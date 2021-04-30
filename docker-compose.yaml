@@ -1,0 +1,84 @@
+version: "3"
+services:
+  rod:
+    container_name: objectiv_rod
+    depends_on:
+      - collector
+    image: objectiv/rod:${TAG:-latest}
+    ports:
+      - 3000:3000
+    networks:
+      - obj
+    environment:
+      - REACT_APP_TRACKER_DEBUG=true
+      - REACT_APP_TRACKER_ENDPOINT=http://localhost:5000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+
+  collector:
+    container_name: objectiv_collector
+    depends_on:
+      - postgres
+    image: objectiv/backend:${TAG:-latest}
+    working_dir: /services
+    entrypoint: 
+      - ./collector.sh
+    ports:
+      - 5000:5000
+    networks:
+      - obj
+    environment:
+      - CONFIG_DEBUG=True
+    env_file: docker/pg_env
+    healthcheck:
+      test: ["CMD", "printf",  "\"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/5000"]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+
+  postgres:
+    container_name: objectiv_postgres
+    image: postgres:latest
+    ports:
+      - 5432:5432
+    networks:
+      - obj
+    volumes:
+      - pgdata:/var/lib/postgresql/data/
+      - ./backend/create_table.sql:/docker-entrypoint-initdb.d/init.sql
+    env_file: docker/pg_env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U objectiv" ]
+      interval: 10s
+      timeout: 2s
+      retries: 5
+
+  notebook:
+    container_name: objectiv_notebook
+    image: objectiv/notebook:${TAG:-latest}
+    ports:
+      - 8888:8888
+    networks:
+      - obj
+    volumes:
+      - ./ds/notebooks:/home/jovyan/work
+    env_file: docker/pg_env
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8888" ]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+
+
+# persist PG data in a docker volume
+volumes:
+  pgdata:
+
+# use bridged networking, so we can access services provided from the host
+networks:
+  obj:
+    driver: bridge
+

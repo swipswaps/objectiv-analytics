@@ -1,0 +1,8 @@
+build/
+jsons/
+objectiv_backend.egg-info/
+sample_data/
+venv
+*.pyc
+__pycache__
+

@@ -1,0 +1,10 @@
+docker-compose.yaml  
+metabase-experiment
+tracker-experiment
+backend/jsons/
+backend/venv/
+rod/node_modules/
+rod/build/
+node_modules/
+.idea
+.git
