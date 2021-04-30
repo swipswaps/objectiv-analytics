@@ -1,4 +1,4 @@
-.PHONY=all build-all-images build-demo build-rod build-ds push-images
+.PHONY=all build-all-images build-ds push-images
 
 # default tag, used to tag images
 export TAG ?= $(shell git rev-parse HEAD)
@@ -14,7 +14,7 @@ all: build-all-images
 # what to build
 build-all-images: build-backend build-ds
 
-# needed for demo stack
+# ds images, build jupyter notebook with DB requirements
 build-ds: build-ds-notebook
 
 # what images to push
