@@ -1,7 +1,10 @@
 .PHONY=all build-all-images build-ds push-images
 
 # default tag, used to tag images
-export TAG ?= $(shell git rev-parse HEAD)
+# we use latest as default, for convenience
+export TAG ?= latest
+
+REVISION ?= $(shell git rev-parse HEAD)
 
 # where to push docker images
 CONTAINER_REPO=eu.gcr.io/objectiv-production
@@ -20,13 +23,13 @@ build-ds: build-ds-notebook
 # what images to push
 push-images: push-image-backend
 
-
+# images are pushed, tagged both "latest" and $REVISION
 push-image-%:
 	$(eval MODULE = $(subst push-image-,,$@))
 	$(eval URL=$(CONTAINER_REPO)/$(MODULE))
 	docker tag objectiv/$(MODULE):$(TAG) $(URL):latest
 	docker push $(URL)
-	gcloud container images add-tag --quiet $(URL):latest $(URL):$(TAG)
+	gcloud container images add-tag --quiet $(URL):latest $(URL):$(REVISION)
 
 
 ## build backend images
