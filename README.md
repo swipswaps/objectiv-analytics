@@ -23,7 +23,7 @@ Starting to use Objectiv Analytics is not hard:
 ### Quick Start: Run Objectiv Pipeline Dockerized
 This is a great way to run Objectiv locally and to see what it is about. With some additional work this
 setup can also be used for low-traffic sites and apps. See also
-(Running the Objectiv Pipeline in Production)[#running-the-objectiv-pipeline-in-production]
+[Running the Objectiv Pipeline in Production](#running-the-objectiv-pipeline-in-production)
 Requirements:
 * docker
 * docker-compose
@@ -34,7 +34,7 @@ docker-compose up
 ```
 This will spin up three images:
 * `objectiv_collector` (http://localhost:5000): Endpoint that the Objectiv-tracker can send events to.
-* `objectiv_postgres`: Database to store data
+* `objectiv_postgres`: Database to store data.
 * `objectiv_notebook` (http://localhost:8080): Jupyter notebook that can be used to query the data.
 
 ### Quick Start: Integrate the Objectiv-Tracker in your app
@@ -87,7 +87,7 @@ For more information on the Objectiv architecture see TODO.
 
 
 ## Building Container Images
-*TODO:* make this work
+**TODO:** make this work
 Requirements:
 * make
 * docker
