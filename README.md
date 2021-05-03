@@ -24,18 +24,17 @@ Starting to use Objectiv Analytics is not hard:
 This is a great way to run Objectiv locally and to see what it is about. With some additional work this
 setup can also be used for low-traffic sites and apps. See also
 [Running the Objectiv Pipeline in Production](#running-the-objectiv-pipeline-in-production)
-Requirements:
-* docker
-* docker-compose
 
-This pulls pre-built images from our Google container registry, if no local copies exist.
+
+The below commands assume that you have `docker-compose` [installed](https://docs.docker.com/compose/install/).
 ```bash
-docker-compose up
+docker-compose pull  # pull pre-built images from gcr
+docker-compose up    # spin up Objective pipeline
 ```
 This will spin up three images:
-* `objectiv_collector` (http://localhost:5000): Endpoint that the Objectiv-tracker can send events to.
-* `objectiv_postgres`: Database to store data.
-* `objectiv_notebook` (http://localhost:8080): Jupyter notebook that can be used to query the data.
+* `objectiv_collector` - Endpoint that the Objectiv-tracker can send events to (http://localhost:5000).
+* `objectiv_postgres` - Database to store data.
+* `objectiv_notebook` - Jupyter notebook that can be used to query the data (http://localhost:8080).
 
 ### Quick Start: Integrate the Objectiv-Tracker in your app
 TODO
@@ -60,15 +59,15 @@ The following diagram shows in the Objectiv architecture in a nutshell. There ar
     |=[Your App]==============|
     |                         |
     |  [1. Objectiv Tracker]  |
-    |   ||                    |
-    |===||====================|
-        ||
-        ||
-    |===||==========[Objectiv Pipeline]====================================|
-    |   \/                                                                 |
-    | |===============================|                                    |
-    | |      [2. Objectiv Collector]  |                                    |
-    | |===============================|                                    |
+    |      ||                 |
+    |======||=================|
+           ||
+           ||
+    |======||=======[Objectiv Pipeline]====================================|
+    |      \/                                                              |
+    |  |===============================|                                   |
+    |  |      [2. Objectiv Collector]  |                                   |
+    |  |===============================|                                   |
     |      ||                                                              |
     |  |===||=================================|                            |
     |  |   \/     [3. Database]               |                            |
