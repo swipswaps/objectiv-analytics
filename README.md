@@ -30,7 +30,7 @@ Requirements:
 
 This pulls pre-built images from our Google container registry, if no local copies exist.
 ```bash
-OBJECTIV_CONTAINER_URL=eu.gcr.io/objectiv-production docker-compose up
+docker-compose up
 ```
 This will spin up three images:
 * `objectiv_collector` (http://localhost:5000): Endpoint that the Objectiv-tracker can send events to.
