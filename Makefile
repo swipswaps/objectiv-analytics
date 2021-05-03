@@ -21,7 +21,7 @@ build-all-images: build-backend build-ds
 build-ds: build-ds-notebook
 
 # what images to push
-push-images: push-image-backend
+push-images: push-image-backend push-image-notebook
 
 # images are pushed, tagged both "latest" and $REVISION
 push-image-%:

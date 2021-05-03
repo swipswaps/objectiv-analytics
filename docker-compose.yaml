@@ -4,7 +4,7 @@ services:
     container_name: objectiv_collector
     depends_on:
       - postgres
-    image: objectiv/backend:${TAG:-latest}
+    image: ${OBJECTIV_CONTAINER_URL}/backend:${TAG}
     working_dir: /services
     entrypoint: 
       - ./collector.sh
@@ -40,7 +40,7 @@ services:
 
   notebook:
     container_name: objectiv_notebook
-    image: objectiv/notebook:${TAG:-latest}
+    image: ${OBJECTIV_CONTAINER_URL}/notebook:${TAG}
     ports:
       - 8888:8888
     networks:
