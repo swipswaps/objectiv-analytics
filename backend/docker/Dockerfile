@@ -1,5 +1,19 @@
 ARG TAG=latest
-FROM objectiv/python3:${TAG}
+
+FROM ubuntu:20.04
+# Step 1: get a python environment setup
+ENV DEBIAN_FRONTEND=noninteractive
+RUN \
+	apt -y -q update && \
+	apt -q -y install python3.8 virtualenv curl && \
+	apt -y autoremove && \
+	apt clean && \
+	rm -rf /var/lib/apt/lists/* && \
+	mkdir -p /services && \
+	virtualenv -p python3 /services/venv
+WORKDIR /services
+
+# Step 2: Customize image for our use
 
 ARG VERSION
 RUN test -n "$VERSION" || (echo "Make sure to set the VERSION argument when building the container"; exit 1)

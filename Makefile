@@ -33,16 +33,11 @@ push-image-%:
 
 
 ## build backend images
-build-backend: build-docker-python3
+build-backend:
 	cd backend && make docker-image
 
 build-ds-notebook:
 	cd ds/docker/notebook && docker build -t objectiv/notebook:$(TAG) $(BUILD_ARGS) .
-
-# build generic modules
-build-docker-%:
-	$(eval MODULE = $(subst build-docker-,,$@))
-	cd docker/$(MODULE) && docker build -t objectiv/$(MODULE):$(TAG) $(BUILD_ARGS) .
 
 
 # control stack through docker-compose
