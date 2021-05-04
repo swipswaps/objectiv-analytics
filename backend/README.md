@@ -53,6 +53,7 @@ make
 
 
 # Allowed schema extensions
+TODO: update this, and move it to some docs specifically about the taxonomy
 * Events:
     * adding new events
     * adding parents to an existing event
