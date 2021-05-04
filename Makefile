@@ -9,8 +9,6 @@ REVISION ?= $(shell git rev-parse HEAD)
 # where to push docker images
 CONTAINER_REPO=eu.gcr.io/objectiv-production
 
-BUILD_ARGS := --build-arg TAG=$(TAG)
-
 # by default we build all images
 all: build-all-images
 
@@ -37,7 +35,9 @@ build-backend:
 	cd backend && make docker-image
 
 build-ds-notebook:
-	cd ds/docker/notebook && docker build -t objectiv/notebook:$(TAG) $(BUILD_ARGS) .
+	cd ds && \
+	docker build \
+	-t objectiv/notebook:$(TAG) -f docker/notebook/Dockerfile .
 
 
 # control stack through docker-compose
