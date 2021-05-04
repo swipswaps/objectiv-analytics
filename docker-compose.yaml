@@ -6,8 +6,7 @@ services:
       - objectiv_postgres
     image: ${OBJECTIV_CONTAINER_URL}/backend:${OBJECTIV_CONTAINER_TAG}
     working_dir: /services
-    entrypoint: 
-      - ./collector.sh
+    entrypoint: bash -c "source venv/bin/activate; objectiv-db-init; ./collector.sh"
     ports:
       - 5000:5000
     networks:
@@ -30,7 +29,6 @@ services:
       - obj
     volumes:
       - pgdata:/var/lib/postgresql/data/
-      - ./backend/create_table.sql:/docker-entrypoint-initdb.d/init.sql
     env_file: docker/pg_env
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U objectiv" ]
