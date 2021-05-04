@@ -46,7 +46,8 @@ export class WebTracker extends Tracker {
       }
 
       // TODO make a document factory that validates if window.document is available
-      locationStack.unshift(createWebDocumentContext({ id: this.id, href: window.document.location.href }));}
+      locationStack.unshift(createWebDocumentContext({ id: this.id, href: window.document.location.href }));
+    }
 
     // Automatically tracked Global Contexts
     if (this.trackDevice) {
