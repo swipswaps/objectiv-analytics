@@ -1,10 +1,17 @@
+# Start the Objectiv Pipeline.
+#
+# By default uses images from eu.gcr.io/objectiv-production
+# To use locally built images set the OBJECTIV_CONTAINER_URL variable to just "objectiv"
+# To use a specific image version instead of latest set OBJECTIV_CONTAINER_TAG
+
 version: "3"
 services:
   objectiv_collector:
     container_name: objectiv_collector
     depends_on:
       - objectiv_postgres
-    image: ${OBJECTIV_CONTAINER_URL}/backend:${OBJECTIV_CONTAINER_TAG}
+    # default image: eu.gcr.io/objectiv-production/backend:latest
+    image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/backend:${OBJECTIV_CONTAINER_TAG-latest}
     working_dir: /services
     entrypoint: bash -c "source venv/bin/activate; objectiv-db-init; ./collector.sh"
     ports:
@@ -38,7 +45,8 @@ services:
 
   objectiv_notebook:
     container_name: objectiv_notebook
-    image: ${OBJECTIV_CONTAINER_URL}/notebook:${OBJECTIV_CONTAINER_TAG}
+    # default image: eu.gcr.io/objectiv-production/notebook:latest
+    image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/notebook:${OBJECTIV_CONTAINER_TAG-latest}
     ports:
       - 8888:8888
     networks:
