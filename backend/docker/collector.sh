@@ -1,6 +1,5 @@
 #!/bin/sh
 
-. venv/bin/activate
 export PYTHONPATH=.:$PYTHONPATH
 # Tell python not to buffer any output to stdout and stderr. Not setting this makes any debugging almost
 # impossible

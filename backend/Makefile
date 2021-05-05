@@ -8,14 +8,15 @@ OBJ_PACKAGE_VERSION ?= 0.0.1
 PACKAGE_NAME = dist/objectiv_backend-$(OBJ_PACKAGE_VERSION)-py3-none-any.whl
 TAG ?= latest
 
-all: docker-image
+all: docker-image python-dist
 
-docker-image: python-dist
+docker-image:
 	docker build \
 	--build-arg VERSION=$(OBJ_PACKAGE_VERSION) \
-	--build-arg TAG=$(TAG) \
 	-t objectiv/backend:$(TAG) -f docker/Dockerfile .
 
+# `python-dist` will build the docker image locally
+# `clean` will remove it again
 python-dist: $(PACKAGE_NAME)
 
 $(PACKAGE_NAME): $(PYTHON_DIRECTORIES)

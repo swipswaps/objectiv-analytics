@@ -1,6 +1,5 @@
 #!/bin/sh
 
-. venv/bin/activate
 export PYTHONPATH=.:$PYTHONPATH
 
 # run worker process in loop
