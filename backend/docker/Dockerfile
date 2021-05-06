@@ -46,10 +46,6 @@ ENV PYTHONHOME=""
 RUN pip install pip==21.1.* --upgrade
 ### End of the Pyhthon-base-image part
 
-ARG VERSION
-RUN test -n "$VERSION" || (echo "Make sure to set the VERSION argument when building the container"; exit 1)
-
-
 # Install dependencies needed to build package
 # TODO: pin versions to hashes
 RUN pip install build virtualenv wheel setuptools
@@ -58,9 +54,6 @@ RUN pip install build virtualenv wheel setuptools
 WORKDIR  /build_dir/
 COPY setup.cfg pyproject.toml /build_dir/
 COPY objectiv_backend/ /build_dir/objectiv_backend/
-
-# Set version correctly
-RUN echo "${VERSION}" > objectiv_backend/VERSION
 
 # Build package
 RUN python3 -m build --wheel
@@ -86,11 +79,6 @@ ENV PYTHONHOME=""
 RUN pip install pip==21.1.* --upgrade
 ### End of the Pyhthon-base-image part
 
-ARG VERSION
-RUN test -n "$VERSION" || (echo "Make sure to set the VERSION argument when building the container"; exit 1)
-
-ENV PYTHON_PACKAGE_FILE=objectiv_backend-${VERSION}-py3-none-any.whl
-
 RUN \
     mkdir -p /services && \
     mkdir -p /services/jsons/OK/ && \
@@ -110,6 +98,7 @@ RUN \
     pip install -r requirements.txt
 
 # Install the objectiv-backend package
-COPY --from=builder /build_dir/dist/${PYTHON_PACKAGE_FILE} /tmp/${PYTHON_PACKAGE_FILE}
-RUN pip install /tmp/${PYTHON_PACKAGE_FILE} && \
-    rm /tmp/${PYTHON_PACKAGE_FILE}
+# Use a wildcard, because the exact package name depends on the current version
+COPY --from=builder /build_dir/dist/* /tmp/
+RUN pip install /tmp/objectiv_backend-*-py3-none-any.whl && \
+    rm /tmp/*
