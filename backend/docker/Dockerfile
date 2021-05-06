@@ -47,18 +47,18 @@ RUN pip install pip==21.1.* --upgrade
 ### End of the Pyhthon-base-image part
 
 # Install dependencies needed to build package
-# TODO: pin versions to hashes
-RUN pip install build virtualenv wheel setuptools
+COPY requirements-build.txt /tmp/requirements-build.txt
+RUN pip install --require-hashes -r /tmp/requirements-build.txt && \
+    rm /tmp/requirements-build.txt
 
 # Copy files
-WORKDIR  /build_dir/
+WORKDIR /build_dir/
 COPY setup.cfg pyproject.toml /build_dir/
 COPY objectiv_backend/ /build_dir/objectiv_backend/
 
 # Build package
 RUN python3 -m build --wheel
 # Done. Resulting file can be found in /build_dir/dist/objectiv_backend-${VERSION}-py3-none-any.whl
-
 
 
 ### Start of the Pyhthon-base-image part
