@@ -25,14 +25,14 @@ FROM ubuntu:20.04 AS builder
 # Using a virtual environment guarantees that we start with a clean slate, and python libraries that
 # e.g. apt-get might install won't conflict with our specific requirements.txt
 RUN \
-  # Setting DEBIAN_FRONTEND prevents apt-get outputting warnings about not running interactively
-  DEBIAN_FRONTEND="noninteractive" && \
-  apt-get update && \
-  apt-get install -y python3 python3-virtualenv && \
-  apt-get -y autoremove && \
-  apt-get -y clean && \
-  rm -rf /var/lib/apt/lists/* && \
-  virtualenv -p python3.8 /venv_python_3_8/
+    # Setting DEBIAN_FRONTEND prevents apt-get outputting warnings about not running interactively
+    DEBIAN_FRONTEND="noninteractive" && \
+    apt-get update && \
+    apt-get install -y python3 python3-virtualenv && \
+    apt-get -y autoremove && \
+    apt-get -y clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    virtualenv -p python3.8 /venv_python_3_8/
 
 ## Activate this virtualenv
 # Instead of using /venv_python_3_8/bin/activate we'll set the variables that activate would set.
@@ -66,13 +66,13 @@ RUN python3 -m build --wheel
 # cache these layers efficiently.
 FROM ubuntu:20.04 AS result
 RUN \
-  DEBIAN_FRONTEND="noninteractive" && \
-  apt-get update && \
-  apt-get install -y python3 python3-virtualenv && \
-  apt-get -y autoremove && \
-  apt-get -y clean && \
-  rm -rf /var/lib/apt/lists/* && \
-  virtualenv -p python3.8 /venv_python_3_8/
+    DEBIAN_FRONTEND="noninteractive" && \
+    apt-get update && \
+    apt-get install -y python3 python3-virtualenv && \
+    apt-get -y autoremove && \
+    apt-get -y clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    virtualenv -p python3.8 /venv_python_3_8/
 ENV VIRTUAL_ENV="/venv_python_3_8/"
 ENV PATH="${VIRTUAL_ENV}bin:${PATH}"
 ENV PYTHONHOME=""
