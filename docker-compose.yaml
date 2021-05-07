@@ -4,7 +4,16 @@
 # To use locally built images set the OBJECTIV_CONTAINER_URL variable to just "objectiv"
 # To use a specific image version instead of latest set OBJECTIV_CONTAINER_TAG
 
-version: "3"
+
+x-db_env_variables: &db_env_variables
+  # warning: never put production credentials in here!
+  POSTGRES_USER: 'objectiv'
+  POSTGRES_PASSWORD: '0bj3ctiv'
+  POSTGRES_DB: 'objectiv'
+  POSTGRES_HOSTNAME: 'objectiv_postgres'
+  POSTGRES_PORT: 5432
+
+version: "3.4"
 services:
   objectiv_collector:
     container_name: objectiv_collector
@@ -19,12 +28,7 @@ services:
     networks:
       - obj
     environment:
-      # warning: never put production credentials in here!
-      - POSTGRES_USER=objectiv
-      - POSTGRES_PASSWORD=0bj3ctiv
-      - POSTGRES_DB=objectiv
-      - POSTGRES_HOSTNAME=objectiv_postgres
-      - POSTGRES_PORT=5432
+      <<: *db_env_variables
     env_file: docker/pg_env
     healthcheck:
       test: ["CMD", "printf",  "\"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/5000"]
@@ -42,12 +46,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data/
     environment:
-      # warning: never put production credentials in here!
-      - POSTGRES_USER=objectiv
-      - POSTGRES_PASSWORD=0bj3ctiv
-      - POSTGRES_DB=objectiv
-      - POSTGRES_HOSTNAME=objectiv_postgres
-      - POSTGRES_PORT=5432
+      <<: *db_env_variables
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U objectiv" ]
       interval: 10s
@@ -65,12 +64,7 @@ services:
     volumes:
       - ./ds/notebooks_volume:/home/jovyan/notebooks_volume
     environment:
-      # warning: never put production credentials in here!
-      - POSTGRES_USER=objectiv
-      - POSTGRES_PASSWORD=0bj3ctiv
-      - POSTGRES_DB=objectiv
-      - POSTGRES_HOSTNAME=objectiv_postgres
-      - POSTGRES_PORT=5432
+      <<: *db_env_variables
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8888" ]
       interval: 30s
