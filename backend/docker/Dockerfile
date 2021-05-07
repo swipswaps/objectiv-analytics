@@ -89,6 +89,7 @@ WORKDIR /services
 # entrypoint scripts
 COPY docker/*.sh /services/
 COPY docker/gunicorn.conf.py /etc/
+ENTRYPOINT /services/entry_point.sh
 
 # python requirements
 COPY requirements.txt /services/

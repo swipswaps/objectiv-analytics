@@ -13,13 +13,18 @@ services:
     # default image: eu.gcr.io/objectiv-production/backend:latest
     image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/backend:${OBJECTIV_CONTAINER_TAG-latest}
     working_dir: /services
-    entrypoint: bash -c "source venv/bin/activate; objectiv-db-init; ./collector.sh"
+    entrypoint: bash -c "objectiv-db-init; ./entry_point.sh"
     ports:
       - 5000:5000
     networks:
       - obj
     environment:
-      - CONFIG_DEBUG=True
+      # warning: never put production credentials in here!
+      - POSTGRES_USER=objectiv
+      - POSTGRES_PASSWORD=0bj3ctiv
+      - POSTGRES_DB=objectiv
+      - POSTGRES_HOSTNAME=objectiv_postgres
+      - POSTGRES_PORT=5432
     env_file: docker/pg_env
     healthcheck:
       test: ["CMD", "printf",  "\"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/5000"]
@@ -36,7 +41,13 @@ services:
       - obj
     volumes:
       - pgdata:/var/lib/postgresql/data/
-    env_file: docker/pg_env
+    environment:
+      # warning: never put production credentials in here!
+      - POSTGRES_USER=objectiv
+      - POSTGRES_PASSWORD=0bj3ctiv
+      - POSTGRES_DB=objectiv
+      - POSTGRES_HOSTNAME=objectiv_postgres
+      - POSTGRES_PORT=5432
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U objectiv" ]
       interval: 10s
@@ -53,7 +64,13 @@ services:
       - obj
     volumes:
       - ./ds/notebooks_volume:/home/jovyan/notebooks_volume
-    env_file: docker/pg_env
+    environment:
+      # warning: never put production credentials in here!
+      - POSTGRES_USER=objectiv
+      - POSTGRES_PASSWORD=0bj3ctiv
+      - POSTGRES_DB=objectiv
+      - POSTGRES_HOSTNAME=objectiv_postgres
+      - POSTGRES_PORT=5432
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8888" ]
       interval: 30s
