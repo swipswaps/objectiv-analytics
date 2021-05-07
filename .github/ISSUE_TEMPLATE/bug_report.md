@@ -2,7 +2,7 @@
 name: Bug report
 about: Create a bug report for broken functionality
 title: 'Bug Report: '
-labels: 'Type: Bug, Status: Awaiting Triage'
+labels: 'Type: Bug'
 assignees: ''
 
 ---
