@@ -6,6 +6,8 @@ Copyright 2021 Objectiv B.V.
 import os
 
 # Custom Schema Extensions to load
+from typing import NamedTuple
+
 SCHEMA_EXTENSION_EVENT = os.environ.get('SCHEMA_EXTENSION_EVENT')
 SCHEMA_EXTENSION_CONTEXT = os.environ.get('SCHEMA_EXTENSION_CONTEXT')
 
@@ -13,3 +15,19 @@ SCHEMA_EXTENSION_CONTEXT = os.environ.get('SCHEMA_EXTENSION_CONTEXT')
 WORKER_BATCH_SIZE = 200
 # Time to sleep, if there is no work to do for the workers
 WORKER_SLEEP_SECONDS = 5
+
+
+class AwsOutputConfig(NamedTuple):
+    access_key_id: str
+    secret_access_key: str
+    region: str
+    bucket: str
+    s3_prefix: str
+
+
+class DiskOutputConfig(NamedTuple):
+    path: str
+
+
+class PostgresOutputConfig(NamedTuple):
+    todo: str

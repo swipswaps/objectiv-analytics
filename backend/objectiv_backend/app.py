@@ -34,7 +34,7 @@ AWS_REGION = 'eu-west-1'  # default region is Ireland
 # default access keys to an empty string, otherwise the boto library will default ot user defaults.
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')  # Need an IAM user with read/write access to S3 bucket
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')  # Need an IAM user with read/write access to S3
-AWS_BUCKET = 'obj-tracker-journeys'
+AWS_BUCKET = os.environ.get('AWS_BUCKET', '')
 AWS_S3_PREFIX = os.environ.get('AWS_S3_PREFIX', 'test-prefix')
 
 # Whether to run in sync mode (default) or async-mode.
@@ -280,7 +280,6 @@ def _write_data_to_disk(data: str, filename: str) -> None:
 
 def _write_data_to_s3(data: str, filename: str) -> None:
     if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
-        print('Not uploading to S3, access keys not specified.')
         return
     file_obj = BytesIO(data.encode('utf-8'))
     s3_client = boto3.client(
