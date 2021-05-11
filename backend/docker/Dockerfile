@@ -43,12 +43,12 @@ ENV VIRTUAL_ENV="/venv_python_3_8/"
 ENV PATH="${VIRTUAL_ENV}bin:${PATH}"
 ENV PYTHONHOME=""
 # Upgrade pip to what is currently the latest version
-RUN pip install pip==21.1.* --upgrade
+RUN pip --no-cache-dir install pip==21.1.* --upgrade
 ### End of the Pyhthon-base-image part
 
 # Install dependencies needed to build package
 COPY requirements-build.txt /tmp/requirements-build.txt
-RUN pip install --require-hashes -r /tmp/requirements-build.txt && \
+RUN pip --no-cache-dir install --require-hashes -r /tmp/requirements-build.txt && \
     rm /tmp/requirements-build.txt
 
 # Copy files
@@ -76,7 +76,7 @@ RUN \
 ENV VIRTUAL_ENV="/venv_python_3_8/"
 ENV PATH="${VIRTUAL_ENV}bin:${PATH}"
 ENV PYTHONHOME=""
-RUN pip install pip==21.1.* --upgrade
+RUN pip --no-cache-dir install pip==21.1.* --upgrade
 ### End of the Pyhthon-base-image part
 
 RUN \
@@ -95,11 +95,11 @@ ENTRYPOINT /services/entry_point.sh
 COPY requirements.txt /services/
 
 RUN \
-    pip install gunicorn && \
-    pip install -r requirements.txt
+    pip --no-cache-dir install gunicorn && \
+    pip --no-cache-dir install -r requirements.txt
 
 # Install the objectiv-backend package
 # Use a wildcard, because the exact package name depends on the current version
 COPY --from=builder /build_dir/dist/* /tmp/
-RUN pip install /tmp/objectiv_backend-*-py3-none-any.whl && \
+RUN pip --no-cache-dir install /tmp/objectiv_backend-*-py3-none-any.whl && \
     rm /tmp/*
