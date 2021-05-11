@@ -76,7 +76,7 @@ RUN \
 ENV VIRTUAL_ENV="/venv_python_3_8/"
 ENV PATH="${VIRTUAL_ENV}bin:${PATH}"
 ENV PYTHONHOME=""
-RUN pip install pip==21.1.* --upgrade
+RUN pip --no-cache-dir install pip==21.1.* --upgrade
 ### End of the Pyhthon-base-image part
 
 RUN \
@@ -101,5 +101,5 @@ RUN \
 # Install the objectiv-backend package
 # Use a wildcard, because the exact package name depends on the current version
 COPY --from=builder /build_dir/dist/* /tmp/
-RUN pip install /tmp/objectiv_backend-*-py3-none-any.whl && \
+RUN pip --no-cache-dir install /tmp/objectiv_backend-*-py3-none-any.whl && \
     rm /tmp/*
