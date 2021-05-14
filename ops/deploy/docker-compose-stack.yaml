@@ -2,7 +2,7 @@ version: "3"
 services:
   rod:
     container_name: rod
-    image: eu.gcr.io/objectiv-production/rod-prod
+    image: ${ROD_CONTAINER_URL-eu.gcr.io/objectiv-production}/rod:${ROD_CONTAINER_TAG-latest}
     networks:
       - obj-proxy
     expose:
@@ -38,7 +38,7 @@ services:
 
   collector:
     container_name: collector
-    image: eu.gcr.io/objectiv-production/backend
+    image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/backend:${OBJECTIV_CONTAINER_TAG-latest}
     depends_on:
       - postgres
     networks:
