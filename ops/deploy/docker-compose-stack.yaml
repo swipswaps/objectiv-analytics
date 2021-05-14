@@ -11,6 +11,7 @@ services:
       - VIRTUAL_HOST=${ROD_HOST}
       - VIRTUAL_PORT=${ROD_PORT}
       - LETSENCRYPT_HOST=${ROD_HOST}
+      - ROD_PORT=${ROD_PORT}
       - REACT_APP_TRACKER_DEBUG=true
       - REACT_APP_TRACKER_ENDPOINT=https://${COLLECTOR_HOST}
     healthcheck:
