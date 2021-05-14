@@ -11,7 +11,7 @@ def generate_password(length=20):
 
 # create users/passwords
 users = {}
-for u in ['collector', 'worker', 'reader']:
+for u in ['postgres', 'collector', 'worker', 'reader']:
     users[u] = {
         'password': generate_password(),
         'username': f'obj_{u}',
@@ -21,17 +21,19 @@ for u in ['collector', 'worker', 'reader']:
 # write SQL
 with open('auth.sql', 'w+') as f:
     for u in users.values():
-        sql = (\
+        if u['username'] == 'postgres':
+            continue
+        sql = (
             f"create user {u['username']} with password '{u['password']}' inherit;\n"
             f"grant {u['role']} to {u['username']};\n")
         f.write(sql)
 
 # write env for collector
-for e in ['collector', 'worker']:
+for e in ['postgres', 'collector', 'worker']:
     user = users[e]
     env_file = f'pg_env_{e}'
     with open(env_file, 'w+') as f:
-        env = (\
+        env = (
             f"POSTGRES_USER={user['username']}\n"
             f"POSTGRES_PASSWORD={user['password']}\n"
             f"POSTGRES_DB=objectiv\n"

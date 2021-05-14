@@ -1,5 +1,24 @@
 version: "3"
 services:
+  rod:
+    container_name: rod
+    image: eu.gcr.io/objectiv-production/rod-prod
+    networks:
+      - obj-proxy
+    expose:
+      - ${ROD_PORT}
+    environment:
+      - VIRTUAL_HOST=${ROD_HOST}
+      - VIRTUAL_PORT=${ROD_PORT}
+      - LETSENCRYPT_HOST=${ROD_HOST}
+      - REACT_APP_TRACKER_DEBUG=true
+      - REACT_APP_TRACKER_ENDPOINT=https://${COLLECTOR_HOST}
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:${ROD_PORT}" ]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+
   postgres:
     container_name: postgres
     image: postgres:latest
@@ -9,9 +28,9 @@ services:
       - pgdata:/var/lib/postgresql/data/
       - ../../backend/create_table.sql:/docker-entrypoint-initdb.d/1_init.sql
       - ./auth.sql:/docker-entrypoint-initdb.d/2_auth.sql
-    env_file: ../../docker/pg_env
+    env_file: pg_env_postgres
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U objectiv" ]
+      test: [ "CMD-SHELL", "pg_isready -U obj_postgres" ]
       interval: 10s
       timeout: 2s
       retries: 5
@@ -33,26 +52,15 @@ services:
       - GUNICORN_WORKERS=${COLLECTOR_GUNICORN_WORKERS:-2}
       - GUNICORN_HOST=${COLLECTOR_HOST}
       - GUNICORN_PORT=${COLLECTOR_PORT}
+      - ASYNC_MODE=false
     env_file: ./pg_env_collector
     working_dir: /services
-    entrypoint: ./collector.sh
+    entrypoint: bash -c "objectiv-db-init; ./entry_point.sh"
     healthcheck:
       test: ["CMD", "printf",  "\"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/${COLLECTOR_PORT}"]
       interval: 30s
       timeout: 2s
       retries: 3
-
-  worker:
-    container_name: worker
-    image: eu.gcr.io/objectiv-production/backend
-    depends_on:
-      - postgres
-      - collector
-    networks:
-      - obj-backend
-    env_file: ./pg_env_worker
-    working_dir: /services
-    entrypoint: ./worker.sh
 
 networks:
   obj-backend:
