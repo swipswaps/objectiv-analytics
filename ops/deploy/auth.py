@@ -21,7 +21,7 @@ for u in ['postgres', 'collector', 'worker', 'reader']:
 # write SQL
 with open('auth.sql', 'w+') as f:
     for u in users.values():
-        if u['username'] == 'postgres':
+        if u['username'] == 'obj_postgres':
             continue
         sql = (
             f"create user {u['username']} with password '{u['password']}' inherit;\n"

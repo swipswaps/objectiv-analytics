@@ -27,7 +27,8 @@ services:
       - obj-backend
     volumes:
       - pgdata:/var/lib/postgresql/data/
-      - ../../backend/create_table.sql:/docker-entrypoint-initdb.d/1_init.sql
+      - ../../backend/objectiv_backend/create_tables.sql:/docker-entrypoint-initdb.d/0_create_tables.sql
+      - ./roles.sql:/docker-entrypoint-initdb.d/1_roles.sql
       - ./auth.sql:/docker-entrypoint-initdb.d/2_auth.sql
     env_file: pg_env_postgres
     healthcheck:
