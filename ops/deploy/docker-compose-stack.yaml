@@ -32,7 +32,7 @@ services:
       - ./auth.sql:/docker-entrypoint-initdb.d/2_auth.sql
     env_file: pg_env_postgres
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U obj_postgres" ]
+      test: [ "CMD-SHELL", "pg_isready -U obj_postgres -d objectiv" ]
       interval: 10s
       timeout: 2s
       retries: 5
