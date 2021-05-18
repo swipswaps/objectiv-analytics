@@ -1,10 +1,10 @@
 import datetime
 import json
-from io import StringIO, BytesIO
+from io import BytesIO
 
 import flask
 import time
-from typing import List, Tuple, Optional
+from typing import List
 import os
 import uuid
 
@@ -13,6 +13,7 @@ from botocore.exceptions import ClientError
 from flask import Flask, request, Response, Request
 from flask_cors import CORS
 
+from common.config import get_config_output
 from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import event_add_construct_context, add_global_context_to_event
 from objectiv_backend.common.types import EventWithId, EventData, ContextData
@@ -25,17 +26,6 @@ from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
-
-# Where to store the output JSONs
-JSON_DIR: Optional[str] = os.environ.get('JSON_DIR', None)
-
-# AWS settings
-AWS_REGION = 'eu-west-1'  # default region is Ireland
-# default access keys to an empty string, otherwise the boto library will default ot user defaults.
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')  # Need an IAM user with read/write access to S3 bucket
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')  # Need an IAM user with read/write access to S3
-AWS_BUCKET = os.environ.get('AWS_BUCKET', '')
-AWS_S3_PREFIX = os.environ.get('AWS_S3_PREFIX', 'test-prefix')
 
 # Whether to run in sync mode (default) or async-mode.
 ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
@@ -56,7 +46,6 @@ def index() -> Response:
         events = _get_event_data(flask.request)
     except ValueError as exc:
         print(f'Data problem: {exc}')  # todo: real error logging
-        # Todo: write data to not okay data directory?
         return _get_response(error_count=1, event_count=-1)
 
     # Do all the enrichment steps that can only be done in this phase
@@ -65,11 +54,16 @@ def index() -> Response:
     set_time_in_events(events, current_millis)
 
     events_with_id = [EventWithId(id=uuid.uuid4(), event=event) for event in events]
-    ok_events, nok_events = write_events_db(events_with_id)
 
-    write_events_to_disk_and_s3(ok_events=ok_events, nok_events=nok_events)
-
-    return _get_response(error_count=len(nok_events), event_count=len(events))
+    if not ASYNC_MODE:
+        ok_events, nok_events = process_events_entry(events=events_with_id)
+        ok_events = process_events_enrichment(events=ok_events)
+        print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
+        write_sync_events(ok_events=ok_events, nok_events=nok_events)
+        return _get_response(error_count=len(nok_events), event_count=len(events))
+    else:
+        write_async_events(events=events_with_id)
+        return _get_response(error_count=0, event_count=len(events))
 
 
 def _get_event_data(request: Request) -> List[EventData]:
@@ -216,48 +210,52 @@ def _get_http_context() -> ContextData:
     return http_context
 
 
-def write_events_db(events: List[EventWithId]) -> Tuple[List[EventWithId], List[EventWithId]]:
+def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId]):
     """
-    Write events to the database.
-    * If not ASYNC_MODE (=default): All events are fully processed, and written to the final data table.
-    * If ASYNC_MODE: All events are written to the entry queue. Workers will have to take care of
-        further processing from there on. In this case all events are always returned as being OK, since
-        the validation doesn't happen in this function.
-    :param events: List of events, with assigned unique-ids
-    :return: Tuple with two lists:
-        ok events: events that were processed okay
-        nok events: events that failed validation.
+    TODO: comments
     """
-    connection = get_db_connection()
-    try:
-        with connection:
-            if ASYNC_MODE:
+    output_config = get_config_output()
+    if output_config.postgres:
+        connection = get_db_connection()
+        try:
+            with connection:
+                insert_events_into_data(connection, events=ok_events)
+                insert_events_into_nok_data(connection, events=nok_events)
+        finally:
+            connection.close()
+
+    if not output_config.disk and not output_config.aws:
+        return
+    for prefix, events in ('OK', ok_events), ('NOK', nok_events):
+        if events:
+            filename = f'{prefix}/{time.time()}.json'
+            data = _events_to_json(events)
+            _write_data_to_disk_if_configured(data=data, filename=filename)
+            _write_data_to_s3_if_configured(data=data, filename=filename)
+
+
+def write_async_events(events: List[EventWithId]):
+    """
+    TODO: comments
+    """
+    output_config = get_config_output()
+    if output_config.postgres:
+        connection = get_db_connection()
+        try:
+            with connection:
                 pg_queue = PostgresQueues(connection=connection)
                 pg_queue.put_events(queue=ProcessingStage.ENTRY, events=events)
-                return events, []
-            else:
-                ok_events, nok_events = process_events_entry(events=events)
-                print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
-                insert_events_into_nok_data(connection, events=nok_events)
-                ok_events = process_events_enrichment(events=ok_events)
-                insert_events_into_data(connection, events=ok_events)
-                return ok_events, nok_events
-    finally:
-        connection.close()
+        finally:
+            connection.close()
 
-
-def write_events_to_disk_and_s3(ok_events: List[EventWithId], nok_events: List[EventWithId]) -> None:
-    # TODO: do we need this?
-    if ok_events:
-        filename = f'OK/{time.time()}.json'
-        data = _events_to_json(ok_events)
-        _write_data_to_disk(data=data, filename=filename)
-        _write_data_to_s3(data=data, filename=filename)
-    if nok_events:
-        filename = f'NOK/{time.time()}.json'
-        data = _events_to_json(nok_events)
-        _write_data_to_disk(data=data, filename=filename)
-        _write_data_to_s3(data=data, filename=filename)
+    if not output_config.disk and not output_config.aws:
+        return
+    prefix = 'RAW'
+    if events:
+        filename = f'{prefix}/{time.time()}.json'
+        data = _events_to_json(events)
+        _write_data_to_disk_if_configured(data=data, filename=filename)
+        _write_data_to_s3_if_configured(data=data, filename=filename)
 
 
 def _events_to_json(events: List[EventWithId]) -> str:
@@ -269,28 +267,30 @@ def _events_to_json(events: List[EventWithId]) -> str:
     return ''.join(result)
 
 
-def _write_data_to_disk(data: str, filename: str) -> None:
-    if not JSON_DIR:
-        print('Not storing on disk.')
+def _write_data_to_disk_if_configured(data: str, filename: str) -> None:
+    disk_config = get_config_output().disk
+    if not disk_config:
         return
-    path = f'{JSON_DIR}/{filename}'
+    path = f'{disk_config.path}/{filename}'
     with open(path, 'w') as of:
         of.write(data)
 
 
-def _write_data_to_s3(data: str, filename: str) -> None:
-    if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
+def _write_data_to_s3_if_configured(data: str, filename: str) -> None:
+    aws_config = get_config_output().aws
+    if not aws_config:
         return
     file_obj = BytesIO(data.encode('utf-8'))
     s3_client = boto3.client(
         service_name='s3',
-        region_name=AWS_REGION,
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+        region_name=aws_config.region,
+        aws_access_key_id=aws_config.access_key_id,
+        aws_secret_access_key=aws_config.secret_access_key)
     try:
+        # TODO: make sure this datestamp matches time.time() above
         dt = datetime.datetime.today()
-        timestamp = dt.strftime('%Y/%m/%d')
-        object_name = f'{AWS_S3_PREFIX}/{timestamp}/{filename}'
-        s3_client.upload_fileobj(file_obj, AWS_BUCKET, object_name)
+        datestamp = dt.strftime('%Y/%m/%d')
+        object_name = f'{aws_config.s3_prefix}/{datestamp}/{filename}'
+        s3_client.upload_fileobj(file_obj, aws_config.bucket, object_name)
     except ClientError as e:
         print(f'Error uploading to s3: {e} ')
