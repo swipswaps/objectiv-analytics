@@ -150,4 +150,4 @@ PG is called pgdata. To remove it, lookup the name from the list and run:
 docker volume rm <volumename>
 ```
 
-
+[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)
