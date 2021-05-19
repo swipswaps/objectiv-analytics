@@ -24,7 +24,14 @@ from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
+cors = CORS(app,
+            resources={r"/*": {
+                "origins": "*",
+                "supports_credentials": True,       # needed for cookies
+                "max_age": 3600 * 24
+                # Setting max_age to a higher values is probably useless, as most browsers cap this time.
+                # See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age
+            }})
 
 # set to False to disable setting a session cookie
 OBJ_COOKIE = 'obj_user_id'
