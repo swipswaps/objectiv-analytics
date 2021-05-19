@@ -13,6 +13,9 @@ from typing import NamedTuple, Optional
 SCHEMA_EXTENSION_EVENT = os.environ.get('SCHEMA_EXTENSION_EVENT')
 SCHEMA_EXTENSION_CONTEXT = os.environ.get('SCHEMA_EXTENSION_CONTEXT')
 
+# Whether to run in sync mode (default) or async-mode.
+_ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
+
 # ### Postgres values.
 # We define some default values here. DO NOT put actual passwords in here
 _PG_DATABASE_NAME = os.environ.get('POSTGRES_DB', 'objectiv')
@@ -64,6 +67,11 @@ class OutputConfig(NamedTuple):
     file_system: Optional[FileSystemOutputConfig]
 
 
+class CollectorConfig(NamedTuple):
+    async_mode: bool
+    output: OutputConfig
+
+
 def get_config_output_aws() -> Optional[AwsOutputConfig]:
     if _AWS_REGION and _AWS_ACCESS_KEY_ID and _AWS_SECRET_ACCESS_KEY and _AWS_BUCKET and _AWS_S3_PREFIX:
         return AwsOutputConfig(
@@ -92,23 +100,31 @@ def get_config_postgres() -> Optional[PostgresConfig]:
     )
 
 
+def get_config_output() -> OutputConfig:
+    """ Get the Collector's output settings. Raises an error if none of the outputs are configured. """
+    output_config = OutputConfig(
+        postgres=get_config_postgres(),
+        aws=get_config_output_aws(),
+        file_system=get_config_output_file_system()
+    )
+    if not output_config.postgres and not output_config.aws and not output_config.file_system:
+        raise Exception('No output configured. At least configure either Postgres, S3 or FileSystem '
+                        'output.')
+    return output_config
+
+
 # creating these configuration structures is not heavy, but it's pointless to do it for each request.
 # so we have some super simple caching here
-# TODO: initialize configuration properly at startup
-_CACHED_OUTPUT_CONFIG: Optional[OutputConfig] = None
+# TODO: initialize configuration at startup
+_CACHED_COLLECTOR_CONFIG: Optional[OutputConfig] = None
 
 
-def get_config_output() -> OutputConfig:
-    """ Get the Collector's output settings """
-    global _CACHED_OUTPUT_CONFIG
-    if not _CACHED_OUTPUT_CONFIG:
-        output_config = OutputConfig(
-            postgres=get_config_postgres(),
-            aws=get_config_output_aws(),
-            file_system=get_config_output_file_system()
+def get_collector_config() -> CollectorConfig:
+    """ Get the Collector Configuration. Cached after first invocation """
+    global _CACHED_COLLECTOR_CONFIG
+    if not _CACHED_COLLECTOR_CONFIG:
+        _CACHED_COLLECTOR_CONFIG = CollectorConfig(
+            async_mode=_ASYNC_MODE,
+            output=get_config_output()
         )
-        if not output_config.postgres and not output_config.aws and not output_config.file_system:
-            raise Exception('No output configured. At least configure either Postgres, S3 or FileSystem '
-                            'output.')
-        _CACHED_OUTPUT_CONFIG = output_config
-    return _CACHED_OUTPUT_CONFIG
+    return _CACHED_COLLECTOR_CONFIG

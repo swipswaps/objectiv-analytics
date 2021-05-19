@@ -5,7 +5,6 @@ from io import BytesIO
 import flask
 import time
 from typing import List
-import os
 import uuid
 
 import boto3
@@ -13,7 +12,7 @@ from botocore.exceptions import ClientError
 from flask import Flask, Response, Request
 from flask_cors import CORS
 
-from objectiv_backend.common.config import get_config_output
+from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import event_add_construct_context, add_global_context_to_event
 from objectiv_backend.common.types import EventWithId, EventData, ContextData
@@ -26,9 +25,6 @@ from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
-
-# Whether to run in sync mode (default) or async-mode.
-ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
 
 # set to False to disable setting a session cookie
 OBJ_COOKIE = 'obj_user_id'
@@ -55,7 +51,7 @@ def index() -> Response:
 
     events_with_id = [EventWithId(id=uuid.uuid4(), event=event) for event in events]
 
-    if not ASYNC_MODE:
+    if not get_collector_config().async_mode:
         ok_events, nok_events = process_events_entry(events=events_with_id)
         ok_events = process_events_enrichment(events=ok_events)
         print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
@@ -217,7 +213,7 @@ def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId
         * aws
         * file system
     """
-    output_config = get_config_output()
+    output_config = get_collector_config().output
     if output_config.postgres:
         connection = get_db_connection(output_config.postgres)
         try:
@@ -244,7 +240,7 @@ def write_async_events(events: List[EventWithId]):
         * aws - to the 'RAW' prefix
         * file system - to the 'RAW' directory
     """
-    output_config = get_config_output()
+    output_config = get_collector_config().output
     if output_config.postgres:
         connection = get_db_connection(output_config.postgres)
         try:
@@ -281,7 +277,7 @@ def _write_data_to_fs_if_configured(data: str, prefix: str, moment: datetime) ->
     """
     Write data to disk, if file_system output is configured.
     """
-    fs_config = get_config_output().file_system
+    fs_config = get_collector_config().output.file_system
     if not fs_config:
         return
     timestamp = moment.timestamp()
@@ -294,7 +290,7 @@ def _write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) ->
     """
     Write data to AWS S3, if S3 output is configured.
     """
-    aws_config = get_config_output().aws
+    aws_config = get_collector_config().output.aws
     if not aws_config:
         return
 
