@@ -1,5 +1,5 @@
-import datetime
 import json
+from datetime import datetime
 from io import BytesIO
 
 import flask
@@ -10,10 +10,10 @@ import uuid
 
 import boto3
 from botocore.exceptions import ClientError
-from flask import Flask, request, Response, Request
+from flask import Flask, Response, Request
 from flask_cors import CORS
 
-from common.config import get_config_output
+from objectiv_backend.common.config import get_config_output
 from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import event_add_construct_context, add_global_context_to_event
 from objectiv_backend.common.types import EventWithId, EventData, ContextData
@@ -117,7 +117,7 @@ def _get_cookie_id() -> str:
     The generated random uuid is stored, so multiple invocations of this function within a request will
     return the same value.
     """
-    cookie_id = request.cookies.get(OBJ_COOKIE)
+    cookie_id = flask.request.cookies.get(OBJ_COOKIE)
     if not cookie_id:
         # There's no cookie in the request, perhaps we already generated one earlier in this request
         cookie_id = flask.g.get('G_COOKIE_ID')
@@ -198,10 +198,10 @@ def _get_http_context() -> ContextData:
     """ Create an HttpContext based on the data in the current request. """
     allowed_headers = ['Host', 'Origin', 'Referer', 'User-Agent']
     http_context = {}
-    if request.remote_addr:
-        http_context['remote_addr'] = request.remote_addr
+    if flask.request.remote_addr:
+        http_context['remote_addr'] = flask.request.remote_addr
 
-    for h, v in request.headers.items():
+    for h, v in flask.request.headers.items():
         if h in allowed_headers:
             http_context[h.lower()] = v
 
@@ -212,11 +212,14 @@ def _get_http_context() -> ContextData:
 
 def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId]):
     """
-    TODO: comments
+    Write the events to the following sinks, if configured:
+        * postgres
+        * aws
+        * file system
     """
     output_config = get_config_output()
     if output_config.postgres:
-        connection = get_db_connection()
+        connection = get_db_connection(output_config.postgres)
         try:
             with connection:
                 insert_events_into_data(connection, events=ok_events)
@@ -224,23 +227,26 @@ def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId
         finally:
             connection.close()
 
-    if not output_config.disk and not output_config.aws:
+    if not output_config.file_system and not output_config.aws:
         return
     for prefix, events in ('OK', ok_events), ('NOK', nok_events):
         if events:
-            filename = f'{prefix}/{time.time()}.json'
             data = _events_to_json(events)
-            _write_data_to_disk_if_configured(data=data, filename=filename)
-            _write_data_to_s3_if_configured(data=data, filename=filename)
+            moment = datetime.utcnow()
+            _write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
+            _write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 
 
 def write_async_events(events: List[EventWithId]):
     """
-    TODO: comments
+    Write the events to the following sinks, if configured:
+        * postgres - To the entry queue
+        * aws - to the 'RAW' prefix
+        * file system - to the 'RAW' directory
     """
     output_config = get_config_output()
     if output_config.postgres:
-        connection = get_db_connection()
+        connection = get_db_connection(output_config.postgres)
         try:
             with connection:
                 pg_queue = PostgresQueues(connection=connection)
@@ -248,38 +254,53 @@ def write_async_events(events: List[EventWithId]):
         finally:
             connection.close()
 
-    if not output_config.disk and not output_config.aws:
+    if not output_config.file_system and not output_config.aws:
         return
     prefix = 'RAW'
     if events:
-        filename = f'{prefix}/{time.time()}.json'
         data = _events_to_json(events)
-        _write_data_to_disk_if_configured(data=data, filename=filename)
-        _write_data_to_s3_if_configured(data=data, filename=filename)
+        moment = datetime.utcnow()
+        _write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
+        _write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 
 
 def _events_to_json(events: List[EventWithId]) -> str:
+    """
+    Convert list of events to a string with on each line a json object representing a single event.
+    Note that the returned string is not a json list; This format makes it suitable as raw input to AWS
+    Athena.
+    """
     result = []
     for event in events:
-        # add newline so we can use this as raw input to AWS Athena
         json_str = json.dumps(event.event) + "\n"
         result.append(json_str)
     return ''.join(result)
 
 
-def _write_data_to_disk_if_configured(data: str, filename: str) -> None:
-    disk_config = get_config_output().disk
-    if not disk_config:
+def _write_data_to_fs_if_configured(data: str, prefix: str, moment: datetime) -> None:
+    """
+    Write data to disk, if file_system output is configured.
+    """
+    fs_config = get_config_output().file_system
+    if not fs_config:
         return
-    path = f'{disk_config.path}/{filename}'
+    timestamp = moment.timestamp()
+    path = f'{fs_config.path}/{prefix}/{timestamp}.json'
     with open(path, 'w') as of:
         of.write(data)
 
 
-def _write_data_to_s3_if_configured(data: str, filename: str) -> None:
+def _write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> None:
+    """
+    Write data to AWS S3, if S3 output is configured.
+    """
     aws_config = get_config_output().aws
     if not aws_config:
         return
+
+    timestamp = moment.timestamp()
+    datestamp = moment.strftime('%Y/%m/%d')
+    object_name = f'{aws_config.s3_prefix}/{datestamp}/{prefix}/{timestamp}.json'
     file_obj = BytesIO(data.encode('utf-8'))
     s3_client = boto3.client(
         service_name='s3',
@@ -287,10 +308,6 @@ def _write_data_to_s3_if_configured(data: str, filename: str) -> None:
         aws_access_key_id=aws_config.access_key_id,
         aws_secret_access_key=aws_config.secret_access_key)
     try:
-        # TODO: make sure this datestamp matches time.time() above
-        dt = datetime.datetime.today()
-        datestamp = dt.strftime('%Y/%m/%d')
-        object_name = f'{aws_config.s3_prefix}/{datestamp}/{filename}'
         s3_client.upload_fileobj(file_obj, aws_config.bucket, object_name)
     except ClientError as e:
         print(f'Error uploading to s3: {e} ')
