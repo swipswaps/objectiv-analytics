@@ -36,6 +36,9 @@ This will spin up three images:
 * `objectiv_postgres` - Database to store data.
 * `objectiv_notebook` - Jupyter notebook that can be used to query the data (http://localhost:8080).
 
+SECURITY WARNING: The above docker-compose commands start a postgres container  without a proper password
+set. Do not use this in production or on a shared system!
+
 ### Quick Start: Integrate the Objectiv-Tracker in your app
 TODO
 

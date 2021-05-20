@@ -15,6 +15,8 @@ pip install --require-hashes -r requirements.txt
 ```bash
 cd ..; docker-compose up --detach postgres
 ```
+SECURITY WARNING: The above docker-compose command starts a postgres container  without a proper password
+set. Do not use this in production or on a shared system!
 ## Run Collector
 After setting up the python env, simply run:
 ```bash
