@@ -1,5 +1,5 @@
 import fetchMock from 'jest-fetch-mock';
-import { FetchAPITransport } from '../src';
+import { defaultFetchParameters, FetchAPITransport } from '../src';
 import { TrackerEvent } from '@objectiv/core';
 
 beforeAll(() => {
@@ -13,19 +13,43 @@ beforeEach(() => {
 describe('FetchAPITransport', () => {
   const MOCK_ENDPOINT = '/test-endpoint';
 
-  const testTransport = new FetchAPITransport({
-    endpoint: MOCK_ENDPOINT,
-  });
   const testEvent = new TrackerEvent({
     eventName: 'test-event',
   });
 
-  it('should send using `fetch` API', async () => {
+  it('should send using `fetch` API with the default parameters', async () => {
+    const testTransport = new FetchAPITransport({
+      endpoint: MOCK_ENDPOINT,
+    });
     await testTransport.handle(testEvent);
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
         body: JSON.stringify([testEvent]),
+        ...defaultFetchParameters,
+      })
+    );
+  });
+
+  it('should send using `fetch` API with the provided custom fetch parameters', async () => {
+    const customFetchParameters: RequestInit = {
+      ...defaultFetchParameters,
+      mode: 'cors',
+      cache: 'no-cache',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+    const testTransport = new FetchAPITransport({
+      endpoint: MOCK_ENDPOINT,
+      fetchParameters: customFetchParameters,
+    });
+    await testTransport.handle(testEvent);
+    expect(fetch).toHaveBeenCalledWith(
+      MOCK_ENDPOINT,
+      expect.objectContaining({
+        body: JSON.stringify([testEvent]),
+        ...customFetchParameters,
       })
     );
   });
