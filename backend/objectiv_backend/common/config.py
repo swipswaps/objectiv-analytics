@@ -22,7 +22,7 @@ _PG_DATABASE_NAME = os.environ.get('POSTGRES_DB', 'objectiv')
 _PG_HOSTNAME = os.environ.get('POSTGRES_HOSTNAME', 'localhost')
 _PG_PORT = os.environ.get('POSTGRES_PORT', '5432')
 _PG_USER = os.environ.get('POSTGRES_USER', 'objectiv')
-_PG_PASSWORD = os.environ.get('POSTGRES_PASSWORD', '0bj3ctiv')
+_PG_PASSWORD = os.environ.get('POSTGRES_PASSWORD', 'no_password_set')
 
 # ### AWS S3 values, for writing data to S3.
 # default access keys to an empty string, otherwise the boto library will default ot user defaults.

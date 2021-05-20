@@ -8,7 +8,7 @@
 x-db_env_variables: &db_env_variables
   # warning: never put production credentials in here!
   POSTGRES_USER: 'objectiv'
-  POSTGRES_PASSWORD: '0bj3ctiv'
+  POSTGRES_PASSWORD: 'no_password_set'
   POSTGRES_DB: 'objectiv'
   POSTGRES_HOSTNAME: 'objectiv_postgres'
   POSTGRES_PORT: 5432
