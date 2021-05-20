@@ -8,7 +8,7 @@ The Objectiv JavaScript Tracker is composed of three module domains.
 - **Plugins** are independent packages that can be configured in any Tracker instance to add or mutate contextual information.
 - **Trackers** are platform specific extensions of the generic **Core** Tracker. They offer a higher level, easier to configure and use, API and may be bundled with a sensible set of **Plugins** for their target environment.
 
->Note: Each package is completely independent of each other. Currently, many of them share the same testing framework or bundler, but each has its own local configurations and may diverge if needed.
+>Note: Packages may be completely independent of each other. Currently, many of them share the same testing framework or bundler, but each has its own local configurations and may diverge if needed.
 
 ## Requirements
 
