@@ -42,6 +42,13 @@ For example this will run tests only for the Core module:
 yarn workspace @objectiv/core test
 ```
 
+This is also how to add and remove dependencies, for example:
+```bash
+yarn workspace @objectiv/core add <packageA>
+yarn workspace @objectiv/core add <packageB> --dev
+yarn workspace @objectiv/core remove <packageA> <packageB>
+```
+
 ## Commonly used commands
 
 ### `yarn list`
