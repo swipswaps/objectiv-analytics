@@ -1,61 +1,70 @@
 # Objectiv JavaScript Tracker
 [PLACEHOLDER: Objectiv Tracker introductory text]
 
-## Tracker monorepo overview
+## Overview
 The Objectiv JavaScript Tracker is composed of three module domains. 
 
 - The **Core** module is a platform agnostic set of generic Interfaces and Classes.  
   More **Core** modules may be added in the future.  
   
-  
 - **Plugins** are independent packages that can be configured in any Tracker instance to add or mutate contextual information.  
   
-
 - **Trackers** are platform specific extensions of the generic **Core** Tracker.  
   They offer a higher level, easier to configure and use, API and may be bundled with a sensible set of **Plugins** for their target environment.
 
->Note: Packages may be completely independent of each other. Currently, many of them share the same testing framework or bundler, but each has its own local configurations and may diverge if needed.
+### Packages
 
-## Requirements
+This is a complete list of the currently available packages.
+
+| Name                                  | Type    | Path                          | Links                                             |
+| ------------------------------------- | ------- | ----------------------------- | ------------------------------------------------- |
+| @objectiv/core                        | core    | /core                         | [README](/core/README.md)                         |
+| @objectiv/plugin-web-device-context   | plugin  | /plugins/web-device-context   | [README](/plugins/web-device-context/README.md)   |
+| @objectiv/plugin-web-document-context | plugin  | /plugins/web-document-context | [README](/plugins/web-document-context/README.md) |
+| @objectiv/tracker-web                 | tracker | /trackers/web                 | [README](/trackers/web/README.md)                 |
+
+>Note: Packages may be completely independent of each other. Currently, many of them share the same testing framework or bundler but that's not required. Each has its own local configurations and may diverge if needed.
+
+## Monorepo
+
+Objectiv Tracker is a monorepo workspace residing in the `tracker` folder under the `objectiv-analytics` repository.
+
+The monorepo is configured to allow for live development on any package without the need of building anything. This means that both TypeScript and Jest have their module resolutions setup to map to the modules' source files dependencies in package.json.
+
+### Requirements
 
 - git
 - Node.js 10
 - Yarn
 
-## Getting started
+### Workspace commands
 
-Objectiv Tracker is a monorepo workspace residing in the `tracker` folder under the `objectiv-analytics` repository.
+While running commands from inside a specific module directory works as expected, it's also possible to execute a command for a specific package from anywhere in the monorepo, without changing directory:
 
-The monorepo is configured to allow for live development on any package without the need of building anything.
-
-Both TypeScript and Jest have their module resolutions setup to map to the source files, regardless of the dependencies in package.json.
-
-## Monorepo commands
-For simplicity, we will assume that all commands are executed from within the `tracker` folder.
-
-```bash
-$ cd tracker
-```
-
-### Commands scope
-By default, all commands will execute for each package. It's possible to execute a command for a single package without changing directory
 ```bash
 yarn workspace <package name> <command>
 ```
 
-For example this will run tests only for the Core module:
+For example, this command will run tests only for the Core module:
 ```bash
 yarn workspace @objectiv/core test
 ```
 
-This is also how to add and remove dependencies:
+### Dependency management
+
+This is how to add and remove dependencies:
+
 ```bash
 yarn workspace @objectiv/core add <packageA>
 yarn workspace @objectiv/core add <packageB> --dev
 yarn workspace @objectiv/core remove <packageA> <packageB>
 ```
 
-## Commonly used commands
+
+
+### Other useful commands
+
+The following commands will be executed for all packages automatically when issued from the monorepo root; the `/tracker` directory. 
 
 ### `yarn list`
 Prints a list of all the packages configured in the monorepo.
