@@ -1,7 +1,8 @@
 # Objectiv JavaScript Tracker
 [PLACEHOLDER: Objectiv Tracker introductory text]
 
-## Overview
+---
+# Overview
 The Objectiv JavaScript Tracker is composed of three module domains. 
 
 - The **Core** module is a platform agnostic set of generic Interfaces and Classes.  
@@ -12,7 +13,7 @@ The Objectiv JavaScript Tracker is composed of three module domains.
 - **Trackers** are platform specific extensions of the generic **Core** Tracker.  
   They offer a higher level, easier to configure and use, API and may be bundled with a sensible set of **Plugins** for their target environment.
 
-### Packages
+## Packages
 
 This is a complete list of the currently available packages.
 
@@ -25,19 +26,19 @@ This is a complete list of the currently available packages.
 
 >Note: Packages may be completely independent of each other. Currently, many of them share the same testing framework or bundler but that's not required. Each has its own local configurations and may diverge if needed.
 
-## Monorepo
+# Monorepo
 
 Objectiv Tracker is a monorepo workspace residing in the `tracker` folder under the `objectiv-analytics` repository.
 
 The monorepo is configured to allow for live development on any package without the need of building anything. This means that both TypeScript and Jest have their module resolutions setup to map to the modules' source files dependencies in package.json.
 
-### Requirements
+## Requirements
 
 - git
 - Node.js 10
 - Yarn
 
-### Workspace commands
+## Workspace commands
 
 While running commands from inside a specific module directory works as expected, it's also possible to execute a command for a specific package from anywhere in the monorepo, without changing directory:
 
@@ -50,7 +51,7 @@ For example, this command will run tests only for the Core module:
 yarn workspace @objectiv/core test
 ```
 
-### Dependency management
+## Dependency management
 
 This is how to add and remove dependencies:
 
@@ -62,7 +63,7 @@ yarn workspace @objectiv/core remove <packageA> <packageB>
 
 
 
-### Other useful commands
+## Other useful commands
 
 The following commands will be executed for all packages automatically when issued from the monorepo root; the `/tracker` directory. 
 

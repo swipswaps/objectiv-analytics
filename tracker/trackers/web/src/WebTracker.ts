@@ -22,7 +22,7 @@ export type WebTrackerConfig = TrackerConfig & {
  *
  * is equivalent to:
  *
- *  const plugins = TrackerPlugins([ WebDocumentContextPlugin, WebDeviceContextPlugin ]);
+ *  const plugins = new TrackerPlugins([ WebDocumentContextPlugin, WebDeviceContextPlugin ]);
  *  const transport = new FetchAPITransport({ endpoint: '/endpoint' });
  *  const tracker = new WebTracker({ transport, plugins });
  *
