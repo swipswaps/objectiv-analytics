@@ -18,17 +18,17 @@ const makeOutput = (format, isMinified, isDefault) => ({
 });
 
 export default [
-  // UMD, CJS, ES
+  // UMD, CJS, ES, IIFE
   {
     input: './src/index.ts',
-    output: [makeOutput('umd', false, true), makeOutput('cjs'), makeOutput('es')],
+    output: [makeOutput('umd', false, true), makeOutput('cjs'), makeOutput('es'), makeOutput('iife')],
     plugins: [...commonPlugins, ...statsPlugins],
   },
 
-  // UMD, CJS, ES - minified
+  // UMD, CJS, ES, IIFE - minified
   {
     input: './src/index.ts',
-    output: [makeOutput('umd', true, true), makeOutput('cjs', true), makeOutput('es', true)],
+    output: [makeOutput('umd', true, true), makeOutput('cjs', true), makeOutput('es', true), makeOutput('iife', true)],
     plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
   },
 ];

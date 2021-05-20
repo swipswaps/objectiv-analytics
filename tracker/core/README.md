@@ -1,11 +1,61 @@
 # Objectiv Core JavaScript module 
+[PLACEHOLDER: Objectiv Core module introductory text]
 
-TODO: describe the architecture in detail
+---
+# Installing
+To install the most recent stable version:
 
-Namespaces:
+### yarn
+```sh
+yarn add @objectiv/core
+```
 
-- Context
-- Tracker
-- TrackerEvent
-- TrackerPlugin
-- Transport
+### npm
+```sh
+npm install @objectiv/core
+```
+
+# Usage
+
+### Script
+```html
+<script src="dist/index.iife.js"></script>
+<script>
+  const tracker = new objectivCore.Tracker();
+</script>
+```
+
+### AMD
+```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
+<script>
+  window.requirejs(['dist/index'], function(objectivCore) {
+    const tracker = new objectivCore.Tracker();
+  });
+</script>
+```
+
+### CommonJS
+```javascript
+const objectivCore = require('@objectiv/core');
+const tracker = new objectivCore.Tracker();
+```
+
+### ESModule
+```javascript
+import { Tracker } from '@objectiv/core';
+const tracker = new Tracker();
+```
+
+# API
+TODO 
+###`Tracker`
+###`TrackerEvent`
+###`TrackerPlugin`
+###`Transport`
+
+# Examples
+TODO 
+
+# Advanced
+TODO 
