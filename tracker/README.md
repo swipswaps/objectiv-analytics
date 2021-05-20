@@ -1,12 +1,18 @@
 # Objectiv JavaScript Tracker
 [PLACEHOLDER: Objectiv Tracker introductory text]
 
-## Tracker overview
+## Tracker monorepo overview
 The Objectiv JavaScript Tracker is composed of three module domains. 
 
-- The **Core** module is a platform agnostic set of generic Interfaces and Classes. More **Core** modules may be added in the future.
-- **Plugins** are independent packages that can be configured in any Tracker instance to add or mutate contextual information.
-- **Trackers** are platform specific extensions of the generic **Core** Tracker. They offer a higher level, easier to configure and use, API and may be bundled with a sensible set of **Plugins** for their target environment.
+- The **Core** module is a platform agnostic set of generic Interfaces and Classes.  
+  More **Core** modules may be added in the future.  
+  
+  
+- **Plugins** are independent packages that can be configured in any Tracker instance to add or mutate contextual information.  
+  
+
+- **Trackers** are platform specific extensions of the generic **Core** Tracker.  
+  They offer a higher level, easier to configure and use, API and may be bundled with a sensible set of **Plugins** for their target environment.
 
 >Note: Packages may be completely independent of each other. Currently, many of them share the same testing framework or bundler, but each has its own local configurations and may diverge if needed.
 
@@ -42,7 +48,7 @@ For example this will run tests only for the Core module:
 yarn workspace @objectiv/core test
 ```
 
-This is also how to add and remove dependencies, for example:
+This is also how to add and remove dependencies:
 ```bash
 yarn workspace @objectiv/core add <packageA>
 yarn workspace @objectiv/core add <packageB> --dev
