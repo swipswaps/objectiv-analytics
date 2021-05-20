@@ -32,7 +32,7 @@ export class Tracker implements Contexts {
   /**
    * Configures the Tracker instance via one TrackerConfig and optionally one or more ContextConfig.
    *
-   * TrackerConfig is used to configure Transport, TrackerPlugins and `debug`.
+   * TrackerConfig is used to configure Transport and TrackerPlugins.
    *
    * ContextConfigs are used to configure LocationStack and GlobalContexts. If multiple configurations have been
    * provided they will be merged onto each other to produce a single LocationStack and GlobalContexts.
