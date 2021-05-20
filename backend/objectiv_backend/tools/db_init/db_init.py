@@ -47,8 +47,15 @@ def main():
     parser.add_argument('--no-retries', dest='retry', default=True, action='store_false',
                         help="By default we'll try to connect multiple times before giving up; thus"
                              "giving the database time to start up if run at start up. If set won't retry")
+    parser.add_argument('--print', dest='print', default=False, action='store_true',
+                        help="Instead of running sql to setup schema, print it to stdout")
     args = parser.parse_args(sys.argv[1:])
     sql = get_sql()
+
+    if args.print:
+        print(sql)
+        exit(0)
+
     connection = get_connection_with_retries(args.retry)
     with connection.cursor() as cursor:
         try:
