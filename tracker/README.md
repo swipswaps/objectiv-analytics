@@ -16,12 +16,12 @@ The Objectiv JavaScript Tracker is composed of three module domains.
 
 This is a complete list of the currently available packages.
 
-| Name                                  | Type    | Path                          | Links                                             |
-| ------------------------------------- | ------- | ----------------------------- | ------------------------------------------------- |
-| @objectiv/core                        | core    | /core                         | [README](/core/README.md)                         |
-| @objectiv/plugin-web-device-context   | plugin  | /plugins/web-device-context   | [README](/plugins/web-device-context/README.md)   |
-| @objectiv/plugin-web-document-context | plugin  | /plugins/web-document-context | [README](/plugins/web-document-context/README.md) |
-| @objectiv/tracker-web                 | tracker | /trackers/web                 | [README](/trackers/web/README.md)                 |
+| Name                                  | Type    | Path                          | Links                                                     |
+| ------------------------------------- | ------- | ----------------------------- | --------------------------------------------------------- |
+| @objectiv/core                        | core    | /core                         | [README](/tracker/core/README.md)                         |
+| @objectiv/plugin-web-device-context   | plugin  | /plugins/web-device-context   | [README](/tracker/plugins/web-device-context/README.md)   |
+| @objectiv/plugin-web-document-context | plugin  | /plugins/web-document-context | [README](/tracker/plugins/web-document-context/README.md) |
+| @objectiv/tracker-web                 | tracker | /trackers/web                 | [README](/tracker/trackers/web/README.md)                 |
 
 >Note: Packages may be completely independent of each other. Currently, many of them share the same testing framework or bundler but that's not required. Each has its own local configurations and may diverge if needed.
 
