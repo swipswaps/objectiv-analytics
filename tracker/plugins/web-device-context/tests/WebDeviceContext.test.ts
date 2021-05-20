@@ -1,5 +1,5 @@
 import { WebDeviceContextPlugin } from '../src';
-import { BaseTracker, TrackerEvent, TrackerPlugins } from '@objectiv/core';
+import { Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/core';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 
 const USER_AGENT_MOCK_VALUE = 'Mocked User Agent';
@@ -23,7 +23,7 @@ describe('WebDeviceContextPlugin', () => {
   });
 
   it('should add the WebDeviceContext to the Event when `beforeTransport` is executed by the Tracker', () => {
-    const testTracker = new BaseTracker({ plugins: new TrackerPlugins([WebDeviceContextPlugin]) });
+    const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDeviceContextPlugin]) });
     const eventContexts = {
       globalContexts: [
         { _context_type: 'section', id: 'X' },

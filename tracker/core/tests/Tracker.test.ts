@@ -1,10 +1,10 @@
-import { BaseTracker, TrackerEvent, TrackerPlugin, TrackerPlugins } from '../src';
+import { Tracker, TrackerEvent, TrackerPlugin, TrackerPlugins } from '../src';
 import { LogTransport, noop } from './mocks';
 
 describe('Tracker', () => {
   it('should instantiate without any config', () => {
-    const testTracker = new BaseTracker();
-    expect(testTracker).toBeInstanceOf(BaseTracker);
+    const testTracker = new Tracker();
+    expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toBe(undefined);
     expect(testTracker.plugins).toBe(undefined);
     expect(testTracker.locationStack).toStrictEqual([]);
@@ -13,8 +13,8 @@ describe('Tracker', () => {
 
   it('should instantiate with tracker config', () => {
     const testTransport = new LogTransport();
-    const testTracker = new BaseTracker({ transport: testTransport });
-    expect(testTracker).toBeInstanceOf(BaseTracker);
+    const testTracker = new Tracker({ transport: testTransport });
+    expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
     expect(testTracker.plugins).toBe(undefined);
     expect(testTracker.locationStack).toStrictEqual([]);
@@ -33,13 +33,13 @@ describe('Tracker', () => {
       ],
     };
 
-    const testTracker = new BaseTracker(initialContextsState);
+    const testTracker = new Tracker(initialContextsState);
     expect(testTracker.locationStack).toEqual(initialContextsState.locationStack);
     expect(testTracker.globalContexts).toEqual(initialContextsState.globalContexts);
 
     // Create a clone of the existing tracker
-    const newTestTracker = new BaseTracker(testTracker);
-    expect(newTestTracker).toBeInstanceOf(BaseTracker);
+    const newTestTracker = new Tracker(testTracker);
+    expect(newTestTracker).toBeInstanceOf(Tracker);
     // They should be identical (yet separate instances)
     expect(newTestTracker).toEqual(testTracker);
 
@@ -73,10 +73,10 @@ describe('Tracker', () => {
         { _context_type: 'global', id: 'Y' },
       ],
     };
-    const mainTracker = new BaseTracker(mainTrackerContexts);
+    const mainTracker = new Tracker(mainTrackerContexts);
 
     // This new tracker is a clone of the mainTracker and extends it with two custom Contexts configuration
-    const sectionTracker = new BaseTracker(
+    const sectionTracker = new Tracker(
       mainTracker,
       {
         locationStack: [{ _context_type: 'section', id: 'B' }],
@@ -139,7 +139,7 @@ describe('Tracker', () => {
           { _context_type: 'global', id: 'Z' },
         ],
       };
-      const testTracker = new BaseTracker(trackerContexts);
+      const testTracker = new Tracker(trackerContexts);
       expect(testEvent.locationStack).toStrictEqual(eventContexts.locationStack);
       expect(testEvent.globalContexts).toStrictEqual(eventContexts.globalContexts);
       const trackedEvent = testTracker.trackEvent(testEvent);
@@ -164,7 +164,7 @@ describe('Tracker', () => {
     it('should execute all plugins implementing the beforeTransport callback', () => {
       const pluginC: TrackerPlugin = { pluginName: 'pluginC', beforeTransport: jest.fn(noop) };
       const pluginD: TrackerPlugin = { pluginName: 'pluginD', beforeTransport: jest.fn(noop) };
-      const testTracker = new BaseTracker({ plugins: new TrackerPlugins([pluginC, pluginD]) });
+      const testTracker = new Tracker({ plugins: new TrackerPlugins([pluginC, pluginD]) });
       testTracker.trackEvent(testEvent);
       expect(pluginC.beforeTransport).toHaveBeenCalledWith(testEvent);
       expect(pluginC.beforeTransport).toHaveBeenCalledWith(testEvent);
@@ -173,7 +173,7 @@ describe('Tracker', () => {
     it('should send the Event via the given Transport', () => {
       const testTransport = new LogTransport();
       jest.spyOn(testTransport, 'handle');
-      const testTracker = new BaseTracker({ transport: testTransport });
+      const testTracker = new Tracker({ transport: testTransport });
       testTracker.trackEvent(testEvent);
       expect(testTransport.handle).toHaveBeenCalledWith(testEvent);
     });

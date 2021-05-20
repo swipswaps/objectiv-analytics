@@ -21,8 +21,7 @@ export type TrackerConfig = ContextsConfig & {
 /**
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
-export class BaseTracker implements Contexts {
-  // Tracker interface
+export class Tracker implements Contexts {
   readonly transport?: Transport;
   readonly plugins?: TrackerPlugins;
 

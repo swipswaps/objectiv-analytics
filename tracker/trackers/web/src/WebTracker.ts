@@ -1,4 +1,4 @@
-import { BaseTracker, TrackerConfig, TrackerPlugins } from '@objectiv/core';
+import { Tracker, TrackerConfig, TrackerPlugins } from '@objectiv/core';
 import { FetchAPITransport } from './FetchAPITransport';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
@@ -12,7 +12,7 @@ export type WebTrackerConfig = TrackerConfig & {
 };
 
 /**
- * Web Tracker is a 1:1 instance of BaseTracker with a simplified construction and some preconfigured Plugins.
+ * Web Tracker is a 1:1 instance of Tracker with a simplified construction and some preconfigured Plugins.
  *
  * TODO Implement helper method for easy Section Tracking
  *
@@ -27,7 +27,7 @@ export type WebTrackerConfig = TrackerConfig & {
  *  const tracker = new WebTracker({ transport, plugins });
  *
  */
-export class WebTracker extends BaseTracker {
+export class WebTracker extends Tracker {
   constructor(webConfig: WebTrackerConfig) {
     let config = webConfig;
 

@@ -1,5 +1,5 @@
 import { WebDocumentContextPlugin } from '../src';
-import { BaseTracker, TrackerEvent, TrackerPlugins } from '@objectiv/core';
+import { Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/core';
 
 describe('WebDocumentContextPlugin', () => {
   it('should instantiate without specifying an ID at construction', () => {
@@ -14,7 +14,7 @@ describe('WebDocumentContextPlugin', () => {
   });
 
   it('should add the WebDocumentContext to the Event when `beforeTransport` is executed by the Tracker', () => {
-    const testTracker = new BaseTracker({ plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
+    const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
     const eventContexts = {
       globalContexts: [
         { _context_type: 'section', id: 'X' },
