@@ -26,9 +26,6 @@ from objectiv_backend.workers.worker_finalize import insert_events_into_data
 app = Flask(__name__)
 cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
 
-# set to False to disable setting a session cookie
-OBJ_COOKIE = 'obj_user_id'
-OBJ_COOKIE_DURATION = 60 * 60 * 24 * 365 * 5
 
 # Some limits on the inputs we accept
 DATA_MAX_SIZE_BYTES = 1_000_000
@@ -100,9 +97,12 @@ def _get_response(error_count: int, event_count: int) -> Response:
         "event_count": event_count
     })
     response = Response(mimetype='application/json', status=status, response=msg)
-    if OBJ_COOKIE:
+
+    cookie_config = get_collector_config().cookie
+    if cookie_config:
         cookie_id = _get_cookie_id()
-        response.set_cookie(key=OBJ_COOKIE, value=f'{cookie_id}', max_age=OBJ_COOKIE_DURATION, samesite='Lax')
+        response.set_cookie(key=cookie_config.name, value=f'{cookie_id}',
+                            max_age=cookie_config.duration, samesite='Lax')
     return response
 
 
@@ -113,7 +113,8 @@ def _get_cookie_id() -> str:
     The generated random uuid is stored, so multiple invocations of this function within a request will
     return the same value.
     """
-    cookie_id = flask.request.cookies.get(OBJ_COOKIE)
+    cookie_config = get_collector_config().cookie
+    cookie_id = flask.request.cookies.get(cookie_config.name)
     if not cookie_id:
         # There's no cookie in the request, perhaps we already generated one earlier in this request
         cookie_id = flask.g.get('G_COOKIE_ID')
@@ -142,7 +143,8 @@ def add_cookie_id_contexts(events: List[EventData]):
     """
     Modify the given list of events: Add the CookieIdContext to each event, if cookies are enabled.
     """
-    if not OBJ_COOKIE:
+    cookie_config = get_collector_config().cookie
+    if not cookie_config:
         return
     cookie_id = _get_cookie_id()
     for event in events:

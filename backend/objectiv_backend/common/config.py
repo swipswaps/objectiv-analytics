@@ -7,7 +7,7 @@ from typing import NamedTuple, Optional
 
 # All settings that are controlled through environment variables are listed at the top here, for a
 # complete overview.
-# Most of these settings should not be accessed by the constants here, but through the functions defined
+# These settings should not be accessed by the constants here, but through the functions defined
 # below (e.g. get_config_output())
 
 SCHEMA_EXTENSION_EVENT = os.environ.get('SCHEMA_EXTENSION_EVENT')
@@ -34,6 +34,10 @@ _AWS_S3_PREFIX = os.environ.get('AWS_S3_PREFIX', 'test-prefix')
 
 # ### Setting for outputting data to the filesystem
 _JSON_OUTPUT_DIR = os.environ.get('JSON_OUTPUT_DIR')
+
+# Cookie settings
+_OBJ_COOKIE = 'obj_user_id'
+_OBJ_COOKIE_DURATION = 60 * 60 * 24 * 365 * 5
 
 # Maximum number of events that a worker will process in a single batch
 WORKER_BATCH_SIZE = 200
@@ -67,8 +71,15 @@ class OutputConfig(NamedTuple):
     file_system: Optional[FileSystemOutputConfig]
 
 
+class CookieConfig(NamedTuple):
+    name: str
+    # duration in seconds
+    duration: int
+
+
 class CollectorConfig(NamedTuple):
     async_mode: bool
+    cookie: Optional[CookieConfig]
     output: OutputConfig
 
 
@@ -113,6 +124,13 @@ def get_config_output() -> OutputConfig:
     return output_config
 
 
+def get_config_cookie() -> CookieConfig:
+    return CookieConfig(
+        name=_OBJ_COOKIE,
+        duration=_OBJ_COOKIE_DURATION
+    )
+
+
 # creating these configuration structures is not heavy, but it's pointless to do it for each request.
 # so we have some super simple caching here
 # TODO: initialize configuration at startup
@@ -125,6 +143,7 @@ def get_collector_config() -> CollectorConfig:
     if not _CACHED_COLLECTOR_CONFIG:
         _CACHED_COLLECTOR_CONFIG = CollectorConfig(
             async_mode=_ASYNC_MODE,
+            cookie=get_config_cookie(),
             output=get_config_output()
         )
     return _CACHED_COLLECTOR_CONFIG
