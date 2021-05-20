@@ -24,7 +24,7 @@ services:
     working_dir: /services
     entrypoint: bash -c "objectiv-db-init; ./entry_point.sh"
     ports:
-      - 5000:5000
+      - 127.0.0.1:5000:5000
     networks:
       - obj
     environment:
@@ -39,7 +39,7 @@ services:
     container_name: objectiv_postgres
     image: postgres:latest
     ports:
-      - 5432:5432
+      - 127.0.0.1:5432:5432
     networks:
       - obj
     volumes:
@@ -57,7 +57,7 @@ services:
     # default image: eu.gcr.io/objectiv-production/notebook:latest
     image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/notebook:${OBJECTIV_CONTAINER_TAG-latest}
     ports:
-      - 8888:8888
+      - 127.0.0.1:8888:8888
     networks:
       - obj
     volumes:
