@@ -24,13 +24,18 @@ from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
 app = Flask(__name__)
+
+# We only have a single endpoint that ingests tracker data. We are not afraid of any CSRF attacks, nor of
+# people reusing our request-responses in other pages, and we don't want to be strict in the origin of
+# request. As such we don't have need for CORS protections, and we can tell the browser to disable it
+# altogether for this origin, coming from all origins.
 cors = CORS(app,
-            resources={r"/*": {
-                "origins": "*",
-                "supports_credentials": True,       # needed for cookies
-                "max_age": 3600 * 24
+            resources={r'/*': {
+                'origins': '*',
+                'supports_credentials': True,       # needed for cookies
                 # Setting max_age to a higher values is probably useless, as most browsers cap this time.
                 # See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age
+                'max_age': 3600 * 24
             }})
 
 # set to False to disable setting a session cookie
