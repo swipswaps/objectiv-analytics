@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 import time
 from typing import Callable, Any
 
+from objectiv_backend.common.config import get_config_postgres
 from objectiv_backend.common.db import get_db_connection
 
 
@@ -18,7 +19,7 @@ def worker_main(function: Callable[[Any], int], loop: bool) -> int:
     :param loop: whether to call the function once (False) or in an endless loop (True)
     :return number of processed events, if loop is False
     """
-    connection = get_db_connection()
+    connection = get_db_connection(get_config_postgres())
     name = function.__name__.split('_')[-1]
     print(f'{name} worker')
     while True:

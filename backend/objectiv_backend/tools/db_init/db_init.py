@@ -14,6 +14,7 @@ from time import sleep
 
 import psycopg2
 
+from objectiv_backend.common.config import get_config_postgres
 from objectiv_backend.common.db import get_db_connection
 
 _MAX_RETRIES = 5
@@ -33,7 +34,7 @@ def get_connection_with_retries(retry: bool):
     retries = 0
     while True:
         try:
-            return get_db_connection()
+            return get_db_connection(get_config_postgres())
         except psycopg2.OperationalError as error:
             if not retry or retries == _MAX_RETRIES:
                 raise Exception("Could not connect to database") from error
