@@ -4,6 +4,7 @@
 # To use locally built images set the OBJECTIV_CONTAINER_URL variable to just "objectiv"
 # To use a specific image version instead of latest set OBJECTIV_CONTAINER_TAG
 
+# WARNING: The postgres configuration here doesn't actually check passwords! This is for local testing only
 
 x-db_env_variables: &db_env_variables
   # warning: never put production credentials in here!
@@ -46,6 +47,7 @@ services:
       - pgdata:/var/lib/postgresql/data/
     environment:
       <<: *db_env_variables
+      POSTGRES_HOST_AUTH_METHOD: 'trust'
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U objectiv" ]
       interval: 10s
