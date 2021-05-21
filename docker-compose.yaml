@@ -47,6 +47,7 @@ services:
       - pgdata:/var/lib/postgresql/data/
     environment:
       <<: *db_env_variables
+      # WARNING: Disabling authentication here
       POSTGRES_HOST_AUTH_METHOD: 'trust'
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U objectiv" ]
