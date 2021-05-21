@@ -5,105 +5,9 @@ import json
 from copy import deepcopy
 from typing import Optional, Any, Dict, Set, List
 
-CONTEXT_META = {
-    "AbstractContext": {
-        "properties": {
-            "id": {"type": "string"}
-        }
-    },
-    "AbstractLocationContext": {
-        "parents": ["AbstractContext"]
-    },
-    "AbstractGlobalContext": {
-        "parents": ["AbstractContext"]
-    },
-    "SectionContext": {
-        "parents": ["AbstractLocationContext"]
-    },
-    "WebDocumentContext": {
-        "parents": ["SectionContext"],
-        "properties": {
-            "url": {"type": "string"}
-        }
-    },
-    "ScreenContext": {
-        "parents": ["SectionContext"],
-        "properties": {
-            "screen": {"type": "string"}
-        }
-    },
-    "ExpandableSectionContext": {
-        "parents": ["SectionContext"],
-    },
-    "MediaPlayerContext": {
-        "parents": ["SectionContext"],
-    },
-    "NavigationContext": {
-        "parents": ["SectionContext"],
-    },
-    "OverlayContext": {
-        "parents": ["SectionContext"],
-    },
-
-    "ItemContext": {
-        "parents": ["AbstractLocationContext"],
-    },
-    "InputContext": {
-        "parents": ["ItemContext"]
-    },
-    "ActionContext": {
-        "parents": ["ItemContext"],
-        "properties": {
-            # TODO ideally `path` and `text` should be wrapped in a `anyOf` operator
-            "path": {"type": "string"},
-            "text": {"type": "string"},
-        }
-    },
-    "ButtonContext": {
-        "parents": ["ActionContext"],
-    },
-    "LinkContext": {
-        "parents": ["ActionContext"],
-    },
-    "DeviceContext": {
-        "parents": ["AbstractGlobalContext"],
-        "properties": {
-            "user-agent": {"type": "string"}
-        }
-    },
-    "ErrorContext": {
-        "parents": ["AbstractGlobalContext"],
-        "properties": {
-            "message": {"type": "string"}
-        }
-    },
-    "CookieIdContext": {
-        "parents": ["AbstractGlobalContext"],
-        "properties": {
-            # TODO: validate that this is a UUID
-            "cookie_id": {"type": "string"},
-        }
-    },
-    "SessionContext": {
-        "parents": ["AbstractGlobalContext"],
-        "properties": {
-            "hitNumber": {"type": "integer"},
-        }
-    },
-    "HttpContext": {
-        "parents": ["AbstractGlobalContext"],
-        "properties": {
-            "host": {"type": "string"},
-            "user-agent": {"type": "string"},
-            # "referer": {"type": "string"},  # TODO: allow optional fields
-            "remote_addr": {"type": "string"}
-        }
-    }
-}
-
 
 class ContextSchema:
-    def __init__(self, context_schema_extension: Dict[str, Any]):
+    def __init__(self, schema: Dict[str, Any]):
         """
 
         :param context_schema_extension: Allowed extensions:
@@ -112,27 +16,37 @@ class ContextSchema:
             * adding properties to an existing context
             * adding sub-properties to an existing context (e.g. a "minimum" field for an integer)
         """
-        self.schema = deepcopy(CONTEXT_META)
+        self.schema = deepcopy(schema)
+
+    def __str__(self) -> str:
+        return json.dumps(self.schema, indent=4)
+
+    def extend_schema(self, context_schema_extension) -> 'ContextSchema':
+        """
+        Create a new context schema that combines the current schema with the schema extension
+
+        TODO: more, and better documentation
+        TODO: build smarter data structures, such that functions below are simple lookups.
+        """
+        schema = deepcopy(self.schema)
         for context_type, data in context_schema_extension.items():
 
-            if context_type not in self.schema:
-                self.schema[context_type] = {"parents": [], "properties": {}}
+            if context_type not in schema:
+                schema[context_type] = {"parents": [], "properties": {}}
 
-            self.schema[context_type]["parents"].extend(data.get("parents", []))
+            schema[context_type]["parents"].extend(data.get("parents", []))
 
             for property_type, property_data in data.get("properties", {}).items():
-                if property_type not in self.schema[context_type]["properties"]:
-                    self.schema[context_type]["properties"][property_type] = {}
-                existing_property = self.schema[context_type]["properties"][property_type]
+                if property_type not in schema[context_type]["properties"]:
+                    schema[context_type]["properties"][property_type] = {}
+                existing_property = schema[context_type]["properties"][property_type]
                 for sub_property_name, sub_property_value in property_data.items():
                     if (sub_property_name in existing_property and
                             sub_property_value != existing_property[sub_property_name]):
                         raise ValueError(f'Cannot change a property of an existing property. '
                                          f'Redefining value of {sub_property_name} of {property_type}')
                     existing_property[sub_property_name] = sub_property_value
-
-    def __str__(self) -> str:
-        return json.dumps(self.schema, indent=4)
+        return ContextSchema(schema)
 
     def list_context_types(self) -> List[str]:
         """ Give a alphabetically sorted list of all context-types. """

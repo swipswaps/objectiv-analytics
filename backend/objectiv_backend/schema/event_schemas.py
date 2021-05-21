@@ -2,6 +2,9 @@
 Copyright 2021 Objectiv B.V.
 """
 import json
+import os
+import re
+import sys
 from copy import deepcopy
 from typing import Set, List, Dict, Any, Optional
 
@@ -9,78 +12,16 @@ import json
 
 from objectiv_backend.schema.context_schemas import ContextSchema
 
-DEFAULT_SCHEMA = {
-    "AbstractEvent": {
-        "parents": [],
-        "requiresContext": ["AbstractContext"]
-    },
-    "NonInteractiveEvent": {
-        "parents": ["AbstractEvent"],
-        "requiresContext": [],
-    },
-    "DocumentLoadedEvent": {
-        "parents": ["NonInteractiveEvent"],
-        "requiresContext": ["WebDocumentContext"],
-    },
-    "URLChangeEvent": {
-        "parents": ["NonInteractiveEvent"],
-        "requiresContext": ["WebDocumentContext"],
-    },
-    "ApplicationLoadedEvent": {
-        "parents": ["NonInteractiveEvent"],
-        "requiresContext": ["SectionContext"],
-    },
-    "SectionVisibleEvent": {
-        "parents": ["NonInteractiveEvent"],
-        "requiresContext": ["SectionContext"],
-    },
-    "SectionHiddenEvent": {
-        "parents": ["NonInteractiveEvent"],
-        "requiresContext": ["SectionContext"],
-    },
-    "VideoEvent": {
-        "parents": ["NonInteractiveEvent"],
-        "requiresContext": ["MediaPlayerContext"],
-    },
-    "VideoLoadEvent": {
-        "parents": ["VideoEvent"],
-        "requiresContext": [],
-    },
-    "VideoStartEvent": {
-        "parents": ["VideoEvent"],
-        "requiresContext": [],
-    },
-    "VideoStopEvent": {
-        "parents": ["VideoEvent"],
-        "requiresContext": [],
-    },
-    "VideoPauseEvent": {
-        "parents": ["VideoEvent"],
-        "requiresContext": [],
-    },
-    "InteractiveEvent": {
-        "parents": ["AbstractEvent"],
-        "requiresContext": ["SectionContext"]
-    },
-    "ClickEvent": {
-        "parents": ["InteractiveEvent"],
-        "requiresContext": [],
-    },
-    "InputChangeEvent": {
-        "parents": ["InteractiveEvent"],
-        "requiresContext": ["InputContext"],
-    },
-}
-
 
 class EventSchema:
-    def __init__(self,
-                 event_schema_extension: Dict[str, Any],
-                 context_schema_extension: Dict[str, Any]
-                 ):
+    def __init__(self, schemas: List[Dict[str, Any]]):
         """
         EventSchema, including the ContextSchema
 
+        :param schemas: non-empty list of valid Schemas (extensions), in their dictionary notation.
+            Might be modified in this function.
+
+        TODO
         :param event_schema_extension: Allowed extensions:
             * adding new events
             * adding parents to an existing event
@@ -94,13 +35,20 @@ class EventSchema:
         # TODO: efficiency, both this class and context_schema.py could calculate most function results at
         #       init-time which would be much more efficient.
         # TODO: ensure schema_extension is validated.
-        self.schema = deepcopy(DEFAULT_SCHEMA)
-        self.context_schema = ContextSchema(context_schema_extension)
-        for event_type, data in event_schema_extension.items():
-            if event_type not in self.schema:
-                self.schema[event_type] = {"parents": [], "requiresContext": []}
-            self.schema[event_type]["parents"].extend(data["parents"])
-            self.schema[event_type]["requiresContext"].extend(data["requiresContext"])
+
+        self.schema = {}
+        self.context_schema = ContextSchema({})
+        for schema in schemas:
+            event_schema = schema['events']
+            context_schema = schema['contexts']
+            # Extend context schema
+            self.context_schema = self.context_schema.extend_schema(context_schema)
+            # Extend event schema
+            for event_type, data in event_schema.items():
+                if event_type not in self.schema:
+                    self.schema[event_type] = {"parents": [], "requiresContext": []}
+                self.schema[event_type]["parents"].extend(data["parents"])
+                self.schema[event_type]["requiresContext"].extend(data["requiresContext"])
 
     def __str__(self) -> str:
         event_schema_str = json.dumps(self.schema, indent=4)
@@ -157,21 +105,38 @@ class EventSchema:
         return self.context_schema.get_context_schema(context_type=context_type)
 
 
-def get_event_schema(event_schema_extension_filename: Optional[str],
-                     context_schema_extension_filename: Optional[str]) -> EventSchema:
+def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     """
-    Get the event schema
-    :param event_schema_extension_filename: optional filename for data to extend the event-schema
-    :param context_schema_extension_filename: optional filename for data to extend the context-schema
+    Get the event schema.
+
+    The schema is based on base_schema.json and the schema files in the optional
+    schema_extension_directory.
+    Files in the extension directory qualify for loading if their name matches [a-z0-9_]+.json. The files
+    are loaded in alphabetical order.
+
+    :param schema_extensions_directory: optional directory path.
     """
-    event_schema_extension_data = {}
-    if event_schema_extension_filename:
-        with open(event_schema_extension_filename) as file:
-            event_schema_extension_data = json.loads(file.read())
-    context_schema_extension_data = {}
-    if context_schema_extension_filename:
-        with open(context_schema_extension_filename) as file:
-            context_schema_extension_data = json.loads(file.read())
-    event_schema = EventSchema(event_schema_extension=event_schema_extension_data,
-                               context_schema_extension=context_schema_extension_data)
+    base_schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'base_schema.json')
+    files_to_load = [base_schema_path]
+
+    if schema_extensions_directory:
+        all_filenames = sorted(os.listdir(schema_extensions_directory))
+        for filename in all_filenames:
+            if not re.match('[a-z0-9_]+.json', filename):
+                print(f'Ignoring non-schema file: {filename}', file=sys.stderr)
+                continue
+            files_to_load.append(os.path.join(schema_extensions_directory, filename))
+
+    schemas = []
+    for filepath in files_to_load:
+        with open(filepath, mode='r') as file:
+            raw_data = file.read()
+        try:
+            schema = json.loads(raw_data)
+        except ValueError as exc:
+            raise Exception(f'Schema file does not contain valid json {filepath}') from exc
+        # todo: schema validation
+        schemas.append(schema)
+
+    event_schema = EventSchema(schemas=schemas)
     return event_schema

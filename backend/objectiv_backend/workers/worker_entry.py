@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import sys
 from typing import List, Tuple
 
-from objectiv_backend.common.config import SCHEMA_EXTENSION_EVENT, SCHEMA_EXTENSION_CONTEXT, WORKER_BATCH_SIZE
+from objectiv_backend.common.config import WORKER_BATCH_SIZE, SCHEMA_EXTENSION_DIRECTORY
 from objectiv_backend.common.types import EventWithId
 from objectiv_backend.schema.event_schemas import get_event_schema
 from objectiv_backend.schema.hydrate_events import hydrate_types_into_event
@@ -13,8 +13,7 @@ from objectiv_backend.workers.pg_queues import PostgresQueues, ProcessingStage
 from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.util import worker_main
 
-EVENT_SCHEMA = get_event_schema(event_schema_extension_filename=SCHEMA_EXTENSION_EVENT,
-                                context_schema_extension_filename=SCHEMA_EXTENSION_CONTEXT)
+EVENT_SCHEMA = get_event_schema(schema_extensions_directory=SCHEMA_EXTENSION_DIRECTORY)
 
 
 def main_entry(connection) -> int:

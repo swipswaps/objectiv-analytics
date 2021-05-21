@@ -1,0 +1,20 @@
+{
+  "events": {
+    "NewEvent2": {
+        "parents": ["NonInteractiveEvent"],
+        "requiresContext": ["XContext2"]
+    }
+  },
+  "contexts": {
+    "XContext2": {
+      "parents": [
+        "AbstractGlobalContext"
+      ],
+      "properties": {
+        "field": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

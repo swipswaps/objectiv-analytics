@@ -12,6 +12,7 @@ from typing import NamedTuple, Optional
 
 SCHEMA_EXTENSION_EVENT = os.environ.get('SCHEMA_EXTENSION_EVENT')
 SCHEMA_EXTENSION_CONTEXT = os.environ.get('SCHEMA_EXTENSION_CONTEXT')
+SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
 
 # Whether to run in sync mode (default) or async-mode.
 _ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
