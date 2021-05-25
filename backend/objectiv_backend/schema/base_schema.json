@@ -1,4 +1,6 @@
 {
+  "name": "base_schema",
+  "version": {"base_schema": "0.0.1"},
   "comment": "This is the Objectiv base schema",
   "events": {
     "AbstractEvent": {

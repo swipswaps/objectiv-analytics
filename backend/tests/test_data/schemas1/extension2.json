@@ -1,4 +1,6 @@
 {
+  "name": "extension2",
+  "version": {"extension2": "0.0.3"},
   "events": {
     "NewEvent2": {
         "parents": ["NonInteractiveEvent"],

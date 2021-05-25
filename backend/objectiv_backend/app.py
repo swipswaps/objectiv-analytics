@@ -21,7 +21,7 @@ from objectiv_backend.schema.validate_events import validate_structure_event_lis
 from objectiv_backend.workers.pg_queues import PostgresQueues, ProcessingStage
 from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.worker_enrichment import process_events_enrichment
-from objectiv_backend.workers.worker_entry import process_events_entry, EVENT_SCHEMA
+from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
 app = Flask(__name__)
@@ -47,13 +47,15 @@ DATA_MAX_EVENT_COUNT = 1_000
 
 @app.route('/schema', methods=['GET'])
 def schema() -> Response:
-    msg = str(EVENT_SCHEMA)
+    event_schema = get_collector_config().schema
+    msg = str(event_schema)
     return _get_json_response(status=200, msg=msg)
 
 
 @app.route('/jsonschema', methods=['GET'])
 def jsonschema() -> Response:
-    msg = json.dumps(generate_json_schema(EVENT_SCHEMA), indent=4)
+    event_schema = get_collector_config().schema
+    msg = json.dumps(generate_json_schema(event_schema), indent=4)
     return _get_json_response(status=200, msg=msg)
 
 

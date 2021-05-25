@@ -156,9 +156,9 @@ def main():
 
     event_schema = get_event_schema(schema_extensions_directory=args.schema_extensions_directory)
     # todo: debug - remove next line and uncomment following
-    print(event_schema)
-    #json_schema = generate_json_schema(event_schema)
-    #print(json.dumps(json_schema, indent=4))
+    #print(event_schema)
+    json_schema = generate_json_schema(event_schema)
+    print(json.dumps(json_schema, indent=4))
 
 
 if __name__ == '__main__':

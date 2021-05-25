@@ -37,10 +37,17 @@ class EventSchema:
         # TODO: ensure schema_extension is validated.
 
         self.schema = {}
+        self.versions = {}
         self.context_schema = ContextSchema({})
         for schema in schemas:
             event_schema = schema['events']
             context_schema = schema['contexts']
+            # todo: separate version merging, and do some validation on this
+            #extension_name = event_schema['name']
+            # if extension_name in self.schema['version']:
+            #     raise ValueError(f'Duplicate schema name. '
+            #                      f'Already a version of "{extension_name}" loaded')
+            self.versions.update(schema['version'])
             # Extend context schema
             self.context_schema = self.context_schema.extend_schema(context_schema)
             # Extend event schema
@@ -53,6 +60,7 @@ class EventSchema:
     def __str__(self) -> str:
         """ Json representation of this event-schema. """
         schema_obj = {
+            "version": self.versions,
             "events": self.schema,
             "contexts": self.context_schema.schema
         }
