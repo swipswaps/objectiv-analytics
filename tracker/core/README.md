@@ -17,7 +17,19 @@ npm install @objectiv/core
 
 # Usage
 
-### Script
+### ESModule
+```javascript
+import { Tracker } from '@objectiv/core';
+const tracker = new Tracker();
+```
+
+### CommonJS
+```javascript
+const objectivCore = require('@objectiv/core');
+const tracker = new objectivCore.Tracker();
+```
+
+### IIFE
 ```html
 <script src="dist/index.iife.js"></script>
 <script>
@@ -35,24 +47,17 @@ npm install @objectiv/core
 </script>
 ```
 
-### CommonJS
-```javascript
-const objectivCore = require('@objectiv/core');
-const tracker = new objectivCore.Tracker();
-```
-
-### ESModule
-```javascript
-import { Tracker } from '@objectiv/core';
-const tracker = new Tracker();
-```
 
 # API
 TODO 
-###`Tracker`
-###`TrackerEvent`
-###`TrackerPlugin`
-###`Transport`
+
+### `Tracker`
+
+### `TrackerEvent`
+
+### `TrackerPlugin`
+
+### `Transport`
 
 # Examples
 TODO 
