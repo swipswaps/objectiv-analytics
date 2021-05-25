@@ -10,8 +10,6 @@ from typing import NamedTuple, Optional
 # These settings should not be accessed by the constants here, but through the functions defined
 # below (e.g. get_config_output())
 
-SCHEMA_EXTENSION_EVENT = os.environ.get('SCHEMA_EXTENSION_EVENT')
-SCHEMA_EXTENSION_CONTEXT = os.environ.get('SCHEMA_EXTENSION_CONTEXT')
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
 
 # Whether to run in sync mode (default) or async-mode.

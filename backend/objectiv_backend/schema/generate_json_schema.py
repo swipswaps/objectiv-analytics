@@ -155,8 +155,8 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     event_schema = get_event_schema(schema_extensions_directory=args.schema_extensions_directory)
+    # todo: debug - remove next line and uncomment following
     print(event_schema)
-
     #json_schema = generate_json_schema(event_schema)
     #print(json.dumps(json_schema, indent=4))
 

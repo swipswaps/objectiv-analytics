@@ -51,10 +51,12 @@ class EventSchema:
                 self.schema[event_type]["requiresContext"].extend(data["requiresContext"])
 
     def __str__(self) -> str:
-        event_schema_str = json.dumps(self.schema, indent=4)
-        return f'\n' \
-               f'Events: {event_schema_str}\n' \
-               f'Contexts: {self.context_schema}\n'
+        """ Json representation of this event-schema. """
+        schema_obj = {
+            "events": self.schema,
+            "contexts": self.context_schema.schema
+        }
+        return json.dumps(schema_obj, indent=4)
 
     def list_event_types(self) -> List[str]:
         """ Give a alphabetically sorted list of all event-types. """
