@@ -1617,6 +1617,7 @@ __metadata:
     eslint-config-prettier: ^8.3.0
     jest: ^26.6.3
     jest-standard-reporter: ^2.0.0
+    prettier: ^2.3.0
     rollup: ^2.48.0
     rollup-plugin-cleanup: ^3.2.1
     rollup-plugin-filesize: ^9.1.1
@@ -1645,6 +1646,7 @@ __metadata:
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
     jest-useragent-mock: ^0.1.1
+    prettier: ^2.3.0
     rollup: ^2.48.0
     rollup-plugin-cleanup: ^3.2.1
     rollup-plugin-filesize: ^9.1.1
@@ -1672,6 +1674,7 @@ __metadata:
     jest: ^26.6.3
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
+    prettier: ^2.3.0
     rollup: ^2.48.0
     rollup-plugin-cleanup: ^3.2.1
     rollup-plugin-filesize: ^9.1.1
@@ -1702,6 +1705,7 @@ __metadata:
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
     jest-useragent-mock: ^0.1.1
+    prettier: ^2.3.0
     rollup: ^2.48.0
     rollup-plugin-cleanup: ^3.2.1
     rollup-plugin-filesize: ^9.1.1
@@ -6439,6 +6443,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"prettier@npm:^2.3.0":
+  version: 2.3.0
+  resolution: "prettier@npm:2.3.0"
+  bin:
+    prettier: bin-prettier.js
+  checksum: 652640cc8b71bc5277cfb8bf6f161783ca588efcf683c3d630837b39da8d57fef35c9e00ae5855a8e3c75136c42274046c913cc2b2d2968558315f31c6a26981
+  languageName: node
+  linkType: hard
+
 "pretty-format@npm:^26.0.0, pretty-format@npm:^26.6.2":
   version: 26.6.2
   resolution: "pretty-format@npm:26.6.2"
@@ -6945,6 +6958,10 @@ __metadata:
 "root@workspace:.":
   version: 0.0.0-use.local
   resolution: "root@workspace:."
+  dependencies:
+    "@objectiv/core": "workspace:core"
+    "@objectiv/tracker-web": "workspace:trackers/web"
+    prettier: ^2.3.0
   languageName: unknown
   linkType: soft
 
