@@ -13,7 +13,7 @@ const statsPlugins = [sizes(), filesize()];
 const makeOutput = (format, isMinified, isDefault) => ({
   file: `dist/index${!isDefault ? `.${format}` : ''}${isMinified ? '.min' : ''}.js`,
   format: format,
-  name: 'objectivCore',
+  name: 'objectiv',
   sourcemap: true,
 });
 

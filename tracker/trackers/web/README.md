@@ -25,15 +25,15 @@ const webTracker = new WebTracker({ endpoint: '/collector' });
 
 ### CommonJS
 ```javascript
-const objectivCore = require('@objectiv/tracker-web');
-const webTracker = new objectivCore.Tracker({ endpoint: '/collector' });
+const objectiv = require('@objectiv/tracker-web');
+const webTracker = new objectiv.WebTracker({ endpoint: '/collector' });
 ```
 
 ### IIFE
 ```html
 <script src="dist/index.iife.js"></script>
 <script>
-  const webTracker = new objectivCore.Tracker({ endpoint: '/collector' });
+  const webTracker = new objectiv.WebTracker({ endpoint: '/collector' });
 </script>
 ```
 
@@ -41,8 +41,8 @@ const webTracker = new objectivCore.Tracker({ endpoint: '/collector' });
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
 <script>
-  window.requirejs(['dist/index'], function(objectivCore) {
-    const webTracker = new objectivCore.Tracker({ endpoint: '/collector' });
+  window.requirejs(['dist/index'], function(objectiv) {
+    const webTracker = new objectiv.WebTracker({ endpoint: '/collector' });
   });
 </script>
 ```

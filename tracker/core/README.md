@@ -25,15 +25,15 @@ const tracker = new Tracker();
 
 ### CommonJS
 ```javascript
-const objectivCore = require('@objectiv/core');
-const tracker = new objectivCore.Tracker();
+const objectiv = require('@objectiv/core');
+const tracker = new objectiv.Tracker();
 ```
 
 ### IIFE
 ```html
 <script src="dist/index.iife.js"></script>
 <script>
-  const tracker = new objectivCore.Tracker();
+  const tracker = new objectiv.Tracker();
 </script>
 ```
 
@@ -41,8 +41,8 @@ const tracker = new objectivCore.Tracker();
 ```html
 <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
 <script>
-  window.requirejs(['dist/index'], function(objectivCore) {
-    const tracker = new objectivCore.Tracker();
+  window.requirejs(['dist/index'], function(objectiv) {
+    const tracker = new objectiv.Tracker();
   });
 </script>
 ```
