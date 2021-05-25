@@ -46,21 +46,3 @@ const tracker = new objectivCore.Tracker();
   });
 </script>
 ```
-
-
-# API
-TODO 
-
-### `Tracker`
-
-### `TrackerEvent`
-
-### `TrackerPlugin`
-
-### `Transport`
-
-# Examples
-TODO 
-
-# Advanced
-TODO 
