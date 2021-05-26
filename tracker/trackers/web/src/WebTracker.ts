@@ -24,7 +24,7 @@ export type WebTrackerConfig = TrackerConfig & {
  *
  *  const plugins = new TrackerPlugins([ WebDocumentContextPlugin, WebDeviceContextPlugin ]);
  *  const transport = new FetchAPITransport({ endpoint: '/endpoint' });
- *  const tracker = new WebTracker({ transport, plugins });
+ *  const tracker = new Tracker({ transport, plugins });
  *
  */
 export class WebTracker extends Tracker {

@@ -1,32 +1,42 @@
-import {TrackerEvent} from '@objectiv/core';
+import { Tracker, TrackerEvent } from '@objectiv/core';
 
 /**
- * URLChangedEvent triggers on each URL change. The URL can be retrieved from the WebDocumentContext
+ * The event name definition
  */
-export class URLChangedEvent extends TrackerEvent {
-  readonly eventName: string =  'URLChangeEvent';
-}
+export const URL_CHANGE_EVENT_NAME = 'URLChangeEvent';
 
 /**
- * There's no observer for URL changes, thus we spy on the History API by patching `pushState` and `replaceState`
+ * URLChangedEvent triggers on each URL change. The actual URL can be retrieved from the WebDocumentContext
  */
-const spyOnHistoryMethods = (methods: string[] = ['pushState', 'replaceState']) => methods.forEach(method => {
-  // Get the History API instance
-  const history: History = window.history;
+export class URLChangedEvent extends TrackerEvent {}
 
-  // Save the original History API method so we may still call it as-is
-  const originalHistoryMethod = history[method];
+/**
+ * Although a `popstate` Event exists, it's only triggered on actual user's interactions with the browser's buttons.
+ * To solve this problem, instead, we spy on History's methods.
+ * When calls to the aforementioned methods are detected we use the pre-factored URLChangedEvent and track it via the
+ * given Tracker instance.
+ */
+export const trackURLChangedEvent = (tracker: Tracker): void => {
+  // Just to keep things short
+  const history: { [index: string]: any } = window.history; // eslint-disable-line @typescript-eslint/no-explicit-any
 
-    // We use a standard function so we can access the `arguments`
-    window.history[method] = function (state) {
-      // Run the original history methods
-      const result = originalHistoryMethod.apply(this, arguments);
-      const event = new Event(method.toLowerCase());
+  // Make a backup copy of all the History methods we intend to spy on
+  const historyBackup: { [index: string]: any } = { // eslint-disable-line @typescript-eslint/no-explicit-any
+    pushState: history.pushState,
+    replaceState: history.replaceState,
+    go: history.go,
+    back: history.back,
+    forward: history.forward,
+  };
 
-      (event as any).state = state;
+  // Factor URLChangedEvent. The actual URL can be retrieved via the WebDocumentContext in the Global Contexts list
+  const urlChangedEvent = new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME });
 
-      window.dispatchEvent(event);
-
-      return result;
+  // Create all the spies: for each of them we just track the URLChangeEvent and run the original backed-up method.
+  Object.keys(historyBackup).forEach((methodToSpy) => {
+    history[methodToSpy] = (...rest: unknown[]) => {
+      tracker.trackEvent(urlChangedEvent);
+      return historyBackup[methodToSpy].apply(history, rest);
     };
-  })
+  });
+};

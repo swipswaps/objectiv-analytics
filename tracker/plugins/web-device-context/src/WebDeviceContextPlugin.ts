@@ -1,5 +1,5 @@
 import { TrackerEvent, TrackerPlugin } from '@objectiv/core';
-import {newWebDeviceContext, WEB_DEVICE_CONTEXT_TYPE, WebDeviceContext} from "./WebDeviceContext";
+import { newWebDeviceContext, WEB_DEVICE_CONTEXT_TYPE, WebDeviceContext } from './WebDeviceContext';
 
 /**
  * The WebDeviceContext Plugin gathers the current user-agent using the Navigator API.
