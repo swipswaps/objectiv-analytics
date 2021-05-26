@@ -1,4 +1,4 @@
-import { TrackerEvent, Transport } from '@objectiv/core';
+import { TrackerEvent, TrackerTransport } from '@objectiv/core';
 
 /**
  * The configuration of the FetchAPITransport class
@@ -29,10 +29,10 @@ export const defaultFetchParameters: Omit<RequestInit, 'body'> = {
 };
 
 /**
- * A Transport based on Fetch API. Sends event synchronously to the specified Collector endpoint
+ * A TrackerTransport based on Fetch API. Sends event synchronously to the specified Collector endpoint
  * Supports specifying extra parameters
  */
-export class FetchAPITransport implements Transport {
+export class FetchAPITransport implements TrackerTransport {
   readonly endpoint: string;
   readonly fetchParameters?: RequestInit;
 

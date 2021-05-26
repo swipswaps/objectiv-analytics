@@ -13,7 +13,7 @@ export interface PluginCallbacks {
   initialize?: (tracker: Tracker) => void;
 
   /**
-   * Executed before the TrackerEvent is handed over to the Transport.
+   * Executed before the TrackerEvent is handed over to the TrackerTransport.
    * Useful to gather Contexts that may have changed from the last TrackerEvent tracking. Eg: URL, Time, User, etc
    */
   beforeTransport?: (event: TrackerEvent) => void;

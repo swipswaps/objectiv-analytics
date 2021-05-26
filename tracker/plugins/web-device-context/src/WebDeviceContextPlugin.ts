@@ -3,7 +3,7 @@ import { newWebDeviceContext, WEB_DEVICE_CONTEXT_TYPE, WebDeviceContext } from '
 
 /**
  * The WebDeviceContext Plugin gathers the current user-agent using the Navigator API.
- * It detects it during construction and adds it as GlobalContext before events are handed over to Transport.
+ * It detects it during construction and adds it as GlobalContext before events are handed over to TrackerTransport.
  */
 export class WebDeviceContextPlugin implements TrackerPlugin {
   readonly pluginName = `${WEB_DEVICE_CONTEXT_TYPE}Plugin`;

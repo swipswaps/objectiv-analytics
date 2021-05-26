@@ -1,7 +1,7 @@
-import { Transport } from '../../src';
+import { TrackerTransport } from '../../src';
 
-export class LogTransport implements Transport {
+export class LogTransport implements TrackerTransport {
   handle(): void {
-    console.log('TestTransport.send');
+    console.log('LogTransport.handle');
   }
 }

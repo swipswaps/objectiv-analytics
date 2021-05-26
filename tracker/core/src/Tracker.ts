@@ -1,16 +1,16 @@
 import { Contexts, ContextsConfig, GlobalContext, LocationContext } from './Context';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugin';
-import { Transport } from './Transport';
+import { TrackerTransport } from './TrackerTransport';
 
 /**
  * The configuration of the Tracker
  */
 export type TrackerConfig = ContextsConfig & {
   /**
-   * Optional. Transport instance. Responsible for sending or storing Events.
+   * Optional. TrackerTransport instance. Responsible for sending or storing Events.
    */
-  transport?: Transport;
+  transport?: TrackerTransport;
 
   /**
    * Optional. Plugins that will be executed when the Tracker initializes and before the Event is sent.
@@ -22,7 +22,7 @@ export type TrackerConfig = ContextsConfig & {
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
 export class Tracker implements Contexts {
-  readonly transport?: Transport;
+  readonly transport?: TrackerTransport;
   readonly plugins?: TrackerPlugins;
 
   // Contexts interface
@@ -32,7 +32,7 @@ export class Tracker implements Contexts {
   /**
    * Configures the Tracker instance via one TrackerConfig and optionally one or more ContextConfig.
    *
-   * TrackerConfig is used to configure Transport and TrackerPlugins.
+   * TrackerConfig is used to configure TrackerTransport and TrackerPlugins.
    *
    * ContextConfigs are used to configure LocationStack and GlobalContexts. If multiple configurations have been
    * provided they will be merged onto each other to produce a single LocationStack and GlobalContexts.
@@ -58,7 +58,7 @@ export class Tracker implements Contexts {
   }
 
   /**
-   * Merges Tracker Location and Global contexts, runs all Plugins and sends the Event via the Transport.
+   * Merges Tracker Location and Global contexts, runs all Plugins and sends the Event via the TrackerTransport.
    */
   trackEvent(event: TrackerEvent): TrackerEvent {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
@@ -69,7 +69,7 @@ export class Tracker implements Contexts {
       this.plugins.beforeTransport(eventToTrack);
     }
 
-    // Hand over TrackerEvent to Transport, if enabled. Transports may send it, queue it, store it, etc
+    // Hand over TrackerEvent to TrackerTransport, if enabled. TrackerTransports may send it, queue it, store it, etc
     if (this.transport) {
       this.transport.handle(eventToTrack);
     }

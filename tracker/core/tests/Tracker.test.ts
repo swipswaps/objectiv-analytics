@@ -178,7 +178,7 @@ describe('Tracker', () => {
       expect(pluginF.beforeTransport).toHaveBeenCalledWith(testEvent);
     });
 
-    it('should send the Event via the given Transport', () => {
+    it('should send the Event via the given TrackerTransport', () => {
       const testTransport = new LogTransport();
       jest.spyOn(testTransport, 'handle');
       const testTracker = new Tracker({ transport: testTransport });

@@ -1,5 +1,5 @@
-import { URL_CHANGE_EVENT_NAME, URLChangedEvent, WebDocumentContextPlugin } from '../src';
-import { Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/core';
+import { URL_CHANGE_EVENT_NAME, WEB_DOCUMENT_CONTEXT_TYPE, WebDocumentContextPlugin } from '../src';
+import { Tracker, TrackerEvent, TrackerPlugins, TrackerTransport } from '@objectiv/core';
 
 describe('WebDocumentContextPlugin', () => {
   it('should instantiate without specifying an ID at construction', () => {
@@ -37,44 +37,85 @@ describe('WebDocumentContextPlugin', () => {
   });
 
   it('should automatically trigger URLChangedEvents in response to the History API', () => {
-    const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
-    spyOn(testTracker, 'trackEvent');
+    class SpyTransport implements TrackerTransport {
+      handle(): void {
+        console.log('SpyTransport.handle');
+      }
+    }
+    const spyTransport = new SpyTransport();
+    spyOn(spyTransport, 'handle');
+
+    new Tracker({ transport: spyTransport, plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
 
     expect(window.history).toHaveLength(1);
 
-    window.history.pushState({ page: 1 }, 'title 1', '?page=1');
-    expect(window.history).toHaveLength(2);
-    expect(testTracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+    /**
+     * NOTE: In all these tests the is fixed to 'http://localhost/'.
+     * It's a JSDOM bug: https://github.com/facebook/jest/issues/890
+     * We can assume that eventually it will be fixed and that our WebDocumentContext is actually correct.
+     */
 
-    window.history.pushState({ page: 2 }, 'title 2', '?page=2');
+    window.history.pushState({ page: 1 }, 'title 1', '/page1?page=1');
+    expect(window.history).toHaveLength(2);
+    expect(spyTransport.handle).toHaveBeenCalledTimes(1);
+    expect(spyTransport.handle).toHaveBeenCalledWith({
+      eventName: URL_CHANGE_EVENT_NAME,
+      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
+      locationStack: [],
+    });
+
+    window.history.pushState({ page: 2 }, 'title 2', '/page2?page=2');
     expect(window.history).toHaveLength(3);
-    expect(testTracker.trackEvent).toHaveBeenCalledTimes(2);
-    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+    expect(spyTransport.handle).toHaveBeenCalledTimes(2);
+    expect(spyTransport.handle).toHaveBeenCalledWith({
+      eventName: URL_CHANGE_EVENT_NAME,
+      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
+      locationStack: [],
+    });
 
     window.history.replaceState({ page: 3 }, 'title 3', '?page=3');
     expect(window.history).toHaveLength(3);
-    expect(testTracker.trackEvent).toHaveBeenCalledTimes(3);
-    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+    expect(spyTransport.handle).toHaveBeenCalledTimes(3);
+    expect(spyTransport.handle).toHaveBeenCalledWith({
+      eventName: URL_CHANGE_EVENT_NAME,
+      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
+      locationStack: [],
+    });
 
     window.history.replaceState({ page: 1 }, 'title1', '?page=1');
     expect(window.history).toHaveLength(3);
-    expect(testTracker.trackEvent).toHaveBeenCalledTimes(4);
-    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+    expect(spyTransport.handle).toHaveBeenCalledTimes(4);
+    expect(spyTransport.handle).toHaveBeenCalledWith({
+      eventName: URL_CHANGE_EVENT_NAME,
+      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
+      locationStack: [],
+    });
 
     window.history.go(1);
     expect(window.history).toHaveLength(3);
-    expect(testTracker.trackEvent).toHaveBeenCalledTimes(5);
-    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+    expect(spyTransport.handle).toHaveBeenCalledTimes(5);
+    expect(spyTransport.handle).toHaveBeenCalledWith({
+      eventName: URL_CHANGE_EVENT_NAME,
+      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
+      locationStack: [],
+    });
 
     window.history.back();
     expect(window.history).toHaveLength(3);
-    expect(testTracker.trackEvent).toHaveBeenCalledTimes(6);
-    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+    expect(spyTransport.handle).toHaveBeenCalledTimes(6);
+    expect(spyTransport.handle).toHaveBeenCalledWith({
+      eventName: URL_CHANGE_EVENT_NAME,
+      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
+      locationStack: [],
+    });
 
     window.history.forward();
     expect(window.history).toHaveLength(3);
-    expect(testTracker.trackEvent).toHaveBeenCalledTimes(7);
-    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+    expect(spyTransport.handle).toHaveBeenCalledTimes(7);
+    expect(spyTransport.handle).toHaveBeenCalledWith({
+      eventName: URL_CHANGE_EVENT_NAME,
+      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
+      locationStack: [],
+    });
   });
 });
