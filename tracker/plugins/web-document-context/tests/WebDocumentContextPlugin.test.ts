@@ -50,9 +50,9 @@ describe('WebDocumentContextPlugin', () => {
     expect(window.history).toHaveLength(1);
 
     /**
-     * NOTE: In all these tests the is fixed to 'http://localhost/'.
+     * NOTE: In all these tests the WebDocumentContext url attribute is fixed to 'http://localhost/'.
      * It's a JSDOM bug: https://github.com/facebook/jest/issues/890
-     * We can assume that eventually it will be fixed and that our WebDocumentContext is actually correct.
+     * We can assume that eventually it will be fixed and that our WebDocumentContext will be correctly reported.
      */
 
     window.history.pushState({ page: 1 }, 'title 1', '/page1?page=1');
