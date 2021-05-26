@@ -1,18 +1,18 @@
-import datetime
 import json
-from io import StringIO, BytesIO
+from datetime import datetime
+from io import BytesIO
 
 import flask
 import time
-from typing import List, Tuple, Optional
-import os
+from typing import List
 import uuid
 
 import boto3
 from botocore.exceptions import ClientError
-from flask import Flask, request, Response, Request
+from flask import Flask, Response, Request
 from flask_cors import CORS
 
+from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import event_add_construct_context, add_global_context_to_event
 from objectiv_backend.common.types import EventWithId, EventData, ContextData
@@ -24,25 +24,20 @@ from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
 app = Flask(__name__)
-cors = CORS(app, resources={r"/*": {"origins": "*", "supports_credentials": True}})
 
-# Where to store the output JSONs
-JSON_DIR: Optional[str] = os.environ.get('JSON_DIR', None)
+# We only have a single endpoint that ingests tracker data. We are not afraid of any CSRF attacks, nor of
+# people reusing our request-responses in other pages, and we don't want to be strict in the origin of
+# request. As such we don't have need for CORS protections, and we can tell the browser to disable it
+# altogether for this origin, coming from all origins.
+cors = CORS(app,
+            resources={r'/*': {
+                'origins': '*',
+                'supports_credentials': True,       # needed for cookies
+                # Setting max_age to a higher values is probably useless, as most browsers cap this time.
+                # See https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Access-Control-Max-Age
+                'max_age': 3600 * 24
+            }})
 
-# AWS settings
-AWS_REGION = 'eu-west-1'  # default region is Ireland
-# default access keys to an empty string, otherwise the boto library will default ot user defaults.
-AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')  # Need an IAM user with read/write access to S3 bucket
-AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')  # Need an IAM user with read/write access to S3
-AWS_BUCKET = 'obj-tracker-journeys'
-AWS_S3_PREFIX = os.environ.get('AWS_S3_PREFIX', 'test-prefix')
-
-# Whether to run in sync mode (default) or async-mode.
-ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
-
-# set to False to disable setting a session cookie
-OBJ_COOKIE = 'obj_user_id'
-OBJ_COOKIE_DURATION = 60 * 60 * 24 * 365 * 5
 
 # Some limits on the inputs we accept
 DATA_MAX_SIZE_BYTES = 1_000_000
@@ -56,7 +51,6 @@ def index() -> Response:
         events = _get_event_data(flask.request)
     except ValueError as exc:
         print(f'Data problem: {exc}')  # todo: real error logging
-        # Todo: write data to not okay data directory?
         return _get_response(error_count=1, event_count=-1)
 
     # Do all the enrichment steps that can only be done in this phase
@@ -65,11 +59,16 @@ def index() -> Response:
     set_time_in_events(events, current_millis)
 
     events_with_id = [EventWithId(id=uuid.uuid4(), event=event) for event in events]
-    ok_events, nok_events = write_events_db(events_with_id)
 
-    write_events_to_disk_and_s3(ok_events=ok_events, nok_events=nok_events)
-
-    return _get_response(error_count=len(nok_events), event_count=len(events))
+    if not get_collector_config().async_mode:
+        ok_events, nok_events = process_events_entry(events=events_with_id)
+        ok_events = process_events_enrichment(events=ok_events)
+        print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
+        write_sync_events(ok_events=ok_events, nok_events=nok_events)
+        return _get_response(error_count=len(nok_events), event_count=len(events))
+    else:
+        write_async_events(events=events_with_id)
+        return _get_response(error_count=0, event_count=len(events))
 
 
 def _get_event_data(request: Request) -> List[EventData]:
@@ -110,9 +109,12 @@ def _get_response(error_count: int, event_count: int) -> Response:
         "event_count": event_count
     })
     response = Response(mimetype='application/json', status=status, response=msg)
-    if OBJ_COOKIE:
+
+    cookie_config = get_collector_config().cookie
+    if cookie_config:
         cookie_id = _get_cookie_id()
-        response.set_cookie(key=OBJ_COOKIE, value=f'{cookie_id}', max_age=OBJ_COOKIE_DURATION, samesite='Lax')
+        response.set_cookie(key=cookie_config.name, value=f'{cookie_id}',
+                            max_age=cookie_config.duration, samesite='Lax')
     return response
 
 
@@ -123,7 +125,8 @@ def _get_cookie_id() -> str:
     The generated random uuid is stored, so multiple invocations of this function within a request will
     return the same value.
     """
-    cookie_id = request.cookies.get(OBJ_COOKIE)
+    cookie_config = get_collector_config().cookie
+    cookie_id = flask.request.cookies.get(cookie_config.name)
     if not cookie_id:
         # There's no cookie in the request, perhaps we already generated one earlier in this request
         cookie_id = flask.g.get('G_COOKIE_ID')
@@ -152,7 +155,8 @@ def add_cookie_id_contexts(events: List[EventData]):
     """
     Modify the given list of events: Add the CookieIdContext to each event, if cookies are enabled.
     """
-    if not OBJ_COOKIE:
+    cookie_config = get_collector_config().cookie
+    if not cookie_config:
         return
     cookie_id = _get_cookie_id()
     for event in events:
@@ -204,10 +208,10 @@ def _get_http_context() -> ContextData:
     """ Create an HttpContext based on the data in the current request. """
     allowed_headers = ['Host', 'Origin', 'Referer', 'User-Agent']
     http_context = {}
-    if request.remote_addr:
-        http_context['remote_addr'] = request.remote_addr
+    if flask.request.remote_addr:
+        http_context['remote_addr'] = flask.request.remote_addr
 
-    for h, v in request.headers.items():
+    for h, v in flask.request.headers.items():
         if h in allowed_headers:
             http_context[h.lower()] = v
 
@@ -216,82 +220,104 @@ def _get_http_context() -> ContextData:
     return http_context
 
 
-def write_events_db(events: List[EventWithId]) -> Tuple[List[EventWithId], List[EventWithId]]:
+def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId]):
     """
-    Write events to the database.
-    * If not ASYNC_MODE (=default): All events are fully processed, and written to the final data table.
-    * If ASYNC_MODE: All events are written to the entry queue. Workers will have to take care of
-        further processing from there on. In this case all events are always returned as being OK, since
-        the validation doesn't happen in this function.
-    :param events: List of events, with assigned unique-ids
-    :return: Tuple with two lists:
-        ok events: events that were processed okay
-        nok events: events that failed validation.
+    Write the events to the following sinks, if configured:
+        * postgres
+        * aws
+        * file system
     """
-    connection = get_db_connection()
-    try:
-        with connection:
-            if ASYNC_MODE:
+    output_config = get_collector_config().output
+    if output_config.postgres:
+        connection = get_db_connection(output_config.postgres)
+        try:
+            with connection:
+                insert_events_into_data(connection, events=ok_events)
+                insert_events_into_nok_data(connection, events=nok_events)
+        finally:
+            connection.close()
+
+    if not output_config.file_system and not output_config.aws:
+        return
+    for prefix, events in ('OK', ok_events), ('NOK', nok_events):
+        if events:
+            data = _events_to_json(events)
+            moment = datetime.utcnow()
+            _write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
+            _write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
+
+
+def write_async_events(events: List[EventWithId]):
+    """
+    Write the events to the following sinks, if configured:
+        * postgres - To the entry queue
+        * aws - to the 'RAW' prefix
+        * file system - to the 'RAW' directory
+    """
+    output_config = get_collector_config().output
+    if output_config.postgres:
+        connection = get_db_connection(output_config.postgres)
+        try:
+            with connection:
                 pg_queue = PostgresQueues(connection=connection)
                 pg_queue.put_events(queue=ProcessingStage.ENTRY, events=events)
-                return events, []
-            else:
-                ok_events, nok_events = process_events_entry(events=events)
-                print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
-                insert_events_into_nok_data(connection, events=nok_events)
-                ok_events = process_events_enrichment(events=ok_events)
-                insert_events_into_data(connection, events=ok_events)
-                return ok_events, nok_events
-    finally:
-        connection.close()
+        finally:
+            connection.close()
 
-
-def write_events_to_disk_and_s3(ok_events: List[EventWithId], nok_events: List[EventWithId]) -> None:
-    # TODO: do we need this?
-    if ok_events:
-        filename = f'OK/{time.time()}.json'
-        data = _events_to_json(ok_events)
-        _write_data_to_disk(data=data, filename=filename)
-        _write_data_to_s3(data=data, filename=filename)
-    if nok_events:
-        filename = f'NOK/{time.time()}.json'
-        data = _events_to_json(nok_events)
-        _write_data_to_disk(data=data, filename=filename)
-        _write_data_to_s3(data=data, filename=filename)
+    if not output_config.file_system and not output_config.aws:
+        return
+    prefix = 'RAW'
+    if events:
+        data = _events_to_json(events)
+        moment = datetime.utcnow()
+        _write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
+        _write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 
 
 def _events_to_json(events: List[EventWithId]) -> str:
+    """
+    Convert list of events to a string with on each line a json object representing a single event.
+    Note that the returned string is not a json list; This format makes it suitable as raw input to AWS
+    Athena.
+    """
     result = []
     for event in events:
-        # add newline so we can use this as raw input to AWS Athena
         json_str = json.dumps(event.event) + "\n"
         result.append(json_str)
     return ''.join(result)
 
 
-def _write_data_to_disk(data: str, filename: str) -> None:
-    if not JSON_DIR:
-        print('Not storing on disk.')
+def _write_data_to_fs_if_configured(data: str, prefix: str, moment: datetime) -> None:
+    """
+    Write data to disk, if file_system output is configured.
+    """
+    fs_config = get_collector_config().output.file_system
+    if not fs_config:
         return
-    path = f'{JSON_DIR}/{filename}'
+    timestamp = moment.timestamp()
+    path = f'{fs_config.path}/{prefix}/{timestamp}.json'
     with open(path, 'w') as of:
         of.write(data)
 
 
-def _write_data_to_s3(data: str, filename: str) -> None:
-    if not AWS_ACCESS_KEY_ID or not AWS_SECRET_ACCESS_KEY:
-        print('Not uploading to S3, access keys not specified.')
+def _write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> None:
+    """
+    Write data to AWS S3, if S3 output is configured.
+    """
+    aws_config = get_collector_config().output.aws
+    if not aws_config:
         return
+
+    timestamp = moment.timestamp()
+    datestamp = moment.strftime('%Y/%m/%d')
+    object_name = f'{aws_config.s3_prefix}/{datestamp}/{prefix}/{timestamp}.json'
     file_obj = BytesIO(data.encode('utf-8'))
     s3_client = boto3.client(
         service_name='s3',
-        region_name=AWS_REGION,
-        aws_access_key_id=AWS_ACCESS_KEY_ID,
-        aws_secret_access_key=AWS_SECRET_ACCESS_KEY)
+        region_name=aws_config.region,
+        aws_access_key_id=aws_config.access_key_id,
+        aws_secret_access_key=aws_config.secret_access_key)
     try:
-        dt = datetime.datetime.today()
-        timestamp = dt.strftime('%Y/%m/%d')
-        object_name = f'{AWS_S3_PREFIX}/{timestamp}/{filename}'
-        s3_client.upload_fileobj(file_obj, AWS_BUCKET, object_name)
+        s3_client.upload_fileobj(file_obj, aws_config.bucket, object_name)
     except ClientError as e:
         print(f'Error uploading to s3: {e} ')

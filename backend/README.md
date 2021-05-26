@@ -14,7 +14,10 @@ pip install --require-hashes -r requirements.txt
 ## Start DB
 ```bash
 cd ..; docker-compose up --detach postgres
+cd backend; python objectiv_backend/tools/db_init/db_init.py
 ```
+SECURITY WARNING: The above docker-compose command starts a postgres container that allows connections
+without verifying passwords. Do not use this in production or on a shared system!
 ## Run Collector
 After setting up the python env, simply run:
 ```bash

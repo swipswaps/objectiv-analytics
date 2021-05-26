@@ -14,6 +14,7 @@ from time import sleep
 
 import psycopg2
 
+from objectiv_backend.common.config import get_config_postgres
 from objectiv_backend.common.db import get_db_connection
 
 _MAX_RETRIES = 5
@@ -33,7 +34,7 @@ def get_connection_with_retries(retry: bool):
     retries = 0
     while True:
         try:
-            return get_db_connection()
+            return get_db_connection(get_config_postgres())
         except psycopg2.OperationalError as error:
             if not retry or retries == _MAX_RETRIES:
                 raise Exception("Could not connect to database") from error
@@ -47,8 +48,15 @@ def main():
     parser.add_argument('--no-retries', dest='retry', default=True, action='store_false',
                         help="By default we'll try to connect multiple times before giving up; thus"
                              "giving the database time to start up if run at start up. If set won't retry")
+    parser.add_argument('--print', dest='print', default=False, action='store_true',
+                        help="Instead of running sql to setup schema, print it to stdout")
     args = parser.parse_args(sys.argv[1:])
     sql = get_sql()
+
+    if args.print:
+        print(sql)
+        exit(0)
+
     connection = get_connection_with_retries(args.retry)
     with connection.cursor() as cursor:
         try:
