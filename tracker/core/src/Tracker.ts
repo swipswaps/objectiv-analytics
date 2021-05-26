@@ -50,6 +50,11 @@ export class Tracker implements Contexts {
     });
     this.locationStack = newLocationStack;
     this.globalContexts = newGlobalContexts;
+
+    // Execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
+    if (this.plugins) {
+      this.plugins.initialize(this);
+    }
   }
 
   /**

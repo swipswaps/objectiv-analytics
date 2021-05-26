@@ -1,4 +1,4 @@
-import { WebDocumentContextPlugin } from '../src';
+import {URL_CHANGE_EVENT_NAME, URLChangedEvent, WebDocumentContextPlugin} from '../src';
 import { Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/core';
 
 describe('WebDocumentContextPlugin', () => {
@@ -34,5 +34,48 @@ describe('WebDocumentContextPlugin', () => {
         },
       ])
     );
+  });
+
+  it('should automatically trigger URLChangedEvents in response to the History API', () => {
+    const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
+    spyOn(testTracker, 'trackEvent');
+
+    expect(window.history).toHaveLength(1);
+
+    window.history.pushState({ page: 1 }, 'title 1', '?page=1');
+    expect(window.history).toHaveLength(2);
+    expect(testTracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+
+    window.history.pushState({ page: 2 }, 'title 2', '?page=2');
+    expect(window.history).toHaveLength(3);
+    expect(testTracker.trackEvent).toHaveBeenCalledTimes(2);
+    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+
+    window.history.replaceState({ page: 3 }, 'title 3', '?page=3');
+    expect(window.history).toHaveLength(3);
+    expect(testTracker.trackEvent).toHaveBeenCalledTimes(3);
+    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+
+    window.history.replaceState({ page: 1 }, 'title1', '?page=1');
+    expect(window.history).toHaveLength(3);
+    expect(testTracker.trackEvent).toHaveBeenCalledTimes(4);
+    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+
+    window.history.go(1);
+    expect(window.history).toHaveLength(3);
+    expect(testTracker.trackEvent).toHaveBeenCalledTimes(5);
+    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+
+    window.history.back();
+    expect(window.history).toHaveLength(3);
+    expect(testTracker.trackEvent).toHaveBeenCalledTimes(6);
+    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+
+    window.history.forward();
+    expect(window.history).toHaveLength(3);
+    expect(testTracker.trackEvent).toHaveBeenCalledTimes(7);
+    expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
+
   });
 });

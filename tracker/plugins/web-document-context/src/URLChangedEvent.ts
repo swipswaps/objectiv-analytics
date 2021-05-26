@@ -21,7 +21,8 @@ export const trackURLChangedEvent = (tracker: Tracker): void => {
   const history: { [index: string]: any } = window.history; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   // Make a backup copy of all the History methods we intend to spy on
-  const historyBackup: { [index: string]: any } = { // eslint-disable-line @typescript-eslint/no-explicit-any
+  const historyBackup: { [index: string]: any } = {
+    // eslint-disable-line @typescript-eslint/no-explicit-any
     pushState: history.pushState,
     replaceState: history.replaceState,
     go: history.go,

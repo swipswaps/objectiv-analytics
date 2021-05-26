@@ -2,7 +2,7 @@ import { trackURLChangedEvent, URL_CHANGE_EVENT_NAME, URLChangedEvent } from '..
 import { Tracker } from '@objectiv/core';
 
 describe('URLChangedEvent', () => {
-  it('should trigger on History API `popstate` events', () => {
+  it('should trigger on all History API methods', () => {
     // Create a test tracker and spy on its `trackEvent` method
     const testTracker = new Tracker();
     spyOn(testTracker, 'trackEvent');
@@ -47,6 +47,5 @@ describe('URLChangedEvent', () => {
     expect(window.history).toHaveLength(3);
     expect(testTracker.trackEvent).toHaveBeenCalledTimes(7);
     expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
-
   });
 });

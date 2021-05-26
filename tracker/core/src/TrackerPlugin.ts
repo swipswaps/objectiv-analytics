@@ -1,10 +1,17 @@
 import { TrackerEvent } from './TrackerEvent';
 import { Newable } from './helpers';
+import { Tracker } from './Tracker';
 
 /**
  * All possible callbacks of a TrackerPlugin.
  */
 export interface PluginCallbacks {
+  /**
+   * Executed when the Tracker initializes.
+   * Useful to register event listeners that execute autonomously. Eg: URLChangeEvent
+   */
+  initialize?: (tracker: Tracker) => void;
+
   /**
    * Executed before the TrackerEvent is handed over to the Transport.
    * Useful to gather Contexts that may have changed from the last TrackerEvent tracking. Eg: URL, Time, User, etc
@@ -73,6 +80,13 @@ export class TrackerPlugins implements PluginCallbacks {
    */
   constructor(plugins: TrackerPluginsConfiguration) {
     this.list = plugins.map((plugin) => (typeof plugin === 'object' ? plugin : new plugin()));
+  }
+
+  /**
+   * Calls each Plugin's `initialize` callback function, if defined
+   */
+  initialize(tracker: Tracker): void {
+    this.list.forEach((plugin) => plugin.initialize && plugin.initialize(tracker));
   }
 
   /**

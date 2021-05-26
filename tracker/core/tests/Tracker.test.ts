@@ -161,13 +161,21 @@ describe('Tracker', () => {
       ]);
     });
 
-    it('should execute all plugins implementing the beforeTransport callback', () => {
-      const pluginC: TrackerPlugin = { pluginName: 'pluginC', beforeTransport: jest.fn(noop) };
-      const pluginD: TrackerPlugin = { pluginName: 'pluginD', beforeTransport: jest.fn(noop) };
+    it('should execute all plugins implementing the initialize callback', () => {
+      const pluginC: TrackerPlugin = { pluginName: 'pluginC', initialize: jest.fn(noop) };
+      const pluginD: TrackerPlugin = { pluginName: 'pluginD', initialize: jest.fn(noop) };
       const testTracker = new Tracker({ plugins: new TrackerPlugins([pluginC, pluginD]) });
+      expect(pluginC.initialize).toHaveBeenCalledWith(testTracker);
+      expect(pluginD.initialize).toHaveBeenCalledWith(testTracker);
+    });
+
+    it('should execute all plugins implementing the beforeTransport callback', () => {
+      const pluginE: TrackerPlugin = { pluginName: 'pluginE', beforeTransport: jest.fn(noop) };
+      const pluginF: TrackerPlugin = { pluginName: 'pluginF', beforeTransport: jest.fn(noop) };
+      const testTracker = new Tracker({ plugins: new TrackerPlugins([pluginE, pluginF]) });
       testTracker.trackEvent(testEvent);
-      expect(pluginC.beforeTransport).toHaveBeenCalledWith(testEvent);
-      expect(pluginC.beforeTransport).toHaveBeenCalledWith(testEvent);
+      expect(pluginE.beforeTransport).toHaveBeenCalledWith(testEvent);
+      expect(pluginF.beforeTransport).toHaveBeenCalledWith(testEvent);
     });
 
     it('should send the Event via the given Transport', () => {
