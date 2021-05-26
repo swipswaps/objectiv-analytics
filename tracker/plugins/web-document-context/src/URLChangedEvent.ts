@@ -18,11 +18,12 @@ export class URLChangedEvent extends TrackerEvent {}
  */
 export const trackURLChangedEvent = (tracker: Tracker): void => {
   // Just to keep things short
-  const history: { [index: string]: any } = window.history; // eslint-disable-line @typescript-eslint/no-explicit-any
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const history: { [index: string]: any } = window.history;
 
   // Make a backup copy of all the History methods we intend to spy on
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const historyBackup: { [index: string]: any } = {
-    // eslint-disable-line @typescript-eslint/no-explicit-any
     pushState: history.pushState,
     replaceState: history.replaceState,
     go: history.go,

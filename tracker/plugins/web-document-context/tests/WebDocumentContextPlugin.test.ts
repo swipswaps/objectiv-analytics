@@ -1,4 +1,4 @@
-import {URL_CHANGE_EVENT_NAME, URLChangedEvent, WebDocumentContextPlugin} from '../src';
+import { URL_CHANGE_EVENT_NAME, URLChangedEvent, WebDocumentContextPlugin } from '../src';
 import { Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/core';
 
 describe('WebDocumentContextPlugin', () => {
@@ -76,6 +76,5 @@ describe('WebDocumentContextPlugin', () => {
     expect(window.history).toHaveLength(3);
     expect(testTracker.trackEvent).toHaveBeenCalledTimes(7);
     expect(testTracker.trackEvent).toHaveBeenCalledWith(new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME }));
-
   });
 });
