@@ -1,11 +1,12 @@
-import { Tracker, TrackerConfig, TrackerPlugins } from '@objectiv/core';
+import { Tracker, TrackerConfig, TrackerPlugins, TrackerTransportSwitch } from '@objectiv/core';
 import { FetchAPITransport } from './FetchAPITransport';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
+import { BeaconAPITransport } from './BeaconAPITransport';
 
 /**
  * Web Tracker can be configured in a easier way by specifying just an `endpoint`.
- * Internally it will automatically construct a FetchAPITransport for the given `endpoint`.
+ * Internally it will create a TrackerTransportSwitch(BeaconAPITransport, FetchAPITransport) for the given `endpoint`.
  */
 export type WebTrackerConfig = TrackerConfig & {
   endpoint?: string;
@@ -23,7 +24,9 @@ export type WebTrackerConfig = TrackerConfig & {
  * is equivalent to:
  *
  *  const plugins = new TrackerPlugins([ WebDocumentContextPlugin, WebDeviceContextPlugin ]);
- *  const transport = new FetchAPITransport({ endpoint: '/endpoint' });
+ *  const beaconTransport = new BeaconAPITransport({ endpoint: '/endpoint' });
+ *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint' });
+ *  const transport = TrackerTransportSwitch(beaconTransport, fetchTransport);
  *  const tracker = new Tracker({ transport, plugins });
  *
  */
@@ -41,9 +44,15 @@ export class WebTracker extends Tracker {
       throw new Error('Please provider either `transport` or `endpoint`, not both at same time');
     }
 
-    // Automatically create a FetchAPITransport with the given `endpoint`
+    // Automatically create a TrackerTransportSwitch(BeaconAPITransport, FetchAPITransport) for the given `endpoint`
     if (config.endpoint) {
-      config = { ...config, transport: new FetchAPITransport({ endpoint: config.endpoint }) };
+      config = {
+        ...config,
+        transport: new TrackerTransportSwitch(
+          new BeaconAPITransport({ endpoint: config.endpoint }),
+          new FetchAPITransport({ endpoint: config.endpoint })
+        ),
+      };
     }
 
     // Configure to use provided `plugins` or automatically create a Plugins instance with some sensible web defaults
