@@ -1,11 +1,11 @@
 import { TrackerTransport } from '../../src';
 
-export class LogTransport implements TrackerTransport {
+export class UnusableTransport implements TrackerTransport {
   handle(): void {
     console.log('LogTransport.handle');
   }
 
   isUsable(): boolean {
-    return true;
+    return false;
   }
 }

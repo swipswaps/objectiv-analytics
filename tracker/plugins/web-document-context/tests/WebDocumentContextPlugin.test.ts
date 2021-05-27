@@ -41,6 +41,9 @@ describe('WebDocumentContextPlugin', () => {
       handle(): void {
         console.log('SpyTransport.handle');
       }
+      isUsable(): boolean {
+        return true;
+      }
     }
     const spyTransport = new SpyTransport();
     spyOn(spyTransport, 'handle');

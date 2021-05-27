@@ -47,4 +47,8 @@ export class FetchAPITransport implements TrackerTransport {
       body: JSON.stringify([event]),
     });
   }
+
+  isUsable(): boolean {
+    return Boolean(fetch);
+  }
 }
