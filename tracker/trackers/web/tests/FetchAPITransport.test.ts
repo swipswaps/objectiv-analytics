@@ -1,6 +1,6 @@
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchParameters, FetchAPITransport } from '../src';
-import { TrackerEvent } from '@objectiv/core';
+import { MemoryQueue, TrackerEvent } from '@objectiv/core';
 
 beforeAll(() => {
   fetchMock.enableMocks();
@@ -52,5 +52,17 @@ describe('FetchAPITransport', () => {
         ...customFetchParameters,
       })
     );
+  });
+
+  it('should enqueue the event in the provided Queue instance', async () => {
+    const testTrackerEventMemoryQueue = new MemoryQueue<TrackerEvent>();
+    spyOn(testTrackerEventMemoryQueue, 'enqueue');
+    const testTransport = new FetchAPITransport({
+      endpoint: MOCK_ENDPOINT,
+      queue: testTrackerEventMemoryQueue,
+    });
+    await testTransport.handle(testEvent);
+    expect(fetch).not.toHaveBeenCalledWith();
+    expect(testTrackerEventMemoryQueue.enqueue).toHaveBeenCalledWith(testEvent);
   });
 });
