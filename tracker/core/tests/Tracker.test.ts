@@ -1,6 +1,6 @@
 import { Tracker, TrackerEvent, TrackerPlugin, TrackerPlugins } from '../src';
 import { LogTransport, noop } from './mocks';
-import {UnusableTransport} from "./mocks/UnusableTransport";
+import { UnusableTransport } from './mocks/UnusableTransport';
 
 describe('Tracker', () => {
   it('should instantiate without any config', () => {
@@ -187,7 +187,7 @@ describe('Tracker', () => {
       expect(testTransport.handle).toHaveBeenCalledWith(testEvent);
     });
 
-    it('should not send the Event via the given TrackerTransport if it\'s not usable', () => {
+    it("should not send the Event via the given TrackerTransport if it's not usable", () => {
       const unusableTransport = new UnusableTransport();
       expect(unusableTransport.isUsable()).toEqual(false);
       jest.spyOn(unusableTransport, 'handle');

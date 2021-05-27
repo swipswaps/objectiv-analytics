@@ -10,8 +10,7 @@ import { TrackerEvent } from './TrackerEvent';
  */
 export interface TrackerTransport {
   /**
-   * Should return if the TrackerTransport can be used.
-   * This method is designed to be used in combination with TrackerTransportSwitch.
+   * Should return if the TrackerTransport can be used. Most useful in combination with TrackerTransportSwitch.
    */
   isUsable(): boolean;
 
@@ -22,7 +21,8 @@ export interface TrackerTransport {
 }
 
 /**
- * TrackerTransportSwitch provides a fallback mechanism to pick the first available transport in a list of them.
+ * TrackerTransportSwitch provides a fallback mechanism to pick the first usable transport in a list of them.
+ * The switch is usable if at least one of the given TrackerTransports is usable.
  *
  * This mechanism can be used to configure multiple TrackerTransport instances, in order of preference, and
  * have TrackerTransportSwitch test each of them via the `isUsable` method to determine the topmost usable one.
@@ -34,17 +34,14 @@ export class TrackerTransportSwitch implements TrackerTransport {
    * Finds the first TrackerTransport which `isUsable()`
    */
   constructor(...args: TrackerTransport[]) {
-    this.firstUsableTransport = args.find(trackerTransport => {
-      console.log(trackerTransport, trackerTransport.isUsable())
-      return trackerTransport.isUsable()
-    });
+    this.firstUsableTransport = args.find((trackerTransport) => trackerTransport.isUsable());
   }
 
   /**
    * Simply proxy the `handle` method to the usable TrackerTransport we found during construction, if any
    */
   handle(event: TrackerEvent): void | Promise<void> {
-    return this.firstUsableTransport?.handle(event)
+    return this.firstUsableTransport?.handle(event);
   }
 
   /**
@@ -52,5 +49,36 @@ export class TrackerTransportSwitch implements TrackerTransport {
    */
   isUsable(): boolean {
     return Boolean(this.firstUsableTransport);
+  }
+}
+
+/**
+ * TrackerTransportGroup provides a mechanism to handle a TrackerEvent to multiple transports. The group is usable
+ * if at least one of the given TrackerTransports is usable.
+ *
+ * This can be used when having multiple Collectors but also for simpler development needs, such as handling & logging
+ */
+export class TrackerTransportGroup implements TrackerTransport {
+  readonly list: TrackerTransport[];
+
+  /**
+   * Store the list of transports, received as construction parameters, in state
+   */
+  constructor(...args: TrackerTransport[]) {
+    this.list = args;
+  }
+
+  /**
+   * Simply proxy the `handle` method to all the TrackerTransport instances we have in list. Skip the unusable ones.
+   */
+  handle(event: TrackerEvent): void | Promise<void> {
+    return this.list.forEach((transport) => transport.isUsable() && transport.handle(event));
+  }
+
+  /**
+   * The whole TrackerTransportGroup is usable if we found at least one one usable TrackerTransport
+   */
+  isUsable(): boolean {
+    return Boolean(this.list.find((transport) => transport.isUsable()));
   }
 }
