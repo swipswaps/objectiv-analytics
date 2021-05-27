@@ -1,6 +1,5 @@
 import { Tracker, TrackerEvent, TrackerPlugin, TrackerPlugins } from '../src';
-import { LogTransport, noop } from './mocks';
-import { UnusableTransport } from './mocks/UnusableTransport';
+import { LogTransport, noop, UnusableTransport } from './mocks';
 
 describe('Tracker', () => {
   it('should instantiate without any config', () => {

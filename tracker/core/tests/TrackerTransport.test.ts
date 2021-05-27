@@ -1,6 +1,5 @@
 import { Tracker, TrackerEvent, TrackerTransportGroup, TrackerTransportSwitch } from '../src';
-import { LogTransport } from './mocks';
-import { UnusableTransport } from './mocks/UnusableTransport';
+import { LogTransport, UnusableTransport } from './mocks';
 import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
 
 const testEventName = 'test-event';

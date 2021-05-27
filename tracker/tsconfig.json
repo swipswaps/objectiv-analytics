@@ -24,6 +24,9 @@
     /* Make sure module resolution works nicely while developing. Base url is necessary for the `paths` directive */
     "baseUrl": "./",
 
+    /* Let's compile to a reasonably modern target  */
+    "target": "ES5",
+
     /* Tell the compiler how to resolve our own modules relatively to `baseUrl` */
     "paths": {
       "@objectiv/core": ["core/src"],
