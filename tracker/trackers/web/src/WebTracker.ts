@@ -1,8 +1,17 @@
-import { MemoryQueue, QueuedTransport, Tracker, TrackerConfig, TrackerPlugins, TransportSwitch } from '@objectiv/core';
+import {
+  MemoryQueue,
+  QueuedTransport,
+  Tracker,
+  TrackerConfig,
+  TrackerPlugins,
+  TransportGroup,
+  TransportSwitch,
+} from '@objectiv/core';
 import { FetchAPITransport } from './FetchAPITransport';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
 import { BeaconAPITransport } from './BeaconAPITransport';
+import { DebugTransport } from './DebugTransport';
 
 /**
  * Web Tracker can be configured in a easier way by specifying just an `endpoint`.
@@ -24,11 +33,13 @@ export type WebTrackerConfig = TrackerConfig & {
  * is equivalent to:
  *
  *  const plugins = new TrackerPlugins([ WebDocumentContextPlugin, WebDeviceContextPlugin ]);
- *  const beaconTransport = new BeaconAPITransport({ endpoint: '/endpoint' });
  *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint' });
+ *  const beaconTransport = new BeaconAPITransport({ endpoint: '/endpoint' });
+ *  const debugTransport = new DebugTransport();
  *  const memoryQueue = new MemoryQueue();
- *  const transportSwitch = TransportSwitch(beaconTransport, fetchTransport);
- *  const transport = new QueuedTransport({ transport: transportSwitch, queue: memoryQueue });
+ *  const transportSwitch = new TransportSwitch(beaconTransport, fetchTransport);
+ *  const transportGroup = new TransportGroup(transportSwitch, debugTransport);
+ *  const transport = new QueuedTransport({ transport: transportGroup, queue: memoryQueue });
  *  const tracker = new Tracker({ transport, plugins });
  *
  */
@@ -51,9 +62,12 @@ export class WebTracker extends Tracker {
       config = {
         ...config,
         transport: new QueuedTransport({
-          transport: new TransportSwitch(
-            new BeaconAPITransport({ endpoint: config.endpoint }),
-            new FetchAPITransport({ endpoint: config.endpoint })
+          transport: new TransportGroup(
+            new TransportSwitch(
+              new FetchAPITransport({ endpoint: config.endpoint }),
+              new BeaconAPITransport({ endpoint: config.endpoint })
+            ),
+            new DebugTransport()
           ),
           queue: new MemoryQueue(),
         }),

@@ -11,6 +11,11 @@ import { TrackerQueue } from './TrackerQueue';
  */
 export interface TrackerTransport {
   /**
+   * A name describing the Transport implementation for debugging purposes
+   */
+  readonly transportName: string;
+
+  /**
    * Should return if the TrackerTransport can be used. Most useful in combination with TransportSwitch.
    */
   isUsable(): boolean;
@@ -29,6 +34,7 @@ export interface TrackerTransport {
  * have TransportSwitch test each of them via the `isUsable` method to determine the topmost usable one.
  */
 export class TransportSwitch implements TrackerTransport {
+  readonly transportName = 'TransportSwitch';
   readonly firstUsableTransport?: TrackerTransport;
 
   /**
@@ -60,6 +66,7 @@ export class TransportSwitch implements TrackerTransport {
  * This can be used when having multiple Collectors but also for simpler development needs, such as handling & logging
  */
 export class TransportGroup implements TrackerTransport {
+  readonly transportName = 'TransportGroup';
   readonly list: TrackerTransport[];
 
   /**
@@ -77,7 +84,7 @@ export class TransportGroup implements TrackerTransport {
   }
 
   /**
-   * The whole TransportGroup is usable if we found at least one one usable TrackerTransport
+   * The whole TransportGroup is usable if we found at least one usable TrackerTransport
    */
   isUsable(): boolean {
     return Boolean(this.list.find((transport) => transport.isUsable()));
@@ -97,6 +104,7 @@ export type QueuedTransportConfig = {
  * The queue runner is executed at construction. It's a simplistic implementation for now, just to test the concept.
  */
 export class QueuedTransport implements TrackerTransport {
+  readonly transportName = 'QueuedTransport';
   readonly transport: TrackerTransport;
   readonly queue: TrackerQueue;
 
@@ -104,11 +112,13 @@ export class QueuedTransport implements TrackerTransport {
     this.transport = config.transport;
     this.queue = config.queue;
 
-    // Start the queue runner. Each tick it will hand over a batch of TrackerEvents to the TrackerTransport
-    this.queue.run(
-      // Make sure to bind the `handle` method to its instance to preserve its scope
-      this.transport.handle.bind(this.transport)
-    );
+    if(this.isUsable()) {
+      // Start the queue runner. Each tick it will hand over a batch of TrackerEvents to the TrackerTransport
+      this.queue.run(
+        // Make sure to bind the `handle` method to its instance to preserve its scope
+        this.transport.handle.bind(this.transport)
+      );
+    }
   }
 
   handle(...args: TrackerEvent[]): void | Promise<void> {

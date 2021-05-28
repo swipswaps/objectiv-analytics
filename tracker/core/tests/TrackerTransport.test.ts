@@ -204,6 +204,24 @@ describe('QueuedTransport', () => {
     jest.useFakeTimers();
   });
 
+  it('should do nothing if the given transport is not usable', () => {
+    const logTransport = new UnusableTransport();
+    const memoryQueue = new MemoryQueue();
+
+    spyOn(logTransport, 'handle');
+
+    const testQueuedTransport = new QueuedTransport({
+      transport: logTransport,
+      queue: memoryQueue,
+    });
+
+    expect(testQueuedTransport.isUsable()).toBe(false);
+
+    expect(memoryQueue.events).toHaveLength(0);
+    expect(logTransport.handle).not.toHaveBeenCalled();
+    expect(setInterval).toHaveBeenCalledTimes(0);
+  });
+
   it('should queue events in the MemoryQueue and send them in batches via the LogTransport', () => {
     const logTransport = new LogTransport();
     const memoryQueue = new MemoryQueue();

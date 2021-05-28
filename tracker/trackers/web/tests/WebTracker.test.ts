@@ -25,16 +25,28 @@ describe('WebTracker', () => {
     expect(testTracker).toBeInstanceOf(WebTracker);
     expect(testTracker.transport).toBeInstanceOf(QueuedTransport);
     expect(testTracker.transport).toEqual({
+      transportName: 'QueuedTransport',
       queue: {
+        queueName: 'MemoryQueue',
         batchDelayMs: 250,
         batchSize: 10,
         events: [],
       },
       transport: {
-        firstUsableTransport: {
-          endpoint: 'localhost',
-          fetchFunction: defaultFetchFunction,
-        },
+        transportName: 'TransportGroup',
+        list: [
+          {
+            transportName: 'TransportSwitch',
+            firstUsableTransport: {
+              transportName: 'FetchAPITransport',
+              endpoint: 'localhost',
+              fetchFunction: defaultFetchFunction,
+            },
+          },
+          {
+            transportName: 'DebugTransport',
+          },
+        ],
       },
     });
   });
@@ -62,10 +74,6 @@ describe('WebTracker', () => {
       expect(testTracker).toBeInstanceOf(WebTracker);
       expect(testTracker.plugins?.list).toStrictEqual([]);
     });
-  });
-
-  describe('Section Tracking', () => {
-    // TODO
   });
 
   describe('trackEvent', () => {

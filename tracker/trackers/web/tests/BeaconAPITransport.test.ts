@@ -20,4 +20,16 @@ describe('BeaconAPITransport', () => {
     await testTransport.handle(testEvent);
     expect(navigator.sendBeacon).toHaveBeenCalledWith(MOCK_ENDPOINT, JSON.stringify([testEvent]));
   });
+
+  it('should be usable only for HTTP or HTTPS endpoints', async () => {
+    const testTransport1 = new BeaconAPITransport({ endpoint: `/endpoint` });
+    expect(testTransport1.isUsable()).toBe(false);
+
+    const testTransport2 = new BeaconAPITransport({ endpoint: `http://endpoint` });
+    expect(testTransport2.isUsable()).toBe(true);
+
+    const testTransport3 = new BeaconAPITransport({ endpoint: `https://endpoint` });
+    expect(testTransport3.isUsable()).toBe(true);
+  });
+
 });

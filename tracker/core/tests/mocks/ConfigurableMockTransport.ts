@@ -1,6 +1,7 @@
 import { TrackerTransport } from '../../src';
 
 export class ConfigurableMockTransport implements TrackerTransport {
+  readonly transportName = 'ConfigurableMockTransport';
   _isUsable: boolean;
 
   constructor({ isUsable }: { isUsable: boolean }) {

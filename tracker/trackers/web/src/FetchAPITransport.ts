@@ -51,6 +51,7 @@ export type FetchAPITransportConfig = {
  * Optionally supports specifying extra parameters for the `fetch` call via the `fetchParameters` config attribute.
  */
 export class FetchAPITransport implements TrackerTransport {
+  readonly transportName = 'FetchAPITransport';
   readonly endpoint: string;
   readonly fetchFunction: typeof defaultFetchFunction;
 
@@ -59,8 +60,8 @@ export class FetchAPITransport implements TrackerTransport {
     this.fetchFunction = config.fetchFunction ?? defaultFetchFunction;
   }
 
-  async handle(event: TrackerEvent): Promise<void> {
-    await this.fetchFunction({ endpoint: this.endpoint, events: [event] });
+  async handle(...args: TrackerEvent[]): Promise<void> {
+    await this.fetchFunction({ endpoint: this.endpoint, events: args });
   }
 
   isUsable(): boolean {

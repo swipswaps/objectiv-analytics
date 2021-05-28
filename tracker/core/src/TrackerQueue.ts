@@ -5,6 +5,11 @@ import { TrackerEvent } from './TrackerEvent';
  */
 export interface TrackerQueue {
   /**
+   * A name describing the Queue implementation for debugging purposes
+   */
+  readonly queueName: string;
+
+  /**
    * How many events to dequeue at the same time
    */
   readonly batchSize: number;
@@ -53,6 +58,7 @@ export type TrackerQueueConfig = {
  *
  */
 export class MemoryQueue implements TrackerQueue {
+  readonly queueName = 'MemoryQueue';
   events: TrackerEvent[] = [];
   readonly batchSize: number;
   readonly batchDelayMs: number;

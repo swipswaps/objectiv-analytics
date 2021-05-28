@@ -38,6 +38,7 @@ describe('WebDocumentContextPlugin', () => {
 
   it('should automatically trigger URLChangedEvents in response to the History API', () => {
     class SpyTransport implements TrackerTransport {
+      readonly transportName = 'SpyTransport';
       handle(): void {
         console.log('SpyTransport.handle');
       }
