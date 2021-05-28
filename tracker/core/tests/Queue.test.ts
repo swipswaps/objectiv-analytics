@@ -1,5 +1,4 @@
 import { MemoryQueue } from '../src';
-import { LogTransport } from './mocks';
 
 describe('Queue', () => {
   const Item1 = { property: 'a' };
@@ -72,7 +71,7 @@ describe('Queue', () => {
     expect(spyRunFunction).not.toHaveBeenCalled();
 
     // Start running the queue, this should start the interval timer
-    testQueue.run(new LogTransport(), spyRunFunction);
+    testQueue.run(spyRunFunction);
     expect(setInterval).toHaveBeenCalledWith(expect.any(Function), testQueue.batchDelayMs);
 
     // Run all timers by one tick - 1st Batch

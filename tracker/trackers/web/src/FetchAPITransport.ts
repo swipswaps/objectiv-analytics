@@ -16,11 +16,15 @@ export const defaultFetchParameters: Omit<RequestInit, 'body'> = {
 /**
  * The default fetch function implementation.
  */
-export const defaultFetchFunction = async (
-  endpoint: string,
-  parameters: typeof defaultFetchParameters,
-  events: TrackerEvent[]
-): Promise<void> => {
+export const defaultFetchFunction = async ({
+  endpoint,
+  events,
+  parameters = defaultFetchParameters,
+}: {
+  endpoint: string;
+  events: TrackerEvent[];
+  parameters?: typeof defaultFetchParameters;
+}): Promise<void> => {
   await fetch(endpoint, {
     ...parameters,
     body: JSON.stringify(events),
@@ -42,11 +46,6 @@ export type FetchAPITransportConfig = {
   queue?: Queue<TrackerEvent>;
 
   /**
-   * Optional. Override the default fetch API call parameters with custom ones.
-   */
-  fetchParameters?: typeof defaultFetchParameters;
-
-  /**
    * Optional. Override the default fetch API implementation with a custom one.
    */
   fetchFunction?: typeof defaultFetchFunction;
@@ -60,18 +59,16 @@ export type FetchAPITransportConfig = {
 export class FetchAPITransport implements TrackerTransport {
   readonly endpoint: string;
   readonly queue?: Queue<TrackerEvent>;
-  readonly fetchParameters: typeof defaultFetchParameters;
   readonly fetchFunction: typeof defaultFetchFunction;
 
   constructor(config: FetchAPITransportConfig) {
     this.endpoint = config.endpoint;
     this.queue = config.queue;
-    this.fetchParameters = config.fetchParameters ?? defaultFetchParameters;
     this.fetchFunction = config.fetchFunction ?? defaultFetchFunction;
 
     // If a Queue has been configured, run it by specifying which method to use for each execution
     if (this.queue) {
-      this.queue.run(this, (items: TrackerEvent[]) => this.fetchFunction(this.endpoint, this.fetchParameters, items));
+      this.queue.run((events: TrackerEvent[]) => this.fetchFunction({ endpoint: this.endpoint, events }));
     }
   }
 
@@ -82,7 +79,7 @@ export class FetchAPITransport implements TrackerTransport {
     }
 
     // Else send the TrackerEvent right away.
-    await this.fetchFunction(this.endpoint, this.fetchParameters, [event]);
+    await this.fetchFunction({ endpoint: this.endpoint, events: [event] });
   }
 
   isUsable(): boolean {

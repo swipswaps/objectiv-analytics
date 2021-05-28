@@ -1,5 +1,5 @@
 import fetchMock from 'jest-fetch-mock';
-import { defaultFetchParameters, FetchAPITransport } from '../src';
+import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
 import { MemoryQueue, TrackerEvent } from '@objectiv/core';
 
 beforeAll(() => {
@@ -31,8 +31,8 @@ describe('FetchAPITransport', () => {
     );
   });
 
-  it('should send using `fetch` API with the provided custom fetch parameters', async () => {
-    const customFetchParameters: RequestInit = {
+  it('should send using `fetch` API with the provided custom fetch function', async () => {
+    const customParameters: RequestInit = {
       ...defaultFetchParameters,
       mode: 'cors',
       cache: 'no-cache',
@@ -42,14 +42,14 @@ describe('FetchAPITransport', () => {
     };
     const testTransport = new FetchAPITransport({
       endpoint: MOCK_ENDPOINT,
-      fetchParameters: customFetchParameters,
+      fetchFunction: ({ endpoint, events }) => defaultFetchFunction({ endpoint, events, parameters: customParameters }),
     });
     await testTransport.handle(testEvent);
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
         body: JSON.stringify([testEvent]),
-        ...customFetchParameters,
+        ...customParameters,
       })
     );
   });
