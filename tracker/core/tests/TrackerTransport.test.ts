@@ -1,4 +1,11 @@
-import { Tracker, TrackerEvent, TrackerTransportGroup, TrackerTransportSwitch } from '../src';
+import {
+  Tracker,
+  TrackerEvent,
+  TrackerMemoryQueue,
+  TrackerQueuedTransport,
+  TrackerTransportGroup,
+  TrackerTransportSwitch,
+} from '../src';
 import { LogTransport, UnusableTransport } from './mocks';
 import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
 
@@ -195,5 +202,44 @@ describe('TrackerTransport complex configurations', () => {
     expect(pigeon.handle).not.toHaveBeenCalled();
     expect(consoleLog.handle).toHaveBeenCalled();
     expect(errorLog.handle).not.toHaveBeenCalled();
+  });
+});
+
+describe('TrackerQueuedTransport', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers();
+  });
+
+  it('should queue events in the MemoryQueue and send them in batches via the LogTransport', () => {
+    const logTransport = new LogTransport();
+    const memoryQueue = new TrackerMemoryQueue();
+
+    spyOn(logTransport, 'handle');
+
+    const testQueuedTransport = new TrackerQueuedTransport({
+      transport: logTransport,
+      queue: memoryQueue,
+    });
+
+    expect(testQueuedTransport.isUsable()).toBe(true);
+
+    expect(memoryQueue.events).toHaveLength(0);
+    expect(logTransport.handle).not.toHaveBeenCalled();
+    expect(setInterval).toHaveBeenCalledTimes(1);
+
+    testQueuedTransport.handle(testEvent);
+
+    expect(memoryQueue.events).toHaveLength(1);
+    expect(logTransport.handle).not.toHaveBeenCalled();
+
+    jest.runTimersToTime(memoryQueue.batchDelayMs);
+    expect(memoryQueue.events).toHaveLength(0);
+    expect(logTransport.handle).toHaveBeenCalledTimes(1);
+    expect(logTransport.handle).toHaveBeenCalledWith(testEvent);
+
+    jest.runTimersToTime(memoryQueue.batchDelayMs);
+    expect(memoryQueue.events).toHaveLength(0);
+    expect(logTransport.handle).toHaveBeenCalledTimes(1);
   });
 });

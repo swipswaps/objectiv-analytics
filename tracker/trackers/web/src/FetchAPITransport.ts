@@ -1,4 +1,4 @@
-import {Queue, QueueRunner, TrackerEvent, TrackerTransport} from '@objectiv/core';
+import { TrackerEvent, TrackerTransport } from '@objectiv/core';
 
 /**
  * The default set of parameters for the fetch API call.
@@ -41,11 +41,6 @@ export type FetchAPITransportConfig = {
   endpoint: string;
 
   /**
-   * Optional. TrackerEvent Queue & Runner instance.
-   */
-  queue?: Queue<TrackerEvent> & QueueRunner<TrackerEvent>;
-
-  /**
    * Optional. Override the default fetch API implementation with a custom one.
    */
   fetchFunction?: typeof defaultFetchFunction;
@@ -53,32 +48,18 @@ export type FetchAPITransportConfig = {
 
 /**
  * A TrackerTransport based on Fetch API. Sends event to the specified Collector endpoint.
- * Optionally supports sending events via a Queue. Queue instance can be provided via the `queue` config attribute.
  * Optionally supports specifying extra parameters for the `fetch` call via the `fetchParameters` config attribute.
  */
 export class FetchAPITransport implements TrackerTransport {
   readonly endpoint: string;
-  readonly queue?: Queue<TrackerEvent> & QueueRunner<TrackerEvent>;
   readonly fetchFunction: typeof defaultFetchFunction;
 
   constructor(config: FetchAPITransportConfig) {
     this.endpoint = config.endpoint;
-    this.queue = config.queue;
     this.fetchFunction = config.fetchFunction ?? defaultFetchFunction;
-
-    // If a Queue has been configured, run it by specifying which method to use for each execution
-    if (this.queue) {
-      this.queue.run((events: TrackerEvent[]) => this.fetchFunction({ endpoint: this.endpoint, events }));
-    }
   }
 
   async handle(event: TrackerEvent): Promise<void> {
-    // If a Queue has been configured, enqueue the TrackerEvent. The queue will self-run as initiated in constructor.
-    if (this.queue) {
-      return this.queue.enqueue(event);
-    }
-
-    // Else send the TrackerEvent right away.
     await this.fetchFunction({ endpoint: this.endpoint, events: [event] });
   }
 

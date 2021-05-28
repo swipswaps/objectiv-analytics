@@ -1,6 +1,6 @@
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
-import { MemoryQueue, TrackerEvent } from '@objectiv/core';
+import { TrackerEvent, TrackerMemoryQueue, TrackerQueuedTransport } from '@objectiv/core';
 
 beforeAll(() => {
   fetchMock.enableMocks();
@@ -31,7 +31,7 @@ describe('FetchAPITransport', () => {
     );
   });
 
-  it('should send using `fetch` API with the provided custom fetch function', async () => {
+  it('should send using `fetch` API with the provided customized fetch function', async () => {
     const customParameters: RequestInit = {
       ...defaultFetchParameters,
       mode: 'cors',
@@ -54,29 +54,34 @@ describe('FetchAPITransport', () => {
     );
   });
 
-  it('should enqueue the event in the provided Queue instance', async () => {
+  it('should enqueue the event instead of sending it right away', async () => {
     jest.useFakeTimers();
 
     // Create a test queue
-    const testTrackerEventMemoryQueue = new MemoryQueue<TrackerEvent>();
+    const testQueue = new TrackerMemoryQueue();
 
-    // Create our Fetch Transport Instance, configured with the test Queue
+    // Create our Fetch Transport Instance
     const testTransport = new FetchAPITransport({
       endpoint: MOCK_ENDPOINT,
-      queue: testTrackerEventMemoryQueue,
+    });
+
+    // Combine the two in a Queued Transport
+    const testQueuedTransport = new TrackerQueuedTransport({
+      transport: testTransport,
+      queue: testQueue,
     });
 
     // Let's handle an Event
-    await testTransport.handle(testEvent);
+    await testQueuedTransport.handle(testEvent);
 
     // Since we configured a Queue, the transport should not have called Fetch yet
     expect(fetch).not.toHaveBeenCalled();
 
     // Instead, it should have enqueued the TrackerEvent
-    expect(testTrackerEventMemoryQueue.items).toContain(testEvent);
+    expect(testQueue.events).toContain(testEvent);
 
     // Run timers to the next Queue tick.
-    jest.runTimersToTime(testTrackerEventMemoryQueue.batchDelayMs);
+    jest.runTimersToTime(testQueue.batchDelayMs);
 
     // Await for all promises to be fulfilled
     await new Promise(setImmediate);

@@ -1,4 +1,5 @@
 import { TrackerEvent } from './TrackerEvent';
+import { TrackerQueue } from './TrackerQueue';
 
 /**
  * The TrackerTransport interface provides a single function to handle one or more TrackerEvents.
@@ -80,5 +81,41 @@ export class TrackerTransportGroup implements TrackerTransport {
    */
   isUsable(): boolean {
     return Boolean(this.list.find((transport) => transport.isUsable()));
+  }
+}
+
+/**
+ * The configuration object of a TrackerQueuedTransport. Requires a Queue and Transport instances.
+ */
+export type TrackerQueuedTransportConfig = {
+  queue: TrackerQueue;
+  transport: TrackerTransport;
+};
+
+/**
+ * A TrackerTransport implementation that leverages TrackerQueue to handle events.
+ * The queue runner is executed at construction. It's a simplistic implementation for now, just to test the concept.
+ */
+export class TrackerQueuedTransport implements TrackerTransport {
+  readonly transport: TrackerTransport;
+  readonly queue: TrackerQueue;
+
+  constructor(config: TrackerQueuedTransportConfig) {
+    this.transport = config.transport;
+    this.queue = config.queue;
+
+    // Start the queue runner. Each tick it will hand over a batch of TrackerEvents to the TrackerTransport
+    this.queue.run(
+      // Make sure to bind the `handle` method to its instance to preserve its scope
+      this.transport.handle.bind(this.transport)
+    );
+  }
+
+  handle(...args: TrackerEvent[]): void | Promise<void> {
+    return this.queue.enqueue(...args);
+  }
+
+  isUsable(): boolean {
+    return this.transport.isUsable();
   }
 }
