@@ -1,7 +1,7 @@
 import { TrackerEvent } from './TrackerEvent';
 
 /**
- * The TrackerTransport interface provides a single function to handle a TrackerEvent.
+ * The TrackerTransport interface provides a single function to handle one or more TrackerEvents.
  *
  * TrackerTransport implementations may vary depending on platform. Eg: web: fetch, node: https module, etc
  *
@@ -15,9 +15,9 @@ export interface TrackerTransport {
   isUsable(): boolean;
 
   /**
-   * Process the given TrackerEvent. Eg. Send, queue, store the TrackerEvent.
+   * Process one or more TrackerEvents. Eg. Send, queue, store, etc
    */
-  handle(event: TrackerEvent): void | Promise<void>;
+  handle(...args: TrackerEvent[]): void | Promise<void>;
 }
 
 /**
@@ -40,8 +40,8 @@ export class TrackerTransportSwitch implements TrackerTransport {
   /**
    * Simply proxy the `handle` method to the usable TrackerTransport we found during construction, if any
    */
-  handle(event: TrackerEvent): void | Promise<void> {
-    return this.firstUsableTransport?.handle(event);
+  handle(...args: TrackerEvent[]): void | Promise<void> {
+    return this.firstUsableTransport?.handle(...args);
   }
 
   /**
@@ -53,7 +53,7 @@ export class TrackerTransportSwitch implements TrackerTransport {
 }
 
 /**
- * TrackerTransportGroup provides a mechanism to handle a TrackerEvent to multiple transports. The group is usable
+ * TrackerTransportGroup provides a mechanism to hand over TrackerEvents to multiple transports. The group is usable
  * if at least one of the given TrackerTransports is usable.
  *
  * This can be used when having multiple Collectors but also for simpler development needs, such as handling & logging
@@ -71,8 +71,8 @@ export class TrackerTransportGroup implements TrackerTransport {
   /**
    * Simply proxy the `handle` method to all the TrackerTransport instances we have in list. Skip the unusable ones.
    */
-  handle(event: TrackerEvent): void | Promise<void> {
-    return this.list.forEach((transport) => transport.isUsable() && transport.handle(event));
+  handle(...args: TrackerEvent[]): void | Promise<void> {
+    return this.list.forEach((transport) => transport.isUsable() && transport.handle(...args));
   }
 
   /**
