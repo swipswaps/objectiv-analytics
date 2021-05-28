@@ -7,35 +7,35 @@ describe('Queue', () => {
 
   it('should instantiate to a 0 length Queue', () => {
     const testQueue = new MemoryQueue();
-    expect(testQueue).toHaveLength(0);
+    expect(testQueue.items).toHaveLength(0);
   });
 
   it('should allow duplicated items', () => {
     const testQueue = new MemoryQueue();
     testQueue.enqueue(Item1);
-    expect(testQueue).toHaveLength(1);
+    expect(testQueue.items).toHaveLength(1);
 
     testQueue.enqueue(Item1);
-    expect(testQueue).toHaveLength(2);
+    expect(testQueue.items).toHaveLength(2);
   });
 
   it('should enqueue and dequeue in the expected order', () => {
     const testQueue = new MemoryQueue();
     testQueue.enqueue(Item1);
-    expect(testQueue).toHaveLength(1);
+    expect(testQueue.items).toHaveLength(1);
 
     testQueue.enqueue(Item2);
-    expect(testQueue).toHaveLength(2);
+    expect(testQueue.items).toHaveLength(2);
 
     testQueue.enqueue(Item3);
-    expect(testQueue).toHaveLength(3);
+    expect(testQueue.items).toHaveLength(3);
 
     expect(testQueue.dequeue()).toStrictEqual([Item1]);
-    expect(testQueue).toHaveLength(2);
+    expect(testQueue.items).toHaveLength(2);
     expect(testQueue.dequeue()).toStrictEqual([Item2]);
-    expect(testQueue).toHaveLength(1);
+    expect(testQueue.items).toHaveLength(1);
     expect(testQueue.dequeue()).toStrictEqual([Item3]);
-    expect(testQueue).toHaveLength(0);
+    expect(testQueue.items).toHaveLength(0);
     expect(testQueue.dequeue()).toStrictEqual([]);
   });
 
@@ -44,12 +44,12 @@ describe('Queue', () => {
     testQueue.enqueue(Item1);
     testQueue.enqueue(Item2);
     testQueue.enqueue(Item3);
-    expect(testQueue).toHaveLength(3);
+    expect(testQueue.items).toHaveLength(3);
 
     expect(testQueue.dequeue(2)).toStrictEqual([Item1, Item2]);
-    expect(testQueue).toHaveLength(1);
+    expect(testQueue.items).toHaveLength(1);
     expect(testQueue.dequeue(3)).toStrictEqual([Item3]);
-    expect(testQueue).toHaveLength(0);
+    expect(testQueue.items).toHaveLength(0);
     expect(testQueue.dequeue(5)).toStrictEqual([]);
   });
 
@@ -67,7 +67,7 @@ describe('Queue', () => {
     });
 
     // At this point the Queue should be full and the runFunction should have never been called
-    expect(testQueue.length).toBe(QUEUE_SIZE);
+    expect(testQueue.items.length).toBe(QUEUE_SIZE);
     expect(spyRunFunction).not.toHaveBeenCalled();
 
     // Start running the queue, this should start the interval timer
@@ -78,7 +78,7 @@ describe('Queue', () => {
     jest.runTimersToTime(testQueue.batchDelayMs);
 
     // Queue size should have gone down by the batch size and runFunction should have been called
-    expect(testQueue.length).toBe(QUEUE_SIZE - testQueue.batchSize);
+    expect(testQueue.items.length).toBe(QUEUE_SIZE - testQueue.batchSize);
     expect(spyRunFunction).toHaveBeenCalledTimes(1);
     expect(spyRunFunction).toHaveBeenCalledWith([...Array(testQueue.batchSize)].map(() => Item1));
 
@@ -87,7 +87,7 @@ describe('Queue', () => {
     jest.runTimersToTime(testQueue.batchDelayMs);
 
     // Queue size should have gone down by the batch size and runFunction should have been called
-    expect(testQueue.length).toBe(QUEUE_SIZE - testQueue.batchSize * 2);
+    expect(testQueue.items.length).toBe(QUEUE_SIZE - testQueue.batchSize * 2);
     expect(spyRunFunction).toHaveBeenCalledTimes(1);
     expect(spyRunFunction).toHaveBeenCalledWith([...Array(testQueue.batchSize)].map(() => Item1));
 
@@ -96,7 +96,7 @@ describe('Queue', () => {
     jest.runTimersToTime(testQueue.batchDelayMs);
 
     // Queue should be empty by now and the runFunction should have received the last, smaller, batch
-    expect(testQueue.length).toBe(0);
+    expect(testQueue.items.length).toBe(0);
     expect(spyRunFunction).toHaveBeenCalledTimes(1);
     expect(spyRunFunction).toHaveBeenCalledWith([...Array(QUEUE_SIZE - testQueue.batchSize * 2)].map(() => Item1));
 
@@ -105,7 +105,7 @@ describe('Queue', () => {
     jest.runTimersToTime(testQueue.batchDelayMs);
 
     // Nothing should have happened
-    expect(testQueue.length).toBe(0);
+    expect(testQueue.items.length).toBe(0);
     expect(spyRunFunction).toHaveBeenCalledTimes(0);
     expect(spyRunFunction).not.toHaveBeenCalled();
   });

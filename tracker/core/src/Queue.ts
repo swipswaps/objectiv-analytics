@@ -1,8 +1,22 @@
 /**
+ * Our Queue generic interface.
+ */
+export interface Queue<T> {
+  /**
+   * Adds an Item to the Queue
+   */
+  enqueue(item: T): void;
+
+  /**
+   * Retrieves the oldest available Item(s) from the Queue
+   */
+  dequeue(batchSize?: number): T[];
+}
+
+/**
  * Configuration object for the queue runner.
  */
-
-export type BatchConfig = {
+export type QueueRunnerConfig = {
   /**
    * How many items to dequeue at the same time
    */
@@ -15,45 +29,30 @@ export type BatchConfig = {
 };
 
 /**
- * Our Queue generic interface.
+ * Our QueueRunner generic interface.
  */
-export interface Queue<T> {
+export interface QueueRunner<T> {
   /**
-   * Optional. How many items to dequeue at the same time.
+   * How many items to dequeue at the same time.
    */
   readonly batchSize: number;
 
   /**
-   * Optional. How often to re-run and dequeue again.
+   * How often to re-run and dequeue again.
    */
   readonly batchDelayMs: number;
 
   /**
-   * Adds a Queueable Item to the Queue
-   */
-  enqueue(item: T): void;
-
-  /**
-   * Retrieves the oldest available Item(s) from the Queue
-   */
-  dequeue(batchSize?: number): T[];
-
-  /**
-   * Queue runner function. Should execute the given `runFunction` with the dequeued items until the Queue is empty.
+   * Queue runner function. Simply executes the given `runFunction` with the dequeued items.
    */
   run(runFunction: (items: T[]) => Promise<void>): void;
-
-  /**
-   * Getter to retrieve how many items are in the Queue
-   */
-  readonly length: number;
 }
 
 /**
  * A very simple Memory Queue generic implementation based on a JavaScript array.
  * It uses setInterval for a continuously consuming runner.
  */
-export class MemoryQueue<T> implements Queue<T> {
+export class MemoryQueue<T> implements Queue<T>, QueueRunner<T> {
   items: T[] = [];
   readonly batchSize: number;
   readonly batchDelayMs: number;
@@ -61,9 +60,9 @@ export class MemoryQueue<T> implements Queue<T> {
   /**
    * Initializes batching configuration with some sensible values.
    */
-  constructor(batchConfig?: BatchConfig) {
-    this.batchSize = batchConfig?.batchSize ?? 10;
-    this.batchDelayMs = batchConfig?.batchDelayMs ?? 250;
+  constructor(config?: QueueRunnerConfig) {
+    this.batchSize = config?.batchSize ?? 10;
+    this.batchDelayMs = config?.batchDelayMs ?? 250;
   }
 
   enqueue(item: T): void {
@@ -82,9 +81,5 @@ export class MemoryQueue<T> implements Queue<T> {
         await runFunction(eventsBatch);
       }
     }, this.batchDelayMs);
-  }
-
-  get length(): number {
-    return this.items.length;
   }
 }
