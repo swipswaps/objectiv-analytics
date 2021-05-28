@@ -49,7 +49,7 @@ def main(argv: List[str]):
             event_data = json.loads(file.read())
         errors = validate_event_list(event_schema=event_schema, event_data=event_data)
         if errors:
-            raise Exception(f'Error in file: {filename}')
+            raise Exception(f'Error in file: {filename} - {errors}')
         print(
             json.dumps(
                 [hydrate_types_into_event(event_schema, event) for event in event_data],

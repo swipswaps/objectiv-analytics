@@ -8,7 +8,7 @@
     }
   },
   "contexts": {
-    "XContext2": {
+    "X2Context": {
       "parents": [
         "AbstractGlobalContext"
       ],
