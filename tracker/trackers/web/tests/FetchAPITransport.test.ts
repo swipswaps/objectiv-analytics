@@ -1,6 +1,6 @@
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
-import { TrackerEvent, TrackerMemoryQueue, TrackerQueuedTransport } from '@objectiv/core';
+import { TrackerEvent, TrackerMemoryQueue, QueuedTransport } from '@objectiv/core';
 
 beforeAll(() => {
   fetchMock.enableMocks();
@@ -66,7 +66,7 @@ describe('FetchAPITransport', () => {
     });
 
     // Combine the two in a Queued Transport
-    const testQueuedTransport = new TrackerQueuedTransport({
+    const testQueuedTransport = new QueuedTransport({
       transport: testTransport,
       queue: testQueue,
     });

@@ -1,4 +1,4 @@
-import { Tracker, TrackerConfig, TrackerPlugins, TrackerTransportSwitch } from '@objectiv/core';
+import { Tracker, TrackerConfig, TrackerPlugins, TransportSwitch } from '@objectiv/core';
 import { FetchAPITransport } from './FetchAPITransport';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
@@ -6,7 +6,7 @@ import { BeaconAPITransport } from './BeaconAPITransport';
 
 /**
  * Web Tracker can be configured in a easier way by specifying just an `endpoint`.
- * Internally it will create a TrackerTransportSwitch(BeaconAPITransport, FetchAPITransport) for the given `endpoint`.
+ * Internally it will automatically configure the Transport layer for the given `endpoint` with sensible defaults.
  */
 export type WebTrackerConfig = TrackerConfig & {
   endpoint?: string;
@@ -26,7 +26,7 @@ export type WebTrackerConfig = TrackerConfig & {
  *  const plugins = new TrackerPlugins([ WebDocumentContextPlugin, WebDeviceContextPlugin ]);
  *  const beaconTransport = new BeaconAPITransport({ endpoint: '/endpoint' });
  *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint' });
- *  const transport = TrackerTransportSwitch(beaconTransport, fetchTransport);
+ *  const transport = TransportSwitch(beaconTransport, fetchTransport);
  *  const tracker = new Tracker({ transport, plugins });
  *
  */
@@ -44,11 +44,11 @@ export class WebTracker extends Tracker {
       throw new Error('Please provider either `transport` or `endpoint`, not both at same time');
     }
 
-    // Automatically create a TrackerTransportSwitch(BeaconAPITransport, FetchAPITransport) for the given `endpoint`
+    // Automatically create a TransportSwitch(BeaconAPITransport, FetchAPITransport) for the given `endpoint`
     if (config.endpoint) {
       config = {
         ...config,
-        transport: new TrackerTransportSwitch(
+        transport: new TransportSwitch(
           new BeaconAPITransport({ endpoint: config.endpoint }),
           new FetchAPITransport({ endpoint: config.endpoint })
         ),

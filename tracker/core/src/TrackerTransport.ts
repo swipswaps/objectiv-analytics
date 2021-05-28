@@ -11,7 +11,7 @@ import { TrackerQueue } from './TrackerQueue';
  */
 export interface TrackerTransport {
   /**
-   * Should return if the TrackerTransport can be used. Most useful in combination with TrackerTransportSwitch.
+   * Should return if the TrackerTransport can be used. Most useful in combination with TransportSwitch.
    */
   isUsable(): boolean;
 
@@ -22,13 +22,13 @@ export interface TrackerTransport {
 }
 
 /**
- * TrackerTransportSwitch provides a fallback mechanism to pick the first usable transport in a list of them.
+ * TransportSwitch provides a fallback mechanism to pick the first usable transport in a list of them.
  * The switch is usable if at least one of the given TrackerTransports is usable.
  *
  * This mechanism can be used to configure multiple TrackerTransport instances, in order of preference, and
- * have TrackerTransportSwitch test each of them via the `isUsable` method to determine the topmost usable one.
+ * have TransportSwitch test each of them via the `isUsable` method to determine the topmost usable one.
  */
-export class TrackerTransportSwitch implements TrackerTransport {
+export class TransportSwitch implements TrackerTransport {
   readonly firstUsableTransport?: TrackerTransport;
 
   /**
@@ -46,7 +46,7 @@ export class TrackerTransportSwitch implements TrackerTransport {
   }
 
   /**
-   * The whole TrackerTransportSwitch is usable if we found a usable TrackerTransport
+   * The whole TransportSwitch is usable if we found a usable TrackerTransport
    */
   isUsable(): boolean {
     return Boolean(this.firstUsableTransport);
@@ -54,12 +54,12 @@ export class TrackerTransportSwitch implements TrackerTransport {
 }
 
 /**
- * TrackerTransportGroup provides a mechanism to hand over TrackerEvents to multiple transports. The group is usable
+ * TransportGroup provides a mechanism to hand over TrackerEvents to multiple transports. The group is usable
  * if at least one of the given TrackerTransports is usable.
  *
  * This can be used when having multiple Collectors but also for simpler development needs, such as handling & logging
  */
-export class TrackerTransportGroup implements TrackerTransport {
+export class TransportGroup implements TrackerTransport {
   readonly list: TrackerTransport[];
 
   /**
@@ -77,7 +77,7 @@ export class TrackerTransportGroup implements TrackerTransport {
   }
 
   /**
-   * The whole TrackerTransportGroup is usable if we found at least one one usable TrackerTransport
+   * The whole TransportGroup is usable if we found at least one one usable TrackerTransport
    */
   isUsable(): boolean {
     return Boolean(this.list.find((transport) => transport.isUsable()));
@@ -85,9 +85,9 @@ export class TrackerTransportGroup implements TrackerTransport {
 }
 
 /**
- * The configuration object of a TrackerQueuedTransport. Requires a Queue and Transport instances.
+ * The configuration object of a QueuedTransport. Requires a Queue and Transport instances.
  */
-export type TrackerQueuedTransportConfig = {
+export type QueuedTransportConfig = {
   queue: TrackerQueue;
   transport: TrackerTransport;
 };
@@ -96,11 +96,11 @@ export type TrackerQueuedTransportConfig = {
  * A TrackerTransport implementation that leverages TrackerQueue to handle events.
  * The queue runner is executed at construction. It's a simplistic implementation for now, just to test the concept.
  */
-export class TrackerQueuedTransport implements TrackerTransport {
+export class QueuedTransport implements TrackerTransport {
   readonly transport: TrackerTransport;
   readonly queue: TrackerQueue;
 
-  constructor(config: TrackerQueuedTransportConfig) {
+  constructor(config: QueuedTransportConfig) {
     this.transport = config.transport;
     this.queue = config.queue;
 

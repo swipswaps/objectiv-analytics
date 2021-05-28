@@ -1,5 +1,5 @@
 import { defaultFetchFunction, FetchAPITransport, WebTracker } from '../src';
-import { TrackerEvent, TrackerPlugins, TrackerTransportSwitch } from '@objectiv/core';
+import { TrackerEvent, TrackerPlugins, TransportSwitch } from '@objectiv/core';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 
@@ -23,7 +23,7 @@ describe('WebTracker', () => {
   it('should instantiate with `endpoint`', () => {
     const testTracker = new WebTracker({ endpoint: 'localhost' });
     expect(testTracker).toBeInstanceOf(WebTracker);
-    expect(testTracker.transport).toBeInstanceOf(TrackerTransportSwitch);
+    expect(testTracker.transport).toBeInstanceOf(TransportSwitch);
     expect(testTracker.transport).toEqual({
       firstUsableTransport: {
         endpoint: 'localhost',

@@ -1,11 +1,4 @@
-import {
-  Tracker,
-  TrackerEvent,
-  TrackerMemoryQueue,
-  TrackerQueuedTransport,
-  TrackerTransportGroup,
-  TrackerTransportSwitch,
-} from '../src';
+import { Tracker, TrackerEvent, TrackerMemoryQueue, QueuedTransport, TransportGroup, TransportSwitch } from '../src';
 import { LogTransport, UnusableTransport } from './mocks';
 import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
 
@@ -16,7 +9,7 @@ const testContexts = {
 };
 const testEvent = new TrackerEvent({ eventName: testEventName, ...testContexts });
 
-describe('TrackerTransportSwitch', () => {
+describe('TransportSwitch', () => {
   it('should not pick any TrackerTransport', () => {
     const transport1 = new UnusableTransport();
     const transport2 = new LogTransport();
@@ -28,7 +21,7 @@ describe('TrackerTransportSwitch', () => {
     spyOn(transport1, 'handle');
     spyOn(transport2, 'handle');
 
-    const transports = new TrackerTransportSwitch(transport1, transport2);
+    const transports = new TransportSwitch(transport1, transport2);
     expect(transports.firstUsableTransport).toBe(undefined);
     expect(transports.isUsable()).toBe(false);
 
@@ -48,7 +41,7 @@ describe('TrackerTransportSwitch', () => {
     spyOn(transport1, 'handle');
     spyOn(transport2, 'handle');
 
-    const transports = new TrackerTransportSwitch(transport1, transport2);
+    const transports = new TransportSwitch(transport1, transport2);
     expect(transports.firstUsableTransport).toBe(transport2);
     expect(transports.isUsable()).toBe(true);
 
@@ -61,7 +54,7 @@ describe('TrackerTransportSwitch', () => {
   });
 });
 
-describe('TrackerTransportGroup', () => {
+describe('TransportGroup', () => {
   it('should not handle any TrackerTransport', () => {
     const transport1 = new UnusableTransport();
     const transport2 = new LogTransport();
@@ -73,7 +66,7 @@ describe('TrackerTransportGroup', () => {
     spyOn(transport1, 'handle');
     spyOn(transport2, 'handle');
 
-    const transports = new TrackerTransportGroup(transport1, transport2);
+    const transports = new TransportGroup(transport1, transport2);
     expect(transports.list).toStrictEqual([transport1, transport2]);
     expect(transports.isUsable()).toBe(false);
 
@@ -93,7 +86,7 @@ describe('TrackerTransportGroup', () => {
     spyOn(transport1, 'handle');
     spyOn(transport2, 'handle');
 
-    const transports = new TrackerTransportGroup(transport1, transport2);
+    const transports = new TransportGroup(transport1, transport2);
     expect(transports.list).toStrictEqual([transport1, transport2]);
     expect(transports.isUsable()).toBe(true);
 
@@ -134,9 +127,9 @@ describe('TrackerTransport complex configurations', () => {
     errorLog._isUsable = true;
     expect(errorLog.isUsable()).toBe(true);
 
-    const sendTransport = new TrackerTransportSwitch(beacon, fetch, xmlHTTPRequest, pigeon);
-    const sendAndLog = new TrackerTransportGroup(sendTransport, consoleLog);
-    const transport = new TrackerTransportSwitch(sendAndLog, errorLog);
+    const sendTransport = new TransportSwitch(beacon, fetch, xmlHTTPRequest, pigeon);
+    const sendAndLog = new TransportGroup(sendTransport, consoleLog);
+    const transport = new TransportSwitch(sendAndLog, errorLog);
 
     expect(sendTransport.isUsable()).toBe(false);
     expect(sendAndLog.isUsable()).toBe(false);
@@ -160,9 +153,9 @@ describe('TrackerTransport complex configurations', () => {
     consoleLog._isUsable = true;
     expect(consoleLog.isUsable()).toBe(true);
 
-    const sendTransport = new TrackerTransportSwitch(beacon, fetch, xmlHTTPRequest, pigeon);
-    const sendAndLog = new TrackerTransportGroup(sendTransport, consoleLog);
-    const transport = new TrackerTransportSwitch(sendAndLog, errorLog);
+    const sendTransport = new TransportSwitch(beacon, fetch, xmlHTTPRequest, pigeon);
+    const sendAndLog = new TransportGroup(sendTransport, consoleLog);
+    const transport = new TransportSwitch(sendAndLog, errorLog);
 
     expect(sendTransport.isUsable()).toBe(true);
     expect(sendAndLog.isUsable()).toBe(true);
@@ -184,9 +177,9 @@ describe('TrackerTransport complex configurations', () => {
     consoleLog._isUsable = true;
     expect(consoleLog.isUsable()).toBe(true);
 
-    const sendTransport = new TrackerTransportSwitch(beacon, fetch, xmlHTTPRequest, pigeon);
-    const sendAndLog = new TrackerTransportGroup(sendTransport, consoleLog);
-    const transport = new TrackerTransportSwitch(sendAndLog, errorLog);
+    const sendTransport = new TransportSwitch(beacon, fetch, xmlHTTPRequest, pigeon);
+    const sendAndLog = new TransportGroup(sendTransport, consoleLog);
+    const transport = new TransportSwitch(sendAndLog, errorLog);
 
     expect(sendTransport.isUsable()).toBe(false);
     expect(sendAndLog.isUsable()).toBe(true);
@@ -205,7 +198,7 @@ describe('TrackerTransport complex configurations', () => {
   });
 });
 
-describe('TrackerQueuedTransport', () => {
+describe('QueuedTransport', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
@@ -217,7 +210,7 @@ describe('TrackerQueuedTransport', () => {
 
     spyOn(logTransport, 'handle');
 
-    const testQueuedTransport = new TrackerQueuedTransport({
+    const testQueuedTransport = new QueuedTransport({
       transport: logTransport,
       queue: memoryQueue,
     });
