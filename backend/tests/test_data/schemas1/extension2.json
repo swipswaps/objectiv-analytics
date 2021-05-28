@@ -2,7 +2,7 @@
   "name": "extension2",
   "version": {"extension2": "0.0.3"},
   "events": {
-    "NewEvent2": {
+    "New2Event": {
         "parents": ["NonInteractiveEvent"],
         "requiresContext": ["XContext2"]
     }
