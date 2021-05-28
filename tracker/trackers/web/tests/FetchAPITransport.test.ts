@@ -55,14 +55,41 @@ describe('FetchAPITransport', () => {
   });
 
   it('should enqueue the event in the provided Queue instance', async () => {
+    jest.useFakeTimers();
+
+    // Create a test queue
     const testTrackerEventMemoryQueue = new MemoryQueue<TrackerEvent>();
-    spyOn(testTrackerEventMemoryQueue, 'enqueue');
+
+    // Create our Fetch Transport Instance, configured with the test Queue
     const testTransport = new FetchAPITransport({
       endpoint: MOCK_ENDPOINT,
       queue: testTrackerEventMemoryQueue,
     });
+
+    // Let's handle an Event
     await testTransport.handle(testEvent);
-    expect(fetch).not.toHaveBeenCalledWith();
-    expect(testTrackerEventMemoryQueue.enqueue).toHaveBeenCalledWith(testEvent);
+
+    // Since we configured a Queue, the transport should not have called Fetch yet
+    expect(fetch).not.toHaveBeenCalled();
+
+    // Instead, it should have enqueued the TrackerEvent
+    expect(testTrackerEventMemoryQueue.items).toContain(testEvent);
+
+    // Run timers to the next Queue tick.
+    jest.runTimersToTime(testTrackerEventMemoryQueue.batchDelayMs);
+
+    // Await for all promises to be fulfilled
+    await new Promise(setImmediate);
+
+    // The Queue should have now sent the event by calling the runFunction once
+    expect(setInterval).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledWith(
+      MOCK_ENDPOINT,
+      expect.objectContaining({
+        body: JSON.stringify([testEvent]),
+        ...defaultFetchParameters,
+      })
+    );
   });
 });

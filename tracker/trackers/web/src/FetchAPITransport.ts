@@ -51,7 +51,7 @@ export class FetchAPITransport implements TrackerTransport {
 
     // If a Queue has been configured, run it by specifying which method to use for each execution
     if (this.queue) {
-      this.queue.run(this.send);
+      this.queue.run(this, this.send);
     }
   }
 

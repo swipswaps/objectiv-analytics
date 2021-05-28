@@ -1,6 +1,8 @@
 /**
  * Configuration object for the queue runner.
  */
+import {TrackerTransport} from "./TrackerTransport";
+
 export type BatchConfig = {
   /**
    * How many items to dequeue at the same time
@@ -40,7 +42,7 @@ export interface Queue<T> {
   /**
    * Queue runner function. Should execute the given `runFunction` with the dequeued items until the Queue is empty.
    */
-  run(runFunction: (items: T[]) => Promise<void>): void;
+  run(transport: TrackerTransport, runFunction: (items: T[]) => Promise<void>): void;
 
   /**
    * Getter to retrieve how many items are in the Queue
@@ -50,7 +52,7 @@ export interface Queue<T> {
 
 /**
  * A very simple Memory Queue generic implementation based on a JavaScript array.
- * It uses setTimeout for the runner.
+ * It uses setInterval for a continuously consuming runner.
  */
 export class MemoryQueue<T> implements Queue<T> {
   items: T[] = [];
@@ -73,16 +75,12 @@ export class MemoryQueue<T> implements Queue<T> {
     return this.items.splice(0, batchSize);
   }
 
-  run(runFunction: (items: T[]) => Promise<void>): void {
-    setTimeout(async () => {
+  // TODO this is way too simplistic, if the batch fails we just lost it. Need to add more complexity, retry, etc
+  run(transport: TrackerTransport, runFunction: (items: T[]) => Promise<void>): void {
+    setInterval(async () => {
       const eventsBatch = this.dequeue(this.batchSize);
       if (eventsBatch.length) {
-        await runFunction(eventsBatch);
-
-        // Execute again if there are still items in the Queue
-        if (this.length) {
-          this.run(runFunction);
-        }
+        await runFunction.apply(transport, [eventsBatch]);
       }
     }, this.batchDelayMs);
   }

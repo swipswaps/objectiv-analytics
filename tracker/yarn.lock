@@ -6958,10 +6958,6 @@ __metadata:
 "root@workspace:.":
   version: 0.0.0-use.local
   resolution: "root@workspace:."
-  dependencies:
-    "@objectiv/core": "workspace:core"
-    "@objectiv/tracker-web": "workspace:trackers/web"
-    prettier: ^2.3.0
   languageName: unknown
   linkType: soft
 
