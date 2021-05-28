@@ -1,4 +1,4 @@
-import { Queue, TrackerEvent, TrackerTransport } from '@objectiv/core';
+import {Queue, QueueRunner, TrackerEvent, TrackerTransport} from '@objectiv/core';
 
 /**
  * The default set of parameters for the fetch API call.
@@ -41,9 +41,9 @@ export type FetchAPITransportConfig = {
   endpoint: string;
 
   /**
-   * Optional. TrackerEvent Queue class.
+   * Optional. TrackerEvent Queue & Runner instance.
    */
-  queue?: Queue<TrackerEvent>;
+  queue?: Queue<TrackerEvent> & QueueRunner<TrackerEvent>;
 
   /**
    * Optional. Override the default fetch API implementation with a custom one.
@@ -58,7 +58,7 @@ export type FetchAPITransportConfig = {
  */
 export class FetchAPITransport implements TrackerTransport {
   readonly endpoint: string;
-  readonly queue?: Queue<TrackerEvent>;
+  readonly queue?: Queue<TrackerEvent> & QueueRunner<TrackerEvent>;
   readonly fetchFunction: typeof defaultFetchFunction;
 
   constructor(config: FetchAPITransportConfig) {
