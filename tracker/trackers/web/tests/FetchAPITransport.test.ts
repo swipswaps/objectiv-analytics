@@ -1,6 +1,6 @@
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
-import { TrackerEvent, TrackerMemoryQueue, QueuedTransport } from '@objectiv/core';
+import { MemoryQueue, QueuedTransport, TrackerEvent } from '@objectiv/core';
 
 beforeAll(() => {
   fetchMock.enableMocks();
@@ -58,7 +58,7 @@ describe('FetchAPITransport', () => {
     jest.useFakeTimers();
 
     // Create a test queue
-    const testQueue = new TrackerMemoryQueue();
+    const testQueue = new MemoryQueue();
 
     // Create our Fetch Transport Instance
     const testTransport = new FetchAPITransport({

@@ -1,4 +1,4 @@
-import { Tracker, TrackerEvent, TrackerMemoryQueue, QueuedTransport, TransportGroup, TransportSwitch } from '../src';
+import { MemoryQueue, Tracker, TrackerEvent, QueuedTransport, TransportGroup, TransportSwitch } from '../src';
 import { LogTransport, UnusableTransport } from './mocks';
 import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
 
@@ -206,7 +206,7 @@ describe('QueuedTransport', () => {
 
   it('should queue events in the MemoryQueue and send them in batches via the LogTransport', () => {
     const logTransport = new LogTransport();
-    const memoryQueue = new TrackerMemoryQueue();
+    const memoryQueue = new MemoryQueue();
 
     spyOn(logTransport, 'handle');
 

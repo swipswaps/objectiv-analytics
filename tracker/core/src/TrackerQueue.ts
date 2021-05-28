@@ -52,7 +52,7 @@ export type TrackerQueueConfig = {
  * TODO Just a PoC. This is a way too simplistic approach. If the batch fails we just lost it. Need to add retry, etc
  *
  */
-export class TrackerMemoryQueue implements TrackerQueue {
+export class MemoryQueue implements TrackerQueue {
   events: TrackerEvent[] = [];
   readonly batchSize: number;
   readonly batchDelayMs: number;

@@ -1,23 +1,23 @@
-import { TrackerEvent, TrackerMemoryQueue } from '../src';
+import { TrackerEvent, MemoryQueue } from '../src';
 
-describe('TrackerMemoryQueue', () => {
+describe('MemoryQueue', () => {
   const TrackerEvent1 = new TrackerEvent({ eventName: 'a' });
   const TrackerEvent2 = new TrackerEvent({ eventName: 'b' });
   const TrackerEvent3 = new TrackerEvent({ eventName: 'c' });
 
   it('should instantiate to a 0 length Queue', () => {
-    const testQueue = new TrackerMemoryQueue();
+    const testQueue = new MemoryQueue();
     expect(testQueue.events).toHaveLength(0);
   });
 
   it('should allow enqueuing multiple items at once', () => {
-    const testQueue = new TrackerMemoryQueue();
+    const testQueue = new MemoryQueue();
     testQueue.enqueue(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(testQueue.events).toHaveLength(3);
   });
 
   it('should allow duplicated items', () => {
-    const testQueue = new TrackerMemoryQueue();
+    const testQueue = new MemoryQueue();
     testQueue.enqueue(TrackerEvent1);
     expect(testQueue.events).toHaveLength(1);
 
@@ -26,7 +26,7 @@ describe('TrackerMemoryQueue', () => {
   });
 
   it('should enqueue and dequeue in the expected order', () => {
-    const testQueue = new TrackerMemoryQueue();
+    const testQueue = new MemoryQueue();
     testQueue.enqueue(TrackerEvent1);
     expect(testQueue.events).toHaveLength(1);
 
@@ -46,7 +46,7 @@ describe('TrackerMemoryQueue', () => {
   });
 
   it('should support dequeue in batches', () => {
-    const testQueue = new TrackerMemoryQueue();
+    const testQueue = new MemoryQueue();
     testQueue.enqueue(TrackerEvent1);
     testQueue.enqueue(TrackerEvent2);
     testQueue.enqueue(TrackerEvent3);
@@ -64,7 +64,7 @@ describe('TrackerMemoryQueue', () => {
 
     // Create a MemoryQueue configured to have batches smaller than the full Queue size
     const QUEUE_SIZE = 25;
-    const testQueue = new TrackerMemoryQueue({ batchSize: 10, batchDelayMs: 100 });
+    const testQueue = new MemoryQueue({ batchSize: 10, batchDelayMs: 100 });
     [...Array(QUEUE_SIZE)].forEach(() => testQueue.enqueue(TrackerEvent1));
 
     // A spy runFunction we can monitor
