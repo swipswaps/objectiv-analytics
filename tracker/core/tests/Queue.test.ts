@@ -1,5 +1,5 @@
 import { MemoryQueue } from '../src';
-import {LogTransport} from "./mocks";
+import { LogTransport } from './mocks';
 
 describe('Queue', () => {
   const Item1 = { property: 'a' };

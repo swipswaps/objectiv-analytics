@@ -1,6 +1,33 @@
 import { Queue, TrackerEvent, TrackerTransport } from '@objectiv/core';
 
 /**
+ * The default set of parameters for the fetch API call.
+ * The `body` parameter is internally managed and should not be overridden.
+ */
+export const defaultFetchParameters: Omit<RequestInit, 'body'> = {
+  method: 'POST',
+  mode: 'no-cors',
+  headers: {
+    'Content-Type': 'text/plain',
+  },
+  credentials: 'include',
+};
+
+/**
+ * The default fetch function implementation.
+ */
+export const defaultFetchFunction = async (
+  endpoint: string,
+  parameters: typeof defaultFetchParameters,
+  events: TrackerEvent[]
+): Promise<void> => {
+  await fetch(endpoint, {
+    ...parameters,
+    body: JSON.stringify(events),
+  });
+};
+
+/**
  * The configuration of the FetchAPITransport class
  */
 export type FetchAPITransportConfig = {
@@ -17,21 +44,12 @@ export type FetchAPITransportConfig = {
   /**
    * Optional. Override the default fetch API call parameters with custom ones.
    */
-  fetchParameters?: RequestInit;
-};
+  fetchParameters?: typeof defaultFetchParameters;
 
-/**
- * The default set of parameters for the fetch API call.
- * The `body` parameter is internally managed and should not be overridden.
- * A Queue instance can be specified at construction, in which case it will be used
- */
-export const defaultFetchParameters: Omit<RequestInit, 'body'> = {
-  method: 'POST',
-  mode: 'no-cors',
-  headers: {
-    'Content-Type': 'text/plain',
-  },
-  credentials: 'include',
+  /**
+   * Optional. Override the default fetch API implementation with a custom one.
+   */
+  fetchFunction?: typeof defaultFetchFunction;
 };
 
 /**
@@ -42,27 +60,19 @@ export const defaultFetchParameters: Omit<RequestInit, 'body'> = {
 export class FetchAPITransport implements TrackerTransport {
   readonly endpoint: string;
   readonly queue?: Queue<TrackerEvent>;
-  readonly fetchParameters?: RequestInit;
+  readonly fetchParameters: typeof defaultFetchParameters;
+  readonly fetchFunction: typeof defaultFetchFunction;
 
   constructor(config: FetchAPITransportConfig) {
     this.endpoint = config.endpoint;
     this.queue = config.queue;
-    this.fetchParameters = config.fetchParameters;
+    this.fetchParameters = config.fetchParameters ?? defaultFetchParameters;
+    this.fetchFunction = config.fetchFunction ?? defaultFetchFunction;
 
     // If a Queue has been configured, run it by specifying which method to use for each execution
     if (this.queue) {
-      this.queue.run(this, this.send);
+      this.queue.run(this, (items: TrackerEvent[]) => this.fetchFunction(this.endpoint, this.fetchParameters, items));
     }
-  }
-
-  /**
-   * Fetch wrapper to actually send one or more Events
-   */
-  private async send(events: TrackerEvent[]) {
-    await fetch(this.endpoint, {
-      ...(this.fetchParameters ?? defaultFetchParameters),
-      body: JSON.stringify(events),
-    });
   }
 
   async handle(event: TrackerEvent): Promise<void> {
@@ -72,7 +82,7 @@ export class FetchAPITransport implements TrackerTransport {
     }
 
     // Else send the TrackerEvent right away.
-    await this.send([event]);
+    await this.fetchFunction(this.endpoint, this.fetchParameters, [event]);
   }
 
   isUsable(): boolean {

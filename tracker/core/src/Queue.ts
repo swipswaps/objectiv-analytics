@@ -1,7 +1,7 @@
 /**
  * Configuration object for the queue runner.
  */
-import {TrackerTransport} from "./TrackerTransport";
+import { TrackerTransport } from './TrackerTransport';
 
 export type BatchConfig = {
   /**

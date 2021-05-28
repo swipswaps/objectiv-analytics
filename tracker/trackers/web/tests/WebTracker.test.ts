@@ -1,4 +1,4 @@
-import { FetchAPITransport, WebTracker } from '../src';
+import {defaultFetchFunction, defaultFetchParameters, FetchAPITransport, WebTracker} from '../src';
 import { TrackerEvent, TrackerPlugins, TrackerTransportSwitch } from '@objectiv/core';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
@@ -25,7 +25,11 @@ describe('WebTracker', () => {
     expect(testTracker).toBeInstanceOf(WebTracker);
     expect(testTracker.transport).toBeInstanceOf(TrackerTransportSwitch);
     expect(testTracker.transport).toEqual({
-      firstUsableTransport: { endpoint: 'localhost', fetchParameters: undefined },
+      firstUsableTransport: {
+        endpoint: 'localhost',
+        fetchFunction: defaultFetchFunction,
+        fetchParameters: defaultFetchParameters,
+      },
     });
   });
 
