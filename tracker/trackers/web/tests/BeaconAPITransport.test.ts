@@ -31,5 +31,4 @@ describe('BeaconAPITransport', () => {
     const testTransport3 = new BeaconAPITransport({ endpoint: `https://endpoint` });
     expect(testTransport3.isUsable()).toBe(true);
   });
-
 });

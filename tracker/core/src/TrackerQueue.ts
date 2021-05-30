@@ -22,7 +22,7 @@ export interface TrackerQueue {
   /**
    * Adds one or more TrackerEvents to the Queue
    */
-  enqueue(...args: TrackerEvent[]): void;
+  enqueue(...args: [TrackerEvent, ...TrackerEvent[]]): void;
 
   /**
    * Retrieves the oldest available Item(s) from the Queue
@@ -32,7 +32,7 @@ export interface TrackerQueue {
   /**
    * Queue runner function. Simply executes the given `runFunction` with the dequeued events.
    */
-  run(runFunction: (...args: TrackerEvent[]) => void | Promise<void>): void;
+  run(runFunction: (...args: TrackerEvent[]) => void): void;
 }
 
 /**
@@ -71,7 +71,7 @@ export class MemoryQueue implements TrackerQueue {
     this.batchDelayMs = config?.batchDelayMs ?? 250;
   }
 
-  enqueue(...args: TrackerEvent[]): void {
+  enqueue(...args: [TrackerEvent, ...TrackerEvent[]]): void {
     this.events.push(...args);
   }
 
@@ -79,11 +79,12 @@ export class MemoryQueue implements TrackerQueue {
     return this.events.splice(0, batchSize);
   }
 
-  run(runFunction: (...args: TrackerEvent[]) => void | Promise<void>): void {
-    setInterval(async () => {
+  run(runFunction: (...args: TrackerEvent[]) => void): void {
+    setInterval(() => {
       const eventsBatch = this.dequeue(this.batchSize);
+      // No need to execute runFunction if the batch is empty
       if (eventsBatch.length) {
-        await runFunction(...eventsBatch);
+        runFunction(...eventsBatch);
       }
     }, this.batchDelayMs);
   }

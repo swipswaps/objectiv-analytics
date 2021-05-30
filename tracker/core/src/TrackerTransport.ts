@@ -23,7 +23,7 @@ export interface TrackerTransport {
   /**
    * Process one or more TrackerEvents. Eg. Send, queue, store, etc
    */
-  handle(...args: TrackerEvent[]): void | Promise<void>;
+  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void;
 }
 
 /**
@@ -38,17 +38,21 @@ export class TransportSwitch implements TrackerTransport {
   readonly firstUsableTransport?: TrackerTransport;
 
   /**
-   * Finds the first TrackerTransport which `isUsable()`
+   * Finds the first TrackerTransport which `isUsable()`.
    */
-  constructor(...args: TrackerTransport[]) {
+  constructor(...args: [TrackerTransport, TrackerTransport, ...TrackerTransport[]]) {
     this.firstUsableTransport = args.find((trackerTransport) => trackerTransport.isUsable());
   }
 
   /**
    * Simply proxy the `handle` method to the usable TrackerTransport we found during construction, if any
    */
-  handle(...args: TrackerEvent[]): void | Promise<void> {
-    return this.firstUsableTransport?.handle(...args);
+  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
+    if (!this.firstUsableTransport) {
+      throw new Error(`${this.transportName}: no usable Transport found; make sure to verify usability first.`);
+    }
+
+    this.firstUsableTransport.handle(...args);
   }
 
   /**
@@ -67,27 +71,31 @@ export class TransportSwitch implements TrackerTransport {
  */
 export class TransportGroup implements TrackerTransport {
   readonly transportName = 'TransportGroup';
-  readonly list: TrackerTransport[];
+  readonly usableTransports: TrackerTransport[];
 
   /**
-   * Store the list of transports, received as construction parameters, in state
+   * Filter and store the list of usable transports, received as construction parameters, in state
    */
-  constructor(...args: TrackerTransport[]) {
-    this.list = args;
+  constructor(...args: [TrackerTransport, TrackerTransport, ...TrackerTransport[]]) {
+    this.usableTransports = args.filter((transport) => transport.isUsable());
   }
 
   /**
-   * Simply proxy the `handle` method to all the TrackerTransport instances we have in list. Skip the unusable ones.
+   * Simply proxy the `handle` method to all the usable TrackerTransport instances we have.
    */
-  handle(...args: TrackerEvent[]): void | Promise<void> {
-    return this.list.forEach((transport) => transport.isUsable() && transport.handle(...args));
+  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
+    if (!this.usableTransports.length) {
+      throw new Error(`${this.transportName}: no usable Transports found; make sure to verify usability first.`);
+    }
+
+    this.usableTransports.map((transport) => transport.handle(...args));
   }
 
   /**
    * The whole TransportGroup is usable if we found at least one usable TrackerTransport
    */
   isUsable(): boolean {
-    return Boolean(this.list.find((transport) => transport.isUsable()));
+    return Boolean(this.usableTransports.length);
   }
 }
 
@@ -112,7 +120,7 @@ export class QueuedTransport implements TrackerTransport {
     this.transport = config.transport;
     this.queue = config.queue;
 
-    if(this.isUsable()) {
+    if (this.isUsable()) {
       // Start the queue runner. Each tick it will hand over a batch of TrackerEvents to the TrackerTransport
       this.queue.run(
         // Make sure to bind the `handle` method to its instance to preserve its scope
@@ -121,8 +129,8 @@ export class QueuedTransport implements TrackerTransport {
     }
   }
 
-  handle(...args: TrackerEvent[]): void | Promise<void> {
-    return this.queue.enqueue(...args);
+  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
+    this.queue.enqueue(...args);
   }
 
   isUsable(): boolean {

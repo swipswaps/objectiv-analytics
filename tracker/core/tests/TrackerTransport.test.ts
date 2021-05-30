@@ -25,7 +25,9 @@ describe('TransportSwitch', () => {
     expect(transports.firstUsableTransport).toBe(undefined);
     expect(transports.isUsable()).toBe(false);
 
-    transports.handle(testEvent);
+    expect(() => {
+      transports.handle(testEvent);
+    }).toThrow();
 
     expect(transport1.handle).not.toHaveBeenCalled();
     expect(transport2.handle).not.toHaveBeenCalled();
@@ -67,10 +69,12 @@ describe('TransportGroup', () => {
     spyOn(transport2, 'handle');
 
     const transports = new TransportGroup(transport1, transport2);
-    expect(transports.list).toStrictEqual([transport1, transport2]);
+    expect(transports.usableTransports).toStrictEqual([]);
     expect(transports.isUsable()).toBe(false);
 
-    transports.handle(testEvent);
+    expect(() => {
+      transports.handle(testEvent);
+    }).toThrow();
 
     expect(transport1.handle).not.toHaveBeenCalled();
     expect(transport2.handle).not.toHaveBeenCalled();
@@ -87,7 +91,7 @@ describe('TransportGroup', () => {
     spyOn(transport2, 'handle');
 
     const transports = new TransportGroup(transport1, transport2);
-    expect(transports.list).toStrictEqual([transport1, transport2]);
+    expect(transports.usableTransports).toStrictEqual([transport1, transport2]);
     expect(transports.isUsable()).toBe(true);
 
     const testTracker = new Tracker({ transport: transports });
