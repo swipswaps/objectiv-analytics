@@ -27,7 +27,7 @@ export interface TrackerQueue {
   /**
    * Retrieves the oldest available Item(s) from the Queue
    */
-  dequeue(batchSize?: number): TrackerEvent[];
+  dequeue(): TrackerEvent[];
 
   /**
    * Queue runner function. Simply executes the given `runFunction` with the dequeued events.
@@ -75,13 +75,13 @@ export class MemoryQueue implements TrackerQueue {
     this.events.push(...args);
   }
 
-  dequeue(batchSize = 1): TrackerEvent[] {
-    return this.events.splice(0, batchSize);
+  dequeue(): TrackerEvent[] {
+    return this.events.splice(0, this.batchSize);
   }
 
   run(runFunction: (...args: TrackerEvent[]) => void): void {
     setInterval(() => {
-      const eventsBatch = this.dequeue(this.batchSize);
+      const eventsBatch = this.dequeue();
       // No need to execute runFunction if the batch is empty
       if (eventsBatch.length) {
         runFunction(...eventsBatch);

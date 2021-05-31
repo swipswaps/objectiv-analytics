@@ -26,7 +26,7 @@ describe('MemoryQueue', () => {
   });
 
   it('should enqueue and dequeue in the expected order', () => {
-    const testQueue = new MemoryQueue();
+    const testQueue = new MemoryQueue({ batchSize: 1 });
     testQueue.enqueue(TrackerEvent1);
     expect(testQueue.events).toHaveLength(1);
 
@@ -46,17 +46,17 @@ describe('MemoryQueue', () => {
   });
 
   it('should support dequeue in batches', () => {
-    const testQueue = new MemoryQueue();
+    const testQueue = new MemoryQueue({ batchSize: 2 });
     testQueue.enqueue(TrackerEvent1);
     testQueue.enqueue(TrackerEvent2);
     testQueue.enqueue(TrackerEvent3);
     expect(testQueue.events).toHaveLength(3);
 
-    expect(testQueue.dequeue(2)).toStrictEqual([TrackerEvent1, TrackerEvent2]);
+    expect(testQueue.dequeue()).toStrictEqual([TrackerEvent1, TrackerEvent2]);
     expect(testQueue.events).toHaveLength(1);
-    expect(testQueue.dequeue(3)).toStrictEqual([TrackerEvent3]);
+    expect(testQueue.dequeue()).toStrictEqual([TrackerEvent3]);
     expect(testQueue.events).toHaveLength(0);
-    expect(testQueue.dequeue(5)).toStrictEqual([]);
+    expect(testQueue.dequeue()).toStrictEqual([]);
   });
 
   it('should run 3 batches', () => {
