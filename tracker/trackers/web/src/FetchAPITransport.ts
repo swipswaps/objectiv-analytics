@@ -60,7 +60,7 @@ export class FetchAPITransport implements TrackerTransport {
     this.fetchFunction = config.fetchFunction ?? defaultFetchFunction;
   }
 
-  handle(...args: TrackerEvent[]): Promise<Response> {
+  handle(...args: [TrackerEvent, ...TrackerEvent[]]): Promise<Response> {
     return this.fetchFunction({ endpoint: this.endpoint, events: args });
   }
 

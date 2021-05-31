@@ -22,7 +22,7 @@ export class BeaconAPITransport implements TrackerTransport {
     this.endpoint = config.endpoint;
   }
 
-  handle(...args: TrackerEvent[]): void {
+  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
     navigator.sendBeacon(this.endpoint, JSON.stringify(args));
   }
 
