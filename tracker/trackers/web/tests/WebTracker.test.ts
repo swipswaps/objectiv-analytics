@@ -34,7 +34,7 @@ describe('WebTracker', () => {
       },
       transport: {
         transportName: 'TransportGroup',
-        list: [
+        usableTransports: [
           {
             transportName: 'TransportSwitch',
             firstUsableTransport: {
