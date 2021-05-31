@@ -209,14 +209,14 @@ describe('QueuedTransport', () => {
   });
 
   it('should do nothing if the given transport is not usable', () => {
-    const logTransport = new UnusableTransport();
     const memoryQueue = new MemoryQueue();
+    const logTransport = new UnusableTransport();
 
     spyOn(logTransport, 'handle');
 
     const testQueuedTransport = new QueuedTransport({
-      transport: logTransport,
       queue: memoryQueue,
+      transport: logTransport,
     });
 
     expect(testQueuedTransport.isUsable()).toBe(false);
@@ -227,14 +227,14 @@ describe('QueuedTransport', () => {
   });
 
   it('should queue events in the MemoryQueue and send them in batches via the LogTransport', () => {
-    const logTransport = new LogTransport();
     const memoryQueue = new MemoryQueue();
+    const logTransport = new LogTransport();
 
     spyOn(logTransport, 'handle');
 
     const testQueuedTransport = new QueuedTransport({
-      transport: logTransport,
       queue: memoryQueue,
+      transport: logTransport,
     });
 
     expect(testQueuedTransport.isUsable()).toBe(true);

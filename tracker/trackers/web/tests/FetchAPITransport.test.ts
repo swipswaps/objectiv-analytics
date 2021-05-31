@@ -67,8 +67,8 @@ describe('FetchAPITransport', () => {
 
     // Combine the two in a Queued Transport
     const testQueuedTransport = new QueuedTransport({
-      transport: testTransport,
       queue: testQueue,
+      transport: testTransport,
     });
 
     // Let's handle an Event

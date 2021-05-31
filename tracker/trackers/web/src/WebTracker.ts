@@ -62,6 +62,7 @@ export class WebTracker extends Tracker {
       config = {
         ...config,
         transport: new QueuedTransport({
+          queue: new MemoryQueue(),
           transport: new TransportGroup(
             new TransportSwitch(
               new FetchAPITransport({ endpoint: config.endpoint }),
@@ -69,7 +70,6 @@ export class WebTracker extends Tracker {
             ),
             new DebugTransport()
           ),
-          queue: new MemoryQueue(),
         }),
       };
     }
