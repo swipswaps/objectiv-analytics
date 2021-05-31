@@ -43,6 +43,11 @@ python objectiv_backend/schema/generate_json_schema.py > test_schema.json
 python -m jsonschema -i <path to json file with events> test_schema.json
 ```
 
+## Run tests
+```bash
+pytest tests
+```
+
 # Build
 ## Build Container Image
 Only requires docker, no python.
