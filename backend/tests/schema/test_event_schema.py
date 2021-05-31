@@ -1,6 +1,10 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+from copy import deepcopy
+
+import pytest
+
 from objectiv_backend.schema.event_schemas import EventSchema
 
 
@@ -33,11 +37,57 @@ def test_create_schema_extend_multiple():
     assert schema.version == expected_version
 
 
-# todo: add tests for wrong extensions and wrong data formats, and assert we get proper errors.
+def test_create_schema_event_cycles_error():
+    schema_in = deepcopy(_SIMPLE_BASE_SCHEMA)
+    # introduce cycle: ChildEvent -> GrandChildEvent -> ChildEvent -> ...
+    schema_in['events']['ChildEvent']['parents'].append('GrandChildEvent')
+    schema = EventSchema()
+    with pytest.raises(ValueError, match='Cycle in event graph'):
+        schema.get_extended_schema(schema_in)
 
-# ### Below we tests functions of an existing Schema object
+
+def test_create_schema_event_reference_error():
+    schema_in = deepcopy(_SIMPLE_BASE_SCHEMA)
+    schema_in['events']['ChildEvent']['parents'].append('NonExistingEvent')
+    schema = EventSchema()
+    with pytest.raises(ValueError, match='Not a valid event_type NonExistingEvent'):
+        schema.get_extended_schema(schema_in)
 
 
+def test_create_schema_event_misnamed_error():
+    schema_in = deepcopy(_SIMPLE_BASE_SCHEMA)
+    schema_in['events']['wrong_event_name'] = schema_in['events']['BaseEvent']
+    schema = EventSchema()
+    with pytest.raises(ValueError, match='Invalid event name: wrong_event_name'):
+        schema.get_extended_schema(schema_in)
+
+
+def test_create_schema_context_cycles_error():
+    schema_in = deepcopy(_SIMPLE_BASE_SCHEMA)
+    # introduce cycle: ChildEvent -> GrandChildEvent -> ChildEvent -> ...
+    schema_in['contexts']['BaseContext']['parents'] = ['OtherContext']
+    schema = EventSchema()
+    with pytest.raises(ValueError, match='Cycle in context graph'):
+        schema.get_extended_schema(schema_in)
+
+
+def test_create_schema_context_reference_error():
+    schema_in = deepcopy(_SIMPLE_BASE_SCHEMA)
+    schema_in['contexts']['BaseContext']['parents'] = ['NonExistingContext']
+    schema = EventSchema()
+    with pytest.raises(ValueError, match='Not a valid context_type NonExistingContext'):
+        schema.get_extended_schema(schema_in)
+
+
+def test_create_schema_context_misnamed_error():
+    schema_in = deepcopy(_SIMPLE_BASE_SCHEMA)
+    schema_in['contexts']['invalid_context_name'] = schema_in['contexts']['OtherContext']
+    schema = EventSchema()
+    with pytest.raises(ValueError, match='Invalid context name: invalid_context_name'):
+        schema.get_extended_schema(schema_in)
+
+
+# ### Below we tests functions of an already created Schema object
 def test_all_parent_event_types():
     schema = _get_schema()
     # todo: maybe come up with a better name that 'all_parent_even_types', a bit confusing that the type
