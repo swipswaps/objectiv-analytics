@@ -32,7 +32,7 @@ class EventSubSchema:
         self._compiled_all_parents_and_required_contexts: \
             Dict[EventType, Tuple[Set[EventType], Set[ContextType]]] = {}
 
-    def extend_schema(self, event_schema: Dict[str, Any]) -> 'EventSubSchema':
+    def get_extended_schema(self, event_schema: Dict[str, Any]) -> 'EventSubSchema':
         """
         Extend the schema with the events in event_schema. Returns a new EventSubSchema, self is
         unmodified.
@@ -140,7 +140,10 @@ class ContextSubSchema:
     """
 
     def __init__(self):
-        """ TODO: comments" """
+        """
+        Create an empty ContextSubSchema.
+        Use extend_schema to add event types to the schema.
+        """
         self.schema: Dict[str, Any] = {}
 
     CONTEXT_NAME_REGEX = r'^[A-Z][a-zA-Z0-9]*Context$'
@@ -148,7 +151,7 @@ class ContextSubSchema:
     def __str__(self) -> str:
         return json.dumps(self.schema, indent=4)
 
-    def extend_schema(self, context_schema_extension) -> 'ContextSubSchema':
+    def get_extended_schema(self, context_schema_extension) -> 'ContextSubSchema':
         """
         Create a new context schema that combines the current schema with the schema extension
 
@@ -238,7 +241,7 @@ class EventSchema:
         self.events = EventSubSchema()
         self.contexts = ContextSubSchema()
 
-    def extend_schema(self, schema: Dict[str, Any]) -> 'EventSchema':
+    def get_extended_schema(self, schema: Dict[str, Any]) -> 'EventSchema':
         """
         TODO: document
         Allowed extensions for events:
@@ -256,8 +259,8 @@ class EventSchema:
         contexts = deepcopy(self.contexts)
         version = deepcopy(self.version)
 
-        events = events.extend_schema(schema['events'])
-        contexts = contexts.extend_schema(schema['contexts'])
+        events = events.get_extended_schema(schema['events'])
+        contexts = contexts.get_extended_schema(schema['contexts'])
         version.update(schema['version'])
         # todo: separate version merging, and do some validation on this
         # extension_name = event_schema['name']
@@ -348,5 +351,5 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
 
     event_schema = EventSchema()
     for schema_json in schema_jsons:
-        event_schema = event_schema.extend_schema(schema_json)
+        event_schema = event_schema.get_extended_schema(schema_json)
     return event_schema
