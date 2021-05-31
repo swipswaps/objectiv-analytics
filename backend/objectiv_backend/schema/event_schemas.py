@@ -225,7 +225,7 @@ class ContextSubSchema:
 
         if count == 0:
             # This is a very crude way to check for cycles, but it works.
-            raise ValueError(f'Cycle in context graph, or hierarchy too deep.'
+            raise ValueError(f'Cycle in context graph, or hierarchy too deep. '
                              f'At context type {context_type}')
 
         if context_type not in self.schema:
