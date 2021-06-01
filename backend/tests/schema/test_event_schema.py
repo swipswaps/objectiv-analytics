@@ -87,6 +87,15 @@ def test_create_schema_context_misnamed_error():
         schema.get_extended_schema(schema_in)
 
 
+def test_create_schema_event_reference_non_existing_context_error():
+    schema_in = deepcopy(_SIMPLE_BASE_SCHEMA)
+    schema_in['events']['ChildEvent']['requiresContext'].append('NonExistingContext')
+    schema = EventSchema()
+    with pytest.raises(ValueError,
+                       match='^Contexts required by events are not defined .*NonExistingContext.*$'):
+        schema.get_extended_schema(schema_in)
+
+
 # ### Below we tests functions of an already created Schema object
 def test_all_parent_event_types():
     schema = _get_schema()

@@ -238,23 +238,23 @@ class ContextSubSchema:
         self._compiled_all_parent_context_types[context_type] = result
         return result
 
-    def list_context_types(self) -> List[str]:
+    def list_context_types(self) -> List[ContextType]:
         """ Give a alphabetically sorted list of all context-types. """
         return self._compiled_list_context_types
 
-    def get_all_parent_context_types(self, context_type: str) -> Set[str]:
+    def get_all_parent_context_types(self, context_type: ContextType) -> Set[ContextType]:
         """
         Given a context_type, give a set with that context_type and all its parent context_types
         """
         return self._compiled_all_parent_context_types.get(context_type, {context_type})
 
-    def get_all_child_context_types(self, context_type: str) -> Set[str]:
+    def get_all_child_context_types(self, context_type: ContextType) -> Set[ContextType]:
         """
         Given a context_type, give a set with that context_type and all its child context_types
         """
         return self._compiled_all_child_context_types.get(context_type, set())
 
-    def get_context_schema(self, context_type: str) -> Optional[Dict[str, Any]]:
+    def get_context_schema(self, context_type: ContextType) -> Optional[Dict[str, Any]]:
         """
         Give the json-schema for a specific context_type, or None if the context type doesn't exist.
         """
@@ -316,11 +316,30 @@ class EventSchema:
         #     raise ValueError(f'Duplicate schema name. '
         #                      f'Already a version of "{extension_name}" loaded')
 
+        # Validation: The EventSubSchema and ContextSubSchema are responsible for validating internal
+        # consistency of the sub-schemes. Here we validate the inter-schema consistency
+        self._validate_events_required_contexts(events, contexts)
+
         result = EventSchema()
         result.events = events
         result.contexts = contexts
         result.version = version
         return result
+
+    @staticmethod
+    def _validate_events_required_contexts(events: EventSubSchema, contexts: ContextSubSchema):
+        """
+        Check that all 'requiredContexts' defined in events schema exist in the contexts schema.
+        :raise ValueError: in case a required context is missing.
+        """
+        all_required_contexts = set()
+        for event_type in events.list_event_types():
+            all_required_contexts |= events.get_all_required_contexts(event_type)
+        all_contexts = contexts.list_context_types()
+        missing_contexts = all_required_contexts - set(all_contexts)
+        if missing_contexts:
+            raise ValueError(f'Contexts required by events are not defined in context sub schema: '
+                             f'{missing_contexts}')
 
     def __str__(self) -> str:
         """ Json representation of this data-schema. """
@@ -331,11 +350,11 @@ class EventSchema:
         }
         return json.dumps(schema_obj, indent=4)
 
-    def list_event_types(self) -> List[str]:
+    def list_event_types(self) -> List[EventType]:
         """ Give a alphabetically sorted list of all event-types. """
         return self.events.list_event_types()
 
-    def get_all_parent_event_types(self, event_type: str) -> Set[str]:
+    def get_all_parent_event_types(self, event_type: EventType) -> Set[EventType]:
         """
         Given an event_type, give a set with that event_type and all its parent event_types.
         :param event_type: event type. Must be a valid event_type
@@ -343,22 +362,22 @@ class EventSchema:
         """
         return self.events.get_all_parent_event_types(event_type=event_type)
 
-    def get_all_required_contexts(self, event_type: str) -> Set[str]:
+    def get_all_required_contexts(self, event_type: EventType) -> Set[ContextType]:
         return self.events.get_all_required_contexts(event_type=event_type)
 
-    def is_valid_event_type(self, event_type: str) -> bool:
+    def is_valid_event_type(self, event_type: EventType) -> bool:
         return self.events.is_valid_event_type(event_type=event_type)
 
-    def list_context_types(self) -> List[str]:
+    def list_context_types(self) -> List[ContextType]:
         return self.contexts.list_context_types()
 
-    def get_all_parent_context_types(self, context_type: str) -> Set[str]:
+    def get_all_parent_context_types(self, context_type: ContextType) -> Set[ContextType]:
         return self.contexts.get_all_parent_context_types(context_type=context_type)
 
-    def get_all_child_context_types(self, context_type: str) -> Set[str]:
+    def get_all_child_context_types(self, context_type: ContextType) -> Set[ContextType]:
         return self.contexts.get_all_child_context_types(context_type=context_type)
 
-    def get_context_schema(self, context_type: str) -> Optional[Dict[str, Any]]:
+    def get_context_schema(self, context_type: ContextType) -> Optional[Dict[str, Any]]:
         return self.contexts.get_context_schema(context_type=context_type)
 
 
