@@ -29,7 +29,7 @@ services:
     networks:
       - obj
     volumes:
-      - ./backend/tests/test_data/schemas1/:/schema-extensions/
+      - ${SCHEMA_EXTENSION_DIRECTORY-./backend/tests/test_data/schemas1}/:/schema-extensions/
     environment:
       <<: *db_env_variables
       SCHEMA_EXTENSION_DIRECTORY: /schema-extensions/
