@@ -16,7 +16,7 @@ from objectiv_backend.workers.util import worker_main
 def main_entry(connection) -> int:
     """
     Pick events from the entry queue and insert them into the enrichment queue.
-    :return number of processed eventsjson
+    :return number of processed events
     """
     with connection:
         pg_queues = PostgresQueues(connection=connection)
