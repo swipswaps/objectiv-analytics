@@ -4,17 +4,13 @@ Copyright 2021 Objectiv B.V.
 import sys
 from typing import List, Tuple
 
-from objectiv_backend.common.config import SCHEMA_EXTENSION_EVENT, SCHEMA_EXTENSION_CONTEXT, WORKER_BATCH_SIZE
+from objectiv_backend.common.config import WORKER_BATCH_SIZE, get_config_event_schema
 from objectiv_backend.common.types import EventWithId
-from objectiv_backend.schema.event_schemas import get_event_schema
 from objectiv_backend.schema.hydrate_events import hydrate_types_into_event
 from objectiv_backend.schema.validate_events import validate_event_adheres_to_schema
 from objectiv_backend.workers.pg_queues import PostgresQueues, ProcessingStage
 from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.util import worker_main
-
-EVENT_SCHEMA = get_event_schema(event_schema_extension_filename=SCHEMA_EXTENSION_EVENT,
-                                context_schema_extension_filename=SCHEMA_EXTENSION_CONTEXT)
 
 
 def main_entry(connection) -> int:
@@ -49,15 +45,16 @@ def process_events_entry(events: List[EventWithId]) -> Tuple[List[EventWithId], 
     """
     ok_events = []
     nok_events = []
+    event_schema = get_config_event_schema()
     for event_w_id in events:
         event = event_w_id.event
 
-        error_info = validate_event_adheres_to_schema(event_schema=EVENT_SCHEMA, event=event)
+        error_info = validate_event_adheres_to_schema(event_schema=event_schema, event=event)
         if error_info:
             print(f'error, event_id: {event_w_id.id}, errors: {[ei.info for ei in error_info]}')
             nok_events.append(event_w_id)
         else:
-            event = hydrate_types_into_event(event_schema=EVENT_SCHEMA, event=event)
+            event = hydrate_types_into_event(event_schema=event_schema, event=event)
             event_w_id = EventWithId(id=event_w_id.id, event=event)
             ok_events.append(event_w_id)
     return ok_events, nok_events
