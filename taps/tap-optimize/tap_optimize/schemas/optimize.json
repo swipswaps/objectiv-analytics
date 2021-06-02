@@ -1,0 +1,18 @@
+{
+    "type": ["null", "object"],
+    "additionalProperties": false,
+    "properties": {
+	"view_id": {
+	    "type": ["integer"]
+	},
+      	"experiment_id": {
+            "type": ["string"]
+	},
+  	"experiment_description": {
+	    "type": ["string"]
+        },
+      	"variant_id": {
+	    "type": ["integer"]
+        }
+    }
+}

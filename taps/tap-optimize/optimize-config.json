@@ -1,0 +1,5 @@
+{
+	"service_account": ".secrets/service-account.json",
+	"view_id": "",
+	"start_date": ""
+}
