@@ -20,7 +20,6 @@ from objectiv_backend.schema.generate_json_schema import generate_json_schema
 from objectiv_backend.schema.validate_events import validate_structure_event_list
 from objectiv_backend.workers.pg_queues import PostgresQueues, ProcessingStage
 from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
-from objectiv_backend.workers.worker_enrichment import process_events_enrichment
 from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
@@ -77,7 +76,6 @@ def index() -> Response:
 
     if not get_collector_config().async_mode:
         ok_events, nok_events = process_events_entry(events=events_with_id)
-        ok_events = process_events_enrichment(events=ok_events)
         print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
         write_sync_events(ok_events=ok_events, nok_events=nok_events)
         return _get_collector_response(error_count=len(nok_events), event_count=len(events))

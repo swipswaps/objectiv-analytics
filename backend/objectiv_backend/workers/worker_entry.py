@@ -15,7 +15,7 @@ from objectiv_backend.workers.util import worker_main
 
 def main_entry(connection) -> int:
     """
-    Pick events from the entry queue and insert them into the enrichment queue.
+    Pick events from the entry queue and insert them into the finalize queue.
     :return number of processed events
     """
     with connection:
@@ -27,7 +27,7 @@ def main_entry(connection) -> int:
         ok_events, nok_events = process_events_entry(events)
         # ok_events continue on the happy path
         # nok_events failed to validate and are written to the nok_data table
-        pg_queues.put_events(queue=ProcessingStage.ENRICHMENT, events=ok_events)
+        pg_queues.put_events(queue=ProcessingStage.FINALIZE, events=ok_events)
         insert_events_into_nok_data(connection=connection, events=nok_events)
     return len(events)
 
