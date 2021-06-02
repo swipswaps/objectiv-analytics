@@ -40,7 +40,7 @@ In this case, a little preparation is needed:
 
 Now we can try to run it, with something like
 ```bash
-  ./tap-optimize --config optimize-config.json | target-postgres --config postgres-config.json
+  ./tap-optimize.sh --config optimize-config.json | target-postgres --config postgres-config.json
 ```
 
 This should:
