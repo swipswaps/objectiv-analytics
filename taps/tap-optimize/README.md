@@ -42,3 +42,9 @@ Now we can try to run it, with something like
 ```bash
   ./tap-optimize --config optimize-config.json | target-postgres --config postgres-config.json
 ```
+
+This should:
+- create a table called `optimize` in `public.objectiv`
+- a row for every experiment-variant combination.
+
+Subsequent calls will update the table if needed.
