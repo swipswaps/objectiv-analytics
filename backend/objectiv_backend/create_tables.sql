@@ -3,15 +3,13 @@ begin;
 create table queue_entry (
     event_id uuid not null,
     insert_order bigserial,
-    value json not null,
-    primary key(event_id)
+    value json not null
 );
 
 create table queue_finalize (
     event_id uuid not null,
     insert_order bigserial,
-    value json not null,
-    primary key(event_id)
+    value json not null
 );
 
 create table data (
@@ -31,8 +29,7 @@ create table nok_data (
     day date not null, -- This is for query convenience; a possible sharding key? We might well put an index on this badboy
     moment timestamp not null,
     cookie_id uuid not null,
-    value json not null,
-    primary key(event_id)
+    value json not null
 );
 
 
