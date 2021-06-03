@@ -1,4 +1,4 @@
-import { GlobalContext } from '@objectiv/core';
+import { GlobalContext } from '@objectiv/tracker-core';
 
 export const WEB_DEVICE_CONTEXT_TYPE = 'WebDeviceContext';
 

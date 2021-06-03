@@ -35,8 +35,8 @@
     "typescript": "^4.2.4"
   },
   "dependencies": {
-    "@objectiv/core": "~0.0.1",
     "@objectiv/plugin-web-device-context": "~0.0.1",
-    "@objectiv/plugin-web-document-context": "~0.0.1"
+    "@objectiv/plugin-web-document-context": "~0.0.1",
+    "@objectiv/tracker-core": "~0.0.1"
   }
 }

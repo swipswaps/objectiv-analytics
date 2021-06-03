@@ -1,5 +1,5 @@
 import { trackURLChangedEvent, URL_CHANGE_EVENT_NAME, URLChangedEvent } from '../src';
-import { Tracker } from '@objectiv/core';
+import { Tracker } from '@objectiv/tracker-core';
 
 describe('URLChangedEvent', () => {
   it('should trigger on all History API methods', () => {

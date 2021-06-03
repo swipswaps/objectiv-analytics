@@ -1,4 +1,4 @@
-import { Tracker, TrackerEvent } from '@objectiv/core';
+import { Tracker, TrackerEvent } from '@objectiv/tracker-core';
 
 /**
  * The event name definition

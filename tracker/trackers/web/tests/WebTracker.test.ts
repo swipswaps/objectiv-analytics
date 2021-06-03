@@ -1,5 +1,5 @@
 import { defaultFetchFunction, FetchAPITransport, WebTracker } from '../src';
-import { QueuedTransport, TrackerEvent, TrackerPlugins } from '@objectiv/core';
+import { QueuedTransport, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 

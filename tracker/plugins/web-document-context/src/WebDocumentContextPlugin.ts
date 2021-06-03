@@ -1,4 +1,4 @@
-import { Tracker, TrackerEvent, TrackerPlugin } from '@objectiv/core';
+import { Tracker, TrackerEvent, TrackerPlugin } from '@objectiv/tracker-core';
 import { newWebDocumentContext, WEB_DOCUMENT_CONTEXT_TYPE } from './WebDocumentContext';
 import { trackURLChangedEvent } from './URLChangedEvent';
 

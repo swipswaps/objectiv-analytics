@@ -6,7 +6,7 @@ import {
   TrackerPlugins,
   TransportGroup,
   TransportSwitch,
-} from '@objectiv/core';
+} from '@objectiv/tracker-core';
 import { FetchAPITransport } from './FetchAPITransport';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';

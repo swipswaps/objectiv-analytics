@@ -1,5 +1,5 @@
 import { WebDeviceContextPlugin } from '../src';
-import { Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/core';
+import { Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 
 const USER_AGENT_MOCK_VALUE = 'Mocked User Agent';

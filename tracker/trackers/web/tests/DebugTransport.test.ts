@@ -1,5 +1,5 @@
 import { DebugTransport } from '../src/DebugTransport';
-import { TrackerEvent } from '@objectiv/core';
+import { TrackerEvent } from '@objectiv/tracker-core';
 
 describe('DebugTransport', () => {
   const testEvent = new TrackerEvent({

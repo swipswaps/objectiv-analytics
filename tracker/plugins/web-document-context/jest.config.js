@@ -4,6 +4,6 @@ module.exports = {
   reporters: ['jest-standard-reporter'],
   collectCoverageFrom: ['src/**.ts'],
   moduleNameMapper: {
-    '@objectiv/core': '../../../core/src',
+    '@objectiv/tracker-core': '../../../core/tracker/src',
   },
 };

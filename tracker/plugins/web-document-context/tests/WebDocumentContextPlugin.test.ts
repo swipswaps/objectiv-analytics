@@ -1,5 +1,5 @@
 import { URL_CHANGE_EVENT_NAME, WEB_DOCUMENT_CONTEXT_TYPE, WebDocumentContextPlugin } from '../src';
-import { Tracker, TrackerEvent, TrackerPlugins, TrackerTransport } from '@objectiv/core';
+import { Tracker, TrackerEvent, TrackerPlugins, TrackerTransport } from '@objectiv/tracker-core';
 
 describe('WebDocumentContextPlugin', () => {
   it('should instantiate without specifying an ID at construction', () => {

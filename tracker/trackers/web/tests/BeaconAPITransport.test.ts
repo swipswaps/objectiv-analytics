@@ -1,5 +1,5 @@
 import { BeaconAPITransport } from '../src';
-import { TrackerEvent } from '@objectiv/core';
+import { TrackerEvent } from '@objectiv/tracker-core';
 
 // TODO add actual Karma + Chrome tests to test the real API, instead of the mock below
 

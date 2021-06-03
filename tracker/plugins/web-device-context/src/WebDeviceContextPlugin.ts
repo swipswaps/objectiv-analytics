@@ -1,4 +1,4 @@
-import { TrackerEvent, TrackerPlugin } from '@objectiv/core';
+import { TrackerEvent, TrackerPlugin } from '@objectiv/tracker-core';
 import { newWebDeviceContext, WEB_DEVICE_CONTEXT_TYPE, WebDeviceContext } from './WebDeviceContext';
 
 /**

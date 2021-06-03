@@ -1,6 +1,6 @@
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
-import { MemoryQueue, QueuedTransport, TrackerEvent } from '@objectiv/core';
+import { MemoryQueue, QueuedTransport, TrackerEvent } from '@objectiv/tracker-core';
 
 beforeAll(() => {
   fetchMock.enableMocks();
