@@ -23,13 +23,16 @@ create table data (
 
 create index on data(day);
 
+create type failure_reason as enum('failed validation', 'duplicate');
+
 create table nok_data (
     -- perhaps we want to add a field here that states the reason why the data is not ok?
     event_id uuid not null,
     day date not null, -- This is for query convenience; a possible sharding key? We might well put an index on this badboy
     moment timestamp not null,
     cookie_id uuid not null,
-    value json not null
+    value json not null,
+    reason failure_reason default 'failed validation'
 );
 
 

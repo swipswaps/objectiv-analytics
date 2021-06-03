@@ -8,7 +8,7 @@ from typing import List
 from psycopg2.extras import execute_values
 
 from objectiv_backend.common.event_utils import get_context
-from objectiv_backend.common.types import EventWithId
+from objectiv_backend.common.types import EventWithId, FailureReason
 
 
 def insert_events_into_data(connection, events: List[EventWithId]):
@@ -26,8 +26,6 @@ def insert_events_into_data(connection, events: List[EventWithId]):
     """
     if not events:
         return
-    duplicate_events = []
-    values = []
 
     # We use 'on conflict do nothing'. With the read-committed isolation level this guarantees that this
     # transaction will not insert a row that will conflict with another transaction, even if the results
@@ -44,66 +42,61 @@ def insert_events_into_data(connection, events: List[EventWithId]):
         on conflict do nothing
         returning event_id
     '''
+    values = []
+    for event in events:
+        timestamp = _millis_to_datetime(event.event['time'])
+        cookie_id = get_context(event.event, 'CookieIdContext')['cookie_id']
+        value = (str(event.id),
+                 timestamp,
+                 timestamp,
+                 cookie_id,
+                 json.dumps(event.event))
+        values.append(value)
     with connection.cursor() as cursor:
-        for event in events:
-            timestamp = _millis_to_datetime(event.event['time'])
-            cookie_id = get_context(event.event, 'CookieIdContext')['cookie_id']
-            value = (str(event.id),
-                     timestamp,
-                     timestamp,
-                     cookie_id,
-                     json.dumps(event.event))
-            values.append(value)
         inserted_event_ids = execute_values(
             cursor, insert_query, values, template=None, page_size=100, fetch=True)
-        # Determine whether there were any duplicate events that were already in the table
-        if len(inserted_event_ids) < len(events):
-            inserted_event_ids_set = set(inserted_event_ids)
-            for event in events:
-                if event.id not in inserted_event_ids_set:
-                    duplicate_events.append(event)
+
+    # Determine whether there were any duplicate events that were already in the table
     # In case of duplicate events, we'll add those to the nok_data table for traceability
+    duplicate_events = []
+    if len(inserted_event_ids) < len(events):
+        inserted_event_ids_set = set(inserted_event_ids)
+        for event in events:
+            if event.id not in inserted_event_ids_set:
+                duplicate_events.append(event)
     if duplicate_events:
-        insert_events_into_nok_data(connection, duplicate_events)
+        insert_events_into_nok_data(connection, duplicate_events, reason=FailureReason.DUPLICATE)
 
 
-def insert_events_into_nok_data(connection, events: List[EventWithId]):
+def insert_events_into_nok_data(connection,
+                                events: List[EventWithId],
+                                reason: FailureReason = FailureReason.FAILED_VALIDATION):
     """
-    Insert events into the 'nok_data' table
+    Insert events into the not-ok data ('nok_data') table
     Does not do any transaction management, this merely issues insert commands.
     :param connection: db connection
     :param events: list of events. Each event must have a CookieIdContext
+    :param reason: Why are these events written to the nok_data table.
     """
-    return _insert_events_into_table(connection=connection, table='nok_data', events=events)
-
-
-def _insert_events_into_table(connection, table: str, events: List[EventWithId]):
-    """
-    Insert events into a table
-    Does not do any transaction management, this merely issues insert commands.
-    :param connection: db connection
-    :param table: table to write to, either 'data' or 'nok_data'
-    :param events: list of events. Each event must be a valid Event, and must have a CookieIdContext
-    """
-    if table not in ('data', 'nok_data'):
-        raise ValueError(f'Table must be one of "data", "nok_data", value: {table}')
-
     if not events:
         return
-    values = []
 
-    insert_query = f'insert into {table}(event_id, day, moment, cookie_id, value) values %s'
+    insert_query = f'insert into nok_data (event_id, day, moment, cookie_id, value, reason) values %s'
+    values = []
+    for event in events:
+        timestamp = _millis_to_datetime(event.event['time'])
+        cookie_id = get_context(event.event, 'CookieIdContext')['cookie_id']
+        value = (str(event.id),
+                 timestamp,
+                 timestamp,
+                 cookie_id,
+                 json.dumps(event.event),
+                 reason.value)
+        values.append(value)
     with connection.cursor() as cursor:
-        for event in events:
-            timestamp = _millis_to_datetime(event.event['time'])
-            cookie_id = get_context(event.event, 'CookieIdContext')['cookie_id']
-            value = (str(event.id),
-                     timestamp,
-                     timestamp,
-                     cookie_id,
-                     json.dumps(event.event))
-            values.append(value)
         execute_values(cursor, insert_query, values, template=None, page_size=100)
+
+
 
 
 def _millis_to_datetime(millis: int) -> datetime:
