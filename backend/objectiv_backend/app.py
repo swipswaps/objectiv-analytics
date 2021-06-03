@@ -72,6 +72,10 @@ def index() -> Response:
     add_cookie_id_contexts(events)
     set_time_in_events(events, current_millis)
 
+    # Here we assign unique event_ids to each event. In the future we'll do that in the tracker. That way
+    # the tracker doesn't have to worry about resending events. As long as the tracker makes sure the
+    # event_ids are consistent, then we can deduplicate them here. But that functionality hasn't been
+    # implemented yet in the tracker, so we assign the ids here.
     events_with_id = [EventWithId(id=uuid.uuid4(), event=event) for event in events]
 
     if not get_collector_config().async_mode:
