@@ -1,4 +1,5 @@
-import { Contexts, ContextsConfig, GlobalContext, LocationContext } from './Context';
+import { GlobalContext, LocationContext } from '@objectiv/schema';
+import { Contexts, ContextsConfig } from './Context';
 
 /**
  * TrackerEvents are simply a combination of an `eventName` and their Contexts.

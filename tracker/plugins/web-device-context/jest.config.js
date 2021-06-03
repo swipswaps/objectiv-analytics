@@ -5,6 +5,7 @@ module.exports = {
   collectCoverageFrom: ['src/**.ts'],
   setupFiles: ['jest-useragent-mock'],
   moduleNameMapper: {
+    '@objectiv/schema': '../../../core/schema/src',
     '@objectiv/tracker-core': '../../../core/tracker/src',
   },
 };

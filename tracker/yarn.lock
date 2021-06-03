@@ -1607,6 +1607,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-web-device-context@workspace:plugins/web-device-context"
   dependencies:
+    "@objectiv/schema": ~0.0.1
     "@objectiv/tracker-core": ~0.0.1
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
@@ -1636,6 +1637,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-web-document-context@workspace:plugins/web-document-context"
   dependencies:
+    "@objectiv/schema": ~0.0.1
     "@objectiv/tracker-core": ~0.0.1
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
@@ -1706,6 +1708,7 @@ __metadata:
   dependencies:
     "@objectiv/plugin-web-device-context": ~0.0.1
     "@objectiv/plugin-web-document-context": ~0.0.1
+    "@objectiv/schema": ~0.0.1
     "@objectiv/tracker-core": ~0.0.1
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0

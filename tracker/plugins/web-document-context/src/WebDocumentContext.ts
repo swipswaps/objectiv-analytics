@@ -1,4 +1,4 @@
-import { GlobalContext } from '@objectiv/tracker-core';
+import { GlobalContext } from '@objectiv/schema';
 
 export const WEB_DOCUMENT_CONTEXT_TYPE = 'WebDocumentContext';
 
