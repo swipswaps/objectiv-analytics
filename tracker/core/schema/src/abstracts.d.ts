@@ -36,7 +36,7 @@ export abstract class AbstractContext {
 
 /**
  * GlobalContexts are used to populate Trackers or Events `globalContexts` properties.
- * They carry information that is not related to the UI, such as device, platform or business data.
+ * They carry information that is not related to where the Event originated, such as device, platform or business data.
  */
 export abstract class AbstractGlobalContext extends AbstractContext {
   /**
@@ -47,7 +47,7 @@ export abstract class AbstractGlobalContext extends AbstractContext {
 
 /**
  * LocationContexts are used to populate Trackers or Events `locationStack` properties.
- * A Location Stack is meant to describe accurately where an Event originated.
+ * A Location Stack is meant to describe accurately where an Event originated. Eg. Sections, Menus, etc.
  */
 export abstract class AbstractLocationContext extends AbstractContext {
   /**
@@ -58,7 +58,7 @@ export abstract class AbstractLocationContext extends AbstractContext {
 
 /**
  * SectionContexts are special LocationContexts representing a logical area of the UI or the system.
- * They can be often reasoned bout as being containers of other LocationContexts but not the direct targets of Events.
+ * They can be often reasoned about as being containers of other LocationContexts but not the direct targets of Events.
  */
 export abstract class AbstractSectionContext extends AbstractLocationContext {
   /**
