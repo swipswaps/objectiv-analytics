@@ -20,9 +20,17 @@ def insert_events_into_data(connection, events: List[EventWithId]):
     were not inserted (because they violated the uniqueness constraint), and those are inserted in the
     not-ok data table (nok_data).
 
-    Does not do any transaction management, this merely issues insert commands.
-    :param connection: db connection
+    Does not do any transaction management, this merely issues insert commands. The insert might block if
+    another transaction inserts events with the same event_ids. In extreme cases this function might even
+    fail if the blocking exceeds the lock_timeout. To minimize impact of blocks and rollbacks, try to keep
+    transactions that use this function short and do not insert too much data in one call
+
+    This function assumes that the postgres connection has the isolation level
+    ISOLATION_LEVEL_READ_COMMITTED set and a lock_timeout is configured.
+
+    :param connection: psycopg2 database connection, must have ISOLATION_LEVEL_READ_COMMITTED set.
     :param events: list of events. Each event must be a valid Event, and must have a CookieIdContext
+    :raise Exception: If the database is not available, or if it blocks longer than lock_timeout.
     """
     if not events:
         return
@@ -34,12 +42,18 @@ def insert_events_into_data(connection, events: List[EventWithId]):
     # Furthermore the returning clause is guaranteed to only return the actually inserted rows [2]. So we
     # can use that to determine which rows were skipped because they violated the uniqueness constraint.
     #
-    # [1] https://www.postgresql.org/docs/11/transaction-iso.html
-    # [2] https://www.postgresql.org/docs/11/sql-insert.html
+    # An disadvantage of this is that the insert might block if another transaction is inserting an event
+    # with the same event_id. Postgres won't know whether the rows are conflicting until the potentially
+    # conflicting transaction commits, and therefore has no choice but to block. If the block exceeds the
+    # lock_timeout then this will result in a failed transaction, and this function will raise an
+    # exception.
+    #
+    # [1] https://www.postgresql.org/docs/13/transaction-iso.html
+    # [2] https://www.postgresql.org/docs/13/sql-insert.html
     insert_query = f'''
         insert into data(event_id, day, moment, cookie_id, value)
         values %s
-        on conflict do nothing
+        on conflict(event_id) do nothing
         returning event_id
     '''
     values = []
@@ -65,6 +79,8 @@ def insert_events_into_data(connection, events: List[EventWithId]):
             if event.id not in inserted_event_ids_set:
                 duplicate_events.append(event)
     if duplicate_events:
+        print(f'Duplicate events found, count: {len(duplicate_events)}. '
+              f'Will be inserted in nok_data table.')
         insert_events_into_nok_data(connection, duplicate_events, reason=FailureReason.DUPLICATE)
 
 
@@ -95,8 +111,6 @@ def insert_events_into_nok_data(connection,
         values.append(value)
     with connection.cursor() as cursor:
         execute_values(cursor, insert_query, values, template=None, page_size=100)
-
-
 
 
 def _millis_to_datetime(millis: int) -> datetime:
