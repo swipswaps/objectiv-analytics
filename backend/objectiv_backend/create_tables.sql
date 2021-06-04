@@ -3,15 +3,13 @@ begin;
 create table queue_entry (
     event_id uuid not null,
     insert_order bigserial,
-    value json not null,
-    primary key(event_id)
+    value json not null
 );
 
 create table queue_finalize (
     event_id uuid not null,
     insert_order bigserial,
-    value json not null,
-    primary key(event_id)
+    value json not null
 );
 
 create table data (
@@ -25,6 +23,8 @@ create table data (
 
 create index on data(day);
 
+create type failure_reason as enum('failed validation', 'duplicate');
+
 create table nok_data (
     -- perhaps we want to add a field here that states the reason why the data is not ok?
     event_id uuid not null,
@@ -32,7 +32,7 @@ create table nok_data (
     moment timestamp not null,
     cookie_id uuid not null,
     value json not null,
-    primary key(event_id)
+    reason failure_reason default 'failed validation'
 );
 
 
