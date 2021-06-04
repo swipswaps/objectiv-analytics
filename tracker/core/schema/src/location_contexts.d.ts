@@ -1,12 +1,8 @@
-import { AbstractLocationContext } from './abstracts';
+import { AbstractActionContext, AbstractItemContext, AbstractSectionContext } from './abstracts';
 
 /**
  * Sections
  */
-export abstract class AbstractSectionContext extends AbstractLocationContext {
-  readonly _section = true;
-}
-
 export interface SectionContext extends AbstractSectionContext {
   readonly _context_type: 'SectionContext';
 }
@@ -40,10 +36,6 @@ export interface OverlayContext extends AbstractSectionContext {
 /**
  * Items
  */
-export abstract class AbstractItemContext extends AbstractLocationContext {
-  readonly _item = true;
-}
-
 export interface ItemContext extends AbstractItemContext {
   readonly _context_type: 'ItemContext';
 }
@@ -55,10 +47,6 @@ export interface InputContext extends AbstractItemContext {
 /**
  * Actions
  */
-export abstract class AbstractActionContext extends AbstractItemContext {
-  readonly _action = true;
-}
-
 export interface ActionContext extends AbstractActionContext {
   readonly _context_type: 'ActionContext';
   path: string;

@@ -1,5 +1,5 @@
-import { AbstractGlobalContext, AbstractLocationContext } from '@objectiv/schema';
-import { Contexts, ContextsConfig } from './Context';
+import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
+import { ContextsConfig } from './Context';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugin';
 import { TrackerTransport } from './TrackerTransport';
