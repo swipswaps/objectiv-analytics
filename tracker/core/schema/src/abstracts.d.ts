@@ -1,11 +1,6 @@
 export abstract class AbstractContext {
-  readonly _context_type: string;
-  readonly id: string;
-
-  constructor({ _context_type, id }: AbstractContext) {
-    this._context_type = _context_type;
-    this.id = id;
-  }
+  abstract readonly _context_type: string;
+  abstract readonly id: string;
 }
 
 export abstract class AbstractGlobalContext extends AbstractContext {
