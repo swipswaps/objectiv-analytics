@@ -49,7 +49,6 @@ export abstract class AbstractNonInteractiveEvent extends AbstractEvent {
 export abstract class AbstractInteractiveEvent extends AbstractEvent {
   readonly _interactive = true;
   readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
-  readonly globalContexts: AbstractGlobalContext[];
 }
 
 export interface AbstractVideoEvent extends AbstractNonInteractiveEvent {
