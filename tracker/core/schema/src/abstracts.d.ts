@@ -134,7 +134,14 @@ export abstract class AbstractNonInteractiveEvent extends AbstractEvent {
  * Events that are the direct result of a user interaction. Eg. a Button Click
  */
 export abstract class AbstractInteractiveEvent extends AbstractEvent {
+  /**
+   * Discrimination property
+   */
   readonly _interactive = true;
+
+  /**
+   * Interactive Events must provide at least one SectionContext in their Location Stack
+   */
   readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
@@ -142,6 +149,13 @@ export abstract class AbstractInteractiveEvent extends AbstractEvent {
  * A category of Non Interactive Events specifically meant to describe Media Player interactions.
  */
 export interface AbstractVideoEvent extends AbstractNonInteractiveEvent {
+  /**
+   * Discrimination property
+   */
   readonly _video: true;
+
+  /**
+   * Video Events must provide at least one MediaPlayerContext in their Location Stack
+   */
   readonly locationStack: [MediaPlayerContext, ...AbstractLocationContext[]];
 }
