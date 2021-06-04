@@ -1,4 +1,4 @@
-import { MediaPlayerContext } from './location_contexts';
+import { MediaPlayerContext, SectionContext } from './location_contexts';
 
 /**
  * Abstract Contexts define either properties required by Collectors or internal ones for hierarchical discrimination
@@ -142,7 +142,7 @@ export abstract class AbstractInteractiveEvent extends AbstractEvent {
   /**
    * Interactive Events must provide at least one SectionContext in their Location Stack
    */
-  readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
+  readonly locationStack: [SectionContext, ...AbstractLocationContext[]];
 }
 
 /**
