@@ -1,3 +1,5 @@
+import { MediaPlayerContext } from './location_contexts';
+
 /**
  * Abstract Contexts
  */
@@ -48,4 +50,9 @@ export abstract class AbstractInteractiveEvent extends AbstractEvent {
   readonly _interactive = true;
   readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
   readonly globalContexts: AbstractGlobalContext[];
+}
+
+export interface AbstractVideoEvent extends AbstractNonInteractiveEvent {
+  readonly _video: true;
+  readonly locationStack: [MediaPlayerContext, ...AbstractLocationContext[]];
 }
