@@ -1,5 +1,5 @@
 import { URL_CHANGE_EVENT_NAME, WEB_DOCUMENT_CONTEXT_TYPE, WebDocumentContextPlugin } from '../src';
-import { Tracker, TrackerEvent, TrackerPlugins, TrackerTransport } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins, TrackerTransport } from '@objectiv/tracker-core';
 
 describe('WebDocumentContextPlugin', () => {
   it('should instantiate without specifying an ID at construction', () => {
@@ -15,19 +15,21 @@ describe('WebDocumentContextPlugin', () => {
 
   it('should add the WebDocumentContext to the Event when `beforeTransport` is executed by the Tracker', () => {
     const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
-    const eventContexts = {
-      globalContexts: [
-        { _context_type: 'section', id: 'X' },
-        { _context_type: 'section', id: 'Y' },
+    const eventContexts: ContextsConfig = {
+      locationStack: [
+        { _location: true, _context_type: 'section', id: 'A' },
+        { _location: true, _context_type: 'section', id: 'B' },
       ],
     };
     const testEvent = new TrackerEvent({ eventName: 'test-event', ...eventContexts });
-    expect(testEvent.globalContexts).toHaveLength(2);
+    expect(testEvent.locationStack).toHaveLength(2);
     const trackedEvent = testTracker.trackEvent(testEvent);
-    expect(trackedEvent.globalContexts).toHaveLength(3);
-    expect(trackedEvent.globalContexts).toEqual(
+    expect(trackedEvent.locationStack).toHaveLength(3);
+    expect(trackedEvent.locationStack).toEqual(
       expect.arrayContaining([
         {
+          _location: true,
+          _section: true,
           _context_type: 'WebDocumentContext',
           id: '#document',
           url: 'http://localhost/',
@@ -64,8 +66,16 @@ describe('WebDocumentContextPlugin', () => {
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenCalledWith({
       eventName: URL_CHANGE_EVENT_NAME,
-      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
-      locationStack: [],
+      locationStack: [
+        {
+          _location: true,
+          _section: true,
+          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          id: '#document',
+          url: 'http://localhost/',
+        },
+      ],
+      globalContexts: [],
     });
 
     window.history.pushState({ page: 2 }, 'title 2', '/page2?page=2');
@@ -73,8 +83,16 @@ describe('WebDocumentContextPlugin', () => {
     expect(spyTransport.handle).toHaveBeenCalledTimes(2);
     expect(spyTransport.handle).toHaveBeenCalledWith({
       eventName: URL_CHANGE_EVENT_NAME,
-      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
-      locationStack: [],
+      locationStack: [
+        {
+          _location: true,
+          _section: true,
+          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          id: '#document',
+          url: 'http://localhost/',
+        },
+      ],
+      globalContexts: [],
     });
 
     window.history.replaceState({ page: 3 }, 'title 3', '?page=3');
@@ -82,8 +100,16 @@ describe('WebDocumentContextPlugin', () => {
     expect(spyTransport.handle).toHaveBeenCalledTimes(3);
     expect(spyTransport.handle).toHaveBeenCalledWith({
       eventName: URL_CHANGE_EVENT_NAME,
-      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
-      locationStack: [],
+      locationStack: [
+        {
+          _location: true,
+          _section: true,
+          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          id: '#document',
+          url: 'http://localhost/',
+        },
+      ],
+      globalContexts: [],
     });
 
     window.history.replaceState({ page: 1 }, 'title1', '?page=1');
@@ -91,8 +117,16 @@ describe('WebDocumentContextPlugin', () => {
     expect(spyTransport.handle).toHaveBeenCalledTimes(4);
     expect(spyTransport.handle).toHaveBeenCalledWith({
       eventName: URL_CHANGE_EVENT_NAME,
-      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
-      locationStack: [],
+      locationStack: [
+        {
+          _location: true,
+          _section: true,
+          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          id: '#document',
+          url: 'http://localhost/',
+        },
+      ],
+      globalContexts: [],
     });
 
     window.history.go(1);
@@ -100,8 +134,16 @@ describe('WebDocumentContextPlugin', () => {
     expect(spyTransport.handle).toHaveBeenCalledTimes(5);
     expect(spyTransport.handle).toHaveBeenCalledWith({
       eventName: URL_CHANGE_EVENT_NAME,
-      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
-      locationStack: [],
+      locationStack: [
+        {
+          _location: true,
+          _section: true,
+          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          id: '#document',
+          url: 'http://localhost/',
+        },
+      ],
+      globalContexts: [],
     });
 
     window.history.back();
@@ -109,8 +151,16 @@ describe('WebDocumentContextPlugin', () => {
     expect(spyTransport.handle).toHaveBeenCalledTimes(6);
     expect(spyTransport.handle).toHaveBeenCalledWith({
       eventName: URL_CHANGE_EVENT_NAME,
-      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
-      locationStack: [],
+      locationStack: [
+        {
+          _location: true,
+          _section: true,
+          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          id: '#document',
+          url: 'http://localhost/',
+        },
+      ],
+      globalContexts: [],
     });
 
     window.history.forward();
@@ -118,8 +168,16 @@ describe('WebDocumentContextPlugin', () => {
     expect(spyTransport.handle).toHaveBeenCalledTimes(7);
     expect(spyTransport.handle).toHaveBeenCalledWith({
       eventName: URL_CHANGE_EVENT_NAME,
-      globalContexts: [{ _context_type: WEB_DOCUMENT_CONTEXT_TYPE, id: '#document', url: 'http://localhost/' }],
-      locationStack: [],
+      locationStack: [
+        {
+          _location: true,
+          _section: true,
+          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          id: '#document',
+          url: 'http://localhost/',
+        },
+      ],
+      globalContexts: [],
     });
   });
 });

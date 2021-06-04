@@ -1,5 +1,5 @@
 import { WebDeviceContextPlugin } from '../src';
-import { Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 
 const USER_AGENT_MOCK_VALUE = 'Mocked User Agent';
@@ -16,18 +16,19 @@ describe('WebDeviceContextPlugin', () => {
   it('should generate the WebDeviceContext when constructed', () => {
     const testWebDeviceContextPlugin = new WebDeviceContextPlugin();
     expect(testWebDeviceContextPlugin.webDeviceContext).toEqual({
+      _global: true,
       _context_type: 'WebDeviceContext',
       id: 'device',
-      'user-agent': USER_AGENT_MOCK_VALUE,
+      userAgent: USER_AGENT_MOCK_VALUE,
     });
   });
 
   it('should add the WebDeviceContext to the Event when `beforeTransport` is executed by the Tracker', () => {
     const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDeviceContextPlugin]) });
-    const eventContexts = {
+    const eventContexts: ContextsConfig = {
       globalContexts: [
-        { _context_type: 'section', id: 'X' },
-        { _context_type: 'section', id: 'Y' },
+        { _global: true, _context_type: 'section', id: 'X' },
+        { _global: true, _context_type: 'section', id: 'Y' },
       ],
     };
     const testEvent = new TrackerEvent({ eventName: 'test-event', ...eventContexts });
@@ -37,9 +38,10 @@ describe('WebDeviceContextPlugin', () => {
     expect(trackedEvent.globalContexts).toEqual(
       expect.arrayContaining([
         {
+          _global: true,
           _context_type: 'WebDeviceContext',
           id: 'device',
-          'user-agent': USER_AGENT_MOCK_VALUE,
+          userAgent: USER_AGENT_MOCK_VALUE,
         },
       ])
     );

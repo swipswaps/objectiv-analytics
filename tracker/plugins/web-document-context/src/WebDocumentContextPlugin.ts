@@ -36,6 +36,6 @@ export class WebDocumentContextPlugin implements TrackerPlugin {
    * Generate a fresh WebDocumentContext before each TrackerEvent is handed over to the TrackerTransport.
    */
   beforeTransport(event: TrackerEvent): void {
-    event.globalContexts.push(newWebDocumentContext({ documentContextId: this.documentContextId }));
+    event.locationStack.push(newWebDocumentContext({ documentContextId: this.documentContextId }));
   }
 }

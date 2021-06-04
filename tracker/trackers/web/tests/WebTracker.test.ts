@@ -94,19 +94,31 @@ describe('WebTracker', () => {
       const testEvent = new TrackerEvent({ eventName: 'test-event' });
       expect(testTracker).toBeInstanceOf(WebTracker);
       expect(testEvent.globalContexts).toHaveLength(0);
+      expect(testEvent.locationStack).toHaveLength(0);
+
       const trackedEvent = testTracker.trackEvent(testEvent);
-      expect(trackedEvent.globalContexts).toHaveLength(2);
-      expect(trackedEvent.globalContexts).toEqual(
+
+      expect(trackedEvent.locationStack).toHaveLength(1);
+      expect(trackedEvent.locationStack).toEqual(
         expect.arrayContaining([
           {
+            _location: true,
+            _section: true,
             _context_type: 'WebDocumentContext',
             id: '#document',
             url: 'http://localhost/',
           },
+        ])
+      );
+
+      expect(trackedEvent.globalContexts).toHaveLength(1);
+      expect(trackedEvent.globalContexts).toEqual(
+        expect.arrayContaining([
           {
+            _global: true,
             _context_type: 'WebDeviceContext',
             id: 'device',
-            'user-agent': USER_AGENT_MOCK_VALUE,
+            userAgent: USER_AGENT_MOCK_VALUE,
           },
         ])
       );

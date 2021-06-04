@@ -1,20 +1,14 @@
-import { GlobalContext } from '@objectiv/schema';
+import { WebDocumentContext } from '@objectiv/schema';
 
 export const WEB_DOCUMENT_CONTEXT_TYPE = 'WebDocumentContext';
-
-/**
- * WebDocumentContext is a GlobalContext tracking the main `document` url automatically.
- */
-export type WebDocumentContext = GlobalContext & {
-  _context_type: typeof WEB_DOCUMENT_CONTEXT_TYPE;
-  url: string;
-};
 
 /**
  * WebDocumentContext factory
  */
 export function newWebDocumentContext({ documentContextId }: { documentContextId: string }): WebDocumentContext {
   return {
+    _location: true,
+    _section: true,
     _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
     id: documentContextId,
     url: document.location.href,

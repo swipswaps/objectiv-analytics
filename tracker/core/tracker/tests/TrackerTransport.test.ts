@@ -1,11 +1,19 @@
-import { MemoryQueue, Tracker, TrackerEvent, QueuedTransport, TransportGroup, TransportSwitch } from '../src';
+import {
+  MemoryQueue,
+  Tracker,
+  TrackerEvent,
+  QueuedTransport,
+  TransportGroup,
+  TransportSwitch,
+  ContextsConfig,
+} from '../src';
 import { LogTransport, UnusableTransport } from './mocks';
 import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
 
 const testEventName = 'test-event';
-const testContexts = {
-  locationStack: [{ _context_type: 'section', id: 'test' }],
-  globalContexts: [{ _context_type: 'global', id: 'test' }],
+const testContexts: ContextsConfig = {
+  locationStack: [{ _location: true, _context_type: 'section', id: 'test' }],
+  globalContexts: [{ _global: true, _context_type: 'global', id: 'test' }],
 };
 const testEvent = new TrackerEvent({ eventName: testEventName, ...testContexts });
 
