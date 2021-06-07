@@ -1,9 +1,9 @@
 import { makeDocumentLoadedEvent, Tracker } from '@objectiv/tracker-core';
 
 /**
- * WebDocumentLoadedEvent is triggered by DOMContentLoaded. The actual URL can be retrieved from the WebDocumentContext
+ * DocumentLoadedEvent is triggered by DOMContentLoaded. The actual URL can be retrieved from the WebDocumentContext
  */
-export const trackWebDocumentLoadedEvent = (tracker: Tracker): void => {
+export const trackDocumentLoadedEvent = (tracker: Tracker): void => {
   const trackEvent = () => tracker.trackEvent(makeDocumentLoadedEvent());
 
   if (document.readyState !== 'complete') {

@@ -1,5 +1,5 @@
 import { makeWebDocumentContext, Tracker } from '@objectiv/tracker-core';
-import { trackWebDocumentLoadedEvent } from '../src/WebDocumentLoadedEvent';
+import { trackDocumentLoadedEvent } from '../src/';
 import { SpyTransport } from './mocks/SpyTransport';
 
 describe('WebDocumentLoadedEvent', () => {
@@ -17,7 +17,7 @@ describe('WebDocumentLoadedEvent', () => {
       transport: spyTransport,
     });
 
-    trackWebDocumentLoadedEvent(testTracker);
+    trackDocumentLoadedEvent(testTracker);
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
       _interactive_event: false,
@@ -56,7 +56,7 @@ describe('WebDocumentLoadedEvent', () => {
       },
     });
 
-    trackWebDocumentLoadedEvent(testTracker);
+    trackDocumentLoadedEvent(testTracker);
 
     // Re-trigger DOMContentLoaded manually
     await window.document.dispatchEvent(
