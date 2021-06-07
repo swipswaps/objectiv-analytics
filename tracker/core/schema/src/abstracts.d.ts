@@ -147,12 +147,6 @@ export abstract class AbstractInteractiveEvent extends AbstractEvent {
    * Discrimination property
    */
   readonly _interactive_event = true;
-
-  /**
-   * Interactive Events must provide at least one SectionContext in their Location Stack
-   */
-  // TODO implementing this guard requires extensive changes to the Tracker class, for later
-  // readonly locationStack: [SectionContext, ...AbstractLocationContext[]];
 }
 
 /**
@@ -163,10 +157,4 @@ export interface AbstractVideoEvent extends AbstractNonInteractiveEvent {
    * Discrimination property
    */
   readonly _video_event: true;
-
-  /**
-   * Video Events must provide at least one MediaPlayerContext in their Location Stack
-   */
-  // TODO implementing this guard requires extensive changes to the Tracker class, for later
-  // readonly locationStack: [MediaPlayerContext, ...AbstractLocationContext[]];
 }

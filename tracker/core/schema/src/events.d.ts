@@ -5,32 +5,22 @@ import { AbstractInteractiveEvent, AbstractNonInteractiveEvent, AbstractVideoEve
  */
 export interface DocumentLoadedEvent extends AbstractNonInteractiveEvent {
   readonly event: 'DocumentLoadedEvent';
-  // TODO implementing this guard requires extensive changes to the Tracker class, for later
-  // readonly locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
 }
 
 export interface URLChangedEvent extends AbstractNonInteractiveEvent {
   readonly event: 'URLChangedEvent';
-  // TODO implementing this guard requires extensive changes to the Tracker class, for later
-  // readonly locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
 }
 
 export interface ApplicationLoadedEvent extends AbstractNonInteractiveEvent {
   readonly event: 'ApplicationLoadedEvent';
-  // TODO implementing this guard requires extensive changes to the Tracker class, for later
-  // readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
 export interface SectionVisibleEvent extends AbstractNonInteractiveEvent {
   readonly event: 'SectionVisibleEvent';
-  // TODO implementing this guard requires extensive changes to the Tracker class, for later
-  // readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
 export interface SectionHiddenEvent extends AbstractNonInteractiveEvent {
   readonly event: 'SectionHiddenEvent';
-  // TODO implementing this guard requires extensive changes to the Tracker class, for later
-  //readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
 /**
@@ -65,6 +55,4 @@ export interface ClickEvent extends AbstractInteractiveEvent {
 
 export interface InputChangeEvent extends AbstractInteractiveEvent {
   readonly event: 'InputChangeEvent';
-  // TODO implementing this guard requires extensive changes to the Tracker class, for later
-  // readonly locationStack: [InputContext, ...AbstractLocationContext[]];
 }
