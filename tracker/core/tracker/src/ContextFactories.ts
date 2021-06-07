@@ -1,7 +1,11 @@
 import {
   ActionContext,
   ButtonContext,
+  CookieIdContext,
+  DeviceContext,
+  ErrorContext,
   ExpandableSectionContext,
+  HttpContext,
   InputContext,
   ItemContext,
   LinkContext,
@@ -10,6 +14,7 @@ import {
   OverlayContext,
   ScreenContext,
   SectionContext,
+  SessionContext,
   WebDocumentContext,
 } from '@objectiv/schema';
 
@@ -142,4 +147,61 @@ export const makeLinkContext = (props: { id: string; href: string; text: string 
   id: props.id,
   path: props.href,
   text: props.text,
+});
+
+/**
+ * DeviceContext Factory
+ */
+export const makeDeviceContext = (props: { userAgent: string }): DeviceContext => ({
+  _global_context: true,
+  _context_type: 'DeviceContext',
+  id: 'device',
+  userAgent: props.userAgent,
+});
+
+/**
+ * ErrorContext Factory
+ */
+export const makeErrorContext = (props: { id: string; message: string }): ErrorContext => ({
+  _global_context: true,
+  _context_type: 'ErrorContext',
+  id: props.id,
+  message: props.message,
+});
+
+/**
+ * CookieIdContext Factory
+ */
+export const makeCookieIdContext = (props: { id: string; cookieId: string }): CookieIdContext => ({
+  _global_context: true,
+  _context_type: 'CookieIdContext',
+  id: props.id,
+  cookie_id: props.cookieId,
+});
+
+/**
+ * SessionContext Factory
+ */
+export const makeSessionContext = (props: { id: string; hitNumber: number }): SessionContext => ({
+  _global_context: true,
+  _context_type: 'SessionContext',
+  id: props.id,
+  hitNumber: props.hitNumber,
+});
+
+/**
+ * SessionContext Factory
+ */
+export const makeHttpContext = (props: {
+  id: string;
+  host: string;
+  userAgent: string;
+  remoteAddr: string;
+}): HttpContext => ({
+  _global_context: true,
+  _context_type: 'HttpContext',
+  id: props.id,
+  host: props.host,
+  userAgent: props.userAgent,
+  remoteAddr: props.remoteAddr,
 });

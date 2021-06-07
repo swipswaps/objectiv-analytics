@@ -1,7 +1,11 @@
 import {
   makeActionContext,
   makeButtonContext,
+  makeCookieIdContext,
+  makeDeviceContext,
+  makeErrorContext,
   makeExpandableSectionContext,
+  makeHttpContext,
   makeInputContext,
   makeItemContext,
   makeLinkContext,
@@ -10,6 +14,7 @@ import {
   makeOverlayContext,
   makeScreenContext,
   makeSectionContext,
+  makeSessionContext,
   makeWebDocumentContext,
 } from '../src';
 
@@ -130,6 +135,53 @@ describe('Context Factories', () => {
       id: 'confirm-data',
       path: '/some/url',
       text: 'Click for Details',
+    });
+  });
+
+  it('DeviceContext', () => {
+    expect(makeDeviceContext({ userAgent: 'user agent string' })).toStrictEqual({
+      _global_context: true,
+      _context_type: 'DeviceContext',
+      id: 'device',
+      userAgent: 'user agent string',
+    });
+  });
+
+  it('ErrorContext', () => {
+    expect(makeErrorContext({ id: 'error-id', message: 'error description' })).toStrictEqual({
+      _global_context: true,
+      _context_type: 'ErrorContext',
+      id: 'error-id',
+      message: 'error description',
+    });
+  });
+
+  it('CookieIdContext', () => {
+    expect(makeCookieIdContext({ id: 'error-id', cookieId: '12345' })).toStrictEqual({
+      _global_context: true,
+      _context_type: 'CookieIdContext',
+      id: 'error-id',
+      cookie_id: '12345', // Note: the cookieId parameter is mapped to cookie_id
+    });
+  });
+
+  it('SessionContext', () => {
+    expect(makeSessionContext({ id: 'session-id', hitNumber: 123 })).toStrictEqual({
+      _global_context: true,
+      _context_type: 'SessionContext',
+      id: 'session-id',
+      hitNumber: 123,
+    });
+  });
+
+  it('HttpContext', () => {
+    expect(makeHttpContext({ id: 'http', host: 'host', userAgent: 'ua', remoteAddr: '0.0.0.0' })).toStrictEqual({
+      _global_context: true,
+      _context_type: 'HttpContext',
+      id: 'http',
+      host: 'host',
+      userAgent: 'ua',
+      remoteAddr: '0.0.0.0',
     });
   });
 });

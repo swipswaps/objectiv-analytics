@@ -13,17 +13,17 @@ describe('WebDeviceContextPlugin', () => {
     clear();
   });
 
-  it('should generate the WebDeviceContext when constructed', () => {
+  it('should generate a DeviceContext when constructed', () => {
     const testWebDeviceContextPlugin = new WebDeviceContextPlugin();
     expect(testWebDeviceContextPlugin.webDeviceContext).toEqual({
       _global_context: true,
-      _context_type: 'WebDeviceContext',
+      _context_type: 'DeviceContext',
       id: 'device',
       userAgent: USER_AGENT_MOCK_VALUE,
     });
   });
 
-  it('should add the WebDeviceContext to the Event when `beforeTransport` is executed by the Tracker', () => {
+  it('should add the DeviceContext to the Event when `beforeTransport` is executed by the Tracker', () => {
     const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDeviceContextPlugin]) });
     const eventContexts: ContextsConfig = {
       globalContexts: [
@@ -39,7 +39,7 @@ describe('WebDeviceContextPlugin', () => {
       expect.arrayContaining([
         {
           _global_context: true,
-          _context_type: 'WebDeviceContext',
+          _context_type: 'DeviceContext',
           id: 'device',
           userAgent: USER_AGENT_MOCK_VALUE,
         },

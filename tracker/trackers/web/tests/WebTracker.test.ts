@@ -116,7 +116,7 @@ describe('WebTracker', () => {
         expect.arrayContaining([
           {
             _global_context: true,
-            _context_type: 'WebDeviceContext',
+            _context_type: 'DeviceContext',
             id: 'device',
             userAgent: USER_AGENT_MOCK_VALUE,
           },
