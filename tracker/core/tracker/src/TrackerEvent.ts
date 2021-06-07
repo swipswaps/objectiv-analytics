@@ -27,8 +27,10 @@ export class TrackerEvent implements Contexts {
    * ContextConfigs are used to configure LocationStack and GlobalContexts. If multiple configurations have been
    * provided they will be merged onto each other to produce a single LocationStack and GlobalContexts.
    */
-  constructor(eventConfiguration: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
-    this.event = eventConfiguration.event;
+  constructor({ event, ...otherEventProps }: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
+    // Let's copy the entire eventConfiguration in state
+    this.event = event;
+    Object.assign(this, otherEventProps);
 
     // Start with empty context lists
     let newLocationStack: AbstractLocationContext[] = [];
@@ -41,7 +43,7 @@ export class TrackerEvent implements Contexts {
     });
 
     // And finally add the TrackerEvent Contexts on top. For Global Contexts instead we do the opposite.
-    this.locationStack = [...newLocationStack, ...(eventConfiguration.locationStack ?? [])];
-    this.globalContexts = [...(eventConfiguration.globalContexts ?? []), ...newGlobalContexts];
+    this.locationStack = [...newLocationStack, ...(otherEventProps.locationStack ?? [])];
+    this.globalContexts = [...(otherEventProps.globalContexts ?? []), ...newGlobalContexts];
   }
 }

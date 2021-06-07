@@ -1,26 +1,22 @@
-import {
-  AbstractGlobalContext,
-  AbstractLocationContext,
-  DocumentLoadedEvent,
-  WebDocumentContext,
-} from '@objectiv/schema';
+import { DocumentLoadedEvent, URLChangedEvent } from '@objectiv/schema';
+import { ContextsConfig } from './Context';
 
 /**
- * DocumentLoadedEvent. Configuration props and Factory. Location Stack must contain a WebDocumentContext.
+ * DocumentLoadedEvent factory
  */
-export type DocumentLoadedEventConfig = {
-  globalContexts?: AbstractGlobalContext[];
-  locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
-};
-export const makeDocumentLoadedEvent = (props: DocumentLoadedEventConfig): DocumentLoadedEvent =>
-  new (class implements DocumentLoadedEvent {
-    readonly _interactive_event = false;
-    readonly event = 'DocumentLoadedEvent';
-    readonly globalContexts: AbstractGlobalContext[];
-    readonly locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
+export const makeDocumentLoadedEvent = (props?: ContextsConfig): DocumentLoadedEvent => ({
+  _interactive_event: false,
+  event: 'DocumentLoadedEvent',
+  globalContexts: props?.globalContexts ?? [],
+  locationStack: props?.locationStack ?? [],
+});
 
-    constructor(props: DocumentLoadedEventConfig) {
-      this.globalContexts = props.globalContexts ?? [];
-      this.locationStack = props.locationStack;
-    }
-  })(props);
+/**
+ * URLChangedEvent factory
+ */
+export const makeURLChangedEvent = (props?: ContextsConfig): URLChangedEvent => ({
+  _interactive_event: false,
+  event: 'URLChangedEvent',
+  globalContexts: props?.globalContexts ?? [],
+  locationStack: props?.locationStack ?? [],
+});

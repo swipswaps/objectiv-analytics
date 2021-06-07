@@ -1,37 +1,36 @@
-import {
-  AbstractLocationContext,
-  AbstractNonInteractiveEvent,
-  AbstractSectionContext,
-  AbstractVideoEvent,
-} from './abstracts';
-import { InputContext, WebDocumentContext } from './location_contexts';
+import { AbstractNonInteractiveEvent, AbstractVideoEvent } from './abstracts';
 
 /**
  * Non-Interactive Events
  */
 export interface DocumentLoadedEvent extends AbstractNonInteractiveEvent {
   readonly event: 'DocumentLoadedEvent';
-  readonly locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
+  // TODO implementing this guard requires extensive changes to the Tracker class, for later
+  // readonly locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
 }
 
 export interface URLChangedEvent extends AbstractNonInteractiveEvent {
   readonly event: 'URLChangedEvent';
-  readonly locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
+  // TODO implementing this guard requires extensive changes to the Tracker class, for later
+  // readonly locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
 }
 
 export interface ApplicationLoadedEvent extends AbstractNonInteractiveEvent {
   readonly event: 'ApplicationLoadedEvent';
-  readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
+  // TODO implementing this guard requires extensive changes to the Tracker class, for later
+  // readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
 export interface SectionVisibleEvent extends AbstractNonInteractiveEvent {
   readonly event: 'SectionVisibleEvent';
-  readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
+  // TODO implementing this guard requires extensive changes to the Tracker class, for later
+  // readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
 export interface SectionHiddenEvent extends AbstractNonInteractiveEvent {
   readonly event: 'SectionHiddenEvent';
-  readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
+  // TODO implementing this guard requires extensive changes to the Tracker class, for later
+  //readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
 /**
@@ -66,5 +65,6 @@ export interface ClickEvent extends AbstractNonInteractiveEvent {
 
 export interface InputChangeEvent extends AbstractNonInteractiveEvent {
   readonly _event: 'InputChangeEvent';
-  readonly locationStack: [InputContext, ...AbstractLocationContext[]];
+  // TODO implementing this guard requires extensive changes to the Tracker class, for later
+  // readonly locationStack: [InputContext, ...AbstractLocationContext[]];
 }
