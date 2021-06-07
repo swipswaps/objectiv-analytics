@@ -7,7 +7,7 @@ import { MediaPlayerContext, SectionContext } from './location_contexts';
  * For example we never want to mix Location Contexts with Global Contexts and Events may requires specific Contexts
  * to be present in their Location Stack. Eg. a NavigationContext instead of a generic SectionContext.
  *
- * This ensures that Events are carrying the Contexts they require to be meaningful and identifiable.
+ * This ensures that Events are carrying the Contexts they require, making them meaningful and identifiable.
  *
  * TypeScript does not support multiple inheritance, thus we use property based discrimination instead.
  * For more info: https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions
@@ -42,7 +42,7 @@ export abstract class AbstractGlobalContext extends AbstractContext {
   /**
    * Discrimination property
    */
-  readonly _global = true;
+  readonly _global_context = true;
 }
 
 /**
@@ -53,7 +53,7 @@ export abstract class AbstractLocationContext extends AbstractContext {
   /**
    * Discrimination property
    */
-  readonly _location = true;
+  readonly _location_context = true;
 }
 
 /**
@@ -64,7 +64,7 @@ export abstract class AbstractSectionContext extends AbstractLocationContext {
   /**
    * Discrimination property
    */
-  readonly _section = true;
+  readonly _section_context = true;
 }
 
 /**
@@ -75,7 +75,7 @@ export abstract class AbstractItemContext extends AbstractLocationContext {
   /**
    * Discrimination property
    */
-  readonly _item = true;
+  readonly _item_context = true;
 }
 
 /**
@@ -86,7 +86,7 @@ export abstract class AbstractActionContext extends AbstractItemContext {
   /**
    * Discrimination property
    */
-  readonly _action = true;
+  readonly _action_context = true;
 }
 
 /**
@@ -127,7 +127,7 @@ export abstract class AbstractNonInteractiveEvent extends AbstractEvent {
   /**
    * Discrimination property
    */
-  readonly _interactive = false;
+  readonly _interactive_event = false;
 }
 
 /**
@@ -137,7 +137,7 @@ export abstract class AbstractInteractiveEvent extends AbstractEvent {
   /**
    * Discrimination property
    */
-  readonly _interactive = true;
+  readonly _interactive_event = true;
 
   /**
    * Interactive Events must provide at least one SectionContext in their Location Stack
@@ -152,7 +152,7 @@ export interface AbstractVideoEvent extends AbstractNonInteractiveEvent {
   /**
    * Discrimination property
    */
-  readonly _video: true;
+  readonly _video_event: true;
 
   /**
    * Video Events must provide at least one MediaPlayerContext in their Location Stack
