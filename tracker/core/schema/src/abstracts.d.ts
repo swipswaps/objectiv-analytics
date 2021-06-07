@@ -1,5 +1,3 @@
-import { MediaPlayerContext, SectionContext } from './location_contexts';
-
 /**
  * Abstract Contexts define either properties required by Collectors or internal ones for hierarchical discrimination
  * purposes.
@@ -87,6 +85,17 @@ export abstract class AbstractActionContext extends AbstractItemContext {
    * Discrimination property
    */
   readonly _action_context = true;
+
+  /**
+   * A string representing where the action will lead to
+   * TODO: make this optional when OSF will support that
+   */
+  path: string;
+
+  /**
+   * The text of the interactive element or, for visuals, a string describing it
+   */
+  text: string;
 }
 
 /**
@@ -138,11 +147,6 @@ export abstract class AbstractInteractiveEvent extends AbstractEvent {
    * Discrimination property
    */
   readonly _interactive_event = true;
-
-  /**
-   * Interactive Events must provide at least one SectionContext in their Location Stack
-   */
-  readonly locationStack: [SectionContext, ...AbstractLocationContext[]];
 }
 
 /**
@@ -153,9 +157,4 @@ export interface AbstractVideoEvent extends AbstractNonInteractiveEvent {
    * Discrimination property
    */
   readonly _video_event: true;
-
-  /**
-   * Video Events must provide at least one MediaPlayerContext in their Location Stack
-   */
-  readonly locationStack: [MediaPlayerContext, ...AbstractLocationContext[]];
 }

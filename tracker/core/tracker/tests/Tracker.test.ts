@@ -123,7 +123,7 @@ describe('Tracker', () => {
     };
     const testEvent = new TrackerEvent(
       {
-        eventName: 'test-event',
+        event: 'test-event',
       },
       eventContexts
     );

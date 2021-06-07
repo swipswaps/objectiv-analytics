@@ -1,37 +1,26 @@
-import {
-  AbstractLocationContext,
-  AbstractNonInteractiveEvent,
-  AbstractSectionContext,
-  AbstractVideoEvent,
-} from './abstracts';
-import { InputContext, WebDocumentContext } from './location_contexts';
+import { AbstractInteractiveEvent, AbstractNonInteractiveEvent, AbstractVideoEvent } from './abstracts';
 
 /**
  * Non-Interactive Events
  */
 export interface DocumentLoadedEvent extends AbstractNonInteractiveEvent {
   readonly event: 'DocumentLoadedEvent';
-  readonly locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
 }
 
 export interface URLChangedEvent extends AbstractNonInteractiveEvent {
   readonly event: 'URLChangedEvent';
-  readonly locationStack: [WebDocumentContext, ...AbstractLocationContext[]];
 }
 
 export interface ApplicationLoadedEvent extends AbstractNonInteractiveEvent {
   readonly event: 'ApplicationLoadedEvent';
-  readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
 export interface SectionVisibleEvent extends AbstractNonInteractiveEvent {
   readonly event: 'SectionVisibleEvent';
-  readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
 export interface SectionHiddenEvent extends AbstractNonInteractiveEvent {
   readonly event: 'SectionHiddenEvent';
-  readonly locationStack: [AbstractSectionContext, ...AbstractLocationContext[]];
 }
 
 /**
@@ -60,11 +49,10 @@ export interface VideoPauseEvent extends AbstractVideoEvent {
 /**
  * Interactive Events
  */
-export interface ClickEvent extends AbstractNonInteractiveEvent {
-  readonly _event: 'ClickEvent';
+export interface ClickEvent extends AbstractInteractiveEvent {
+  readonly event: 'ClickEvent';
 }
 
-export interface InputChangeEvent extends AbstractNonInteractiveEvent {
-  readonly _event: 'InputChangeEvent';
-  readonly locationStack: [InputContext, ...AbstractLocationContext[]];
+export interface InputChangeEvent extends AbstractInteractiveEvent {
+  readonly event: 'InputChangeEvent';
 }

@@ -14,7 +14,7 @@ describe('FetchAPITransport', () => {
   const MOCK_ENDPOINT = '/test-endpoint';
 
   const testEvent = new TrackerEvent({
-    eventName: 'test-event',
+    event: 'test-event',
   });
 
   it('should send using `fetch` API with the default parameters', async () => {

@@ -49,8 +49,6 @@ export interface InputContext extends AbstractItemContext {
  */
 export interface ActionContext extends AbstractActionContext {
   readonly _context_type: 'ActionContext';
-  path: string;
-  text: string;
 }
 
 export interface ButtonContext extends AbstractActionContext {

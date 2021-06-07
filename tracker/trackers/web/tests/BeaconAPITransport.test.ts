@@ -10,7 +10,7 @@ describe('BeaconAPITransport', () => {
   const MOCK_ENDPOINT = '/test-endpoint';
 
   const testEvent = new TrackerEvent({
-    eventName: 'test-event',
+    event: 'test-event',
   });
 
   it('should send using `sendBeacon` API', async () => {
