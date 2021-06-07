@@ -43,9 +43,10 @@ python objectiv_backend/schema/generate_json_schema.py > test_schema.json
 python -m jsonschema -i <path to json file with events> test_schema.json
 ```
 
-## Run tests
+## Run Tests and Checks
 ```bash
 pytest tests
+mypy objectiv_backend
 ```
 
 # Build
