@@ -18,6 +18,7 @@ _ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
 
 # ### Postgres values.
 # We define some default values here. DO NOT put actual passwords in here
+_OUTPUT_ENABLE_PG = os.environ.get('OUTPUT_ENABLE_PG', 'true') == 'true'
 _PG_HOSTNAME = os.environ.get('POSTGRES_HOSTNAME', 'localhost')
 _PG_PORT = os.environ.get('POSTGRES_PORT', '5432')
 _PG_DATABASE_NAME = os.environ.get('POSTGRES_DB', 'objectiv')
@@ -26,6 +27,7 @@ _PG_PASSWORD = os.environ.get('POSTGRES_PASSWORD', '')
 
 # ### AWS S3 values, for writing data to S3.
 # default access keys to an empty string, otherwise the boto library will default ot user defaults.
+_OUTPUT_ENABLE_AWS = os.environ.get('OUTPUT_ENABLE_AWS', '') == 'true'
 _AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
 _AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
 _AWS_REGION = os.environ.get('AWS_REGION', 'eu-west-1')
@@ -33,7 +35,8 @@ _AWS_BUCKET = os.environ.get('AWS_BUCKET', '')
 _AWS_S3_PREFIX = os.environ.get('AWS_S3_PREFIX', '')
 
 # ### Setting for outputting data to the filesystem
-_JSON_OUTPUT_DIR = os.environ.get('JSON_OUTPUT_DIR')
+_OUTPUT_ENABLE_FILESYSTEM = os.environ.get('OUTPUT_ENABLE_FILESYSTEM', '') == 'true'
+_FILESYSTEM_OUTPUT_DIR = os.environ.get('FILESYSTEM_OUTPUT_DIR')
 
 # Cookie settings
 _OBJ_COOKIE = 'obj_user_id'
@@ -85,26 +88,35 @@ class CollectorConfig(NamedTuple):
 
 
 def get_config_output_aws() -> Optional[AwsOutputConfig]:
+    if not _OUTPUT_ENABLE_AWS:
+        return None
     if _AWS_REGION and _AWS_ACCESS_KEY_ID and _AWS_SECRET_ACCESS_KEY and _AWS_BUCKET and _AWS_S3_PREFIX:
-        return AwsOutputConfig(
-            access_key_id=_AWS_ACCESS_KEY_ID,
-            secret_access_key=_AWS_SECRET_ACCESS_KEY,
-            region=_AWS_REGION,
-            bucket=_AWS_BUCKET,
-            s3_prefix=_AWS_S3_PREFIX
-        )
-    return None
+        raise ValueError(f'OUTPUT_ENABLE_AWS = true, but not all required values specified. '
+                         f'Must specify AWS_REGION, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_BUCKET, '
+                         f'and AWS_S3_PREFIX')
+    return AwsOutputConfig(
+        access_key_id=_AWS_ACCESS_KEY_ID,
+        secret_access_key=_AWS_SECRET_ACCESS_KEY,
+        region=_AWS_REGION,
+        bucket=_AWS_BUCKET,
+        s3_prefix=_AWS_S3_PREFIX
+    )
 
 
 def get_config_output_file_system() -> Optional[FileSystemOutputConfig]:
-    if _JSON_OUTPUT_DIR:
-        return FileSystemOutputConfig(path=_JSON_OUTPUT_DIR)
-    return None
+    if not _OUTPUT_ENABLE_FILESYSTEM:
+        return None
+    if not _FILESYSTEM_OUTPUT_DIR:
+        raise ValueError('OUTPUT_ENABLE_FILESYSTEM = true, but FILESYSTEM_OUTPUT_DIR not specified.')
+    return FileSystemOutputConfig(path=_FILESYSTEM_OUTPUT_DIR)
 
 
 def get_config_postgres() -> Optional[PostgresConfig]:
-    if not _PG_HOSTNAME or not _PG_PORT or not _PG_DATABASE_NAME or not _PG_USER or not _PG_PASSWORD:
+    if not _OUTPUT_ENABLE_PG:
         return None
+    if not _PG_HOSTNAME or not _PG_PORT or not _PG_DATABASE_NAME or not _PG_USER:
+        raise ValueError(f'OUTPUT_ENABLE_PG = true, but not all required values specified. '
+                         f'Must specify PG_HOSTNAME, PG_PORT, PG_DATABASE_NAME, PG_USER, and PG_PASSWORD')
     return PostgresConfig(
         hostname=_PG_HOSTNAME,
         port=int(_PG_PORT),
@@ -121,6 +133,7 @@ def get_config_output() -> OutputConfig:
         aws=get_config_output_aws(),
         file_system=get_config_output_file_system()
     )
+    print(output_config)
     if not output_config.postgres and not output_config.aws and not output_config.file_system:
         raise Exception('No output configured. At least configure either Postgres, S3 or FileSystem '
                         'output.')
