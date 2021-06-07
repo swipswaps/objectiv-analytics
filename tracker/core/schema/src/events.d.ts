@@ -1,4 +1,4 @@
-import { AbstractNonInteractiveEvent, AbstractVideoEvent } from './abstracts';
+import { AbstractInteractiveEvent, AbstractNonInteractiveEvent, AbstractVideoEvent } from './abstracts';
 
 /**
  * Non-Interactive Events
@@ -59,12 +59,12 @@ export interface VideoPauseEvent extends AbstractVideoEvent {
 /**
  * Interactive Events
  */
-export interface ClickEvent extends AbstractNonInteractiveEvent {
-  readonly _event: 'ClickEvent';
+export interface ClickEvent extends AbstractInteractiveEvent {
+  readonly event: 'ClickEvent';
 }
 
-export interface InputChangeEvent extends AbstractNonInteractiveEvent {
-  readonly _event: 'InputChangeEvent';
+export interface InputChangeEvent extends AbstractInteractiveEvent {
+  readonly event: 'InputChangeEvent';
   // TODO implementing this guard requires extensive changes to the Tracker class, for later
   // readonly locationStack: [InputContext, ...AbstractLocationContext[]];
 }
