@@ -19,7 +19,10 @@ def worker_main(function: Callable[[Any], int], loop: bool) -> int:
     :param loop: whether to call the function once (False) or in an endless loop (True)
     :return number of processed events, if loop is False
     """
-    connection = get_db_connection(get_config_postgres())
+    pg_config = get_config_postgres()
+    if pg_config is None:
+        raise Exception('Missing Postgres configuration')
+    connection = get_db_connection(pg_config)
     name = function.__name__.split('_')[-1]
     print(f'{name} worker')
     while True:

@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import argparse
 import json
 import sys
-from typing import List, Any, Dict, NamedTuple
+from typing import List, Any, Dict, NamedTuple, Set
 
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 from objectiv_backend.schema.validate_events import EVENT_LIST_SCHEMA
@@ -35,7 +35,7 @@ def _combine_definition(schema_definitions: List[SchemaDefinitionTuple]) -> Dict
     Get the combined definitions from all schema_definitions.
     Will give an error if there are any conflicting definitions.
     """
-    overlap = set()
+    overlap: Set[str] = set()
     for sd in schema_definitions:
         overlap &= set(sd.definitions.keys())
     if overlap:
@@ -70,6 +70,8 @@ def get_schema_context_validation(event_schema: EventSchema) -> SchemaDefinition
     definitions = {}
     for context_type in event_schema.list_context_types():
         definition = event_schema.get_context_schema(context_type)
+        # help mypy; we are iterating result of list_context_types, so definition should exist
+        assert definition is not None
         definition["properties"]["_context_type"] = {"type": "string", "const": context_type}
         definitions[context_type] = definition
         references.append({"$ref":  f"#/definitions/{context_type}"})

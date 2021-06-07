@@ -172,4 +172,5 @@ def get_collector_config() -> CollectorConfig:
     global _CACHED_COLLECTOR_CONFIG
     if not _CACHED_COLLECTOR_CONFIG:
         init_collector_config()
+        assert _CACHED_COLLECTOR_CONFIG is not None  # help out mypy
     return _CACHED_COLLECTOR_CONFIG
