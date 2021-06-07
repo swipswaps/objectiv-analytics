@@ -23,7 +23,7 @@ describe('WebDocumentContextPlugin', () => {
         { _location_context: true, _context_type: 'section', id: 'B' },
       ],
     };
-    const testEvent = new TrackerEvent({ eventName: 'test-event', ...eventContexts });
+    const testEvent = new TrackerEvent({ event: 'test-event', ...eventContexts });
     expect(testEvent.locationStack).toHaveLength(2);
     const trackedEvent = testTracker.trackEvent(testEvent);
     expect(trackedEvent.locationStack).toHaveLength(3);
@@ -67,7 +67,7 @@ describe('WebDocumentContextPlugin', () => {
     expect(window.history).toHaveLength(2);
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      eventName: URL_CHANGE_EVENT_NAME,
+      event: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
           _location_context: true,
@@ -84,7 +84,7 @@ describe('WebDocumentContextPlugin', () => {
     expect(window.history).toHaveLength(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(2);
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      eventName: URL_CHANGE_EVENT_NAME,
+      event: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
           _location_context: true,
@@ -101,7 +101,7 @@ describe('WebDocumentContextPlugin', () => {
     expect(window.history).toHaveLength(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(3);
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      eventName: URL_CHANGE_EVENT_NAME,
+      event: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
           _location_context: true,
@@ -118,7 +118,7 @@ describe('WebDocumentContextPlugin', () => {
     expect(window.history).toHaveLength(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(4);
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      eventName: URL_CHANGE_EVENT_NAME,
+      event: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
           _location_context: true,
@@ -135,7 +135,7 @@ describe('WebDocumentContextPlugin', () => {
     expect(window.history).toHaveLength(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(5);
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      eventName: URL_CHANGE_EVENT_NAME,
+      event: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
           _location_context: true,
@@ -152,7 +152,7 @@ describe('WebDocumentContextPlugin', () => {
     expect(window.history).toHaveLength(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(6);
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      eventName: URL_CHANGE_EVENT_NAME,
+      event: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
           _location_context: true,
@@ -169,7 +169,7 @@ describe('WebDocumentContextPlugin', () => {
     expect(window.history).toHaveLength(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(7);
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      eventName: URL_CHANGE_EVENT_NAME,
+      event: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
           _location_context: true,

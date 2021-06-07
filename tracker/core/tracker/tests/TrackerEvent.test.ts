@@ -8,33 +8,33 @@ describe('TrackerEvent', () => {
   };
 
   it('should instantiate with the given properties as one Config', () => {
-    const testEvent = new TrackerEvent({ eventName: 'test-event', ...testContexts });
+    const testEvent = new TrackerEvent({ event: 'test-event', ...testContexts });
     expect(testEvent).toBeInstanceOf(TrackerEvent);
-    expect(testEvent.eventName).toBe(testEventName);
+    expect(testEvent.event).toBe(testEventName);
     expect(testEvent.locationStack).toEqual(testContexts.locationStack);
     expect(testEvent.globalContexts).toEqual(testContexts.globalContexts);
   });
 
   it('should instantiate with the given properties as multiple Configs', () => {
-    const testEvent = new TrackerEvent({ eventName: 'test-event' }, testContexts);
+    const testEvent = new TrackerEvent({ event: 'test-event' }, testContexts);
     expect(testEvent).toBeInstanceOf(TrackerEvent);
-    expect(testEvent.eventName).toBe(testEventName);
+    expect(testEvent.event).toBe(testEventName);
     expect(testEvent.locationStack).toEqual(testContexts.locationStack);
     expect(testEvent.globalContexts).toEqual(testContexts.globalContexts);
   });
 
   it('should instantiate without LocationStack', () => {
-    const testEvent = new TrackerEvent({ eventName: 'test-event' }, { globalContexts: testContexts.globalContexts });
+    const testEvent = new TrackerEvent({ event: 'test-event' }, { globalContexts: testContexts.globalContexts });
     expect(testEvent).toBeInstanceOf(TrackerEvent);
-    expect(testEvent.eventName).toBe(testEventName);
+    expect(testEvent.event).toBe(testEventName);
     expect(testEvent.locationStack).toEqual([]);
     expect(testEvent.globalContexts).toEqual(testContexts.globalContexts);
   });
 
   it('should instantiate without GlobalContexts', () => {
-    const testEvent = new TrackerEvent({ eventName: 'test-event' }, { locationStack: testContexts.locationStack });
+    const testEvent = new TrackerEvent({ event: 'test-event' }, { locationStack: testContexts.locationStack });
     expect(testEvent).toBeInstanceOf(TrackerEvent);
-    expect(testEvent.eventName).toBe(testEventName);
+    expect(testEvent.event).toBe(testEventName);
     expect(testEvent.locationStack).toEqual(testContexts.locationStack);
     expect(testEvent.globalContexts).toEqual([]);
   });
@@ -59,7 +59,7 @@ describe('TrackerEvent', () => {
       ],
     };
     const composedEvent = new TrackerEvent(
-      { eventName: 'test-event', ...eventContexts },
+      { event: 'test-event', ...eventContexts },
       sectionContexts1,
       sectionContexts2
     );

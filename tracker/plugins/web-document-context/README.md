@@ -23,7 +23,7 @@ Listens to [History API](https://developer.mozilla.org/en-US/docs/Web/API/Histor
 
 ```typescript
 {
-  eventName: 'URLChangedEvent';
+  event: 'URLChangedEvent';
   globalContexts: [
     {
       _context_type: 'WebDocumentContext',

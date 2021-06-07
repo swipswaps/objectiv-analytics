@@ -31,7 +31,7 @@ describe('WebDeviceContextPlugin', () => {
         { _global_context: true, _context_type: 'section', id: 'Y' },
       ],
     };
-    const testEvent = new TrackerEvent({ eventName: 'test-event', ...eventContexts });
+    const testEvent = new TrackerEvent({ event: 'test-event', ...eventContexts });
     expect(testEvent.globalContexts).toHaveLength(2);
     const trackedEvent = testTracker.trackEvent(testEvent);
     expect(trackedEvent.globalContexts).toHaveLength(3);

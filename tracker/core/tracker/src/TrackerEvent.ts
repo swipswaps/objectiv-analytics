@@ -1,21 +1,19 @@
-import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
+import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
 import { ContextsConfig } from './Context';
 
 /**
- * TrackerEvents are simply a combination of an `eventName` and their Contexts.
+ * TrackerEvents are simply a combination of an `event` name and their Contexts.
  * Contexts are entirely optional, although Collectors will mostly likely enforce minimal requirements around them.
  * Eg. An interactive TrackerEvent without a Location Stack is probably not descriptive enough to be acceptable.
  */
-export type TrackerEventConfig = ContextsConfig & {
-  eventName: string;
-};
+export type TrackerEventConfig = Pick<AbstractEvent, 'event'> & ContextsConfig;
 
 /**
  * Our main TrackerEvent interface and basic implementation
  */
 export class TrackerEvent implements Contexts {
   // Event interface
-  readonly eventName: string;
+  readonly event: string;
 
   // Contexts interface
   readonly locationStack: AbstractLocationContext[];
@@ -24,13 +22,13 @@ export class TrackerEvent implements Contexts {
   /**
    * Configures the TrackerEvent instance via a TrackerEventConfig and optionally one or more ContextConfig.
    *
-   * TrackerEventConfig is used to configure the `eventName`.
+   * TrackerEventConfig is used mainly to configure the `event` property, although it can also carry Contexts.
    *
    * ContextConfigs are used to configure LocationStack and GlobalContexts. If multiple configurations have been
    * provided they will be merged onto each other to produce a single LocationStack and GlobalContexts.
    */
   constructor(eventConfiguration: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
-    this.eventName = eventConfiguration.eventName;
+    this.event = eventConfiguration.event;
 
     // Start with empty context lists
     let newLocationStack: AbstractLocationContext[] = [];

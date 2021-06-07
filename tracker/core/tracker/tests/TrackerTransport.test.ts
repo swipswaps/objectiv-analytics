@@ -15,7 +15,7 @@ const testContexts: ContextsConfig = {
   locationStack: [{ _location_context: true, _context_type: 'section', id: 'test' }],
   globalContexts: [{ _global_context: true, _context_type: 'global', id: 'test' }],
 };
-const testEvent = new TrackerEvent({ eventName: testEventName, ...testContexts });
+const testEvent = new TrackerEvent({ event: testEventName, ...testContexts });
 
 describe('TransportSwitch', () => {
   it('should not pick any TrackerTransport', () => {

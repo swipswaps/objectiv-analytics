@@ -32,7 +32,7 @@ export const trackURLChangedEvent = (tracker: Tracker): void => {
   };
 
   // Factor URLChangedEvent. The actual URL can be retrieved via the WebDocumentContext in the Global Contexts list
-  const urlChangedEvent = new URLChangedEvent({ eventName: URL_CHANGE_EVENT_NAME });
+  const urlChangedEvent = new URLChangedEvent({ event: URL_CHANGE_EVENT_NAME });
 
   // Create all the spies: for each of them we just track the URLChangeEvent and run the original backed-up method.
   Object.keys(historyBackup).forEach((methodToSpy) => {
