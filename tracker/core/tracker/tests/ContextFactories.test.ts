@@ -1,10 +1,16 @@
 import {
-  makeActionContext, makeButtonContext,
-  makeExpandableSectionContext, makeInputContext, makeItemContext, makeLinkContext,
-  makeMediaPlayerContext, makeNavigationContext, makeOverlayContext,
+  makeActionContext,
+  makeButtonContext,
+  makeExpandableSectionContext,
+  makeInputContext,
+  makeItemContext,
+  makeLinkContext,
+  makeMediaPlayerContext,
+  makeNavigationContext,
+  makeOverlayContext,
   makeScreenContext,
   makeSectionContext,
-  makeWebDocumentContext
+  makeWebDocumentContext,
 } from '../src';
 
 describe('Context Factories', () => {
@@ -73,7 +79,6 @@ describe('Context Factories', () => {
     });
   });
 
-
   it('ItemContext', () => {
     expect(makeItemContext({ id: 'item-1' })).toStrictEqual({
       _location_context: true,
@@ -93,8 +98,7 @@ describe('Context Factories', () => {
   });
 
   it('ActionContext', () => {
-    expect(makeActionContext({ id: 'chevron-right',path: '/next',
-      text: 'Next Slide' })).toStrictEqual({
+    expect(makeActionContext({ id: 'chevron-right', path: '/next', text: 'Next Slide' })).toStrictEqual({
       _location_context: true,
       _item_context: true,
       _action_context: true,
@@ -123,7 +127,9 @@ describe('Context Factories', () => {
       _item_context: true,
       _action_context: true,
       _context_type: 'LinkContext',
-      id: 'confirm-data', path: '/some/url', text: 'Click for Details'
+      id: 'confirm-data',
+      path: '/some/url',
+      text: 'Click for Details',
     });
   });
 });
