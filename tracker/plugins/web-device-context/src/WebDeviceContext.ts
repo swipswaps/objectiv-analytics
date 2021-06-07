@@ -16,7 +16,7 @@ export interface WebDeviceContext extends AbstractGlobalContext {
  */
 export function newWebDeviceContext(): WebDeviceContext {
   return {
-    _global: true,
+    _global_context: true,
     _context_type: WEB_DEVICE_CONTEXT_TYPE,
     id: 'device',
     userAgent: navigator.userAgent,

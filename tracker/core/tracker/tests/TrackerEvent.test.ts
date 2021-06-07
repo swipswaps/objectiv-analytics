@@ -3,8 +3,8 @@ import { ContextsConfig, TrackerEvent } from '../src';
 describe('TrackerEvent', () => {
   const testEventName = 'test-event';
   const testContexts: ContextsConfig = {
-    locationStack: [{ _location: true, _context_type: 'section', id: 'test' }],
-    globalContexts: [{ _global: true, _context_type: 'global', id: 'test' }],
+    locationStack: [{ _location_context: true, _context_type: 'section', id: 'test' }],
+    globalContexts: [{ _global_context: true, _context_type: 'global', id: 'test' }],
   };
 
   it('should instantiate with the given properties as one Config', () => {
@@ -42,20 +42,20 @@ describe('TrackerEvent', () => {
   it('should allow compositions with multiple configs or instances and produce a valid LocationStack', () => {
     const eventContexts: ContextsConfig = {
       locationStack: [
-        { _location: true, _context_type: 'section', id: 'D' },
-        { _location: true, _context_type: 'item', id: 'X' },
+        { _location_context: true, _context_type: 'section', id: 'D' },
+        { _location_context: true, _context_type: 'item', id: 'X' },
       ],
     };
     const sectionContexts1: ContextsConfig = {
       locationStack: [
-        { _location: true, _context_type: 'section', id: 'root' },
-        { _location: true, _context_type: 'section', id: 'A' },
+        { _location_context: true, _context_type: 'section', id: 'root' },
+        { _location_context: true, _context_type: 'section', id: 'A' },
       ],
     };
     const sectionContexts2: ContextsConfig = {
       locationStack: [
-        { _location: true, _context_type: 'section', id: 'B' },
-        { _location: true, _context_type: 'section', id: 'C' },
+        { _location_context: true, _context_type: 'section', id: 'B' },
+        { _location_context: true, _context_type: 'section', id: 'C' },
       ],
     };
     const composedEvent = new TrackerEvent(
@@ -64,12 +64,12 @@ describe('TrackerEvent', () => {
       sectionContexts2
     );
     expect(composedEvent.locationStack).toEqual([
-      { _location: true, _context_type: 'section', id: 'root' },
-      { _location: true, _context_type: 'section', id: 'A' },
-      { _location: true, _context_type: 'section', id: 'B' },
-      { _location: true, _context_type: 'section', id: 'C' },
-      { _location: true, _context_type: 'section', id: 'D' },
-      { _location: true, _context_type: 'item', id: 'X' },
+      { _location_context: true, _context_type: 'section', id: 'root' },
+      { _location_context: true, _context_type: 'section', id: 'A' },
+      { _location_context: true, _context_type: 'section', id: 'B' },
+      { _location_context: true, _context_type: 'section', id: 'C' },
+      { _location_context: true, _context_type: 'section', id: 'D' },
+      { _location_context: true, _context_type: 'item', id: 'X' },
     ]);
   });
 });

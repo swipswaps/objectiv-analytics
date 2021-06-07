@@ -17,8 +17,8 @@ describe('WebDocumentContextPlugin', () => {
     const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
     const eventContexts: ContextsConfig = {
       locationStack: [
-        { _location: true, _context_type: 'section', id: 'A' },
-        { _location: true, _context_type: 'section', id: 'B' },
+        { _location_context: true, _context_type: 'section', id: 'A' },
+        { _location_context: true, _context_type: 'section', id: 'B' },
       ],
     };
     const testEvent = new TrackerEvent({ eventName: 'test-event', ...eventContexts });
@@ -28,8 +28,8 @@ describe('WebDocumentContextPlugin', () => {
     expect(trackedEvent.locationStack).toEqual(
       expect.arrayContaining([
         {
-          _location: true,
-          _section: true,
+          _location_context: true,
+          _section_context: true,
           _context_type: 'WebDocumentContext',
           id: '#document',
           url: 'http://localhost/',
@@ -68,8 +68,8 @@ describe('WebDocumentContextPlugin', () => {
       eventName: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
-          _location: true,
-          _section: true,
+          _location_context: true,
+          _section_context: true,
           _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
@@ -85,8 +85,8 @@ describe('WebDocumentContextPlugin', () => {
       eventName: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
-          _location: true,
-          _section: true,
+          _location_context: true,
+          _section_context: true,
           _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
@@ -102,8 +102,8 @@ describe('WebDocumentContextPlugin', () => {
       eventName: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
-          _location: true,
-          _section: true,
+          _location_context: true,
+          _section_context: true,
           _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
@@ -119,8 +119,8 @@ describe('WebDocumentContextPlugin', () => {
       eventName: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
-          _location: true,
-          _section: true,
+          _location_context: true,
+          _section_context: true,
           _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
@@ -136,8 +136,8 @@ describe('WebDocumentContextPlugin', () => {
       eventName: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
-          _location: true,
-          _section: true,
+          _location_context: true,
+          _section_context: true,
           _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
@@ -153,8 +153,8 @@ describe('WebDocumentContextPlugin', () => {
       eventName: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
-          _location: true,
-          _section: true,
+          _location_context: true,
+          _section_context: true,
           _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
@@ -170,8 +170,8 @@ describe('WebDocumentContextPlugin', () => {
       eventName: URL_CHANGE_EVENT_NAME,
       locationStack: [
         {
-          _location: true,
-          _section: true,
+          _location_context: true,
+          _section_context: true,
           _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',

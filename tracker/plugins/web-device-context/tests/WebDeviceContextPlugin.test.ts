@@ -16,7 +16,7 @@ describe('WebDeviceContextPlugin', () => {
   it('should generate the WebDeviceContext when constructed', () => {
     const testWebDeviceContextPlugin = new WebDeviceContextPlugin();
     expect(testWebDeviceContextPlugin.webDeviceContext).toEqual({
-      _global: true,
+      _global_context: true,
       _context_type: 'WebDeviceContext',
       id: 'device',
       userAgent: USER_AGENT_MOCK_VALUE,
@@ -27,8 +27,8 @@ describe('WebDeviceContextPlugin', () => {
     const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDeviceContextPlugin]) });
     const eventContexts: ContextsConfig = {
       globalContexts: [
-        { _global: true, _context_type: 'section', id: 'X' },
-        { _global: true, _context_type: 'section', id: 'Y' },
+        { _global_context: true, _context_type: 'section', id: 'X' },
+        { _global_context: true, _context_type: 'section', id: 'Y' },
       ],
     };
     const testEvent = new TrackerEvent({ eventName: 'test-event', ...eventContexts });
@@ -38,7 +38,7 @@ describe('WebDeviceContextPlugin', () => {
     expect(trackedEvent.globalContexts).toEqual(
       expect.arrayContaining([
         {
-          _global: true,
+          _global_context: true,
           _context_type: 'WebDeviceContext',
           id: 'device',
           userAgent: USER_AGENT_MOCK_VALUE,

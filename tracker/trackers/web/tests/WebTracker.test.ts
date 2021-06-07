@@ -102,8 +102,8 @@ describe('WebTracker', () => {
       expect(trackedEvent.locationStack).toEqual(
         expect.arrayContaining([
           {
-            _location: true,
-            _section: true,
+            _location_context: true,
+            _section_context: true,
             _context_type: 'WebDocumentContext',
             id: '#document',
             url: 'http://localhost/',
@@ -115,7 +115,7 @@ describe('WebTracker', () => {
       expect(trackedEvent.globalContexts).toEqual(
         expect.arrayContaining([
           {
-            _global: true,
+            _global_context: true,
             _context_type: 'WebDeviceContext',
             id: 'device',
             userAgent: USER_AGENT_MOCK_VALUE,
