@@ -18,9 +18,9 @@ _ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
 
 # ### Postgres values.
 # We define some default values here. DO NOT put actual passwords in here
-_PG_DATABASE_NAME = os.environ.get('POSTGRES_DB', 'objectiv')
 _PG_HOSTNAME = os.environ.get('POSTGRES_HOSTNAME', 'localhost')
 _PG_PORT = os.environ.get('POSTGRES_PORT', '5432')
+_PG_DATABASE_NAME = os.environ.get('POSTGRES_DB', 'objectiv')
 _PG_USER = os.environ.get('POSTGRES_USER', 'objectiv')
 _PG_PASSWORD = os.environ.get('POSTGRES_PASSWORD', '')
 
@@ -30,7 +30,7 @@ _AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
 _AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
 _AWS_REGION = os.environ.get('AWS_REGION', 'eu-west-1')
 _AWS_BUCKET = os.environ.get('AWS_BUCKET', '')
-_AWS_S3_PREFIX = os.environ.get('AWS_S3_PREFIX', 'test-prefix')
+_AWS_S3_PREFIX = os.environ.get('AWS_S3_PREFIX', '')
 
 # ### Setting for outputting data to the filesystem
 _JSON_OUTPUT_DIR = os.environ.get('JSON_OUTPUT_DIR')
@@ -39,9 +39,9 @@ _JSON_OUTPUT_DIR = os.environ.get('JSON_OUTPUT_DIR')
 _OBJ_COOKIE = 'obj_user_id'
 _OBJ_COOKIE_DURATION = 60 * 60 * 24 * 365 * 5
 
-# Maximum number of events that a worker will process in a single batch
+# Maximum number of events that a worker will process in a single batch. Only relevant in async mode
 WORKER_BATCH_SIZE = 200
-# Time to sleep, if there is no work to do for the workers
+# Time to sleep, if there is no work to do for the workers. Only relevant in async mode
 WORKER_SLEEP_SECONDS = 5
 
 
@@ -103,6 +103,8 @@ def get_config_output_file_system() -> Optional[FileSystemOutputConfig]:
 
 
 def get_config_postgres() -> Optional[PostgresConfig]:
+    if not _PG_HOSTNAME or not _PG_PORT or not _PG_DATABASE_NAME or not _PG_USER or not _PG_PASSWORD:
+        return None
     return PostgresConfig(
         hostname=_PG_HOSTNAME,
         port=int(_PG_PORT),
@@ -138,18 +140,23 @@ def get_config_event_schema() -> EventSchema:
 
 # creating these configuration structures is not heavy, but it's pointless to do it for each request.
 # so we have some super simple caching here
-# TODO: initialize configuration at startup
-_CACHED_COLLECTOR_CONFIG: Optional[OutputConfig] = None
+_CACHED_COLLECTOR_CONFIG: Optional[CollectorConfig] = None
+
+
+def init_collector_config():
+    """ Load collector config into cache. """
+    global _CACHED_COLLECTOR_CONFIG
+    _CACHED_COLLECTOR_CONFIG = CollectorConfig(
+        async_mode=_ASYNC_MODE,
+        cookie=get_config_cookie(),
+        output=get_config_output(),
+        schema=get_config_event_schema()
+    )
 
 
 def get_collector_config() -> CollectorConfig:
-    """ Get the Collector Configuration. Cached after first invocation """
+    """ Get the Collector Configuration from cache, or if not cached load it first. """
     global _CACHED_COLLECTOR_CONFIG
     if not _CACHED_COLLECTOR_CONFIG:
-        _CACHED_COLLECTOR_CONFIG = CollectorConfig(
-            async_mode=_ASYNC_MODE,
-            cookie=get_config_cookie(),
-            output=get_config_output(),
-            schema=get_config_event_schema()
-        )
+        init_collector_config()
     return _CACHED_COLLECTOR_CONFIG

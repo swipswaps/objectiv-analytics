@@ -29,6 +29,9 @@ DATA_MAX_EVENT_COUNT = 1_000
 
 
 def collect() -> Response:
+    """
+    Endpoint that accepts event data from the tracker and stores it for further processing.
+    """
     current_millis = round(time.time() * 1000)
     try:
         events = _get_event_data(flask.request)
