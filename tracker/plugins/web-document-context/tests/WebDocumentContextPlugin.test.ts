@@ -1,5 +1,7 @@
-import { URL_CHANGE_EVENT_NAME, WEB_DOCUMENT_CONTEXT_TYPE, WebDocumentContextPlugin } from '../src';
+import { URL_CHANGE_EVENT_NAME, WebDocumentContextPlugin } from '../src';
 import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins, TrackerTransport } from '@objectiv/tracker-core';
+
+const EXPECTED_CONTEXT_TYPE = 'WebDocumentContext';
 
 describe('WebDocumentContextPlugin', () => {
   it('should instantiate without specifying an ID at construction', () => {
@@ -70,7 +72,7 @@ describe('WebDocumentContextPlugin', () => {
         {
           _location_context: true,
           _section_context: true,
-          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          _context_type: EXPECTED_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
         },
@@ -87,7 +89,7 @@ describe('WebDocumentContextPlugin', () => {
         {
           _location_context: true,
           _section_context: true,
-          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          _context_type: EXPECTED_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
         },
@@ -104,7 +106,7 @@ describe('WebDocumentContextPlugin', () => {
         {
           _location_context: true,
           _section_context: true,
-          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          _context_type: EXPECTED_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
         },
@@ -121,7 +123,7 @@ describe('WebDocumentContextPlugin', () => {
         {
           _location_context: true,
           _section_context: true,
-          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          _context_type: EXPECTED_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
         },
@@ -138,7 +140,7 @@ describe('WebDocumentContextPlugin', () => {
         {
           _location_context: true,
           _section_context: true,
-          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          _context_type: EXPECTED_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
         },
@@ -155,7 +157,7 @@ describe('WebDocumentContextPlugin', () => {
         {
           _location_context: true,
           _section_context: true,
-          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          _context_type: EXPECTED_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
         },
@@ -172,7 +174,7 @@ describe('WebDocumentContextPlugin', () => {
         {
           _location_context: true,
           _section_context: true,
-          _context_type: WEB_DOCUMENT_CONTEXT_TYPE,
+          _context_type: EXPECTED_CONTEXT_TYPE,
           id: '#document',
           url: 'http://localhost/',
         },

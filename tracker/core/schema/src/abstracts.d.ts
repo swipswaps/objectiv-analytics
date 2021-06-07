@@ -87,6 +87,17 @@ export abstract class AbstractActionContext extends AbstractItemContext {
    * Discrimination property
    */
   readonly _action_context = true;
+
+  /**
+   * A string representing where the action will lead to
+   * TODO: make this optional when OSF will support that
+   */
+  path: string;
+
+  /**
+   * The text of the interactive element or, for visuals, a string describing it
+   */
+  text: string;
 }
 
 /**
