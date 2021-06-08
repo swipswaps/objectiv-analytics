@@ -1,14 +1,11 @@
 import json
 from datetime import datetime
-from io import BytesIO
 
 import flask
 import time
 from typing import List
 import uuid
 
-import boto3
-from botocore.exceptions import ClientError
 from flask import Response, Request
 
 from objectiv_backend.common.config import get_collector_config
@@ -16,6 +13,8 @@ from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import event_add_construct_context, add_global_context_to_event
 from objectiv_backend.common.types import EventWithId, EventData, ContextData
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
+from objectiv_backend.end_points.extra_output import events_to_json, write_data_to_fs_if_configured, \
+    write_data_to_s3_if_configured
 from objectiv_backend.schema.validate_events import validate_structure_event_list
 from objectiv_backend.workers.pg_queues import PostgresQueues, ProcessingStage
 from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
@@ -189,6 +188,7 @@ def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId
         * file system
     """
     output_config = get_collector_config().output
+    # todo: add exception handling. if one output fails, continue to next if configured.
     if output_config.postgres:
         connection = get_db_connection(output_config.postgres)
         try:
@@ -202,10 +202,10 @@ def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId
         return
     for prefix, events in ('OK', ok_events), ('NOK', nok_events):
         if events:
-            data = _events_to_json(events)
+            data = events_to_json(events)
             moment = datetime.utcnow()
-            _write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
-            _write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
+            write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
+            write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 
 
 def write_async_events(events: List[EventWithId]):
@@ -216,6 +216,7 @@ def write_async_events(events: List[EventWithId]):
         * file system - to the 'RAW' directory
     """
     output_config = get_collector_config().output
+    # todo: add exception handling. if one output fails, continue to next if configured.
     if output_config.postgres:
         connection = get_db_connection(output_config.postgres)
         try:
@@ -229,56 +230,8 @@ def write_async_events(events: List[EventWithId]):
         return
     prefix = 'RAW'
     if events:
-        data = _events_to_json(events)
+        data = events_to_json(events)
         moment = datetime.utcnow()
-        _write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
-        _write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
+        write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
+        write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 
-
-def _events_to_json(events: List[EventWithId]) -> str:
-    """
-    Convert list of events to a string with on each line a json object representing a single event.
-    Note that the returned string is not a json list; This format makes it suitable as raw input to AWS
-    Athena.
-    """
-    result = []
-    for event in events:
-        json_str = json.dumps(event.event) + "\n"
-        result.append(json_str)
-    return ''.join(result)
-
-
-def _write_data_to_fs_if_configured(data: str, prefix: str, moment: datetime) -> None:
-    """
-    Write data to disk, if file_system output is configured.
-    """
-    fs_config = get_collector_config().output.file_system
-    if not fs_config:
-        return
-    timestamp = moment.timestamp()
-    path = f'{fs_config.path}/{prefix}/{timestamp}.json'
-    with open(path, 'w') as of:
-        of.write(data)
-
-
-def _write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> None:
-    """
-    Write data to AWS S3, if S3 output is configured.
-    """
-    aws_config = get_collector_config().output.aws
-    if not aws_config:
-        return
-
-    timestamp = moment.timestamp()
-    datestamp = moment.strftime('%Y/%m/%d')
-    object_name = f'{aws_config.s3_prefix}/{datestamp}/{prefix}/{timestamp}.json'
-    file_obj = BytesIO(data.encode('utf-8'))
-    s3_client = boto3.client(
-        service_name='s3',
-        region_name=aws_config.region,
-        aws_access_key_id=aws_config.access_key_id,
-        aws_secret_access_key=aws_config.secret_access_key)
-    try:
-        s3_client.upload_fileobj(file_obj, aws_config.bucket, object_name)
-    except ClientError as e:
-        print(f'Error uploading to s3: {e} ')
