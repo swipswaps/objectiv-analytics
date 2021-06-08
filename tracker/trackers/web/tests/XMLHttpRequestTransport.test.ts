@@ -84,14 +84,14 @@ describe('XMLHttpRequestTransport', () => {
             resolve(xhr.response);
           } else {
             reject({
-              status: this.status,
+              status: xhr.status,
               statusText: xhr.statusText,
             });
           }
         };
         xhr.onerror = function () {
           reject({
-            status: this.status,
+            status: xhr.status,
             statusText: xhr.statusText,
           });
         };
