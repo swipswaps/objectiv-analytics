@@ -133,7 +133,6 @@ def get_config_output() -> OutputConfig:
         aws=get_config_output_aws(),
         file_system=get_config_output_file_system()
     )
-    print(output_config)
     if not output_config.postgres and not output_config.aws and not output_config.file_system:
         raise Exception('No output configured. At least configure either Postgres, S3 or FileSystem '
                         'output.')
