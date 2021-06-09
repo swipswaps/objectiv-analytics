@@ -53,14 +53,39 @@ yarn workspace @objectiv/core test
 
 ## Dependency management
 
-This is how to add and remove dependencies:
 
+### Add / Remove dependencies
+This is how to add/update or remove dependencies for a specific package:
+
+#### Using `yarn workspace`
 ```bash
 yarn workspace @objectiv/core add <packageA>
 yarn workspace @objectiv/core add <packageB> --dev
 yarn workspace @objectiv/core remove <packageA> <packageB>
 ```
 
+#### Using `yarn add`
+From inside the directory of one of the packages:
+
+```bash
+yarn add <packageA>
+yarn add <packageB> --dev
+yarn install 
+```
+
+### Upgrade dependencies
+
+#### For all packages:
+
+```bash
+yarn up <package>
+```
+
+#### For all packages, interactively:
+
+```bash
+yarn up <package> -i
+```
 
 
 ## Other useful commands
