@@ -1,7 +1,6 @@
 import { useTracker } from './ObjectivProvider';
 import { ReactTracker } from "./ReactTracker";
-import { useOnMount } from "./useOnMount";
-import { useOnUnmount } from "./useOnUnmount";
+import { useOnMount, useOnUnmount } from "./helperHooks";
 
 /**
  * A side effect that triggers SectionVisibleEvent and SectionHiddenEvent as the component mounts and unmounts.
