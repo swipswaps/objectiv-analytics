@@ -1,5 +1,5 @@
-# Objectiv WebTracker 
-[PLACEHOLDER: Objectiv WebTracker introductory text]
+# Objectiv ReactTracker 
+[PLACEHOLDER: Objectiv ReactTracker introductory text]
 
 ---
 # Installing
@@ -7,42 +7,20 @@ To install the most recent stable version:
 
 ### yarn
 ```sh
-yarn add @objectiv/tracker-web
+yarn add @objectiv/tracker-react
 ```
 
 ### npm
 ```sh
-npm install @objectiv/tracker-web
+npm install @objectiv/tracker-react
 ```
 
 # Usage
 
-### ESModule
 ```javascript
-import { WebTracker } from '@objectiv/tracker-web';
-const webTracker = new WebTracker({ endpoint: '/collector' });
-```
+import { ReactTracker } from '@objectiv/tracker-react';
+const reactTracker = new ReactTracker({ endpoint: '/collector' });
 
-### CommonJS
-```javascript
-const objectiv = require('@objectiv/tracker-web');
-const webTracker = new objectiv.WebTracker({ endpoint: '/collector' });
-```
+// TODO add example of provider usage
 
-### IIFE
-```html
-<script src="dist/index.iife.js"></script>
-<script>
-  const webTracker = new objectiv.WebTracker({ endpoint: '/collector' });
-</script>
-```
-
-### AMD
-```html
-<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js"></script>
-<script>
-  window.requirejs(['dist/index'], function(objectiv) {
-    const webTracker = new objectiv.WebTracker({ endpoint: '/collector' });
-  });
-</script>
 ```
