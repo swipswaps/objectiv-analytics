@@ -73,6 +73,15 @@ yarn add <packageB> --dev
 yarn install 
 ```
 
+> NOTE: We do not recommend upgrading dependencies per package unless really needed for compatibility reasons.
+> 
+> It makes much more sense to manage common dependencies via `yarn up`.
+> 
+> This ensures that sub-packages will not need their own `node_modules` linker and instead rely entirely on the shared 
+> one, located in the root of the workspace.
+> 
+> Fewer dependencies results also in faster builds, and a reduced risk to run into incompatibilities between packages.
+
 ### Upgrade dependencies
 
 #### For all packages:
