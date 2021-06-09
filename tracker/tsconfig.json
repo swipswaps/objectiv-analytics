@@ -30,7 +30,8 @@
     /* Tell the compiler how to resolve our own modules relatively to `baseUrl` */
     "paths": {
       "@objectiv/core": ["core/src"],
-      "@objectiv/plugin-*": ["plugins/*/src"]
+      "@objectiv/plugin-*": ["plugins/*/src"],
+      "@objectiv/tracker-*": ["trackers/*/src"]
     }
   }
 }
