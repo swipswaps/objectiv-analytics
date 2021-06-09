@@ -73,7 +73,7 @@ yarn add <packageB> --dev
 yarn install 
 ```
 
-> NOTE: We do not recommend upgrading dependencies per package unless really needed for compatibility reasons.
+> Note: We do not recommend upgrading dependencies per package unless really needed for compatibility reasons.
 > 
 > It makes much more sense to manage common dependencies via `yarn up`.
 > 

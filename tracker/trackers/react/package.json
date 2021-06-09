@@ -36,6 +36,7 @@
     "xhr-mock": "^2.5.1"
   },
   "dependencies": {
+    "@objectiv/core": "~0.0.1",
     "@objectiv/tracker-web": "~0.0.1"
   }
 }

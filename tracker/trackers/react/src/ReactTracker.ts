@@ -1,9 +1,16 @@
-import { Tracker, TrackerPlugins } from '@objectiv/core';
-import { defaultWebTrackerPluginsList, WebTrackerConfig } from '@objectiv/tracker-web';
+import { TrackerPlugins } from '@objectiv/core';
+import { defaultWebTrackerPluginsList, WebTracker, WebTrackerConfig } from '@objectiv/tracker-web';
 
+/**
+ * React Tracker configuration is identical to the Web Tracker configuration.
+ */
 export type ReactTrackerConfig = WebTrackerConfig;
 
-export class ReactTracker extends Tracker {
+/**
+ * React Tracker extends the Web Tracker functionality with React specific Hooks and ContextProviders to simplify the
+ * tracking of Sections, Component visibility and Component state.
+ */
+export class ReactTracker extends WebTracker {
   constructor(reactConfig: ReactTrackerConfig) {
     let config = reactConfig;
 
@@ -17,8 +24,6 @@ export class ReactTracker extends Tracker {
         ]),
       };
     }
-
-    console.log(config);
 
     super(config);
   }
