@@ -17,7 +17,7 @@ describe('FetchAPITransport', () => {
     eventName: 'test-event',
   });
 
-  it('should send using `fetch` API with the default parameters', async () => {
+  it('should send using `fetch` API with the default fetch function', async () => {
     const testTransport = new FetchAPITransport({
       endpoint: MOCK_ENDPOINT,
     });
