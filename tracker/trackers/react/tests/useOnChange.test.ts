@@ -49,7 +49,7 @@ describe('useOnChange', () => {
     expect(mockEffectCallback).toHaveBeenCalledTimes(2);
   });
 
-  it('should execute the latest version of of the effect callback', () => {
+  it('should execute the latest version of the effect callback', () => {
     const newState = { property: 2, attribute: 'b' };
     const mockEffectCallback2 = jest.fn();
     const mockEffectCallback3 = jest.fn();

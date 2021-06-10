@@ -33,7 +33,7 @@ describe('useOnUnmount', () => {
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
   });
 
-  it('should execute the latest version of of the effect callback', () => {
+  it('should execute the latest version of the effect callback', () => {
     const mockEffectCallback2 = jest.fn();
     const mockEffectCallback3 = jest.fn();
     const mockEffectCallback4 = jest.fn();
