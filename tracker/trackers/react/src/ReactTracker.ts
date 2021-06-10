@@ -25,6 +25,7 @@ export class ReactTracker extends WebTracker {
       };
     }
 
+    /* istanbul ignore next */
     super(config, ...contextConfigs);
   }
 }

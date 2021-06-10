@@ -8,6 +8,6 @@ module.exports = {
     '@objectiv/core': '../../../core/src',
     '@objectiv/plugin-(.*)': '../../../plugins/$1/src',
     '@objectiv/tracker-core': '../../../core/tracker/src',
-    '@objectiv/tracker-(.*)': '../../../trackers/$1/src',
+    '@objectiv/tracker-web': '../../../trackers/web/src',
   },
 };
