@@ -26,12 +26,12 @@ describe('useTrackOnToggle', () => {
   };
 
   const Menu = () => (
-      <ul>
-        <li>Menu1</li>
-        <li>Menu2</li>
-        <li>Menu3</li>
-      </ul>
-    );
+    <ul>
+      <li>Menu1</li>
+      <li>Menu2</li>
+      <li>Menu3</li>
+    </ul>
+  );
 
   const Application = () => {
     const [menuOpen, setMenuOpen] = useState(false);
@@ -42,7 +42,7 @@ describe('useTrackOnToggle', () => {
     return (
       <>
         Test application
-        {menuOpen ? <Menu /> : null }
+        {menuOpen ? <Menu /> : null}
         <button data-testid="toggle-menu" onClick={() => setMenuOpen(!menuOpen)} value="Toggle Menu" />
       </>
     );
@@ -90,7 +90,10 @@ describe('useTrackOnToggle', () => {
   it('should allow overriding the tracker with a custom one', () => {
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new ReactTracker({ transport: spyTransport2 });
-    const { rerender } = renderHook((state) => useTrackOnToggle(state, makeSectionVisibleEvent(), makeSectionHiddenEvent(), anotherTracker), {initialProps: false});
+    const { rerender } = renderHook(
+      (state) => useTrackOnToggle(state, makeSectionVisibleEvent(), makeSectionHiddenEvent(), anotherTracker),
+      { initialProps: false }
+    );
 
     rerender(true);
     rerender(false);
