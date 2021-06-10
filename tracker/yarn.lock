@@ -1713,6 +1713,7 @@ __metadata:
     prettier: ^2.3.0
     react: ^17.0.2
     react-dom: ^17.0.2
+    react-fast-compare: ^3.2.0
     react-test-renderer: ^17.0.2
     rollup: ^2.48.0
     rollup-plugin-cleanup: ^3.2.1
@@ -6753,6 +6754,13 @@ __metadata:
   peerDependencies:
     react: ">=16.13.1"
   checksum: 8b5294dd14f8d13e430e0c15d7a8fa2eede0c4d59b499303a51645b2e29c00f1ab373de07431664fe64f08362fe2ee044757ffdbad60db1a84df151dd1d4ebaf
+  languageName: node
+  linkType: hard
+
+"react-fast-compare@npm:^3.2.0":
+  version: 3.2.0
+  resolution: "react-fast-compare@npm:3.2.0"
+  checksum: 6fe65c889eb4f326e97769135f97b3d63ac68737866f9c37f9625c9de4f5eaa9abed6f748eb3fd6a66808392118842916309cab7cfa99c67991f0c837433d6d2
   languageName: node
   linkType: hard
 
