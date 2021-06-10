@@ -24,9 +24,9 @@ describe('TrackerSection', () => {
       <TrackerContextProvider tracker={root}>
         <div data-id={'tracker'}>
           <TrackingComponent id={'in-root'} />
-          <TrackerSection id='section1'>
-            <TrackingComponent id='in-section1' />
-            <TrackerSection id='section2'>
+          <TrackerSection id="section1">
+            <TrackingComponent id="in-section1" />
+            <TrackerSection id="section2">
               <TrackingComponent id={'in-section2'} />
             </TrackerSection>
           </TrackerSection>
@@ -39,5 +39,4 @@ describe('TrackerSection', () => {
     expect(spy).toHaveBeenNthCalledWith(2, 'in-section1: root/section1');
     expect(spy).toHaveBeenNthCalledWith(3, 'in-section2: root/section1/section2');
   });
-
 });

@@ -1,5 +1,5 @@
 import { TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
-import { WebTracker } from "@objectiv/tracker-web";
+import { WebTracker } from '@objectiv/tracker-web';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 import { ReactTracker } from '../src';

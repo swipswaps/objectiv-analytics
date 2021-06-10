@@ -19,7 +19,9 @@ describe('useOnUnmount', () => {
   });
 
   it('should not execute on rerender', () => {
-    const { rerender } = renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
+    const { rerender } = renderHook((effectCallback) => useOnUnmount(effectCallback), {
+      initialProps: mockEffectCallback,
+    });
 
     expect(mockEffectCallback).not.toHaveBeenCalled();
 
@@ -31,7 +33,9 @@ describe('useOnUnmount', () => {
   });
 
   it('should execute on unmount', () => {
-    const { unmount } = renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
+    const { unmount } = renderHook((effectCallback) => useOnUnmount(effectCallback), {
+      initialProps: mockEffectCallback,
+    });
 
     expect(mockEffectCallback).not.toHaveBeenCalled();
 
@@ -44,7 +48,9 @@ describe('useOnUnmount', () => {
     const mockEffectCallback2 = jest.fn();
     const mockEffectCallback3 = jest.fn();
     const mockEffectCallback4 = jest.fn();
-    const { rerender, unmount } = renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
+    const { rerender, unmount } = renderHook((effectCallback) => useOnUnmount(effectCallback), {
+      initialProps: mockEffectCallback,
+    });
 
     rerender(mockEffectCallback2);
     rerender(mockEffectCallback3);
