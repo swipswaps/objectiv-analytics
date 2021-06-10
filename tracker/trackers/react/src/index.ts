@@ -1,5 +1,6 @@
 export * from './ReactTracker';
 export * from './TrackerContextProvider';
+export * from './TrackerSection';
 export * from './useOnChange';
 export * from './useOnMount';
 export * from './useOnUnmount';

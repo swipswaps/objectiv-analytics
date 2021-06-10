@@ -1,3 +1,4 @@
+import { makeSectionContext } from '@objectiv/tracker-core';
 import { render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import fetchMock from 'jest-fetch-mock';
@@ -33,11 +34,9 @@ describe('TrackerContextProvider', () => {
 
     it('should retrieve the tracker from the closes Context Provider', () => {
       const endpoint = '/collector';
-      const root = new ReactTracker({ endpoint, locationStack: [{ _context_type: 'SectionContext', id: 'root' }] });
-      const section1 = new ReactTracker(root, { locationStack: [{ _context_type: 'SectionContext', id: 'section1' }] });
-      const section2 = new ReactTracker(section1, {
-        locationStack: [{ _context_type: 'SectionContext', id: 'section2' }],
-      });
+      const root = new ReactTracker({ endpoint, locationStack: [makeSectionContext({ id: 'root' })] });
+      const section1 = new ReactTracker(root, { locationStack: [makeSectionContext({ id: 'section1' })] });
+      const section2 = new ReactTracker(section1, { locationStack: [makeSectionContext({ id: 'section2' })] });
 
       const spy = jest.fn();
 
@@ -58,6 +57,7 @@ describe('TrackerContextProvider', () => {
                 <TrackingComponent id={'in-section2'} />
               </TrackerContextProvider>
             </TrackerContextProvider>
+            XMLHttpRequestTransport
           </div>
         </TrackerContextProvider>
       );

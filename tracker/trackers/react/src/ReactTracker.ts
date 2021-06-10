@@ -1,4 +1,4 @@
-import { ContextsConfig, TrackerPlugins } from '@objectiv/core';
+import { ContextsConfig, TrackerPlugins } from '@objectiv/tracker-core';
 import { defaultWebTrackerPluginsList, WebTracker, WebTrackerConfig } from '@objectiv/tracker-web';
 
 /**

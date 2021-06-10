@@ -1,4 +1,4 @@
-import { Tracker } from '@objectiv/core';
+import { Tracker } from '@objectiv/tracker-core';
 import { createContext, ReactNode, useContext } from 'react';
 
 /**

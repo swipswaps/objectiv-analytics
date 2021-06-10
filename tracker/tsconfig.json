@@ -32,7 +32,7 @@
       "@objectiv/schema": ["core/schema/src"],
       "@objectiv/plugin-*": ["plugins/*/src"],
       "@objectiv/tracker-core": ["core/tracker/src"],
-      "@objectiv/tracker-*": ["plugins/*/src"],
+      "@objectiv/tracker-*": ["trackers/*/src"],
     }
   }
 }

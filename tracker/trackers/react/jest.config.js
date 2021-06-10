@@ -7,6 +7,7 @@ module.exports = {
   moduleNameMapper: {
     '@objectiv/core': '../../../core/src',
     '@objectiv/plugin-(.*)': '../../../plugins/$1/src',
+    '@objectiv/tracker-core': '../../../core/tracker/src',
     '@objectiv/tracker-(.*)': '../../../trackers/$1/src',
   },
 };
