@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect, useState } from 'react';
-import { ReactTracker, TrackerContextProvider, useTrackOnChange } from '../src';
+import { ReactTracker, TrackerContextProvider, useTrackVisibility } from '../src';
 
-describe('useTrackOnChange', () => {
+describe('useTrackVisibility', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -16,8 +16,6 @@ describe('useTrackOnChange', () => {
   const renderSpy = jest.fn();
   const tracker = new ReactTracker({ transport: spyTransport });
 
-  const menuToggleEvent = { event: 'MenuToggleEvent', locationStack: [], globalContexts: [] };
-
   const Index = () => {
     return (
       <TrackerContextProvider tracker={tracker}>
@@ -26,8 +24,10 @@ describe('useTrackOnChange', () => {
     );
   };
 
-  const Menu = ({ isOpen }: { isOpen: boolean }) => {
-    return !isOpen ? null : (
+  const Menu = () => {
+    useTrackVisibility();
+
+    return (
       <ul>
         <li>Menu1</li>
         <li>Menu2</li>
@@ -38,14 +38,13 @@ describe('useTrackOnChange', () => {
 
   const Application = () => {
     const [menuOpen, setMenuOpen] = useState(false);
-    useTrackOnChange(menuOpen, menuToggleEvent);
 
     useEffect(renderSpy);
 
     return (
       <>
         Test application
-        <Menu isOpen={menuOpen} />
+        { menuOpen ? <Menu /> : null }
         <button data-testid="toggle-menu" onClick={() => setMenuOpen(!menuOpen)} value="Toggle Menu" />
       </>
     );
@@ -85,18 +84,18 @@ describe('useTrackOnChange', () => {
     fireEvent.click(toggleMenuButton);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(3);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'MenuToggleEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ event: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ event: 'SectionHiddenEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(3, expect.objectContaining({ event: 'SectionVisibleEvent' }));
   });
 
   it('should allow overriding the tracker with a custom one', () => {
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new ReactTracker({ transport: spyTransport2 });
-    const { rerender } = renderHook((state) => useTrackOnChange(state, menuToggleEvent, anotherTracker));
-
-    rerender({ state: true });
+    renderHook(() => useTrackVisibility(anotherTracker));
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'MenuToggleEvent' }));
+    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'SectionVisibleEvent' }));
   });
 });
