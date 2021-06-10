@@ -48,4 +48,23 @@ describe('useOnChange', () => {
     hook.rerender(newState2);
     expect(mockEffectCallback).toHaveBeenCalledTimes(2);
   });
+
+  it('should execute the latest version of of the effect callback', () => {
+    const newState = { property: 2, attribute: 'b' };
+    const mockEffectCallback2 = jest.fn();
+    const mockEffectCallback3 = jest.fn();
+    const mockEffectCallback4 = jest.fn();
+    const hook = renderHook(({ state, effect }) => useOnChange(state, effect), {
+      initialProps: { state: initialState, effect: mockEffectCallback },
+    });
+
+    hook.rerender({ state: initialState, effect: mockEffectCallback2 });
+    hook.rerender({ state: initialState, effect: mockEffectCallback3 });
+    hook.rerender({ state: newState, effect: mockEffectCallback4 });
+
+    expect(mockEffectCallback).not.toHaveBeenCalled();
+    expect(mockEffectCallback2).not.toHaveBeenCalled();
+    expect(mockEffectCallback3).not.toHaveBeenCalled();
+    expect(mockEffectCallback4).toHaveBeenCalledTimes(1);
+  });
 });
