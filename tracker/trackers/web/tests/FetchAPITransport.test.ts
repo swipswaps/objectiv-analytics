@@ -1,6 +1,6 @@
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
-import { MemoryQueue, QueuedTransport, TrackerEvent } from '@objectiv/core';
+import { MemoryQueue, QueuedTransport, TrackerEvent } from '@objectiv/tracker-core';
 
 beforeAll(() => {
   fetchMock.enableMocks();
@@ -14,7 +14,7 @@ describe('FetchAPITransport', () => {
   const MOCK_ENDPOINT = '/test-endpoint';
 
   const testEvent = new TrackerEvent({
-    eventName: 'test-event',
+    event: 'test-event',
   });
 
   it('should send using `fetch` API with the default fetch function', async () => {
