@@ -15,6 +15,14 @@ jobs:
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Cache pip
+        # Configure cache for the files that pip downloads. At the end of the steps the path gets cached
+        # (if the cache keys doesn't exist yet). If the cache key exists it gets restored in this step.
+        uses: actions/cache@v2
+        with:
+          # This path is specific to Ubuntu
+          path: ~/.cache/pip
+          key: pip-${{ matrix.python-version }}-${{ hashFiles('backend/requirements.txt', 'backend/requirements-dev.txt') }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
