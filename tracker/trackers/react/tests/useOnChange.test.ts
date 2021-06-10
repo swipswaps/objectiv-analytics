@@ -43,10 +43,12 @@ describe('useOnChange', () => {
     hook.rerender(newState1);
     hook.rerender(newState1);
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
+    expect(mockEffectCallback).toHaveBeenCalledWith(initialState, newState1);
     hook.rerender(newState2);
     hook.rerender(newState2);
     hook.rerender(newState2);
     expect(mockEffectCallback).toHaveBeenCalledTimes(2);
+    expect(mockEffectCallback).toHaveBeenCalledWith(newState1, newState2);
   });
 
   it('should execute the latest version of the effect callback', () => {
@@ -66,5 +68,6 @@ describe('useOnChange', () => {
     expect(mockEffectCallback2).not.toHaveBeenCalled();
     expect(mockEffectCallback3).not.toHaveBeenCalled();
     expect(mockEffectCallback4).toHaveBeenCalledTimes(1);
+    expect(mockEffectCallback4).toHaveBeenCalledWith(initialState, newState);
   });
 });

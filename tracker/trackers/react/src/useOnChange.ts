@@ -1,10 +1,15 @@
-import { EffectCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import isEqual from 'react-fast-compare';
+
+/**
+ * A custom EffectCallback that received the monitored `previousState` and `state` values
+ */
+type OnChangeEffectCallback = <T>(previousState: T, state: T) => void;
 
 /**
  * A side effect that monitors the given `state` and runs the given `effect` when it changes.
  */
-export const useOnChange = <T = unknown>(state: T, effect: EffectCallback) => {
+export const useOnChange = <T = unknown>(state: T, effect: OnChangeEffectCallback) => {
   let previousStateRef = useRef<T>(state);
   let latestEffectRef = useRef(effect);
 
@@ -12,7 +17,8 @@ export const useOnChange = <T = unknown>(state: T, effect: EffectCallback) => {
 
   useEffect(() => {
     if (!isEqual(previousStateRef.current, state)) {
-      effect();
+      effect(previousStateRef.current, state);
+      previousStateRef.current = state;
     }
   }, [state]);
 };
