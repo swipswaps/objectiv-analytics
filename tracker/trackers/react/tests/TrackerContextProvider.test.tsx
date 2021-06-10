@@ -57,7 +57,6 @@ describe('TrackerContextProvider', () => {
                 <TrackingComponent id={'in-section2'} />
               </TrackerContextProvider>
             </TrackerContextProvider>
-            XMLHttpRequestTransport
           </div>
         </TrackerContextProvider>
       );
