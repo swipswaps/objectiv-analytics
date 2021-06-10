@@ -1,4 +1,5 @@
 import {
+  ContextsConfig,
   MemoryQueue,
   QueuedTransport,
   Tracker,
@@ -65,7 +66,7 @@ export const defaultWebTrackerPluginsList = [WebDocumentContextPlugin, WebDevice
  *
  */
 export class WebTracker extends Tracker {
-  constructor(webConfig: WebTrackerConfig) {
+  constructor(webConfig: WebTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = webConfig;
 
     // Either `transport` or `endpoint` must be provided
@@ -94,6 +95,6 @@ export class WebTracker extends Tracker {
       };
     }
 
-    super(config);
+    super(config, ...contextConfigs);
   }
 }
