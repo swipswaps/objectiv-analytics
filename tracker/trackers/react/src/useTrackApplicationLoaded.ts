@@ -1,5 +1,5 @@
-import { useTracker } from './ObjectivProvider';
 import { ReactTracker } from './ReactTracker';
+import { useTracker } from './TrackerContextProvider';
 
 /**
  * Triggers an ApplicationLoadedEvent when the using component mounts for the first time.

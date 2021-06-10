@@ -1,5 +1,5 @@
-export * from './ObjectivProvider';
 export * from './ReactTracker';
+export * from './TrackerContextProvider';
 export * from './useOnChange';
 export * from './useOnMount';
 export * from './useOnUnmount';

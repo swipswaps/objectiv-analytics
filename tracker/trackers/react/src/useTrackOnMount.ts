@@ -1,6 +1,6 @@
 import { TrackerEvent } from '@objectiv/core';
-import { useTracker } from './ObjectivProvider';
 import { ReactTracker } from './ReactTracker';
+import { useTracker } from './TrackerContextProvider';
 import { useOnMount } from './useOnMount';
 
 /**

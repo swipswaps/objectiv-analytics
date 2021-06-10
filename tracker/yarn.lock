@@ -1205,7 +1205,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.12.5":
+"@babel/runtime-corejs3@npm:^7.10.2":
+  version: 7.14.5
+  resolution: "@babel/runtime-corejs3@npm:7.14.5"
+  dependencies:
+    core-js-pure: ^3.14.0
+    regenerator-runtime: ^0.13.4
+  checksum: d434603a84457bcb0d51bbb8d262a8525d855df66087802d4b9ca5703fcd46520de6f8499fbb637c593108ce4648768ad2aa3a2f5c1c9c256355b96f51dc14dc
+  languageName: node
+  linkType: hard
+
+"@babel/runtime@npm:^7.10.2, @babel/runtime@npm:^7.12.5":
   version: 7.14.5
   resolution: "@babel/runtime@npm:7.14.5"
   dependencies:
@@ -1703,6 +1713,7 @@ __metadata:
     "@objectiv/tracker-web": ~0.0.1
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
+    "@testing-library/react": ^11.2.7
     "@testing-library/react-hooks": ^7.0.0
     "@types/jest": ^26.0.23
     "@types/react": ^17.0.11
@@ -1837,6 +1848,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@testing-library/dom@npm:^7.28.1":
+  version: 7.31.2
+  resolution: "@testing-library/dom@npm:7.31.2"
+  dependencies:
+    "@babel/code-frame": ^7.10.4
+    "@babel/runtime": ^7.12.5
+    "@types/aria-query": ^4.2.0
+    aria-query: ^4.2.2
+    chalk: ^4.1.0
+    dom-accessibility-api: ^0.5.6
+    lz-string: ^1.4.4
+    pretty-format: ^26.6.2
+  checksum: f930b4797fd41e515e645427027574fb82a46d90edde20523c2269916be88aeb302f2a4eb982d7c41afbe2de4ed3129e6b269424db2a90974ea76bdb9f26e3ed
+  languageName: node
+  linkType: hard
+
 "@testing-library/react-hooks@npm:^7.0.0":
   version: 7.0.0
   resolution: "@testing-library/react-hooks@npm:7.0.0"
@@ -1859,10 +1886,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@testing-library/react@npm:^11.2.7":
+  version: 11.2.7
+  resolution: "@testing-library/react@npm:11.2.7"
+  dependencies:
+    "@babel/runtime": ^7.12.5
+    "@testing-library/dom": ^7.28.1
+  peerDependencies:
+    react: "*"
+    react-dom: "*"
+  checksum: 389c9f3e83f59677f5283783788d18f8cd499342a0e5c1f67821c292860afe5f282ff8b5ced795b9c2f7d78132005d8b6b33e1b3e3a9004e240e3569f8e168ef
+  languageName: node
+  linkType: hard
+
 "@tootallnate/once@npm:1":
   version: 1.1.2
   resolution: "@tootallnate/once@npm:1.1.2"
   checksum: d030f3fb14e0373dbf5005d8f696ff34fda87bf56744bea611fc737449bfc0687ebcb28ee8ba4c6624877f51b18d701c0d417d793f406006a192f4721911d048
+  languageName: node
+  linkType: hard
+
+"@types/aria-query@npm:^4.2.0":
+  version: 4.2.1
+  resolution: "@types/aria-query@npm:4.2.1"
+  checksum: 1b64d16e09ebb071f9c97a4a0ae0d0f6b573a3c14e9f966d51c9ebfc30d19681782428d7cb4ec75d93aa1b58a857f5f17babbfedeefebc85c4047cf5f6b96d5f
   languageName: node
   linkType: hard
 
@@ -2479,6 +2526,16 @@ __metadata:
   dependencies:
     sprintf-js: ~1.0.2
   checksum: 435adaef5f6671c3ef1478a22be6fd54bdb99fdbbce8f5561b9cbbb05068ccce87b7df3b9f3322ff52a6ebb9cab2b427cbedac47a07611690a9beaa5184093e2
+  languageName: node
+  linkType: hard
+
+"aria-query@npm:^4.2.2":
+  version: 4.2.2
+  resolution: "aria-query@npm:4.2.2"
+  dependencies:
+    "@babel/runtime": ^7.10.2
+    "@babel/runtime-corejs3": ^7.10.2
+  checksum: dc7631b6f9aee453aee3587f1b4e998e2fca89909a7d2587d91694165d161850a8b64c433348efde78297e35473df6d79deb7abea8571f82485dad9b5401c390
   languageName: node
   linkType: hard
 
@@ -3197,6 +3254,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"core-js-pure@npm:^3.14.0":
+  version: 3.14.0
+  resolution: "core-js-pure@npm:3.14.0"
+  checksum: 8afceb673f05fd3fa384783f063b69f20f4f9a7963a66ac2330e3c63c14cb1e63b520e0195eba7019ee64bc3d5c3389000ef225b612dbadc8e1cfce7de54c907
+  languageName: node
+  linkType: hard
+
 "core-util-is@npm:1.0.2, core-util-is@npm:~1.0.0":
   version: 1.0.2
   resolution: "core-util-is@npm:1.0.2"
@@ -3430,6 +3494,13 @@ __metadata:
   dependencies:
     esutils: ^2.0.2
   checksum: 2eae469bd2889ceee9892083a67340b3622568fe5290edce620e5d5ddab23d644b2a780e9a7c68ad9c8a62716a70c5e484402ac93a398fa78b54b7505592aa7f
+  languageName: node
+  linkType: hard
+
+"dom-accessibility-api@npm:^0.5.6":
+  version: 0.5.6
+  resolution: "dom-accessibility-api@npm:0.5.6"
+  checksum: b579681083e683291df022bdf094dae2c7e39db0ff28f70ed2c8368eda203fe4c45bcf92f1c623ce4b746cb245f9a5dc9d176f1781d600b9218728d3a1d1580f
   languageName: node
   linkType: hard
 
@@ -5686,6 +5757,15 @@ __metadata:
   dependencies:
     yallist: ^4.0.0
   checksum: b8b78353d2391c0f135cdc245c4744ad41c2efb1a6d98f31bc57a2cf48ebf02de96e4876657c3026673576bf1f1f61fc3fdd77ab00ad1ead737537bf17d8019d
+  languageName: node
+  linkType: hard
+
+"lz-string@npm:^1.4.4":
+  version: 1.4.4
+  resolution: "lz-string@npm:1.4.4"
+  bin:
+    lz-string: bin/bin.js
+  checksum: 60a13f8a724d109cffc7dda4cb98569adfa0516750f8a75b7236f6bc94b47edffb59e8a1e501364404e3867cf399e6612c3981f9c81c2de75751203431bf2e69
   languageName: node
   linkType: hard
 
