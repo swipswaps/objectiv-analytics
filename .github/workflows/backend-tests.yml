@@ -1,0 +1,27 @@
+name: "Backend tests: pytest mypy"
+
+on: [push]
+
+jobs:
+  typecheck-and-run-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.7, 3.8]
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          cd backend
+          pip install -r requirements-dev.txt
+          pip install --require-hashes -r requirements.txt
+      - name: Typecheck with MyPy
+        run: cd backend; mypy objectiv_backend/
+      - name: Test with pytest
+        run: cd backend; pytest
