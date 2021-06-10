@@ -1,3 +1,4 @@
+import { makeSectionContext } from '@objectiv/tracker-core';
 import { ReactNode } from 'react';
 import { ReactTracker } from './ReactTracker';
 import { TrackerContextProvider, useTracker } from './TrackerContextProvider';
@@ -10,13 +11,7 @@ import { TrackerContextProvider, useTracker } from './TrackerContextProvider';
  *
  */
 export const TrackerSection = ({ id, children }: { id: string; children: ReactNode }) => {
-  const sectionATracker = new ReactTracker(useTracker(), {
-    locationStack: [
-      //createSectionContext({ id }) // TODO need schema
-    ],
-  });
-
-  console.log(id)
+  const sectionATracker = new ReactTracker(useTracker(), { locationStack: [makeSectionContext({ id })] });
 
   return <TrackerContextProvider tracker={sectionATracker}>{children}</TrackerContextProvider>;
 };
