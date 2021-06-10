@@ -2,7 +2,7 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   reporters: ['jest-standard-reporter'],
-  collectCoverageFrom: ['src/**.ts'],
+  collectCoverageFrom: ['src/**.{ts,tsx}'],
   setupFiles: ['jest-useragent-mock'],
   moduleNameMapper: {
     '@objectiv/core': '../../../core/src',

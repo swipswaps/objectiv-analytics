@@ -43,11 +43,9 @@ describe('TrackerContextProvider', () => {
 
       const TrackingComponent = ({ id }: { id: string }) => {
         const tracker = useTracker();
-        const locationStackAsPath = tracker.locationStack.map((locationContext) => locationContext.id).join('/')
-        spy(`${id}: ${locationStackAsPath}`)
-        return (
-          <div data-testid={id}>{locationStackAsPath}</div>
-        );
+        const locationStackAsPath = tracker.locationStack.map((locationContext) => locationContext.id).join('/');
+        spy(`${id}: ${locationStackAsPath}`);
+        return <div data-testid={id}>{locationStackAsPath}</div>;
       };
 
       render(
