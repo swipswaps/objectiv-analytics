@@ -8,6 +8,7 @@ describe('ReactTracker', () => {
   describe('Default Plugins from WebTracker', () => {
     it('should have some Web Plugins configured by default when no `plugins` have been specified', () => {
       const testTracker = new ReactTracker({ endpoint: 'localhost' });
+
       expect(testTracker).toBeInstanceOf(ReactTracker);
       expect(testTracker.plugins?.list).toEqual(
         expect.arrayContaining([
@@ -20,6 +21,7 @@ describe('ReactTracker', () => {
 
     it('should not have any default Plugin configured when `plugins` have been overridden', () => {
       const testTracker = new WebTracker({ endpoint: 'localhost', plugins: new TrackerPlugins([]) });
+
       expect(testTracker).toBeInstanceOf(WebTracker);
       expect(testTracker.plugins?.list).toStrictEqual([]);
     });
@@ -41,8 +43,10 @@ describe('ReactTracker', () => {
     it('should track WebDocumentContext and DeviceContext Contexts automatically by default', () => {
       const testTracker = new ReactTracker({ endpoint: 'localhost' });
       const testEvent = new TrackerEvent({ event: 'test-event' });
+
       expect(testTracker).toBeInstanceOf(ReactTracker);
       expect(testEvent.globalContexts).toHaveLength(0);
+
       const trackedEvent = testTracker.trackEvent(testEvent);
 
       expect(trackedEvent.locationStack).toHaveLength(1);
@@ -57,7 +61,6 @@ describe('ReactTracker', () => {
           },
         ])
       );
-
       expect(trackedEvent.globalContexts).toHaveLength(1);
       expect(trackedEvent.globalContexts).toEqual(
         expect.arrayContaining([

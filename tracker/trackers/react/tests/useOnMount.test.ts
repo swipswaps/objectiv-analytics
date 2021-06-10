@@ -14,22 +14,29 @@ describe('useOnMount', () => {
 
   it('should execute once on mount', () => {
     renderHook(() => useOnMount(mockEffectCallback));
+
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
   });
 
   it('should not execute on unmount', () => {
-    const hook = renderHook(() => useOnMount(mockEffectCallback));
+    const { unmount } = renderHook(() => useOnMount(mockEffectCallback));
+
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
-    hook.unmount();
+
+    unmount();
+
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
   });
 
   it('should not execute on rerender', () => {
-    const hook = renderHook(() => useOnMount(mockEffectCallback));
+    const { rerender } = renderHook(() => useOnMount(mockEffectCallback));
+
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
-    hook.rerender();
-    hook.rerender();
-    hook.rerender();
+
+    rerender();
+    rerender();
+    rerender();
+
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
   });
 });

@@ -42,21 +42,26 @@ describe('useTrackApplicationLoaded', () => {
 
   it('should execute once on mount', () => {
     render(<Index />);
+
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: "ApplicationLoadedEvent" }));
   });
 
   it('should not execute on unmount', () => {
     const { unmount } = render(<Index />);
+
     unmount();
+
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: "ApplicationLoadedEvent" }));
   });
 
   it('should not execute on rerender', () => {
     const { rerender } = render(<Index />);
+
     rerender(<Index />)
     rerender(<Index />)
+
     expect(renderSpy).toHaveBeenCalledTimes(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: "ApplicationLoadedEvent" }));
@@ -70,6 +75,7 @@ describe('useTrackApplicationLoaded', () => {
     };
     const anotherTracker = new ReactTracker({ transport: spyTransport2 })
     renderHook(() => useTrackApplicationLoaded(anotherTracker));
+
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ event: "ApplicationLoadedEvent" }));

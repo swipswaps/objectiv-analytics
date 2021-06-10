@@ -14,22 +14,29 @@ describe('useOnUnmount', () => {
 
   it('should not execute on mount', () => {
     renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
+
     expect(mockEffectCallback).not.toHaveBeenCalled();
   });
 
   it('should not execute on rerender', () => {
-    const hook = renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
+    const { rerender } = renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
+
     expect(mockEffectCallback).not.toHaveBeenCalled();
-    hook.rerender();
-    hook.rerender();
-    hook.rerender();
+
+    rerender();
+    rerender();
+    rerender();
+
     expect(mockEffectCallback).not.toHaveBeenCalled();
   });
 
   it('should execute on unmount', () => {
-    const hook = renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
+    const { unmount } = renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
+
     expect(mockEffectCallback).not.toHaveBeenCalled();
-    hook.unmount();
+
+    unmount();
+
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
   });
 
@@ -37,12 +44,12 @@ describe('useOnUnmount', () => {
     const mockEffectCallback2 = jest.fn();
     const mockEffectCallback3 = jest.fn();
     const mockEffectCallback4 = jest.fn();
-    const hook = renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
+    const { rerender, unmount } = renderHook((effectCallback) => useOnUnmount(effectCallback), { initialProps: mockEffectCallback });
 
-    hook.rerender(mockEffectCallback2);
-    hook.rerender(mockEffectCallback3);
-    hook.rerender(mockEffectCallback4);
-    hook.unmount();
+    rerender(mockEffectCallback2);
+    rerender(mockEffectCallback3);
+    rerender(mockEffectCallback4);
+    unmount();
 
     expect(mockEffectCallback).not.toHaveBeenCalled();
     expect(mockEffectCallback2).not.toHaveBeenCalled();
