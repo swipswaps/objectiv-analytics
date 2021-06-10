@@ -18,6 +18,12 @@ describe('useOnChange', () => {
     expect(mockEffectCallback).not.toHaveBeenCalled();
   });
 
+  it('should not execute on unmount', () => {
+    const hook = renderHook((state) => useOnChange(state, mockEffectCallback), { initialProps: initialState });
+    hook.unmount();
+    expect(mockEffectCallback).not.toHaveBeenCalled();
+  });
+
   it('should not execute on re-render if the state did not change', () => {
     const hook = renderHook((state) => useOnChange(state, mockEffectCallback), { initialProps: initialState });
     hook.rerender(initialState);
