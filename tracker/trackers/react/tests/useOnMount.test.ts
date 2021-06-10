@@ -14,7 +14,6 @@ describe('useOnMount', () => {
 
   it('should execute once on mount', () => {
     renderHook(() => useOnMount(mockEffectCallback));
-
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
   });
 
@@ -28,6 +27,8 @@ describe('useOnMount', () => {
   it('should not execute on rerender', () => {
     const hook = renderHook(() => useOnMount(mockEffectCallback));
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
+    hook.rerender();
+    hook.rerender();
     hook.rerender();
     expect(mockEffectCallback).toHaveBeenCalledTimes(1);
   });
