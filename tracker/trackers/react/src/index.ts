@@ -3,6 +3,7 @@ export * from './TrackerContextProvider';
 export * from './TrackerSection';
 export * from './useOnChange';
 export * from './useOnMount';
+export * from './useOnToggle';
 export * from './useOnUnmount';
 export * from './useTrackApplicationLoaded';
 export * from './useTrackOnChange';

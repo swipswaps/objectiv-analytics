@@ -44,7 +44,7 @@ describe('useTrackVisibility', () => {
     return (
       <>
         Test application
-        { menuOpen ? <Menu /> : null }
+        {menuOpen ? <Menu /> : null}
         <button data-testid="toggle-menu" onClick={() => setMenuOpen(!menuOpen)} value="Toggle Menu" />
       </>
     );

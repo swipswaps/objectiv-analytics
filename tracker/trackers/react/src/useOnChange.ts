@@ -2,9 +2,9 @@ import { useEffect, useRef } from 'react';
 import isEqual from 'react-fast-compare';
 
 /**
- * A custom EffectCallback that received the monitored `previousState` and `state` values
+ * A custom generic EffectCallback that received the monitored `previousState` and `state` values
  */
-type OnChangeEffectCallback = <T>(previousState: T, state: T) => void;
+export type OnChangeEffectCallback = <T>(previousState: T, state: T) => void;
 
 /**
  * A side effect that monitors the given `state` and runs the given `effect` when it changes.
