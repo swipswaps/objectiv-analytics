@@ -12,12 +12,12 @@ import { TrackerContextProvider, useTracker } from './TrackerContextProvider';
  */
 export const TrackerSection = ({
   id,
-  tracker = useTracker(),
   children,
+  tracker = useTracker(),
 }: {
   id: string;
-  tracker?: Tracker;
   children: ReactNode;
+  tracker?: Tracker;
 }) => {
   const sectionATracker = new ReactTracker(tracker, { locationStack: [makeSectionContext({ id })] });
 

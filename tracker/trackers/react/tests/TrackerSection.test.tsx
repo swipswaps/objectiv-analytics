@@ -42,7 +42,10 @@ describe('TrackerSection', () => {
 
   it('should use the given tracker and ignore TrackerContextProviders', () => {
     const root = new ReactTracker({ endpoint: '/collector', locationStack: [makeSectionContext({ id: 'root' })] });
-    const customTracker = new ReactTracker({ endpoint: '/collector', locationStack: [makeSectionContext({ id: 'custom' })] });
+    const customTracker = new ReactTracker({
+      endpoint: '/collector',
+      locationStack: [makeSectionContext({ id: 'custom' })],
+    });
 
     const spy = jest.fn();
 
