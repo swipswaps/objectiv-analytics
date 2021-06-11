@@ -1,5 +1,5 @@
 import { LinkContext } from '@objectiv/schema';
-import { makeClickEvent } from '@objectiv/tracker-core';
+import { trackLinkClick } from '@objectiv/tracker-web';
 import { ReactTracker } from './ReactTracker';
 import { useTracker } from './TrackerContextProvider';
 
@@ -9,4 +9,4 @@ import { useTracker } from './TrackerContextProvider';
 export const useTrackLinkClick =
   (linkContext: LinkContext, tracker: ReactTracker = useTracker()) =>
   () =>
-    tracker.trackEvent(makeClickEvent({ locationStack: [linkContext] }));
+    trackLinkClick(linkContext, tracker);

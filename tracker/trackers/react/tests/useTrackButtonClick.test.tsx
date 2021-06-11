@@ -2,7 +2,7 @@ import { makeButtonContext } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useTrackButtonClick, ReactTracker, TrackerContextProvider, TrackerNavigation, TrackerSection } from '../src';
 
-describe('trackButtonClick', () => {
+describe('useTrackButtonClick', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });

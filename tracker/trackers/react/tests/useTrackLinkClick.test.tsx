@@ -2,7 +2,7 @@ import { makeLinkContext } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { useTrackLinkClick, ReactTracker, TrackerContextProvider, TrackerNavigation, TrackerSection } from '../src';
 
-describe('trackLinkClick', () => {
+describe('useTrackLinkClick', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
