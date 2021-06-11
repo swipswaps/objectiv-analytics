@@ -82,7 +82,6 @@ describe('onButtonClick', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(3, expect.objectContaining({ event: 'ClickEvent' }));
   });
 
-  // TODO
   it('should allow overriding the tracker with a custom one', () => {
     const TestApp = () => (
       <TrackerContextProvider tracker={tracker}>
