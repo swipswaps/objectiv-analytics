@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import isEqual from 'react-fast-compare';
+import isEqual from 'fast-deep-equal';
 
 /**
  * A custom generic EffectCallback that received the monitored `previousState` and `state` values
