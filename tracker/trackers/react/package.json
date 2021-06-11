@@ -6,8 +6,8 @@
   "scripts": {
     "build": "rollup -c --silent --failAfterWarnings",
     "prettier": "prettier --write .",
-    "test": "jest --no-cache --silent",
-    "test:ci": "jest --no-cache --silent --ci",
+    "test": "jest --no-cache --silent --runInBand",
+    "test:ci": "jest --no-cache --silent --ci --runInBand",
     "test:coverage": "jest --no-cache --silent --coverage"
   },
   "devDependencies": {
