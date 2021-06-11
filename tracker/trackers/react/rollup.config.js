@@ -10,25 +10,31 @@ const commonPlugins = [nodeResolve(), commonjs(), ts()];
 const minificationPlugins = [cleanup(), terser()];
 const statsPlugins = [sizes(), filesize()];
 
-const makeOutput = (format, isMinified, isDefault) => ({
-  file: `dist/index${!isDefault ? `.${format}` : ''}${isMinified ? '.min' : ''}.js`,
+const makeOutput = (format, isMinified) => ({
+  file: `dist/index${isMinified ? '.min' : ''}.js`,
   format: format,
   name: 'objectiv',
   sourcemap: true,
+  globals: {
+    'react': 'React',
+    'react-dom': 'ReactDOM',
+  },
 });
 
 export default [
   // UMD, CJS, ES, IIFE
   {
     input: './src/index.ts',
-    output: [makeOutput('umd', false, true), makeOutput('cjs'), makeOutput('es'), makeOutput('iife')],
+    output: [makeOutput('umd', false)],
     plugins: [...commonPlugins, ...statsPlugins],
+    external: ['react', 'react-dom'],
   },
 
   // UMD, CJS, ES, IIFE - minified
   {
     input: './src/index.ts',
-    output: [makeOutput('umd', true, true), makeOutput('cjs', true), makeOutput('es', true), makeOutput('iife', true)],
+    output: [makeOutput('umd', true)],
     plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
+    external: ['react', 'react-dom'],
   },
 ];
