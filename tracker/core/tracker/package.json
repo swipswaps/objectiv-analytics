@@ -4,6 +4,9 @@
   "description": "Objectiv JavaScript Tracker Core library",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rollup -c --silent --failAfterWarnings",
     "prettier": "prettier --write .",
