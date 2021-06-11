@@ -1,6 +1,9 @@
 name: "Backend tests: pytest mypy"
 
-on: [push]
+on:
+  push:
+    paths:
+      - 'backend/**'
 
 jobs:
   typecheck-and-run-tests:
