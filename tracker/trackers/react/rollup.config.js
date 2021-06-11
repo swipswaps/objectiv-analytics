@@ -11,9 +11,9 @@ const commonPlugins = [peerDepsExternal(), nodeResolve(), commonjs(), ts()];
 const minificationPlugins = [cleanup(), terser()];
 const statsPlugins = [sizes(), filesize()];
 
-const makeOutput = (format, isMinified) => ({
+const makeOutput = (isMinified) => ({
   file: `dist/index${isMinified ? '.min' : ''}.js`,
-  format: format,
+  format: 'umd',
   name: 'objectiv',
   sourcemap: true,
   globals: {
@@ -26,14 +26,14 @@ export default [
   // UMD
   {
     input: './src/index.ts',
-    output: [makeOutput('umd', false)],
+    output: [makeOutput(false)],
     plugins: [...commonPlugins, ...statsPlugins],
   },
 
   // UMD - minified
   {
     input: './src/index.ts',
-    output: [makeOutput('umd', true)],
+    output: [makeOutput(true)],
     plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
   },
 ];
