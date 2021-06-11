@@ -5,6 +5,8 @@ import { TrackerContextProvider, useTracker } from './TrackerContextProvider';
 
 /**
  * Tracker Overlay is a SectionProvider meant to wrap around popovers, tooltips, modals and layered content in general.
+ * The resulting provider will return a tracker extended with whatever contexts are already present in ancestor
+ * TrackerContextProviders. Unless a tracker instance is provided to override this default behavior.
  *
  * TODO add better docs and some examples
  */

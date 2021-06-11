@@ -1,9 +1,14 @@
 import { makeSectionContext } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import fetchMock from 'jest-fetch-mock';
-import { ReactTracker, TrackerContextProvider, TrackerSection, useTracker } from '../src';
-import { TrackerNavigation } from "../src/TrackerNavigation";
-import { TrackerOverlay } from "../src/TrackerOverlay";
+import {
+  ReactTracker,
+  TrackerContextProvider,
+  TrackerNavigation,
+  TrackerOverlay,
+  TrackerSection,
+  useTracker,
+} from '../src';
 
 describe('TrackerSection, TrackerNavigation, TrackerOverlay', () => {
   beforeAll(() => {
@@ -72,7 +77,7 @@ describe('TrackerSection, TrackerNavigation, TrackerOverlay', () => {
               <TrackingComponent id={'in-section2'} />
             </TrackerNavigation>
             <TrackerOverlay id="section3" tracker={customTracker}>
-              <TrackingComponent id={'in-section3'}/>
+              <TrackingComponent id={'in-section3'} />
             </TrackerOverlay>
           </TrackerSection>
         </div>

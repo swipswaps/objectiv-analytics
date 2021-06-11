@@ -25,6 +25,7 @@ export class ReactTracker extends WebTracker {
       };
     }
 
+    // code-coverage mistakenly detects super class calls as uncovered code-forks. Related to TS transpiling.
     /* istanbul ignore next */
     super(config, ...contextConfigs);
   }
