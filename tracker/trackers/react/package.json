@@ -3,12 +3,18 @@
   "version": "0.0.1",
   "description": "Objectiv React Tracker",
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rollup -c --silent --failAfterWarnings",
     "prettier": "prettier --write .",
     "test": "jest --no-cache --silent",
     "test:ci": "jest --no-cache --silent --ci",
-    "test:coverage": "jest --no-cache --silent --coverage"
+    "test:coverage": "jest --no-cache --silent --coverage",
+    "publish": "npm publish",
+    "unpublish": "npm unpublish @objectiv/tracker-react --force"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^19.0.0",

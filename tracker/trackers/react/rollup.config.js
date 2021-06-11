@@ -13,24 +13,24 @@ const statsPlugins = [sizes(), filesize()];
 
 const makeOutput = (isMinified) => ({
   file: `dist/index${isMinified ? '.min' : ''}.js`,
-  format: 'umd',
-  name: 'objectiv',
+  format: 'es',
+  name: 'ObjectivReactTracker',
   sourcemap: true,
   globals: {
-    'react': 'React',
+    react: 'React',
     'react/jsx-runtime': 'jsxRuntime',
   },
 });
 
 export default [
-  // UMD
+  // ES
   {
     input: './src/index.ts',
     output: [makeOutput(false)],
     plugins: [...commonPlugins, ...statsPlugins],
   },
 
-  // UMD - minified
+  // ES minified
   {
     input: './src/index.ts',
     output: [makeOutput(true)],

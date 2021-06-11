@@ -1,19 +1,34 @@
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import ts from '@wessberg/rollup-plugin-ts'; // Official plugin crashes: https://github.com/rollup/plugins/issues/287
 import cleanup from 'rollup-plugin-cleanup';
 import filesize from 'rollup-plugin-filesize';
 import sizes from 'rollup-plugin-sizes';
 import { terser } from 'rollup-plugin-terser';
+import ts from 'rollup-plugin-ts';
 
-export default {
-  input: './src/index.ts',
-  output: [
-    {
-      dir: 'dist',
-      format: 'umd',
-      name: 'objectivWebDocumentContextPlugin',
-    },
-  ],
-  plugins: [nodeResolve(), commonjs(), ts(), cleanup(), terser(), sizes(), filesize()],
-};
+const commonPlugins = [nodeResolve(), commonjs(), ts()];
+const minificationPlugins = [cleanup(), terser()];
+const statsPlugins = [sizes(), filesize()];
+
+const makeOutput = (isMinified) => ({
+  file: `dist/index${isMinified ? '.min' : ''}.js`,
+  format: 'es',
+  name: 'ObjectivTrackerWebDocumentContextPlugin',
+  sourcemap: true,
+});
+
+export default [
+  // ES
+  {
+    input: './src/index.ts',
+    output: [makeOutput(false)],
+    plugins: [...commonPlugins, ...statsPlugins],
+  },
+
+  // ES minified
+  {
+    input: './src/index.ts',
+    output: [makeOutput(true)],
+    plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
+  },
+];

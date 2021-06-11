@@ -20,7 +20,4 @@ npm install @objectiv/tracker-react
 ```javascript
 import { ReactTracker } from '@objectiv/tracker-react';
 const reactTracker = new ReactTracker({ endpoint: '/collector' });
-
-// TODO add example of provider usage
-
 ```

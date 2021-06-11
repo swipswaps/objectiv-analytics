@@ -5,7 +5,9 @@
   "types": "src/index.d.ts",
   "scripts": {
     "lint": "eslint . --ext .js,.ts",
-    "prettier": "prettier --write ."
+    "prettier": "prettier --write .",
+    "publish": "npm publish",
+    "unpublish": "npm unpublish @objectiv/schema --force"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.23.0",
