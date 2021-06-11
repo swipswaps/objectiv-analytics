@@ -31,10 +31,14 @@ def get_sql() -> str:
 
 def get_connection_with_retries(retry: bool):
     """ Connect to database. If retry set will attempt multiple times"""
+    pg_config = get_config_postgres()
+    if pg_config is None:
+        raise Exception('Missing Postgres configuration')
+
     retries = 0
     while True:
         try:
-            return get_db_connection(get_config_postgres())
+            return get_db_connection(pg_config)
         except psycopg2.OperationalError as error:
             if not retry or retries == _MAX_RETRIES:
                 raise Exception("Could not connect to database") from error

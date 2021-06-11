@@ -3,7 +3,7 @@ from datetime import datetime
 
 import flask
 import time
-from typing import List
+from typing import List, Mapping
 import uuid
 
 from flask import Response, Request
@@ -167,7 +167,7 @@ def set_time_in_events(events: List[EventData], current_millis: int):
 def _get_http_context() -> ContextData:
     """ Create an HttpContext based on the data in the current request. """
     allowed_headers = ['Host', 'Origin', 'Referer', 'User-Agent']
-    http_context = {}
+    http_context: ContextData = {}
     if flask.request.remote_addr:
         http_context['remote_addr'] = flask.request.remote_addr
 

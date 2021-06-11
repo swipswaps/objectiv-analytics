@@ -8,8 +8,7 @@ import sys
 from copy import deepcopy
 from typing import Set, List, Dict, Any, Optional, Tuple
 
-EventType = str
-ContextType = str
+from objectiv_backend.common.types import EventType, ContextType
 
 MAX_HIERARCHY_DEPTH = 100
 
@@ -49,10 +48,10 @@ class EventSubSchema:
                 schema[event_type] = {'parents': [], 'requiresContext': []}
             schema[event_type]['parents'].extend(data['parents'])
             schema[event_type]['requiresContext'].extend(data['requiresContext'])
-        event_schema = EventSubSchema()
-        event_schema.schema = schema
-        event_schema._compile()
-        return event_schema
+        event_sub_schema = EventSubSchema()
+        event_sub_schema.schema = schema
+        event_sub_schema._compile()
+        return event_sub_schema
 
     def _compile(self):
         """
