@@ -1,12 +1,13 @@
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import ts from '@wessberg/rollup-plugin-ts'; // Official plugin crashes: https://github.com/rollup/plugins/issues/287
 import cleanup from 'rollup-plugin-cleanup';
 import filesize from 'rollup-plugin-filesize';
+import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import sizes from 'rollup-plugin-sizes';
 import { terser } from 'rollup-plugin-terser';
+import ts from 'rollup-plugin-ts';
 
-const commonPlugins = [nodeResolve(), commonjs(), ts()];
+const commonPlugins = [peerDepsExternal(), nodeResolve(), commonjs(), ts()];
 const minificationPlugins = [cleanup(), terser()];
 const statsPlugins = [sizes(), filesize()];
 
@@ -17,7 +18,7 @@ const makeOutput = (format, isMinified) => ({
   sourcemap: true,
   globals: {
     'react': 'React',
-    'react-dom': 'ReactDOM',
+    'react/jsx-runtime': 'jsxRuntime',
   },
 });
 
@@ -27,7 +28,6 @@ export default [
     input: './src/index.ts',
     output: [makeOutput('umd', false)],
     plugins: [...commonPlugins, ...statsPlugins],
-    external: ['react', 'react-dom'],
   },
 
   // UMD - minified
@@ -35,6 +35,5 @@ export default [
     input: './src/index.ts',
     output: [makeOutput('umd', true)],
     plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
-    external: ['react', 'react-dom'],
   },
 ];
