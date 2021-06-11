@@ -22,7 +22,7 @@ const makeOutput = (format, isMinified) => ({
 });
 
 export default [
-  // UMD, CJS, ES, IIFE
+  // UMD
   {
     input: './src/index.ts',
     output: [makeOutput('umd', false)],
@@ -30,7 +30,7 @@ export default [
     external: ['react', 'react-dom'],
   },
 
-  // UMD, CJS, ES, IIFE - minified
+  // UMD - minified
   {
     input: './src/index.ts',
     output: [makeOutput('umd', true)],
