@@ -12,6 +12,8 @@ pip install --require-hashes -r requirements.txt
 pip install -r requirements-dev.txt
 ```
 
+test change backend
+
 ## Start DB
 ```bash
 cd ..; docker-compose up --detach postgres
