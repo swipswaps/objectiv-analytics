@@ -1,16 +1,16 @@
-import { makeSectionContext, Tracker } from '@objectiv/tracker-core';
+import { makeOverlayContext, Tracker } from '@objectiv/tracker-core';
 import { ReactNode } from 'react';
 import { ReactTracker } from './ReactTracker';
 import { TrackerContextProvider, useTracker } from './TrackerContextProvider';
 
 /**
- * Tracker Section wraps a logical section under a new TrackerContextProvider.
+ * Tracker Overlay is a SectionProvider meant to wrap around popovers, tooltips, modals and layered content in general.
  * The resulting provider will return a tracker extended with whatever contexts are already present in ancestor
  * TrackerContextProviders. Unless a tracker instance is provided to override this default behavior.
  *
  * TODO add better docs and some examples
  */
-export const TrackerSection = ({
+export const TrackerOverlay = ({
   id,
   children,
   tracker = useTracker(),
@@ -19,7 +19,7 @@ export const TrackerSection = ({
   children: ReactNode;
   tracker?: Tracker;
 }) => {
-  const sectionTracker = new ReactTracker(tracker, { locationStack: [makeSectionContext({ id })] });
+  const overlayTracker = new ReactTracker(tracker, { locationStack: [makeOverlayContext({ id })] });
 
-  return <TrackerContextProvider tracker={sectionTracker}>{children}</TrackerContextProvider>;
+  return <TrackerContextProvider tracker={overlayTracker}>{children}</TrackerContextProvider>;
 };

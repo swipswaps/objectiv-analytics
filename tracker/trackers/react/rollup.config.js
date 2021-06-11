@@ -17,7 +17,7 @@ const makeOutput = (isMinified) => ({
   name: 'objectiv',
   sourcemap: true,
   globals: {
-    'react': 'React',
+    react: 'React',
     'react/jsx-runtime': 'jsxRuntime',
   },
 });

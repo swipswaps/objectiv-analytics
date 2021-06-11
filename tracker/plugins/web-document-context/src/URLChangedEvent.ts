@@ -5,6 +5,9 @@ import { makeURLChangedEvent, Tracker } from '@objectiv/tracker-core';
  * To solve this problem, instead, we spy on History's methods.
  * When calls to the aforementioned methods are detected we use the pre-factored URLChangedEvent and track it via the
  * given Tracker instance.
+ *
+ * TODO improve this to work nicely with SPAs, it needs a fair bit more complexity to track the Location as well.
+ *
  */
 export const trackURLChangedEvent = (tracker: Tracker): void => {
   // Just to keep things short
