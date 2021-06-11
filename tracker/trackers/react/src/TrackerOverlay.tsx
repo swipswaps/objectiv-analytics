@@ -2,7 +2,7 @@ import { makeOverlayContext, Tracker } from '@objectiv/tracker-core';
 import { ReactNode } from 'react';
 import { ReactTracker } from './ReactTracker';
 import { TrackerContextProvider, useTracker } from './TrackerContextProvider';
-import { useTrackVisibility } from "./useTrackVisibility";
+import { useTrackVisibility } from './useTrackVisibility';
 
 /**
  * Tracker Overlay is a SectionProvider meant to wrap around popovers, tooltips, modals and layered content in general.

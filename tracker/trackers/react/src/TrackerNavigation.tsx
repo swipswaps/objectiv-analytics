@@ -2,7 +2,7 @@ import { makeNavigationContext, Tracker } from '@objectiv/tracker-core';
 import { ReactNode } from 'react';
 import { ReactTracker } from './ReactTracker';
 import { TrackerContextProvider, useTracker } from './TrackerContextProvider';
-import { useTrackVisibility } from "./useTrackVisibility";
+import { useTrackVisibility } from './useTrackVisibility';
 
 /**
  * Tracker Navigation is a SectionProvider meant to wrap around menus, menu drawers and navigation elements in general.

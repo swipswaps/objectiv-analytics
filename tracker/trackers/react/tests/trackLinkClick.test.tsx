@@ -101,7 +101,10 @@ describe('trackLinkClick', () => {
     const Link = () => (
       <a
         data-testid="test-button"
-        onClick={trackLinkClick(makeLinkContext({ id: 'buttonA', text: 'confirm button', href: '/path' }), anotherTracker)}
+        onClick={trackLinkClick(
+          makeLinkContext({ id: 'buttonA', text: 'confirm button', href: '/path' }),
+          anotherTracker
+        )}
       >
         Proceed
       </a>
