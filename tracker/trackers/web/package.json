@@ -4,6 +4,7 @@
   "description": "Objectiv Web Tracker",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "module": "dist/index.js",
   "files": [
     "dist"
   ],
@@ -12,8 +13,8 @@
     "prettier": "prettier --write .",
     "lint": "eslint . --ext .js,.ts",
     "test": "jest --no-cache --silent",
-    "test:ci": "jest --no-cache --silent --ci",
-    "test:coverage": "jest --no-cache --silent --coverage",
+    "test:ci": "jest --no-cache --silent --ci --runInBand",
+    "test:coverage": "jest --no-cache --silent --coverage --runInBand",
     "publish": "npm publish",
     "unpublish": "npm unpublish @objectiv/tracker-web --force"
   },

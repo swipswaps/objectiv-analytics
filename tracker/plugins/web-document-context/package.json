@@ -4,6 +4,7 @@
   "description": "Objectiv Tracker WebDocumentContext Plugin",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "module": "dist/index.js",
   "files": [
     "dist"
   ],
@@ -11,8 +12,8 @@
     "build": "rollup -c --silent --failAfterWarnings",
     "prettier": "prettier --write .",
     "lint": "eslint . --ext .js,.ts",
-    "test": "jest --no-cache --silent",
-    "test:ci": "jest --no-cache --silent --ci",
+    "test": "jest --no-cache --silent --runInBand",
+    "test:ci": "jest --no-cache --silent --ci --runInBand",
     "test:coverage": "jest --no-cache --silent --coverage",
     "publish": "npm publish",
     "unpublish": "npm unpublish @objectiv/plugin-web-document-context --force"

@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "description": "Objectiv Tracker Web Device Context Plugin",
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
     "dist"
@@ -11,11 +12,11 @@
     "build": "rollup -c --silent --failAfterWarnings",
     "prettier": "prettier --write .",
     "lint": "eslint . --ext .js,.ts",
-    "test": "jest --no-cache --silent",
-    "test:ci": "jest --no-cache --silent --ci",
+    "test": "jest --no-cache --silent --runInBand",
+    "test:ci": "jest --no-cache --silent --ci --runInBand",
     "test:coverage": "jest --no-cache --silent --coverage",
     "publish": "npm publish",
-    "unpublish": "npm unpublish @objectiv/plugin-web-device-context --force"
+    "unpublish": "npm unpublish @objectiv/plugin-web-device-context"
   },
   "devDependencies": {
     "@objectiv/schema": "~0.0.1",
