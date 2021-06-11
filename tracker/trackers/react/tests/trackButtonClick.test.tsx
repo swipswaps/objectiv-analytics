@@ -1,6 +1,6 @@
 import { makeButtonContext } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { trackButtonClick, ReactTracker, TrackerContextProvider, TrackerNavigation, TrackerSection } from '../src';
+import { useTrackButtonClick, ReactTracker, TrackerContextProvider, TrackerNavigation, TrackerSection } from '../src';
 
 describe('trackButtonClick', () => {
   beforeEach(() => {
@@ -29,13 +29,11 @@ describe('trackButtonClick', () => {
     );
   };
 
-  const Button = () => (
-    <button
-      data-testid="test-button"
-      onClick={trackButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }))}
-      value={'Proceed'}
-    />
-  );
+  const Button = () => {
+    const buttonClickHandler = useTrackButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }));
+
+    return <button data-testid="test-button" onClick={buttonClickHandler} value={'Proceed'} />;
+  };
 
   it('should not execute on mount', () => {
     render(<TestApp />);
@@ -99,13 +97,12 @@ describe('trackButtonClick', () => {
     );
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new ReactTracker({ transport: spyTransport2 });
-    const Button = () => (
-      <button
-        data-testid="test-button"
-        onClick={trackButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }), anotherTracker)}
-        value={'Proceed'}
-      />
+    const buttonClickHandler = useTrackButtonClick(
+      makeButtonContext({ id: 'buttonA', text: 'confirm button' }),
+      anotherTracker
     );
+
+    const Button = () => <button data-testid="test-button" onClick={buttonClickHandler} value={'Proceed'} />;
 
     render(<TestApp />);
 

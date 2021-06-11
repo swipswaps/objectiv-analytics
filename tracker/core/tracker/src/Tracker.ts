@@ -70,6 +70,8 @@ export class Tracker implements Contexts {
       this.plugins.beforeTransport(eventToTrack);
     }
 
+    // TODO Cleanup Event and Contexts from discriminatory properties before handing it over to Transport
+
     // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
     if (this.transport && this.transport.isUsable()) {
       this.transport.handle(eventToTrack);

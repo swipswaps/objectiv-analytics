@@ -6,8 +6,7 @@ import { useTracker } from './TrackerContextProvider';
 /**
  * Event handler to be used for Button-like elements.
  */
-export const trackButtonClick = (buttonContext: ButtonContext, tracker: ReactTracker = useTracker()) => {
-  const buttonTracker = new ReactTracker(tracker, { locationStack: [buttonContext] });
-
-  return () => buttonTracker.trackEvent(makeClickEvent());
-};
+export const useTrackButtonClick =
+  (buttonContext: ButtonContext, tracker: ReactTracker = useTracker()) =>
+  () =>
+    tracker.trackEvent(makeClickEvent({ locationStack: [buttonContext] }));

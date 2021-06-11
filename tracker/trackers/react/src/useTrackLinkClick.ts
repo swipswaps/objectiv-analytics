@@ -6,8 +6,7 @@ import { useTracker } from './TrackerContextProvider';
 /**
  * Event handler to be used for Link-like elements.
  */
-export const trackLinkClick = (linkContext: LinkContext, tracker: ReactTracker = useTracker()) => {
-  const linkTracker = new ReactTracker(tracker, { locationStack: [linkContext] });
-
-  return () => linkTracker.trackEvent(makeClickEvent());
-};
+export const useTrackLinkClick =
+  (linkContext: LinkContext, tracker: ReactTracker = useTracker()) =>
+  () =>
+    tracker.trackEvent(makeClickEvent({ locationStack: [linkContext] }));
