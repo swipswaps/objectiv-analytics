@@ -41,7 +41,7 @@ describe('trackLinkClick', () => {
   it('should not execute on mount', () => {
     render(<TestApp />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalled();
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'ClickEvent' }));
   });
 
   it('should not execute on unmount', () => {
@@ -49,7 +49,7 @@ describe('trackLinkClick', () => {
 
     unmount();
 
-    expect(spyTransport.handle).not.toHaveBeenCalled();
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'ClickEvent' }));
   });
 
   it('should not execute on rerender', () => {
@@ -59,7 +59,7 @@ describe('trackLinkClick', () => {
     rerender(<TestApp />);
 
     expect(renderSpy).toHaveBeenCalledTimes(3);
-    expect(spyTransport.handle).not.toHaveBeenCalled();
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'ClickEvent' }));
   });
 
   it('should execute on click', () => {
@@ -71,9 +71,11 @@ describe('trackLinkClick', () => {
     fireEvent.click(testButton);
     fireEvent.click(testButton);
 
-    expect(spyTransport.handle).toHaveBeenCalledTimes(3);
+    expect(spyTransport.handle).toHaveBeenCalledTimes(5);
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ event: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ event: 'SectionVisibleEvent' }));
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
-      1,
+      3,
       expect.objectContaining({
         event: 'ClickEvent',
         globalContexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
@@ -84,8 +86,8 @@ describe('trackLinkClick', () => {
         ]),
       })
     );
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ event: 'ClickEvent' }));
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(3, expect.objectContaining({ event: 'ClickEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(4, expect.objectContaining({ event: 'ClickEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(5, expect.objectContaining({ event: 'ClickEvent' }));
   });
 
   it('should allow overriding the tracker with a custom one', () => {
@@ -116,7 +118,7 @@ describe('trackLinkClick', () => {
 
     fireEvent.click(testButton);
 
-    expect(spyTransport.handle).not.toHaveBeenCalled();
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'ClickEvent' }));
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport2.handle).toHaveBeenCalledWith(
       expect.objectContaining({
