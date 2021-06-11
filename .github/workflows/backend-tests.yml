@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'backend/**'
+      # Also run if we update this file, or any other workflow
+      - '.github/**'
 
 jobs:
   typecheck-and-run-tests:
