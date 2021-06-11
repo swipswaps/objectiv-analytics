@@ -8,7 +8,7 @@ import { TrackerContextProvider, useTracker } from './TrackerContextProvider';
  * The resulting provider will return a tracker extended with whatever contexts are already present in ancestor
  * TrackerContextProviders. Unless a tracker instance is provided to override this default behavior.
  *
- * TODO add better docs
+ * TODO add better docs and some examples
  */
 export const TrackerSection = ({
   id,
@@ -19,7 +19,7 @@ export const TrackerSection = ({
   children: ReactNode;
   tracker?: Tracker;
 }) => {
-  const sectionATracker = new ReactTracker(tracker, { locationStack: [makeSectionContext({ id })] });
+  const sectionTracker = new ReactTracker(tracker, { locationStack: [makeSectionContext({ id })] });
 
-  return <TrackerContextProvider tracker={sectionATracker}>{children}</TrackerContextProvider>;
+  return <TrackerContextProvider tracker={sectionTracker}>{children}</TrackerContextProvider>;
 };
