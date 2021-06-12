@@ -15,6 +15,11 @@
  */
 
 /**
+ * All discriminating properties start with this prefix.
+ */
+type DiscriminatingPropertyPrefix = '__';
+
+/**
  * All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement.
  *
  * Extending interfaces should narrow `_context_type` type from string to a string literal matching the interface name.

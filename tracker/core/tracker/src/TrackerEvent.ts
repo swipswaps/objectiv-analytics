@@ -1,5 +1,12 @@
-import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
+import {
+  AbstractEvent,
+  AbstractGlobalContext,
+  AbstractLocationContext,
+  Contexts,
+  DiscriminatingPropertyPrefix,
+} from '@objectiv/schema';
 import { ContextsConfig } from './Context';
+import { getObjectKeys } from './helpers';
 
 /**
  * TrackerEvents are simply a combination of an `event` name and their Contexts.
@@ -48,48 +55,30 @@ export class TrackerEvent implements AbstractEvent, Contexts {
   }
 
   /**
-   * Serializes the TrackerEvent to a string. Cleans up the discriminatory property we use internally to differentiate
-   * between Contexts and Event types.
+   * Custom JSON serializer that cleans up the discriminatory properties we use internally to differentiate
+   * between Contexts and Event types. This ensures the Event we send to Collectors has only OSF properties.
    */
   toJSON() {
-    return cleanEventFromDiscriminatingProperties(this);
+    // All discriminating properties start with this prefix
+    const DISCRIMINATING_PROPERTY_PREFIX: DiscriminatingPropertyPrefix = '__';
+
+    // Clone the TrackerEvent to avoid mutating the original
+    const cleanedTrackerEvent: TrackerEvent = new TrackerEvent(this);
+
+    // Our cleaning function
+    const cleanObjectFromDiscriminatingProperties = <T extends object>(obj: T) => {
+      getObjectKeys(obj).forEach((propertyName) => {
+        if (propertyName.toString().startsWith(DISCRIMINATING_PROPERTY_PREFIX)) {
+          delete obj[propertyName];
+        }
+      });
+    };
+
+    // Remove all discriminating properties from the TrackerEvent itself, its LocationStack and its GlobalContexts
+    cleanObjectFromDiscriminatingProperties(cleanedTrackerEvent);
+    cleanedTrackerEvent.locationStack.map(cleanObjectFromDiscriminatingProperties);
+    cleanedTrackerEvent.globalContexts.map(cleanObjectFromDiscriminatingProperties);
+
+    return cleanedTrackerEvent;
   }
 }
-
-// TODO move this to module and test it
-const getObjectKeys = Object.keys as <T extends object>(obj: T) => Array<keyof T>;
-
-const cleanEventFromDiscriminatingProperties = (trackerEvent: TrackerEvent): TrackerEvent => {
-  // TODO move this to the schema
-  const discriminatingPropertyPrefix = '__';
-
-  // Clone the Event to avoid mutating the original
-  const cleanedTrackerEvent: TrackerEvent = new TrackerEvent(trackerEvent);
-
-  // Remove all discriminating properties from the TrackerEvent itself
-  getObjectKeys(cleanedTrackerEvent).forEach((propertyName) => {
-    if (propertyName.startsWith(discriminatingPropertyPrefix)) {
-      delete cleanedTrackerEvent[propertyName];
-    }
-  });
-
-  // Remove all discriminating properties from Location Contexts
-  cleanedTrackerEvent.locationStack.map((locationContext) =>
-    getObjectKeys(locationContext).forEach((propertyName) => {
-      if (propertyName.startsWith(discriminatingPropertyPrefix)) {
-        delete locationContext[propertyName];
-      }
-    })
-  );
-
-  // Remove all discriminating properties from Global Contexts
-  cleanedTrackerEvent.globalContexts.map((globalContext) =>
-    getObjectKeys(globalContext).forEach((propertyName) => {
-      if (propertyName.startsWith(discriminatingPropertyPrefix)) {
-        delete globalContext[propertyName];
-      }
-    })
-  );
-
-  return cleanedTrackerEvent;
-};
