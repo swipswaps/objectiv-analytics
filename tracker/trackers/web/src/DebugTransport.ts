@@ -6,7 +6,7 @@ import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
 export class DebugTransport implements TrackerTransport {
   readonly transportName = 'DebugTransport';
   handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
-    console.debug(args);
+    args.forEach(trackerEvent => console.debug(trackerEvent));
   }
 
   isUsable(): boolean {
