@@ -3,13 +3,13 @@ import { makeWebDocumentContext, Tracker } from '@objectiv/tracker-core';
 import { SpyTransport } from './mocks/SpyTransport';
 
 const EXPECTED_DECORATED_URL_CHANGED_EVENT = {
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'URLChangedEvent',
   globalContexts: [],
   locationStack: [
     {
-      _location_context: true,
-      _section_context: true,
+      __location_context: true,
+      __section_context: true,
       _context_type: 'WebDocumentContext',
       id: '#document',
       url: '/test',

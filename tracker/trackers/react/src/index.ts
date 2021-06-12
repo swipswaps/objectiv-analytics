@@ -1,6 +1,7 @@
 export * from '@objectiv/tracker-web';
 export * from './ReactTracker';
 export * from './TrackerContextProvider';
+export * from './TrackerItem';
 export * from './TrackerNavigation';
 export * from './TrackerOverlay';
 export * from './TrackerSection';

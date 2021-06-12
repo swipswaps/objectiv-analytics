@@ -11,7 +11,7 @@ export type TrackerEventConfig = Pick<AbstractEvent, 'event'> & ContextsConfig;
 /**
  * Our main TrackerEvent interface and basic implementation
  */
-export class TrackerEvent implements Contexts {
+export class TrackerEvent implements AbstractEvent, Contexts {
   // Event interface
   readonly event: string;
 
@@ -46,4 +46,50 @@ export class TrackerEvent implements Contexts {
     this.locationStack = [...newLocationStack, ...(otherEventProps.locationStack ?? [])];
     this.globalContexts = [...(otherEventProps.globalContexts ?? []), ...newGlobalContexts];
   }
+
+  /**
+   * Serializes the TrackerEvent to a string. Cleans up the discriminatory property we use internally to differentiate
+   * between Contexts and Event types.
+   */
+  toJSON() {
+    return cleanEventFromDiscriminatingProperties(this);
+  }
 }
+
+// TODO move this to module and test it
+const getObjectKeys = Object.keys as <T extends object>(obj: T) => Array<keyof T>;
+
+const cleanEventFromDiscriminatingProperties = (trackerEvent: TrackerEvent): TrackerEvent => {
+  // TODO move this to the schema
+  const discriminatingPropertyPrefix = '__';
+
+  // Clone the Event to avoid mutating the original
+  const cleanedTrackerEvent: TrackerEvent = new TrackerEvent(trackerEvent);
+
+  // Remove all discriminating properties from the TrackerEvent itself
+  getObjectKeys(cleanedTrackerEvent).forEach((propertyName) => {
+    if (propertyName.startsWith(discriminatingPropertyPrefix)) {
+      delete cleanedTrackerEvent[propertyName];
+    }
+  });
+
+  // Remove all discriminating properties from Location Contexts
+  cleanedTrackerEvent.locationStack.map((locationContext) =>
+    getObjectKeys(locationContext).forEach((propertyName) => {
+      if (propertyName.startsWith(discriminatingPropertyPrefix)) {
+        delete locationContext[propertyName];
+      }
+    })
+  );
+
+  // Remove all discriminating properties from Global Contexts
+  cleanedTrackerEvent.globalContexts.map((globalContext) =>
+    getObjectKeys(globalContext).forEach((propertyName) => {
+      if (propertyName.startsWith(discriminatingPropertyPrefix)) {
+        delete globalContext[propertyName];
+      }
+    })
+  );
+
+  return cleanedTrackerEvent;
+};

@@ -3,13 +3,13 @@ import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv
 import { SpyTransport } from './mocks/SpyTransport';
 
 const EXPECTED_URL_CHANGED_EVENT = {
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'URLChangedEvent',
   globalContexts: [],
   locationStack: [
     {
-      _location_context: true,
-      _section_context: true,
+      __location_context: true,
+      __section_context: true,
       _context_type: 'WebDocumentContext',
       id: '#document',
       url: 'http://localhost/',
@@ -33,8 +33,8 @@ describe('WebDocumentContextPlugin', () => {
     const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
     const eventContexts: ContextsConfig = {
       locationStack: [
-        { _location_context: true, _context_type: 'section', id: 'A' },
-        { _location_context: true, _context_type: 'section', id: 'B' },
+        { __location_context: true, _context_type: 'section', id: 'A' },
+        { __location_context: true, _context_type: 'section', id: 'B' },
       ],
     };
     const testEvent = new TrackerEvent({ event: 'test-event', ...eventContexts });
@@ -44,8 +44,8 @@ describe('WebDocumentContextPlugin', () => {
     expect(trackedEvent.locationStack).toEqual(
       expect.arrayContaining([
         {
-          _location_context: true,
-          _section_context: true,
+          __location_context: true,
+          __section_context: true,
           _context_type: 'WebDocumentContext',
           id: '#document',
           url: 'http://localhost/',

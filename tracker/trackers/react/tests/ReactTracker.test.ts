@@ -53,8 +53,8 @@ describe('ReactTracker', () => {
       expect(trackedEvent.locationStack).toEqual(
         expect.arrayContaining([
           {
-            _location_context: true,
-            _section_context: true,
+            __location_context: true,
+            __section_context: true,
             _context_type: 'WebDocumentContext',
             id: '#document',
             url: 'http://localhost/',
@@ -65,7 +65,7 @@ describe('ReactTracker', () => {
       expect(trackedEvent.globalContexts).toEqual(
         expect.arrayContaining([
           {
-            _global_context: true,
+            __global_context: true,
             _context_type: 'DeviceContext',
             id: 'device',
             userAgent: USER_AGENT_MOCK_VALUE,

@@ -1,4 +1,4 @@
-import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
+import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
 import { ContextsConfig } from './Context';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugin';
@@ -61,7 +61,7 @@ export class Tracker implements Contexts {
   /**
    * Merges Tracker Location and Global contexts, runs all Plugins and sends the Event via the TrackerTransport.
    */
-  trackEvent(event: TrackerEvent): TrackerEvent {
+  trackEvent(event: AbstractEvent): AbstractEvent {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
     const eventToTrack = new TrackerEvent(event, this);
 
@@ -69,8 +69,6 @@ export class Tracker implements Contexts {
     if (this.plugins) {
       this.plugins.beforeTransport(eventToTrack);
     }
-
-    // TODO Cleanup Event and Contexts from discriminatory properties before handing it over to Transport
 
     // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
     if (this.transport && this.transport.isUsable()) {

@@ -20,13 +20,13 @@ describe('WebDocumentLoadedEvent', () => {
     trackDocumentLoadedEvent(testTracker);
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      _interactive_event: false,
+      __interactive_event: false,
       event: 'DocumentLoadedEvent',
       globalContexts: [],
       locationStack: [
         {
-          _location_context: true,
-          _section_context: true,
+          __location_context: true,
+          __section_context: true,
           _context_type: 'WebDocumentContext',
           id: '#document',
           url: '/test',
@@ -67,13 +67,13 @@ describe('WebDocumentLoadedEvent', () => {
     );
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      _interactive_event: false,
+      __interactive_event: false,
       event: 'DocumentLoadedEvent',
       globalContexts: [],
       locationStack: [
         {
-          _location_context: true,
-          _section_context: true,
+          __location_context: true,
+          __section_context: true,
           _context_type: 'WebDocumentContext',
           id: '#document',
           url: '/test',

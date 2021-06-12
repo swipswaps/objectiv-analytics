@@ -9,6 +9,9 @@
  *
  * TypeScript does not support multiple inheritance, thus we use property based discrimination instead.
  * For more info: https://www.typescriptlang.org/docs/handbook/2/narrowing.html#discriminated-unions
+ *
+ * Discrimination properties should not be sent to Collectors. Trackers have custom serialization in place to
+ * strip them out. This is done by simply removing all properties which names starts with a double underscore.
  */
 
 /**
@@ -40,7 +43,7 @@ export abstract class AbstractGlobalContext extends AbstractContext {
   /**
    * Discrimination property
    */
-  readonly _global_context = true;
+  readonly __global_context = true;
 }
 
 /**
@@ -51,7 +54,7 @@ export abstract class AbstractLocationContext extends AbstractContext {
   /**
    * Discrimination property
    */
-  readonly _location_context = true;
+  readonly __location_context = true;
 }
 
 /**
@@ -62,7 +65,7 @@ export abstract class AbstractSectionContext extends AbstractLocationContext {
   /**
    * Discrimination property
    */
-  readonly _section_context = true;
+  readonly __section_context = true;
 }
 
 /**
@@ -73,7 +76,7 @@ export abstract class AbstractItemContext extends AbstractLocationContext {
   /**
    * Discrimination property
    */
-  readonly _item_context = true;
+  readonly __item_context = true;
 }
 
 /**
@@ -84,7 +87,7 @@ export abstract class AbstractActionContext extends AbstractItemContext {
   /**
    * Discrimination property
    */
-  readonly _action_context = true;
+  readonly __action_context = true;
 
   /**
    * A string representing where the action will lead to
@@ -136,7 +139,7 @@ export abstract class AbstractNonInteractiveEvent extends AbstractEvent {
   /**
    * Discrimination property
    */
-  readonly _interactive_event = false;
+  readonly __interactive_event = false;
 }
 
 /**
@@ -146,7 +149,7 @@ export abstract class AbstractInteractiveEvent extends AbstractEvent {
   /**
    * Discrimination property
    */
-  readonly _interactive_event = true;
+  readonly __interactive_event = true;
 }
 
 /**
@@ -156,5 +159,5 @@ export interface AbstractVideoEvent extends AbstractNonInteractiveEvent {
   /**
    * Discrimination property
    */
-  readonly _video_event: true;
+  readonly __video_event: true;
 }

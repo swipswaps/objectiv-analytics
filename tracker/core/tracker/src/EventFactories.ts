@@ -18,7 +18,7 @@ import { ContextsConfig } from './Context';
  * DocumentLoadedEvent factory
  */
 export const makeDocumentLoadedEvent = (props?: ContextsConfig): DocumentLoadedEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'DocumentLoadedEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -28,7 +28,7 @@ export const makeDocumentLoadedEvent = (props?: ContextsConfig): DocumentLoadedE
  * URLChangedEvent factory
  */
 export const makeURLChangedEvent = (props?: ContextsConfig): URLChangedEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'URLChangedEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -38,7 +38,7 @@ export const makeURLChangedEvent = (props?: ContextsConfig): URLChangedEvent => 
  * ApplicationLoadedEvent factory
  */
 export const makeApplicationLoadedEvent = (props?: ContextsConfig): ApplicationLoadedEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'ApplicationLoadedEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -48,7 +48,7 @@ export const makeApplicationLoadedEvent = (props?: ContextsConfig): ApplicationL
  * SectionVisibleEvent factory
  */
 export const makeSectionVisibleEvent = (props?: ContextsConfig): SectionVisibleEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'SectionVisibleEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -58,7 +58,7 @@ export const makeSectionVisibleEvent = (props?: ContextsConfig): SectionVisibleE
  * SectionHiddenEvent factory
  */
 export const makeSectionHiddenEvent = (props?: ContextsConfig): SectionHiddenEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'SectionHiddenEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -68,8 +68,8 @@ export const makeSectionHiddenEvent = (props?: ContextsConfig): SectionHiddenEve
  * VideoEvent factory
  */
 export const makeVideoEvent = (props?: ContextsConfig): VideoEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -79,8 +79,8 @@ export const makeVideoEvent = (props?: ContextsConfig): VideoEvent => ({
  * VideoLoadEvent factory
  */
 export const makeVideoLoadEvent = (props?: ContextsConfig): VideoLoadEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoLoadEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -90,8 +90,8 @@ export const makeVideoLoadEvent = (props?: ContextsConfig): VideoLoadEvent => ({
  * VideoStartEvent factory
  */
 export const makeVideoStartEvent = (props?: ContextsConfig): VideoStartEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoStartEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -101,8 +101,8 @@ export const makeVideoStartEvent = (props?: ContextsConfig): VideoStartEvent => 
  * VideoStopEvent factory
  */
 export const makeVideoStopEvent = (props?: ContextsConfig): VideoStopEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoStopEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -112,8 +112,8 @@ export const makeVideoStopEvent = (props?: ContextsConfig): VideoStopEvent => ({
  * VideoPauseEvent factory
  */
 export const makeVideoPauseEvent = (props?: ContextsConfig): VideoPauseEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoPauseEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -123,7 +123,7 @@ export const makeVideoPauseEvent = (props?: ContextsConfig): VideoPauseEvent => 
  * ClickEvent factory
  */
 export const makeClickEvent = (props?: ContextsConfig): ClickEvent => ({
-  _interactive_event: true,
+  __interactive_event: true,
   event: 'ClickEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],
@@ -133,7 +133,7 @@ export const makeClickEvent = (props?: ContextsConfig): ClickEvent => ({
  * ClickEvent factory
  */
 export const makeInputChangeEvent = (props?: ContextsConfig): InputChangeEvent => ({
-  _interactive_event: true,
+  __interactive_event: true,
   event: 'InputChangeEvent',
   globalContexts: props?.globalContexts ?? [],
   locationStack: props?.locationStack ?? [],

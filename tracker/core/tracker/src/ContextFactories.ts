@@ -22,8 +22,8 @@ import {
  * SectionContext Factory
  */
 export const makeSectionContext = (props: { id: string }): SectionContext => ({
-  _location_context: true,
-  _section_context: true,
+  __location_context: true,
+  __section_context: true,
   _context_type: 'SectionContext',
   id: props.id,
 });
@@ -32,8 +32,8 @@ export const makeSectionContext = (props: { id: string }): SectionContext => ({
  * WebDocumentContext Factory
  */
 export const makeWebDocumentContext = (props: { id: string; url: string }): WebDocumentContext => ({
-  _location_context: true,
-  _section_context: true,
+  __location_context: true,
+  __section_context: true,
   _context_type: 'WebDocumentContext',
   id: props.id,
   url: props.url,
@@ -43,8 +43,8 @@ export const makeWebDocumentContext = (props: { id: string; url: string }): WebD
  * ScreenContext Factory
  */
 export const makeScreenContext = (props: { id: string; screen: string }): ScreenContext => ({
-  _location_context: true,
-  _section_context: true,
+  __location_context: true,
+  __section_context: true,
   _context_type: 'ScreenContext',
   id: props.id,
   screen: props.screen,
@@ -54,8 +54,8 @@ export const makeScreenContext = (props: { id: string; screen: string }): Screen
  * ExpandableSectionContext Factory
  */
 export const makeExpandableSectionContext = (props: { id: string }): ExpandableSectionContext => ({
-  _location_context: true,
-  _section_context: true,
+  __location_context: true,
+  __section_context: true,
   _context_type: 'ExpandableSectionContext',
   id: props.id,
 });
@@ -64,8 +64,8 @@ export const makeExpandableSectionContext = (props: { id: string }): ExpandableS
  * MediaPlayerContext Factory
  */
 export const makeMediaPlayerContext = (props: { id: string }): MediaPlayerContext => ({
-  _location_context: true,
-  _section_context: true,
+  __location_context: true,
+  __section_context: true,
   _context_type: 'MediaPlayerContext',
   id: props.id,
 });
@@ -74,8 +74,8 @@ export const makeMediaPlayerContext = (props: { id: string }): MediaPlayerContex
  * NavigationContext Factory
  */
 export const makeNavigationContext = (props: { id: string }): NavigationContext => ({
-  _location_context: true,
-  _section_context: true,
+  __location_context: true,
+  __section_context: true,
   _context_type: 'NavigationContext',
   id: props.id,
 });
@@ -84,8 +84,8 @@ export const makeNavigationContext = (props: { id: string }): NavigationContext 
  * OverlayContext Factory
  */
 export const makeOverlayContext = (props: { id: string }): OverlayContext => ({
-  _location_context: true,
-  _section_context: true,
+  __location_context: true,
+  __section_context: true,
   _context_type: 'OverlayContext',
   id: props.id,
 });
@@ -94,8 +94,8 @@ export const makeOverlayContext = (props: { id: string }): OverlayContext => ({
  * ItemContext Factory
  */
 export const makeItemContext = (props: { id: string }): ItemContext => ({
-  _location_context: true,
-  _item_context: true,
+  __location_context: true,
+  __item_context: true,
   _context_type: 'ItemContext',
   id: props.id,
 });
@@ -104,8 +104,8 @@ export const makeItemContext = (props: { id: string }): ItemContext => ({
  * InputContext Factory
  */
 export const makeInputContext = (props: { id: string }): InputContext => ({
-  _location_context: true,
-  _item_context: true,
+  __location_context: true,
+  __item_context: true,
   _context_type: 'InputContext',
   id: props.id,
 });
@@ -114,9 +114,9 @@ export const makeInputContext = (props: { id: string }): InputContext => ({
  * ActionContext Factory
  */
 export const makeActionContext = (props: { id: string; path: string; text: string }): ActionContext => ({
-  _location_context: true,
-  _item_context: true,
-  _action_context: true,
+  __location_context: true,
+  __item_context: true,
+  __action_context: true,
   _context_type: 'ActionContext',
   id: props.id,
   path: props.path,
@@ -127,9 +127,9 @@ export const makeActionContext = (props: { id: string; path: string; text: strin
  * ButtonContext Factory
  */
 export const makeButtonContext = (props: { id: string; text: string }): ButtonContext => ({
-  _location_context: true,
-  _item_context: true,
-  _action_context: true,
+  __location_context: true,
+  __item_context: true,
+  __action_context: true,
   _context_type: 'ButtonContext',
   id: props.id,
   path: '', // TODO OSF does not support optional properties; default to empty string. See also AbstractActionContext
@@ -140,9 +140,9 @@ export const makeButtonContext = (props: { id: string; text: string }): ButtonCo
  * LinkContext Factory
  */
 export const makeLinkContext = (props: { id: string; href: string; text: string }): LinkContext => ({
-  _location_context: true,
-  _item_context: true,
-  _action_context: true,
+  __location_context: true,
+  __item_context: true,
+  __action_context: true,
   _context_type: 'LinkContext',
   id: props.id,
   path: props.href,
@@ -153,7 +153,7 @@ export const makeLinkContext = (props: { id: string; href: string; text: string 
  * DeviceContext Factory
  */
 export const makeDeviceContext = (props: { userAgent: string }): DeviceContext => ({
-  _global_context: true,
+  __global_context: true,
   _context_type: 'DeviceContext',
   id: 'device',
   userAgent: props.userAgent,
@@ -163,7 +163,7 @@ export const makeDeviceContext = (props: { userAgent: string }): DeviceContext =
  * ErrorContext Factory
  */
 export const makeErrorContext = (props: { id: string; message: string }): ErrorContext => ({
-  _global_context: true,
+  __global_context: true,
   _context_type: 'ErrorContext',
   id: props.id,
   message: props.message,
@@ -173,7 +173,7 @@ export const makeErrorContext = (props: { id: string; message: string }): ErrorC
  * CookieIdContext Factory
  */
 export const makeCookieIdContext = (props: { id: string; cookieId: string }): CookieIdContext => ({
-  _global_context: true,
+  __global_context: true,
   _context_type: 'CookieIdContext',
   id: props.id,
   cookie_id: props.cookieId,
@@ -183,7 +183,7 @@ export const makeCookieIdContext = (props: { id: string; cookieId: string }): Co
  * SessionContext Factory
  */
 export const makeSessionContext = (props: { id: string; hitNumber: number }): SessionContext => ({
-  _global_context: true,
+  __global_context: true,
   _context_type: 'SessionContext',
   id: props.id,
   hitNumber: props.hitNumber,
@@ -198,7 +198,7 @@ export const makeHttpContext = (props: {
   userAgent: string;
   remoteAddr: string;
 }): HttpContext => ({
-  _global_context: true,
+  __global_context: true,
   _context_type: 'HttpContext',
   id: props.id,
   host: props.host,

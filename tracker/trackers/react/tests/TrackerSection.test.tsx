@@ -9,8 +9,9 @@ import {
   TrackerSection,
   useTracker,
 } from '../src';
+import { TrackerItem } from '../src/TrackerItem';
 
-describe('TrackerSection, TrackerNavigation, TrackerOverlay', () => {
+describe('TrackerSection, TrackerNavigation, TrackerOverlay, TrackerItem', () => {
   beforeAll(() => {
     fetchMock.enableMocks();
   });
@@ -38,17 +39,21 @@ describe('TrackerSection, TrackerNavigation, TrackerOverlay', () => {
             </TrackerNavigation>
             <TrackerOverlay id="section3">
               <TrackingComponent id={'in-section3'} />
+              <TrackerItem id="section4">
+                <TrackingComponent id={'in-section4'} />
+              </TrackerItem>
             </TrackerOverlay>
           </TrackerSection>
         </div>
       </TrackerContextProvider>
     );
 
-    expect(spy).toHaveBeenCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(5);
     expect(spy).toHaveBeenNthCalledWith(1, 'in-root: root');
     expect(spy).toHaveBeenNthCalledWith(2, 'in-section1: root/section1');
     expect(spy).toHaveBeenNthCalledWith(3, 'in-section2: root/section1/section2');
     expect(spy).toHaveBeenNthCalledWith(4, 'in-section3: root/section1/section3');
+    expect(spy).toHaveBeenNthCalledWith(5, 'in-section4: root/section1/section3/section4');
   });
 
   it('should use the given tracker and ignore TrackerContextProviders', () => {
@@ -78,16 +83,20 @@ describe('TrackerSection, TrackerNavigation, TrackerOverlay', () => {
             </TrackerNavigation>
             <TrackerOverlay id="section3" tracker={customTracker}>
               <TrackingComponent id={'in-section3'} />
+              <TrackerItem id="section4" tracker={customTracker}>
+                <TrackingComponent id={'in-section4'} />
+              </TrackerItem>
             </TrackerOverlay>
           </TrackerSection>
         </div>
       </TrackerContextProvider>
     );
 
-    expect(spy).toHaveBeenCalledTimes(4);
+    expect(spy).toHaveBeenCalledTimes(5);
     expect(spy).toHaveBeenNthCalledWith(1, 'in-root: root');
     expect(spy).toHaveBeenNthCalledWith(2, 'in-section1: custom/section1');
     expect(spy).toHaveBeenNthCalledWith(3, 'in-section2: custom/section2');
     expect(spy).toHaveBeenNthCalledWith(4, 'in-section3: custom/section3');
+    expect(spy).toHaveBeenNthCalledWith(5, 'in-section4: custom/section4');
   });
 });
