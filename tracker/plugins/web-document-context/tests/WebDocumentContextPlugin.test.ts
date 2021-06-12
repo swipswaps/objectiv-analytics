@@ -1,21 +1,5 @@
 import { WebDocumentContextPlugin } from '../src';
 import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
-import { SpyTransport } from './mocks/SpyTransport';
-
-const EXPECTED_URL_CHANGED_EVENT = {
-  __interactive_event: false,
-  event: 'URLChangedEvent',
-  globalContexts: [],
-  locationStack: [
-    {
-      __location_context: true,
-      __section_context: true,
-      _context_type: 'WebDocumentContext',
-      id: '#document',
-      url: 'http://localhost/',
-    },
-  ],
-};
 
 describe('WebDocumentContextPlugin', () => {
   it('should instantiate without specifying an ID at construction', () => {
@@ -52,55 +36,5 @@ describe('WebDocumentContextPlugin', () => {
         },
       ])
     );
-  });
-
-  it('should automatically trigger URLChangedEvents in response to the History API', () => {
-    const spyTransport = new SpyTransport();
-    spyOn(spyTransport, 'handle');
-
-    new Tracker({ transport: spyTransport, plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
-
-    expect(window.history).toHaveLength(1);
-
-    /**
-     * NOTE: In all these tests the WebDocumentContext url attribute is fixed to 'http://localhost/'.
-     * It's a JSDOM bug: https://github.com/facebook/jest/issues/890
-     * We can assume that eventually it will be fixed and that our WebDocumentContext will be correctly reported.
-     */
-
-    window.history.pushState({ page: 1 }, 'title 1', '/page1?page=1');
-    expect(window.history).toHaveLength(2);
-    expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(EXPECTED_URL_CHANGED_EVENT);
-
-    window.history.pushState({ page: 2 }, 'title 2', '/page2?page=2');
-    expect(window.history).toHaveLength(3);
-    expect(spyTransport.handle).toHaveBeenCalledTimes(2);
-    expect(spyTransport.handle).toHaveBeenCalledWith(EXPECTED_URL_CHANGED_EVENT);
-
-    window.history.replaceState({ page: 3 }, 'title 3', '?page=3');
-    expect(window.history).toHaveLength(3);
-    expect(spyTransport.handle).toHaveBeenCalledTimes(3);
-    expect(spyTransport.handle).toHaveBeenCalledWith(EXPECTED_URL_CHANGED_EVENT);
-
-    window.history.replaceState({ page: 1 }, 'title1', '?page=1');
-    expect(window.history).toHaveLength(3);
-    expect(spyTransport.handle).toHaveBeenCalledTimes(4);
-    expect(spyTransport.handle).toHaveBeenCalledWith(EXPECTED_URL_CHANGED_EVENT);
-
-    window.history.go(1);
-    expect(window.history).toHaveLength(3);
-    expect(spyTransport.handle).toHaveBeenCalledTimes(5);
-    expect(spyTransport.handle).toHaveBeenCalledWith(EXPECTED_URL_CHANGED_EVENT);
-
-    window.history.back();
-    expect(window.history).toHaveLength(3);
-    expect(spyTransport.handle).toHaveBeenCalledTimes(6);
-    expect(spyTransport.handle).toHaveBeenCalledWith(EXPECTED_URL_CHANGED_EVENT);
-
-    window.history.forward();
-    expect(window.history).toHaveLength(3);
-    expect(spyTransport.handle).toHaveBeenCalledTimes(7);
-    expect(spyTransport.handle).toHaveBeenCalledWith(EXPECTED_URL_CHANGED_EVENT);
   });
 });

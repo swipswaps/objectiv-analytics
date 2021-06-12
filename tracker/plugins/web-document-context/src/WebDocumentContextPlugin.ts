@@ -1,5 +1,4 @@
-import { makeWebDocumentContext, Tracker, TrackerEvent, TrackerPlugin } from '@objectiv/tracker-core';
-import { trackURLChangedEvent } from './URLChangedEvent';
+import { makeWebDocumentContext, TrackerEvent, TrackerPlugin } from '@objectiv/tracker-core';
 
 /**
  * WebDocumentContextConfig allows to optionally specify a custom ID for the WebDocumentContext
@@ -22,13 +21,6 @@ export class WebDocumentContextPlugin implements TrackerPlugin {
    */
   constructor(config?: WebDocumentContextPluginConfig) {
     this.documentContextId = config?.documentContextId ?? document.nodeName;
-  }
-
-  /**
-   * Initializes the URLChangedEvent listener
-   */
-  initialize(tracker: Tracker): void {
-    trackURLChangedEvent(tracker);
   }
 
   /**

@@ -1,5 +1,5 @@
-import { defaultFetchFunction, FetchAPITransport, WebTracker } from '../src';
-import { QueuedTransport, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { defaultFetchFunction, FetchAPITransport, TransportGroup, WebTracker } from '../src';
+import { TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 
@@ -23,19 +23,19 @@ describe('WebTracker', () => {
   it('should instantiate with `endpoint`', () => {
     const testTracker = new WebTracker({ endpoint: 'localhost' });
     expect(testTracker).toBeInstanceOf(WebTracker);
-    expect(testTracker.transport).toBeInstanceOf(QueuedTransport);
+    expect(testTracker.transport).toBeInstanceOf(TransportGroup);
     expect(testTracker.transport).toEqual({
-      transportName: 'QueuedTransport',
-      queue: {
-        queueName: 'MemoryQueue',
-        batchDelayMs: 250,
-        batchSize: 10,
-        events: [],
-      },
-      transport: {
-        transportName: 'TransportGroup',
-        usableTransports: [
-          {
+      transportName: 'TransportGroup',
+      usableTransports: [
+        {
+          transportName: 'QueuedTransport',
+          queue: {
+            queueName: 'MemoryQueue',
+            batchDelayMs: 250,
+            batchSize: 10,
+            events: [],
+          },
+          transport: {
             transportName: 'TransportSwitch',
             firstUsableTransport: {
               transportName: 'FetchAPITransport',
@@ -43,11 +43,11 @@ describe('WebTracker', () => {
               fetchFunction: defaultFetchFunction,
             },
           },
-          {
-            transportName: 'DebugTransport',
-          },
-        ],
-      },
+        },
+        {
+          transportName: 'DebugTransport',
+        },
+      ],
     });
   });
 

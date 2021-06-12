@@ -11,6 +11,6 @@ describe('DebugTransport', () => {
     expect(testTransport.isUsable()).toBe(true);
     spyOn(console, 'debug');
     await testTransport.handle(testEvent);
-    expect(console.debug).toHaveBeenCalledWith([testEvent]);
+    expect(console.debug).toHaveBeenCalledWith(testEvent);
   });
 });

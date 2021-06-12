@@ -1994,10 +1994,6 @@ __metadata:
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
     "@types/jest": ^26.0.23
-    "@typescript-eslint/eslint-plugin": ^4.23.0
-    "@typescript-eslint/parser": ^4.23.0
-    eslint: ^7.26.0
-    eslint-config-prettier: ^8.3.0
     jest: ^26.6.3
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
@@ -2024,13 +2020,10 @@ __metadata:
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
     "@types/jest": ^26.0.23
-    "@typescript-eslint/eslint-plugin": ^4.23.0
-    "@typescript-eslint/parser": ^4.23.0
-    eslint: ^7.26.0
-    eslint-config-prettier: ^8.3.0
     jest: ^26.6.3
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
+    mutation-observer: ^1.0.3
     prettier: ^2.3.0
     rollup: ^2.48.0
     rollup-plugin-cleanup: ^3.2.1
@@ -2065,10 +2058,6 @@ __metadata:
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
     "@types/jest": ^26.0.23
-    "@typescript-eslint/eslint-plugin": ^4.23.0
-    "@typescript-eslint/parser": ^4.23.0
-    eslint: ^7.26.0
-    eslint-config-prettier: ^8.3.0
     jest: ^26.6.3
     jest-standard-reporter: ^2.0.0
     prettier: ^2.3.0
@@ -2131,10 +2120,6 @@ __metadata:
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
     "@types/jest": ^26.0.23
-    "@typescript-eslint/eslint-plugin": ^4.23.0
-    "@typescript-eslint/parser": ^4.23.0
-    eslint: ^7.26.0
-    eslint-config-prettier: ^8.3.0
     jest: ^26.6.3
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
@@ -6444,6 +6429,13 @@ __metadata:
   version: 2.1.3
   resolution: "ms@npm:2.1.3"
   checksum: 6e721e648a544154d5de4c114b32f573d8027ca8ec505cf6c1105e505986d6ac46934a1256735aa0eece8eb2f5b2a1230503b2dddd3b100f9f016fd8a4f15f33
+  languageName: node
+  linkType: hard
+
+"mutation-observer@npm:^1.0.3":
+  version: 1.0.3
+  resolution: "mutation-observer@npm:1.0.3"
+  checksum: 698ead43e7e76b8641177042e9beae6431019f891a2e87ff9d14eb8f191472feedb2921259c1a6658f6a958b2f27f057b812f15b1c2260dcbee88bbfd0257930
   languageName: node
   linkType: hard
 
