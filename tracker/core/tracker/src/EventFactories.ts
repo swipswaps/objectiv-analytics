@@ -29,7 +29,7 @@ export const makeDocumentLoadedEvent = (props?: ContextsConfig): DocumentLoadedE
  */
 export const makeURLChangedEvent = (props?: ContextsConfig): URLChangedEvent => ({
   __interactive_event: false,
-  event: 'URLChangedEvent',
+  event: 'URLChangeEvent',
   global_contexts: props?.global_contexts ?? [],
   location_stack: props?.location_stack ?? [],
 });

@@ -38,14 +38,14 @@ describe('Event Factories', () => {
   it('URLChangedEvent', () => {
     expect(makeURLChangedEvent()).toStrictEqual({
       __interactive_event: false,
-      event: 'URLChangedEvent',
+      event: 'URLChangeEvent',
       global_contexts: [],
       location_stack: [],
     });
 
     expect(makeURLChangedEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
       __interactive_event: false,
-      event: 'URLChangedEvent',
+      event: 'URLChangeEvent',
       global_contexts: [device],
       location_stack: [sectionA],
     });
