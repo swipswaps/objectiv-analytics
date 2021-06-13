@@ -143,7 +143,7 @@ describe('Context Factories', () => {
       __global_context: true,
       _context_type: 'DeviceContext',
       id: 'device',
-      userAgent: 'user agent string',
+      'user-agent': 'user agent string',
     });
   });
 
@@ -180,7 +180,7 @@ describe('Context Factories', () => {
       _context_type: 'HttpContext',
       id: 'http',
       host: 'host',
-      userAgent: 'ua',
+      'user-agent': 'ua',
       remoteAddr: '0.0.0.0',
     });
   });

@@ -34,17 +34,17 @@ describe('TrackerContextProvider', () => {
 
     it('should retrieve the tracker from the closes Context Provider', () => {
       const endpoint = '/collector';
-      const root = new ReactTracker({ endpoint, locationStack: [makeSectionContext({ id: 'root' })] });
-      const section1 = new ReactTracker(root, { locationStack: [makeSectionContext({ id: 'section1' })] });
-      const section2 = new ReactTracker(section1, { locationStack: [makeSectionContext({ id: 'section2' })] });
+      const root = new ReactTracker({ endpoint, location_stack: [makeSectionContext({ id: 'root' })] });
+      const section1 = new ReactTracker(root, { location_stack: [makeSectionContext({ id: 'section1' })] });
+      const section2 = new ReactTracker(section1, { location_stack: [makeSectionContext({ id: 'section2' })] });
 
       const spy = jest.fn();
 
       const TrackingComponent = ({ id }: { id: string }) => {
         const tracker = useTracker();
-        const locationStackAsPath = tracker.locationStack.map((locationContext) => locationContext.id).join('/');
-        spy(`${id}: ${locationStackAsPath}`);
-        return <div data-testid={id}>{locationStackAsPath}</div>;
+        const location_stackAsPath = tracker.location_stack.map((locationContext) => locationContext.id).join('/');
+        spy(`${id}: ${location_stackAsPath}`);
+        return <div data-testid={id}>{location_stackAsPath}</div>;
       };
 
       render(

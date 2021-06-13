@@ -156,7 +156,7 @@ export const makeDeviceContext = (props: { userAgent: string }): DeviceContext =
   __global_context: true,
   _context_type: 'DeviceContext',
   id: 'device',
-  userAgent: props.userAgent,
+  'user-agent': props.userAgent,
 });
 
 /**
@@ -202,6 +202,6 @@ export const makeHttpContext = (props: {
   _context_type: 'HttpContext',
   id: props.id,
   host: props.host,
-  userAgent: props.userAgent,
+  'user-agent': props.userAgent,
   remoteAddr: props.remoteAddr,
 });

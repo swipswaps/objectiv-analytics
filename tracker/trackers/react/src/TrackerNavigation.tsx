@@ -22,7 +22,7 @@ export const TrackerNavigation = ({
   children: ReactNode;
   tracker?: Tracker;
 }) => {
-  const navigationTracker = new ReactTracker(tracker, { locationStack: [makeNavigationContext({ id })] });
+  const navigationTracker = new ReactTracker(tracker, { location_stack: [makeNavigationContext({ id })] });
   useTrackVisibility(navigationTracker);
 
   return <TrackerContextProvider tracker={navigationTracker}>{children}</TrackerContextProvider>;

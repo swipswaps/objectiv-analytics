@@ -22,7 +22,7 @@ export const TrackerSection = ({
   children: ReactNode;
   tracker?: Tracker;
 }) => {
-  const sectionTracker = new ReactTracker(tracker, { locationStack: [makeSectionContext({ id })] });
+  const sectionTracker = new ReactTracker(tracker, { location_stack: [makeSectionContext({ id })] });
   useTrackVisibility(sectionTracker);
 
   return <TrackerContextProvider tracker={sectionTracker}>{children}</TrackerContextProvider>;

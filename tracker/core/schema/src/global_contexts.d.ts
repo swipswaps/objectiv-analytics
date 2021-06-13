@@ -3,7 +3,7 @@ import { AbstractGlobalContext } from './abstracts';
 export interface DeviceContext extends AbstractGlobalContext {
   readonly _context_type: 'DeviceContext';
   readonly id: 'device';
-  userAgent: string;
+  'user-agent': string;
 }
 
 export interface ErrorContext extends AbstractGlobalContext {
@@ -24,6 +24,6 @@ export interface SessionContext extends AbstractGlobalContext {
 export interface HttpContext extends AbstractGlobalContext {
   readonly _context_type: 'HttpContext';
   host: string;
-  userAgent: string;
+  'user-agent': string;
   remoteAddr: string;
 }

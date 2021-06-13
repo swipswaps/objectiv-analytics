@@ -23,16 +23,16 @@ export class TrackerEvent implements AbstractEvent, Contexts {
   readonly event: string;
 
   // Contexts interface
-  readonly locationStack: AbstractLocationContext[];
-  readonly globalContexts: AbstractGlobalContext[];
+  readonly location_stack: AbstractLocationContext[];
+  readonly global_contexts: AbstractGlobalContext[];
 
   /**
    * Configures the TrackerEvent instance via a TrackerEventConfig and optionally one or more ContextConfig.
    *
    * TrackerEventConfig is used mainly to configure the `event` property, although it can also carry Contexts.
    *
-   * ContextConfigs are used to configure LocationStack and GlobalContexts. If multiple configurations have been
-   * provided they will be merged onto each other to produce a single LocationStack and GlobalContexts.
+   * ContextConfigs are used to configure location_stack and global_contexts. If multiple configurations have been
+   * provided they will be merged onto each other to produce a single location_stack and global_contexts.
    */
   constructor({ event, ...otherEventProps }: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
     // Let's copy the entire eventConfiguration in state
@@ -40,18 +40,18 @@ export class TrackerEvent implements AbstractEvent, Contexts {
     Object.assign(this, otherEventProps);
 
     // Start with empty context lists
-    let newLocationStack: AbstractLocationContext[] = [];
-    let newGlobalContexts: AbstractGlobalContext[] = [];
+    let new_location_stack: AbstractLocationContext[] = [];
+    let new_global_contexts: AbstractGlobalContext[] = [];
 
     // Process ContextConfigs first. Same order as they have been passed
-    contextConfigs.forEach(({ locationStack, globalContexts }) => {
-      newLocationStack = [...newLocationStack, ...(locationStack ?? [])];
-      newGlobalContexts = [...newGlobalContexts, ...(globalContexts ?? [])];
+    contextConfigs.forEach(({ location_stack, global_contexts }) => {
+      new_location_stack = [...new_location_stack, ...(location_stack ?? [])];
+      new_global_contexts = [...new_global_contexts, ...(global_contexts ?? [])];
     });
 
     // And finally add the TrackerEvent Contexts on top. For Global Contexts instead we do the opposite.
-    this.locationStack = [...newLocationStack, ...(otherEventProps.locationStack ?? [])];
-    this.globalContexts = [...(otherEventProps.globalContexts ?? []), ...newGlobalContexts];
+    this.location_stack = [...new_location_stack, ...(otherEventProps.location_stack ?? [])];
+    this.global_contexts = [...(otherEventProps.global_contexts ?? []), ...new_global_contexts];
   }
 
   /**
@@ -74,10 +74,10 @@ export class TrackerEvent implements AbstractEvent, Contexts {
       });
     };
 
-    // Remove all discriminating properties from the TrackerEvent itself, its LocationStack and its GlobalContexts
+    // Remove all discriminating properties from the TrackerEvent itself, its location_stack and its global_contexts
     cleanObjectFromDiscriminatingProperties(cleanedTrackerEvent);
-    cleanedTrackerEvent.locationStack.map(cleanObjectFromDiscriminatingProperties);
-    cleanedTrackerEvent.globalContexts.map(cleanObjectFromDiscriminatingProperties);
+    cleanedTrackerEvent.location_stack.map(cleanObjectFromDiscriminatingProperties);
+    cleanedTrackerEvent.global_contexts.map(cleanObjectFromDiscriminatingProperties);
 
     return cleanedTrackerEvent;
   }

@@ -17,15 +17,15 @@ describe('TrackerSection, TrackerNavigation, TrackerOverlay, TrackerItem', () =>
   });
 
   it('should retrieve the tracker from the closest TrackerContextProviders', () => {
-    const root = new ReactTracker({ endpoint: '/collector', locationStack: [makeSectionContext({ id: 'root' })] });
+    const root = new ReactTracker({ endpoint: '/collector', location_stack: [makeSectionContext({ id: 'root' })] });
 
     const spy = jest.fn();
 
     const TrackingComponent = ({ id }: { id: string }) => {
       const tracker = useTracker();
-      const locationStackAsPath = tracker.locationStack.map((locationContext) => locationContext.id).join('/');
-      spy(`${id}: ${locationStackAsPath}`);
-      return <div data-testid={id}>{locationStackAsPath}</div>;
+      const location_stackAsPath = tracker.location_stack.map((locationContext) => locationContext.id).join('/');
+      spy(`${id}: ${location_stackAsPath}`);
+      return <div data-testid={id}>{location_stackAsPath}</div>;
     };
 
     render(
@@ -57,19 +57,19 @@ describe('TrackerSection, TrackerNavigation, TrackerOverlay, TrackerItem', () =>
   });
 
   it('should use the given tracker and ignore TrackerContextProviders', () => {
-    const root = new ReactTracker({ endpoint: '/collector', locationStack: [makeSectionContext({ id: 'root' })] });
+    const root = new ReactTracker({ endpoint: '/collector', location_stack: [makeSectionContext({ id: 'root' })] });
     const customTracker = new ReactTracker({
       endpoint: '/collector',
-      locationStack: [makeSectionContext({ id: 'custom' })],
+      location_stack: [makeSectionContext({ id: 'custom' })],
     });
 
     const spy = jest.fn();
 
     const TrackingComponent = ({ id }: { id: string }) => {
       const tracker = useTracker();
-      const locationStackAsPath = tracker.locationStack.map((locationContext) => locationContext.id).join('/');
-      spy(`${id}: ${locationStackAsPath}`);
-      return <div data-testid={id}>{locationStackAsPath}</div>;
+      const location_stackAsPath = tracker.location_stack.map((locationContext) => locationContext.id).join('/');
+      spy(`${id}: ${location_stackAsPath}`);
+      return <div data-testid={id}>{location_stackAsPath}</div>;
     };
 
     render(

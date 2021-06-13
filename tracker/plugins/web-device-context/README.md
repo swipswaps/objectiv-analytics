@@ -1,7 +1,7 @@
 # Objectiv WebDeviceContext Plugin
 Detects the user agent string for the current browser via the [Navigator API](https://developer.mozilla.org/en-US/docs/Web/API/NavigatorID/userAgent), during its instantiation, to factor a `WebDeviceContext`.  
 
-The Context is then attached to each `TrackerEvent`'s `GlobalContexts` during its `beforeTransport` phase.  
+The Context is then attached to each `TrackerEvent`'s `global_contexts` during its `beforeTransport` phase.  
 
 ### WebDeviceContext
 ```typescript

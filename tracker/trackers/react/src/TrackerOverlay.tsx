@@ -22,7 +22,7 @@ export const TrackerOverlay = ({
   children: ReactNode;
   tracker?: Tracker;
 }) => {
-  const overlayTracker = new ReactTracker(tracker, { locationStack: [makeOverlayContext({ id })] });
+  const overlayTracker = new ReactTracker(tracker, { location_stack: [makeOverlayContext({ id })] });
   useTrackVisibility(overlayTracker);
 
   return <TrackerContextProvider tracker={overlayTracker}>{children}</TrackerContextProvider>;

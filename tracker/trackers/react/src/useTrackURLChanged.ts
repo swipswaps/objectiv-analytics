@@ -1,7 +1,7 @@
 import { makeURLChangedEvent } from '@objectiv/tracker-core';
 import { ReactTracker } from './ReactTracker';
 import { useTracker } from './TrackerContextProvider';
-import { useTrackOnChange } from "./useTrackOnChange";
+import { useTrackOnChange } from './useTrackOnChange';
 
 /**
  * Triggers a URLChangedEvent whenever a different URL is detected via the Location API.

@@ -6,4 +6,4 @@ import { WebTracker } from './WebTracker';
  * Event handler to be used for Link-like elements.
  */
 export const trackLinkClick = (linkContext: LinkContext, tracker: WebTracker) =>
-  tracker.trackEvent(makeClickEvent({ locationStack: [linkContext] }));
+  tracker.trackEvent(makeClickEvent({ location_stack: [linkContext] }));

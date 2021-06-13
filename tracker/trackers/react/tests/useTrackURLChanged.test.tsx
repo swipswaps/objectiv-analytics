@@ -1,11 +1,11 @@
 import { render } from '@testing-library/react';
-import { renderHook } from "@testing-library/react-hooks";
+import { renderHook } from '@testing-library/react-hooks';
 //import { renderHook } from '@testing-library/react-hooks';
 import { useEffect } from 'react';
 import { ReactTracker, TrackerContextProvider } from '../src';
-import { useTrackURLChanged } from "../src/useTrackURLChanged";
+import { useTrackURLChanged } from '../src/useTrackURLChanged';
 
-const oldWindowLocation = window.location
+const oldWindowLocation = window.location;
 
 beforeAll(() => {
   window.location = Object.defineProperties(
@@ -15,14 +15,14 @@ beforeAll(() => {
       href: {
         configurable: true,
       },
-    },
-  )
-})
+    }
+  );
+});
 afterAll(() => {
   // restore `window.location` to the original `jsdom`
   // `Location` object
-  window.location = oldWindowLocation
-})
+  window.location = oldWindowLocation;
+});
 
 describe('useTrackURLChanged', () => {
   beforeEach(() => {

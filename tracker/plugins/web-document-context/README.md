@@ -1,5 +1,5 @@
 # Objectiv WebDocumentContext Plugin
-Detects the current URL via the document's [Location API](https://developer.mozilla.org/en-US/docs/Web/API/Location/href) and factors a `WebDocumentContext` that is attached to each `TrackerEvent`'s `GlobalContexts` during their `beforeTransport` phase.
+Detects the current URL via the document's [Location API](https://developer.mozilla.org/en-US/docs/Web/API/Location/href) and factors a `WebDocumentContext` that is attached to each `TrackerEvent`'s `global_contexts` during their `beforeTransport` phase.
 
 Listens to [History API](https://developer.mozilla.org/en-US/docs/Web/API/History_API) state changes and automatically triggers `URLChangedEvent`s.
 
@@ -26,7 +26,7 @@ Listens to [DOMContentLoaded](https://developer.mozilla.org/en-US/docs/Web/API/W
 ```typescript
 {
   event: 'URLChangedEvent';
-  locationStack: [
+  location_stack: [
     {
       _context_type: 'WebDocumentContext',
       id: string,
@@ -41,7 +41,7 @@ Listens to [DOMContentLoaded](https://developer.mozilla.org/en-US/docs/Web/API/W
 ```typescript
 {
   event: 'DocumentLoadedEvent';
-  locationStack: [
+  location_stack: [
     {
       _context_type: 'WebDocumentContext',
       id: string,

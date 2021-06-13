@@ -81,8 +81,8 @@ describe('useTrackLinkClick', () => {
       3,
       expect.objectContaining({
         event: 'ClickEvent',
-        globalContexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
-        locationStack: expect.arrayContaining([
+        global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
+        location_stack: expect.arrayContaining([
           expect.objectContaining({ _context_type: 'SectionContext' }),
           expect.objectContaining({ _context_type: 'NavigationContext' }),
           expect.objectContaining({ _context_type: 'LinkContext' }),
@@ -125,8 +125,8 @@ describe('useTrackLinkClick', () => {
     expect(spyTransport2.handle).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'ClickEvent',
-        globalContexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
-        locationStack: expect.arrayContaining([
+        global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
+        location_stack: expect.arrayContaining([
           expect.not.objectContaining({ _context_type: 'SectionContext' }),
           expect.objectContaining({ _context_type: 'LinkContext' }),
         ]),

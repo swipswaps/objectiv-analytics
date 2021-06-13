@@ -20,8 +20,8 @@ import { ContextsConfig } from './Context';
 export const makeDocumentLoadedEvent = (props?: ContextsConfig): DocumentLoadedEvent => ({
   __interactive_event: false,
   event: 'DocumentLoadedEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -30,8 +30,8 @@ export const makeDocumentLoadedEvent = (props?: ContextsConfig): DocumentLoadedE
 export const makeURLChangedEvent = (props?: ContextsConfig): URLChangedEvent => ({
   __interactive_event: false,
   event: 'URLChangedEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -40,8 +40,8 @@ export const makeURLChangedEvent = (props?: ContextsConfig): URLChangedEvent => 
 export const makeApplicationLoadedEvent = (props?: ContextsConfig): ApplicationLoadedEvent => ({
   __interactive_event: false,
   event: 'ApplicationLoadedEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -50,8 +50,8 @@ export const makeApplicationLoadedEvent = (props?: ContextsConfig): ApplicationL
 export const makeSectionVisibleEvent = (props?: ContextsConfig): SectionVisibleEvent => ({
   __interactive_event: false,
   event: 'SectionVisibleEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -60,8 +60,8 @@ export const makeSectionVisibleEvent = (props?: ContextsConfig): SectionVisibleE
 export const makeSectionHiddenEvent = (props?: ContextsConfig): SectionHiddenEvent => ({
   __interactive_event: false,
   event: 'SectionHiddenEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -71,8 +71,8 @@ export const makeVideoEvent = (props?: ContextsConfig): VideoEvent => ({
   __interactive_event: false,
   __video_event: true,
   event: 'VideoEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -82,8 +82,8 @@ export const makeVideoLoadEvent = (props?: ContextsConfig): VideoLoadEvent => ({
   __interactive_event: false,
   __video_event: true,
   event: 'VideoLoadEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -93,8 +93,8 @@ export const makeVideoStartEvent = (props?: ContextsConfig): VideoStartEvent => 
   __interactive_event: false,
   __video_event: true,
   event: 'VideoStartEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -104,8 +104,8 @@ export const makeVideoStopEvent = (props?: ContextsConfig): VideoStopEvent => ({
   __interactive_event: false,
   __video_event: true,
   event: 'VideoStopEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -115,8 +115,8 @@ export const makeVideoPauseEvent = (props?: ContextsConfig): VideoPauseEvent => 
   __interactive_event: false,
   __video_event: true,
   event: 'VideoPauseEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -125,8 +125,8 @@ export const makeVideoPauseEvent = (props?: ContextsConfig): VideoPauseEvent => 
 export const makeClickEvent = (props?: ContextsConfig): ClickEvent => ({
   __interactive_event: true,
   event: 'ClickEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
@@ -135,6 +135,6 @@ export const makeClickEvent = (props?: ContextsConfig): ClickEvent => ({
 export const makeInputChangeEvent = (props?: ContextsConfig): InputChangeEvent => ({
   __interactive_event: true,
   event: 'InputChangeEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });

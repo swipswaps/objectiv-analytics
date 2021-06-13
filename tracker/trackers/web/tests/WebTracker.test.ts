@@ -89,21 +89,19 @@ describe('WebTracker', () => {
       clear();
     });
 
-    it('should track WebDocument and WebDevice Contexts as GlobalContexts automatically by default', () => {
+    it('should track WebDocument and WebDevice Contexts as global_contexts automatically by default', () => {
       const testTracker = new WebTracker({ endpoint: 'localhost' });
       const testEvent = new TrackerEvent({ event: 'test-event' });
       expect(testTracker).toBeInstanceOf(WebTracker);
-      expect(testEvent.globalContexts).toHaveLength(0);
-      expect(testEvent.locationStack).toHaveLength(0);
+      expect(testEvent.global_contexts).toHaveLength(0);
+      expect(testEvent.location_stack).toHaveLength(0);
 
       const trackedEvent = testTracker.trackEvent(testEvent);
 
-      expect(trackedEvent.locationStack).toHaveLength(1);
-      expect(trackedEvent.locationStack).toEqual(
+      expect(trackedEvent.location_stack).toHaveLength(1);
+      expect(trackedEvent.location_stack).toEqual(
         expect.arrayContaining([
           {
-            __location_context: true,
-            __section_context: true,
             _context_type: 'WebDocumentContext',
             id: '#document',
             url: 'http://localhost/',
@@ -111,14 +109,13 @@ describe('WebTracker', () => {
         ])
       );
 
-      expect(trackedEvent.globalContexts).toHaveLength(1);
-      expect(trackedEvent.globalContexts).toEqual(
+      expect(trackedEvent.global_contexts).toHaveLength(1);
+      expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           {
-            __global_context: true,
             _context_type: 'DeviceContext',
             id: 'device',
-            userAgent: USER_AGENT_MOCK_VALUE,
+            'user-agent': USER_AGENT_MOCK_VALUE,
           },
         ])
       );

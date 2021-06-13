@@ -31,6 +31,6 @@ export class WebDocumentContextPlugin implements TrackerPlugin {
       id: this.documentContextId,
       url: document.location.href,
     });
-    event.locationStack.unshift(webDocumentContext);
+    event.location_stack.unshift(webDocumentContext);
   }
 }
