@@ -6,7 +6,8 @@ import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
 export class DebugTransport implements TrackerTransport {
   readonly transportName = 'DebugTransport';
   handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
-    console.debug(args);
+    // We stringify and re-parse the TrackerEvent for our custom serializer to clean up discriminatory properties
+    args.forEach((trackerEvent) => console.debug(JSON.parse(JSON.stringify(trackerEvent))));
   }
 
   isUsable(): boolean {

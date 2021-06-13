@@ -1,19 +1,20 @@
-import { makeSectionContext, Tracker } from '@objectiv/tracker-core';
+import { makeItemContext, Tracker } from '@objectiv/tracker-core';
 import { ReactNode } from 'react';
 import { ReactTracker } from './ReactTracker';
 import { TrackerContextProvider, useTracker } from './TrackerContextProvider';
 import { useTrackVisibility } from './useTrackVisibility';
 
 /**
- * Tracker Section wraps a logical section under a new TrackerContextProvider.
+ * Tracker Item is a SectionProvider meant to wrap around interactive elements that are not Buttons or Links. For
+ * example Cards, Media Items, Content Items and so on.
  * The resulting provider will return a tracker extended with whatever contexts are already present in ancestor
  * TrackerContextProviders. Unless a tracker instance is provided to override this default behavior.
  *
- * Tracker Section tracks its own visibility automatically.
+ * Tracker Item tracks its own visibility automatically.
  *
  * TODO add better docs and some examples
  */
-export const TrackerSection = ({
+export const TrackerItem = ({
   id,
   children,
   tracker = useTracker(),
@@ -22,8 +23,8 @@ export const TrackerSection = ({
   children: ReactNode;
   tracker?: Tracker;
 }) => {
-  const sectionTracker = new ReactTracker(tracker, { location_stack: [makeSectionContext({ id })] });
-  useTrackVisibility(sectionTracker);
+  const itemTracker = new ReactTracker(tracker, { location_stack: [makeItemContext({ id })] });
+  useTrackVisibility(itemTracker);
 
-  return <TrackerContextProvider tracker={sectionTracker}>{children}</TrackerContextProvider>;
+  return <TrackerContextProvider tracker={itemTracker}>{children}</TrackerContextProvider>;
 };

@@ -8,7 +8,7 @@ describe('WebDocumentLoadedEvent', () => {
     spyOn(spyTransport, 'handle');
 
     const testTracker = new Tracker({
-      locationStack: [
+      location_stack: [
         makeWebDocumentContext({
           id: '#document',
           url: '/test',
@@ -20,13 +20,13 @@ describe('WebDocumentLoadedEvent', () => {
     trackDocumentLoadedEvent(testTracker);
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      _interactive_event: false,
+      __interactive_event: false,
       event: 'DocumentLoadedEvent',
-      globalContexts: [],
-      locationStack: [
+      global_contexts: [],
+      location_stack: [
         {
-          _location_context: true,
-          _section_context: true,
+          __location_context: true,
+          __section_context: true,
           _context_type: 'WebDocumentContext',
           id: '#document',
           url: '/test',
@@ -40,7 +40,7 @@ describe('WebDocumentLoadedEvent', () => {
     spyOn(spyTransport, 'handle');
 
     const testTracker = new Tracker({
-      locationStack: [
+      location_stack: [
         makeWebDocumentContext({
           id: '#document',
           url: '/test',
@@ -67,13 +67,13 @@ describe('WebDocumentLoadedEvent', () => {
     );
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      _interactive_event: false,
+      __interactive_event: false,
       event: 'DocumentLoadedEvent',
-      globalContexts: [],
-      locationStack: [
+      global_contexts: [],
+      location_stack: [
         {
-          _location_context: true,
-          _section_context: true,
+          __location_context: true,
+          __section_context: true,
           _context_type: 'WebDocumentContext',
           id: '#document',
           url: '/test',

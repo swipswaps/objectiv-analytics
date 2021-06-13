@@ -21,6 +21,9 @@
     /* Enable emitting interoperability between CommonJS and ES Modules. Enables also 'allowSyntheticDefaultImports' */
     "esModuleInterop": true,
 
+    /* Generate .d.ts declaration files */
+    "declaration": true,
+
     /* Make sure module resolution works nicely while developing. Base url is necessary for the `paths` directive */
     "baseUrl": "./",
 

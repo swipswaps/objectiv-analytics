@@ -27,16 +27,16 @@ export type WebTrackerConfig = TrackerConfig & {
  * A factory to create the default Transport of Web Tracker. Requires an endpoint as its only parameter.
  */
 export const makeWebTrackerDefaultTransport = (config: { endpoint: string }): TrackerTransport =>
-  new QueuedTransport({
-    queue: new MemoryQueue(),
-    transport: new TransportGroup(
-      new TransportSwitch(
+  new TransportGroup(
+    new QueuedTransport({
+      queue: new MemoryQueue(),
+      transport: new TransportSwitch(
         new FetchAPITransport({ endpoint: config.endpoint }),
         new XMLHttpRequestTransport({ endpoint: config.endpoint })
       ),
-      new DebugTransport()
-    ),
-  });
+    }),
+    new DebugTransport()
+  );
 
 /**
  * The default list of Plugins of Web Tracker

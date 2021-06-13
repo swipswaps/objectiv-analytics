@@ -1,8 +1,8 @@
 import { makeButtonContext } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { onButtonClick, ReactTracker, TrackerContextProvider, TrackerNavigation, TrackerSection } from '../src';
+import { useTrackButtonClick, ReactTracker, TrackerContextProvider, TrackerNavigation, TrackerSection } from '../src';
 
-describe('onButtonClick', () => {
+describe('useTrackButtonClick', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -29,18 +29,16 @@ describe('onButtonClick', () => {
     );
   };
 
-  const Button = () => (
-    <button
-      data-testid="test-button"
-      onClick={onButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }))}
-      value={'Proceed'}
-    />
-  );
+  const Button = () => {
+    const buttonClickHandler = useTrackButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }));
+
+    return <button data-testid="test-button" onClick={buttonClickHandler} value={'Proceed'} />;
+  };
 
   it('should not execute on mount', () => {
     render(<TestApp />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalled();
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'ClickEvent' }));
   });
 
   it('should not execute on unmount', () => {
@@ -48,7 +46,7 @@ describe('onButtonClick', () => {
 
     unmount();
 
-    expect(spyTransport.handle).not.toHaveBeenCalled();
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'ClickEvent' }));
   });
 
   it('should not execute on rerender', () => {
@@ -58,7 +56,7 @@ describe('onButtonClick', () => {
     rerender(<TestApp />);
 
     expect(renderSpy).toHaveBeenCalledTimes(3);
-    expect(spyTransport.handle).not.toHaveBeenCalled();
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'ClickEvent' }));
   });
 
   it('should execute on click', () => {
@@ -70,21 +68,23 @@ describe('onButtonClick', () => {
     fireEvent.click(testButton);
     fireEvent.click(testButton);
 
-    expect(spyTransport.handle).toHaveBeenCalledTimes(3);
+    expect(spyTransport.handle).toHaveBeenCalledTimes(5);
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ event: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ event: 'SectionVisibleEvent' }));
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
-      1,
+      3,
       expect.objectContaining({
         event: 'ClickEvent',
-        globalContexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
-        locationStack: expect.arrayContaining([
+        global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
+        location_stack: expect.arrayContaining([
           expect.objectContaining({ _context_type: 'SectionContext' }),
           expect.objectContaining({ _context_type: 'NavigationContext' }),
           expect.objectContaining({ _context_type: 'ButtonContext' }),
         ]),
       })
     );
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ event: 'ClickEvent' }));
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(3, expect.objectContaining({ event: 'ClickEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(4, expect.objectContaining({ event: 'ClickEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(5, expect.objectContaining({ event: 'ClickEvent' }));
   });
 
   it('should allow overriding the tracker with a custom one', () => {
@@ -97,13 +97,12 @@ describe('onButtonClick', () => {
     );
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new ReactTracker({ transport: spyTransport2 });
-    const Button = () => (
-      <button
-        data-testid="test-button"
-        onClick={onButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }), anotherTracker)}
-        value={'Proceed'}
-      />
+    const buttonClickHandler = useTrackButtonClick(
+      makeButtonContext({ id: 'buttonA', text: 'confirm button' }),
+      anotherTracker
     );
+
+    const Button = () => <button data-testid="test-button" onClick={buttonClickHandler} value={'Proceed'} />;
 
     render(<TestApp />);
 
@@ -111,13 +110,13 @@ describe('onButtonClick', () => {
 
     fireEvent.click(testButton);
 
-    expect(spyTransport.handle).not.toHaveBeenCalled();
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ event: 'ClickEvent' }));
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport2.handle).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'ClickEvent',
-        globalContexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
-        locationStack: expect.arrayContaining([
+        global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
+        location_stack: expect.arrayContaining([
           expect.not.objectContaining({ _context_type: 'SectionContext' }),
           expect.objectContaining({ _context_type: 'ButtonContext' }),
         ]),

@@ -21,203 +21,203 @@ const device = makeDeviceContext({ userAgent: '123' });
 describe('Event Factories', () => {
   it('DocumentLoadedEvent', () => {
     expect(makeDocumentLoadedEvent()).toStrictEqual({
-      _interactive_event: false,
+      __interactive_event: false,
       event: 'DocumentLoadedEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeDocumentLoadedEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
+    expect(makeDocumentLoadedEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
       event: 'DocumentLoadedEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('URLChangedEvent', () => {
     expect(makeURLChangedEvent()).toStrictEqual({
-      _interactive_event: false,
+      __interactive_event: false,
       event: 'URLChangedEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeURLChangedEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
+    expect(makeURLChangedEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
       event: 'URLChangedEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('ApplicationLoadedEvent', () => {
     expect(makeApplicationLoadedEvent()).toStrictEqual({
-      _interactive_event: false,
+      __interactive_event: false,
       event: 'ApplicationLoadedEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeApplicationLoadedEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
+    expect(makeApplicationLoadedEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
       event: 'ApplicationLoadedEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('SectionVisibleEvent', () => {
     expect(makeSectionVisibleEvent()).toStrictEqual({
-      _interactive_event: false,
+      __interactive_event: false,
       event: 'SectionVisibleEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeSectionVisibleEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
+    expect(makeSectionVisibleEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
       event: 'SectionVisibleEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('SectionHiddenEvent', () => {
     expect(makeSectionHiddenEvent()).toStrictEqual({
-      _interactive_event: false,
+      __interactive_event: false,
       event: 'SectionHiddenEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeSectionHiddenEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
+    expect(makeSectionHiddenEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
       event: 'SectionHiddenEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('VideoEvent', () => {
     expect(makeVideoEvent()).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeVideoEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+    expect(makeVideoEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('VideoLoadEvent', () => {
     expect(makeVideoLoadEvent()).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoLoadEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeVideoLoadEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+    expect(makeVideoLoadEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoLoadEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('VideoStartEvent', () => {
     expect(makeVideoStartEvent()).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoStartEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeVideoStartEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+    expect(makeVideoStartEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoStartEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('VideoStopEvent', () => {
     expect(makeVideoStopEvent()).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoStopEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeVideoStopEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+    expect(makeVideoStopEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoStopEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('VideoPauseEvent', () => {
     expect(makeVideoPauseEvent()).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoPauseEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeVideoPauseEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: false,
-      _video_event: true,
+    expect(makeVideoPauseEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: false,
+      __video_event: true,
       event: 'VideoPauseEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('ClickEvent', () => {
     expect(makeClickEvent()).toStrictEqual({
-      _interactive_event: true,
+      __interactive_event: true,
       event: 'ClickEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeClickEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: true,
+    expect(makeClickEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: true,
       event: 'ClickEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 
   it('InputChangeEvent', () => {
     expect(makeInputChangeEvent()).toStrictEqual({
-      _interactive_event: true,
+      __interactive_event: true,
       event: 'InputChangeEvent',
-      globalContexts: [],
-      locationStack: [],
+      global_contexts: [],
+      location_stack: [],
     });
 
-    expect(makeInputChangeEvent({ locationStack: [sectionA], globalContexts: [device] })).toStrictEqual({
-      _interactive_event: true,
+    expect(makeInputChangeEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: true,
       event: 'InputChangeEvent',
-      globalContexts: [device],
-      locationStack: [sectionA],
+      global_contexts: [device],
+      location_stack: [sectionA],
     });
   });
 });

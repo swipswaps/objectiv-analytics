@@ -9,10 +9,11 @@
   "scripts": {
     "build": "yarn workspaces foreach --verbose run build",
     "prettier": "yarn workspaces foreach --verbose run prettier",
-    "lint": "yarn workspaces foreach --verbose run lint",
     "list": "yarn workspaces list",
     "test": "yarn workspaces foreach --verbose run test",
     "test:ci": "yarn workspaces foreach --verbose run test:ci",
-    "test:coverage": "yarn workspaces foreach --verbose run test:coverage"
+    "test:coverage": "yarn workspaces foreach --verbose run test:coverage",
+    "publish": "yarn workspaces foreach --verbose run publish",
+    "unpublish": "yarn workspaces foreach --verbose run unpublish"
   }
 }

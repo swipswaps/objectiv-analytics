@@ -18,123 +18,123 @@ import { ContextsConfig } from './Context';
  * DocumentLoadedEvent factory
  */
 export const makeDocumentLoadedEvent = (props?: ContextsConfig): DocumentLoadedEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'DocumentLoadedEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * URLChangedEvent factory
  */
 export const makeURLChangedEvent = (props?: ContextsConfig): URLChangedEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'URLChangedEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * ApplicationLoadedEvent factory
  */
 export const makeApplicationLoadedEvent = (props?: ContextsConfig): ApplicationLoadedEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'ApplicationLoadedEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * SectionVisibleEvent factory
  */
 export const makeSectionVisibleEvent = (props?: ContextsConfig): SectionVisibleEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'SectionVisibleEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * SectionHiddenEvent factory
  */
 export const makeSectionHiddenEvent = (props?: ContextsConfig): SectionHiddenEvent => ({
-  _interactive_event: false,
+  __interactive_event: false,
   event: 'SectionHiddenEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * VideoEvent factory
  */
 export const makeVideoEvent = (props?: ContextsConfig): VideoEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * VideoLoadEvent factory
  */
 export const makeVideoLoadEvent = (props?: ContextsConfig): VideoLoadEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoLoadEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * VideoStartEvent factory
  */
 export const makeVideoStartEvent = (props?: ContextsConfig): VideoStartEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoStartEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * VideoStopEvent factory
  */
 export const makeVideoStopEvent = (props?: ContextsConfig): VideoStopEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoStopEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * VideoPauseEvent factory
  */
 export const makeVideoPauseEvent = (props?: ContextsConfig): VideoPauseEvent => ({
-  _interactive_event: false,
-  _video_event: true,
+  __interactive_event: false,
+  __video_event: true,
   event: 'VideoPauseEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * ClickEvent factory
  */
 export const makeClickEvent = (props?: ContextsConfig): ClickEvent => ({
-  _interactive_event: true,
+  __interactive_event: true,
   event: 'ClickEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });
 
 /**
  * ClickEvent factory
  */
 export const makeInputChangeEvent = (props?: ContextsConfig): InputChangeEvent => ({
-  _interactive_event: true,
+  __interactive_event: true,
   event: 'InputChangeEvent',
-  globalContexts: props?.globalContexts ?? [],
-  locationStack: props?.locationStack ?? [],
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
 });

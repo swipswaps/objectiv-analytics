@@ -12,8 +12,8 @@ import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
 
 const testEventName = 'test-event';
 const testContexts: ContextsConfig = {
-  locationStack: [{ _location_context: true, _context_type: 'section', id: 'test' }],
-  globalContexts: [{ _global_context: true, _context_type: 'global', id: 'test' }],
+  location_stack: [{ __location_context: true, _context_type: 'section', id: 'test' }],
+  global_contexts: [{ __global_context: true, _context_type: 'global', id: 'test' }],
 };
 const testEvent = new TrackerEvent({ event: testEventName, ...testContexts });
 

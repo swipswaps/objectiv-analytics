@@ -45,30 +45,27 @@ describe('ReactTracker', () => {
       const testEvent = new TrackerEvent({ event: 'test-event' });
 
       expect(testTracker).toBeInstanceOf(ReactTracker);
-      expect(testEvent.globalContexts).toHaveLength(0);
+      expect(testEvent.global_contexts).toHaveLength(0);
 
       const trackedEvent = testTracker.trackEvent(testEvent);
 
-      expect(trackedEvent.locationStack).toHaveLength(1);
-      expect(trackedEvent.locationStack).toEqual(
+      expect(trackedEvent.location_stack).toHaveLength(1);
+      expect(trackedEvent.location_stack).toEqual(
         expect.arrayContaining([
           {
-            _location_context: true,
-            _section_context: true,
             _context_type: 'WebDocumentContext',
             id: '#document',
             url: 'http://localhost/',
           },
         ])
       );
-      expect(trackedEvent.globalContexts).toHaveLength(1);
-      expect(trackedEvent.globalContexts).toEqual(
+      expect(trackedEvent.global_contexts).toHaveLength(1);
+      expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           {
-            _global_context: true,
             _context_type: 'DeviceContext',
             id: 'device',
-            userAgent: USER_AGENT_MOCK_VALUE,
+            'user-agent': USER_AGENT_MOCK_VALUE,
           },
         ])
       );
