@@ -20,6 +20,6 @@ export class WebDeviceContextPlugin implements TrackerPlugin {
    * Add the the WebDeviceContext to the Event's Global Contexts
    */
   beforeTransport(event: TrackerEvent): void {
-    event.globalContexts.push(this.webDeviceContext);
+    event.global_contexts.push(this.webDeviceContext);
   }
 }

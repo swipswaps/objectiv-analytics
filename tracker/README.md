@@ -56,14 +56,48 @@ yarn workspace @objectiv/tracker-core test
 
 ## Dependency management
 
-This is how to add and remove dependencies:
 
+### Add / Remove dependencies
+This is how to add/update or remove dependencies for a specific package:
+
+#### Using `yarn workspace`
 ```bash
 yarn workspace @objectiv/tracker-core add <packageA>
 yarn workspace @objectiv/tracker-core add <packageB> --dev
 yarn workspace @objectiv/tracker-core remove <packageA> <packageB>
 ```
 
+#### Using `yarn add`
+From inside the directory of one of the packages:
+
+```bash
+yarn add <packageA>
+yarn add <packageB> --dev
+yarn install 
+```
+
+> Note: We do not recommend upgrading dependencies per package unless really needed for compatibility reasons.
+> 
+> It makes much more sense to manage common dependencies via `yarn up`.
+> 
+> This ensures that sub-packages will not need their own `node_modules` linker and instead rely entirely on the shared 
+> one, located in the root of the workspace.
+> 
+> Fewer dependencies results also in faster builds, and a reduced risk to run into incompatibilities between packages.
+
+### Upgrade dependencies
+
+#### For all packages:
+
+```bash
+yarn up <package>
+```
+
+#### For all packages, interactively:
+
+```bash
+yarn up <package> -i
+```
 
 
 ## Other useful commands

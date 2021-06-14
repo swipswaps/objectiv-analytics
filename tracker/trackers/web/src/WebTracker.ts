@@ -1,9 +1,11 @@
 import {
+  ContextsConfig,
   MemoryQueue,
   QueuedTransport,
   Tracker,
   TrackerConfig,
   TrackerPlugins,
+  TrackerTransport,
   TransportGroup,
   TransportSwitch,
 } from '@objectiv/tracker-core';
@@ -20,6 +22,26 @@ import { XMLHttpRequestTransport } from './XMLHttpRequestTransport';
 export type WebTrackerConfig = TrackerConfig & {
   endpoint?: string;
 };
+
+/**
+ * A factory to create the default Transport of Web Tracker. Requires an endpoint as its only parameter.
+ */
+export const makeWebTrackerDefaultTransport = (config: { endpoint: string }): TrackerTransport =>
+  new TransportGroup(
+    new QueuedTransport({
+      queue: new MemoryQueue(),
+      transport: new TransportSwitch(
+        new FetchAPITransport({ endpoint: config.endpoint }),
+        new XMLHttpRequestTransport({ endpoint: config.endpoint })
+      ),
+    }),
+    new DebugTransport()
+  );
+
+/**
+ * The default list of Plugins of Web Tracker
+ */
+export const defaultWebTrackerPluginsList = [WebDocumentContextPlugin, WebDeviceContextPlugin];
 
 /**
  * Web Tracker is a 1:1 instance of Tracker with a simplified construction and some preconfigured Plugins.
@@ -44,7 +66,7 @@ export type WebTrackerConfig = TrackerConfig & {
  *
  */
 export class WebTracker extends Tracker {
-  constructor(webConfig: WebTrackerConfig) {
+  constructor(webConfig: WebTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = webConfig;
 
     // Either `transport` or `endpoint` must be provided
@@ -57,20 +79,11 @@ export class WebTracker extends Tracker {
       throw new Error('Please provider either `transport` or `endpoint`, not both at same time');
     }
 
-    // Automatically create a Memory Queued Beacon and Fetch APIs Transport Switch for the given `endpoint`
+    // Automatically create a default Transport for the given `endpoint` with a sensible setup
     if (config.endpoint) {
       config = {
         ...config,
-        transport: new QueuedTransport({
-          queue: new MemoryQueue(),
-          transport: new TransportGroup(
-            new TransportSwitch(
-              new FetchAPITransport({ endpoint: config.endpoint }),
-              new XMLHttpRequestTransport({ endpoint: config.endpoint })
-            ),
-            new DebugTransport()
-          ),
-        }),
+        transport: makeWebTrackerDefaultTransport({ endpoint: config.endpoint }),
       };
     }
 
@@ -78,10 +91,10 @@ export class WebTracker extends Tracker {
     if (!config.plugins) {
       config = {
         ...config,
-        plugins: new TrackerPlugins([WebDocumentContextPlugin, WebDeviceContextPlugin]),
+        plugins: new TrackerPlugins(defaultWebTrackerPluginsList),
       };
     }
 
-    super(config);
+    super(config, ...contextConfigs);
   }
 }

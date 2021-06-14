@@ -8,7 +8,7 @@ export interface DocumentLoadedEvent extends AbstractNonInteractiveEvent {
 }
 
 export interface URLChangedEvent extends AbstractNonInteractiveEvent {
-  readonly event: 'URLChangedEvent';
+  readonly event: 'URLChangeEvent';
 }
 
 export interface ApplicationLoadedEvent extends AbstractNonInteractiveEvent {

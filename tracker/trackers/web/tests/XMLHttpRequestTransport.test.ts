@@ -1,4 +1,4 @@
-import { TrackerEvent } from '@objectiv/core';
+import { TrackerEvent } from '@objectiv/tracker-core';
 import xhrMock from 'xhr-mock';
 import { XMLHttpRequestTransport } from '../src';
 
@@ -14,7 +14,7 @@ describe('XMLHttpRequestTransport', () => {
   const MOCK_ENDPOINT = '/test-endpoint';
 
   const testEvent = new TrackerEvent({
-    eventName: 'test-event',
+    event: 'test-event',
   });
 
   it('should send using `xhr` with the default xhr function', async () => {
