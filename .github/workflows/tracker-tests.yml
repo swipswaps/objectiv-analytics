@@ -12,9 +12,9 @@ jobs:
   run-tracker-tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Change directory to the Tracker monorepo
-      - run: cd tracker
       - uses: actions/checkout@v2
+      - name: Change directory to the Tracker monorepo
+        run: cd tracker
       - name: Install monorepo dependencies
         run: yarn install
       - name: Run tests for all packages
