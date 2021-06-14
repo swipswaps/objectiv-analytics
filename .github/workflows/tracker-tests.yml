@@ -15,9 +15,9 @@ jobs:
       - uses: actions/checkout@v2
       - name: Install monorepo dependencies
         run: |
-          cd backend
+          cd tracker
           yarn install
       - name: Run tests for all packages
         run: |
-          cd backend
+          cd tracker
           yarn test:ci
