@@ -9,7 +9,7 @@ on:
       - '.github/**'
 
 jobs:
-  run-tests:
+  run-tracker-tests:
     runs-on: ubuntu-latest
     steps:
       - name: Change directory to the Tracker monorepo
