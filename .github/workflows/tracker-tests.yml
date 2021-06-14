@@ -1,0 +1,19 @@
+name: "Tracker tests"
+
+on:
+  push:
+    paths:
+      - 'backend/**'
+      - 'tracker/**'
+      # Also run if we update this file, or any other workflow
+      - '.github/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install dependencies
+        run: yarn install
+      - name: Run tests
+        run: yarn test:ci
