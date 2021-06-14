@@ -13,6 +13,6 @@
     "test": "yarn workspaces foreach --verbose run test",
     "test:ci": "yarn workspaces foreach --verbose run test:ci",
     "test:coverage": "yarn workspaces foreach --verbose run test:coverage",
-    "publish": "yarn workspaces foreach --verbose run publish"
+    "publish": "yarn workspaces foreach --verbose exec npm publish"
   }
 }

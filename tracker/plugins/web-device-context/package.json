@@ -13,8 +13,7 @@
     "prettier": "prettier --write .",
     "test": "jest --no-cache --silent --runInBand",
     "test:ci": "jest --no-cache --silent --ci --runInBand",
-    "test:coverage": "jest --no-cache --silent --coverage --runInBand",
-    "publish": "npm publish"
+    "test:coverage": "jest --no-cache --silent --coverage --runInBand"
   },
   "devDependencies": {
     "@objectiv/schema": "~0.0.1",

@@ -13,8 +13,7 @@
     "prettier": "prettier --write .",
     "test": "jest --no-cache --silent",
     "test:ci": "jest --no-cache --silent --ci --runInBand",
-    "test:coverage": "jest --no-cache --silent --coverage --runInBand",
-    "publish": "npm publish"
+    "test:coverage": "jest --no-cache --silent --coverage --runInBand"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^19.0.0",
