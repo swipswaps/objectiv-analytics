@@ -9,11 +9,13 @@ on:
       - '.github/**'
 
 jobs:
-  build:
+  run-tests:
     runs-on: ubuntu-latest
     steps:
+      - name: Change directory to the Tracker monorepo
+      - run: cd tracker
       - uses: actions/checkout@v2
-      - name: Install dependencies
+      - name: Install monorepo dependencies
         run: yarn install
-      - name: Run tests
+      - name: Run tests for all packages
         run: yarn test:ci
