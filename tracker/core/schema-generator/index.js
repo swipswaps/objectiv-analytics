@@ -2,10 +2,7 @@ const fs = require('fs');
 
 // contains object, describing the object, eg, stuff like:
 // class_name, properties, parent, abstract, type, interfaces
-const object_definitions = {
-    'events': {},
-    'contexts': {}
-};
+const object_definitions = {};
 
 // contains actual typescript declarations of object
 const object_declarations = {
@@ -159,7 +156,6 @@ for ( let event_type in events) {
     };
 }
 
-
 contexts = schema['contexts'];
 // first determine parents for non abstract contexts
 // so we know which are location contexts
@@ -291,7 +287,7 @@ for ( let definition_type in object_declarations ){
         }
     }
     // if we have more than 0 imports, make them unique (cast to set) and generate import statement
-    const import_statement = imports.length > 0 ? `import {${[... new Set(imports)].join(',')}} from './abstracts'`: null;
+    const import_statement = imports.length > 0 ? `import {${[... new Set(imports)].join(',')}} from './abstracts';`: null;
 
     // write imports and declarations to file
     fs.writeFileSync(filename, [...[import_statement], ...Object.values(object_declarations[definition_type])].join("\n"));
