@@ -41,11 +41,12 @@ function createDefinition(params = {
         p_list.push( `readonly ${property}: ${params.properties[property]};`);
     }
 
-    const tpl = `export ${params.abstract? 'abstract ': ''}${params.definition_type} ${params.class_name}` +
-        `${params.parent? ' extends ' + params.parent: ''}` +
-        `${params.interfacess? ' implements ' + params.interfaces.join(',') : ''} {
-        ${p_list.join('\n\t')}
-}`;
+    const tpl = `export ${params.abstract? 'abstract ': ''}${params.definition_type} ${params.class_name}`
+        + `${params.parent? ' extends ' + params.parent: ''}`
+        + `${params.interfaces? ' implements ' + params.interfaces.join(',') : ''}`
+        + `{\n`
+        + `\t${p_list.join('\n\t')}\n`
++`}`;
     return tpl;
 }
 
@@ -65,7 +66,7 @@ function createMissingAbstracts(params = {
         // if the abstract hasn't been created yet, let's do it now
         if (!object_definitions[class_name]) {
             // let's find the parent
-            let discriminator = camelToUnderscore(class_name);
+            let discriminator = camelToUnderscore(class_name.replace('Abstract', ''));
             let properties = [];
             properties['_' + discriminator] = true;
 
@@ -125,7 +126,7 @@ for ( let event_type in events) {
 
     // check if this is an abstract class
     if( event_type.match(/Abstract.*?/) ) {
-        const discriminator = camelToUnderscore(event_type);
+        const discriminator = camelToUnderscore(event_type.replace('Abstract', ''));
         properties['_' + discriminator] = true;
         abstract = true;
         definition_type = 'class';
@@ -152,7 +153,7 @@ for ( let event_type in events) {
         abstract: abstract,
         parent: parent,
         definition_type: definition_type,
-        interfaces: interfaces
+        // interfaces: interfaces
     };
 }
 
@@ -184,7 +185,7 @@ for ( let context_type in contexts ){
 
     // check if this is an abstract class
     if( context_type.match(/Abstract.*?/) ){
-        const discriminator = camelToUnderscore(context_type);
+        const discriminator = camelToUnderscore(context_type.replace('Abstract', ''));
         properties['_' + discriminator] = true;
         abstract = true;
         definition_type = 'class';
@@ -222,7 +223,7 @@ for ( let context_type in contexts ){
         abstract: abstract,
         parent: parent,
         definition_type: definition_type,
-        interfaces: interfaces,
+        // interfaces: interfaces,
         stack_type: stack_type
     };
 }
