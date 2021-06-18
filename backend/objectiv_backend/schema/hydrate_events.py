@@ -6,7 +6,6 @@ import json
 import sys
 from typing import Dict, Any, List
 
-from objectiv_backend.common.config import SCHEMA_BASE_PATH
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 from objectiv_backend.schema.validate_events import validate_event_list
 
@@ -43,7 +42,7 @@ def main(argv: List[str]):
     args = parser.parse_args(argv[1:])
 
     filenames = args.filenames
-    event_schema = get_event_schema(SCHEMA_BASE_PATH, schema_extensions_directory=args.schema_extensions_directory)
+    event_schema = get_event_schema(schema_extensions_directory=args.schema_extensions_directory)
 
     for filename in filenames:
         with open(filename) as file:

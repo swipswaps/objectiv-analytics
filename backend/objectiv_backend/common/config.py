@@ -152,7 +152,7 @@ def get_config_cookie() -> CookieConfig:
 
 
 def get_config_event_schema() -> EventSchema:
-    return get_event_schema(SCHEMA_BASE_PATH, SCHEMA_EXTENSION_DIRECTORY)
+    return get_event_schema(SCHEMA_EXTENSION_DIRECTORY)
 
 
 # creating these configuration structures is not heavy, but it's pointless to do it for each request.

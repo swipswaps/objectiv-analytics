@@ -381,7 +381,7 @@ class EventSchema:
         return self.contexts.get_context_schema(context_type=context_type)
 
 
-def get_event_schema(schema_base_path: str, schema_extensions_directory: Optional[str]) -> EventSchema:
+def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     """
     Get the event schema.
 
@@ -393,7 +393,8 @@ def get_event_schema(schema_base_path: str, schema_extensions_directory: Optiona
     :param schema_base_path: where to find the base schema
     :param schema_extensions_directory: optional directory path.
     """
-
+    from objectiv_backend.common.config import SCHEMA_BASE_PATH
+    schema_base_path = SCHEMA_BASE_PATH
     files_to_load = [schema_base_path]
 
     if schema_extensions_directory:
