@@ -1,4 +1,4 @@
-.PHONY: all clean python-package docker-image tests
+.PHONY: all clean python-package docker-image tests base_schema
 
 # Targets:
 # docker-image:   Build docker image that includes installed python package. Only dependency is docker
@@ -13,6 +13,10 @@ PYTHON_DIRECTORIES=$(shell find objectiv_backend -type d)
 OBJ_PACKAGE_VERSION = $(shell cat objectiv_backend/VERSION)
 PACKAGE_NAME = dist/objectiv_backend-$(OBJ_PACKAGE_VERSION)-py3-none-any.whl
 
+SCHEMA_SOURCE_DIR=../schema
+SCHEMA_TARGET_DIR=objectiv_backend/schema
+SCHEMA_BASE_FILE=base_schema.json
+
 # tag of the container image we'll build
 TAG ?= latest
 
@@ -23,13 +27,22 @@ docker-image:
 
 python-package: $(PACKAGE_NAME)
 
-$(PACKAGE_NAME): $(PYTHON_DIRECTORIES)
+# copy base schema into the scope of the python package
+# we always do this, to make sure, we're not using old stuff
+base_schema:
+	cp -f ${SCHEMA_SOURCE_DIR}/${SCHEMA_BASE_FILE} ${SCHEMA_TARGET_DIR}
+
+$(PACKAGE_NAME): base_schema $(PYTHON_DIRECTORIES)
 	python3 -m build --wheel
 
 clean:
 	rm dist/*
 	rm -r build
+	rm ${SCHEMA_TARGET_DIR}/${SCHEMA_BASE_FILE}
 
 tests:
 	mypy objectiv_backend
 	pytest tests
+
+run: base_schema
+	cd objectiv_backend && flask run

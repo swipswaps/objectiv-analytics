@@ -13,6 +13,11 @@ from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
 
+# this is where we expect the base schema to be .normally it lives outside of the scop of backend
+# (/schema/base_schema.json), so either tell backend where it is (local), or copy it here, at build time
+SCHEMA_BASE_PATH = os.environ.get('SCHEMA_BASE_PATH', os.path.join(
+    os.path.dirname(__file__), '..', 'schema', 'base_schema.json'))
+
 # Whether to run in sync mode (default) or async-mode.
 _ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
 
@@ -147,13 +152,12 @@ def get_config_cookie() -> CookieConfig:
 
 
 def get_config_event_schema() -> EventSchema:
-    return get_event_schema(SCHEMA_EXTENSION_DIRECTORY)
+    return get_event_schema(SCHEMA_BASE_PATH, SCHEMA_EXTENSION_DIRECTORY)
 
 
 # creating these configuration structures is not heavy, but it's pointless to do it for each request.
 # so we have some super simple caching here
 _CACHED_COLLECTOR_CONFIG: Optional[CollectorConfig] = None
-
 
 def init_collector_config():
     """ Load collector config into cache. """
