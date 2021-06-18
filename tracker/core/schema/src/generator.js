@@ -100,8 +100,34 @@ for (let fn of files) {
 }
 
 
-// TODO: properly combine all schema files into one
+// start with base schema
 const schema = all_schema['base_schema.json'];
+
+// now add extensions if any
+// TODO: allow to add properties to existing contexts
+for ( let extension_file in all_schema ) {
+    // this one we already have, so skip it
+    if ( extension_file == 'base_schema.json' ){
+        continue;
+    }
+    const extension = all_schema[extension_file];
+    console.log(`Loading extension ${extension['name']} from ${extension_file}`);
+
+    // events
+    for (let event_type in extension['events']){
+        if ( !(event_type in schema['events']) ){
+            // only add if it doesn't already exist
+            schema['events'][event_type] = extension['events'][event_type];
+        }
+    }
+    // contexts
+    for (let context_type in extension['contexts']){
+        if (! (context_type in schema['contexts']) ){
+            // only add if it doesn't already exist
+            schema['contexts'][context_type] = extension['contexts'][context_type];
+        }
+    }
+}
 
 // first do events
 events = schema['events'];
