@@ -10,6 +10,7 @@ from typing import Set, List, Dict, Any, Optional, Tuple
 
 from objectiv_backend.common.types import EventType, ContextType
 
+
 MAX_HIERARCHY_DEPTH = 100
 
 
@@ -384,15 +385,17 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     """
     Get the event schema.
 
-    The schema is based on base_schema.json and the schema files in the optional
+    The schema is based on schema/base_schema.json and the schema files in the optional
     schema_extension_directory.
     Files in the extension directory qualify for loading if their name matches [a-z0-9_]+\\.json.
     The files are loaded in alphabetical order.
 
+    :param schema_base_path: where to find the base schema
     :param schema_extensions_directory: optional directory path.
     """
-    base_schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'base_schema.json')
-    files_to_load = [base_schema_path]
+    from objectiv_backend.common.config import SCHEMA_BASE_PATH
+    schema_base_path = SCHEMA_BASE_PATH
+    files_to_load = [schema_base_path]
 
     if schema_extensions_directory:
         all_filenames = sorted(os.listdir(schema_extensions_directory))
