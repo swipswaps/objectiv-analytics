@@ -389,8 +389,7 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     schema_extension_directory.
     Files in the extension directory qualify for loading if their name matches [a-z0-9_]+\\.json.
     The files are loaded in alphabetical order.
-
-    :param schema_base_path: where to find the base schema
+    
     :param schema_extensions_directory: optional directory path.
     """
     from objectiv_backend.common.config import SCHEMA_BASE_PATH
