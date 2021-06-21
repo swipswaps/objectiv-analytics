@@ -181,7 +181,7 @@ describe('Context Factories', () => {
       id: 'http',
       host: 'host',
       'user-agent': 'ua',
-      remoteAddr: '0.0.0.0',
+      remote_addr: '0.0.0.0',
     });
   });
 });
