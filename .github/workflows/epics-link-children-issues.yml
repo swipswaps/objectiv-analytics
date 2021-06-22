@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
     - name: Update parent issues
-      uses: ivarpruijn/parent-issue-update@master
+      uses: ivarpruijn/github-actions/parent-issue-update@master
       with:
         TOKEN: ${{ secrets.ISSUES_TOKEN }}
         REPO: ${{ github.repository }}
