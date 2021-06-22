@@ -12,11 +12,13 @@
 
 const fs = require('fs');
 
-
 const DISCRIMINATING_PROPERTY_PREFIX = '_';
 
 // where to find the schema files, by default we look in the root of the repository
 const schema_dir = '../../../../schema/';
+
+// name of base schema, will be loaded first
+const base_schema_file = 'base_schema.json';
 
 // contains object, describing the object, eg, stuff like:
 // class_name, properties, parent, abstract, type, interfaces
@@ -54,7 +56,7 @@ function createDefinition(params = {
     definition_type: 'class',
     interfaces: false
 }){
-    let p_list = [];
+    const p_list = [];
     for (let property in params.properties ){
         let property_clean = property;
         if ( property.match(/-/) ){
@@ -102,8 +104,8 @@ function createMissingAbstracts(params = {
         // if the abstract hasn't been created yet, let's do it now
         if (!object_definitions[class_name]) {
 
-            let discriminator = camelToUnderscore(class_name.replace('Abstract', ''));
-            let properties = [];
+            const discriminator = camelToUnderscore(class_name.replace('Abstract', ''));
+            const properties = [];
             properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator] = [];
             properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator]['discriminator'] = true;
 
@@ -115,18 +117,16 @@ function createMissingAbstracts(params = {
              example:
              DocumentLoadedEvent -> NonInteractiveEvent -> AbstractEvent
 
-             in this case, the desired outcome is
-             DocumentLoadedEvent \
-                                  -> AbstractNonInteractiveEvent -> AbstractEvent
-             NonInteractiveEvent /
-
+             in this case, the outcome is
+             DocumentLoadedEvent -> AbstractNonInteractiveEvent \
+                                                                 -> AbstractEvent
+                                            NonInteractiveEvent /
              Which means we have to:
              - create the AbstractNoninteractiveEvent
              - change the hierarchy
 
              So we create a new parent for DocumentLoadedEvent (AbstractNoninteractiveEvent), and attach it
-             to the parent of NonInteractiveEvent (parent of the parent). And finally attach NonInteractiveEvent
-             below the newly created abstract class.
+             to the parent of NonInteractiveEvent (parent of the parent).
              */
             if ( !parent.match(/^Abstract/) && 'Abstract' + parent != class_name ){
                 parent = 'Abstract' + parent;
@@ -149,12 +149,23 @@ function createMissingAbstracts(params = {
 
         }
         // update params with new parent class
-        params.old_parent = params.parent;
         params.parent = class_name;
     }
     return params;
 }
 
+// parse json-schema like property definition
+// so we can use it to generate TS
+// returns the type of the property.
+function get_property_definition(params={}) {
+    switch ( params['type'] ) {
+        case 'array':
+            return `${params['items']}[]`;
+
+        default:
+            return params['type'];
+    }
+}
 
 const files = fs.readdirSync(schema_dir);
 
@@ -170,15 +181,12 @@ for (let fn of files) {
 }
 
 // start with base schema
-const schema = all_schema['base_schema.json'];
+const schema = all_schema[base_schema_file];
+delete all_schema[base_schema_file];
 
 // now add extensions if any
 // TODO: allow to add properties to existing contexts
 for ( let extension_file in all_schema ) {
-    // this one we already have, so skip it
-    if ( extension_file == 'base_schema.json' ){
-        continue;
-    }
     const extension = all_schema[extension_file];
     console.log(`Loading extension ${extension['name']} from ${extension_file}`);
 
@@ -198,16 +206,6 @@ for ( let extension_file in all_schema ) {
     }
 }
 
-function get_property_definition(params={}) {
-    switch ( params['type'] ) {
-        case 'array':
-            return `${params['items']}[]`;
-
-        default:
-            return params['type'];
-    }
-}
-
 // first do events
 const events = schema['events'];
 for ( let event_type in events ){
@@ -221,13 +219,12 @@ for ( let event_type in events ){
 
 for ( let event_type in events) {
 
-    let properties = [];
+    const event = events[event_type];
+    const properties = [];
     let abstract = false;
     let parent = undefined;
     let definition_type = undefined;
     let interfaces = false;
-
-    let event = events[event_type];
 
     // check if this is an abstract class
     if( event_type.match(/Abstract.*?/) ) {
@@ -290,7 +287,7 @@ for ( let context_type in contexts ){
 for ( let context_type in contexts ){
 
     const context = contexts[context_type];
-    let properties = [];
+    const properties = [];
     let abstract = false;
     let parent = false;
     let definition_type = undefined;
@@ -352,23 +349,30 @@ for ( let context_type in contexts ){
 // let's fix inheritance properly, objects (interfaces) extending non abstracts are not allowed
 // so we add an abstract class on top, that extends the parents' parent (until we find an abstract)
 for ( let object_type in object_definitions ) {
-    let object_definition = object_definitions[object_type];
+    const object_definition = object_definitions[object_type];
     object_definitions[object_type] = createMissingAbstracts(object_definition);
 }
 
-// a little bit of cleaning / housekeeping. If:
-// - an object is not abstract
-// - but there is an abstract version of it
-// - and it's not its parent
-// we fix that here.
+/* a little bit of cleaning / housekeeping. If:
+ - an object is not abstract
+ - but there is an abstract version of it
+ - and it's not its parent
+ we fix that here.
+
+ example:
+ in OSF:   ItemContext -> SectionContext -> AbstractLocationContext -> AbstractContext
+ In TS this is represented as:
+    ItemContext     \
+                        -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
+    SectionContext  /
+ Additionally, it moves the properties, as defined in SectionContext to AbstractSectionContext.
+*/
 for ( let object_type in object_definitions ) {
-    let object_definition = object_definitions[object_type];
-    let abstract_class_name = 'Abstract' + object_definition['class_name'];
+    const object_definition = object_definitions[object_type];
+    const abstract_class_name = 'Abstract' + object_definition['class_name'];
     if ( !object_definition.abstract
         && object_definitions[abstract_class_name]
         && object_definition['parent'] != abstract_class_name){
-
-        //console.log(`moving ${object_type} to ${abstract_class_name}`);
 
         // we move it
         object_definitions[object_type]['parent'] = abstract_class_name;
@@ -390,7 +394,7 @@ for ( let object_type in object_definitions ) {
 // now let's generate the object declarations
 // and put them in the correct location
 for ( let object_type in object_definitions ){
-    let object_definition = object_definitions[object_type];
+    const object_definition = object_definitions[object_type];
 
     let definition_type = 'events';
     if ( object_definition.abstract ) {
@@ -406,10 +410,11 @@ for ( let object_type in object_definitions ){
 for ( let definition_type in object_declarations ){
     const filename = `${definition_type}.d.ts`;
 
-    // list of classes to import
+    // list of (abstract) classes to import (as they represent the top of the hierarchy)
     let imports = [];
 
     // we only import abstract classes, so no need to do this when writing the abstract classes
+    // this is because they are defines in a separate file
     if ( definition_type != 'abstracts' ){
 
         // add import statement of abstracts in non- abstract files
@@ -430,9 +435,12 @@ for ( let definition_type in object_declarations ){
 }
 
 // generate index for all declarations
-export_file_list = [...Object.keys(object_declarations), ['static']];
-fs.writeFileSync('index.d.ts', export_file_list
+// this includes all generated types, as well as those in static.d.ts
+const export_file_list = [...Object.keys(object_declarations), ['static']];
+const index_filename = 'index.d.ts';
+fs.writeFileSync(index_filename, export_file_list
     .map( (element) => {
         return `export * from './${element}';`;
     }).join('\n')
 );
+console.log(`Written ${export_file_list.length} exports to ${index_filename}`);
