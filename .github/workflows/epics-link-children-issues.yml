@@ -16,7 +16,7 @@ jobs:
     steps:
     - uses: actions/checkout@main
     - name: Update parent issues
-      uses: objectiv/objectiv-github-actions/parent-issue-update@main
+      uses: parent-issue-update@main
       with:
         TOKEN: ${{ secrets.ISSUES_TOKEN }}
         REPO: objectiv/objectiv-github-actions
