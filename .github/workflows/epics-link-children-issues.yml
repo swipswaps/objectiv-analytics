@@ -5,13 +5,18 @@ on:
   issues:
     types: [opened, closed, reopened, edited, deleted]
 
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Test scenario tags'  
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@main
     - name: Update parent issues
-      uses: ribtoks/parent-issue-update@master
+      uses: objectiv/objectiv-github-actions/parent-issue-update@main
       with:
-        TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        TOKEN: ${{ secrets.ISSUES_TOKEN }}
         REPO: ${{ github.repository }}
