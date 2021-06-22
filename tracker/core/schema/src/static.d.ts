@@ -1,9 +1,9 @@
-import {AbstractGlobalContext, AbstractLocationContext} from "./bak";
+import {AbstractGlobalContext, AbstractLocationContext} from "./abstracts";
 
 /**
  * All discriminating properties start with this prefix.
  */
-type DiscriminatingPropertyPrefix = '__';
+export type DiscriminatingPropertyPrefix = '__';
 
 
 
