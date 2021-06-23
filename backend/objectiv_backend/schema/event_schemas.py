@@ -398,8 +398,10 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     # this should also work when running from a zipped package
     from objectiv_backend.common.config import LOAD_BASE_SCHEMA
     if LOAD_BASE_SCHEMA:
-        base_schema = json.loads(pkgutil.get_data(__name__, "base_schema.json"))
-        schema_jsons.append(base_schema)
+        data = pkgutil.get_data(__name__, "base_schema.json")
+        if data:
+            base_schema = json.loads(data)
+            schema_jsons.append(base_schema)
 
     files_to_load = []
     if schema_extensions_directory:
