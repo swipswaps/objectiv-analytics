@@ -7,6 +7,7 @@ import re
 import sys
 from copy import deepcopy
 from typing import Set, List, Dict, Any, Optional, Tuple
+import pkgutil
 
 from objectiv_backend.common.types import EventType, ContextType
 
@@ -392,10 +393,14 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     
     :param schema_extensions_directory: optional directory path.
     """
-    from objectiv_backend.common.config import SCHEMA_BASE_PATH
-    schema_base_path = SCHEMA_BASE_PATH
-    files_to_load = [schema_base_path]
 
+    schema_jsons = []
+    # load base schema from the current dir using pkgutil
+    # this should also work when running from a zipped package
+    base_schema = json.loads(pkgutil.get_data(__name__, "base_schema.json"))
+    schema_jsons.append(base_schema)
+
+    files_to_load = []
     if schema_extensions_directory:
         all_filenames = sorted(os.listdir(schema_extensions_directory))
         for filename in all_filenames:
@@ -404,7 +409,6 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
                 continue
             files_to_load.append(os.path.join(schema_extensions_directory, filename))
 
-    schema_jsons = []
     for filepath in files_to_load:
         with open(filepath, mode='r') as file:
             raw_data = file.read()
