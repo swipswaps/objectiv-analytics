@@ -11,6 +11,7 @@ from typing import NamedTuple, Optional
 # below (e.g. get_config_output())
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 
+LOAD_BASE_SCHEMA = os.environ.get('LOAD_BASE_SCHEMA', 'true') == 'true'
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
 
 # Whether to run in sync mode (default) or async-mode.
