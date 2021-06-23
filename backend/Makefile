@@ -18,7 +18,7 @@ TAG ?= latest
 
 all: docker-image python-package
 
-docker-image:
+docker-image: base_schema
 	docker build -t objectiv/backend:$(TAG) -f docker/Dockerfile .
 
 python-package: $(PACKAGE_NAME)
