@@ -11,6 +11,7 @@ from typing import NamedTuple, Optional
 # below (e.g. get_config_output())
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 
+LOAD_BASE_SCHEMA = os.environ.get('LOAD_BASE_SCHEMA', 'true') == 'true'
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
 
 # Whether to run in sync mode (default) or async-mode.
@@ -153,7 +154,6 @@ def get_config_event_schema() -> EventSchema:
 # creating these configuration structures is not heavy, but it's pointless to do it for each request.
 # so we have some super simple caching here
 _CACHED_COLLECTOR_CONFIG: Optional[CollectorConfig] = None
-
 
 def init_collector_config():
     """ Load collector config into cache. """

@@ -1,4 +1,4 @@
-.PHONY: all clean python-package docker-image tests
+.PHONY: all clean python-package docker-image tests base_schema
 
 # Targets:
 # docker-image:   Build docker image that includes installed python package. Only dependency is docker
@@ -18,17 +18,23 @@ TAG ?= latest
 
 all: docker-image python-package
 
-docker-image:
+docker-image: base_schema
 	docker build -t objectiv/backend:$(TAG) -f docker/Dockerfile .
 
 python-package: $(PACKAGE_NAME)
 
-$(PACKAGE_NAME): $(PYTHON_DIRECTORIES)
+# copy base schema into the scope of the python package
+# we always do this, to make sure, we're not using old stuff
+base_schema:
+	cp -f ../schema/base_schema.json objectiv_backend/schema/
+
+$(PACKAGE_NAME): base_schema $(PYTHON_DIRECTORIES)
 	python3 -m build --wheel
 
 clean:
 	rm dist/*
 	rm -r build
+	rm objectiv_backend/schema/base_schema.json
 
 tests:
 	mypy objectiv_backend
