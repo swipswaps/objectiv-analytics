@@ -41,7 +41,7 @@ build-ds-notebook:
 
 
 build-tracker:
-	cd tracker && yarn build
+	cd tracker && yarn install && yarn build
 
 publish-tracker: build-tracker
 	cd tracker/verdaccio && make run 

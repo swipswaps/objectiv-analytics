@@ -111,6 +111,9 @@ To have a little more control, you can also manually run the steps involved:
 ## start up verdaccio in Docker container
 cd verdaccio && make run
 
+## install requirements
+yarn install
+
 ## build tracker
 yarn build
 
