@@ -20,7 +20,7 @@ describe('WebDocumentLoadedEvent', () => {
     trackDocumentLoadedEvent(testTracker);
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      __interactive_event: false,
+      __non_interactive_event: true,
       event: 'DocumentLoadedEvent',
       global_contexts: [],
       location_stack: [
@@ -67,7 +67,7 @@ describe('WebDocumentLoadedEvent', () => {
     );
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
-      __interactive_event: false,
+      __non_interactive_event: true,
       event: 'DocumentLoadedEvent',
       global_contexts: [],
       location_stack: [

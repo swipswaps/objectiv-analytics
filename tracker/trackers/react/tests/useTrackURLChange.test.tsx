@@ -3,7 +3,7 @@ import { renderHook } from '@testing-library/react-hooks';
 //import { renderHook } from '@testing-library/react-hooks';
 import { useEffect } from 'react';
 import { ReactTracker, TrackerContextProvider } from '../src';
-import { useTrackURLChanged } from '../src/useTrackURLChanged';
+import { useTrackURLChange } from '../src/useTrackURLChange';
 
 const oldWindowLocation = window.location;
 
@@ -24,7 +24,7 @@ afterAll(() => {
   window.location = oldWindowLocation;
 });
 
-describe('useTrackURLChanged', () => {
+describe('useTrackURLChange', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -52,7 +52,7 @@ describe('useTrackURLChanged', () => {
   };
 
   const Application = () => {
-    useTrackURLChanged();
+    useTrackURLChange();
 
     useEffect(renderSpy);
 
@@ -72,7 +72,7 @@ describe('useTrackURLChanged', () => {
       isUsable: () => true,
     };
     const anotherTracker = new ReactTracker({ transport: spyTransport2 });
-    renderHook(() => useTrackURLChanged(anotherTracker));
+    renderHook(() => useTrackURLChange(anotherTracker));
 
     // TODO JSDOM doesn't support mocking location out of the box
   });
