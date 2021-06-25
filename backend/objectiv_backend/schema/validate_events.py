@@ -72,6 +72,7 @@ class EventError (Dict):
         self.event_id = event_id
         self.error_info = error_info
 
+        # we use a dictionary representation, to make sure we can serialize it with the JSON encoder
         dict.__init__(self, event_id=event_id.__str__(), error_info=[e.asdict() for e in error_info])
 
 
