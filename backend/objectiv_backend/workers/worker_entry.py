@@ -24,7 +24,7 @@ def main_entry(connection) -> int:
                                                          max_items=WORKER_BATCH_SIZE)
         print(f'event-ids: {sorted(event.id for event in events)}')
 
-        ok_events, nok_events, event_erros = process_events_entry(events)
+        ok_events, nok_events, event_errors = process_events_entry(events)
         # ok_events continue on the happy path
         # nok_events failed to validate and are written to the nok_data table
         pg_queues.put_events(queue=ProcessingStage.FINALIZE, events=ok_events)
