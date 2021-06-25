@@ -172,7 +172,7 @@ const files = fs.readdirSync(schema_dir);
 // read all schema files
 const all_schema = {};
 for (let fn of files) {
-    if (fn.match(/.*?\.json$/)) {
+    if (fn.match(/[a-z0-9_]+\.json$/)) {
         let data = fs.readFileSync(schema_dir + fn, 'utf-8');
         all_schema[fn] = JSON.parse(data);
     } else {
