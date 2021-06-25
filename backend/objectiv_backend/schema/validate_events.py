@@ -55,6 +55,7 @@ EVENT_LIST_SCHEMA = {
     }
 }
 
+
 class ErrorInfo(NamedTuple):
     data: Any
     info: str

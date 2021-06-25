@@ -21,7 +21,3 @@ class FailureReason(Enum):
     # values match the values of the failure_reason type in the database
     FAILED_VALIDATION = 'failed validation'
     DUPLICATE = 'duplicate'
-
-
-
-
