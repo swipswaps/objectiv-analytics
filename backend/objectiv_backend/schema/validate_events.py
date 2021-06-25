@@ -72,7 +72,7 @@ class EventError (Dict):
         self.event_id = event_id
         self.error_info = error_info
 
-        dict.__init__(self, event_id=event_id.hex, error_info=[e.asdict() for e in error_info])
+        dict.__init__(self, event_id=event_id.__str__(), error_info=[e.asdict() for e in error_info])
 
 
 def validate_structure_event_list(event_data: Any) -> List[ErrorInfo]:
