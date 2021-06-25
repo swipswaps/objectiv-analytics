@@ -14,6 +14,9 @@ from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 LOAD_BASE_SCHEMA = os.environ.get('LOAD_BASE_SCHEMA', 'true') == 'true'
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
 
+# when set to true, the collector will return detailed validation errors per event
+SCHEMA_VALIDATION_ERROR_REPORTING = os.environ.get('SCHEMA_VALIDATION_ERROR_REPORTING', 'false') == 'true'
+
 # Whether to run in sync mode (default) or async-mode.
 _ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
 

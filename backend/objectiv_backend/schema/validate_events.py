@@ -5,6 +5,7 @@ import argparse
 import json
 import sys
 from typing import List, Any, Dict, NamedTuple
+import uuid
 
 import jsonschema
 from jsonschema import ValidationError
@@ -54,10 +55,23 @@ EVENT_LIST_SCHEMA = {
     }
 }
 
-
 class ErrorInfo(NamedTuple):
     data: Any
     info: str
+
+    def asdict(self):
+        return self._asdict()
+
+
+class EventError (Dict):
+    event_id: uuid.UUID
+    error_info: ErrorInfo
+
+    def __init__(self, event_id: uuid.UUID, error_info: ErrorInfo):
+        self.event_id = event_id
+        self.error_info = error_info
+
+        dict.__init__(self, event_id=event_id.hex, error_info=[e.asdict() for e in error_info])
 
 
 def validate_structure_event_list(event_data: Any) -> List[ErrorInfo]:
