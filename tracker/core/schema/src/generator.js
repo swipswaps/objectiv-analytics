@@ -42,6 +42,13 @@ function getParents (class_name) {
     }
 }
 
+function getDefinition(class_name) {
+    if ( object_definitions[class_name] ){
+        return object_definitions[class_name];
+    }
+    return false;
+}
+
 function camelToUnderscore(key) {
    const result = key.replace( /([A-Z])/g, " $1" );
    return result.split(' ').join('_').toLowerCase();
@@ -77,6 +84,55 @@ function createDefinition(params = {
         + ` {\n`
         + `\t${p_list.join('\n\t')}\n`
 +`}`;
+    return tpl;
+}
+
+function createFactory(params = {
+    class_name: '',
+    properties: [],
+    abstract: false,
+    parent: false,
+    definition_type: 'class',
+    interfaces: false
+}) {
+    /*
+    export const makeOverlayContext = (props: { id: string }): OverlayContext => ({
+  __location_context: true,
+  __section_context: true,
+  _context_type: 'OverlayContext',
+  id: props.id,
+}); */
+
+    // first, compose / merge properties from all parents
+    const merged_properties = params.properties;
+    const parents = getParents(params.class_name);
+    for ( let p of parents ){
+        let parent_params = getDefinition(p);
+        for ( let prop in parent_params.properties ) {
+            if ( !merged_properties[prop] ){
+                merged_properties[prop] = parent_params.properties[prop];
+            }
+        }
+    }
+
+    const discriminators = [];
+    const properties = [];
+    const props = []
+    for ( let p in merged_properties ){
+        if ( merged_properties[p]['discriminator'] ){
+            discriminators.push(`${p}: true`);
+        }
+        else if ( merged_properties[p]['type'] ){
+            properties.push(`${p}: props.${p};`);
+            props.push(`${p}: ${merged_properties[p]['type']}`);
+        }
+    }
+    const tpl = `export const make${params.class_name} = ( props: { ${props.join(',')} }): ${params.class_name} => ({\n`
+        + `\t${discriminators.join(",\n\t")}\n`
+        + `\t_context_type: '${params.class_name}'\n`
+        + `\t${properties.join(",\n\t")}\n`
+        + `};`;
+    
     return tpl;
 }
 
@@ -150,6 +206,8 @@ function createMissingAbstracts(params = {
         }
         // update params with new parent class
         params.parent = class_name;
+        // update parent map
+        toParent[params.class_name] = class_name;
     }
     return params;
 }
@@ -376,6 +434,7 @@ for ( let object_type in object_definitions ) {
 
         // we move it
         object_definitions[object_type]['parent'] = abstract_class_name;
+        toParent[object_type] = abstract_class_name;
 
         // if it defines any properties, we move them to the parent
         for ( let property in object_definitions[object_type]['properties'] ){
@@ -399,10 +458,19 @@ for ( let object_type in object_definitions ){
     let definition_type = 'events';
     if ( object_definition.abstract ) {
         definition_type = 'abstracts';
-    } else if ( object_definition.object_type === 'context' ){
-        definition_type = object_definition.stack_type;
+    } else {
+        if ( object_definition.object_type === 'context' ) {
+            definition_type = object_definition.stack_type;
+        }
+
+        // write some factories
+        // we don't want factories for abstracts; dow!
+        let factory = createFactory(object_definitions[object_type]);
+        console.log(factory);
     }
     object_declarations[definition_type][object_type] = createDefinition(object_definitions[object_type]);
+
+
 }
 
 
