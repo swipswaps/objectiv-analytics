@@ -65,9 +65,9 @@ class ErrorInfo(NamedTuple):
 
 class EventError (Dict):
     event_id: uuid.UUID
-    error_info: ErrorInfo
+    error_info: List[ErrorInfo]
 
-    def __init__(self, event_id: uuid.UUID, error_info: ErrorInfo):
+    def __init__(self, event_id: uuid.UUID, error_info: List[ErrorInfo]):
         self.event_id = event_id
         self.error_info = error_info
 
