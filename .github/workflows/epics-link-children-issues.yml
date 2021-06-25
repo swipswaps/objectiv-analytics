@@ -8,9 +8,6 @@ on:
     inputs:
       tags:
         description: 'Test scenario tags'  
-
-  workflow_dispatch:
-
 jobs:
   build:
     runs-on: ubuntu-latest
