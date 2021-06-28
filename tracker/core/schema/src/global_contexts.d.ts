@@ -13,7 +13,7 @@ export interface CookieIdContext extends AbstractGlobalContext {
 }
 export interface SessionContext extends AbstractGlobalContext {
 	readonly _context_type: 'SessionContext';
-	hitNumber: number;
+	hit_number: number;
 }
 export interface HttpContext extends AbstractGlobalContext {
 	readonly _context_type: 'HttpContext';

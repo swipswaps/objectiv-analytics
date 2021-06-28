@@ -211,7 +211,7 @@
         "AbstractGlobalContext"
       ],
       "properties": {
-        "hitNumber": {
+        "hit_number": {
           "type": "integer"
         }
       }

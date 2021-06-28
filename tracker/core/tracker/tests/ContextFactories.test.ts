@@ -166,11 +166,11 @@ describe('Context Factories', () => {
   });
 
   it('SessionContext', () => {
-    expect(makeSessionContext({ id: 'session-id', hitNumber: 123 })).toStrictEqual({
+    expect(makeSessionContext({ id: 'session-id', hit_number: 123 })).toStrictEqual({
       __global_context: true,
       _context_type: 'SessionContext',
       id: 'session-id',
-      hitNumber: 123,
+      hit_number: 123,
     });
   });
 

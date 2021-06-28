@@ -119,11 +119,11 @@ export const makeSectionContext = ( props: { id: string }): SectionContext => ({
 	_context_type: 'SectionContext',
 	id: props.id,
 });
-export const makeSessionContext = ( props: { id: string; hitNumber: number }): SessionContext => ({
+export const makeSessionContext = ( props: { id: string; hit_number: number }): SessionContext => ({
 	__global_context: true,
 	_context_type: 'SessionContext',
 	id: props.id,
-	hitNumber: props.hitNumber,
+	hit_number: props.hit_number,
 });
 export const makeWebDocumentContext = ( props: { id: string; url: string }): WebDocumentContext => ({
 	__location_context: true,
