@@ -15,7 +15,7 @@ from objectiv_backend.common.types import EventWithId, EventData, ContextData
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
 from objectiv_backend.end_points.extra_output import events_to_json, write_data_to_fs_if_configured, \
     write_data_to_s3_if_configured
-from objectiv_backend.schema.validate_events import validate_structure_event_list
+from objectiv_backend.schema.validate_events import validate_structure_event_list, EventError
 from objectiv_backend.workers.pg_queues import PostgresQueues, ProcessingStage
 from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.worker_entry import process_events_entry
@@ -36,7 +36,8 @@ def collect() -> Response:
         events = _get_event_data(flask.request)
     except ValueError as exc:
         print(f'Data problem: {exc}')  # todo: real error logging
-        return _get_collector_response(error_count=1, event_count=-1)
+
+        return _get_collector_response(error_count=1, event_count=-1, data_error=exc.__str__())
 
     # Do all the enrichment steps that can only be done in this phase
     add_http_contexts(events)
@@ -50,10 +51,10 @@ def collect() -> Response:
     events_with_id = [EventWithId(id=uuid.uuid4(), event=event) for event in events]
 
     if not get_collector_config().async_mode:
-        ok_events, nok_events = process_events_entry(events=events_with_id)
+        ok_events, nok_events, event_errors = process_events_entry(events=events_with_id)
         print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
         write_sync_events(ok_events=ok_events, nok_events=nok_events)
-        return _get_collector_response(error_count=len(nok_events), event_count=len(events))
+        return _get_collector_response(error_count=len(nok_events), event_count=len(events), event_errors=event_errors)
     else:
         write_async_events(events=events_with_id)
         return _get_collector_response(error_count=0, event_count=len(events))
@@ -88,15 +89,26 @@ def _get_event_data(request: Request) -> List[EventData]:
     return events
 
 
-def _get_collector_response(error_count: int, event_count: int) -> Response:
+def _get_collector_response(
+        error_count: int, event_count: int, event_errors: List[EventError] = None, data_error: str = '') -> Response:
     """
     Create a Response object, with a json message with event counts, and a cookie set if needed.
     """
+
+    if not get_collector_config().error_reporting:
+        event_errors = []
+        data_error = ''
+    else:
+        if event_errors is None:
+            event_errors = []
+
     status = 200 if error_count == 0 else 400
     msg = json.dumps({
         "status": f"{status}",
         "error_count": error_count,
-        "event_count": event_count
+        "event_count": event_count,
+        "event_errors": event_errors,
+        "data_error": data_error
     })
     return get_json_response(status=status, msg=msg)
 
