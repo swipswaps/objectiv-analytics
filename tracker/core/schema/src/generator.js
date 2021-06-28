@@ -14,6 +14,10 @@ const fs = require('fs');
 
 const DISCRIMINATING_PROPERTY_PREFIX = '_';
 
+// TODO: naming of these should come from the schema
+const EVENT_DISCRIMINATOR = 'event';
+const CONTEXT_DISCRIMINATOR = '_context_type'
+
 // where to find the schema files, by default we look in the root of the repository
 const schema_dir = '../../../../schema/';
 
@@ -72,7 +76,7 @@ function createDefinition(params = {
     const p_list = [];
     for (let property in params.properties ){
         let property_clean = property;
-        if ( property.match(/-/) ){
+        if ( property.match(/DISCRIMINATING_PROPERTY_PREFIX/) ){
             property_clean = `'${property}'`;
         }
         if ( params.properties[property]['type'] ) {
@@ -93,6 +97,7 @@ function createDefinition(params = {
     return tpl;
 }
 
+// creates factory methods, based on the interfaces generated.
 function createFactory(params = {
     class_name: '',
     properties: [],
@@ -101,27 +106,12 @@ function createFactory(params = {
     definition_type: 'class',
     interfaces: false
 }) {
-    /*
-    export const makeOverlayContext = (props: { id: string }): OverlayContext => ({
-  __location_context: true,
-  __section_context: true,
-  _context_type: 'OverlayContext',
-  id: props.id,
-});
 
-export const makeDocumentLoadedEvent = (props?: ContextsConfig): DocumentLoadedEvent => ({
-  __non_interactive_event: true,
-  event: 'DocumentLoadedEvent',
-  global_contexts: props?.global_contexts ?? [],
-  location_stack: props?.location_stack ?? [],
-});
-
-*/
     const object_discriminator = {};
     if ( params.object_type == 'context' ){
-        object_discriminator['_context_type'] = {'value':  `'${params.class_name}'`};
+        object_discriminator[CONTEXT_DISCRIMINATOR] = {'value':  `'${params.class_name}'`};
     } else {
-        object_discriminator['event'] =  {'value': `'${params.class_name}'`};
+        object_discriminator[EVENT_DISCRIMINATOR] =  {'value': `'${params.class_name}'`};
     }
 
     // first, compose / merge properties from all parents
@@ -343,8 +333,8 @@ for ( let event_type in events) {
         abstract = true;
         definition_type = 'class';
     } else {
-        properties['event'] = [];
-        properties['event']['value'] = `'${event_type}'`;
+        properties[EVENT_DISCRIMINATOR] = [];
+        properties[EVENT_DISCRIMINATOR]['value'] = `'${event_type}'`;
         definition_type = 'interface';
     }
 
@@ -423,8 +413,8 @@ for ( let context_type in contexts ){
         }
 
         // literal discriminator for non-abstract class
-        properties['_context_type'] = [];
-        properties['_context_type']['value'] = `'${context_type}'`;
+        properties[CONTEXT_DISCRIMINATOR] = [];
+        properties[CONTEXT_DISCRIMINATOR]['value'] = `'${context_type}'`;
         definition_type = 'interface';
     }
 
