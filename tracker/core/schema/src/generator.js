@@ -114,6 +114,8 @@ function createFactory(params = {
         object_discriminator[EVENT_DISCRIMINATOR] =  {'value': `'${params.class_name}'`};
     }
 
+
+    // we resolve all the properties, based on the ancestry of this class
     // first, compose / merge properties from all parents
     const merged_properties_temp = [object_discriminator];
 
@@ -126,6 +128,8 @@ function createFactory(params = {
     // finally add this objects properties
     merged_properties_temp.push(params.properties);
 
+    // now we merge all of the defined properties, hierarchically (from parent to child)
+    // taking care not to overwrite existing ones
     const merged_properties = [];
     for ( let mpt in merged_properties_temp ){
         for ( let property in merged_properties_temp[mpt] ){
@@ -141,24 +145,24 @@ function createFactory(params = {
 
     // factories for the events have some optional parameters
     const optional = params.object_type == 'event' ? '?' : '';
-    for ( let p in merged_properties ){
-        if ( merged_properties[p]['discriminator'] ){
-            discriminators.push(`${p}: true`);
+    for ( let mp in merged_properties ){
+        if ( merged_properties[mp]['discriminator'] ){
+            discriminators.push(`${mp}: true`);
         }
-        else if ( merged_properties[p]['type'] ){
+        else if ( merged_properties[mp]['type'] ){
 
             if ( optional == '?' ) {
                 // because the global_contexts and location_stack arrays are optional
                 // we provide an empty array as default here
-                properties.push(`${p}: props?.${p} ?? []`);
-                props.push(`${p}?: ${merged_properties[p]['type']}`);
+                properties.push(`${mp}: props?.${mp} ?? []`);
+                props.push(`${mp}?: ${merged_properties[mp]['type']}`);
             } else {
-                properties.push(`${p}: props.${p}`);
-                props.push(`${p}: ${merged_properties[p]['type']}`);
+                properties.push(`${mp}: props.${mp}`);
+                props.push(`${mp}: ${merged_properties[mp]['type']}`);
             }
 
-        } else if ( merged_properties[p]['value'] ){
-            properties.push(`${p}: ${merged_properties[p]['value']}`);
+        } else if ( merged_properties[mp]['value'] ){
+            properties.push(`${mp}: ${merged_properties[mp]['value']}`);
         }
     }
     const tpl = `export const make${params.class_name} = ( props${optional}: { ${props.join('; ')} }): ${params.class_name} => ({\n`
