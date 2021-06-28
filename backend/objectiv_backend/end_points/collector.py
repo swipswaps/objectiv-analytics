@@ -8,7 +8,7 @@ import uuid
 
 from flask import Response, Request
 
-from objectiv_backend.common.config import get_collector_config, SCHEMA_VALIDATION_ERROR_REPORTING
+from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import event_add_construct_context, add_global_context_to_event
 from objectiv_backend.common.types import EventWithId, EventData, ContextData
@@ -90,14 +90,17 @@ def _get_event_data(request: Request) -> List[EventData]:
 
 
 def _get_collector_response(
-        error_count: int, event_count: int, event_errors: List[EventError] = [], data_error: str = '') -> Response:
+        error_count: int, event_count: int, event_errors: List[EventError] = None, data_error: str = '') -> Response:
     """
     Create a Response object, with a json message with event counts, and a cookie set if needed.
     """
 
-    if not SCHEMA_VALIDATION_ERROR_REPORTING:
+    if not get_collector_config().error_reporting:
         event_errors = []
         data_error = ''
+    else:
+        if event_errors is None:
+            event_errors = []
 
     status = 200 if error_count == 0 else 400
     msg = json.dumps({

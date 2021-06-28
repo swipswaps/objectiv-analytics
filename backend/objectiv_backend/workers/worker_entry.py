@@ -39,9 +39,10 @@ def process_events_entry(events: List[EventWithId]) -> Tuple[List[EventWithId], 
     2) Split event list on events that pass validation and those that don't
 
     :param events: List of events. validate_structure_event_list() must pass on this list.
-    :return: tuple with two lists. Both lists have the hydrated types.
+    :return: tuple with three lists. Both event lists have the hydrated types.
         1) ok events: events that passed validation
         2) not-ok events: events that didn't pass validation
+        3) list of errors per event
     """
     ok_events = []
     nok_events = []

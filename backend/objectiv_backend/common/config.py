@@ -87,6 +87,7 @@ class CookieConfig(NamedTuple):
 class CollectorConfig(NamedTuple):
     async_mode: bool
     cookie: Optional[CookieConfig]
+    error_reporting: bool
     output: OutputConfig
     schema: EventSchema
 
@@ -164,6 +165,7 @@ def init_collector_config():
     _CACHED_COLLECTOR_CONFIG = CollectorConfig(
         async_mode=_ASYNC_MODE,
         cookie=get_config_cookie(),
+        error_reporting=SCHEMA_VALIDATION_ERROR_REPORTING,
         output=get_config_output(),
         schema=get_config_event_schema()
     )
