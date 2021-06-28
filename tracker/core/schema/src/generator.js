@@ -30,10 +30,16 @@ const object_declarations = {
     'events': {},
     'global_contexts': {},
     'location_contexts': {}
-}
+};
+
+// contains factories to create instances of events / contexts
+const object_factories = {
+    'EventFactories': {},
+    'ContextFactories': {}
+};
 
 // list to cache list of abstract parents of interfaces
-const toParent = {}
+const toParent = {};
 function getParents (class_name) {
     if ( toParent[class_name] ){
         return [...getParents(toParent[class_name]), ...[toParent[class_name]]];
@@ -101,37 +107,74 @@ function createFactory(params = {
   __section_context: true,
   _context_type: 'OverlayContext',
   id: props.id,
-}); */
+});
+
+export const makeDocumentLoadedEvent = (props?: ContextsConfig): DocumentLoadedEvent => ({
+  __non_interactive_event: true,
+  event: 'DocumentLoadedEvent',
+  global_contexts: props?.global_contexts ?? [],
+  location_stack: props?.location_stack ?? [],
+});
+
+*/
+    const object_discriminator = {};
+    if ( params.object_type == 'context' ){
+        object_discriminator['_context_type'] = {'value':  `'${params.class_name}'`};
+    } else {
+        object_discriminator['event'] =  {'value': `'${params.class_name}'`};
+    }
 
     // first, compose / merge properties from all parents
-    const merged_properties = params.properties;
+    const merged_properties_temp = [object_discriminator];
+
+    // add properties in order of hierarchy
     const parents = getParents(params.class_name);
     for ( let p of parents ){
         let parent_params = getDefinition(p);
-        for ( let prop in parent_params.properties ) {
-            if ( !merged_properties[prop] ){
-                merged_properties[prop] = parent_params.properties[prop];
+        merged_properties_temp.push(parent_params.properties);
+    }
+    // finally add this objects properties
+    merged_properties_temp.push(params.properties);
+
+    const merged_properties = [];
+    for ( let mpt in merged_properties_temp ){
+        for ( let property in merged_properties_temp[mpt] ){
+            if ( !(property in merged_properties) ) {
+                merged_properties[property] = merged_properties_temp[mpt][property];
             }
         }
     }
 
     const discriminators = [];
     const properties = [];
-    const props = []
+    const props = [];
+
+    // factories for the events have some optional parameters
+    const optional = params.object_type == 'event' ? '?' : '';
     for ( let p in merged_properties ){
         if ( merged_properties[p]['discriminator'] ){
             discriminators.push(`${p}: true`);
         }
         else if ( merged_properties[p]['type'] ){
-            properties.push(`${p}: props.${p};`);
-            props.push(`${p}: ${merged_properties[p]['type']}`);
+
+            if ( optional == '?' ) {
+                // because the global_contexts and location_stack arrays are optional
+                // we provide an empty array as default here
+                properties.push(`${p}: props?.${p} ?? []`);
+                props.push(`${p}?: ${merged_properties[p]['type']}`);
+            } else {
+                properties.push(`${p}: props.${p}`);
+                props.push(`${p}: ${merged_properties[p]['type']}`);
+            }
+
+        } else if ( merged_properties[p]['value'] ){
+            properties.push(`${p}: ${merged_properties[p]['value']}`);
         }
     }
-    const tpl = `export const make${params.class_name} = ( props: { ${props.join(',')} }): ${params.class_name} => ({\n`
-        + `\t${discriminators.join(",\n\t")}\n`
-        + `\t_context_type: '${params.class_name}'\n`
-        + `\t${properties.join(",\n\t")}\n`
-        + `};`;
+    const tpl = `export const make${params.class_name} = ( props${optional}: { ${props.join('; ')} }): ${params.class_name} => ({\n`
+        + `\t${discriminators.join(",\n\t")},\n`
+        + `\t${properties.join(",\n\t")},\n`
+        + `});`;
     
     return tpl;
 }
@@ -220,6 +263,10 @@ function get_property_definition(params={}) {
         case 'array':
             return `${params['items']}[]`;
 
+        case 'str':
+            return 'string';
+        case 'integer':
+            return 'number';
         default:
             return params['type'];
     }
@@ -319,7 +366,7 @@ for ( let event_type in events) {
     }
 
     object_definitions[event_type] = {
-        type: 'event',
+        object_type: 'event',
         class_name: event_type,
         properties: properties,
         abstract: abstract,
@@ -459,20 +506,40 @@ for ( let object_type in object_definitions ){
     if ( object_definition.abstract ) {
         definition_type = 'abstracts';
     } else {
+        let factory_type = 'EventFactories';
         if ( object_definition.object_type === 'context' ) {
             definition_type = object_definition.stack_type;
+            factory_type = 'ContextFactories';
         }
 
         // write some factories
         // we don't want factories for abstracts; dow!
         let factory = createFactory(object_definitions[object_type]);
-        console.log(factory);
+        object_factories[factory_type][object_type] = factory;
     }
     object_declarations[definition_type][object_type] = createDefinition(object_definitions[object_type]);
 
 
 }
 
+for ( let factory_type in object_factories ){
+
+    const factories = {};
+    for ( let factory of Object.keys(object_factories[factory_type]).sort((a,b) => a.localeCompare(b)) ){
+        factories[factory] = object_factories[factory_type][factory];
+    }
+
+    const imports = Object.keys(factories);
+    if ( factory_type == 'EventFactories' ) {
+        imports.push('AbstractLocationContext');
+        imports.push('AbstractGlobalContext');
+    }
+    const import_statement = `import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';`
+
+    const filename = `../../tracker/src/${factory_type}.ts`;
+    fs.writeFileSync(filename, [...[import_statement], ...Object.values(factories)].join('\n'));
+        console.log(`Written ${Object.values(factories).length} factories to ${filename}`)
+}
 
 // now write some files
 for ( let definition_type in object_declarations ){
