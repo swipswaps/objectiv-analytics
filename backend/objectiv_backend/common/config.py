@@ -14,6 +14,9 @@ from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 LOAD_BASE_SCHEMA = os.environ.get('LOAD_BASE_SCHEMA', 'true') == 'true'
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
 
+# when set to true, the collector will return detailed validation errors per event
+SCHEMA_VALIDATION_ERROR_REPORTING = os.environ.get('SCHEMA_VALIDATION_ERROR_REPORTING', 'false') == 'true'
+
 # Whether to run in sync mode (default) or async-mode.
 _ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
 
@@ -84,6 +87,7 @@ class CookieConfig(NamedTuple):
 class CollectorConfig(NamedTuple):
     async_mode: bool
     cookie: Optional[CookieConfig]
+    error_reporting: bool
     output: OutputConfig
     schema: EventSchema
 
@@ -161,6 +165,7 @@ def init_collector_config():
     _CACHED_COLLECTOR_CONFIG = CollectorConfig(
         async_mode=_ASYNC_MODE,
         cookie=get_config_cookie(),
+        error_reporting=SCHEMA_VALIDATION_ERROR_REPORTING,
         output=get_config_output(),
         schema=get_config_event_schema()
     )
