@@ -262,10 +262,11 @@ function get_property_definition(params={}) {
     switch ( params['type'] ) {
         case 'array':
             return `${params['items']}[]`;
-
         case 'str':
             return 'string';
         case 'integer':
+            // too bad we don't have ints
+            // alternatively, we could use bigints here
             return 'number';
         default:
             return params['type'];
