@@ -181,7 +181,7 @@
         "AbstractGlobalContext"
       ],
       "properties": {
-        "user-agent": {
+        "user_agent": {
           "type": "string"
         }
       }
@@ -224,7 +224,7 @@
         "host": {
           "type": "string"
         },
-        "user-agent": {
+        "user_agent": {
           "type": "string"
         },
         "remote_addr": {
