@@ -75,16 +75,13 @@ function createDefinition(params = {
 }){
     const p_list = [];
     for (let property in params.properties ){
-        let property_clean = property;
-        if ( property.match(/DISCRIMINATING_PROPERTY_PREFIX/) ){
-            property_clean = `'${property}'`;
-        }
+
         if ( params.properties[property]['type'] ) {
-            p_list.push(`${property_clean}: ${params.properties[property]['type']};`);
+            p_list.push(`${property}: ${params.properties[property]['type']};`);
         } else if (params.properties[property]['discriminator']) {
-            p_list.push(`readonly ${property_clean} = ${params.properties[property]['discriminator']};`);
+            p_list.push(`readonly ${property} = ${params.properties[property]['discriminator']};`);
         } else {
-            p_list.push(`readonly ${property_clean}: ${params.properties[property]['value']};`);
+            p_list.push(`readonly ${property}: ${params.properties[property]['value']};`);
         }
     }
 
@@ -107,13 +104,14 @@ function createFactory(params = {
     interfaces: false
 }) {
 
+    // we set the literal discriminators first, so they won't be overridden
+    // by parent classes.
     const object_discriminator = {};
     if ( params.object_type == 'context' ){
         object_discriminator[CONTEXT_DISCRIMINATOR] = {'value':  `'${params.class_name}'`};
     } else {
         object_discriminator[EVENT_DISCRIMINATOR] =  {'value': `'${params.class_name}'`};
     }
-
 
     // we resolve all the properties, based on the ancestry of this class
     // first, compose / merge properties from all parents
@@ -238,6 +236,8 @@ function createMissingAbstracts(params = {
 
             // add params to map
             object_definitions[class_name] = intermediate_params;
+            // add to parent map
+            toParent[class_name] = parent;
             createMissingAbstracts(intermediate_params);
 
         }
