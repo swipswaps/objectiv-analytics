@@ -3,7 +3,7 @@ name: "Tracker tests"
 on:
   push:
     paths:
-      - 'backend/**'
+      - 'schema/**'
       - 'tracker/**'
       # Also run if we update this file, or any other workflow
       - '.github/**'
