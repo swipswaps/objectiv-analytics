@@ -1,15 +1,17 @@
 // noinspection JSUnfilteredForInLoop,UnnecessaryLocalVariableJS
 
-/*
- Script to generate Typescript definitions of events and contexts used by the tracker, based on the centralized
- schema. The schema directory itself can be found in the root of the git repository (/schema). The base schema is in
- /schema/base_schema.json.
- Additionally, the script will look for extensions there, and will add them to the generated classes and interfaces.
 
- Usage is pretty straight forward:
-    ```node generate.js```
- That's all there is to it.
-
+/**
+ *
+ * Script to generate Typescript definitions of events and contexts used by the tracker, based on the centralized
+ * schema. The schema directory itself can be found in the root of the git repository (/schema). The base schema is in
+ * /schema/base_schema.json.
+ * Additionally, the script will look for extensions there, and will add them to the generated classes and interfaces.
+ *
+ * Usage is pretty straight forward:
+ *    ```node generate.js```
+ * That's all there is to it.
+ *
  */
 
 const fs = require('fs');
@@ -209,22 +211,26 @@ function createMissingAbstracts(
       // let's find the parent
       let parent = getParents(params.class_name).pop();
 
-      /* if our parent isn't abstract, we try to make it so
-             however, if that means we should become our own parent, that's not ok.
-             example:
-             DocumentLoadedEvent -> NonInteractiveEvent -> AbstractEvent
+      /**
+       * if our parent isn't abstract, we try to make it so
+       * however, if that means we should become our own parent, that's not ok.
+       * example:
+       * DocumentLoadedEvent -> NonInteractiveEvent -> AbstractEvent
+       *
+       * in this case, the outcome is
+       * DocumentLoadedEvent -> AbstractNonInteractiveEvent   \
+       *                                                         -> AbstractEvent
+       *                                NonInteractiveEvent   /
+       *
+       * Which means we have to:
+       *  - create the AbstractNoninteractiveEvent
+       *  - change the hierarchy
+       *
+       * So we create a new parent for DocumentLoadedEvent (AbstractNoninteractiveEvent), and attach it
+       * to the parent of NonInteractiveEvent (parent of the parent).
+       *
+       */
 
-             in this case, the outcome is
-             DocumentLoadedEvent -> AbstractNonInteractiveEvent \
-                                                                 -> AbstractEvent
-                                            NonInteractiveEvent /
-             Which means we have to:
-             - create the AbstractNoninteractiveEvent
-             - change the hierarchy
-
-             So we create a new parent for DocumentLoadedEvent (AbstractNoninteractiveEvent), and attach it
-             to the parent of NonInteractiveEvent (parent of the parent).
-             */
       if (!parent.match(/^Abstract/) && 'Abstract' + parent !== class_name) {
         parent = 'Abstract' + parent;
       } else {
@@ -453,20 +459,23 @@ for (let object_type in object_definitions) {
   object_definitions[object_type] = createMissingAbstracts(object_definition);
 }
 
-/* a little bit of cleaning / housekeeping. If:
- - an object is not abstract
- - but there is an abstract version of it
- - and it's not its parent
- we fix that here.
-
- example:
- in OSF:   ItemContext -> SectionContext -> AbstractLocationContext -> AbstractContext
- In TS this is represented as:
-    ItemContext     \
-                        -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
-    SectionContext  /
- Additionally, it moves the properties, as defined in SectionContext to AbstractSectionContext.
-*/
+/**
+ * a little bit of cleaning / housekeeping. If:
+ *  - an object is not abstract
+ *  - but there is an abstract version of it
+ *  - and it's not its parent
+ * we fix that here.
+ *
+ * example:
+ * in OSF:   ItemContext -> SectionContext -> AbstractLocationContext -> AbstractContext
+ * In TS this is represented as:
+ *     ItemContext     \
+ *                         -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
+ *     SectionContext  /
+ *
+ * Additionally, it moves the properties, as defined in SectionContext to AbstractSectionContext.
+ *
+ */
 for (let object_type in object_definitions) {
   const object_definition = object_definitions[object_type];
   const abstract_class_name = 'Abstract' + object_definition['class_name'];
