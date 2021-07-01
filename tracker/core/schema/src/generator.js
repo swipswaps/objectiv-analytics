@@ -1,13 +1,16 @@
-/*
- Script to generate Typescript definitions of events and contexts used by the tracker, based on the centralized
- schema. The schema directory itself can be found in the root of the git repository (/schema). The base schema is in
- /schema/base_schema.json.
- Additionally, the script will look for extensions there, and will add them to the generated classes and interfaces.
+// noinspection JSUnfilteredForInLoop,UnnecessaryLocalVariableJS
 
- Usage is pretty straight forward:
-    ```node generate.js```
- That's all there is to it.
-
+/**
+ *
+ * Script to generate Typescript definitions of events and contexts used by the tracker, based on the centralized
+ * schema. The schema directory itself can be found in the root of the git repository (/schema). The base schema is in
+ * /schema/base_schema.json.
+ * Additionally, the script will look for extensions there, and will add them to the generated classes and interfaces.
+ *
+ * Usage is pretty straight forward:
+ *    ```node generate.js```
+ * That's all there is to it.
+ *
  */
 
 const fs = require('fs');
@@ -78,8 +81,7 @@ function createDefinition(
   const p_list = [];
   for (let property in params.properties) {
     if (params.properties[property]['type']) {
-      // TODO params.properties[property]['type'] needs to be mapped. OSF and TS don't always have matching types
-      p_list.push(`${property}: ${params.properties[property]['type']};`);
+      p_list.push(`${property}: ${get_property_definition(params.properties[property])};`);
     } else if (params.properties[property]['discriminator']) {
       p_list.push(`readonly ${property} = ${params.properties[property]['discriminator']};`);
     } else {
@@ -208,23 +210,27 @@ function createMissingAbstracts(
       // let's find the parent
       let parent = getParents(params.class_name).pop();
 
-      /* if our parent isn't abstract, we try to make it so
-             however, if that means we should become our own parent, that's not ok.
-             example:
-             DocumentLoadedEvent -> NonInteractiveEvent -> AbstractEvent
+      /**
+       * if our parent isn't abstract, we try to make it so
+       * however, if that means we should become our own parent, that's not ok.
+       * example:
+       * DocumentLoadedEvent -> NonInteractiveEvent -> AbstractEvent
+       *
+       * in this case, the outcome is
+       * DocumentLoadedEvent -> AbstractNonInteractiveEvent   \
+       *                                                         -> AbstractEvent
+       *                                NonInteractiveEvent   /
+       *
+       * Which means we have to:
+       *  - create the AbstractNoninteractiveEvent
+       *  - change the hierarchy
+       *
+       * So we create a new parent for DocumentLoadedEvent (AbstractNoninteractiveEvent), and attach it
+       * to the parent of NonInteractiveEvent (parent of the parent).
+       *
+       */
 
-             in this case, the outcome is
-             DocumentLoadedEvent -> AbstractNonInteractiveEvent \
-                                                                 -> AbstractEvent
-                                            NonInteractiveEvent /
-             Which means we have to:
-             - create the AbstractNoninteractiveEvent
-             - change the hierarchy
-
-             So we create a new parent for DocumentLoadedEvent (AbstractNoninteractiveEvent), and attach it
-             to the parent of NonInteractiveEvent (parent of the parent).
-             */
-      if (!parent.match(/^Abstract/) && 'Abstract' + parent != class_name) {
+      if (!parent.match(/^Abstract/) && 'Abstract' + parent !== class_name) {
         parent = 'Abstract' + parent;
       } else {
         // we need the parent of the parent
@@ -392,7 +398,7 @@ for (let context_type in contexts) {
   let abstract = false;
   let parent = false;
   let definition_type = undefined;
-  let interfaces = false;
+  // let interfaces = false;
   let stack_type = '';
 
   // check if this is an abstract class
@@ -452,27 +458,30 @@ for (let object_type in object_definitions) {
   object_definitions[object_type] = createMissingAbstracts(object_definition);
 }
 
-/* a little bit of cleaning / housekeeping. If:
- - an object is not abstract
- - but there is an abstract version of it
- - and it's not its parent
- we fix that here.
-
- example:
- in OSF:   ItemContext -> SectionContext -> AbstractLocationContext -> AbstractContext
- In TS this is represented as:
-    ItemContext     \
-                        -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
-    SectionContext  /
- Additionally, it moves the properties, as defined in SectionContext to AbstractSectionContext.
-*/
+/**
+ * a little bit of cleaning / housekeeping. If:
+ *  - an object is not abstract
+ *  - but there is an abstract version of it
+ *  - and it's not its parent
+ * we fix that here.
+ *
+ * example:
+ * in OSF:   ItemContext -> SectionContext -> AbstractLocationContext -> AbstractContext
+ * In TS this is represented as:
+ *     ItemContext     \
+ *                         -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
+ *     SectionContext  /
+ *
+ * Additionally, it moves the properties, as defined in SectionContext to AbstractSectionContext.
+ *
+ */
 for (let object_type in object_definitions) {
   const object_definition = object_definitions[object_type];
   const abstract_class_name = 'Abstract' + object_definition['class_name'];
   if (
     !object_definition.abstract &&
     object_definitions[abstract_class_name] &&
-    object_definition['parent'] != abstract_class_name
+    object_definition['parent'] !== abstract_class_name
   ) {
     // we move it
     object_definitions[object_type]['parent'] = abstract_class_name;
@@ -480,7 +489,7 @@ for (let object_type in object_definitions) {
 
     // if it defines any properties, we move them to the parent
     for (let property in object_definitions[object_type]['properties']) {
-      if (property.substring(0) != '_' && object_definitions[object_type]['properties'][property]['type']) {
+      if (property.substring(0) !== '_' && object_definitions[object_type]['properties'][property]['type']) {
         // add to parent
         object_definitions[abstract_class_name]['properties'][property] =
           object_definitions[object_type]['properties'][property];
@@ -521,7 +530,7 @@ for (let factory_type in object_factories) {
   }
 
   const imports = Object.keys(factories);
-  if (factory_type == 'EventFactories') {
+  if (factory_type === 'EventFactories') {
     imports.push('AbstractLocationContext');
     imports.push('AbstractGlobalContext');
   }
@@ -541,7 +550,7 @@ for (let definition_type in object_declarations) {
 
   // we only import abstract classes, so no need to do this when writing the abstract classes
   // this is because they are defines in a separate file
-  if (definition_type != 'abstracts') {
+  if (definition_type !== 'abstracts') {
     // add import statement of abstracts in non- abstract files
     // import { AbstractGlobalContext } from './abstracts';
     // NOTE: there may be duplicates in this array, so make sure to fix that later
