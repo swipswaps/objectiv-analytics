@@ -19,5 +19,5 @@ export interface HttpContext extends AbstractGlobalContext {
 	readonly _context_type: 'HttpContext';
 	host: string;
 	'user-agent': string;
-	remote_addr: string;
+	remote_address: string;
 }

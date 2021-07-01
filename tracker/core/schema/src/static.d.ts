@@ -1,11 +1,9 @@
-import {AbstractGlobalContext, AbstractLocationContext} from "./abstracts";
+import { AbstractGlobalContext, AbstractLocationContext } from './abstracts';
 
 /**
  * All discriminating properties start with this prefix.
  */
 export type DiscriminatingPropertyPrefix = '__';
-
-
 
 /**
  * An interface coupling Location Stack and Global Contexts. Used by Tracker and Events.
