@@ -59,13 +59,13 @@ export const makeExpandableSectionContext = ( props: { id: string }): Expandable
 	_context_type: 'ExpandableSectionContext',
 	id: props.id,
 });
-export const makeHttpContext = ( props: { id: string; host: string; user_agent: string; remote_addr: string }): HttpContext => ({
+export const makeHttpContext = ( props: { id: string; host: string; user_agent: string; remote_address: string }): HttpContext => ({
 	__global_context: true,
 	_context_type: 'HttpContext',
 	id: props.id,
 	host: props.host,
 	user_agent: props.user_agent,
-	remote_addr: props.remote_addr,
+	remote_address: props.remote_address,
 });
 export const makeInputContext = ( props: { id: string }): InputContext => ({
 	__location_context: true,
