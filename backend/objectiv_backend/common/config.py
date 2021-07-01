@@ -11,7 +11,11 @@ from typing import NamedTuple, Optional
 # below (e.g. get_config_output())
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 
+LOAD_BASE_SCHEMA = os.environ.get('LOAD_BASE_SCHEMA', 'true') == 'true'
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
+
+# when set to true, the collector will return detailed validation errors per event
+SCHEMA_VALIDATION_ERROR_REPORTING = os.environ.get('SCHEMA_VALIDATION_ERROR_REPORTING', 'false') == 'true'
 
 # Whether to run in sync mode (default) or async-mode.
 _ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
@@ -83,6 +87,7 @@ class CookieConfig(NamedTuple):
 class CollectorConfig(NamedTuple):
     async_mode: bool
     cookie: Optional[CookieConfig]
+    error_reporting: bool
     output: OutputConfig
     schema: EventSchema
 
@@ -154,13 +159,13 @@ def get_config_event_schema() -> EventSchema:
 # so we have some super simple caching here
 _CACHED_COLLECTOR_CONFIG: Optional[CollectorConfig] = None
 
-
 def init_collector_config():
     """ Load collector config into cache. """
     global _CACHED_COLLECTOR_CONFIG
     _CACHED_COLLECTOR_CONFIG = CollectorConfig(
         async_mode=_ASYNC_MODE,
         cookie=get_config_cookie(),
+        error_reporting=SCHEMA_VALIDATION_ERROR_REPORTING,
         output=get_config_output(),
         schema=get_config_event_schema()
     )

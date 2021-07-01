@@ -5,7 +5,20 @@
   "events": {
     "AbstractEvent": {
       "parents": [],
-      "requiresContext": ["AbstractContext"]
+      "requiresContext": ["AbstractContext"],
+      "properties":{
+        "location_stack": {
+          "type": "array",
+          "items": "AbstractLocationContext"
+        },
+        "global_contexts": {
+          "type": "array",
+          "items": "AbstractGlobalContext"
+        },
+        "event": {
+          "type": "string"
+        }
+      }
     },
     "NonInteractiveEvent": {
       "parents": ["AbstractEvent"],
@@ -68,6 +81,9 @@
     "AbstractContext": {
       "properties": {
         "id": {
+          "type": "string"
+        },
+        "_context_type": {
           "type": "string"
         }
       }

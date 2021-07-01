@@ -9,6 +9,8 @@ There is currently one variable supported for configuring the data input format:
 of the full schema. **TODO:** link to a schema explanation.
 If not set the default schema is used.
 
+- `SCHEMA_VALIDATION_ERROR_REPORTING` - if set to `true`, after validation, the collector response will
+include extensive error reporting as to why certain events have been invalidated.
 
 ## 2. Output Configuration
 Currently, the only supported non-experimental output option for the collector is Postgres.

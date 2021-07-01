@@ -203,5 +203,5 @@ export const makeHttpContext = (props: {
   id: props.id,
   host: props.host,
   'user-agent': props.userAgent,
-  remoteAddr: props.remoteAddr,
+  remote_addr: props.remoteAddr,
 });

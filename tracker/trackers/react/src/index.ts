@@ -16,5 +16,5 @@ export * from './useTrackOnChange';
 export * from './useTrackOnMount';
 export * from './useTrackOnToggle';
 export * from './useTrackOnUnmount';
-export * from './useTrackURLChanged';
+export * from './useTrackURLChange';
 export * from './useTrackVisibility';
