@@ -30,7 +30,9 @@ describe('useTrackButtonClick', () => {
   };
 
   const Button = () => {
-    const buttonClickHandler = useTrackButtonClick(makeButtonContext({ id: 'buttonA', path: '', text: 'confirm button' }));
+    const buttonClickHandler = useTrackButtonClick(
+      makeButtonContext({ id: 'buttonA', path: '', text: 'confirm button' })
+    );
 
     return <button data-testid="test-button" onClick={buttonClickHandler} value={'Proceed'} />;
   };
