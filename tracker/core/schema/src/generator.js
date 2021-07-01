@@ -63,6 +63,7 @@ function createDefinition(params = {
             property_clean = `'${property}'`;
         }
         if ( params.properties[property]['type'] ) {
+            // TODO params.properties[property]['type'] needs to be mapped. OSF and TS don't always have matching types
             p_list.push(`${property_clean}: ${params.properties[property]['type']};`);
         } else if (params.properties[property]['discriminator']) {
             p_list.push(`readonly ${property_clean} = ${params.properties[property]['discriminator']};`);
