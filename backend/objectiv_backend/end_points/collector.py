@@ -181,7 +181,7 @@ def _get_http_context() -> ContextData:
     allowed_headers = ['Host', 'Origin', 'Referer', 'User-Agent']
     http_context: ContextData = {}
     if flask.request.remote_addr:
-        http_context['remote_addr'] = flask.request.remote_addr
+        http_context['remote_address'] = flask.request.remote_addr
 
     for h, v in flask.request.headers.items():
         if h in allowed_headers:

@@ -227,7 +227,7 @@
         "user_agent": {
           "type": "string"
         },
-        "remote_addr": {
+        "remote_address": {
           "type": "string"
         }
       }

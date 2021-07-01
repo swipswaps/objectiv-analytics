@@ -1,6 +1,5 @@
 // noinspection JSUnfilteredForInLoop,UnnecessaryLocalVariableJS
 
-
 /**
  *
  * Script to generate Typescript definitions of events and contexts used by the tracker, based on the centralized
