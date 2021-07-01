@@ -181,7 +181,7 @@
         "AbstractGlobalContext"
       ],
       "properties": {
-        "user-agent": {
+        "user_agent": {
           "type": "string"
         }
       }
@@ -211,7 +211,7 @@
         "AbstractGlobalContext"
       ],
       "properties": {
-        "hitNumber": {
+        "hit_number": {
           "type": "integer"
         }
       }
@@ -224,7 +224,7 @@
         "host": {
           "type": "string"
         },
-        "user-agent": {
+        "user_agent": {
           "type": "string"
         },
         "remote_addr": {

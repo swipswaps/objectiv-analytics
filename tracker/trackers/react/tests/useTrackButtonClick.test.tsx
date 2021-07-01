@@ -30,7 +30,7 @@ describe('useTrackButtonClick', () => {
   };
 
   const Button = () => {
-    const buttonClickHandler = useTrackButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }));
+    const buttonClickHandler = useTrackButtonClick(makeButtonContext({ id: 'buttonA', path: '', text: 'confirm button' }));
 
     return <button data-testid="test-button" onClick={buttonClickHandler} value={'Proceed'} />;
   };
@@ -98,7 +98,7 @@ describe('useTrackButtonClick', () => {
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new ReactTracker({ transport: spyTransport2 });
     const buttonClickHandler = useTrackButtonClick(
-      makeButtonContext({ id: 'buttonA', text: 'confirm button' }),
+      makeButtonContext({ id: 'buttonA', path: '', text: 'confirm button' }),
       anotherTracker
     );
 

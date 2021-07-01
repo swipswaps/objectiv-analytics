@@ -115,7 +115,7 @@ describe('WebTracker', () => {
           {
             _context_type: 'DeviceContext',
             id: 'device',
-            'user-agent': USER_AGENT_MOCK_VALUE,
+            'user_agent': USER_AGENT_MOCK_VALUE,
           },
         ])
       );

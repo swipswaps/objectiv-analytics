@@ -77,23 +77,23 @@ describe('TrackerEvent', () => {
     const testEvent = new TrackerEvent(
       makeVideoLoadEvent({
         location_stack: [makeOverlayContext({ id: 'player' })],
-        global_contexts: [makeDeviceContext({ userAgent: 'test-user-agent' })],
+        global_contexts: [makeDeviceContext({ id: 'test-device', user_agent: 'test-user-agent' })],
       })
     );
     const jsonStringEvent = JSON.stringify(testEvent, null, 2);
     expect(jsonStringEvent).toEqual(`{
   "event": "VideoLoadEvent",
-  "global_contexts": [
-    {
-      "_context_type": "DeviceContext",
-      "id": "device",
-      "user-agent": "test-user-agent"
-    }
-  ],
   "location_stack": [
     {
       "_context_type": "OverlayContext",
       "id": "player"
+    }
+  ],
+  "global_contexts": [
+    {
+      "_context_type": "DeviceContext",
+      "id": "test-device",
+      "user_agent": "test-user-agent"
     }
   ]
 }`);
