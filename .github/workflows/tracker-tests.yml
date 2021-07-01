@@ -1,0 +1,23 @@
+name: "Tracker tests"
+
+on:
+  push:
+    paths:
+      - 'schema/**'
+      - 'tracker/**'
+      # Also run if we update this file, or any other workflow
+      - '.github/**'
+
+jobs:
+  run-tracker-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install monorepo dependencies
+        run: |
+          cd tracker
+          yarn install
+      - name: Run tests for all packages
+        run: |
+          cd tracker
+          yarn test:ci
