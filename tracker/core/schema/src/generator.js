@@ -108,7 +108,7 @@ function createFactory(params = {
     // we set the literal discriminators first, so they won't be overridden
     // by parent classes.
     const object_discriminator = {};
-    if ( params.object_type == 'context' ){
+    if ( params.object_type === 'context' ){
         object_discriminator[CONTEXT_DISCRIMINATOR] = {'value':  `'${params.class_name}'`};
     } else {
         object_discriminator[EVENT_DISCRIMINATOR] =  {'value': `'${params.class_name}'`};
@@ -143,14 +143,14 @@ function createFactory(params = {
     const props = [];
 
     // factories for the events have some optional parameters
-    const optional = params.object_type == 'event' ? '?' : '';
+    const optional = params.object_type === 'event' ? '?' : '';
     for ( let mp in merged_properties ){
         if ( merged_properties[mp]['discriminator'] ){
             discriminators.push(`${mp}: true`);
         }
         else if ( merged_properties[mp]['type'] ){
 
-            if ( optional == '?' ) {
+            if ( optional === '?' ) {
                 // because the global_contexts and location_stack arrays are optional
                 // we provide an empty array as default here
                 properties.push(`${mp}: props?.${mp} ?? []`);
