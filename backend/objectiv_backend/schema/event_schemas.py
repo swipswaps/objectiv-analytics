@@ -7,6 +7,7 @@ import re
 import sys
 from copy import deepcopy
 from typing import Set, List, Dict, Any, Optional, Tuple
+import pkgutil
 
 from objectiv_backend.common.types import EventType, ContextType
 
@@ -384,16 +385,25 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     """
     Get the event schema.
 
-    The schema is based on base_schema.json and the schema files in the optional
+    The schema is based on schema/base_schema.json and the schema files in the optional
     schema_extension_directory.
     Files in the extension directory qualify for loading if their name matches [a-z0-9_]+\\.json.
     The files are loaded in alphabetical order.
-
+    
     :param schema_extensions_directory: optional directory path.
     """
-    base_schema_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'base_schema.json')
-    files_to_load = [base_schema_path]
 
+    schema_jsons = []
+    # load base schema from the current dir using pkgutil
+    # this should also work when running from a zipped package
+    from objectiv_backend.common.config import LOAD_BASE_SCHEMA
+    if LOAD_BASE_SCHEMA:
+        data = pkgutil.get_data(__name__, "base_schema.json")
+        if data:
+            base_schema = json.loads(data)
+            schema_jsons.append(base_schema)
+
+    files_to_load = []
     if schema_extensions_directory:
         all_filenames = sorted(os.listdir(schema_extensions_directory))
         for filename in all_filenames:
@@ -402,7 +412,6 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
                 continue
             files_to_load.append(os.path.join(schema_extensions_directory, filename))
 
-    schema_jsons = []
     for filepath in files_to_load:
         with open(filepath, mode='r') as file:
             raw_data = file.read()

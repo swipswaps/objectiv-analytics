@@ -1,58 +1,43 @@
-import { AbstractInteractiveEvent, AbstractNonInteractiveEvent, AbstractVideoEvent } from './abstracts';
-
-/**
- * Non-Interactive Events
- */
+import {AbstractNonInteractiveEvent,AbstractVideoEvent,AbstractInteractiveEvent} from './abstracts';
+export interface NonInteractiveEvent extends AbstractNonInteractiveEvent {
+	readonly event: 'NonInteractiveEvent';
+}
 export interface DocumentLoadedEvent extends AbstractNonInteractiveEvent {
-  readonly event: 'DocumentLoadedEvent';
+	readonly event: 'DocumentLoadedEvent';
 }
-
-export interface URLChangedEvent extends AbstractNonInteractiveEvent {
-  readonly event: 'URLChangeEvent';
+export interface URLChangeEvent extends AbstractNonInteractiveEvent {
+	readonly event: 'URLChangeEvent';
 }
-
 export interface ApplicationLoadedEvent extends AbstractNonInteractiveEvent {
-  readonly event: 'ApplicationLoadedEvent';
+	readonly event: 'ApplicationLoadedEvent';
 }
-
 export interface SectionVisibleEvent extends AbstractNonInteractiveEvent {
-  readonly event: 'SectionVisibleEvent';
+	readonly event: 'SectionVisibleEvent';
 }
-
 export interface SectionHiddenEvent extends AbstractNonInteractiveEvent {
-  readonly event: 'SectionHiddenEvent';
+	readonly event: 'SectionHiddenEvent';
 }
-
-/**
- * Video Events
- */
 export interface VideoEvent extends AbstractVideoEvent {
-  readonly event: 'VideoEvent';
+	readonly event: 'VideoEvent';
 }
-
 export interface VideoLoadEvent extends AbstractVideoEvent {
-  readonly event: 'VideoLoadEvent';
+	readonly event: 'VideoLoadEvent';
 }
-
 export interface VideoStartEvent extends AbstractVideoEvent {
-  readonly event: 'VideoStartEvent';
+	readonly event: 'VideoStartEvent';
 }
-
 export interface VideoStopEvent extends AbstractVideoEvent {
-  readonly event: 'VideoStopEvent';
+	readonly event: 'VideoStopEvent';
 }
-
 export interface VideoPauseEvent extends AbstractVideoEvent {
-  readonly event: 'VideoPauseEvent';
+	readonly event: 'VideoPauseEvent';
 }
-
-/**
- * Interactive Events
- */
+export interface InteractiveEvent extends AbstractInteractiveEvent {
+	readonly event: 'InteractiveEvent';
+}
 export interface ClickEvent extends AbstractInteractiveEvent {
-  readonly event: 'ClickEvent';
+	readonly event: 'ClickEvent';
 }
-
 export interface InputChangeEvent extends AbstractInteractiveEvent {
-  readonly event: 'InputChangeEvent';
+	readonly event: 'InputChangeEvent';
 }
