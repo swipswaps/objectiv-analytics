@@ -175,13 +175,13 @@ describe('Context Factories', () => {
   });
 
   it('HttpContext', () => {
-    expect(makeHttpContext({ id: 'http', host: 'host', user_agent: 'ua', remote_addr: '0.0.0.0' })).toStrictEqual({
+    expect(makeHttpContext({ id: 'http', host: 'host', user_agent: 'ua', remote_address: '0.0.0.0' })).toStrictEqual({
       __global_context: true,
       _context_type: 'HttpContext',
       id: 'http',
       host: 'host',
       user_agent: 'ua',
-      remote_addr: '0.0.0.0',
+      remote_address: '0.0.0.0',
     });
   });
 });
