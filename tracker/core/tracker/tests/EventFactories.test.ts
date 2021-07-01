@@ -16,7 +16,7 @@ import {
 } from '../src';
 
 const sectionA = makeSectionContext({ id: 'A' });
-const device = makeDeviceContext({ userAgent: '123' });
+const device = makeDeviceContext({ id: 'device-123', user_agent: '123' });
 
 describe('Event Factories', () => {
   it('DocumentLoadedEvent', () => {

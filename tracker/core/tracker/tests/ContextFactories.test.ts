@@ -115,7 +115,7 @@ describe('Context Factories', () => {
   });
 
   it('ButtonContext', () => {
-    expect(makeButtonContext({ id: 'confirm-data', text: 'Confirm' })).toStrictEqual({
+    expect(makeButtonContext({ id: 'confirm-data', path: '', text: 'Confirm' })).toStrictEqual({
       __location_context: true,
       __item_context: true,
       __action_context: true,
@@ -127,7 +127,7 @@ describe('Context Factories', () => {
   });
 
   it('LinkContext', () => {
-    expect(makeLinkContext({ id: 'confirm-data', href: '/some/url', text: 'Click for Details' })).toStrictEqual({
+    expect(makeLinkContext({ id: 'confirm-data', path: '/some/url', text: 'Click for Details' })).toStrictEqual({
       __location_context: true,
       __item_context: true,
       __action_context: true,
@@ -139,11 +139,11 @@ describe('Context Factories', () => {
   });
 
   it('DeviceContext', () => {
-    expect(makeDeviceContext({ userAgent: 'user agent string' })).toStrictEqual({
+    expect(makeDeviceContext({ id: 'test device', user_agent: 'user agent string' })).toStrictEqual({
       __global_context: true,
       _context_type: 'DeviceContext',
-      id: 'device',
-      'user-agent': 'user agent string',
+      id: 'test device',
+      user_agent: 'user agent string',
     });
   });
 
@@ -157,7 +157,7 @@ describe('Context Factories', () => {
   });
 
   it('CookieIdContext', () => {
-    expect(makeCookieIdContext({ id: 'error-id', cookieId: '12345' })).toStrictEqual({
+    expect(makeCookieIdContext({ id: 'error-id', cookie_id: '12345' })).toStrictEqual({
       __global_context: true,
       _context_type: 'CookieIdContext',
       id: 'error-id',
@@ -166,21 +166,21 @@ describe('Context Factories', () => {
   });
 
   it('SessionContext', () => {
-    expect(makeSessionContext({ id: 'session-id', hitNumber: 123 })).toStrictEqual({
+    expect(makeSessionContext({ id: 'session-id', hit_number: 123 })).toStrictEqual({
       __global_context: true,
       _context_type: 'SessionContext',
       id: 'session-id',
-      hitNumber: 123,
+      hit_number: 123,
     });
   });
 
   it('HttpContext', () => {
-    expect(makeHttpContext({ id: 'http', host: 'host', userAgent: 'ua', remoteAddr: '0.0.0.0' })).toStrictEqual({
+    expect(makeHttpContext({ id: 'http', host: 'host', user_agent: 'ua', remote_addr: '0.0.0.0' })).toStrictEqual({
       __global_context: true,
       _context_type: 'HttpContext',
       id: 'http',
       host: 'host',
-      'user-agent': 'ua',
+      user_agent: 'ua',
       remote_addr: '0.0.0.0',
     });
   });

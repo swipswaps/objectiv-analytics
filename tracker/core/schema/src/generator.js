@@ -14,6 +14,10 @@ const fs = require('fs');
 
 const DISCRIMINATING_PROPERTY_PREFIX = '_';
 
+// TODO: naming of these should come from the schema
+const EVENT_DISCRIMINATOR = 'event';
+const CONTEXT_DISCRIMINATOR = '_context_type';
+
 // where to find the schema files, by default we look in the root of the repository
 const schema_dir = '../../../../schema/';
 
@@ -32,6 +36,12 @@ const object_declarations = {
   location_contexts: {},
 };
 
+// contains factories to create instances of events / contexts
+const object_factories = {
+  EventFactories: {},
+  ContextFactories: {},
+};
+
 // list to cache list of abstract parents of interfaces
 const toParent = {};
 function getParents(class_name) {
@@ -40,6 +50,13 @@ function getParents(class_name) {
   } else {
     return [];
   }
+}
+
+function getDefinition(class_name) {
+  if (object_definitions[class_name]) {
+    return object_definitions[class_name];
+  }
+  return false;
 }
 
 function camelToUnderscore(key) {
@@ -60,17 +77,13 @@ function createDefinition(
 ) {
   const p_list = [];
   for (let property in params.properties) {
-    let property_clean = property;
-    if (property.match(/-/)) {
-      property_clean = `'${property}'`;
-    }
     if (params.properties[property]['type']) {
       // TODO params.properties[property]['type'] needs to be mapped. OSF and TS don't always have matching types
-      p_list.push(`${property_clean}: ${params.properties[property]['type']};`);
+      p_list.push(`${property}: ${params.properties[property]['type']};`);
     } else if (params.properties[property]['discriminator']) {
-      p_list.push(`readonly ${property_clean} = ${params.properties[property]['discriminator']};`);
+      p_list.push(`readonly ${property} = ${params.properties[property]['discriminator']};`);
     } else {
-      p_list.push(`readonly ${property_clean}: ${params.properties[property]['value']};`);
+      p_list.push(`readonly ${property}: ${params.properties[property]['value']};`);
     }
   }
 
@@ -81,6 +94,84 @@ function createDefinition(
     ` {\n` +
     `\t${p_list.join('\n\t')}\n` +
     `}`;
+  return tpl;
+}
+
+// creates factory methods, based on the interfaces generated.
+function createFactory(
+  params = {
+    class_name: '',
+    properties: [],
+    abstract: false,
+    parent: false,
+    definition_type: 'class',
+    interfaces: false,
+  }
+) {
+  // we set the literal discriminators first, so they won't be overridden
+  // by parent classes.
+  const object_discriminator = {};
+  if (params.object_type === 'context') {
+    object_discriminator[CONTEXT_DISCRIMINATOR] = { value: `'${params.class_name}'` };
+  } else {
+    object_discriminator[EVENT_DISCRIMINATOR] = { value: `'${params.class_name}'` };
+  }
+
+  // we resolve all the properties, based on the ancestry of this class
+  // first, compose / merge properties from all parents
+  const merged_properties_temp = [object_discriminator];
+
+  // add properties in order of hierarchy
+  const parents = getParents(params.class_name);
+  for (let p of parents) {
+    let parent_params = getDefinition(p);
+    merged_properties_temp.push(parent_params.properties);
+  }
+  // finally add this objects properties
+  merged_properties_temp.push(params.properties);
+
+  // now we merge all of the defined properties, hierarchically (from parent to child)
+  // taking care not to overwrite existing ones
+  const merged_properties = [];
+  for (let mpt in merged_properties_temp) {
+    for (let property in merged_properties_temp[mpt]) {
+      if (!(property in merged_properties)) {
+        merged_properties[property] = merged_properties_temp[mpt][property];
+      }
+    }
+  }
+
+  const discriminators = [];
+  const properties = [];
+  const props = [];
+
+  // factories for the events have some optional parameters
+  const optional = params.object_type === 'event' ? '?' : '';
+  for (let mp in merged_properties) {
+    if (merged_properties[mp]['discriminator']) {
+      discriminators.push(`${mp}: true`);
+    } else if (merged_properties[mp]['type']) {
+      if (optional === '?') {
+        // because the global_contexts and location_stack arrays are optional
+        // we provide an empty array as default here
+        properties.push(`${mp}: props?.${mp} ?? []`);
+        props.push(`${mp}?: ${merged_properties[mp]['type']}`);
+      } else {
+        properties.push(`${mp}: props.${mp}`);
+        props.push(`${mp}: ${merged_properties[mp]['type']}`);
+      }
+    } else if (merged_properties[mp]['value']) {
+      properties.push(`${mp}: ${merged_properties[mp]['value']}`);
+    }
+  }
+  const tpl =
+    `export const make${params.class_name} = ( props${optional}: { ${props.join('; ')} }): ${
+      params.class_name
+    } => ({\n` +
+    `\t${discriminators.join(',\n\t')},\n` +
+    `\t${properties.join(',\n\t')},\n` +
+    `});`;
+
   return tpl;
 }
 
@@ -150,10 +241,14 @@ function createMissingAbstracts(
 
       // add params to map
       object_definitions[class_name] = intermediate_params;
+      // add to parent map
+      toParent[class_name] = parent;
       createMissingAbstracts(intermediate_params);
     }
     // update params with new parent class
     params.parent = class_name;
+    // update parent map
+    toParent[params.class_name] = class_name;
   }
   return params;
 }
@@ -165,7 +260,12 @@ function get_property_definition(params = {}) {
   switch (params['type']) {
     case 'array':
       return `${params['items']}[]`;
-
+    case 'str':
+      return 'string';
+    case 'integer':
+      // too bad we don't have ints
+      // alternatively, we could use bigints here
+      return 'number';
     default:
       return params['type'];
   }
@@ -240,8 +340,8 @@ for (let event_type in events) {
     abstract = true;
     definition_type = 'class';
   } else {
-    properties['event'] = [];
-    properties['event']['value'] = `'${event_type}'`;
+    properties[EVENT_DISCRIMINATOR] = [];
+    properties[EVENT_DISCRIMINATOR]['value'] = `'${event_type}'`;
     definition_type = 'interface';
   }
 
@@ -264,7 +364,7 @@ for (let event_type in events) {
   }
 
   object_definitions[event_type] = {
-    type: 'event',
+    object_type: 'event',
     class_name: event_type,
     properties: properties,
     abstract: abstract,
@@ -316,8 +416,8 @@ for (let context_type in contexts) {
     }
 
     // literal discriminator for non-abstract class
-    properties['_context_type'] = [];
-    properties['_context_type']['value'] = `'${context_type}'`;
+    properties[CONTEXT_DISCRIMINATOR] = [];
+    properties[CONTEXT_DISCRIMINATOR]['value'] = `'${context_type}'`;
     definition_type = 'interface';
   }
 
@@ -376,6 +476,7 @@ for (let object_type in object_definitions) {
   ) {
     // we move it
     object_definitions[object_type]['parent'] = abstract_class_name;
+    toParent[object_type] = abstract_class_name;
 
     // if it defines any properties, we move them to the parent
     for (let property in object_definitions[object_type]['properties']) {
@@ -398,10 +499,37 @@ for (let object_type in object_definitions) {
   let definition_type = 'events';
   if (object_definition.abstract) {
     definition_type = 'abstracts';
-  } else if (object_definition.object_type === 'context') {
-    definition_type = object_definition.stack_type;
+  } else {
+    let factory_type = 'EventFactories';
+    if (object_definition.object_type === 'context') {
+      definition_type = object_definition.stack_type;
+      factory_type = 'ContextFactories';
+    }
+
+    // write some factories
+    // we don't want factories for abstracts; dow!
+    let factory = createFactory(object_definitions[object_type]);
+    object_factories[factory_type][object_type] = factory;
   }
   object_declarations[definition_type][object_type] = createDefinition(object_definitions[object_type]);
+}
+
+for (let factory_type in object_factories) {
+  const factories = {};
+  for (let factory of Object.keys(object_factories[factory_type]).sort((a, b) => a.localeCompare(b))) {
+    factories[factory] = object_factories[factory_type][factory];
+  }
+
+  const imports = Object.keys(factories);
+  if (factory_type == 'EventFactories') {
+    imports.push('AbstractLocationContext');
+    imports.push('AbstractGlobalContext');
+  }
+  const import_statement = `import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';`;
+
+  const filename = `../../tracker/src/${factory_type}.ts`;
+  fs.writeFileSync(filename, [...[import_statement], ...Object.values(factories)].join('\n'));
+  console.log(`Written ${Object.values(factories).length} factories to ${filename}`);
 }
 
 // now write some files

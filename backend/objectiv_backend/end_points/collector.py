@@ -185,7 +185,10 @@ def _get_http_context() -> ContextData:
 
     for h, v in flask.request.headers.items():
         if h in allowed_headers:
-            http_context[h.lower()] = v
+            if h == 'User-Agent':
+                http_context['user_agent'] = v
+            else:
+                http_context[h.lower()] = v
 
     http_context['_context_type'] = 'HttpContext'
     http_context['id'] = 'http_context'
