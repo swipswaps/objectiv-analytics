@@ -1,39 +1,39 @@
-import {AbstractSectionContext,AbstractItemContext,AbstractActionContext} from './abstracts';
+import { AbstractSectionContext, AbstractItemContext, AbstractActionContext } from './abstracts';
 export interface SectionContext extends AbstractSectionContext {
-	readonly _context_type: 'SectionContext';
+  readonly _context_type: 'SectionContext';
 }
 export interface WebDocumentContext extends AbstractSectionContext {
-	readonly _context_type: 'WebDocumentContext';
-	url: string;
+  readonly _context_type: 'WebDocumentContext';
+  url: string;
 }
 export interface ScreenContext extends AbstractSectionContext {
-	readonly _context_type: 'ScreenContext';
-	screen: string;
+  readonly _context_type: 'ScreenContext';
+  screen: string;
 }
 export interface ExpandableSectionContext extends AbstractSectionContext {
-	readonly _context_type: 'ExpandableSectionContext';
+  readonly _context_type: 'ExpandableSectionContext';
 }
 export interface MediaPlayerContext extends AbstractSectionContext {
-	readonly _context_type: 'MediaPlayerContext';
+  readonly _context_type: 'MediaPlayerContext';
 }
 export interface NavigationContext extends AbstractSectionContext {
-	readonly _context_type: 'NavigationContext';
+  readonly _context_type: 'NavigationContext';
 }
 export interface OverlayContext extends AbstractSectionContext {
-	readonly _context_type: 'OverlayContext';
+  readonly _context_type: 'OverlayContext';
 }
 export interface ItemContext extends AbstractItemContext {
-	readonly _context_type: 'ItemContext';
+  readonly _context_type: 'ItemContext';
 }
 export interface InputContext extends AbstractItemContext {
-	readonly _context_type: 'InputContext';
+  readonly _context_type: 'InputContext';
 }
 export interface ActionContext extends AbstractActionContext {
-	readonly _context_type: 'ActionContext';
+  readonly _context_type: 'ActionContext';
 }
 export interface ButtonContext extends AbstractActionContext {
-	readonly _context_type: 'ButtonContext';
+  readonly _context_type: 'ButtonContext';
 }
 export interface LinkContext extends AbstractActionContext {
-	readonly _context_type: 'LinkContext';
+  readonly _context_type: 'LinkContext';
 }
