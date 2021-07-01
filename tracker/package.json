@@ -11,10 +11,10 @@
     "prettier": "yarn workspaces foreach --exclude root --verbose run prettier",
     "list": "yarn workspaces list",
     "tsc": "yarn workspaces foreach --exclude root --verbose run tsc",
-    "test": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --verbose run test",
-    "test:ci": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --verbose run test:ci",
-    "test:coverage": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --verbose run test:coverage",
-    "publish": "yarn workspaces foreach --exclude root --verbose exec npm publish",
+    "test": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --verbose run test",
+    "test:ci": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --verbose run test:ci",
+    "test:coverage": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --verbose run test:coverage",
+    "publish": "yarn workspaces foreach --exclude root --exclude @objectiv/utilities --verbose exec npm publish",
     "utils:generate": "yarn workspace @objectiv/utilities generate && yarn prettier && yarn tsc"
   }
 }
