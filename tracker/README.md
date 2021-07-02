@@ -21,8 +21,9 @@ This is a complete list of the currently available packages.
 
 | Name                                  | Type    | Path                          | Links                                                     |
 | ------------------------------------- | ------- | ----------------------------- | --------------------------------------------------------- |
-| @objectiv/schema                      | core    | /core/schema                  | [README](/tracker/core/schema/README.md)                         |
-| @objectiv/tracker-core                | core    | /core/tracker                 | [README](/tracker/core/tracker/README.md)                         |
+| @objectiv/schema                      | core    | /core/schema                  | [README](/tracker/core/schema/README.md)                  |
+| @objectiv/tracker-core                | core    | /core/tracker                 | [README](/tracker/core/tracker/README.md)                 |
+| @objectiv/utilities                   | core    | /core/utilities               | [README](/tracker/core/utilities/README.md)               |
 | @objectiv/plugin-web-device-context   | plugin  | /plugins/web-device-context   | [README](/tracker/plugins/web-device-context/README.md)   |
 | @objectiv/plugin-web-document-context | plugin  | /plugins/web-document-context | [README](/tracker/plugins/web-document-context/README.md) |
 | @objectiv/tracker-web                 | tracker | /trackers/web                 | [README](/tracker/trackers/web/README.md)                 |
@@ -141,11 +142,14 @@ Install dependencies for all packages and links local packages to each other.
 ### `yarn prettier`
 Runs prettier for all packages in write mode.
 
-### `yarn lint`
-Lints all packages.
+### `yarn tsc`
+Runs the TypeScript compiler for all typed packages.
 
 ### `yarn test`
 Runs the tests for all packages.
+
+### `yarn test:ci`
+Runs the tests for all packages in CI mode.
 
 ### `yarn test:coverage`
 Runs the tests for all packages and collects coverage.
@@ -154,3 +158,11 @@ Coverage output will be produced in a `/coverage` folder under each package.
 ### `yarn build`
 Builds all packages.
 Build output will be produced in a `/dist` folder under each package.
+
+### `yarn publish`
+Publishes all public packages.
+
+### `yarn utils:generate`
+Runs the generator utility. This will generate:
+- The @objectiv/schema package TypeScript definitions from the OSF
+- The Context and Event factories in @objectiv/tracker-core package from the @objectiv/schema 
