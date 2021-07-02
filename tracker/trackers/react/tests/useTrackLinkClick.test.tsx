@@ -31,7 +31,7 @@ describe('useTrackLinkClick', () => {
 
   const Link = () => {
     const linkClickHandler = useTrackLinkClick(
-      makeLinkContext({ id: 'buttonA', path: '/path', text: 'confirm button'})
+      makeLinkContext({ id: 'buttonA', path: '/path', text: 'confirm button' })
     );
 
     return (

@@ -19,7 +19,7 @@ describe('WebDeviceContextPlugin', () => {
       __global_context: true,
       _context_type: 'DeviceContext',
       id: 'device',
-      'user_agent': USER_AGENT_MOCK_VALUE,
+      user_agent: USER_AGENT_MOCK_VALUE,
     });
   });
 
@@ -41,7 +41,7 @@ describe('WebDeviceContextPlugin', () => {
           __global_context: true,
           _context_type: 'DeviceContext',
           id: 'device',
-          'user_agent': USER_AGENT_MOCK_VALUE,
+          user_agent: USER_AGENT_MOCK_VALUE,
         },
       ])
     );

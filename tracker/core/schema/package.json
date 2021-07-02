@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "prettier": "prettier --write .",
-    "generate": "(cd src && node generator.js) && yarn prettier && yarn tsc --noEmit"
+    "tsc": "tsc --noEmit"
   },
   "devDependencies": {
     "prettier": "^2.3.0",

@@ -1,0 +1,16 @@
+{
+  "name": "@objectiv/utilities",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Objectiv Core Utilities",
+  "files": [
+    "src/generator.js"
+  ],
+  "scripts": {
+    "prettier": "prettier --write .",
+    "generate": "(cd src && node generator.js)"
+  },
+  "devDependencies": {
+    "prettier": "^2.3.0"
+  }
+}

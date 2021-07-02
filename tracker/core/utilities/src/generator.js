@@ -21,8 +21,14 @@ const DISCRIMINATING_PROPERTY_PREFIX = '_';
 const EVENT_DISCRIMINATOR = 'event';
 const CONTEXT_DISCRIMINATOR = '_context_type';
 
-// where to find the schema files, by default we look in the root of the repository
+// where to find the base schema files, by default we look in the root of the repository
 const schema_dir = '../../../../schema/';
+
+// where to find the core schema package files
+const core_schema_package_dir = '../../../core/schema/src/';
+
+// where to find the core tracker package source files
+const core_tracker_package_dir = '../../../core/tracker/src/';
 
 // name of base schema, will be loaded first
 const base_schema_file = 'base_schema.json';
@@ -536,14 +542,14 @@ for (let factory_type in object_factories) {
   }
   const import_statement = `import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';`;
 
-  const filename = `../../tracker/src/${factory_type}.ts`;
+  const filename = `${core_tracker_package_dir}${factory_type}.ts`;
   fs.writeFileSync(filename, [...[import_statement], ...Object.values(factories)].join('\n'));
   console.log(`Written ${Object.values(factories).length} factories to ${filename}`);
 }
 
 // now write some files
 for (let definition_type in object_declarations) {
-  const filename = `${definition_type}.d.ts`;
+  const filename = `${core_schema_package_dir}${definition_type}.d.ts`;
 
   // list of (abstract) classes to import (as they represent the top of the hierarchy)
   let imports = [];
@@ -575,7 +581,7 @@ for (let definition_type in object_declarations) {
 // generate index for all declarations
 // this includes all generated types, as well as those in static.d.ts
 const export_file_list = [...Object.keys(object_declarations), ['static']];
-const index_filename = 'index.d.ts';
+const index_filename = `${core_schema_package_dir}index.d.ts`;
 fs.writeFileSync(
   index_filename,
   export_file_list
