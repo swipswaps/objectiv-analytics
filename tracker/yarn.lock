@@ -2110,9 +2110,11 @@ __metadata:
     "@rollup/plugin-node-resolve": ^13.0.0
     "@types/jest": ^26.0.23
     jest: ^26.6.3
+    jest-extended: ^0.11.5
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
     jest-useragent-mock: ^0.1.1
+    mockdate: ^3.0.5
     prettier: ^2.3.0
     rollup: ^2.48.0
     rollup-plugin-cleanup: ^3.2.1
@@ -6043,6 +6045,13 @@ __metadata:
   bin:
     mkdirp: bin/cmd.js
   checksum: 1aa3a6a2d7514f094a91329ec09994f5d32d2955a4985ecbb3d86f2aaeafc4aa11521f98d606144c1d49cd9835004d9a73342709b8c692c92e59eacf37412468
+  languageName: node
+  linkType: hard
+
+"mockdate@npm:^3.0.5":
+  version: 3.0.5
+  resolution: "mockdate@npm:3.0.5"
+  checksum: 8098a98f0af3a143b7a3f9625c6ae525cad0b72c9798a82b9429e6c89bcb0c67e238126e5df8962169e8a503a51af18d03eea222051c8e67f62707277880ece0
   languageName: node
   linkType: hard
 

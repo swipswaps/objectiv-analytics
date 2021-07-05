@@ -1,4 +1,4 @@
-import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
+import { addTransportTime, TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
 
 /**
  * A TrackerTransport that simply logs TrackerEvents to the console as debug messages.
@@ -6,8 +6,10 @@ import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
 export class DebugTransport implements TrackerTransport {
   readonly transportName = 'DebugTransport';
   handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
+    // We simulate a Transport that adds the transport_time
+    const events = addTransportTime(args);
     // We stringify and re-parse the TrackerEvent for our custom serializer to clean up discriminatory properties
-    args.forEach((trackerEvent) => console.debug(JSON.parse(JSON.stringify(trackerEvent))));
+    events.forEach((trackerEvent) => console.debug(JSON.parse(JSON.stringify(trackerEvent))));
   }
 
   isUsable(): boolean {

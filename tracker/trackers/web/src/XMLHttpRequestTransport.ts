@@ -1,4 +1,4 @@
-import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
+import { addTransportTime, TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
 
 /**
  * The default XMLHttpRequest function implementation.
@@ -8,7 +8,7 @@ export const defaultXMLHttpRequestFunction = ({
   events,
 }: {
   endpoint: string;
-  events: TrackerEvent[];
+  events: [TrackerEvent, ...TrackerEvent[]];
 }): Promise<unknown> => {
   return new Promise(function (resolve, reject) {
     const xhr = new XMLHttpRequest();
@@ -32,7 +32,7 @@ export const defaultXMLHttpRequestFunction = ({
         statusText: xhr.statusText,
       });
     };
-    xhr.send(JSON.stringify(events));
+    xhr.send(JSON.stringify(addTransportTime(events)));
   });
 };
 

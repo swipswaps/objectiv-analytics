@@ -1,5 +1,17 @@
 import { BeaconAPITransport } from '../src';
 import { TrackerEvent } from '@objectiv/tracker-core';
+import MockDate from 'mockdate';
+
+const mockedMs = 1434319925275;
+
+beforeEach(() => {
+  MockDate.reset();
+  MockDate.set(mockedMs);
+});
+
+afterEach(() => {
+  MockDate.reset();
+});
 
 // TODO add actual Karma + Chrome tests to test the real API, instead of the mock below
 
@@ -18,7 +30,15 @@ describe('BeaconAPITransport', () => {
       endpoint: MOCK_ENDPOINT,
     });
     await testTransport.handle(testEvent);
-    expect(navigator.sendBeacon).toHaveBeenCalledWith(MOCK_ENDPOINT, JSON.stringify([testEvent]));
+    expect(navigator.sendBeacon).toHaveBeenCalledWith(
+      MOCK_ENDPOINT,
+      JSON.stringify([
+        {
+          ...testEvent,
+          transport_time: mockedMs,
+        },
+      ])
+    );
   });
 
   it('should be usable only for HTTP or HTTPS endpoints', async () => {

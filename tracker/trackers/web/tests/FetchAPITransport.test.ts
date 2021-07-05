@@ -1,6 +1,9 @@
 import fetchMock from 'jest-fetch-mock';
+import MockDate from 'mockdate';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
 import { MemoryQueue, QueuedTransport, TrackerEvent } from '@objectiv/tracker-core';
+
+const mockedMs = 1434319925275;
 
 beforeAll(() => {
   fetchMock.enableMocks();
@@ -8,6 +11,12 @@ beforeAll(() => {
 
 beforeEach(() => {
   fetchMock.resetMocks();
+  MockDate.reset();
+  MockDate.set(mockedMs);
+});
+
+afterEach(() => {
+  MockDate.reset();
 });
 
 describe('FetchAPITransport', () => {
@@ -25,7 +34,12 @@ describe('FetchAPITransport', () => {
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
-        body: JSON.stringify([testEvent]),
+        body: JSON.stringify([
+          {
+            ...testEvent,
+            transport_time: mockedMs,
+          },
+        ]),
         ...defaultFetchParameters,
       })
     );
@@ -48,7 +62,12 @@ describe('FetchAPITransport', () => {
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
-        body: JSON.stringify([testEvent]),
+        body: JSON.stringify([
+          {
+            ...testEvent,
+            transport_time: mockedMs,
+          },
+        ]),
         ...customParameters,
       })
     );
@@ -92,7 +111,12 @@ describe('FetchAPITransport', () => {
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
-        body: JSON.stringify([testEvent]),
+        body: JSON.stringify([
+          {
+            ...testEvent,
+            transport_time: mockedMs,
+          },
+        ]),
         ...defaultFetchParameters,
       })
     );
