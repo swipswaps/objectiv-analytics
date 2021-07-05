@@ -24,7 +24,7 @@
         "tracking_time": {
           "type": "integer"
         },
-        "sending_time": {
+        "transport_time": {
           "type": "integer"
         }
       }

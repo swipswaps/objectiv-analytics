@@ -13,35 +13,27 @@ import { generateUUID, getObjectKeys } from './helpers';
  * Contexts are entirely optional, although Collectors will mostly likely enforce minimal requirements around them.
  * Eg. An interactive TrackerEvent without a Location Stack is probably not descriptive enough to be acceptable.
  */
-export type TrackerEventConfig = Pick<AbstractEvent, 'event'> &
-  ContextsConfig & {
-    /**
-     * Unless the Event config has been preconfigured with an id the TrackerEvent will generate one for us.
-     * This happens, for example, when cloning Events; in such cases we want to preserve the original Event id.
-     */
-    id?: string;
-  };
+export type TrackerEventConfig = Pick<AbstractEvent, 'event'> & ContextsConfig;
 
 /**
- * Some properties are not meant to be set by developers and, instead, are automatically populated by the Tracker.
- * In this type we redefine them as Optional. Setting them manually may be handy for testing and imports.
- * All TrackerEvents will implement this type, while the Tracker and Transport take care of the missing properties.
+ * An Event before it has been handed over to the Tracker.
+ * Properties that will be set by the Tracker or Transport are omitted: `id`, `tracking_time`, `transport_time`
  */
-export type UntrackedAbstractEvent = Omit<AbstractEvent, 'id' | 'tracking_time' | 'sending_time'> & {
-  id?: string;
-  tracking_time?: number;
-  sending_time?: number;
-};
+export type UntrackedEvent = Omit<AbstractEvent, 'id' | 'tracking_time' | 'transport_time'>;
+
+/**
+ * An Event right after the Tracker started handling it. Before enrichment by Plugins and Transport.
+ * The Event will have an unique `id` and a `tracking_time` assigned by the Tracker.
+ * Properties that will be set by the Transport are omitted: `transport_time`
+ */
+export type TrackedEvent = Omit<AbstractEvent, 'transport_time'>;
 
 /**
  * Our main TrackerEvent interface and basic implementation
  */
-export class TrackerEvent implements UntrackedAbstractEvent, Contexts {
+export class TrackerEvent implements UntrackedEvent, Contexts {
   // Event interface
   readonly event: string;
-  readonly id: string;
-  tracking_time?: number;
-  sending_time?: number;
 
   // Contexts interface
   readonly location_stack: AbstractLocationContext[];
@@ -55,13 +47,10 @@ export class TrackerEvent implements UntrackedAbstractEvent, Contexts {
    * ContextConfigs are used to configure location_stack and global_contexts. If multiple configurations have been
    * provided they will be merged onto each other to produce a single location_stack and global_contexts.
    */
-  constructor({ event, id, ...otherEventProps }: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
+  constructor({ event, ...otherEventProps }: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
     // Let's copy the entire eventConfiguration in state
     this.event = event;
     Object.assign(this, otherEventProps);
-
-    // Generate a unique UUID v4 for this event, unless we have been given an Event with a pre-assigned id (eg: cloning)
-    this.id = id ?? generateUUID();
 
     // Start with empty context lists
     let new_location_stack: AbstractLocationContext[] = [];
@@ -105,9 +94,27 @@ export class TrackerEvent implements UntrackedAbstractEvent, Contexts {
 
     return cleanedTrackerEvent;
   }
+}
 
-  setTrackingTime() {
+/**
+ * A TrackerEvent that's been handed over to a Tracker.
+ * At construction it decorates itself with `id` and `tracking_time`.
+ * This event is factored by the Tracker immediately after receiving a TrackerEvent via the trackEvent method.
+ */
+export class TrackerTrackedEvent extends TrackerEvent implements TrackedEvent {
+  id: string;
+  tracking_time: number;
+
+  /**
+   * Extends the regular TrackerEvent by automatically setting a tracking_time at construction.
+   */
+  constructor(config: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
+    super(config, ...contextConfigs);
+
+    // Generate a unique UUID v4 for this event
+    this.id = generateUUID();
+
+    // Set tracking_time
     this.tracking_time = Date.now();
-    return this;
   }
 }

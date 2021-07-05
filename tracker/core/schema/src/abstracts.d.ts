@@ -4,7 +4,7 @@ export abstract class AbstractEvent {
   event: string;
   id: string;
   tracking_time: number;
-  sending_time: number;
+  transport_time: number;
 }
 export abstract class AbstractContext {
   id: string;
