@@ -106,7 +106,7 @@ export class TrackerTrackedEvent extends TrackerEvent implements TrackedEvent {
   tracking_time: number;
 
   /**
-   * Extends the regular TrackerEvent by automatically setting a tracking_time at construction.
+   * Extends the regular TrackerEvent by automatically setting `id` and `tracking_time` properties.
    */
   constructor(config: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
     super(config, ...contextConfigs);
