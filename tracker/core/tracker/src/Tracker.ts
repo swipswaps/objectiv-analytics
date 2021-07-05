@@ -65,6 +65,9 @@ export class Tracker implements Contexts {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
     const eventToTrack = new TrackerEvent(event, this);
 
+    // Set tracking_time
+    eventToTrack.tracking_time = Date.now();
+
     // Execute all plugins `beforeTransport` callback. Plugins may enrich or add Contexts to the TrackerEvent
     if (this.plugins) {
       this.plugins.beforeTransport(eventToTrack);

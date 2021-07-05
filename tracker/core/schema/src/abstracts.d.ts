@@ -3,6 +3,8 @@ export abstract class AbstractEvent {
   global_contexts: AbstractGlobalContext[];
   event: string;
   id: string;
+  tracking_time: number;
+  sending_time: number;
 }
 export abstract class AbstractContext {
   id: string;

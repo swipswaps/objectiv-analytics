@@ -156,8 +156,9 @@ function createFactory(
   // factories for the events have some properties that need to be treated differently
   // - location_stack and global_contexts are always optional because most often the Tracker provides them
   // - id is not overridable because the Tracker is responsible to provide one
+  // - tracking_time and sending_time are also not overridable because the Tracker is responsible to provide one
   let are_all_props_optional = true;
-  let return_type = params.class_name;
+  let return_omit = [];
   for (let mp in merged_properties) {
     if (merged_properties[mp]['discriminator']) {
       discriminators.push(`${mp}: true`);
@@ -167,9 +168,9 @@ function createFactory(
         // we provide an empty array as default here
         properties.push(`${mp}: props?.${mp} ?? []`);
         props.push(`${mp}?: ${merged_properties[mp]['type']}`);
-      } else if (params.object_type === 'event' && mp === 'id') {
-        // simply don't add the id property and adjust the return type to omit it as well
-        return_type = `Omit<${return_type}, 'id'>`;
+      } else if (params.object_type === 'event' && ['id', 'tracking_time', 'sending_time'].includes(mp)) {
+        // simply don't add the property and adjust the return type to omit it as well
+        return_omit.push(mp);
       } else {
         are_all_props_optional = false;
         properties.push(`${mp}: props.${mp}`);
@@ -179,6 +180,8 @@ function createFactory(
       properties.push(`${mp}: ${merged_properties[mp]['value']}`);
     }
   }
+  const class_name = params.class_name;
+  const return_type = return_omit.length > 0 ? `Omit<${class_name}, '${return_omit.join("' | '")}'>` : class_name;
   const tpl =
     `export const make${params.class_name} = ( props${are_all_props_optional ? '?' : ''}: { ${props.join('; ')} }): 
     ${return_type} => ({\n` +

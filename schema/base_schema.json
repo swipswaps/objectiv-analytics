@@ -20,6 +20,12 @@
         },
         "id": {
           "type": "string"
+        },
+        "tracking_time": {
+          "type": "integer"
+        },
+        "sending_time": {
+          "type": "integer"
         }
       }
     },

@@ -13,18 +13,35 @@ import { generateUUID, getObjectKeys } from './helpers';
  * Contexts are entirely optional, although Collectors will mostly likely enforce minimal requirements around them.
  * Eg. An interactive TrackerEvent without a Location Stack is probably not descriptive enough to be acceptable.
  */
-export type TrackerEventConfig = Pick<AbstractEvent, 'event'> & ContextsConfig & {
-  // Unless the Event config has been preconfigured with an id the TrackerEvent will generate one for us
+export type TrackerEventConfig = Pick<AbstractEvent, 'event'> &
+  ContextsConfig & {
+    /**
+     * Unless the Event config has been preconfigured with an id the TrackerEvent will generate one for us.
+     * This happens, for example, when cloning Events; in such cases we want to preserve the original Event id.
+     */
+    id?: string;
+  };
+
+/**
+ * Some properties are not meant to be set by developers and, instead, are automatically populated by the Tracker.
+ * In this type we redefine them as Optional. Setting them manually may be handy for testing and imports.
+ * All TrackerEvents will implement this type, while the Tracker and Transport take care of the missing properties.
+ */
+export type UntrackedAbstractEvent = Omit<AbstractEvent, 'id' | 'tracking_time' | 'sending_time'> & {
   id?: string;
+  tracking_time?: number;
+  sending_time?: number;
 };
 
 /**
  * Our main TrackerEvent interface and basic implementation
  */
-export class TrackerEvent implements AbstractEvent, Contexts {
+export class TrackerEvent implements UntrackedAbstractEvent, Contexts {
   // Event interface
   readonly event: string;
   readonly id: string;
+  tracking_time?: number;
+  sending_time?: number;
 
   // Contexts interface
   readonly location_stack: AbstractLocationContext[];
@@ -43,7 +60,7 @@ export class TrackerEvent implements AbstractEvent, Contexts {
     this.event = event;
     Object.assign(this, otherEventProps);
 
-    // Generate a unique UUID v4 for this event, unless we have been given an Event with a pre-assigned id
+    // Generate a unique UUID v4 for this event, unless we have been given an Event with a pre-assigned id (eg: cloning)
     this.id = id ?? generateUUID();
 
     // Start with empty context lists
@@ -87,5 +104,10 @@ export class TrackerEvent implements AbstractEvent, Contexts {
     cleanedTrackerEvent.global_contexts.map(cleanObjectFromDiscriminatingProperties);
 
     return cleanedTrackerEvent;
+  }
+
+  setTrackingTime() {
+    this.tracking_time = Date.now();
+    return this;
   }
 }
