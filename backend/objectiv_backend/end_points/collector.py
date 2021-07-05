@@ -3,7 +3,7 @@ from datetime import datetime
 
 import flask
 import time
-from typing import cast, List
+from typing import List
 import uuid
 
 from flask import Response, Request
@@ -48,7 +48,7 @@ def collect() -> Response:
     Map event data to a list of EventWithId entities.
     Event data has been validated against the schema in the _get_event_data above. So all Events will have an `id`. 
     """
-    events_with_id = [EventWithId(id=cast(uuid.UUID, event.get('id')), event=event) for event in events]
+    events_with_id = [EventWithId(id=uuid.UUID(event.get('id')), event=event) for event in events]
 
     if not get_collector_config().async_mode:
         ok_events, nok_events, event_errors = process_events_entry(events=events_with_id)
