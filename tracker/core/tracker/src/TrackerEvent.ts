@@ -38,13 +38,13 @@ export class TrackerEvent implements AbstractEvent, Contexts {
    * ContextConfigs are used to configure location_stack and global_contexts. If multiple configurations have been
    * provided they will be merged onto each other to produce a single location_stack and global_contexts.
    */
-  constructor({ event, ...otherEventProps }: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
+  constructor({ event, id, ...otherEventProps }: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
     // Let's copy the entire eventConfiguration in state
     this.event = event;
     Object.assign(this, otherEventProps);
 
     // Generate a unique UUID v4 for this event, unless we have been given an Event with a pre-assigned id
-    this.id = otherEventProps.id ?? generateUUID();
+    this.id = id ?? generateUUID();
 
     // Start with empty context lists
     let new_location_stack: AbstractLocationContext[] = [];
