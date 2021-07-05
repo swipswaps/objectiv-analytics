@@ -3,8 +3,7 @@ from datetime import datetime
 
 import flask
 import time
-from typing import List, Mapping
-import uuid
+from typing import List
 
 from flask import Response, Request
 
@@ -44,11 +43,11 @@ def collect() -> Response:
     add_cookie_id_contexts(events)
     set_time_in_events(events, current_millis)
 
-    # Here we assign unique event_ids to each event. In the future we'll do that in the tracker. That way
-    # the tracker doesn't have to worry about resending events. As long as the tracker makes sure the
-    # event_ids are consistent, then we can deduplicate them here. But that functionality hasn't been
-    # implemented yet in the tracker, so we assign the ids here.
-    events_with_id = [EventWithId(id=uuid.uuid4(), event=event) for event in events]
+    """
+    Map event data to a list of EventWithId entities.
+    Event data has been validated against the schema in the _get_event_data above. So all Events will have an `id`. 
+    """
+    events_with_id = [EventWithId(id=event.get('id'), event=event) for event in events]
 
     if not get_collector_config().async_mode:
         ok_events, nok_events, event_errors = process_events_entry(events=events_with_id)
