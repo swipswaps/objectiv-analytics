@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid';
+
 /**
  * Generic decorator to extend Interfaces and ensure they will have a class constructor
  */
@@ -12,3 +14,8 @@ export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
  * A TypeScript friendly Object.keys
  */
 export const getObjectKeys = Object.keys as <T extends object>(obj: T) => Array<keyof T>;
+
+/**
+ * A UUID v4 generator
+ */
+export const generateUUID = () => uuidv4();

@@ -153,8 +153,11 @@ function createFactory(
   const properties = [];
   const props = [];
 
-  // factories for the events have optional location_stack and global_contexts because often the Tracker provides them
+  // factories for the events have some properties that need to be treated differently
+  // - location_stack and global_contexts are always optional because most often the Tracker provides them
+  // - id is not overridable because the Tracker is responsible to provide one
   let are_all_props_optional = true;
+  let return_type = params.class_name;
   for (let mp in merged_properties) {
     if (merged_properties[mp]['discriminator']) {
       discriminators.push(`${mp}: true`);
@@ -164,6 +167,9 @@ function createFactory(
         // we provide an empty array as default here
         properties.push(`${mp}: props?.${mp} ?? []`);
         props.push(`${mp}?: ${merged_properties[mp]['type']}`);
+      } else if (params.object_type === 'event' && mp === 'id') {
+        // simply don't add the id property and adjust the return type to omit it as well
+        return_type = `Omit<${return_type}, 'id'>`;
       } else {
         are_all_props_optional = false;
         properties.push(`${mp}: props.${mp}`);
@@ -174,12 +180,11 @@ function createFactory(
     }
   }
   const tpl =
-    `export const make${params.class_name} = ( props${are_all_props_optional ? '?' : ''}: { ${props.join('; ')} }): ${
-      params.class_name
-    } => ({\n` +
+    `export const make${params.class_name} = ( props${are_all_props_optional ? '?' : ''}: { ${props.join('; ')} }): 
+    ${return_type} => ({\n` +
     `\t${discriminators.join(',\n\t')},\n` +
     `\t${properties.join(',\n\t')},\n` +
-    `});`;
+    `});\n`;
 
   return tpl;
 }
@@ -541,7 +546,7 @@ for (let factory_type in object_factories) {
     imports.push('AbstractLocationContext');
     imports.push('AbstractGlobalContext');
   }
-  const import_statement = `import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';`;
+  const import_statement = `import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';\n`;
 
   const filename = `${core_tracker_package_dir}${factory_type}.ts`;
   fs.writeFileSync(filename, [...[import_statement], ...Object.values(factories)].join('\n'));
