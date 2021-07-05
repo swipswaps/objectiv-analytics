@@ -2,7 +2,7 @@ import { makeWebDocumentContext, Tracker } from '@objectiv/tracker-core';
 import { trackDocumentLoadedEvent } from '../src/';
 import { SpyTransport } from './mocks/SpyTransport';
 
-const UUID_REGEX = /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
+const UUID_REGEX = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 
 describe('WebDocumentLoadedEvent', () => {
   it('should track as expected when document has been loaded already', () => {
