@@ -23,6 +23,7 @@ EVENT_LIST_SCHEMA = {
             },
             "id": {
                 "type": "string",
+                "pattern": "^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$"
             },
             # TODO: global_contexts and location_stack are identical for now but we could make this very strict
             "global_contexts": {
