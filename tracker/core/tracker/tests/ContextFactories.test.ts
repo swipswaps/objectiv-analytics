@@ -103,37 +103,35 @@ describe('Context Factories', () => {
   });
 
   it('ActionContext', () => {
-    expect(makeActionContext({ id: 'chevron-right', path: '/next', text: 'Next Slide' })).toStrictEqual({
+    expect(makeActionContext({ id: 'chevron-right', text: 'Next Slide' })).toStrictEqual({
       __location_context: true,
       __item_context: true,
       __action_context: true,
       _context_type: 'ActionContext',
       id: 'chevron-right',
-      path: '/next',
       text: 'Next Slide',
     });
   });
 
   it('ButtonContext', () => {
-    expect(makeButtonContext({ id: 'confirm-data', path: '', text: 'Confirm' })).toStrictEqual({
+    expect(makeButtonContext({ id: 'confirm-data', text: 'Confirm' })).toStrictEqual({
       __location_context: true,
       __item_context: true,
       __action_context: true,
       _context_type: 'ButtonContext',
       id: 'confirm-data',
-      path: '',
       text: 'Confirm',
     });
   });
 
   it('LinkContext', () => {
-    expect(makeLinkContext({ id: 'confirm-data', path: '/some/url', text: 'Click for Details' })).toStrictEqual({
+    expect(makeLinkContext({ id: 'confirm-data', href: '/some/url', text: 'Click for Details' })).toStrictEqual({
       __location_context: true,
       __item_context: true,
       __action_context: true,
       _context_type: 'LinkContext',
       id: 'confirm-data',
-      path: '/some/url',
+      href: '/some/url',
       text: 'Click for Details',
     });
   });

@@ -167,9 +167,6 @@
         "ItemContext"
       ],
       "properties": {
-        "path": {
-          "type": "string"
-        },
         "text": {
           "type": "string"
         }
@@ -183,7 +180,12 @@
     "LinkContext": {
       "parents": [
         "ActionContext"
-      ]
+      ],
+      "properties": {
+        "href": {
+          "type": "string"
+        }
+      }
     },
     "DeviceContext": {
       "parents": [

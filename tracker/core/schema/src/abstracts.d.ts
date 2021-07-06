@@ -33,6 +33,5 @@ export abstract class AbstractItemContext extends AbstractLocationContext {
 }
 export abstract class AbstractActionContext extends AbstractItemContext {
   readonly __action_context = true;
-  path: string;
   text: string;
 }
