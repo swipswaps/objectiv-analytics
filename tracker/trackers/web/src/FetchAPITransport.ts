@@ -1,4 +1,4 @@
-import { addTransportTime, TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
+import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
 
 /**
  * The default set of parameters for the fetch API call.
@@ -25,9 +25,10 @@ export const defaultFetchFunction = async ({
   events: [TrackerEvent, ...TrackerEvent[]];
   parameters?: typeof defaultFetchParameters;
 }): Promise<Response> => {
+  events.forEach((event) => event.setTransportTime());
   return fetch(endpoint, {
     ...parameters,
-    body: JSON.stringify(addTransportTime(events)),
+    body: JSON.stringify(events),
   });
 };
 

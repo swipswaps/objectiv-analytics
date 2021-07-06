@@ -34,6 +34,9 @@ export type TrackedEvent = Omit<AbstractEvent, 'transport_time'>;
 export class TrackerEvent implements UntrackedEvent, Contexts {
   // Event interface
   readonly event: string;
+  id?: string;
+  tracking_time?: number;
+  transport_time?: number;
 
   // Contexts interface
   readonly location_stack: AbstractLocationContext[];
@@ -52,6 +55,11 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
     this.event = event;
     Object.assign(this, otherEventProps);
 
+    // If the Event does not have an id yet, generate one
+    if (!this.id) {
+      this.id = generateUUID();
+    }
+
     // Start with empty context lists
     let new_location_stack: AbstractLocationContext[] = [];
     let new_global_contexts: AbstractGlobalContext[] = [];
@@ -65,6 +73,22 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
     // And finally add the TrackerEvent Contexts on top. For Global Contexts instead we do the opposite.
     this.location_stack = [...new_location_stack, ...(otherEventProps.location_stack ?? [])];
     this.global_contexts = [...(otherEventProps.global_contexts ?? []), ...new_global_contexts];
+  }
+
+  /**
+   * Tracking time setter.
+   * Defaults to Date.now() if not timestampMs is provided.
+   */
+  setTrackingTime(timestampMs: number = Date.now()) {
+    this.tracking_time = timestampMs;
+  }
+
+  /**
+   * Transport time setter.
+   * Defaults to Date.now() if not timestampMs is provided.
+   */
+  setTransportTime(timestampMs: number = Date.now()) {
+    this.transport_time = timestampMs;
   }
 
   /**
@@ -93,28 +117,5 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
     cleanedTrackerEvent.global_contexts.map(cleanObjectFromDiscriminatingProperties);
 
     return cleanedTrackerEvent;
-  }
-}
-
-/**
- * A TrackerEvent that's been handed over to a Tracker.
- * At construction it decorates itself with `id` and `tracking_time`.
- * This event is factored by the Tracker immediately after receiving a TrackerEvent via the trackEvent method.
- */
-export class TrackerTrackedEvent extends TrackerEvent implements TrackedEvent {
-  id: string;
-  tracking_time: number;
-
-  /**
-   * Extends the regular TrackerEvent by automatically setting `id` and `tracking_time` properties.
-   */
-  constructor(config: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
-    super(config, ...contextConfigs);
-
-    // Generate a unique UUID v4 for this event
-    this.id = generateUUID();
-
-    // Set tracking_time
-    this.tracking_time = Date.now();
   }
 }

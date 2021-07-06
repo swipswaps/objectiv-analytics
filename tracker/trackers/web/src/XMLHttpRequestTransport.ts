@@ -1,4 +1,4 @@
-import { addTransportTime, TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
+import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
 
 /**
  * The default XMLHttpRequest function implementation.
@@ -32,7 +32,8 @@ export const defaultXMLHttpRequestFunction = ({
         statusText: xhr.statusText,
       });
     };
-    xhr.send(JSON.stringify(addTransportTime(events)));
+    events.forEach((event) => event.setTransportTime());
+    xhr.send(JSON.stringify(events));
   });
 };
 

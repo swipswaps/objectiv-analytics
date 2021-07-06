@@ -137,12 +137,3 @@ export class QueuedTransport implements TrackerTransport {
     return this.transport.isUsable();
   }
 }
-
-/**
- * A helper method used by some sending Transports. Enriches a list of events with a `transport_time` attribute.
- */
-export const addTransportTime = (events: [TrackerEvent, ...TrackerEvent[]]) =>
-  events.map((event) => ({
-    ...event,
-    transport_time: Date.now(),
-  }));

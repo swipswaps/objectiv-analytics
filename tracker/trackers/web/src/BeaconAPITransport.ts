@@ -1,4 +1,4 @@
-import { addTransportTime, TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
+import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
 
 /**
  * The configuration of the BeaconAPITransport class
@@ -23,8 +23,8 @@ export class BeaconAPITransport implements TrackerTransport {
   }
 
   handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
-    const events = addTransportTime(args);
-    navigator.sendBeacon(this.endpoint, JSON.stringify(events));
+    args.forEach((event) => event.setTransportTime());
+    navigator.sendBeacon(this.endpoint, JSON.stringify(args));
   }
 
   isUsable(): boolean {
