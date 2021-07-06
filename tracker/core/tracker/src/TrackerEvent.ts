@@ -22,13 +22,6 @@ export type TrackerEventConfig = Pick<AbstractEvent, 'event'> & ContextsConfig;
 export type UntrackedEvent = Omit<AbstractEvent, 'id' | 'tracking_time' | 'transport_time'>;
 
 /**
- * An Event right after the Tracker started handling it. Before enrichment by Plugins and Transport.
- * The Event will have an unique `id` and a `tracking_time` assigned by the Tracker.
- * Properties that will be set by the Transport are omitted: `transport_time`
- */
-export type TrackedEvent = Omit<AbstractEvent, 'transport_time'>;
-
-/**
  * Our main TrackerEvent interface and basic implementation
  */
 export class TrackerEvent implements UntrackedEvent, Contexts {
