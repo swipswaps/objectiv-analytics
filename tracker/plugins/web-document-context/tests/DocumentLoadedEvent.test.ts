@@ -2,6 +2,8 @@ import { makeWebDocumentContext, Tracker } from '@objectiv/tracker-core';
 import { trackDocumentLoadedEvent } from '../src/';
 import { SpyTransport } from './mocks/SpyTransport';
 
+const UUID_REGEX = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
+
 describe('WebDocumentLoadedEvent', () => {
   it('should track as expected when document has been loaded already', () => {
     const spyTransport = new SpyTransport();
@@ -22,6 +24,7 @@ describe('WebDocumentLoadedEvent', () => {
     expect(spyTransport.handle).toHaveBeenCalledWith({
       __non_interactive_event: true,
       event: 'DocumentLoadedEvent',
+      id: expect.stringMatching(UUID_REGEX),
       global_contexts: [],
       location_stack: [
         {
@@ -69,6 +72,7 @@ describe('WebDocumentLoadedEvent', () => {
     expect(spyTransport.handle).toHaveBeenCalledWith({
       __non_interactive_event: true,
       event: 'DocumentLoadedEvent',
+      id: expect.stringMatching(UUID_REGEX),
       global_contexts: [],
       location_stack: [
         {
