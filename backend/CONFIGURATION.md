@@ -16,11 +16,11 @@ include extensive error reporting as to why certain events have been invalidated
 Currently, the only supported non-experimental output option for the collector is Postgres.
 
 Postgres variables:
-- `PG_HOSTNAME`      - Default: `localhost`
-- `PG_PORT`          - Default: `5432`
-- `PG_DATABASE_NAME` - Default: `objectiv`
-- `PG_USER`          - Default: `objectiv`
-- `PG_PASSWORD`
+- `POSTGRES_HOSTNAME`      - Default: `localhost`
+- `POSTGRES_PORT`          - Default: `5432`
+- `POSTGRES_DB`             - Default: `objectiv`
+- `POSTGRES_USER`          - Default: `objectiv`
+- `POSTGRES_PASSWORD`       - Needs to be set, as there's no default
 
 ## Experimental Configuration Options
 There are some additional experimental configuration options. These are not (yet) supported and might be
