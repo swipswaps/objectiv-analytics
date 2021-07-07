@@ -153,18 +153,19 @@ function createFactory(
   const properties = [];
   const props = [];
 
-  // factories for the events have some optional parameters
-  const optional = params.object_type === 'event' ? '?' : '';
+  // factories for the events have optional location_stack and global_contexts because often the Tracker provides them
+  let are_all_props_optional = true;
   for (let mp in merged_properties) {
     if (merged_properties[mp]['discriminator']) {
       discriminators.push(`${mp}: true`);
     } else if (merged_properties[mp]['type']) {
-      if (optional === '?') {
+      if (params.object_type === 'event' && ['location_stack', 'global_contexts'].includes(mp)) {
         // because the global_contexts and location_stack arrays are optional
         // we provide an empty array as default here
         properties.push(`${mp}: props?.${mp} ?? []`);
         props.push(`${mp}?: ${merged_properties[mp]['type']}`);
       } else {
+        are_all_props_optional = false;
         properties.push(`${mp}: props.${mp}`);
         props.push(`${mp}: ${merged_properties[mp]['type']}`);
       }
@@ -173,7 +174,7 @@ function createFactory(
     }
   }
   const tpl =
-    `export const make${params.class_name} = ( props${optional}: { ${props.join('; ')} }): ${
+    `export const make${params.class_name} = ( props${are_all_props_optional ? '?' : ''}: { ${props.join('; ')} }): ${
       params.class_name
     } => ({\n` +
     `\t${discriminators.join(',\n\t')},\n` +
