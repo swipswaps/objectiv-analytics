@@ -123,7 +123,7 @@ describe('TrackerEvent', () => {
     expect(testEventClone1_2.id).toBe(testEvent.id);
   });
 
-  describe("setTrackingTime", () => {
+  describe('setTrackingTime', () => {
     it('should use Date.now() when timestampMs is not provided', () => {
       const testEvent = new TrackerEvent({ event: 'test-event' });
       expect(testEvent.tracking_time).toBeUndefined();
@@ -139,9 +139,9 @@ describe('TrackerEvent', () => {
       expect(testEvent.tracking_time).toBe(timestampMs);
       expect(testEvent.tracking_time).not.toBe(mockedMs);
     });
-  })
+  });
 
-  describe("setTransportTime", () => {
+  describe('setTransportTime', () => {
     it('should use Date.now() when timestampMs is not provided', () => {
       const testEvent = new TrackerEvent({ event: 'test-event' });
       expect(testEvent.transport_time).toBeUndefined();
@@ -157,5 +157,5 @@ describe('TrackerEvent', () => {
       expect(testEvent.transport_time).toBe(timestampMs);
       expect(testEvent.transport_time).not.toBe(mockedMs);
     });
-  })
+  });
 });
