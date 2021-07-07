@@ -3,7 +3,7 @@ import {
   makeClickEvent,
   makeDeviceContext,
   makeDocumentLoadedEvent,
-  makeInputChangeEvent,
+  makeInputChangeEvent, makeInteractiveEvent, makeNonInteractiveEvent,
   makeSectionContext,
   makeSectionHiddenEvent,
   makeSectionVisibleEvent,
@@ -19,6 +19,36 @@ const sectionA = makeSectionContext({ id: 'A' });
 const device = makeDeviceContext({ id: 'device-123', user_agent: '123' });
 
 describe('Event Factories', () => {
+  it('InteractiveEvent', () => {
+    expect(makeInteractiveEvent()).toStrictEqual({
+      __interactive_event: true,
+      event: 'InteractiveEvent',
+      global_contexts: [],
+      location_stack: [],
+    });
+    expect(makeInteractiveEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __interactive_event: true,
+      event: 'InteractiveEvent',
+      global_contexts: [device],
+      location_stack: [sectionA],
+    });
+  });
+
+  it('NonInteractiveEvent', () => {
+    expect(makeNonInteractiveEvent()).toStrictEqual({
+      __non_interactive_event: true,
+      event: 'NonInteractiveEvent',
+      global_contexts: [],
+      location_stack: [],
+    });
+    expect(makeNonInteractiveEvent({ location_stack: [sectionA], global_contexts: [device] })).toStrictEqual({
+      __non_interactive_event: true,
+      event: 'NonInteractiveEvent',
+      global_contexts: [device],
+      location_stack: [sectionA],
+    });
+  });
+
   it('DocumentLoadedEvent', () => {
     expect(makeDocumentLoadedEvent()).toStrictEqual({
       __non_interactive_event: true,
