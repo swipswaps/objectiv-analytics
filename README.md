@@ -34,7 +34,7 @@ docker-compose up    # spin up Objective pipeline
 This will spin up three images:
 * `objectiv_collector` - Endpoint that the Objectiv-tracker can send events to (http://localhost:5000).
 * `objectiv_postgres` - Database to store data.
-* `objectiv_notebook` - Jupyter notebook that can be used to query the data (http://localhost:8080).
+* `objectiv_notebook` - Jupyter notebook that can be used to query the data (http://localhost:8888).
 
 SECURITY WARNING: The above docker-compose commands start a postgres container that allows connections
 without verifying passwords. Do not use this in production or on a shared system!
