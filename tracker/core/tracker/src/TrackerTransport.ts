@@ -130,7 +130,7 @@ export class QueuedTransport implements TrackerTransport {
   }
 
   handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
-    this.queue.enqueue(...args);
+    this.queue.push(...args);
   }
 
   isUsable(): boolean {

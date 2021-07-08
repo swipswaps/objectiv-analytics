@@ -1,11 +1,11 @@
 import {
-  MemoryQueue,
+  ContextsConfig,
+  QueuedTransport,
   Tracker,
   TrackerEvent,
-  QueuedTransport,
+  TrackerQueue,
   TransportGroup,
   TransportSwitch,
-  ContextsConfig,
 } from '../src';
 import { LogTransport, UnusableTransport } from './mocks';
 import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
@@ -217,52 +217,52 @@ describe('QueuedTransport', () => {
   });
 
   it('should do nothing if the given transport is not usable', () => {
-    const memoryQueue = new MemoryQueue();
+    const trackerQueue = new TrackerQueue();
     const logTransport = new UnusableTransport();
 
     spyOn(logTransport, 'handle');
 
     const testQueuedTransport = new QueuedTransport({
-      queue: memoryQueue,
+      queue: trackerQueue,
       transport: logTransport,
     });
 
     expect(testQueuedTransport.isUsable()).toBe(false);
 
-    expect(memoryQueue.events).toHaveLength(0);
+    expect(trackerQueue.store.length).toBe(0);
     expect(logTransport.handle).not.toHaveBeenCalled();
     expect(setInterval).toHaveBeenCalledTimes(0);
   });
 
-  it('should queue events in the MemoryQueue and send them in batches via the LogTransport', () => {
-    const memoryQueue = new MemoryQueue();
+  it('should queue events in the TrackerQueue and send them in batches via the LogTransport', () => {
+    const trackerQueue = new TrackerQueue();
     const logTransport = new LogTransport();
 
     spyOn(logTransport, 'handle');
 
     const testQueuedTransport = new QueuedTransport({
-      queue: memoryQueue,
+      queue: trackerQueue,
       transport: logTransport,
     });
 
     expect(testQueuedTransport.isUsable()).toBe(true);
 
-    expect(memoryQueue.events).toHaveLength(0);
+    expect(trackerQueue.store.length).toBe(0);
     expect(logTransport.handle).not.toHaveBeenCalled();
     expect(setInterval).toHaveBeenCalledTimes(1);
 
     testQueuedTransport.handle(testEvent);
 
-    expect(memoryQueue.events).toHaveLength(1);
+    expect(trackerQueue.store.length).toBe(1);
     expect(logTransport.handle).not.toHaveBeenCalled();
 
-    jest.runTimersToTime(memoryQueue.batchDelayMs);
-    expect(memoryQueue.events).toHaveLength(0);
+    jest.advanceTimersToNextTimer();
+    expect(trackerQueue.store.length).toBe(0);
     expect(logTransport.handle).toHaveBeenCalledTimes(1);
     expect(logTransport.handle).toHaveBeenCalledWith(testEvent);
 
-    jest.runTimersToTime(memoryQueue.batchDelayMs);
-    expect(memoryQueue.events).toHaveLength(0);
+    jest.advanceTimersToNextTimer();
+    expect(trackerQueue.store.length).toBe(0);
     expect(logTransport.handle).toHaveBeenCalledTimes(1);
   });
 });
