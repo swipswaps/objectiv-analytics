@@ -40,19 +40,19 @@ describe('TrackerQueue', () => {
     const runFunctionSpy = jest.fn();
     testQueue.run(runFunctionSpy);
 
-    jest.advanceTimersToNextTimer();
+    jest.advanceTimersByTime(testQueue.batchDelayMs);
 
     expect(runFunctionSpy).toHaveBeenCalledWith(TrackerEvent1);
     expect(testQueue.store.length).toBe(2);
 
     runFunctionSpy.mockReset()
-    jest.advanceTimersToNextTimer();
+    jest.advanceTimersByTime(testQueue.batchDelayMs);
 
     expect(runFunctionSpy).toHaveBeenCalledWith(TrackerEvent2);
     expect(testQueue.store.length).toBe(1);
 
     runFunctionSpy.mockReset()
-    jest.advanceTimersToNextTimer();
+    jest.advanceTimersByTime(testQueue.batchDelayMs);
 
     expect(runFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
     expect(testQueue.store.length).toBe(0);
@@ -68,13 +68,13 @@ describe('TrackerQueue', () => {
     const runFunctionSpy = jest.fn();
     testQueue.run(runFunctionSpy);
 
-    jest.advanceTimersToNextTimer();
+    jest.advanceTimersByTime(testQueue.batchDelayMs);
 
     expect(runFunctionSpy).toHaveBeenCalledWith(...[TrackerEvent1, TrackerEvent2]);
     expect(testQueue.store.length).toBe(1);
 
     runFunctionSpy.mockReset()
-    jest.advanceTimersToNextTimer();
+    jest.advanceTimersByTime(testQueue.batchDelayMs);
 
     expect(runFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
     expect(testQueue.store.length).toBe(0);
