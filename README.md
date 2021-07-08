@@ -48,8 +48,8 @@ TODO
 The following diagram shows in the Objectiv architecture in a nutshell. There are four main components:
 1. The Objectiv tracker. You'll need to integrate this into your project.
    This is similar to e.g. a Google Analytics tracker.
-   The code for this can be found in the `objectiv-tracker` directory. 
-   See [objectiv-tracker/README.md](objectiv-tracker/README.md) for more information
+   The code for this can be found in the `tracker` directory. 
+   See [tracker/README.md](tracker/README.md) for more information
 2. The Objectiv collector. A python app, which can be found in the `backend` directory.
    See [backend/README.md](backend/README.md) for more information
 3. The database is used to store raw data, as well as processed data. We use SQL-supporting database,
