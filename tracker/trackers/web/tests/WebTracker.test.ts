@@ -36,7 +36,7 @@ describe('WebTracker', () => {
             store: {
               length: 0,
               events: [],
-            }
+            },
           },
           transport: {
             transportName: 'TransportSwitch',

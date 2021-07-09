@@ -139,7 +139,7 @@ export class TrackerQueue implements TrackerQueueInterface {
       if (eventsBatch.length) {
         runFunction(...eventsBatch);
         // TODO improve this, chain it with runFunction
-        this.store.delete(eventsBatch.map(event => event.id));
+        this.store.delete(eventsBatch.map((event) => event.id));
       }
     }, this.batchDelayMs);
   }
