@@ -52,21 +52,21 @@ describe('ReactTracker', () => {
       expect(trackedEvent.location_stack).toHaveLength(1);
       expect(trackedEvent.location_stack).toEqual(
         expect.arrayContaining([
-          {
+          expect.objectContaining({
             _context_type: 'WebDocumentContext',
             id: '#document',
             url: 'http://localhost/',
-          },
+          }),
         ])
       );
       expect(trackedEvent.global_contexts).toHaveLength(1);
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
-          {
+          expect.objectContaining({
             _context_type: 'DeviceContext',
             id: 'device',
             user_agent: USER_AGENT_MOCK_VALUE,
-          },
+          }),
         ])
       );
     });

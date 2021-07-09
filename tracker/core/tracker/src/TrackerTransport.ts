@@ -2,6 +2,11 @@ import { TrackerEvent } from './TrackerEvent';
 import { TrackerQueue } from './TrackerQueue';
 
 /**
+ * TrackerTransports can receive either Events ready to be processed or Promises.
+ */
+export type TransportableEvent = TrackerEvent | Promise<TrackerEvent>;
+
+/**
  * The TrackerTransport interface provides a single function to handle one or more TrackerEvents.
  *
  * TrackerTransport implementations may vary depending on platform. Eg: web: fetch, node: https module, etc
@@ -21,9 +26,9 @@ export interface TrackerTransport {
   isUsable(): boolean;
 
   /**
-   * Process one or more TrackerEvents. Eg. Send, queue, store, etc
+   * Process one or more TransportableEvent. Eg. Send, queue, store, etc
    */
-  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void;
+  handle(events: TransportableEvent[]): Promise<any>;
 }
 
 /**
@@ -47,12 +52,12 @@ export class TransportSwitch implements TrackerTransport {
   /**
    * Simply proxy the `handle` method to the usable TrackerTransport we found during construction, if any
    */
-  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
+  handle(events: TransportableEvent[]): Promise<any> {
     if (!this.firstUsableTransport) {
       throw new Error(`${this.transportName}: no usable Transport found; make sure to verify usability first.`);
     }
 
-    this.firstUsableTransport.handle(...args);
+    return this.firstUsableTransport.handle(events);
   }
 
   /**
@@ -83,12 +88,12 @@ export class TransportGroup implements TrackerTransport {
   /**
    * Simply proxy the `handle` method to all the usable TrackerTransport instances we have.
    */
-  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
+  handle(events: TransportableEvent[]): Promise<any> {
     if (!this.usableTransports.length) {
       throw new Error(`${this.transportName}: no usable Transports found; make sure to verify usability first.`);
     }
 
-    this.usableTransports.map((transport) => transport.handle(...args));
+    return Promise.all(this.usableTransports.map((transport) => transport.handle(events)));
   }
 
   /**
@@ -132,8 +137,8 @@ export class QueuedTransport implements TrackerTransport {
     }
   }
 
-  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
-    this.queue.push(...args);
+  handle(events: TransportableEvent[]): Promise<any> {
+    return Promise.all(events).then((events) => this.queue.push(events));
   }
 
   isUsable(): boolean {

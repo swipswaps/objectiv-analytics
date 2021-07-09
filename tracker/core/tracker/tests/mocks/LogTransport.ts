@@ -2,8 +2,9 @@ import { TrackerTransport } from '../../src';
 
 export class LogTransport implements TrackerTransport {
   readonly transportName = 'LogTransport';
-  handle(): void {
+  handle(): Promise<any> {
     console.log('LogTransport.handle');
+    return Promise.resolve();
   }
 
   isUsable(): boolean {

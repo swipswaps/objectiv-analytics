@@ -183,7 +183,7 @@ describe('Tracker', () => {
       jest.spyOn(testTransport, 'handle');
       const testTracker = new Tracker({ transport: testTransport });
       testTracker.trackEvent(testEvent);
-      expect(testTransport.handle).toHaveBeenCalledWith(testEvent);
+      expect(testTransport.handle).toHaveBeenCalledWith([testEvent]);
     });
 
     it("should not send the Event via the given TrackerTransport if it's not usable", () => {

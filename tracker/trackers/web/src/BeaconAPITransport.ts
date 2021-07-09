@@ -1,4 +1,4 @@
-import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
+import { TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
 
 /**
  * The configuration of the BeaconAPITransport class
@@ -22,8 +22,9 @@ export class BeaconAPITransport implements TrackerTransport {
     this.endpoint = config.endpoint;
   }
 
-  handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
-    navigator.sendBeacon(this.endpoint, JSON.stringify(args));
+  async handle(events: TransportableEvent[]): Promise<any> {
+    navigator.sendBeacon(this.endpoint, JSON.stringify(await Promise.all(events)));
+    return Promise.resolve();
   }
 
   isUsable(): boolean {

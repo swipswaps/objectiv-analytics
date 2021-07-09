@@ -72,7 +72,7 @@ export class Tracker implements Contexts {
 
     // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
     if (this.transport && this.transport.isUsable()) {
-      this.transport.handle(eventToTrack);
+      this.transport.handle([eventToTrack]);
     }
 
     return eventToTrack;

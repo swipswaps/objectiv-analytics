@@ -1,4 +1,4 @@
-import { TrackerEvent, TrackerTransport } from '@objectiv/tracker-core';
+import { TrackerEvent, TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
 
 /**
  * The default XMLHttpRequest function implementation.
@@ -65,8 +65,8 @@ export class XMLHttpRequestTransport implements TrackerTransport {
     this.xmlHttpRequestFunction = config.xmlHttpRequestFunction ?? defaultXMLHttpRequestFunction;
   }
 
-  handle(...args: [TrackerEvent, ...TrackerEvent[]]): Promise<unknown> {
-    return this.xmlHttpRequestFunction({ endpoint: this.endpoint, events: args });
+  async handle(events: TransportableEvent[]): Promise<any> {
+    return this.xmlHttpRequestFunction({ endpoint: this.endpoint, events: await Promise.all(events) });
   }
 
   isUsable(): boolean {

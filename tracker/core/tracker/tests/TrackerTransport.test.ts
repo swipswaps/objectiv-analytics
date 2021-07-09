@@ -4,6 +4,7 @@ import {
   Tracker,
   TrackerEvent,
   TrackerQueue,
+  TrackerQueueMemoryStore,
   TransportGroup,
   TransportSwitch,
 } from '../src';
@@ -42,7 +43,7 @@ describe('TransportSwitch', () => {
     expect(transports.isUsable()).toBe(false);
 
     expect(() => {
-      transports.handle(testEvent);
+      transports.handle([testEvent]);
     }).toThrow();
 
     expect(transport1.handle).not.toHaveBeenCalled();
@@ -68,7 +69,7 @@ describe('TransportSwitch', () => {
     testTracker.trackEvent(testEvent);
 
     expect(transport1.handle).not.toHaveBeenCalled();
-    expect(transport2.handle).toHaveBeenCalledWith(testEvent);
+    expect(transport2.handle).toHaveBeenCalledWith([testEvent]);
   });
 });
 
@@ -89,7 +90,7 @@ describe('TransportGroup', () => {
     expect(transports.isUsable()).toBe(false);
 
     expect(() => {
-      transports.handle(testEvent);
+      transports.handle([testEvent]);
     }).toThrow();
 
     expect(transport1.handle).not.toHaveBeenCalled();
@@ -221,7 +222,7 @@ describe('TrackerTransport complex configurations', () => {
 describe('QueuedTransport', () => {
   it('should do nothing if the given transport is not usable', () => {
     const logTransport = new UnusableTransport();
-    spyOn(logTransport, 'handle');
+    spyOn(logTransport, 'handle').and.callThrough();
     const trackerQueue = new TrackerQueue();
 
     const testQueuedTransport = new QueuedTransport({
@@ -235,37 +236,31 @@ describe('QueuedTransport', () => {
     expect(setInterval).not.toHaveBeenCalled();
   });
 
-  it('should queue events in the TrackerQueue and send them in batches via the LogTransport', () => {
+  it('should queue events in the TrackerQueue and send them in batches via the LogTransport', async () => {
+    const queueStore = new TrackerQueueMemoryStore();
     const logTransport = new LogTransport();
-    spyOn(logTransport, 'handle');
-    const trackerQueue = new TrackerQueue();
+    const trackerQueue = new TrackerQueue({ store: queueStore });
 
     const testQueuedTransport = new QueuedTransport({
       queue: trackerQueue,
       transport: logTransport,
     });
 
+    spyOn(trackerQueue, 'processFunction');
+
     expect(testQueuedTransport.isUsable()).toBe(true);
 
     expect(trackerQueue.processFunction).not.toBeUndefined();
-    expect(trackerQueue.store.length).toBe(0);
-    expect(logTransport.handle).not.toHaveBeenCalled();
+    expect(trackerQueue.processFunction).not.toHaveBeenCalled();
     expect(setInterval).toHaveBeenCalledTimes(1);
 
-    jest.advanceTimersToNextTimer();
+    await testQueuedTransport.handle([testEvent]);
+    expect(queueStore.length).toBe(1);
+    expect(trackerQueue.processFunction).not.toHaveBeenCalled();
 
-    testQueuedTransport.handle(testEvent);
-
-    expect(trackerQueue.store.length).toBe(1);
-    expect(logTransport.handle).not.toHaveBeenCalled();
-
-    jest.advanceTimersToNextTimer();
-    expect(trackerQueue.store.length).toBe(0);
-    expect(logTransport.handle).toHaveBeenCalledTimes(1);
-    expect(logTransport.handle).toHaveBeenCalledWith(testEvent);
-
-    jest.advanceTimersToNextTimer();
-    expect(trackerQueue.store.length).toBe(0);
-    expect(logTransport.handle).toHaveBeenCalledTimes(1);
+    jest.advanceTimersByTime(trackerQueue.batchDelayMs);
+    await (() => new Promise(setImmediate));
+    expect(trackerQueue.processFunction).toHaveBeenCalledTimes(1);
+    expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, [testEvent]);
   });
 });
