@@ -30,10 +30,13 @@ describe('WebTracker', () => {
         {
           transportName: 'QueuedTransport',
           queue: {
-            queueName: 'MemoryQueue',
+            queueName: 'TrackerQueue',
             batchDelayMs: 250,
             batchSize: 10,
-            events: [],
+            store: {
+              length: 0,
+              events: [],
+            }
           },
           transport: {
             transportName: 'TransportSwitch',
