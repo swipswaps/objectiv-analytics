@@ -33,6 +33,7 @@ describe('WebTracker', () => {
             queueName: 'TrackerQueue',
             batchDelayMs: 250,
             batchSize: 10,
+            processFunction: expect.any(Function),
             store: {
               length: 0,
               events: [],

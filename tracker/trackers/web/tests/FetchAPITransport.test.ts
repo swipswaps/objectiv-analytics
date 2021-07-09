@@ -8,6 +8,11 @@ beforeAll(() => {
 
 beforeEach(() => {
   fetchMock.resetMocks();
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.useRealTimers();
 });
 
 describe('FetchAPITransport', () => {
@@ -55,8 +60,6 @@ describe('FetchAPITransport', () => {
   });
 
   it('should enqueue the event instead of sending it right away', async () => {
-    jest.useFakeTimers();
-
     // Create a test queue
     const testQueue = new TrackerQueue();
 

@@ -52,39 +52,9 @@ export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
 }
 
 /**
- * Our Tracker Events Queue generic interface.
+ * The definition of the runner function. Gets executed every batchDelayMs to process the Queue.
  */
-export interface TrackerQueueInterface {
-  /**
-   * A name describing the Queue implementation for debugging purposes
-   */
-  readonly queueName: string;
-
-  /**
-   * How many events to dequeue at the same time
-   */
-  readonly batchSize: number;
-
-  /**
-   * How often to re-run and dequeue again
-   */
-  readonly batchDelayMs: number;
-
-  /**
-   * Adds one or more TrackerEvents to the Queue
-   */
-  push(...args: [TrackerEvent, ...TrackerEvent[]]): void;
-
-  /**
-   * Adds one or more TrackerEvents to the Queue
-   */
-  readBatch(): TrackerEvent[];
-
-  /**
-   * Queue runner function. Simply executes the given `runFunction` with the dequeued events.
-   */
-  run(runFunction: (...args: TrackerEvent[]) => void): void;
-}
+type TrackerQueueProcessFunction = (...args: TrackerEvent[]) => void;
 
 /**
  * The configuration of a TrackerQueue
@@ -107,10 +77,61 @@ export type TrackerQueueConfig = {
 };
 
 /**
+ * Our Tracker Events Queue generic interface.
+ */
+export interface TrackerQueueInterface extends Required<TrackerQueueConfig> {
+  /**
+   * The function to execute every batchDelayMs. Must be set with `setProcessFunction` before calling `run`
+   */
+  processFunction?: TrackerQueueProcessFunction;
+
+  /**
+   * A name describing the Queue implementation for debugging purposes
+   */
+  readonly queueName: string;
+
+  /**
+   * How many events to dequeue at the same time
+   */
+  readonly batchSize: number;
+
+  /**
+   * How often to re-run and dequeue again
+   */
+  readonly batchDelayMs: number;
+
+  /**
+   * Sets the processFunction to execute whenever run is called
+   */
+  setProcessFunction(processFunction: TrackerQueueProcessFunction): void;
+
+  /**
+   * Starts the runner process
+   */
+  startRunner(): void;
+
+  /**
+   * Adds one or more TrackerEvents to the Queue
+   */
+  push(...args: [TrackerEvent, ...TrackerEvent[]]): void;
+
+  /**
+   * Adds one or more TrackerEvents to the Queue
+   */
+  readBatch(): TrackerEvent[];
+
+  /**
+   * Fetches a batch of Events from the Queue and executes the given `processFunction` with them.
+   */
+  run(): void;
+}
+
+/**
  * A very simple Batched Queue implementation.
  */
 export class TrackerQueue implements TrackerQueueInterface {
   readonly queueName = 'TrackerQueue';
+  processFunction?: TrackerQueueProcessFunction;
   readonly store: TrackerQueueStoreInterface;
   readonly batchSize: number;
   readonly batchDelayMs: number;
@@ -124,6 +145,16 @@ export class TrackerQueue implements TrackerQueueInterface {
     this.batchDelayMs = config?.batchDelayMs ?? 250;
   }
 
+  setProcessFunction(processFunction: TrackerQueueProcessFunction) {
+    this.processFunction = processFunction;
+  }
+
+  startRunner() {
+    setInterval(() => {
+      this.run();
+    }, this.batchDelayMs);
+  }
+
   push(...args: [TrackerEvent, ...TrackerEvent[]]): void {
     this.store.write(args);
   }
@@ -132,15 +163,16 @@ export class TrackerQueue implements TrackerQueueInterface {
     return this.store.read(this.batchSize);
   }
 
-  run(runFunction: (...args: TrackerEvent[]) => void): void {
-    setInterval(() => {
-      const eventsBatch = this.readBatch();
-      // No need to execute runFunction if the batch is empty
-      if (eventsBatch.length) {
-        runFunction(...eventsBatch);
-        // TODO improve this, chain it with runFunction
-        this.store.delete(eventsBatch.map((event) => event.id));
-      }
-    }, this.batchDelayMs);
+  run(): void {
+    if (!this.processFunction) {
+      throw new Error('TrackerQueue `processFunction` has not been set.');
+    }
+    const eventsBatch = this.readBatch();
+    // No need to execute processFunction if the batch is empty
+    if (eventsBatch.length) {
+      this.processFunction(...eventsBatch);
+      // TODO improve this, chain it with processFunction and add retry logic based on the type of issue
+      this.store.delete(eventsBatch.map((event) => event.id));
+    }
   }
 }

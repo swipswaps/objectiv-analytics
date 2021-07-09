@@ -17,6 +17,14 @@ const testContexts: ContextsConfig = {
 };
 const testEvent = new TrackerEvent({ event: testEventName, ...testContexts });
 
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.useRealTimers();
+});
+
 describe('TransportSwitch', () => {
   it('should not pick any TrackerTransport', () => {
     const transport1 = new UnusableTransport();
@@ -211,16 +219,10 @@ describe('TrackerTransport complex configurations', () => {
 });
 
 describe('QueuedTransport', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    jest.useFakeTimers();
-  });
-
   it('should do nothing if the given transport is not usable', () => {
-    const trackerQueue = new TrackerQueue();
     const logTransport = new UnusableTransport();
-
     spyOn(logTransport, 'handle');
+    const trackerQueue = new TrackerQueue();
 
     const testQueuedTransport = new QueuedTransport({
       queue: trackerQueue,
@@ -228,17 +230,15 @@ describe('QueuedTransport', () => {
     });
 
     expect(testQueuedTransport.isUsable()).toBe(false);
-
     expect(trackerQueue.store.length).toBe(0);
     expect(logTransport.handle).not.toHaveBeenCalled();
-    expect(setInterval).toHaveBeenCalledTimes(0);
+    expect(setInterval).not.toHaveBeenCalled();
   });
 
   it('should queue events in the TrackerQueue and send them in batches via the LogTransport', () => {
-    const trackerQueue = new TrackerQueue();
     const logTransport = new LogTransport();
-
     spyOn(logTransport, 'handle');
+    const trackerQueue = new TrackerQueue();
 
     const testQueuedTransport = new QueuedTransport({
       queue: trackerQueue,
@@ -247,9 +247,12 @@ describe('QueuedTransport', () => {
 
     expect(testQueuedTransport.isUsable()).toBe(true);
 
+    expect(trackerQueue.processFunction).not.toBeUndefined();
     expect(trackerQueue.store.length).toBe(0);
     expect(logTransport.handle).not.toHaveBeenCalled();
     expect(setInterval).toHaveBeenCalledTimes(1);
+
+    jest.advanceTimersToNextTimer();
 
     testQueuedTransport.handle(testEvent);
 
