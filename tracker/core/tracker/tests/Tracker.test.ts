@@ -128,7 +128,7 @@ describe('Tracker', () => {
       eventContexts
     );
 
-    it('should merge Tracker Location Stack and Global Contexts with the Event ones', () => {
+    it('should merge Tracker Location Stack and Global Contexts with the Event ones', async () => {
       const trackerContexts: ContextsConfig = {
         location_stack: [
           { __location_context: true, _context_type: 'section', id: 'root' },
@@ -142,7 +142,7 @@ describe('Tracker', () => {
       const testTracker = new Tracker(trackerContexts);
       expect(testEvent.location_stack).toStrictEqual(eventContexts.location_stack);
       expect(testEvent.global_contexts).toStrictEqual(eventContexts.global_contexts);
-      const trackedEvent = testTracker.trackEvent(testEvent);
+      const trackedEvent = await testTracker.trackEvent(testEvent);
       expect(testEvent.location_stack).toStrictEqual(eventContexts.location_stack);
       expect(testEvent.global_contexts).toStrictEqual(eventContexts.global_contexts);
       expect(testTracker.location_stack).toStrictEqual(trackerContexts.location_stack);
@@ -183,7 +183,7 @@ describe('Tracker', () => {
       jest.spyOn(testTransport, 'handle');
       const testTracker = new Tracker({ transport: testTransport });
       testTracker.trackEvent(testEvent);
-      expect(testTransport.handle).toHaveBeenCalledWith([testEvent]);
+      expect(testTransport.handle).toHaveBeenCalledWith(testEvent);
     });
 
     it("should not send the Event via the given TrackerTransport if it's not usable", () => {

@@ -1,3 +1,4 @@
+import { isNonEmptyArray, NonEmptyArray } from './helpers';
 import { TrackerEvent } from './TrackerEvent';
 
 /**
@@ -17,7 +18,7 @@ export interface TrackerQueueStoreInterface {
   /**
    * Write Events to the store
    */
-  write(events: TrackerEvent[]): Promise<any>;
+  write(...args: NonEmptyArray<TrackerEvent>): Promise<any>;
 
   /**
    * Delete TrackerEvents from the store
@@ -32,20 +33,18 @@ export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
   length: number = 0;
   events: TrackerEvent[] = [];
 
-  read(size?: number): Promise<TrackerEvent[]> {
-    return Promise.resolve(this.events.slice(0, size));
+  async read(size?: number): Promise<TrackerEvent[]> {
+    return this.events.slice(0, size);
   }
 
-  write(events: TrackerEvent[]): Promise<any> {
-    this.events.push(...events);
+  async write(...args: NonEmptyArray<TrackerEvent>): Promise<any> {
+    this.events.push(...args);
     this.updateLength();
-    return Promise.resolve();
   }
 
-  delete(trackerEventIds: string[]): Promise<any> {
+  async delete(trackerEventIds: string[]): Promise<any> {
     this.events = this.events.filter((trackerEvent) => !trackerEventIds.includes(trackerEvent.id));
     this.updateLength();
-    return Promise.resolve();
   }
 
   updateLength(): void {
@@ -56,7 +55,7 @@ export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
 /**
  * The definition of the runner function. Gets executed every batchDelayMs to process the Queue.
  */
-type TrackerQueueProcessFunction = (events: TrackerEvent[]) => Promise<any>;
+type TrackerQueueProcessFunction = (...args: NonEmptyArray<TrackerEvent>) => Promise<any>;
 
 /**
  * The configuration of a TrackerQueue
@@ -109,14 +108,13 @@ export interface TrackerQueueInterface extends Required<TrackerQueueConfig> {
 
   /**
    * Starts the runner process
-   * TODO make this return a promise
    */
   startRunner(): void;
 
   /**
    * Adds one or more TrackerEvents to the Queue
    */
-  push(events: TrackerEvent[]): Promise<any>;
+  push(...args: NonEmptyArray<TrackerEvent>): Promise<any>;
 
   /**
    * Adds one or more TrackerEvents to the Queue
@@ -160,11 +158,11 @@ export class TrackerQueue implements TrackerQueueInterface {
     }, this.batchDelayMs);
   }
 
-  push(events: TrackerEvent[]): Promise<any> {
-    return this.store.write(events);
+  async push(...args: NonEmptyArray<TrackerEvent>): Promise<any> {
+    return this.store.write(...args);
   }
 
-  readBatch(): Promise<TrackerEvent[]> {
+  async readBatch(): Promise<TrackerEvent[]> {
     return this.store.read(this.batchSize);
   }
 
@@ -174,8 +172,10 @@ export class TrackerQueue implements TrackerQueueInterface {
         return reject('TrackerQueue `processFunction` has not been set.');
       }
       const eventsBatch = await this.readBatch();
-      await this.processFunction(eventsBatch);
-      await this.store.delete(eventsBatch.map((event) => event.id));
+      if (isNonEmptyArray(eventsBatch)) {
+        await this.processFunction(...eventsBatch);
+        await this.store.delete(eventsBatch.map((event) => event.id));
+      }
       resolve();
     });
   }

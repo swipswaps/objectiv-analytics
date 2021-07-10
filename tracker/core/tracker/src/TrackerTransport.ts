@@ -1,8 +1,9 @@
+import { isNonEmptyArray, NonEmptyArray } from './helpers';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerQueue } from './TrackerQueue';
 
 /**
- * TrackerTransports can receive either Events ready to be processed or Promises.
+ * TrackerTransports can receive either Events ready to be processed or Event Promises.
  */
 export type TransportableEvent = TrackerEvent | Promise<TrackerEvent>;
 
@@ -28,7 +29,7 @@ export interface TrackerTransport {
   /**
    * Process one or more TransportableEvent. Eg. Send, queue, store, etc
    */
-  handle(events: TransportableEvent[]): Promise<any>;
+  handle(...args: NonEmptyArray<TransportableEvent>): Promise<any>;
 }
 
 /**
@@ -52,12 +53,12 @@ export class TransportSwitch implements TrackerTransport {
   /**
    * Simply proxy the `handle` method to the usable TrackerTransport we found during construction, if any
    */
-  handle(events: TransportableEvent[]): Promise<any> {
+  async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
     if (!this.firstUsableTransport) {
-      throw new Error(`${this.transportName}: no usable Transport found; make sure to verify usability first.`);
+      return Promise.reject(`${this.transportName}: no usable Transport found; make sure to verify usability first.`);
     }
 
-    return this.firstUsableTransport.handle(events);
+    return this.firstUsableTransport.handle(...args);
   }
 
   /**
@@ -88,12 +89,12 @@ export class TransportGroup implements TrackerTransport {
   /**
    * Simply proxy the `handle` method to all the usable TrackerTransport instances we have.
    */
-  handle(events: TransportableEvent[]): Promise<any> {
+  async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
     if (!this.usableTransports.length) {
-      throw new Error(`${this.transportName}: no usable Transports found; make sure to verify usability first.`);
+      return Promise.reject(`${this.transportName}: no usable Transports found; make sure to verify usability first.`);
     }
 
-    return Promise.all(this.usableTransports.map((transport) => transport.handle(events)));
+    return this.usableTransports.map((transport) => transport.handle(...args));
   }
 
   /**
@@ -137,8 +138,8 @@ export class QueuedTransport implements TrackerTransport {
     }
   }
 
-  handle(events: TransportableEvent[]): Promise<any> {
-    return Promise.all(events).then((events) => this.queue.push(events));
+  async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
+    return Promise.all(args).then((events) => isNonEmptyArray(events) && this.queue.push(...events));
   }
 
   isUsable(): boolean {

@@ -10,7 +10,7 @@ describe('DebugTransport', () => {
     const testTransport = new DebugTransport();
     expect(testTransport.isUsable()).toBe(true);
     spyOn(console, 'debug');
-    await testTransport.handle([testEvent]);
+    await testTransport.handle(testEvent);
     expect(console.debug).toHaveBeenCalledWith(testEvent);
   });
 });

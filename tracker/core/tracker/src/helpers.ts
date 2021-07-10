@@ -16,6 +16,18 @@ export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 export const getObjectKeys = Object.keys as <T extends object>(obj: T) => Array<keyof T>;
 
 /**
+ * A TypeScript generic describing an array with at least one item of the given Type
+ */
+export type NonEmptyArray<T> = [T, ...T[]];
+
+/**
+ * A TypeScript NonEmptyArray guard
+ */
+export function isNonEmptyArray<T>(array: T[]): array is [T, ...T[]] {
+  return array.length > 0;
+}
+
+/**
  * A UUID v4 generator
  */
 export const generateUUID = () => uuidv4();

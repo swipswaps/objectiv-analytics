@@ -93,14 +93,14 @@ describe('WebTracker', () => {
       clear();
     });
 
-    it('should track WebDocument and WebDevice Contexts as global_contexts automatically by default', () => {
+    it('should track WebDocument and WebDevice Contexts as global_contexts automatically by default', async () => {
       const testTracker = new WebTracker({ endpoint: 'localhost' });
       const testEvent = new TrackerEvent({ event: 'test-event' });
       expect(testTracker).toBeInstanceOf(WebTracker);
       expect(testEvent.global_contexts).toHaveLength(0);
       expect(testEvent.location_stack).toHaveLength(0);
 
-      const trackedEvent = testTracker.trackEvent(testEvent);
+      const trackedEvent = await testTracker.trackEvent(testEvent);
 
       expect(trackedEvent.location_stack).toHaveLength(1);
       expect(trackedEvent.location_stack).toEqual(

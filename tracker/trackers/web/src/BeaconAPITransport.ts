@@ -1,4 +1,4 @@
-import { TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
+import { NonEmptyArray, TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
 
 /**
  * The configuration of the BeaconAPITransport class
@@ -22,8 +22,8 @@ export class BeaconAPITransport implements TrackerTransport {
     this.endpoint = config.endpoint;
   }
 
-  async handle(events: TransportableEvent[]): Promise<any> {
-    navigator.sendBeacon(this.endpoint, JSON.stringify(await Promise.all(events)));
+  async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
+    navigator.sendBeacon(this.endpoint, JSON.stringify(await Promise.all(args)));
     return Promise.resolve();
   }
 

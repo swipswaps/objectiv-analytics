@@ -45,7 +45,7 @@ describe('useTrackOnUnmount', () => {
     unmount();
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith([expect.objectContaining({ event: 'SectionHiddenEvent' })]);
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'SectionHiddenEvent' }));
   });
 
   it('should not execute on rerender', () => {
@@ -71,6 +71,6 @@ describe('useTrackOnUnmount', () => {
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport2.handle).toHaveBeenCalledWith([expect.objectContaining({ event: 'SectionHiddenEvent' })]);
+    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'SectionHiddenEvent' }));
   });
 });

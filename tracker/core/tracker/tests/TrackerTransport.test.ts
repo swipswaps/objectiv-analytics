@@ -42,9 +42,9 @@ describe('TransportSwitch', () => {
     expect(transports.firstUsableTransport).toBe(undefined);
     expect(transports.isUsable()).toBe(false);
 
-    expect(() => {
-      transports.handle([testEvent]);
-    }).toThrow();
+    expect(transports.handle(testEvent)).rejects.toEqual(
+      'TransportSwitch: no usable Transport found; make sure to verify usability first.'
+    );
 
     expect(transport1.handle).not.toHaveBeenCalled();
     expect(transport2.handle).not.toHaveBeenCalled();
@@ -69,7 +69,7 @@ describe('TransportSwitch', () => {
     testTracker.trackEvent(testEvent);
 
     expect(transport1.handle).not.toHaveBeenCalled();
-    expect(transport2.handle).toHaveBeenCalledWith([testEvent]);
+    expect(transport2.handle).toHaveBeenCalledWith(testEvent);
   });
 });
 
@@ -89,9 +89,9 @@ describe('TransportGroup', () => {
     expect(transports.usableTransports).toStrictEqual([]);
     expect(transports.isUsable()).toBe(false);
 
-    expect(() => {
-      transports.handle([testEvent]);
-    }).toThrow();
+    expect(transports.handle(testEvent)).rejects.toEqual(
+      'TransportGroup: no usable Transports found; make sure to verify usability first.'
+    );
 
     expect(transport1.handle).not.toHaveBeenCalled();
     expect(transport2.handle).not.toHaveBeenCalled();
@@ -254,13 +254,14 @@ describe('QueuedTransport', () => {
     expect(trackerQueue.processFunction).not.toHaveBeenCalled();
     expect(setInterval).toHaveBeenCalledTimes(1);
 
-    await testQueuedTransport.handle([testEvent]);
+    await testQueuedTransport.handle(testEvent);
+
     expect(queueStore.length).toBe(1);
     expect(trackerQueue.processFunction).not.toHaveBeenCalled();
 
-    jest.advanceTimersByTime(trackerQueue.batchDelayMs);
-    await (() => new Promise(setImmediate));
+    await trackerQueue.run();
+
     expect(trackerQueue.processFunction).toHaveBeenCalledTimes(1);
-    expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, [testEvent]);
+    expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, testEvent);
   });
 });

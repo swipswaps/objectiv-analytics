@@ -30,7 +30,7 @@ describe('XMLHttpRequestTransport', () => {
       return res.status(200);
     });
 
-    await testTransport.handle([testEvent]);
+    await testTransport.handle(testEvent);
   });
 
   it('should send using `xhr` with the default xhr function - 500 error example', async () => {
@@ -44,7 +44,7 @@ describe('XMLHttpRequestTransport', () => {
     });
 
     try {
-      await testTransport.handle([testEvent]);
+      await testTransport.handle(testEvent);
     } catch (error) {
       expect(error).toStrictEqual({ status: 500, statusText: 'oops' });
     }
@@ -58,7 +58,7 @@ describe('XMLHttpRequestTransport', () => {
     xhrMock.post(MOCK_ENDPOINT, () => Promise.reject());
 
     try {
-      await testTransport.handle([testEvent]);
+      await testTransport.handle(testEvent);
     } catch (error) {
       expect(error).toStrictEqual({ status: 0, statusText: '' });
     }
@@ -111,6 +111,6 @@ describe('XMLHttpRequestTransport', () => {
       return res.status(200);
     });
 
-    await testTransport.handle([testEvent]);
+    await testTransport.handle(testEvent);
   });
 });

@@ -18,13 +18,11 @@ describe('trackButtonClick', () => {
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenCalledWith(
-      expect.arrayContaining([
-        expect.objectContaining({
-          event: 'ClickEvent',
-          global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
-          location_stack: expect.arrayContaining([expect.objectContaining({ _context_type: 'ButtonContext' })]),
-        }),
-      ])
+      expect.objectContaining({
+        event: 'ClickEvent',
+        global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
+        location_stack: expect.arrayContaining([expect.objectContaining({ _context_type: 'ButtonContext' })]),
+      })
     );
   });
 });

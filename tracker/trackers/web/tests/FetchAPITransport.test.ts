@@ -26,7 +26,7 @@ describe('FetchAPITransport', () => {
     const testTransport = new FetchAPITransport({
       endpoint: MOCK_ENDPOINT,
     });
-    await testTransport.handle([testEvent]);
+    await testTransport.handle(testEvent);
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
@@ -49,7 +49,7 @@ describe('FetchAPITransport', () => {
       endpoint: MOCK_ENDPOINT,
       fetchFunction: ({ endpoint, events }) => defaultFetchFunction({ endpoint, events, parameters: customParameters }),
     });
-    await testTransport.handle([testEvent]);
+    await testTransport.handle(testEvent);
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
@@ -75,7 +75,7 @@ describe('FetchAPITransport', () => {
     });
 
     // Let's handle an Event
-    await testQueuedTransport.handle([testEvent]);
+    await testQueuedTransport.handle(testEvent);
 
     // Since we configured a Queue, the transport should not have called Fetch yet
     expect(fetch).not.toHaveBeenCalled();

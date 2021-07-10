@@ -20,7 +20,7 @@ describe('TrackerQueue', () => {
 
   it('should allow enqueuing multiple items at once', () => {
     const testQueue = new TrackerQueue();
-    testQueue.push([TrackerEvent1, TrackerEvent2, TrackerEvent3]);
+    testQueue.push(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(testQueue.store.length).toBe(3);
   });
 
@@ -42,30 +42,30 @@ describe('TrackerQueue', () => {
     testQueue.setProcessFunction(processFunctionSpy);
     expect(testQueue.store.length).toBe(0);
 
-    await testQueue.push([TrackerEvent1]);
+    await testQueue.push(TrackerEvent1);
     expect(memoryStore.length).toBe(1);
 
-    await testQueue.push([TrackerEvent2]);
+    await testQueue.push(TrackerEvent2);
     expect(memoryStore.length).toBe(2);
 
-    await testQueue.push([TrackerEvent3]);
+    await testQueue.push(TrackerEvent3);
     expect(memoryStore.length).toBe(3);
 
     await testQueue.run();
 
-    expect(processFunctionSpy).toHaveBeenCalledWith([TrackerEvent1]);
+    expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent1);
     expect(memoryStore.length).toBe(2);
 
     processFunctionSpy.mockReset();
     await testQueue.run();
 
-    expect(processFunctionSpy).toHaveBeenCalledWith([TrackerEvent2]);
+    expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent2);
     expect(memoryStore.length).toBe(1);
 
     processFunctionSpy.mockReset();
     await testQueue.run();
 
-    expect(processFunctionSpy).toHaveBeenCalledWith([TrackerEvent3]);
+    expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
     expect(memoryStore.length).toBe(0);
   });
 
@@ -73,18 +73,18 @@ describe('TrackerQueue', () => {
     const processFunctionSpy = jest.fn();
     const testQueue = new TrackerQueue({ batchSize: 2 });
     testQueue.setProcessFunction(processFunctionSpy);
-    await testQueue.push([TrackerEvent1, TrackerEvent2, TrackerEvent3]);
+    await testQueue.push(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(testQueue.store.length).toBe(3);
 
     await testQueue.run();
 
-    expect(processFunctionSpy).toHaveBeenCalledWith([TrackerEvent1, TrackerEvent2]);
+    expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent1, TrackerEvent2);
     expect(testQueue.store.length).toBe(1);
 
     processFunctionSpy.mockReset();
     await testQueue.run();
 
-    expect(processFunctionSpy).toHaveBeenCalledWith([TrackerEvent3]);
+    expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
     expect(testQueue.store.length).toBe(0);
   });
 });

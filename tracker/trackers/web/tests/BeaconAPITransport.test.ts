@@ -17,7 +17,7 @@ describe('BeaconAPITransport', () => {
     const testTransport = new BeaconAPITransport({
       endpoint: MOCK_ENDPOINT,
     });
-    await testTransport.handle([testEvent]);
+    await testTransport.handle(testEvent);
     expect(navigator.sendBeacon).toHaveBeenCalledWith(MOCK_ENDPOINT, JSON.stringify([testEvent]));
   });
 

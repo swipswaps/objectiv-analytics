@@ -21,23 +21,21 @@ describe('WebDocumentLoadedEvent', () => {
 
     trackDocumentLoadedEvent(testTracker);
 
-    expect(spyTransport.handle).toHaveBeenCalledWith([
-      {
-        __non_interactive_event: true,
-        event: 'DocumentLoadedEvent',
-        id: expect.stringMatching(UUID_REGEX),
-        global_contexts: [],
-        location_stack: [
-          {
-            __location_context: true,
-            __section_context: true,
-            _context_type: 'WebDocumentContext',
-            id: '#document',
-            url: '/test',
-          },
-        ],
-      },
-    ]);
+    expect(spyTransport.handle).toHaveBeenCalledWith({
+      __non_interactive_event: true,
+      event: 'DocumentLoadedEvent',
+      id: expect.stringMatching(UUID_REGEX),
+      global_contexts: [],
+      location_stack: [
+        {
+          __location_context: true,
+          __section_context: true,
+          _context_type: 'WebDocumentContext',
+          id: '#document',
+          url: '/test',
+        },
+      ],
+    });
   });
 
   it('should track as expected when document has yet to load', async () => {
@@ -71,22 +69,20 @@ describe('WebDocumentLoadedEvent', () => {
       })
     );
 
-    expect(spyTransport.handle).toHaveBeenCalledWith([
-      {
-        __non_interactive_event: true,
-        event: 'DocumentLoadedEvent',
-        id: expect.stringMatching(UUID_REGEX),
-        global_contexts: [],
-        location_stack: [
-          {
-            __location_context: true,
-            __section_context: true,
-            _context_type: 'WebDocumentContext',
-            id: '#document',
-            url: '/test',
-          },
-        ],
-      },
-    ]);
+    expect(spyTransport.handle).toHaveBeenCalledWith({
+      __non_interactive_event: true,
+      event: 'DocumentLoadedEvent',
+      id: expect.stringMatching(UUID_REGEX),
+      global_contexts: [],
+      location_stack: [
+        {
+          __location_context: true,
+          __section_context: true,
+          _context_type: 'WebDocumentContext',
+          id: '#document',
+          url: '/test',
+        },
+      ],
+    });
   });
 });
