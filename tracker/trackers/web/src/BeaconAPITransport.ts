@@ -24,7 +24,6 @@ export class BeaconAPITransport implements TrackerTransport {
 
   async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
     navigator.sendBeacon(this.endpoint, JSON.stringify(await Promise.all(args)));
-    return Promise.resolve();
   }
 
   isUsable(): boolean {

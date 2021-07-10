@@ -8,9 +8,8 @@ export class ConfigurableMockTransport implements TrackerTransport {
     this._isUsable = isUsable;
   }
 
-  handle(): Promise<any> {
+  async handle(): Promise<any> {
     console.log('MockTransport.handle');
-    return Promise.resolve();
   }
 
   isUsable(): boolean {
