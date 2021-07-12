@@ -61,7 +61,7 @@ export class Tracker implements Contexts {
   /**
    * Merges Tracker Location and Global contexts, runs all Plugins and sends the Event via the TrackerTransport.
    */
-  trackEvent(event: TrackerEventConfig): TrackerEvent {
+  async trackEvent(event: TrackerEventConfig): Promise<TrackerEvent> {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
     const trackedEvent = new TrackerEvent(event, this);
 
@@ -75,7 +75,7 @@ export class Tracker implements Contexts {
 
     // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
     if (this.transport && this.transport.isUsable()) {
-      this.transport.handle(trackedEvent);
+      await this.transport.handle(trackedEvent);
     }
 
     return trackedEvent;

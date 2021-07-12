@@ -40,14 +40,14 @@ describe('ReactTracker', () => {
       clear();
     });
 
-    it('should track WebDocumentContext and DeviceContext Contexts automatically by default', () => {
+    it('should track WebDocumentContext and DeviceContext Contexts automatically by default', async () => {
       const testTracker = new ReactTracker({ endpoint: 'localhost' });
       const testEvent = new TrackerEvent({ event: 'test-event' });
 
       expect(testTracker).toBeInstanceOf(ReactTracker);
       expect(testEvent.global_contexts).toHaveLength(0);
 
-      const trackedEvent = testTracker.trackEvent(testEvent);
+      const trackedEvent = await testTracker.trackEvent(testEvent);
 
       expect(trackedEvent.location_stack).toHaveLength(1);
       expect(trackedEvent.location_stack).toEqual(

@@ -1,18 +1,18 @@
+import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
+import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import {
   ContextsConfig,
-  MemoryQueue,
   QueuedTransport,
   Tracker,
   TrackerConfig,
   TrackerPlugins,
+  TrackerQueue,
   TrackerTransport,
   TransportGroup,
   TransportSwitch,
 } from '@objectiv/tracker-core';
-import { FetchAPITransport } from './FetchAPITransport';
-import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
-import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
 import { DebugTransport } from './DebugTransport';
+import { FetchAPITransport } from './FetchAPITransport';
 import { XMLHttpRequestTransport } from './XMLHttpRequestTransport';
 
 /**
@@ -29,7 +29,7 @@ export type WebTrackerConfig = TrackerConfig & {
 export const makeWebTrackerDefaultTransport = (config: { endpoint: string }): TrackerTransport =>
   new TransportGroup(
     new QueuedTransport({
-      queue: new MemoryQueue(),
+      queue: new TrackerQueue(),
       transport: new TransportSwitch(
         new FetchAPITransport({ endpoint: config.endpoint }),
         new XMLHttpRequestTransport({ endpoint: config.endpoint })
@@ -58,10 +58,10 @@ export const defaultWebTrackerPluginsList = [WebDocumentContextPlugin, WebDevice
  *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint' });
  *  const beaconTransport = new BeaconAPITransport({ endpoint: '/endpoint' });
  *  const debugTransport = new DebugTransport();
- *  const memoryQueue = new MemoryQueue();
+ *  const trackerQueue = new TrackerQueue();
  *  const transportSwitch = new TransportSwitch(beaconTransport, fetchTransport);
  *  const transportGroup = new TransportGroup(transportSwitch, debugTransport);
- *  const transport = new QueuedTransport({ transport: transportGroup, queue: memoryQueue });
+ *  const transport = new QueuedTransport({ transport: transportGroup, queue: trackerQueue });
  *  const tracker = new Tracker({ transport, plugins });
  *
  */

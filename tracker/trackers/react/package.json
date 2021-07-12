@@ -12,9 +12,9 @@
     "build": "rollup -c --silent --failAfterWarnings",
     "prettier": "prettier --write .",
     "tsc": "tsc --noEmit",
-    "test": "jest --no-cache --silent --runInBand",
-    "test:ci": "jest --no-cache --silent --ci --runInBand",
-    "test:coverage": "jest --no-cache --silent --coverage --runInBand"
+    "test": "jest --silent --runInBand",
+    "test:ci": "jest --silent --ci --runInBand",
+    "test:coverage": "jest --silent --coverage --runInBand"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^19.0.0",
