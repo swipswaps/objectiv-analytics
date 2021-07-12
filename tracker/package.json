@@ -16,5 +16,8 @@
     "test:coverage": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --verbose run test:coverage",
     "publish": "yarn workspaces foreach --exclude root --exclude @objectiv/utilities --verbose exec npm publish",
     "utils:generate": "yarn workspace @objectiv/utilities generate && yarn prettier && yarn tsc"
+  },
+  "dependencies": {
+    "json5": "^2.2.0"
   }
 }
