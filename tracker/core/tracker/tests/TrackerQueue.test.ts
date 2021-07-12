@@ -36,7 +36,7 @@ describe('TrackerQueue', () => {
   });
 
   it('should enqueue and dequeue in the expected order', async () => {
-    const processFunctionSpy = jest.fn();
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
     const memoryStore = new TrackerQueueMemoryStore();
     const testQueue = new TrackerQueue({ batchSize: 1, store: memoryStore });
     testQueue.setProcessFunction(processFunctionSpy);
@@ -56,13 +56,13 @@ describe('TrackerQueue', () => {
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent1);
     expect(memoryStore.length).toBe(2);
 
-    processFunctionSpy.mockReset();
+    processFunctionSpy.mockClear();
     await testQueue.run();
 
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent2);
     expect(memoryStore.length).toBe(1);
 
-    processFunctionSpy.mockReset();
+    processFunctionSpy.mockClear();
     await testQueue.run();
 
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
@@ -70,7 +70,7 @@ describe('TrackerQueue', () => {
   });
 
   it('should support batches', async () => {
-    const processFunctionSpy = jest.fn();
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
     const testQueue = new TrackerQueue({ batchSize: 2 });
     testQueue.setProcessFunction(processFunctionSpy);
     await testQueue.push(TrackerEvent1, TrackerEvent2, TrackerEvent3);
@@ -80,11 +80,13 @@ describe('TrackerQueue', () => {
 
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent1, TrackerEvent2);
     expect(testQueue.store.length).toBe(1);
+    expect(testQueue.processingEventIds).toHaveLength(0);
 
-    processFunctionSpy.mockReset();
+    processFunctionSpy.mockClear();
     await testQueue.run();
 
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
     expect(testQueue.store.length).toBe(0);
+    expect(testQueue.processingEventIds).toHaveLength(0);
   });
 });

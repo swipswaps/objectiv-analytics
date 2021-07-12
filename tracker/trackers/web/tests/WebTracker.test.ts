@@ -34,6 +34,7 @@ describe('WebTracker', () => {
             batchDelayMs: 250,
             batchSize: 10,
             processFunction: expect.any(Function),
+            processingEventIds: [],
             store: {
               length: 0,
               events: [],
