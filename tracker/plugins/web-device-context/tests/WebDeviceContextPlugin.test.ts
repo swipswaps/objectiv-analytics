@@ -23,7 +23,7 @@ describe('WebDeviceContextPlugin', () => {
     });
   });
 
-  it('should add the DeviceContext to the Event when `beforeTransport` is executed by the Tracker', () => {
+  it('should add the DeviceContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
     const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDeviceContextPlugin]) });
     const eventContexts: ContextsConfig = {
       global_contexts: [
@@ -33,7 +33,7 @@ describe('WebDeviceContextPlugin', () => {
     };
     const testEvent = new TrackerEvent({ event: 'test-event', ...eventContexts });
     expect(testEvent.global_contexts).toHaveLength(2);
-    const trackedEvent = testTracker.trackEvent(testEvent);
+    const trackedEvent = await testTracker.trackEvent(testEvent);
     expect(trackedEvent.global_contexts).toHaveLength(3);
     expect(trackedEvent.global_contexts).toEqual(
       expect.arrayContaining([

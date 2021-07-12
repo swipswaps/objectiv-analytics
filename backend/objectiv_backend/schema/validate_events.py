@@ -21,6 +21,10 @@ EVENT_LIST_SCHEMA = {
             "event": {
                 "type": "string"
             },
+            "id": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}$"
+            },
             # TODO: global_contexts and location_stack are identical for now but we could make this very strict
             "global_contexts": {
                 "type": "array",
@@ -51,7 +55,7 @@ EVENT_LIST_SCHEMA = {
                 "minimum": 1_577_836_800_000,  # 2020-01-01 00:00:00
             }
         },
-        "required": ["event", "global_contexts", "location_stack"]  # TODO: make time a required field
+        "required": ["event", "id", "global_contexts", "location_stack"]  # TODO: make time a required field
     }
 }
 

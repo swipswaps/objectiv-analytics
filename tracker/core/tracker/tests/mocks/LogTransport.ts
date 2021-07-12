@@ -2,7 +2,8 @@ import { TrackerTransport } from '../../src';
 
 export class LogTransport implements TrackerTransport {
   readonly transportName = 'LogTransport';
-  handle(): void {
+
+  async handle(): Promise<any> {
     console.log('LogTransport.handle');
   }
 

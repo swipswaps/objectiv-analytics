@@ -95,7 +95,8 @@ describe('TrackerEvent', () => {
       "id": "test-device",
       "user_agent": "test-user-agent"
     }
-  ]
+  ],
+  "id": "${testEvent.id}"
 }`);
   });
 });

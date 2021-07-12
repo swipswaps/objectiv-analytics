@@ -2000,6 +2000,7 @@ __metadata:
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
     "@types/jest": ^26.0.23
+    "@types/uuid": ^8.3.1
     jest: ^26.6.3
     jest-standard-reporter: ^2.0.0
     prettier: ^2.3.0
@@ -2012,6 +2013,7 @@ __metadata:
     ts-jest: ^26.5.6
     tslib: ^2.2.0
     typescript: ^4.2.4
+    uuid: ^8.3.2
   languageName: unknown
   linkType: soft
 
@@ -2433,6 +2435,13 @@ __metadata:
   version: 0.7.36
   resolution: "@types/ua-parser-js@npm:0.7.36"
   checksum: 0a0aa0172cccb77128b8daf49731ef88e6fb66afe9fdb4e1fac289d5f9b6dcc37133d61053504a0f0edba1925459174d665fed23f1a637e135e17bdc9bcecd8c
+  languageName: node
+  linkType: hard
+
+"@types/uuid@npm:^8.3.1":
+  version: 8.3.1
+  resolution: "@types/uuid@npm:8.3.1"
+  checksum: 5864be83031f5836be985187ecebb2769936bf223bad896dac381f1a0fdd2ae239f448263196f752d62a4ecc8563817d6d94e329eb2099a28e743ab206e7bfea
   languageName: node
   linkType: hard
 
@@ -8060,7 +8069,7 @@ typescript@^4.2.4:
   languageName: node
   linkType: hard
 
-"uuid@npm:^8.3.0":
+"uuid@npm:^8.3.0, uuid@npm:^8.3.2":
   version: 8.3.2
   resolution: "uuid@npm:8.3.2"
   bin:

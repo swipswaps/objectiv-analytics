@@ -2,6 +2,7 @@ export abstract class AbstractEvent {
   location_stack: AbstractLocationContext[];
   global_contexts: AbstractGlobalContext[];
   event: string;
+  id: string;
 }
 export abstract class AbstractContext {
   id: string;

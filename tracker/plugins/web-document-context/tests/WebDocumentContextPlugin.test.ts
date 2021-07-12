@@ -13,7 +13,7 @@ describe('WebDocumentContextPlugin', () => {
     expect(testWebDocumentContextPlugin.documentContextId).toBe(customDocumentId);
   });
 
-  it('should add the WebDocumentContext to the Event when `beforeTransport` is executed by the Tracker', () => {
+  it('should add the WebDocumentContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
     const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
     const eventContexts: ContextsConfig = {
       location_stack: [
@@ -23,7 +23,7 @@ describe('WebDocumentContextPlugin', () => {
     };
     const testEvent = new TrackerEvent({ event: 'test-event', ...eventContexts });
     expect(testEvent.location_stack).toHaveLength(2);
-    const trackedEvent = testTracker.trackEvent(testEvent);
+    const trackedEvent = await testTracker.trackEvent(testEvent);
     expect(trackedEvent.location_stack).toHaveLength(3);
     expect(trackedEvent.location_stack).toEqual(
       expect.arrayContaining([

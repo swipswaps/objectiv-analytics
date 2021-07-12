@@ -6,14 +6,18 @@ import {
   DiscriminatingPropertyPrefix,
 } from '@objectiv/schema';
 import { ContextsConfig } from './Context';
-import { getObjectKeys } from './helpers';
+import { generateUUID, getObjectKeys } from './helpers';
 
 /**
  * TrackerEvents are simply a combination of an `event` name and their Contexts.
  * Contexts are entirely optional, although Collectors will mostly likely enforce minimal requirements around them.
  * Eg. An interactive TrackerEvent without a Location Stack is probably not descriptive enough to be acceptable.
  */
-export type TrackerEventConfig = Pick<AbstractEvent, 'event'> & ContextsConfig;
+export type TrackerEventConfig = Pick<AbstractEvent, 'event'> &
+  ContextsConfig & {
+    // Unless the Event config has been preconfigured with an id the TrackerEvent will generate one for us
+    id?: string;
+  };
 
 /**
  * Our main TrackerEvent interface and basic implementation
@@ -21,6 +25,7 @@ export type TrackerEventConfig = Pick<AbstractEvent, 'event'> & ContextsConfig;
 export class TrackerEvent implements AbstractEvent, Contexts {
   // Event interface
   readonly event: string;
+  readonly id: string;
 
   // Contexts interface
   readonly location_stack: AbstractLocationContext[];
@@ -34,10 +39,13 @@ export class TrackerEvent implements AbstractEvent, Contexts {
    * ContextConfigs are used to configure location_stack and global_contexts. If multiple configurations have been
    * provided they will be merged onto each other to produce a single location_stack and global_contexts.
    */
-  constructor({ event, ...otherEventProps }: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
+  constructor({ event, id, ...otherEventProps }: TrackerEventConfig, ...contextConfigs: ContextsConfig[]) {
     // Let's copy the entire eventConfiguration in state
     this.event = event;
     Object.assign(this, otherEventProps);
+
+    // Generate a unique UUID v4 for this event, unless we have been given an Event with a pre-assigned id
+    this.id = id ?? generateUUID();
 
     // Start with empty context lists
     let new_location_stack: AbstractLocationContext[] = [];

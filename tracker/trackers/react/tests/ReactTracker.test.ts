@@ -40,33 +40,33 @@ describe('ReactTracker', () => {
       clear();
     });
 
-    it('should track WebDocumentContext and DeviceContext Contexts automatically by default', () => {
+    it('should track WebDocumentContext and DeviceContext Contexts automatically by default', async () => {
       const testTracker = new ReactTracker({ endpoint: 'localhost' });
       const testEvent = new TrackerEvent({ event: 'test-event' });
 
       expect(testTracker).toBeInstanceOf(ReactTracker);
       expect(testEvent.global_contexts).toHaveLength(0);
 
-      const trackedEvent = testTracker.trackEvent(testEvent);
+      const trackedEvent = await testTracker.trackEvent(testEvent);
 
       expect(trackedEvent.location_stack).toHaveLength(1);
       expect(trackedEvent.location_stack).toEqual(
         expect.arrayContaining([
-          {
+          expect.objectContaining({
             _context_type: 'WebDocumentContext',
             id: '#document',
             url: 'http://localhost/',
-          },
+          }),
         ])
       );
       expect(trackedEvent.global_contexts).toHaveLength(1);
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
-          {
+          expect.objectContaining({
             _context_type: 'DeviceContext',
             id: 'device',
             user_agent: USER_AGENT_MOCK_VALUE,
-          },
+          }),
         ])
       );
     });

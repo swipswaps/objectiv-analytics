@@ -1,4 +1,4 @@
-import { AbstractEvent } from '@objectiv/schema';
+import { TrackerEventConfig } from '@objectiv/tracker-core';
 import { ReactTracker } from './ReactTracker';
 import { useTracker } from './TrackerContextProvider';
 import { useOnToggle } from './useOnToggle';
@@ -9,8 +9,8 @@ import { useOnToggle } from './useOnToggle';
  **/
 export const useTrackOnToggle = (
   state: boolean,
-  trueEvent: AbstractEvent,
-  falseEvent: AbstractEvent,
+  trueEvent: TrackerEventConfig,
+  falseEvent: TrackerEventConfig,
   tracker: ReactTracker = useTracker()
 ) => {
   useOnToggle(
