@@ -4,7 +4,7 @@
  *
  * Script to generate Typescript definitions of events and contexts used by the tracker, based on the centralized
  * schema. The schema directory itself can be found in the root of the git repository (/schema). The base schema is in
- * /schema/base_schema.json.
+ * /schema/base_schema.json5.
  * Additionally, the script will look for extensions there, and will add them to the generated classes and interfaces.
  *
  * Usage is pretty straight forward:
@@ -14,6 +14,7 @@
  */
 
 const fs = require('fs');
+const JSON5 = require('json5');
 
 const DISCRIMINATING_PROPERTY_PREFIX = '_';
 
@@ -31,7 +32,7 @@ const core_schema_package_dir = '../../../core/schema/src/';
 const core_tracker_package_dir = '../../../core/tracker/src/';
 
 // name of base schema, will be loaded first
-const base_schema_file = 'base_schema.json';
+const base_schema_file = 'base_schema.json5';
 
 // contains object, describing the object, eg, stuff like:
 // class_name, properties, parent, abstract, type, interfaces
@@ -82,10 +83,15 @@ function createDefinition(
     parent: false,
     definition_type: 'class',
     interfaces: false,
+    description: '',
   }
 ) {
   const p_list = [];
   for (let property in params.properties) {
+    // add description for property
+    if (params.properties[property]['description']) {
+      p_list.push(`/**\n * ${params.properties[property]['description'].split('\n').join('\n *')}\n */`);
+    }
     if (params.properties[property]['type']) {
       p_list.push(`${property}: ${get_property_definition(params.properties[property])};`);
     } else if (params.properties[property]['discriminator']) {
@@ -95,7 +101,15 @@ function createDefinition(
     }
   }
 
+  let description = '';
+  if ('description' in params && params.description !== undefined && params.description !== '') {
+    description = params.description.split('\n').join('\n * ');
+  }
+
   const tpl =
+    `/**\n` +
+    ` * ${description}\n` +
+    ` */\n` +
     `export ${params.abstract ? 'abstract ' : ''}${params.definition_type} ${params.class_name}` +
     `${params.parent ? ' extends ' + params.parent : ''}` +
     `${params.interfaces ? ' implements ' + params.interfaces.join(',') : ''}` +
@@ -113,7 +127,7 @@ function createFactory(
     abstract: false,
     parent: false,
     definition_type: 'class',
-    interfaces: false,
+    description: '',
   }
 ) {
   // we set the literal discriminators first, so they won't be overridden
@@ -179,7 +193,9 @@ function createFactory(
       properties.push(`${mp}: ${merged_properties[mp]['value']}`);
     }
   }
+  const description = `/** Creates instance of ${params.class_name} */\n`;
   const tpl =
+      `${description}` +
     `export const make${params.class_name} = ( props${are_all_props_optional ? '?' : ''}: { ${props.join('; ')} }): 
     ${return_type} => ({\n` +
     `\t${discriminators.join(',\n\t')},\n` +
@@ -201,7 +217,7 @@ function createMissingAbstracts(
     abstract: false,
     parent: false,
     definition_type: 'class',
-    interfaces: false,
+    description: '',
   }
 ) {
   // if we have a parent and our parent is not abstract, we cannot extend it
@@ -255,6 +271,7 @@ function createMissingAbstracts(
         abstract: true,
         parent: parent,
         definition_type: 'class',
+        description: '',
       };
 
       // add params to map
@@ -294,9 +311,17 @@ const files = fs.readdirSync(schema_dir);
 // read all schema files
 const all_schema = {};
 for (let fn of files) {
-  if (fn.match(/[a-z0-9_]+\.json$/)) {
+  if (fn.match(/[a-z0-9_]+\.json5?$/)) {
     let data = fs.readFileSync(schema_dir + fn, 'utf-8');
-    all_schema[fn] = JSON.parse(data);
+    all_schema[fn] = JSON5.parse(data, (key, value) => {
+      // clean up `description` fields from json5 schema
+      // newlines in the string are translated to 8 spaces by the deserializer
+      // we translate them back to newlines and remove leading spaces
+      if (key === 'description') {
+        return value.replace(/\ {8}/g, '\n').replace(/^\s+/gm, '').replace(/\n$/, '');
+      }
+      return value;
+    });
   } else {
     console.log(`ignoring invalid file: ${fn}`);
   }
@@ -360,12 +385,14 @@ for (let event_type in events) {
   } else {
     properties[EVENT_DISCRIMINATOR] = [];
     properties[EVENT_DISCRIMINATOR]['value'] = `'${event_type}'`;
+    properties[EVENT_DISCRIMINATOR]['description'] = 'Typescript discriminator';
     definition_type = 'interface';
   }
 
   if (event['properties']) {
     for (let property_name in event['properties']) {
       properties[property_name] = [];
+      properties[property_name]['description'] = event['properties'][property_name]['description'];
       properties[property_name]['type'] = get_property_definition(event['properties'][property_name]);
     }
   }
@@ -388,7 +415,7 @@ for (let event_type in events) {
     abstract: abstract,
     parent: parent,
     definition_type: definition_type,
-    // interfaces: interfaces
+    description: event['description'],
   };
 }
 
@@ -434,14 +461,15 @@ for (let context_type in contexts) {
     }
 
     // literal discriminator for non-abstract class
-    properties[CONTEXT_DISCRIMINATOR] = [];
+    properties[CONTEXT_DISCRIMINATOR] = { description: 'Typescript discriminator' };
     properties[CONTEXT_DISCRIMINATOR]['value'] = `'${context_type}'`;
+
     definition_type = 'interface';
   }
 
   if (context['properties']) {
     for (let property_name in context['properties']) {
-      properties[property_name] = [];
+      properties[property_name] = { description: context['properties'][property_name]['description'] };
       properties[property_name]['type'] = get_property_definition(context['properties'][property_name]);
     }
   }
@@ -458,8 +486,8 @@ for (let context_type in contexts) {
     abstract: abstract,
     parent: parent,
     definition_type: definition_type,
-    // interfaces: interfaces,
     stack_type: stack_type,
+    description: context['description'],
   };
 }
 

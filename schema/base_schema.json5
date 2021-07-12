@@ -136,7 +136,7 @@
           This ensures that Events are carrying the Contexts they require, making them meaningful and identifiable. \
           \
           All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement. \
-        ",
+       ",
       "properties": {
         "id": {
           "description":"A unique string identifier to be combined with `_context_type` for Context instance uniqueness.",
@@ -270,8 +270,8 @@
         "AbstractGlobalContext"
       ],
       "properties": {
-        "description": "String describing the user-agent that emitted the event",
         "user_agent": {
+          "description": "String describing the user-agent that emitted the event",
           "type": "string"
         }
       }
