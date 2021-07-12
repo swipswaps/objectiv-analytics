@@ -65,7 +65,7 @@ describe('TrackerQueue', () => {
   it('should enqueue and dequeue in the expected order', async () => {
     const processFunctionSpy = jest.fn(() => Promise.resolve());
     const memoryStore = new TrackerQueueMemoryStore();
-    const testQueue = new TrackerQueue({ batchSize: 1, store: memoryStore });
+    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, store: memoryStore });
     testQueue.setProcessFunction(processFunctionSpy);
     expect(testQueue.store.length).toBe(0);
 
@@ -98,7 +98,7 @@ describe('TrackerQueue', () => {
 
   it('should support batches', async () => {
     const processFunctionSpy = jest.fn(() => Promise.resolve());
-    const testQueue = new TrackerQueue({ batchSize: 2 });
+    const testQueue = new TrackerQueue({ batchSize: 2, concurrency: 1 });
     testQueue.setProcessFunction(processFunctionSpy);
     await testQueue.push(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(testQueue.store.length).toBe(3);
@@ -120,6 +120,35 @@ describe('TrackerQueue', () => {
     await testQueue.run();
 
     expect(processFunctionSpy).not.toHaveBeenCalled();
+    expect(testQueue.store.length).toBe(0);
+    expect(testQueue.processingEventIds).toHaveLength(0);
+  });
+
+  it('should support concurrent batches', async () => {
+    const TrackerEvent4 = new TrackerEvent({ event: 'd' });
+    const TrackerEvent5 = new TrackerEvent({ event: 'e' });
+    const TrackerEvent6 = new TrackerEvent({ event: 'f' });
+    const TrackerEvent7 = new TrackerEvent({ event: 'g' });
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
+    const testQueue = new TrackerQueue({ batchSize: 3, concurrency: 3 });
+    testQueue.setProcessFunction(processFunctionSpy);
+    await testQueue.push(
+      TrackerEvent1,
+      TrackerEvent2,
+      TrackerEvent3,
+      TrackerEvent4,
+      TrackerEvent5,
+      TrackerEvent6,
+      TrackerEvent7
+    );
+    expect(testQueue.store.length).toBe(7);
+
+    await testQueue.run();
+
+    expect(processFunctionSpy).toHaveBeenCalledTimes(3);
+    expect(processFunctionSpy).toHaveBeenNthCalledWith(1, ...[TrackerEvent1, TrackerEvent2, TrackerEvent3]);
+    expect(processFunctionSpy).toHaveBeenNthCalledWith(2, ...[TrackerEvent4, TrackerEvent5, TrackerEvent6]);
+    expect(processFunctionSpy).toHaveBeenNthCalledWith(3, ...[TrackerEvent7]);
     expect(testQueue.store.length).toBe(0);
     expect(testQueue.processingEventIds).toHaveLength(0);
   });

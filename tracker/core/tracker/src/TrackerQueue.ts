@@ -79,6 +79,11 @@ export type TrackerQueueConfig = {
    * Optional. How often to re-run and dequeue again, in ms. Defaults to 250.
    */
   readonly batchDelayMs?: number;
+
+  /**
+   * Optional. How many batches to process simultaneously. Defaults to 4.
+   */
+  readonly concurrency?: number;
 };
 
 /**
@@ -94,16 +99,6 @@ export interface TrackerQueueInterface extends Required<TrackerQueueConfig> {
    * A name describing the Queue implementation for debugging purposes
    */
   readonly queueName: string;
-
-  /**
-   * How many events to dequeue at the same time
-   */
-  readonly batchSize: number;
-
-  /**
-   * How often to re-run and dequeue again
-   */
-  readonly batchDelayMs: number;
 
   /**
    * Sets the processFunction to execute whenever run is called
@@ -140,7 +135,9 @@ export class TrackerQueue implements TrackerQueueInterface {
   readonly store: TrackerQueueStoreInterface;
   readonly batchSize: number;
   readonly batchDelayMs: number;
+  readonly concurrency: number;
 
+  // FIXME make this an array of arrays, so we may know how many batches are in there as well
   // Hold a list of Event IDs that are currently being processed
   processingEventIds: string[] = [];
 
@@ -151,6 +148,7 @@ export class TrackerQueue implements TrackerQueueInterface {
     this.store = config?.store ?? new TrackerQueueMemoryStore();
     this.batchSize = config?.batchSize ?? 10;
     this.batchDelayMs = config?.batchDelayMs ?? 250;
+    this.concurrency = config?.concurrency ?? 4;
   }
 
   setProcessFunction(processFunction: TrackerQueueProcessFunction) {
@@ -172,7 +170,7 @@ export class TrackerQueue implements TrackerQueueInterface {
     const eventsBatch = await this.store.read(this.batchSize, (event) => !this.processingEventIds.includes(event.id));
 
     // Push Event Ids in the processing list, so the next readBatch will not pick these up
-    this.processingEventIds.push(...eventsBatch.map(event => event.id));
+    this.processingEventIds.push(...eventsBatch.map((event) => event.id));
 
     return eventsBatch;
   }
@@ -182,14 +180,22 @@ export class TrackerQueue implements TrackerQueueInterface {
       return Promise.reject('TrackerQueue `processFunction` has not been set.');
     }
 
-    // Read next batch of Events. This method will not read Events that are currently being processed already
-    const eventsBatch = await this.readBatch();
+    // Load and process as many Event batches as `concurrency` allows. For each Event we create a Promise.
+    let processPromises: Promise<any>[] = [];
 
-    if (isNonEmptyArray(eventsBatch)) {
+    for (let i = 0; i < this.concurrency; i++) {
+      const eventsBatch = await this.readBatch();
+
+      // No need to continue if there are no more Events to process
+      if (!isNonEmptyArray(eventsBatch)) {
+        return;
+      }
+
+      // Gather Event Ids. Used for both deletion and processingEventIds cleanup.
       const eventsBatchIds = eventsBatch.map((event) => event.id);
 
-      // Run process function
-      return (
+      // Queue process function
+      processPromises.push(
         this.processFunction(...eventsBatch)
           // Delete Events from Store when the process function promise resolves
           .then(() => {
@@ -201,5 +207,7 @@ export class TrackerQueue implements TrackerQueueInterface {
           })
       );
     }
+
+    return Promise.all(processPromises);
   }
 }
