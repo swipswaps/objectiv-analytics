@@ -18,23 +18,21 @@ import {
   WebDocumentContext,
 } from '@objectiv/schema';
 
-export const makeActionContext = (props: { id: string; path: string; text: string }): ActionContext => ({
+export const makeActionContext = (props: { id: string; text: string }): ActionContext => ({
   __location_context: true,
   __item_context: true,
   __action_context: true,
   _context_type: 'ActionContext',
   id: props.id,
-  path: props.path,
   text: props.text,
 });
 
-export const makeButtonContext = (props: { id: string; path: string; text: string }): ButtonContext => ({
+export const makeButtonContext = (props: { id: string; text: string }): ButtonContext => ({
   __location_context: true,
   __item_context: true,
   __action_context: true,
   _context_type: 'ButtonContext',
   id: props.id,
-  path: props.path,
   text: props.text,
 });
 
@@ -94,14 +92,14 @@ export const makeItemContext = (props: { id: string }): ItemContext => ({
   id: props.id,
 });
 
-export const makeLinkContext = (props: { id: string; path: string; text: string }): LinkContext => ({
+export const makeLinkContext = (props: { id: string; text: string; href: string }): LinkContext => ({
   __location_context: true,
   __item_context: true,
   __action_context: true,
   _context_type: 'LinkContext',
   id: props.id,
-  path: props.path,
   text: props.text,
+  href: props.href,
 });
 
 export const makeMediaPlayerContext = (props: { id: string }): MediaPlayerContext => ({

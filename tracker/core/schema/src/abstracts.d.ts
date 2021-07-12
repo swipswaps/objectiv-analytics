@@ -3,6 +3,8 @@ export abstract class AbstractEvent {
   global_contexts: AbstractGlobalContext[];
   event: string;
   id: string;
+  tracking_time: number;
+  transport_time: number;
 }
 export abstract class AbstractContext {
   id: string;
@@ -31,6 +33,5 @@ export abstract class AbstractItemContext extends AbstractLocationContext {
 }
 export abstract class AbstractActionContext extends AbstractItemContext {
   readonly __action_context = true;
-  path: string;
   text: string;
 }
