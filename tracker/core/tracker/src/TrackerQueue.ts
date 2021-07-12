@@ -169,7 +169,12 @@ export class TrackerQueue implements TrackerQueueInterface {
   }
 
   async readBatch(): Promise<TrackerEvent[]> {
-    return this.store.read(this.batchSize, (event) => !this.processingEventIds.includes(event.id));
+    const eventsBatch = await this.store.read(this.batchSize, (event) => !this.processingEventIds.includes(event.id));
+
+    // Push Event Ids in the processing list, so the next readBatch will not pick these up
+    this.processingEventIds.push(...eventsBatch.map(event => event.id));
+
+    return eventsBatch;
   }
 
   async run(): Promise<any> {
@@ -182,9 +187,6 @@ export class TrackerQueue implements TrackerQueueInterface {
 
     if (isNonEmptyArray(eventsBatch)) {
       const eventsBatchIds = eventsBatch.map((event) => event.id);
-
-      // Push Event Ids in the processing list, so the next readBatch will not pick these up
-      this.processingEventIds.push(...eventsBatchIds);
 
       // Run process function
       return (
