@@ -195,7 +195,7 @@ function createFactory(
   }
   const description = `/** Creates instance of ${params.class_name} */\n`;
   const tpl =
-      `${description}` +
+    `${description}` +
     `export const make${params.class_name} = ( props${are_all_props_optional ? '?' : ''}: { ${props.join('; ')} }): 
     ${return_type} => ({\n` +
     `\t${discriminators.join(',\n\t')},\n` +
