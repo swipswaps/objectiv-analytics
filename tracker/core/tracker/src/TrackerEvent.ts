@@ -13,10 +13,11 @@ import { generateUUID, getObjectKeys } from './helpers';
  * Contexts are entirely optional, although Collectors will mostly likely enforce minimal requirements around them.
  * Eg. An interactive TrackerEvent without a Location Stack is probably not descriptive enough to be acceptable.
  */
-export type TrackerEventConfig = Pick<AbstractEvent, 'event'> & ContextsConfig & {
-  // Unless the Event config has been preconfigured with an id the TrackerEvent will generate one for us
-  id?: string;
-};
+export type TrackerEventConfig = Pick<AbstractEvent, 'event'> &
+  ContextsConfig & {
+    // Unless the Event config has been preconfigured with an id the TrackerEvent will generate one for us
+    id?: string;
+  };
 
 /**
  * Our main TrackerEvent interface and basic implementation

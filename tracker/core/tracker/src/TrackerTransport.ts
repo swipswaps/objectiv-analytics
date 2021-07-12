@@ -121,16 +121,19 @@ export class QueuedTransport implements TrackerTransport {
     this.queue = config.queue;
 
     if (this.isUsable()) {
-      // Start the queue runner. Each tick it will hand over a batch of TrackerEvents to the TrackerTransport
-      this.queue.run(
-        // Make sure to bind the `handle` method to its instance to preserve its scope
-        this.transport.handle.bind(this.transport)
-      );
+      // Bind the handle function to its Transport instance to preserve its scope
+      const processFunction = this.transport.handle.bind(this.transport);
+
+      // Set the queue processFunction to transport.handle method: the queue will run Transport.handle for each batch
+      this.queue.setProcessFunction(processFunction);
+
+      // And start the Queue runner
+      this.queue.startRunner();
     }
   }
 
   handle(...args: [TrackerEvent, ...TrackerEvent[]]): void {
-    this.queue.enqueue(...args);
+    this.queue.push(...args);
   }
 
   isUsable(): boolean {
