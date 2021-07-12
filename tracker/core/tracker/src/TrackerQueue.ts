@@ -1,5 +1,5 @@
-import { AbstractEvent } from '@objectiv/schema';
 import { isNonEmptyArray, NonEmptyArray } from './helpers';
+import { TrackerEvent } from './TrackerEvent';
 
 /**
  * Our Tracker Queue Store generic interface.
@@ -13,12 +13,12 @@ export interface TrackerQueueStoreInterface {
   /**
    * Read Events from the store, if `size` is omitted all TrackerEvents will be returned
    */
-  read(size?: number): Promise<AbstractEvent[]>;
+  read(size?: number): Promise<TrackerEvent[]>;
 
   /**
    * Write Events to the store
    */
-  write(...args: NonEmptyArray<AbstractEvent>): Promise<any>;
+  write(...args: NonEmptyArray<TrackerEvent>): Promise<any>;
 
   /**
    * Delete TrackerEvents from the store
@@ -31,13 +31,13 @@ export interface TrackerQueueStoreInterface {
  */
 export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
   length: number = 0;
-  events: AbstractEvent[] = [];
+  events: TrackerEvent[] = [];
 
-  async read(size?: number): Promise<AbstractEvent[]> {
+  async read(size?: number): Promise<TrackerEvent[]> {
     return this.events.slice(0, size);
   }
 
-  async write(...args: NonEmptyArray<AbstractEvent>): Promise<any> {
+  async write(...args: NonEmptyArray<TrackerEvent>): Promise<any> {
     this.events.push(...args);
     this.updateLength();
   }
@@ -55,7 +55,7 @@ export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
 /**
  * The definition of the runner function. Gets executed every batchDelayMs to process the Queue.
  */
-type TrackerQueueProcessFunction = (...args: NonEmptyArray<AbstractEvent>) => Promise<any>;
+type TrackerQueueProcessFunction = (...args: NonEmptyArray<TrackerEvent>) => Promise<any>;
 
 /**
  * The configuration of a TrackerQueue
@@ -114,12 +114,12 @@ export interface TrackerQueueInterface extends Required<TrackerQueueConfig> {
   /**
    * Adds one or more TrackerEvents to the Queue
    */
-  push(...args: NonEmptyArray<AbstractEvent>): Promise<any>;
+  push(...args: NonEmptyArray<TrackerEvent>): Promise<any>;
 
   /**
    * Adds one or more TrackerEvents to the Queue
    */
-  readBatch(): Promise<AbstractEvent[]>;
+  readBatch(): Promise<TrackerEvent[]>;
 
   /**
    * Fetches a batch of Events from the Queue and executes the given `processFunction` with them.
@@ -158,11 +158,11 @@ export class TrackerQueue implements TrackerQueueInterface {
     }, this.batchDelayMs);
   }
 
-  async push(...args: NonEmptyArray<AbstractEvent>): Promise<any> {
+  async push(...args: NonEmptyArray<TrackerEvent>): Promise<any> {
     return this.store.write(...args);
   }
 
-  async readBatch(): Promise<AbstractEvent[]> {
+  async readBatch(): Promise<TrackerEvent[]> {
     return this.store.read(this.batchSize);
   }
 

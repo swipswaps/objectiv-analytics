@@ -1,11 +1,11 @@
-import { AbstractEvent } from '@objectiv/schema';
 import { isNonEmptyArray, NonEmptyArray } from './helpers';
+import { TrackerEvent } from './TrackerEvent';
 import { TrackerQueue } from './TrackerQueue';
 
 /**
  * TrackerTransports can receive either Events ready to be processed or Event Promises.
  */
-export type TransportableEvent = AbstractEvent | Promise<AbstractEvent>;
+export type TransportableEvent = TrackerEvent | Promise<TrackerEvent>;
 
 /**
  * The TrackerTransport interface provides a single function to handle one or more TrackerEvents.
