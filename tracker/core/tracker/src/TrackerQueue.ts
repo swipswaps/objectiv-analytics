@@ -159,8 +159,7 @@ export class TrackerQueue implements TrackerQueueInterface {
 
   startRunner() {
     setInterval(async () => {
-      // TODO some state to prevent concurrent runs
-      // TODO a timeout/cancel mechanism so we may cancel run running for too long and retry or die
+      // TODO Add timeout/cancel mechanism so we may cancel runs running for too long and retry or die
       await this.run();
     }, this.batchDelayMs);
   }
@@ -190,7 +189,7 @@ export class TrackerQueue implements TrackerQueueInterface {
       // Run process function
       return (
         this.processFunction(...eventsBatch)
-          // Delete events from Store when the process function promise resolves
+          // Delete Events from Store when the process function promise resolves
           .then(() => {
             this.store.delete(eventsBatchIds);
           })

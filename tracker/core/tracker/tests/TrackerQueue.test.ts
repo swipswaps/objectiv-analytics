@@ -1,4 +1,5 @@
 import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore } from '../src';
+import spyOn = jest.spyOn;
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -6,6 +7,32 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.useRealTimers();
+});
+
+describe('TrackerQueueMemoryStore', () => {
+  const TrackerEvent1 = new TrackerEvent({ event: 'a' });
+  const TrackerEvent2 = new TrackerEvent({ event: 'b' });
+  const TrackerEvent3 = new TrackerEvent({ event: 'c' });
+
+  it('should read all Events', async () => {
+    const trackerQueueStore = new TrackerQueueMemoryStore();
+    await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
+    expect(trackerQueueStore.length).toBe(3);
+
+    const events = await trackerQueueStore.read();
+
+    expect(events.map((event) => event.event)).toStrictEqual(['a', 'b', 'c']);
+  });
+
+  it('should allow filtering when reading Events', async () => {
+    const trackerQueueStore = new TrackerQueueMemoryStore();
+    await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
+    expect(trackerQueueStore.length).toBe(3);
+
+    const events = await trackerQueueStore.read(Infinity, (event) => event.event !== 'a');
+
+    expect(events.map((event) => event.event)).toStrictEqual(['b', 'c']);
+  });
 });
 
 describe('TrackerQueue', () => {
@@ -88,5 +115,27 @@ describe('TrackerQueue', () => {
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
     expect(testQueue.store.length).toBe(0);
     expect(testQueue.processingEventIds).toHaveLength(0);
+
+    processFunctionSpy.mockClear();
+    await testQueue.run();
+
+    expect(processFunctionSpy).not.toHaveBeenCalled();
+    expect(testQueue.store.length).toBe(0);
+    expect(testQueue.processingEventIds).toHaveLength(0);
+  });
+
+  it('startRunner should start the setInterval that will execute `run` automatically after enough time', async () => {
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
+    const testQueue = new TrackerQueue();
+    testQueue.setProcessFunction(processFunctionSpy);
+
+    spyOn(testQueue, 'run');
+    expect(testQueue.run).not.toHaveBeenCalled();
+
+    testQueue.startRunner();
+
+    jest.advanceTimersByTime(testQueue.batchDelayMs);
+
+    expect(testQueue.run).toHaveBeenCalled();
   });
 });
