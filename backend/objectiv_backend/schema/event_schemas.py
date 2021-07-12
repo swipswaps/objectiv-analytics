@@ -385,7 +385,7 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     """
     Get the event schema.
 
-    The schema is based on schema/base_schema.json and the schema files in the optional
+    The schema is based on schema/base_schema.json5 and the schema files in the optional
     schema_extension_directory.
     Files in the extension directory qualify for loading if their name matches [a-z0-9_]+\\.json.
     The files are loaded in alphabetical order.
@@ -398,7 +398,7 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     # this should also work when running from a zipped package
     from objectiv_backend.common.config import LOAD_BASE_SCHEMA
     if LOAD_BASE_SCHEMA:
-        data = pkgutil.get_data(__name__, "base_schema.json")
+        data = pkgutil.get_data(__name__, "base_schema.json5")
         if data:
             base_schema = json.loads(data)
             schema_jsons.append(base_schema)
