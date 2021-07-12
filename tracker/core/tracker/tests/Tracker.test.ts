@@ -174,8 +174,8 @@ describe('Tracker', () => {
       const pluginF: TrackerPlugin = { pluginName: 'pluginF', beforeTransport: jest.fn(noop) };
       const testTracker = new Tracker({ plugins: new TrackerPlugins([pluginE, pluginF]) });
       testTracker.trackEvent(testEvent);
-      expect(pluginE.beforeTransport).toHaveBeenCalledWith(testEvent);
-      expect(pluginF.beforeTransport).toHaveBeenCalledWith(testEvent);
+      expect(pluginE.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+      expect(pluginF.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
     });
 
     it('should send the Event via the given TrackerTransport', () => {
@@ -183,7 +183,7 @@ describe('Tracker', () => {
       jest.spyOn(testTransport, 'handle');
       const testTracker = new Tracker({ transport: testTransport });
       testTracker.trackEvent(testEvent);
-      expect(testTransport.handle).toHaveBeenCalledWith(testEvent);
+      expect(testTransport.handle).toHaveBeenCalledWith(expect.objectContaining(testEvent));
     });
 
     it("should not send the Event via the given TrackerTransport if it's not usable", () => {

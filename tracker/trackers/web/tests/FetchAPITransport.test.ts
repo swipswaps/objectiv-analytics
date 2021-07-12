@@ -1,6 +1,9 @@
 import fetchMock from 'jest-fetch-mock';
+import MockDate from 'mockdate';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
 import { TrackerQueue, QueuedTransport, TrackerEvent } from '@objectiv/tracker-core';
+
+const mockedMs = 1434319925275;
 
 beforeAll(() => {
   fetchMock.enableMocks();
@@ -9,10 +12,13 @@ beforeAll(() => {
 beforeEach(() => {
   fetchMock.resetMocks();
   jest.useFakeTimers();
+  MockDate.reset();
+  MockDate.set(mockedMs);
 });
 
 afterEach(() => {
   jest.useRealTimers();
+  MockDate.reset();
 });
 
 describe('FetchAPITransport', () => {
@@ -27,10 +33,17 @@ describe('FetchAPITransport', () => {
       endpoint: MOCK_ENDPOINT,
     });
     await testTransport.handle(testEvent);
+    const { id, ...otherProps } = testEvent;
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
-        body: JSON.stringify([testEvent]),
+        body: JSON.stringify([
+          {
+            ...otherProps,
+            transport_time: mockedMs,
+            id,
+          },
+        ]),
         ...defaultFetchParameters,
       })
     );
@@ -50,10 +63,17 @@ describe('FetchAPITransport', () => {
       fetchFunction: ({ endpoint, events }) => defaultFetchFunction({ endpoint, events, parameters: customParameters }),
     });
     await testTransport.handle(testEvent);
+    const { id, ...otherProps } = testEvent;
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
-        body: JSON.stringify([testEvent]),
+        body: JSON.stringify([
+          {
+            ...otherProps,
+            transport_time: mockedMs,
+            id,
+          },
+        ]),
         ...customParameters,
       })
     );
@@ -92,10 +112,17 @@ describe('FetchAPITransport', () => {
     // The Queue should have now sent the event by calling the runFunction once
     expect(setInterval).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledTimes(1);
+    const { id, ...otherProps } = testEvent;
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
-        body: JSON.stringify([testEvent]),
+        body: JSON.stringify([
+          {
+            ...otherProps,
+            transport_time: mockedMs,
+            id,
+          },
+        ]),
         ...defaultFetchParameters,
       })
     );

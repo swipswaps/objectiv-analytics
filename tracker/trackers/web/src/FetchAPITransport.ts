@@ -1,4 +1,10 @@
-import { NonEmptyArray, TrackerEvent, TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
+import {
+  isNonEmptyArray,
+  NonEmptyArray,
+  TrackerEvent,
+  TrackerTransport,
+  TransportableEvent,
+} from '@objectiv/tracker-core';
 
 /**
  * The default set of parameters for the fetch API call.
@@ -22,9 +28,10 @@ export const defaultFetchFunction = async ({
   parameters = defaultFetchParameters,
 }: {
   endpoint: string;
-  events: TrackerEvent[];
+  events: [TrackerEvent, ...TrackerEvent[]];
   parameters?: typeof defaultFetchParameters;
 }): Promise<Response> => {
+  events.forEach((event) => event.setTransportTime());
   return fetch(endpoint, {
     ...parameters,
     body: JSON.stringify(events),
@@ -60,8 +67,11 @@ export class FetchAPITransport implements TrackerTransport {
     this.fetchFunction = config.fetchFunction ?? defaultFetchFunction;
   }
 
-  async handle(...args: NonEmptyArray<TransportableEvent>): Promise<Response> {
-    return this.fetchFunction({ endpoint: this.endpoint, events: await Promise.all(args) });
+  async handle(...args: NonEmptyArray<TransportableEvent>): Promise<Response | void> {
+    const events = await Promise.all(args);
+    if (isNonEmptyArray(events)) {
+      return this.fetchFunction({ endpoint: this.endpoint, events });
+    }
   }
 
   isUsable(): boolean {

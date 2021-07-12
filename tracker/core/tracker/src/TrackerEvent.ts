@@ -20,12 +20,20 @@ export type TrackerEventConfig = Pick<AbstractEvent, 'event'> &
   };
 
 /**
+ * An Event before it has been handed over to the Tracker.
+ * Properties that will be set by the Tracker or Transport are omitted: `id`, `tracking_time`, `transport_time`
+ */
+export type UntrackedEvent = Omit<AbstractEvent, 'id' | 'tracking_time' | 'transport_time'>;
+
+/**
  * Our main TrackerEvent interface and basic implementation
  */
-export class TrackerEvent implements AbstractEvent, Contexts {
+export class TrackerEvent implements UntrackedEvent, Contexts {
   // Event interface
   readonly event: string;
-  readonly id: string;
+  id: string;
+  tracking_time?: number;
+  transport_time?: number;
 
   // Contexts interface
   readonly location_stack: AbstractLocationContext[];
@@ -44,7 +52,7 @@ export class TrackerEvent implements AbstractEvent, Contexts {
     this.event = event;
     Object.assign(this, otherEventProps);
 
-    // Generate a unique UUID v4 for this event, unless we have been given an Event with a pre-assigned id
+    // If the Event does not have an id yet, generate one
     this.id = id ?? generateUUID();
 
     // Start with empty context lists
@@ -60,6 +68,22 @@ export class TrackerEvent implements AbstractEvent, Contexts {
     // And finally add the TrackerEvent Contexts on top. For Global Contexts instead we do the opposite.
     this.location_stack = [...new_location_stack, ...(otherEventProps.location_stack ?? [])];
     this.global_contexts = [...(otherEventProps.global_contexts ?? []), ...new_global_contexts];
+  }
+
+  /**
+   * Tracking time setter.
+   * Defaults to Date.now() if not timestampMs is provided.
+   */
+  setTrackingTime(timestampMs: number = Date.now()) {
+    this.tracking_time = timestampMs;
+  }
+
+  /**
+   * Transport time setter.
+   * Defaults to Date.now() if not timestampMs is provided.
+   */
+  setTransportTime(timestampMs: number = Date.now()) {
+    this.transport_time = timestampMs;
   }
 
   /**
