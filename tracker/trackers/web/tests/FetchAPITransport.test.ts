@@ -33,13 +33,15 @@ describe('FetchAPITransport', () => {
       endpoint: MOCK_ENDPOINT,
     });
     await testTransport.handle(testEvent);
+    const { id, ...otherProps } = testEvent;
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
         body: JSON.stringify([
           {
-            ...testEvent,
+            ...otherProps,
             transport_time: mockedMs,
+            id,
           },
         ]),
         ...defaultFetchParameters,
@@ -61,13 +63,15 @@ describe('FetchAPITransport', () => {
       fetchFunction: ({ endpoint, events }) => defaultFetchFunction({ endpoint, events, parameters: customParameters }),
     });
     await testTransport.handle(testEvent);
+    const { id, ...otherProps } = testEvent;
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
         body: JSON.stringify([
           {
-            ...testEvent,
+            ...otherProps,
             transport_time: mockedMs,
+            id,
           },
         ]),
         ...customParameters,
@@ -108,13 +112,15 @@ describe('FetchAPITransport', () => {
     // The Queue should have now sent the event by calling the runFunction once
     expect(setInterval).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledTimes(1);
+    const { id, ...otherProps } = testEvent;
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
         body: JSON.stringify([
           {
-            ...testEvent,
+            ...otherProps,
             transport_time: mockedMs,
+            id,
           },
         ]),
         ...defaultFetchParameters,
