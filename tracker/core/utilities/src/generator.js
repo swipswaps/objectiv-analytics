@@ -82,7 +82,6 @@ function createDefinition(
     abstract: false,
     parent: false,
     definition_type: 'class',
-    interfaces: false,
     description: '',
   }
 ) {
@@ -93,11 +92,11 @@ function createDefinition(
       p_list.push(`/**\n * ${params.properties[property]['description'].split('\n').join('\n *')}\n */`);
     }
     if (params.properties[property]['type']) {
-      p_list.push(`${property}: ${get_property_definition(params.properties[property])};`);
+      p_list.push(`${property}: ${get_property_definition(params.properties[property])};\n`);
     } else if (params.properties[property]['discriminator']) {
-      p_list.push(`readonly ${property} = ${params.properties[property]['discriminator']};`);
+      p_list.push(`readonly ${property} = ${params.properties[property]['discriminator']};\n`);
     } else {
-      p_list.push(`readonly ${property}: ${params.properties[property]['value']};`);
+      p_list.push(`readonly ${property}: ${params.properties[property]['value']};\n`);
     }
   }
 
@@ -116,7 +115,6 @@ function createDefinition(
     ` */\n` +
     `export ${params.abstract ? 'abstract ' : ''}${params.definition_type} ${params.class_name}` +
     `${params.parent ? ' extends ' + params.parent : ''}` +
-    `${params.interfaces ? ' implements ' + params.interfaces.join(',') : ''}` +
     ` {\n` +
     `\t${p_list.join('\n\t')}\n` +
     `}`;
@@ -169,7 +167,9 @@ function createFactory(
 
   const discriminators = [];
   const properties = [];
-  const props = [];
+  const props = {};
+
+  const props_name = 'props';
 
   // factories for the events have some properties that need to be treated differently
   // - location_stack and global_contexts are always optional because most often the Tracker provides them
@@ -184,29 +184,46 @@ function createFactory(
       if (params.object_type === 'event' && ['location_stack', 'global_contexts'].includes(mp)) {
         // because the global_contexts and location_stack arrays are optional
         // we provide an empty array as default here
-        properties.push(`${mp}: props?.${mp} ?? []`);
-        props.push(`${mp}?: ${merged_properties[mp]['type']}`);
+        properties.push(`${mp}: ${props_name}?.${mp} ?? []`);
+        props[mp] = `${mp}?: ${merged_properties[mp]['type']}`;
       } else if (params.object_type === 'event' && ['id', 'tracking_time', 'transport_time'].includes(mp)) {
         // simply don't add the property and adjust the return type to omit it as well
         return_omit.push(mp);
       } else {
         are_all_props_optional = false;
-        properties.push(`${mp}: props.${mp}`);
-        props.push(`${mp}: ${merged_properties[mp]['type']}`);
+        properties.push(`${mp}: ${props_name}.${mp}`);
+        props[mp] = `${mp}: ${merged_properties[mp]['type']}`;
       }
     } else if (merged_properties[mp]['value']) {
       properties.push(`${mp}: ${merged_properties[mp]['value']}`);
     }
   }
 
-  const description = `/** Creates instance of ${params.class_name} */\n`;
-
   const class_name = params.class_name;
   const return_type = return_omit.length > 0 ? `Omit<${class_name}, '${return_omit.join("' | '")}'>` : class_name;
 
+  const f_params = [`@param {Object} ${props_name} - factory properties`];
+  Object.keys(props).forEach((key) => {
+    const property = merged_properties[key];
+    f_params.push(
+      `@param {${property.type}} ${props_name}.${key} - ${property.description
+        .trim()
+        .split('\n')
+        .join('\n  *         ')}`
+    );
+  });
+
+  const description =
+    `/** Creates instance of ${class_name} \n` +
+    `  * ${f_params.join('\n  * ')}\n` +
+    `  * @return ${return_type} - ${params.description.split('\n').join('\n  * \t')}\n` +
+    ` */\n`;
+
   const tpl =
     `${description}` +
-    `export const make${params.class_name} = ( props${are_all_props_optional ? '?' : ''}: { ${props.join('; ')} }): 
+    `export const make${params.class_name} = ( ${props_name}${are_all_props_optional ? '?' : ''}: { ${Object.values(
+      props
+    ).join('; ')} }): 
     ${return_type} => ({\n` +
     `\t${discriminators.join(',\n\t')},\n` +
     `\t${properties.join(',\n\t')},\n` +
@@ -380,7 +397,6 @@ for (let event_type in events) {
   let abstract = false;
   let parent = undefined;
   let definition_type = undefined;
-  let interfaces = false;
 
   // check if this is an abstract class
   if (event_type.match(/Abstract.*?/)) {
@@ -414,11 +430,6 @@ for (let event_type in events) {
     parent = event['parents'].shift();
   }
 
-  // check for required contexts
-  if (event['requiresContext'].length > 0) {
-    interfaces = event['requiresContext'];
-  }
-
   object_definitions[event_type] = {
     object_type: 'event',
     class_name: event_type,
@@ -448,7 +459,6 @@ for (let context_type in contexts) {
   let abstract = false;
   let parent = false;
   let definition_type = undefined;
-  // let interfaces = false;
   let stack_type = '';
 
   // check if this is an abstract class
@@ -621,7 +631,7 @@ for (let definition_type in object_declarations) {
   // write imports and declarations to file
   fs.writeFileSync(
     filename,
-    [...[import_statement], ...Object.values(object_declarations[definition_type])].join('\n')
+    [...[import_statement], ...Object.values(object_declarations[definition_type])].join('\n\n')
   );
   console.log(`Written ${Object.values(object_declarations[definition_type]).length} definitions to ${filename}`);
 }
