@@ -36,4 +36,5 @@ export interface ButtonContext extends AbstractActionContext {
 }
 export interface LinkContext extends AbstractActionContext {
   readonly _context_type: 'LinkContext';
+  href: string;
 }

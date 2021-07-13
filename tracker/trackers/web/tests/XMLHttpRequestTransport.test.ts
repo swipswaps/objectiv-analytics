@@ -1,13 +1,19 @@
 import { TrackerEvent } from '@objectiv/tracker-core';
+import MockDate from 'mockdate';
 import xhrMock from 'xhr-mock';
 import { XMLHttpRequestTransport } from '../src';
 
+const mockedMs = 1434319925275;
+
 beforeEach(() => {
   xhrMock.setup();
+  MockDate.reset();
+  MockDate.set(mockedMs);
 });
 
 afterEach(() => {
   xhrMock.teardown();
+  MockDate.reset();
 });
 
 describe('XMLHttpRequestTransport', () => {
@@ -26,7 +32,16 @@ describe('XMLHttpRequestTransport', () => {
 
     xhrMock.post(MOCK_ENDPOINT, (req, res) => {
       expect(req.header('Content-Type')).toEqual('text/plain');
-      expect(req.body()).toEqual(JSON.stringify([testEvent]));
+      const { id, ...otherProps } = testEvent;
+      expect(req.body()).toEqual(
+        JSON.stringify([
+          {
+            ...otherProps,
+            transport_time: mockedMs,
+            id,
+          },
+        ])
+      );
       return res.status(200);
     });
 

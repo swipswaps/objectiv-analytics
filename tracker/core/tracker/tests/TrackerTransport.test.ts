@@ -69,7 +69,7 @@ describe('TransportSwitch', () => {
     testTracker.trackEvent(testEvent);
 
     expect(transport1.handle).not.toHaveBeenCalled();
-    expect(transport2.handle).toHaveBeenCalledWith(testEvent);
+    expect(transport2.handle).toHaveBeenCalledWith(expect.objectContaining(testEvent));
   });
 });
 

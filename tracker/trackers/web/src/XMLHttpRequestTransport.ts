@@ -1,4 +1,4 @@
-import { TrackerEvent, TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
+import { isNonEmptyArray, TrackerEvent, TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
 import { NonEmptyArray } from '../../../core/tracker/src/helpers';
 
 /**
@@ -9,7 +9,7 @@ export const defaultXMLHttpRequestFunction = ({
   events,
 }: {
   endpoint: string;
-  events: TrackerEvent[];
+  events: [TrackerEvent, ...TrackerEvent[]];
 }): Promise<unknown> => {
   return new Promise(function (resolve, reject) {
     const xhr = new XMLHttpRequest();
@@ -33,6 +33,7 @@ export const defaultXMLHttpRequestFunction = ({
         statusText: xhr.statusText,
       });
     };
+    events.forEach((event) => event.setTransportTime());
     xhr.send(JSON.stringify(events));
   });
 };
@@ -67,7 +68,10 @@ export class XMLHttpRequestTransport implements TrackerTransport {
   }
 
   async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
-    return this.xmlHttpRequestFunction({ endpoint: this.endpoint, events: await Promise.all(args) });
+    const events = await Promise.all(args);
+    if (isNonEmptyArray(events)) {
+      return this.xmlHttpRequestFunction({ endpoint: this.endpoint, events });
+    }
   }
 
   isUsable(): boolean {

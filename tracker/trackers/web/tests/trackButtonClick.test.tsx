@@ -14,7 +14,7 @@ describe('trackButtonClick', () => {
   const tracker = new WebTracker({ transport: spyTransport });
 
   it('should execute when invoked', () => {
-    trackButtonClick(makeButtonContext({ id: 'buttonA', path: '', text: 'confirm button' }), tracker);
+    trackButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }), tracker);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenCalledWith(

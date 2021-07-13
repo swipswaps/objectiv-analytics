@@ -14,7 +14,7 @@ describe('trackLinkClick', () => {
   const tracker = new WebTracker({ transport: spyTransport });
 
   it('should execute when invoked', () => {
-    trackLinkClick(makeLinkContext({ id: 'linkA', path: '/path', text: 'confirm link' }), tracker);
+    trackLinkClick(makeLinkContext({ id: 'linkA', href: '/some/url', text: 'confirm link' }), tracker);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenCalledWith(
