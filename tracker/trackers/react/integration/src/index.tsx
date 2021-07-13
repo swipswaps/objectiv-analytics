@@ -1,11 +1,11 @@
-import { ReactTracker } from "@objectiv/tracker-react";
+import { ReactTracker } from '@objectiv/tracker-react';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-const tracker = new ReactTracker({endpoint: 'http://endpoint'})
+const tracker = new ReactTracker({ endpoint: 'http://endpoint' });
 
 console.log(tracker);
 

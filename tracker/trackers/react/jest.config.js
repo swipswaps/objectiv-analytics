@@ -10,4 +10,5 @@ module.exports = {
     '@objectiv/tracker-core': '../../../core/tracker/src',
     '@objectiv/tracker-web': '../../../trackers/web/src',
   },
+  modulePathIgnorePatterns: ['integration'],
 };
