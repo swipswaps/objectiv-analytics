@@ -244,14 +244,10 @@
         "ItemContext"
       ],
       "properties": {
-        "path": {
-          "description": "The path describes a location or action the action will take the user",
-          "type": "string"
-        },
         "text": {
           "description": "The text of the interactive element or, for visuals, a string describing it",
           "type": "string"
-        }
+        },
       }
     },
     "ButtonContext": {
@@ -264,7 +260,13 @@
       "description": "interactive element, representing a (hyper) link.",
       "parents": [
         "ActionContext"
-      ]
+      ],
+      "properties": {
+        "href": {
+          "description": "URL (href) the link points to",
+          "type": "string"
+        }
+      }
     },
     "DeviceContext": {
       "description": "Global context containing meta info about the device that emitted the event.",
