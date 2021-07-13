@@ -394,8 +394,7 @@ Object.keys(events).forEach((event_type) => {
   }
 });
 
-Object.keys(events).forEach((event_type) => {
-  const event = events[event_type];
+Object.entries(events).forEach(([event_type, event]) => {
   const properties = {};
   let abstract = false;
   let parent = undefined;
@@ -456,8 +455,7 @@ Object.keys(contexts).forEach((context_type) => {
   }
 });
 
-Object.keys(contexts).forEach((context_type) => {
-  const context = contexts[context_type];
+Object.entries(contexts).forEach(([context_type, context]) => {
   const properties = {};
   let abstract = false;
   let parent = false;
