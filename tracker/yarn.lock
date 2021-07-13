@@ -2844,6 +2844,20 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@objectiv/tracker-react-integration-app@workspace:trackers/react/integration":
+  version: 0.0.0-use.local
+  resolution: "@objectiv/tracker-react-integration-app@workspace:trackers/react/integration"
+  dependencies:
+    "@craco/craco": ^6.2.0
+    cra-template-typescript: 1.1.2
+    craco-alias: ^3.0.1
+    react: ^17.0.2
+    react-dom: ^17.0.2
+    react-scripts: 4.0.3
+    web-vitals: ^2.1.0
+  languageName: unknown
+  linkType: soft
+
 "@objectiv/tracker-react@workspace:trackers/react":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react@workspace:trackers/react"
@@ -14043,21 +14057,6 @@ fsevents@^1.2.7:
   checksum: 9e79031ad20f9c20941aec1eda32d39eb558e9130740013e5a7b53367cf0eb8f7505c8034fec7da47cdcd80b254f20f1311c250bb586323bec7fbf7d97a90a1e
   languageName: node
   linkType: hard
-
-"react-tracker-integration-test-app@workspace:trackers/react/integration":
-  version: 0.0.0-use.local
-  resolution: "react-tracker-integration-test-app@workspace:trackers/react/integration"
-  dependencies:
-    "@craco/craco": ^6.2.0
-    cra-template-typescript: 1.1.2
-    craco-alias: ^3.0.1
-    jest: 26.6.0
-    react: ^17.0.2
-    react-dom: ^17.0.2
-    react-scripts: 4.0.3
-    web-vitals: ^2.1.0
-  languageName: unknown
-  linkType: soft
 
 "react@npm:^17.0.2":
   version: 17.0.2

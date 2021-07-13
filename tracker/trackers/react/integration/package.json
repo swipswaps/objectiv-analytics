@@ -1,6 +1,7 @@
 {
-  "name": "react-tracker-integration-test-app",
+  "name": "@objectiv/tracker-react-integration-app",
   "version": "0.0.1",
+  "description": "Objectiv React Tracker Integration Testing App",
   "private": true,
   "dependencies": {
     "@craco/craco": "^6.2.0",
