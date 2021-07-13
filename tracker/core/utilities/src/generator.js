@@ -106,9 +106,13 @@ function createDefinition(
     description = params.description.split('\n').join('\n * ');
   }
 
+  const parents = getParents(params.class_name);
+  parents.push(params.class_name);
+  const inheritance = parents.reverse().join(' -> ');
   const tpl =
     `/**\n` +
     ` * ${description}\n` +
+    ` * Inheritance: ${inheritance}\n` +
     ` */\n` +
     `export ${params.abstract ? 'abstract ' : ''}${params.definition_type} ${params.class_name}` +
     `${params.parent ? ' extends ' + params.parent : ''}` +
@@ -377,23 +381,24 @@ for (let event_type in events) {
     // top level abstract classes don't need the discriminator
     if (event['parents'].length > 0) {
       const discriminator = camelToUnderscore(event_type.replace('Abstract', ''));
-      properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator] = [];
-      properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator]['discriminator'] = true;
+      properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator] = { discriminator: true };
     }
     abstract = true;
     definition_type = 'class';
   } else {
-    properties[EVENT_DISCRIMINATOR] = [];
-    properties[EVENT_DISCRIMINATOR]['value'] = `'${event_type}'`;
-    properties[EVENT_DISCRIMINATOR]['description'] = 'Typescript discriminator';
+    properties[EVENT_DISCRIMINATOR] = {
+      description: 'Typescript descriminator',
+      value: `'${event_type}'`,
+    };
     definition_type = 'interface';
   }
 
   if (event['properties']) {
     for (let property_name in event['properties']) {
-      properties[property_name] = [];
-      properties[property_name]['description'] = event['properties'][property_name]['description'];
-      properties[property_name]['type'] = get_property_definition(event['properties'][property_name]);
+      properties[property_name] = {
+        description: event['properties'][property_name]['description'],
+        type: get_property_definition(event['properties'][property_name]),
+      };
     }
   }
 
@@ -445,8 +450,7 @@ for (let context_type in contexts) {
     // top level abstract classes don't need the discriminator
     if (context['parents'] && context['parents'].length > 0) {
       const discriminator = camelToUnderscore(context_type.replace('Abstract', ''));
-      properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator] = [];
-      properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator]['discriminator'] = true;
+      properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator] = { discriminator: true };
     }
     abstract = true;
     definition_type = 'class';
@@ -461,16 +465,20 @@ for (let context_type in contexts) {
     }
 
     // literal discriminator for non-abstract class
-    properties[CONTEXT_DISCRIMINATOR] = { description: 'Typescript discriminator' };
-    properties[CONTEXT_DISCRIMINATOR]['value'] = `'${context_type}'`;
+    properties[CONTEXT_DISCRIMINATOR] = {
+      description: 'Typescript discriminator',
+      value: `'${context_type}'`,
+    };
 
     definition_type = 'interface';
   }
 
   if (context['properties']) {
     for (let property_name in context['properties']) {
-      properties[property_name] = { description: context['properties'][property_name]['description'] };
-      properties[property_name]['type'] = get_property_definition(context['properties'][property_name]);
+      properties[property_name] = {
+        description: context['properties'][property_name]['description'],
+        type: get_property_definition(context['properties'][property_name]),
+      };
     }
   }
 

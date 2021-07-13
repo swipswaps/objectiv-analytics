@@ -187,11 +187,13 @@
       }
     },
     "ScreenContext": {
+      "description": "SectionContext for a screen",
       "parents": [
         "SectionContext"
       ],
       "properties": {
         "screen": {
+          "description": "name of the screen",
           "type": "string"
         }
       }
