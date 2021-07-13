@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import json
+import json5
 import os
 import re
 import sys
@@ -400,7 +400,7 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     if LOAD_BASE_SCHEMA:
         data = pkgutil.get_data(__name__, "base_schema.json5")
         if data:
-            base_schema = json.loads(data)
+            base_schema = json5.loads(data)
             schema_jsons.append(base_schema)
 
     files_to_load = []
