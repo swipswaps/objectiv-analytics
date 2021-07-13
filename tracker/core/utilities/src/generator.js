@@ -86,7 +86,7 @@ function createDefinition(
   }
 ) {
   const p_list = [];
-  for (let property in params.properties) {
+  Object.keys(params.properties).forEach((property) => {
     // add description for property
     if (params.properties[property]['description']) {
       p_list.push(`/**\n * ${params.properties[property]['description'].split('\n').join('\n *')}\n */`);
@@ -98,7 +98,7 @@ function createDefinition(
     } else {
       p_list.push(`readonly ${property}: ${params.properties[property]['value']};\n`);
     }
-  }
+  });
 
   let description = '';
   if ('description' in params && params.description !== undefined && params.description !== '') {
@@ -146,29 +146,28 @@ function createFactory(
   const merged_properties_temp = [object_discriminator];
 
   // add properties in order of hierarchy
-  const parents = getParents(params.class_name);
-  for (let p of parents) {
-    let parent_params = getDefinition(p);
+  getParents(params.class_name).forEach((parent) => {
+    const parent_params = getDefinition(parent);
     merged_properties_temp.push(parent_params.properties);
-  }
+  });
+
   // finally add this objects properties
   merged_properties_temp.push(params.properties);
 
   // now we merge all of the defined properties, hierarchically (from parent to child)
   // taking care not to overwrite existing ones
-  const merged_properties = [];
-  for (let mpt in merged_properties_temp) {
-    for (let property in merged_properties_temp[mpt]) {
+  const merged_properties = {};
+  merged_properties_temp.forEach((mpt) => {
+    Object.keys(mpt).forEach((property) => {
       if (!(property in merged_properties)) {
-        merged_properties[property] = merged_properties_temp[mpt][property];
+        merged_properties[property] = mpt[property];
       }
-    }
-  }
+    });
+  });
 
   const discriminators = [];
   const properties = [];
   const props = {};
-
   const props_name = 'props';
 
   // factories for the events have some properties that need to be treated differently
@@ -177,7 +176,7 @@ function createFactory(
   // - tracking_time and transport_time are also not overridable because the Tracker is responsible to provide one
   let are_all_props_optional = true;
   let return_omit = [];
-  for (let mp in merged_properties) {
+  Object.keys(merged_properties).forEach((mp) => {
     if (merged_properties[mp]['discriminator']) {
       discriminators.push(`${mp}: true`);
     } else if (merged_properties[mp]['type']) {
@@ -197,22 +196,26 @@ function createFactory(
     } else if (merged_properties[mp]['value']) {
       properties.push(`${mp}: ${merged_properties[mp]['value']}`);
     }
-  }
+  });
 
   const class_name = params.class_name;
+
+  // we have a special return type, that allows to omit certain properties, which will be
+  // populated at a later stage
   const return_type = return_omit.length > 0 ? `Omit<${class_name}, '${return_omit.join("' | '")}'>` : class_name;
 
+  // generate function params, and combine with their description from the base schema
+  // the form is something like:
+  //  @param {param_type} props.param - param_description
   const f_params = [`@param {Object} ${props_name} - factory properties`];
   Object.keys(props).forEach((key) => {
     const property = merged_properties[key];
     f_params.push(
-      `@param {${property.type}} ${props_name}.${key} - ${property.description
-        .trim()
-        .split('\n')
-        .join('\n  *         ')}`
+      `@param {${property.type}} ${props_name}.${key} - ${property.description.split('\n').join('\n  *         ')}`
     );
   });
 
+  // description of factory function. It combines a description of the class, the parameters and the return type
   const description =
     `/** Creates instance of ${class_name} \n` +
     `  * ${f_params.join('\n  * ')}\n` +
@@ -240,7 +243,7 @@ function createFactory(
 function createMissingAbstracts(
   params = {
     class_name: '',
-    properties: [],
+    properties: {},
     abstract: false,
     parent: false,
     definition_type: 'class',
@@ -337,7 +340,7 @@ const files = fs.readdirSync(schema_dir);
 
 // read all schema files
 const all_schema = {};
-for (let fn of files) {
+files.forEach((fn) => {
   if (fn.match(/[a-z0-9_]+\.json5?$/)) {
     let data = fs.readFileSync(schema_dir + fn, 'utf-8');
     all_schema[fn] = JSON5.parse(data, (key, value) => {
@@ -352,7 +355,7 @@ for (let fn of files) {
   } else {
     console.log(`ignoring invalid file: ${fn}`);
   }
-}
+});
 
 // start with base schema
 const schema = all_schema[base_schema_file];
@@ -360,40 +363,40 @@ delete all_schema[base_schema_file];
 
 // now add extensions if any
 // TODO: allow to add properties to existing contexts
-for (let extension_file in all_schema) {
+Object.keys(all_schema).forEach((extension_file) => {
   const extension = all_schema[extension_file];
   console.log(`Loading extension ${extension['name']} from ${extension_file}`);
 
   // events
-  for (let event_type in extension['events']) {
+  Object.keys(extension['events']).forEach((event_type) => {
     if (!(event_type in schema['events'])) {
       // only add if it doesn't already exist
       schema['events'][event_type] = extension['events'][event_type];
     }
-  }
+  });
   // contexts
-  for (let context_type in extension['contexts']) {
+  Object.keys(extension['context']).forEach((context_type) => {
     if (!(context_type in schema['contexts'])) {
       // only add if it doesn't already exist
       schema['contexts'][context_type] = extension['contexts'][context_type];
     }
-  }
-}
+  });
+});
 
 // first do events
 const events = schema['events'];
-for (let event_type in events) {
+Object.keys(events).forEach((event_type) => {
   // if we have more than 0 parents
   if (events[event_type]['parents'].length > 0) {
     toParent[event_type] = events[event_type]['parents'][0];
   } else {
     toParent[event_type] = '';
   }
-}
+});
 
-for (let event_type in events) {
+Object.keys(events).forEach((event_type) => {
   const event = events[event_type];
-  const properties = [];
+  const properties = {};
   let abstract = false;
   let parent = undefined;
   let definition_type = undefined;
@@ -416,12 +419,12 @@ for (let event_type in events) {
   }
 
   if (event['properties']) {
-    for (let property_name in event['properties']) {
+    Object.keys(event['properties']).forEach((property_name) => {
       properties[property_name] = {
         description: event['properties'][property_name]['description'],
         type: get_property_definition(event['properties'][property_name]),
       };
-    }
+    });
   }
 
   // check if we extend any parents
@@ -439,23 +442,23 @@ for (let event_type in events) {
     definition_type: definition_type,
     description: event['description'],
   };
-}
+});
 
 const contexts = schema['contexts'];
+
 // first determine parents for non abstract contexts
 // so we know which are location contexts
-
-for (let context_type in contexts) {
+Object.keys(contexts).forEach((context_type) => {
   if (contexts[context_type]['parents'] && contexts[context_type]['parents'].length > 0) {
     toParent[context_type] = contexts[context_type]['parents'][0];
   } else {
     toParent[context_type] = '';
   }
-}
+});
 
-for (let context_type in contexts) {
+Object.keys(contexts).forEach((context_type) => {
   const context = contexts[context_type];
-  const properties = [];
+  const properties = {};
   let abstract = false;
   let parent = false;
   let definition_type = undefined;
@@ -490,12 +493,12 @@ for (let context_type in contexts) {
   }
 
   if (context['properties']) {
-    for (let property_name in context['properties']) {
+    Object.keys(context['properties']).forEach((property_name) => {
       properties[property_name] = {
         description: context['properties'][property_name]['description'],
         type: get_property_definition(context['properties'][property_name]),
       };
-    }
+    });
   }
 
   // check if we extend any parents
@@ -513,14 +516,13 @@ for (let context_type in contexts) {
     stack_type: stack_type,
     description: context['description'],
   };
-}
+});
 
 // let's fix inheritance properly, objects (interfaces) extending non abstracts are not allowed
 // so we add an abstract class on top, that extends the parents' parent (until we find an abstract)
-for (let object_type in object_definitions) {
-  const object_definition = object_definitions[object_type];
+Object.entries(object_definitions).forEach(([object_type, object_definition]) => {
   object_definitions[object_type] = createMissingAbstracts(object_definition);
-}
+});
 
 /**
  * a little bit of cleaning / housekeeping. If:
@@ -539,8 +541,7 @@ for (let object_type in object_definitions) {
  * Additionally, it moves the properties, as defined in SectionContext to AbstractSectionContext.
  *
  */
-for (let object_type in object_definitions) {
-  const object_definition = object_definitions[object_type];
+Object.entries(object_definitions).forEach(([object_type, object_definition]) => {
   const abstract_class_name = 'Abstract' + object_definition['class_name'];
   if (
     !object_definition.abstract &&
@@ -552,7 +553,7 @@ for (let object_type in object_definitions) {
     toParent[object_type] = abstract_class_name;
 
     // if it defines any properties, we move them to the parent
-    for (let property in object_definitions[object_type]['properties']) {
+    Object.keys(object_definitions[object_type]['properties']).forEach((property) => {
       if (property.substring(0) !== '_' && object_definitions[object_type]['properties'][property]['type']) {
         // add to parent
         object_definitions[abstract_class_name]['properties'][property] =
@@ -560,15 +561,13 @@ for (let object_type in object_definitions) {
         // remove here
         delete object_definitions[object_type]['properties'][property];
       }
-    }
+    });
   }
-}
+});
 
 // now let's generate the object declarations
 // and put them in the correct location
-for (let object_type in object_definitions) {
-  const object_definition = object_definitions[object_type];
-
+Object.entries(object_definitions).forEach(([object_type, object_definition]) => {
   let definition_type = 'events';
   if (object_definition.abstract) {
     definition_type = 'abstracts';
@@ -585,13 +584,16 @@ for (let object_type in object_definitions) {
     object_factories[factory_type][object_type] = factory;
   }
   object_declarations[definition_type][object_type] = createDefinition(object_definitions[object_type]);
-}
+});
 
-for (let factory_type in object_factories) {
+Object.keys(object_factories).forEach((factory_type) => {
   const factories = {};
-  for (let factory of Object.keys(object_factories[factory_type]).sort((a, b) => a.localeCompare(b))) {
-    factories[factory] = object_factories[factory_type][factory];
-  }
+
+  Object.keys(object_factories[factory_type])
+    .sort((a, b) => a.localeCompare(b))
+    .forEach((factory) => {
+      factories[factory] = object_factories[factory_type][factory];
+    });
 
   const imports = Object.keys(factories);
   if (factory_type === 'EventFactories') {
@@ -603,10 +605,10 @@ for (let factory_type in object_factories) {
   const filename = `${core_tracker_package_dir}${factory_type}.ts`;
   fs.writeFileSync(filename, [...[import_statement], ...Object.values(factories)].join('\n'));
   console.log(`Written ${Object.values(factories).length} factories to ${filename}`);
-}
+});
 
 // now write some files
-for (let definition_type in object_declarations) {
+Object.keys(object_declarations).forEach((definition_type) => {
   const filename = `${core_schema_package_dir}${definition_type}.d.ts`;
 
   // list of (abstract) classes to import (as they represent the top of the hierarchy)
@@ -618,11 +620,11 @@ for (let definition_type in object_declarations) {
     // add import statement of abstracts in non- abstract files
     // import { AbstractGlobalContext } from './abstracts';
     // NOTE: there may be duplicates in this array, so make sure to fix that later
-    for (let object_type in object_declarations[definition_type]) {
+    Object.keys(object_declarations[definition_type]).forEach((object_type) => {
       if (object_definitions[object_type].parent && object_definitions[object_type].parent.match(/Abstract/)) {
         imports.push(object_definitions[object_type].parent);
       }
-    }
+    });
   }
   // if we have more than 0 imports, make them unique (cast to set) and generate import statement
   const import_statement =
@@ -634,7 +636,7 @@ for (let definition_type in object_declarations) {
     [...[import_statement], ...Object.values(object_declarations[definition_type])].join('\n\n')
   );
   console.log(`Written ${Object.values(object_declarations[definition_type]).length} definitions to ${filename}`);
-}
+});
 
 // generate index for all declarations
 // this includes all generated types, as well as those in static.d.ts
