@@ -23,7 +23,7 @@ import {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<ApplicationLoadedEvent, 'id'> - non interactive event that is emitted after an application (eg. SPA) has finished loading.
+ * @returns {Omit<ApplicationLoadedEvent, 'id'>} - ApplicationLoadedEvent: non interactive event that is emitted after an application (eg. SPA) has finished loading.
  * 	Contains a `SectionContext`
  */
 export const makeApplicationLoadedEvent = (props?: {
@@ -42,7 +42,7 @@ export const makeApplicationLoadedEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<ClickEvent, 'id'> - Event triggered by a user clicking on an element
+ * @returns {Omit<ClickEvent, 'id'>} - ClickEvent: Event triggered by a user clicking on an element
  */
 export const makeClickEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -60,7 +60,7 @@ export const makeClickEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<DocumentLoadedEvent, 'id'> - A non interactive event that is emitted after a document finishes loading. It should provide a
+ * @returns {Omit<DocumentLoadedEvent, 'id'>} - DocumentLoadedEvent: A non interactive event that is emitted after a document finishes loading. It should provide a
  * 	`WebDocumentContext` which should describe the state (eg. URL) of the event.
  * 	NOTE: with SPA's this probably only happens once, as page (re)loads don't happen after the initial page load
  */
@@ -80,7 +80,7 @@ export const makeDocumentLoadedEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<InputChangeEvent, 'id'> - Event triggered when user input is modified.
+ * @returns {Omit<InputChangeEvent, 'id'>} - InputChangeEvent: Event triggered when user input is modified.
  */
 export const makeInputChangeEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -98,7 +98,7 @@ export const makeInputChangeEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<InteractiveEvent, 'id'> - Events that are the direct result of a user interaction. Eg. a Button Click
+ * @returns {Omit<InteractiveEvent, 'id'>} - InteractiveEvent: Events that are the direct result of a user interaction. Eg. a Button Click
  */
 export const makeInteractiveEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -116,7 +116,7 @@ export const makeInteractiveEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<NonInteractiveEvent, 'id'> - Non interactive events, are events that are not (directly) triggered by an interaction. For example:
+ * @returns {Omit<NonInteractiveEvent, 'id'>} - NonInteractiveEvent: Non interactive events, are events that are not (directly) triggered by an interaction. For example:
  * 	Consider the following flow of events:
  * 	1. press play in a video player -> ButtonEvent -> interactive
  * 	2. Videoplayer starting playback -> MediaStartEvent -> non-interactive
@@ -137,7 +137,7 @@ export const makeNonInteractiveEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<SectionHiddenEvent, 'id'> - Non interactive event, emitted after a section (`SectionContext`) has become invisible.
+ * @returns {Omit<SectionHiddenEvent, 'id'>} - SectionHiddenEvent: Non interactive event, emitted after a section (`SectionContext`) has become invisible.
  */
 export const makeSectionHiddenEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -155,7 +155,7 @@ export const makeSectionHiddenEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<SectionVisibleEvent, 'id'> - Non interactive event, emitted after a section (`SectionContext`) has become visible.
+ * @returns {Omit<SectionVisibleEvent, 'id'>} - SectionVisibleEvent: Non interactive event, emitted after a section (`SectionContext`) has become visible.
  */
 export const makeSectionVisibleEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -173,7 +173,7 @@ export const makeSectionVisibleEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<URLChangeEvent, 'id'> - non interactive event that is emitted when the URL of a page has changed. Also contains a `WebDocumentContext`
+ * @returns {Omit<URLChangeEvent, 'id'>} - URLChangeEvent: non interactive event that is emitted when the URL of a page has changed. Also contains a `WebDocumentContext`
  * 	that details the change.
  */
 export const makeURLChangeEvent = (props?: {
@@ -192,7 +192,7 @@ export const makeURLChangeEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<VideoEvent, 'id'> - Family of non interactive events triggered by a video player
+ * @returns {Omit<VideoEvent, 'id'>} - VideoEvent: Family of non interactive events triggered by a video player
  */
 export const makeVideoEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -211,7 +211,7 @@ export const makeVideoEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<VideoLoadEvent, 'id'> - Event emitted after a video completes loading.
+ * @returns {Omit<VideoLoadEvent, 'id'>} - VideoLoadEvent: Event emitted after a video completes loading.
  */
 export const makeVideoLoadEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -230,7 +230,7 @@ export const makeVideoLoadEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<VideoPauseEvent, 'id'> - Event emitted after a video pauses playback (toggle).
+ * @returns {Omit<VideoPauseEvent, 'id'>} - VideoPauseEvent: Event emitted after a video pauses playback (toggle).
  */
 export const makeVideoPauseEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -249,7 +249,7 @@ export const makeVideoPauseEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<VideoStartEvent, 'id'> - Event emitted after a video starts playback.
+ * @returns {Omit<VideoStartEvent, 'id'>} - VideoStartEvent: Event emitted after a video starts playback.
  */
 export const makeVideoStartEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -268,7 +268,7 @@ export const makeVideoStartEvent = (props?: {
  *         deterministically describes where an event took place.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global information about the event. They carry information that is not
  *         related to where the Event originated, such as device, platform or business data.
- * @return Omit<VideoStopEvent, 'id'> - Event emitted after a video stops playback.
+ * @returns {Omit<VideoStopEvent, 'id'>} - VideoStopEvent: Event emitted after a video stops playback.
  */
 export const makeVideoStopEvent = (props?: {
   location_stack?: AbstractLocationContext[];

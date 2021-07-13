@@ -216,7 +216,7 @@ function createFactory(
   const description =
     `/** Creates instance of ${class_name} \n` +
     `  * ${f_params.join('\n  * ')}\n` +
-    `  * @return ${return_type} - ${params.description.split('\n').join('\n  * \t')}\n` +
+    `  * @returns {${return_type}} - ${class_name}: ${params.description.split('\n').join('\n  * \t')}\n` +
     ` */\n`;
 
   const tpl =
