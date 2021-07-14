@@ -9,5 +9,5 @@ module.exports = {
     '@objectiv/tracker-core': '<rootDir>/../../core/tracker/src',
     '@objectiv/tracker-web': '<rootDir>/../../trackers/web/src',
   },
-  modulePathIgnorePatterns: ['e2e'],
+  modulePathIgnorePatterns: ['live'],
 };

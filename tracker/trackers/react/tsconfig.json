@@ -3,5 +3,7 @@
   "compilerOptions": {
     "jsx": "react-jsx"
   },
-  "exclude": ["tests/e2e"]
+  "exclude": [
+    "tests/live"
+  ]
 }

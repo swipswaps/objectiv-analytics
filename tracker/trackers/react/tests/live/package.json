@@ -1,7 +1,7 @@
 {
-  "name": "@objectiv/tracker-react-e2e-testing-app",
+  "name": "@objectiv/tracker-react-live-testing-app",
   "version": "0.0.1",
-  "description": "Objectiv React Tracker e2e Testing App",
+  "description": "Objectiv React Tracker Live Testing App",
   "private": true,
   "dependencies": {
     "@craco/craco": "^6.2.0",
