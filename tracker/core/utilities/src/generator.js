@@ -175,7 +175,7 @@ function createFactory(
   // - id is not overridable because the Tracker is responsible to provide one
   // - tracking_time and transport_time are also not overridable because the Tracker is responsible to provide one
   let are_all_props_optional = true;
-  let return_omit = [];
+  const return_omit = [];
   Object.keys(merged_properties).forEach((mp) => {
     if (merged_properties[mp]['discriminator']) {
       discriminators.push(`${mp}: true`);
@@ -261,8 +261,8 @@ function createMissingAbstracts(
     // if the abstract hasn't been created yet, let's do it now
     if (!object_definitions[class_name]) {
       const discriminator = camelToUnderscore(class_name.replace('Abstract', ''));
-      const properties = [];
-      properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator] = [];
+      const properties = {};
+      properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator] = {};
       properties[DISCRIMINATING_PROPERTY_PREFIX + discriminator]['discriminator'] = true;
 
       // let's find the parent
@@ -342,7 +342,7 @@ const files = fs.readdirSync(schema_dir);
 const all_schema = {};
 files.forEach((fn) => {
   if (fn.match(/[a-z0-9_]+\.json5?$/)) {
-    let data = fs.readFileSync(schema_dir + fn, 'utf-8');
+    const data = fs.readFileSync(schema_dir + fn, 'utf-8');
     all_schema[fn] = JSON5.parse(data, (key, value) => {
       // clean up `description` fields from json5 schema
       // newlines in the string are translated to 8 spaces by the deserializer
@@ -578,7 +578,7 @@ Object.entries(object_definitions).forEach(([object_type, object_definition]) =>
 
     // write some factories
     // we don't want factories for abstracts; dow!
-    let factory = createFactory(object_definitions[object_type]);
+    const factory = createFactory(object_definitions[object_type]);
     object_factories[factory_type][object_type] = factory;
   }
   object_declarations[definition_type][object_type] = createDefinition(object_definitions[object_type]);
@@ -610,7 +610,7 @@ Object.keys(object_declarations).forEach((definition_type) => {
   const filename = `${core_schema_package_dir}${definition_type}.d.ts`;
 
   // list of (abstract) classes to import (as they represent the top of the hierarchy)
-  let imports = [];
+  const imports = [];
 
   // we only import abstract classes, so no need to do this when writing the abstract classes
   // this is because they are defines in a separate file
