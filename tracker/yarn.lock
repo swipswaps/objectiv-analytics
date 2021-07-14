@@ -2134,6 +2134,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/utilities@workspace:core/utilities"
   dependencies:
+    json5: ^2.2.0
     prettier: ^2.3.0
   languageName: unknown
   linkType: soft
@@ -7278,8 +7279,6 @@ __metadata:
 "root@workspace:.":
   version: 0.0.0-use.local
   resolution: "root@workspace:."
-  dependencies:
-    json5: ^2.2.0
   languageName: unknown
   linkType: soft
 
