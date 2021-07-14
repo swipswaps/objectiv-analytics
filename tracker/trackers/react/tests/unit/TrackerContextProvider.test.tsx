@@ -2,7 +2,7 @@ import { makeSectionContext } from '@objectiv/tracker-core';
 import { render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import fetchMock from 'jest-fetch-mock';
-import { ReactTracker, TrackerContextProvider, useTracker } from '../src';
+import { ReactTracker, TrackerContextProvider, useTracker } from '../../src';
 
 describe('TrackerContextProvider', () => {
   beforeAll(() => {

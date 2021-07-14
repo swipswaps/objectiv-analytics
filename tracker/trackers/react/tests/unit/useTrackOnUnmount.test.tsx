@@ -2,7 +2,7 @@ import { makeSectionHiddenEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect } from 'react';
-import { ReactTracker, TrackerContextProvider, useTrackOnUnmount } from '../src';
+import { ReactTracker, TrackerContextProvider, useTrackOnUnmount } from '../../src';
 
 describe('useTrackOnUnmount', () => {
   beforeEach(() => {

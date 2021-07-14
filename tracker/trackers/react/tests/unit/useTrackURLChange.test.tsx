@@ -1,8 +1,7 @@
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect } from 'react';
-import { ReactTracker, TrackerContextProvider } from '../src';
-import { useTrackURLChange } from '../src';
+import { ReactTracker, TrackerContextProvider, useTrackURLChange } from '../../src';
 
 const oldWindowLocation = window.location;
 

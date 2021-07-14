@@ -2844,9 +2844,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-react-integration-app@workspace:trackers/react/integration":
+"@objectiv/tracker-react-e2e-testing-app@workspace:trackers/react/tests/e2e":
   version: 0.0.0-use.local
-  resolution: "@objectiv/tracker-react-integration-app@workspace:trackers/react/integration"
+  resolution: "@objectiv/tracker-react-e2e-testing-app@workspace:trackers/react/tests/e2e"
   dependencies:
     "@craco/craco": ^6.2.0
     cra-template-typescript: 1.1.2

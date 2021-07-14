@@ -25,5 +25,5 @@ dist/
 # Markdown
 *.md
 
-# Integration App
-integration
+# React Tracker e2e testing App
+tests/e2e
