@@ -9,7 +9,7 @@ import { AbstractNonInteractiveEvent, AbstractVideoEvent, AbstractInteractiveEve
  */
 export interface NonInteractiveEvent extends AbstractNonInteractiveEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'NonInteractiveEvent';
 }
@@ -22,7 +22,7 @@ export interface NonInteractiveEvent extends AbstractNonInteractiveEvent {
  */
 export interface DocumentLoadedEvent extends AbstractNonInteractiveEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'DocumentLoadedEvent';
 }
@@ -34,7 +34,7 @@ export interface DocumentLoadedEvent extends AbstractNonInteractiveEvent {
  */
 export interface URLChangeEvent extends AbstractNonInteractiveEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'URLChangeEvent';
 }
@@ -46,7 +46,7 @@ export interface URLChangeEvent extends AbstractNonInteractiveEvent {
  */
 export interface ApplicationLoadedEvent extends AbstractNonInteractiveEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'ApplicationLoadedEvent';
 }
@@ -57,7 +57,7 @@ export interface ApplicationLoadedEvent extends AbstractNonInteractiveEvent {
  */
 export interface SectionVisibleEvent extends AbstractNonInteractiveEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'SectionVisibleEvent';
 }
@@ -68,7 +68,7 @@ export interface SectionVisibleEvent extends AbstractNonInteractiveEvent {
  */
 export interface SectionHiddenEvent extends AbstractNonInteractiveEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'SectionHiddenEvent';
 }
@@ -79,7 +79,7 @@ export interface SectionHiddenEvent extends AbstractNonInteractiveEvent {
  */
 export interface VideoEvent extends AbstractVideoEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'VideoEvent';
 }
@@ -90,7 +90,7 @@ export interface VideoEvent extends AbstractVideoEvent {
  */
 export interface VideoLoadEvent extends AbstractVideoEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'VideoLoadEvent';
 }
@@ -101,7 +101,7 @@ export interface VideoLoadEvent extends AbstractVideoEvent {
  */
 export interface VideoStartEvent extends AbstractVideoEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'VideoStartEvent';
 }
@@ -112,7 +112,7 @@ export interface VideoStartEvent extends AbstractVideoEvent {
  */
 export interface VideoStopEvent extends AbstractVideoEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'VideoStopEvent';
 }
@@ -123,7 +123,7 @@ export interface VideoStopEvent extends AbstractVideoEvent {
  */
 export interface VideoPauseEvent extends AbstractVideoEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'VideoPauseEvent';
 }
@@ -134,7 +134,7 @@ export interface VideoPauseEvent extends AbstractVideoEvent {
  */
 export interface InteractiveEvent extends AbstractInteractiveEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'InteractiveEvent';
 }
@@ -145,7 +145,7 @@ export interface InteractiveEvent extends AbstractInteractiveEvent {
  */
 export interface ClickEvent extends AbstractInteractiveEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'ClickEvent';
 }
@@ -156,7 +156,7 @@ export interface ClickEvent extends AbstractInteractiveEvent {
  */
 export interface InputChangeEvent extends AbstractInteractiveEvent {
   /**
-   * Typescript descriminator
+   * Typescript discriminator
    */
   readonly event: 'InputChangeEvent';
 }

@@ -6,13 +6,14 @@
 export abstract class AbstractEvent {
   /**
    * The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
-   *deterministically describes where an event took place.
+   *deterministically describes where an event took place from global to specific.
+   *The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
    */
   location_stack: AbstractLocationContext[];
 
   /**
-   * Global contexts add global information about the event. They carry information that is not
-   *related to where the Event originated, such as device, platform or business data.
+   * Global contexts add global / general information about the event. They carry information that is not
+   *related to where the Event originated (location), such as device, platform or business data.
    */
   global_contexts: AbstractGlobalContext[];
 
@@ -51,7 +52,8 @@ export abstract class AbstractEvent {
  */
 export abstract class AbstractContext {
   /**
-   * A unique string identifier to be combined with `_context_type` for Context instance uniqueness.
+   * A unique string identifier to be combined with the Context Type (`_context_type`)
+   *for Context instance uniqueness.
    */
   id: string;
 
