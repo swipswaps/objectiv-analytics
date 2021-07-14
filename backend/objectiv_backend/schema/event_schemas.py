@@ -1,7 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import json5
+import json5 # type: ignore
+import json
 import os
 import re
 import sys
