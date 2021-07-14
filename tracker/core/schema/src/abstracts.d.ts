@@ -27,6 +27,16 @@ export abstract class AbstractEvent {
    *in `not ok` events.
    */
   id: string;
+
+  /**
+   * Timestamp indicating when the event was generated (added to the transport queue).
+   */
+  tracking_time: number;
+
+  /**
+   * Timestamp indicating when the event was sent (transported) to the collector.
+   */
+  transport_time: number;
 }
 
 /**

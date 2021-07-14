@@ -34,6 +34,14 @@
             implementing this. On the collector side, events should be unique, this means duplicate id's result \
             in `not ok` events.",
           "type": "string"
+        },
+        "tracking_time": {
+          "description": "Timestamp indicating when the event was generated (added to the transport queue).",
+          "type": "integer"
+        },
+        "transport_time": {
+          "description": "Timestamp indicating when the event was sent (transported) to the collector.",
+          "type": "integer"
         }
       }
     },
