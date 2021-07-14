@@ -2851,9 +2851,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-react-e2e-testing-app@workspace:trackers/react/tests/e2e":
+"@objectiv/tracker-react-live-testing-app@workspace:trackers/react/tests/live":
   version: 0.0.0-use.local
-  resolution: "@objectiv/tracker-react-e2e-testing-app@workspace:trackers/react/tests/e2e"
+  resolution: "@objectiv/tracker-react-live-testing-app@workspace:trackers/react/tests/live"
   dependencies:
     "@craco/craco": ^6.2.0
     "@objectiv/tracker-react": "workspace:trackers/react"

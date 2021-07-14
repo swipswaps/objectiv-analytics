@@ -12,6 +12,7 @@
     "list": "yarn workspaces list",
     "tsc": "yarn workspaces foreach --exclude root --exclude @objectiv/tracker-react-live-testing-app --verbose run tsc",
     "test": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --exclude @objectiv/tracker-react-live-testing-app --verbose run test",
+    "test:live": "yarn workspace @objectiv/tracker-react-live-testing-app start",
     "test:ci": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --exclude @objectiv/tracker-react-live-testing-app --verbose run test:ci",
     "test:coverage": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --exclude @objectiv/tracker-react-live-testing-app --verbose run test:coverage",
     "publish": "yarn workspaces foreach --exclude root --exclude @objectiv/utilities --exclude @objectiv/tracker-react-live-testing-app --verbose exec npm publish",
