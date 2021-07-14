@@ -27,6 +27,7 @@ This is a complete list of the currently available packages.
 | @objectiv/plugin-web-device-context   | plugin  | /plugins/web-device-context   | [README](/tracker/plugins/web-device-context/README.md)   |
 | @objectiv/plugin-web-document-context | plugin  | /plugins/web-document-context | [README](/tracker/plugins/web-document-context/README.md) |
 | @objectiv/tracker-web                 | tracker | /trackers/web                 | [README](/tracker/trackers/web/README.md)                 |
+| @objectiv/tracker-react               | tracker | /trackers/react               | [README](/tracker/trackers/react/README.md)               |
 
 >Note: Packages may be completely independent of each other. Currently, many of them share the same testing framework or bundler but that's not required. Each has its own local configurations and may diverge if needed.
 
@@ -147,6 +148,9 @@ Runs the TypeScript compiler for all typed packages.
 
 ### `yarn test`
 Runs the tests for all packages.
+
+### `yarn test:live`
+Starts the React Tracker live testing App. This is a playground that executes from sources. Useful for debugging.
 
 ### `yarn test:ci`
 Runs the tests for all packages in CI mode.

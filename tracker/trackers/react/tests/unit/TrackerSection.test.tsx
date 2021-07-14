@@ -4,12 +4,12 @@ import fetchMock from 'jest-fetch-mock';
 import {
   ReactTracker,
   TrackerContextProvider,
+  TrackerItem,
   TrackerNavigation,
   TrackerOverlay,
   TrackerSection,
   useTracker,
-} from '../src';
-import { TrackerItem } from '../src/TrackerItem';
+} from '../../src';
 
 describe('TrackerSection, TrackerNavigation, TrackerOverlay, TrackerItem', () => {
   beforeAll(() => {

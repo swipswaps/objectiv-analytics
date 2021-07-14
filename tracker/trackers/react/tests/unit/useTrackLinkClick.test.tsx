@@ -1,8 +1,8 @@
-import { makeButtonContext } from '@objectiv/tracker-core';
+import { makeLinkContext } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { useTrackButtonClick, ReactTracker, TrackerContextProvider, TrackerNavigation, TrackerSection } from '../src';
+import { useTrackLinkClick, ReactTracker, TrackerContextProvider, TrackerNavigation, TrackerSection } from '../../src';
 
-describe('useTrackButtonClick', () => {
+describe('useTrackLinkClick', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -22,17 +22,23 @@ describe('useTrackButtonClick', () => {
       <TrackerContextProvider tracker={tracker}>
         <TrackerSection id={'root'}>
           <TrackerNavigation id={'main-nav'}>
-            <Button />
+            <Link />
           </TrackerNavigation>
         </TrackerSection>
       </TrackerContextProvider>
     );
   };
 
-  const Button = () => {
-    const buttonClickHandler = useTrackButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }));
+  const Link = () => {
+    const linkClickHandler = useTrackLinkClick(
+      makeLinkContext({ id: 'buttonA', href: '/path', text: 'confirm button' })
+    );
 
-    return <button data-testid="test-button" onClick={buttonClickHandler} value={'Proceed'} />;
+    return (
+      <a data-testid="test-button" onClick={linkClickHandler}>
+        Proceed
+      </a>
+    );
   };
 
   it('should not execute on mount', () => {
@@ -79,7 +85,7 @@ describe('useTrackButtonClick', () => {
         location_stack: expect.arrayContaining([
           expect.objectContaining({ _context_type: 'SectionContext' }),
           expect.objectContaining({ _context_type: 'NavigationContext' }),
-          expect.objectContaining({ _context_type: 'ButtonContext' }),
+          expect.objectContaining({ _context_type: 'LinkContext' }),
         ]),
       })
     );
@@ -91,18 +97,22 @@ describe('useTrackButtonClick', () => {
     const TestApp = () => (
       <TrackerContextProvider tracker={tracker}>
         <TrackerSection id={'root'}>
-          <Button />
+          <Link />
         </TrackerSection>
       </TrackerContextProvider>
     );
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new ReactTracker({ transport: spyTransport2 });
-    const buttonClickHandler = useTrackButtonClick(
-      makeButtonContext({ id: 'buttonA', text: 'confirm button' }),
+    const linkClickHandler = useTrackLinkClick(
+      makeLinkContext({ id: 'buttonA', href: '/path', text: 'confirm button' }),
       anotherTracker
     );
 
-    const Button = () => <button data-testid="test-button" onClick={buttonClickHandler} value={'Proceed'} />;
+    const Link = () => (
+      <a data-testid="test-button" onClick={linkClickHandler}>
+        Proceed
+      </a>
+    );
 
     render(<TestApp />);
 
@@ -118,7 +128,7 @@ describe('useTrackButtonClick', () => {
         global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
         location_stack: expect.arrayContaining([
           expect.not.objectContaining({ _context_type: 'SectionContext' }),
-          expect.objectContaining({ _context_type: 'ButtonContext' }),
+          expect.objectContaining({ _context_type: 'LinkContext' }),
         ]),
       })
     );
