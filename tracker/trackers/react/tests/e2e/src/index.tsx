@@ -1,17 +1,24 @@
-import { ReactTracker } from '@objectiv/tracker-react';
+import { createServer } from "miragejs"
+import { ReactTracker, TrackerContextProvider } from '@objectiv/tracker-react';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-const tracker = new ReactTracker({ endpoint: 'http://endpoint' });
+// Fake the whole backend with Mirage
+let server = createServer({})
+server.post("/endpoint")
+
+const tracker = new ReactTracker({ endpoint: '/endpoint' });
 
 console.log(tracker);
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <TrackerContextProvider tracker={tracker}>
+      <App />
+    </TrackerContextProvider>
   </React.StrictMode>,
   document.getElementById('root')
 );
