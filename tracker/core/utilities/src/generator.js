@@ -329,7 +329,7 @@ function get_property_definition(params = {}) {
       return 'string';
     case 'integer':
       // too bad we don't have ints
-      // alternatively, we could use bigints here
+      // alternatively, we could use big ints here
       return 'number';
     default:
       return params['type'];
