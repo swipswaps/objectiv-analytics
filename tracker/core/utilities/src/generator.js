@@ -348,7 +348,7 @@ files.forEach((fn) => {
       // newlines in the string are translated to 8 spaces by the deserializer
       // we translate them back to newlines and remove leading spaces
       if (key === 'description') {
-        return value.replace(/\ {8}/g, '\n').replace(/^\s+/gm, '').replace(/\n$/, '');
+        return value.replace(/\s{8}/g, '\n').replace(/^\s+/gm, '').replace(/\n$/, '');
       }
       return value;
     });
@@ -398,7 +398,7 @@ Object.entries(events).forEach(([event_type, event]) => {
   const properties = {};
   let abstract = false;
   let parent = undefined;
-  let definition_type = undefined;
+  let definition_type;
 
   // check if this is an abstract class
   if (event_type.match(/Abstract.*?/)) {
@@ -411,7 +411,7 @@ Object.entries(events).forEach(([event_type, event]) => {
     definition_type = 'class';
   } else {
     properties[EVENT_DISCRIMINATOR] = {
-      description: 'Typescript descriminator',
+      description: 'Typescript discriminator',
       value: `'${event_type}'`,
     };
     definition_type = 'interface';
@@ -459,8 +459,8 @@ Object.entries(contexts).forEach(([context_type, context]) => {
   const properties = {};
   let abstract = false;
   let parent = false;
-  let definition_type = undefined;
-  let stack_type = '';
+  let definition_type;
+  let stack_type;
 
   // check if this is an abstract class
   if (context_type.match(/Abstract.*?/)) {
