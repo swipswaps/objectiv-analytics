@@ -1,4 +1,4 @@
-// noinspection JSUnfilteredForInLoop,UnnecessaryLocalVariableJS
+// noinspection UnnecessaryLocalVariableJS
 
 /**
  *
