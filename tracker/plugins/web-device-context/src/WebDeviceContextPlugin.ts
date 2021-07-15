@@ -22,4 +22,11 @@ export class WebDeviceContextPlugin implements TrackerPlugin {
   beforeTransport(event: TrackerEvent): void {
     event.global_contexts.push(this.webDeviceContext);
   }
+
+  /**
+   * Make this plugin usable only if the Navigator API is available
+   */
+  isUsable(): boolean {
+    return Boolean(navigator);
+  }
 }
