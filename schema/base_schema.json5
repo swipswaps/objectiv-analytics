@@ -8,7 +8,7 @@
         Events must provide a `name` and optionally can, but most likely will, carry a list of Location and Global \
         Contexts",
       "parents": [],
-      "requiresContext": ["AbstractContext"],
+      "requiresContext": ["AbstractContext", "ApplicationContext"],
       "properties":{
         "location_stack": {
           "description": "\
@@ -173,6 +173,12 @@
         that is not related to where the Event originated, such as device, platform or business data.",
       "parents": [
         "AbstractContext"
+      ]
+    },
+    "ApplicationContext": {
+      "description": "Global context containing the origin (application id) of the event",
+      "parents": [
+        "AbstractGlobalContext"
       ]
     },
     "SectionContext": {
