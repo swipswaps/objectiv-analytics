@@ -30,6 +30,6 @@ export class WebDeviceContextPlugin implements TrackerPlugin {
    * Make this plugin usable only if the Navigator API is available
    */
   isUsable(): boolean {
-    return Boolean(navigator);
+    return typeof navigator !== 'undefined';
   }
 }

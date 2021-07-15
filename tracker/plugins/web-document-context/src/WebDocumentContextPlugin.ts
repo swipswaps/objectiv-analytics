@@ -38,6 +38,6 @@ export class WebDocumentContextPlugin implements TrackerPlugin {
    * Make this plugin usable only if the Document API and its Location API are available
    */
   isUsable(): boolean {
-    return Boolean(document) && Boolean(document.location);
+    return typeof document !== 'undefined' && typeof document.location !== 'undefined';
   }
 }
