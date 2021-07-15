@@ -20,7 +20,7 @@ export class WebDocumentContextPlugin implements TrackerPlugin {
    * If no ID is specified the document's `nodeName` is used.
    */
   constructor(config?: WebDocumentContextPluginConfig) {
-    this.documentContextId = config?.documentContextId ?? document.nodeName;
+    this.documentContextId = config?.documentContextId ?? this.isUsable() ? document.nodeName : 'unknown';
   }
 
   /**

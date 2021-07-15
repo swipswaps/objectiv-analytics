@@ -13,7 +13,10 @@ export class WebDeviceContextPlugin implements TrackerPlugin {
    * Detects user-agent and generates a WebDeviceContext.
    */
   constructor() {
-    this.webDeviceContext = makeDeviceContext({ id: 'device', user_agent: navigator.userAgent });
+    this.webDeviceContext = makeDeviceContext({
+      id: 'device',
+      user_agent: this.isUsable() ? navigator.userAgent : 'unknown',
+    });
   }
 
   /**

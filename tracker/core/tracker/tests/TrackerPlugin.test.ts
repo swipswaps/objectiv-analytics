@@ -9,7 +9,10 @@ describe('Plugin', () => {
   });
 
   it('should instantiate when specifying a list of Plugins instances', () => {
-    const plugins: TrackerPlugin[] = [{ pluginName: 'test-pluginA', isUsable: () => true }, { pluginName: 'test-pluginB', isUsable: () => true }];
+    const plugins: TrackerPlugin[] = [
+      { pluginName: 'test-pluginA', isUsable: () => true },
+      { pluginName: 'test-pluginB', isUsable: () => true },
+    ];
     const testPlugins = new TrackerPlugins(plugins);
     expect(testPlugins).toBeInstanceOf(TrackerPlugins);
     expect(testPlugins).toEqual({ list: plugins });
@@ -24,7 +27,9 @@ describe('Plugin', () => {
         this.parameter = args?.parameter;
       }
 
-      isUsable() { return true }
+      isUsable() {
+        return true;
+      }
     }
     const TestPluginAFactory = (parameter: string) => new TestPluginA({ parameter });
     const plugins: TrackerPluginsConfiguration = [
@@ -35,7 +40,7 @@ describe('Plugin', () => {
       {
         pluginName: 'pluginA',
         parameter: 'parameterValue',
-        isUsable: () => true
+        isUsable: () => true,
       } as TrackerPlugin,
     ];
     const testPlugins = new TrackerPlugins(plugins);
@@ -83,7 +88,11 @@ describe('Plugin', () => {
 
   it('should execute only Plugins that are usable', () => {
     const pluginA: TrackerPlugin = { pluginName: 'test-pluginA', isUsable: () => true, beforeTransport: jest.fn(noop) };
-    const pluginB: TrackerPlugin = { pluginName: 'test-pluginB', isUsable: () => false, beforeTransport: jest.fn(noop) };
+    const pluginB: TrackerPlugin = {
+      pluginName: 'test-pluginB',
+      isUsable: () => false,
+      beforeTransport: jest.fn(noop),
+    };
     const pluginC: TrackerPlugin = { pluginName: 'test-pluginC', isUsable: () => true, beforeTransport: jest.fn(noop) };
     const plugins: TrackerPlugin[] = [pluginA, pluginB, pluginC];
     const testPlugins = new TrackerPlugins(plugins);
