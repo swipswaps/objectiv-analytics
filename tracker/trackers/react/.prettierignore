@@ -24,3 +24,6 @@ dist/
 
 # Markdown
 *.md
+
+# React Tracker Live testing App
+tests/live

@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": "../../",
+    "paths": {
+      "@objectiv/schema": ["core/schema/src"],
+      "@objectiv/plugin-*": ["plugins/*/src"],
+      "@objectiv/tracker-core": ["core/tracker/src"],
+      "@objectiv/tracker-*": ["trackers/*/src"]
+    }
+  }
+}
