@@ -6,7 +6,14 @@ describe('Tracker', () => {
     const testTracker = new Tracker({ applicationId: 'app-id' });
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toBe(undefined);
-    expect(testTracker.plugins).toBe(undefined);
+    expect(testTracker.plugins).toEqual({
+      list: [
+        {
+          applicationContext: { __global_context: true, _context_type: 'ApplicationContext', id: 'app-id' },
+          pluginName: 'ApplicationContextPlugin',
+        },
+      ],
+    });
     expect(testTracker.applicationId).toBe('app-id');
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
@@ -17,7 +24,14 @@ describe('Tracker', () => {
     const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport });
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
-    expect(testTracker.plugins).toBe(undefined);
+    expect(testTracker.plugins).toEqual({
+      list: [
+        {
+          applicationContext: { __global_context: true, _context_type: 'ApplicationContext', id: 'app-id' },
+          pluginName: 'ApplicationContextPlugin',
+        },
+      ],
+    });
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
   });
@@ -162,6 +176,7 @@ describe('Tracker', () => {
         { __global_context: true, _context_type: 'global', id: 'X' },
         { __global_context: true, _context_type: 'global', id: 'Y' },
         { __global_context: true, _context_type: 'global', id: 'Z' },
+        { __global_context: true, _context_type: 'ApplicationContext', id: 'app-id' },
       ]);
     });
 
@@ -187,7 +202,7 @@ describe('Tracker', () => {
       jest.spyOn(testTransport, 'handle');
       const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport });
       testTracker.trackEvent(testEvent);
-      expect(testTransport.handle).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+      expect(testTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: testEvent.event }));
     });
 
     it("should not send the Event via the given TrackerTransport if it's not usable", () => {

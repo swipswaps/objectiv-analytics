@@ -1,8 +1,8 @@
-import { ApplicationContextPlugin } from '@objectiv/plugin-application-context';
 import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import {
   ContextsConfig,
+  getDefaultTrackerPluginsList,
   QueuedTransport,
   Tracker,
   TrackerConfig,
@@ -43,7 +43,7 @@ export const makeWebTrackerDefaultTransport = (config: { endpoint: string }): Tr
  * The default list of Plugins of Web Tracker
  */
 export const getDefaultWebTrackerPluginsList = (config: WebTrackerConfig) => [
-  new ApplicationContextPlugin(config),
+  ...getDefaultTrackerPluginsList(config),
   WebDocumentContextPlugin,
   WebDeviceContextPlugin,
 ];

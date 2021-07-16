@@ -13,7 +13,7 @@ describe('ApplicationContextPlugin', () => {
 
   it('should add the ApplicationContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
     const plugins = new ApplicationContextPlugin({ applicationId: 'app-id' });
-    const testTracker = new Tracker({ plugins: new TrackerPlugins([plugins]) });
+    const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([plugins]) });
     const eventContexts: ContextsConfig = {
       global_contexts: [
         { __global_context: true, _context_type: 'section', id: 'X' },

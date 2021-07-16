@@ -11,7 +11,7 @@ describe('trackButtonClick', () => {
   });
 
   const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
-  const tracker = new WebTracker({ transport: spyTransport });
+  const tracker = new WebTracker({ applicationId: 'app-id', transport: spyTransport });
 
   it('should execute when invoked', () => {
     trackButtonClick(makeButtonContext({ id: 'buttonA', text: 'confirm button' }), tracker);

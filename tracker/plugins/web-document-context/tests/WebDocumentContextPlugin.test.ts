@@ -14,7 +14,10 @@ describe('WebDocumentContextPlugin', () => {
   });
 
   it('should add the WebDocumentContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
-    const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDocumentContextPlugin]) });
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: new TrackerPlugins([WebDocumentContextPlugin]),
+    });
     const eventContexts: ContextsConfig = {
       location_stack: [
         { __location_context: true, _context_type: 'section', id: 'A' },
