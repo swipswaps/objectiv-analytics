@@ -204,7 +204,6 @@ export class RetryTransport implements TrackerTransport {
   errors: Error[] = [];
   attemptCount: number = 1;
   startTime: number | null = null;
-  retryTimeout: ReturnType<typeof setTimeout> | null = null;
 
   constructor(config: RetryTransportConfig) {
     this.transport = config.transport;
