@@ -17,12 +17,19 @@ const makeOutput = (isMinified) => ({
   sourcemap: true,
 });
 
+function silenceCircularDependencyWarnings (warning, rollupWarn) {
+  if (warning.code !== 'CIRCULAR_DEPENDENCY') {
+    rollupWarn(warning);
+  }
+}
+
 export default [
   // ES
   {
     input: './src/index.ts',
     output: [makeOutput(false)],
     plugins: [...commonPlugins, ...statsPlugins],
+    onwarn: silenceCircularDependencyWarnings
   },
 
   // ES minified
@@ -30,5 +37,6 @@ export default [
     input: './src/index.ts',
     output: [makeOutput(true)],
     plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
+    onwarn: silenceCircularDependencyWarnings
   },
 ];
