@@ -176,6 +176,7 @@ export type RetryTransportConfig = {
   maxTimeoutMs?: number; // defaults to Infinity
   retryFactor?: number; // defaults to 2
 
+  // TODO add an async callback to do something on retry?
   // TODO add an async callback to do something on failure?
 };
 
