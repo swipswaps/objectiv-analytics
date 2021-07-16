@@ -33,6 +33,16 @@ export interface TrackerTransport {
 }
 
 /**
+ * SendingTransport are those that will send Events to the Collector.
+ */
+export interface SendingTransport extends TrackerTransport {
+  /**
+   * The Collector endpoint
+   */
+  readonly endpoint: string;
+}
+
+/**
  * TransportSwitch provides a fallback mechanism to pick the first usable transport in a list of them.
  * The switch is usable if at least one of the given TrackerTransports is usable.
  *
@@ -148,13 +158,13 @@ export class QueuedTransport implements TrackerTransport {
 }
 
 /**
- * The configuration object of a RetryTransport. Requires a Transport instance.
+ * The configuration object of a RetryTransport. Requires a SendingTransport instance.
  */
 export type RetryTransportConfig = {
   /**
-   * The Transport instance to wrap around. Retry Transport will invoke the wrapped Transport `handle`.
+   * The SendingTransport instance to wrap around. Retry Transport will invoke the wrapped SendingTransport `handle`.
    */
-  transport: TrackerTransport;
+  transport: SendingTransport;
 
   /**
    * Optional. How many times we will retry before giving up. Defaults to 10;
@@ -181,11 +191,11 @@ export type RetryTransportConfig = {
 };
 
 /**
- * A TrackerTransport implementation that implements exponential fallback, timeouts around another Transport
+ * A TrackerTransport implementation that implements exponential fallback, timeouts around a SendingTransport
  */
 export class RetryTransport implements TrackerTransport {
   readonly transportName = 'RetryTransport';
-  readonly transport: TrackerTransport;
+  readonly transport: SendingTransport;
   readonly maxAttempts: number;
   readonly maxRetryMs: number;
   readonly minTimeoutMs: number;
@@ -217,41 +227,36 @@ export class RetryTransport implements TrackerTransport {
     return Math.min(Math.round(this.minTimeoutMs * Math.pow(this.retryFactor, this.attemptCount)), this.maxTimeoutMs);
   }
 
+  async retry(error: Error, events: NonEmptyArray<TransportableEvent>): Promise<any> {
+    // Stop retrying if we reached maxAttempts
+    if (this.attemptCount > this.maxAttempts) {
+      this.errors.push(...[new Error('maxAttempts reached'), error]);
+      return false;
+    }
+
+    // Stop retrying if we reached maxRetryMs
+    if (this.startTime && Date.now() - this.startTime >= this.maxRetryMs) {
+      this.errors.push(...[new Error('maxRetryMs reached'), error]);
+      return false;
+    }
+
+    // Push error in the list of errors
+    this.errors.push(error);
+
+    // Wait for the next timeout
+    const nextTimeoutMs = this.calculateNextTimeoutMs();
+    await new Promise((resolve) => setTimeout(resolve, nextTimeoutMs));
+
+    // Increment number of attempts
+    this.attemptCount++;
+
+    // Try again
+    return this.handle(...events);
+  }
+
   async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
     this.startTime = Date.now();
-
-    return this.transport.handle(...args).catch((error) => {
-      // Clear previous attempt's timeout
-      if (this.retryTimeout) {
-        clearTimeout(this.retryTimeout);
-      }
-
-      // Push error in the list of errors
-      this.errors.push(error);
-
-      // Stop retrying if we reached maxAttempts
-      if (this.attemptCount > this.maxAttempts) {
-        this.errors.push(new Error('maxAttempts reached'));
-        return false;
-      }
-
-      // Stop retrying if we reached maxRetryMs
-      if (this.startTime && Date.now() - this.startTime >= this.maxRetryMs) {
-        this.errors.push(new Error('maxRetryMs reached'));
-        return false;
-      }
-
-      // Start timer and retry
-      const self = this;
-      this.retryTimeout = setTimeout(function () {
-        // Increment number of attempts
-        self.attemptCount++;
-        // Try again
-        self.transport.handle(...args);
-      }, this.calculateNextTimeoutMs());
-
-      return true;
-    });
+    return this.transport.handle(...args).catch((error) => this.retry(error, args));
   }
 
   isUsable(): boolean {

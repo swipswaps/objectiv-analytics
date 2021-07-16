@@ -1,6 +1,9 @@
+import fetchMock from 'jest-fetch-mock';
 import {
   ContextsConfig,
+  FetchAPITransport,
   QueuedTransport,
+  RetryTransport,
   Tracker,
   TrackerEvent,
   TrackerQueue,
@@ -264,5 +267,82 @@ describe('QueuedTransport', () => {
     expect(trackerQueue.processingEventIds).toHaveLength(0);
     expect(trackerQueue.processFunction).toHaveBeenCalledTimes(1);
     expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, testEvent);
+  });
+});
+
+describe('RetryTransport', () => {
+  beforeEach(() => {
+    fetchMock.enableMocks();
+  });
+
+  afterEach(() => {
+    fetchMock.resetMocks();
+  });
+
+  it('should do nothing if the given transport is not usable', () => {
+    const unusableTransport = new UnusableTransport();
+    spyOn(unusableTransport, 'handle').and.callThrough();
+
+    new RetryTransport({ transport: unusableTransport });
+
+    expect(unusableTransport.isUsable()).toBe(false);
+    expect(unusableTransport.handle).not.toHaveBeenCalled();
+  });
+
+  it('should not retry', async () => {
+    const retryTransport = new RetryTransport({ transport: new FetchAPITransport({ endpoint: 'http://localhost' }) });
+    spyOn(retryTransport, 'retry').and.callThrough();
+
+    await retryTransport.handle(testEvent);
+
+    expect(retryTransport.retry).not.toHaveBeenCalled();
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('should retry once', async () => {
+    jest.useRealTimers();
+    const mockedError = new Error('You shall not pass!');
+    fetchMock.mockRejectOnce(mockedError);
+    const retryTransport = new RetryTransport({
+      transport: new FetchAPITransport({ endpoint: 'http://localhost' }),
+      minTimeoutMs: 1,
+      maxTimeoutMs: 1,
+      retryFactor: 1,
+    });
+    spyOn(retryTransport, 'retry').and.callThrough();
+
+    await retryTransport.handle(testEvent);
+
+    expect(retryTransport.attemptCount).toBe(2);
+    expect(retryTransport.retry).toHaveBeenCalledTimes(1);
+    expect(retryTransport.retry).toHaveBeenNthCalledWith(1, mockedError, [testEvent]);
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('should retry three times', async () => {
+    jest.useRealTimers();
+    const mockedError = new Error('You shall not pass!');
+    fetchMock.mockReject(mockedError);
+    const retryTransport = new RetryTransport({
+      transport: new FetchAPITransport({ endpoint: 'http://localhost' }),
+      maxAttempts: 3,
+      minTimeoutMs: 1,
+      maxTimeoutMs: 1,
+      retryFactor: 1,
+    });
+
+    spyOn(retryTransport, 'retry').and.callThrough();
+    spyOn(retryTransport, 'handle').and.callThrough();
+
+    await retryTransport.handle(testEvent);
+
+    expect(retryTransport.attemptCount).toBe(4);
+    expect(retryTransport.retry).toHaveBeenCalledTimes(4);
+    expect(retryTransport.retry).toHaveBeenNthCalledWith(1, mockedError, [testEvent]);
+    expect(retryTransport.retry).toHaveBeenNthCalledWith(2, mockedError, [testEvent]);
+    expect(retryTransport.retry).toHaveBeenNthCalledWith(3, mockedError, [testEvent]);
+    expect(retryTransport.retry).toHaveBeenNthCalledWith(4, mockedError, [testEvent]);
+    expect(retryTransport.handle).toHaveBeenCalledTimes(4);
+    expect(fetch).toHaveBeenCalledTimes(4);
   });
 });
