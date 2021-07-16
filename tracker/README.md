@@ -104,7 +104,7 @@ yarn up <package> -i
 ## Building / publishing packages
 To locally publish the packages (so they can be used by applications), we use verdaccio. By far, the easiest way, is to run
 ```bash
-make publish-tracker
+make publish
 ```
 from the root of the repo.
 
