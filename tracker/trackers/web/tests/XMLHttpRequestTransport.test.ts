@@ -134,7 +134,7 @@ describe('XMLHttpRequestTransport', () => {
     const testTransport = new XMLHttpRequestTransport({
       endpoint: MOCK_ENDPOINT,
     });
-    spyOn(testTransport, "xmlHttpRequestFunction").and.callThrough();
+    spyOn(testTransport, 'xmlHttpRequestFunction').and.callThrough();
 
     // @ts-ignore purposely disable TS and call the handle method anyway
     await testTransport.handle();
@@ -142,5 +142,4 @@ describe('XMLHttpRequestTransport', () => {
     // XMLHttpRequest should not have been executed
     expect(testTransport.xmlHttpRequestFunction).not.toHaveBeenCalled();
   });
-
 });

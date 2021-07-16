@@ -1,25 +1,25 @@
 import { WebDeviceContextPlugin } from '../src';
 import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 
-const origin = global.navigator.userAgent
+const origin = global.navigator.userAgent;
 const cleared = Symbol('clear');
-let fakeUserAgent: string | null | Symbol = null
+let fakeUserAgent: string | null | Symbol = null;
 
 const USER_AGENT_MOCK_VALUE = 'Mocked User Agent';
 
 Object.defineProperty(global.navigator, 'userAgent', {
   get() {
-    return fakeUserAgent === cleared ? origin : (fakeUserAgent || '')
+    return fakeUserAgent === cleared ? origin : fakeUserAgent || '';
   },
-})
+});
 
 export const clear = () => {
-  fakeUserAgent = cleared
-}
+  fakeUserAgent = cleared;
+};
 
 export const mockUserAgent = (agent: string) => {
-  fakeUserAgent = agent
-}
+  fakeUserAgent = agent;
+};
 
 describe('WebDeviceContextPlugin', () => {
   beforeEach(() => {
