@@ -1,4 +1,5 @@
 import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore } from '../src';
+import spyOn = jest.spyOn;
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -6,6 +7,32 @@ beforeEach(() => {
 
 afterEach(() => {
   jest.useRealTimers();
+});
+
+describe('TrackerQueueMemoryStore', () => {
+  const TrackerEvent1 = new TrackerEvent({ event: 'a' });
+  const TrackerEvent2 = new TrackerEvent({ event: 'b' });
+  const TrackerEvent3 = new TrackerEvent({ event: 'c' });
+
+  it('should read all Events', async () => {
+    const trackerQueueStore = new TrackerQueueMemoryStore();
+    await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
+    expect(trackerQueueStore.length).toBe(3);
+
+    const events = await trackerQueueStore.read();
+
+    expect(events.map((event) => event.event)).toStrictEqual(['a', 'b', 'c']);
+  });
+
+  it('should allow filtering when reading Events', async () => {
+    const trackerQueueStore = new TrackerQueueMemoryStore();
+    await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
+    expect(trackerQueueStore.length).toBe(3);
+
+    const events = await trackerQueueStore.read(Infinity, (event) => event.event !== 'a');
+
+    expect(events.map((event) => event.event)).toStrictEqual(['b', 'c']);
+  });
 });
 
 describe('TrackerQueue', () => {
@@ -36,9 +63,9 @@ describe('TrackerQueue', () => {
   });
 
   it('should enqueue and dequeue in the expected order', async () => {
-    const processFunctionSpy = jest.fn();
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
     const memoryStore = new TrackerQueueMemoryStore();
-    const testQueue = new TrackerQueue({ batchSize: 1, store: memoryStore });
+    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, store: memoryStore });
     testQueue.setProcessFunction(processFunctionSpy);
     expect(testQueue.store.length).toBe(0);
 
@@ -56,13 +83,13 @@ describe('TrackerQueue', () => {
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent1);
     expect(memoryStore.length).toBe(2);
 
-    processFunctionSpy.mockReset();
+    processFunctionSpy.mockClear();
     await testQueue.run();
 
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent2);
     expect(memoryStore.length).toBe(1);
 
-    processFunctionSpy.mockReset();
+    processFunctionSpy.mockClear();
     await testQueue.run();
 
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
@@ -70,8 +97,8 @@ describe('TrackerQueue', () => {
   });
 
   it('should support batches', async () => {
-    const processFunctionSpy = jest.fn();
-    const testQueue = new TrackerQueue({ batchSize: 2 });
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
+    const testQueue = new TrackerQueue({ batchSize: 2, concurrency: 1 });
     testQueue.setProcessFunction(processFunctionSpy);
     await testQueue.push(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(testQueue.store.length).toBe(3);
@@ -80,11 +107,64 @@ describe('TrackerQueue', () => {
 
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent1, TrackerEvent2);
     expect(testQueue.store.length).toBe(1);
+    expect(testQueue.processingEventIds).toHaveLength(0);
 
-    processFunctionSpy.mockReset();
+    processFunctionSpy.mockClear();
     await testQueue.run();
 
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
     expect(testQueue.store.length).toBe(0);
+    expect(testQueue.processingEventIds).toHaveLength(0);
+
+    processFunctionSpy.mockClear();
+    await testQueue.run();
+
+    expect(processFunctionSpy).not.toHaveBeenCalled();
+    expect(testQueue.store.length).toBe(0);
+    expect(testQueue.processingEventIds).toHaveLength(0);
+  });
+
+  it('should support concurrent batches', async () => {
+    const TrackerEvent4 = new TrackerEvent({ event: 'd' });
+    const TrackerEvent5 = new TrackerEvent({ event: 'e' });
+    const TrackerEvent6 = new TrackerEvent({ event: 'f' });
+    const TrackerEvent7 = new TrackerEvent({ event: 'g' });
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
+    const testQueue = new TrackerQueue({ batchSize: 3, concurrency: 3 });
+    testQueue.setProcessFunction(processFunctionSpy);
+    await testQueue.push(
+      TrackerEvent1,
+      TrackerEvent2,
+      TrackerEvent3,
+      TrackerEvent4,
+      TrackerEvent5,
+      TrackerEvent6,
+      TrackerEvent7
+    );
+    expect(testQueue.store.length).toBe(7);
+
+    await testQueue.run();
+
+    expect(processFunctionSpy).toHaveBeenCalledTimes(3);
+    expect(processFunctionSpy).toHaveBeenNthCalledWith(1, ...[TrackerEvent1, TrackerEvent2, TrackerEvent3]);
+    expect(processFunctionSpy).toHaveBeenNthCalledWith(2, ...[TrackerEvent4, TrackerEvent5, TrackerEvent6]);
+    expect(processFunctionSpy).toHaveBeenNthCalledWith(3, ...[TrackerEvent7]);
+    expect(testQueue.store.length).toBe(0);
+    expect(testQueue.processingEventIds).toHaveLength(0);
+  });
+
+  it('startRunner should start the setInterval that will execute `run` automatically after enough time', async () => {
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
+    const testQueue = new TrackerQueue();
+    testQueue.setProcessFunction(processFunctionSpy);
+
+    spyOn(testQueue, 'run');
+    expect(testQueue.run).not.toHaveBeenCalled();
+
+    testQueue.startRunner();
+
+    jest.advanceTimersByTime(testQueue.batchDelayMs);
+
+    expect(testQueue.run).toHaveBeenCalled();
   });
 });

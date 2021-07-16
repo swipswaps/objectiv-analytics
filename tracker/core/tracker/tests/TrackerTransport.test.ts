@@ -246,7 +246,7 @@ describe('QueuedTransport', () => {
       transport: logTransport,
     });
 
-    spyOn(trackerQueue, 'processFunction');
+    spyOn(trackerQueue, 'processFunction').and.callThrough();
 
     expect(testQueuedTransport.isUsable()).toBe(true);
 
@@ -261,6 +261,7 @@ describe('QueuedTransport', () => {
 
     await trackerQueue.run();
 
+    expect(trackerQueue.processingEventIds).toHaveLength(0);
     expect(trackerQueue.processFunction).toHaveBeenCalledTimes(1);
     expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, testEvent);
   });

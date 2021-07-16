@@ -13,7 +13,7 @@ export interface TrackerQueueStoreInterface {
   /**
    * Read Events from the store, if `size` is omitted all TrackerEvents will be returned
    */
-  read(size?: number): Promise<TrackerEvent[]>;
+  read(size?: number, filterPredicate?: (event: TrackerEvent) => boolean): Promise<TrackerEvent[]>;
 
   /**
    * Write Events to the store
@@ -33,8 +33,12 @@ export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
   length: number = 0;
   events: TrackerEvent[] = [];
 
-  async read(size?: number): Promise<TrackerEvent[]> {
-    return this.events.slice(0, size);
+  async read(size?: number, filterPredicate?: (event: TrackerEvent) => boolean): Promise<TrackerEvent[]> {
+    let events = this.events;
+    if (filterPredicate) {
+      events = events.filter(filterPredicate);
+    }
+    return events.slice(0, size);
   }
 
   async write(...args: NonEmptyArray<TrackerEvent>): Promise<any> {
@@ -75,6 +79,11 @@ export type TrackerQueueConfig = {
    * Optional. How often to re-run and dequeue again, in ms. Defaults to 250.
    */
   readonly batchDelayMs?: number;
+
+  /**
+   * Optional. How many batches to process simultaneously. Defaults to 4.
+   */
+  readonly concurrency?: number;
 };
 
 /**
@@ -90,16 +99,6 @@ export interface TrackerQueueInterface extends Required<TrackerQueueConfig> {
    * A name describing the Queue implementation for debugging purposes
    */
   readonly queueName: string;
-
-  /**
-   * How many events to dequeue at the same time
-   */
-  readonly batchSize: number;
-
-  /**
-   * How often to re-run and dequeue again
-   */
-  readonly batchDelayMs: number;
 
   /**
    * Sets the processFunction to execute whenever run is called
@@ -136,6 +135,11 @@ export class TrackerQueue implements TrackerQueueInterface {
   readonly store: TrackerQueueStoreInterface;
   readonly batchSize: number;
   readonly batchDelayMs: number;
+  readonly concurrency: number;
+
+  // FIXME make this an array of arrays, so we may know how many batches are in there as well
+  // Hold a list of Event IDs that are currently being processed
+  processingEventIds: string[] = [];
 
   /**
    * Initializes batching configuration with some sensible values.
@@ -144,6 +148,7 @@ export class TrackerQueue implements TrackerQueueInterface {
     this.store = config?.store ?? new TrackerQueueMemoryStore();
     this.batchSize = config?.batchSize ?? 10;
     this.batchDelayMs = config?.batchDelayMs ?? 250;
+    this.concurrency = config?.concurrency ?? 4;
   }
 
   setProcessFunction(processFunction: TrackerQueueProcessFunction) {
@@ -152,8 +157,7 @@ export class TrackerQueue implements TrackerQueueInterface {
 
   startRunner() {
     setInterval(async () => {
-      // TODO some state to prevent concurrent runs
-      // TODO a timeout/cancel mechanism so we may cancel run running for too long and retry or die
+      // TODO Add timeout/cancel mechanism so we may cancel runs running for too long and retry or die
       await this.run();
     }, this.batchDelayMs);
   }
@@ -163,20 +167,47 @@ export class TrackerQueue implements TrackerQueueInterface {
   }
 
   async readBatch(): Promise<TrackerEvent[]> {
-    return this.store.read(this.batchSize);
+    const eventsBatch = await this.store.read(this.batchSize, (event) => !this.processingEventIds.includes(event.id));
+
+    // Push Event Ids in the processing list, so the next readBatch will not pick these up
+    this.processingEventIds.push(...eventsBatch.map((event) => event.id));
+
+    return eventsBatch;
   }
 
   async run(): Promise<any> {
-    return new Promise<void>(async (resolve, reject) => {
-      if (!this.processFunction) {
-        return reject('TrackerQueue `processFunction` has not been set.');
-      }
+    if (!this.processFunction) {
+      return Promise.reject('TrackerQueue `processFunction` has not been set.');
+    }
+
+    // Load and process as many Event batches as `concurrency` allows. For each Event we create a Promise.
+    let processPromises: Promise<any>[] = [];
+
+    for (let i = 0; i < this.concurrency; i++) {
       const eventsBatch = await this.readBatch();
-      if (isNonEmptyArray(eventsBatch)) {
-        await this.processFunction(...eventsBatch);
-        await this.store.delete(eventsBatch.map((event) => event.id));
+
+      // No need to continue if there are no more Events to process
+      if (!isNonEmptyArray(eventsBatch)) {
+        return;
       }
-      resolve();
-    });
+
+      // Gather Event Ids. Used for both deletion and processingEventIds cleanup.
+      const eventsBatchIds = eventsBatch.map((event) => event.id);
+
+      // Queue process function
+      processPromises.push(
+        this.processFunction(...eventsBatch)
+          // Delete Events from Store when the process function promise resolves
+          .then(() => {
+            this.store.delete(eventsBatchIds);
+          })
+          // Delete Event Ids from processing list, regardless if the processing was successful or not
+          .finally(() => {
+            this.processingEventIds = this.processingEventIds.filter((eventId) => !eventsBatchIds.includes(eventId));
+          })
+      );
+    }
+
+    return Promise.all(processPromises);
   }
 }
