@@ -177,7 +177,7 @@ export type RetryTransportConfig = {
   maxRetryMs?: number;
 
   /**
-   * Optional. The following properties are all used to calculate the exponential fallback timeout between attempts.
+   * Optional. The following properties are used to calculate the exponential timeouts between attempts.
    *
    * Given an `attemptCount`, representing how many times we retried so far, this is the formula:
    *   min( round( minTimeoutMs * pow(retryFactor, attemptCount) ), maxTimeout)
@@ -185,9 +185,6 @@ export type RetryTransportConfig = {
   minTimeoutMs?: number; // defaults to 1000
   maxTimeoutMs?: number; // defaults to Infinity
   retryFactor?: number; // defaults to 2
-
-  // TODO add an async callback to do something on retry?
-  // TODO add an async callback to do something on failure?
 };
 
 /**
@@ -231,12 +228,14 @@ export class RetryTransport implements TrackerTransport {
     // Stop retrying if we reached maxAttempts
     if (this.attemptCount > this.maxAttempts) {
       this.errors.push(...[new Error('maxAttempts reached'), error]);
+      // TODO Return promise.reject?
       return false;
     }
 
     // Stop retrying if we reached maxRetryMs
     if (this.startTime && Date.now() - this.startTime >= this.maxRetryMs) {
       this.errors.push(...[new Error('maxRetryMs reached'), error]);
+      // TODO Return promise.reject?
       return false;
     }
 
