@@ -13,15 +13,9 @@ const statsPlugins = [sizes(), filesize()];
 const makeOutput = (isMinified) => ({
   file: `dist/index${isMinified ? '.min' : ''}.js`,
   format: 'es',
-  name: 'ObjectivCoreTracker',
+  name: 'ObjectivTrackerApplicationContextPlugin',
   sourcemap: true,
 });
-
-function silenceCircularDependencyWarnings (warning, rollupWarn) {
-  if (warning.code !== 'CIRCULAR_DEPENDENCY') {
-    rollupWarn(warning);
-  }
-}
 
 export default [
   // ES
@@ -29,7 +23,6 @@ export default [
     input: './src/index.ts',
     output: [makeOutput(false)],
     plugins: [...commonPlugins, ...statsPlugins],
-    onwarn: silenceCircularDependencyWarnings
   },
 
   // ES minified
@@ -37,6 +30,5 @@ export default [
     input: './src/index.ts',
     output: [makeOutput(true)],
     plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
-    onwarn: silenceCircularDependencyWarnings
   },
 ];

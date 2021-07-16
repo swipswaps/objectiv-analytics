@@ -64,12 +64,12 @@ describe('TransportSwitch', () => {
     expect(transports.firstUsableTransport).toBe(transport2);
     expect(transports.isUsable()).toBe(true);
 
-    const testTracker = new Tracker({ transport: transports });
+    const testTracker = new Tracker({ applicationId: 'app-id', transport: transports });
 
     testTracker.trackEvent(testEvent);
 
     expect(transport1.handle).not.toHaveBeenCalled();
-    expect(transport2.handle).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+    expect(transport2.handle).toHaveBeenCalledWith(expect.objectContaining({ event: testEvent.event }));
   });
 });
 
@@ -111,7 +111,7 @@ describe('TransportGroup', () => {
     expect(transports.usableTransports).toStrictEqual([transport1, transport2]);
     expect(transports.isUsable()).toBe(true);
 
-    const testTracker = new Tracker({ transport: transports });
+    const testTracker = new Tracker({ applicationId: 'app-id', transport: transports });
 
     testTracker.trackEvent(testEvent);
 
@@ -156,7 +156,7 @@ describe('TrackerTransport complex configurations', () => {
     expect(sendAndLog.isUsable()).toBe(false);
     expect(transport.isUsable()).toBe(true);
 
-    const testTracker = new Tracker({ transport });
+    const testTracker = new Tracker({ applicationId: 'app-id', transport });
 
     testTracker.trackEvent(testEvent);
 
@@ -182,7 +182,7 @@ describe('TrackerTransport complex configurations', () => {
     expect(sendAndLog.isUsable()).toBe(true);
     expect(transport.isUsable()).toBe(true);
 
-    const testTracker = new Tracker({ transport });
+    const testTracker = new Tracker({ applicationId: 'app-id', transport });
 
     testTracker.trackEvent(testEvent);
 
@@ -206,7 +206,7 @@ describe('TrackerTransport complex configurations', () => {
     expect(sendAndLog.isUsable()).toBe(true);
     expect(transport.isUsable()).toBe(true);
 
-    const testTracker = new Tracker({ transport });
+    const testTracker = new Tracker({ applicationId: 'app-id', transport });
 
     testTracker.trackEvent(testEvent);
 
@@ -246,7 +246,7 @@ describe('QueuedTransport', () => {
       transport: logTransport,
     });
 
-    spyOn(trackerQueue, 'processFunction');
+    spyOn(trackerQueue, 'processFunction').and.callThrough();
 
     expect(testQueuedTransport.isUsable()).toBe(true);
 
@@ -261,6 +261,7 @@ describe('QueuedTransport', () => {
 
     await trackerQueue.run();
 
+    expect(trackerQueue.processingEventIds).toHaveLength(0);
     expect(trackerQueue.processFunction).toHaveBeenCalledTimes(1);
     expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, testEvent);
   });

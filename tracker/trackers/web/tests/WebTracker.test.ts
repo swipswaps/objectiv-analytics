@@ -5,13 +5,19 @@ import { clear, mockUserAgent } from 'jest-useragent-mock';
 
 describe('WebTracker', () => {
   it('should not instantiate without either `transport` or `endpoint`', () => {
-    expect(() => new WebTracker({})).toThrow();
+    expect(
+      () =>
+        new WebTracker({
+          applicationId: 'app-id',
+        })
+    ).toThrow();
   });
 
   it('should not instantiate with both `endpoint` and `transport`', () => {
     expect(
       () =>
         new WebTracker({
+          applicationId: 'app-id',
           endpoint: 'localhost',
           transport: new FetchAPITransport({
             endpoint: 'localhost',
@@ -21,7 +27,7 @@ describe('WebTracker', () => {
   });
 
   it('should instantiate with `endpoint`', () => {
-    const testTracker = new WebTracker({ endpoint: 'localhost' });
+    const testTracker = new WebTracker({ applicationId: 'app-id', endpoint: 'localhost' });
     expect(testTracker).toBeInstanceOf(WebTracker);
     expect(testTracker.transport).toBeInstanceOf(TransportGroup);
     expect(testTracker.transport).toEqual({
@@ -33,7 +39,9 @@ describe('WebTracker', () => {
             queueName: 'TrackerQueue',
             batchDelayMs: 250,
             batchSize: 10,
+            concurrency: 4,
             processFunction: expect.any(Function),
+            processingEventIds: [],
             store: {
               length: 0,
               events: [],
@@ -56,14 +64,17 @@ describe('WebTracker', () => {
   });
 
   it('should instantiate with `transport`', () => {
-    const testTracker = new WebTracker({ transport: new FetchAPITransport({ endpoint: 'localhost' }) });
+    const testTracker = new WebTracker({
+      applicationId: 'app-id',
+      transport: new FetchAPITransport({ endpoint: 'localhost' }),
+    });
     expect(testTracker).toBeInstanceOf(WebTracker);
     expect(testTracker.transport).toBeInstanceOf(FetchAPITransport);
   });
 
   describe('Default Plugins', () => {
     it('should have some Web Plugins configured by default when no `plugins` have been specified', () => {
-      const testTracker = new WebTracker({ endpoint: 'localhost' });
+      const testTracker = new WebTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       expect(testTracker).toBeInstanceOf(WebTracker);
       expect(testTracker.plugins?.list).toEqual(
         expect.arrayContaining([
@@ -74,7 +85,11 @@ describe('WebTracker', () => {
     });
 
     it('should not have any default Plugin configured when `plugins` have been overridden', () => {
-      const testTracker = new WebTracker({ endpoint: 'localhost', plugins: new TrackerPlugins([]) });
+      const testTracker = new WebTracker({
+        applicationId: 'app-id',
+        endpoint: 'localhost',
+        plugins: new TrackerPlugins([]),
+      });
       expect(testTracker).toBeInstanceOf(WebTracker);
       expect(testTracker.plugins?.list).toStrictEqual([]);
     });
@@ -93,8 +108,8 @@ describe('WebTracker', () => {
       clear();
     });
 
-    it('should track WebDocument and WebDevice Contexts as global_contexts automatically by default', async () => {
-      const testTracker = new WebTracker({ endpoint: 'localhost' });
+    it('should track Application, WebDocument and WebDevice Contexts as global_contexts automatically by default', async () => {
+      const testTracker = new WebTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       const testEvent = new TrackerEvent({ event: 'test-event' });
       expect(testTracker).toBeInstanceOf(WebTracker);
       expect(testEvent.global_contexts).toHaveLength(0);
@@ -113,9 +128,13 @@ describe('WebTracker', () => {
         ])
       );
 
-      expect(trackedEvent.global_contexts).toHaveLength(1);
+      expect(trackedEvent.global_contexts).toHaveLength(2);
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
+          expect.objectContaining({
+            _context_type: 'ApplicationContext',
+            id: 'app-id',
+          }),
           expect.objectContaining({
             _context_type: 'DeviceContext',
             id: 'device',
