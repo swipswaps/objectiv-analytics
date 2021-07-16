@@ -178,7 +178,7 @@ def set_time_in_events(events: List[EventData], current_millis: int):
 
 def _get_http_context() -> ContextData:
     """ Create an HttpContext based on the data in the current request. """
-    allowed_headers = ['Host', 'Origin', 'Referer', 'User-Agent']
+    allowed_headers = ['Host', 'Origin', 'Referer', 'User-Agent', 'X-Real-IP', 'X-Forwarded-For']
     http_context: ContextData = {}
     if flask.request.remote_addr:
         http_context['remote_address'] = flask.request.remote_addr
