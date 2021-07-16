@@ -223,8 +223,8 @@ export class RetryTransport implements TrackerTransport {
     }
   }
 
-  calculateNextTimeoutMs() {
-    return Math.min(Math.round(this.minTimeoutMs * Math.pow(this.retryFactor, this.attemptCount)), this.maxTimeoutMs);
+  calculateNextTimeoutMs(attemptCount: number) {
+    return Math.min(Math.round(this.minTimeoutMs * Math.pow(this.retryFactor, attemptCount)), this.maxTimeoutMs);
   }
 
   async retry(error: Error, events: NonEmptyArray<TransportableEvent>): Promise<any> {
@@ -244,7 +244,7 @@ export class RetryTransport implements TrackerTransport {
     this.errors.push(error);
 
     // Wait for the next timeout
-    const nextTimeoutMs = this.calculateNextTimeoutMs();
+    const nextTimeoutMs = this.calculateNextTimeoutMs(this.attemptCount);
     await new Promise((resolve) => setTimeout(resolve, nextTimeoutMs));
 
     // Increment number of attempts

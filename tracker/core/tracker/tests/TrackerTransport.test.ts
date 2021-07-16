@@ -279,6 +279,12 @@ describe('RetryTransport', () => {
     fetchMock.resetMocks();
   });
 
+  it('should generate exponential timeouts', () => {
+    const retryTransport = new RetryTransport({ transport: new UnusableTransport() });
+    const timeouts = Array.from(Array(10).keys()).map(retryTransport.calculateNextTimeoutMs.bind(retryTransport));
+    expect(timeouts).toBe([1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000, 512000]);
+  });
+
   it('should not accept 0 or negative minTimeoutMs', () => {
     expect(() => new RetryTransport({ transport: new UnusableTransport(), minTimeoutMs: 0 })).toThrow(
       'minTimeoutMs must be at least 1'
