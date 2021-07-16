@@ -2802,7 +2802,6 @@ __metadata:
     jest: ^26.6.3
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
-    jest-useragent-mock: ^0.1.1
     prettier: ^2.3.0
     rollup: ^2.48.0
     rollup-plugin-cleanup: ^3.2.1

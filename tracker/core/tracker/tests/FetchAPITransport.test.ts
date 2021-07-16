@@ -143,7 +143,7 @@ describe('FetchAPITransport', () => {
     // @ts-ignore purposely disable TS and call the handle method anyway
     await testTransport.handle();
 
-    // Since we configured a Queue, the transport should not have called Fetch yet
+    // Fetch should not have been called
     expect(fetch).not.toHaveBeenCalled();
   });
 });

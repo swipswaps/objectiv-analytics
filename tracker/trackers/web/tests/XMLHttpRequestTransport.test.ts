@@ -128,4 +128,19 @@ describe('XMLHttpRequestTransport', () => {
 
     await testTransport.handle(testEvent);
   });
+
+  it('should be safe to call with an empty array of Events for devs without TS', async () => {
+    // Create our XMLHttpRequest Transport Instance
+    const testTransport = new XMLHttpRequestTransport({
+      endpoint: MOCK_ENDPOINT,
+    });
+    spyOn(testTransport, "xmlHttpRequestFunction").and.callThrough();
+
+    // @ts-ignore purposely disable TS and call the handle method anyway
+    await testTransport.handle();
+
+    // XMLHttpRequest should not have been executed
+    expect(testTransport.xmlHttpRequestFunction).not.toHaveBeenCalled();
+  });
+
 });
