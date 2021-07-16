@@ -19,7 +19,7 @@ describe('useTrackButtonClick', () => {
 
   const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
   const renderSpy = jest.fn();
-  const tracker = new ReactTracker({ transport: spyTransport });
+  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
   const TestApp = () => {
     renderSpy();
@@ -102,7 +102,7 @@ describe('useTrackButtonClick', () => {
       </TrackerContextProvider>
     );
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
-    const anotherTracker = new ReactTracker({ transport: spyTransport2 });
+    const anotherTracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport2 });
     const buttonClickHandler = useTrackButtonClick(
       makeButtonContext({ id: 'buttonA', text: 'confirm button' }),
       anotherTracker

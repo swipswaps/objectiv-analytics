@@ -1,5 +1,5 @@
 import { ContextsConfig, TrackerPlugins } from '@objectiv/tracker-core';
-import { defaultWebTrackerPluginsList, WebTracker, WebTrackerConfig } from '@objectiv/tracker-web';
+import { getDefaultWebTrackerPluginsList, WebTracker, WebTrackerConfig } from '@objectiv/tracker-web';
 
 /**
  * React Tracker configuration is identical to the Web Tracker configuration.
@@ -19,7 +19,7 @@ export class ReactTracker extends WebTracker {
       config = {
         ...config,
         plugins: new TrackerPlugins([
-          ...defaultWebTrackerPluginsList,
+          ...getDefaultWebTrackerPluginsList(config),
           // TODO add React plugins
         ]),
       };

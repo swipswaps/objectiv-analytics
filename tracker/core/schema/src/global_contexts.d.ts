@@ -1,6 +1,17 @@
 import { AbstractGlobalContext } from './abstracts';
 
 /**
+ * Global context containing the origin (application id) of the event
+ * Inheritance: ApplicationContext -> AbstractGlobalContext -> AbstractContext
+ */
+export interface ApplicationContext extends AbstractGlobalContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _context_type: 'ApplicationContext';
+}
+
+/**
  * Global context containing meta info about the device that emitted the event.
  * Inheritance: DeviceContext -> AbstractGlobalContext -> AbstractContext
  */

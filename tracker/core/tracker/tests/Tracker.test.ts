@@ -1,19 +1,20 @@
-import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugin, TrackerPlugins } from '../src';
+import { ContextsConfig, Tracker, TrackerConfig, TrackerEvent, TrackerPlugin, TrackerPlugins } from '../src';
 import { LogTransport, noop, UnusableTransport } from './mocks';
 
 describe('Tracker', () => {
-  it('should instantiate without any config', () => {
-    const testTracker = new Tracker();
+  it('should instantiate with just applicationId', () => {
+    const testTracker = new Tracker({ applicationId: 'app-id' });
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toBe(undefined);
     expect(testTracker.plugins).toBe(undefined);
+    expect(testTracker.applicationId).toBe('app-id');
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
   });
 
   it('should instantiate with tracker config', () => {
     const testTransport = new LogTransport();
-    const testTracker = new Tracker({ transport: testTransport });
+    const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport });
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
     expect(testTracker.plugins).toBe(undefined);
@@ -22,7 +23,8 @@ describe('Tracker', () => {
   });
 
   it('should instantiate with another Tracker, inheriting its state, yet being independent instances', () => {
-    const initialContextsState: ContextsConfig = {
+    const initialContextsState: TrackerConfig = {
+      applicationId: 'app-id',
       location_stack: [
         { __location_context: true, _context_type: 'section', id: 'root' },
         { __location_context: true, _context_type: 'section', id: 'A' },
@@ -63,7 +65,8 @@ describe('Tracker', () => {
   });
 
   it('should allow complex compositions of multiple Tracker instances and Configs', () => {
-    const mainTrackerContexts: ContextsConfig = {
+    const mainTrackerContexts: TrackerConfig = {
+      applicationId: 'app-id',
       location_stack: [
         { __location_context: true, _context_type: 'section', id: 'root' },
         { __location_context: true, _context_type: 'section', id: 'A' },
@@ -129,7 +132,8 @@ describe('Tracker', () => {
     );
 
     it('should merge Tracker Location Stack and Global Contexts with the Event ones', async () => {
-      const trackerContexts: ContextsConfig = {
+      const trackerContexts: TrackerConfig = {
+        applicationId: 'app-id',
         location_stack: [
           { __location_context: true, _context_type: 'section', id: 'root' },
           { __location_context: true, _context_type: 'section', id: 'A' },
@@ -164,7 +168,7 @@ describe('Tracker', () => {
     it('should execute all plugins implementing the initialize callback', () => {
       const pluginC: TrackerPlugin = { pluginName: 'pluginC', initialize: jest.fn(noop) };
       const pluginD: TrackerPlugin = { pluginName: 'pluginD', initialize: jest.fn(noop) };
-      const testTracker = new Tracker({ plugins: new TrackerPlugins([pluginC, pluginD]) });
+      const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([pluginC, pluginD]) });
       expect(pluginC.initialize).toHaveBeenCalledWith(testTracker);
       expect(pluginD.initialize).toHaveBeenCalledWith(testTracker);
     });
@@ -172,7 +176,7 @@ describe('Tracker', () => {
     it('should execute all plugins implementing the beforeTransport callback', () => {
       const pluginE: TrackerPlugin = { pluginName: 'pluginE', beforeTransport: jest.fn(noop) };
       const pluginF: TrackerPlugin = { pluginName: 'pluginF', beforeTransport: jest.fn(noop) };
-      const testTracker = new Tracker({ plugins: new TrackerPlugins([pluginE, pluginF]) });
+      const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([pluginE, pluginF]) });
       testTracker.trackEvent(testEvent);
       expect(pluginE.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
       expect(pluginF.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
@@ -181,7 +185,7 @@ describe('Tracker', () => {
     it('should send the Event via the given TrackerTransport', () => {
       const testTransport = new LogTransport();
       jest.spyOn(testTransport, 'handle');
-      const testTracker = new Tracker({ transport: testTransport });
+      const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport });
       testTracker.trackEvent(testEvent);
       expect(testTransport.handle).toHaveBeenCalledWith(expect.objectContaining(testEvent));
     });
@@ -190,7 +194,7 @@ describe('Tracker', () => {
       const unusableTransport = new UnusableTransport();
       expect(unusableTransport.isUsable()).toEqual(false);
       jest.spyOn(unusableTransport, 'handle');
-      const testTracker = new Tracker({ transport: unusableTransport });
+      const testTracker = new Tracker({ applicationId: 'app-id', transport: unusableTransport });
       testTracker.trackEvent(testEvent);
       expect(unusableTransport.handle).not.toHaveBeenCalled();
     });

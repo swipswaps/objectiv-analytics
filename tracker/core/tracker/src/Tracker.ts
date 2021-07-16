@@ -9,6 +9,11 @@ import { TrackerTransport } from './TrackerTransport';
  */
 export type TrackerConfig = ContextsConfig & {
   /**
+   * Application ID. Used to generate ApplicationContext (global context)
+   */
+  applicationId: string;
+
+  /**
    * Optional. TrackerTransport instance. Responsible for sending or storing Events.
    */
   transport?: TrackerTransport;
@@ -23,6 +28,7 @@ export type TrackerConfig = ContextsConfig & {
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
 export class Tracker implements Contexts {
+  readonly applicationId: string;
   readonly transport?: TrackerTransport;
   readonly plugins?: TrackerPlugins;
 
@@ -38,7 +44,8 @@ export class Tracker implements Contexts {
    * ContextConfigs are used to configure location_stack and global_contexts. If multiple configurations have been
    * provided they will be merged onto each other to produce a single location_stack and global_contexts.
    */
-  constructor(trackerConfig?: TrackerConfig, ...contextConfigs: ContextsConfig[]) {
+  constructor(trackerConfig: TrackerConfig, ...contextConfigs: ContextsConfig[]) {
+    this.applicationId = trackerConfig?.applicationId;
     this.transport = trackerConfig?.transport;
     this.plugins = trackerConfig?.plugins;
 

@@ -39,7 +39,7 @@ describe('useTrackURLChange', () => {
 
   const renderSpy = jest.fn();
 
-  const tracker = new ReactTracker({ transport: spyTransport });
+  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
   const Index = () => {
     return (
@@ -69,7 +69,7 @@ describe('useTrackURLChange', () => {
       handle: jest.fn(),
       isUsable: () => true,
     };
-    const anotherTracker = new ReactTracker({ transport: spyTransport2 });
+    const anotherTracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport2 });
     renderHook(() => useTrackURLChange(anotherTracker));
 
     // TODO JSDOM doesn't support mocking location out of the box

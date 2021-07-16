@@ -1,3 +1,4 @@
+import { ApplicationContextPlugin } from '@objectiv/plugin-application-context';
 import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import {
@@ -41,7 +42,11 @@ export const makeWebTrackerDefaultTransport = (config: { endpoint: string }): Tr
 /**
  * The default list of Plugins of Web Tracker
  */
-export const defaultWebTrackerPluginsList = [WebDocumentContextPlugin, WebDeviceContextPlugin];
+export const getDefaultWebTrackerPluginsList = (config: WebTrackerConfig) => [
+  new ApplicationContextPlugin(config),
+  WebDocumentContextPlugin,
+  WebDeviceContextPlugin,
+];
 
 /**
  * Web Tracker is a 1:1 instance of Tracker with a simplified construction and some preconfigured Plugins.
@@ -91,7 +96,7 @@ export class WebTracker extends Tracker {
     if (!config.plugins) {
       config = {
         ...config,
-        plugins: new TrackerPlugins(defaultWebTrackerPluginsList),
+        plugins: new TrackerPlugins(getDefaultWebTrackerPluginsList(config)),
       };
     }
 

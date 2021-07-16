@@ -10,7 +10,7 @@ describe('TrackerContextProvider', () => {
   });
 
   it('should mount and render its children', () => {
-    const reactTracker = new ReactTracker({ endpoint: '/collector' });
+    const reactTracker = new ReactTracker({ applicationId: 'app-id', endpoint: '/collector' });
     render(
       <TrackerContextProvider tracker={reactTracker}>
         <div>First</div>
@@ -34,7 +34,11 @@ describe('TrackerContextProvider', () => {
 
     it('should retrieve the tracker from the closes Context Provider', () => {
       const endpoint = '/collector';
-      const root = new ReactTracker({ endpoint, location_stack: [makeSectionContext({ id: 'root' })] });
+      const root = new ReactTracker({
+        endpoint,
+        applicationId: 'app-id',
+        location_stack: [makeSectionContext({ id: 'root' })],
+      });
       const section1 = new ReactTracker(root, { location_stack: [makeSectionContext({ id: 'section1' })] });
       const section2 = new ReactTracker(section1, { location_stack: [makeSectionContext({ id: 'section2' })] });
 

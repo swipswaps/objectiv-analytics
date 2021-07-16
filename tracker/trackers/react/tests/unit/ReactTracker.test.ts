@@ -7,12 +7,13 @@ import { ReactTracker } from '../../src';
 describe('ReactTracker', () => {
   describe('Default Plugins from WebTracker', () => {
     it('should have some Web Plugins configured by default when no `plugins` have been specified', () => {
-      const testTracker = new ReactTracker({ endpoint: 'localhost' });
+      const testTracker = new ReactTracker({ applicationId: 'app-id', endpoint: 'localhost' });
 
       expect(testTracker).toBeInstanceOf(ReactTracker);
       expect(testTracker.plugins?.list).toEqual(
         expect.arrayContaining([
           // TODO adjust to the new plugins
+          expect.objectContaining({ pluginName: 'ApplicationContextPlugin' }),
           expect.objectContaining({ pluginName: 'WebDocumentContextPlugin' }),
           expect.objectContaining({ pluginName: 'WebDeviceContextPlugin' }),
         ])
@@ -20,7 +21,11 @@ describe('ReactTracker', () => {
     });
 
     it('should not have any default Plugin configured when `plugins` have been overridden', () => {
-      const testTracker = new WebTracker({ endpoint: 'localhost', plugins: new TrackerPlugins([]) });
+      const testTracker = new WebTracker({
+        applicationId: 'app-id',
+        endpoint: 'localhost',
+        plugins: new TrackerPlugins([]),
+      });
 
       expect(testTracker).toBeInstanceOf(WebTracker);
       expect(testTracker.plugins?.list).toStrictEqual([]);
@@ -40,8 +45,8 @@ describe('ReactTracker', () => {
       clear();
     });
 
-    it('should track WebDocumentContext and DeviceContext Contexts automatically by default', async () => {
-      const testTracker = new ReactTracker({ endpoint: 'localhost' });
+    it('should track Application, WebDocumentContext and DeviceContext Contexts automatically by default', async () => {
+      const testTracker = new ReactTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       const testEvent = new TrackerEvent({ event: 'test-event' });
 
       expect(testTracker).toBeInstanceOf(ReactTracker);
@@ -59,9 +64,13 @@ describe('ReactTracker', () => {
           }),
         ])
       );
-      expect(trackedEvent.global_contexts).toHaveLength(1);
+      expect(trackedEvent.global_contexts).toHaveLength(2);
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
+          expect.objectContaining({
+            _context_type: 'ApplicationContext',
+            id: 'app-id',
+          }),
           expect.objectContaining({
             _context_type: 'DeviceContext',
             id: 'device',

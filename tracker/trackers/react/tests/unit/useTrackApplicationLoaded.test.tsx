@@ -20,7 +20,7 @@ describe('useTrackApplicationLoaded', () => {
 
   const renderSpy = jest.fn();
 
-  const tracker = new ReactTracker({ transport: spyTransport });
+  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
   const Index = () => {
     return (
@@ -71,7 +71,7 @@ describe('useTrackApplicationLoaded', () => {
       handle: jest.fn(),
       isUsable: () => true,
     };
-    const anotherTracker = new ReactTracker({ transport: spyTransport2 });
+    const anotherTracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport2 });
     renderHook(() => useTrackApplicationLoaded(anotherTracker));
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
