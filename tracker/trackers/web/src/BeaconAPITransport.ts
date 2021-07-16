@@ -30,7 +30,8 @@ export class BeaconAPITransport implements TrackerTransport {
 
   isUsable(): boolean {
     return (
-      Boolean(navigator.sendBeacon) &&
+      typeof navigator !== 'undefined' &&
+      typeof navigator.sendBeacon !== 'undefined' &&
       // Beacons are only supported over HTTP or HTTPS
       ['http://', 'https://'].some((protocol) => this.endpoint.startsWith(protocol))
     );

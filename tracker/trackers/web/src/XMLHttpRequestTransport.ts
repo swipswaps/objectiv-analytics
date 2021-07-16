@@ -75,6 +75,6 @@ export class XMLHttpRequestTransport implements TrackerTransport {
   }
 
   isUsable(): boolean {
-    return Boolean(XMLHttpRequest);
+    return typeof XMLHttpRequest !== 'undefined';
   }
 }

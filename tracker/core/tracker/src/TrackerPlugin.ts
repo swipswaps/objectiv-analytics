@@ -21,9 +21,16 @@ export interface PluginCallbacks {
 
 /**
  * A TrackerPlugin must define its own `pluginName` and may define PluginCallbacks callbacks.
+ * It also defines a method to determine if the plugin can be used. Similarly to the Transport interface, this can
+ * be used to check environment requirements, APIs availability, etc.
  */
 export interface TrackerPlugin extends PluginCallbacks {
   readonly pluginName: string;
+
+  /**
+   * Should return if the TrackerPlugin can be used. Eg: a browser based plugin may want to return `false` during SSR.
+   */
+  isUsable(): boolean;
 }
 
 /**
@@ -42,6 +49,10 @@ export interface TrackerPlugin extends PluginCallbacks {
  *      constructor(args?: { parameter?: string }) {
  *        this.parameter = args?.parameter;
  *      }
+ *
+ *      isUsable() {
+ *        return true;
+ *      }
  *    }
  *
  *  And its factory:
@@ -59,7 +70,8 @@ export interface TrackerPlugin extends PluginCallbacks {
  *
  *    {
  *      pluginName: 'pluginA',
- *      parameter: 'parameterValue'
+ *      parameter: 'parameterValue',
+ *      isUsable: () => true
  *    } as TrackerPlugin
  *
  */
@@ -67,6 +79,7 @@ export type TrackerPluginsConfiguration = (TrackerPlugin | Newable<TrackerPlugin
 
 /**
  * TrackerPlugins is responsible for constructing TrackerPlugin instances and orchestrating their callbacks.
+ * It also makes sure to check if Plugins are usable, before executing their callbacks.
  *
  * @note plugin order matters, as they are executed sequentially, a plugin executed later has access to previous
  * Plugins mutations. For example a plugin meant to access the finalized version of the TrackerEvent should be placed
@@ -86,13 +99,13 @@ export class TrackerPlugins implements PluginCallbacks {
    * Calls each Plugin's `initialize` callback function, if defined
    */
   initialize(tracker: Tracker): void {
-    this.list.forEach((plugin) => plugin.initialize && plugin.initialize(tracker));
+    this.list.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(tracker));
   }
 
   /**
    * Calls each Plugin's `beforeTransport` callback function, if defined
    */
   beforeTransport(event: TrackerEvent): void {
-    this.list.forEach((plugin) => plugin.beforeTransport && plugin.beforeTransport(event));
+    this.list.forEach((plugin) => plugin.isUsable() && plugin.beforeTransport && plugin.beforeTransport(event));
   }
 }
