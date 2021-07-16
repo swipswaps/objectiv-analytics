@@ -40,7 +40,7 @@ build-ds-notebook:
 	-t objectiv/notebook:$(TAG) -f docker/notebook/Dockerfile .
 
 publish-tracker:
-	cd tracker && make publish-tracker
+	cd tracker && make publish
 
 # control stack through docker-compose
 start:

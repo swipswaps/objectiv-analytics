@@ -104,7 +104,7 @@ yarn up <package> -i
 ## Building / publishing packages
 To locally publish the packages (so they can be used by applications), we use verdaccio. By far, the easiest way, is to run
 ```bash
-make publish-tracker
+make publish
 ```
 from the root of the repo.
 
@@ -133,6 +133,9 @@ Stopping verdaccio will also remove any published packages (as the storage isn't
 ## Other useful commands
 
 The following commands will be executed for all packages automatically when issued from the monorepo root; the `/tracker` directory. 
+
+### `yarn clean`
+Deletes all `dist` folders of `core`, `plugins` and `trackers`
 
 ### `yarn list`
 Prints a list of all the packages configured in the monorepo.
