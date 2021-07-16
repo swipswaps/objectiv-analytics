@@ -133,4 +133,17 @@ describe('FetchAPITransport', () => {
       })
     );
   });
+
+  it('should be safe to call with an empty array of Events for devs without TS', async () => {
+    // Create our Fetch Transport Instance
+    const testTransport = new FetchAPITransport({
+      endpoint: MOCK_ENDPOINT,
+    });
+
+    // @ts-ignore purposely disable TS and call the handle method anyway
+    await testTransport.handle();
+
+    // Since we configured a Queue, the transport should not have called Fetch yet
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });

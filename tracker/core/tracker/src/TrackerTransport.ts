@@ -191,7 +191,8 @@ export type RetryTransportConfig = {
 };
 
 /**
- * A TrackerTransport implementation that implements exponential fallback, timeouts around a SendingTransport
+ * A TrackerTransport implementing exponential backoff retries around a SendingTransport handle method.
+ * It allows to also specify maximum retry time and number of attempts.
  */
 export class RetryTransport implements TrackerTransport {
   readonly transportName = 'RetryTransport';

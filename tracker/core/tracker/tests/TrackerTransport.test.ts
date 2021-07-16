@@ -279,13 +279,29 @@ describe('RetryTransport', () => {
     fetchMock.resetMocks();
   });
 
+  it('should not accept 0 or negative minTimeoutMs', () => {
+    expect(() => new RetryTransport({ transport: new UnusableTransport(), minTimeoutMs: 0 })).toThrow(
+      'minTimeoutMs must be at least 1'
+    );
+    expect(() => new RetryTransport({ transport: new UnusableTransport(), minTimeoutMs: -10 })).toThrow(
+      'minTimeoutMs must be at least 1'
+    );
+  });
+
+  it('should not accept minTimeoutMs bigger than maxTimeoutMs', () => {
+    expect(() => new RetryTransport({ transport: new UnusableTransport(), minTimeoutMs: 10, maxTimeoutMs: 5 })).toThrow(
+      'minTimeoutMs cannot be bigger than maxTimeoutMs'
+    );
+  });
+
   it('should do nothing if the given transport is not usable', () => {
     const unusableTransport = new UnusableTransport();
     spyOn(unusableTransport, 'handle').and.callThrough();
 
-    new RetryTransport({ transport: unusableTransport });
+    const retryTransport = new RetryTransport({ transport: unusableTransport });
 
     expect(unusableTransport.isUsable()).toBe(false);
+    expect(retryTransport.isUsable()).toBe(false);
     expect(unusableTransport.handle).not.toHaveBeenCalled();
   });
 
@@ -344,5 +360,24 @@ describe('RetryTransport', () => {
     expect(retryTransport.retry).toHaveBeenNthCalledWith(4, mockedError, [testEvent]);
     expect(retryTransport.handle).toHaveBeenCalledTimes(4);
     expect(fetch).toHaveBeenCalledTimes(4);
+  });
+
+  it('should stop retrying if we reached maxRetryMs', async () => {
+    jest.useRealTimers();
+    fetchMock.mockResponse(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    const retryTransport = new RetryTransport({
+      transport: new FetchAPITransport({ endpoint: 'http://localhost' }),
+      minTimeoutMs: 1,
+      maxTimeoutMs: 1,
+      retryFactor: 1,
+      maxRetryMs: 1,
+    });
+    spyOn(retryTransport, 'retry').and.callThrough();
+
+    await retryTransport.handle(testEvent);
+
+    expect(retryTransport.retry).toHaveBeenCalledTimes(1);
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(retryTransport.errors[0]).toStrictEqual(new Error('maxRetryMs reached'));
   });
 });

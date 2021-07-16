@@ -51,13 +51,13 @@ export class Tracker implements Contexts {
    * provided they will be merged onto each other to produce a single location_stack and global_contexts.
    */
   constructor(trackerConfig: TrackerConfig, ...contextConfigs: ContextsConfig[]) {
-    this.applicationId = trackerConfig?.applicationId;
-    this.transport = trackerConfig?.transport;
-    this.plugins = trackerConfig?.plugins ?? new TrackerPlugins([new ApplicationContextPlugin(trackerConfig)]);
+    this.applicationId = trackerConfig.applicationId;
+    this.transport = trackerConfig.transport;
+    this.plugins = trackerConfig.plugins ?? new TrackerPlugins(getDefaultTrackerPluginsList(trackerConfig));
 
     // Process ContextConfigs
-    let new_location_stack: AbstractLocationContext[] = trackerConfig?.location_stack ?? [];
-    let new_global_contexts: AbstractGlobalContext[] = trackerConfig?.global_contexts ?? [];
+    let new_location_stack: AbstractLocationContext[] = trackerConfig.location_stack ?? [];
+    let new_global_contexts: AbstractGlobalContext[] = trackerConfig.global_contexts ?? [];
     contextConfigs.forEach(({ location_stack, global_contexts }) => {
       new_location_stack = [...new_location_stack, ...(location_stack ?? [])];
       new_global_contexts = [...new_global_contexts, ...(global_contexts ?? [])];
