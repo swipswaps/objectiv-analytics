@@ -1,3 +1,4 @@
+import { ApplicationContextPlugin } from '@objectiv/plugin-application-context';
 import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
 import { ContextsConfig } from './Context';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
@@ -8,6 +9,11 @@ import { TrackerTransport } from './TrackerTransport';
  * The configuration of the Tracker
  */
 export type TrackerConfig = ContextsConfig & {
+  /**
+   * Application ID. Used to generate ApplicationContext (global context)
+   */
+  applicationId: string;
+
   /**
    * Optional. TrackerTransport instance. Responsible for sending or storing Events.
    */
@@ -20,11 +26,17 @@ export type TrackerConfig = ContextsConfig & {
 };
 
 /**
+ * The default list of Plugins of Web Tracker
+ */
+export const getDefaultTrackerPluginsList = (config: TrackerConfig) => [new ApplicationContextPlugin(config)];
+
+/**
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
 export class Tracker implements Contexts {
+  readonly applicationId: string;
   readonly transport?: TrackerTransport;
-  readonly plugins?: TrackerPlugins;
+  readonly plugins: TrackerPlugins;
 
   // Contexts interface
   readonly location_stack: AbstractLocationContext[];
@@ -38,9 +50,10 @@ export class Tracker implements Contexts {
    * ContextConfigs are used to configure location_stack and global_contexts. If multiple configurations have been
    * provided they will be merged onto each other to produce a single location_stack and global_contexts.
    */
-  constructor(trackerConfig?: TrackerConfig, ...contextConfigs: ContextsConfig[]) {
+  constructor(trackerConfig: TrackerConfig, ...contextConfigs: ContextsConfig[]) {
+    this.applicationId = trackerConfig?.applicationId;
     this.transport = trackerConfig?.transport;
-    this.plugins = trackerConfig?.plugins;
+    this.plugins = trackerConfig?.plugins ?? new TrackerPlugins([new ApplicationContextPlugin(trackerConfig)]);
 
     // Process ContextConfigs
     let new_location_stack: AbstractLocationContext[] = trackerConfig?.location_stack ?? [];
@@ -53,9 +66,7 @@ export class Tracker implements Contexts {
     this.global_contexts = new_global_contexts;
 
     // Execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
-    if (this.plugins) {
-      this.plugins.initialize(this);
-    }
+    this.plugins.initialize(this);
   }
 
   /**
@@ -69,9 +80,7 @@ export class Tracker implements Contexts {
     trackedEvent.setTrackingTime();
 
     // Execute all plugins `beforeTransport` callback. Plugins may enrich or add Contexts to the TrackerEvent
-    if (this.plugins) {
-      this.plugins.beforeTransport(trackedEvent);
-    }
+    this.plugins.beforeTransport(trackedEvent);
 
     // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
     if (this.transport && this.transport.isUsable()) {

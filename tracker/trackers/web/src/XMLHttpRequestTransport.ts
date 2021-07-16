@@ -1,5 +1,10 @@
-import { isNonEmptyArray, TrackerEvent, TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
-import { NonEmptyArray } from '../../../core/tracker/src/helpers';
+import {
+  isNonEmptyArray,
+  NonEmptyArray,
+  TrackerEvent,
+  TrackerTransport,
+  TransportableEvent,
+} from '@objectiv/tracker-core';
 
 /**
  * The default XMLHttpRequest function implementation.

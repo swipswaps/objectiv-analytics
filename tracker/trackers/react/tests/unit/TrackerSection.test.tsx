@@ -17,7 +17,11 @@ describe('TrackerSection, TrackerNavigation, TrackerOverlay, TrackerItem', () =>
   });
 
   it('should retrieve the tracker from the closest TrackerContextProviders', () => {
-    const root = new ReactTracker({ endpoint: '/collector', location_stack: [makeSectionContext({ id: 'root' })] });
+    const root = new ReactTracker({
+      applicationId: 'app-id',
+      endpoint: '/collector',
+      location_stack: [makeSectionContext({ id: 'root' })],
+    });
 
     const spy = jest.fn();
 
@@ -57,8 +61,13 @@ describe('TrackerSection, TrackerNavigation, TrackerOverlay, TrackerItem', () =>
   });
 
   it('should use the given tracker and ignore TrackerContextProviders', () => {
-    const root = new ReactTracker({ endpoint: '/collector', location_stack: [makeSectionContext({ id: 'root' })] });
+    const root = new ReactTracker({
+      applicationId: 'app-id',
+      endpoint: '/collector',
+      location_stack: [makeSectionContext({ id: 'root' })],
+    });
     const customTracker = new ReactTracker({
+      applicationId: 'app-id',
       endpoint: '/collector',
       location_stack: [makeSectionContext({ id: 'custom' })],
     });

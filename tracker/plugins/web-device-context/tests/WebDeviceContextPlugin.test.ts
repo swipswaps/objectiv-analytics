@@ -24,7 +24,7 @@ describe('WebDeviceContextPlugin', () => {
   });
 
   it('should add the DeviceContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
-    const testTracker = new Tracker({ plugins: new TrackerPlugins([WebDeviceContextPlugin]) });
+    const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([WebDeviceContextPlugin]) });
     const eventContexts: ContextsConfig = {
       global_contexts: [
         { __global_context: true, _context_type: 'section', id: 'X' },

@@ -15,7 +15,7 @@ describe('useTrackOnUnmount', () => {
 
   const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
   const renderSpy = jest.fn();
-  const tracker = new ReactTracker({ transport: spyTransport });
+  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
   const Index = () => {
     return (
@@ -64,7 +64,7 @@ describe('useTrackOnUnmount', () => {
       handle: jest.fn(),
       isUsable: () => true,
     };
-    const anotherTracker = new ReactTracker({ transport: spyTransport2 });
+    const anotherTracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport2 });
     const { unmount } = renderHook(() => useTrackOnUnmount(makeSectionHiddenEvent(), anotherTracker));
 
     unmount();

@@ -1,5 +1,6 @@
 import {
   ActionContext,
+  ApplicationContext,
   ButtonContext,
   CookieIdContext,
   DeviceContext,
@@ -33,6 +34,18 @@ export const makeActionContext = (props: { id: string; text: string }): ActionCo
   _context_type: 'ActionContext',
   id: props.id,
   text: props.text,
+});
+
+/** Creates instance of ApplicationContext
+ * @param {Object} props - factory properties
+ * @param {string} props.id - A unique string identifier to be combined with the Context Type (`_context_type`)
+ *         for Context instance uniqueness.
+ * @returns {ApplicationContext} - ApplicationContext: Global context containing the origin (application id) of the event
+ */
+export const makeApplicationContext = (props: { id: string }): ApplicationContext => ({
+  __global_context: true,
+  _context_type: 'ApplicationContext',
+  id: props.id,
 });
 
 /** Creates instance of ButtonContext

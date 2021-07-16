@@ -10,6 +10,7 @@ describe('WebDocumentLoadedEvent', () => {
     spyOn(spyTransport, 'handle');
 
     const testTracker = new Tracker({
+      applicationId: 'app-id',
       location_stack: [
         makeWebDocumentContext({
           id: '#document',
@@ -25,7 +26,13 @@ describe('WebDocumentLoadedEvent', () => {
       __non_interactive_event: true,
       event: 'DocumentLoadedEvent',
       id: expect.stringMatching(UUID_REGEX),
-      global_contexts: [],
+      global_contexts: [
+        {
+          __global_context: true,
+          _context_type: 'ApplicationContext',
+          id: 'app-id',
+        },
+      ],
       location_stack: [
         {
           __location_context: true,
@@ -44,6 +51,7 @@ describe('WebDocumentLoadedEvent', () => {
     spyOn(spyTransport, 'handle');
 
     const testTracker = new Tracker({
+      applicationId: 'app-id',
       location_stack: [
         makeWebDocumentContext({
           id: '#document',
@@ -74,7 +82,13 @@ describe('WebDocumentLoadedEvent', () => {
       __non_interactive_event: true,
       event: 'DocumentLoadedEvent',
       id: expect.stringMatching(UUID_REGEX),
-      global_contexts: [],
+      global_contexts: [
+        {
+          __global_context: true,
+          _context_type: 'ApplicationContext',
+          id: 'app-id',
+        },
+      ],
       location_stack: [
         {
           __location_context: true,
