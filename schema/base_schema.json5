@@ -6,7 +6,8 @@
     "AbstractEvent": {
       "description": "\
         Events must provide a `name` and optionally can, but most likely will, carry a list of Location and Global \n\
-        Contexts",
+        Contexts. Additionally, every event must have an `ApplicationContext` to be able to distinguish from what \n\
+        application the event originated.",
       "parents": [],
       "requiresContext": ["ApplicationContext"],
       "properties":{
@@ -143,7 +144,7 @@
           \n\
           This ensures that Events are carrying the Contexts they require, making them meaningful and identifiable. \n\
           \n\
-          All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement. \n\
+          All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement. \
        ",
       "properties": {
         "id": {
