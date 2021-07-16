@@ -5,23 +5,23 @@
   "events": {
     "AbstractEvent": {
       "description": "\
-        Events must provide a `name` and optionally can, but most likely will, carry a list of Location and Global \
+        Events must provide a `name` and optionally can, but most likely will, carry a list of Location and Global \n\
         Contexts",
       "parents": [],
       "requiresContext": ["ApplicationContext"],
       "properties":{
         "location_stack": {
           "description": "\
-            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that \
-            deterministically describes where an event took place from global to specific. \
-            The whole stack (list) is needed to exactly pinpoint where in the UI the event originated. \
+            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that \n\
+            deterministically describes where an event took place from global to specific. \n\
+            The whole stack (list) is needed to exactly pinpoint where in the UI the event originated. \n\
           ",
           "type": "array",
           "items": "AbstractLocationContext"
         },
         "global_contexts": {
           "description": "\
-            Global contexts add global / general information about the event. They carry information that is not \
+            Global contexts add global / general information about the event. They carry information that is not \n\
             related to where the Event originated (location), such as device, platform or business data.",
           "type": "array",
           "items": "AbstractGlobalContext"
@@ -31,8 +31,8 @@
           "type": "string"
         },
         "id": {
-          "description": "Unique identifier for a specific instance of an event. Typically UUID's are a good way of \
-            implementing this. On the collector side, events should be unique, this means duplicate id's result \
+          "description": "Unique identifier for a specific instance of an event. Typically UUID's are a good way of \n\
+            implementing this. On the collector side, events should be unique, this means duplicate id's result \n\
             in `not ok` events.",
           "type": "string"
         },
@@ -48,39 +48,38 @@
     },
     "NonInteractiveEvent": {
       "description": "\
-        Non interactive events, are events that are not (directly) triggered by an interaction. For example: \
-        Consider the following flow of events: \
-        1. press play in a video player -> ButtonEvent -> interactive \
+        Non interactive events, are events that are not (directly) triggered by an interaction. For example: \n\
+        Consider the following flow of events: \n\
+        1. press play in a video player -> ButtonEvent -> interactive \n\
         2. Videoplayer starting playback -> MediaStartEvent -> non-interactive",
       "parents": ["AbstractEvent"],
       "requiresContext": []
     },
     "DocumentLoadedEvent": {
       "description": "\
-        A non interactive event that is emitted after a document finishes loading. It should provide a \
-        `WebDocumentContext` which should describe the state (eg. URL) of the event. \
-        \
+        A non interactive event that is emitted after a document finishes loading. It should provide a \n\
+        `WebDocumentContext` which should describe the state (eg. URL) of the event. \n\
+        \n\
         NOTE: with SPA's this probably only happens once, as page (re)loads don't happen after the initial page load",
       "parents": ["NonInteractiveEvent"],
       "requiresContext": ["WebDocumentContext"]
     },
     "URLChangeEvent": {
       "description": "\
-        non interactive event that is emitted when the URL of a page has changed. Also contains a `WebDocumentContext` \
+        non interactive event that is emitted when the URL of a page has changed. Also contains a `WebDocumentContext` \n\
         that details the change.",
       "parents": ["NonInteractiveEvent"],
       "requiresContext": ["WebDocumentContext"]
     },
     "ApplicationLoadedEvent": {
       "description": "\
-        non interactive event that is emitted after an application (eg. SPA) has finished loading. \
+        non interactive event that is emitted after an application (eg. SPA) has finished loading. \n\
         Contains a `SectionContext`",
       "parents": ["NonInteractiveEvent"],
       "requiresContext": ["SectionContext"]
     },
     "SectionVisibleEvent": {
-      "description": "\
-        Non interactive event, emitted after a section (`SectionContext`) has become visible.",
+      "description": "Non interactive event, emitted after a section (`SectionContext`) has become visible.",
       "parents": ["NonInteractiveEvent"],
       "requiresContext": ["SectionContext"]
     },
@@ -134,21 +133,21 @@
   "contexts": {
     "AbstractContext": {
        "description": "\
-          Abstract Contexts define either properties required by Collectors or internal ones for hierarchical \
-          discrimination purposes. \
-          \
-          All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement. \
-          \
-          For example we never want to mix Location Contexts with Global Contexts and Events may requires specific Contexts \
-          to be present in their Location Stack. Eg. a NavigationContext instead of a generic SectionContext. \
-          \
-          This ensures that Events are carrying the Contexts they require, making them meaningful and identifiable. \
-          \
-          All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement. \
+          Abstract Contexts define either properties required by Collectors or internal ones for hierarchical \n\
+          discrimination purposes. \n\
+          \n\
+          All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement. \n\
+          \n\
+          For example we never want to mix Location Contexts with Global Contexts and Events may requires specific Contexts \n\
+          to be present in their Location Stack. Eg. a NavigationContext instead of a generic SectionContext. \n\
+          \n\
+          This ensures that Events are carrying the Contexts they require, making them meaningful and identifiable. \n\
+          \n\
+          All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement. \n\
        ",
       "properties": {
         "id": {
-          "description":"A unique string identifier to be combined with the Context Type (`_context_type`) \
+          "description":"A unique string identifier to be combined with the Context Type (`_context_type`) \n\
            for Context instance uniqueness.",
           "type": "string"
         },
@@ -160,8 +159,8 @@
     },
     "AbstractLocationContext": {
       "description": "\
-        This is the abstract parent of all location contexts. LocationContexts are used to populate Trackers or Events \
-        `location_stack` properties. A Location Stack is meant to describe accurately where an Event originated in the \
+        This is the abstract parent of all location contexts. LocationContexts are used to populate Trackers or Events \n\
+        `location_stack` properties. A Location Stack is meant to describe accurately where an Event originated in the \n\
         UI Eg. Sections, Menus, etc.",
       "parents": [
         "AbstractContext"
@@ -169,7 +168,7 @@
     },
     "AbstractGlobalContext": {
       "description": "\
-        Global_contexts are used to populate Trackers or Events `global_contexts` properties. They carry information \
+        Global_contexts are used to populate Trackers or Events `global_contexts` properties. They carry information \n\
         that is not related to where the Event originated, such as device, platform or business data.",
       "parents": [
         "AbstractContext"
@@ -183,8 +182,8 @@
     },
     "SectionContext": {
       "description": "\
-        SectionContexts are special LocationContexts representing a logical area of the UI or the system.\
-        They can be often reasoned about as being containers of other LocationContexts but not the direct targets of \
+        SectionContexts are special LocationContexts representing a logical area of the UI or the system. \n\
+        They can be often reasoned about as being containers of other LocationContexts but not the direct targets of \n\
         Events.",
       "parents": [
         "AbstractLocationContext"
@@ -240,7 +239,7 @@
     },
     "ItemContext": {
       "description": "\
-        ItemContexts are special LocationContexts representing interactive elements of the UI or targets in a system.\
+        ItemContexts are special LocationContexts representing interactive elements of the UI or targets in a system. \n\
         These elements may trigger both Interactive and Non-Interactive Events. Eg. an Input field or a Button.",
       "parents": [
         "AbstractLocationContext"
@@ -254,7 +253,7 @@
     },
     "ActionContext": {
       "description": "\
-        ActionContexts are a more specific version of ItemContext specifically meant to describe actionable Items.\
+        ActionContexts are a more specific version of ItemContext specifically meant to describe actionable Items. \n\
         These represent interactive elements that will trigger an Interactive Event. Eg. A Button or Link.",
       "parents": [
         "ItemContext"
