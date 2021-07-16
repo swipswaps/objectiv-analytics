@@ -1,7 +1,13 @@
 import fetchMock from 'jest-fetch-mock';
 import MockDate from 'mockdate';
-import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
-import { TrackerQueue, QueuedTransport, TrackerEvent } from '@objectiv/tracker-core';
+import {
+  defaultFetchFunction,
+  defaultFetchParameters,
+  FetchAPITransport,
+  QueuedTransport,
+  TrackerEvent,
+  TrackerQueue
+} from '../src';
 
 const mockedMs = 1434319925275;
 
@@ -22,7 +28,7 @@ afterEach(() => {
 });
 
 describe('FetchAPITransport', () => {
-  const MOCK_ENDPOINT = '/test-endpoint';
+  const MOCK_ENDPOINT = 'http://test-endpoint';
 
   const testEvent = new TrackerEvent({
     event: 'test-event',

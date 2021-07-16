@@ -2,6 +2,7 @@ import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import {
   ContextsConfig,
+  FetchAPITransport,
   QueuedTransport,
   Tracker,
   TrackerConfig,
@@ -12,7 +13,6 @@ import {
   TransportSwitch,
 } from '@objectiv/tracker-core';
 import { DebugTransport } from './DebugTransport';
-import { FetchAPITransport } from './FetchAPITransport';
 import { XMLHttpRequestTransport } from './XMLHttpRequestTransport';
 
 /**

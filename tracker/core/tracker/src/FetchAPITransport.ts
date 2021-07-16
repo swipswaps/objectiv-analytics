@@ -1,10 +1,5 @@
-import {
-  isNonEmptyArray,
-  NonEmptyArray,
-  TrackerEvent,
-  TrackerTransport,
-  TransportableEvent,
-} from '@objectiv/tracker-core';
+import 'cross-fetch/polyfill';
+import { isNonEmptyArray, NonEmptyArray, TrackerEvent, TrackerTransport, TransportableEvent, } from './';
 
 /**
  * The default set of parameters for the fetch API call.
