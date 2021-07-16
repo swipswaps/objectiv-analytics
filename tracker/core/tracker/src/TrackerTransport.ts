@@ -146,3 +146,114 @@ export class QueuedTransport implements TrackerTransport {
     return this.transport.isUsable();
   }
 }
+
+/**
+ * The configuration object of a RetryTransport. Requires a Transport instance.
+ */
+export type RetryTransportConfig = {
+  /**
+   * The Transport instance to wrap around. Retry Transport will invoke the wrapped Transport `handle`.
+   */
+  transport: TrackerTransport;
+
+  /**
+   * Optional. How many times we will retry before giving up. Defaults to 10;
+   */
+  maxAttempts?: number;
+
+  /**
+   * Optional. How much time we will keep retrying before giving up. Defaults to Infinity;
+   */
+  maxRetryMs?: number;
+
+  /**
+   * Optional. The following properties are all used to calculate the exponential fallback timeout between attempts.
+   *
+   * Given an `attemptCount`, representing how many times we retried so far, this is the formula:
+   *   min( round( minTimeoutMs * pow(retryFactor, attemptCount) ), maxTimeout)
+   */
+  minTimeoutMs?: number; // defaults to 1000
+  maxTimeoutMs?: number; // defaults to Infinity
+  retryFactor?: number; // defaults to 2
+
+  // TODO add an async callback to do something on failure?
+};
+
+/**
+ * A TrackerTransport implementation that implements exponential fallback, timeouts around another Transport
+ */
+export class RetryTransport implements TrackerTransport {
+  readonly transportName = 'RetryTransport';
+  readonly transport: TrackerTransport;
+  readonly maxAttempts: number;
+  readonly maxRetryMs: number;
+  readonly minTimeoutMs: number;
+  readonly maxTimeoutMs: number;
+  readonly retryFactor: number;
+  errors: Error[] = [];
+  attemptCount: number = 1;
+  startTime: number | null = null;
+  retryTimeout: ReturnType<typeof setTimeout> | null = null;
+
+  constructor(config: RetryTransportConfig) {
+    this.transport = config.transport;
+    this.maxAttempts = config.maxAttempts ?? 10;
+    this.maxRetryMs = config.maxRetryMs ?? Infinity;
+    this.minTimeoutMs = config.minTimeoutMs ?? 1000;
+    this.maxTimeoutMs = config.maxTimeoutMs ?? Infinity;
+    this.retryFactor = config.retryFactor ?? 2;
+
+    if (this.minTimeoutMs <= 0) {
+      throw new Error('minTimeoutMs must be at least 1');
+    }
+
+    if (this.minTimeoutMs > this.maxTimeoutMs) {
+      throw new Error('minTimeoutMs cannot be bigger than maxTimeoutMs');
+    }
+  }
+
+  calculateNextTimeoutMs() {
+    return Math.min(Math.round(this.minTimeoutMs * Math.pow(this.retryFactor, this.attemptCount)), this.maxTimeoutMs);
+  }
+
+  async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
+    this.startTime = Date.now();
+
+    return this.transport.handle(...args).catch((error) => {
+      // Clear previous attempt's timeout
+      if (this.retryTimeout) {
+        clearTimeout(this.retryTimeout);
+      }
+
+      // Push error in the list of errors
+      this.errors.push(error);
+
+      // Stop retrying if we reached maxAttempts
+      if (this.attemptCount > this.maxAttempts) {
+        this.errors.push(new Error('maxAttempts reached'));
+        return false;
+      }
+
+      // Stop retrying if we reached maxRetryMs
+      if (this.startTime && Date.now() - this.startTime >= this.maxRetryMs) {
+        this.errors.push(new Error('maxRetryMs reached'));
+        return false;
+      }
+
+      // Start timer and retry
+      const self = this;
+      this.retryTimeout = setTimeout(function () {
+        // Increment number of attempts
+        self.attemptCount++;
+        // Try again
+        self.transport.handle(...args);
+      }, this.calculateNextTimeoutMs());
+
+      return true;
+    });
+  }
+
+  isUsable(): boolean {
+    return this.transport.isUsable();
+  }
+}

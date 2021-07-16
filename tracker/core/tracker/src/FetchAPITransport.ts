@@ -1,5 +1,5 @@
 import 'cross-fetch/polyfill';
-import { isNonEmptyArray, NonEmptyArray, TrackerEvent, TrackerTransport, TransportableEvent, } from './';
+import { isNonEmptyArray, NonEmptyArray, TrackerEvent, TrackerTransport, TransportableEvent } from './';
 
 /**
  * The default set of parameters for the fetch API call.

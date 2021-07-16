@@ -6,7 +6,7 @@ import {
   FetchAPITransport,
   QueuedTransport,
   TrackerEvent,
-  TrackerQueue
+  TrackerQueue,
 } from '../src';
 
 const mockedMs = 1434319925275;
