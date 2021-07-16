@@ -75,6 +75,6 @@ export class FetchAPITransport implements TrackerTransport {
   }
 
   isUsable(): boolean {
-    return Boolean(fetch);
+    return typeof fetch !== 'undefined';
   }
 }

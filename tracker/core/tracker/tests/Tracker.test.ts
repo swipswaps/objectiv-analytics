@@ -181,16 +181,16 @@ describe('Tracker', () => {
     });
 
     it('should execute all plugins implementing the initialize callback', () => {
-      const pluginC: TrackerPlugin = { pluginName: 'pluginC', initialize: jest.fn(noop) };
-      const pluginD: TrackerPlugin = { pluginName: 'pluginD', initialize: jest.fn(noop) };
+      const pluginC: TrackerPlugin = { pluginName: 'pluginC', isUsable: () => true, initialize: jest.fn(noop) };
+      const pluginD: TrackerPlugin = { pluginName: 'pluginD', isUsable: () => true, initialize: jest.fn(noop) };
       const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([pluginC, pluginD]) });
       expect(pluginC.initialize).toHaveBeenCalledWith(testTracker);
       expect(pluginD.initialize).toHaveBeenCalledWith(testTracker);
     });
 
     it('should execute all plugins implementing the beforeTransport callback', () => {
-      const pluginE: TrackerPlugin = { pluginName: 'pluginE', beforeTransport: jest.fn(noop) };
-      const pluginF: TrackerPlugin = { pluginName: 'pluginF', beforeTransport: jest.fn(noop) };
+      const pluginE: TrackerPlugin = { pluginName: 'pluginE', isUsable: () => true, beforeTransport: jest.fn(noop) };
+      const pluginF: TrackerPlugin = { pluginName: 'pluginF', isUsable: () => true, beforeTransport: jest.fn(noop) };
       const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([pluginE, pluginF]) });
       testTracker.trackEvent(testEvent);
       expect(pluginE.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
