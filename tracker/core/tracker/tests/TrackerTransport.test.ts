@@ -356,7 +356,9 @@ describe('RetryTransport', () => {
     spyOn(retryTransport, 'retry').and.callThrough();
     spyOn(retryTransport, 'handle').and.callThrough();
 
-    await retryTransport.handle(testEvent);
+    await expect(retryTransport.handle(testEvent)).rejects.toEqual(expect.arrayContaining([
+      new Error('maxAttempts reached')
+    ]));
 
     expect(retryTransport.attemptCount).toBe(4);
     expect(retryTransport.retry).toHaveBeenCalledTimes(4);
@@ -366,6 +368,7 @@ describe('RetryTransport', () => {
     expect(retryTransport.retry).toHaveBeenNthCalledWith(4, mockedError, [testEvent]);
     expect(retryTransport.handle).toHaveBeenCalledTimes(4);
     expect(fetch).toHaveBeenCalledTimes(4);
+    expect(retryTransport.errors[0]).toStrictEqual(new Error('maxAttempts reached'));
   });
 
   it('should stop retrying if we reached maxRetryMs', async () => {
@@ -380,7 +383,9 @@ describe('RetryTransport', () => {
     });
     spyOn(retryTransport, 'retry').and.callThrough();
 
-    await retryTransport.handle(testEvent);
+    await expect(retryTransport.handle(testEvent)).rejects.toEqual(expect.arrayContaining([
+      new Error('maxRetryMs reached')
+    ]));
 
     expect(retryTransport.retry).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledTimes(1);
