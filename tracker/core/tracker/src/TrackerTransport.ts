@@ -183,14 +183,28 @@ export type RetryTransportConfig = {
  */
 export class RetryTransport implements TrackerTransport {
   readonly transportName = 'RetryTransport';
+
+  // RetryTransportConfig
   readonly transport: TrackerTransport;
   readonly maxAttempts: number;
   readonly maxRetryMs: number;
   readonly minTimeoutMs: number;
   readonly maxTimeoutMs: number;
   readonly retryFactor: number;
+
+  /**
+   * A list of errors in reverse order. Eg: element 0 is the last error occurred. N-1 is the first.
+   */
   errors: Error[] = [];
+
+  /**
+   * How many times we have tried so far. Used in the calculation of the exponential backoff.
+   */
   attemptCount: number = 1;
+
+  /**
+   * Start time is persisted before each attempt and checked before retrying to verify if we exceeded maxRetryMs.
+   */
   startTime: number | null = null;
 
   constructor(config: RetryTransportConfig) {
