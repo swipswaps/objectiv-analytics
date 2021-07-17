@@ -356,9 +356,9 @@ describe('RetryTransport', () => {
     spyOn(retryTransport, 'retry').and.callThrough();
     spyOn(retryTransport, 'handle').and.callThrough();
 
-    await expect(retryTransport.handle(testEvent)).rejects.toEqual(expect.arrayContaining([
-      new Error('maxAttempts reached')
-    ]));
+    await expect(retryTransport.handle(testEvent)).rejects.toEqual(
+      expect.arrayContaining([new Error('maxAttempts reached')])
+    );
 
     expect(retryTransport.attemptCount).toBe(4);
     expect(retryTransport.retry).toHaveBeenCalledTimes(4);
@@ -383,9 +383,9 @@ describe('RetryTransport', () => {
     });
     spyOn(retryTransport, 'retry').and.callThrough();
 
-    await expect(retryTransport.handle(testEvent)).rejects.toEqual(expect.arrayContaining([
-      new Error('maxRetryMs reached')
-    ]));
+    await expect(retryTransport.handle(testEvent)).rejects.toEqual(
+      expect.arrayContaining([new Error('maxRetryMs reached')])
+    );
 
     expect(retryTransport.retry).toHaveBeenCalledTimes(1);
     expect(fetch).toHaveBeenCalledTimes(1);
