@@ -1,8 +1,8 @@
 import {
   isNonEmptyArray,
   NonEmptyArray,
-  TrackerTransport,
   TrackerEvent,
+  TrackerTransport,
   TransportableEvent,
 } from '@objectiv/tracker-core';
 
