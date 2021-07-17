@@ -1,6 +1,6 @@
-import { SendingTransport } from '../../src';
+import { TrackerTransport } from '../../src';
 
-export class UnusableTransport implements SendingTransport {
+export class UnusableTransport implements TrackerTransport {
   readonly transportName = 'UnusableTransport';
   readonly endpoint = 'http://endpoint';
 

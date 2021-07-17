@@ -1,4 +1,4 @@
-import { NonEmptyArray, SendingTransport, TransportableEvent } from '@objectiv/tracker-core';
+import { NonEmptyArray, TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
 
 /**
  * The configuration of the BeaconAPITransport class
@@ -14,7 +14,7 @@ export type BeaconAPITransportConfig = {
  * A TrackerTransport based on Beacon API. Sends event asynchronously to the specified Collector endpoint
  * NOTE: Beacon is rather experimental and not yet 100% reliable. This Transport will be a PoC until that changes
  */
-export class BeaconAPITransport implements SendingTransport {
+export class BeaconAPITransport implements TrackerTransport {
   readonly transportName = 'BeaconAPITransport';
   readonly endpoint: string;
 

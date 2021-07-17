@@ -1,5 +1,5 @@
 import 'cross-fetch/polyfill';
-import { isNonEmptyArray, NonEmptyArray, SendingTransport, TrackerEvent, TransportableEvent } from './';
+import { isNonEmptyArray, NonEmptyArray, TrackerTransport, TrackerEvent, TransportableEvent } from './';
 
 /**
  * The default set of parameters for the fetch API call.
@@ -52,7 +52,7 @@ export type FetchAPITransportConfig = {
  * A TrackerTransport based on Fetch API. Sends event to the specified Collector endpoint.
  * Optionally supports specifying a custom `fetchFunction`.
  */
-export class FetchAPITransport implements SendingTransport {
+export class FetchAPITransport implements TrackerTransport {
   readonly transportName = 'FetchAPITransport';
   readonly endpoint: string;
   readonly fetchFunction: typeof defaultFetchFunction;

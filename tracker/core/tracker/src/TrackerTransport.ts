@@ -33,16 +33,6 @@ export interface TrackerTransport {
 }
 
 /**
- * SendingTransport are those that will send Events to the Collector.
- */
-export interface SendingTransport extends TrackerTransport {
-  /**
-   * The Collector endpoint
-   */
-  readonly endpoint: string;
-}
-
-/**
  * TransportSwitch provides a fallback mechanism to pick the first usable transport in a list of them.
  * The switch is usable if at least one of the given TrackerTransports is usable.
  *
@@ -158,13 +148,13 @@ export class QueuedTransport implements TrackerTransport {
 }
 
 /**
- * The configuration object of a RetryTransport. Requires a SendingTransport instance.
+ * The configuration object of a RetryTransport. Requires a TrackerTransport instance.
  */
 export type RetryTransportConfig = {
   /**
-   * The SendingTransport instance to wrap around. Retry Transport will invoke the wrapped SendingTransport `handle`.
+   * The TrackerTransport instance to wrap around. Retry Transport will invoke the wrapped TrackerTransport `handle`.
    */
-  transport: SendingTransport;
+  transport: TrackerTransport;
 
   /**
    * Optional. How many times we will retry before giving up. Defaults to 10;
@@ -188,12 +178,12 @@ export type RetryTransportConfig = {
 };
 
 /**
- * A TrackerTransport implementing exponential backoff retries around a SendingTransport handle method.
+ * A TrackerTransport implementing exponential backoff retries around a TrackerTransport handle method.
  * It allows to also specify maximum retry time and number of attempts.
  */
 export class RetryTransport implements TrackerTransport {
   readonly transportName = 'RetryTransport';
-  readonly transport: SendingTransport;
+  readonly transport: TrackerTransport;
   readonly maxAttempts: number;
   readonly maxRetryMs: number;
   readonly minTimeoutMs: number;
