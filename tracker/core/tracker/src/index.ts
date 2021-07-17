@@ -1,7 +1,6 @@
 export * from './Context';
 export * from './ContextFactories';
 export * from './EventFactories';
-export * from './FetchAPITransport';
 export * from './helpers';
 export * from './Tracker';
 export * from './TrackerEvent';

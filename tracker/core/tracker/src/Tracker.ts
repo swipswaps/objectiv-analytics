@@ -28,7 +28,7 @@ export type TrackerConfig = ContextsConfig & {
 /**
  * The default list of Plugins of Web Tracker
  */
-export const getDefaultTrackerPluginsList = (config: TrackerConfig) => [new ApplicationContextPlugin(config)];
+export const getDefaultTrackerPluginsList = (props: { applicationId: string }) => [new ApplicationContextPlugin(props)];
 
 /**
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
@@ -53,7 +53,7 @@ export class Tracker implements Contexts {
   constructor(trackerConfig: TrackerConfig, ...contextConfigs: ContextsConfig[]) {
     this.applicationId = trackerConfig.applicationId;
     this.transport = trackerConfig.transport;
-    this.plugins = trackerConfig.plugins ?? new TrackerPlugins(getDefaultTrackerPluginsList(trackerConfig));
+    this.plugins = trackerConfig.plugins ?? new TrackerPlugins(getDefaultTrackerPluginsList(this));
 
     // Process ContextConfigs
     let new_location_stack: AbstractLocationContext[] = trackerConfig.location_stack ?? [];

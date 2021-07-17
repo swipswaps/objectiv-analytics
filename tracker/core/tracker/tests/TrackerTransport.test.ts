@@ -1,7 +1,5 @@
-import fetchMock from 'jest-fetch-mock';
 import {
   ContextsConfig,
-  FetchAPITransport,
   QueuedTransport,
   RetryTransport,
   Tracker,
@@ -271,14 +269,6 @@ describe('QueuedTransport', () => {
 });
 
 describe('RetryTransport', () => {
-  beforeEach(() => {
-    fetchMock.enableMocks();
-  });
-
-  afterEach(() => {
-    fetchMock.resetMocks();
-  });
-
   it('should generate exponential timeouts', () => {
     const retryTransport = new RetryTransport({ transport: new UnusableTransport() });
     const timeouts = Array.from(Array(10).keys()).map(retryTransport.calculateNextTimeoutMs.bind(retryTransport));
@@ -312,21 +302,24 @@ describe('RetryTransport', () => {
   });
 
   it('should not retry', async () => {
-    const retryTransport = new RetryTransport({ transport: new FetchAPITransport({ endpoint: 'http://localhost' }) });
+    const logTransport = new LogTransport();
+    spyOn(logTransport, 'handle').and.returnValue(Promise.resolve());
+    const retryTransport = new RetryTransport({ transport: logTransport });
     spyOn(retryTransport, 'retry').and.callThrough();
 
     await retryTransport.handle(testEvent);
 
     expect(retryTransport.retry).not.toHaveBeenCalled();
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(logTransport.handle).toHaveBeenCalledTimes(1);
   });
 
   it('should retry once', async () => {
     jest.useRealTimers();
     const mockedError = new Error('You shall not pass!');
-    fetchMock.mockRejectOnce(mockedError);
+    const logTransport = new LogTransport();
+    spyOn(logTransport, 'handle').and.returnValues(Promise.reject(mockedError), Promise.resolve());
     const retryTransport = new RetryTransport({
-      transport: new FetchAPITransport({ endpoint: 'http://localhost' }),
+      transport: logTransport,
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
       retryFactor: 1,
@@ -338,15 +331,16 @@ describe('RetryTransport', () => {
     expect(retryTransport.attemptCount).toBe(2);
     expect(retryTransport.retry).toHaveBeenCalledTimes(1);
     expect(retryTransport.retry).toHaveBeenNthCalledWith(1, mockedError, [testEvent]);
-    expect(fetch).toHaveBeenCalledTimes(2);
+    expect(logTransport.handle).toHaveBeenCalledTimes(2);
   });
 
   it('should retry three times', async () => {
     jest.useRealTimers();
     const mockedError = new Error('You shall not pass!');
-    fetchMock.mockReject(mockedError);
+    const logTransport = new LogTransport();
+    spyOn(logTransport, 'handle').and.returnValue(Promise.reject(mockedError));
     const retryTransport = new RetryTransport({
-      transport: new FetchAPITransport({ endpoint: 'http://localhost' }),
+      transport: logTransport,
       maxAttempts: 3,
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
@@ -367,15 +361,20 @@ describe('RetryTransport', () => {
     expect(retryTransport.retry).toHaveBeenNthCalledWith(3, mockedError, [testEvent]);
     expect(retryTransport.retry).toHaveBeenNthCalledWith(4, mockedError, [testEvent]);
     expect(retryTransport.handle).toHaveBeenCalledTimes(4);
-    expect(fetch).toHaveBeenCalledTimes(4);
+    expect(logTransport.handle).toHaveBeenCalledTimes(4);
     expect(retryTransport.errors[0]).toStrictEqual(new Error('maxAttempts reached'));
   });
 
   it('should stop retrying if we reached maxRetryMs', async () => {
     jest.useRealTimers();
-    fetchMock.mockResponse(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    const slowFailingTransport = {
+      transportName: 'SlowFailingTransport',
+      handle: async (): Promise<any> => new Promise((_, reject) => setTimeout(reject, 100)),
+      isUsable: () => true,
+    };
+    spyOn(slowFailingTransport, 'handle').and.callThrough();
     const retryTransport = new RetryTransport({
-      transport: new FetchAPITransport({ endpoint: 'http://localhost' }),
+      transport: slowFailingTransport,
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
       retryFactor: 1,
@@ -388,7 +387,7 @@ describe('RetryTransport', () => {
     );
 
     expect(retryTransport.retry).toHaveBeenCalledTimes(1);
-    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(slowFailingTransport.handle).toHaveBeenCalledTimes(1);
     expect(retryTransport.errors[0]).toStrictEqual(new Error('maxRetryMs reached'));
   });
 });

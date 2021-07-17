@@ -2,9 +2,9 @@ import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import {
   ContextsConfig,
-  FetchAPITransport,
   getDefaultTrackerPluginsList,
   QueuedTransport,
+  RetryTransport,
   Tracker,
   TrackerConfig,
   TrackerPlugins,
@@ -14,6 +14,7 @@ import {
   TransportSwitch,
 } from '@objectiv/tracker-core';
 import { DebugTransport } from './DebugTransport';
+import { FetchAPITransport } from './FetchAPITransport';
 import { XMLHttpRequestTransport } from './XMLHttpRequestTransport';
 
 /**
@@ -31,10 +32,12 @@ export const makeWebTrackerDefaultTransport = (config: { endpoint: string }): Tr
   new TransportGroup(
     new QueuedTransport({
       queue: new TrackerQueue(),
-      transport: new TransportSwitch(
-        new FetchAPITransport({ endpoint: config.endpoint }),
-        new XMLHttpRequestTransport({ endpoint: config.endpoint })
-      ),
+      transport: new RetryTransport({
+        transport: new TransportSwitch(
+          new FetchAPITransport({ endpoint: config.endpoint }),
+          new XMLHttpRequestTransport({ endpoint: config.endpoint })
+        ),
+      }),
     }),
     new DebugTransport()
   );
@@ -50,23 +53,27 @@ export const getDefaultWebTrackerPluginsList = (config: WebTrackerConfig) => [
 
 /**
  * Web Tracker is a 1:1 instance of Tracker with a simplified construction and some preconfigured Plugins.
- * It initializes with a Queued Beacon and Fetch APIs Transport Switch automatically.
+ * It initializes with a Queued FEtch and Beacon APIs Transport Switch wrapped in a Retry Transport automatically.
  * The resulting Queue has some sensible defaults (10 events every 100ms) for sending events in batches.
+ * The Retry logic is configured for 10 retries with exponential backoff starting at 1000ms.
+ * The transport is also grouped with a DebugTransport for logging the handled events to console.
  *
  * This construction:
  *
- *  const webTracker = new WebTracker({ endpoint: '/endpoint' })
+ *  const webTracker = new WebTracker({ applicationId: 'app-id', endpoint: '/endpoint' });
  *
  * is equivalent to:
  *
- *  const plugins = new TrackerPlugins([ WebDocumentContextPlugin, WebDeviceContextPlugin ]);
  *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint' });
  *  const beaconTransport = new BeaconAPITransport({ endpoint: '/endpoint' });
+ *  const transportSwitch = new TransportSwitch(fetchTransport, beaconTransport);
+ *  const retryTransport = new RetryTransport({ transport: transportSwitch});
  *  const debugTransport = new DebugTransport();
+ *  const transportGroup = new TransportGroup(retryTransport, debugTransport);
  *  const trackerQueue = new TrackerQueue();
- *  const transportSwitch = new TransportSwitch(beaconTransport, fetchTransport);
- *  const transportGroup = new TransportGroup(transportSwitch, debugTransport);
  *  const transport = new QueuedTransport({ transport: transportGroup, queue: trackerQueue });
+ *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id' });
+ *  const plugins = new TrackerPlugins([ applicationContextPlugin, WebDocumentContextPlugin, WebDeviceContextPlugin ]);
  *  const tracker = new Tracker({ transport, plugins });
  *
  */

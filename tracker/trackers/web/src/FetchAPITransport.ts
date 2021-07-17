@@ -1,4 +1,3 @@
-import 'cross-fetch/polyfill';
 import { isNonEmptyArray, NonEmptyArray, TrackerTransport, TrackerEvent, TransportableEvent } from './';
 
 /**

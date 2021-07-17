@@ -48,11 +48,22 @@ describe('WebTracker', () => {
             },
           },
           transport: {
-            transportName: 'TransportSwitch',
-            firstUsableTransport: {
-              transportName: 'FetchAPITransport',
-              endpoint: 'localhost',
-              fetchFunction: defaultFetchFunction,
+            transportName: 'RetryTransport',
+            attemptCount: 1,
+            errors: [],
+            maxAttempts: 10,
+            maxRetryMs: Infinity,
+            maxTimeoutMs: Infinity,
+            minTimeoutMs: 1000,
+            retryFactor: 2,
+            startTime: null,
+            transport: {
+              transportName: 'TransportSwitch',
+              firstUsableTransport: {
+                transportName: 'FetchAPITransport',
+                endpoint: 'localhost',
+                fetchFunction: defaultFetchFunction,
+              },
             },
           },
         },
