@@ -1,4 +1,10 @@
-import { isNonEmptyArray, NonEmptyArray, TrackerTransport, TrackerEvent, TransportableEvent } from './';
+import {
+  isNonEmptyArray,
+  NonEmptyArray,
+  TrackerEvent,
+  TrackerTransport,
+  TransportableEvent
+} from '@objectiv/tracker-core';
 
 /**
  * The default set of parameters for the fetch API call.
