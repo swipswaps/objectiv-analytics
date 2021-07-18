@@ -53,7 +53,7 @@ export const getDefaultWebTrackerPluginsList = (config: WebTrackerConfig) => [
 
 /**
  * Web Tracker is a 1:1 instance of Tracker with a simplified construction and some preconfigured Plugins.
- * It initializes with a Queued FEtch and Beacon APIs Transport Switch wrapped in a Retry Transport automatically.
+ * It initializes with a Queued Fetch and XMLHttpRequest Transport Switch wrapped in a Retry Transport automatically.
  * The resulting Queue has some sensible defaults (10 events every 100ms) for sending events in batches.
  * The Retry logic is configured for 10 retries with exponential backoff starting at 1000ms.
  * The transport is also grouped with a DebugTransport for logging the handled events to console.
@@ -65,8 +65,8 @@ export const getDefaultWebTrackerPluginsList = (config: WebTrackerConfig) => [
  * is equivalent to:
  *
  *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint' });
- *  const beaconTransport = new BeaconAPITransport({ endpoint: '/endpoint' });
- *  const transportSwitch = new TransportSwitch(fetchTransport, beaconTransport);
+ *  const xmlHttpRequestTransport = new XMLHttpRequestTransport({ endpoint: '/endpoint' });
+ *  const transportSwitch = new TransportSwitch(fetchTransport, xmlHttpRequestTransport);
  *  const retryTransport = new RetryTransport({ transport: transportSwitch});
  *  const debugTransport = new DebugTransport();
  *  const transportGroup = new TransportGroup(retryTransport, debugTransport);

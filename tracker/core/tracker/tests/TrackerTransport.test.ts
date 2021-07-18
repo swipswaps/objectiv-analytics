@@ -122,7 +122,6 @@ describe('TransportGroup', () => {
 });
 
 describe('TrackerTransport complex configurations', () => {
-  const beacon = new ConfigurableMockTransport({ isUsable: false });
   const fetch = new ConfigurableMockTransport({ isUsable: false });
   const xmlHTTPRequest = new ConfigurableMockTransport({ isUsable: false });
   const pigeon = new ConfigurableMockTransport({ isUsable: false });
@@ -130,14 +129,12 @@ describe('TrackerTransport complex configurations', () => {
   const errorLog = new ConfigurableMockTransport({ isUsable: false });
 
   beforeEach(() => {
-    beacon._isUsable = false;
     fetch._isUsable = false;
     xmlHTTPRequest._isUsable = false;
     pigeon._isUsable = false;
     consoleLog._isUsable = false;
     errorLog._isUsable = false;
     jest.clearAllMocks();
-    spyOn(beacon, 'handle');
     spyOn(fetch, 'handle');
     spyOn(xmlHTTPRequest, 'handle');
     spyOn(pigeon, 'handle');
@@ -149,7 +146,7 @@ describe('TrackerTransport complex configurations', () => {
     errorLog._isUsable = true;
     expect(errorLog.isUsable()).toBe(true);
 
-    const sendTransport = new TransportSwitch(beacon, fetch, xmlHTTPRequest, pigeon);
+    const sendTransport = new TransportSwitch(fetch, xmlHTTPRequest, pigeon);
     const sendAndLog = new TransportGroup(sendTransport, consoleLog);
     const transport = new TransportSwitch(sendAndLog, errorLog);
 
@@ -161,7 +158,6 @@ describe('TrackerTransport complex configurations', () => {
 
     testTracker.trackEvent(testEvent);
 
-    expect(beacon.handle).not.toHaveBeenCalled();
     expect(fetch.handle).not.toHaveBeenCalled();
     expect(xmlHTTPRequest.handle).not.toHaveBeenCalled();
     expect(pigeon.handle).not.toHaveBeenCalled();
@@ -175,7 +171,7 @@ describe('TrackerTransport complex configurations', () => {
     consoleLog._isUsable = true;
     expect(consoleLog.isUsable()).toBe(true);
 
-    const sendTransport = new TransportSwitch(beacon, fetch, xmlHTTPRequest, pigeon);
+    const sendTransport = new TransportSwitch(fetch, xmlHTTPRequest, pigeon);
     const sendAndLog = new TransportGroup(sendTransport, consoleLog);
     const transport = new TransportSwitch(sendAndLog, errorLog);
 
@@ -187,7 +183,6 @@ describe('TrackerTransport complex configurations', () => {
 
     testTracker.trackEvent(testEvent);
 
-    expect(beacon.handle).not.toHaveBeenCalled();
     expect(fetch.handle).toHaveBeenCalled();
     expect(xmlHTTPRequest.handle).not.toHaveBeenCalled();
     expect(pigeon.handle).not.toHaveBeenCalled();
@@ -199,7 +194,7 @@ describe('TrackerTransport complex configurations', () => {
     consoleLog._isUsable = true;
     expect(consoleLog.isUsable()).toBe(true);
 
-    const sendTransport = new TransportSwitch(beacon, fetch, xmlHTTPRequest, pigeon);
+    const sendTransport = new TransportSwitch(fetch, xmlHTTPRequest, pigeon);
     const sendAndLog = new TransportGroup(sendTransport, consoleLog);
     const transport = new TransportSwitch(sendAndLog, errorLog);
 
@@ -211,7 +206,6 @@ describe('TrackerTransport complex configurations', () => {
 
     testTracker.trackEvent(testEvent);
 
-    expect(beacon.handle).not.toHaveBeenCalled();
     expect(fetch.handle).not.toHaveBeenCalled();
     expect(xmlHTTPRequest.handle).not.toHaveBeenCalled();
     expect(pigeon.handle).not.toHaveBeenCalled();

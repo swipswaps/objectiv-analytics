@@ -3,7 +3,7 @@ import {
   NonEmptyArray,
   TrackerEvent,
   TrackerTransport,
-  TransportableEvent
+  TransportableEvent,
 } from '@objectiv/tracker-core';
 
 /**
