@@ -2,6 +2,7 @@ import {
   ContextsConfig,
   QueuedTransport,
   RetryTransport,
+  RetryTransportAttempt,
   Tracker,
   TrackerEvent,
   TrackerQueue,
@@ -265,7 +266,10 @@ describe('QueuedTransport', () => {
 describe('RetryTransport', () => {
   it('should generate exponential timeouts', () => {
     const retryTransport = new RetryTransport({ transport: new UnusableTransport() });
-    const timeouts = Array.from(Array(10).keys()).map(retryTransport.calculateNextTimeoutMs.bind(retryTransport));
+    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    const timeouts = Array.from(Array(10).keys()).map(
+      retryTransportAttempt.calculateNextTimeoutMs.bind(retryTransport)
+    );
     expect(timeouts).toStrictEqual([1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000, 512000]);
   });
 
@@ -295,15 +299,31 @@ describe('RetryTransport', () => {
     expect(unusableTransport.handle).not.toHaveBeenCalled();
   });
 
+  it('should resolve as expected', async () => {
+    const logTransport = new LogTransport();
+    spyOn(logTransport, 'handle').and.callThrough();
+
+    const retryTransport = new RetryTransport({ transport: logTransport });
+    spyOn(retryTransport.attempts, 'push').and.callThrough();
+    spyOn(retryTransport.attempts, 'splice').and.callThrough();
+
+    await expect(retryTransport.handle(testEvent)).resolves.toBeUndefined();
+
+    expect(retryTransport.attempts.push).toHaveBeenCalledTimes(1);
+    expect(retryTransport.attempts.splice).toHaveBeenCalledTimes(1);
+    expect(retryTransport.attempts).toHaveLength(0);
+  });
+
   it('should not retry', async () => {
     const logTransport = new LogTransport();
     spyOn(logTransport, 'handle').and.returnValue(Promise.resolve());
     const retryTransport = new RetryTransport({ transport: logTransport });
-    spyOn(retryTransport, 'retry').and.callThrough();
+    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    spyOn(retryTransportAttempt, 'retry').and.callThrough();
 
-    await retryTransport.handle(testEvent);
+    await retryTransportAttempt.run();
 
-    expect(retryTransport.retry).not.toHaveBeenCalled();
+    expect(retryTransportAttempt.retry).not.toHaveBeenCalled();
     expect(logTransport.handle).toHaveBeenCalledTimes(1);
   });
 
@@ -318,13 +338,14 @@ describe('RetryTransport', () => {
       maxTimeoutMs: 1,
       retryFactor: 1,
     });
-    spyOn(retryTransport, 'retry').and.callThrough();
+    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    spyOn(retryTransportAttempt, 'retry').and.callThrough();
 
-    await retryTransport.handle(testEvent);
+    await retryTransportAttempt.run();
 
-    expect(retryTransport.attemptCount).toBe(2);
-    expect(retryTransport.retry).toHaveBeenCalledTimes(1);
-    expect(retryTransport.retry).toHaveBeenNthCalledWith(1, mockedError, [testEvent]);
+    expect(retryTransportAttempt.attemptCount).toBe(2);
+    expect(retryTransportAttempt.retry).toHaveBeenCalledTimes(1);
+    expect(retryTransportAttempt.retry).toHaveBeenNthCalledWith(1, mockedError);
     expect(logTransport.handle).toHaveBeenCalledTimes(2);
   });
 
@@ -340,22 +361,20 @@ describe('RetryTransport', () => {
       maxTimeoutMs: 1,
       retryFactor: 1,
     });
+    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    spyOn(retryTransportAttempt, 'retry').and.callThrough();
 
-    spyOn(retryTransport, 'retry').and.callThrough();
-    spyOn(retryTransport, 'handle').and.callThrough();
-
-    await expect(retryTransport.handle(testEvent)).rejects.toEqual(
+    await expect(retryTransportAttempt.run()).rejects.toEqual(
       expect.arrayContaining([new Error('maxAttempts reached')])
     );
 
-    expect(retryTransport.attemptCount).toBe(4);
-    expect(retryTransport.retry).toHaveBeenCalledTimes(3);
-    expect(retryTransport.retry).toHaveBeenNthCalledWith(1, mockedError, [testEvent]);
-    expect(retryTransport.retry).toHaveBeenNthCalledWith(2, mockedError, [testEvent]);
-    expect(retryTransport.retry).toHaveBeenNthCalledWith(3, mockedError, [testEvent]);
-    expect(retryTransport.handle).toHaveBeenCalledTimes(4);
+    expect(retryTransportAttempt.attemptCount).toBe(4);
+    expect(retryTransportAttempt.retry).toHaveBeenCalledTimes(3);
+    expect(retryTransportAttempt.retry).toHaveBeenNthCalledWith(1, mockedError);
+    expect(retryTransportAttempt.retry).toHaveBeenNthCalledWith(2, mockedError);
+    expect(retryTransportAttempt.retry).toHaveBeenNthCalledWith(3, mockedError);
     expect(logTransport.handle).toHaveBeenCalledTimes(3);
-    expect(retryTransport.errors[0]).toStrictEqual(new Error('maxAttempts reached'));
+    expect(retryTransportAttempt.errors[0]).toStrictEqual(new Error('maxAttempts reached'));
   });
 
   it('should stop retrying if we reached maxRetryMs', async () => {
@@ -373,14 +392,17 @@ describe('RetryTransport', () => {
       retryFactor: 1,
       maxRetryMs: 1,
     });
-    spyOn(retryTransport, 'retry').and.callThrough();
+    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    spyOn(retryTransportAttempt, 'retry').and.callThrough();
 
-    await expect(retryTransport.handle(testEvent)).rejects.toEqual(
+    await expect(retryTransportAttempt.run()).rejects.toEqual(
       expect.arrayContaining([new Error('maxRetryMs reached')])
     );
 
-    expect(retryTransport.retry).toHaveBeenCalledTimes(1);
+    expect(retryTransportAttempt.retry).toHaveBeenCalledTimes(1);
     expect(slowFailingTransport.handle).toHaveBeenCalledTimes(1);
-    expect(retryTransport.errors[0]).toStrictEqual(new Error('maxRetryMs reached'));
+    expect(retryTransportAttempt.errors[0]).toStrictEqual(new Error('maxRetryMs reached'));
   });
+
+  // TODO write test to verify everything works as expected also when wrapped in a concurrency > 1 Queue
 });

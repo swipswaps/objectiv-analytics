@@ -178,6 +178,99 @@ export type RetryTransportConfig = {
 };
 
 /**
+ * A RetryTransportAttempt is a TransportRetry worker.
+ * TransportRetry creates a RetryTransportAttempt instance whenever its `handle` method is invoked.
+ */
+export class RetryTransportAttempt implements Required<RetryTransportConfig> {
+  // RetryTransport State
+  readonly transport: TrackerTransport;
+  readonly maxAttempts: number;
+  readonly maxRetryMs: number;
+  readonly minTimeoutMs: number;
+  readonly maxTimeoutMs: number;
+  readonly retryFactor: number;
+
+  /**
+   * The list of Events to handle.
+   */
+  events: NonEmptyArray<TransportableEvent>;
+
+  /**
+   * A list of errors in reverse order. Eg: element 0 is the last error occurred. N-1 is the first.
+   */
+  errors: Error[];
+
+  /**
+   * How many times we have tried so far. Used in the calculation of the exponential backoff.
+   */
+  attemptCount: number;
+
+  /**
+   * Start time is persisted before each attempt and checked before retrying to verify if we exceeded maxRetryMs.
+   */
+  startTime: number;
+
+  constructor(retryTransportInstance: RetryTransport, events: NonEmptyArray<TransportableEvent>) {
+    this.transport = retryTransportInstance.transport;
+    this.maxAttempts = retryTransportInstance.maxAttempts;
+    this.maxRetryMs = retryTransportInstance.maxRetryMs;
+    this.minTimeoutMs = retryTransportInstance.minTimeoutMs;
+    this.maxTimeoutMs = retryTransportInstance.maxTimeoutMs;
+    this.retryFactor = retryTransportInstance.retryFactor;
+    this.events = events;
+    this.errors = [];
+    this.attemptCount = 1;
+    this.startTime = Date.now();
+  }
+
+  /**
+   * Determines how much time we have to wait based on the number of attempts and the configuration variables
+   */
+  calculateNextTimeoutMs(attemptCount: number) {
+    return Math.min(Math.round(this.minTimeoutMs * Math.pow(this.retryFactor, attemptCount)), this.maxTimeoutMs);
+  }
+
+  /**
+   * Verifies if we exceeded maxAttempts or maxRetryMs before attempting to call the given Transport's `handle` method.
+   * If promise rejections occur it invokes the `retry` method.
+   */
+  async run() {
+    // Stop if we reached maxAttempts
+    if (this.attemptCount > this.maxAttempts) {
+      this.errors.unshift(new Error('maxAttempts reached'));
+      return Promise.reject(this.errors);
+    }
+
+    // Stop if we reached maxRetryMs
+    if (this.startTime && Date.now() - this.startTime >= this.maxRetryMs) {
+      this.errors.unshift(new Error('maxRetryMs reached'));
+      return Promise.reject(this.errors);
+    }
+
+    // Attempt to transport the given Events. Catch any rejections and have `retry` handle them.
+    return this.transport.handle(...this.events).catch((error) => this.retry(error));
+  }
+
+  /**
+   * Handles the given error, waits for the appropriate time and `attempt`s again
+   */
+  async retry(error: Error): Promise<any> {
+    // Push error in the list of errors
+    this.errors.unshift(error);
+
+    // Wait for the next timeout
+    const nextTimeoutMs = this.calculateNextTimeoutMs(this.attemptCount);
+    await new Promise((resolve) => setTimeout(resolve, nextTimeoutMs));
+
+    // Increment number of attempts
+    this.attemptCount++;
+
+    // Run again
+    return this.run();
+  }
+}
+
+/**
  * A TrackerTransport implementing exponential backoff retries around a TrackerTransport handle method.
  * It allows to also specify maximum retry time and number of attempts.
  */
@@ -192,20 +285,8 @@ export class RetryTransport implements TrackerTransport {
   readonly maxTimeoutMs: number;
   readonly retryFactor: number;
 
-  /**
-   * A list of errors in reverse order. Eg: element 0 is the last error occurred. N-1 is the first.
-   */
-  errors: Error[] = [];
-
-  /**
-   * How many times we have tried so far. Used in the calculation of the exponential backoff.
-   */
-  attemptCount: number = 1;
-
-  /**
-   * Start time is persisted before each attempt and checked before retrying to verify if we exceeded maxRetryMs.
-   */
-  startTime: number | null = null;
+  // A list of attempts that are currently running
+  attempts: RetryTransportAttempt[] = [];
 
   constructor(config: RetryTransportConfig) {
     this.transport = config.transport;
@@ -224,44 +305,21 @@ export class RetryTransport implements TrackerTransport {
     }
   }
 
-  calculateNextTimeoutMs(attemptCount: number) {
-    return Math.min(Math.round(this.minTimeoutMs * Math.pow(this.retryFactor, attemptCount)), this.maxTimeoutMs);
-  }
-
-  async retry(error: Error, events: NonEmptyArray<TransportableEvent>): Promise<any> {
-    // Push error in the list of errors
-    this.errors.unshift(error);
-
-    // Wait for the next timeout
-    const nextTimeoutMs = this.calculateNextTimeoutMs(this.attemptCount);
-    await new Promise((resolve) => setTimeout(resolve, nextTimeoutMs));
-
-    // Increment number of attempts
-    this.attemptCount++;
-
-    // Try again
-    return this.handle(...events);
-  }
-
+  /**
+   * Creates a RetryTransportAttempt for the given Events and runs it.
+   */
   async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
-    // Measure total running time. Used to stop in combination with maxRetryMs.
-    if (this.startTime === null) {
-      this.startTime = Date.now();
-    }
+    // Create a new RetryTransportAttempt instance to handle the given Events
+    const attempt = new RetryTransportAttempt(this, args);
 
-    // Stop if we reached maxAttempts
-    if (this.attemptCount > this.maxAttempts) {
-      this.errors.unshift(new Error('maxAttempts reached'));
-      return Promise.reject(this.errors);
-    }
+    // Push the new RetryTransportAttempt instance to state
+    const attemptIndex = this.attempts.push(attempt);
 
-    // Stop if we reached maxRetryMs
-    if (this.startTime && Date.now() - this.startTime >= this.maxRetryMs) {
-      this.errors.unshift(new Error('maxRetryMs reached'));
-      return Promise.reject(this.errors);
-    }
-
-    return this.transport.handle(...args).catch((error) => this.retry(error, args));
+    // Run attempt
+    return attempt.run().finally(() => {
+      // Regardless if the attempt was successful or not, clear up the `attempts` state when it's done.
+      this.attempts.splice(attemptIndex - 1, 1);
+    });
   }
 
   isUsable(): boolean {
