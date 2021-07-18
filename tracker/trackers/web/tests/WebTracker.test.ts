@@ -49,14 +49,12 @@ describe('WebTracker', () => {
           },
           transport: {
             transportName: 'RetryTransport',
-            attemptCount: 1,
-            errors: [],
             maxAttempts: 10,
             maxRetryMs: Infinity,
             maxTimeoutMs: Infinity,
             minTimeoutMs: 1000,
             retryFactor: 2,
-            startTime: null,
+            attempts: [],
             transport: {
               transportName: 'TransportSwitch',
               firstUsableTransport: {
