@@ -349,13 +349,12 @@ describe('RetryTransport', () => {
     );
 
     expect(retryTransport.attemptCount).toBe(4);
-    expect(retryTransport.retry).toHaveBeenCalledTimes(4);
+    expect(retryTransport.retry).toHaveBeenCalledTimes(3);
     expect(retryTransport.retry).toHaveBeenNthCalledWith(1, mockedError, [testEvent]);
     expect(retryTransport.retry).toHaveBeenNthCalledWith(2, mockedError, [testEvent]);
     expect(retryTransport.retry).toHaveBeenNthCalledWith(3, mockedError, [testEvent]);
-    expect(retryTransport.retry).toHaveBeenNthCalledWith(4, mockedError, [testEvent]);
     expect(retryTransport.handle).toHaveBeenCalledTimes(4);
-    expect(logTransport.handle).toHaveBeenCalledTimes(4);
+    expect(logTransport.handle).toHaveBeenCalledTimes(3);
     expect(retryTransport.errors[0]).toStrictEqual(new Error('maxAttempts reached'));
   });
 

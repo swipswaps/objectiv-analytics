@@ -229,18 +229,6 @@ export class RetryTransport implements TrackerTransport {
   }
 
   async retry(error: Error, events: NonEmptyArray<TransportableEvent>): Promise<any> {
-    // Stop retrying if we reached maxAttempts
-    if (this.attemptCount > this.maxAttempts) {
-      this.errors.unshift(...[new Error('maxAttempts reached'), error]);
-      return Promise.reject(this.errors);
-    }
-
-    // Stop retrying if we reached maxRetryMs
-    if (this.startTime && Date.now() - this.startTime >= this.maxRetryMs) {
-      this.errors.unshift(...[new Error('maxRetryMs reached'), error]);
-      return Promise.reject(this.errors);
-    }
-
     // Push error in the list of errors
     this.errors.unshift(error);
 
@@ -256,7 +244,23 @@ export class RetryTransport implements TrackerTransport {
   }
 
   async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
-    this.startTime = Date.now();
+    // Measure total running time. Used to stop in combination with maxRetryMs.
+    if (this.startTime === null) {
+      this.startTime = Date.now();
+    }
+
+    // Stop if we reached maxAttempts
+    if (this.attemptCount > this.maxAttempts) {
+      this.errors.unshift(new Error('maxAttempts reached'));
+      return Promise.reject(this.errors);
+    }
+
+    // Stop if we reached maxRetryMs
+    if (this.startTime && Date.now() - this.startTime >= this.maxRetryMs) {
+      this.errors.unshift(new Error('maxRetryMs reached'));
+      return Promise.reject(this.errors);
+    }
+
     return this.transport.handle(...args).catch((error) => this.retry(error, args));
   }
 
