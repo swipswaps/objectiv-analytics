@@ -204,7 +204,7 @@ def _get_http_context() -> ContextData:
         # we're interested in the IP of the first proxy outside of
         # our own network. (more specific, the farthest proxy with a public IP)
         # in this case, we use the IP of proxy2, assuming proxy3 is our LB/reverse proxy
-        hosts = http_context['x_forwarded_for'].split()
+        hosts = str(http_context['x_forwarded_for']).split()
         if len(hosts) > 1:
             http_context['remote_address'] = hosts[-2]
         else:
