@@ -200,14 +200,15 @@ def _get_http_context() -> ContextData:
         http_context['remote_address'] = http_context['x_real_ip']
     elif 'x_forwarded_for' in http_context:
         # x-forwarded-for headers take the form of:
-        # client proxy1 proxy2 proxy3
-        # we're interested in the IP of the first proxy outside of
-        # our own network. (more specific, the farthest proxy with a public IP)
-        # in this case, we use the IP of proxy2, assuming proxy3 is our LB/reverse proxy
+        # client proxy_1...proxy_n
+        # we're interested in proxy_n, which is the last node that connects to us, and as such
+        # has to be an Internet routed proxy. proxies before it, including the client may be internal
+        # and non-routable addresses.
         hosts = str(http_context['x_forwarded_for']).split()
         if len(hosts) > 1:
-            http_context['remote_address'] = hosts[-2]
+            http_context['remote_address'] = hosts[-1]
         else:
+            # if there's only one address there, we use that.
             http_context['remote_address'] = http_context['x_forwarded_for']
     elif flask.request.remote_addr:
         http_context['remote_address'] = flask.request.remote_addr
@@ -217,7 +218,6 @@ def _get_http_context() -> ContextData:
 
     http_context['_context_type'] = 'HttpContext'
     http_context['id'] = 'http_context'
-    print(f'Logging {http_context}')
 
     return http_context
 
