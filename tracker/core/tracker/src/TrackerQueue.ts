@@ -76,7 +76,7 @@ export type TrackerQueueConfig = {
   readonly batchSize?: number;
 
   /**
-   * Optional. How often to re-run and dequeue again, in ms. Defaults to 250.
+   * Optional. How often to re-run and dequeue again, in ms. Defaults to 1000.
    */
   readonly batchDelayMs?: number;
 

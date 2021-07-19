@@ -37,7 +37,7 @@ describe('WebTracker', () => {
           transportName: 'QueuedTransport',
           queue: {
             queueName: 'TrackerQueue',
-            batchDelayMs: 250,
+            batchDelayMs: 1000,
             batchSize: 10,
             concurrency: 4,
             processFunction: expect.any(Function),
