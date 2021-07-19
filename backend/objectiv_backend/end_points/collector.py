@@ -180,15 +180,45 @@ def _get_http_context() -> ContextData:
     """ Create an HttpContext based on the data in the current request. """
     allowed_headers = ['Host', 'Origin', 'Referer', 'User-Agent', 'X-Real-IP', 'X-Forwarded-For']
     http_context: ContextData = {}
+
+    # this is the IP of the client connecting to us
+    # in the case of a reverse proxy / LB, it would be that IP
     if flask.request.remote_addr:
-        http_context['remote_address'] = flask.request.remote_addr
+        http_context['remote_addr'] = flask.request.remote_addr
 
     for h, v in flask.request.headers.items():
         if h in allowed_headers:
             http_context[h.lower().replace('-', '_')] = v
 
+    # try to determine the IP address of the calling user agent, by looking at some standard headers
+    # if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
+    # cases this is probably wrong.
+    # We use the standard 'remote_addr' field for this, so we don't need to worry about this downstream.
+    if 'x_real_ip' in http_context:
+        # any upstream proxy probably know the 'right' IP. If it sets the x-real-ip header to that,
+        # we use that.
+        http_context['remote_address'] = http_context['x_real_ip']
+    elif 'x_forwarded_for' in http_context:
+        # x-forwarded-for headers take the form of:
+        # client proxy1 proxy2 proxy3
+        # we're interested in the IP of the first proxy outside of
+        # our own network. (more specific, the farthest proxy with a public IP)
+        # in this case, we use the IP of proxy2, assuming proxy3 is our LB/reverse proxy
+        hosts = http_context['x_forwarded_for'].split()
+        if len(hosts) > 1:
+            http_context['remote_address'] = hosts[-2]
+        else:
+            http_context['remote_address'] = http_context['x_forwarded_for']
+    elif flask.request.remote_addr:
+        http_context['remote_address'] = flask.request.remote_addr
+    else:
+        # this should never happen!
+        http_context['remote_address'] = 'unknown'
+
     http_context['_context_type'] = 'HttpContext'
     http_context['id'] = 'http_context'
+    print(f'Logging {http_context}')
+
     return http_context
 
 
