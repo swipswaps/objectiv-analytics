@@ -147,7 +147,7 @@ export class TrackerQueue implements TrackerQueueInterface {
   constructor(config?: TrackerQueueConfig) {
     this.store = config?.store ?? new TrackerQueueMemoryStore();
     this.batchSize = config?.batchSize ?? 10;
-    this.batchDelayMs = config?.batchDelayMs ?? 250;
+    this.batchDelayMs = config?.batchDelayMs ?? 1000;
     this.concurrency = config?.concurrency ?? 4;
   }
 
