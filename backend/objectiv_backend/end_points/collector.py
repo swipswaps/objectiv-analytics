@@ -144,36 +144,27 @@ def set_time_in_events(events: List[EventData], current_millis: int):
     """
     Modify the given list of events: Set the correct time in the events
 
-    1. Validate that - Note: currently failing this validation has no consequences
-      1.1. All events in the list are in chronological order:
-      1.2. The events are not more that X seconds delayed.
-    2. Adjust time if needed: if the current requests header has an X-timestamp header, we'll use that to
-       calculate the client's clock skew, and adjust all events in the list.
+    Adjust time if needed: if the current requests header has an X-timestamp header, we'll use that to
+    calculate the client's clock skew, and adjust all events in the list.
     :param events: List of events to modify
     :param current_millis: time in milliseconds since epoch UTC, when this request was received.
     """
     offset = 0
-    if 'X-timestamp' in flask.request.headers:
+    # transport_time is the same for all events in one batch
+    # so we use the transport_time from the first event
+    if 'transport_time' in events[0]:
         try:
-            client_millis = int(flask.request.headers['X-timestamp'])
+            client_millis = int(events[0]['transport_time'])
         except ValueError as exc:
             client_millis = current_millis
         offset = current_millis - client_millis
         print(f'debug - time offset: {offset}')
     for event in events:
-        # event['time'] = event['time'] + offset
-        # use current_millis as a fallback until time is implemented in the FE and made a required field.
-        event['time'] = event.get('time', current_millis) + offset
-    # Validate
-    for event in events:
-        MAX_DELAYED_EVENTS_MILLIS = 1000 * 3600  # TODO: move, different value?
-        if (current_millis - event['time']) > MAX_DELAYED_EVENTS_MILLIS:
-            pass
-            #TODO: error?
-    for i, event in enumerate(events):
-        if i > 0 and events[i - 1]['time'] > event['time']:
-            print(f'Events not in right order!!! timestamp {events[i - 1]["time"]} before {event["time"]}')
-            # TODO: error?
+        # here we correct the tracking time with the calculated offset
+        # the assumption here is that transport time should be the same as the server time (current_millis)
+        # to account for clients that have an out-of-sync clock
+        event['time'] = event['tracking_time'] + offset
+        event['received_time'] = current_millis
 
 
 def _get_http_context() -> ContextData:
