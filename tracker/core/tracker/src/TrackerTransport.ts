@@ -170,7 +170,7 @@ export type RetryTransportConfig = {
    * Optional. The following properties are used to calculate the exponential timeouts between attempts.
    *
    * Given an `attemptCount`, representing how many times we retried so far, this is the formula:
-   *   min( round( minTimeoutMs * pow(retryFactor, attemptCount) ), maxTimeout)
+   *   min( round( minTimeoutMs * pow(retryFactor, attemptCount) ), maxTimeoutMs)
    */
   minTimeoutMs?: number; // defaults to 1000
   maxTimeoutMs?: number; // defaults to Infinity
