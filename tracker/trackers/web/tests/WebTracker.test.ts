@@ -26,7 +26,7 @@ describe('WebTracker', () => {
     ).toThrow();
   });
 
-  it('should instantiate with `endpoint`', () => {
+  it('should instantiate with `applicationId` and `endpoint`', () => {
     const testTracker = new WebTracker({ applicationId: 'app-id', endpoint: 'localhost' });
     expect(testTracker).toBeInstanceOf(WebTracker);
     expect(testTracker.transport).toBeInstanceOf(TransportGroup);

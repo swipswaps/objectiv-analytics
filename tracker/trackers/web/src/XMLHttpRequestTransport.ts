@@ -23,6 +23,11 @@ export const defaultXMLHttpRequestFunction = ({
     xhr.setRequestHeader('Content-Type', 'text/plain');
     xhr.withCredentials = true;
     xhr.onload = function () {
+      /**
+       * TODO Discussion:
+       * 1. Fetch doesn't behave like this and probably we should sync this method up so it's consistent.
+       * 2. The Collector returns 400 errors on validation errors. We definitely don't want to treat those as failures.
+       */
       if (this.status >= 200 && this.status < 300) {
         resolve(xhr.response);
       } else {
