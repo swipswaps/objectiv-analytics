@@ -180,7 +180,7 @@ def set_time_in_events(events: List[EventData], current_millis: int):
 
 def _get_http_context() -> ContextData:
     """ Create an HttpContext based on the data in the current request. """
-    allowed_headers = ['Host', 'Origin', 'Referer', 'User-Agent']
+    allowed_headers = ['Referer', 'User-Agent']
     http_context: ContextData = {}
 
     for h, v in flask.request.headers.items():
