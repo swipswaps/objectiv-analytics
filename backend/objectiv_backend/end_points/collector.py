@@ -110,7 +110,9 @@ def _get_collector_response(
         "event_errors": event_errors,
         "data_error": data_error
     })
-    return get_json_response(status=status, msg=msg)
+    # we always return a HTTP 200 status code, so we can handle any errors
+    # on the application layer.
+    return get_json_response(status=200, msg=msg)
 
 
 def add_http_contexts(events: List[EventData]):
