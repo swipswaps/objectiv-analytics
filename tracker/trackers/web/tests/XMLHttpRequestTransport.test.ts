@@ -1,4 +1,4 @@
-import { TrackerEvent } from '@objectiv/tracker-core';
+import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
 import MockDate from 'mockdate';
 import xhrMock from 'xhr-mock';
 import { XMLHttpRequestTransport } from '../src';
@@ -61,8 +61,10 @@ describe('XMLHttpRequestTransport', () => {
     try {
       await testTransport.handle(testEvent);
     } catch (error) {
-      expect(error).toStrictEqual({ status: 500, statusText: 'oops' });
+      expect(error).toStrictEqual(new TransportSendError());
     }
+
+    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
   });
 
   it('should send using `xhr` with the default xhr function - onError example', async () => {
@@ -75,8 +77,10 @@ describe('XMLHttpRequestTransport', () => {
     try {
       await testTransport.handle(testEvent);
     } catch (error) {
-      expect(error).toStrictEqual({ status: 0, statusText: '' });
+      expect(error).toStrictEqual(new TransportSendError());
     }
+
+    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
   });
 
   it('should send using `xhr` with the provided customized xhr function', async () => {

@@ -7,6 +7,7 @@ import {
   QueuedTransport,
   TrackerEvent,
   TrackerQueue,
+  TransportSendError,
 } from '../src';
 
 const mockedMs = 1434319925275;
@@ -145,5 +146,22 @@ describe('FetchAPITransport', () => {
 
     // Fetch should not have been called
     expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('should reject with TransportSendError on http status !== 200', async () => {
+    // Create our Fetch Transport Instance
+    const testTransport = new FetchAPITransport({
+      endpoint: MOCK_ENDPOINT,
+    });
+
+    fetchMock.mockResponse('oops', { status: 500 });
+
+    try {
+      await testTransport.handle(testEvent);
+    } catch (error) {
+      expect(error).toStrictEqual(new TransportSendError());
+    }
+
+    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
   });
 });

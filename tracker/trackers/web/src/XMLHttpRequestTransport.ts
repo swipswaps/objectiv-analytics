@@ -4,6 +4,7 @@ import {
   TrackerEvent,
   TrackerTransport,
   TransportableEvent,
+  TransportSendError,
 } from '@objectiv/tracker-core';
 
 /**
@@ -22,27 +23,14 @@ export const defaultXMLHttpRequestFunction = ({
     xhr.open('POST', endpoint, async);
     xhr.setRequestHeader('Content-Type', 'text/plain');
     xhr.withCredentials = true;
-    xhr.onload = function () {
-      /**
-       * TODO Discussion:
-       * 1. Fetch doesn't behave like this and probably we should sync this method up so it's consistent.
-       * 2. The Collector returns 400 errors on validation errors. We definitely don't want to treat those as failures.
-       */
-      if (this.status >= 200 && this.status < 300) {
+    xhr.onload = () => {
+      if (xhr.status === 200) {
         resolve(xhr.response);
       } else {
-        reject({
-          status: xhr.status,
-          statusText: xhr.statusText,
-        });
+        reject(new TransportSendError());
       }
     };
-    xhr.onerror = function () {
-      reject({
-        status: xhr.status,
-        statusText: xhr.statusText,
-      });
-    };
+    xhr.onerror = () => reject(new TransportSendError());
     events.forEach((event) => event.setTransportTime());
     xhr.send(JSON.stringify(events));
   });

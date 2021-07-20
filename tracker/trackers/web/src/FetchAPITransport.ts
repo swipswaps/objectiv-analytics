@@ -4,6 +4,7 @@ import {
   TrackerEvent,
   TrackerTransport,
   TransportableEvent,
+  TransportSendError,
 } from '@objectiv/tracker-core';
 
 /**
@@ -35,6 +36,12 @@ export const defaultFetchFunction = async ({
   return fetch(endpoint, {
     ...parameters,
     body: JSON.stringify(events),
+  }).then((response) => {
+    if (response.status === 200) {
+      return response;
+    } else {
+      throw new TransportSendError();
+    }
   });
 };
 

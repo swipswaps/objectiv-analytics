@@ -1,3 +1,4 @@
+import ExtendableError from 'es6-error';
 import { isNonEmptyArray, NonEmptyArray } from './helpers';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerQueue } from './TrackerQueue';
@@ -6,6 +7,12 @@ import { TrackerQueue } from './TrackerQueue';
  * TrackerTransports can receive either Events ready to be processed or Event Promises.
  */
 export type TransportableEvent = TrackerEvent | Promise<TrackerEvent>;
+
+/**
+ * A custom error thrown by Sending Transports (eg: Fetch) whenever the Collector was not reachable.
+ * RetryTransportAttempts will react to it by retrying.
+ */
+export class TransportSendError extends ExtendableError {}
 
 /**
  * The TrackerTransport interface provides a single function to handle one or more TrackerEvents.
@@ -248,7 +255,14 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
     }
 
     // Attempt to transport the given Events. Catch any rejections and have `retry` handle them.
-    return this.transport.handle(...this.events).catch((error) => this.retry(error));
+    return this.transport.handle(...this.events).catch((error) => {
+      // Retry TransportSendErrors
+      if (error instanceof TransportSendError) {
+        return this.retry(error);
+      }
+      // And ignore any other errors
+      return Promise.reject(error);
+    });
   }
 
   /**

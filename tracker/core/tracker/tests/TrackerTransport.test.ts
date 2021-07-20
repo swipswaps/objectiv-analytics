@@ -8,6 +8,7 @@ import {
   TrackerQueue,
   TrackerQueueMemoryStore,
   TransportGroup,
+  TransportSendError,
   TransportSwitch,
 } from '../src';
 import { LogTransport, UnusableTransport } from './mocks';
@@ -327,9 +328,30 @@ describe('RetryTransport', () => {
     expect(logTransport.handle).toHaveBeenCalledTimes(1);
   });
 
+  it('should not retry on errors that are not TransportSendError', async () => {
+    jest.useRealTimers();
+    const mockedError = new Error('Some bug');
+    const logTransport = new LogTransport();
+    spyOn(logTransport, 'handle').and.returnValues(Promise.reject(mockedError), Promise.resolve());
+    const retryTransport = new RetryTransport({
+      transport: logTransport,
+      minTimeoutMs: 1,
+      maxTimeoutMs: 1,
+      retryFactor: 1,
+    });
+    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    spyOn(retryTransportAttempt, 'retry').and.callThrough();
+
+    await expect(retryTransportAttempt.run()).rejects.toEqual(mockedError);
+
+    expect(retryTransportAttempt.attemptCount).toBe(1);
+    expect(retryTransportAttempt.retry).not.toHaveBeenCalled();
+    expect(logTransport.handle).toHaveBeenCalledTimes(1);
+  });
+
   it('should retry once', async () => {
     jest.useRealTimers();
-    const mockedError = new Error('You shall not pass!');
+    const mockedError = new TransportSendError('You shall not pass!');
     const logTransport = new LogTransport();
     spyOn(logTransport, 'handle').and.returnValues(Promise.reject(mockedError), Promise.resolve());
     const retryTransport = new RetryTransport({
@@ -351,7 +373,7 @@ describe('RetryTransport', () => {
 
   it('should retry three times', async () => {
     jest.useRealTimers();
-    const mockedError = new Error('You shall not pass!');
+    const mockedError = new TransportSendError('You shall not pass!');
     const logTransport = new LogTransport();
     spyOn(logTransport, 'handle').and.returnValue(Promise.reject(mockedError));
     const retryTransport = new RetryTransport({
@@ -381,7 +403,7 @@ describe('RetryTransport', () => {
     jest.useRealTimers();
     const slowFailingTransport = {
       transportName: 'SlowFailingTransport',
-      handle: async (): Promise<any> => new Promise((_, reject) => setTimeout(reject, 100)),
+      handle: async () => new Promise((_, reject) => setTimeout(() => reject(new TransportSendError()), 100)),
       isUsable: () => true,
     };
     spyOn(slowFailingTransport, 'handle').and.callThrough();
