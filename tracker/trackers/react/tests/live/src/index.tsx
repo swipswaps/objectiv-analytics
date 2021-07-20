@@ -10,7 +10,7 @@ import reportWebVitals from './reportWebVitals';
 let server = createServer({})
 server.post("/endpoint")
 
-const tracker = new ReactTracker({ endpoint: '/endpoint' });
+const tracker = new ReactTracker({ applicationId: 'live-testing-app', endpoint: '/endpoint' });
 
 console.log(tracker);
 
