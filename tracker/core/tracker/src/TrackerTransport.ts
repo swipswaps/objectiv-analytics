@@ -290,6 +290,11 @@ export class RetryTransport implements TrackerTransport {
 
   constructor(config: RetryTransportConfig) {
     this.transport = config.transport;
+
+    /**
+     * With these defaults the maximum execution time of an Attempt is ~ 17 minutes
+     * 1000 + 2000 + 4000 + 8000 + 16000 + 32000 + 64000 + 128000 + 256000 + 512000 = 1023000 ms or 17.05 mins
+     */
     this.maxAttempts = config.maxAttempts ?? 10;
     this.maxRetryMs = config.maxRetryMs ?? Infinity;
     this.minTimeoutMs = config.minTimeoutMs ?? 1000;
