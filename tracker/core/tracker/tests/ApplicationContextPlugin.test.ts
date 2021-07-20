@@ -1,5 +1,4 @@
-import { ApplicationContextPlugin } from '../src';
-import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '../src';
 
 describe('ApplicationContextPlugin', () => {
   it('should generate a DeviceContext when constructed', () => {

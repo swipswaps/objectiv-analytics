@@ -1,5 +1,5 @@
-import { ApplicationContextPlugin } from '@objectiv/plugin-application-context';
 import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
+import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugin';

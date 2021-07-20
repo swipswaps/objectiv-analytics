@@ -1,3 +1,4 @@
+export * from './ApplicationContextPlugin';
 export * from './Context';
 export * from './ContextFactories';
 export * from './EventFactories';
