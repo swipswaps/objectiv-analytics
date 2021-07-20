@@ -6,29 +6,27 @@ import sizes from 'rollup-plugin-sizes';
 import { terser } from 'rollup-plugin-terser';
 import ts from 'rollup-plugin-ts';
 
-const commonPlugins = [nodeResolve(), commonjs(), ts()];
-const minificationPlugins = [cleanup(), terser()];
-const statsPlugins = [sizes(), filesize()];
-
-const makeOutput = (isMinified) => ({
-  file: `dist/index${isMinified ? '.min' : ''}.js`,
-  format: 'es',
-  name: 'ObjectivCoreTracker',
-  sourcemap: true,
-});
-
 export default [
-  // ES
   {
     input: './src/index.ts',
-    output: [makeOutput(false)],
-    plugins: [...commonPlugins, ...statsPlugins],
-  },
-
-  // ES minified
-  {
-    input: './src/index.ts',
-    output: [makeOutput(true)],
-    plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
+    output: [
+      {
+        file: `dist/index.js`,
+        format: 'es',
+        name: 'ObjectivCoreTracker',
+        sourcemap: false,
+      },
+    ],
+    plugins: [
+      nodeResolve(),
+      commonjs({
+        sourceMap: false,
+      }),
+      ts(),
+      cleanup(),
+      terser(),
+      sizes(),
+      filesize(),
+    ],
   },
 ];
