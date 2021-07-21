@@ -51,7 +51,7 @@ def collect() -> Response:
     events_with_id = [EventWithId(id=uuid.UUID(event.get('id')), event=event) for event in events]
 
     if not get_collector_config().async_mode:
-        ok_events, nok_events, event_errors = process_events_entry(events=events_with_id)
+        ok_events, nok_events, event_errors = process_events_entry(events=events_with_id, current_millis=current_millis)
         print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
         write_sync_events(ok_events=ok_events, nok_events=nok_events)
         return _get_collector_response(error_count=len(nok_events), event_count=len(events), event_errors=event_errors)
@@ -164,7 +164,10 @@ def set_time_in_events(events: List[EventData], current_millis: int):
         # the assumption here is that transport time should be the same as the server time (current_millis)
         # to account for clients that have an out-of-sync clock
         event['time'] = event['tracking_time'] + offset
-        event['received_time'] = current_millis
+
+        # remove unwanted timestamps
+        del event['tracking_time']
+        del event['transport_time']
 
 
 def _get_http_context() -> ContextData:

@@ -210,6 +210,7 @@ def _validate_context_item(event_schema: EventSchema, context) -> List[ErrorInfo
 def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[ErrorInfo]:
     """
     Read given filename, and validate the event data in that file.
+    :param event_schema: EventSchema to use for validation
     :param filename: path of file to read
     :return: list of found errors
     """
@@ -226,14 +227,15 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
     return errors
 
 
-def validate_event_time(event: Dict[str, Any]) -> List[ErrorInfo]:
+def validate_event_time(event: Dict[str, Any], current_millis: int) -> List[ErrorInfo]:
     """
     Validate timestamps in event to check if it's not too old
     :param event:
+    :param current_millis:
     :return: ErrorInfo, if any
     """
-    if event['received_time'] - event['tracking_time'] > MAX_DELAYED_EVENTS_MILLIS:
-        return [ErrorInfo(event, f'Event too old: {event["received_time"] - event["tracking_time"]} > {MAX_DELAYED_EVENTS_MILLIS}')]
+    if current_millis - event['time'] > MAX_DELAYED_EVENTS_MILLIS:
+        return [ErrorInfo(event, f'Event too old: {event["received_time"] - event["time"]} > {MAX_DELAYED_EVENTS_MILLIS}')]
     return []
 
 
