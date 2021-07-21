@@ -338,8 +338,8 @@
         "AbstractGlobalContext"
       ],
       "properties": {
-        "host": {
-          "description": "FQDN of the host (collector) the event was sent to.",
+        "referer": {
+          "description": "Full URL to HTTP referrer of the current page.",
           "type": "string"
         },
         "user_agent": {
@@ -347,7 +347,7 @@
           "type": "string"
         },
         "remote_address": {
-          "description": "IP address of the agent that sent the event.",
+          "description": "(public) IP address of the agent that sent the event.",
           "type": "string"
         }
       }
