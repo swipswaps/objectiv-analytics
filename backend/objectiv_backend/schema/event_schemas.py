@@ -181,6 +181,7 @@ class ContextSubSchema:
                 schema[context_type] = {"parents": [], "properties": {}}
 
             schema[context_type]["parents"].extend(data.get("parents", []))
+            schema[context_type]["description"] = data.get("description", '')
 
             for property_type, property_data in data.get("properties", {}).items():
                 if property_type not in schema[context_type]["properties"]:
