@@ -68,18 +68,6 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
     // And finally add the TrackerEvent Contexts on top. For Global Contexts instead we do the opposite.
     this.location_stack = [...new_location_stack, ...(otherEventProps.location_stack ?? [])];
     this.global_contexts = [...(otherEventProps.global_contexts ?? []), ...new_global_contexts];
-
-    console.groupCollapsed(`Objectiv: ${this.event} ${id ? 'enriched' : 'created'}`);
-    console.log(`Event ID: ${this.id}`);
-    console.log(`Tracking Time: ${this.tracking_time ?? 'none'}`);
-    console.log(`Transport Time: ${this.transport_time ?? 'none'}`);
-    console.group(`Location Stack:`);
-    console.log(this.location_stack)
-    console.groupEnd();
-    console.group(`Global Contexts:`);
-    console.log(this.global_contexts)
-    console.groupEnd();
-    console.groupEnd();
   }
 
   /**
