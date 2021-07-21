@@ -8,7 +8,7 @@ import { terser } from 'rollup-plugin-terser';
 import ts from 'rollup-plugin-ts';
 
 const dev = process.env.dev === 'true';
-console.log(`Build type: ${dev ? 'debug' : 'production'}`);
+console.log(`Build type: ${dev ? 'dev' : 'production'}`);
 
 export default [
   {

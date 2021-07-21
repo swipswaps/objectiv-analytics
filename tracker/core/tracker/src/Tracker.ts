@@ -65,6 +65,20 @@ export class Tracker implements Contexts {
     this.location_stack = new_location_stack;
     this.global_contexts = new_global_contexts;
 
+    console.groupCollapsed(`Objectiv: Tracker initialized`);
+    console.log(`Application ID: ${this.applicationId}`);
+    console.log(`Transport: ${this.transport?.transportName ?? 'none'}`);
+    console.group(`Plugins:`);
+    console.log(this.plugins.list.map(plugin => plugin.pluginName).join(', '))
+    console.groupEnd();
+    console.group(`Location Stack:`);
+    console.log(this.location_stack)
+    console.groupEnd();
+    console.group(`Global Contexts:`);
+    console.log(this.global_contexts)
+    console.groupEnd();
+    console.groupEnd();
+
     // Execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
     this.plugins.initialize(this);
   }
