@@ -1,39 +1,38 @@
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import cleanup from 'rollup-plugin-cleanup';
+import strip from "@rollup/plugin-strip";
 import filesize from 'rollup-plugin-filesize';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import sizes from 'rollup-plugin-sizes';
 import { terser } from 'rollup-plugin-terser';
 import ts from 'rollup-plugin-ts';
 
-const commonPlugins = [peerDepsExternal(), nodeResolve(), commonjs(), ts()];
-const minificationPlugins = [cleanup(), terser()];
-const statsPlugins = [sizes(), filesize()];
-
-const makeOutput = (isMinified) => ({
-  file: `dist/index${isMinified ? '.min' : ''}.js`,
-  format: 'es',
-  name: 'ObjectivReactTracker',
-  sourcemap: true,
-  globals: {
-    react: 'React',
-    'react/jsx-runtime': 'jsxRuntime',
-  },
-});
+const dev = process.env.dev === 'true';
+console.log(`Build type: ${dev ? 'dev' : 'production'}`);
 
 export default [
-  // ES
   {
     input: './src/index.ts',
-    output: [makeOutput(false)],
-    plugins: [...commonPlugins, ...statsPlugins],
-  },
-
-  // ES minified
-  {
-    input: './src/index.ts',
-    output: [makeOutput(true)],
-    plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
+    output: [{
+      file: `dist/index.js`,
+      format: 'esm',
+      name: 'ObjectivReactTracker',
+      sourcemap: dev
+    }],
+    plugins: [
+      peerDepsExternal(),
+      nodeResolve(),
+      commonjs(),
+      ts(),
+      ...(dev ? [] : [
+        strip({
+          include: ["**/*.(js|jsx|ts|tsx)"],
+          functions: ["console.*"],
+        }),
+        terser()
+      ]),
+      sizes(),
+      filesize()
+    ],
   },
 ];

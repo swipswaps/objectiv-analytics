@@ -1,43 +1,35 @@
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import cleanup from 'rollup-plugin-cleanup';
+import strip from '@rollup/plugin-strip';
 import filesize from 'rollup-plugin-filesize';
 import sizes from 'rollup-plugin-sizes';
 import { terser } from 'rollup-plugin-terser';
 import ts from 'rollup-plugin-ts';
 
-const commonPlugins = [nodeResolve(), commonjs(), ts()];
-const minificationPlugins = [
-  cleanup({
-    extensions: ['js', 'jsx', 'ts', 'tsx']
-  }), 
-  terser({
-  compress: {
-    // Make this the default and add a command option to disable it for dev builds
-    drop_console: true
-  }
-})];
-const statsPlugins = [sizes(), filesize()];
-
-const makeOutput = (isMinified) => ({
-  file: `dist/index${isMinified ? '.min' : ''}.js`,
-  format: 'es',
-  name: 'ObjectivCoreTracker',
-  sourcemap: true,
-});
+const dev = process.env.dev === 'true';
+console.log(`Build type: ${dev ? 'dev' : 'production'}`);
 
 export default [
-  // ES
   {
     input: './src/index.ts',
-    output: [makeOutput(false)],
-    plugins: [...commonPlugins, ...statsPlugins],
-  },
-
-  // ES minified
-  {
-    input: './src/index.ts',
-    output: [makeOutput(true)],
-    plugins: [...commonPlugins, ...minificationPlugins, ...statsPlugins],
+    output: [{
+      file: `dist/index.js`,
+      format: 'esm',
+      sourcemap: dev,
+    }],
+    plugins: [
+      nodeResolve(),
+      commonjs(),
+      ts(),
+      ...(dev ? [] : [
+        strip({
+          include: ["**/*.(js|jsx|ts|tsx)"],
+          functions: ["console.*"],
+        }),
+        terser()
+      ]),
+      sizes(),
+      filesize()
+    ],
   },
 ];
