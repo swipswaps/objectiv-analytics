@@ -65,7 +65,17 @@ export class Tracker implements Contexts {
     this.location_stack = new_location_stack;
     this.global_contexts = new_global_contexts;
 
-    console.groupCollapsed(`Objectiv: Tracker initialized`);
+    console.groupCollapsed(
+      `Objectiv: Tracker initialized ${
+        this.location_stack.length
+          ? '(' +
+            this.location_stack
+              .map((context) => `${context._context_type.replace('Context', '')}:${context.id}`)
+              .join(' > ') +
+            ')'
+          : ''
+      }`
+    );
     console.log(`Application ID: ${this.applicationId}`);
     console.log(`Transport: ${this.transport?.transportName ?? 'none'}`);
     console.group(`Plugins:`);
@@ -98,7 +108,17 @@ export class Tracker implements Contexts {
 
     // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
     if (this.transport && this.transport.isUsable()) {
-      console.groupCollapsed(`Objectiv: Tracking ${trackedEvent.event}`);
+      console.groupCollapsed(
+        `Objectiv: Tracking ${trackedEvent.event} ${
+          this.location_stack.length
+            ? '(' +
+              this.location_stack
+                .map((context) => `${context._context_type.replace('Context', '')}:${context.id}`)
+                .join(' > ') +
+              ')'
+            : ''
+        }`
+      );
       console.log(`Event ID: ${trackedEvent.id}`);
       console.log(`Tracking Time: ${trackedEvent.tracking_time ?? 'none'}`);
       console.log(`Transport Time: ${trackedEvent.transport_time ?? 'none'}`);

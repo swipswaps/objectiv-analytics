@@ -68,7 +68,7 @@ export const defaultFetchFunction = async ({
         console.log(events);
         console.groupEnd();
 
-        reject(new TransportSendError())
+        reject(new TransportSendError());
       });
   });
 };
