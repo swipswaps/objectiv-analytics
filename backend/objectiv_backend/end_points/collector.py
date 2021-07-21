@@ -110,7 +110,9 @@ def _get_collector_response(
         "event_errors": event_errors,
         "data_error": data_error
     })
-    return get_json_response(status=status, msg=msg)
+    # we always return a HTTP 200 status code, so we can handle any errors
+    # on the application layer.
+    return get_json_response(status=200, msg=msg)
 
 
 def add_http_contexts(events: List[EventData]):
@@ -172,20 +174,43 @@ def set_time_in_events(events: List[EventData], current_millis: int):
 
 def _get_http_context() -> ContextData:
     """ Create an HttpContext based on the data in the current request. """
-    allowed_headers = ['Host', 'Origin', 'Referer', 'User-Agent']
+    allowed_headers = ['Referer', 'User-Agent']
     http_context: ContextData = {}
-    if flask.request.remote_addr:
-        http_context['remote_address'] = flask.request.remote_addr
 
     for h, v in flask.request.headers.items():
         if h in allowed_headers:
-            if h == 'User-Agent':
-                http_context['user_agent'] = v
-            else:
-                http_context[h.lower()] = v
+            http_context[h.lower().replace('-', '_')] = v
+
+    # try to determine the IP address of the calling user agent, by looking at some standard headers
+    # if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
+    # cases this is probably wrong.
+    if 'X-Real-IP' in flask.request.headers:
+        # any upstream proxy probably know the 'right' IP. If it sets the x-real-ip header to that,
+        # we use that.
+        http_context['remote_address'] = flask.request.headers['X-Real-IP']
+    elif 'X-Forwarded-For' in flask.request.headers:
+        # x-forwarded-for headers take the form of:
+        # client proxy_1...proxy_n
+        # we're interested in proxy_n, which is the last node that connects to us, and as such
+        # has to be an Internet routed proxy. proxies before it, including the client may be internal
+        # and non-routable addresses.
+        hosts = str(flask.request.headers['X-Forwarded-For']).split()
+        if len(hosts) > 1:
+            http_context['remote_address'] = hosts[-1]
+        else:
+            # if there's only one address there, we use that.
+            http_context['remote_address'] = flask.request.headers['X-Forwarded-For']
+    elif flask.request.remote_addr:
+        # if all else fails, look for remote_addr in the request. This is the IP the current connection
+        # originates from. Most likely a proxy (which is why this is the last resort).
+        http_context['remote_address'] = flask.request.remote_addr
+    else:
+        # this should never happen!
+        http_context['remote_address'] = 'unknown'
 
     http_context['_context_type'] = 'HttpContext'
     http_context['id'] = 'http_context'
+
     return http_context
 
 
