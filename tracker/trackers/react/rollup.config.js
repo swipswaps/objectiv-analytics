@@ -1,6 +1,6 @@
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import strip from "@rollup/plugin-strip";
+import strip from '@rollup/plugin-strip';
 import filesize from 'rollup-plugin-filesize';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import sizes from 'rollup-plugin-sizes';
@@ -13,26 +13,30 @@ console.log(`Build type: ${dev ? 'dev' : 'production'}`);
 export default [
   {
     input: './src/index.ts',
-    output: [{
-      file: `dist/index.js`,
-      format: 'esm',
-      name: 'ObjectivReactTracker',
-      sourcemap: dev
-    }],
+    output: [
+      {
+        file: `dist/index.js`,
+        format: 'esm',
+        name: 'ObjectivReactTracker',
+        sourcemap: dev,
+      },
+    ],
     plugins: [
       peerDepsExternal(),
       nodeResolve(),
       commonjs(),
       ts(),
-      ...(dev ? [] : [
-        strip({
-          include: ["**/*.(js|jsx|ts|tsx)"],
-          functions: ["console.*"],
-        }),
-        terser()
-      ]),
+      ...(dev
+        ? []
+        : [
+            strip({
+              include: ['**/*.(js|jsx|ts|tsx)'],
+              functions: ['console.*'],
+            }),
+            terser(),
+          ]),
       sizes(),
-      filesize()
+      filesize(),
     ],
   },
 ];

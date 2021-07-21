@@ -69,13 +69,13 @@ export class Tracker implements Contexts {
     console.log(`Application ID: ${this.applicationId}`);
     console.log(`Transport: ${this.transport?.transportName ?? 'none'}`);
     console.group(`Plugins:`);
-    console.log(this.plugins.list.map(plugin => plugin.pluginName).join(', '))
+    console.log(this.plugins.list.map((plugin) => plugin.pluginName).join(', '));
     console.groupEnd();
     console.group(`Location Stack:`);
-    console.log(this.location_stack)
+    console.log(this.location_stack);
     console.groupEnd();
     console.group(`Global Contexts:`);
-    console.log(this.global_contexts)
+    console.log(this.global_contexts);
     console.groupEnd();
     console.groupEnd();
 
@@ -103,10 +103,10 @@ export class Tracker implements Contexts {
       console.log(`Tracking Time: ${trackedEvent.tracking_time ?? 'none'}`);
       console.log(`Transport Time: ${trackedEvent.transport_time ?? 'none'}`);
       console.group(`Location Stack:`);
-      console.log(trackedEvent.location_stack)
+      console.log(trackedEvent.location_stack);
       console.groupEnd();
       console.group(`Global Contexts:`);
-      console.log(trackedEvent.global_contexts)
+      console.log(trackedEvent.global_contexts);
       console.groupEnd();
       console.groupEnd();
 

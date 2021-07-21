@@ -12,24 +12,28 @@ console.log(`Build type: ${dev ? 'dev' : 'production'}`);
 export default [
   {
     input: './src/index.ts',
-    output: [{
-      file: `dist/index.js`,
-      format: 'esm',
-      sourcemap: dev,
-    }],
+    output: [
+      {
+        file: `dist/index.js`,
+        format: 'esm',
+        sourcemap: dev,
+      },
+    ],
     plugins: [
       nodeResolve(),
       commonjs(),
       ts(),
-      ...(dev ? [] : [
-        strip({
-          include: ["**/*.(js|jsx|ts|tsx)"],
-          functions: ["console.*"],
-        }),
-        terser()
-      ]),
+      ...(dev
+        ? []
+        : [
+            strip({
+              include: ['**/*.(js|jsx|ts|tsx)'],
+              functions: ['console.*'],
+            }),
+            terser(),
+          ]),
       sizes(),
-      filesize()
+      filesize(),
     ],
   },
 ];

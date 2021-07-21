@@ -32,16 +32,20 @@ export const defaultFetchFunction = async ({
   events: [TrackerEvent, ...TrackerEvent[]];
   parameters?: typeof defaultFetchParameters;
 }): Promise<Response> => {
-  events.forEach((event) => event.setTransportTime());
-  return fetch(endpoint, {
-    ...parameters,
-    body: JSON.stringify(events),
-  }).then((response) => {
-    if (response.status === 200) {
-      return response;
-    } else {
-      throw new TransportSendError();
-    }
+  return new Promise(function (resolve, reject) {
+    events.forEach((event) => event.setTransportTime());
+    fetch(endpoint, {
+      ...parameters,
+      body: JSON.stringify(events),
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          resolve(response);
+        } else {
+          reject(new TransportSendError());
+        }
+      })
+      .catch(() => reject(new TransportSendError()));
   });
 };
 
