@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 import re
 
 from objectiv_backend.common.config import get_config_event_schema
@@ -7,7 +7,8 @@ from objectiv_backend.common.config import get_config_event_schema
 event_schema = get_config_event_schema()
 
 
-def get_type(property_description: List[str]) -> str:
+def get_type(property_description: Dict[str, str]) -> str:
+    print(property_description)
     type_name = property_description['type']
 
     if 'items' in property_description:
@@ -21,6 +22,7 @@ def get_type(property_description: List[str]) -> str:
         return 'str'
     if type_name == 'integer':
         return 'int'
+    return 'str'
 
 # first: events
 

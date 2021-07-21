@@ -27,7 +27,7 @@ class EventSubSchema:
         Create an empty EventSubSchema.
         Use extend_schema to add event types to the schema.
         """
-        self.schema: Dict[EventType, Dict[str, list]] = {}
+        self.schema: Dict[EventType, Dict[str, list, dict]] = {}
         # _compiled_* fields are derived fields that need to be calculated after self.schema is set.
         self._compiled_list_event_types: List[EventType] = []
         self._compiled_all_parents_and_required_contexts: \
