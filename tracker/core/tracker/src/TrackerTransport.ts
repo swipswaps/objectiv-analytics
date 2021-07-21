@@ -157,6 +157,8 @@ export class QueuedTransport implements TrackerTransport {
 
       // And start the Queue runner
       this.queue.startRunner();
+
+      console.log(`%cObjectiv: ${this.queue.queueName} runner started`, 'font-weight:bold');
     }
   }
 
@@ -281,8 +283,21 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
       return Promise.reject(this.errors);
     }
 
+    console.groupCollapsed(`Objectiv: RetryTransportAttempt running`);
+    console.log(`Attempt Count: ${this.attemptCount}`);
+    console.log(`Events:`);
+    console.log(this.events);
+    console.groupEnd();
+
     // Attempt to transport the given Events. Catch any rejections and have `retry` handle them.
     return this.transport.handle(...this.events).catch((error) => {
+      console.groupCollapsed(`Objectiv: RetryTransportAttempt failed`);
+      console.log(`Error:`);
+      console.log(error);
+      console.log(`Events:`);
+      console.log(this.events);
+      console.groupEnd();
+
       // Retry TransportSendErrors
       if (error instanceof TransportSendError) {
         return this.retry(error);
@@ -305,6 +320,15 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
 
     // Increment number of attempts
     this.attemptCount++;
+
+    console.groupCollapsed(`Objectiv: RetryTransportAttempt retrying`);
+    console.log(`Attempt Count: ${this.attemptCount}`);
+    console.log(`Waited: ${nextTimeoutMs}`);
+    console.log(`Error:`);
+    console.log(error);
+    console.log(`Events:`);
+    console.log(this.events);
+    console.groupEnd();
 
     // Run again
     return this.run();

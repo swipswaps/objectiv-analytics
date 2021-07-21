@@ -174,7 +174,6 @@ export class TrackerQueue implements TrackerQueueInterface {
 
   startRunner() {
     setInterval(async () => {
-      // TODO Add timeout/cancel mechanism so we may cancel runs running for too long and retry or die
       await this.run();
     }, this.batchDelayMs);
   }
@@ -207,6 +206,11 @@ export class TrackerQueue implements TrackerQueueInterface {
       if (!isNonEmptyArray(eventsBatch)) {
         return;
       }
+
+      console.groupCollapsed(`Objectiv: ${this.queueName} batch read`);
+      console.log(`Events:`);
+      console.log(eventsBatch);
+      console.groupEnd();
 
       // Gather Event Ids. Used for both deletion and processingEventIds cleanup.
       const eventsBatchIds = eventsBatch.map((event) => event.id);
