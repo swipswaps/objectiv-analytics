@@ -43,13 +43,19 @@ class EventSubSchema:
         """
         schema = deepcopy(self.schema)
         for event_type, data in event_schema.items():
+
             # todo: move this check to schema check?
             if not re.match(self.EVENT_NAME_REGEX, event_type):
                 raise ValueError(f'Invalid event name: {event_type}')
             if event_type not in schema:
-                schema[event_type] = {'parents': [], 'requiresContext': []}
+                schema[event_type] = {'parents': [], 'requiresContext': [], 'properties': {}}
             schema[event_type]['parents'].extend(data['parents'])
             schema[event_type]['requiresContext'].extend(data['requiresContext'])
+            schema[event_type]['description'] = data['description']
+            if 'properties' in data:
+                for property_name, property_value in data['properties'].items():
+                    schema[event_type]['properties'][property_name] = property_value
+
         event_sub_schema = EventSubSchema()
         event_sub_schema.schema = schema
         event_sub_schema._compile()
