@@ -13,7 +13,8 @@ from jsonschema import ValidationError
 from objectiv_backend.common.types import EventData
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 
-MAX_DELAYED_EVENTS_MILLIS = 1000 * 3600  # TODO: move, different value?
+
+MAX_DELAYED_EVENTS_MILLIS = 1000 * 3600  # set to 0 to disable TODO: move, different value?
 
 EVENT_LIST_SCHEMA = {
     "type": "array",
@@ -234,7 +235,7 @@ def validate_event_time(event: Dict[str, Any], current_millis: int) -> List[Erro
     :param current_millis:
     :return: ErrorInfo, if any
     """
-    if current_millis - event['time'] > MAX_DELAYED_EVENTS_MILLIS:
+    if MAX_DELAYED_EVENTS_MILLIS and current_millis - event['time'] > MAX_DELAYED_EVENTS_MILLIS:
         return [ErrorInfo(event, f'Event too old: {event["received_time"] - event["time"]} > {MAX_DELAYED_EVENTS_MILLIS}')]
     return []
 
