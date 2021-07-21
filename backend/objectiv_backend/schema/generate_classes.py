@@ -8,7 +8,6 @@ event_schema = get_config_event_schema()
 
 
 def get_type(property_description: Dict[str, str]) -> str:
-    print(property_description)
     type_name = property_description['type']
 
     if 'items' in property_description:
