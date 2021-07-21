@@ -4,7 +4,8 @@
   "events": {
     "New2Event": {
         "parents": ["NonInteractiveEvent"],
-        "requiresContext": ["X2Context"]
+        "requiresContext": ["X2Context"],
+        "description": "New test event"
     }
   },
   "contexts": {
@@ -12,9 +13,11 @@
       "parents": [
         "AbstractGlobalContext"
       ],
+      "description": "test XContext",
       "properties": {
         "field": {
-          "type": "string"
+          "type": "string",
+          "description": "test field"
         }
       }
     }
