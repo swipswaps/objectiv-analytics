@@ -345,10 +345,10 @@ files.forEach((fn) => {
     const data = fs.readFileSync(schema_dir + fn, 'utf-8');
     all_schema[fn] = JSON5.parse(data, (key, value) => {
       // clean up `description` fields from json5 schema
-      // newlines in the string are translated to 8 spaces by the deserializer
-      // we translate them back to newlines and remove leading spaces
+      // we remove excess whitespace padding as a result from indentation in the schema
+      // we also remove the final newline
       if (key === 'description') {
-        return value.replace(/\s{8}/g, '\n').replace(/^\s+/gm, '').replace(/\n$/, '');
+        return value.replace(/^\s+/gm, '').replace(/\n$/, '');
       }
       return value;
     });
