@@ -12,7 +12,7 @@ import {
  */
 export const defaultFetchParameters: Omit<RequestInit, 'body'> = {
   method: 'POST',
-  mode: 'no-cors',
+  mode: 'cors',
   headers: {
     'Content-Type': 'text/plain',
   },
