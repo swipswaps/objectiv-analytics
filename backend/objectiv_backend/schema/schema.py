@@ -2,7 +2,7 @@ from typing import List
 from abc import ABC
 
 
-class AbstractContext (ABC):
+class AbstractContext(ABC):
     """
     Abstract Contexts define either properties required by Collectors or internal ones for hierarchical
     discrimination purposes.
@@ -32,7 +32,7 @@ class AbstractContext (ABC):
         self.id = id
 
 
-class AbstractLocationContext (AbstractContext, ABC):
+class AbstractLocationContext(AbstractContext, ABC):
     """
     This is the abstract parent of all location contexts. LocationContexts are used to populate Trackers or Events
     `location_stack` properties. A Location Stack is meant to describe accurately where an Event originated in the
@@ -54,7 +54,7 @@ class AbstractLocationContext (AbstractContext, ABC):
         AbstractContext.__init__(self, id=id)
 
 
-class AbstractGlobalContext (AbstractContext, ABC):
+class AbstractGlobalContext(AbstractContext, ABC):
     """
     Global_contexts are used to populate Trackers or Events `global_contexts` properties. They carry information
     that is not related to where the Event originated, such as device, platform or business data.
@@ -75,7 +75,7 @@ class AbstractGlobalContext (AbstractContext, ABC):
         AbstractContext.__init__(self, id=id)
 
 
-class ApplicationContext (AbstractGlobalContext):
+class ApplicationContext(AbstractGlobalContext):
     """
     Global context containing the origin (application id) of the event
 
@@ -95,7 +95,7 @@ class ApplicationContext (AbstractGlobalContext):
         AbstractGlobalContext.__init__(self, id=id)
 
 
-class SectionContext (AbstractLocationContext):
+class SectionContext(AbstractLocationContext):
     """
     SectionContexts are special LocationContexts representing a logical area of the UI or the system.
     They can be often reasoned about as being containers of other LocationContexts but not the direct targets of
@@ -117,7 +117,7 @@ class SectionContext (AbstractLocationContext):
         AbstractLocationContext.__init__(self, id=id)
 
 
-class WebDocumentContext (SectionContext):
+class WebDocumentContext(SectionContext):
     """
     global context about a web document. Should at least contain the current URL.
 
@@ -142,7 +142,7 @@ class WebDocumentContext (SectionContext):
         self.url = url
 
 
-class ScreenContext (SectionContext):
+class ScreenContext(SectionContext):
     """
     SectionContext for a screen
 
@@ -167,7 +167,7 @@ class ScreenContext (SectionContext):
         self.screen = screen
 
 
-class ExpandableSectionContext (SectionContext):
+class ExpandableSectionContext(SectionContext):
     """
     A `SectionContext` that is expandable.
 
@@ -187,7 +187,7 @@ class ExpandableSectionContext (SectionContext):
         SectionContext.__init__(self, id=id)
 
 
-class MediaPlayerContext (SectionContext):
+class MediaPlayerContext(SectionContext):
     """
     A `SectionContext` containing a media player.
 
@@ -207,7 +207,7 @@ class MediaPlayerContext (SectionContext):
         SectionContext.__init__(self, id=id)
 
 
-class NavigationContext (SectionContext):
+class NavigationContext(SectionContext):
     """
     A `SectionContext` containing navigational elements, for example a menu.
 
@@ -227,7 +227,7 @@ class NavigationContext (SectionContext):
         SectionContext.__init__(self, id=id)
 
 
-class OverlayContext (SectionContext):
+class OverlayContext(SectionContext):
     """
     A `SectionContext` that is an overlay
 
@@ -247,7 +247,7 @@ class OverlayContext (SectionContext):
         SectionContext.__init__(self, id=id)
 
 
-class ItemContext (AbstractLocationContext):
+class ItemContext(AbstractLocationContext):
     """
     ItemContexts are special LocationContexts representing interactive elements of the UI or targets in a system.
     These elements may trigger both Interactive and Non-Interactive Events. Eg. an Input field or a Button.
@@ -268,7 +268,7 @@ class ItemContext (AbstractLocationContext):
         AbstractLocationContext.__init__(self, id=id)
 
 
-class InputContext (ItemContext):
+class InputContext(ItemContext):
     """
     A location context, representing user input. For example, a form field, like input.
 
@@ -288,7 +288,7 @@ class InputContext (ItemContext):
         ItemContext.__init__(self, id=id)
 
 
-class ActionContext (ItemContext):
+class ActionContext(ItemContext):
     """
     ActionContexts are a more specific version of ItemContext specifically meant to describe actionable Items.
     These represent interactive elements that will trigger an Interactive Event. Eg. A Button or Link.
@@ -314,7 +314,7 @@ class ActionContext (ItemContext):
         self.text = text
 
 
-class ButtonContext (ActionContext):
+class ButtonContext(ActionContext):
     """
     interactive element, representing a button.
 
@@ -338,7 +338,7 @@ class ButtonContext (ActionContext):
         ActionContext.__init__(self, text=text, id=id)
 
 
-class LinkContext (ActionContext):
+class LinkContext(ActionContext):
     """
     interactive element, representing a (hyper) link.
 
@@ -367,7 +367,7 @@ class LinkContext (ActionContext):
         self.href = href
 
 
-class DeviceContext (AbstractGlobalContext):
+class DeviceContext(AbstractGlobalContext):
     """
     Global context containing meta info about the device that emitted the event.
 
@@ -392,7 +392,7 @@ class DeviceContext (AbstractGlobalContext):
         self.user_agent = user_agent
 
 
-class ErrorContext (AbstractGlobalContext):
+class ErrorContext(AbstractGlobalContext):
     """
     Generic global context to encapsulate any errors
 
@@ -417,7 +417,7 @@ class ErrorContext (AbstractGlobalContext):
         self.message = message
 
 
-class CookieIdContext (AbstractGlobalContext):
+class CookieIdContext(AbstractGlobalContext):
     """
     Global context with information needed to reconstruct a user session.
 
@@ -442,7 +442,7 @@ class CookieIdContext (AbstractGlobalContext):
         self.cookie_id = cookie_id
 
 
-class SessionContext (AbstractGlobalContext):
+class SessionContext(AbstractGlobalContext):
     """
     Context with meta info pertaining to the current session.
 
@@ -467,7 +467,7 @@ class SessionContext (AbstractGlobalContext):
         self.hit_number = hit_number
 
 
-class HttpContext (AbstractGlobalContext):
+class HttpContext(AbstractGlobalContext):
     """
     Global context with meta information about the agent that sent the event.
 
@@ -506,7 +506,7 @@ class HttpContext (AbstractGlobalContext):
         self.remote_address = remote_address
 
 
-class AbstractEvent (ABC):
+class AbstractEvent(ABC):
     """
     Events must provide a `name` and optionally can, but most likely will, carry a list of Location and Global
     Contexts. Additionally, every event must have an `ApplicationContext` to be able to distinguish from what
@@ -561,7 +561,7 @@ class AbstractEvent (ABC):
         self.transport_time = transport_time
 
 
-class NonInteractiveEvent (AbstractEvent):
+class NonInteractiveEvent(AbstractEvent):
     """
     Non interactive events, are events that are not (directly) triggered by an interaction. For example:
     Consider the following flow of events:
@@ -618,7 +618,7 @@ class NonInteractiveEvent (AbstractEvent):
                                transport_time=transport_time)
 
 
-class DocumentLoadedEvent (NonInteractiveEvent):
+class DocumentLoadedEvent(NonInteractiveEvent):
     """
     A non interactive event that is emitted after a document finishes loading. It should provide a
     `WebDocumentContext` which should describe the state (eg. URL) of the event.
@@ -675,7 +675,7 @@ class DocumentLoadedEvent (NonInteractiveEvent):
                                      transport_time=transport_time)
 
 
-class URLChangeEvent (NonInteractiveEvent):
+class URLChangeEvent(NonInteractiveEvent):
     """
     non interactive event that is emitted when the URL of a page has changed. Also contains a `WebDocumentContext`
     that details the change.
@@ -730,7 +730,7 @@ class URLChangeEvent (NonInteractiveEvent):
                                      transport_time=transport_time)
 
 
-class ApplicationLoadedEvent (NonInteractiveEvent):
+class ApplicationLoadedEvent(NonInteractiveEvent):
     """
     non interactive event that is emitted after an application (eg. SPA) has finished loading.
     Contains a `SectionContext`
@@ -785,7 +785,7 @@ class ApplicationLoadedEvent (NonInteractiveEvent):
                                      transport_time=transport_time)
 
 
-class SectionVisibleEvent (NonInteractiveEvent):
+class SectionVisibleEvent(NonInteractiveEvent):
     """
     Non interactive event, emitted after a section (`SectionContext`) has become visible.
 
@@ -839,7 +839,7 @@ class SectionVisibleEvent (NonInteractiveEvent):
                                      transport_time=transport_time)
 
 
-class SectionHiddenEvent (NonInteractiveEvent):
+class SectionHiddenEvent(NonInteractiveEvent):
     """
     Non interactive event, emitted after a section (`SectionContext`) has become invisible.
 
@@ -893,7 +893,7 @@ class SectionHiddenEvent (NonInteractiveEvent):
                                      transport_time=transport_time)
 
 
-class VideoEvent (NonInteractiveEvent):
+class VideoEvent(NonInteractiveEvent):
     """
     Family of non interactive events triggered by a video player
 
@@ -947,7 +947,7 @@ class VideoEvent (NonInteractiveEvent):
                                      transport_time=transport_time)
 
 
-class VideoLoadEvent (VideoEvent):
+class VideoLoadEvent(VideoEvent):
     """
     Event emitted after a video completes loading.
 
@@ -1001,7 +1001,7 @@ class VideoLoadEvent (VideoEvent):
                             transport_time=transport_time)
 
 
-class VideoStartEvent (VideoEvent):
+class VideoStartEvent(VideoEvent):
     """
     Event emitted after a video starts playback.
 
@@ -1055,7 +1055,7 @@ class VideoStartEvent (VideoEvent):
                             transport_time=transport_time)
 
 
-class VideoStopEvent (VideoEvent):
+class VideoStopEvent(VideoEvent):
     """
     Event emitted after a video stops playback.
 
@@ -1109,7 +1109,7 @@ class VideoStopEvent (VideoEvent):
                             transport_time=transport_time)
 
 
-class VideoPauseEvent (VideoEvent):
+class VideoPauseEvent(VideoEvent):
     """
     Event emitted after a video pauses playback (toggle).
 
@@ -1163,7 +1163,7 @@ class VideoPauseEvent (VideoEvent):
                             transport_time=transport_time)
 
 
-class InteractiveEvent (AbstractEvent):
+class InteractiveEvent(AbstractEvent):
     """
     Events that are the direct result of a user interaction. Eg. a Button Click
 
@@ -1217,7 +1217,7 @@ class InteractiveEvent (AbstractEvent):
                                transport_time=transport_time)
 
 
-class ClickEvent (InteractiveEvent):
+class ClickEvent(InteractiveEvent):
     """
     Event triggered by a user clicking on an element
 
@@ -1271,7 +1271,7 @@ class ClickEvent (InteractiveEvent):
                                   transport_time=transport_time)
 
 
-class InputChangeEvent (InteractiveEvent):
+class InputChangeEvent(InteractiveEvent):
     """
     Event triggered when user input is modified.
 

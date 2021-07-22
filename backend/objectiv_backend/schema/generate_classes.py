@@ -90,7 +90,7 @@ def get_classes(objects: Dict[str, dict]) -> None:
         if re.match('^Abstract', obj_name):
             parents.append('ABC')
         if len(parents) > 0:
-            parent = f' ({", ".join(parents)})'
+            parent = f'({", ".join(parents)})'
 
         class_description = [s.strip() for s in obj['description'].split('\n')]
 
