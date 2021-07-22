@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Any
 import re
 
 from objectiv_backend.common.config import get_config_event_schema
@@ -33,7 +33,7 @@ def get_parent_list(objects: Dict[str, dict]) -> Dict[str, list]:
     :return: dictionary with a list of ancestors per object
     """
     # first create a list of parent per obj
-    parent_mapping = {}
+    parent_mapping: Dict[str, Any] = {}
     for obj_name, obj in objects.items():
         if len(obj['parents']) > 0:
             parent_mapping[obj_name] = obj['parents'][0]
@@ -63,7 +63,7 @@ def get_all_properties(object_list: List, objects: Dict[str, dict]) -> Dict[str,
     :param objects:
     :return: dictionary of properties
     """
-    properties = {}
+    properties: Dict[str, dict] = {}
     for obj in object_list:
         if 'properties' in objects[obj]:
             properties.update(objects[obj]['properties'])
@@ -98,10 +98,10 @@ def get_classes(objects: Dict[str, dict]) -> None:
         class_descriptions = [s.strip() for s in obj['description'].split('\n')]
 
         # instance variables, for this instance (eg. self.variable)
-        iv = []
+        iv: List = []
 
         # properties of _this_ instance
-        properties = {}
+        properties: Dict[str, dict] = {}
         if 'properties' in obj and len(obj['properties']) > 0:
             properties = obj['properties']
 
