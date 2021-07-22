@@ -27,16 +27,16 @@ def get_type(property_description: Dict[str, str]) -> str:
 # first: events
 
 
-def get_parent_list(objects: Dict) -> Dict:
+def get_parent_list(objects: Dict[str, dict]) -> Dict[str, list]:
     # first create a list of parent per obj
     parent_mapping = {}
-    for obj_name, obj in objects:
+    for obj_name, obj in objects.items():
         if len(obj['parents']) > 0:
             parent_mapping[obj_name] = obj['parents'][0]
         else:
             parent_mapping[obj_name] = None
 
-    parent_list = {}
+    parent_list: Dict[str, list] = {}
     for klass in parent_mapping.keys():
         parent = parent_mapping[klass]
         parent_list[klass] = []
@@ -51,7 +51,7 @@ def get_parent_list(objects: Dict) -> Dict:
     return parent_list
 
 
-def get_all_properties(object_list: List, objects: Dict) -> Dict:
+def get_all_properties(object_list: List, objects: Dict[str, dict]) -> Dict[str, dict]:
     properties = {}
     for obj in object_list:
         if 'properties' in objects[obj]:
@@ -61,7 +61,7 @@ def get_all_properties(object_list: List, objects: Dict) -> Dict:
 
 def get_classes(objects: Dict) -> None:
 
-    pl = get_parent_list(objects.items())
+    pl = get_parent_list(objects)
 
     for obj_name, obj in objects.items():
 
@@ -80,13 +80,8 @@ def get_classes(objects: Dict) -> None:
 
         class_description = [s.strip() for s in obj['description'].split('\n')]
 
-        # constructor args, these should include all instance variables, both for this instance,
-        # but also for the super class
-        args = []
         # instance variables, for this instance
         iv = []
-        # args to pass to super
-        super_args = []
 
         # properties of _this_ instance
         properties = {}
@@ -97,7 +92,14 @@ def get_classes(objects: Dict) -> None:
             if property_name not in ['_context_type', 'event']:
                 iv.append(f'self.{property_name} = {property_name}')
 
+        # constructor description arguments
         cda = []
+        # constructor args, these should include all instance variables, both for this instance,
+        # but also for the super class
+        args = []
+        # args to pass to super
+        super_args = []
+
         if len(all_properties) > 0:
             class_description.append('\n    Attributes:')
             for property_name, property_description in all_properties.items():
@@ -109,7 +111,7 @@ def get_classes(objects: Dict) -> None:
                 property_type = get_type(property_description)
 
                 args.append(f'{property_name}: {property_type}')
-                cda.append(f':param {property_name}: {property_type} -\n           {property_description["description"].strip()}')
+                cda.append(f':param {property_name}: \n           {property_description["description"].strip()}')
 
                 class_description.append(
                     f'    {property_name} ({property_type}):\n            {property_description["description"].strip()}')
@@ -118,6 +120,7 @@ def get_classes(objects: Dict) -> None:
         if len(iv) > 0:
             instance_variables += '\n'
 
+        # constructor arguments
         args_string = ''
         if len(args) > 0:
             if len(args) > 3:
@@ -132,6 +135,7 @@ def get_classes(objects: Dict) -> None:
             f'\n        """\n'
         )
 
+        # arguments to call super with
         super_args_string = ''
         if len(super_args) > 0:
             if len(super_args) > 3:
@@ -151,6 +155,7 @@ def get_classes(objects: Dict) -> None:
             f'        {instance_variables}'
         )
 
+        # class description
         description = '\n    '.join(class_description)
         tpl = (
 
