@@ -229,14 +229,16 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
 
 def validate_event_time(event: Dict[str, Any], current_millis: int) -> List[ErrorInfo]:
     """
-    Validate timestamps in event to check if it's not too old
+    Validate timestamps in event to check if it's not too old or too new
     :param event:
     :param current_millis:
-    :return: ErrorInfo, if any
+    :return: [ErrorInfo], if any
     """
     max_delay = get_config_timestamp_validation().max_delay
     if max_delay and current_millis - event['time'] > max_delay:
-        return [ErrorInfo(event, f'Event too old: {event["received_time"] - event["time"]} > {max_delay}')]
+        return [ErrorInfo(event, f'Event too old: {current_millis - event["time"]} > {max_delay}')]
+    if event['time'] > current_millis:
+        return [ErrorInfo(event, f'Event in the future: {event["time"]} > {current_millis}')]
     return []
 
 
