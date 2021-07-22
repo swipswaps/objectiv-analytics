@@ -75,6 +75,7 @@ def get_classes(objects: Dict[str, dict]) -> None:
     Generates python classes based on the list (Dict) of objects provided
     :param objects: Dict
     """
+
     pl = get_parent_list(objects)
 
     for obj_name, obj in objects.items():
@@ -84,6 +85,7 @@ def get_classes(objects: Dict[str, dict]) -> None:
 
         parent = ''
         parents = obj['parents']
+
         super_class = None
         if len(obj['parents']) > 0:
             super_class = obj['parents'][0]
@@ -92,9 +94,10 @@ def get_classes(objects: Dict[str, dict]) -> None:
         if len(parents) > 0:
             parent = f'({", ".join(parents)})'
 
-        class_description = [s.strip() for s in obj['description'].split('\n')]
+        # get object/class description from schema, and clean up some white space
+        class_descriptions = [s.strip() for s in obj['description'].split('\n')]
 
-        # instance variables, for this instance
+        # instance variables, for this instance (eg. self.variable)
         iv = []
 
         # properties of _this_ instance
@@ -107,15 +110,15 @@ def get_classes(objects: Dict[str, dict]) -> None:
                 iv.append(f'self.{property_name} = {property_name}')
 
         # constructor description arguments
-        cda = []
+        cda: List = []
         # constructor args, these should include all instance variables, both for this instance,
         # but also for the super class
-        args = []
+        args: List = []
         # args to pass to super
-        super_args = []
+        super_args: List = []
 
         if len(all_properties) > 0:
-            class_description.append('\n    Attributes:')
+            class_descriptions.append('\n    Attributes:')
             for property_name, property_description in all_properties.items():
                 if property_name in ['_context_type', 'event']:
                     # ignore these properties, as they are reflected in the class name
@@ -128,15 +131,15 @@ def get_classes(objects: Dict[str, dict]) -> None:
                 cda.append(
                     f':param {property_name}: \n           {property_description["description"].strip()}')
 
-                class_description.append(
+                class_descriptions.append(
                     f'    {property_name} ({property_type}):\n            {property_description["description"].strip()}')
 
         # class description
-        description = '\n    '.join(class_description)
+        class_description = '\n    '.join(class_descriptions)
 
-        instance_variables = '\n        '.join(iv)
+        set_instance_variables = ''
         if len(iv) > 0:
-            instance_variables += '\n'
+            set_instance_variables = '        ' + '\n        '.join(iv) + '\n'
 
         # constructor arguments
         args_string = ''
@@ -162,6 +165,7 @@ def get_classes(objects: Dict[str, dict]) -> None:
             else:
                 super_args_string = ', ' + ', '.join(super_args)
 
+        # only call the super class if there is one (from within our own hierarchy)
         call_super_class = ''
         if super_class:
             call_super_class = f'        {super_class}.__init__(self{super_args_string})\n'
@@ -170,14 +174,14 @@ def get_classes(objects: Dict[str, dict]) -> None:
             f'def __init__(self{args_string}):\n'
             f'{constructor_description}\n'
             f'{call_super_class}'
-            f'        {instance_variables}'
+            f'{set_instance_variables}'
         )
 
         tpl = (
 
             f'class {obj_name}{parent}:\n'
             '    """\n'
-            f'    {description}\n'
+            f'    {class_description}\n'
             '    """\n'
             f'    {constructor}\n'
         )
