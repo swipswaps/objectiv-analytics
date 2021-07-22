@@ -1,33 +1,37 @@
-from typing import List, Dict, Any
+from typing import List, Dict
 import re
 
 from objectiv_backend.common.config import get_config_event_schema
 
-# get schema
-event_schema = get_config_event_schema()
-
 
 def get_type(property_description: Dict[str, str]) -> str:
+    """
+    Translate (json)schema property type to something Python understands
+    :param property_description: from schema
+    :return: string containing Python type
+    """
     type_name = property_description['type']
 
     abstract_type = ''
     if 'items' in property_description:
         abstract_type = property_description['items']
-
     if type_name == 'array':
         return f'List[{abstract_type}]'
     if type_name == 'object':
-        return 'Dict{}'
+        return 'Dict{str, Any}'
     if type_name == 'string':
         return 'str'
     if type_name == 'integer':
         return 'int'
     return 'str'
 
-# first: events
-
 
 def get_parent_list(objects: Dict[str, dict]) -> Dict[str, list]:
+    """
+    Create list containing ancestry of all objects
+    :param objects:
+    :return: dictionary with a list of ancestors per object
+    """
     # first create a list of parent per obj
     parent_mapping = {}
     for obj_name, obj in objects.items():
@@ -52,6 +56,13 @@ def get_parent_list(objects: Dict[str, dict]) -> Dict[str, list]:
 
 
 def get_all_properties(object_list: List, objects: Dict[str, dict]) -> Dict[str, dict]:
+    """
+    returns a dictionary containing properties of all objects in the list. Can be used to resolve all (inherited)
+    properties of an object
+    :param object_list: List of all objects in the ancestry
+    :param objects:
+    :return: dictionary of properties
+    """
     properties = {}
     for obj in object_list:
         if 'properties' in objects[obj]:
@@ -59,8 +70,11 @@ def get_all_properties(object_list: List, objects: Dict[str, dict]) -> Dict[str,
     return properties
 
 
-def get_classes(objects: Dict) -> None:
-
+def get_classes(objects: Dict[str, dict]) -> None:
+    """
+    Generates python classes based on the list (Dict) of objects provided
+    :param objects: Dict
+    """
     pl = get_parent_list(objects)
 
     for obj_name, obj in objects.items():
@@ -111,10 +125,14 @@ def get_classes(objects: Dict) -> None:
                 property_type = get_type(property_description)
 
                 args.append(f'{property_name}: {property_type}')
-                cda.append(f':param {property_name}: \n           {property_description["description"].strip()}')
+                cda.append(
+                    f':param {property_name}: \n           {property_description["description"].strip()}')
 
                 class_description.append(
                     f'    {property_name} ({property_type}):\n            {property_description["description"].strip()}')
+
+        # class description
+        description = '\n    '.join(class_description)
 
         instance_variables = '\n        '.join(iv)
         if len(iv) > 0:
@@ -155,8 +173,6 @@ def get_classes(objects: Dict) -> None:
             f'        {instance_variables}'
         )
 
-        # class description
-        description = '\n    '.join(class_description)
         tpl = (
 
             f'class {obj_name}{parent}:\n'
@@ -165,13 +181,16 @@ def get_classes(objects: Dict) -> None:
             '    """\n'
             f'    {constructor}\n'
         )
-
         print(tpl)
 
 
+# some imports
 print('from typing import List')
 print('from abc import ABC\n\n')
-# print(event_schema.contexts.schema.items())
-get_classes(event_schema.contexts.schema)
 
+# get schema
+event_schema = get_config_event_schema()
+# process contexts (needed for events, so we do these first)
+get_classes(event_schema.contexts.schema)
+# process events
 get_classes(event_schema.events.schema)
