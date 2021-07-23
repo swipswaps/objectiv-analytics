@@ -76,9 +76,13 @@ def get_event_factory(objects: Dict[str, dict]) -> List[str]:
     :param objects:
     :return: str - function to instantiate classes
     """
-    factory: List[str] = ['def make_event(event_type: str, **kwargs) -> AbstractEvent:']
+    factory: List[str] = [
+        'def make_event(event: str = None, **kwargs) -> AbstractEvent:',
+        '    if not event:',
+        '        event = kwargs["event"]\n'
+    ]
     for obj_name, obj in objects.items():
-        factory.append(f'    if event_type == "{obj_name}":\n'
+        factory.append(f'    if event == "{obj_name}":\n'
                        f'        return {obj_name}(**kwargs)')
     factory.append(f'    return AbstractEvent(**kwargs)')
     return factory
@@ -113,7 +117,7 @@ def get_classes(objects: Dict[str, dict]) -> List[str]:
         class_descriptions = [s.strip() for s in obj['description'].split('\n')]
 
         # instance variables, for this instance (eg. self.variable)
-        iv: List = []
+        iv: List[str] = []
 
         # properties of _this_ instance
         properties: Dict[str, dict] = {}
@@ -125,12 +129,12 @@ def get_classes(objects: Dict[str, dict]) -> List[str]:
                 iv.append(f'self.{property_name} = {property_name}')
 
         # constructor description arguments
-        cda: List = []
+        cda: List[str] = []
         # constructor args, these should include all instance variables, both for this instance,
         # but also for the super class
-        args: List = []
+        args: List[str] = []
         # args to pass to super
-        super_args: List = []
+        super_args: List[str] = []
 
         if len(all_properties) > 0:
             class_descriptions.append('\n    Attributes:')
