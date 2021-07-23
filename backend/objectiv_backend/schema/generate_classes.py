@@ -80,7 +80,7 @@ def get_event_factory(objects: Dict[str,dict]) -> List[str]:
     for obj_name, obj in objects.items():
         factory.append(f'    if event_type == "{obj_name}":\n'
                        f'        return {obj_name}(**kwargs)')
-    factory.append(f'    return AbstractEvent()')
+    factory.append(f'    return AbstractEvent(**kwargs)')
     return factory
 
 

@@ -1356,4 +1356,4 @@ def make_event(event_type: str, **kwargs) -> AbstractEvent:
         return ClickEvent(**kwargs)
     if event_type == "InputChangeEvent":
         return InputChangeEvent(**kwargs)
-    return AbstractEvent()
+    return AbstractEvent(**kwargs)
