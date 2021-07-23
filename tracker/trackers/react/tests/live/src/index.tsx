@@ -9,7 +9,7 @@ import reportWebVitals from './reportWebVitals';
 // Fake the whole backend with Mirage
 createServer({
   routes() {
-    this.post("/endpoint", () => (new Response(200, {}, { status: 200 })))
+    this.post("/endpoint", () => (new Response(500, {}, { status: 200 })))
   },
 })
 

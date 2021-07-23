@@ -32,16 +32,44 @@ export const defaultFetchFunction = async ({
   events: [TrackerEvent, ...TrackerEvent[]];
   parameters?: typeof defaultFetchParameters;
 }): Promise<Response> => {
-  events.forEach((event) => event.setTransportTime());
-  return fetch(endpoint, {
-    ...parameters,
-    body: JSON.stringify(events),
-  }).then((response) => {
-    if (response.status === 200) {
-      return response;
-    } else {
-      throw new TransportSendError();
-    }
+  return new Promise(function (resolve, reject) {
+    events.forEach((event) => event.setTransportTime());
+
+    console.groupCollapsed(`Objectiv: FetchAPITransport sending`);
+    console.log(`Events:`);
+    console.log(events);
+    console.groupEnd();
+
+    fetch(endpoint, {
+      ...parameters,
+      body: JSON.stringify(events),
+    })
+      .then((response) => {
+        if (response.status === 200) {
+          console.groupCollapsed(`Objectiv: FetchAPITransport success`);
+          console.log(`Events:`);
+          console.log(events);
+          console.groupEnd();
+
+          resolve(response);
+        } else {
+          console.groupCollapsed(`Objectiv: FetchAPITransport failure`);
+          console.log(`Events:`);
+          console.log(events);
+          console.log(`Response: ${response}`);
+          console.groupEnd();
+
+          reject(new TransportSendError());
+        }
+      })
+      .catch(() => {
+        console.groupCollapsed(`Objectiv: FetchAPITransport error`);
+        console.log(`Events:`);
+        console.log(events);
+        console.groupEnd();
+
+        reject(new TransportSendError());
+      });
   });
 };
 

@@ -55,6 +55,11 @@ export class TransportSwitch implements TrackerTransport {
    */
   constructor(...args: [TrackerTransport, TrackerTransport, ...TrackerTransport[]]) {
     this.firstUsableTransport = args.find((trackerTransport) => trackerTransport.isUsable());
+
+    console.groupCollapsed(`Objectiv: ${this.transportName} initialized`);
+    console.log(`Transports: ${args.map((transport) => transport.transportName).join(', ')}`);
+    console.log(`First usable Transport: ${this.firstUsableTransport?.transportName ?? 'none'}`);
+    console.groupEnd();
   }
 
   /**
@@ -91,6 +96,11 @@ export class TransportGroup implements TrackerTransport {
    */
   constructor(...args: [TrackerTransport, TrackerTransport, ...TrackerTransport[]]) {
     this.usableTransports = args.filter((transport) => transport.isUsable());
+
+    console.groupCollapsed(`Objectiv: ${this.transportName} initialized`);
+    console.log(`Transports: ${args.map((transport) => transport.transportName).join(', ')}`);
+    console.log(`Usable Transports: ${this.usableTransports.map((transport) => transport.transportName).join(', ')}`);
+    console.groupEnd();
   }
 
   /**
@@ -133,6 +143,11 @@ export class QueuedTransport implements TrackerTransport {
     this.transport = config.transport;
     this.queue = config.queue;
 
+    console.groupCollapsed(`Objectiv: ${this.transportName} initialized`);
+    console.log(`Transport: ${this.transport.transportName}`);
+    console.log(`Queue: ${this.queue.queueName}`);
+    console.groupEnd();
+
     if (this.isUsable()) {
       // Bind the handle function to its Transport instance to preserve its scope
       const processFunction = this.transport.handle.bind(this.transport);
@@ -142,6 +157,8 @@ export class QueuedTransport implements TrackerTransport {
 
       // And start the Queue runner
       this.queue.startRunner();
+
+      console.log(`%cObjectiv: ${this.queue.queueName} runner started`, 'font-weight:bold');
     }
   }
 
@@ -228,6 +245,18 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
     this.errors = [];
     this.attemptCount = 1;
     this.startTime = Date.now();
+
+    console.groupCollapsed(`Objectiv: RetryTransportAttempt created`);
+    console.log(`Transport: ${this.transport.transportName}`);
+    console.log(`Max Attempts: ${this.maxAttempts}`);
+    console.log(`Max Retry (ms): ${this.maxRetryMs}`);
+    console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
+    console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
+    console.log(`Retry Factor: ${this.retryFactor}`);
+    console.group(`Events:`);
+    console.log(this.events);
+    console.groupEnd();
+    console.groupEnd();
   }
 
   /**
@@ -254,8 +283,21 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
       return Promise.reject(this.errors);
     }
 
+    console.groupCollapsed(`Objectiv: RetryTransportAttempt running`);
+    console.log(`Attempt Count: ${this.attemptCount}`);
+    console.log(`Events:`);
+    console.log(this.events);
+    console.groupEnd();
+
     // Attempt to transport the given Events. Catch any rejections and have `retry` handle them.
     return this.transport.handle(...this.events).catch((error) => {
+      console.groupCollapsed(`Objectiv: RetryTransportAttempt failed`);
+      console.log(`Error:`);
+      console.log(error);
+      console.log(`Events:`);
+      console.log(this.events);
+      console.groupEnd();
+
       // Retry TransportSendErrors
       if (error instanceof TransportSendError) {
         return this.retry(error);
@@ -278,6 +320,15 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
 
     // Increment number of attempts
     this.attemptCount++;
+
+    console.groupCollapsed(`Objectiv: RetryTransportAttempt retrying`);
+    console.log(`Attempt Count: ${this.attemptCount}`);
+    console.log(`Waited: ${nextTimeoutMs}`);
+    console.log(`Error:`);
+    console.log(error);
+    console.log(`Events:`);
+    console.log(this.events);
+    console.groupEnd();
 
     // Run again
     return this.run();
@@ -322,6 +373,15 @@ export class RetryTransport implements TrackerTransport {
     if (this.minTimeoutMs > this.maxTimeoutMs) {
       throw new Error('minTimeoutMs cannot be bigger than maxTimeoutMs');
     }
+
+    console.groupCollapsed(`Objectiv: ${this.transportName} initialized`);
+    console.log(`Transport: ${this.transport.transportName}`);
+    console.log(`Max Attempts: ${this.maxAttempts}`);
+    console.log(`Max Retry (ms): ${this.maxRetryMs}`);
+    console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
+    console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
+    console.log(`Retry Factor: ${this.retryFactor}`);
+    console.groupEnd();
   }
 
   /**

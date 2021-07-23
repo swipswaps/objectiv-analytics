@@ -6,6 +6,11 @@ import { TrackerEvent } from './TrackerEvent';
  */
 export interface TrackerQueueStoreInterface {
   /**
+   * A name describing the Queue Store implementation for debugging purposes
+   */
+  readonly queueStoreName: string;
+
+  /**
    * How many TrackerEvents are in the store
    */
   length: number;
@@ -30,8 +35,13 @@ export interface TrackerQueueStoreInterface {
  * An in-memory implementation of a TrackerQueueStore.
  */
 export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
+  queueStoreName = `TrackerQueueMemoryStore`;
   length: number = 0;
   events: TrackerEvent[] = [];
+
+  constructor() {
+    console.log(`%cObjectiv: ${this.queueStoreName} initialized`, 'font-weight: bold');
+  }
 
   async read(size?: number, filterPredicate?: (event: TrackerEvent) => boolean): Promise<TrackerEvent[]> {
     let events = this.events;
@@ -149,6 +159,13 @@ export class TrackerQueue implements TrackerQueueInterface {
     this.batchSize = config?.batchSize ?? 10;
     this.batchDelayMs = config?.batchDelayMs ?? 1000;
     this.concurrency = config?.concurrency ?? 4;
+
+    console.groupCollapsed(`Objectiv: ${this.queueName} initialized`);
+    console.log(`Store: ${this.store.queueStoreName}`);
+    console.log(`Batch Size: ${this.batchSize}`);
+    console.log(`Batch Delay (ms): ${this.batchDelayMs}`);
+    console.log(`Concurrency: ${this.concurrency}`);
+    console.groupEnd();
   }
 
   setProcessFunction(processFunction: TrackerQueueProcessFunction) {
@@ -157,7 +174,6 @@ export class TrackerQueue implements TrackerQueueInterface {
 
   startRunner() {
     setInterval(async () => {
-      // TODO Add timeout/cancel mechanism so we may cancel runs running for too long and retry or die
       await this.run();
     }, this.batchDelayMs);
   }
@@ -190,6 +206,11 @@ export class TrackerQueue implements TrackerQueueInterface {
       if (!isNonEmptyArray(eventsBatch)) {
         return;
       }
+
+      console.groupCollapsed(`Objectiv: ${this.queueName} batch read`);
+      console.log(`Events:`);
+      console.log(eventsBatch);
+      console.groupEnd();
 
       // Gather Event Ids. Used for both deletion and processingEventIds cleanup.
       const eventsBatchIds = eventsBatch.map((event) => event.id);

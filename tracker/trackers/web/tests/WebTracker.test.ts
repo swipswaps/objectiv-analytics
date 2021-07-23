@@ -43,6 +43,7 @@ describe('WebTracker', () => {
             processFunction: expect.any(Function),
             processingEventIds: [],
             store: {
+              queueStoreName: 'TrackerQueueMemoryStore',
               length: 0,
               events: [],
             },

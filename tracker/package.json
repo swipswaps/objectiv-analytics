@@ -9,6 +9,7 @@
   "scripts": {
     "clean": "yarn exec make clean",
     "build": "yarn workspaces foreach --exclude root --exclude @objectiv/tracker-react-live-testing-app --verbose run build",
+    "build:dev": "dev=true yarn build",
     "prettier": "yarn workspaces foreach --exclude root --exclude @objectiv/tracker-react-live-testing-app --verbose run prettier",
     "list": "yarn workspaces list",
     "tsc": "yarn workspaces foreach --exclude root --exclude @objectiv/tracker-react-live-testing-app --verbose run tsc",
