@@ -1325,35 +1325,38 @@ class InputChangeEvent(InteractiveEvent):
                                   transport_time=transport_time)
 
 
-def make_event(event_type: str, **kwargs) -> AbstractEvent:
-    if event_type == "AbstractEvent":
+def make_event(event: str = None, **kwargs) -> AbstractEvent:
+    if not event:
+        event = kwargs["event"]
+
+    if event == "AbstractEvent":
         return AbstractEvent(**kwargs)
-    if event_type == "NonInteractiveEvent":
+    if event == "NonInteractiveEvent":
         return NonInteractiveEvent(**kwargs)
-    if event_type == "DocumentLoadedEvent":
+    if event == "DocumentLoadedEvent":
         return DocumentLoadedEvent(**kwargs)
-    if event_type == "URLChangeEvent":
+    if event == "URLChangeEvent":
         return URLChangeEvent(**kwargs)
-    if event_type == "ApplicationLoadedEvent":
+    if event == "ApplicationLoadedEvent":
         return ApplicationLoadedEvent(**kwargs)
-    if event_type == "SectionVisibleEvent":
+    if event == "SectionVisibleEvent":
         return SectionVisibleEvent(**kwargs)
-    if event_type == "SectionHiddenEvent":
+    if event == "SectionHiddenEvent":
         return SectionHiddenEvent(**kwargs)
-    if event_type == "VideoEvent":
+    if event == "VideoEvent":
         return VideoEvent(**kwargs)
-    if event_type == "VideoLoadEvent":
+    if event == "VideoLoadEvent":
         return VideoLoadEvent(**kwargs)
-    if event_type == "VideoStartEvent":
+    if event == "VideoStartEvent":
         return VideoStartEvent(**kwargs)
-    if event_type == "VideoStopEvent":
+    if event == "VideoStopEvent":
         return VideoStopEvent(**kwargs)
-    if event_type == "VideoPauseEvent":
+    if event == "VideoPauseEvent":
         return VideoPauseEvent(**kwargs)
-    if event_type == "InteractiveEvent":
+    if event == "InteractiveEvent":
         return InteractiveEvent(**kwargs)
-    if event_type == "ClickEvent":
+    if event == "ClickEvent":
         return ClickEvent(**kwargs)
-    if event_type == "InputChangeEvent":
+    if event == "InputChangeEvent":
         return InputChangeEvent(**kwargs)
     return AbstractEvent(**kwargs)
