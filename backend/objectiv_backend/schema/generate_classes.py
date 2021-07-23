@@ -114,7 +114,8 @@ def get_classes(objects: Dict[str, dict]) -> List[str]:
             parent = f'({", ".join(parents)})'
 
         # get object/class description from schema, and clean up some white space
-        class_descriptions = [s.strip() for s in obj['description'].split('\n')]
+        class_descriptions = [s.strip()
+                              for s in obj['description'].split('\n')]
 
         # instance variables, for this instance (eg. self.variable)
         iv: List[str] = []
