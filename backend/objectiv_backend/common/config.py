@@ -17,6 +17,9 @@ SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
 # when set to true, the collector will return detailed validation errors per event
 SCHEMA_VALIDATION_ERROR_REPORTING = os.environ.get('SCHEMA_VALIDATION_ERROR_REPORTING', 'false') == 'true'
 
+# Number of ms before an event is considered too old. set to 0 to disable
+MAX_DELAYED_EVENTS_MILLIS = 1000 * 3600
+
 # Whether to run in sync mode (default) or async-mode.
 _ASYNC_MODE = os.environ.get('ASYNC_MODE', '') == 'true'
 
@@ -82,6 +85,10 @@ class CookieConfig(NamedTuple):
     name: str
     # duration in seconds
     duration: int
+
+
+class TimestampValidationConfig(NamedTuple):
+    max_delay: int
 
 
 class CollectorConfig(NamedTuple):
@@ -155,9 +162,14 @@ def get_config_event_schema() -> EventSchema:
     return get_event_schema(SCHEMA_EXTENSION_DIRECTORY)
 
 
+def get_config_timestamp_validation() -> TimestampValidationConfig:
+    return TimestampValidationConfig(max_delay=MAX_DELAYED_EVENTS_MILLIS)
+
+
 # creating these configuration structures is not heavy, but it's pointless to do it for each request.
 # so we have some super simple caching here
 _CACHED_COLLECTOR_CONFIG: Optional[CollectorConfig] = None
+
 
 def init_collector_config():
     """ Load collector config into cache. """
