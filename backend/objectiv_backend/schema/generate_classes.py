@@ -70,7 +70,20 @@ def get_all_properties(object_list: List, objects: Dict[str, dict]) -> Dict[str,
     return properties
 
 
-def get_classes(objects: Dict[str, dict]) -> None:
+def get_event_factory(objects: Dict[str,dict]) -> List[str]:
+    """
+    Generate very basic factory to be able to load events
+    :param objects:
+    :return: str - function to instantiate classes
+    """
+    factory: List[str] = ['def make_event(event_type: str, **kwargs) -> AbstractEvent:']
+    for obj_name, obj in objects.items():
+        factory.append(f'    if event_type == "{obj_name}":\n'
+                       f'        return {obj_name}(**kwargs)')
+    return factory
+
+
+def get_classes(objects: Dict[str, dict]) -> List[str]:
     """
     Generates python classes based on the list (Dict) of objects provided
     :param objects: Dict
@@ -78,6 +91,7 @@ def get_classes(objects: Dict[str, dict]) -> None:
 
     pl = get_parent_list(objects)
 
+    classes: List[str] = []
     for obj_name, obj in objects.items():
 
         hierarchy = [obj_name, *pl[obj_name]]
@@ -177,24 +191,31 @@ def get_classes(objects: Dict[str, dict]) -> None:
             f'{set_instance_variables}'
         )
 
-        tpl = (
-
+        classes.append(
             f'class {obj_name}{parent}:\n'
             '    """\n'
             f'    {class_description}\n'
             '    """\n'
             f'    {constructor}\n'
         )
-        print(tpl)
 
+    classes.append('\n')
+    return classes
 
-# some imports
-print('from typing import List')
-print('from abc import ABC\n\n')
 
 # get schema
 event_schema = get_config_event_schema()
-# process contexts (needed for events, so we do these first)
-get_classes(event_schema.contexts.schema)
-# process events
-get_classes(event_schema.events.schema)
+
+with open('schema.py', 'w') as output:
+    # some imports
+    imports = [
+        'from typing import List',
+        'from abc import ABC'
+    ]
+    output.write('\n'.join(imports) + '\n\n\n')
+    # process contexts (needed for events, so we do these first)
+    output.write('\n'.join(get_classes(event_schema.contexts.schema)))
+    # process events
+    output.write('\n'.join(get_classes(event_schema.events.schema)))
+
+    output.write('\n'.join(get_event_factory(event_schema.events.schema)))
