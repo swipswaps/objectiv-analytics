@@ -12,6 +12,8 @@ from jsonschema import ValidationError
 
 from objectiv_backend.common.types import EventData
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
+from objectiv_backend.common.config import get_config_timestamp_validation
+
 
 EVENT_LIST_SCHEMA = {
     "type": "array",
@@ -53,9 +55,17 @@ EVENT_LIST_SCHEMA = {
                 # recent data for importing. Setting this minimum value should also catch situations where
                 # we get timestamps in seconds instead of milliseconds
                 "minimum": 1_577_836_800_000,  # 2020-01-01 00:00:00
+            },
+            "tracking_time": {
+                "description": "Timestamp indicating when the event was generated (added to the transport queue).",
+                "type": "integer"
+            },
+            "transport_time": {
+                "description": "Timestamp indicating when the event was sent (transported) to the collector.",
+                "type": "integer"
             }
         },
-        "required": ["event", "id", "global_contexts", "location_stack"]  # TODO: make time a required field
+        "required": ["event", "id", "global_contexts", "location_stack", "tracking_time", "transport_time"]  # TODO: make time a required field
     }
 }
 
@@ -208,6 +218,7 @@ def _validate_context_item(event_schema: EventSchema, context) -> List[ErrorInfo
 def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[ErrorInfo]:
     """
     Read given filename, and validate the event data in that file.
+    :param event_schema: EventSchema to use for validation
     :param filename: path of file to read
     :return: list of found errors
     """
@@ -222,6 +233,21 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
     else:
         print(f'\nSummary: No errors found in {filename}')
     return errors
+
+
+def validate_event_time(event: Dict[str, Any], current_millis: int) -> List[ErrorInfo]:
+    """
+    Validate timestamps in event to check if it's not too old or too new
+    :param event:
+    :param current_millis:
+    :return: [ErrorInfo], if any
+    """
+    max_delay = get_config_timestamp_validation().max_delay
+    if max_delay and current_millis - event['time'] > max_delay:
+        return [ErrorInfo(event, f'Event too old: {current_millis - event["time"]} > {max_delay}')]
+    if event['time'] > current_millis:
+        return [ErrorInfo(event, f'Event in the future: {event["time"]} > {current_millis}')]
+    return []
 
 
 def main():

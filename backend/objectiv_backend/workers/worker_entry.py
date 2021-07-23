@@ -2,12 +2,13 @@
 Copyright 2021 Objectiv B.V.
 """
 import sys
+import time
 from typing import List, Tuple
 
 from objectiv_backend.common.config import WORKER_BATCH_SIZE, get_config_event_schema
 from objectiv_backend.common.types import EventWithId
 from objectiv_backend.schema.hydrate_events import hydrate_types_into_event
-from objectiv_backend.schema.validate_events import validate_event_adheres_to_schema, EventError
+from objectiv_backend.schema.validate_events import validate_event_adheres_to_schema, validate_event_time, EventError
 from objectiv_backend.workers.pg_queues import PostgresQueues, ProcessingStage
 from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.util import worker_main
@@ -32,13 +33,14 @@ def main_entry(connection) -> int:
     return len(events)
 
 
-def process_events_entry(events: List[EventWithId]) -> Tuple[List[EventWithId], List[EventWithId], List[EventError]]:
+def process_events_entry(events: List[EventWithId], current_millis: int = 0) -> Tuple[List[EventWithId], List[EventWithId], List[EventError]]:
     """
     Two step processing of events:
     1) Modify events: hydrate all parent types of both the event and contexts into the event
     2) Split event list on events that pass validation and those that don't
 
     :param events: List of events. validate_structure_event_list() must pass on this list.
+    :param current_millis: (current) timestamp to compare events with
     :return: tuple with three lists. Both event lists have the hydrated types.
         1) ok events: events that passed validation
         2) not-ok events: events that didn't pass validation
@@ -48,10 +50,17 @@ def process_events_entry(events: List[EventWithId]) -> Tuple[List[EventWithId], 
     nok_events = []
     event_errors = []
     event_schema = get_config_event_schema()
+
+    if current_millis == 0:
+        current_millis = round(time.time() * 1000)
+
     for event_w_id in events:
         event = event_w_id.event
 
-        error_info = validate_event_adheres_to_schema(event_schema=event_schema, event=event)
+        error_info = \
+            validate_event_adheres_to_schema(event_schema=event_schema, event=event) + \
+            validate_event_time(event=event, current_millis=current_millis)
+
         if error_info:
             print(f'error, event_id: {event_w_id.id}, errors: {[ei.info for ei in error_info]}')
             nok_events.append(event_w_id)
