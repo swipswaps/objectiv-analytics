@@ -146,8 +146,8 @@ def set_time_in_events(events: List[EventData], current_millis: int):
     """
     Modify the given list of events: Set the correct time in the events
 
-    Adjust time if needed: if the current requests header has an X-timestamp header, we'll use that to
-    calculate the client's clock skew, and adjust all events in the list.
+    We use the `event.transport_time` to determine an offset (if any) between client and server time. We
+    then corrent `event.tracking_time` using this offset and set it in `event.time`
     :param events: List of events to modify
     :param current_millis: time in milliseconds since epoch UTC, when this request was received.
     """
