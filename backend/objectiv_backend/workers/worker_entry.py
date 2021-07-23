@@ -60,7 +60,6 @@ def process_events_entry(events: List[EventWithId], current_millis: int = 0) -> 
         error_info = \
             validate_event_adheres_to_schema(event_schema=event_schema, event=event) + \
             validate_event_time(event=event, current_millis=current_millis)
-        # TODO: should we check events are in chronological order?
 
         if error_info:
             print(f'error, event_id: {event_w_id.id}, errors: {[ei.info for ei in error_info]}')
