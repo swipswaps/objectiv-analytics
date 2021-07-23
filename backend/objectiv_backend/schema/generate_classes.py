@@ -70,7 +70,7 @@ def get_all_properties(object_list: List, objects: Dict[str, dict]) -> Dict[str,
     return properties
 
 
-def get_event_factory(objects: Dict[str,dict]) -> List[str]:
+def get_event_factory(objects: Dict[str, dict]) -> List[str]:
     """
     Generate very basic factory to be able to load events
     :param objects:
@@ -147,7 +147,8 @@ def get_classes(objects: Dict[str, dict]) -> List[str]:
                     f':param {property_name}: \n           {property_description["description"].strip()}')
 
                 class_descriptions.append(
-                    f'    {property_name} ({property_type}):\n            {property_description["description"].strip()}')
+                    f'    {property_name} ({property_type}):\n            {property_description["description"].strip()}'
+                )
 
         # class description
         class_description = '\n    '.join(class_descriptions)
