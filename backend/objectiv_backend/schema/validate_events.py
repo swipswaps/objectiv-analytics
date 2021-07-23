@@ -55,9 +55,17 @@ EVENT_LIST_SCHEMA = {
                 # recent data for importing. Setting this minimum value should also catch situations where
                 # we get timestamps in seconds instead of milliseconds
                 "minimum": 1_577_836_800_000,  # 2020-01-01 00:00:00
+            },
+            "tracking_time": {
+                "description": "Timestamp indicating when the event was generated (added to the transport queue).",
+                "type": "integer"
+            },
+            "transport_time": {
+                "description": "Timestamp indicating when the event was sent (transported) to the collector.",
+                "type": "integer"
             }
         },
-        "required": ["event", "id", "global_contexts", "location_stack"]  # TODO: make time a required field
+        "required": ["event", "id", "global_contexts", "location_stack", "tracking_time", "transport_time"]  # TODO: make time a required field
     }
 }
 
