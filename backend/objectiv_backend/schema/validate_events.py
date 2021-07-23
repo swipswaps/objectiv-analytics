@@ -43,10 +43,12 @@ def get_event_list_schema() -> Dict[str, Any]:
     """
     event_schema = get_config_event_schema()
     events = event_schema.events.schema
-    abstract_event = events['AbstractEvent']
-
     contexts = event_schema.contexts.schema
 
+    # we use AbstractEvent as the blueprint for what an event should look like
+    abstract_event = events['AbstractEvent']
+
+    # list of properties for an event (can be nested)
     properties: Dict[str, dict] = {}
     for property_name, property_desc in abstract_event['properties'].items():
 
@@ -58,7 +60,7 @@ def get_event_list_schema() -> Dict[str, Any]:
             parent_context = contexts['AbstractContext']
 
             # here we merge the properties from the requested context with those of AbstractContext
-            # and replace/override the abstractdefinition from the base schema with the actual one
+            # and replace/override the abstract definition from the base schema with the actual one
             property_desc = {**context['properties'], ** parent_context['properties']}
 
         properties[property_name] = property_desc
