@@ -1323,3 +1323,36 @@ class InputChangeEvent(InteractiveEvent):
                                   id=id,
                                   tracking_time=tracking_time,
                                   transport_time=transport_time)
+
+
+def make_event(event_type: str, **kwargs) -> AbstractEvent:
+    if event_type == "AbstractEvent":
+        return AbstractEvent(**kwargs)
+    if event_type == "NonInteractiveEvent":
+        return NonInteractiveEvent(**kwargs)
+    if event_type == "DocumentLoadedEvent":
+        return DocumentLoadedEvent(**kwargs)
+    if event_type == "URLChangeEvent":
+        return URLChangeEvent(**kwargs)
+    if event_type == "ApplicationLoadedEvent":
+        return ApplicationLoadedEvent(**kwargs)
+    if event_type == "SectionVisibleEvent":
+        return SectionVisibleEvent(**kwargs)
+    if event_type == "SectionHiddenEvent":
+        return SectionHiddenEvent(**kwargs)
+    if event_type == "VideoEvent":
+        return VideoEvent(**kwargs)
+    if event_type == "VideoLoadEvent":
+        return VideoLoadEvent(**kwargs)
+    if event_type == "VideoStartEvent":
+        return VideoStartEvent(**kwargs)
+    if event_type == "VideoStopEvent":
+        return VideoStopEvent(**kwargs)
+    if event_type == "VideoPauseEvent":
+        return VideoPauseEvent(**kwargs)
+    if event_type == "InteractiveEvent":
+        return InteractiveEvent(**kwargs)
+    if event_type == "ClickEvent":
+        return ClickEvent(**kwargs)
+    if event_type == "InputChangeEvent":
+        return InputChangeEvent(**kwargs)
