@@ -2764,55 +2764,29 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@objectiv/plugin-application-context@workspace:plugins/application-context":
-  version: 0.0.0-use.local
-  resolution: "@objectiv/plugin-application-context@workspace:plugins/application-context"
-  dependencies:
-    "@objectiv/schema": ~0.0.1
-    "@objectiv/tracker-core": ~0.0.1
-    "@rollup/plugin-commonjs": ^19.0.0
-    "@rollup/plugin-node-resolve": ^13.0.0
-    "@types/jest": ^26.0.23
-    jest: ^26.6.3
-    jest-fetch-mock: ^3.0.3
-    jest-standard-reporter: ^2.0.0
-    jest-useragent-mock: ^0.1.1
-    prettier: ^2.3.0
-    rollup: ^2.48.0
-    rollup-plugin-cleanup: ^3.2.1
-    rollup-plugin-filesize: ^9.1.1
-    rollup-plugin-sizes: ^1.0.4
-    rollup-plugin-terser: ^7.0.2
-    rollup-plugin-ts: ^1.4.0
-    ts-jest: ^26.5.6
-    tslib: ^2.2.0
-    typescript: ^4.2.4
-  languageName: unknown
-  linkType: soft
-
 "@objectiv/plugin-web-device-context@workspace:plugins/web-device-context, @objectiv/plugin-web-device-context@~0.0.1":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-web-device-context@workspace:plugins/web-device-context"
   dependencies:
-    "@objectiv/schema": ~0.0.1
-    "@objectiv/tracker-core": ~0.0.1
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
+    "@rollup/plugin-strip": ^2.0.1
     "@types/jest": ^26.0.23
     jest: ^26.6.3
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
-    jest-useragent-mock: ^0.1.1
     prettier: ^2.3.0
     rollup: ^2.48.0
-    rollup-plugin-cleanup: ^3.2.1
     rollup-plugin-filesize: ^9.1.1
+    rollup-plugin-peer-deps-external: ^2.2.4
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^1.4.0
     ts-jest: ^26.5.6
     tslib: ^2.2.0
     typescript: ^4.2.4
+  peerDependencies:
+    "@objectiv/tracker-core": ~0.0.1
   languageName: unknown
   linkType: soft
 
@@ -2820,10 +2794,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-web-document-context@workspace:plugins/web-document-context"
   dependencies:
-    "@objectiv/schema": ~0.0.1
-    "@objectiv/tracker-core": ~0.0.1
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
+    "@rollup/plugin-strip": ^2.0.1
     "@types/jest": ^26.0.23
     jest: ^26.6.3
     jest-extended: ^0.11.5
@@ -2831,14 +2804,16 @@ __metadata:
     jest-standard-reporter: ^2.0.0
     prettier: ^2.3.0
     rollup: ^2.48.0
-    rollup-plugin-cleanup: ^3.2.1
     rollup-plugin-filesize: ^9.1.1
+    rollup-plugin-peer-deps-external: ^2.2.4
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^1.4.0
     ts-jest: ^26.5.6
     tslib: ^2.2.0
     typescript: ^4.2.4
+  peerDependencies:
+    "@objectiv/tracker-core": ~0.0.1
   languageName: unknown
   linkType: soft
 
@@ -2858,14 +2833,15 @@ __metadata:
     "@objectiv/schema": ~0.0.1
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
+    "@rollup/plugin-strip": ^2.0.1
     "@types/jest": ^26.0.23
     "@types/uuid": ^8.3.1
+    es6-error: ^4.1.1
     jest: ^26.6.3
     jest-standard-reporter: ^2.0.0
     mockdate: ^3.0.5
     prettier: ^2.3.0
     rollup: ^2.48.0
-    rollup-plugin-cleanup: ^3.2.1
     rollup-plugin-filesize: ^9.1.1
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
@@ -2902,6 +2878,7 @@ __metadata:
     "@objectiv/tracker-web": ~0.0.1
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
+    "@rollup/plugin-strip": ^2.0.1
     "@testing-library/react": ^11.2.7
     "@testing-library/react-hooks": ^7.0.0
     "@types/jest": ^26.0.23
@@ -2915,7 +2892,6 @@ __metadata:
     react-dom: ^17.0.2
     react-test-renderer: ^17.0.2
     rollup: ^2.48.0
-    rollup-plugin-cleanup: ^3.2.1
     rollup-plugin-filesize: ^9.1.1
     rollup-plugin-peer-deps-external: ^2.2.4
     rollup-plugin-sizes: ^1.0.4
@@ -2939,6 +2915,7 @@ __metadata:
     "@objectiv/tracker-core": ~0.0.1
     "@rollup/plugin-commonjs": ^19.0.0
     "@rollup/plugin-node-resolve": ^13.0.0
+    "@rollup/plugin-strip": ^2.0.1
     "@types/jest": ^26.0.23
     jest: ^26.6.3
     jest-extended: ^0.11.5
@@ -2948,7 +2925,6 @@ __metadata:
     mockdate: ^3.0.5
     prettier: ^2.3.0
     rollup: ^2.48.0
-    rollup-plugin-cleanup: ^3.2.1
     rollup-plugin-filesize: ^9.1.1
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
@@ -3062,6 +3038,19 @@ __metadata:
   peerDependencies:
     rollup: ^1.20.0 || ^2.0.0
   checksum: b8532ce34011d6384b697e351c6ca6863aeb08b02dfc968efde84dc397d77c7efdff7623c4d05562d21ef62c8a598e765deb9608d6a6bf65835a956325ef20e7
+  languageName: node
+  linkType: hard
+
+"@rollup/plugin-strip@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "@rollup/plugin-strip@npm:2.0.1"
+  dependencies:
+    "@rollup/pluginutils": ^3.1.0
+    estree-walker: ^2.0.1
+    magic-string: ^0.25.7
+  peerDependencies:
+    rollup: ^1.20.0 || ^2.0.0
+  checksum: 583ca33ec71ee8fcbe4eff52622c04bf169c689dfea192099719a07e476935e630ccdde4bb22026a5c686d8f3c1955b2ed19a569c14dd3344db212d108ea04b3
   languageName: node
   linkType: hard
 
@@ -7225,6 +7214,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"es6-error@npm:^4.1.1":
+  version: 4.1.1
+  resolution: "es6-error@npm:4.1.1"
+  checksum: d7343d3f47834d71912278b5a7476028b7ef3db4ee5c8b7184d7204d2c3a48dd4ce68d197a14116f0d16c85f85d3d8ed1d8c137cf5bc9f33f672646755289688
+  languageName: node
+  linkType: hard
+
 "es6-iterator@npm:2.0.3, es6-iterator@npm:~2.0.3":
   version: 2.0.3
   resolution: "es6-iterator@npm:2.0.3"
@@ -10482,17 +10478,6 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"js-cleanup@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "js-cleanup@npm:1.2.0"
-  dependencies:
-    magic-string: ^0.25.7
-    perf-regexes: ^1.0.1
-    skip-regex: ^1.0.2
-  checksum: edbf0ff958b02da7596a26bfe539bf0240d4c2929ce57c6974946bbb60f3d8b288eaa561719ddcb04c33921f175e3f94f3594c3908143e1bbf07b5e1dd29fbde
-  languageName: node
-  linkType: hard
-
 "js-tokens@npm:^3.0.0 || ^4.0.0, js-tokens@npm:^4.0.0":
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
@@ -12762,13 +12747,6 @@ fsevents@^1.2.7:
   languageName: node
   linkType: hard
 
-"perf-regexes@npm:^1.0.1":
-  version: 1.0.1
-  resolution: "perf-regexes@npm:1.0.1"
-  checksum: 0aa34565ba249739d4c3c0a1b407be88ea48be2eb910b73d529a923f20b5043feb1bb43470457226d78fd7778e7d8c176b28148c8bd14a511222c68555b1d383
-  languageName: node
-  linkType: hard
-
 "performance-now@npm:^2.1.0":
   version: 2.1.0
   resolution: "performance-now@npm:2.1.0"
@@ -14865,18 +14843,6 @@ resolve@^2.0.0-next.3:
   languageName: node
   linkType: hard
 
-"rollup-plugin-cleanup@npm:^3.2.1":
-  version: 3.2.1
-  resolution: "rollup-plugin-cleanup@npm:3.2.1"
-  dependencies:
-    js-cleanup: ^1.2.0
-    rollup-pluginutils: ^2.8.2
-  peerDependencies:
-    rollup: ">=2.0"
-  checksum: 4da17814418d9316a94bb05bc6bab514730a0e1de2e2aa7f64fc072262a300b664536f7b35ff76b8da964e80ab3457c7dd993e2efb0e72f3d69c92f4ddd86c69
-  languageName: node
-  linkType: hard
-
 "rollup-plugin-filesize@npm:^9.1.1":
   version: 9.1.1
   resolution: "rollup-plugin-filesize@npm:9.1.1"
@@ -15447,13 +15413,6 @@ resolve@^2.0.0-next.3:
   version: 1.0.5
   resolution: "sisteransi@npm:1.0.5"
   checksum: 6554debe10fa4c6a7e8d58531313fdb61c39bb435ba420f8d7a01d8aaffecc654cca846b586e33f3c904350e24f229d5bbd8069abdb583c93252849a0f73e933
-  languageName: node
-  linkType: hard
-
-"skip-regex@npm:^1.0.2":
-  version: 1.0.2
-  resolution: "skip-regex@npm:1.0.2"
-  checksum: 84bb6382b823949691cec53a2d3d8d872994009cced78f107c36cca3667c3b99a6db8e5b27deb12f60f152a326a12b1f8ace045263da17b6da03004a7d0a35f8
   languageName: node
   linkType: hard
 

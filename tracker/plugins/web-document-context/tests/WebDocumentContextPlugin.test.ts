@@ -2,6 +2,11 @@ import { WebDocumentContextPlugin } from '../src';
 import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 
 describe('WebDocumentContextPlugin', () => {
+  it('should instantiate as unusable', () => {
+    const testWebDocumentContextPlugin = new WebDocumentContextPlugin();
+    expect(testWebDocumentContextPlugin.documentContextId).toBe(document.nodeName);
+  });
+
   it('should instantiate without specifying an ID at construction', () => {
     const testWebDocumentContextPlugin = new WebDocumentContextPlugin();
     expect(testWebDocumentContextPlugin.documentContextId).toBe(document.nodeName);

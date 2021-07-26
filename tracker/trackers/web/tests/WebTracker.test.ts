@@ -26,7 +26,7 @@ describe('WebTracker', () => {
     ).toThrow();
   });
 
-  it('should instantiate with `endpoint`', () => {
+  it('should instantiate with `applicationId` and `endpoint`', () => {
     const testTracker = new WebTracker({ applicationId: 'app-id', endpoint: 'localhost' });
     expect(testTracker).toBeInstanceOf(WebTracker);
     expect(testTracker.transport).toBeInstanceOf(TransportGroup);
@@ -37,22 +37,32 @@ describe('WebTracker', () => {
           transportName: 'QueuedTransport',
           queue: {
             queueName: 'TrackerQueue',
-            batchDelayMs: 250,
+            batchDelayMs: 1000,
             batchSize: 10,
             concurrency: 4,
             processFunction: expect.any(Function),
             processingEventIds: [],
             store: {
+              queueStoreName: 'TrackerQueueMemoryStore',
               length: 0,
               events: [],
             },
           },
           transport: {
-            transportName: 'TransportSwitch',
-            firstUsableTransport: {
-              transportName: 'FetchAPITransport',
-              endpoint: 'localhost',
-              fetchFunction: defaultFetchFunction,
+            transportName: 'RetryTransport',
+            maxAttempts: 10,
+            maxRetryMs: Infinity,
+            maxTimeoutMs: Infinity,
+            minTimeoutMs: 1000,
+            retryFactor: 2,
+            attempts: [],
+            transport: {
+              transportName: 'TransportSwitch',
+              firstUsableTransport: {
+                transportName: 'FetchAPITransport',
+                endpoint: 'localhost',
+                fetchFunction: defaultFetchFunction,
+              },
             },
           },
         },

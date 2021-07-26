@@ -24,7 +24,6 @@ This is a complete list of the currently available packages.
 | @objectiv/schema                      | core    | /core/schema                  | [README](/tracker/core/schema/README.md)                  |
 | @objectiv/tracker-core                | core    | /core/tracker                 | [README](/tracker/core/tracker/README.md)                 |
 | @objectiv/utilities                   | core    | /core/utilities               | [README](/tracker/core/utilities/README.md)               |
-| @objectiv/plugin-application-context  | plugin  | /plugins/application-context  | [README](/tracker/plugins/application-context/README.md)  |
 | @objectiv/plugin-web-device-context   | plugin  | /plugins/web-device-context   | [README](/tracker/plugins/web-device-context/README.md)   |
 | @objectiv/plugin-web-document-context | plugin  | /plugins/web-document-context | [README](/tracker/plugins/web-document-context/README.md) |
 | @objectiv/tracker-web                 | tracker | /trackers/web                 | [README](/tracker/trackers/web/README.md)                 |

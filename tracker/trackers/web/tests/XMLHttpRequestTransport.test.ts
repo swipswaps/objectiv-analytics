@@ -1,4 +1,4 @@
-import { TrackerEvent } from '@objectiv/tracker-core';
+import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
 import MockDate from 'mockdate';
 import xhrMock from 'xhr-mock';
 import { XMLHttpRequestTransport } from '../src';
@@ -61,8 +61,10 @@ describe('XMLHttpRequestTransport', () => {
     try {
       await testTransport.handle(testEvent);
     } catch (error) {
-      expect(error).toStrictEqual({ status: 500, statusText: 'oops' });
+      expect(error).toStrictEqual(new TransportSendError());
     }
+
+    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
   });
 
   it('should send using `xhr` with the default xhr function - onError example', async () => {
@@ -75,8 +77,10 @@ describe('XMLHttpRequestTransport', () => {
     try {
       await testTransport.handle(testEvent);
     } catch (error) {
-      expect(error).toStrictEqual({ status: 0, statusText: '' });
+      expect(error).toStrictEqual(new TransportSendError());
     }
+
+    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
   });
 
   it('should send using `xhr` with the provided customized xhr function', async () => {
@@ -127,5 +131,19 @@ describe('XMLHttpRequestTransport', () => {
     });
 
     await testTransport.handle(testEvent);
+  });
+
+  it('should be safe to call with an empty array of Events for devs without TS', async () => {
+    // Create our XMLHttpRequest Transport Instance
+    const testTransport = new XMLHttpRequestTransport({
+      endpoint: MOCK_ENDPOINT,
+    });
+    spyOn(testTransport, 'xmlHttpRequestFunction').and.callThrough();
+
+    // @ts-ignore purposely disable TS and call the handle method anyway
+    await testTransport.handle();
+
+    // XMLHttpRequest should not have been executed
+    expect(testTransport.xmlHttpRequestFunction).not.toHaveBeenCalled();
   });
 });
