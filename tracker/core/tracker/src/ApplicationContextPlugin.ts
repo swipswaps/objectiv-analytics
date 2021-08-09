@@ -1,5 +1,7 @@
 import { ApplicationContext } from '@objectiv/schema';
-import { makeApplicationContext, TrackerEvent, TrackerPlugin } from '@objectiv/tracker-core';
+import { makeApplicationContext } from './ContextFactories';
+import { TrackerEvent } from './TrackerEvent';
+import { TrackerPlugin } from './TrackerPlugin';
 
 /**
  * The ApplicationContext Plugin adds an ApplicationContext as GlobalContext before events are transported.
@@ -15,6 +17,13 @@ export class ApplicationContextPlugin implements TrackerPlugin {
     this.applicationContext = makeApplicationContext({
       id: config.applicationId,
     });
+
+    console.groupCollapsed(`Objectiv: ${this.pluginName} initialized`);
+    console.log(`Application ID: ${config.applicationId}`);
+    console.group(`Application Context:`);
+    console.log(this.applicationContext);
+    console.groupEnd();
+    console.groupEnd();
   }
 
   /**

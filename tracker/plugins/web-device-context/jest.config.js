@@ -3,7 +3,6 @@ module.exports = {
   testEnvironment: 'jsdom',
   reporters: ['jest-standard-reporter'],
   collectCoverageFrom: ['src/**.ts'],
-  setupFiles: ['jest-useragent-mock'],
   moduleNameMapper: {
     '@objectiv/schema': '<rootDir>../../core/schema/src',
     '@objectiv/tracker-core': '<rootDir>../../core/tracker/src',
