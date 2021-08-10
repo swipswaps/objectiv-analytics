@@ -1325,7 +1325,7 @@ class InputChangeEvent(InteractiveEvent):
                                   transport_time=transport_time)
 
 
-def make_event(event: str = None, **kwargs) -> AbstractEvent:
+def make_event(event: str, **kwargs) -> AbstractEvent:
     if event == "AbstractEvent":
         return AbstractEvent(**kwargs)
     if event == "NonInteractiveEvent":

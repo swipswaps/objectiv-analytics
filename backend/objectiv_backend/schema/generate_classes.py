@@ -76,7 +76,7 @@ def get_event_factory(objects: Dict[str, dict]) -> List[str]:
     :param objects:
     :return: str - function to instantiate classes
     """
-    factory: List[str] = ['def make_event(event: str = None, **kwargs) -> AbstractEvent:']
+    factory: List[str] = ['def make_event(event: str, **kwargs) -> AbstractEvent:']
     for obj_name, obj in objects.items():
         factory.append(f'    if event == "{obj_name}":\n'
                        f'        return {obj_name}(**kwargs)')
