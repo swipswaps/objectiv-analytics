@@ -45,12 +45,9 @@ def get_parent_list(objects: Dict[str, dict]) -> Dict[str, list]:
         parent = parent_mapping[klass]
         parent_list[klass] = []
 
-        while True:
-            if parent in parent_mapping:
-                parent_list[klass].append(parent)
-                parent = parent_mapping[parent]
-            else:
-                break
+        while parent in parent_mapping:
+            parent_list[klass].append(parent)
+            parent = parent_mapping[parent]
 
     return parent_list
 
