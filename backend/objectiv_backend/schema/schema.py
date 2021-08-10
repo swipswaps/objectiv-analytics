@@ -1326,9 +1326,6 @@ class InputChangeEvent(InteractiveEvent):
 
 
 def make_event(event: str = None, **kwargs) -> AbstractEvent:
-    if not event:
-        event = kwargs["event"]
-
     if event == "AbstractEvent":
         return AbstractEvent(**kwargs)
     if event == "NonInteractiveEvent":
