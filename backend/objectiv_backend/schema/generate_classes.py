@@ -18,7 +18,7 @@ def get_type(property_description: Dict[str, str]) -> str:
     if type_name == 'array':
         return f'List[{abstract_type}]'
     if type_name == 'object':
-        return 'Dict{str, Any}'
+        return 'Dict[str, Any]'
     if type_name == 'string':
         return 'str'
     if type_name == 'integer':
