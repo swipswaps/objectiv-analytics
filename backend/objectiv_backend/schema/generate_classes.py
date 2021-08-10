@@ -83,7 +83,7 @@ def get_event_factory(objects: Dict[str, dict]) -> List[str]:
 
 def get_classes(objects: Dict[str, dict]) -> List[str]:
     """
-    Generates python classes based on the list (Dict) of objects provided
+    Generates python source code for classes based on the list (Dict) of objects provided
     :param objects: Dict
     """
 
