@@ -206,19 +206,24 @@ def get_classes(objects: Dict[str, dict]) -> List[str]:
     return classes
 
 
-# get schema
-event_schema = get_config_event_schema()
+def main():
+    # get schema
+    event_schema = get_config_event_schema()
 
-with open('schema.py', 'w') as output:
-    # some imports
-    imports = [
-        'from typing import List',
-        'from abc import ABC'
-    ]
-    output.write('\n'.join(imports) + '\n\n\n')
-    # process contexts (needed for events, so we do these first)
-    output.write('\n'.join(get_classes(event_schema.contexts.schema)))
-    # process events
-    output.write('\n'.join(get_classes(event_schema.events.schema)))
+    with open('schema.py', 'w') as output:
+        # some imports
+        imports = [
+            'from typing import List',
+            'from abc import ABC'
+        ]
+        output.write('\n'.join(imports) + '\n\n\n')
+        # process contexts (needed for events, so we do these first)
+        output.write('\n'.join(get_classes(event_schema.contexts.schema)))
+        # process events
+        output.write('\n'.join(get_classes(event_schema.events.schema)))
 
-    output.write('\n'.join(get_event_factory(event_schema.events.schema)))
+        output.write('\n'.join(get_event_factory(event_schema.events.schema)))
+
+
+if __name__ == '__main__':
+    main()
