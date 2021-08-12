@@ -22,7 +22,7 @@ class AbstractContext(ABC):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -44,7 +44,7 @@ class AbstractLocationContext(AbstractContext, ABC):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -65,7 +65,7 @@ class AbstractGlobalContext(AbstractContext, ABC):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -85,7 +85,7 @@ class ApplicationContext(AbstractGlobalContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -107,7 +107,7 @@ class SectionContext(AbstractLocationContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -129,7 +129,7 @@ class WebDocumentContext(SectionContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, url: str, id: str):
+    def __init__(self, url: str, id: str, **kwargs):
         """
         :param url: 
            Property containing a (valid) URL
@@ -154,7 +154,7 @@ class ScreenContext(SectionContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, screen: str, id: str):
+    def __init__(self, screen: str, id: str, **kwargs):
         """
         :param screen: 
            name of the screen
@@ -177,7 +177,7 @@ class ExpandableSectionContext(SectionContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -197,7 +197,7 @@ class MediaPlayerContext(SectionContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -217,7 +217,7 @@ class NavigationContext(SectionContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -237,7 +237,7 @@ class OverlayContext(SectionContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -258,7 +258,7 @@ class ItemContext(AbstractLocationContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -278,7 +278,7 @@ class InputContext(ItemContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, id: str):
+    def __init__(self, id: str, **kwargs):
         """
         :param id: 
            A unique string identifier to be combined with the Context Type (`_context_type`) 
@@ -301,7 +301,7 @@ class ActionContext(ItemContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, text: str, id: str):
+    def __init__(self, text: str, id: str, **kwargs):
         """
         :param text: 
            The text of the interactive element or, for visuals, a string describing it
@@ -326,7 +326,7 @@ class ButtonContext(ActionContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, text: str, id: str):
+    def __init__(self, text: str, id: str, **kwargs):
         """
         :param text: 
            The text of the interactive element or, for visuals, a string describing it
@@ -352,7 +352,11 @@ class LinkContext(ActionContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, href: str, text: str, id: str):
+    def __init__(self,
+                 href: str,
+                 text: str,
+                 id: str,
+                 **kwargs):
         """
         :param href: 
            URL (href) the link points to
@@ -379,7 +383,7 @@ class DeviceContext(AbstractGlobalContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, user_agent: str, id: str):
+    def __init__(self, user_agent: str, id: str, **kwargs):
         """
         :param user_agent: 
            String describing the user-agent that emitted the event
@@ -404,7 +408,7 @@ class ErrorContext(AbstractGlobalContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, message: str, id: str):
+    def __init__(self, message: str, id: str, **kwargs):
         """
         :param message: 
            Error message
@@ -429,7 +433,7 @@ class CookieIdContext(AbstractGlobalContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, cookie_id: str, id: str):
+    def __init__(self, cookie_id: str, id: str, **kwargs):
         """
         :param cookie_id: 
            Unique identifier from the session cookie
@@ -454,7 +458,7 @@ class SessionContext(AbstractGlobalContext):
            for Context instance uniqueness.
     """
 
-    def __init__(self, hit_number: int, id: str):
+    def __init__(self, hit_number: int, id: str, **kwargs):
         """
         :param hit_number: 
            Hit counter relative to the current session, this event originated in.
@@ -487,7 +491,8 @@ class HttpContext(AbstractGlobalContext):
                  referer: str,
                  user_agent: str,
                  remote_address: str,
-                 id: str):
+                 id: str,
+                 **kwargs):
         """
         :param referer: 
            Full URL to HTTP referrer of the current page.
@@ -535,7 +540,8 @@ class AbstractEvent(ABC):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -591,7 +597,8 @@ class NonInteractiveEvent(AbstractEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -648,7 +655,8 @@ class DocumentLoadedEvent(NonInteractiveEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -703,7 +711,8 @@ class URLChangeEvent(NonInteractiveEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -758,7 +767,8 @@ class ApplicationLoadedEvent(NonInteractiveEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -812,7 +822,8 @@ class SectionVisibleEvent(NonInteractiveEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -866,7 +877,8 @@ class SectionHiddenEvent(NonInteractiveEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -920,7 +932,8 @@ class VideoEvent(NonInteractiveEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -974,7 +987,8 @@ class VideoLoadEvent(VideoEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -1028,7 +1042,8 @@ class VideoStartEvent(VideoEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -1082,7 +1097,8 @@ class VideoStopEvent(VideoEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -1136,7 +1152,8 @@ class VideoPauseEvent(VideoEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -1190,7 +1207,8 @@ class InteractiveEvent(AbstractEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -1244,7 +1262,8 @@ class ClickEvent(InteractiveEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
@@ -1298,7 +1317,8 @@ class InputChangeEvent(InteractiveEvent):
                  global_contexts: List[AbstractGlobalContext],
                  id: str,
                  tracking_time: int,
-                 transport_time: int):
+                 transport_time: int,
+                 **kwargs):
         """
         :param location_stack: 
            The location stack is an ordered list (stack), that contains a hierarchy of location contexts that 
