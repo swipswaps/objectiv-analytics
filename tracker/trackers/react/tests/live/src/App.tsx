@@ -1,5 +1,4 @@
 import { makeLinkContext, trackLinkClick, useTrackApplicationLoaded, useTracker } from "@objectiv/tracker-react";
-import logo from './logo.svg';
 import './App.css';
 
 function App() {
@@ -10,14 +9,26 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
         <div
           className="App-link"
           onClick={
-            () => trackLinkClick(makeLinkContext({id: 'test-link', href: '/', text: 'Track Link Click'}), tracker)
+            () => trackLinkClick(makeLinkContext({id: 'test-link', href: '/', text: 'Track 1 Link Click'}), tracker)
           }>
-          Track Link Click
+          Track 1 Link Click
         </div>
+
+        <br />
+
+        <div
+          className="App-link"
+          onClick={
+            () => {
+              Array.from(Array(55)).forEach((x, i) => trackLinkClick(makeLinkContext({id: 'test-link', href: '/', text: 'Track 55 Link Click'}), tracker));
+            }
+          }>
+          Track 55 Link Click
+        </div>
+
       </header>
     </div>
   );

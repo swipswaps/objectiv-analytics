@@ -1,7 +1,14 @@
 import fetchMock from 'jest-fetch-mock';
 import MockDate from 'mockdate';
-import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
-import { TrackerQueue, QueuedTransport, TrackerEvent } from '@objectiv/tracker-core';
+import {
+  defaultFetchFunction,
+  defaultFetchParameters,
+  FetchAPITransport,
+  QueuedTransport,
+  TrackerEvent,
+  TrackerQueue,
+  TransportSendError,
+} from '../src';
 
 const mockedMs = 1434319925275;
 
@@ -22,7 +29,7 @@ afterEach(() => {
 });
 
 describe('FetchAPITransport', () => {
-  const MOCK_ENDPOINT = '/test-endpoint';
+  const MOCK_ENDPOINT = 'http://test-endpoint';
 
   const testEvent = new TrackerEvent({
     event: 'test-event',
@@ -126,5 +133,35 @@ describe('FetchAPITransport', () => {
         ...defaultFetchParameters,
       })
     );
+  });
+
+  it('should be safe to call with an empty array of Events for devs without TS', async () => {
+    // Create our Fetch Transport Instance
+    const testTransport = new FetchAPITransport({
+      endpoint: MOCK_ENDPOINT,
+    });
+
+    // @ts-ignore purposely disable TS and call the handle method anyway
+    await testTransport.handle();
+
+    // Fetch should not have been called
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it('should reject with TransportSendError on http status !== 200', async () => {
+    // Create our Fetch Transport Instance
+    const testTransport = new FetchAPITransport({
+      endpoint: MOCK_ENDPOINT,
+    });
+
+    fetchMock.mockResponse('oops', { status: 500 });
+
+    try {
+      await testTransport.handle(testEvent);
+    } catch (error) {
+      expect(error).toStrictEqual(new TransportSendError());
+    }
+
+    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
   });
 });
