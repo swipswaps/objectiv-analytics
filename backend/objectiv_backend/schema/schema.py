@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict, Any
 from abc import ABC
 
 
@@ -32,7 +32,7 @@ class AbstractContext(ABC):
         self.id = id
 
 
-class AbstractLocationContext(AbstractContext, ABC):
+class AbstractLocationContext(AbstractContext):
     """
     This is the abstract parent of all location contexts. LocationContexts are used to populate Trackers or Events
     `location_stack` properties. A Location Stack is meant to describe accurately where an Event originated in the
@@ -54,7 +54,7 @@ class AbstractLocationContext(AbstractContext, ABC):
         AbstractContext.__init__(self, id=id)
 
 
-class AbstractGlobalContext(AbstractContext, ABC):
+class AbstractGlobalContext(AbstractContext):
     """
     Global_contexts are used to populate Trackers or Events `global_contexts` properties. They carry information
     that is not related to where the Event originated, such as device, platform or business data.
@@ -1345,6 +1345,52 @@ class InputChangeEvent(InteractiveEvent):
                                   transport_time=transport_time)
 
 
+def make_context(_context_type: str, **kwargs) -> AbstractContext:
+    if _context_type == "AbstractContext":
+        return AbstractContext(**kwargs)
+    if _context_type == "AbstractLocationContext":
+        return AbstractLocationContext(**kwargs)
+    if _context_type == "AbstractGlobalContext":
+        return AbstractGlobalContext(**kwargs)
+    if _context_type == "ApplicationContext":
+        return ApplicationContext(**kwargs)
+    if _context_type == "SectionContext":
+        return SectionContext(**kwargs)
+    if _context_type == "WebDocumentContext":
+        return WebDocumentContext(**kwargs)
+    if _context_type == "ScreenContext":
+        return ScreenContext(**kwargs)
+    if _context_type == "ExpandableSectionContext":
+        return ExpandableSectionContext(**kwargs)
+    if _context_type == "MediaPlayerContext":
+        return MediaPlayerContext(**kwargs)
+    if _context_type == "NavigationContext":
+        return NavigationContext(**kwargs)
+    if _context_type == "OverlayContext":
+        return OverlayContext(**kwargs)
+    if _context_type == "ItemContext":
+        return ItemContext(**kwargs)
+    if _context_type == "InputContext":
+        return InputContext(**kwargs)
+    if _context_type == "ActionContext":
+        return ActionContext(**kwargs)
+    if _context_type == "ButtonContext":
+        return ButtonContext(**kwargs)
+    if _context_type == "LinkContext":
+        return LinkContext(**kwargs)
+    if _context_type == "DeviceContext":
+        return DeviceContext(**kwargs)
+    if _context_type == "ErrorContext":
+        return ErrorContext(**kwargs)
+    if _context_type == "CookieIdContext":
+        return CookieIdContext(**kwargs)
+    if _context_type == "SessionContext":
+        return SessionContext(**kwargs)
+    if _context_type == "HttpContext":
+        return HttpContext(**kwargs)
+    return AbstractContext(**kwargs)
+
+
 def make_event(event: str, **kwargs) -> AbstractEvent:
     if event == "AbstractEvent":
         return AbstractEvent(**kwargs)
@@ -1377,3 +1423,11 @@ def make_event(event: str, **kwargs) -> AbstractEvent:
     if event == "InputChangeEvent":
         return InputChangeEvent(**kwargs)
     return AbstractEvent(**kwargs)
+
+
+def make_event_from_dict(obj: Dict[str, Any]) -> AbstractEvent:
+    obj['location_stack'] = [make_context(**c) for c in obj['location_stack']]
+    obj['global_contexts'] = [make_context(
+        **c) for c in obj['global_contexts']]
+
+    return make_event(**obj)

@@ -90,6 +90,27 @@ def get_event_factory(objects: Dict[str, dict]) -> List[str]:
     return factory
 
 
+def get_context_factory(objects: Dict[str, dict]) -> List[str]:
+    """
+    Generate basic factory to create context instances
+    :param objects:
+    :return: str - function to instantiate classes
+    """
+    factory: List[str] = ['def make_context(_context_type: str, **kwargs) -> AbstractContext:']
+    for obj_name, obj in objects.items():
+        factory.append(f'    if _context_type == "{obj_name}":\n'
+                       f'        return {obj_name}(**kwargs)')
+    factory.append(f'    return AbstractContext(**kwargs)')
+    return factory
+
+
+def get_event_maker() -> str:
+    return (f"def make_event_from_dict(obj: Dict[str, Any]) -> AbstractEvent:\n"
+            f"    obj['location_stack'] = [make_context(**c) for c in obj['location_stack']]\n"
+            f"    obj['global_contexts'] = [make_context(**c) for c in obj['global_contexts']]\n\n"
+            f"    return make_event(**obj)\n")
+
+
 def get_constructor_description(constructor_description_arguments: List[str]) -> str:
     """
     Build docstring for class constructor
@@ -162,7 +183,7 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     super_classes: List[str] = []
     if len(obj['parents']) > 0:
         super_classes = [p for p in obj['parents']]
-    if re.match('^Abstract', obj_name):
+    if re.match('^Abstract', obj_name) and len(parents) == 0:
         parents.append('ABC')
 
     # get object/class description from schema, and clean up some white space
@@ -261,7 +282,7 @@ def main():
     with open('schema.py', 'w') as output:
         # some imports
         imports = [
-            'from typing import List',
+            'from typing import List, Dict, Any',
             'from abc import ABC'
         ]
         output.write('\n'.join(imports) + '\n\n\n')
@@ -270,7 +291,9 @@ def main():
         # process events
         output.write('\n'.join(get_classes(event_schema.events.schema)))
 
-        output.write('\n'.join(get_event_factory(event_schema.events.schema)))
+        output.write('\n'.join(get_context_factory(event_schema.contexts.schema)) + '\n\n')
+        output.write('\n'.join(get_event_factory(event_schema.events.schema)) + '\n\n\n')
+        output.write(get_event_maker())
 
 
 if __name__ == '__main__':
