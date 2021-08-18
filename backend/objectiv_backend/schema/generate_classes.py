@@ -105,6 +105,10 @@ def get_context_factory(objects: Dict[str, dict]) -> List[str]:
 
 
 def get_event_maker() -> str:
+    """
+    Generate factory to create and hydrate event (AbstractEvent) object
+    :return:
+    """
     return (f"def make_event_from_dict(obj: Dict[str, Any]) -> AbstractEvent:\n"
             f"    if not ('event' in obj and 'location_stack' in obj and 'global_contexts' in obj):\n"
             f"        raise Exception('missing arguments')\n"
@@ -113,63 +117,112 @@ def get_event_maker() -> str:
             f"    return make_event(**obj)\n")
 
 
-def get_constructor_description(constructor_description_arguments: List[str]) -> str:
+def indent_lines(code: str, level: int, spaces: int = 4):
     """
-    Build docstring for class constructor
-    :param constructor_description_arguments:
+    indentation helper function. Add spaces in front of every line of code
+    :param code: string, code to be indented
+    :param level: indentation level
+    :param spaces: # of spaces per level
+    :return: indented string
+    """
+    width = level * spaces
+    lines = code.split('\n')
+
+    return '\n'.join([line.rjust(width + len(line), ' ') for line in lines])
+
+
+def get_constructor_description(property_meta: Dict[str, dict]) -> str:
+    """
+    Build docstring for class constructor. Should be of the form:
+        :param <property_name>: <property_description>
+    :property_meta:
     :return: str - python comment
     """
-    return (
-            f'        """\n'
-            f'        ' + '\n        '.join(constructor_description_arguments) +
-            f'\n        """\n'
-    )
+    params = [f':param {name}: \n{indent_lines(meta["description"], level=1)}'
+              for name, meta in property_meta.items()]
+
+    return indent_lines(f'"""\n' + '\n'.join(params) + f'\n"""', level=2)
 
 
-def get_super_arg_string(super_args: List[str]) -> str:
-    """
-    generates python code (string) of arguments to call super class with
-    :param super_args:
-    :return: str - formatted python code
-    """
-    super_args_string = ''
-    if len(super_args) > 0:
-        if len(super_args) > 3:
-            super_args_string = ',\n                       ' + \
-                                ', \n                       '.join(super_args)
-        else:
-            super_args_string = ', ' + ', '.join(super_args)
-    return super_args_string
-
-
-def get_args_string(args: List[str]) -> str:
+def get_args_string(property_meta: Dict[str, dict]) -> str:
     """
     Generate code fragment for constructor arguments
-    :param args: list of arguments to pass to method
+    :param property_meta: list of arguments to pass to method
     :return: formatted string of joined arguments,  or empty string if none
     """
-    args.append('**kwargs')
+
+    # add **kwargs to parameters, to allow for "Extra parameters" in call to constructor
+    args = {p: m['type'] for p, m in property_meta.items()}
+    args['**kwargs'] = 'Optional[Any]'
+    params = [f'{p}: {t}' for p, t in args.items()]
+
     if len(args) > 3:
-        args_string = ',\n                 ' + \
-                      ', \n                 '.join(args)
+        # if the args don't fit on 1 line, we break them over multiple lines with 17 spaces of indentation
+        # so the line up nicely in the constructor
+        args_string = ',\n' + indent_lines(',\n'.join(params), level=17, spaces=1)
     else:
-        args_string = ', ' + ', '.join(args)
+        args_string = ', ' + ', '.join(params)
+
     return args_string
 
 
-def get_call_super_classes_string(super_classes: List[str], super_args: List[str]) -> str:
+def get_super_args_string(property_meta: Dict[str, dict]) -> str:
+    """
+    generates python code (string) of arguments to call super class with
+    :param property_meta:
+    :return: str - formatted python code
+    """
+    super_args_string = ''
+    params = [f'{p}={p}' for p in property_meta.keys()]
+    if len(property_meta) > 0:
+        if len(property_meta) > 3:
+            # hard to properly indent, as it depends on the strlen of the super class
+            # we indent a bit to make it work, and have autoindent fix it properly
+            super_args_string = ',\n' + indent_lines(',\n'.join(params), level=17, spaces=1)
+        else:
+            super_args_string = ', ' + ', '.join(params)
+    return super_args_string
+
+
+def get_call_super_classes_string(super_classes: List[str], property_meta: Dict[str, dict]) -> str:
     """
     Generate code to call all supers
     :param super_classes: list of super classes
-    :param super_args: arguments to call super class with
+    :param property_meta: arguments to call super class with
     :return: formatted string of python code
     """
     call_super_classes_string = ''
     for super_class in super_classes:
         # arguments to call super with
-        super_args_string = get_super_arg_string(super_args)
-        call_super_classes_string += f'        {super_class}.__init__(self{super_args_string})\n'
+        args_string = get_super_args_string(property_meta)
+        call_super_classes_string += indent_lines(f'{super_class}.__init__(self{args_string})', 2)
     return call_super_classes_string
+
+
+def get_class_attributes_description(property_meta: Dict[str, dict]) -> List[str]:
+    """
+    Generate "attributes" part of class description based on class properties
+    :param property_meta:
+    :return:
+    """
+    class_descriptions: List[str] = []
+    if len(property_meta) > 0:
+        class_descriptions.append('\n    Attributes:')
+    for property_name, meta in property_meta.items():
+        class_descriptions.append(indent_lines(f'{property_name} ({meta["type"]}):', 1)
+                                  + '\n'
+                                  + indent_lines(f'{meta["description"]}', 3))
+    return class_descriptions
+
+
+def get_set_instance_variables(instance_variables: List[str]) -> str:
+    """
+    Set / register instance variables in the constructor:
+        self.<property> = <property>
+    :param instance_variables:
+    :return: indented string of python code
+    """
+    return indent_lines('\n'.join([f'self.{iv} = {iv}' for iv in instance_variables]), level=2)
 
 
 def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]) -> str:
@@ -183,9 +236,15 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     parents = obj['parents']
 
     super_classes: List[str] = []
+
+    if len(parents) == 0:
+        parents.append('SchemaEntity')
+
     if len(obj['parents']) > 0:
         super_classes = [p for p in obj['parents']]
-    if re.match('^Abstract', obj_name) and len(parents) == 0:
+
+    # make sure all Abstract classes are actually abstract
+    if re.match('^Abstract', obj_name):
         parents.append('ABC')
 
     # get object/class description from schema, and clean up some white space
@@ -193,70 +252,56 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
 
     # instance variables, for this instance (eg. self.variable)
     instance_variables: List[str] = []
-
-    # properties of _this_ instance
-    properties: Dict[str, dict] = {}
     if 'properties' in obj and len(obj['properties']) > 0:
         properties = obj['properties']
 
         for property_name in properties.keys():
             if property_name not in ['_context_type', 'event']:
-                instance_variables.append(f'self.{property_name} = {property_name}')
+                instance_variables.append(property_name)
 
-    # constructor description arguments
-    cda: List[str] = []
-    # constructor args, these should include all instance variables, both for this instance,
-    # but also for the super class
-    args: List[str] = []
-    # args to pass to super
-    super_args: List[str] = []
+    property_meta: Dict[str, dict] = {}
+    for property_name, property_description in all_properties.items():
+        if property_name in ['_context_type', 'event']:
+            instance_type = f"{property_name} = '{obj_name}'"
+            # ignore these properties, as they are reflected in the class name
+            continue
+        property_type = get_type(property_description)
 
-    if len(all_properties) > 0:
-        class_descriptions.append('\n    Attributes:')
-        for property_name, property_description in all_properties.items():
-            if property_name in ['_context_type', 'event']:
-                # ignore these properties, as they are reflected in the class name
-                continue
-            if property_name not in properties:
-                # if this is not a property of the current class, it must ne inherited from one of
-                # its super classes
-                super_args.append(f'{property_name}={property_name}')
-            property_type = get_type(property_description)
+        # create dict with properties and meta info
+        # be sure to strip the description strings, as they mess with alignment otherwise
+        property_meta[property_name] = {
+            'type': property_type,
+            'description': '\n'.join([line.strip() for line in property_description["description"].split('\n')])
+        }
 
-            args.append(f'{property_name}: {property_type}')
-            cda.append(
-                f':param {property_name}: \n           {property_description["description"].strip()}')
-
-            class_descriptions.append(
-                f'    {property_name} ({property_type}):\n            {property_description["description"].strip()}'
-            )
+    # add  attribute descriptions to class description
+    class_descriptions.extend(get_class_attributes_description(property_meta))
 
     # constructor arguments
-    args_string = get_args_string(args)
-    constructor_description = get_constructor_description(cda)
-    call_super_classes = get_call_super_classes_string(super_classes, super_args)
-    set_instance_variables = ''
-    if len(instance_variables) > 0:
-        set_instance_variables = '        ' + '\n        '.join(instance_variables) + '\n'
+    args_string = get_args_string(property_meta)
+    constructor_description = get_constructor_description(property_meta)
+    call_super_classes = get_call_super_classes_string(super_classes, property_meta)
+    set_instance_variables = get_set_instance_variables(instance_variables)
 
     constructor = (
         f'def __init__(self{args_string}):\n'
         f'{constructor_description}\n'
-        f'{call_super_classes}'
+        f'{call_super_classes}\n'
         f'{set_instance_variables}'
     )
 
     parent_string = ''
     if len(parents) > 0:
         parent_string = f'({", ".join(parents)})'
-    class_description = '\n    '.join(class_descriptions)
+    class_description = indent_lines('\n'.join(class_descriptions), 1)
 
     return(
         f'class {obj_name}{parent_string}:\n'
         '    """\n'
         f'    {class_description}\n'
         '    """\n'
-        f'    {constructor}\n'
+        f'    {instance_type}\n\n'
+        f'    {constructor}\n\n'
     )
 
 
@@ -284,8 +329,9 @@ def main():
     with open('schema.py', 'w') as output:
         # some imports
         imports = [
-            'from typing import List, Dict, Any',
-            'from abc import ABC'
+            'from typing import List, Dict, Any, Optional',
+            'from abc import ABC',
+            'from schema_utils import SchemaEntity'
         ]
         output.write('\n'.join(imports) + '\n\n\n')
         # process contexts (needed for events, so we do these first)
