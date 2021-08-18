@@ -1,6 +1,6 @@
 from typing import List, Dict, Any, Optional
 from abc import ABC
-from objectiv_backend/schema/schema_utils import SchemaEntity
+from objectiv_backend.schema.schema_utils import SchemaEntity
 
 
 class AbstractContext(SchemaEntity, ABC):

@@ -308,7 +308,7 @@ def main():
         imports = [
             'from typing import List, Dict, Any, Optional',
             'from abc import ABC',
-            'from objectiv_backend/schema/schema_utils import SchemaEntity'
+            'from objectiv_backend.schema.schema_utils import SchemaEntity'
         ]
         output.write('\n'.join(imports) + '\n\n\n')
         # process contexts (needed for events, so we do these first)
