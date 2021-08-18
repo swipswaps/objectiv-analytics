@@ -55,7 +55,8 @@ def get_parent_list(objects: Dict[str, Dict[str, Any]]) -> Dict[str, List[str]]:
 
     parent_list: Dict[str, List[str]] = {}
     for klass in parent_mapping.keys():
-        parent_list[klass] = get_parents(class_name=klass, parent_mapping=parent_mapping)
+        parent_list[klass] = get_parents(
+            class_name=klass, parent_mapping=parent_mapping)
 
     return parent_list
 
@@ -82,7 +83,8 @@ def get_event_factory(objects: Dict[str, dict]) -> List[str]:
     :param objects:
     :return: str - function to instantiate classes
     """
-    factory: List[str] = ['def make_event(event: str, **kwargs) -> AbstractEvent:']
+    factory: List[str] = [
+        'def make_event(event: str, **kwargs) -> AbstractEvent:']
     for obj_name, obj in objects.items():
         factory.append(f'    if event == "{obj_name}":\n'
                        f'        return {obj_name}(**kwargs)')
@@ -96,7 +98,8 @@ def get_context_factory(objects: Dict[str, dict]) -> List[str]:
     :param objects:
     :return: str - function to instantiate classes
     """
-    factory: List[str] = ['def make_context(_context_type: str, **kwargs) -> AbstractContext:']
+    factory: List[str] = [
+        'def make_context(_context_type: str, **kwargs) -> AbstractContext:']
     for obj_name, obj in objects.items():
         factory.append(f'    if _context_type == "{obj_name}":\n'
                        f'        return {obj_name}(**kwargs)')
@@ -159,7 +162,8 @@ def get_args_string(property_meta: Dict[str, dict]) -> str:
     if len(args) > 3:
         # if the args don't fit on 1 line, we break them over multiple lines with 17 spaces of indentation
         # so the line up nicely in the constructor
-        args_string = ',\n' + indent_lines(',\n'.join(params), level=17, spaces=1)
+        args_string = ',\n' + \
+            indent_lines(',\n'.join(params), level=17, spaces=1)
     else:
         args_string = ', ' + ', '.join(params)
 
@@ -180,7 +184,8 @@ def get_super_args_string(property_meta: Dict[str, dict]) -> str:
         if len(property_meta) > 3:
             # hard to properly indent, as it depends on the strlen of the super class
             # we indent a bit to make it work, and have autoindent fix it properly
-            super_args_string = ',\n' + indent_lines(',\n'.join(params), level=17, spaces=1)
+            super_args_string = ',\n' + \
+                indent_lines(',\n'.join(params), level=17, spaces=1)
         else:
             super_args_string = ', ' + ', '.join(params)
     return super_args_string
@@ -197,7 +202,8 @@ def get_call_super_classes_string(super_classes: List[str], property_meta: Dict[
     for super_class in super_classes:
         # arguments to call super with
         args_string = get_super_args_string(property_meta)
-        call_super_classes_string += indent_lines(f'{super_class}.__init__(self{args_string})', 2)
+        call_super_classes_string += indent_lines(
+            f'{super_class}.__init__(self{args_string})', 2)
     return call_super_classes_string
 
 
@@ -257,7 +263,8 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     constructor_description = get_constructor_description(property_meta)
 
     super_classes: List[str] = [p for p in obj['parents']]
-    call_super_classes = get_call_super_classes_string(super_classes, property_meta)
+    call_super_classes = get_call_super_classes_string(
+        super_classes, property_meta)
 
     constructor = (
         f'def __init__(self{args_string}):\n'
@@ -292,7 +299,8 @@ def get_classes(objects: Dict[str, dict]) -> List[str]:
     for obj_name, obj in objects.items():
         hierarchy = [obj_name, *parent_list[obj_name]]
         all_properties = get_all_properties(hierarchy, objects=objects)
-        classes.append(get_class(obj_name=obj_name, obj=obj, all_properties=all_properties))
+        classes.append(get_class(obj_name=obj_name, obj=obj,
+                       all_properties=all_properties))
     classes.append('\n')
     return classes
 
@@ -314,8 +322,10 @@ def main():
         # process events
         output.write('\n'.join(get_classes(event_schema.events.schema)))
 
-        output.write('\n'.join(get_context_factory(event_schema.contexts.schema)) + '\n\n')
-        output.write('\n'.join(get_event_factory(event_schema.events.schema)) + '\n\n\n')
+        output.write('\n'.join(get_context_factory(
+            event_schema.contexts.schema)) + '\n\n')
+        output.write('\n'.join(get_event_factory(
+            event_schema.events.schema)) + '\n\n\n')
         output.write(get_event_maker())
 
 
