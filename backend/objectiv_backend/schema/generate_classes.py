@@ -174,6 +174,8 @@ def get_super_args_string(property_meta: Dict[str, dict]) -> str:
     """
     super_args_string = ''
     params = [f'{p}={p}' for p in property_meta.keys()]
+    # make sure all arguments bubble up
+    params.append('**kwargs')
     if len(property_meta) > 0:
         if len(property_meta) > 3:
             # hard to properly indent, as it depends on the strlen of the super class
@@ -209,20 +211,10 @@ def get_class_attributes_description(property_meta: Dict[str, dict]) -> List[str
     if len(property_meta) > 0:
         class_descriptions.append('\n    Attributes:')
     for property_name, meta in property_meta.items():
-        class_descriptions.append(indent_lines(f'{property_name} ({meta["type"]}):', 1)
+        class_descriptions.append(indent_lines(f'{property_name} ({meta["type"]}):', level=1)
                                   + '\n'
                                   + indent_lines(f'{meta["description"]}', 3))
     return class_descriptions
-
-
-def get_set_instance_variables(instance_variables: List[str]) -> str:
-    """
-    Set / register instance variables in the constructor:
-        self.<property> = <property>
-    :param instance_variables:
-    :return: indented string of python code
-    """
-    return indent_lines('\n'.join([f'self.{iv} = {iv}' for iv in instance_variables]), level=2)
 
 
 def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]) -> str:
@@ -235,13 +227,11 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     """
     parents = obj['parents']
 
-    super_classes: List[str] = []
-
+    # add internal super class to "root" class (no parents)
     if len(parents) == 0:
         parents.append('SchemaEntity')
 
-    if len(obj['parents']) > 0:
-        super_classes = [p for p in obj['parents']]
+    super_classes: List[str] = [p for p in obj['parents']]
 
     # make sure all Abstract classes are actually abstract
     if re.match('^Abstract', obj_name):
@@ -250,27 +240,17 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     # get object/class description from schema, and clean up some white space
     class_descriptions = [s.strip() for s in obj['description'].split('\n')]
 
-    # instance variables, for this instance (eg. self.variable)
-    instance_variables: List[str] = []
-    if 'properties' in obj and len(obj['properties']) > 0:
-        properties = obj['properties']
-
-        for property_name in properties.keys():
-            if property_name not in ['_context_type', 'event']:
-                instance_variables.append(property_name)
-
-    property_meta: Dict[str, dict] = {}
+    property_meta: Dict[str, Dict[str, str]] = {}
     for property_name, property_description in all_properties.items():
         if property_name in ['_context_type', 'event']:
             instance_type = f"{property_name} = '{obj_name}'"
             # ignore these properties, as they are reflected in the class name
             continue
-        property_type = get_type(property_description)
 
         # create dict with properties and meta info
         # be sure to strip the description strings, as they mess with alignment otherwise
         property_meta[property_name] = {
-            'type': property_type,
+            'type': get_type(property_description),
             'description': '\n'.join([line.strip() for line in property_description["description"].split('\n')])
         }
 
@@ -281,13 +261,11 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     args_string = get_args_string(property_meta)
     constructor_description = get_constructor_description(property_meta)
     call_super_classes = get_call_super_classes_string(super_classes, property_meta)
-    set_instance_variables = get_set_instance_variables(instance_variables)
 
     constructor = (
         f'def __init__(self{args_string}):\n'
         f'{constructor_description}\n'
         f'{call_super_classes}\n'
-        f'{set_instance_variables}'
     )
 
     parent_string = ''

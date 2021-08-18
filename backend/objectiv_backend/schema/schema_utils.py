@@ -19,3 +19,14 @@ class SchemaEntity(dict):
         else:
             # this should never happen! But better safe than sorry
             raise Exception(f'Unknown entity / missing attributes in {type(self)}')
+
+    def __getattr__(self, item):
+        """
+        wrapper to allow attribute access to dictionary values by key
+        :param item:
+        :return:
+        """
+        try:
+            return self[item]
+        except KeyError:
+            raise AttributeError
