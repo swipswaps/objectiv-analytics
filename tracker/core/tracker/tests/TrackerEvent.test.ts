@@ -140,22 +140,4 @@ describe('TrackerEvent', () => {
       expect(testEvent.tracking_time).not.toBe(mockedMs);
     });
   });
-
-  describe('setTransportTime', () => {
-    it('should use Date.now() when timestampMs is not provided', () => {
-      const testEvent = new TrackerEvent({ event: 'test-event' });
-      expect(testEvent.transport_time).toBeUndefined();
-      testEvent.setTransportTime();
-      expect(testEvent.transport_time).toBe(mockedMs);
-    });
-
-    it('should use whatever timestampMs is provided', () => {
-      const testEvent = new TrackerEvent({ event: 'test-event' });
-      expect(testEvent.transport_time).toBeUndefined();
-      const timestampMs = 1234567890123;
-      testEvent.setTransportTime(timestampMs);
-      expect(testEvent.transport_time).toBe(timestampMs);
-      expect(testEvent.transport_time).not.toBe(mockedMs);
-    });
-  });
 });

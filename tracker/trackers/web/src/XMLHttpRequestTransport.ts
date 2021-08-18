@@ -31,7 +31,6 @@ export const defaultXMLHttpRequestFunction = ({
       }
     };
     xhr.onerror = () => reject(new TransportSendError());
-    events.forEach((event) => event.setTransportTime());
     xhr.send(JSON.stringify(events));
   });
 };

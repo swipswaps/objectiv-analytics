@@ -47,7 +47,6 @@ describe('FetchAPITransport', () => {
         body: JSON.stringify([
           {
             ...otherProps,
-            transport_time: mockedMs,
             id,
           },
         ]),
@@ -77,7 +76,6 @@ describe('FetchAPITransport', () => {
         body: JSON.stringify([
           {
             ...otherProps,
-            transport_time: mockedMs,
             id,
           },
         ]),
@@ -126,7 +124,6 @@ describe('FetchAPITransport', () => {
         body: JSON.stringify([
           {
             ...otherProps,
-            transport_time: mockedMs,
             id,
           },
         ]),

@@ -33,8 +33,6 @@ export const defaultFetchFunction = async ({
   parameters?: typeof defaultFetchParameters;
 }): Promise<Response> => {
   return new Promise(function (resolve, reject) {
-    events.forEach((event) => event.setTransportTime());
-
     console.groupCollapsed(`Objectiv: FetchAPITransport sending`);
     console.log(`Events:`);
     console.log(events);
