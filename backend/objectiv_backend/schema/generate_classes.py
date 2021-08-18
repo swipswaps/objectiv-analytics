@@ -198,13 +198,13 @@ def get_call_super_classes_string(super_classes: List[str], property_meta: Dict[
     :param property_meta: arguments to call super class with
     :return: formatted string of python code
     """
-    call_super_classes_string = ''
+    call_super_classes: List[str] = []
     for super_class in super_classes:
         # arguments to call super with
         args_string = get_super_args_string(property_meta)
-        call_super_classes_string += indent_lines(
-            f'{super_class}.__init__(self{args_string})', 2)
-    return call_super_classes_string
+        call_super_classes.append(indent_lines(
+            f'{super_class}.__init__(self{args_string})', 2))
+    return '\n'.join(call_super_classes)
 
 
 def get_class_attributes_description(property_meta: Dict[str, dict]) -> List[str]:
@@ -231,10 +231,14 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     :param all_properties: List of all properties (through class hierarchy)
     :return:
     """
-    parents = obj['parents']
+    parents = [p for p in obj['parents']]
     # add internal super class to "root" class (no parents)
     if len(parents) == 0:
         parents.append('SchemaEntity')
+
+    # keep track of super classes to call
+    super_classes: List[str] = [p for p in parents]
+
     # make sure all Abstract classes are actually abstract
     if re.match('^Abstract', obj_name):
         parents.append('ABC')
@@ -262,14 +266,13 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     args_string = get_args_string(property_meta)
     constructor_description = get_constructor_description(property_meta)
 
-    super_classes: List[str] = [p for p in obj['parents']]
     call_super_classes = get_call_super_classes_string(
         super_classes, property_meta)
 
     constructor = (
         f'def __init__(self{args_string}):\n'
         f'{constructor_description}\n'
-        f'{call_super_classes}\n'
+        f'{call_super_classes}'
     )
 
     parent_string = ''
