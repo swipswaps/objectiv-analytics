@@ -226,13 +226,9 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     :return:
     """
     parents = obj['parents']
-
     # add internal super class to "root" class (no parents)
     if len(parents) == 0:
         parents.append('SchemaEntity')
-
-    super_classes: List[str] = [p for p in obj['parents']]
-
     # make sure all Abstract classes are actually abstract
     if re.match('^Abstract', obj_name):
         parents.append('ABC')
@@ -259,6 +255,8 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     # constructor arguments
     args_string = get_args_string(property_meta)
     constructor_description = get_constructor_description(property_meta)
+
+    super_classes: List[str] = [p for p in obj['parents']]
     call_super_classes = get_call_super_classes_string(super_classes, property_meta)
 
     constructor = (
