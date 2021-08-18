@@ -237,9 +237,6 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     if re.match('^Abstract', obj_name):
         parents.append('ABC')
 
-    # get object/class description from schema, and clean up some white space
-    class_descriptions = [s.strip() for s in obj['description'].split('\n')]
-
     property_meta: Dict[str, Dict[str, str]] = {}
     for property_name, property_description in all_properties.items():
         if property_name in ['_context_type', 'event']:
@@ -254,6 +251,8 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
             'description': '\n'.join([line.strip() for line in property_description["description"].split('\n')])
         }
 
+    # get object/class description from schema, and clean up some white space
+    class_descriptions = [s.strip() for s in obj['description'].split('\n')]
     # add  attribute descriptions to class description
     class_descriptions.extend(get_class_attributes_description(property_meta))
 
@@ -309,7 +308,7 @@ def main():
         imports = [
             'from typing import List, Dict, Any, Optional',
             'from abc import ABC',
-            'from schema_utils import SchemaEntity'
+            'from objectiv_backend/schema/schema_utils import SchemaEntity'
         ]
         output.write('\n'.join(imports) + '\n\n\n')
         # process contexts (needed for events, so we do these first)
