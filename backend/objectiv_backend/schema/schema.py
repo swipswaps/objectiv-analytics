@@ -30,8 +30,7 @@ class AbstractContext(SchemaEntity, ABC):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        SchemaEntity.__init__(self, id=id)
-        self.id = id
+        SchemaEntity.__init__(self, id=id, **kwargs)
 
 
 class AbstractLocationContext(AbstractContext, ABC):
@@ -53,7 +52,7 @@ class AbstractLocationContext(AbstractContext, ABC):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        AbstractContext.__init__(self, id=id)
+        AbstractContext.__init__(self, id=id, **kwargs)
 
 
 class AbstractGlobalContext(AbstractContext, ABC):
@@ -74,7 +73,7 @@ class AbstractGlobalContext(AbstractContext, ABC):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        AbstractContext.__init__(self, id=id)
+        AbstractContext.__init__(self, id=id, **kwargs)
 
 
 class ApplicationContext(AbstractGlobalContext):
@@ -94,7 +93,7 @@ class ApplicationContext(AbstractGlobalContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        AbstractGlobalContext.__init__(self, id=id)
+        AbstractGlobalContext.__init__(self, id=id, **kwargs)
 
 
 class SectionContext(AbstractLocationContext):
@@ -116,7 +115,7 @@ class SectionContext(AbstractLocationContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        AbstractLocationContext.__init__(self, id=id)
+        AbstractLocationContext.__init__(self, id=id, **kwargs)
 
 
 class WebDocumentContext(SectionContext):
@@ -140,8 +139,7 @@ class WebDocumentContext(SectionContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        SectionContext.__init__(self, url=url, id=id)
-        self.url = url
+        SectionContext.__init__(self, url=url, id=id, **kwargs)
 
 
 class ScreenContext(SectionContext):
@@ -165,8 +163,7 @@ class ScreenContext(SectionContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        SectionContext.__init__(self, screen=screen, id=id)
-        self.screen = screen
+        SectionContext.__init__(self, screen=screen, id=id, **kwargs)
 
 
 class ExpandableSectionContext(SectionContext):
@@ -186,7 +183,7 @@ class ExpandableSectionContext(SectionContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        SectionContext.__init__(self, id=id)
+        SectionContext.__init__(self, id=id, **kwargs)
 
 
 class MediaPlayerContext(SectionContext):
@@ -206,7 +203,7 @@ class MediaPlayerContext(SectionContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        SectionContext.__init__(self, id=id)
+        SectionContext.__init__(self, id=id, **kwargs)
 
 
 class NavigationContext(SectionContext):
@@ -226,7 +223,7 @@ class NavigationContext(SectionContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        SectionContext.__init__(self, id=id)
+        SectionContext.__init__(self, id=id, **kwargs)
 
 
 class OverlayContext(SectionContext):
@@ -246,7 +243,7 @@ class OverlayContext(SectionContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        SectionContext.__init__(self, id=id)
+        SectionContext.__init__(self, id=id, **kwargs)
 
 
 class ItemContext(AbstractLocationContext):
@@ -267,7 +264,7 @@ class ItemContext(AbstractLocationContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        AbstractLocationContext.__init__(self, id=id)
+        AbstractLocationContext.__init__(self, id=id, **kwargs)
 
 
 class InputContext(ItemContext):
@@ -287,7 +284,7 @@ class InputContext(ItemContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        ItemContext.__init__(self, id=id)
+        ItemContext.__init__(self, id=id, **kwargs)
 
 
 class ActionContext(ItemContext):
@@ -312,8 +309,7 @@ class ActionContext(ItemContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        ItemContext.__init__(self, text=text, id=id)
-        self.text = text
+        ItemContext.__init__(self, text=text, id=id, **kwargs)
 
 
 class ButtonContext(ActionContext):
@@ -337,7 +333,7 @@ class ButtonContext(ActionContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        ActionContext.__init__(self, text=text, id=id)
+        ActionContext.__init__(self, text=text, id=id, **kwargs)
 
 
 class LinkContext(ActionContext):
@@ -369,8 +365,7 @@ class LinkContext(ActionContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        ActionContext.__init__(self, href=href, text=text, id=id)
-        self.href = href
+        ActionContext.__init__(self, href=href, text=text, id=id, **kwargs)
 
 
 class DeviceContext(AbstractGlobalContext):
@@ -394,8 +389,8 @@ class DeviceContext(AbstractGlobalContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        AbstractGlobalContext.__init__(self, user_agent=user_agent, id=id)
-        self.user_agent = user_agent
+        AbstractGlobalContext.__init__(
+            self, user_agent=user_agent, id=id, **kwargs)
 
 
 class ErrorContext(AbstractGlobalContext):
@@ -419,8 +414,7 @@ class ErrorContext(AbstractGlobalContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        AbstractGlobalContext.__init__(self, message=message, id=id)
-        self.message = message
+        AbstractGlobalContext.__init__(self, message=message, id=id, **kwargs)
 
 
 class CookieIdContext(AbstractGlobalContext):
@@ -444,8 +438,8 @@ class CookieIdContext(AbstractGlobalContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        AbstractGlobalContext.__init__(self, cookie_id=cookie_id, id=id)
-        self.cookie_id = cookie_id
+        AbstractGlobalContext.__init__(
+            self, cookie_id=cookie_id, id=id, **kwargs)
 
 
 class SessionContext(AbstractGlobalContext):
@@ -469,8 +463,8 @@ class SessionContext(AbstractGlobalContext):
             A unique string identifier to be combined with the Context Type (`_context_type`)
             for Context instance uniqueness.
         """
-        AbstractGlobalContext.__init__(self, hit_number=hit_number, id=id)
-        self.hit_number = hit_number
+        AbstractGlobalContext.__init__(
+            self, hit_number=hit_number, id=id, **kwargs)
 
 
 class HttpContext(AbstractGlobalContext):
@@ -511,10 +505,8 @@ class HttpContext(AbstractGlobalContext):
                                        referer=referer,
                                        user_agent=user_agent,
                                        remote_address=remote_address,
-                                       id=id)
-        self.referer = referer
-        self.user_agent = user_agent
-        self.remote_address = remote_address
+                                       id=id,
+                                       **kwargs)
 
 
 class AbstractEvent(SchemaEntity, ABC):
@@ -567,11 +559,8 @@ class AbstractEvent(SchemaEntity, ABC):
                               location_stack=location_stack,
                               global_contexts=global_contexts,
                               id=id,
-                              time=time)
-        self.location_stack = location_stack
-        self.global_contexts = global_contexts
-        self.id = id
-        self.time = time
+                              time=time,
+                              **kwargs)
 
 
 class NonInteractiveEvent(AbstractEvent):
@@ -625,7 +614,8 @@ class NonInteractiveEvent(AbstractEvent):
                                location_stack=location_stack,
                                global_contexts=global_contexts,
                                id=id,
-                               time=time)
+                               time=time,
+                               **kwargs)
 
 
 class DocumentLoadedEvent(NonInteractiveEvent):
@@ -679,7 +669,8 @@ class DocumentLoadedEvent(NonInteractiveEvent):
                                      location_stack=location_stack,
                                      global_contexts=global_contexts,
                                      id=id,
-                                     time=time)
+                                     time=time,
+                                     **kwargs)
 
 
 class URLChangeEvent(NonInteractiveEvent):
@@ -731,7 +722,8 @@ class URLChangeEvent(NonInteractiveEvent):
                                      location_stack=location_stack,
                                      global_contexts=global_contexts,
                                      id=id,
-                                     time=time)
+                                     time=time,
+                                     **kwargs)
 
 
 class ApplicationLoadedEvent(NonInteractiveEvent):
@@ -783,7 +775,8 @@ class ApplicationLoadedEvent(NonInteractiveEvent):
                                      location_stack=location_stack,
                                      global_contexts=global_contexts,
                                      id=id,
-                                     time=time)
+                                     time=time,
+                                     **kwargs)
 
 
 class SectionVisibleEvent(NonInteractiveEvent):
@@ -834,7 +827,8 @@ class SectionVisibleEvent(NonInteractiveEvent):
                                      location_stack=location_stack,
                                      global_contexts=global_contexts,
                                      id=id,
-                                     time=time)
+                                     time=time,
+                                     **kwargs)
 
 
 class SectionHiddenEvent(NonInteractiveEvent):
@@ -885,7 +879,8 @@ class SectionHiddenEvent(NonInteractiveEvent):
                                      location_stack=location_stack,
                                      global_contexts=global_contexts,
                                      id=id,
-                                     time=time)
+                                     time=time,
+                                     **kwargs)
 
 
 class VideoEvent(NonInteractiveEvent):
@@ -936,7 +931,8 @@ class VideoEvent(NonInteractiveEvent):
                                      location_stack=location_stack,
                                      global_contexts=global_contexts,
                                      id=id,
-                                     time=time)
+                                     time=time,
+                                     **kwargs)
 
 
 class VideoLoadEvent(VideoEvent):
@@ -987,7 +983,8 @@ class VideoLoadEvent(VideoEvent):
                             location_stack=location_stack,
                             global_contexts=global_contexts,
                             id=id,
-                            time=time)
+                            time=time,
+                            **kwargs)
 
 
 class VideoStartEvent(VideoEvent):
@@ -1038,7 +1035,8 @@ class VideoStartEvent(VideoEvent):
                             location_stack=location_stack,
                             global_contexts=global_contexts,
                             id=id,
-                            time=time)
+                            time=time,
+                            **kwargs)
 
 
 class VideoStopEvent(VideoEvent):
@@ -1089,7 +1087,8 @@ class VideoStopEvent(VideoEvent):
                             location_stack=location_stack,
                             global_contexts=global_contexts,
                             id=id,
-                            time=time)
+                            time=time,
+                            **kwargs)
 
 
 class VideoPauseEvent(VideoEvent):
@@ -1140,7 +1139,8 @@ class VideoPauseEvent(VideoEvent):
                             location_stack=location_stack,
                             global_contexts=global_contexts,
                             id=id,
-                            time=time)
+                            time=time,
+                            **kwargs)
 
 
 class InteractiveEvent(AbstractEvent):
@@ -1191,7 +1191,8 @@ class InteractiveEvent(AbstractEvent):
                                location_stack=location_stack,
                                global_contexts=global_contexts,
                                id=id,
-                               time=time)
+                               time=time,
+                               **kwargs)
 
 
 class ClickEvent(InteractiveEvent):
@@ -1242,7 +1243,8 @@ class ClickEvent(InteractiveEvent):
                                   location_stack=location_stack,
                                   global_contexts=global_contexts,
                                   id=id,
-                                  time=time)
+                                  time=time,
+                                  **kwargs)
 
 
 class InputChangeEvent(InteractiveEvent):
@@ -1293,7 +1295,8 @@ class InputChangeEvent(InteractiveEvent):
                                   location_stack=location_stack,
                                   global_contexts=global_contexts,
                                   id=id,
-                                  time=time)
+                                  time=time,
+                                  **kwargs)
 
 
 def make_context(_context_type: str, **kwargs) -> AbstractContext:
