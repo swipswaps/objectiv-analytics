@@ -1,5 +1,5 @@
 import { AbstractLocationContext } from '@objectiv/schema';
-import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
+import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-web';
 import { v4 as uuidv4 } from 'uuid';
 import { ClickTrackingByContextType, ContextType } from './ContextType';
 import {
