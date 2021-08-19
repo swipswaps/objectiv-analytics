@@ -173,11 +173,11 @@ describe('Context Factories', () => {
   });
 
   it('HttpContext', () => {
-    expect(makeHttpContext({ id: 'http', host: 'host', user_agent: 'ua', remote_address: '0.0.0.0' })).toStrictEqual({
+    expect(makeHttpContext({ id: 'http', referer: 'referer', user_agent: 'ua', remote_address: '0.0.0.0' })).toStrictEqual({
       __global_context: true,
       _context_type: 'HttpContext',
       id: 'http',
-      host: 'host',
+      referer: 'referer',
       user_agent: 'ua',
       remote_address: '0.0.0.0',
     });
