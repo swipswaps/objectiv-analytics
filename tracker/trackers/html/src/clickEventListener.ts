@@ -11,11 +11,6 @@ export const clickEventListener = (tracker: WebTracker, event: Event, element: H
     return;
   }
 
-  if (!tracker) {
-    console.warn('Tracker not initialized.')
-    return;
-  }
-
   const targetElementId = event.target.getAttribute(TrackingAttribute.objectivElementId);
   const elementId = element.getAttribute(TrackingAttribute.objectivElementId);
   if (targetElementId !== elementId) {
