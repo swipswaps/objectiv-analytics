@@ -78,7 +78,7 @@ class ErrorInfo(NamedTuple):
         return self._asdict()
 
 
-class EventError (Dict):
+class EventError(Dict):
     event_id: uuid.UUID
     error_info: List[ErrorInfo]
 
