@@ -1,7 +1,7 @@
 {
-  "name": "@objectiv/tracker-web",
+  "name": "@objectiv/tracker-html",
   "version": "0.0.1",
-  "description": "Objectiv Web Tracker",
+  "description": "Objectiv HTML Tracker",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "module": "dist/index.js",
@@ -23,11 +23,7 @@
     "@rollup/plugin-strip": "^2.0.1",
     "@types/jest": "^26.0.23",
     "jest": "^26.6.3",
-    "jest-extended": "^0.11.5",
-    "jest-fetch-mock": "^3.0.3",
     "jest-standard-reporter": "^2.0.0",
-    "jest-useragent-mock": "^0.1.1",
-    "mockdate": "^3.0.5",
     "prettier": "^2.3.0",
     "rollup": "^2.48.0",
     "rollup-plugin-filesize": "^9.1.1",
@@ -36,13 +32,9 @@
     "rollup-plugin-ts": "^1.4.0",
     "ts-jest": "^26.5.6",
     "tslib": "^2.2.0",
-    "typescript": "^4.2.4",
-    "xhr-mock": "^2.5.1"
+    "typescript": "^4.2.4"
   },
   "dependencies": {
-    "@objectiv/plugin-web-device-context": "~0.0.1",
-    "@objectiv/plugin-web-document-context": "~0.0.1",
-    "@objectiv/tracker-core": "~0.0.1",
-    "superjson": "^1.7.5"
+    "@objectiv/tracker-web": "~0.0.1"
   }
 }
