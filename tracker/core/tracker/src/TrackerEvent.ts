@@ -21,9 +21,9 @@ export type TrackerEventConfig = Pick<AbstractEvent, 'event'> &
 
 /**
  * An Event before it has been handed over to the Tracker.
- * Properties that will be set by the Tracker or Transport are omitted: `id`, `tracking_time`, `transport_time`
+ * Properties that will be set by the Tracker or Transport are omitted: `id`, `time`
  */
-export type UntrackedEvent = Omit<AbstractEvent, 'id' | 'tracking_time' | 'transport_time'>;
+export type UntrackedEvent = Omit<AbstractEvent, 'id' | 'time'>;
 
 /**
  * Our main TrackerEvent interface and basic implementation
@@ -32,8 +32,7 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
   // Event interface
   readonly event: string;
   id: string;
-  tracking_time?: number;
-  transport_time?: number;
+  time?: number;
 
   // Contexts interface
   readonly location_stack: AbstractLocationContext[];
@@ -74,8 +73,8 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
    * Tracking time setter.
    * Defaults to Date.now() if not timestampMs is provided.
    */
-  setTrackingTime(timestampMs: number = Date.now()) {
-    this.tracking_time = timestampMs;
+  setTime(timestampMs: number = Date.now()) {
+    this.time = timestampMs;
   }
 
   /**
