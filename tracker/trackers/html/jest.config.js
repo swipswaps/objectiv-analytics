@@ -5,6 +5,6 @@ module.exports = {
   collectCoverageFrom: ['src/**.ts'],
   moduleNameMapper: {
     '@objectiv/tracker-core': '../../../core/tracker/src',
-    '@objectiv/plugin-(.*)': '../../../plugins/$1/src'
+    '@objectiv/plugin-(.*)': '../../../plugins/$1/src',
   },
 };

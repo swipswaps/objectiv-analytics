@@ -1,4 +1,5 @@
 import { AbstractLocationContext } from '@objectiv/schema';
+import { cleanObjectFromDiscriminatingProperties } from "@objectiv/tracker-core";
 import superjson from 'superjson';
 import { v4 as uuidv4 } from 'uuid';
 import ContextType from './ContextType';
@@ -23,9 +24,9 @@ type trackElementReturn = {
 };
 
 /**
- * It's possible to call `trackElement` with just an ID for SectionContexts
+ * It's possible to call `trackElement` with just an ID for SectionContexts aka Elements
  */
-const DEFAULT_CONTEXT_TYPE = ContextType.section;
+const DEFAULT_CONTEXT_TYPE = ContextType.element;
 
 /**
  * The main endpoint of the HTML Tracker. Can be called in three ways:
@@ -45,27 +46,35 @@ const DEFAULT_CONTEXT_TYPE = ContextType.section;
  */
 
 // Overload: Section context by id only
-export function trackElement(id: string): trackElementReturn;
+export function track(id: string): trackElementReturn;
 
-// Overload: Button context
-export function trackElement(
+// Overload: Location contexts without attributes
+export function track(
   id: string,
-  type: ContextType.button,
-  extraAttributes: { text: string }
+  type:
+    | ContextType.element
+    | ContextType.expandableElement
+    | ContextType.input
+    | ContextType.mediaPlayer
+    | ContextType.navigation
+    | ContextType.overlay
 ): trackElementReturn;
 
+// Overload: Button context
+export function track(id: string, type: ContextType.button, extraAttributes: { text: string }): trackElementReturn;
+
 // Overload: Link context
-export function trackElement(
+export function track(
   id: string,
   type: ContextType.link,
   extraAttributes: { href: string; text: string }
 ): trackElementReturn;
 
 // Overload: Any Location Context
-export function trackElement(instance: AbstractLocationContext): trackElementReturn;
+export function track(instance: AbstractLocationContext): trackElementReturn;
 
 // Implementation
-export function trackElement(
+export function track(
   idOrContextInstance: string | AbstractLocationContext,
   type?: ContextType,
   extraAttributes?: Record<string, any>
@@ -75,16 +84,30 @@ export function trackElement(
   if (typeof idOrContextInstance === 'string') {
     return {
       [TrackingAttribute.objectivElementId]: elementId,
+      // TODO perhaps nicer to use a Factory for this
       [TrackingAttribute.objectivContext]: superjson.stringify({
-        __context_type: type ?? DEFAULT_CONTEXT_TYPE,
+        _context_type: type ?? DEFAULT_CONTEXT_TYPE,
         id: idOrContextInstance,
         ...extraAttributes,
       }),
     };
   } else {
+    cleanObjectFromDiscriminatingProperties(idOrContextInstance);
     return {
       [TrackingAttribute.objectivElementId]: elementId,
       [TrackingAttribute.objectivContext]: superjson.stringify(idOrContextInstance),
     };
   }
 }
+
+/**
+ * Location Context specific shortcuts. To make it easier to track the common HTML Elements
+ */
+export const trackButton = (id: string, text: string) => track(id, ContextType.button, { text });
+export const trackElement = (id: string) => track(id, ContextType.element);
+export const trackExpandableElement = (id: string) => track(id, ContextType.expandableElement);
+export const trackInput = (id: string) => track(id, ContextType.input);
+export const trackLink = (id: string, text: string, href: string) => track(id, ContextType.link, { text, href });
+export const trackMediaPlayer = (id: string) => track(id, ContextType.mediaPlayer);
+export const trackNavigation = (id: string) => track(id, ContextType.navigation);
+export const trackOverlay = (id: string) => track(id, ContextType.overlay);

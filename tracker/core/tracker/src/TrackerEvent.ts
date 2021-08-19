@@ -1,12 +1,6 @@
-import {
-  AbstractEvent,
-  AbstractGlobalContext,
-  AbstractLocationContext,
-  Contexts,
-  DiscriminatingPropertyPrefix,
-} from '@objectiv/schema';
+import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext, Contexts, } from '@objectiv/schema';
 import { ContextsConfig } from './Context';
-import { generateUUID, getObjectKeys } from './helpers';
+import { cleanObjectFromDiscriminatingProperties, generateUUID } from './helpers';
 
 /**
  * TrackerEvents are simply a combination of an `event` name and their Contexts.
@@ -91,20 +85,8 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
    * between Contexts and Event types. This ensures the Event we send to Collectors has only OSF properties.
    */
   toJSON() {
-    // All discriminating properties start with this prefix
-    const DISCRIMINATING_PROPERTY_PREFIX: DiscriminatingPropertyPrefix = '__';
-
     // Clone the TrackerEvent to avoid mutating the original
     const cleanedTrackerEvent: TrackerEvent = new TrackerEvent(this);
-
-    // Our cleaning function
-    const cleanObjectFromDiscriminatingProperties = <T extends object>(obj: T) => {
-      getObjectKeys(obj).forEach((propertyName) => {
-        if (propertyName.toString().startsWith(DISCRIMINATING_PROPERTY_PREFIX)) {
-          delete obj[propertyName];
-        }
-      });
-    };
 
     // Remove all discriminating properties from the TrackerEvent itself, its location_stack and its global_contexts
     cleanObjectFromDiscriminatingProperties(cleanedTrackerEvent);

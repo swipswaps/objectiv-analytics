@@ -1,8 +1,12 @@
-// TODO generate this from schema
 enum ContextType {
-  section = 'SectionContext',
   button = 'ButtonContext',
+  element = 'SectionContext',
+  expandableElement = 'ExpandableSectionContext',
+  input = 'InputContext',
   link = 'LinkContext',
+  mediaPlayer = 'MediaPlayerContext',
+  navigation = 'NavigationContext',
+  overlay = 'OverlayContext',
 }
 
 export default ContextType;
