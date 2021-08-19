@@ -183,7 +183,7 @@ def get_super_args_string(property_meta: Dict[str, dict]) -> str:
     if len(property_meta) > 0:
         if len(property_meta) > 3:
             # hard to properly indent, as it depends on the strlen of the super class
-            # we indent a bit to make it work, and have autoindent fix it properly
+            # we indent a bit to make it work, and have auto indent fix it properly
             super_args_string = ',\n' + \
                 indent_lines(',\n'.join(params), level=17, spaces=1)
         else:
@@ -203,7 +203,7 @@ def get_call_super_classes_string(super_classes: List[str], property_meta: Dict[
         # arguments to call super with
         args_string = get_super_args_string(property_meta)
         call_super_classes.append(indent_lines(
-            f'{super_class}.__init__(self{args_string})', 2))
+            f'{super_class}.__init__(self{args_string})', level=2))
     return '\n'.join(call_super_classes)
 
 
@@ -219,7 +219,7 @@ def get_class_attributes_description(property_meta: Dict[str, dict]) -> List[str
     for property_name, meta in property_meta.items():
         class_descriptions.append(indent_lines(f'{property_name} ({meta["type"]}):', level=1)
                                   + '\n'
-                                  + indent_lines(f'{meta["description"]}', 3))
+                                  + indent_lines(f'{meta["description"]}', level=3))
     return class_descriptions
 
 
@@ -278,7 +278,7 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
     parent_string = ''
     if len(parents) > 0:
         parent_string = f'({", ".join(parents)})'
-    class_description = indent_lines('\n'.join(class_descriptions), 1)
+    class_description = indent_lines('\n'.join(class_descriptions), level=1)
 
     return(
         f'class {obj_name}{parent_string}:\n'
