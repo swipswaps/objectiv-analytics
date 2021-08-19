@@ -43,6 +43,8 @@ const DEFAULT_CONTEXT_TYPE = ContextType.element;
  *
  * Returns an object containing the tracking attributes. It's properties are supposed to be spread on the target HTML
  * Element. This allows us to identify elements uniquely in a Document and to reconstruct their Location.
+ *
+ * For most commonly used Elements / Location Contexts see also the shortcut functions below.
  */
 
 // Overload: Section context by id only
@@ -84,7 +86,7 @@ export function track(
   if (typeof idOrContextInstance === 'string') {
     return {
       [TrackingAttribute.objectivElementId]: elementId,
-      // TODO perhaps nicer to use a Factory for this
+      // TODO Probably nicer to use our factories for this. A wrapper around them may work, leveraging ContextType
       [TrackingAttribute.objectivContext]: superjson.stringify({
         _context_type: type ?? DEFAULT_CONTEXT_TYPE,
         id: idOrContextInstance,
@@ -101,7 +103,7 @@ export function track(
 }
 
 /**
- * Location Context specific shortcuts. To make it easier to track the common HTML Elements
+ * Location Context specific shortcuts. To make it easier to track common HTML Elements
  */
 export const trackButton = (id: string, text: string) => track(id, ContextType.button, { text });
 export const trackElement = (id: string) => track(id, ContextType.element);
