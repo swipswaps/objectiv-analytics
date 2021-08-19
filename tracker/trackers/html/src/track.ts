@@ -1,6 +1,5 @@
 import { AbstractLocationContext } from '@objectiv/schema';
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
-import superjson from 'superjson';
 import { v4 as uuidv4 } from 'uuid';
 import { ClickTrackingByContextType, ContextType } from './ContextType';
 import {
@@ -92,7 +91,7 @@ export function track(
 
   return {
     [TrackingAttribute.objectivElementId]: elementId,
-    [TrackingAttribute.objectivContext]: superjson.stringify(contextInstance),
+    [TrackingAttribute.objectivContext]: JSON.stringify(contextInstance),
     [TrackingAttribute.objectivTrackClicks]: shouldTrackClicks ? TrackingAttributeTrue : TrackingAttributeFalse,
   };
 }
