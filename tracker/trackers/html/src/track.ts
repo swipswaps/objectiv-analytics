@@ -83,23 +83,25 @@ export function track(
 ): trackElementReturn {
   const elementId = uuidv4();
 
+  let contextInstance;
   if (typeof idOrContextInstance === 'string') {
-    return {
-      [TrackingAttribute.objectivElementId]: elementId,
-      // TODO Probably nicer to use our factories for this. A wrapper around them may work, leveraging ContextType
-      [TrackingAttribute.objectivContext]: superjson.stringify({
-        _context_type: type ?? DEFAULT_CONTEXT_TYPE,
-        id: idOrContextInstance,
-        ...extraAttributes,
-      }),
+    // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
+    contextInstance = {
+      __location_context: true,
+      _context_type: type ?? DEFAULT_CONTEXT_TYPE,
+      id: idOrContextInstance,
+      ...extraAttributes,
     };
   } else {
-    cleanObjectFromDiscriminatingProperties(idOrContextInstance);
-    return {
-      [TrackingAttribute.objectivElementId]: elementId,
-      [TrackingAttribute.objectivContext]: superjson.stringify(idOrContextInstance),
-    };
+    contextInstance = idOrContextInstance;
   }
+
+  cleanObjectFromDiscriminatingProperties(contextInstance);
+
+  return {
+    [TrackingAttribute.objectivElementId]: elementId,
+    [TrackingAttribute.objectivContext]: superjson.stringify(contextInstance),
+  };
 }
 
 /**
