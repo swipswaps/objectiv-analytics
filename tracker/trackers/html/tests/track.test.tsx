@@ -2,25 +2,28 @@ import {
   makeButtonContext,
   makeExpandableSectionContext,
   makeInputContext,
-  makeLinkContext, makeMediaPlayerContext, makeNavigationContext,
-  makeOverlayContext, makeSectionContext
+  makeLinkContext,
+  makeMediaPlayerContext,
+  makeNavigationContext,
+  makeOverlayContext,
+  makeSectionContext,
 } from '@objectiv/tracker-core';
 import superjson from 'superjson';
 import {
+  ContextType,
   track,
   trackButton,
   trackElement,
   trackExpandableElement,
-  TrackingAttribute,
   trackInput,
-  trackLink, trackMediaPlayer, trackNavigation, trackOverlay
+  trackLink,
+  trackMediaPlayer,
+  trackNavigation,
+  trackOverlay,
 } from '../src';
-import ContextType from '../src/ContextType';
+import { TrackingAttribute, TrackingAttributeFalse, TrackingAttributeTrue } from '../src/TrackingAttributes';
 
 const UUIDV4_REGEX = /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
-
-//   mediaPlayer = 'MediaPlayerContext',
-//   navigation = 'NavigationContext',
 
 describe('track', () => {
   it('should return Button tracking attributes', () => {
@@ -35,6 +38,7 @@ describe('track', () => {
         id: 'test-button',
         text: 'Click Me',
       }),
+      [TrackingAttribute.objectivTrackClicks]: TrackingAttributeTrue,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -54,6 +58,7 @@ describe('track', () => {
         _context_type: 'SectionContext',
         id: 'test-section',
       }),
+      [TrackingAttribute.objectivTrackClicks]: TrackingAttributeFalse,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -73,6 +78,7 @@ describe('track', () => {
         _context_type: 'ExpandableSectionContext',
         id: 'test-expandable',
       }),
+      [TrackingAttribute.objectivTrackClicks]: TrackingAttributeFalse,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -91,6 +97,7 @@ describe('track', () => {
         _context_type: 'InputContext',
         id: 'test-input',
       }),
+      [TrackingAttribute.objectivTrackClicks]: TrackingAttributeFalse,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -111,6 +118,7 @@ describe('track', () => {
         text: 'Click Me',
         href: '/test',
       }),
+      [TrackingAttribute.objectivTrackClicks]: TrackingAttributeTrue,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -129,6 +137,7 @@ describe('track', () => {
         _context_type: 'MediaPlayerContext',
         id: 'test-media-player',
       }),
+      [TrackingAttribute.objectivTrackClicks]: TrackingAttributeFalse,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -147,6 +156,7 @@ describe('track', () => {
         _context_type: 'NavigationContext',
         id: 'test-nav',
       }),
+      [TrackingAttribute.objectivTrackClicks]: TrackingAttributeFalse,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -165,6 +175,7 @@ describe('track', () => {
         _context_type: 'OverlayContext',
         id: 'test-overlay',
       }),
+      [TrackingAttribute.objectivTrackClicks]: TrackingAttributeFalse,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
