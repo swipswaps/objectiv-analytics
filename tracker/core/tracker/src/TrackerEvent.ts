@@ -79,14 +79,6 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
   }
 
   /**
-   * Transport time setter.
-   * Defaults to Date.now() if not timestampMs is provided.
-   */
-  setTransportTime(timestampMs: number = Date.now()) {
-    this.transport_time = timestampMs;
-  }
-
-  /**
    * Custom JSON serializer that cleans up the discriminatory properties we use internally to differentiate
    * between Contexts and Event types. This ensures the Event we send to Collectors has only OSF properties.
    */
