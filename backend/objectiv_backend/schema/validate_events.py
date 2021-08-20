@@ -6,68 +6,14 @@ import json
 import sys
 from typing import List, Any, Dict, NamedTuple
 import uuid
+import re
 
 import jsonschema
 from jsonschema import ValidationError
 
 from objectiv_backend.common.types import EventData
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
-from objectiv_backend.common.config import get_config_timestamp_validation
-
-
-EVENT_LIST_SCHEMA = {
-    "type": "array",
-    "items":  {
-        "type": "object",
-        "properties": {
-            "event": {
-                "type": "string"
-            },
-            "id": {
-                "type": "string",
-                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}$"
-            },
-            # TODO: global_contexts and location_stack are identical for now but we could make this very strict
-            "global_contexts": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "_context_type": {"type": "string"},
-                    },
-                    "required": ["_context_type"]
-                }
-            },
-            "location_stack": {
-                "type": "array",
-                "items": {
-                    "type": "object",
-                    "properties": {
-                        "_context_type": {"type": "string"},
-                    },
-                    "required": ["_context_type"]
-                }
-            },
-            "time": {
-                "type": "integer",
-                # format: milliseconds since 1970-01-01 00:00:00
-                # Data needs to be recent, but we allow a bit of slack because we might convert some
-                # recent data for importing. Setting this minimum value should also catch situations where
-                # we get timestamps in seconds instead of milliseconds
-                "minimum": 1_577_836_800_000,  # 2020-01-01 00:00:00
-            },
-            "tracking_time": {
-                "description": "Timestamp indicating when the event was generated (added to the transport queue).",
-                "type": "integer"
-            },
-            "transport_time": {
-                "description": "Timestamp indicating when the event was sent (transported) to the collector.",
-                "type": "integer"
-            }
-        },
-        "required": ["event", "id", "global_contexts", "location_stack", "tracking_time", "transport_time"]  # TODO: make time a required field
-    }
-}
+from objectiv_backend.common.config import get_config_timestamp_validation, get_config_event_schema
 
 
 class ErrorInfo(NamedTuple):
@@ -90,6 +36,47 @@ class EventError (Dict):
         dict.__init__(self, event_id=event_id.__str__(), error_info=[e.asdict() for e in error_info])
 
 
+def get_event_list_schema() -> Dict[str, Any]:
+    """
+
+    :return: a dictionary containing a JSON schema like string to validate an array of events
+    """
+    event_schema = get_config_event_schema()
+    events = event_schema.events.schema
+    contexts = event_schema.contexts.schema
+
+    # we use AbstractEvent as the blueprint for what an event should look like
+    abstract_event = events['AbstractEvent']
+
+    # list of properties for an event (can be nested)
+    properties: Dict[str, dict] = {}
+    for property_name, property_desc in abstract_event['properties'].items():
+
+        if 'items' in property_desc and re.match('^Abstract.*?Context$', property_desc['items']):
+            # TODO use the correct AbstractContext (AbstractLocationContext or AbstractGlobalContext) and
+            # infer the properties through the hierarchy
+            context_type = property_desc['items']
+            context = contexts[context_type]
+            parent_context = contexts['AbstractContext']
+
+            # here we merge the properties from the requested context with those of AbstractContext
+            # and replace/override the abstract definition from the base schema with the actual one
+            property_desc = {**context['properties'], ** parent_context['properties']}
+
+        properties[property_name] = property_desc
+
+    # we want a schema for a list of events (the base_schema only specifies a single event)
+    schema: Dict[str, Any] = {
+        "type": "array",
+        "items":  {
+            "type": "object",
+            "properties": properties,
+            "required": list(properties.keys())
+        }
+    }
+    return schema
+
+
 def validate_structure_event_list(event_data: Any) -> List[ErrorInfo]:
     """
     Checks that event_data is a list of events, that each event has the required fields, and that all
@@ -100,7 +87,8 @@ def validate_structure_event_list(event_data: Any) -> List[ErrorInfo]:
     :return: list of found errors. Empty list indicates not errors
     """
     try:
-        jsonschema.validate(instance=event_data, schema=EVENT_LIST_SCHEMA)
+        event_list_schema = get_event_list_schema()
+        jsonschema.validate(instance=event_data, schema=event_list_schema)
     except ValidationError as exc:
         return [ErrorInfo(event_data, f'Overall structure does not adhere to schema: {exc}')]
     return []
@@ -137,6 +125,7 @@ def validate_event_adheres_to_schema(event_schema: EventSchema, event: EventData
         - event-type is part of event schema
         - all contexts have the correct attributes
         - all the contexts that are required by the event-type are present
+    :param event_schema:
     :param event: Structural correct event.
     :return: list of found errors
     """
