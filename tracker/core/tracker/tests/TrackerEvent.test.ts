@@ -123,39 +123,21 @@ describe('TrackerEvent', () => {
     expect(testEventClone1_2.id).toBe(testEvent.id);
   });
 
-  describe('setTrackingTime', () => {
+  describe('setTime', () => {
     it('should use Date.now() when timestampMs is not provided', () => {
       const testEvent = new TrackerEvent({ event: 'test-event' });
-      expect(testEvent.tracking_time).toBeUndefined();
-      testEvent.setTrackingTime();
-      expect(testEvent.tracking_time).toBe(mockedMs);
+      expect(testEvent.time).toBeUndefined();
+      testEvent.setTime();
+      expect(testEvent.time).toBe(mockedMs);
     });
 
     it('should use whatever timestampMs is provided', () => {
       const testEvent = new TrackerEvent({ event: 'test-event' });
-      expect(testEvent.tracking_time).toBeUndefined();
+      expect(testEvent.time).toBeUndefined();
       const timestampMs = 1234567890123;
-      testEvent.setTrackingTime(timestampMs);
-      expect(testEvent.tracking_time).toBe(timestampMs);
-      expect(testEvent.tracking_time).not.toBe(mockedMs);
-    });
-  });
-
-  describe('setTransportTime', () => {
-    it('should use Date.now() when timestampMs is not provided', () => {
-      const testEvent = new TrackerEvent({ event: 'test-event' });
-      expect(testEvent.transport_time).toBeUndefined();
-      testEvent.setTransportTime();
-      expect(testEvent.transport_time).toBe(mockedMs);
-    });
-
-    it('should use whatever timestampMs is provided', () => {
-      const testEvent = new TrackerEvent({ event: 'test-event' });
-      expect(testEvent.transport_time).toBeUndefined();
-      const timestampMs = 1234567890123;
-      testEvent.setTransportTime(timestampMs);
-      expect(testEvent.transport_time).toBe(timestampMs);
-      expect(testEvent.transport_time).not.toBe(mockedMs);
+      testEvent.setTime(timestampMs);
+      expect(testEvent.time).toBe(timestampMs);
+      expect(testEvent.time).not.toBe(mockedMs);
     });
   });
 });

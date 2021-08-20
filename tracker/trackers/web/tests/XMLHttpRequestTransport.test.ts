@@ -37,7 +37,6 @@ describe('XMLHttpRequestTransport', () => {
         JSON.stringify([
           {
             ...otherProps,
-            transport_time: mockedMs,
             id,
           },
         ])

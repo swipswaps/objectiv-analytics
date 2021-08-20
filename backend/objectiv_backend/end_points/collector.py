@@ -147,30 +147,23 @@ def set_time_in_events(events: List[EventData], current_millis: int):
     """
     Modify the given list of events: Set the correct time in the events
 
-    We use the `event.transport_time` to determine an offset (if any) between client and server time. We
-    then corrent `event.tracking_time` using this offset and set it in `event.time`
+    We use the `http x-transport-time` header to determine an offset (if any) between client and server time. We
+    then correct `event.time` using this offset and set it in `event.time`
     :param events: List of events to modify
     :param current_millis: time in milliseconds since epoch UTC, when this request was received.
     """
-    offset = 0
-    # transport_time is the same for all events in one batch
-    # so we use the transport_time from the first event
-    if 'transport_time' in events[0]:
-        try:
-            client_millis = int(events[0]['transport_time'])
-        except ValueError as exc:
-            client_millis = current_millis
-        offset = current_millis - client_millis
-        print(f'debug - time offset: {offset}')
+
+    try:
+        client_millis = int(flask.request.headers['X-transport-time'])
+    except ValueError as exc:
+        client_millis = current_millis
+    offset = current_millis - client_millis
+    print(f'debug - time offset: {offset}')
     for event in events:
         # here we correct the tracking time with the calculated offset
         # the assumption here is that transport time should be the same as the server time (current_millis)
         # to account for clients that have an out-of-sync clock
-        event['time'] = event['tracking_time'] + offset
-
-        # remove unwanted timestamps
-        del event['tracking_time']
-        del event['transport_time']
+        event['time'] = event['time'] + offset
 
 
 def _get_http_context() -> HttpContext:

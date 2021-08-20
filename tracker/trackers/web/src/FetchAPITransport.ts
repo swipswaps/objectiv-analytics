@@ -33,12 +33,17 @@ export const defaultFetchFunction = async ({
   parameters?: typeof defaultFetchParameters;
 }): Promise<Response> => {
   return new Promise(function (resolve, reject) {
-    events.forEach((event) => event.setTransportTime());
-
     console.groupCollapsed(`Objectiv: FetchAPITransport sending`);
     console.log(`Events:`);
     console.log(events);
     console.groupEnd();
+
+    // add current timestamp to the request, so the collector
+    // may check if there's any clock offset between server and client
+    parameters.headers = {
+      ...(parameters.headers ?? {}),
+      'X-transport-time': Date.now().toString(),
+    };
 
     fetch(endpoint, {
       ...parameters,
