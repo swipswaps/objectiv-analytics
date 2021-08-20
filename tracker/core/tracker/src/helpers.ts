@@ -33,7 +33,6 @@ export function isNonEmptyArray<T>(array: T[]): array is [T, ...T[]] {
  */
 export const generateUUID = () => uuidv4();
 
-
 /**
  * Used to clean our Object instances from TS discriminating artifact properties
  */
