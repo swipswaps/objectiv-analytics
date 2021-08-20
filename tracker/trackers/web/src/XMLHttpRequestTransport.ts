@@ -22,6 +22,9 @@ export const defaultXMLHttpRequestFunction = ({
     const async = true;
     xhr.open('POST', endpoint, async);
     xhr.setRequestHeader('Content-Type', 'text/plain');
+    // add current timestamp to the request, so the collector
+    // may check if there's any clock offset between server and client
+    xhr.setRequestHeader('X-transport-time', Date.now().toString());
     xhr.withCredentials = true;
     xhr.onload = () => {
       if (xhr.status === 200) {

@@ -38,6 +38,13 @@ export const defaultFetchFunction = async ({
     console.log(events);
     console.groupEnd();
 
+    // add current timestamp to the request, so the collector
+    // may check if there's any clock offset between server and client
+    parameters.headers = {
+      ...parameters.headers ?? {},
+      'X-transport-time': Date.now().toString(),
+    }
+
     fetch(endpoint, {
       ...parameters,
       body: JSON.stringify(events),
