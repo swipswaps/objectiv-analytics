@@ -14,8 +14,8 @@ export enum TrackingAttribute {
   // Track blur events for this tracked element
   objectivTrackBlurs = 'data-objectiv-track-blurs',
 
-  // Track visibility events for this tracked element
-  objectivTrackVisibility = 'data-objectiv-track-visibility',
+  // Indicates visibility of the element, defaults to true
+  objectivVisible = 'data-objectiv-visible',
 }
 
 /**
@@ -35,5 +35,5 @@ export type TrackingAttributes = {
   [TrackingAttribute.objectivContext]: string;
   [TrackingAttribute.objectivTrackClicks]: TrackingAttributeBoolean;
   [TrackingAttribute.objectivTrackBlurs]: TrackingAttributeBoolean;
-  [TrackingAttribute.objectivTrackVisibility]: TrackingAttributeBoolean;
+  [TrackingAttribute.objectivVisible]: TrackingAttributeBoolean;
 };

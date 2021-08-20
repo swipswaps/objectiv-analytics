@@ -6,7 +6,5 @@ import { startObservingDOM } from './observer';
  */
 export const configureTracker = (webTrackerConfig: WebTrackerConfig) => {
   const tracker = new WebTracker(webTrackerConfig);
-  console.log('Tracker initialized');
   startObservingDOM(tracker);
-  console.log('Mutation Observer initialized');
 };

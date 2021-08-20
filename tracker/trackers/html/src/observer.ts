@@ -4,10 +4,6 @@ import { clickEventListener } from './clickEventListener';
 import { isTrackedElement } from './isTrackedElement';
 import { TrackingAttribute } from './TrackingAttributes';
 
-const intersectionObserver = new IntersectionObserver((what) => {
-  console.log('visibility change for', what);
-});
-
 /**
  * Given a Mutation Observer node it will find all Tracked Elements.
  * Elements with the Objectiv Track Click attribute are bound to a trackClickEventListener on 'click'.
@@ -18,14 +14,9 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) 
     if (isTrackedElement(element)) {
       if (element.dataset.objectivTrackClicks === 'true') {
         element.addEventListener('click', (event: Event) => clickEventListener(tracker, event, element));
-        console.log('Added `click` event listener to Element:', element.dataset.objectivContext);
       }
       if (element.dataset.objectivTrackBlurs === 'true') {
         element.addEventListener('blur', (event: Event) => blurEventListener(tracker, event, element));
-        console.log('Added `blur` event listener to Element:', element.dataset.objectivContext);
-      }
-      if (element.dataset.objectivTrackVisibility === 'true') {
-        intersectionObserver.observe(element)
       }
     }
   });
@@ -35,50 +26,27 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) 
  * We use a Mutation Observer to monitor the DOM for subtrees being added.
  * When that happens we traverse the new Nodes and scout for Elements that have been enriched with our Tracking
  * Attributes. For those Elements we attach Event listeners which will automatically handle their tracking.
+ *
+ * The same Observer is also configured to monitor changes in our visibility attribute.
+ * When we detect a change in the visibility of a tracked element we trigger the corresponding visibility event.
  */
 export const startObservingDOM = (tracker: WebTracker) => {
   new MutationObserver((mutationsList) => {
-    mutationsList.forEach(({ addedNodes, type, target }) => {
+    mutationsList.forEach(({ addedNodes, target, attributeName, oldValue }) => {
       addedNodes.forEach((addedNode) => {
-        if(addedNode instanceof Element) {
+        if (addedNode instanceof Element) {
           addEventListenersToTrackedElements(tracker, addedNode);
         }
       });
-      if(type === 'attributes') {
-        console.log(target, isVisible(target));
+      if(target instanceof HTMLElement && attributeName) {
+        console.log('visibility change!', oldValue, ' > ', target.dataset.objectivVisible);
       }
     });
   }).observe(document, {
     childList: true,
     subtree: true,
-    attributes: true
+    attributes: true,
+    attributeOldValue: true,
+    attributeFilter: [TrackingAttribute.objectivVisible]
   });
 };
-
-function isVisible(elem: Node) {
-  if (!(elem instanceof HTMLElement)) return false;
-  const style = getComputedStyle(elem);
-  if (style.display === 'none') return false;
-  if (style.visibility !== 'visible') return false;
-  if (style.opacity === '0') return false;
-  if (elem.offsetWidth + elem.offsetHeight + elem.getBoundingClientRect().height +
-    elem.getBoundingClientRect().width === 0) {
-    return false;
-  }
-  const elemCenter   = {
-    x: elem.getBoundingClientRect().left + elem.offsetWidth / 2,
-    y: elem.getBoundingClientRect().top + elem.offsetHeight / 2
-  };
-  if (elemCenter.x < 0) return false;
-  if (elemCenter.x > (document.documentElement.clientWidth || window.innerWidth)) return false;
-  if (elemCenter.y < 0) return false;
-  if (elemCenter.y > (document.documentElement.clientHeight || window.innerHeight)) return false;
-
-  return true
-
-  // let pointContainer = document.elementFromPoint(elemCenter.x, elemCenter.y);
-  // do {
-  //   if (pointContainer === elem) return true;
-  // } while (pointContainer = pointContainer.parentNode);
-  //return false;
-}

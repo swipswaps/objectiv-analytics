@@ -43,18 +43,3 @@ export const BlurTrackingByContextType: Map<ContextType, boolean> = new Map([
   [ContextType.navigation, false],
   [ContextType.overlay, false],
 ]);
-
-/**
- * Holds for which which ContextTypes we will track visibility automatically.
- * This is used as default value for the objectivTrackVisibility Tracking Attribute.
- */
-export const VisibilityTrackingByContextType: Map<ContextType, boolean> = new Map([
-  [ContextType.button, false],
-  [ContextType.element, true],
-  [ContextType.expandableElement, true],
-  [ContextType.input, false],
-  [ContextType.link, false],
-  [ContextType.mediaPlayer, true],
-  [ContextType.navigation, true],
-  [ContextType.overlay, true],
-]);

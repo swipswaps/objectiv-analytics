@@ -1,12 +1,7 @@
 import { AbstractLocationContext } from '@objectiv/schema';
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-web';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  BlurTrackingByContextType,
-  ClickTrackingByContextType,
-  ContextType,
-  VisibilityTrackingByContextType,
-} from './ContextType';
+import { BlurTrackingByContextType, ClickTrackingByContextType, ContextType } from './ContextType';
 import {
   TrackingAttribute,
   TrackingAttributeFalse,
@@ -39,63 +34,93 @@ export const DEFAULT_CONTEXT_TYPE = ContextType.element;
  */
 
 // Overload: Section context by id only
-export function track(id: string): TrackingAttributes;
+export function track(parameters: { id: string }): TrackingAttributes;
 
 // Overload: Location contexts without attributes
-export function track(
-  id: string,
+export function track(parameters: {
+  id: string;
   type:
     | ContextType.element
     | ContextType.expandableElement
     | ContextType.input
     | ContextType.mediaPlayer
     | ContextType.navigation
-    | ContextType.overlay
-): TrackingAttributes;
+    | ContextType.overlay;
+}): TrackingAttributes;
+
+// Overload: Section contexts with visibility
+export function track(parameters: {
+  id: string;
+  type:
+    | ContextType.element
+    | ContextType.expandableElement
+    | ContextType.mediaPlayer
+    | ContextType.navigation
+    | ContextType.overlay;
+  isVisible?: boolean;
+}): TrackingAttributes;
 
 // Overload: Button context
-export function track(id: string, type: ContextType.button, extraAttributes: { text: string }): TrackingAttributes;
+export function track(parameters: {
+  id: string;
+  type: ContextType.button;
+  extraAttributes: { text: string };
+}): TrackingAttributes;
 
 // Overload: Link context
-export function track(
-  id: string,
-  type: ContextType.link,
-  extraAttributes: { href: string; text: string }
-): TrackingAttributes;
+export function track(parameters: {
+  id: string;
+  type: ContextType.link;
+  extraAttributes: { href: string; text: string };
+}): TrackingAttributes;
 
 // Overload: Any Location Context
-export function track(instance: AbstractLocationContext): TrackingAttributes;
+export function track(parameters: { instance: AbstractLocationContext }): TrackingAttributes;
 
 // Implementation
-export function track(
-  idOrContextInstance: string | AbstractLocationContext,
-  type?: ContextType,
-  extraAttributes?: Record<string, any>
-): TrackingAttributes | {} {
+export function track({
+  id,
+  instance,
+  type,
+  extraAttributes,
+  isVisible = true,
+}: {
+  id?: string;
+  instance?: AbstractLocationContext;
+  type?: ContextType;
+  extraAttributes?: Record<string, any>;
+  isVisible?: boolean;
+}): TrackingAttributes | {} {
   const elementId = uuidv4();
 
   // This can happen when feeding dynamic parameters to track. Eg: search or database results.
-  if (!idOrContextInstance) {
+  if ((!id && !instance) || (id && instance)) {
     console.group('track: Unexpected input');
-    console.log(`id/context: ${idOrContextInstance}`)
-    console.log(`type: ${type}`)
-    console.log(`extra attributes: ${JSON.stringify(extraAttributes)}`)
+    console.log(`id: ${id}`);
+    console.log(`instance: ${id}`);
+    console.log(`type: ${type}`);
+    console.log(`extraAttributes: ${JSON.stringify(extraAttributes)}`);
+    console.log(`isVisible: ${isVisible}`);
     console.groupEnd();
     return {};
   }
 
   // Factor context instance if necessary
   let contextInstance;
-  if (typeof idOrContextInstance === 'string') {
+  if (id) {
     // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
     contextInstance = {
       __location_context: true,
       _context_type: type ?? DEFAULT_CONTEXT_TYPE,
-      id: idOrContextInstance,
+      id: id,
       ...extraAttributes,
     };
   } else {
-    contextInstance = idOrContextInstance;
+    contextInstance = instance;
+  }
+
+  if (!contextInstance) {
+    return {};
   }
 
   // Clean up the instance from discriminatory properties
@@ -107,26 +132,46 @@ export function track(
   // Check if this context type allows for automatically tracking blur events (eg: an input)
   const shouldTrackBlurs = BlurTrackingByContextType.get(contextInstance._context_type as ContextType);
 
-  // Check if this context type allows for automatically tracking visibility events (eg: an input)
-  const shouldTrackVisibility = VisibilityTrackingByContextType.get(contextInstance._context_type as ContextType);
-
   return {
     [TrackingAttribute.objectivElementId]: elementId,
     [TrackingAttribute.objectivContext]: JSON.stringify(contextInstance),
     [TrackingAttribute.objectivTrackClicks]: shouldTrackClicks ? TrackingAttributeTrue : TrackingAttributeFalse,
     [TrackingAttribute.objectivTrackBlurs]: shouldTrackBlurs ? TrackingAttributeTrue : TrackingAttributeFalse,
-    [TrackingAttribute.objectivTrackVisibility]: shouldTrackVisibility ? TrackingAttributeTrue : TrackingAttributeFalse,
+    [TrackingAttribute.objectivVisible]: isVisible ? TrackingAttributeTrue : TrackingAttributeFalse,
   };
 }
 
 /**
  * Location Context specific shortcuts. To make it easier to track common HTML Elements
  */
-export const trackButton = (id: string, text: string) => track(id, ContextType.button, { text });
-export const trackElement = (id: string) => track(id, ContextType.element);
-export const trackExpandableElement = (id: string) => track(id, ContextType.expandableElement);
-export const trackInput = (id: string) => track(id, ContextType.input);
-export const trackLink = (id: string, text: string, href: string) => track(id, ContextType.link, { text, href });
-export const trackMediaPlayer = (id: string) => track(id, ContextType.mediaPlayer);
-export const trackNavigation = (id: string) => track(id, ContextType.navigation);
-export const trackOverlay = (id: string) => track(id, ContextType.overlay);
+export const trackButton = ({ id, text }: { id: string; text: string }) => {
+  return track({ id, type: ContextType.button, extraAttributes: { text } });
+};
+
+export const trackElement = ({ id, isVisible }: { id: string; isVisible?: boolean }) => {
+  return track({ id, type: ContextType.element, isVisible });
+};
+
+export const trackExpandableElement = ({ id, isVisible }: { id: string; isVisible?: boolean }) => {
+  return track({ id, type: ContextType.expandableElement, isVisible });
+};
+
+export const trackInput = ({ id }: { id: string }) => {
+  return track({ id, type: ContextType.input });
+};
+
+export const trackLink = ({ id, text, href }: { id: string; text: string; href: string }) => {
+  return track({ id, type: ContextType.link, extraAttributes: { text, href } });
+};
+
+export const trackMediaPlayer = ({ id, isVisible }: { id: string; isVisible?: boolean }) => {
+  return track({ id, type: ContextType.mediaPlayer, isVisible });
+};
+
+export const trackNavigation = ({ id, isVisible }: { id: string; isVisible?: boolean }) => {
+  return track({ id, type: ContextType.navigation, isVisible });
+};
+
+export const trackOverlay = ({ id, isVisible }: { id: string; isVisible?: boolean }) => {
+  return track({ id, type: ContextType.overlay, isVisible });
+};
