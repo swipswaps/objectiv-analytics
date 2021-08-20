@@ -42,7 +42,7 @@ describe('WebDocumentLoadedEvent', () => {
           url: '/test',
         },
       ],
-      tracking_time: expect.toBeNumber(),
+      time: expect.toBeNumber(),
     });
   });
 
@@ -98,7 +98,7 @@ describe('WebDocumentLoadedEvent', () => {
           url: '/test',
         },
       ],
-      tracking_time: expect.toBeNumber(),
+      time: expect.toBeNumber(),
     });
   });
 });

@@ -123,21 +123,21 @@ export const makeExpandableSectionContext = (props: { id: string }): ExpandableS
  * @param {Object} props - factory properties
  * @param {string} props.id - A unique string identifier to be combined with the Context Type (`_context_type`)
  *         for Context instance uniqueness.
- * @param {string} props.host - FQDN of the host (collector) the event was sent to.
+ * @param {string} props.referer - Full URL to HTTP referrer of the current page.
  * @param {string} props.user_agent - User-agent of the agent that sent the event.
- * @param {string} props.remote_address - IP address of the agent that sent the event.
+ * @param {string} props.remote_address - (public) IP address of the agent that sent the event.
  * @returns {HttpContext} - HttpContext: Global context with meta information about the agent that sent the event.
  */
 export const makeHttpContext = (props: {
   id: string;
-  host: string;
+  referer: string;
   user_agent: string;
   remote_address: string;
 }): HttpContext => ({
   __global_context: true,
   _context_type: 'HttpContext',
   id: props.id,
-  host: props.host,
+  referer: props.referer,
   user_agent: props.user_agent,
   remote_address: props.remote_address,
 });
