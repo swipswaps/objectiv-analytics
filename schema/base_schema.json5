@@ -35,7 +35,8 @@
           "description": "Unique identifier for a specific instance of an event. Typically UUID's are a good way of \n\
             implementing this. On the collector side, events should be unique, this means duplicate id's result \n\
             in `not ok` events.",
-          "type": "string"
+          "type": "string",
+          "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{12}$"
         },
         "time": {
           "description": "Timestamp indicating when the event was generated",

@@ -7,7 +7,7 @@ import sys
 from typing import List, Any, Dict, NamedTuple, Set
 
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
-from objectiv_backend.schema.validate_events import EVENT_LIST_SCHEMA
+from objectiv_backend.schema.validate_events import get_event_list_schema
 
 
 class SchemaDefinitionTuple(NamedTuple):
@@ -55,7 +55,7 @@ def get_schema_base_properties() -> SchemaDefinitionTuple:
     has the properties id and _context_type.
     """
     return SchemaDefinitionTuple(
-        schema=EVENT_LIST_SCHEMA,
+        schema=get_event_list_schema(),
         definitions={}
     )
 
