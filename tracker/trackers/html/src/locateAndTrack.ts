@@ -18,12 +18,13 @@ type EventFactory = (props?: {
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
  */
-export const locateAndTrack = (eventFactory: EventFactory, tracker: WebTracker, event: Event, element: HTMLElement) => {
-  if (!isTrackedElement(event.target)) {
+export const locateAndTrack = (eventFactory: EventFactory, tracker: WebTracker, target: EventTarget | null, element: HTMLElement) => {
+  if (!isTrackedElement(target)) {
     return;
   }
 
-  const targetElementId = event.target.getAttribute(TrackingAttribute.objectivElementId);
+  // We double check if the target and the trigger element are the same. This ensures we don't track bubbled events
+  const targetElementId = target.getAttribute(TrackingAttribute.objectivElementId);
   const elementId = element.getAttribute(TrackingAttribute.objectivElementId);
   if (targetElementId !== elementId) {
     return;

@@ -1,4 +1,10 @@
-import { makeClickEvent, makeInputChangeEvent, WebTracker } from '@objectiv/tracker-web';
+import {
+  makeClickEvent,
+  makeInputChangeEvent,
+  makeSectionHiddenEvent,
+  makeSectionVisibleEvent,
+  WebTracker
+} from '@objectiv/tracker-web';
 import { isTrackedElement } from './isTrackedElement';
 import { locateAndTrack } from "./locateAndTrack";
 import { TrackingAttribute } from './TrackingAttributes';
@@ -12,18 +18,17 @@ import { TrackingAttribute } from './TrackingAttributes';
  */
 function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) {
   const elements = node.querySelectorAll(`[${TrackingAttribute.objectivElementId}]`);
-  trackIfVisible(node);
-  elements.forEach((element) => {
-    trackIfVisible(element);
+  [node, ...Array.from(elements)].forEach((element) => {
+    trackIfVisible(tracker, element);
     if (isTrackedElement(element)) {
       if (element.dataset.objectivTrackClicks === 'true') {
         element.addEventListener('click', (event: Event) => {
-          locateAndTrack(makeClickEvent, tracker, event, element);
+          locateAndTrack(makeClickEvent, tracker, event.target, element);
         })
       }
       if (element.dataset.objectivTrackBlurs === 'true') {
         element.addEventListener('blur', (event: Event) => {
-          locateAndTrack(makeInputChangeEvent, tracker, event, element)
+          locateAndTrack(makeInputChangeEvent, tracker, event.target, element)
         });
       }
     }
@@ -33,10 +38,10 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) 
 /**
  * Checks if the given Node is a tracked element and if we need to trigger a visibility: true event for it.
  */
-function trackIfVisible(element: Node) {
+function trackIfVisible(tracker: WebTracker, element: Node) {
   if (isTrackedElement(element)) {
     if (element.dataset.objectivTrackVisibility === 'true' && element.dataset.objectivVisible === 'true') {
-      console.log('visibility change', 'false', ' > ', 'true');
+      locateAndTrack(makeSectionVisibleEvent, tracker, element, element);
     }
   }
 }
@@ -44,10 +49,10 @@ function trackIfVisible(element: Node) {
 /**
  * Checks if the given Node is a tracked element and if we need to trigger a visibility: false event for it.
  */
-function trackIfHidden(element: Node) {
+function trackIfHidden(tracker: WebTracker, element: Node) {
   if (isTrackedElement(element)) {
     if (element.dataset.objectivTrackVisibility === 'true' && element.dataset.objectivVisible === 'false') {
-      console.log('visibility change', 'true', ' > ', 'false');
+      locateAndTrack(makeSectionHiddenEvent, tracker, element, element);
     }
   }
 }
@@ -69,8 +74,8 @@ export const startObservingDOM = (tracker: WebTracker) => {
         }
       });
       if (attributeName) {
-        trackIfVisible(target);
-        trackIfHidden(target);
+        trackIfVisible(tracker, target);
+        trackIfHidden(tracker, target);
       }
     });
   }).observe(document, {
