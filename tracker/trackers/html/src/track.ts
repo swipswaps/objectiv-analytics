@@ -83,7 +83,7 @@ export function track({
   instance,
   type,
   extraAttributes,
-  isVisible = true,
+  isVisible,
 }: {
   id?: string;
   instance?: AbstractLocationContext;
@@ -132,12 +132,17 @@ export function track({
   // Check if this context type allows for automatically tracking blur events (eg: an input)
   const shouldTrackBlurs = BlurTrackingByContextType.get(contextInstance._context_type as ContextType);
 
+  // We track visibility if we received the isVisible parameter
+  const shouldTrackVisibility = isVisible !== undefined;
+  const isElementVisible = shouldTrackVisibility && isVisible;
+
   return {
     [TrackingAttribute.objectivElementId]: elementId,
     [TrackingAttribute.objectivContext]: JSON.stringify(contextInstance),
     [TrackingAttribute.objectivTrackClicks]: shouldTrackClicks ? TrackingAttributeTrue : TrackingAttributeFalse,
     [TrackingAttribute.objectivTrackBlurs]: shouldTrackBlurs ? TrackingAttributeTrue : TrackingAttributeFalse,
-    [TrackingAttribute.objectivVisible]: isVisible ? TrackingAttributeTrue : TrackingAttributeFalse,
+    [TrackingAttribute.objectivTrackVisibility]: shouldTrackVisibility ? TrackingAttributeTrue : TrackingAttributeFalse,
+    [TrackingAttribute.objectivVisible]: isElementVisible ? TrackingAttributeTrue : TrackingAttributeFalse,
   };
 }
 

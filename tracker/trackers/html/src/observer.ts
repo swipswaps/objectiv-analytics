@@ -4,14 +4,17 @@ import { locateAndTrack } from "./locateAndTrack";
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
- * Given a Mutation Observer node it will find all Tracked Elements.
- * Elements with the Objectiv Track Click attribute are bound to EventListener for Buttons, Links.
- * Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
- * When the listeners trigger, `locateAndTrack` will reconstruct a Location Stack and track the appropriate Events.
+ * Given a Mutation Observer node it will find all Tracked Elements:
+ * - All Elements will be checked for visibility tracking and appropriate events will be triggered for them.
+ * - Elements with the Objectiv Track Click attribute are bound to EventListener for Buttons, Links.
+ * - Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
+ * - When the listeners trigger, `locateAndTrack` will reconstruct a Location Stack and track the appropriate Events.
  */
 function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) {
   const elements = node.querySelectorAll(`[${TrackingAttribute.objectivElementId}]`);
+  trackIfVisible(node);
   elements.forEach((element) => {
+    trackIfVisible(element);
     if (isTrackedElement(element)) {
       if (element.dataset.objectivTrackClicks === 'true') {
         element.addEventListener('click', (event: Event) => {
@@ -28,6 +31,28 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) 
 }
 
 /**
+ * Checks if the given Node is a tracked element and if we need to trigger a visibility: true event for it.
+ */
+function trackIfVisible(element: Node) {
+  if (isTrackedElement(element)) {
+    if (element.dataset.objectivTrackVisibility === 'true' && element.dataset.objectivVisible === 'true') {
+      console.log('visibility change', 'false', ' > ', 'true');
+    }
+  }
+}
+
+/**
+ * Checks if the given Node is a tracked element and if we need to trigger a visibility: false event for it.
+ */
+function trackIfHidden(element: Node) {
+  if (isTrackedElement(element)) {
+    if (element.dataset.objectivTrackVisibility === 'true' && element.dataset.objectivVisible === 'false') {
+      console.log('visibility change', 'true', ' > ', 'false');
+    }
+  }
+}
+
+/**
  * We use a Mutation Observer to monitor the DOM for subtrees being added.
  * When that happens we traverse the new Nodes and scout for Elements that have been enriched with our Tracking
  * Attributes. For those Elements we attach Event listeners which will automatically handle their tracking.
@@ -37,21 +62,21 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) 
  */
 export const startObservingDOM = (tracker: WebTracker) => {
   new MutationObserver((mutationsList) => {
-    mutationsList.forEach(({ addedNodes, target, attributeName, oldValue }) => {
+    mutationsList.forEach(({ addedNodes, target, attributeName }) => {
       addedNodes.forEach((addedNode) => {
         if (addedNode instanceof Element) {
           addEventListenersToTrackedElements(tracker, addedNode);
         }
       });
-      if(target instanceof HTMLElement && attributeName) {
-        console.log('visibility change!', oldValue, ' > ', target.dataset.objectivVisible);
+      if (attributeName) {
+        trackIfVisible(target);
+        trackIfHidden(target);
       }
     });
   }).observe(document, {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeOldValue: true,
     attributeFilter: [TrackingAttribute.objectivVisible]
   });
 };
