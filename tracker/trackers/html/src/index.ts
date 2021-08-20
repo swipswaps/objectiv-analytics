@@ -1,3 +1,4 @@
+export * from './blurEventListener';
 export * from './clickEventListener';
 export * from './ContextType';
 export * from './findTrackedElementsInDOM';

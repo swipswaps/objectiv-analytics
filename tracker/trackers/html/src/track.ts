@@ -1,7 +1,12 @@
 import { AbstractLocationContext } from '@objectiv/schema';
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-web';
 import { v4 as uuidv4 } from 'uuid';
-import { ClickTrackingByContextType, ContextType } from './ContextType';
+import {
+  BlurTrackingByContextType,
+  ClickTrackingByContextType,
+  ContextType,
+  VisibilityTrackingByContextType,
+} from './ContextType';
 import {
   TrackingAttribute,
   TrackingAttributeFalse,
@@ -66,8 +71,18 @@ export function track(
   idOrContextInstance: string | AbstractLocationContext,
   type?: ContextType,
   extraAttributes?: Record<string, any>
-): TrackingAttributes {
+): TrackingAttributes | {} {
   const elementId = uuidv4();
+
+  // This can happen when feeding dynamic parameters to track. Eg: search or database results.
+  if (!idOrContextInstance) {
+    console.group('track: Unexpected input');
+    console.log(`id/context: ${idOrContextInstance}`)
+    console.log(`type: ${type}`)
+    console.log(`extra attributes: ${JSON.stringify(extraAttributes)}`)
+    console.groupEnd();
+    return {};
+  }
 
   // Factor context instance if necessary
   let contextInstance;
@@ -89,10 +104,18 @@ export function track(
   // Check if this context type allows for automatically tracking click events (eg: a button)
   const shouldTrackClicks = ClickTrackingByContextType.get(contextInstance._context_type as ContextType);
 
+  // Check if this context type allows for automatically tracking blur events (eg: an input)
+  const shouldTrackBlurs = BlurTrackingByContextType.get(contextInstance._context_type as ContextType);
+
+  // Check if this context type allows for automatically tracking visibility events (eg: an input)
+  const shouldTrackVisibility = VisibilityTrackingByContextType.get(contextInstance._context_type as ContextType);
+
   return {
     [TrackingAttribute.objectivElementId]: elementId,
     [TrackingAttribute.objectivContext]: JSON.stringify(contextInstance),
     [TrackingAttribute.objectivTrackClicks]: shouldTrackClicks ? TrackingAttributeTrue : TrackingAttributeFalse,
+    [TrackingAttribute.objectivTrackBlurs]: shouldTrackBlurs ? TrackingAttributeTrue : TrackingAttributeFalse,
+    [TrackingAttribute.objectivTrackVisibility]: shouldTrackVisibility ? TrackingAttributeTrue : TrackingAttributeFalse,
   };
 }
 

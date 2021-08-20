@@ -1,12 +1,12 @@
-import { makeClickEvent, WebTracker } from '@objectiv/tracker-web';
+import { makeInputChangeEvent, WebTracker } from '@objectiv/tracker-web';
 import { findTrackedElementsInDOM } from './findTrackedElementsInDOM';
 import { isTrackedElement } from './isTrackedElement';
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
- * Our Click Event listener will traverse the DOM and reconstruct a LocationStack, then use WebTracker to transport it.
+ * Our Blur Event listener will traverse the DOM and reconstruct a LocationStack, then use WebTracker to transport it.
  */
-export const clickEventListener = (tracker: WebTracker, event: Event, element: HTMLElement) => {
+export const blurEventListener = (tracker: WebTracker, event: Event, element: HTMLElement) => {
   if (!isTrackedElement(event.target)) {
     return;
   }
@@ -20,12 +20,8 @@ export const clickEventListener = (tracker: WebTracker, event: Event, element: H
   const trackedElements = findTrackedElementsInDOM(element).reverse();
 
   // TODO reconstruct Location Stack from trackedElements
-  if (event instanceof PointerEvent) {
-    tracker.trackEvent(makeClickEvent({ location_stack: [] }));
-  }
 
-  //FocusEvent
-  console.log(event);
+  tracker.trackEvent(makeInputChangeEvent({ location_stack: [] }));
 
   console.log(element.dataset, trackedElements);
 };

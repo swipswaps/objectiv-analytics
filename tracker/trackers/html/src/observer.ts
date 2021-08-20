@@ -1,4 +1,5 @@
-import { WebTracker } from "@objectiv/tracker-web";
+import { WebTracker } from '@objectiv/tracker-web';
+import { blurEventListener } from './blurEventListener';
 import { clickEventListener } from './clickEventListener';
 import { isTrackedElement } from './isTrackedElement';
 import { TrackingAttribute } from './TrackingAttributes';
@@ -13,9 +14,14 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: HTMLEleme
     if (isTrackedElement(element)) {
       if (element.dataset.objectivTrackClicks === 'true') {
         element.addEventListener('click', (event: Event) => clickEventListener(tracker, event, element));
-        console.log('Added event listener for Clicks on new Element: ', element.dataset.objectivContext)
+        console.log('Added event listener for Clicks on new Element: ', element.dataset.objectivContext);
       }
-      // TODO: other events; such as hover, blur, etc
+      if (element.dataset.objectivTrackBlurs === 'true') {
+        element.addEventListener('blur', (event: Event) => blurEventListener(tracker, event, element));
+        console.log('Added event listener for Blurs on new Element: ', element.dataset.objectivContext);
+      }
+
+      // TODO: visibility events
     }
   });
 }
@@ -38,4 +44,4 @@ export const startObservingDOM = (tracker: WebTracker) => {
     childList: true,
     subtree: true,
   });
-}
+};

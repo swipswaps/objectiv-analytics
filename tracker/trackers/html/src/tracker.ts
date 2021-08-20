@@ -1,5 +1,5 @@
-import { WebTracker, WebTrackerConfig } from "@objectiv/tracker-web";
-import { startObservingDOM } from "./observer";
+import { WebTracker, WebTrackerConfig } from '@objectiv/tracker-web';
+import { startObservingDOM } from './observer';
 
 /**
  * Allows to configure the main tracker instance and initializes the mutation observer to start auto tracking.
@@ -9,4 +9,4 @@ export const configureTracker = (webTrackerConfig: WebTrackerConfig) => {
   console.log('Tracker initialized');
   startObservingDOM(tracker);
   console.log('Mutation Observer initialized');
-}
+};
