@@ -362,7 +362,6 @@ const schema = all_schema[base_schema_file];
 delete all_schema[base_schema_file];
 
 // now add extensions if any
-// TODO: allow to add properties to existing contexts
 Object.keys(all_schema).forEach((extension_file) => {
   const extension = all_schema[extension_file];
   console.log(`Loading extension ${extension['name']} from ${extension_file}`);
@@ -372,13 +371,31 @@ Object.keys(all_schema).forEach((extension_file) => {
     if (!(event_type in schema['events'])) {
       // only add if it doesn't already exist
       schema['events'][event_type] = extension['events'][event_type];
+    } else {
+      Object.keys(extension['events'][event_type]['properties']).forEach((property) => {
+        if (!(property in schema['events'][event_type]['properties'])) {
+          schema['events'][event_type]['properties'][property] =
+            extension['events'][event_type]['properties'][property];
+        } else {
+          console.log(`Not overriding existing property '${property}'`);
+        }
+      });
     }
   });
   // contexts
-  Object.keys(extension['context']).forEach((context_type) => {
+  Object.keys(extension['contexts']).forEach((context_type) => {
     if (!(context_type in schema['contexts'])) {
       // only add if it doesn't already exist
       schema['contexts'][context_type] = extension['contexts'][context_type];
+    } else {
+      Object.keys(extension['contexts'][context_type]['properties']).forEach((property) => {
+        if (!(property in schema['contexts'][context_type]['properties'])) {
+          schema['contexts'][context_type]['properties'][property] =
+            extension['contexts'][context_type]['properties'][property];
+        } else {
+          console.log(`Not overriding existing property '${property}'`);
+        }
+      });
     }
   });
 });
