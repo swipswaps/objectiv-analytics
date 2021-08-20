@@ -29,12 +29,17 @@ export const locateAndTrack = (eventFactory: EventFactory, tracker: WebTracker, 
     return;
   }
 
-  const trackedElements = findTrackedElementsInDOM(element).reverse();
+  const elementsStack = findTrackedElementsInDOM(element).reverse();
+  const locationStack = elementsStack.reduce((locationContexts, element) => {
+    const locationContext = element.getAttribute(TrackingAttribute.objectivContext);
+    if(locationContext) {
+      // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
+      locationContexts.push(JSON.parse(locationContext))
+    }
+    return locationContexts;
+  }, [] as AbstractLocationContext[]);
 
-  // TODO reconstruct Location Stack from trackedElements
-  console.log(event, element.dataset, trackedElements);
-
-  const newEvent = eventFactory({ location_stack: [] });
+  const newEvent = eventFactory({ location_stack: locationStack });
 
   return tracker.trackEvent(newEvent);
 };
