@@ -3,7 +3,7 @@ from datetime import datetime
 
 import flask
 import time
-from typing import List
+from typing import List, Dict
 import uuid
 
 from flask import Response, Request
@@ -21,6 +21,7 @@ from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
+from objectiv_backend.schema.schema import HttpContext
 
 # Some limits on the inputs we accept
 DATA_MAX_SIZE_BYTES = 1_000_000
@@ -120,7 +121,7 @@ def add_http_contexts(events: List[EventData]):
     Modify the given list of events: Add the HttpContext to each event
     """
     # get http context for current request (same for all events in this request)
-    http_context = _get_http_context()
+    http_context: HttpContext = _get_http_context()
     for event in events:
         add_global_context_to_event(event=event, context=http_context)
 
@@ -172,14 +173,14 @@ def set_time_in_events(events: List[EventData], current_millis: int):
         del event['transport_time']
 
 
-def _get_http_context() -> ContextData:
+def _get_http_context() -> HttpContext:
     """ Create an HttpContext based on the data in the current request. """
     allowed_headers = ['Referer', 'User-Agent']
-    http_context: ContextData = {}
 
+    http_headers: Dict[str, str] = {}
     for h, v in flask.request.headers.items():
         if h in allowed_headers:
-            http_context[h.lower().replace('-', '_')] = v
+          http_headers[h.lower().replace('-', '_')] = v
 
     # try to determine the IP address of the calling user agent, by looking at some standard headers
     # if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
@@ -187,7 +188,7 @@ def _get_http_context() -> ContextData:
     if 'X-Real-IP' in flask.request.headers:
         # any upstream proxy probably know the 'right' IP. If it sets the x-real-ip header to that,
         # we use that.
-        http_context['remote_address'] = flask.request.headers['X-Real-IP']
+        http_headers['remote_address'] = flask.request.headers['X-Real-IP']
     elif 'X-Forwarded-For' in flask.request.headers:
         # x-forwarded-for headers take the form of:
         # client proxy_1...proxy_n
@@ -196,20 +197,21 @@ def _get_http_context() -> ContextData:
         # and non-routable addresses.
         hosts = str(flask.request.headers['X-Forwarded-For']).split()
         if len(hosts) > 1:
-            http_context['remote_address'] = hosts[-1]
+            http_headers['remote_address'] = hosts[-1]
         else:
             # if there's only one address there, we use that.
-            http_context['remote_address'] = flask.request.headers['X-Forwarded-For']
+            http_headers['remote_address'] = flask.request.headers['X-Forwarded-For']
     elif flask.request.remote_addr:
         # if all else fails, look for remote_addr in the request. This is the IP the current connection
         # originates from. Most likely a proxy (which is why this is the last resort).
-        http_context['remote_address'] = flask.request.remote_addr
+        http_headers['remote_address'] = flask.request.remote_addr
     else:
         # this should never happen!
-        http_context['remote_address'] = 'unknown'
+        http_headers['remote_address'] = 'unknown'
 
-    http_context['_context_type'] = 'HttpContext'
-    http_context['id'] = 'http_context'
+    http_headers['id'] = 'http_context'
+
+    http_context: HttpContext = HttpContext(**http_headers)
 
     return http_context
 
