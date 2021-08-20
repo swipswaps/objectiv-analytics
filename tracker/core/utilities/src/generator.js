@@ -376,6 +376,8 @@ Object.keys(all_schema).forEach((extension_file) => {
         if (!(property in schema['events'][event_type]['properties'])) {
           schema['events'][event_type]['properties'][property] =
             extension['events'][event_type]['properties'][property];
+        } else {
+          console.log(`Not overriding existing property '${property}'`)
         }
       });
     }
@@ -390,6 +392,8 @@ Object.keys(all_schema).forEach((extension_file) => {
         if (!(property in schema['contexts'][context_type]['properties'])) {
           schema['contexts'][context_type]['properties'][property] =
             extension['contexts'][context_type]['properties'][property];
+        } else {
+          console.log(`Not overriding existing property '${property}'`)
         }
       });
     }
