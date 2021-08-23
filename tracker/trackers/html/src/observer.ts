@@ -19,7 +19,10 @@ import { TrackingAttribute } from './TrackingAttributes';
 function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) {
   const elements = node.querySelectorAll(`[${TrackingAttribute.objectivElementId}]`);
   [node, ...Array.from(elements)].forEach((element) => {
+    // Track visibility of newly mounted Elements
     trackIfVisible(tracker, element);
+
+    // Attach Event listeners for clicks, blurs, etc
     if (isTrackedElement(element)) {
       if (element.dataset.objectivTrackClicks === 'true') {
         element.addEventListener('click', (event: Event) => {
