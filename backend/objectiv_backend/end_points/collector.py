@@ -35,16 +35,15 @@ def collect() -> Response:
     try:
         event_data = _get_event_data(flask.request)
         events = event_data['events']
+        transport_time = event_data['transport_time']
     except ValueError as exc:
         print(f'Data problem: {exc}')  # todo: real error logging
-
         return _get_collector_response(error_count=1, event_count=-1, data_error=exc.__str__())
 
     # Do all the enrichment steps that can only be done in this phase
     add_http_contexts(events)
     add_cookie_id_contexts(events)
 
-    transport_time = event_data['transport_time']
     set_time_in_events(events, current_millis, transport_time)
 
     """
@@ -86,10 +85,12 @@ def _get_event_data(request: Request) -> Dict[str, Any]:
         raise ValueError('Parsed post data is not a list')
     if 'events' not in event_data:
         raise ValueError('Could not find events in post data')
-    if 'transport_time' not in event_data:
-        raise ValueError('Could not find transport_time in post data')
     if not isinstance(event_data['events'], list):
         raise ValueError('Parsed data is not a list')
+    if 'transport_time' not in event_data:
+        raise ValueError('Could not find transport_time in post data')
+    if not isinstance(event_data['transport_time'], int):
+        raise ValueError('transport_time is not a valid integer')
     if len(event_data['events']) > DATA_MAX_EVENT_COUNT:
         raise ValueError('Events exceeds limit')
     error_info = validate_structure_event_list(event_data=event_data['events'])
@@ -151,7 +152,7 @@ def add_cookie_id_contexts(events: List[EventData]):
         )
 
 
-def set_time_in_events(events: List[EventData], current_millis: int, client_millis=None):
+def set_time_in_events(events: List[EventData], current_millis: int, client_millis: int):
     """
     Modify the given list of events: Set the correct time in the events
 
