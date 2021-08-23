@@ -34,12 +34,15 @@ describe('XMLHttpRequestTransport', () => {
       expect(req.header('Content-Type')).toEqual('text/plain');
       const { id, ...otherProps } = testEvent;
       expect(req.body()).toEqual(
-        JSON.stringify([
-          {
-            ...otherProps,
-            id,
-          },
-        ])
+        JSON.stringify({
+          events: [
+            {
+              ...otherProps,
+              id,
+            }
+          ],
+          transport_time: mockedMs
+        })
       );
       return res.status(200);
     });
