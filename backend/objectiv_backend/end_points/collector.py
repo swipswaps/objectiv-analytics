@@ -68,11 +68,16 @@ def _get_event_data(request: Request) -> Dict[str, Any]:
 
     :raise ValueError:
         1) data is not valid json
-        2) data is bigger than DATA_MAX_SIZE_BYTES
-        3) The parsed data is a list with more than DATA_MAX_EVENT_COUNT entries
-        4) The parsed data is not a list, as expected
-        5) The parsed data is not structured as a list of events. This only does basic validation, see
+        2) The parsed data is a dictionary with more than DATA_MAX_EVENT_COUNT entries
+        3) The parsed data is not a dictionary, as expected
+        4) The key 'events' could not be found
+        5) The data at key 'events' is not a list
+        6) the key 'transport_time' could not be found
+        7) the key 'transport_time' is not a valid integer
+        8) data is bigger than DATA_MAX_SIZE_BYTES
+        9) The parsed data is not structured as a list of events. This only does basic validation, see
             the validate_structure_data function for more information
+
     :param request: Request from which to parse the data
     :return: the parsed data, a list of EventData
     """
