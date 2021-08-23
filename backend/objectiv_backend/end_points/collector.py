@@ -11,7 +11,7 @@ from flask import Response, Request
 from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import event_add_construct_context, add_global_context_to_event
-from objectiv_backend.common.types import EventWithId, EventData, ContextData
+from objectiv_backend.common.types import EventWithId, EventData
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
 from objectiv_backend.end_points.extra_output import events_to_json, write_data_to_fs_if_configured, \
     write_data_to_s3_if_configured
@@ -21,7 +21,7 @@ from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
-from objectiv_backend.schema.schema import HttpContext
+from objectiv_backend.schema.schema import HttpContext, CookieIdContext, make_event_from_dict
 
 # Some limits on the inputs we accept
 DATA_MAX_SIZE_BYTES = 1_000_000
@@ -87,7 +87,7 @@ def _get_event_data(request: Request) -> List[EventData]:
     error_info = validate_structure_event_list(event_data=events)
     if error_info:
         raise ValueError(f'List of Events not structured well: {error_info[0].info}')
-    return events
+    return [make_event_from_dict(event) for event in events]
 
 
 def _get_collector_response(
@@ -134,13 +134,10 @@ def add_cookie_id_contexts(events: List[EventData]):
     if not cookie_config:
         return
     cookie_id = get_cookie_id()
+    cookie_id_context = CookieIdContext(id=cookie_id, cookie_id=cookie_id)
     for event in events:
-        event_add_construct_context(
-            event=event,
-            context_type='CookieIdContext',
-            context_id=cookie_id,
-            cookie_id=cookie_id
-        )
+        add_global_context_to_event(event, cookie_id_context)
+
 
 
 def set_time_in_events(events: List[EventData], current_millis: int):
