@@ -44,10 +44,7 @@ def collect() -> Response:
     add_http_contexts(events)
     add_cookie_id_contexts(events)
 
-    if 'transport_time' in event_data:
-        transport_time = event_data['transport_time']
-    else:
-        transport_time = None
+    transport_time = event_data['transport_time']
     set_time_in_events(events, current_millis, transport_time)
 
     """
@@ -86,10 +83,11 @@ def _get_event_data(request: Request) -> Dict[str, Any]:
         raise ValueError(f'Data size exceeds limit')
     event_data = json.loads(post_data)
     if not isinstance(event_data, dict):
-        print(event_data)
         raise ValueError('Parsed post data is not a list')
     if 'events' not in event_data:
-        raise ValueError('Cannot find events in post data')
+        raise ValueError('Could not find events in post data')
+    if 'transport_time' not in event_data:
+        raise ValueError('Could not find transport_time in post data')
     if not isinstance(event_data['events'], list):
         raise ValueError('Parsed data is not a list')
     if len(event_data['events']) > DATA_MAX_EVENT_COUNT:
