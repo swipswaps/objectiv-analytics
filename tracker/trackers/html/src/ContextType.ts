@@ -21,7 +21,7 @@ export enum ContextType {
 export const ClickTrackingByContextType: Map<ContextType, boolean> = new Map([
   [ContextType.button, true],
   [ContextType.element, false],
-  [ContextType.expandableElement, false],
+  [ContextType.expandableElement, true],
   [ContextType.input, false],
   [ContextType.link, true],
   [ContextType.mediaPlayer, false],
