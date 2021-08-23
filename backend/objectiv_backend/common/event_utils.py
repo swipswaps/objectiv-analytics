@@ -26,7 +26,7 @@ def get_context(event: EventData, context_type: ContextType) -> AbstractContext:
 def get_contexts(event: EventData, context_type: ContextType) -> List[AbstractContext]:
     """ Given all the Contexts of the given type."""
     contexts = get_global_contexts(event) + get_location_stack(event)
-    result = []
+    result: List[AbstractContext] = []
     for context in contexts:
         if context.__class__.__name__ == context_type:
             result.append(context)
@@ -38,12 +38,12 @@ def get_global_contexts(event: EventData) -> List[AbstractGlobalContext]:
     return event.get("global_contexts", [])
 
 
-def get_location_stack(event: EventData) -> List[AbstractLocationContext]:
+def get_location_stack(event: EventData) -> List[AbstractContext]:
     """ Given an event, return the location stack (location contexts)."""
     return event.get("location_stack", [])
 
 
-def add_global_context_to_event(event: EventData, context: AbstractGlobalContext) -> Dict[str, Any]:
+def add_global_context_to_event(event: EventData, context: AbstractContext) -> Dict[str, Any]:
     """ Add the global context to the event. Returns the modified event """
     event['global_contexts'].append(context)
     return event
