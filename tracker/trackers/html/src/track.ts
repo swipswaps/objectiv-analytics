@@ -79,14 +79,6 @@ export function track(parameters: {
   extraAttributes: { href: string; text: string };
 }): TrackingAttributes;
 
-// Overload: Expandable Element context
-export function track(parameters: {
-  id: string;
-  type: ContextType.expandableElement;
-  extraAttributes: { text: string };
-  isVisible?: boolean;
-}): TrackingAttributes;
-
 // Overload: Any Location Context
 export function track(parameters: { instance: AbstractLocationContext }): TrackingAttributes;
 
@@ -182,8 +174,8 @@ export const trackElement = ({ id, isVisible }: { id: string; isVisible?: boolea
   return track({ id, type: ContextType.element, isVisible });
 };
 
-export const trackExpandableElement = ({ id, text, isVisible }: { id: string; text: string, isVisible?: boolean }) => {
-  return track({ id, type: ContextType.expandableElement, extraAttributes: { text }, isVisible });
+export const trackExpandableElement = ({ id, isVisible }: { id: string; isVisible?: boolean }) => {
+  return track({ id, type: ContextType.expandableElement, isVisible });
 };
 
 export const trackInput = ({ id }: { id: string }) => {
