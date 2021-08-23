@@ -40,7 +40,7 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) 
 }
 
 /**
- * Checks if the given origin Element and EventTarget are the same Tracked HTML Element.
+ * Checks if the given origin Tracked Element and the Event Target are the same Tracked Element.
  */
 const isBubbledEvent = (originElement: Element, eventTarget: EventTarget) => {
   if (!isTrackedElement(eventTarget)) {
@@ -86,11 +86,14 @@ function trackIfHidden(tracker: WebTracker, element: Node) {
 export const startObservingDOM = (tracker: WebTracker) => {
   new MutationObserver((mutationsList) => {
     mutationsList.forEach(({ addedNodes, target, attributeName }) => {
+      // New DOM nodes mutation: attach event listeners to all Tracked Elements
       addedNodes.forEach((addedNode) => {
         if (addedNode instanceof Element) {
           addEventListenersToTrackedElements(tracker, addedNode);
         }
       });
+
+      // Visibility attribute mutation: determine visibility of Tracked Elements
       if (attributeName) {
         trackIfVisible(tracker, target);
         trackIfHidden(tracker, target);
