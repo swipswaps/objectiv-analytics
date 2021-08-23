@@ -5,13 +5,14 @@ import {
   BlurTrackingByContextType,
   ClickTrackingByContextType,
   ContextType,
-  VisibilityTrackingByContextType
+  VisibilityTrackingByContextType,
 } from './ContextType';
 import {
   TrackingAttribute,
   TrackingAttributeFalse,
   TrackingAttributes,
   TrackingAttributeTrue,
+  TrackingAttributeVisibility,
 } from './TrackingAttributes';
 
 /**
@@ -140,19 +141,26 @@ export function track({
   // Check if this context type allows for automatically tracking blur events (eg: an input)
   const shouldTrackBlurs = BlurTrackingByContextType.get(contextType);
 
-  // We track visibility if we received the isVisible parameter or based on the VisibilityTrackingByContextType map
-  const shouldTrackVisibility = isVisible === undefined ? VisibilityTrackingByContextType.get(contextType) : true;
+  // Visibility can be tracked automatically, for certain contexts, programmatically for section contexts or not at all
+  let trackVisibilityConfig: TrackingAttributeVisibility = undefined;
 
-  // If we are programmatically tracking visibility, use whatever `isVisible` value has been given, else assume `true`
-  const isElementVisible = shouldTrackVisibility && (isVisible ?? true);
+  // If we did not receive the `isVisible` parameter attempt to auto-track visibility, if the Context Type allows
+  if (isVisible === undefined) {
+    if (VisibilityTrackingByContextType.get(contextType)) {
+      trackVisibilityConfig = { mode: 'auto' };
+    }
+  }
+  // Else we will track whatever value we received as manual
+  else {
+    trackVisibilityConfig = { mode: 'manual', isVisible };
+  }
 
   return {
-    [TrackingAttribute.objectivElementId]: elementId,
-    [TrackingAttribute.objectivContext]: JSON.stringify(contextInstance),
-    [TrackingAttribute.objectivTrackClicks]: shouldTrackClicks ? TrackingAttributeTrue : TrackingAttributeFalse,
-    [TrackingAttribute.objectivTrackBlurs]: shouldTrackBlurs ? TrackingAttributeTrue : TrackingAttributeFalse,
-    [TrackingAttribute.objectivTrackVisibility]: shouldTrackVisibility ? TrackingAttributeTrue : TrackingAttributeFalse,
-    [TrackingAttribute.objectivVisible]: isElementVisible ? TrackingAttributeTrue : TrackingAttributeFalse,
+    [TrackingAttribute.elementId]: elementId,
+    [TrackingAttribute.context]: JSON.stringify(contextInstance),
+    [TrackingAttribute.trackClicks]: shouldTrackClicks ? TrackingAttributeTrue : TrackingAttributeFalse,
+    [TrackingAttribute.trackBlurs]: shouldTrackBlurs ? TrackingAttributeTrue : TrackingAttributeFalse,
+    [TrackingAttribute.trackVisibility]: JSON.stringify(trackVisibilityConfig),
   };
 }
 

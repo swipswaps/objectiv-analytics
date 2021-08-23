@@ -3,22 +3,19 @@
  */
 export enum TrackingAttribute {
   // A unique identifier used internally to pinpoint to a specific instance of a tracked element
-  objectivElementId = 'data-objectiv-element-id',
+  elementId = 'data-objectiv-element-id',
 
   // A serialized instance of an Objectiv Context
-  objectivContext = 'data-objectiv-context',
+  context = 'data-objectiv-context',
 
   // Track click events for this tracked element
-  objectivTrackClicks = 'data-objectiv-track-clicks',
+  trackClicks = 'data-objectiv-track-clicks',
 
   // Track blur events for this tracked element
-  objectivTrackBlurs = 'data-objectiv-track-blurs',
+  trackBlurs = 'data-objectiv-track-blurs',
 
-  // Track visibility events for this tracked element
-  objectivTrackVisibility = 'data-objectiv-track-visibility',
-
-  // Indicates visibility of the element, defaults to true
-  objectivVisible = 'data-objectiv-visible',
+  // Determines how we will track visibility events for this tracked element.
+  trackVisibility = 'data-objectiv-track-visibility',
 }
 
 /**
@@ -31,13 +28,17 @@ export const TrackingAttributeTrue: TrackingAttributeTrue = 'true';
 export const TrackingAttributeFalse: TrackingAttributeFalse = 'false';
 
 /**
+ * The possible values of the `trackVisibility` TrackingAttribute.
+ */
+export type TrackingAttributeVisibility = undefined | { mode: 'auto' } | { mode: 'manual'; isVisible: boolean };
+
+/**
  * The object that `trackElement` call return, containing all Tracking Attributes.
  */
 export type TrackingAttributes = {
-  [TrackingAttribute.objectivElementId]: string;
-  [TrackingAttribute.objectivContext]: string;
-  [TrackingAttribute.objectivTrackClicks]: TrackingAttributeBoolean;
-  [TrackingAttribute.objectivTrackBlurs]: TrackingAttributeBoolean;
-  [TrackingAttribute.objectivTrackVisibility]: TrackingAttributeBoolean;
-  [TrackingAttribute.objectivVisible]: TrackingAttributeBoolean;
+  [TrackingAttribute.elementId]: string;
+  [TrackingAttribute.context]: string;
+  [TrackingAttribute.trackClicks]: TrackingAttributeBoolean;
+  [TrackingAttribute.trackBlurs]: TrackingAttributeBoolean;
+  [TrackingAttribute.trackVisibility]: TrackingAttributeVisibility;
 };

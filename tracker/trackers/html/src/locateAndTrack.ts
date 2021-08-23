@@ -23,7 +23,7 @@ export const locateAndTrack = (eventFactory: EventFactory, tracker: WebTracker, 
 
   // Re-hydrate Location Stack
   const locationStack = elementsStack.reduce((locationContexts, element) => {
-    const locationContext = element.getAttribute(TrackingAttribute.objectivContext);
+    const locationContext = element.getAttribute(TrackingAttribute.context);
     if (locationContext) {
       // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
       locationContexts.push(JSON.parse(locationContext));

@@ -10,5 +10,5 @@ export type TrackedElement = HTMLElement & { dataset: TrackingAttributes };
  */
 export const isTrackedElement = (element: Element | Node | EventTarget | null): element is TrackedElement =>
   element instanceof HTMLElement &&
-  element.hasAttribute(TrackingAttribute.objectivElementId) &&
-  element.hasAttribute(TrackingAttribute.objectivContext);
+  element.hasAttribute(TrackingAttribute.elementId) &&
+  element.hasAttribute(TrackingAttribute.context);
