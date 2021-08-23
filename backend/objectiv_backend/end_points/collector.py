@@ -3,7 +3,7 @@ from datetime import datetime
 
 import flask
 import time
-from typing import List
+from typing import List, Dict, Any
 import uuid
 
 from flask import Response, Request
@@ -33,7 +33,8 @@ def collect() -> Response:
     """
     current_millis = round(time.time() * 1000)
     try:
-        events = _get_event_data(flask.request)
+        event_data = _get_event_data(flask.request)
+        events = event_data['events']
     except ValueError as exc:
         print(f'Data problem: {exc}')  # todo: real error logging
 
@@ -42,7 +43,12 @@ def collect() -> Response:
     # Do all the enrichment steps that can only be done in this phase
     add_http_contexts(events)
     add_cookie_id_contexts(events)
-    set_time_in_events(events, current_millis)
+
+    if 'transport_time' in event_data:
+        transport_time = event_data['transport_time']
+    else:
+        transport_time = None
+    set_time_in_events(events, current_millis, transport_time)
 
     """
     Map event data to a list of EventWithId entities.
@@ -60,7 +66,7 @@ def collect() -> Response:
         return _get_collector_response(error_count=0, event_count=len(events))
 
 
-def _get_event_data(request: Request) -> List[EventData]:
+def _get_event_data(request: Request) -> Dict[str, Any]:
     """
     Parse the requests data as json and return as a list
 
@@ -78,15 +84,20 @@ def _get_event_data(request: Request) -> List[EventData]:
     if len(post_data) > DATA_MAX_SIZE_BYTES:
         # if it's more than a megabyte, we'll refuse to process
         raise ValueError(f'Data size exceeds limit')
-    events = json.loads(post_data)
-    if not isinstance(events, list):
+    event_data = json.loads(post_data)
+    if not isinstance(event_data, dict):
+        print(event_data)
+        raise ValueError('Parsed post data is not a list')
+    if 'events' not in event_data:
+        raise ValueError('Cannot find events in post data')
+    if not isinstance(event_data['events'], list):
         raise ValueError('Parsed data is not a list')
-    if len(events) > DATA_MAX_EVENT_COUNT:
+    if len(event_data['events']) > DATA_MAX_EVENT_COUNT:
         raise ValueError('Events exceeds limit')
-    error_info = validate_structure_event_list(event_data=events)
+    error_info = validate_structure_event_list(event_data=event_data['events'])
     if error_info:
         raise ValueError(f'List of Events not structured well: {error_info[0].info}')
-    return events
+    return event_data
 
 
 def _get_collector_response(
@@ -142,7 +153,7 @@ def add_cookie_id_contexts(events: List[EventData]):
         )
 
 
-def set_time_in_events(events: List[EventData], current_millis: int):
+def set_time_in_events(events: List[EventData], current_millis: int, client_millis=None):
     """
     Modify the given list of events: Set the correct time in the events
 
@@ -150,12 +161,12 @@ def set_time_in_events(events: List[EventData], current_millis: int):
     then correct `event.time` using this offset and set it in `event.time`
     :param events: List of events to modify
     :param current_millis: time in milliseconds since epoch UTC, when this request was received.
+    :param client_millis: time sent by client
     """
 
-    try:
-        client_millis = int(flask.request.headers['X-transport-time'])
-    except ValueError as exc:
+    if not client_millis:
         client_millis = current_millis
+
     offset = current_millis - client_millis
     print(f'debug - time offset: {offset}')
     for event in events:
