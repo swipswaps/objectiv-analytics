@@ -1,7 +1,12 @@
 import { AbstractLocationContext } from '@objectiv/schema';
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-web';
 import { v4 as uuidv4 } from 'uuid';
-import { BlurTrackingByContextType, ClickTrackingByContextType, ContextType } from './ContextType';
+import {
+  BlurTrackingByContextType,
+  ClickTrackingByContextType,
+  ContextType,
+  VisibilityTrackingByContextType
+} from './ContextType';
 import {
   TrackingAttribute,
   TrackingAttributeFalse,
@@ -126,15 +131,20 @@ export function track({
   // Clean up the instance from discriminatory properties
   cleanObjectFromDiscriminatingProperties(contextInstance);
 
+  // Get the current _context_type from the instance
+  const contextType = contextInstance._context_type as ContextType;
+
   // Check if this context type allows for automatically tracking click events (eg: a button)
-  const shouldTrackClicks = ClickTrackingByContextType.get(contextInstance._context_type as ContextType);
+  const shouldTrackClicks = ClickTrackingByContextType.get(contextType);
 
   // Check if this context type allows for automatically tracking blur events (eg: an input)
-  const shouldTrackBlurs = BlurTrackingByContextType.get(contextInstance._context_type as ContextType);
+  const shouldTrackBlurs = BlurTrackingByContextType.get(contextType);
 
-  // We track visibility if we received the isVisible parameter
-  const shouldTrackVisibility = isVisible !== undefined;
-  const isElementVisible = shouldTrackVisibility && isVisible;
+  // We track visibility if we received the isVisible parameter or based on the VisibilityTrackingByContextType map
+  const shouldTrackVisibility = isVisible === undefined ? VisibilityTrackingByContextType.get(contextType) : true;
+
+  // If we are programmatically tracking visibility, use whatever `isVisible` value has been given, else assume `true`
+  const isElementVisible = shouldTrackVisibility && (isVisible ?? true);
 
   return {
     [TrackingAttribute.objectivElementId]: elementId,

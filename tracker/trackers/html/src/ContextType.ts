@@ -15,7 +15,7 @@ export enum ContextType {
 }
 
 /**
- * Holds for which which ContextTypes we will track clicks automatically.
+ * Holds for which ContextTypes we will track clicks automatically.
  * This is used as default value for the objectivTrackClicks Tracking Attribute.
  */
 export const ClickTrackingByContextType: Map<ContextType, boolean> = new Map([
@@ -30,7 +30,7 @@ export const ClickTrackingByContextType: Map<ContextType, boolean> = new Map([
 ]);
 
 /**
- * Holds for which which ContextTypes we will track blurs automatically.
+ * Holds for which ContextTypes we will track blurs automatically.
  * This is used as default value for the objectivTrackBlurs Tracking Attribute.
  */
 export const BlurTrackingByContextType: Map<ContextType, boolean> = new Map([
@@ -42,4 +42,22 @@ export const BlurTrackingByContextType: Map<ContextType, boolean> = new Map([
   [ContextType.mediaPlayer, false],
   [ContextType.navigation, false],
   [ContextType.overlay, false],
+]);
+
+/**
+ * Holds for which ContextTypes we will track visibility automatically.
+ * This is used as default value for the objectivTrackVisibility Tracking Attribute.
+ *
+ * Developers can always switch to programmatic tracking by specifying the isVisible parameter.
+ * When isVisible is given we will not automatically track visibility.
+ */
+export const VisibilityTrackingByContextType: Map<ContextType, boolean> = new Map([
+  [ContextType.button, false],
+  [ContextType.element, true],
+  [ContextType.expandableElement, true],
+  [ContextType.input, false],
+  [ContextType.link, false],
+  [ContextType.mediaPlayer, true],
+  [ContextType.navigation, true],
+  [ContextType.overlay, true],
 ]);
