@@ -1,7 +1,6 @@
-import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext } from "@objectiv/schema";
+import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext } from '@objectiv/schema';
 import { WebTracker } from '@objectiv/tracker-web';
 import { findTrackedElementsInDOM } from './findTrackedElementsInDOM';
-import { isTrackedElement } from './isTrackedElement';
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
@@ -18,29 +17,23 @@ type EventFactory = (props?: {
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
  */
-export const locateAndTrack = (eventFactory: EventFactory, tracker: WebTracker, target: EventTarget | null, element: HTMLElement) => {
-  if (!isTrackedElement(target)) {
-    return;
-  }
-
-  // We double check if the target and the trigger element are the same. This ensures we don't track bubbled events
-  const targetElementId = target.getAttribute(TrackingAttribute.objectivElementId);
-  const elementId = element.getAttribute(TrackingAttribute.objectivElementId);
-  if (targetElementId !== elementId) {
-    return;
-  }
-
+export const locateAndTrack = (eventFactory: EventFactory, tracker: WebTracker, element: HTMLElement) => {
+  // Retrieve parent elements
   const elementsStack = findTrackedElementsInDOM(element).reverse();
+
+  // Re-hydrate Location Stack
   const locationStack = elementsStack.reduce((locationContexts, element) => {
     const locationContext = element.getAttribute(TrackingAttribute.objectivContext);
-    if(locationContext) {
+    if (locationContext) {
       // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
-      locationContexts.push(JSON.parse(locationContext))
+      locationContexts.push(JSON.parse(locationContext));
     }
     return locationContexts;
   }, [] as AbstractLocationContext[]);
 
+  // Create new Event
   const newEvent = eventFactory({ location_stack: locationStack });
 
-  return tracker.trackEvent(newEvent);
+  // Track
+  tracker.trackEvent(newEvent);
 };

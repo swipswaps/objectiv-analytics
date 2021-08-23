@@ -3,10 +3,10 @@ import {
   makeInputChangeEvent,
   makeSectionHiddenEvent,
   makeSectionVisibleEvent,
-  WebTracker
+  WebTracker,
 } from '@objectiv/tracker-web';
 import { isTrackedElement } from './isTrackedElement';
-import { locateAndTrack } from "./locateAndTrack";
+import { locateAndTrack } from './locateAndTrack';
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
@@ -23,12 +23,16 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) 
     if (isTrackedElement(element)) {
       if (element.dataset.objectivTrackClicks === 'true') {
         element.addEventListener('click', (event: Event) => {
-          locateAndTrack(makeClickEvent, tracker, event.target, element);
-        })
+          if (event.target && !isBubbledEvent(element, event.target)) {
+            locateAndTrack(makeClickEvent, tracker, element);
+          }
+        });
       }
       if (element.dataset.objectivTrackBlurs === 'true') {
         element.addEventListener('blur', (event: Event) => {
-          locateAndTrack(makeInputChangeEvent, tracker, event.target, element)
+          if (event.target && !isBubbledEvent(element, event.target)) {
+            locateAndTrack(makeInputChangeEvent, tracker, element);
+          }
         });
       }
     }
@@ -36,12 +40,26 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) 
 }
 
 /**
+ * Checks if the given origin Element and EventTarget are the same Tracked HTML Element.
+ */
+const isBubbledEvent = (originElement: Element, eventTarget: EventTarget) => {
+  if (!isTrackedElement(eventTarget)) {
+    return;
+  }
+
+  const originElementId = originElement.getAttribute(TrackingAttribute.objectivElementId);
+  const targetElementId = eventTarget.getAttribute(TrackingAttribute.objectivElementId);
+
+  return originElementId !== targetElementId;
+};
+
+/**
  * Checks if the given Node is a tracked element and if we need to trigger a visibility: true event for it.
  */
 function trackIfVisible(tracker: WebTracker, element: Node) {
   if (isTrackedElement(element)) {
     if (element.dataset.objectivTrackVisibility === 'true' && element.dataset.objectivVisible === 'true') {
-      locateAndTrack(makeSectionVisibleEvent, tracker, element, element);
+      locateAndTrack(makeSectionVisibleEvent, tracker, element);
     }
   }
 }
@@ -52,7 +70,7 @@ function trackIfVisible(tracker: WebTracker, element: Node) {
 function trackIfHidden(tracker: WebTracker, element: Node) {
   if (isTrackedElement(element)) {
     if (element.dataset.objectivTrackVisibility === 'true' && element.dataset.objectivVisible === 'false') {
-      locateAndTrack(makeSectionHiddenEvent, tracker, element, element);
+      locateAndTrack(makeSectionHiddenEvent, tracker, element);
     }
   }
 }
@@ -82,6 +100,6 @@ export const startObservingDOM = (tracker: WebTracker) => {
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: [TrackingAttribute.objectivVisible]
+    attributeFilter: [TrackingAttribute.objectivVisible],
   });
 };
