@@ -87,7 +87,7 @@ def _get_event_data(request: Request) -> Dict[str, Any]:
         raise ValueError(f'Data size exceeds limit')
     event_data = json.loads(post_data)
     if not isinstance(event_data, dict):
-        raise ValueError('Parsed post data is not a list')
+        raise ValueError('Parsed post data is not a dict')
     if 'events' not in event_data:
         raise ValueError('Could not find events in post data')
     if not isinstance(event_data['events'], list):
