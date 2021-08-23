@@ -10,13 +10,13 @@ import { locateAndTrack } from './locateAndTrack';
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
- * Given a Mutation Observer node it will find all Tracked Elements:
+ * Given a Mutation Observer node containing newly added nodes it will find all Tracked Elements:
  * - All Elements will be checked for visibility tracking and appropriate events will be triggered for them.
  * - Elements with the Objectiv Track Click attribute are bound to EventListener for Buttons, Links.
  * - Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
  * - When the listeners trigger, `locateAndTrack` will reconstruct a Location Stack and track the appropriate Events.
  */
-function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) {
+function trackNewElements(tracker: WebTracker, node: Element) {
   const elements = node.querySelectorAll(`[${TrackingAttribute.objectivElementId}]`);
   [node, ...Array.from(elements)].forEach((element) => {
     // Track visibility of newly mounted Elements
@@ -43,6 +43,21 @@ function addEventListenersToTrackedElements(tracker: WebTracker, node: Element) 
 }
 
 /**
+ * Given a Mutation Observer node containing removed nodes it will track whether to track visibility:hidden events
+ */
+function untrackElements(tracker: WebTracker, node: Element) {
+  const elements = node.querySelectorAll(`[${TrackingAttribute.objectivElementId}]`);
+  [node, ...Array.from(elements)].forEach((element) => {
+    // Track visibility:hidden of unmounted Elements
+    if (isTrackedElement(element)) {
+      if (element.dataset.objectivTrackVisibility === 'true') {
+        locateAndTrack(makeSectionHiddenEvent, tracker, element);
+      }
+    }
+  });
+}
+
+/**
  * Checks if the given origin Tracked Element and the Event Target are the same Tracked Element.
  */
 const isBubbledEvent = (originElement: Element, eventTarget: EventTarget) => {
@@ -57,7 +72,7 @@ const isBubbledEvent = (originElement: Element, eventTarget: EventTarget) => {
 };
 
 /**
- * Checks if the given Node is a tracked element and if we need to trigger a visibility: true event for it.
+ * Checks if the given Node is a tracked element and if we need to trigger a visibility: visible event for it.
  */
 function trackIfVisible(tracker: WebTracker, element: Node) {
   if (isTrackedElement(element)) {
@@ -68,7 +83,7 @@ function trackIfVisible(tracker: WebTracker, element: Node) {
 }
 
 /**
- * Checks if the given Node is a tracked element and if we need to trigger a visibility: false event for it.
+ * Checks if the given Node is a tracked element and if we need to trigger a visibility: hidden event for it.
  */
 function trackIfHidden(tracker: WebTracker, element: Node) {
   if (isTrackedElement(element)) {
@@ -88,15 +103,22 @@ function trackIfHidden(tracker: WebTracker, element: Node) {
  */
 export const startObservingDOM = (tracker: WebTracker) => {
   new MutationObserver((mutationsList) => {
-    mutationsList.forEach(({ addedNodes, target, attributeName }) => {
-      // New DOM nodes mutation: attach event listeners to all Tracked Elements
+    mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName }) => {
+      // New DOM nodes mutation: attach event listeners to all Tracked Elements and track visibility:visible events
       addedNodes.forEach((addedNode) => {
         if (addedNode instanceof Element) {
-          addEventListenersToTrackedElements(tracker, addedNode);
+          trackNewElements(tracker, addedNode);
         }
       });
 
-      // Visibility attribute mutation: determine visibility of Tracked Elements
+      // Removed DOM nodes mutation: track visibility:hidden events
+      removedNodes.forEach((removedNode) => {
+        if (removedNode instanceof Element) {
+          untrackElements(tracker, removedNode);
+        }
+      });
+
+      // Visibility attribute mutation (programmatic visibility change): determine and track visibility events
       if (attributeName) {
         trackIfVisible(tracker, target);
         trackIfHidden(tracker, target);
