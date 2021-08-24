@@ -7,6 +7,7 @@ import {
   WebTracker,
 } from '@objectiv/tracker-web';
 import { findTrackedParentElements } from './findTrackedParentElements';
+import { isTrackableElement } from "./isTrackedElement";
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
@@ -41,8 +42,8 @@ export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tr
     throw new Error('Tracker not initialized. Provide a tracker instance or setup a global one via `configureTracker`');
   }
 
-  // Make sure we got an HTML Element, else we can't traverse the DOM nor get dataset attributes
-  if (!(element instanceof HTMLElement)) {
+  // Make sure we got an HTML or SVG Element, else we can't traverse the DOM nor get dataset attributes
+  if (!isTrackableElement(element)) {
     return;
   }
 
@@ -80,6 +81,11 @@ export type TrackHelperParameters = {
 export const trackClick = ({ element, tracker }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeClickEvent, element, tracker });
 };
+
+// TODO create helpers for all the clickable contexts, these should add also a location context item
+// trackButtonClick
+// trackLinkClick
+// trackExpandableElement
 
 export const trackInputChange = ({ element, tracker }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeInputChangeEvent, element, tracker });
