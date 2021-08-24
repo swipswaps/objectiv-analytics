@@ -62,9 +62,9 @@ function untrackElements(element: Element, tracker: WebTracker = window.objectiv
 /**
  * Checks if the given origin Tracked Element and the Event Target are the same Tracked Element.
  */
-const isBubbledEvent = (originElement: Element, eventTarget: EventTarget) => {
+const isBubbledEvent = (originElement: Element, eventTarget: EventTarget): boolean => {
   if (!isTrackedElement(eventTarget)) {
-    return;
+    return true;
   }
 
   const originElementId = originElement.getAttribute(TrackingAttribute.elementId);
