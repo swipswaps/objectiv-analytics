@@ -130,7 +130,7 @@ def validate_event_adheres_to_schema(event_schema: EventSchema, event: AbstractE
     :param event: Structural correct event.
     :return: list of found errors
     """
-    event_name = event.event
+    event_name = event['event']
     if not event_schema.is_valid_event_type(event_name):
         return [ErrorInfo(event, f'Unknown event: {event_name}')]
 
