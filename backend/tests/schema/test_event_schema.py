@@ -161,16 +161,28 @@ def test_get_context_schema():
     schema = _get_schema()
     base_context_json_schema = {
         'properties': {
-            'id': {'type': 'string'}
+            'id': {
+                'type': 'string',
+                'description': 'test id'
+            }
         },
         'required': ['id'],
         'type': 'object'
     }
     extra_context_json_schema = {
         'properties': {
-            'extra_property': {'type': 'string'},
-            'id': {'type': 'string'},
-            'other_property': {'type': 'number'}
+            'extra_property': {
+                'type': 'string',
+                'description': 'test extra property'
+            },
+            'id': {
+                'type': 'string',
+                'description': 'test id'
+            },
+            'other_property': {
+                'type': 'number',
+                'description': 'test other property'
+            }
         },
         'required': ['extra_property', 'id', 'other_property'],
         'type': 'object'
@@ -197,36 +209,45 @@ _SIMPLE_BASE_SCHEMA = {
     "events": {
         "BaseEvent": {
             "parents": [],
-            "requiresContext": ["BaseContext"]
+            "requiresContext": ["BaseContext"],
+            "description": "test base event"
         },
         "ChildEvent": {
             "parents": ["BaseEvent"],
-            "requiresContext": []
+            "requiresContext": [],
+            "description": "test child event"
         },
         "Child2Event": {
             "parents": ["BaseEvent"],
-            "requiresContext": ["OtherContext"]
+            "requiresContext": ["OtherContext"],
+            "description": "test child 2 event"
         },
         "GrandChildEvent": {
             "parents": ["ChildEvent", "Child2Event"],
-            "requiresContext": []
+            "requiresContext": [],
+            "description": "test grand child event"
         }
     },
     "contexts": {
         "BaseContext": {
+            "description": "test base context",
             "properties": {
                 "id": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "test id"
                 }
-            }
+            },
+
         },
         "OtherContext": {
             "parents": [
                 "BaseContext"
             ],
+            "description": "test other context",
             "properties": {
                 "other_property": {
-                    "type": "number"
+                    "type": "number",
+                    "description": "test other property"
                 }
             }
         }
@@ -240,7 +261,8 @@ _EXTENSION_TO_SIMPLE_BASE_SCHEMA = {
     "events": {
         "GreatGrandChildEvent": {
             "parents": ["GrandChildEvent"],
-            "requiresContext": ["ExtraContext"]
+            "requiresContext": ["ExtraContext"],
+            "description": "test great grand child event"
         },
     },
     "contexts": {
@@ -249,9 +271,11 @@ _EXTENSION_TO_SIMPLE_BASE_SCHEMA = {
                 "BaseContext",
                 "OtherContext"
             ],
+            "description": "test extra context",
             "properties": {
                 "extra_property": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "test extra property"
                 }
             }
         }

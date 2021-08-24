@@ -31,14 +31,9 @@ export abstract class AbstractEvent {
   id: string;
 
   /**
-   * Timestamp indicating when the event was generated (added to the transport queue).
+   * Timestamp indicating when the event was generated
    */
-  tracking_time: number;
-
-  /**
-   * Timestamp indicating when the event was sent (transported) to the collector.
-   */
-  transport_time: number;
+  time: number;
 }
 
 /**

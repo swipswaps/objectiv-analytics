@@ -33,8 +33,6 @@ export const defaultFetchFunction = async ({
   parameters?: typeof defaultFetchParameters;
 }): Promise<Response> => {
   return new Promise(function (resolve, reject) {
-    events.forEach((event) => event.setTransportTime());
-
     console.groupCollapsed(`Objectiv: FetchAPITransport sending`);
     console.log(`Events:`);
     console.log(events);
@@ -42,7 +40,13 @@ export const defaultFetchFunction = async ({
 
     fetch(endpoint, {
       ...parameters,
-      body: JSON.stringify(events),
+      body: JSON.stringify(
+          {
+            events,
+            // add current timestamp to the request, so the collector
+            // may check if there's any clock offset between server and client
+            transport_time: Date.now()
+          }),
     })
       .then((response) => {
         if (response.status === 200) {
