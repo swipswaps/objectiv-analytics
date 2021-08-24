@@ -3,15 +3,14 @@ from datetime import datetime
 
 import flask
 import time
-from typing import List, Dict
-import uuid
+
+from typing import List, Dict, Any, Union
 
 from flask import Response, Request
 
 from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.db import get_db_connection
-from objectiv_backend.common.event_utils import event_add_construct_context, add_global_context_to_event
-from objectiv_backend.common.types import EventWithId, EventData
+from objectiv_backend.common.event_utils import add_global_context_to_event
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
 from objectiv_backend.end_points.extra_output import events_to_json, write_data_to_fs_if_configured, \
     write_data_to_s3_if_configured
@@ -21,7 +20,7 @@ from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
-from objectiv_backend.schema.schema import HttpContext, CookieIdContext, make_event_from_dict
+from objectiv_backend.schema.schema import HttpContext, CookieIdContext, AbstractEvent, make_event_from_dict
 
 # Some limits on the inputs we accept
 DATA_MAX_SIZE_BYTES = 1_000_000
@@ -34,60 +33,72 @@ def collect() -> Response:
     """
     current_millis = round(time.time() * 1000)
     try:
-        events = _get_event_data(flask.request)
+        event_data = _get_event_data(flask.request)
+        events: List[AbstractEvent] = event_data['events']
+        transport_time = event_data['transport_time']
     except ValueError as exc:
         print(f'Data problem: {exc}')  # todo: real error logging
-
         return _get_collector_response(error_count=1, event_count=-1, data_error=exc.__str__())
 
     # Do all the enrichment steps that can only be done in this phase
     add_http_contexts(events)
     add_cookie_id_contexts(events)
-    set_time_in_events(events, current_millis)
 
-    """
-    Map event data to a list of EventWithId entities.
-    Event data has been validated against the schema in the _get_event_data above. So all Events will have an `id`. 
-    """
-    events_with_id = [EventWithId(id=uuid.UUID(event.get('id')), event=event) for event in events]
+    set_time_in_events(events, current_millis, transport_time)
 
     if not get_collector_config().async_mode:
-        ok_events, nok_events, event_errors = process_events_entry(events=events_with_id, current_millis=current_millis)
+        ok_events, nok_events, event_errors = process_events_entry(events=events, current_millis=current_millis)
         print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
         write_sync_events(ok_events=ok_events, nok_events=nok_events)
         return _get_collector_response(error_count=len(nok_events), event_count=len(events), event_errors=event_errors)
     else:
-        write_async_events(events=events_with_id)
+        write_async_events(events=events)
         return _get_collector_response(error_count=0, event_count=len(events))
 
 
-def _get_event_data(request: Request) -> List[EventData]:
+def _get_event_data(request: Request) -> Dict[str, Any]:
     """
     Parse the requests data as json and return as a list
 
     :raise ValueError:
         1) data is not valid json
-        2) data is bigger than DATA_MAX_SIZE_BYTES
-        3) The parsed data is a list with more than DATA_MAX_EVENT_COUNT entries
-        4) The parsed data is not a list, as expected
-        5) The parsed data is not structured as a list of events. This only does basic validation, see
+        2) The parsed data is a dictionary with more than DATA_MAX_EVENT_COUNT entries
+        3) The parsed data is not a dictionary, as expected
+        4) The key 'events' could not be found
+        5) The data at key 'events' is not a list
+        6) the key 'transport_time' could not be found
+        7) the key 'transport_time' is not a valid integer
+        8) data is bigger than DATA_MAX_SIZE_BYTES
+        9) The parsed data is not structured as a list of events. This only does basic validation, see
             the validate_structure_data function for more information
+
     :param request: Request from which to parse the data
-    :return: the parsed data, a list of EventData
+    :return: the parsed data, a list of AbstractEvents
     """
     post_data = request.data
     if len(post_data) > DATA_MAX_SIZE_BYTES:
         # if it's more than a megabyte, we'll refuse to process
         raise ValueError(f'Data size exceeds limit')
-    events = json.loads(post_data)
-    if not isinstance(events, list):
+    event_data = json.loads(post_data)
+    if not isinstance(event_data, dict):
+        raise ValueError('Parsed post data is not a dict')
+    if 'events' not in event_data:
+        raise ValueError('Could not find events in post data')
+    if not isinstance(event_data['events'], list):
         raise ValueError('Parsed data is not a list')
-    if len(events) > DATA_MAX_EVENT_COUNT:
+    if 'transport_time' not in event_data:
+        raise ValueError('Could not find transport_time in post data')
+    if not isinstance(event_data['transport_time'], int):
+        raise ValueError('transport_time is not a valid integer')
+    if len(event_data['events']) > DATA_MAX_EVENT_COUNT:
         raise ValueError('Events exceeds limit')
-    error_info = validate_structure_event_list(event_data=events)
+    error_info = validate_structure_event_list(event_data=event_data['events'])
     if error_info:
         raise ValueError(f'List of Events not structured well: {error_info[0].info}')
-    return [make_event_from_dict(event) for event in events]
+
+    events = [make_event_from_dict(event) for event in event_data['events']]
+
+    return {k: events if k == 'events' else v for k, v in event_data.items()}
 
 
 def _get_collector_response(
@@ -116,7 +127,7 @@ def _get_collector_response(
     return get_json_response(status=200, msg=msg)
 
 
-def add_http_contexts(events: List[EventData]):
+def add_http_contexts(events: List[AbstractEvent]):
     """
     Modify the given list of events: Add the HttpContext to each event
     """
@@ -126,7 +137,7 @@ def add_http_contexts(events: List[EventData]):
         add_global_context_to_event(event=event, context=http_context)
 
 
-def add_cookie_id_contexts(events: List[EventData]):
+def add_cookie_id_contexts(events: List[AbstractEvent]):
     """
     Modify the given list of events: Add the CookieIdContext to each event, if cookies are enabled.
     """
@@ -139,8 +150,7 @@ def add_cookie_id_contexts(events: List[EventData]):
         add_global_context_to_event(event, cookie_id_context)
 
 
-
-def set_time_in_events(events: List[EventData], current_millis: int):
+def set_time_in_events(events: List[AbstractEvent], current_millis: int, client_millis: int):
     """
     Modify the given list of events: Set the correct time in the events
 
@@ -148,12 +158,12 @@ def set_time_in_events(events: List[EventData], current_millis: int):
     then correct `event.time` using this offset and set it in `event.time`
     :param events: List of events to modify
     :param current_millis: time in milliseconds since epoch UTC, when this request was received.
+    :param client_millis: time sent by client
     """
 
-    try:
-        client_millis = int(flask.request.headers['X-transport-time'])
-    except ValueError as exc:
+    if not client_millis:
         client_millis = current_millis
+
     offset = current_millis - client_millis
     print(f'debug - time offset: {offset}')
     for event in events:
@@ -170,7 +180,7 @@ def _get_http_context() -> HttpContext:
     http_headers: Dict[str, str] = {}
     for h, v in flask.request.headers.items():
         if h in allowed_headers:
-          http_headers[h.lower().replace('-', '_')] = v
+            http_headers[h.lower().replace('-', '_')] = v
 
     # try to determine the IP address of the calling user agent, by looking at some standard headers
     # if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
@@ -206,7 +216,7 @@ def _get_http_context() -> HttpContext:
     return http_context
 
 
-def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId]):
+def write_sync_events(ok_events: List[AbstractEvent], nok_events: List[AbstractEvent]):
     """
     Write the events to the following sinks, if configured:
         * postgres
@@ -234,7 +244,7 @@ def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId
             write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 
 
-def write_async_events(events: List[EventWithId]):
+def write_async_events(events: List[AbstractEvent]):
     """
     Write the events to the following sinks, if configured:
         * postgres - To the entry queue
