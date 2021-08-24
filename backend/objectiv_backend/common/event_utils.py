@@ -3,7 +3,6 @@ Copyright 2021 Objectiv B.V.
 """
 from typing import Optional, List, Type
 
-from objectiv_backend.common.types import ContextType
 from objectiv_backend.schema.schema import AbstractEvent, AbstractContext, AbstractLocationContext, AbstractGlobalContext, make_context
 
 
@@ -43,22 +42,8 @@ def get_location_stack(event: AbstractEvent) -> List[AbstractLocationContext]:
     return event.location_stack
 
 
-def add_global_context_to_event(event: AbstractEvent, context: AbstractContext) -> AbstractEvent:
+def add_global_context_to_event(event: AbstractEvent, context: AbstractGlobalContext) -> AbstractEvent:
     """ Add the global context to the event. Returns the modified event """
-    if not isinstance(context, AbstractGlobalContext):
-        raise ValueError(f'Trying to add invalid context to global contexts: {context}')
     event['global_contexts'].append(context)
     return event
 
-
-def event_add_construct_context(event: AbstractEvent,
-                                context_type: ContextType,
-                                context_id: str,
-                                **kwargs) -> AbstractEvent:
-    """
-    Create a new Context, and add that to the Event.
-    :return: The modified Event.
-    """
-
-    context = make_context(_context_type=context_type, id=context_id, **kwargs)
-    return add_global_context_to_event(event, context)
