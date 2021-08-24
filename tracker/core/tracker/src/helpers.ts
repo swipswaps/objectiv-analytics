@@ -1,4 +1,4 @@
-import { DiscriminatingPropertyPrefix } from "@objectiv/schema";
+import { DiscriminatingPropertyPrefix } from '@objectiv/schema';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

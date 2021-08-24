@@ -22,8 +22,8 @@ type EventFactory = (props?: {
  */
 export type TrackEventParameters = {
   eventFactory: EventFactory;
-  tracker: WebTracker;
   element: HTMLElement | EventTarget;
+  tracker?: WebTracker;
 };
 
 /**
@@ -35,7 +35,12 @@ export type TrackEventParameters = {
  * TODO add a parameter to allow matching closes Tracked Element Parent, instead of doing that magically
  *
  */
-export const trackEvent = ({ eventFactory, tracker, element }: TrackEventParameters) => {
+export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tracker }: TrackEventParameters) => {
+  // If we didn't get a Tracker we can't continue
+  if (!tracker) {
+    throw new Error('Tracker not initialized. Provide a tracker instance or setup a global one via `configureTracker`');
+  }
+
   // Make sure we got an HTML Element, else we can't traverse the DOM nor get dataset attributes
   if (!(element instanceof HTMLElement)) {
     return;
@@ -64,27 +69,30 @@ export const trackEvent = ({ eventFactory, tracker, element }: TrackEventParamet
 /**
  * The parameters of the Event helper functions
  */
-export type TrackHelperParameters = Pick<TrackEventParameters, 'tracker' | 'element'>;
+export type TrackHelperParameters = {
+  element: HTMLElement | EventTarget;
+  tracker?: WebTracker;
+};
 
 /**
  * Event specific helpers. To make it easier to track common Events
  */
-export const trackClick = ({ tracker, element }: TrackHelperParameters) => {
-  return trackEvent({ eventFactory: makeClickEvent, tracker, element });
+export const trackClick = ({ element, tracker }: TrackHelperParameters) => {
+  return trackEvent({ eventFactory: makeClickEvent, element, tracker });
 };
 
-export const trackInputChange = ({ tracker, element }: TrackHelperParameters) => {
-  return trackEvent({ eventFactory: makeInputChangeEvent, tracker, element });
+export const trackInputChange = ({ element, tracker }: TrackHelperParameters) => {
+  return trackEvent({ eventFactory: makeInputChangeEvent, element, tracker });
 };
 
-export const trackSectionVisibleEvent = ({ tracker, element }: TrackHelperParameters) => {
-  return trackEvent({ eventFactory: makeSectionVisibleEvent, tracker, element });
+export const trackSectionVisibleEvent = ({ element, tracker }: TrackHelperParameters) => {
+  return trackEvent({ eventFactory: makeSectionVisibleEvent, element, tracker });
 };
 
-export const trackSectionHiddenEvent = ({ tracker, element }: TrackHelperParameters) => {
-  return trackEvent({ eventFactory: makeSectionHiddenEvent, tracker, element });
+export const trackSectionHiddenEvent = ({ element, tracker }: TrackHelperParameters) => {
+  return trackEvent({ eventFactory: makeSectionHiddenEvent, element, tracker });
 };
 
-export const trackVisibility = ({ tracker, element, isVisible }: TrackHelperParameters & { isVisible: boolean }) => {
-  return trackEvent({ eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent, tracker, element });
+export const trackVisibility = ({ element, tracker, isVisible }: TrackHelperParameters & { isVisible: boolean }) => {
+  return trackEvent({ eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent, element, tracker });
 };

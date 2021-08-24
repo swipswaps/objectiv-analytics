@@ -10,11 +10,11 @@ import { TrackingAttribute, TrackingAttributeVisibility } from './TrackingAttrib
  * - Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
  * - When the listeners trigger, `locateAndTrack` will reconstruct a Location Stack and track the appropriate Events.
  */
-function trackNewElements(tracker: WebTracker, node: Element) {
-  const elements = node.querySelectorAll(`[${TrackingAttribute.elementId}]`);
-  [node, ...Array.from(elements)].forEach((element) => {
+function trackNewElements(element: Element, tracker: WebTracker = window.objectiv.tracker) {
+  const elements = element.querySelectorAll(`[${TrackingAttribute.elementId}]`);
+  [element, ...Array.from(elements)].forEach((element) => {
     // Visibility: visible tracking of newly mounted Elements
-    trackIfVisible(tracker, element);
+    trackIfVisible(element, tracker);
 
     // Attach Event listeners for clicks, blurs, etc
     if (isTrackedElement(element)) {
@@ -22,7 +22,7 @@ function trackNewElements(tracker: WebTracker, node: Element) {
       if (element.getAttribute(TrackingAttribute.trackClicks) === 'true') {
         element.addEventListener('click', (event: Event) => {
           if (event.target && !isBubbledEvent(element, event.target)) {
-            trackClick({ tracker, element });
+            trackClick({ element, tracker });
           }
         });
       }
@@ -31,7 +31,7 @@ function trackNewElements(tracker: WebTracker, node: Element) {
       if (element.getAttribute(TrackingAttribute.trackBlurs) === 'true') {
         element.addEventListener('blur', (event: Event) => {
           if (event.target && !isBubbledEvent(element, event.target)) {
-            trackInputChange({ tracker, element });
+            trackInputChange({ element, tracker });
           }
         });
       }
@@ -43,16 +43,16 @@ function trackNewElements(tracker: WebTracker, node: Element) {
  * Given a Mutation Observer node containing removed nodes it will track whether to track visibility:hidden events
  * Hidden Events are triggered only for automatically tracked Elements.
  */
-function untrackElements(tracker: WebTracker, node: Element) {
-  const elements = node.querySelectorAll(`[${TrackingAttribute.elementId}]`);
-  [node, ...Array.from(elements)].forEach((element) => {
+function untrackElements(element: Element, tracker: WebTracker = window.objectiv.tracker) {
+  const elements = element.querySelectorAll(`[${TrackingAttribute.elementId}]`);
+  [element, ...Array.from(elements)].forEach((element) => {
     // Track visibility:hidden of unmounted Elements
     if (isTrackedElement(element)) {
       const trackVisibilityAttribute = element.getAttribute(TrackingAttribute.trackVisibility);
       if (trackVisibilityAttribute !== null) {
         const trackVisibilityConfig: TrackingAttributeVisibility = JSON.parse(trackVisibilityAttribute);
         if (trackVisibilityConfig && trackVisibilityConfig.mode === 'auto') {
-          trackSectionHiddenEvent({ tracker, element });
+          trackSectionHiddenEvent({ element, tracker });
         }
       }
     }
@@ -76,7 +76,7 @@ const isBubbledEvent = (originElement: Element, eventTarget: EventTarget) => {
 /**
  * Checks if the given Node is a tracked element and if we need to trigger a visibility: visible event for it.
  */
-function trackIfVisible(tracker: WebTracker, element: Node) {
+function trackIfVisible(element: Node, tracker: WebTracker = window.objectiv.tracker) {
   if (isTrackedElement(element)) {
     const trackVisibilityAttribute = element.getAttribute(TrackingAttribute.trackVisibility);
     if (trackVisibilityAttribute !== null) {
@@ -86,7 +86,7 @@ function trackIfVisible(tracker: WebTracker, element: Node) {
           trackVisibilityConfig.mode === 'auto' ||
           (trackVisibilityConfig.mode === 'manual' && trackVisibilityConfig.isVisible)
         ) {
-          trackSectionVisibleEvent({ tracker, element });
+          trackSectionVisibleEvent({ element, tracker });
         }
       }
     }
@@ -96,7 +96,7 @@ function trackIfVisible(tracker: WebTracker, element: Node) {
 /**
  * Checks if the given Node is a tracked element and if we need to trigger a visibility: hidden event for it.
  */
-function trackIfHidden(tracker: WebTracker, element: Node) {
+function trackIfHidden(element: Node, tracker: WebTracker = window.objectiv.tracker) {
   if (isTrackedElement(element)) {
     const trackVisibilityAttribute = element.getAttribute(TrackingAttribute.trackVisibility);
     if (trackVisibilityAttribute !== null) {
@@ -106,7 +106,7 @@ function trackIfHidden(tracker: WebTracker, element: Node) {
           trackVisibilityConfig.mode === 'auto' ||
           (trackVisibilityConfig.mode === 'manual' && !trackVisibilityConfig.isVisible)
         ) {
-          trackSectionHiddenEvent({ tracker, element });
+          trackSectionHiddenEvent({ element, tracker });
         }
       }
     }
@@ -124,27 +124,27 @@ function trackIfHidden(tracker: WebTracker, element: Node) {
  * We also monitor nodes that are removed. If those nodes are Tracked Elements of which we were tracking visibility
  * we will trigger visibility: hidden events for them.
  */
-export const startObservingDOM = (tracker: WebTracker) => {
+export const startObservingDOM = (tracker: WebTracker = window.objectiv.tracker) => {
   new MutationObserver((mutationsList) => {
     mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName }) => {
       // New DOM nodes mutation: attach event listeners to all Tracked Elements and track visibility:visible events
       addedNodes.forEach((addedNode) => {
         if (addedNode instanceof Element) {
-          trackNewElements(tracker, addedNode);
+          trackNewElements(addedNode, tracker);
         }
       });
 
       // Removed DOM nodes mutation: track visibility:hidden events
       removedNodes.forEach((removedNode) => {
         if (removedNode instanceof Element) {
-          untrackElements(tracker, removedNode);
+          untrackElements(removedNode, tracker);
         }
       });
 
       // Visibility attribute mutation (programmatic visibility change): determine and track visibility events
       if (attributeName) {
-        trackIfVisible(tracker, target);
-        trackIfHidden(tracker, target);
+        trackIfVisible(target, tracker);
+        trackIfHidden(target, tracker);
       }
     });
   }).observe(document, {

@@ -6,3 +6,4 @@ export * from './track';
 export * from './tracker';
 export * from './trackEvent';
 export * from './TrackingAttributes';
+export * from './window';

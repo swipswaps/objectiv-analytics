@@ -1,4 +1,4 @@
-import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext, Contexts, } from '@objectiv/schema';
+import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
 import { ContextsConfig } from './Context';
 import { cleanObjectFromDiscriminatingProperties, generateUUID } from './helpers';
 
