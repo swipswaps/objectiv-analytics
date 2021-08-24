@@ -21,6 +21,17 @@ import {
 export const DEFAULT_CONTEXT_TYPE = ContextType.element;
 
 /**
+ * The parameters of `track`
+ */
+export type TrackParameters = {
+  id?: string;
+  instance?: AbstractLocationContext;
+  type?: ContextType;
+  extraAttributes?: Record<string, any>;
+  isVisible?: boolean;
+};
+
+/**
  * The main endpoint of the HTML Tracker. Can be called in three ways:
  *
  *    trackElement(<id>)
@@ -36,7 +47,7 @@ export const DEFAULT_CONTEXT_TYPE = ContextType.element;
  * Returns an object containing the tracking attributes. It's properties are supposed to be spread on the target HTML
  * Element. This allows us to identify elements uniquely in a Document and to reconstruct their Location.
  *
- * For most commonly used Elements / Location Contexts see also the shortcut functions below.
+ * For most commonly used Elements / Location Contexts see also the helper functions below.
  */
 
 // Overload: Section context by id only
@@ -164,7 +175,7 @@ export function track({
 }
 
 /**
- * Location Context specific shortcuts. To make it easier to track common HTML Elements
+ * Location Context specific helpers. To make it easier to track common HTML Elements
  */
 export const trackButton = ({ id, text }: { id: string; text: string }) => {
   return track({ id, type: ContextType.button, extraAttributes: { text } });

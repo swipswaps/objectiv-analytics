@@ -1,6 +1,6 @@
-import { WebTracker, } from '@objectiv/tracker-web';
+import { WebTracker } from '@objectiv/tracker-web';
 import { isTrackedElement } from './isTrackedElement';
-import { trackClick, trackInputChange, trackSectionHiddenEvent, trackSectionVisibleEvent } from "./trackEvent";
+import { trackClick, trackInputChange, trackSectionHiddenEvent, trackSectionVisibleEvent } from './trackEvent';
 import { TrackingAttribute, TrackingAttributeVisibility } from './TrackingAttributes';
 
 /**
@@ -86,7 +86,7 @@ function trackIfVisible(tracker: WebTracker, element: Node) {
           trackVisibilityConfig.mode === 'auto' ||
           (trackVisibilityConfig.mode === 'manual' && trackVisibilityConfig.isVisible)
         ) {
-          trackSectionVisibleEvent({ tracker, element })
+          trackSectionVisibleEvent({ tracker, element });
         }
       }
     }
@@ -106,7 +106,7 @@ function trackIfHidden(tracker: WebTracker, element: Node) {
           trackVisibilityConfig.mode === 'auto' ||
           (trackVisibilityConfig.mode === 'manual' && !trackVisibilityConfig.isVisible)
         ) {
-          trackSectionHiddenEvent({ tracker, element })
+          trackSectionHiddenEvent({ tracker, element });
         }
       }
     }

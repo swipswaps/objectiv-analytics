@@ -83,7 +83,7 @@ describe('track', () => {
       [TrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
       [TrackingAttribute.context]: JSON.stringify({
         _context_type: 'ExpandableSectionContext',
-        id: 'test-expandable'
+        id: 'test-expandable',
       }),
       [TrackingAttribute.trackClicks]: TrackingAttributeTrue,
       [TrackingAttribute.trackBlurs]: TrackingAttributeFalse,

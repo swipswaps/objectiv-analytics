@@ -4,9 +4,10 @@ import {
   makeInputChangeEvent,
   makeSectionHiddenEvent,
   makeSectionVisibleEvent,
-  WebTracker
+  WebTracker,
 } from '@objectiv/tracker-web';
 import { findTrackedElementsInDOM } from './findTrackedElementsInDOM';
+import { isTrackedElement } from './isTrackedElement';
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
@@ -18,15 +19,26 @@ type EventFactory = (props?: {
 }) => Omit<AbstractEvent, 'id' | 'tracking_time' | 'transport_time'>;
 
 /**
+ * The parameters of `trackEvent`
+ */
+export type TrackEventParameters = {
+  eventFactory: EventFactory;
+  tracker: WebTracker;
+  element: HTMLElement | EventTarget;
+};
+
+/**
  * 1. Traverses the DOM to reconstruct the component stack
  * 2. Uses the component stack to reconstruct a LocationStack
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
  */
-export const trackEvent = (
-  {eventFactory, tracker, element}:
-  {eventFactory: EventFactory, tracker: WebTracker, element: HTMLElement}
-) => {
+export const trackEvent = ({ eventFactory, tracker, element }: TrackEventParameters) => {
+  // Make sure we got a Tracked Element
+  if (!isTrackedElement(element)) {
+    return;
+  }
+
   // Retrieve parent elements
   const elementsStack = findTrackedElementsInDOM(element).reverse();
 
@@ -48,20 +60,25 @@ export const trackEvent = (
 };
 
 /**
- * Event specific shortcuts. To make it easier to track common Events
+ * The parameters of the Event helper functions
  */
-export const trackClick = ({ tracker, element }: { tracker: WebTracker, element: HTMLElement }) => {
+export type TrackHelperParameters = Pick<TrackEventParameters, 'tracker' | 'element'>;
+
+/**
+ * Event specific helpers. To make it easier to track common Events
+ */
+export const trackClick = ({ tracker, element }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeClickEvent, tracker, element });
 };
 
-export const trackInputChange = ({ tracker, element }: { tracker: WebTracker, element: HTMLElement }) => {
+export const trackInputChange = ({ tracker, element }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeInputChangeEvent, tracker, element });
 };
 
-export const trackSectionVisibleEvent = ({ tracker, element }: { tracker: WebTracker, element: HTMLElement }) => {
+export const trackSectionVisibleEvent = ({ tracker, element }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeSectionVisibleEvent, tracker, element });
 };
 
-export const trackSectionHiddenEvent = ({ tracker, element }: { tracker: WebTracker, element: HTMLElement }) => {
+export const trackSectionHiddenEvent = ({ tracker, element }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeSectionHiddenEvent, tracker, element });
 };
