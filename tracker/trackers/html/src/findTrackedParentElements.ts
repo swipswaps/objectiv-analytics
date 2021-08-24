@@ -3,7 +3,7 @@ import { isTrackedElement } from './isTrackedElement';
 /**
  * Walk the DOM upwards looking for Tracked Elements. The resulting array can be used to reconstruct a Location Stack.
  */
-export const findTrackedElementsInDOM = (
+export const findTrackedParentElements = (
   element: HTMLElement | null,
   parentElements: HTMLElement[] = []
 ): HTMLElement[] => {
@@ -13,5 +13,5 @@ export const findTrackedElementsInDOM = (
   if (isTrackedElement(element)) {
     parentElements.push(element);
   }
-  return findTrackedElementsInDOM(element.parentElement, parentElements);
+  return findTrackedParentElements(element.parentElement, parentElements);
 };

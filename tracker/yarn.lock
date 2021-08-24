@@ -2953,7 +2953,6 @@ __metadata:
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^1.4.0
-    superjson: ^1.7.5
     ts-jest: ^26.5.6
     tslib: ^2.2.0
     typescript: ^4.2.4
@@ -16081,16 +16080,6 @@ resolve@^2.0.0-next.3:
     postcss: ^7.0.0
     postcss-selector-parser: ^3.0.0
   checksum: 1345ad348db3c98f7d0423762e13e816a8c1ba0b1d90d79f3528513be429f1cf68b7fa9c9d379870208586e7ff4cfb68b4121bbd904df03b17e84d62efcff288
-  languageName: node
-  linkType: hard
-
-"superjson@npm:^1.7.5":
-  version: 1.7.5
-  resolution: "superjson@npm:1.7.5"
-  dependencies:
-    debug: ^4.3.1
-    lodash.clonedeep: ^4.5.0
-  checksum: c45a61b61ecc84fd03df915da2a9217a3909944bfb6247b1fc3d3e2d7018a2b8c579a6191bfc155b1d710328004e21aca875af1dd96d14f5e678d7738912b53e
   languageName: node
   linkType: hard
 

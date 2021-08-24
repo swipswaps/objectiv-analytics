@@ -42,7 +42,6 @@
   "dependencies": {
     "@objectiv/plugin-web-device-context": "~0.0.1",
     "@objectiv/plugin-web-document-context": "~0.0.1",
-    "@objectiv/tracker-core": "~0.0.1",
-    "superjson": "^1.7.5"
+    "@objectiv/tracker-core": "~0.0.1"
   }
 }

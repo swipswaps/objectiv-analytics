@@ -1,5 +1,5 @@
 export * from './ContextType';
-export * from './findTrackedElementsInDOM';
+export * from './findTrackedParentElements';
 export * from './isTrackedElement';
 export * from './observer';
 export * from './track';

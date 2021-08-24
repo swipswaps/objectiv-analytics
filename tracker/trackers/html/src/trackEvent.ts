@@ -6,8 +6,7 @@ import {
   makeSectionVisibleEvent,
   WebTracker,
 } from '@objectiv/tracker-web';
-import { findTrackedElementsInDOM } from './findTrackedElementsInDOM';
-import { isTrackedElement } from './isTrackedElement';
+import { findTrackedParentElements } from './findTrackedParentElements';
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
@@ -32,15 +31,18 @@ export type TrackEventParameters = {
  * 2. Uses the component stack to reconstruct a LocationStack
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
+ *
+ * TODO add a parameter to allow matching closes Tracked Element Parent, instead of doing that magically
+ *
  */
 export const trackEvent = ({ eventFactory, tracker, element }: TrackEventParameters) => {
-  // Make sure we got a Tracked Element
-  if (!isTrackedElement(element)) {
+  // Make sure we got an HTML Element, else we can't traverse the DOM nor get dataset attributes
+  if (!(element instanceof HTMLElement)) {
     return;
   }
 
-  // Retrieve parent elements
-  const elementsStack = findTrackedElementsInDOM(element).reverse();
+  // Retrieve parent Tracked Elements
+  const elementsStack = findTrackedParentElements(element).reverse();
 
   // Re-hydrate Location Stack
   const locationStack = elementsStack.reduce((locationContexts, element) => {
@@ -81,4 +83,8 @@ export const trackSectionVisibleEvent = ({ tracker, element }: TrackHelperParame
 
 export const trackSectionHiddenEvent = ({ tracker, element }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeSectionHiddenEvent, tracker, element });
+};
+
+export const trackVisibility = ({ tracker, element, isVisible }: TrackHelperParameters & { isVisible: boolean }) => {
+  return trackEvent({ eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent, tracker, element });
 };
