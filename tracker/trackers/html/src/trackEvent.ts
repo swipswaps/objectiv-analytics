@@ -1,5 +1,11 @@
 import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext } from '@objectiv/schema';
-import { WebTracker } from '@objectiv/tracker-web';
+import {
+  makeClickEvent,
+  makeInputChangeEvent,
+  makeSectionHiddenEvent,
+  makeSectionVisibleEvent,
+  WebTracker
+} from '@objectiv/tracker-web';
 import { findTrackedElementsInDOM } from './findTrackedElementsInDOM';
 import { TrackingAttribute } from './TrackingAttributes';
 
@@ -17,7 +23,10 @@ type EventFactory = (props?: {
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
  */
-export const locateAndTrack = (eventFactory: EventFactory, tracker: WebTracker, element: HTMLElement) => {
+export const trackEvent = (
+  {eventFactory, tracker, element}:
+  {eventFactory: EventFactory, tracker: WebTracker, element: HTMLElement}
+) => {
   // Retrieve parent elements
   const elementsStack = findTrackedElementsInDOM(element).reverse();
 
@@ -36,4 +45,23 @@ export const locateAndTrack = (eventFactory: EventFactory, tracker: WebTracker, 
 
   // Track
   tracker.trackEvent(newEvent);
+};
+
+/**
+ * Event specific shortcuts. To make it easier to track common Events
+ */
+export const trackClick = ({ tracker, element }: { tracker: WebTracker, element: HTMLElement }) => {
+  return trackEvent({ eventFactory: makeClickEvent, tracker, element });
+};
+
+export const trackInputChange = ({ tracker, element }: { tracker: WebTracker, element: HTMLElement }) => {
+  return trackEvent({ eventFactory: makeInputChangeEvent, tracker, element });
+};
+
+export const trackSectionVisibleEvent = ({ tracker, element }: { tracker: WebTracker, element: HTMLElement }) => {
+  return trackEvent({ eventFactory: makeSectionVisibleEvent, tracker, element });
+};
+
+export const trackSectionHiddenEvent = ({ tracker, element }: { tracker: WebTracker, element: HTMLElement }) => {
+  return trackEvent({ eventFactory: makeSectionHiddenEvent, tracker, element });
 };

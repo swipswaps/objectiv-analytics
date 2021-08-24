@@ -1,12 +1,6 @@
-import {
-  makeClickEvent,
-  makeInputChangeEvent,
-  makeSectionHiddenEvent,
-  makeSectionVisibleEvent,
-  WebTracker,
-} from '@objectiv/tracker-web';
+import { WebTracker, } from '@objectiv/tracker-web';
 import { isTrackedElement } from './isTrackedElement';
-import { locateAndTrack } from './locateAndTrack';
+import { trackClick, trackInputChange, trackSectionHiddenEvent, trackSectionVisibleEvent } from "./trackEvent";
 import { TrackingAttribute, TrackingAttributeVisibility } from './TrackingAttributes';
 
 /**
@@ -28,7 +22,7 @@ function trackNewElements(tracker: WebTracker, node: Element) {
       if (element.getAttribute(TrackingAttribute.trackClicks) === 'true') {
         element.addEventListener('click', (event: Event) => {
           if (event.target && !isBubbledEvent(element, event.target)) {
-            locateAndTrack(makeClickEvent, tracker, element);
+            trackClick({ tracker, element });
           }
         });
       }
@@ -37,7 +31,7 @@ function trackNewElements(tracker: WebTracker, node: Element) {
       if (element.getAttribute(TrackingAttribute.trackBlurs) === 'true') {
         element.addEventListener('blur', (event: Event) => {
           if (event.target && !isBubbledEvent(element, event.target)) {
-            locateAndTrack(makeInputChangeEvent, tracker, element);
+            trackInputChange({ tracker, element });
           }
         });
       }
@@ -58,7 +52,7 @@ function untrackElements(tracker: WebTracker, node: Element) {
       if (trackVisibilityAttribute !== null) {
         const trackVisibilityConfig: TrackingAttributeVisibility = JSON.parse(trackVisibilityAttribute);
         if (trackVisibilityConfig && trackVisibilityConfig.mode === 'auto') {
-          locateAndTrack(makeSectionHiddenEvent, tracker, element);
+          trackSectionHiddenEvent({ tracker, element });
         }
       }
     }
@@ -92,7 +86,7 @@ function trackIfVisible(tracker: WebTracker, element: Node) {
           trackVisibilityConfig.mode === 'auto' ||
           (trackVisibilityConfig.mode === 'manual' && trackVisibilityConfig.isVisible)
         ) {
-          locateAndTrack(makeSectionVisibleEvent, tracker, element);
+          trackSectionVisibleEvent({ tracker, element })
         }
       }
     }
@@ -112,7 +106,7 @@ function trackIfHidden(tracker: WebTracker, element: Node) {
           trackVisibilityConfig.mode === 'auto' ||
           (trackVisibilityConfig.mode === 'manual' && !trackVisibilityConfig.isVisible)
         ) {
-          locateAndTrack(makeSectionHiddenEvent, tracker, element);
+          trackSectionHiddenEvent({ tracker, element })
         }
       }
     }
