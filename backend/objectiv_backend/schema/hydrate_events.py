@@ -11,7 +11,7 @@ from objectiv_backend.schema.validate_events import validate_event_list
 from objectiv_backend.schema.schema import AbstractEvent
 
 
-def hydrate_types_into_event(event_schema: EventSchema, event: AbstractEvent) -> AbstractEvent:
+def hydrate_types_into_event(event_schema: EventSchema, event: Dict[str, Any]) -> Dict[str, Any]:
     """
     Modifies the given event:
         1. adds a "events" field: a list of all inherited event-types (including the event)
