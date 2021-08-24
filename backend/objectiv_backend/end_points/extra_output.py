@@ -14,20 +14,16 @@ import boto3
 from botocore.exceptions import ClientError
 
 from objectiv_backend.common.config import get_collector_config
-from objectiv_backend.common.types import EventWithId
+from objectiv_backend.schema.schema import AbstractEvent
 
 
-def events_to_json(events: List[EventWithId]) -> str:
+def events_to_json(events: List[AbstractEvent]) -> str:
     """
     Convert list of events to a string with on each line a json object representing a single event.
     Note that the returned string is not a json list; This format makes it suitable as raw input to AWS
     Athena.
     """
-    result = []
-    for event in events:
-        json_str = json.dumps(event.event) + "\n"
-        result.append(json_str)
-    return ''.join(result)
+    return json.dumps(events)
 
 
 def write_data_to_fs_if_configured(data: str, prefix: str, moment: datetime) -> None:

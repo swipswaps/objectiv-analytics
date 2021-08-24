@@ -8,10 +8,11 @@ from typing import List
 from psycopg2.extras import execute_values
 
 from objectiv_backend.common.event_utils import get_context
-from objectiv_backend.common.types import EventWithId, FailureReason
+from objectiv_backend.common.types import FailureReason
+from objectiv_backend.schema.schema import AbstractEvent, CookieIdContext
 
 
-def insert_events_into_data(connection, events: List[EventWithId]):
+def insert_events_into_data(connection, events: List[AbstractEvent]):
     """
     Insert events into the 'data' table.
 
@@ -58,13 +59,13 @@ def insert_events_into_data(connection, events: List[EventWithId]):
     '''
     values = []
     for event in events:
-        timestamp = _millis_to_datetime(event.event['time'])
-        cookie_id = get_context(event.event, 'CookieIdContext')['cookie_id']
+        timestamp = _millis_to_datetime(event.time)
+        cookie_id = get_context(event, CookieIdContext)['cookie_id']
         value = (str(event.id),
                  timestamp,
                  timestamp,
                  cookie_id,
-                 json.dumps(event.event))
+                 json.dumps(event))
         values.append(value)
     with connection.cursor() as cursor:
         inserted_event_ids = execute_values(
@@ -85,7 +86,7 @@ def insert_events_into_data(connection, events: List[EventWithId]):
 
 
 def insert_events_into_nok_data(connection,
-                                events: List[EventWithId],
+                                events: List[AbstractEvent],
                                 reason: FailureReason = FailureReason.FAILED_VALIDATION):
     """
     Insert events into the not-ok data ('nok_data') table
@@ -100,13 +101,13 @@ def insert_events_into_nok_data(connection,
     insert_query = f'insert into nok_data (event_id, day, moment, cookie_id, value, reason) values %s'
     values = []
     for event in events:
-        timestamp = _millis_to_datetime(event.event['time'])
-        cookie_id = get_context(event.event, 'CookieIdContext')['cookie_id']
+        timestamp = _millis_to_datetime(event.time)
+        cookie_id = get_context(event, CookieIdContext)['cookie_id']
         value = (str(event.id),
                  timestamp,
                  timestamp,
                  cookie_id,
-                 json.dumps(event.event),
+                 json.dumps(event),
                  reason.value)
         values.append(value)
     with connection.cursor() as cursor:

@@ -11,9 +11,10 @@ import re
 import jsonschema
 from jsonschema import ValidationError
 
-from objectiv_backend.common.types import EventData
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 from objectiv_backend.common.config import get_config_timestamp_validation, get_config_event_schema
+
+from objectiv_backend.schema.schema import AbstractEvent
 
 
 class ErrorInfo(NamedTuple):
@@ -114,7 +115,7 @@ def validate_event_list(event_schema: EventSchema, event_data: Any) -> List[Erro
     return errors
 
 
-def validate_event_adheres_to_schema(event_schema: EventSchema, event: EventData) -> List[ErrorInfo]:
+def validate_event_adheres_to_schema(event_schema: EventSchema, event: AbstractEvent) -> List[ErrorInfo]:
     """
     Validate that the event adheres to the EventSchema.
 
@@ -129,7 +130,7 @@ def validate_event_adheres_to_schema(event_schema: EventSchema, event: EventData
     :param event: Structural correct event.
     :return: list of found errors
     """
-    event_name = event['event']
+    event_name = event.event
     if not event_schema.is_valid_event_type(event_name):
         return [ErrorInfo(event, f'Unknown event: {event_name}')]
 
@@ -224,7 +225,7 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
     return errors
 
 
-def validate_event_time(event: Dict[str, Any], current_millis: int) -> List[ErrorInfo]:
+def validate_event_time(event: AbstractEvent, current_millis: int) -> List[ErrorInfo]:
     """
     Validate timestamps in event to check if it's not too old or too new
     :param event:

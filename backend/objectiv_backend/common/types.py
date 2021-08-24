@@ -5,15 +5,10 @@ import uuid
 from enum import Enum
 from typing import NamedTuple, Union, Dict, Any
 
-EventData = Dict[str, Any]
+ContextData = Dict[str, Union[str, int, float]]
 
 EventType = str
 ContextType = str
-
-
-class EventWithId(NamedTuple):
-    id: uuid.UUID
-    event: EventData
 
 
 class FailureReason(Enum):

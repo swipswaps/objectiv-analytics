@@ -9,7 +9,7 @@ from typing import List, Tuple
 import psycopg2
 from psycopg2.extras import execute_values
 
-from objectiv_backend.common.types import EventWithId
+from objectiv_backend.schema.schema import AbstractEvent, make_event_from_dict
 
 
 class ProcessingStage(Enum):
@@ -44,7 +44,7 @@ class PostgresQueues:
             return 'queue_finalize'
         raise Exception('Implementation incomplete')
 
-    def get_events(self, queue: ProcessingStage, max_items: int) -> List[EventWithId]:
+    def get_events(self, queue: ProcessingStage, max_items: int) -> List[AbstractEvent]:
         """
         Get a list of events from a queue for processing.
 
@@ -66,12 +66,12 @@ class PostgresQueues:
         '''
         with self.connection.cursor(cursor_factory=psycopg2.extras.NamedTupleCursor) as cursor:
             cursor.execute(query, (max_items, ))
-            events_with_id = [EventWithId(id=row.event_id, event=row.value) for row in cursor.fetchall()]
+            events_with_id = [make_event_from_dict(row.value) for row in cursor.fetchall()]
         return events_with_id
 
     def put_events(self,
                    queue: ProcessingStage,
-                   events: List[EventWithId]):
+                   events: List[AbstractEvent]):
         """
         Put an event with a given event-id on a queue
 

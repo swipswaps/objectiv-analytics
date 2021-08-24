@@ -1345,7 +1345,7 @@ def make_context(_context_type: str, **kwargs) -> AbstractContext:
     return AbstractContext(**kwargs)
 
 
-def make_event(event: str, **kwargs) -> AbstractEvent:
+def make_event(event: str, **kwargs):
     if event == "AbstractEvent":
         return AbstractEvent(**kwargs)
     if event == "NonInteractiveEvent":
