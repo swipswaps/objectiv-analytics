@@ -1,4 +1,4 @@
-import { isTrackedElement } from './isTrackedElement';
+import { isTrackedElement } from './typeGuards';
 
 /**
  * Walk the DOM upwards looking for Tracked Elements. The resulting array can be used to reconstruct a Location Stack.

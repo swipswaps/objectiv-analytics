@@ -1,7 +1,7 @@
 import { WebTracker } from '@objectiv/tracker-web';
-import { isTrackedElement } from './isTrackedElement';
 import { trackClick, trackInputChange, trackSectionHiddenEvent, trackSectionVisibleEvent } from './trackEvent';
 import { TrackingAttribute, TrackingAttributeVisibility } from './TrackingAttributes';
+import { isTrackedElement } from './typeGuards';
 
 /**
  * Given a Mutation Observer node containing newly added nodes it will find all Tracked Elements:

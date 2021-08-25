@@ -7,8 +7,8 @@ import {
   WebTracker,
 } from '@objectiv/tracker-web';
 import { findTrackedParentElements } from './findTrackedParentElements';
-import { isTrackableElement } from "./isTrackedElement";
 import { TrackingAttribute } from './TrackingAttributes';
+import { isTrackableElement } from './typeGuards';
 
 /**
  * All of our EventFactories have a similar signature

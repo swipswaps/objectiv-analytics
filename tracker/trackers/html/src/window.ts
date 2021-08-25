@@ -1,6 +1,10 @@
 import { WebTracker } from '@objectiv/tracker-web';
 
 /**
+ * TODO Temporary and probably not needed if we compile to UMD
+ */
+
+/**
  * The interface of our namespace which will be extending the Window interface
  */
 export interface ObjectivNamespace {
