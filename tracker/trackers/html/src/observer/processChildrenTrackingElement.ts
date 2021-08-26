@@ -1,4 +1,4 @@
-import { ChildrenTrackingAttribute, ElementTrackingAttribute, TrackingAttribute } from '../TrackingAttributes';
+import { ChildrenTrackingAttribute, ElementTrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, isTrackableElement, TrackedElement } from '../typeGuards';
 
 /**
@@ -27,7 +27,7 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
     }
 
     // Transfer TrackingAttributes from the original element to the new queriedElement
-    const elementId = element.getAttribute(TrackingAttribute.elementId);
+    const elementId = element.getAttribute(ElementTrackingAttribute.elementId);
     const context = element.getAttribute(ElementTrackingAttribute.context);
     const trackClicks = element.getAttribute(ElementTrackingAttribute.trackClicks);
     const trackBlurs = element.getAttribute(ElementTrackingAttribute.trackBlurs);
@@ -35,7 +35,7 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
 
     if (elementId) {
       // Copy tracking onto new Element
-      queriedElement.setAttribute(TrackingAttribute.elementId, elementId + '-' + elementQuery + '-' + index);
+      queriedElement.setAttribute(ElementTrackingAttribute.elementId, elementId + '-' + elementQuery + '-' + index);
       if (context) {
         queriedElement.setAttribute(ElementTrackingAttribute.context, context);
       }

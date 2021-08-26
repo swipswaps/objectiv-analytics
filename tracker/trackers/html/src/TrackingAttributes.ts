@@ -6,17 +6,12 @@ export type TrackingAttributeVisibilityManual = { mode: 'manual'; isVisible: boo
 export type TrackingAttributeVisibility = TrackingAttributeVisibilityAuto | TrackingAttributeVisibilityManual;
 
 /**
- * Common tracking attributes used by all types of tracked elements
- */
-export enum TrackingAttribute {
-  // A unique identifier used internally to pinpoint to a specific instance of a tracked element
-  elementId = 'data-objectiv-element-id',
-}
-
-/**
  * All the attributes that are added to a DOM Element to make it trackable
  */
 export enum ElementTrackingAttribute {
+  // A unique identifier used internally to pinpoint to a specific instance of a tracked element
+  elementId = 'data-objectiv-element-id',
+
   // A serialized instance of an Objectiv Context
   context = 'data-objectiv-context',
 
@@ -42,7 +37,7 @@ export enum ChildrenTrackingAttribute {
  * The object that `track` calls return
  */
 export type ElementTrackingAttributes = {
-  [TrackingAttribute.elementId]: string;
+  [ElementTrackingAttribute.elementId]: string;
   [ElementTrackingAttribute.context]: string;
   [ElementTrackingAttribute.trackClicks]?: boolean;
   [ElementTrackingAttribute.trackBlurs]?: boolean;
@@ -64,6 +59,5 @@ export type ChildTrackingQuery = {
  * The object that `trackChildren` calls return
  */
 export type ChildrenTrackingAttributes = {
-  [TrackingAttribute.elementId]: string;
   [ChildrenTrackingAttribute.queries]: ChildTrackingQuery[];
 };

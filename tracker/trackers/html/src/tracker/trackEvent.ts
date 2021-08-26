@@ -82,11 +82,6 @@ export const trackClick = ({ element, tracker }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeClickEvent, element, tracker });
 };
 
-// TODO create helpers for all the clickable contexts, these should add also a location context item
-// trackButtonClick
-// trackLinkClick
-// trackExpandableElement
-
 export const trackInputChange = ({ element, tracker }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeInputChangeEvent, element, tracker });
 };

@@ -1,4 +1,4 @@
-import { TrackingAttribute } from '../TrackingAttributes';
+import { ElementTrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 
 /**
@@ -11,8 +11,8 @@ const isBubbledEvent = (originElement: Element, eventTarget: EventTarget): boole
     return false;
   }
 
-  const originElementId = originElement.getAttribute(TrackingAttribute.elementId);
-  const targetElementId = eventTarget.getAttribute(TrackingAttribute.elementId);
+  const originElementId = originElement.getAttribute(ElementTrackingAttribute.elementId);
+  const targetElementId = eventTarget.getAttribute(ElementTrackingAttribute.elementId);
 
   return originElementId !== targetElementId;
 };

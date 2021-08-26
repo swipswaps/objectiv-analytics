@@ -10,7 +10,6 @@ import {
 import {
   ElementTrackingAttribute,
   ElementTrackingAttributes,
-  TrackingAttribute,
   TrackingAttributeVisibility,
 } from '../TrackingAttributes';
 
@@ -168,7 +167,7 @@ export function track({ id, instance, type, extraAttributes, options }: TrackPar
   }
 
   return {
-    [TrackingAttribute.elementId]: elementId,
+    [ElementTrackingAttribute.elementId]: elementId,
     [ElementTrackingAttribute.context]: JSON.stringify(contextInstance),
     [ElementTrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
     [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),

@@ -1,6 +1,6 @@
 import { WebTracker } from '@objectiv/tracker-web';
 import { trackSectionHiddenEvent } from '../tracker';
-import { ElementTrackingAttribute, TrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
+import { ElementTrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 
 /**
@@ -8,7 +8,7 @@ import { isTrackedElement } from '../typeGuards';
  * Hidden Events are triggered only for automatically tracked Elements.
  */
 const processRemovedElements = (element: Element, tracker: WebTracker = window.objectiv.tracker) => {
-  const elements = element.querySelectorAll(`[${TrackingAttribute.elementId}]`);
+  const elements = element.querySelectorAll(`[${ElementTrackingAttribute.elementId}]`);
   [element, ...Array.from(elements)].forEach((element) => {
     if (isTrackedElement(element)) {
       const trackVisibilityAttribute = element.getAttribute(ElementTrackingAttribute.trackVisibility);

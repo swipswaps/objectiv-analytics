@@ -1,4 +1,8 @@
-import { ElementTrackingAttributes } from '../TrackingAttributes';
+import {
+  ChildrenTrackingAttribute,
+  ChildrenTrackingAttributes,
+  ElementTrackingAttributes,
+} from '../TrackingAttributes';
 
 /**
  * The parameters of `trackChildren`
@@ -8,12 +12,16 @@ export type TrackChildrenParameters = {
   trackAs: ElementTrackingAttributes;
 };
 
+export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
+
 /**
  * Used to decorate a Trackable Element with our Children Tracking Attributes.
  * TODO better docs
  */
-export const trackChildren = (parameters: TrackChildrenParameters[]) => {
-  console.log(parameters);
+export const trackChildren = (parameters: TrackChildrenParameters[]): TrackChildrenReturnValue => {
+  return {
+    [ChildrenTrackingAttribute.queries]: JSON.stringify(parameters),
+  };
 };
 
 export const trackChild = (parameters: TrackChildrenParameters) => trackChildren([parameters]);
