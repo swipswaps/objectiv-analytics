@@ -1,3 +1,5 @@
+import { TrackingAttributeVisibility } from './TrackingAttributes';
+
 /**
  * All the Location Context types `track` supports.
  * Naming note: `Section` contexts are mapped to `Element`. This is to avoid confusion between our SectionContext and
@@ -18,31 +20,17 @@ export enum ContextType {
  * Holds for which ContextTypes we will track clicks automatically.
  * This is used as default value for the objectivTrackClicks Tracking Attribute.
  */
-export const ClickTrackingByContextType: Map<ContextType, boolean> = new Map([
+export const TrackClicksDefaultValueByContextType: Map<ContextType, boolean> = new Map([
   [ContextType.button, true],
-  [ContextType.element, false],
   [ContextType.expandableElement, true],
-  [ContextType.input, false],
   [ContextType.link, true],
-  [ContextType.mediaPlayer, false],
-  [ContextType.navigation, false],
-  [ContextType.overlay, false],
 ]);
 
 /**
  * Holds for which ContextTypes we will track blurs automatically.
  * This is used as default value for the objectivTrackBlurs Tracking Attribute.
  */
-export const BlurTrackingByContextType: Map<ContextType, boolean> = new Map([
-  [ContextType.button, false],
-  [ContextType.element, false],
-  [ContextType.expandableElement, false],
-  [ContextType.input, true],
-  [ContextType.link, false],
-  [ContextType.mediaPlayer, false],
-  [ContextType.navigation, false],
-  [ContextType.overlay, false],
-]);
+export const TrackBlursDefaultValueByContextType: Map<ContextType, boolean> = new Map([[ContextType.input, true]]);
 
 /**
  * Holds for which ContextTypes we will track visibility automatically.
@@ -51,13 +39,10 @@ export const BlurTrackingByContextType: Map<ContextType, boolean> = new Map([
  * Developers can always switch to programmatic tracking by specifying the isVisible parameter.
  * When isVisible is given we will not automatically track visibility.
  */
-export const VisibilityTrackingByContextType: Map<ContextType, boolean> = new Map([
-  [ContextType.button, false],
-  [ContextType.element, true],
-  [ContextType.expandableElement, true],
-  [ContextType.input, false],
-  [ContextType.link, false],
-  [ContextType.mediaPlayer, true],
-  [ContextType.navigation, true],
-  [ContextType.overlay, true],
+export const TrackVisibilityDefaultValueByContextType: Map<ContextType, TrackingAttributeVisibility> = new Map([
+  [ContextType.element, { mode: 'auto' }],
+  [ContextType.expandableElement, { mode: 'auto' }],
+  [ContextType.mediaPlayer, { mode: 'auto' }],
+  [ContextType.navigation, { mode: 'auto' }],
+  [ContextType.overlay, { mode: 'auto' }],
 ]);
