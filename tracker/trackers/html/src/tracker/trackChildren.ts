@@ -1,7 +1,7 @@
 import {
   ChildrenTrackingAttribute,
   ChildrenTrackingAttributes,
-  ElementTrackingAttributes,
+  StringifiedElementTrackingAttributes,
 } from '../TrackingAttributes';
 
 /**
@@ -9,7 +9,7 @@ import {
  */
 export type TrackChildrenParameters = {
   query: string;
-  trackAs: ElementTrackingAttributes;
+  trackAs: StringifiedElementTrackingAttributes;
 };
 
 export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
@@ -18,18 +18,10 @@ export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
  * Used to decorate a Trackable Element with our Children Tracking Attributes.
  * TODO better docs
  */
-export const trackChildren = (parameters: TrackChildrenParameters[]): TrackChildrenReturnValue => {
+export const trackChildren = (childrenParameters: TrackChildrenParameters[]): TrackChildrenReturnValue => {
   return {
-    [ChildrenTrackingAttribute.queries]: JSON.stringify(parameters),
+    [ChildrenTrackingAttribute.queries]: JSON.stringify(childrenParameters),
   };
 };
 
-export const trackChild = (parameters: TrackChildrenParameters) => trackChildren([parameters]);
-
-// {...trackChild({ query: 'button[aria-label="Previous"], trackAs: trackButton({id: 'prev', text: 'Previous'}) }}
-//
-// {...trackChildren([
-//   { query: 'button[aria-label="Previous"], trackAs: trackButton({id: 'prev', text: 'Previous'}) },
-//   { query: 'button[aria-label="Next"], trackAs: trackButton({id: 'next', text: 'Next'}) },
-// ])}
-//
+export const trackChild = (childParameters: TrackChildrenParameters) => trackChildren([childParameters]);

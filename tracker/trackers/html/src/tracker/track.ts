@@ -9,7 +9,7 @@ import {
 } from '../ContextType';
 import {
   ElementTrackingAttribute,
-  ElementTrackingAttributes,
+  StringifiedElementTrackingAttributes,
   TrackingAttributeVisibility,
 } from '../TrackingAttributes';
 
@@ -25,6 +25,7 @@ export type TrackParameterOptions = {
   trackClicks?: boolean;
   trackBlurs?: boolean;
   trackVisibility?: TrackingAttributeVisibility;
+  serialize?: boolean;
 };
 
 /**
@@ -38,7 +39,7 @@ export type TrackParameters = {
   options?: TrackParameterOptions;
 };
 
-export type TrackReturnValue = ElementTrackingAttributes | {};
+export type TrackReturnValue = StringifiedElementTrackingAttributes | {};
 
 /**
  * Used to decorate a Trackable Element with our Tracking Attributes. Can be called in three ways:
@@ -125,7 +126,7 @@ export function track({ id, instance, type, extraAttributes, options }: TrackPar
   }
 
   // Factor context instance if necessary
-  let contextInstance;
+  let contextInstance: AbstractLocationContext | undefined;
   if (id) {
     // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
     contextInstance = {

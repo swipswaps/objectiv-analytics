@@ -1,3 +1,5 @@
+import { AbstractLocationContext } from "@objectiv/schema";
+
 /**
  * The possible values of the `trackVisibility` TrackingAttribute.
  */
@@ -38,10 +40,21 @@ export enum ChildrenTrackingAttribute {
  */
 export type ElementTrackingAttributes = {
   [ElementTrackingAttribute.elementId]: string;
-  [ElementTrackingAttribute.context]: string;
+  [ElementTrackingAttribute.context]: AbstractLocationContext;
   [ElementTrackingAttribute.trackClicks]?: boolean;
   [ElementTrackingAttribute.trackBlurs]?: boolean;
   [ElementTrackingAttribute.trackVisibility]?: TrackingAttributeVisibility;
+};
+
+/**
+ * The object that `track` calls return, stringified
+ */
+export type StringifiedElementTrackingAttributes = {
+  [ElementTrackingAttribute.elementId]: string;
+  [ElementTrackingAttribute.context]: string;
+  [ElementTrackingAttribute.trackClicks]?: string;
+  [ElementTrackingAttribute.trackBlurs]?: string;
+  [ElementTrackingAttribute.trackVisibility]?: string;
 };
 
 /**
@@ -51,13 +64,13 @@ export type ChildTrackingQuery = {
   // A querySelector expression
   query: string;
 
-  // The attributes
-  elementTrackingAttributes: ElementTrackingAttributes;
+  // The attributes to apply to the Element matching the query
+  trackAs: StringifiedElementTrackingAttributes;
 };
 
 /**
  * The object that `trackChildren` calls return
  */
 export type ChildrenTrackingAttributes = {
-  [ChildrenTrackingAttribute.queries]: ChildTrackingQuery[];
+  [ChildrenTrackingAttribute.queries]: string[];
 };

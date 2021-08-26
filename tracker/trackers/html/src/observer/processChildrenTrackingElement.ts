@@ -1,4 +1,8 @@
-import { ChildrenTrackingAttribute, ElementTrackingAttribute } from '../TrackingAttributes';
+import {
+  ChildrenTrackingAttribute,
+  ChildTrackingQuery,
+  StringifiedElementTrackingAttributes
+} from '../TrackingAttributes';
 import { isChildrenTrackingElement, isTrackableElement, TrackedElement } from '../typeGuards';
 
 /**
@@ -8,45 +12,39 @@ import { isChildrenTrackingElement, isTrackableElement, TrackedElement } from '.
  * - Return a list of the decorated Elements
  */
 const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
-  if (!isChildrenTrackingElement(element)) {
-    return [];
-  }
-
-  // FIXME deserialize and process queries one by one
-  const elementQuery = 'lol';
-  const elementQueries = element.getAttribute(ChildrenTrackingAttribute.queries);
-  if (!elementQueries) {
-    return [];
-  }
-
-  // TODO make this in a querySelector, not querySelectorAll
   const queriedElements: TrackedElement[] = [];
-  element.querySelectorAll(elementQueries).forEach((queriedElement, index) => {
-    if (!isTrackableElement(queriedElement)) {
+
+  if (!isChildrenTrackingElement(element)) {
+    return queriedElements;
+  }
+
+  const queriesAttribute = element.getAttribute(ChildrenTrackingAttribute.queries);
+  if (!queriesAttribute) {
+    return queriedElements;
+  }
+
+  const queries = JSON.parse(queriesAttribute);
+  if (!Array.isArray(queries)) {
+    return queriedElements;
+  }
+
+  queries.forEach(({ query, trackAs }: ChildTrackingQuery) => {
+    const queriedElement = element.querySelector(query);
+    if (!queriedElement) {
+      console.error(`Could find Element via querySelector query: ${query}`);
       return;
     }
 
-    // Transfer TrackingAttributes from the original element to the new queriedElement
-    const elementId = element.getAttribute(ElementTrackingAttribute.elementId);
-    const context = element.getAttribute(ElementTrackingAttribute.context);
-    const trackClicks = element.getAttribute(ElementTrackingAttribute.trackClicks);
-    const trackBlurs = element.getAttribute(ElementTrackingAttribute.trackBlurs);
-    const trackVisibility = element.getAttribute(ElementTrackingAttribute.trackVisibility);
+    if (!isTrackableElement(queriedElement)) {
+      console.error(`Element matched with querySelector query: ${query} is not trackable`);
+      return;
+    }
 
-    if (elementId) {
-      // Copy tracking onto new Element
-      queriedElement.setAttribute(ElementTrackingAttribute.elementId, elementId + '-' + elementQuery + '-' + index);
-      if (context) {
-        queriedElement.setAttribute(ElementTrackingAttribute.context, context);
-      }
-      if (trackClicks) {
-        queriedElement.setAttribute(ElementTrackingAttribute.trackClicks, trackClicks);
-      }
-      if (trackBlurs) {
-        queriedElement.setAttribute(ElementTrackingAttribute.trackBlurs, trackBlurs);
-      }
-      if (trackVisibility) {
-        queriedElement.setAttribute(ElementTrackingAttribute.trackVisibility, trackVisibility);
+    let key: keyof StringifiedElementTrackingAttributes;
+    for (key in trackAs) {
+      const value = trackAs[key];
+      if (value !== undefined) {
+        queriedElement.setAttribute(key, value);
       }
     }
 
