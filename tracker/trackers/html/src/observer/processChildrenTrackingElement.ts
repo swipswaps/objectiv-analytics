@@ -1,7 +1,7 @@
 import {
   ChildrenTrackingAttribute,
   ChildTrackingQuery,
-  StringifiedElementTrackingAttributes
+  StringifiedElementTrackingAttributes,
 } from '../TrackingAttributes';
 import { isChildrenTrackingElement, isTrackableElement, TrackedElement } from '../typeGuards';
 

@@ -10,6 +10,7 @@ import {
 } from '@objectiv/tracker-core';
 import {
   ContextType,
+  ElementTrackingAttribute,
   track,
   trackButton,
   trackElement,
@@ -20,7 +21,6 @@ import {
   trackNavigation,
   trackOverlay,
 } from '../src';
-import { TrackingAttribute, TrackingAttributeFalse, TrackingAttributeTrue } from '../src/TrackingAttributes';
 
 const UUIDV4_REGEX = /^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i;
 
@@ -35,15 +35,15 @@ describe('track', () => {
     const trackingAttributes3 = track({ instance: makeButtonContext({ id: 'test-button', text: 'Click Me' }) });
 
     const expectedTrackingAttributes = {
-      [TrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
-      [TrackingAttribute.context]: JSON.stringify({
+      [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'ButtonContext',
         id: 'test-button',
         text: 'Click Me',
       }),
-      [TrackingAttribute.trackClicks]: TrackingAttributeTrue,
-      [TrackingAttribute.trackBlurs]: TrackingAttributeFalse,
-      [TrackingAttribute.trackVisibility]: undefined,
+      [ElementTrackingAttribute.trackClicks]: 'true',
+      [ElementTrackingAttribute.trackBlurs]: undefined,
+      [ElementTrackingAttribute.trackVisibility]: undefined,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -58,14 +58,14 @@ describe('track', () => {
     const trackingAttributes4 = track({ instance: makeSectionContext({ id: 'test-section' }) });
 
     const expectedTrackingAttributes = {
-      [TrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
-      [TrackingAttribute.context]: JSON.stringify({
+      [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'SectionContext',
         id: 'test-section',
       }),
-      [TrackingAttribute.trackClicks]: TrackingAttributeFalse,
-      [TrackingAttribute.trackBlurs]: TrackingAttributeFalse,
-      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [ElementTrackingAttribute.trackClicks]: undefined,
+      [ElementTrackingAttribute.trackBlurs]: undefined,
+      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -80,14 +80,14 @@ describe('track', () => {
     const trackingAttributes3 = track({ instance: makeExpandableSectionContext({ id: 'test-expandable' }) });
 
     const expectedTrackingAttributes = {
-      [TrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
-      [TrackingAttribute.context]: JSON.stringify({
+      [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'ExpandableSectionContext',
         id: 'test-expandable',
       }),
-      [TrackingAttribute.trackClicks]: TrackingAttributeTrue,
-      [TrackingAttribute.trackBlurs]: TrackingAttributeFalse,
-      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [ElementTrackingAttribute.trackClicks]: 'true',
+      [ElementTrackingAttribute.trackBlurs]: undefined,
+      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -101,14 +101,14 @@ describe('track', () => {
     const trackingAttributes3 = track({ instance: makeInputContext({ id: 'test-input' }) });
 
     const expectedTrackingAttributes = {
-      [TrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
-      [TrackingAttribute.context]: JSON.stringify({
+      [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'InputContext',
         id: 'test-input',
       }),
-      [TrackingAttribute.trackClicks]: TrackingAttributeFalse,
-      [TrackingAttribute.trackBlurs]: TrackingAttributeTrue,
-      [TrackingAttribute.trackVisibility]: undefined,
+      [ElementTrackingAttribute.trackClicks]: undefined,
+      [ElementTrackingAttribute.trackBlurs]: 'true',
+      [ElementTrackingAttribute.trackVisibility]: undefined,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -128,16 +128,16 @@ describe('track', () => {
     });
 
     const expectedTrackingAttributes = {
-      [TrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
-      [TrackingAttribute.context]: JSON.stringify({
+      [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'LinkContext',
         id: 'test-link',
         text: 'Click Me',
         href: '/test',
       }),
-      [TrackingAttribute.trackClicks]: TrackingAttributeTrue,
-      [TrackingAttribute.trackBlurs]: TrackingAttributeFalse,
-      [TrackingAttribute.trackVisibility]: undefined,
+      [ElementTrackingAttribute.trackClicks]: 'true',
+      [ElementTrackingAttribute.trackBlurs]: undefined,
+      [ElementTrackingAttribute.trackVisibility]: undefined,
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -151,14 +151,14 @@ describe('track', () => {
     const trackingAttributes3 = track({ instance: makeMediaPlayerContext({ id: 'test-media-player' }) });
 
     const expectedTrackingAttributes = {
-      [TrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
-      [TrackingAttribute.context]: JSON.stringify({
+      [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'MediaPlayerContext',
         id: 'test-media-player',
       }),
-      [TrackingAttribute.trackClicks]: TrackingAttributeFalse,
-      [TrackingAttribute.trackBlurs]: TrackingAttributeFalse,
-      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [ElementTrackingAttribute.trackClicks]: undefined,
+      [ElementTrackingAttribute.trackBlurs]: undefined,
+      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -172,14 +172,14 @@ describe('track', () => {
     const trackingAttributes3 = track({ instance: makeNavigationContext({ id: 'test-nav' }) });
 
     const expectedTrackingAttributes = {
-      [TrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
-      [TrackingAttribute.context]: JSON.stringify({
+      [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'NavigationContext',
         id: 'test-nav',
       }),
-      [TrackingAttribute.trackClicks]: TrackingAttributeFalse,
-      [TrackingAttribute.trackBlurs]: TrackingAttributeFalse,
-      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [ElementTrackingAttribute.trackClicks]: undefined,
+      [ElementTrackingAttribute.trackBlurs]: undefined,
+      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
@@ -193,14 +193,14 @@ describe('track', () => {
     const trackingAttributes3 = track({ instance: makeOverlayContext({ id: 'test-overlay' }) });
 
     const expectedTrackingAttributes = {
-      [TrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
-      [TrackingAttribute.context]: JSON.stringify({
+      [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'OverlayContext',
         id: 'test-overlay',
       }),
-      [TrackingAttribute.trackClicks]: TrackingAttributeFalse,
-      [TrackingAttribute.trackBlurs]: TrackingAttributeFalse,
-      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [ElementTrackingAttribute.trackClicks]: undefined,
+      [ElementTrackingAttribute.trackBlurs]: undefined,
+      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);

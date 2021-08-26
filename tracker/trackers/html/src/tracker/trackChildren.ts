@@ -9,7 +9,7 @@ import {
  */
 export type TrackChildrenParameters = {
   query: string;
-  trackAs: StringifiedElementTrackingAttributes;
+  trackAs: StringifiedElementTrackingAttributes | {};
 };
 
 export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
@@ -19,6 +19,7 @@ export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
  * TODO better docs
  */
 export const trackChildren = (childrenParameters: TrackChildrenParameters[]): TrackChildrenReturnValue => {
+  // TODO Debuggability: Validate that trackAs is actually valued?
   return {
     [ChildrenTrackingAttribute.queries]: JSON.stringify(childrenParameters),
   };

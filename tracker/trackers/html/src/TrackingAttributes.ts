@@ -1,4 +1,4 @@
-import { AbstractLocationContext } from "@objectiv/schema";
+import { AbstractLocationContext } from '@objectiv/schema';
 
 /**
  * The possible values of the `trackVisibility` TrackingAttribute.
