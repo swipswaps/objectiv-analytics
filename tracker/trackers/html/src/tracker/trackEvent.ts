@@ -6,9 +6,9 @@ import {
   makeSectionVisibleEvent,
   WebTracker,
 } from '@objectiv/tracker-web';
-import { findTrackedParentElements } from './findTrackedParentElements';
-import { TrackingAttribute } from './TrackingAttributes';
-import { isTrackableElement } from './typeGuards';
+import { ElementTrackingAttribute } from '../TrackingAttributes';
+import { isTrackableElement } from '../typeGuards';
+import findTrackedParentElements from './findTrackedParentElements';
 
 /**
  * All of our EventFactories have a similar signature
@@ -52,7 +52,7 @@ export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tr
 
   // Re-hydrate Location Stack
   const locationStack = elementsStack.reduce((locationContexts, element) => {
-    const locationContext = element.getAttribute(TrackingAttribute.context);
+    const locationContext = element.getAttribute(ElementTrackingAttribute.context);
     if (locationContext) {
       // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
       locationContexts.push(JSON.parse(locationContext));

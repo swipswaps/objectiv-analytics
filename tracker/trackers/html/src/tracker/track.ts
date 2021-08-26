@@ -6,22 +6,22 @@ import {
   ClickTrackingByContextType,
   ContextType,
   VisibilityTrackingByContextType,
-} from './ContextType';
+} from '../ContextType';
 import {
+  ElementTrackingAttribute,
+  ElementTrackingAttributes,
   TrackingAttribute,
-  TrackingAttributeFalse,
-  TrackingAttributes,
-  TrackingAttributeTrue,
   TrackingAttributeVisibility,
-} from './TrackingAttributes';
+} from '../TrackingAttributes';
 
 /**
- * It's possible to call `trackElement` with just an ID for SectionContexts aka Elements
+ * It's possible to call `track` with just an ID for SectionContexts aka Elements
  */
 export const DEFAULT_CONTEXT_TYPE = ContextType.element;
 
 /**
  * The parameters of `track`
+ * // TODO move instance + type + extraAttributes to a `context` attribute, move isVisible to an `options` attributes
  */
 export type TrackParameters = {
   id?: string;
@@ -32,7 +32,7 @@ export type TrackParameters = {
 };
 
 /**
- * The main endpoint of the HTML Tracker. Can be called in three ways:
+ * Used to decorate a Trackable Element with our Tracking Attributes. Can be called in three ways:
  *
  *    trackElement(<id>)
  *    trackElement(<id>, <ContextType>, <extraAttributes object>)
@@ -51,7 +51,7 @@ export type TrackParameters = {
  */
 
 // Overload: Section context by id only
-export function track(parameters: { id: string }): TrackingAttributes;
+export function track(parameters: { id: string; query?: string }): ElementTrackingAttributes;
 
 // Overload: Location contexts without attributes
 export function track(parameters: {
@@ -62,7 +62,8 @@ export function track(parameters: {
     | ContextType.mediaPlayer
     | ContextType.navigation
     | ContextType.overlay;
-}): TrackingAttributes;
+  query?: string;
+}): ElementTrackingAttributes;
 
 // Overload: Section contexts with visibility
 export function track(parameters: {
@@ -74,24 +75,27 @@ export function track(parameters: {
     | ContextType.navigation
     | ContextType.overlay;
   isVisible?: boolean;
-}): TrackingAttributes;
+  query?: string;
+}): ElementTrackingAttributes;
 
 // Overload: Button context
 export function track(parameters: {
   id: string;
   type: ContextType.button;
   extraAttributes: { text: string };
-}): TrackingAttributes;
+  query?: string;
+}): ElementTrackingAttributes;
 
 // Overload: Link context
 export function track(parameters: {
   id: string;
   type: ContextType.link;
   extraAttributes: { href: string; text: string };
-}): TrackingAttributes;
+  query?: string;
+}): ElementTrackingAttributes;
 
 // Overload: Any Location Context
-export function track(parameters: { instance: AbstractLocationContext }): TrackingAttributes;
+export function track(parameters: { instance: AbstractLocationContext; query?: any }): ElementTrackingAttributes;
 
 // Implementation
 export function track({
@@ -100,13 +104,7 @@ export function track({
   type,
   extraAttributes,
   isVisible,
-}: {
-  id?: string;
-  instance?: AbstractLocationContext;
-  type?: ContextType;
-  extraAttributes?: Record<string, any>;
-  isVisible?: boolean;
-}): TrackingAttributes | {} {
+}: TrackParameters): ElementTrackingAttributes | {} {
   const elementId = uuidv4();
 
   // This can happen when feeding dynamic parameters to track. Eg: search or database results.
@@ -152,25 +150,25 @@ export function track({
   const shouldTrackBlurs = BlurTrackingByContextType.get(contextType);
 
   // Visibility can be tracked automatically, for certain contexts, programmatically for section contexts or not at all
-  let trackVisibilityConfig: TrackingAttributeVisibility = undefined;
+  let trackVisibilityValue: TrackingAttributeVisibility | undefined = undefined;
 
   // If we did not receive the `isVisible` parameter attempt to auto-track visibility, if the Context Type allows
   if (isVisible === undefined) {
     if (VisibilityTrackingByContextType.get(contextType)) {
-      trackVisibilityConfig = { mode: 'auto' };
+      trackVisibilityValue = { mode: 'auto' };
     }
   }
   // Else we will track whatever value we received as manual
   else {
-    trackVisibilityConfig = { mode: 'manual', isVisible };
+    trackVisibilityValue = { mode: 'manual', isVisible };
   }
 
   return {
     [TrackingAttribute.elementId]: elementId,
-    [TrackingAttribute.context]: JSON.stringify(contextInstance),
-    [TrackingAttribute.trackClicks]: shouldTrackClicks ? TrackingAttributeTrue : TrackingAttributeFalse,
-    [TrackingAttribute.trackBlurs]: shouldTrackBlurs ? TrackingAttributeTrue : TrackingAttributeFalse,
-    [TrackingAttribute.trackVisibility]: JSON.stringify(trackVisibilityConfig),
+    [ElementTrackingAttribute.context]: JSON.stringify(contextInstance),
+    [ElementTrackingAttribute.trackClicks]: JSON.stringify(shouldTrackClicks),
+    [ElementTrackingAttribute.trackBlurs]: JSON.stringify(shouldTrackBlurs),
+    [ElementTrackingAttribute.trackVisibility]: JSON.stringify(trackVisibilityValue),
   };
 }
 

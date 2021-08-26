@@ -1,10 +1,22 @@
 /**
- * All the attributes that are added to a DOM Element to make it trackable
+ * The possible values of the `trackVisibility` TrackingAttribute.
+ */
+export type TrackingAttributeVisibilityAuto = { mode: 'auto' };
+export type TrackingAttributeVisibilityManual = { mode: 'manual'; isVisible: boolean };
+export type TrackingAttributeVisibility = TrackingAttributeVisibilityAuto | TrackingAttributeVisibilityManual;
+
+/**
+ * Common tracking attributes used by all types of tracked elements
  */
 export enum TrackingAttribute {
   // A unique identifier used internally to pinpoint to a specific instance of a tracked element
   elementId = 'data-objectiv-element-id',
+}
 
+/**
+ * All the attributes that are added to a DOM Element to make it trackable
+ */
+export enum ElementTrackingAttribute {
   // A serialized instance of an Objectiv Context
   context = 'data-objectiv-context',
 
@@ -19,26 +31,39 @@ export enum TrackingAttribute {
 }
 
 /**
- * Explicit literal types and constants for booleans in our Tracking Attributes
+ * All the attributes that are added to a DOM Element that tracks its children via querySelector
  */
-export type TrackingAttributeTrue = 'true';
-export type TrackingAttributeFalse = 'false';
-export type TrackingAttributeBoolean = TrackingAttributeTrue | TrackingAttributeFalse;
-export const TrackingAttributeTrue: TrackingAttributeTrue = 'true';
-export const TrackingAttributeFalse: TrackingAttributeFalse = 'false';
+export enum ChildrenTrackingAttribute {
+  // A list of serialized ChildTrackingQuery objects
+  queries = 'data-objectiv-queries',
+}
 
 /**
- * The possible values of the `trackVisibility` TrackingAttribute.
+ * The object that `track` calls return
  */
-export type TrackingAttributeVisibility = undefined | { mode: 'auto' } | { mode: 'manual'; isVisible: boolean };
-
-/**
- * The object that `trackElement` call return, containing all Tracking Attributes.
- */
-export type TrackingAttributes = {
+export type ElementTrackingAttributes = {
   [TrackingAttribute.elementId]: string;
-  [TrackingAttribute.context]: string;
-  [TrackingAttribute.trackClicks]: TrackingAttributeBoolean;
-  [TrackingAttribute.trackBlurs]: TrackingAttributeBoolean;
-  [TrackingAttribute.trackVisibility]: TrackingAttributeVisibility;
+  [ElementTrackingAttribute.context]: string;
+  [ElementTrackingAttribute.trackClicks]?: boolean;
+  [ElementTrackingAttribute.trackBlurs]?: boolean;
+  [ElementTrackingAttribute.trackVisibility]?: TrackingAttributeVisibility;
+};
+
+/**
+ * The object representing a querySelector expression and the attributes that will be applied to the matching Element
+ */
+export type ChildTrackingQuery = {
+  // A querySelector expression
+  query: string;
+
+  // The attributes
+  elementTrackingAttributes: ElementTrackingAttributes;
+};
+
+/**
+ * The object that `trackChildren` calls return
+ */
+export type ChildrenTrackingAttributes = {
+  [TrackingAttribute.elementId]: string;
+  [ChildrenTrackingAttribute.queries]: ChildTrackingQuery[];
 };

@@ -1,12 +1,9 @@
-import { isTrackedElement } from './typeGuards';
+import { isTrackedElement } from '../typeGuards';
 
 /**
  * Walk the DOM upwards looking for Tracked Elements. The resulting array can be used to reconstruct a Location Stack.
  */
-export const findTrackedParentElements = (
-  element: HTMLElement | null,
-  parentElements: HTMLElement[] = []
-): HTMLElement[] => {
+const findTrackedParentElements = (element: HTMLElement | null, parentElements: HTMLElement[] = []): HTMLElement[] => {
   if (!element) {
     return parentElements;
   }
@@ -15,3 +12,5 @@ export const findTrackedParentElements = (
   }
   return findTrackedParentElements(element.parentElement, parentElements);
 };
+
+export default findTrackedParentElements;
