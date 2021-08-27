@@ -25,7 +25,7 @@ export type TrackParameterOptions = {
   trackClicks?: boolean;
   trackBlurs?: boolean;
   trackVisibility?: TrackingAttributeVisibility;
-  serialize?: boolean;
+  parentTracker?: StringifiedElementTrackingAttributes | {};
 };
 
 /**
@@ -167,8 +167,18 @@ export function track({ id, instance, type, extraAttributes, options }: TrackPar
     }
   }
 
+  // Process parent tracker option and extract the Parent tracker Element Id attribute
+  let parentElementId = undefined;
+  if (options && options.parentTracker) {
+    if (options.parentTracker !== {}) {
+      const parentTrackerAttributes = options.parentTracker as StringifiedElementTrackingAttributes;
+      parentElementId = parentTrackerAttributes[ElementTrackingAttribute.elementId];
+    }
+  }
+
   return {
     [ElementTrackingAttribute.elementId]: elementId,
+    [ElementTrackingAttribute.parentElementId]: parentElementId,
     [ElementTrackingAttribute.context]: JSON.stringify(contextInstance),
     [ElementTrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
     [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),

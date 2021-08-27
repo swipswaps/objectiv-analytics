@@ -14,6 +14,9 @@ export enum ElementTrackingAttribute {
   // A unique identifier used internally to pinpoint to a specific instance of a tracked element
   elementId = 'data-objectiv-element-id',
 
+  // DOM traversing to rebuild Locations is not always possible, eg: Portals. This allows specifying a parent Element.
+  parentElementId = 'data-objectiv-parent-element-id',
+
   // A serialized instance of an Objectiv Context
   context = 'data-objectiv-context',
 
@@ -40,6 +43,7 @@ export enum ChildrenTrackingAttribute {
  */
 export type ElementTrackingAttributes = {
   [ElementTrackingAttribute.elementId]: string;
+  [ElementTrackingAttribute.parentElementId]?: string;
   [ElementTrackingAttribute.context]: AbstractLocationContext;
   [ElementTrackingAttribute.trackClicks]?: boolean;
   [ElementTrackingAttribute.trackBlurs]?: boolean;
@@ -51,6 +55,7 @@ export type ElementTrackingAttributes = {
  */
 export type StringifiedElementTrackingAttributes = {
   [ElementTrackingAttribute.elementId]: string;
+  [ElementTrackingAttribute.parentElementId]?: string;
   [ElementTrackingAttribute.context]: string;
   [ElementTrackingAttribute.trackClicks]?: string;
   [ElementTrackingAttribute.trackBlurs]?: string;

@@ -44,3 +44,14 @@ export type ChildrenTrackingElement = TrackableElement & { dataset: ChildrenTrac
  */
 export const isChildrenTrackingElement = (element: GuardElement): element is ChildrenTrackingElement =>
   isTrackableElement(element) && element.hasAttribute(ChildrenTrackingAttribute.trackChildren);
+
+/**
+ * A Custom Parent Tracking Element is a TrackedElement with the ElementTrackingAttribute.parentElementId
+ */
+export type CustomParentTrackedElement = TrackableElement & { dataset: ChildrenTrackingAttributes };
+
+/**
+ * A type guard to determine if the given Element is a TrackableElement decorated with ChildrenTrackingAttributes.
+ */
+export const isCustomParentTrackedElement = (element: GuardElement): element is CustomParentTrackedElement =>
+  isTrackedElement(element) && element.hasAttribute(ElementTrackingAttribute.parentElementId);

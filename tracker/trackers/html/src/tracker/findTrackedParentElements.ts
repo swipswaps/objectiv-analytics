@@ -1,16 +1,33 @@
-import { isTrackedElement } from '../typeGuards';
+import { ElementTrackingAttribute, TrackableElement } from '@objectiv/tracker-html';
+import { isCustomParentTrackedElement, isTrackedElement } from '../typeGuards';
 
 /**
  * Walk the DOM upwards looking for Tracked Elements. The resulting array can be used to reconstruct a Location Stack.
  */
-const findTrackedParentElements = (element: HTMLElement | null, parentElements: HTMLElement[] = []): HTMLElement[] => {
+const findTrackedParentElements = (
+  element: TrackableElement | null,
+  parentElements: TrackableElement[] = []
+): TrackableElement[] => {
   if (!element) {
     return parentElements;
   }
+
   if (isTrackedElement(element)) {
     parentElements.push(element);
   }
-  return findTrackedParentElements(element.parentElement, parentElements);
+
+  let nextElement: TrackableElement | null = element.parentElement;
+
+  // If this element has a Parent Tracked Element Id specified, follow that instead of the DOM parentElement
+  if (isCustomParentTrackedElement(element)) {
+    const parentElementId = element.getAttribute(ElementTrackingAttribute.parentElementId);
+    const parentElement = document.querySelector(`[${ElementTrackingAttribute.elementId}='${parentElementId}']`);
+    if (isTrackedElement(parentElement)) {
+      nextElement = parentElement;
+    }
+  }
+
+  return findTrackedParentElements(nextElement, parentElements);
 };
 
 export default findTrackedParentElements;
