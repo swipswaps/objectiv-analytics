@@ -109,7 +109,7 @@ def validate_event_list(event_schema: EventSchema, event_data: Any) -> List[Erro
     if errors:
         return errors
 
-    for event in event_data:
+    for event in event_data['events']:
         errors_event = validate_event_adheres_to_schema(event_schema, event)
         errors.extend(errors_event)
     return errors
@@ -214,7 +214,7 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
     """
     with open(filename) as file:
         event_data = json.loads(file.read())
-    errors = validate_event_list(event_schema=event_schema, event_data=event_data['events'])
+    errors = validate_event_list(event_schema=event_schema, event_data=event_data)
     if errors:
         print(f'\n{len(errors)} error(s) found:')
         for error in errors:
