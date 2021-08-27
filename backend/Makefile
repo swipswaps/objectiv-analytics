@@ -26,7 +26,9 @@ python-package: $(PACKAGE_NAME)
 # copy base schema into the scope of the python package
 # we always do this, to make sure, we're not using old stuff
 base_schema:
-	cp -f ../schema/base_schema.json5 objectiv_backend/schema/
+	cp -f ../schema/base_schema.json5 ../schema/event_list.json5 objectiv_backend/schema/
+
+
 
 $(PACKAGE_NAME): base_schema $(PYTHON_DIRECTORIES)
 	python3 -m build --wheel

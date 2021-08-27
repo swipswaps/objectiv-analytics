@@ -10,7 +10,7 @@ from copy import deepcopy
 from typing import Set, List, Dict, Any, Optional, Tuple
 import pkgutil
 
-from objectiv_backend.common.types import EventType, ContextType
+from objectiv_backend.common.types import EventType, ContextType, EventListSchema
 
 MAX_HIERARCHY_DEPTH = 100
 
@@ -387,6 +387,13 @@ class EventSchema:
 
     def get_context_schema(self, context_type: ContextType) -> Optional[Dict[str, Any]]:
         return self.contexts.get_context_schema(context_type=context_type)
+
+
+def get_event_list_schema() -> EventListSchema:
+    data = pkgutil.get_data(__name__, "event_list.json5")
+    schema_json = json5.loads(data)
+
+    return schema_json
 
 
 def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:

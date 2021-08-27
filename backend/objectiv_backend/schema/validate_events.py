@@ -13,7 +13,8 @@ from jsonschema import ValidationError
 
 from objectiv_backend.common.types import EventData
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
-from objectiv_backend.common.config import get_config_timestamp_validation, get_config_event_schema
+from objectiv_backend.common.config import \
+    get_config_timestamp_validation, get_config_event_schema, get_config_event_list_schema
 
 
 class ErrorInfo(NamedTuple):
@@ -49,7 +50,7 @@ def get_event_list_schema() -> Dict[str, Any]:
     abstract_event = events['AbstractEvent']
 
     # list of properties for an event (can be nested)
-    properties: Dict[str, dict] = {}
+    items: Dict[str, dict] = {}
     for property_name, property_desc in abstract_event['properties'].items():
 
         if 'items' in property_desc and re.match('^Abstract.*?Context$', property_desc['items']):
@@ -63,18 +64,16 @@ def get_event_list_schema() -> Dict[str, Any]:
             # and replace/override the abstract definition from the base schema with the actual one
             property_desc = {**context['properties'], ** parent_context['properties']}
 
-        properties[property_name] = property_desc
+        items[property_name] = property_desc
 
     # we want a schema for a list of events (the base_schema only specifies a single event)
-    schema: Dict[str, Any] = {
-        "type": "array",
-        "items":  {
-            "type": "object",
-            "properties": properties,
-            "required": list(properties.keys())
-        }
-    }
-    return schema
+    # we replace the items in the event list schema with the actual definition (from the base_schema)
+    # _if_ it is an item named 'AbstractEvent'
+    event_list_schema = get_config_event_list_schema()['properties']['events']
+    if 'items' in event_list_schema and event_list_schema['items'] == 'AbstractEvent':
+        event_list_schema['items'] = items
+
+    return event_list_schema
 
 
 def validate_structure_event_list(event_data: Any) -> List[ErrorInfo]:
@@ -213,7 +212,7 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
     """
     with open(filename) as file:
         event_data = json.loads(file.read())
-    errors = validate_event_list(event_schema=event_schema, event_data=event_data)
+    errors = validate_event_list(event_schema=event_schema, event_data=event_data['events'])
     if errors:
         print(f'\n{len(errors)} error(s) found:')
         for error in errors:
@@ -249,7 +248,6 @@ def main():
     filenames = args.filenames
     event_schema = get_event_schema(schema_extensions_directory=args.schema_extensions_directory)
 
-    print(f'Schema: {event_schema}')
     for filename in args.filenames:
         print(f'\nChecking {filename}')
         errors_file = validate_events_in_file(event_schema=event_schema,
