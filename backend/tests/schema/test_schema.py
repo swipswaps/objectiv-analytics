@@ -117,4 +117,3 @@ def test_add_global_context():
     # check if it's there, and holds the proper values
     generated_context = get_context(event, HttpContext)
     assert generated_context == context_vars
-
