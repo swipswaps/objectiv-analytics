@@ -12,5 +12,6 @@
       "type": "integer",
       "description": "Timestamp when the list of events was sent by the tracker"
     }
-  }
+  },
+  "required": ["events", "transport_time"]
 }
