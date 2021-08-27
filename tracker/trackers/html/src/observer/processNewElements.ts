@@ -9,14 +9,14 @@ import processNewElement from './processNewElement';
 function processNewElements(element: Element, tracker: WebTracker = window.objectiv.tracker) {
   const elements = element.querySelectorAll(`[${ElementTrackingAttribute.elementId}]`);
   [element, ...Array.from(elements)].forEach((element) => {
+    // Process `track` attributes
+    processNewElement(element, tracker);
+
+    // Process `trackChildren` attributes
     const childrenTrackedElements = processChildrenTrackingElement(element);
-    if (childrenTrackedElements.length) {
-      childrenTrackedElements.forEach((queriedElement) => {
-        processNewElement(queriedElement, tracker);
-      });
-    } else {
-      processNewElement(element, tracker);
-    }
+    childrenTrackedElements.forEach((queriedElement) => {
+      processNewElement(queriedElement, tracker);
+    });
   });
 }
 

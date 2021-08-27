@@ -1,8 +1,5 @@
-import {
-  ChildrenTrackingAttribute,
-  ChildTrackingQuery,
-  StringifiedElementTrackingAttributes,
-} from '../TrackingAttributes';
+import { TrackChildrenParameters } from '../tracker';
+import { ChildrenTrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, isTrackableElement, TrackedElement } from '../typeGuards';
 
 /**
@@ -12,46 +9,60 @@ import { isChildrenTrackingElement, isTrackableElement, TrackedElement } from '.
  * - Return a list of the decorated Elements
  */
 const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
-  const queriedElements: TrackedElement[] = [];
+  const newlyTrackedElements: TrackedElement[] = [];
 
   if (!isChildrenTrackingElement(element)) {
-    return queriedElements;
+    return newlyTrackedElements;
   }
 
   const childrenTrackingQueriesAttribute = element.getAttribute(ChildrenTrackingAttribute.trackChildren);
   if (!childrenTrackingQueriesAttribute) {
-    return queriedElements;
+    return newlyTrackedElements;
   }
 
   const childrenTrackingQueries = JSON.parse(childrenTrackingQueriesAttribute);
   if (!Array.isArray(childrenTrackingQueries)) {
-    return queriedElements;
+    return newlyTrackedElements;
   }
 
-  childrenTrackingQueries.forEach(({ query, trackAs }: ChildTrackingQuery) => {
-    const queriedElement = element.querySelector(query);
-    if (!queriedElement) {
-      console.error(`Could find Element via querySelector query: ${query}`);
+  childrenTrackingQueries.forEach(({ query, queryAll, trackAs }: TrackChildrenParameters) => {
+    const queriedElements = [];
+
+    if (trackAs === {}) {
+      console.error(`trackAs attributes for query: ${query} are empty`);
       return;
     }
 
-    if (!isTrackableElement(queriedElement)) {
-      console.error(`Element matched with querySelector query: ${query} is not trackable`);
-      return;
+    if (query) {
+      queriedElements.push(element.querySelector(query));
     }
 
-    let key: keyof StringifiedElementTrackingAttributes;
-    for (key in trackAs) {
-      const value = trackAs[key];
-      if (value !== undefined) {
-        queriedElement.setAttribute(key, value);
+    if (queryAll) {
+      queriedElements.push(...Array.from(element.querySelectorAll(queryAll)));
+    }
+
+    queriedElements.forEach((queriedElement) => {
+      if (!queriedElement) {
+        console.error(`Could find Element via querySelector query: ${query}`);
+        return;
       }
-    }
 
-    queriedElements.push(queriedElement as TrackedElement);
+      if (!isTrackableElement(queriedElement)) {
+        console.error(`Element matched with querySelector query: ${query} is not trackable`);
+        return;
+      }
+
+      for (let [key, value] of Object.entries(trackAs)) {
+        if (value !== undefined) {
+          queriedElement.setAttribute(key, value);
+        }
+      }
+
+      newlyTrackedElements.push(queriedElement as TrackedElement);
+    });
   });
 
-  return queriedElements;
+  return newlyTrackedElements;
 };
 
 export default processChildrenTrackingElement;

@@ -58,17 +58,6 @@ export type StringifiedElementTrackingAttributes = {
 };
 
 /**
- * The object representing a querySelector expression and the attributes that will be applied to the matching Element
- */
-export type ChildTrackingQuery = {
-  // A querySelector expression
-  query: string;
-
-  // The attributes to apply to the Element matching the query
-  trackAs: StringifiedElementTrackingAttributes;
-};
-
-/**
  * The object that `trackChildren` calls return
  */
 export type ChildrenTrackingAttributes = {

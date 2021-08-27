@@ -7,8 +7,17 @@ import {
 /**
  * The parameters of `trackChildren`
  */
-export type TrackChildrenParameters = {
+export type TrackChildrenQuery = {
   query: string;
+  queryAll?: undefined;
+};
+
+export type TrackChildrenQueryAll = {
+  query?: undefined;
+  queryAll: string;
+};
+
+export type TrackChildrenParameters = (TrackChildrenQuery | TrackChildrenQueryAll) & {
   trackAs: StringifiedElementTrackingAttributes | {};
 };
 
