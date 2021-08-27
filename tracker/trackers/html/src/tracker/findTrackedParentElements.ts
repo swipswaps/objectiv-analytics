@@ -1,5 +1,5 @@
-import { ElementTrackingAttribute, TrackableElement } from '@objectiv/tracker-html';
-import { isCustomParentTrackedElement, isTrackedElement } from '../typeGuards';
+import { ElementTrackingAttribute } from '../TrackingAttributes';
+import { isCustomParentTrackedElement, isTrackedElement, TrackableElement } from '../typeGuards';
 
 /**
  * Walk the DOM upwards looking for Tracked Elements. The resulting array can be used to reconstruct a Location Stack.

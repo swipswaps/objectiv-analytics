@@ -36,6 +36,7 @@ describe('track', () => {
 
     const expectedTrackingAttributes = {
       [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'ButtonContext',
         id: 'test-button',
@@ -59,6 +60,7 @@ describe('track', () => {
 
     const expectedTrackingAttributes = {
       [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'SectionContext',
         id: 'test-section',
@@ -81,6 +83,7 @@ describe('track', () => {
 
     const expectedTrackingAttributes = {
       [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'ExpandableSectionContext',
         id: 'test-expandable',
@@ -102,6 +105,7 @@ describe('track', () => {
 
     const expectedTrackingAttributes = {
       [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'InputContext',
         id: 'test-input',
@@ -129,6 +133,7 @@ describe('track', () => {
 
     const expectedTrackingAttributes = {
       [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'LinkContext',
         id: 'test-link',
@@ -152,6 +157,7 @@ describe('track', () => {
 
     const expectedTrackingAttributes = {
       [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'MediaPlayerContext',
         id: 'test-media-player',
@@ -173,6 +179,7 @@ describe('track', () => {
 
     const expectedTrackingAttributes = {
       [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'NavigationContext',
         id: 'test-nav',
@@ -194,6 +201,7 @@ describe('track', () => {
 
     const expectedTrackingAttributes = {
       [ElementTrackingAttribute.elementId]: expect.stringMatching(UUIDV4_REGEX),
+      [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
         _context_type: 'OverlayContext',
         id: 'test-overlay',
