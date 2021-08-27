@@ -7,7 +7,7 @@ import { isChildrenTrackingElement, isTrackableElement, TrackedElement } from '.
 
 /**
  * Check if Element is a Children Tracking Element. If so:
- * - Run its queries
+ * - Run its children tracking queries
  * - Decorate matching Elements intoTracked Elements
  * - Return a list of the decorated Elements
  */
@@ -18,17 +18,17 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
     return queriedElements;
   }
 
-  const queriesAttribute = element.getAttribute(ChildrenTrackingAttribute.queries);
-  if (!queriesAttribute) {
+  const childrenTrackingQueriesAttribute = element.getAttribute(ChildrenTrackingAttribute.trackChildren);
+  if (!childrenTrackingQueriesAttribute) {
     return queriedElements;
   }
 
-  const queries = JSON.parse(queriesAttribute);
-  if (!Array.isArray(queries)) {
+  const childrenTrackingQueries = JSON.parse(childrenTrackingQueriesAttribute);
+  if (!Array.isArray(childrenTrackingQueries)) {
     return queriedElements;
   }
 
-  queries.forEach(({ query, trackAs }: ChildTrackingQuery) => {
+  childrenTrackingQueries.forEach(({ query, trackAs }: ChildTrackingQuery) => {
     const queriedElement = element.querySelector(query);
     if (!queriedElement) {
       console.error(`Could find Element via querySelector query: ${query}`);

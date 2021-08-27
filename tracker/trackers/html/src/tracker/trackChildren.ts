@@ -21,7 +21,7 @@ export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
 export const trackChildren = (childrenParameters: TrackChildrenParameters[]): TrackChildrenReturnValue => {
   // TODO Debuggability: Validate that trackAs is actually valued?
   return {
-    [ChildrenTrackingAttribute.queries]: JSON.stringify(childrenParameters),
+    [ChildrenTrackingAttribute.trackChildren]: JSON.stringify(childrenParameters),
   };
 };
 

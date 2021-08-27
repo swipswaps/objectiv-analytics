@@ -32,7 +32,7 @@ export enum ElementTrackingAttribute {
  */
 export enum ChildrenTrackingAttribute {
   // A list of serialized ChildTrackingQuery objects
-  queries = 'data-objectiv-queries',
+  trackChildren = 'data-objectiv-track-children',
 }
 
 /**
@@ -72,5 +72,5 @@ export type ChildTrackingQuery = {
  * The object that `trackChildren` calls return
  */
 export type ChildrenTrackingAttributes = {
-  [ChildrenTrackingAttribute.queries]: string[];
+  [ChildrenTrackingAttribute.trackChildren]: string[];
 };

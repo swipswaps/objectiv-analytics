@@ -43,4 +43,4 @@ export type ChildrenTrackingElement = TrackableElement & { dataset: ChildrenTrac
  * A type guard to determine if the given Element is a TrackableElement decorated with ChildrenTrackingAttributes.
  */
 export const isChildrenTrackingElement = (element: GuardElement): element is ChildrenTrackingElement =>
-  isTrackableElement(element) && element.hasAttribute(ChildrenTrackingAttribute.queries);
+  isTrackableElement(element) && element.hasAttribute(ChildrenTrackingAttribute.trackChildren);
