@@ -69,9 +69,11 @@ def get_event_list_schema() -> Dict[str, Any]:
     # we want a schema for a list of events (the base_schema only specifies a single event)
     # we replace the items in the event list schema with the actual definition (from the base_schema)
     # _if_ it is an item named 'AbstractEvent'
-    event_list_schema = get_config_event_list_schema()['properties']['events']
-    if 'items' in event_list_schema and event_list_schema['items'] == 'AbstractEvent':
-        event_list_schema['items'] = items
+    event_list_schema = get_config_event_list_schema()
+    if 'events' in event_list_schema['properties'] and \
+            'items' in event_list_schema['properties']['events'] and \
+            event_list_schema['properties']['events']['items'] == 'AbstractEvent':
+        event_list_schema['properties']['events']['items'] = items
 
     return event_list_schema
 
