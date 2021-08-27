@@ -88,14 +88,6 @@ def _get_event_data(request: Request) -> Dict[str, Any]:
     event_data = json.loads(post_data)
     if not isinstance(event_data, dict):
         raise ValueError('Parsed post data is not a dict')
-    if 'events' not in event_data:
-        raise ValueError('Could not find events in post data')
-    if not isinstance(event_data['events'], list):
-        raise ValueError('Parsed data is not a list')
-    if 'transport_time' not in event_data:
-        raise ValueError('Could not find transport_time in post data')
-    if not isinstance(event_data['transport_time'], int):
-        raise ValueError('transport_time is not a valid integer')
     if len(event_data['events']) > DATA_MAX_EVENT_COUNT:
         raise ValueError('Events exceeds limit')
     error_info = validate_structure_event_list(event_data=event_data)
