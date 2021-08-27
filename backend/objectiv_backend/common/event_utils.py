@@ -34,12 +34,12 @@ def get_contexts(event: AbstractEvent, context_type: Type[AbstractContext]) -> L
 
 def get_global_contexts(event: AbstractEvent) -> List[AbstractGlobalContext]:
     """ Given an event, return all global contexts (if any)."""
-    return event.global_contexts
+    return event['global_contexts']
 
 
 def get_location_stack(event: AbstractEvent) -> List[AbstractLocationContext]:
     """ Given an event, return the location stack (location contexts)."""
-    return event.location_stack
+    return event['location_stack']
 
 
 def add_global_context_to_event(event: AbstractEvent, context: AbstractGlobalContext) -> AbstractEvent:
