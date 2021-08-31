@@ -3,7 +3,9 @@ import {
   makeClickEvent,
   makeInputChangeEvent,
   makeSectionHiddenEvent,
-  makeSectionVisibleEvent, makeVideoPauseEvent, makeVideoStartEvent,
+  makeSectionVisibleEvent,
+  makeVideoPauseEvent,
+  makeVideoStartEvent,
   WebTracker,
 } from '@objectiv/tracker-web';
 import { ElementTrackingAttribute } from '../TrackingAttributes';
