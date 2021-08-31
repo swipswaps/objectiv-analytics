@@ -1,5 +1,6 @@
 import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext } from '@objectiv/schema';
 import {
+  makeApplicationLoadedEvent,
   makeClickEvent,
   makeInputChangeEvent,
   makeSectionHiddenEvent,
@@ -44,23 +45,22 @@ export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tr
     throw new Error('Tracker not initialized. Provide a tracker instance or setup a global one via `configureTracker`');
   }
 
-  // Make sure we got an HTML or SVG Element, else we can't traverse the DOM nor get dataset attributes
-  if (!isTrackableElement(element)) {
-    return;
+  // For HTML or SVG Elements traverse the DOM to reconstruct their Location
+  let locationStack: AbstractLocationContext[] = [];
+  if (isTrackableElement(element)) {
+    // Retrieve parent Tracked Elements
+    const elementsStack = findTrackedParentElements(element).reverse();
+
+    // Re-hydrate Location Stack
+    locationStack = elementsStack.reduce((locationContexts, element) => {
+      const locationContext = element.getAttribute(ElementTrackingAttribute.context);
+      if (locationContext) {
+        // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
+        locationContexts.push(JSON.parse(locationContext));
+      }
+      return locationContexts;
+    }, [] as AbstractLocationContext[]);
   }
-
-  // Retrieve parent Tracked Elements
-  const elementsStack = findTrackedParentElements(element).reverse();
-
-  // Re-hydrate Location Stack
-  const locationStack = elementsStack.reduce((locationContexts, element) => {
-    const locationContext = element.getAttribute(ElementTrackingAttribute.context);
-    if (locationContext) {
-      // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
-      locationContexts.push(JSON.parse(locationContext));
-    }
-    return locationContexts;
-  }, [] as AbstractLocationContext[]);
 
   // Create new Event
   const newEvent = eventFactory({ location_stack: locationStack });
@@ -106,4 +106,8 @@ export const trackVideoPauseEvent = ({ element, tracker }: TrackHelperParameters
 
 export const trackVisibility = ({ element, tracker, isVisible }: TrackHelperParameters & { isVisible: boolean }) => {
   return trackEvent({ eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent, element, tracker });
+};
+
+export const trackApplicationLoadedEvent = ({ element, tracker }: TrackHelperParameters) => {
+  return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
 };
