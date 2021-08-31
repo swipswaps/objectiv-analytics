@@ -113,6 +113,7 @@ export function track(parameters: {
 export function track({ id, instance, type, extraAttributes, options }: TrackParameters): TrackReturnValue {
   const elementId = uuidv4();
 
+  // TODO actually use exceptions and a catchall on top of things (startDomObserver)
   // This can happen when feeding dynamic parameters to track. Eg: search or database results.
   if ((!id && !instance) || (id && instance)) {
     console.group('track: Unexpected input');

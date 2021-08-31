@@ -3,7 +3,7 @@ import {
   makeClickEvent,
   makeInputChangeEvent,
   makeSectionHiddenEvent,
-  makeSectionVisibleEvent,
+  makeSectionVisibleEvent, makeVideoPauseEvent, makeVideoStartEvent,
   WebTracker,
 } from '@objectiv/tracker-web';
 import { ElementTrackingAttribute } from '../TrackingAttributes';
@@ -92,6 +92,14 @@ export const trackSectionVisibleEvent = ({ element, tracker }: TrackHelperParame
 
 export const trackSectionHiddenEvent = ({ element, tracker }: TrackHelperParameters) => {
   return trackEvent({ eventFactory: makeSectionHiddenEvent, element, tracker });
+};
+
+export const trackVideoStartEvent = ({ element, tracker }: TrackHelperParameters) => {
+  return trackEvent({ eventFactory: makeVideoStartEvent, element, tracker });
+};
+
+export const trackVideoPauseEvent = ({ element, tracker }: TrackHelperParameters) => {
+  return trackEvent({ eventFactory: makeVideoPauseEvent, element, tracker });
 };
 
 export const trackVisibility = ({ element, tracker, isVisible }: TrackHelperParameters & { isVisible: boolean }) => {
