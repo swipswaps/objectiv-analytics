@@ -4,7 +4,7 @@ import {
   makeClickEvent,
   makeInputChangeEvent,
   makeSectionHiddenEvent,
-  makeSectionVisibleEvent,
+  makeSectionVisibleEvent, makeURLChangeEvent,
   makeVideoPauseEvent,
   makeVideoStartEvent,
   WebTracker,
@@ -108,6 +108,12 @@ export const trackVisibility = ({ element, tracker, isVisible }: TrackHelperPara
   return trackEvent({ eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent, element, tracker });
 };
 
-export const trackApplicationLoadedEvent = ({ element, tracker }: TrackHelperParameters) => {
+export const trackApplicationLoadedEvent = (parameters?: TrackHelperParameters) => {
+  const { element , tracker } = parameters ?? { element: document};
   return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
+};
+
+export const trackURLChangeEvent = (parameters?: TrackHelperParameters) => {
+  const { element , tracker } = parameters ?? { element: document};
+  return trackEvent({ eventFactory: makeURLChangeEvent, element, tracker });
 };
