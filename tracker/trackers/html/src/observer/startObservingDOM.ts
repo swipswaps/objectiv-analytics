@@ -21,21 +21,22 @@ import trackIfVisible from './trackIfVisible';
  * We also monitor nodes that are removed. If those nodes are Tracked Elements of which we were tracking visibility
  * we will trigger visibility: hidden events for them.
  *
- * SPA URL changes
+ * SPA URL changes (default enabled, configurable)
  * We can leverage the same Observer to detect also URL changes. To do so we simply keep track of the last URL we have
  * detected previously and if it's different we automatically trigger a URL change event.
  */
 
 let previousURL = location.href;
 
-export const startObservingDOM = (tracker: WebTracker = window.objectiv.tracker) => {
+export const startObservingDOM = (tracker: WebTracker = window.objectiv.tracker, trackURLChanges: boolean) => {
   new MutationObserver((mutationsList) => {
-    // TODO make configurable
-    // Track SPA URL changes
-    const currentURL = location.href;
-    if (currentURL !== previousURL) {
-      previousURL = currentURL;
-      trackURLChangeEvent()
+    if (trackURLChanges) {
+      // Track SPA URL changes
+      const currentURL = location.href;
+      if (currentURL !== previousURL) {
+        previousURL = currentURL;
+        trackURLChangeEvent()
+      }
     }
 
     // Track DOM changes
