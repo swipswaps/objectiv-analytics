@@ -1,7 +1,7 @@
 import { QueuedTransport, TrackerEvent, TrackerQueue, TransportSendError } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import MockDate from 'mockdate';
-import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport, } from '../src';
+import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
 
 const mockedMs = 1434319925275;
 
@@ -42,9 +42,9 @@ describe('FetchAPITransport', () => {
             {
               ...otherProps,
               id,
-            }
+            },
           ],
-          transport_time: mockedMs
+          transport_time: mockedMs,
         }),
         ...defaultFetchParameters,
       })
@@ -74,9 +74,9 @@ describe('FetchAPITransport', () => {
             {
               ...otherProps,
               id,
-            }
+            },
           ],
-          transport_time: mockedMs
+          transport_time: mockedMs,
         }),
         ...customParameters,
       })
@@ -125,9 +125,9 @@ describe('FetchAPITransport', () => {
             {
               ...otherProps,
               id,
-            }
+            },
           ],
-          transport_time: mockedMs
+          transport_time: mockedMs,
         }),
         ...defaultFetchParameters,
       })

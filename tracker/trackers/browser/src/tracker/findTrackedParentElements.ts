@@ -22,9 +22,11 @@ const findTrackedParentElements = (
   if (isCustomParentTrackedElement(element)) {
     const parentElementId = element.getAttribute(ElementTrackingAttribute.parentElementId);
     const parentElement = document.querySelector(`[${ElementTrackingAttribute.elementId}='${parentElementId}']`);
-    if (isTrackedElement(parentElement)) {
-      nextElement = parentElement;
+    if (!isTrackedElement(parentElement)) {
+      console.error(`Parent Element with Id '${parentElementId}' is missing or not a Tracked Element`);
+      return parentElements;
     }
+    nextElement = parentElement;
   }
 
   return findTrackedParentElements(nextElement, parentElements);

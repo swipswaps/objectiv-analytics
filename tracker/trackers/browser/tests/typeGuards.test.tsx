@@ -2,9 +2,9 @@ import {
   ChildrenTrackingAttribute,
   ElementTrackingAttribute,
   isChildrenTrackingElement,
-  isCustomParentTrackedElement
-} from "../src";
-import { isTrackableElement, isTrackedElement } from "../src/typeGuards";
+  isCustomParentTrackedElement,
+} from '../src';
+import { isTrackableElement, isTrackedElement } from '../src/typeGuards';
 
 describe('isTrackableElement', () => {
   it('should return false', () => {
@@ -74,13 +74,13 @@ describe('isTrackedElement', () => {
   });
 
   it('should return true', () => {
-    div.setAttribute(ElementTrackingAttribute.context, 'value')
+    div.setAttribute(ElementTrackingAttribute.context, 'value');
     expect(isTrackedElement(div)).toBe(true);
 
-    section.setAttribute(ElementTrackingAttribute.context,  'value')
+    section.setAttribute(ElementTrackingAttribute.context, 'value');
     expect(isTrackedElement(section)).toBe(true);
 
-    button.setAttribute(ElementTrackingAttribute.context,  'value')
+    button.setAttribute(ElementTrackingAttribute.context, 'value');
     expect(isTrackedElement(button)).toBe(true);
 
     // TODO cover negative cases
@@ -101,13 +101,13 @@ describe('isChildrenTrackingElement', () => {
   });
 
   it('should return true', () => {
-    div.setAttribute(ChildrenTrackingAttribute.trackChildren, '1')
+    div.setAttribute(ChildrenTrackingAttribute.trackChildren, '1');
     expect(isChildrenTrackingElement(div)).toBe(true);
 
-    section.setAttribute(ChildrenTrackingAttribute.trackChildren, 'value')
+    section.setAttribute(ChildrenTrackingAttribute.trackChildren, 'value');
     expect(isChildrenTrackingElement(section)).toBe(true);
 
-    button.setAttribute(ChildrenTrackingAttribute.trackChildren, 'value')
+    button.setAttribute(ChildrenTrackingAttribute.trackChildren, 'value');
     expect(isChildrenTrackingElement(button)).toBe(true);
 
     // TODO cover negative cases
@@ -128,16 +128,16 @@ describe('isCustomParentTrackedElement', () => {
   });
 
   it('should return true', () => {
-    div.setAttribute(ElementTrackingAttribute.context, 'value')
-    div.setAttribute(ElementTrackingAttribute.parentElementId, 'value')
+    div.setAttribute(ElementTrackingAttribute.context, 'value');
+    div.setAttribute(ElementTrackingAttribute.parentElementId, 'value');
     expect(isCustomParentTrackedElement(div)).toBe(true);
 
-    section.setAttribute(ElementTrackingAttribute.context, 'value')
-    section.setAttribute(ElementTrackingAttribute.parentElementId, 'value')
+    section.setAttribute(ElementTrackingAttribute.context, 'value');
+    section.setAttribute(ElementTrackingAttribute.parentElementId, 'value');
     expect(isCustomParentTrackedElement(section)).toBe(true);
 
-    button.setAttribute(ElementTrackingAttribute.context, 'value')
-    button.setAttribute(ElementTrackingAttribute.parentElementId, 'value')
+    button.setAttribute(ElementTrackingAttribute.context, 'value');
+    button.setAttribute(ElementTrackingAttribute.parentElementId, 'value');
     expect(isCustomParentTrackedElement(button)).toBe(true);
 
     // TODO cover negative cases

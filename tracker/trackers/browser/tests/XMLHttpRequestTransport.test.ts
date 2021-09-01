@@ -39,9 +39,9 @@ describe('XMLHttpRequestTransport', () => {
             {
               ...otherProps,
               id,
-            }
+            },
           ],
-          transport_time: mockedMs
+          transport_time: mockedMs,
         })
       );
       return res.status(200);
@@ -87,9 +87,9 @@ describe('XMLHttpRequestTransport', () => {
 
   it('should send using `xhr` with the provided customized xhr function', async () => {
     const customXMLHttpRequestFunction = ({
-                                            endpoint,
-                                            events,
-                                          }: {
+      endpoint,
+      events,
+    }: {
       endpoint: string;
       events: TrackerEvent[];
     }): Promise<unknown> => {
