@@ -13,7 +13,6 @@ import {
   TransportGroup,
   TransportSwitch,
 } from '@objectiv/tracker-core';
-import { startAutoTracking } from '../observer/startAutoTracking';
 import { DebugTransport } from '../transport/DebugTransport';
 import { FetchAPITransport } from '../transport/FetchAPITransport';
 import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
@@ -139,11 +138,5 @@ export class BrowserTracker extends Tracker {
 
     // Initialize core Tracker
     super(config, ...contextConfigs);
-
-    // Store Tracker instance in window interface
-    window.objectiv.tracker = this;
-
-    // Initialize auto Tracker
-    startAutoTracking(trackerConfig);
   }
 }
