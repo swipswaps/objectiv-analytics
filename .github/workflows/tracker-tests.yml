@@ -29,4 +29,4 @@ jobs:
         run: |
           cd tracker
           yarn utils:generate
-          test $(git status -s -mno | wc -l) -gt 0
+          test $(git status -s -uno | wc -l) -gt 0
