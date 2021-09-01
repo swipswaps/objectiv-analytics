@@ -37,13 +37,15 @@ describe('FetchAPITransport', () => {
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
-        body: JSON.stringify([
-          {
-            ...otherProps,
-            transport_time: mockedMs,
-            id,
-          },
-        ]),
+        body: JSON.stringify({
+          events: [
+            {
+              ...otherProps,
+              id,
+            }
+          ],
+          transport_time: mockedMs
+        }),
         ...defaultFetchParameters,
       })
     );
@@ -67,13 +69,15 @@ describe('FetchAPITransport', () => {
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
-        body: JSON.stringify([
-          {
-            ...otherProps,
-            transport_time: mockedMs,
-            id,
-          },
-        ]),
+        body: JSON.stringify({
+          events: [
+            {
+              ...otherProps,
+              id,
+            }
+          ],
+          transport_time: mockedMs
+        }),
         ...customParameters,
       })
     );
@@ -116,13 +120,15 @@ describe('FetchAPITransport', () => {
     expect(fetch).toHaveBeenCalledWith(
       MOCK_ENDPOINT,
       expect.objectContaining({
-        body: JSON.stringify([
-          {
-            ...otherProps,
-            transport_time: mockedMs,
-            id,
-          },
-        ]),
+        body: JSON.stringify({
+          events: [
+            {
+              ...otherProps,
+              id,
+            }
+          ],
+          transport_time: mockedMs
+          }),
         ...defaultFetchParameters,
       })
     );

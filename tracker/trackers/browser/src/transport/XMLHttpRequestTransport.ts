@@ -31,8 +31,12 @@ export const defaultXMLHttpRequestFunction = ({
       }
     };
     xhr.onerror = () => reject(new TransportSendError());
-    events.forEach((event) => event.setTransportTime());
-    xhr.send(JSON.stringify(events));
+    xhr.send(JSON.stringify({
+      events,
+      // add current timestamp to the request, so the collector
+      // may check if there's any clock offset between server and client
+      transport_time: Date.now()
+    }));
   });
 };
 

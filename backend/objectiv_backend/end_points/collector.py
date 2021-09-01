@@ -3,7 +3,7 @@ from datetime import datetime
 
 import flask
 import time
-from typing import List
+from typing import List, Dict, Any
 import uuid
 
 from flask import Response, Request
@@ -33,16 +33,18 @@ def collect() -> Response:
     """
     current_millis = round(time.time() * 1000)
     try:
-        events = _get_event_data(flask.request)
+        event_data = _get_event_data(flask.request)
+        events = event_data['events']
+        transport_time = event_data['transport_time']
     except ValueError as exc:
         print(f'Data problem: {exc}')  # todo: real error logging
-
         return _get_collector_response(error_count=1, event_count=-1, data_error=exc.__str__())
 
     # Do all the enrichment steps that can only be done in this phase
     add_http_contexts(events)
     add_cookie_id_contexts(events)
-    set_time_in_events(events, current_millis)
+
+    set_time_in_events(events, current_millis, transport_time)
 
     """
     Map event data to a list of EventWithId entities.
@@ -60,17 +62,22 @@ def collect() -> Response:
         return _get_collector_response(error_count=0, event_count=len(events))
 
 
-def _get_event_data(request: Request) -> List[EventData]:
+def _get_event_data(request: Request) -> Dict[str, Any]:
     """
     Parse the requests data as json and return as a list
 
     :raise ValueError:
         1) data is not valid json
-        2) data is bigger than DATA_MAX_SIZE_BYTES
-        3) The parsed data is a list with more than DATA_MAX_EVENT_COUNT entries
-        4) The parsed data is not a list, as expected
-        5) The parsed data is not structured as a list of events. This only does basic validation, see
+        2) The parsed data is a dictionary with more than DATA_MAX_EVENT_COUNT entries
+        3) The parsed data is not a dictionary, as expected
+        4) The key 'events' could not be found
+        5) The data at key 'events' is not a list
+        6) the key 'transport_time' could not be found
+        7) the key 'transport_time' is not a valid integer
+        8) data is bigger than DATA_MAX_SIZE_BYTES
+        9) The parsed data is not structured as a list of events. This only does basic validation, see
             the validate_structure_data function for more information
+
     :param request: Request from which to parse the data
     :return: the parsed data, a list of EventData
     """
@@ -78,15 +85,23 @@ def _get_event_data(request: Request) -> List[EventData]:
     if len(post_data) > DATA_MAX_SIZE_BYTES:
         # if it's more than a megabyte, we'll refuse to process
         raise ValueError(f'Data size exceeds limit')
-    events = json.loads(post_data)
-    if not isinstance(events, list):
+    event_data = json.loads(post_data)
+    if not isinstance(event_data, dict):
+        raise ValueError('Parsed post data is not a dict')
+    if 'events' not in event_data:
+        raise ValueError('Could not find events in post data')
+    if not isinstance(event_data['events'], list):
         raise ValueError('Parsed data is not a list')
-    if len(events) > DATA_MAX_EVENT_COUNT:
+    if 'transport_time' not in event_data:
+        raise ValueError('Could not find transport_time in post data')
+    if not isinstance(event_data['transport_time'], int):
+        raise ValueError('transport_time is not a valid integer')
+    if len(event_data['events']) > DATA_MAX_EVENT_COUNT:
         raise ValueError('Events exceeds limit')
-    error_info = validate_structure_event_list(event_data=events)
+    error_info = validate_structure_event_list(event_data=event_data['events'])
     if error_info:
         raise ValueError(f'List of Events not structured well: {error_info[0].info}')
-    return events
+    return event_data
 
 
 def _get_collector_response(
@@ -142,34 +157,27 @@ def add_cookie_id_contexts(events: List[EventData]):
         )
 
 
-def set_time_in_events(events: List[EventData], current_millis: int):
+def set_time_in_events(events: List[EventData], current_millis: int, client_millis: int):
     """
     Modify the given list of events: Set the correct time in the events
 
-    We use the `event.transport_time` to determine an offset (if any) between client and server time. We
-    then corrent `event.tracking_time` using this offset and set it in `event.time`
+    We use the `http x-transport-time` header to determine an offset (if any) between client and server time. We
+    then correct `event.time` using this offset and set it in `event.time`
     :param events: List of events to modify
     :param current_millis: time in milliseconds since epoch UTC, when this request was received.
+    :param client_millis: time sent by client
     """
-    offset = 0
-    # transport_time is the same for all events in one batch
-    # so we use the transport_time from the first event
-    if 'transport_time' in events[0]:
-        try:
-            client_millis = int(events[0]['transport_time'])
-        except ValueError as exc:
-            client_millis = current_millis
-        offset = current_millis - client_millis
-        print(f'debug - time offset: {offset}')
+
+    if not client_millis:
+        client_millis = current_millis
+
+    offset = current_millis - client_millis
+    print(f'debug - time offset: {offset}')
     for event in events:
         # here we correct the tracking time with the calculated offset
         # the assumption here is that transport time should be the same as the server time (current_millis)
         # to account for clients that have an out-of-sync clock
-        event['time'] = event['tracking_time'] + offset
-
-        # remove unwanted timestamps
-        del event['tracking_time']
-        del event['transport_time']
+        event['time'] = event['time'] + offset
 
 
 def _get_http_context() -> ContextData:

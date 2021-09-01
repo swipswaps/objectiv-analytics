@@ -101,7 +101,7 @@ export class Tracker implements Contexts {
     const trackedEvent = new TrackerEvent(event, this);
 
     // Set tracking time
-    trackedEvent.setTrackingTime();
+    trackedEvent.setTime();
 
     // Execute all plugins `beforeTransport` callback. Plugins may enrich or add Contexts to the TrackerEvent
     this.plugins.beforeTransport(trackedEvent);
@@ -120,8 +120,7 @@ export class Tracker implements Contexts {
         }`
       );
       console.log(`Event ID: ${trackedEvent.id}`);
-      console.log(`Tracking Time: ${trackedEvent.tracking_time ?? 'none'}`);
-      console.log(`Transport Time: ${trackedEvent.transport_time ?? 'none'}`);
+      console.log(`Time: ${trackedEvent.time ?? 'none'}`);
       console.group(`Location Stack:`);
       console.log(trackedEvent.location_stack);
       console.groupEnd();

@@ -86,9 +86,9 @@ export interface HttpContext extends AbstractGlobalContext {
   readonly _context_type: 'HttpContext';
 
   /**
-   * FQDN of the host (collector) the event was sent to.
+   * Full URL to HTTP referrer of the current page.
    */
-  host: string;
+  referer: string;
 
   /**
    * User-agent of the agent that sent the event.
@@ -96,7 +96,7 @@ export interface HttpContext extends AbstractGlobalContext {
   user_agent: string;
 
   /**
-   * IP address of the agent that sent the event.
+   * (public) IP address of the agent that sent the event.
    */
   remote_address: string;
 }

@@ -27,7 +27,7 @@ class EventSubSchema:
         Create an empty EventSubSchema.
         Use extend_schema to add event types to the schema.
         """
-        self.schema: Dict[EventType, Dict[str, list]] = {}
+        self.schema: Dict[EventType, Dict[str, list, dict]] = {}
         # _compiled_* fields are derived fields that need to be calculated after self.schema is set.
         self._compiled_list_event_types: List[EventType] = []
         self._compiled_all_parents_and_required_contexts: \
@@ -43,13 +43,19 @@ class EventSubSchema:
         """
         schema = deepcopy(self.schema)
         for event_type, data in event_schema.items():
+
             # todo: move this check to schema check?
             if not re.match(self.EVENT_NAME_REGEX, event_type):
                 raise ValueError(f'Invalid event name: {event_type}')
             if event_type not in schema:
-                schema[event_type] = {'parents': [], 'requiresContext': []}
+                schema[event_type] = {'parents': [], 'requiresContext': [], 'properties': {}}
             schema[event_type]['parents'].extend(data['parents'])
             schema[event_type]['requiresContext'].extend(data['requiresContext'])
+            schema[event_type]['description'] = data['description']
+            if 'properties' in data:
+                for property_name, property_value in data['properties'].items():
+                    schema[event_type]['properties'][property_name] = property_value
+
         event_sub_schema = EventSubSchema()
         event_sub_schema.schema = schema
         event_sub_schema._compile()
@@ -175,6 +181,7 @@ class ContextSubSchema:
                 schema[context_type] = {"parents": [], "properties": {}}
 
             schema[context_type]["parents"].extend(data.get("parents", []))
+            schema[context_type]["description"] = data.get("description", '')
 
             for property_type, property_data in data.get("properties", {}).items():
                 if property_type not in schema[context_type]["properties"]:

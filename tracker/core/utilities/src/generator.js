@@ -173,7 +173,7 @@ function createFactory(
   // factories for the events have some properties that need to be treated differently
   // - location_stack and global_contexts are always optional because most often the Tracker provides them
   // - id is not overridable because the Tracker is responsible to provide one
-  // - tracking_time and transport_time are also not overridable because the Tracker is responsible to provide one
+  // - time is not overridable because the Tracker is responsible to provide one
   let are_all_props_optional = true;
   const return_omit = [];
   Object.keys(merged_properties).forEach((mp) => {
@@ -185,7 +185,7 @@ function createFactory(
         // we provide an empty array as default here
         properties.push(`${mp}: ${props_name}?.${mp} ?? []`);
         props[mp] = `${mp}?: ${merged_properties[mp]['type']}`;
-      } else if (params.object_type === 'event' && ['id', 'tracking_time', 'transport_time'].includes(mp)) {
+      } else if (params.object_type === 'event' && ['id', 'time'].includes(mp)) {
         // simply don't add the property and adjust the return type to omit it as well
         return_omit.push(mp);
       } else {
@@ -362,7 +362,6 @@ const schema = all_schema[base_schema_file];
 delete all_schema[base_schema_file];
 
 // now add extensions if any
-// TODO: allow to add properties to existing contexts
 Object.keys(all_schema).forEach((extension_file) => {
   const extension = all_schema[extension_file];
   console.log(`Loading extension ${extension['name']} from ${extension_file}`);
@@ -372,13 +371,31 @@ Object.keys(all_schema).forEach((extension_file) => {
     if (!(event_type in schema['events'])) {
       // only add if it doesn't already exist
       schema['events'][event_type] = extension['events'][event_type];
+    } else {
+      Object.keys(extension['events'][event_type]['properties']).forEach((property) => {
+        if (!(property in schema['events'][event_type]['properties'])) {
+          schema['events'][event_type]['properties'][property] =
+            extension['events'][event_type]['properties'][property];
+        } else {
+          console.log(`Not overriding existing property '${property}'`);
+        }
+      });
     }
   });
   // contexts
-  Object.keys(extension['context']).forEach((context_type) => {
+  Object.keys(extension['contexts']).forEach((context_type) => {
     if (!(context_type in schema['contexts'])) {
       // only add if it doesn't already exist
       schema['contexts'][context_type] = extension['contexts'][context_type];
+    } else {
+      Object.keys(extension['contexts'][context_type]['properties']).forEach((property) => {
+        if (!(property in schema['contexts'][context_type]['properties'])) {
+          schema['contexts'][context_type]['properties'][property] =
+            extension['contexts'][context_type]['properties'][property];
+        } else {
+          console.log(`Not overriding existing property '${property}'`);
+        }
+      });
     }
   });
 });
