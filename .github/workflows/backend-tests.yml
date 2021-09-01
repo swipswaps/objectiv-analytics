@@ -4,6 +4,8 @@ on:
   push:
     paths:
       - 'backend/**'
+      # Also run if the schema has been updated
+      - 'schema/**'
       # Also run if we update this file, or any other workflow
       - '.github/**'
 
