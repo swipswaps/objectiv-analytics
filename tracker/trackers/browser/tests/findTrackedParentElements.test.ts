@@ -58,10 +58,10 @@ describe('findTrackedParentElements', () => {
     expect(isTrackedElement(untrackedSection)).toBe(false);
     expect(isTrackedElement(topSection)).toBe(true);
 
-    midSection.appendChild(div)
-    untrackedSection.appendChild(midSection)
+    midSection.appendChild(div);
+    untrackedSection.appendChild(midSection);
     topSection.appendChild(untrackedSection);
-    document.body.appendChild(topSection)
+    document.body.appendChild(topSection);
 
     const trackedParentElements = findTrackedParentElements(div);
     expect(trackedParentElements).toHaveLength(3);
@@ -87,10 +87,10 @@ describe('findTrackedParentElements', () => {
     expect(isTrackedElement(untrackedSection)).toBe(false);
     expect(isTrackedElement(topSection)).toBe(true);
 
-    midSection.appendChild(div)
-    untrackedSection.appendChild(midSection)
+    midSection.appendChild(div);
+    untrackedSection.appendChild(midSection);
     topSection.appendChild(untrackedSection);
-    document.body.appendChild(topSection)
+    document.body.appendChild(topSection);
 
     const trackedParentElements = findTrackedParentElements(div);
     expect(trackedParentElements).toHaveLength(2);
@@ -98,7 +98,7 @@ describe('findTrackedParentElements', () => {
   });
 
   it('should console.error and exit early if parentElementId is not a Tracked Element', () => {
-    jest.spyOn(global.console, 'error')
+    jest.spyOn(global.console, 'error');
 
     const div = document.createElement('div');
     div.setAttribute(ElementTrackingAttribute.context, 'div');
@@ -116,15 +116,17 @@ describe('findTrackedParentElements', () => {
     expect(isTrackedElement(untrackedSection)).toBe(false);
     expect(isTrackedElement(topSection)).toBe(false);
 
-    midSection.appendChild(div)
-    untrackedSection.appendChild(midSection)
+    midSection.appendChild(div);
+    untrackedSection.appendChild(midSection);
     topSection.appendChild(untrackedSection);
-    document.body.appendChild(topSection)
+    document.body.appendChild(topSection);
 
     const trackedParentElements = findTrackedParentElements(div);
     expect(trackedParentElements).toHaveLength(1);
     expect(trackedParentElements).toStrictEqual([div]);
-    expect(console.error).toHaveBeenCalledTimes(1)
-    expect(console.error).toHaveBeenCalledWith(`Parent Element with Id 'top' is missing or not a Tracked Element`)
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith(
+      `[Objectiv] findTrackedParentElements: missing or invalid Parent Element 'top'`
+    );
   });
 });

@@ -15,6 +15,7 @@ export enum ContextType {
   navigation = 'NavigationContext',
   overlay = 'OverlayContext',
 }
+export const ContextTypes = Object.values(ContextType);
 
 /**
  * Holds for which ContextTypes we will track clicks automatically.

@@ -3,6 +3,7 @@ import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core'
 import { v4 as uuidv4 } from 'uuid';
 import {
   ContextType,
+  ContextTypes,
   TrackBlursDefaultValueByContextType,
   TrackClicksDefaultValueByContextType,
   TrackVisibilityDefaultValueByContextType,
@@ -113,34 +114,32 @@ export function track(parameters: {
 export function track({ id, instance, type, extraAttributes, options }: TrackParameters): TrackReturnValue {
   const elementId = uuidv4();
 
-  // TODO actually use exceptions and a catchall on top of things (startDomObserver)
   // This can happen when feeding dynamic parameters to track. Eg: search or database results.
   if ((!id && !instance) || (id && instance)) {
-    console.group('track: Unexpected input');
-    console.log(`id: ${id}`);
-    console.log(`instance: ${id}`);
-    console.log(`type: ${type}`);
-    console.log(`extraAttributes: ${JSON.stringify(extraAttributes)}`);
-    console.log(`options: ${JSON.stringify(options)}`);
-    console.groupEnd();
+    // TODO use exceptions and make the return value stricter
+    console.error('[Objectiv] track: Unexpected input', { id, instance });
     return {};
   }
 
   // Factor context instance if necessary
   let contextInstance: AbstractLocationContext | undefined;
   if (id) {
-    // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
-    contextInstance = {
-      __location_context: true,
-      _context_type: type ?? DEFAULT_CONTEXT_TYPE,
-      id: id,
-      ...extraAttributes,
-    };
+    const contextType = type ?? DEFAULT_CONTEXT_TYPE;
+    if (ContextTypes.includes(contextType)) {
+      // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
+      contextInstance = {
+        __location_context: true,
+        _context_type: type ?? DEFAULT_CONTEXT_TYPE,
+        id: id,
+        ...extraAttributes,
+      };
+    }
   } else {
     contextInstance = instance;
   }
 
   if (!contextInstance) {
+    // TODO use exceptions and make the return value stricter
     return {};
   }
 
@@ -161,7 +160,7 @@ export function track({ id, instance, type, extraAttributes, options }: TrackPar
       trackClicks = options.trackClicks;
     }
     if (options.trackBlurs !== undefined) {
-      trackClicks = options.trackBlurs;
+      trackBlurs = options.trackBlurs;
     }
     if (options.trackVisibility !== undefined) {
       trackVisibility = options.trackVisibility;
@@ -171,6 +170,7 @@ export function track({ id, instance, type, extraAttributes, options }: TrackPar
   // Process parent tracker option and extract the Parent tracker Element Id attribute
   let parentElementId = undefined;
   if (options && options.parentTracker) {
+    // TODO validate parameter, make it stricter and use exceptions
     if (options.parentTracker !== {}) {
       const parentTrackerAttributes = options.parentTracker as StringifiedElementTrackingAttributes;
       parentElementId = parentTrackerAttributes[ElementTrackingAttribute.elementId];
