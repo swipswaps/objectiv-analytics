@@ -163,4 +163,21 @@ describe('FetchAPITransport', () => {
 
     await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
   });
+
+  it('should reject with TransportSendError on network failures', async () => {
+    // Create our Fetch Transport Instance
+    const testTransport = new FetchAPITransport({
+      endpoint: MOCK_ENDPOINT,
+    });
+
+    fetchMock.mockReject();
+
+    try {
+      await testTransport.handle(testEvent);
+    } catch (error) {
+      expect(error).toStrictEqual(new TransportSendError());
+    }
+
+    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
+  });
 });
