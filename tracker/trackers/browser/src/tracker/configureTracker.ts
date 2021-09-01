@@ -1,4 +1,4 @@
-import { BrowserTracker, BrowserTrackerConfig } from "./BrowserTracker";
+import { BrowserTracker, BrowserTrackerConfig } from './BrowserTracker';
 
 /**
  * Allows to easily configure a main tracker instance.

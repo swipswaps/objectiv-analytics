@@ -1,7 +1,7 @@
 import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
 import MockDate from 'mockdate';
 import xhrMock from 'xhr-mock';
-import { XMLHttpRequestTransport } from '../src/';
+import { XMLHttpRequestTransport } from '../src';
 
 const mockedMs = 1434319925275;
 
@@ -87,9 +87,9 @@ describe('XMLHttpRequestTransport', () => {
 
   it('should send using `xhr` with the provided customized xhr function', async () => {
     const customXMLHttpRequestFunction = ({
-      endpoint,
-      events,
-    }: {
+                                            endpoint,
+                                            events,
+                                          }: {
       endpoint: string;
       events: TrackerEvent[];
     }): Promise<unknown> => {
