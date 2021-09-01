@@ -13,6 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+          check-latest: true
       - name: Install monorepo dependencies
         run: |
           cd tracker
@@ -21,3 +25,8 @@ jobs:
         run: |
           cd tracker
           yarn test:ci
+      - name: test if TS schema is up to date
+        run: |
+          cd tracker
+          yarn utils:generate
+          git diff
