@@ -1,4 +1,4 @@
-import { BrowserTracker, BrowserTrackerConfig } from "@objectiv/tracker-browser";
+import { BrowserTracker, BrowserTrackerConfig } from "./BrowserTracker";
 
 /**
  * Allows to easily configure a main tracker instance.
