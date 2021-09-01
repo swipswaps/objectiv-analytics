@@ -169,12 +169,10 @@ export function track({ id, instance, type, extraAttributes, options }: TrackPar
 
   // Process parent tracker option and extract the Parent tracker Element Id attribute
   let parentElementId = undefined;
-  if (options && options.parentTracker) {
-    // TODO validate parameter, make it stricter and use exceptions
-    if (options.parentTracker !== {}) {
-      const parentTrackerAttributes = options.parentTracker as StringifiedElementTrackingAttributes;
-      parentElementId = parentTrackerAttributes[ElementTrackingAttribute.elementId];
-    }
+  // TODO validate parameter, make it stricter and use exceptions
+  if (options && options.parentTracker !== {}) {
+    const parentTrackerAttributes = options.parentTracker as StringifiedElementTrackingAttributes;
+    parentElementId = parentTrackerAttributes[ElementTrackingAttribute.elementId];
   }
 
   return {
