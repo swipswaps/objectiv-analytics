@@ -20,7 +20,7 @@ import findTrackedParentElements from './findTrackedParentElements';
 type EventFactory = (props?: {
   location_stack?: AbstractLocationContext[];
   global_contexts?: AbstractGlobalContext[];
-}) => Omit<AbstractEvent, 'id' | 'tracking_time' | 'transport_time'>;
+}) => Omit<AbstractEvent, 'id' | 'time'>;
 
 /**
  * The parameters of `trackEvent`
