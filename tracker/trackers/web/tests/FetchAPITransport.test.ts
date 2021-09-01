@@ -49,9 +49,9 @@ describe('FetchAPITransport', () => {
             {
               ...otherProps,
               id,
-            }
+            },
           ],
-          transport_time: mockedMs
+          transport_time: mockedMs,
         }),
         ...defaultFetchParameters,
       })
@@ -81,9 +81,9 @@ describe('FetchAPITransport', () => {
             {
               ...otherProps,
               id,
-            }
+            },
           ],
-          transport_time: mockedMs
+          transport_time: mockedMs,
         }),
         ...customParameters,
       })
@@ -132,10 +132,10 @@ describe('FetchAPITransport', () => {
             {
               ...otherProps,
               id,
-            }
+            },
           ],
-          transport_time: mockedMs
-          }),
+          transport_time: mockedMs,
+        }),
         ...defaultFetchParameters,
       })
     );
