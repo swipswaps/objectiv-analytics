@@ -1,5 +1,21 @@
-import { makeClickEvent, makeSectionContext } from '@objectiv/tracker-core';
-import { BrowserTracker, configureTracker, ElementTrackingAttribute, trackEvent } from '../src';
+import {
+  makeApplicationLoadedEvent,
+  makeClickEvent,
+  makeInputChangeEvent,
+  makeSectionContext,
+  makeSectionHiddenEvent,
+  makeSectionVisibleEvent, makeURLChangeEvent, makeVideoPauseEvent, makeVideoStartEvent,
+} from '@objectiv/tracker-core';
+import {
+  BrowserTracker,
+  configureTracker,
+  ElementTrackingAttribute, trackApplicationLoadedEvent,
+  trackClick,
+  trackEvent,
+  trackInputChange,
+  trackSectionHiddenEvent,
+  trackSectionVisibleEvent, trackURLChangeEvent, trackVideoPauseEvent, trackVideoStartEvent, trackVisibility,
+} from '../src';
 
 describe('trackEvent', () => {
   const testElement = document.createElement('div');
@@ -128,5 +144,118 @@ describe('trackEvent', () => {
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
+  });
+
+  it('should track a Click Event', () => {
+    trackClick({ element: testElement });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
+  });
+
+  it('should track a Input Change Event', () => {
+    trackInputChange({ element: testElement });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeInputChangeEvent())
+    );
+  });
+
+  it('should track a Section Visible Event', () => {
+    trackSectionVisibleEvent({ element: testElement });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeSectionVisibleEvent())
+    );
+  });
+
+  it('should track a Section Hidden Event', () => {
+    trackSectionHiddenEvent({ element: testElement });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeSectionHiddenEvent())
+    );
+  });
+
+  it('should track a Video Start Event', () => {
+    trackVideoStartEvent({ element: testElement });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeVideoStartEvent())
+    );
+  });
+
+  it('should track a Video Pause Event', () => {
+    trackVideoPauseEvent({ element: testElement });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeVideoPauseEvent())
+    );
+  });
+
+  it('should track either a Section Visible or Section Hidden Event based on the given state', () => {
+    trackVisibility({ element: testElement, isVisible: true });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeSectionVisibleEvent())
+    );
+
+    trackVisibility({ element: testElement, isVisible: false });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(2);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining(makeSectionHiddenEvent())
+    );
+
+  });
+
+  it('should track an Application Loaded Event', () => {
+    trackApplicationLoadedEvent();
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeApplicationLoadedEvent())
+    );
+
+    trackApplicationLoadedEvent({ element: testElement });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(2);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining(makeApplicationLoadedEvent())
+    );
+  });
+
+  it('should track a URL Change Event', () => {
+    trackURLChangeEvent();
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeURLChangeEvent())
+    );
+
+    trackURLChangeEvent({ element: testElement });
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(2);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining(makeURLChangeEvent())
+    );
+
   });
 });

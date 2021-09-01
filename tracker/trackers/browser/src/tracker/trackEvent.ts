@@ -61,7 +61,7 @@ export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tr
     }, [] as AbstractLocationContext[]);
 
     // TODO temporary until we have factories to avoid parsing invalid data from attributes
-    locationStack = locationStack.filter(locationContext => locationContext)
+    locationStack = locationStack.filter((locationContext) => locationContext);
   }
 
   // Create new Event
