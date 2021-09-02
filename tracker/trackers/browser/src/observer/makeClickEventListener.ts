@@ -9,6 +9,7 @@ import isBubbledEvent from './isBubbledEvent';
 const makeClickEventListener =
   (element: TrackedElement, tracker: BrowserTracker = window.objectiv.tracker) =>
   (event: Event) => {
+    // TODO find workaround to test target-less events
     /* istanbul ignore else - hard to test with jest, skip for now */
     if (event.target && !isBubbledEvent(element, event.target)) {
       trackClick({ element, tracker });
