@@ -7,7 +7,7 @@ import { isTrackedElement } from '../typeGuards';
  * Given a Mutation Observer node containing removed nodes it will track whether to track visibility:hidden events
  * Hidden Events are triggered only for automatically tracked Elements.
  */
-const processRemovedElements = (element: Element, tracker: BrowserTracker) => {
+const trackRemovedElements = (element: Element, tracker: BrowserTracker) => {
   const elements = element.querySelectorAll(`[${ElementTrackingAttribute.elementId}]`);
   [element, ...Array.from(elements)].forEach((element) => {
     if (isTrackedElement(element)) {
@@ -23,4 +23,4 @@ const processRemovedElements = (element: Element, tracker: BrowserTracker) => {
   });
 };
 
-export default processRemovedElements;
+export default trackRemovedElements;

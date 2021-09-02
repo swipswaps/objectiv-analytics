@@ -1,8 +1,8 @@
 import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackClick, trackInputChange } from '../tracker/trackEvent';
 import { ElementTrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
-import isBubbledEvent from './isBubbledEvent';
+import makeBlurEventListener from './makeBlurEventListener';
+import makeClickEventListener from "./makeClickEventListener";
 import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
 
 /**
@@ -18,20 +18,12 @@ const trackNewElement = (element: Element, tracker: BrowserTracker = window.obje
 
     // Click tracking (buttons, links)
     if (element.getAttribute(ElementTrackingAttribute.trackClicks) === 'true') {
-      element.addEventListener('click', (event: Event) => {
-        if (event.target && !isBubbledEvent(element, event.target)) {
-          trackClick({ element, tracker });
-        }
-      });
+      element.addEventListener('click', makeClickEventListener(element, tracker));
     }
 
     // Blur tracking (inputs)
     if (element.getAttribute(ElementTrackingAttribute.trackBlurs) === 'true') {
-      element.addEventListener('blur', (event: Event) => {
-        if (event.target && !isBubbledEvent(element, event.target)) {
-          trackInputChange({ element, tracker });
-        }
-      });
+      element.addEventListener('blur', makeBlurEventListener(element, tracker));
     }
   }
 };

@@ -2,8 +2,8 @@ import { BrowserTracker, BrowserTrackerConfig } from '../tracker/BrowserTracker'
 import { trackApplicationLoadedEvent, trackURLChangeEvent } from '../tracker/trackEvent';
 import { ElementTrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
-import processRemovedElements from './processRemovedElements';
 import trackNewElements from './trackNewElements';
+import trackRemovedElements from "./trackRemovedElements";
 import trackVisibilityHiddenEvent from './trackVisibilityHiddenEvent';
 import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
 
@@ -60,7 +60,7 @@ export const startAutoTracking = (options: BrowserTrackerConfig, tracker: Browse
       // Removed DOM nodes mutation: track visibility:hidden events
       removedNodes.forEach((removedNode) => {
         if (removedNode instanceof Element) {
-          processRemovedElements(removedNode, tracker);
+          trackRemovedElements(removedNode, tracker);
         }
       });
 
