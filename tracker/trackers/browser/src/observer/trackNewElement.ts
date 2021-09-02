@@ -2,7 +2,7 @@ import { BrowserTracker } from '../tracker/BrowserTracker';
 import { ElementTrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 import makeBlurEventListener from './makeBlurEventListener';
-import makeClickEventListener from "./makeClickEventListener";
+import makeClickEventListener from './makeClickEventListener';
 import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
 
 /**

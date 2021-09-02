@@ -3,7 +3,7 @@ import { trackApplicationLoadedEvent, trackURLChangeEvent } from '../tracker/tra
 import { ElementTrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 import trackNewElements from './trackNewElements';
-import trackRemovedElements from "./trackRemovedElements";
+import trackRemovedElements from './trackRemovedElements';
 import trackVisibilityHiddenEvent from './trackVisibilityHiddenEvent';
 import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
 
