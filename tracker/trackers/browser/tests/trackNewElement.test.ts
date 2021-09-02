@@ -2,11 +2,11 @@ import {
   makeButtonContext,
   makeInputContext,
   makeSectionContext,
-  makeSectionVisibleEvent
-} from "@objectiv/tracker-core";
-import { BrowserTracker, configureTracker, ElementTrackingAttribute } from "../src";
+  makeSectionVisibleEvent,
+} from '@objectiv/tracker-core';
+import { BrowserTracker, configureTracker, ElementTrackingAttribute } from '../src';
 import trackNewElement from '../src/observer/trackNewElement';
-import makeTrackedElement from "./mocks/makeTrackedElement";
+import makeTrackedElement from './mocks/makeTrackedElement';
 
 describe('trackNewElement', () => {
   beforeEach(() => {
@@ -15,7 +15,6 @@ describe('trackNewElement', () => {
     expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
     spyOn(window.objectiv.tracker, 'trackEvent');
   });
-
 
   it('should skip the Element if it is not a Tracked Element', async () => {
     const div = document.createElement('div');
@@ -28,23 +27,26 @@ describe('trackNewElement', () => {
   });
 
   it('should track visibility: visible event', async () => {
-    const sectionContext = makeSectionContext({id: 'test'})
+    const sectionContext = makeSectionContext({ id: 'test' });
     const trackedDiv = makeTrackedElement('div-id-1', JSON.stringify(sectionContext), 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"auto"}')
+    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"auto"}');
     spyOn(trackedDiv, 'addEventListener');
 
     trackNewElement(trackedDiv);
 
     expect(trackedDiv.addEventListener).not.toHaveBeenCalled();
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeSectionVisibleEvent({location_stack: [sectionContext]}));
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      makeSectionVisibleEvent({ location_stack: [sectionContext] })
+    );
   });
 
   it('should attach click event listener', async () => {
-    const buttonContext = makeButtonContext({ id: 'test', text: 'test' })
+    const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
     const trackedButton = makeTrackedElement('button-id-1', JSON.stringify(buttonContext), 'button');
-    trackedButton.setAttribute('data-testid', 'test-button')
-    trackedButton.setAttribute(ElementTrackingAttribute.trackClicks, 'true')
+    trackedButton.setAttribute('data-testid', 'test-button');
+    trackedButton.setAttribute(ElementTrackingAttribute.trackClicks, 'true');
     document.body.appendChild(trackedButton);
     spyOn(trackedButton, 'addEventListener');
 
@@ -58,9 +60,9 @@ describe('trackNewElement', () => {
   });
 
   it('should attach blur event listener', async () => {
-    const inputContext = makeInputContext({ id: 'test' })
+    const inputContext = makeInputContext({ id: 'test' });
     const trackedInput = makeTrackedElement('input-id-1', JSON.stringify(inputContext), 'input');
-    trackedInput.setAttribute(ElementTrackingAttribute.trackBlurs, 'true')
+    trackedInput.setAttribute(ElementTrackingAttribute.trackBlurs, 'true');
     spyOn(trackedInput, 'addEventListener');
 
     trackNewElement(trackedInput);
