@@ -11,6 +11,7 @@ const isBubbledEvent = (originElement: TrackedElement, eventTarget: EventTarget)
     return false;
   }
 
+  // TODO we need a proper parsers for these attributes with good validation
   const originElementId = originElement.getAttribute(ElementTrackingAttribute.elementId);
   const targetElementId = eventTarget.getAttribute(ElementTrackingAttribute.elementId);
 

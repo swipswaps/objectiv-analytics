@@ -54,7 +54,8 @@ export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tr
 
     // Re-hydrate Location Stack
     locationStack = elementsStack.reduce((locationContexts, element) => {
-      // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
+      // TODO we need a proper parsers for these attributes with good validation
+      // TODO surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
       const locationContext = element.getAttribute(ElementTrackingAttribute.context) as string;
       locationContexts.push(JSON.parse(locationContext));
       return locationContexts;
