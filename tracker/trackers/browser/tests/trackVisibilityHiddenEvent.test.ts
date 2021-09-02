@@ -56,4 +56,18 @@ describe('trackVisibilityHiddenEvent', () => {
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeSectionHiddenEvent());
   });
+
+  it('should use given tracker instead of the global one', async () => {
+    const trackerOverride = new BrowserTracker({ applicationId: 'override', endpoint: 'override' });
+    spyOn(trackerOverride, 'trackEvent');
+
+    const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
+    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
+
+    trackVisibilityHiddenEvent(trackedDiv, trackerOverride);
+
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(trackerOverride.trackEvent).toHaveBeenCalledTimes(1);
+    expect(trackerOverride.trackEvent).toHaveBeenNthCalledWith(1, makeSectionHiddenEvent());
+  });
 });
