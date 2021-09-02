@@ -3,7 +3,7 @@ import { trackClick, trackInputChange } from '../tracker/trackEvent';
 import { ElementTrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 import isBubbledEvent from './isBubbledEvent';
-import trackIfVisible from './trackIfVisible';
+import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
 
 /**
  * Attaches event handlers to the given Element and triggers visibility Events for it if the Tracking Attributes allow.
@@ -14,7 +14,7 @@ import trackIfVisible from './trackIfVisible';
 const processNewElement = (element: Element, tracker: BrowserTracker) => {
   if (isTrackedElement(element)) {
     // Visibility: visible tracking
-    trackIfVisible(element, tracker);
+    trackVisibilityVisibleEvent(element, tracker);
 
     // Click tracking (buttons, links)
     if (element.getAttribute(ElementTrackingAttribute.trackClicks) === 'true') {

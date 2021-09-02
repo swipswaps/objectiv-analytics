@@ -4,8 +4,8 @@ import { ElementTrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 import processNewElements from './processNewElements';
 import processRemovedElements from './processRemovedElements';
-import trackIfHidden from './trackIfHidden';
-import trackIfVisible from './trackIfVisible';
+import trackVisibilityHiddenEvent from './trackVisibilityHiddenEvent';
+import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
 
 /**
  * Auto tracking monitors the DOM and automatically tracks certain events:
@@ -66,8 +66,8 @@ export const startAutoTracking = (options: BrowserTrackerConfig, tracker: Browse
 
       // Visibility attribute mutation (programmatic visibility change): determine and track visibility events
       if (attributeName && isTrackedElement(target)) {
-        trackIfVisible(target, tracker);
-        trackIfHidden(target, tracker);
+        trackVisibilityVisibleEvent(target, tracker);
+        trackVisibilityHiddenEvent(target, tracker);
       }
     });
   }).observe(document, {
