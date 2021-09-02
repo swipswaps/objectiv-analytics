@@ -229,7 +229,6 @@ describe('trackEvent', () => {
       2,
       expect.objectContaining(makeSectionHiddenEvent())
     );
-
   });
 
   it('should track an Application Loaded Event', () => {
@@ -266,6 +265,5 @@ describe('trackEvent', () => {
       2,
       expect.objectContaining(makeURLChangeEvent())
     );
-
   });
 });

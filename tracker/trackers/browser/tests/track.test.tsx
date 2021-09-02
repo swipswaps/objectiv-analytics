@@ -22,7 +22,7 @@ import {
   trackNavigation,
   trackOverlay,
 } from '../src';
-import matchElementId from "./mocks/matchElementId";
+import matchElementId from './mocks/matchElementId';
 
 describe('track', () => {
   it('should return an empty Object and console.error when given invalid parameters', () => {

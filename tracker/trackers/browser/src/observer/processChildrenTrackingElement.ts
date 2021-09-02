@@ -1,4 +1,4 @@
-import { isEmptyObject } from "../isEmptyObject";
+import { isEmptyObject } from '../isEmptyObject';
 import { TrackChildrenParameters } from '../tracker/trackChildren';
 import { ChildrenTrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, TrackableElement, TrackedElement } from '../typeGuards';

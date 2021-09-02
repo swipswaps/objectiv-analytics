@@ -1,7 +1,7 @@
-import { makeSectionHiddenEvent } from "@objectiv/tracker-core";
-import { BrowserTracker, configureTracker, ElementTrackingAttribute } from "../src";
-import trackVisibilityHiddenEvent from "../src/observer/trackVisibilityHiddenEvent";
-import makeTrackedElement from "./mocks/makeTrackedElement";
+import { makeSectionHiddenEvent } from '@objectiv/tracker-core';
+import { BrowserTracker, configureTracker, ElementTrackingAttribute } from '../src';
+import trackVisibilityHiddenEvent from '../src/observer/trackVisibilityHiddenEvent';
+import makeTrackedElement from './mocks/makeTrackedElement';
 
 describe('trackVisibilityHiddenEvent', () => {
   beforeEach(() => {
@@ -14,46 +14,46 @@ describe('trackVisibilityHiddenEvent', () => {
   it('should not track elements without visibility tracking attributes', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
 
-    trackVisibilityHiddenEvent(trackedDiv)
+    trackVisibilityHiddenEvent(trackedDiv);
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled()
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
 
   it('should not track elements with invalid visibility tracking attributes', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, 'null')
+    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, 'null');
 
-    trackVisibilityHiddenEvent(trackedDiv)
+    trackVisibilityHiddenEvent(trackedDiv);
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled()
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
 
   it('should track in mode:auto', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"auto"}')
+    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"auto"}');
 
-    trackVisibilityHiddenEvent(trackedDiv)
+    trackVisibilityHiddenEvent(trackedDiv);
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1)
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeSectionHiddenEvent())
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeSectionHiddenEvent());
   });
 
   it('should not track in mode:manual with isVisible:true', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}')
+    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
 
-    trackVisibilityHiddenEvent(trackedDiv)
+    trackVisibilityHiddenEvent(trackedDiv);
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled()
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
 
   it('should track in mode:manual with isVisible:false', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}')
+    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
 
-    trackVisibilityHiddenEvent(trackedDiv)
+    trackVisibilityHiddenEvent(trackedDiv);
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1)
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeSectionHiddenEvent())
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeSectionHiddenEvent());
   });
 });
