@@ -55,8 +55,6 @@ describe('trackNewElement', () => {
     expect(trackedButton.addEventListener).toHaveBeenCalledTimes(1);
     expect(trackedButton.addEventListener).toHaveBeenNthCalledWith(1, 'click', expect.any(Function));
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
-
-    // TODO test the actual handlers
   });
 
   it('should attach blur event listener', async () => {
