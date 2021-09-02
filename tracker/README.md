@@ -143,8 +143,11 @@ Prints a list of all the packages configured in the monorepo.
 ### `yarn install`
 Install dependencies for all packages and links local packages to each other.
 
-### `yarn prettier`
+### `yarn prettify`
 Runs prettier for all packages in write mode.
+
+### `yarn prettify:generated`
+Runs prettier for `core/schema/src/*`, `core/tracker/src/ContextFactories.ts` and `core/tracker/src/EventFactories.ts` in write mode.
 
 ### `yarn tsc`
 Runs the TypeScript compiler for all typed packages.

@@ -11,7 +11,8 @@
   "scripts": {
     "build": "rollup -c --silent --failAfterWarnings",
     "build:dev": "dev=true run build",
-    "prettier": "prettier --write .",
+    "prettify": "prettier --write .",
+    "prettify:generated": "yarn prettier --write src/ContextFactories.ts",
     "tsc": "tsc --noEmit",
     "test": "jest --silent --runInBand",
     "test:ci": "jest --silent --ci --runInBand",
