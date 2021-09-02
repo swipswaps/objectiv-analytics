@@ -1,5 +1,7 @@
-import { BrowserTracker, configureTracker } from '../src';
-import trackNewElement from '../src/observer/trackNewElement';
+import { makeSectionContext, makeSectionHiddenEvent } from '@objectiv/tracker-core';
+import { BrowserTracker, configureTracker, ElementTrackingAttribute } from '../src';
+import trackRemovedElements from '../src/observer/trackRemovedElements';
+import makeTrackedElement from './mocks/makeTrackedElement';
 
 describe('trackRemovedElements', () => {
   beforeEach(() => {
@@ -9,14 +11,67 @@ describe('trackRemovedElements', () => {
     spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
-  it('should skip the Element if it is not a Tracked Element', async () => {
-    // TODO finish this
+  it('should skip all Elements that are not Tracked Element', async () => {
     const div = document.createElement('div');
-    spyOn(div, 'addEventListener');
+    const anotherDiv = document.createElement('div');
+    const button = document.createElement('button');
 
-    trackNewElement(div);
+    anotherDiv.appendChild(button);
+    div.appendChild(anotherDiv);
+    document.body.appendChild(div);
 
-    expect(div.addEventListener).not.toHaveBeenCalled();
+    trackRemovedElements(div);
+
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('should skip all Elements that do not have visibility tracking attributes', async () => {
+    const div = document.createElement('div');
+    const trackedDiv = makeTrackedElement('div', 'null', 'div');
+    const trackedButton = makeTrackedElement('button', 'null', 'button');
+
+    trackedDiv.appendChild(trackedButton);
+    div.appendChild(trackedDiv);
+    document.body.appendChild(div);
+
+    trackRemovedElements(div);
+
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('should trigger a visibility:hidden Event for Tracked Elements with visibility:auto attributes', async () => {
+    const div = document.createElement('div');
+    const sectionContext = makeSectionContext({ id: 'div' });
+    const trackedDiv = makeTrackedElement('div', JSON.stringify(sectionContext), 'div');
+    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"auto"}');
+    const trackedButton = makeTrackedElement('button', 'null', 'button');
+
+    trackedDiv.appendChild(trackedButton);
+    div.appendChild(trackedDiv);
+    document.body.appendChild(div);
+
+    trackRemovedElements(div);
+
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      makeSectionHiddenEvent({ location_stack: [sectionContext] })
+    );
+  });
+
+  it('should not trigger a visibility:hidden Event for Tracked Elements with visibility:manual attributes', async () => {
+    const div = document.createElement('div');
+    const sectionContext = makeSectionContext({ id: 'div' });
+    const trackedDiv = makeTrackedElement('div', JSON.stringify(sectionContext), 'div');
+    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
+    const trackedButton = makeTrackedElement('button', 'null', 'button');
+
+    trackedDiv.appendChild(trackedButton);
+    div.appendChild(trackedDiv);
+    document.body.appendChild(div);
+
+    trackRemovedElements(div);
+
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
 });
