@@ -111,12 +111,20 @@ export const trackVisibility = ({ element, tracker, isVisible }: TrackHelperPara
   return trackEvent({ eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent, element, tracker });
 };
 
-export const trackApplicationLoadedEvent = (parameters?: TrackHelperParameters) => {
-  const { element, tracker } = parameters ?? { element: document };
+/**
+ * The parameters of the Application Loaded and URLChange Event helper functions
+ */
+export type NonInteractiveTrackHelperParameters = {
+  element?: HTMLElement | EventTarget;
+  tracker?: BrowserTracker;
+};
+
+export const trackApplicationLoadedEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
+  const { element = document, tracker } = parameters ?? { element: document };
   return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
 };
 
-export const trackURLChangeEvent = (parameters?: TrackHelperParameters) => {
-  const { element, tracker } = parameters ?? { element: document };
+export const trackURLChangeEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
+  const { element = document, tracker } = parameters ?? { element: document };
   return trackEvent({ eventFactory: makeURLChangeEvent, element, tracker });
 };

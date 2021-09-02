@@ -12,10 +12,7 @@ const trackVisibilityHiddenEvent = (element: TrackedElement, tracker: BrowserTra
     // TODO we need a proper parsers for these attributes with good validation
     const trackVisibilityConfig: TrackingAttributeVisibility = JSON.parse(trackVisibilityAttribute);
     if (trackVisibilityConfig) {
-      if (
-        trackVisibilityConfig.mode === 'auto' ||
-        (trackVisibilityConfig.mode === 'manual' && !trackVisibilityConfig.isVisible)
-      ) {
+      if (trackVisibilityConfig.mode === 'manual' && !trackVisibilityConfig.isVisible) {
         trackSectionHiddenEvent({ element, tracker });
       }
     }

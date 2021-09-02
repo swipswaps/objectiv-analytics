@@ -8,7 +8,39 @@ import trackVisibilityHiddenEvent from './trackVisibilityHiddenEvent';
 import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
 
 /**
- * Auto tracking monitors the DOM and automatically tracks certain events:
+ * Global state to track if we already triggered an Application Loaded Event and to keep track of URLs
+ */
+let applicationLoaded = false;
+let previousURL = location.href;
+
+/**
+ * The options that `startAutoTracking` accepts
+ */
+export type AutoTrackingOptions = Pick<BrowserTrackerConfig, 'trackURLChanges' | 'trackApplicationLoaded'>;
+
+/**
+ * Initializes our automatic tracking, based on Mutation Observer.
+ * Also tracks application Loaded.
+ */
+export const startAutoTracking = (options: AutoTrackingOptions, tracker: BrowserTracker = window.objectiv.tracker) => {
+  const trackURLChanges = options.trackURLChanges ?? true;
+  const trackApplicationLoaded = options.trackApplicationLoaded ?? true;
+
+  new MutationObserver(makeMutationCallback(trackURLChanges, tracker)).observe(document, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: [ElementTrackingAttribute.trackVisibility],
+  });
+
+  if (trackApplicationLoaded && !applicationLoaded) {
+    applicationLoaded = true;
+    trackApplicationLoadedEvent({ tracker });
+  }
+};
+
+/**
+ * A factory to generate our mutation observer callback. It will observe:
  *
  * New DOM nodes added.
  * We use a Mutation Observer to monitor the DOM for subtrees being added.
@@ -30,21 +62,16 @@ import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
  * Application Loaded Event (default enabled, configurable)
  * Triggered once
  */
-
-let applicationLoaded = false;
-let previousURL = location.href;
-
-export const startAutoTracking = (options: BrowserTrackerConfig, tracker: BrowserTracker = window.objectiv.tracker) => {
-  const trackURLChanges = options.trackURLChanges ?? true;
-  const trackApplicationLoaded = options.trackApplicationLoaded ?? true;
-
-  new MutationObserver((mutationsList) => {
+export const makeMutationCallback =
+  (trackURLChanges: boolean, tracker: BrowserTracker = window.objectiv.tracker): MutationCallback =>
+  (mutationsList) => {
     if (trackURLChanges) {
       // Track SPA URL changes
       const currentURL = location.href;
+      console.log(currentURL, previousURL);
       if (currentURL !== previousURL) {
         previousURL = currentURL;
-        trackURLChangeEvent();
+        trackURLChangeEvent({ tracker });
       }
     }
 
@@ -70,15 +97,4 @@ export const startAutoTracking = (options: BrowserTrackerConfig, tracker: Browse
         trackVisibilityHiddenEvent(target, tracker);
       }
     });
-  }).observe(document, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: [ElementTrackingAttribute.trackVisibility],
-  });
-
-  if (trackApplicationLoaded && !applicationLoaded) {
-    applicationLoaded = true;
-    trackApplicationLoadedEvent();
-  }
-};
+  };
