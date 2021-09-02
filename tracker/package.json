@@ -19,6 +19,6 @@
     "test:ci": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --exclude @objectiv/tracker-react-live-testing-app --verbose run test:ci",
     "test:coverage": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --exclude @objectiv/tracker-react-live-testing-app --verbose run test:coverage",
     "publish": "yarn workspaces foreach --exclude root --exclude @objectiv/utilities --exclude @objectiv/tracker-react-live-testing-app --verbose exec npm publish",
-    "utils:generate": "yarn workspace @objectiv/utilities generate && yarn prettier && yarn tsc"
+    "utils:generate": "yarn workspace @objectiv/utilities generate && yarn prettify:generated && yarn tsc"
   }
 }
