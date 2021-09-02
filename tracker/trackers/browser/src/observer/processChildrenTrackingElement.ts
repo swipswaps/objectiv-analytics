@@ -1,7 +1,7 @@
 import { isEmptyObject } from '../isEmptyObject';
 import { TrackChildrenParameters } from '../tracker/trackChildren';
 import { ChildrenTrackingAttribute } from '../TrackingAttributes';
-import { isChildrenTrackingElement, TrackableElement, TrackedElement } from '../typeGuards';
+import { isChildrenTrackingElement, TrackedElement } from '../typeGuards';
 
 /**
  * Check if Element is a Children Tracking Element. If so:
@@ -9,7 +9,7 @@ import { isChildrenTrackingElement, TrackableElement, TrackedElement } from '../
  * - Decorate matching Elements intoTracked Elements
  * - Return a list of the decorated Elements
  */
-const processChildrenTrackingElement = (element: TrackableElement): TrackedElement[] => {
+const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
   const newlyTrackedElements: TrackedElement[] = [];
 
   if (!isChildrenTrackingElement(element)) {
