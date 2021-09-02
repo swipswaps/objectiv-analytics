@@ -1,13 +1,5 @@
-import { ElementTrackingAttribute, TrackedElement } from "../src";
 import isBubbledEvent from "../src/observer/isBubbledEvent";
-
-const makeTrackedElement = (id: string, context: string, tagName: keyof HTMLElementTagNameMap): TrackedElement => {
-  const trackedDiv = document.createElement(tagName);
-  trackedDiv.setAttribute(ElementTrackingAttribute.elementId, id);
-  trackedDiv.setAttribute(ElementTrackingAttribute.context, context);
-
-  return trackedDiv as TrackedElement;
-}
+import makeTrackedElement from "./mocks/makeTrackedElement";
 
 describe('isBubbledEvent', () => {
   it('should return true', async () => {

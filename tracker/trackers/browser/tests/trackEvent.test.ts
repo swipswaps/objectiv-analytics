@@ -4,17 +4,25 @@ import {
   makeInputChangeEvent,
   makeSectionContext,
   makeSectionHiddenEvent,
-  makeSectionVisibleEvent, makeURLChangeEvent, makeVideoPauseEvent, makeVideoStartEvent,
+  makeSectionVisibleEvent,
+  makeURLChangeEvent,
+  makeVideoPauseEvent,
+  makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
   configureTracker,
-  ElementTrackingAttribute, trackApplicationLoadedEvent,
+  ElementTrackingAttribute,
+  trackApplicationLoadedEvent,
   trackClick,
   trackEvent,
   trackInputChange,
   trackSectionHiddenEvent,
-  trackSectionVisibleEvent, trackURLChangeEvent, trackVideoPauseEvent, trackVideoStartEvent, trackVisibility,
+  trackSectionVisibleEvent,
+  trackURLChangeEvent,
+  trackVideoPauseEvent,
+  trackVideoStartEvent,
+  trackVisibility,
 } from '../src';
 
 describe('trackEvent', () => {
@@ -27,6 +35,8 @@ describe('trackEvent', () => {
     expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
     spyOn(window.objectiv.tracker, 'trackEvent');
   });
+
+  // TODO test invalid contexts after we introduce context factories. Currently trackEvent will crash with those
 
   it('should throw if a Tracker instance cannot be retrieved and was not provided either', () => {
     // @ts-ignore forcefully wipe the tracker instance
