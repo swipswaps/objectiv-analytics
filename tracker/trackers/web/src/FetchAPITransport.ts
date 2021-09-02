@@ -40,13 +40,12 @@ export const defaultFetchFunction = async ({
 
     fetch(endpoint, {
       ...parameters,
-      body: JSON.stringify(
-          {
-            events,
-            // add current timestamp to the request, so the collector
-            // may check if there's any clock offset between server and client
-            transport_time: Date.now()
-          }),
+      body: JSON.stringify({
+        events,
+        // add current timestamp to the request, so the collector
+        // may check if there's any clock offset between server and client
+        transport_time: Date.now(),
+      }),
     })
       .then((response) => {
         if (response.status === 200) {

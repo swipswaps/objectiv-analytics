@@ -39,9 +39,9 @@ describe('XMLHttpRequestTransport', () => {
             {
               ...otherProps,
               id,
-            }
+            },
           ],
-          transport_time: mockedMs
+          transport_time: mockedMs,
         })
       );
       return res.status(200);

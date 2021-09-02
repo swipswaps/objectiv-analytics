@@ -7,7 +7,7 @@
     "src/generator.js"
   ],
   "scripts": {
-    "prettier": "prettier --write .",
+    "prettify": "prettier --write .",
     "generate": "(cd src && node generator.js)"
   },
   "devDependencies": {
