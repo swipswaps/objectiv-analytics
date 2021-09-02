@@ -1,6 +1,7 @@
+import { isEmptyObject } from "../isEmptyObject";
 import { TrackChildrenParameters } from '../tracker/trackChildren';
 import { ChildrenTrackingAttribute } from '../TrackingAttributes';
-import { isChildrenTrackingElement, isTrackableElement, TrackedElement } from '../typeGuards';
+import { isChildrenTrackingElement, TrackableElement, TrackedElement } from '../typeGuards';
 
 /**
  * Check if Element is a Children Tracking Element. If so:
@@ -8,14 +9,16 @@ import { isChildrenTrackingElement, isTrackableElement, TrackedElement } from '.
  * - Decorate matching Elements intoTracked Elements
  * - Return a list of the decorated Elements
  */
-const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
+const processChildrenTrackingElement = (element: TrackableElement): TrackedElement[] => {
   const newlyTrackedElements: TrackedElement[] = [];
 
   if (!isChildrenTrackingElement(element)) {
     return newlyTrackedElements;
   }
 
+  // TODO we need a proper parsers for these attributes with good validation
   const childrenTrackingQueriesAttribute = element.getAttribute(ChildrenTrackingAttribute.trackChildren);
+  /* istanbul ignore if - this cannot happen but we don't have proper type guards to enforce it */
   if (!childrenTrackingQueriesAttribute) {
     return newlyTrackedElements;
   }
@@ -25,10 +28,12 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
     return newlyTrackedElements;
   }
 
+  // TODO add validation for empty arrays (most probably to the attribute parser when we have it)
+
   childrenTrackingQueries.forEach(({ query, queryAll, trackAs }: TrackChildrenParameters) => {
     const queriedElements = [];
 
-    if (trackAs === {}) {
+    if (isEmptyObject(trackAs)) {
       console.error(`trackAs attributes for query: ${query} are empty`);
       return;
     }
@@ -47,15 +52,8 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
         return;
       }
 
-      if (!isTrackableElement(queriedElement)) {
-        console.error(`Element matched with querySelector query: ${query} is not trackable`);
-        return;
-      }
-
-      for (let [key, value] of Object.entries(trackAs)) {
-        if (value !== undefined) {
-          queriedElement.setAttribute(key, value);
-        }
+      for (let [key, value] of Object.entries<string>(trackAs)) {
+        queriedElement.setAttribute(key, value);
       }
 
       newlyTrackedElements.push(queriedElement as TrackedElement);

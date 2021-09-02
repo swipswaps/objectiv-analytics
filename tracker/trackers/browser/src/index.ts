@@ -1,4 +1,5 @@
 export * from './ContextType';
+export * from './isEmptyObject';
 export * from './observer/isBubbledEvent';
 export * from './observer/processChildrenTrackingElement';
 export * from './observer/processNewElement';
