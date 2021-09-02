@@ -1,4 +1,4 @@
-import { makeButtonContext, makeClickEvent, makeSectionContext } from '@objectiv/tracker-core';
+import { makeClickEvent } from '@objectiv/tracker-core';
 import { BrowserTracker, configureTracker } from '../src/';
 import makeClickEventListener from '../src/observer/makeClickEventListener';
 import makeTrackedElement from './mocks/makeTrackedElement';
