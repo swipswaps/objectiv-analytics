@@ -1,6 +1,6 @@
-import { Infer, intersection, literal, object, string } from 'superstruct';
+import { Infer, intersection, literal, string, type } from 'superstruct';
 
-export const AbstractContext = object({
+export const AbstractContext = type({
   id: string(),
   _context_type: string(),
 });
@@ -8,7 +8,7 @@ export type AbstractContext = Infer<typeof AbstractContext>;
 
 export const AbstractLocationContext = intersection([
   AbstractContext,
-  object({
+  type({
     __location_context: literal(true),
   }),
 ]);

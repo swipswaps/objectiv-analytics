@@ -120,6 +120,8 @@ export function track(parameters: TrackParameters): TrackReturnValue {
     id: id,
     ...extraAttributes,
   };
+  
+  assert(contextInstance, AbstractLocationContext);
 
   // Clean up the instance from discriminatory properties
   cleanObjectFromDiscriminatingProperties(contextInstance);
