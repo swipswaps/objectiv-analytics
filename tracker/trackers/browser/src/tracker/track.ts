@@ -38,15 +38,21 @@ export type TrackOptions = z.infer<typeof TrackOptions>;
 /**
  * Used to decorate a Trackable Element with our Tracking Attributes.
  *
- * Examples
- *
- *    track({ instance: makeElementContext({ id: 'section-id' }) })
- *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
- *
  * Returns an object containing the tracking attributes. It's properties are supposed to be spread on the target HTML
  * Element. This allows us to identify elements uniquely in a Document and to reconstruct their Location.
  *
  * For most commonly used Locations see the helper functions below.
+ *
+ * Track Examples
+ *
+ *    track({ instance: makeElementContext({ id: 'section-id' }) })
+ *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
+ *
+ * Track Helpers Examples
+ *
+ *    trackElement({ id: 'section-id', options: { trackClicks: true } })
+ *    trackButton({ id: 'section-id', text: 'button text' })
+ *
  */
 export const TrackParameters = z.object({ instance: LocationContext, options: z.optional(TrackOptions) });
 export const TrackReturnValue = StringifiedElementTrackingAttributes;
