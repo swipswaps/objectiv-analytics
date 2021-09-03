@@ -2,13 +2,14 @@ import {
   makeButtonContext,
   makeExpandableSectionContext,
   makeInputContext,
-  makeLinkContext, makeMediaPlayerContext, makeNavigationContext, makeOverlayContext,
+  makeLinkContext,
+  makeMediaPlayerContext,
+  makeNavigationContext,
+  makeOverlayContext,
   makeSectionContext,
 } from '@objectiv/tracker-core';
 import {
-  ContextType,
   ElementTrackingAttribute,
-  StringifiedElementTrackingAttributes,
   track,
   trackButton,
   trackElement,
@@ -24,42 +25,32 @@ import matchElementId from './mocks/matchElementId';
 describe('track', () => {
   it('should throw when given invalid parameters', () => {
     // @ts-ignore
-    expect(() => track({ id: null })).toThrow();
+    expect(() => track({ instance: null })).toThrow();
     // @ts-ignore
-    expect(() => track({ id: undefined })).toThrow();
+    expect(() => track({ instance: undefined })).toThrow();
     // @ts-ignore
-    expect(() => track({ id: 0 })).toThrow();
+    expect(() => track({ instance: 0 })).toThrow();
     // @ts-ignore
-    expect(() => track({ id: false })).toThrow();
+    expect(() => track({ instance: false })).toThrow();
     // @ts-ignore
-    expect(() => track({ id: true })).toThrow();
+    expect(() => track({ instance: true })).toThrow();
     // @ts-ignore
-    expect(() => track({ id: {} })).toThrow();
+    expect(() => track({ instance: {} })).toThrow();
     // @ts-ignore
-    expect(() => track({ id: Infinity })).toThrow();
+    expect(() => track({ instance: Infinity })).toThrow();
     // @ts-ignore
-    expect(() => track({ id: -Infinity })).toThrow();
+    expect(() => track({ instance: -Infinity })).toThrow();
     // @ts-ignore
-    expect(() => track({ id: 'test', type: ContextType.button })).toThrow();
+    expect(() => track({ instance: 'test' })).toThrow();
     // @ts-ignore
-    expect(() => track({ id: 'test', type: ContextType.button })).toThrow();
-    // @ts-ignore
-    expect(() => track({ id: 'test', type: ContextType.link })).toThrow();
-    // @ts-ignore
-    expect(() => track({ id: 'test', type: ContextType.link, extraAttributes: { href: '/path' } })).toThrow();
-    // @ts-ignore
-    expect(() => track({ id: 'test', type: ContextType.link, extraAttributes: { text: 'some text' } })).toThrow();
-    // @ts-ignore
-    expect(() => track({ id: 'test', type: 'invalid' })).toThrow();
-    // @ts-ignore
-    expect(() => track({ id: 'test', options: 'invalid' })).toThrow();
+    expect(() => track({ instance: makeSectionContext({ id: 'test' }), options: 'invalid' })).toThrow();
   });
 
   it('should allow overriding whether to track click, blur and visibility events via options', () => {
     expect(trackElement({ id: 'test' })).toStrictEqual({
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
+      [ElementTrackingAttribute.context]: JSON.stringify({ id: 'test', _context_type: 'SectionContext' }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,
       [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -76,7 +67,7 @@ describe('track', () => {
     ).toStrictEqual({
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
+      [ElementTrackingAttribute.context]: JSON.stringify({ id: 'test', _context_type: 'SectionContext' }),
       [ElementTrackingAttribute.trackClicks]: 'true',
       [ElementTrackingAttribute.trackBlurs]: 'true',
       [ElementTrackingAttribute.trackVisibility]: '{"mode":"manual","isVisible":true}',
@@ -84,11 +75,11 @@ describe('track', () => {
   });
 
   it('should allow overriding parent auto detection via options', () => {
-    const parentTracker = trackElement({ id: 'parent' }) as StringifiedElementTrackingAttributes;
+    const parentTracker = trackElement({ id: 'parent' });
     expect(trackElement({ id: 'test' })).toStrictEqual({
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
+      [ElementTrackingAttribute.context]: JSON.stringify({ id: 'test', _context_type: 'SectionContext' }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,
       [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -96,7 +87,7 @@ describe('track', () => {
     expect(trackElement({ id: 'test', options: { parentTracker: parentTracker } })).toStrictEqual({
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: parentTracker[ElementTrackingAttribute.elementId],
-      [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
+      [ElementTrackingAttribute.context]: JSON.stringify({ id: 'test', _context_type: 'SectionContext' }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,
       [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -111,8 +102,8 @@ describe('track', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        _context_type: 'ButtonContext',
         id: 'test-button',
+        _context_type: 'ButtonContext',
         text: 'Click Me',
       }),
       [ElementTrackingAttribute.trackClicks]: 'true',
@@ -132,8 +123,8 @@ describe('track', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        _context_type: 'SectionContext',
         id: 'test-section',
+        _context_type: 'SectionContext',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,
@@ -152,8 +143,8 @@ describe('track', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        _context_type: 'ExpandableSectionContext',
         id: 'test-expandable',
+        _context_type: 'ExpandableSectionContext',
       }),
       [ElementTrackingAttribute.trackClicks]: 'true',
       [ElementTrackingAttribute.trackBlurs]: undefined,
@@ -172,8 +163,8 @@ describe('track', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        _context_type: 'InputContext',
         id: 'test-input',
+        _context_type: 'InputContext',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: 'true',
@@ -198,8 +189,8 @@ describe('track', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        _context_type: 'LinkContext',
         id: 'test-link',
+        _context_type: 'LinkContext',
         text: 'Click Me',
         href: '/test',
       }),
@@ -220,8 +211,8 @@ describe('track', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        _context_type: 'MediaPlayerContext',
         id: 'test-media-player',
+        _context_type: 'MediaPlayerContext',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,
@@ -240,8 +231,8 @@ describe('track', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        _context_type: 'NavigationContext',
         id: 'test-nav',
+        _context_type: 'NavigationContext',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,
@@ -260,8 +251,8 @@ describe('track', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        _context_type: 'OverlayContext',
         id: 'test-overlay',
+        _context_type: 'OverlayContext',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,

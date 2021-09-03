@@ -9,9 +9,9 @@ import {
   makeOverlayContext,
   makeSectionContext,
 } from '@objectiv/tracker-core';
-import { assert, boolean, Infer, object, optional } from 'superstruct';
 import { v4 as uuidv4 } from 'uuid';
-import { AbstractLocationContext } from '../Contexts';
+import { z } from "zod";
+import { LocationContext } from '../Contexts';
 import {
   ContextType,
   TrackBlursDefaultValueByContextType,
@@ -25,26 +25,30 @@ import {
 } from '../TrackingAttributes';
 
 /**
- * The options parameter of the `track` function. Used to override default behavior
+ * The options parameter of the `track` api. Used to override default behavior
  */
-export const TrackOptions = object({
-  trackClicks: optional(boolean()),
-  trackBlurs: optional(boolean()),
-  trackVisibility: optional(TrackingAttributeVisibility),
-  parentTracker: optional(StringifiedElementTrackingAttributes),
+export const TrackOptions = z.object({
+  trackClicks: z.optional(z.boolean()),
+  trackBlurs: z.optional(z.boolean()),
+  trackVisibility: z.optional(TrackingAttributeVisibility),
+  parentTracker: z.optional(StringifiedElementTrackingAttributes),
 });
-export type TrackOptions = Infer<typeof TrackOptions>;
+export type TrackOptions = z.infer<typeof TrackOptions>;
 
 /**
- * All the possible parameters combination of `track`
+ * The parameters of the `track` api
  */
-export const TrackParameters = object({
-  instance: AbstractLocationContext,
-  options: optional(TrackOptions),
-});
-export type TrackParameters = Infer<typeof TrackParameters>;
+export const TrackParameters = z.tuple([
+  z.object({
+    instance: LocationContext,
+    options: z.optional(TrackOptions),
+  })
+]);
 
-export type TrackReturnValue = StringifiedElementTrackingAttributes;
+/**
+ * The `track` function schema validator
+ */
+const TrackFunction = z.function(TrackParameters, StringifiedElementTrackingAttributes);
 
 /**
  * Used to decorate a Trackable Element with our Tracking Attributes. Can be called in three ways:
@@ -62,9 +66,7 @@ export type TrackReturnValue = StringifiedElementTrackingAttributes;
  *
  * For most commonly used Elements / Location Contexts see also the helper functions below.
  */
-export function track(parameters: TrackParameters): TrackReturnValue {
-  assert(parameters, TrackParameters);
-  const { instance, options } = parameters;
+export const track = TrackFunction.validate(({ instance, options }) => {
   const elementId = uuidv4();
 
   // Clean up the instance from discriminatory properties
@@ -103,7 +105,7 @@ export function track(parameters: TrackParameters): TrackReturnValue {
     [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
     [ElementTrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
   };
-}
+})
 
 /**
  * Location Context specific helpers. To make it easier to track common HTML Elements

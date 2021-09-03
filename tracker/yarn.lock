@@ -2045,12 +2045,12 @@ __metadata:
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^1.4.0
-    superstruct: ^0.15.2
     ts-jest: ^26.5.6
     tslib: ^2.2.0
     typescript: ^4.2.4
     uuid: ^8.3.2
     xhr-mock: ^2.5.1
+    zod: ^3.8.1
   languageName: unknown
   linkType: soft
 
@@ -7549,13 +7549,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"superstruct@npm:^0.15.2":
-  version: 0.15.2
-  resolution: "superstruct@npm:0.15.2"
-  checksum: 8803e65c0dd0e0f502a057b6106a88f2f9dccfe00b242206adb0c77aa804736dce66c8d57ffefea6ead64acef2bcd97728afa92baa73a12cbe0d290f9c4e3354
-  languageName: node
-  linkType: hard
-
 "supports-color@npm:^5.3.0":
   version: 5.5.0
   resolution: "supports-color@npm:5.5.0"
@@ -8302,5 +8295,12 @@ typescript@^4.2.4:
     y18n: ^4.0.0
     yargs-parser: ^18.1.2
   checksum: dbf687d6b938f01bbf11e158dde6df906282b70cd9295af0217ee8cefbd83ad09d49fa9458d0d5325b0e66f03df954a38986db96f91e5b46ccdbbaf9a0157b23
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.8.1":
+  version: 3.8.1
+  resolution: "zod@npm:3.8.1"
+  checksum: 99256c8853eb7ff386be4babb8dd0603a932cfd3e29233cd9f6d43eb6a7788b282b99d9254b16d652c410169d92bd976ad1d22e075275d563f4d0fda931df415
   languageName: node
   linkType: hard

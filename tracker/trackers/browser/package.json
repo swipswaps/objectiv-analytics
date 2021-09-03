@@ -37,7 +37,7 @@
     "xhr-mock": "^2.5.1"
   },
   "dependencies": {
-    "superstruct": "^0.15.2",
-    "uuid": "^8.3.2"
+    "uuid": "^8.3.2",
+    "zod": "^3.8.1"
   }
 }
