@@ -75,7 +75,7 @@ export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tr
 /**
  * The parameters of the Event helper functions
  */
-export type TrackHelperParameters = {
+export type TrackEventHelperParameters = {
   element: HTMLElement | EventTarget;
   tracker?: BrowserTracker;
 };
@@ -83,31 +83,31 @@ export type TrackHelperParameters = {
 /**
  * Event specific helpers. To make it easier to track common Events
  */
-export const trackClick = ({ element, tracker }: TrackHelperParameters) => {
+export const trackClick = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeClickEvent, element, tracker });
 };
 
-export const trackInputChange = ({ element, tracker }: TrackHelperParameters) => {
+export const trackInputChange = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeInputChangeEvent, element, tracker });
 };
 
-export const trackSectionVisibleEvent = ({ element, tracker }: TrackHelperParameters) => {
+export const trackSectionVisibleEvent = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeSectionVisibleEvent, element, tracker });
 };
 
-export const trackSectionHiddenEvent = ({ element, tracker }: TrackHelperParameters) => {
+export const trackSectionHiddenEvent = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeSectionHiddenEvent, element, tracker });
 };
 
-export const trackVideoStartEvent = ({ element, tracker }: TrackHelperParameters) => {
+export const trackVideoStartEvent = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeVideoStartEvent, element, tracker });
 };
 
-export const trackVideoPauseEvent = ({ element, tracker }: TrackHelperParameters) => {
+export const trackVideoPauseEvent = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeVideoPauseEvent, element, tracker });
 };
 
-export const trackVisibility = ({ element, tracker, isVisible }: TrackHelperParameters & { isVisible: boolean }) => {
+export const trackVisibility = ({ element, tracker, isVisible }: TrackEventHelperParameters & { isVisible: boolean }) => {
   return trackEvent({ eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent, element, tracker });
 };
 

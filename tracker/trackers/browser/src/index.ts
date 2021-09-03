@@ -1,5 +1,4 @@
 export * from './Contexts';
-export * from './ContextType';
 export * from './isEmptyObject';
 export * from './observer/isBubbledEvent';
 export * from './observer/makeBlurEventListener';

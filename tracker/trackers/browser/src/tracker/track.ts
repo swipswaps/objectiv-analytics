@@ -11,13 +11,7 @@ import {
 } from '@objectiv/tracker-core';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from "zod";
-import { LocationContext } from '../Contexts';
-import {
-  ContextType,
-  TrackBlursDefaultValueByContextType,
-  TrackClicksDefaultValueByContextType,
-  TrackVisibilityDefaultValueByContextType,
-} from '../ContextType';
+import { ActionContext, ExpandableSectionContext, InputContext, LocationContext, SectionContext } from '../Contexts';
 import {
   ElementTrackingAttribute,
   StringifiedElementTrackingAttributes,
@@ -60,16 +54,10 @@ export const TrackFunction = z.function(z.tuple([TrackParameters]), TrackReturnV
 export const track = TrackFunction.validate(({ instance, options }) => {
   const elementId = uuidv4();
 
-  // Clean up the instance from discriminatory properties
-  cleanObjectFromDiscriminatingProperties(instance);
-
-  // Get the current _context_type from the instance
-  const contextType = instance._context_type as ContextType;
-
   // Process options. Gather default attribute values
-  let trackClicks = TrackClicksDefaultValueByContextType.get(contextType);
-  let trackBlurs = TrackBlursDefaultValueByContextType.get(contextType);
-  let trackVisibility = TrackVisibilityDefaultValueByContextType.get(contextType);
+  let trackClicks = z.union([ActionContext, ExpandableSectionContext]).safeParse(instance).success ? true : undefined;
+  let trackBlurs = InputContext.safeParse(instance).success ? true : undefined;
+  let trackVisibility = SectionContext.safeParse(instance).success ? { mode: 'auto' } : undefined;
   let parentElementId = undefined;
 
   // Process options and apply overrides, if any
@@ -87,6 +75,9 @@ export const track = TrackFunction.validate(({ instance, options }) => {
       parentElementId = options.parentTracker[ElementTrackingAttribute.elementId];
     }
   }
+
+  // Clean up the instance from discriminatory properties before serializing it
+  cleanObjectFromDiscriminatingProperties(instance);
 
   return {
     [ElementTrackingAttribute.elementId]: elementId,
