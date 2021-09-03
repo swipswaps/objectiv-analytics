@@ -36,36 +36,21 @@ export const TrackOptions = z.object({
 export type TrackOptions = z.infer<typeof TrackOptions>;
 
 /**
- * The parameters of the `track` api
- */
-export const TrackParameters = z.tuple([
-  z.object({
-    instance: LocationContext,
-    options: z.optional(TrackOptions),
-  })
-]);
-
-/**
- * The `track` function schema validator
- */
-const TrackFunction = z.function(TrackParameters, StringifiedElementTrackingAttributes);
-
-/**
- * Used to decorate a Trackable Element with our Tracking Attributes. Can be called in three ways:
- *
- *    trackElement(<id>)
- *    trackElement(<id>, <ContextType>, <extraAttributes object>, <options object>)
+ * Used to decorate a Trackable Element with our Tracking Attributes.
  *
  * Examples
  *
- *    trackElement('section id')
- *    trackElement('button', ContextType.button, { text: 'Click Me' }, { trackClicks: true })
+ *    track({ instance: makeElementContext({ id: 'section-id' }) })
+ *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
  *
  * Returns an object containing the tracking attributes. It's properties are supposed to be spread on the target HTML
  * Element. This allows us to identify elements uniquely in a Document and to reconstruct their Location.
  *
- * For most commonly used Elements / Location Contexts see also the helper functions below.
+ * For most commonly used Locations see the helper functions below.
  */
+export const TrackParameters = z.object({ instance: LocationContext, options: z.optional(TrackOptions) });
+export const TrackReturnValue = StringifiedElementTrackingAttributes;
+export const TrackFunction = z.function(z.tuple([TrackParameters]), TrackReturnValue);
 export const track = TrackFunction.validate(({ instance, options }) => {
   const elementId = uuidv4();
 
@@ -110,69 +95,70 @@ export const track = TrackFunction.validate(({ instance, options }) => {
 /**
  * Location Context specific helpers. To make it easier to track common HTML Elements
  */
-type TrackButtonParameters = {
-  id: string;
-  text: string;
-  options?: TrackOptions;
-};
-export const trackButton = ({ id, text, options }: TrackButtonParameters) => {
-  return track({ instance: makeButtonContext({ id, text }), options });
-};
+export const TrackHelperParameters = z.object({ id: z.string(), options: z.optional(TrackOptions) });
 
-type TrackElementParameters = {
-  id: string;
-  options?: TrackOptions;
-};
-export const trackElement = ({ id, options }: TrackElementParameters) => {
+/**
+ * TrackElement helper
+ */
+export const TrackElementFunction = z.function(z.tuple([TrackHelperParameters]), TrackReturnValue);
+export const trackElement = TrackElementFunction.validate(({ id, options }) => {
   return track({ instance: makeSectionContext({ id }), options });
-};
+});
 
-type TrackExpandableElementParameters = {
-  id: string;
-  options?: TrackOptions;
-};
-export const trackExpandableElement = ({ id, options }: TrackExpandableElementParameters) => {
+/**
+ * TrackExpandableElement helper
+ */
+export const TrackExpandableElementFunction = z.function(z.tuple([TrackHelperParameters]), TrackReturnValue);
+export const trackExpandableElement = TrackExpandableElementFunction.validate(({ id, options }) => {
   return track({ instance: makeExpandableSectionContext({ id }), options });
-};
+});
 
-type TrackInputParameters = {
-  id: string;
-  options?: TrackOptions;
-};
-export const trackInput = ({ id, options }: TrackInputParameters) => {
+/**
+ * TrackInput helper
+ */
+export const TrackInputFunction = z.function(z.tuple([TrackHelperParameters]), TrackReturnValue);
+export const trackInput = TrackInputFunction.validate(({ id, options }) => {
   return track({ instance: makeInputContext({ id }), options });
-};
+});
 
-type TrackLinkParameters = {
-  id: string;
-  text: string;
-  href: string;
-  options?: TrackOptions;
-};
-export const trackLink = ({ id, text, href, options }: TrackLinkParameters) => {
+/**
+ * TrackButton helper
+ */
+export const TrackButtonParameters = TrackHelperParameters.extend({ text: z.string() });
+export const TrackButtonFunction = z.function(z.tuple([TrackButtonParameters]), TrackReturnValue);
+export const trackButton = TrackButtonFunction.validate(({ id, text, options }) => {
+  return track({ instance: makeButtonContext({ id, text }), options });
+});
+
+/**
+ * TrackLink helper
+ */
+export const TrackLinkParameters = TrackHelperParameters.extend({ text: z.string(), href: z.string() });
+export const TrackLinkFunction = z.function(z.tuple([TrackLinkParameters]), TrackReturnValue);
+export const trackLink = TrackLinkFunction.validate(({ id, text, href, options }) => {
   return track({ instance: makeLinkContext({ id, text, href }), options });
-};
+});
 
-type TrackMediaPlayerParameters = {
-  id: string;
-  options?: TrackOptions;
-};
-export const trackMediaPlayer = ({ id, options }: TrackMediaPlayerParameters) => {
+/**
+ * TrackMediaPlayer helper
+ */
+export const TrackMediaPlayerFunction = z.function(z.tuple([TrackHelperParameters]), TrackReturnValue);
+export const trackMediaPlayer = TrackMediaPlayerFunction.validate(({ id, options }) => {
   return track({ instance: makeMediaPlayerContext({ id }), options });
-};
+});
 
-type TrackNavigationParameters = {
-  id: string;
-  options?: TrackOptions;
-};
-export const trackNavigation = ({ id, options }: TrackNavigationParameters) => {
+/**
+ * TrackNavigation helper
+ */
+export const TrackNavigationFunction = z.function(z.tuple([TrackHelperParameters]), TrackReturnValue);
+export const trackNavigation = TrackNavigationFunction.validate(({ id, options }) => {
   return track({ instance: makeNavigationContext({ id }), options });
-};
+});
 
-type TrackOverlayParameters = {
-  id: string;
-  options?: TrackOptions;
-};
-export const trackOverlay = ({ id, options }: TrackOverlayParameters) => {
+/**
+ * TrackOverlay helper
+ */
+export const TrackOverlayFunction = z.function(z.tuple([TrackHelperParameters]), TrackReturnValue);
+export const trackOverlay = TrackOverlayFunction.validate(({ id, options }) => {
   return track({ instance: makeOverlayContext({ id }), options });
-};
+});
