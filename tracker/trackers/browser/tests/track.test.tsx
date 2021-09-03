@@ -1,4 +1,11 @@
 import {
+  makeButtonContext,
+  makeExpandableSectionContext,
+  makeInputContext,
+  makeLinkContext, makeMediaPlayerContext, makeNavigationContext, makeOverlayContext,
+  makeSectionContext,
+} from '@objectiv/tracker-core';
+import {
   ContextType,
   ElementTrackingAttribute,
   StringifiedElementTrackingAttributes,
@@ -10,9 +17,9 @@ import {
   trackLink,
   trackMediaPlayer,
   trackNavigation,
-  trackOverlay
+  trackOverlay,
 } from '../src';
-import matchElementId from "./mocks/matchElementId";
+import matchElementId from './mocks/matchElementId';
 
 describe('track', () => {
   it('should throw when given invalid parameters', () => {
@@ -49,7 +56,7 @@ describe('track', () => {
   });
 
   it('should allow overriding whether to track click, blur and visibility events via options', () => {
-    expect(track({ id: 'test' })).toStrictEqual({
+    expect(trackElement({ id: 'test' })).toStrictEqual({
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
@@ -58,7 +65,7 @@ describe('track', () => {
       [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     });
     expect(
-      track({
+      trackElement({
         id: 'test',
         options: {
           trackClicks: true,
@@ -77,8 +84,8 @@ describe('track', () => {
   });
 
   it('should allow overriding parent auto detection via options', () => {
-    const parentTracker = track({ id: 'parent' }) as StringifiedElementTrackingAttributes;
-    expect(track({ id: 'test' })).toStrictEqual({
+    const parentTracker = trackElement({ id: 'parent' }) as StringifiedElementTrackingAttributes;
+    expect(trackElement({ id: 'test' })).toStrictEqual({
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
@@ -86,7 +93,7 @@ describe('track', () => {
       [ElementTrackingAttribute.trackBlurs]: undefined,
       [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     });
-    expect(track({ id: 'test', options: { parentTracker: parentTracker } })).toStrictEqual({
+    expect(trackElement({ id: 'test', options: { parentTracker: parentTracker } })).toStrictEqual({
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: parentTracker[ElementTrackingAttribute.elementId],
       [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
@@ -97,11 +104,7 @@ describe('track', () => {
   });
 
   it('should return Button tracking attributes', () => {
-    const trackingAttributes1 = track({
-      id: 'test-button',
-      type: ContextType.button,
-      extraAttributes: { text: 'Click Me' },
-    });
+    const trackingAttributes1 = track({ instance: makeButtonContext({ id: 'test-button', text: 'Click Me' }) });
     const trackingAttributes2 = trackButton({ id: 'test-button', text: 'Click Me' });
 
     const expectedTrackingAttributes = {
@@ -122,9 +125,8 @@ describe('track', () => {
   });
 
   it('should return Element (Section) tracking attributes', () => {
-    const trackingAttributes1 = track({ id: 'test-section' });
-    const trackingAttributes2 = track({ id: 'test-section', type: ContextType.element });
-    const trackingAttributes3 = trackElement({ id: 'test-section' });
+    const trackingAttributes1 = track({ instance: makeSectionContext({ id: 'test-section' }) });
+    const trackingAttributes2 = trackElement({ id: 'test-section' });
 
     const expectedTrackingAttributes = {
       [ElementTrackingAttribute.elementId]: matchElementId,
@@ -140,11 +142,10 @@ describe('track', () => {
 
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
     expect(trackingAttributes2).toStrictEqual(expectedTrackingAttributes);
-    expect(trackingAttributes3).toStrictEqual(expectedTrackingAttributes);
   });
 
   it('should return ExpandableElement (ExpandableSection) tracking attributes', () => {
-    const trackingAttributes1 = track({ id: 'test-expandable', type: ContextType.expandableElement });
+    const trackingAttributes1 = track({ instance: makeExpandableSectionContext({ id: 'test-expandable' }) });
     const trackingAttributes2 = trackExpandableElement({ id: 'test-expandable' });
 
     const expectedTrackingAttributes = {
@@ -164,7 +165,7 @@ describe('track', () => {
   });
 
   it('should return Input tracking attributes', () => {
-    const trackingAttributes1 = track({ id: 'test-input', type: ContextType.input });
+    const trackingAttributes1 = track({ instance: makeInputContext({ id: 'test-input' }) });
     const trackingAttributes2 = trackInput({ id: 'test-input' });
 
     const expectedTrackingAttributes = {
@@ -185,9 +186,11 @@ describe('track', () => {
 
   it('should return Link tracking attributes', () => {
     const trackingAttributes1 = track({
-      id: 'test-link',
-      type: ContextType.link,
-      extraAttributes: { text: 'Click Me', href: '/test' },
+      instance: makeLinkContext({
+        id: 'test-link',
+        text: 'Click Me',
+        href: '/test',
+      }),
     });
     const trackingAttributes2 = trackLink({ id: 'test-link', text: 'Click Me', href: '/test' });
 
@@ -210,7 +213,7 @@ describe('track', () => {
   });
 
   it('should return MediaPlayer tracking attributes', () => {
-    const trackingAttributes1 = track({ id: 'test-media-player', type: ContextType.mediaPlayer });
+    const trackingAttributes1 = track({ instance: makeMediaPlayerContext({id: 'test-media-player'})});
     const trackingAttributes2 = trackMediaPlayer({ id: 'test-media-player' });
 
     const expectedTrackingAttributes = {
@@ -230,7 +233,7 @@ describe('track', () => {
   });
 
   it('should return Navigation tracking attributes', () => {
-    const trackingAttributes1 = track({ id: 'test-nav', type: ContextType.navigation });
+    const trackingAttributes1 = track({instance: makeNavigationContext({ id: 'test-nav'})});
     const trackingAttributes2 = trackNavigation({ id: 'test-nav' });
 
     const expectedTrackingAttributes = {
@@ -250,7 +253,7 @@ describe('track', () => {
   });
 
   it('should return Overlay tracking attributes', () => {
-    const trackingAttributes1 = track({ id: 'test-overlay', type: ContextType.overlay });
+    const trackingAttributes1 = track({ instance: makeOverlayContext({ id: 'test-overlay' })});
     const trackingAttributes2 = trackOverlay({ id: 'test-overlay' });
 
     const expectedTrackingAttributes = {
