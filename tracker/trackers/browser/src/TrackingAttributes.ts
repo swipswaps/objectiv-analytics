@@ -1,11 +1,17 @@
 import { AbstractLocationContext } from '@objectiv/schema';
+import { boolean, Infer, literal, object, optional, string, union } from 'superstruct';
 
 /**
  * The possible values of the `trackVisibility` TrackingAttribute.
  */
-export type TrackingAttributeVisibilityAuto = { mode: 'auto' };
-export type TrackingAttributeVisibilityManual = { mode: 'manual'; isVisible: boolean };
-export type TrackingAttributeVisibility = TrackingAttributeVisibilityAuto | TrackingAttributeVisibilityManual;
+export const TrackingAttributeVisibilityAuto = object({ mode: literal('auto') });
+export type TrackingAttributeVisibilityAuto = Infer<typeof TrackingAttributeVisibilityAuto>;
+
+export const TrackingAttributeVisibilityManual = object({ mode: literal('manual'), isVisible: boolean() });
+export type TrackingAttributeVisibilityManual = Infer<typeof TrackingAttributeVisibilityManual>;
+
+export const TrackingAttributeVisibility = union([TrackingAttributeVisibilityAuto, TrackingAttributeVisibilityManual]);
+export type TrackingAttributeVisibility = Infer<typeof TrackingAttributeVisibility>;
 
 /**
  * All the attributes that are added to a DOM Element to make it trackable
@@ -53,14 +59,15 @@ export type ElementTrackingAttributes = {
 /**
  * The object that `track` calls return, stringified
  */
-export type StringifiedElementTrackingAttributes = {
-  [ElementTrackingAttribute.elementId]: string;
-  [ElementTrackingAttribute.parentElementId]?: string;
-  [ElementTrackingAttribute.context]: string;
-  [ElementTrackingAttribute.trackClicks]?: string;
-  [ElementTrackingAttribute.trackBlurs]?: string;
-  [ElementTrackingAttribute.trackVisibility]?: string;
-};
+export const StringifiedElementTrackingAttributes = object({
+  [ElementTrackingAttribute.elementId]: string(),
+  [ElementTrackingAttribute.parentElementId]: optional(string()),
+  [ElementTrackingAttribute.context]: string(),
+  [ElementTrackingAttribute.trackClicks]: optional(string()),
+  [ElementTrackingAttribute.trackBlurs]: optional(string()),
+  [ElementTrackingAttribute.trackVisibility]: optional(string()),
+});
+export type StringifiedElementTrackingAttributes = Infer<typeof StringifiedElementTrackingAttributes>;
 
 /**
  * The object that `trackChildren` calls return

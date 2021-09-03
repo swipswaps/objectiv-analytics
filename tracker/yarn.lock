@@ -2045,6 +2045,7 @@ __metadata:
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^1.4.0
+    superstruct: ^0.15.2
     ts-jest: ^26.5.6
     tslib: ^2.2.0
     typescript: ^4.2.4
@@ -7545,6 +7546,13 @@ __metadata:
   version: 2.0.0
   resolution: "strip-final-newline@npm:2.0.0"
   checksum: 74dbd8a602409706748db730200efab53ba739ed7888310e74e45697efbd760981df6d6f0fa34b23e973135fb07d3b22adae6e6d58898f692a094e49692c6c33
+  languageName: node
+  linkType: hard
+
+"superstruct@npm:^0.15.2":
+  version: 0.15.2
+  resolution: "superstruct@npm:0.15.2"
+  checksum: 8803e65c0dd0e0f502a057b6106a88f2f9dccfe00b242206adb0c77aa804736dce66c8d57ffefea6ead64acef2bcd97728afa92baa73a12cbe0d290f9c4e3354
   languageName: node
   linkType: hard
 
