@@ -93,7 +93,6 @@ export function track(parameters: TrackParameters): TrackReturnValue {
       trackVisibility = options.trackVisibility;
     }
     if (options.parentTracker !== undefined) {
-      assert(options.parentTracker, StringifiedElementTrackingAttributes);
       parentElementId = options.parentTracker[ElementTrackingAttribute.elementId];
     }
   }
