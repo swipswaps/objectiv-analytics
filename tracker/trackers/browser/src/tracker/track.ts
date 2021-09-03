@@ -81,8 +81,6 @@ export function track(parameters: TrackParameters): TrackReturnValue {
 
   // Process options and apply overrides, if any
   if (options !== undefined) {
-    assert(options, TrackOptions);
-
     if (options.trackClicks !== undefined) {
       trackClicks = options.trackClicks;
     }
