@@ -6,16 +6,13 @@ import { z } from "zod";
 export const AbstractContext = z.object({
   id: z.string(),
   _context_type: z.enum([
-    'SectionContext',
-    'WebDocumentContext',
-    'ScreenContext',
+    'SectionContext', // aka ElementContext
+    'ExpandableSectionContext',
     'ExpandableSectionContext',
     'MediaPlayerContext',
     'NavigationContext',
     'OverlayContext',
-    'ItemContext',
     'InputContext',
-    'ActionContext',
     'ButtonContext',
     'LinkContext',
   ]),
@@ -36,9 +33,7 @@ export type AbstractLocationContext = z.infer<typeof AbstractLocationContext>;
 export const AbstractSectionContext = AbstractLocationContext.extend({
   __section_context: z.literal(true),
   _context_type: z.enum([
-    'SectionContext',
-    'WebDocumentContext',
-    'ScreenContext',
+    'SectionContext', // aka ElementContext
     'ExpandableSectionContext',
     'MediaPlayerContext',
     'NavigationContext',
@@ -83,22 +78,6 @@ export const ElementContext = AbstractSectionContext.extend({
   _context_type: z.literal(AbstractSectionContext.shape._context_type.enum.SectionContext),
 });
 export type SectionContext = z.infer<typeof ElementContext>;
-
-/**
- * WebDocumentContext
- */
-export const WebDocumentContext = AbstractSectionContext.extend({
-  _context_type: z.literal(AbstractSectionContext.shape._context_type.enum.WebDocumentContext),
-});
-export type WebDocumentContext = z.infer<typeof WebDocumentContext>;
-
-/**
- * ScreenContext
- */
-export const ScreenContext = AbstractSectionContext.extend({
-  _context_type: z.literal(AbstractSectionContext.shape._context_type.enum.ScreenContext),
-});
-export type ScreenContext = z.infer<typeof ScreenContext>;
 
 /**
  * ExpandableSectionContext
@@ -162,8 +141,6 @@ export type LinkContext = z.infer<typeof LinkContext>;
  */
 export const LocationContext = z.union([
   ElementContext,
-  WebDocumentContext,
-  ScreenContext,
   ExpandableSectionContext,
   MediaPlayerContext,
   NavigationContext,
@@ -178,8 +155,6 @@ export const LocationContext = z.union([
  */
 export const SectionContext = z.union([
   ElementContext,
-  WebDocumentContext,
-  ScreenContext,
   ExpandableSectionContext,
   MediaPlayerContext,
   NavigationContext,
