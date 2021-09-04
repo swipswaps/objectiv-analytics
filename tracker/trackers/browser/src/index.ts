@@ -16,6 +16,8 @@ export * from './tracker/findTrackedParentElements';
 export * from './tracker/track';
 export * from './tracker/trackChildren';
 export * from './tracker/trackEvent';
+export * from './tracker/trackLocation';
+export * from './tracker/trackLocationHelpers';
 export * from './TrackingAttributes';
 export * from './transport/DebugTransport';
 export * from './transport/FetchAPITransport';
