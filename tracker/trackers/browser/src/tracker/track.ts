@@ -38,6 +38,9 @@ export const TrackFunction = z.function(
   StringifiedElementTrackingAttributes
 );
 
+/**
+ * The "unsafe" implementation of `track`: `trackImplementation` will not prevent errors from being thrown.
+ */
 export const trackImplementation = TrackFunction.validate(({ instance, options }) => {
   const elementId = uuidv4();
 
@@ -77,7 +80,7 @@ export const trackImplementation = TrackFunction.validate(({ instance, options }
 })
 
 /**
- * Wrapper around `trackImplementation` calls, for error handling
+ * A safe wrapper around `trackImplementation` and the recommended way of tracking Elements
  */
 export const track = (parameters: z.infer<typeof TrackParameters>, onError?: (error: Error) => void) => {
   try {
