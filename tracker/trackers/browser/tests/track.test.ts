@@ -262,4 +262,23 @@ describe('track', () => {
     expect(trackingAttributes1).toStrictEqual(expectedTrackingAttributes);
     expect(trackingAttributes2).toStrictEqual(expectedTrackingAttributes);
   });
+
+  it('should not allow extra attributes', () => {
+    const customSectionContext = {...makeSectionContext({ id: 'test-overlay' }), extraMetadata: { test: 123 }}
+    const trackingAttributes = track({ instance: customSectionContext});
+
+    const expectedTrackingAttributes = {
+      [ElementTrackingAttribute.elementId]: matchElementId,
+      [ElementTrackingAttribute.parentElementId]: undefined,
+      [ElementTrackingAttribute.context]: JSON.stringify({
+        id: 'test-overlay',
+        _context_type: 'SectionContext',
+      }),
+      [ElementTrackingAttribute.trackClicks]: undefined,
+      [ElementTrackingAttribute.trackBlurs]: undefined,
+      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+    };
+
+    expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
+  });
 });
