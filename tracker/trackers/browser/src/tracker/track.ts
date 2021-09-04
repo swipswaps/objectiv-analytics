@@ -10,6 +10,8 @@ export const track = (parameters: z.infer<typeof TrackParameters>, onError: (err
   } catch (error) {
     if (onError) {
       onError(error)
+    } else {
+      console.error(error)
     }
     return {};
   }

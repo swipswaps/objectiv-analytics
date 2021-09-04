@@ -36,4 +36,14 @@ describe('track', () => {
     expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(z.ZodError);
   })
 
+  it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
+    const consoleErrorMock = spyOn(console, 'error');
+
+    // @ts-ignore
+    track({ instance: {} });
+
+    expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+    expect(consoleErrorMock.calls.first().args[0]).toBeInstanceOf(z.ZodError);
+  })
+
 });
