@@ -1,7 +1,7 @@
 import { cleanObjectFromDiscriminatingProperties, } from '@objectiv/tracker-core';
 import { v4 as uuidv4 } from 'uuid';
 import { z } from "zod";
-import { ActionContext, ExpandableSectionContext, InputContext, LocationContext, SectionContext } from '../Contexts';
+import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
 import {
   ElementTrackingAttribute,
   StringifiedElementTrackingAttributes,
@@ -42,7 +42,7 @@ export const trackLocation = TrackFunction.validate(({ instance, options }) => {
   const elementId = uuidv4();
 
   // Process options. Gather default attribute values
-  let trackClicks = z.union([ActionContext, ExpandableSectionContext]).safeParse(instance).success ? true : undefined;
+  let trackClicks = ClickableContext.safeParse(instance).success ? true : undefined;
   let trackBlurs = InputContext.safeParse(instance).success ? true : undefined;
   let trackVisibility = SectionContext.safeParse(instance).success ? { mode: 'auto' } : undefined;
   let parentElementId = undefined;

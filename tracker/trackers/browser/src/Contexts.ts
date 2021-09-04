@@ -177,3 +177,11 @@ export const ActionContext = z.union([
   ButtonContext,
   LinkContext,
 ]);
+
+/**
+ * ClickableContext
+ */
+export const ClickableContext = z.union([
+  ActionContext,
+  ExpandableSectionContext,
+]);

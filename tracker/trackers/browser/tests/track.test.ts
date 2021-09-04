@@ -45,5 +45,4 @@ describe('track', () => {
     expect(consoleErrorMock).toHaveBeenCalledTimes(1);
     expect(consoleErrorMock.calls.first().args[0]).toBeInstanceOf(z.ZodError);
   })
-
 });
