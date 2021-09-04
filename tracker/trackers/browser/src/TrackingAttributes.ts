@@ -61,11 +61,11 @@ export type ElementTrackingAttributes = {
  */
 export const StringifiedElementTrackingAttributes = z.object({
   [ElementTrackingAttribute.elementId]: z.string(),
-  [ElementTrackingAttribute.parentElementId]: z.optional(z.string()),
+  [ElementTrackingAttribute.parentElementId]: z.string().optional(),
   [ElementTrackingAttribute.context]: z.string(),
-  [ElementTrackingAttribute.trackClicks]: z.optional(z.string()),
-  [ElementTrackingAttribute.trackBlurs]: z.optional(z.string()),
-  [ElementTrackingAttribute.trackVisibility]: z.optional(z.string()),
+  [ElementTrackingAttribute.trackClicks]: z.string().optional(),
+  [ElementTrackingAttribute.trackBlurs]: z.string().optional(),
+  [ElementTrackingAttribute.trackVisibility]: z.string().optional(),
 });
 export type StringifiedElementTrackingAttributes = z.infer<typeof StringifiedElementTrackingAttributes>;
 

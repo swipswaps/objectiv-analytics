@@ -22,10 +22,10 @@ import {
  * The options parameter of the `track` api. Used to override default behavior
  */
 export const TrackOptions = z.object({
-  trackClicks: z.optional(z.boolean()),
-  trackBlurs: z.optional(z.boolean()),
-  trackVisibility: z.optional(TrackingAttributeVisibility),
-  parentTracker: z.optional(StringifiedElementTrackingAttributes),
+  trackClicks: z.boolean().optional(),
+  trackBlurs: z.boolean().optional(),
+  trackVisibility: TrackingAttributeVisibility.optional(),
+  parentTracker: StringifiedElementTrackingAttributes.optional(),
 });
 export type TrackOptions = z.infer<typeof TrackOptions>;
 
@@ -48,7 +48,7 @@ export type TrackOptions = z.infer<typeof TrackOptions>;
  *    trackButton({ id: 'section-id', text: 'button text' })
  *
  */
-export const TrackParameters = z.object({ instance: LocationContext, options: z.optional(TrackOptions) });
+export const TrackParameters = z.object({ instance: LocationContext, options: TrackOptions.optional() });
 export const TrackReturnValue = StringifiedElementTrackingAttributes;
 export const TrackFunction = z.function(z.tuple([TrackParameters]), TrackReturnValue);
 export const track = TrackFunction.validate(({ instance, options }) => {
@@ -92,7 +92,7 @@ export const track = TrackFunction.validate(({ instance, options }) => {
 /**
  * Location Context specific helpers. To make it easier to track common HTML Elements
  */
-export const TrackHelperParameters = z.object({ id: z.string(), options: z.optional(TrackOptions) });
+export const TrackHelperParameters = z.object({ id: z.string(), options: TrackOptions.optional() });
 
 /**
  * TrackElement helper
