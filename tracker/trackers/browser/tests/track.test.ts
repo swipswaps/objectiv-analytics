@@ -1,4 +1,5 @@
 import { makeSectionContext, } from '@objectiv/tracker-core';
+import { z } from "zod";
 import { track } from '../src';
 
 describe('track', () => {
@@ -25,5 +26,14 @@ describe('track', () => {
     expect(track({ instance: makeSectionContext({ id: 'test' }), options: 'invalid' })).toStrictEqual({});
   });
 
-  // TODO test onError callback
+  it('should call `onError` callback when an error occurs', () => {
+    const errorCallback = jest.fn();
+
+    // @ts-ignore
+    track({ instance: {} }, errorCallback);
+
+    expect(errorCallback).toHaveBeenCalledTimes(1);
+    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(z.ZodError);
+  })
+
 });
