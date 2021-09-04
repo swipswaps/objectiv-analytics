@@ -10,7 +10,7 @@ import {
 } from '@objectiv/tracker-core';
 import { z } from "zod";
 import { track } from "../tracker/track";
-import { TrackOptions } from "../tracker/trackLocation";
+import { TrackOptions } from "../tracker/track";
 
 /**
  * Track Location helpers automatically factor Context Instances and use `track` internally.
