@@ -1,6 +1,5 @@
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
 import { boolean, create, func, Infer, is, literal, object, optional, union } from 'superstruct';
-import { v4 as uuidv4 } from 'uuid';
 import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
 import { isEmptyObject } from '../isEmptyObject';
 import {
@@ -22,7 +21,6 @@ import {
  *    track({ instance: makeElementContext({ id: 'section-id' }) })
  *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
  */
-
 export const TrackReturnValue = union([StringifiedElementTrackingAttributes, literal({})]);
 export type TrackReturnValue = Infer<typeof TrackReturnValue>;
 
@@ -38,16 +36,14 @@ export const TrackParameters = object({
   options: optional(TrackOptions),
   onError: optional(func()),
 });
-export type TrackParameters = Infer<typeof TrackParameters> & {
-  onError?: (error: Error, parameters: TrackParameters) => void;
-};
+export type TrackOnErrorParameter = { onError?: (error: Error, parameters: TrackParameters) => void; };
+export type TrackParameters = Infer<typeof TrackParameters> & TrackOnErrorParameter;
 
 export const track = (parameters: TrackParameters): TrackReturnValue => {
   try {
+    // Validate input
     const { instance, options } = create(parameters, TrackParameters);
-    const elementId = uuidv4();
 
-    // TODO try to embed this whole defaulting block into the type itself using coercion
     // Process options. Gather default attribute values
     let trackClicks = is(instance, ClickableContext) ? true : undefined;
     let trackBlurs = is(instance, InputContext) ? true : undefined;
@@ -70,19 +66,19 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
       }
     }
 
-    // Clean up the instance from discriminatory properties before serializing it
+    // Clean up the Context instance from discriminatory properties before serializing it
     cleanObjectFromDiscriminatingProperties(instance);
 
-    return {
-      [ElementTrackingAttribute.elementId]: elementId,
+    // Validate output and return it
+    return create({
       [ElementTrackingAttribute.parentElementId]: parentElementId,
       [ElementTrackingAttribute.context]: JSON.stringify(instance),
       [ElementTrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
       [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
       [ElementTrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
-    };
+    }, StringifiedElementTrackingAttributes);
   } catch (error) {
-    if (parameters?.onError) {
+    if (parameters.onError) {
       parameters.onError(error, parameters);
     } else {
       console.error(error, parameters);

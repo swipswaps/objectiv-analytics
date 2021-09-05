@@ -8,18 +8,19 @@ import {
   makeOverlayContext,
   makeSectionContext,
 } from '@objectiv/tracker-core';
-import { func, Infer, intersection, object, optional, string } from 'superstruct';
-import { track, TrackOptions } from '../tracker/track';
+import { assign, Infer, object, pick, string } from 'superstruct';
+import { track, TrackOnErrorParameter, TrackParameters } from '../tracker/track';
 
 /**
  * Track Location helpers automatically factor Context Instances and use `track` internally.
  */
-export const TrackHelperParameters = object({
-  id: string(),
-  options: optional(TrackOptions),
-  onError: optional(func()),
-});
-export type TrackHelperParameters = Infer<typeof TrackHelperParameters>;
+export const TrackHelperParameters = assign(
+  pick(TrackParameters, ['options', 'onError']),
+  object({
+    id: string(),
+  })
+);
+export type TrackHelperParameters = Infer<typeof TrackHelperParameters> & TrackOnErrorParameter;
 
 /**
  * TrackElement helper
@@ -45,8 +46,8 @@ export const trackInput = ({ id, options, onError }: TrackHelperParameters) => {
 /**
  * TrackButton helper
  */
-export const TrackButtonParameters = intersection([TrackHelperParameters, object({ text: string() })]);
-export type TrackButtonParameters = Infer<typeof TrackButtonParameters>;
+export const TrackButtonParameters = assign(TrackHelperParameters, object({ text: string() }));
+export type TrackButtonParameters = Infer<typeof TrackButtonParameters> & TrackOnErrorParameter;
 export const trackButton = ({ id, text, options, onError }: TrackButtonParameters) => {
   return track({ instance: makeButtonContext({ id, text }), options, onError });
 };
@@ -54,8 +55,8 @@ export const trackButton = ({ id, text, options, onError }: TrackButtonParameter
 /**
  * TrackLink helper
  */
-export const TrackLinkParameters = intersection([TrackHelperParameters, object({ text: string(), href: string() })]);
-export type TrackLinkParameters = Infer<typeof TrackLinkParameters>;
+export const TrackLinkParameters = assign(TrackHelperParameters, object({ text: string(), href: string() }));
+export type TrackLinkParameters = Infer<typeof TrackLinkParameters> & TrackOnErrorParameter;
 export const trackLink = ({ id, text, href, options, onError }: TrackLinkParameters) => {
   return track({ instance: makeLinkContext({ id, text, href }), options, onError });
 };

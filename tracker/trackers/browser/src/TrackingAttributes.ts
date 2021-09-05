@@ -1,5 +1,6 @@
-import { AbstractLocationContext } from '@objectiv/schema';
-import { boolean, Infer, literal, object, optional, string, union } from 'superstruct';
+import { boolean, defaulted, define, Infer, is, literal, object, optional, string, union } from 'superstruct';
+import { validate, v4 } from 'uuid';
+import { LocationContext } from "./Contexts";
 
 /**
  * The possible values of the `trackVisibility` TrackingAttribute.
@@ -45,26 +46,39 @@ export enum ChildrenTrackingAttribute {
 }
 
 /**
+ * A custom Struct describing v4 UUIDs
+ */
+export const Uuid = define('Uuid', (value: any) => validate(value))
+
+/**
+ * Custom Structs describing stringified booleans
+ */
+export const StringTrue = define('StringTrue', (value: any) => value ==='true')
+export const StringFalse = define('StringFalse', (value: any) => value ==='false')
+export const StringBoolean = define('StringBoolean', (value: any) => is(value, union([StringTrue, StringFalse])))
+
+/**
  * The object that `track` calls return
  */
-export type ElementTrackingAttributes = {
-  [ElementTrackingAttribute.elementId]: string;
-  [ElementTrackingAttribute.parentElementId]?: string;
-  [ElementTrackingAttribute.context]: AbstractLocationContext;
-  [ElementTrackingAttribute.trackClicks]?: boolean;
-  [ElementTrackingAttribute.trackBlurs]?: boolean;
-  [ElementTrackingAttribute.trackVisibility]?: TrackingAttributeVisibility;
-};
+export const ElementTrackingAttributes = object({
+  [ElementTrackingAttribute.elementId]: Uuid,
+  [ElementTrackingAttribute.parentElementId]: optional(Uuid),
+  [ElementTrackingAttribute.context]: LocationContext,
+  [ElementTrackingAttribute.trackClicks]: optional(boolean()),
+  [ElementTrackingAttribute.trackBlurs]: optional(boolean()),
+  [ElementTrackingAttribute.trackVisibility]: optional(TrackingAttributeVisibility),
+});
+export type ElementTrackingAttributes = Infer<typeof ElementTrackingAttributes>;
 
 /**
  * The object that `track` calls return, stringified
  */
 export const StringifiedElementTrackingAttributes = object({
-  [ElementTrackingAttribute.elementId]: string(),
-  [ElementTrackingAttribute.parentElementId]: optional(string()),
+  [ElementTrackingAttribute.elementId]: defaulted(Uuid, () => v4()),
+  [ElementTrackingAttribute.parentElementId]: optional(Uuid),
   [ElementTrackingAttribute.context]: string(),
-  [ElementTrackingAttribute.trackClicks]: optional(string()),
-  [ElementTrackingAttribute.trackBlurs]: optional(string()),
+  [ElementTrackingAttribute.trackClicks]: optional(StringBoolean),
+  [ElementTrackingAttribute.trackBlurs]: optional(StringBoolean),
   [ElementTrackingAttribute.trackVisibility]: optional(string()),
 });
 export type StringifiedElementTrackingAttributes = Infer<typeof StringifiedElementTrackingAttributes>;
