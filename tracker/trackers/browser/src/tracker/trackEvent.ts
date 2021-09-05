@@ -107,7 +107,11 @@ export const trackVideoPauseEvent = ({ element, tracker }: TrackEventHelperParam
   return trackEvent({ eventFactory: makeVideoPauseEvent, element, tracker });
 };
 
-export const trackVisibility = ({ element, tracker, isVisible }: TrackEventHelperParameters & { isVisible: boolean }) => {
+export const trackVisibility = ({
+  element,
+  tracker,
+  isVisible,
+}: TrackEventHelperParameters & { isVisible: boolean }) => {
   return trackEvent({ eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent, element, tracker });
 };
 

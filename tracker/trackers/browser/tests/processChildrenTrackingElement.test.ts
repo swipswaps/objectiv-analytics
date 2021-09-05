@@ -86,6 +86,8 @@ describe('processChildrenTrackingElement', () => {
 
     expect(result).toHaveLength(1);
     expect(isTrackedElement(result[0])).toBe(true);
-    expect(JSON.parse(result[0].getAttribute(ElementTrackingAttribute.context) ?? '')).toStrictEqual(expectedButtonContext);
+    expect(JSON.parse(result[0].getAttribute(ElementTrackingAttribute.context) ?? '')).toStrictEqual(
+      expectedButtonContext
+    );
   });
 });

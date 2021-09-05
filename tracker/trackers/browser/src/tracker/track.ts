@@ -1,7 +1,8 @@
-import { cleanObjectFromDiscriminatingProperties, } from '@objectiv/tracker-core';
+import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
+import { boolean, create, func, Infer, is, literal, object, optional, union } from 'superstruct';
 import { v4 as uuidv4 } from 'uuid';
-import { z } from "zod";
 import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
+import { isEmptyObject } from '../isEmptyObject';
 import {
   ElementTrackingAttribute,
   StringifiedElementTrackingAttributes,
@@ -21,75 +22,70 @@ import {
  *    track({ instance: makeElementContext({ id: 'section-id' }) })
  *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
  */
-export const TrackOptions = z.object({
-  trackClicks: z.boolean().optional(),
-  trackBlurs: z.boolean().optional(),
-  trackVisibility: TrackingAttributeVisibility.optional(),
-  parentTracker: StringifiedElementTrackingAttributes.optional(),
+
+export const TrackReturnValue = union([StringifiedElementTrackingAttributes, literal({})]);
+export type TrackReturnValue = Infer<typeof TrackReturnValue>;
+
+export const TrackOptions = object({
+  trackClicks: optional(boolean()),
+  trackBlurs: optional(boolean()),
+  trackVisibility: optional(TrackingAttributeVisibility),
+  parentTracker: optional(TrackReturnValue),
 });
 
-export const TrackParameters = z.object({
+export const TrackParameters = object({
   instance: LocationContext,
-  options: TrackOptions.optional()
+  options: optional(TrackOptions),
+  onError: optional(func()),
 });
+export type TrackParameters = Infer<typeof TrackParameters> & {
+  onError?: (error: Error, parameters: TrackParameters) => void;
+};
 
-export const TrackFunction = z.function(
-  z.tuple([TrackParameters]),
-  StringifiedElementTrackingAttributes
-);
-
-/**
- * The "unsafe" implementation of `track`: `trackImplementation` will not prevent errors from being thrown.
- */
-export const trackImplementation = TrackFunction.validate(({ instance, options }) => {
-  const elementId = uuidv4();
-
-  // Process options. Gather default attribute values
-  let trackClicks = ClickableContext.safeParse(instance).success ? true : undefined;
-  let trackBlurs = InputContext.safeParse(instance).success ? true : undefined;
-  let trackVisibility = SectionContext.safeParse(instance).success ? { mode: 'auto' } : undefined;
-  let parentElementId = undefined;
-
-  // Process options and apply overrides, if any
-  if (options !== undefined) {
-    if (options.trackClicks !== undefined) {
-      trackClicks = options.trackClicks;
-    }
-    if (options.trackBlurs !== undefined) {
-      trackBlurs = options.trackBlurs;
-    }
-    if (options.trackVisibility !== undefined) {
-      trackVisibility = options.trackVisibility;
-    }
-    if (options.parentTracker !== undefined) {
-      parentElementId = options.parentTracker[ElementTrackingAttribute.elementId];
-    }
-  }
-
-  // Clean up the instance from discriminatory properties before serializing it
-  cleanObjectFromDiscriminatingProperties(instance);
-
-  return {
-    [ElementTrackingAttribute.elementId]: elementId,
-    [ElementTrackingAttribute.parentElementId]: parentElementId,
-    [ElementTrackingAttribute.context]: JSON.stringify(instance),
-    [ElementTrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
-    [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
-    [ElementTrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
-  };
-})
-
-/**
- * A safe wrapper around `trackImplementation` and the recommended way of tracking Elements
- */
-export const track = (parameters: z.infer<typeof TrackParameters>, onError?: (error: Error) => void) => {
+export const track = (parameters: TrackParameters): TrackReturnValue => {
   try {
-    return trackImplementation(parameters)
+    const { instance, options } = create(parameters, TrackParameters);
+    const elementId = uuidv4();
+
+    // TODO try to embed this whole defaulting block into the type itself using coercion
+    // Process options. Gather default attribute values
+    let trackClicks = is(instance, ClickableContext) ? true : undefined;
+    let trackBlurs = is(instance, InputContext) ? true : undefined;
+    let trackVisibility = is(instance, SectionContext) ? { mode: 'auto' } : undefined;
+    let parentElementId = undefined;
+
+    // Process options and apply overrides, if any
+    if (options !== undefined) {
+      if (options.trackClicks !== undefined) {
+        trackClicks = options.trackClicks;
+      }
+      if (options.trackBlurs !== undefined) {
+        trackBlurs = options.trackBlurs;
+      }
+      if (options.trackVisibility !== undefined) {
+        trackVisibility = options.trackVisibility;
+      }
+      if (options.parentTracker !== undefined && !isEmptyObject(options.parentTracker)) {
+        parentElementId = options.parentTracker[ElementTrackingAttribute.elementId];
+      }
+    }
+
+    // Clean up the instance from discriminatory properties before serializing it
+    cleanObjectFromDiscriminatingProperties(instance);
+
+    return {
+      [ElementTrackingAttribute.elementId]: elementId,
+      [ElementTrackingAttribute.parentElementId]: parentElementId,
+      [ElementTrackingAttribute.context]: JSON.stringify(instance),
+      [ElementTrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
+      [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
+      [ElementTrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
+    };
   } catch (error) {
-    if (onError) {
-      onError(error)
+    if (parameters?.onError) {
+      parameters.onError(error, parameters);
     } else {
-      console.error(error)
+      console.error(error, parameters);
     }
     return {};
   }

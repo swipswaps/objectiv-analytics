@@ -48,7 +48,7 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
 
     queriedElements.forEach((queriedElement) => {
       if (!queriedElement) {
-        console.error(`Could find Element via querySelector query: ${query}`);
+        console.error(`Could not find Element via querySelector query: ${query}`);
         return;
       }
 

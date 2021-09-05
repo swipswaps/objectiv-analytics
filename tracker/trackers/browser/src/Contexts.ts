@@ -1,11 +1,11 @@
-import { z } from "zod";
-
 /**
  * AbstractContext
  */
-export const AbstractContext = z.object({
-  id: z.string(),
-  _context_type: z.enum([
+import { assign, enums, Infer, literal, object, string, union } from 'superstruct';
+
+export const AbstractContext = object({
+  id: string(),
+  _context_type: enums([
     'SectionContext', // aka ElementContext
     'ExpandableSectionContext',
     'ExpandableSectionContext',
@@ -17,130 +17,156 @@ export const AbstractContext = z.object({
     'LinkContext',
   ]),
 });
-export type AbstractContext = z.infer<typeof AbstractContext>;
+export type AbstractContext = Infer<typeof AbstractContext>;
 
 /**
  * AbstractLocationContext
  */
-export const AbstractLocationContext = AbstractContext.extend({
-  __location_context: z.literal(true),
-});
-export type AbstractLocationContext = z.infer<typeof AbstractLocationContext>;
+export const AbstractLocationContext = assign(
+  AbstractContext,
+  object({
+    __location_context: literal(true),
+  })
+);
+export type AbstractLocationContext = Infer<typeof AbstractLocationContext>;
 
 /**
  * AbstractSectionContext
  */
-export const AbstractSectionContext = AbstractLocationContext.extend({
-  __section_context: z.literal(true),
-  _context_type: z.enum([
-    'SectionContext', // aka ElementContext
-    'ExpandableSectionContext',
-    'MediaPlayerContext',
-    'NavigationContext',
-    'OverlayContext',
-  ])
-});
-export type AbstractSectionContext = z.infer<typeof AbstractLocationContext>;
+export const AbstractSectionContext = assign(
+  AbstractLocationContext,
+  object({
+    __section_context: literal(true),
+    _context_type: enums([
+      'SectionContext', // aka ElementContext
+      'ExpandableSectionContext',
+      'MediaPlayerContext',
+      'NavigationContext',
+      'OverlayContext',
+    ]),
+  })
+);
+export type AbstractSectionContext = Infer<typeof AbstractLocationContext>;
 
 /**
  * AbstractItemContext
  */
-export const AbstractItemContext = AbstractLocationContext.extend({
-  __item_context: z.literal(true),
-  _context_type: z.enum([
-    'ItemContext',
-    'InputContext',
-    'ActionContext',
-    'ButtonContext',
-    'LinkContext',
-  ])
-});
-export type AbstractItemContext = z.infer<typeof AbstractItemContext>;
+export const AbstractItemContext = assign(
+  AbstractLocationContext,
+  object({
+    __item_context: literal(true),
+    _context_type: enums(['ItemContext', 'InputContext', 'ActionContext', 'ButtonContext', 'LinkContext']),
+  })
+);
+export type AbstractItemContext = Infer<typeof AbstractItemContext>;
 
 /**
  * AbstractActionContext
  */
-export const AbstractActionContext = AbstractItemContext.extend({
-  __action_context: z.literal(true),
-  _context_type: z.enum([
-    'ActionContext',
-    'ButtonContext',
-    'LinkContext',
-  ]),
-  text: z.string()
-});
-export type AbstractActionContext = z.infer<typeof AbstractActionContext>;
+export const AbstractActionContext = assign(
+  AbstractItemContext,
+  object({
+    __action_context: literal(true),
+    _context_type: enums(['ActionContext', 'ButtonContext', 'LinkContext']),
+    text: string(),
+  })
+);
+export type AbstractActionContext = Infer<typeof AbstractActionContext>;
 
 /**
- * ElementContext
+ * ElementContext aka SectionContext
  */
-export const ElementContext = AbstractSectionContext.extend({
-  _context_type: z.literal(AbstractSectionContext.shape._context_type.enum.SectionContext),
-});
-export type SectionContext = z.infer<typeof ElementContext>;
+export const ElementContext = assign(
+  AbstractSectionContext,
+  object({
+    _context_type: literal('SectionContext'),
+  })
+);
+export type SectionContext = Infer<typeof ElementContext>;
 
 /**
  * ExpandableSectionContext
  */
-export const ExpandableSectionContext = AbstractSectionContext.extend({
-  _context_type: z.literal(AbstractSectionContext.shape._context_type.enum.ExpandableSectionContext),
-});
-export type ExpandableSectionContext = z.infer<typeof ExpandableSectionContext>;
+export const ExpandableSectionContext = assign(
+  AbstractSectionContext,
+  object({
+    _context_type: literal('ExpandableSectionContext'),
+  })
+);
+export type ExpandableSectionContext = Infer<typeof ExpandableSectionContext>;
 
 /**
  * MediaPlayerContext
  */
-export const MediaPlayerContext = AbstractSectionContext.extend({
-  _context_type: z.literal(AbstractSectionContext.shape._context_type.enum.MediaPlayerContext),
-});
-export type MediaPlayerContext = z.infer<typeof MediaPlayerContext>;
+export const MediaPlayerContext = assign(
+  AbstractSectionContext,
+  object({
+    _context_type: literal('MediaPlayerContext'),
+  })
+);
+export type MediaPlayerContext = Infer<typeof MediaPlayerContext>;
 
 /**
  * NavigationContext
  */
-export const NavigationContext = AbstractSectionContext.extend({
-  _context_type: z.literal(AbstractSectionContext.shape._context_type.enum.NavigationContext),
-});
-export type NavigationContext = z.infer<typeof NavigationContext>;
+export const NavigationContext = assign(
+  AbstractSectionContext,
+  object({
+    _context_type: literal('NavigationContext'),
+  })
+);
+export type NavigationContext = Infer<typeof NavigationContext>;
 
 /**
  * OverlayContext
  */
-export const OverlayContext = AbstractSectionContext.extend({
-  _context_type: z.literal(AbstractSectionContext.shape._context_type.enum.OverlayContext),
-});
-export type OverlayContext = z.infer<typeof OverlayContext>;
+export const OverlayContext = assign(
+  AbstractSectionContext,
+  object({
+    _context_type: literal('OverlayContext'),
+  })
+);
+export type OverlayContext = Infer<typeof OverlayContext>;
 
 /**
  * InputContext
  */
-export const InputContext = AbstractItemContext.extend({
-  _context_type: z.literal(AbstractItemContext.shape._context_type.enum.InputContext),
-});
-export type InputContext = z.infer<typeof InputContext>;
+export const InputContext = assign(
+  AbstractItemContext,
+  object({
+    _context_type: literal('InputContext'),
+  })
+);
+export type InputContext = Infer<typeof InputContext>;
 
 /**
  * ButtonContext
  */
-export const ButtonContext = AbstractActionContext.extend({
-  _context_type: z.literal(AbstractActionContext.shape._context_type.enum.ButtonContext),
-});
-export type ButtonContext = z.infer<typeof ButtonContext>;
+export const ButtonContext = assign(
+  AbstractActionContext,
+  object({
+    _context_type: literal('ButtonContext'),
+  })
+);
+export type ButtonContext = Infer<typeof ButtonContext>;
 
 /**
  * LinkContext
  */
-export const LinkContext = AbstractActionContext.extend({
-  _context_type: z.literal(AbstractActionContext.shape._context_type.enum.LinkContext),
-  href: z.string()
-});
-export type LinkContext = z.infer<typeof LinkContext>;
+export const LinkContext = assign(
+  AbstractActionContext,
+  object({
+    _context_type: literal('LinkContext'),
+    href: string(),
+  })
+);
+export type LinkContext = Infer<typeof LinkContext>;
 
 /**
  * LocationContext
  */
-export const LocationContext = z.union([
-  ElementContext,
+export const LocationContext = union([
+  ElementContext, // aka SectionContext
   ExpandableSectionContext,
   MediaPlayerContext,
   NavigationContext,
@@ -153,8 +179,8 @@ export const LocationContext = z.union([
 /**
  * SectionContext
  */
-export const SectionContext = z.union([
-  ElementContext,
+export const SectionContext = union([
+  ElementContext, // aka SectionContext
   ExpandableSectionContext,
   MediaPlayerContext,
   NavigationContext,
@@ -164,24 +190,14 @@ export const SectionContext = z.union([
 /**
  * ItemContext
  */
-export const ItemContext = z.union([
-  InputContext,
-  ButtonContext,
-  LinkContext,
-]);
+export const ItemContext = union([InputContext, ButtonContext, LinkContext]);
 
 /**
  * ActionContext
  */
-export const ActionContext = z.union([
-  ButtonContext,
-  LinkContext,
-]);
+export const ActionContext = union([ButtonContext, LinkContext]);
 
 /**
  * ClickableContext
  */
-export const ClickableContext = z.union([
-  ActionContext,
-  ExpandableSectionContext,
-]);
+export const ClickableContext = union([ActionContext, ExpandableSectionContext]);

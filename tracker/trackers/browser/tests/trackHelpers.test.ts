@@ -11,7 +11,7 @@ import {
 } from '../src';
 import matchElementId from './mocks/matchElementId';
 
-describe('trackLocationHelpers', () => {
+describe('trackHelpers', () => {
   it('trackButton', () => {
     const trackingAttributes = trackButton({ id: 'test-button', text: 'Click Me' });
 
@@ -19,8 +19,8 @@ describe('trackLocationHelpers', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        id: 'test-button',
         _context_type: 'ButtonContext',
+        id: 'test-button',
         text: 'Click Me',
       }),
       [ElementTrackingAttribute.trackClicks]: 'true',
@@ -38,8 +38,8 @@ describe('trackLocationHelpers', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        id: 'test-section',
         _context_type: 'SectionContext',
+        id: 'test-section',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,
@@ -56,8 +56,8 @@ describe('trackLocationHelpers', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        id: 'test-expandable',
         _context_type: 'ExpandableSectionContext',
+        id: 'test-expandable',
       }),
       [ElementTrackingAttribute.trackClicks]: 'true',
       [ElementTrackingAttribute.trackBlurs]: undefined,
@@ -74,8 +74,8 @@ describe('trackLocationHelpers', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        id: 'test-input',
         _context_type: 'InputContext',
+        id: 'test-input',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: 'true',
@@ -92,8 +92,8 @@ describe('trackLocationHelpers', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        id: 'link',
         _context_type: 'LinkContext',
+        id: 'link',
         text: 'Click Me',
         href: '/test',
       }),
@@ -112,8 +112,8 @@ describe('trackLocationHelpers', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        id: 'test-media-player',
         _context_type: 'MediaPlayerContext',
+        id: 'test-media-player',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,
@@ -130,8 +130,8 @@ describe('trackLocationHelpers', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        id: 'test-nav',
         _context_type: 'NavigationContext',
+        id: 'test-nav',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,
@@ -148,8 +148,8 @@ describe('trackLocationHelpers', () => {
       [ElementTrackingAttribute.elementId]: matchElementId,
       [ElementTrackingAttribute.parentElementId]: undefined,
       [ElementTrackingAttribute.context]: JSON.stringify({
-        id: 'test-overlay',
         _context_type: 'OverlayContext',
+        id: 'test-overlay',
       }),
       [ElementTrackingAttribute.trackClicks]: undefined,
       [ElementTrackingAttribute.trackBlurs]: undefined,

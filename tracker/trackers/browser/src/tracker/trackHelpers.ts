@@ -8,77 +8,75 @@ import {
   makeOverlayContext,
   makeSectionContext,
 } from '@objectiv/tracker-core';
-import { z } from "zod";
-import { track } from "../tracker/track";
-import { TrackOptions } from "../tracker/track";
+import { func, Infer, intersection, object, optional, string } from 'superstruct';
+import { track, TrackOptions } from '../tracker/track';
 
 /**
  * Track Location helpers automatically factor Context Instances and use `track` internally.
  */
-export const TrackHelperParameters = z.object({ id: z.string(), options: TrackOptions.optional() });
+export const TrackHelperParameters = object({
+  id: string(),
+  options: optional(TrackOptions),
+  onError: optional(func()),
+});
+export type TrackHelperParameters = Infer<typeof TrackHelperParameters>;
 
 /**
  * TrackElement helper
  */
-export const TrackElementFunction = z.function(z.tuple([TrackHelperParameters]));
-export const trackElement = TrackElementFunction.validate(({ id, options }) => {
-  return track({ instance: makeSectionContext({ id }), options });
-});
+export const trackElement = ({ id, options, onError }: TrackHelperParameters) => {
+  return track({ instance: makeSectionContext({ id }), options, onError });
+};
 
 /**
  * TrackExpandableElement helper
  */
-export const TrackExpandableElementFunction = z.function(z.tuple([TrackHelperParameters]));
-export const trackExpandableElement = TrackExpandableElementFunction.validate(({ id, options }) => {
-  return track({ instance: makeExpandableSectionContext({ id }), options });
-});
+export const trackExpandableElement = ({ id, options, onError }: TrackHelperParameters) => {
+  return track({ instance: makeExpandableSectionContext({ id }), options, onError });
+};
 
 /**
  * TrackInput helper
  */
-export const TrackInputFunction = z.function(z.tuple([TrackHelperParameters]));
-export const trackInput = TrackInputFunction.validate(({ id, options }) => {
-  return track({ instance: makeInputContext({ id }), options });
-});
+export const trackInput = ({ id, options, onError }: TrackHelperParameters) => {
+  return track({ instance: makeInputContext({ id }), options, onError });
+};
 
 /**
  * TrackButton helper
  */
-export const TrackButtonParameters = TrackHelperParameters.extend({ text: z.string() });
-export const TrackButtonFunction = z.function(z.tuple([TrackButtonParameters]));
-export const trackButton = TrackButtonFunction.validate(({ id, text, options }) => {
-  return track({ instance: makeButtonContext({ id, text }), options });
-});
+export const TrackButtonParameters = intersection([TrackHelperParameters, object({ text: string() })]);
+export type TrackButtonParameters = Infer<typeof TrackButtonParameters>;
+export const trackButton = ({ id, text, options, onError }: TrackButtonParameters) => {
+  return track({ instance: makeButtonContext({ id, text }), options, onError });
+};
 
 /**
  * TrackLink helper
  */
-export const TrackLinkParameters = TrackHelperParameters.extend({ text: z.string(), href: z.string() });
-export const TrackLinkFunction = z.function(z.tuple([TrackLinkParameters]));
-export const trackLink = TrackLinkFunction.validate(({ id, text, href, options }) => {
-  return track({ instance: makeLinkContext({ id, text, href }), options });
-});
+export const TrackLinkParameters = intersection([TrackHelperParameters, object({ text: string(), href: string() })]);
+export type TrackLinkParameters = Infer<typeof TrackLinkParameters>;
+export const trackLink = ({ id, text, href, options, onError }: TrackLinkParameters) => {
+  return track({ instance: makeLinkContext({ id, text, href }), options, onError });
+};
 
 /**
  * TrackMediaPlayer helper
  */
-export const TrackMediaPlayerFunction = z.function(z.tuple([TrackHelperParameters]));
-export const trackMediaPlayer = TrackMediaPlayerFunction.validate(({ id, options }) => {
-  return track({ instance: makeMediaPlayerContext({ id }), options });
-});
+export const trackMediaPlayer = ({ id, options, onError }: TrackHelperParameters) => {
+  return track({ instance: makeMediaPlayerContext({ id }), options, onError });
+};
 
 /**
  * TrackNavigation helper
  */
-export const TrackNavigationFunction = z.function(z.tuple([TrackHelperParameters]));
-export const trackNavigation = TrackNavigationFunction.validate(({ id, options }) => {
-  return track({ instance: makeNavigationContext({ id }), options });
-});
+export const trackNavigation = ({ id, options, onError }: TrackHelperParameters) => {
+  return track({ instance: makeNavigationContext({ id }), options, onError });
+};
 
 /**
  * TrackOverlay helper
  */
-export const TrackOverlayFunction = z.function(z.tuple([TrackHelperParameters]));
-export const trackOverlay = TrackOverlayFunction.validate(({ id, options }) => {
-  return track({ instance: makeOverlayContext({ id }), options });
-});
+export const trackOverlay = ({ id, options, onError }: TrackHelperParameters) => {
+  return track({ instance: makeOverlayContext({ id }), options, onError });
+};

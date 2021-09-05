@@ -1,17 +1,17 @@
 import { AbstractLocationContext } from '@objectiv/schema';
-import { z } from "zod";
+import { boolean, Infer, literal, object, optional, string, union } from 'superstruct';
 
 /**
  * The possible values of the `trackVisibility` TrackingAttribute.
  */
-export const TrackingAttributeVisibilityAuto = z.object({ mode: z.literal('auto') });
-export type TrackingAttributeVisibilityAuto = z.infer<typeof TrackingAttributeVisibilityAuto>;
+export const TrackingAttributeVisibilityAuto = object({ mode: literal('auto') });
+export type TrackingAttributeVisibilityAuto = Infer<typeof TrackingAttributeVisibilityAuto>;
 
-export const TrackingAttributeVisibilityManual = z.object({ mode: z.literal('manual'), isVisible: z.boolean() });
-export type TrackingAttributeVisibilityManual = z.infer<typeof TrackingAttributeVisibilityManual>;
+export const TrackingAttributeVisibilityManual = object({ mode: literal('manual'), isVisible: boolean() });
+export type TrackingAttributeVisibilityManual = Infer<typeof TrackingAttributeVisibilityManual>;
 
-export const TrackingAttributeVisibility = z.union([TrackingAttributeVisibilityAuto, TrackingAttributeVisibilityManual]);
-export type TrackingAttributeVisibility = z.infer<typeof TrackingAttributeVisibility>;
+export const TrackingAttributeVisibility = union([TrackingAttributeVisibilityAuto, TrackingAttributeVisibilityManual]);
+export type TrackingAttributeVisibility = Infer<typeof TrackingAttributeVisibility>;
 
 /**
  * All the attributes that are added to a DOM Element to make it trackable
@@ -59,15 +59,15 @@ export type ElementTrackingAttributes = {
 /**
  * The object that `track` calls return, stringified
  */
-export const StringifiedElementTrackingAttributes = z.object({
-  [ElementTrackingAttribute.elementId]: z.string(),
-  [ElementTrackingAttribute.parentElementId]: z.string().optional(),
-  [ElementTrackingAttribute.context]: z.string(),
-  [ElementTrackingAttribute.trackClicks]: z.string().optional(),
-  [ElementTrackingAttribute.trackBlurs]: z.string().optional(),
-  [ElementTrackingAttribute.trackVisibility]: z.string().optional(),
+export const StringifiedElementTrackingAttributes = object({
+  [ElementTrackingAttribute.elementId]: string(),
+  [ElementTrackingAttribute.parentElementId]: optional(string()),
+  [ElementTrackingAttribute.context]: string(),
+  [ElementTrackingAttribute.trackClicks]: optional(string()),
+  [ElementTrackingAttribute.trackBlurs]: optional(string()),
+  [ElementTrackingAttribute.trackVisibility]: optional(string()),
 });
-export type StringifiedElementTrackingAttributes = z.infer<typeof StringifiedElementTrackingAttributes>;
+export type StringifiedElementTrackingAttributes = Infer<typeof StringifiedElementTrackingAttributes>;
 
 /**
  * The object that `trackChildren` calls return
