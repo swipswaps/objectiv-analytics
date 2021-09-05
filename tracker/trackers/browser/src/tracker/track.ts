@@ -36,8 +36,16 @@ export const TrackParameters = object({
   options: optional(TrackOptions),
   onError: optional(func()),
 });
-export type TrackOnErrorParameter = { onError?: (error: Error, parameters: TrackParameters) => void; };
-export type TrackParameters = Infer<typeof TrackParameters> & TrackOnErrorParameter;
+export type TrackParameters = Infer<typeof TrackParameters>;
+
+export const trackErrorHandler = (error: Error, parameters: Pick<TrackParameters, 'onError'>) => {
+  if (parameters?.onError) {
+    parameters.onError(error);
+  } else {
+    console.error(error, parameters);
+  }
+  return {};
+};
 
 export const track = (parameters: TrackParameters): TrackReturnValue => {
   try {
@@ -70,19 +78,17 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     cleanObjectFromDiscriminatingProperties(instance);
 
     // Validate output and return it
-    return create({
-      [ElementTrackingAttribute.parentElementId]: parentElementId,
-      [ElementTrackingAttribute.context]: JSON.stringify(instance),
-      [ElementTrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
-      [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
-      [ElementTrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
-    }, StringifiedElementTrackingAttributes);
+    return create(
+      {
+        [ElementTrackingAttribute.parentElementId]: parentElementId,
+        [ElementTrackingAttribute.context]: JSON.stringify(instance),
+        [ElementTrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
+        [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
+        [ElementTrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
+      },
+      StringifiedElementTrackingAttributes
+    );
   } catch (error) {
-    if (parameters.onError) {
-      parameters.onError(error, parameters);
-    } else {
-      console.error(error, parameters);
-    }
-    return {};
+    return trackErrorHandler(error, parameters);
   }
 };

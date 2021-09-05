@@ -1,6 +1,6 @@
 import { boolean, defaulted, define, Infer, is, literal, object, optional, string, union } from 'superstruct';
 import { validate, v4 } from 'uuid';
-import { LocationContext } from "./Contexts";
+import { LocationContext } from './Contexts';
 
 /**
  * The possible values of the `trackVisibility` TrackingAttribute.
@@ -48,14 +48,14 @@ export enum ChildrenTrackingAttribute {
 /**
  * A custom Struct describing v4 UUIDs
  */
-export const Uuid = define('Uuid', (value: any) => validate(value))
+export const Uuid = define('Uuid', (value: any) => validate(value));
 
 /**
  * Custom Structs describing stringified booleans
  */
-export const StringTrue = define('StringTrue', (value: any) => value ==='true')
-export const StringFalse = define('StringFalse', (value: any) => value ==='false')
-export const StringBoolean = define('StringBoolean', (value: any) => is(value, union([StringTrue, StringFalse])))
+export const StringTrue = define('StringTrue', (value: any) => value === 'true');
+export const StringFalse = define('StringFalse', (value: any) => value === 'false');
+export const StringBoolean = define('StringBoolean', (value: any) => is(value, union([StringTrue, StringFalse])));
 
 /**
  * The object that `track` calls return

@@ -12,6 +12,29 @@ import {
 import matchElementId from './mocks/matchElementId';
 
 describe('trackHelpers', () => {
+  it('should return an empty object when error occurs', () => {
+    // @ts-ignore
+    expect(trackButton()).toStrictEqual({});
+    // @ts-ignore
+    expect(trackButton({ wrong: 'test-button' })).toStrictEqual({});
+    // @ts-ignore
+    expect(trackButton({ id: undefined })).toStrictEqual({});
+    // @ts-ignore
+    expect(trackButton({ id: 0, text: 'test' })).toStrictEqual({});
+    // @ts-ignore
+    expect(trackButton({ id: false, text: 'test' })).toStrictEqual({});
+    // @ts-ignore
+    expect(trackButton({ id: true, text: 'test' })).toStrictEqual({});
+    // @ts-ignore
+    expect(trackButton({ id: {}, text: 'test' })).toStrictEqual({});
+    // @ts-ignore
+    expect(trackButton({ id: Infinity, text: 'test' })).toStrictEqual({});
+    // @ts-ignore
+    expect(trackButton({ id: -Infinity, text: 'test' })).toStrictEqual({});
+    // @ts-ignore
+    expect(trackButton({ id: 'test', text: 'test', options: 'nope' })).toStrictEqual({});
+  });
+
   it('trackButton', () => {
     const trackingAttributes = trackButton({ id: 'test-button', text: 'Click Me' });
 

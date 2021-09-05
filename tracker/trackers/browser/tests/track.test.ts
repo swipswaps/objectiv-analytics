@@ -15,6 +15,10 @@ import matchElementId from './mocks/matchElementId';
 describe('track', () => {
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
+    expect(track()).toStrictEqual({});
+    // @ts-ignore
+    expect(track({})).toStrictEqual({});
+    // @ts-ignore
     expect(track({ instance: null })).toStrictEqual({});
     // @ts-ignore
     expect(track({ instance: undefined })).toStrictEqual({});
@@ -260,7 +264,7 @@ describe('track', () => {
 
   it('should not allow extra attributes', () => {
     const customSectionContext = { ...makeSectionContext({ id: 'test-overlay' }), extraMetadata: { test: 123 } };
-    const trackingAttributes = track({ instance: customSectionContext, onError: (error) => console.log(error) });
+    const trackingAttributes = track({ instance: customSectionContext, onError: (error: Error) => console.log(error) });
 
     expect(trackingAttributes).toStrictEqual({});
   });
