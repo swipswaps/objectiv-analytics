@@ -15,29 +15,29 @@ import matchElementId from './mocks/matchElementId';
 describe('track', () => {
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
-    expect(track()).toStrictEqual({});
+    expect(track()).toBeUndefined();
     // @ts-ignore
-    expect(track({})).toStrictEqual({});
+    expect(track({})).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: null })).toStrictEqual({});
+    expect(track({ instance: null })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: undefined })).toStrictEqual({});
+    expect(track({ instance: undefined })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: 0 })).toStrictEqual({});
+    expect(track({ instance: 0 })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: false })).toStrictEqual({});
+    expect(track({ instance: false })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: true })).toStrictEqual({});
+    expect(track({ instance: true })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: {} })).toStrictEqual({});
+    expect(track({ instance: {} })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: Infinity })).toStrictEqual({});
+    expect(track({ instance: Infinity })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: -Infinity })).toStrictEqual({});
+    expect(track({ instance: -Infinity })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: 'test' })).toStrictEqual({});
+    expect(track({ instance: 'test' })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: makeSectionContext({ id: 'test' }), options: 'invalid' })).toStrictEqual({});
+    expect(track({ instance: makeSectionContext({ id: 'test' }), options: 'invalid' })).toBeUndefined();
   });
 
   it('should call `onError` callback when an error occurs', () => {
@@ -266,6 +266,6 @@ describe('track', () => {
     const customSectionContext = { ...makeSectionContext({ id: 'test-overlay' }), extraMetadata: { test: 123 } };
     const trackingAttributes = track({ instance: customSectionContext, onError: (error: Error) => console.log(error) });
 
-    expect(trackingAttributes).toStrictEqual({});
+    expect(trackingAttributes).toBeUndefined();
   });
 });

@@ -14,25 +14,25 @@ import matchElementId from './mocks/matchElementId';
 describe('trackHelpers', () => {
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
-    expect(trackButton()).toStrictEqual({});
+    expect(trackButton()).toBeUndefined();
     // @ts-ignore
-    expect(trackButton({ wrong: 'test-button' })).toStrictEqual({});
+    expect(trackButton({ wrong: 'test-button' })).toBeUndefined();
     // @ts-ignore
-    expect(trackButton({ id: undefined })).toStrictEqual({});
+    expect(trackButton({ id: undefined })).toBeUndefined();
     // @ts-ignore
-    expect(trackButton({ id: 0, text: 'test' })).toStrictEqual({});
+    expect(trackButton({ id: 0, text: 'test' })).toBeUndefined();
     // @ts-ignore
-    expect(trackButton({ id: false, text: 'test' })).toStrictEqual({});
+    expect(trackButton({ id: false, text: 'test' })).toBeUndefined();
     // @ts-ignore
-    expect(trackButton({ id: true, text: 'test' })).toStrictEqual({});
+    expect(trackButton({ id: true, text: 'test' })).toBeUndefined();
     // @ts-ignore
-    expect(trackButton({ id: {}, text: 'test' })).toStrictEqual({});
+    expect(trackButton({ id: {}, text: 'test' })).toBeUndefined();
     // @ts-ignore
-    expect(trackButton({ id: Infinity, text: 'test' })).toStrictEqual({});
+    expect(trackButton({ id: Infinity, text: 'test' })).toBeUndefined();
     // @ts-ignore
-    expect(trackButton({ id: -Infinity, text: 'test' })).toStrictEqual({});
+    expect(trackButton({ id: -Infinity, text: 'test' })).toBeUndefined();
     // @ts-ignore
-    expect(trackButton({ id: 'test', text: 'test', options: 'nope' })).toStrictEqual({});
+    expect(trackButton({ id: 'test', text: 'test', options: 'nope' })).toBeUndefined();
   });
 
   it('trackButton', () => {

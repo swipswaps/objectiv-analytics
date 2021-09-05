@@ -1,7 +1,6 @@
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
-import { boolean, create, func, Infer, is, literal, object, optional, union } from 'superstruct';
+import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
 import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
-import { isEmptyObject } from '../isEmptyObject';
 import {
   ElementTrackingAttribute,
   StringifiedElementTrackingAttributes,
@@ -21,7 +20,7 @@ import {
  *    track({ instance: makeElementContext({ id: 'section-id' }) })
  *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
  */
-export const TrackReturnValue = union([StringifiedElementTrackingAttributes, literal({})]);
+export const TrackReturnValue = optional(StringifiedElementTrackingAttributes);
 export type TrackReturnValue = Infer<typeof TrackReturnValue>;
 
 export const TrackOptions = object({
@@ -44,7 +43,7 @@ export const trackErrorHandler = (error: Error, parameters: Pick<TrackParameters
   } else {
     console.error(error, parameters);
   }
-  return {};
+  return undefined;
 };
 
 export const track = (parameters: TrackParameters): TrackReturnValue => {
@@ -56,10 +55,9 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     const trackClicks = options?.trackClicks ?? (is(instance, ClickableContext) ? true : undefined);
     const trackBlurs = options?.trackBlurs ?? (is(instance, InputContext) ? true : undefined);
     const trackVisibility = options?.trackVisibility ?? (is(instance, SectionContext) ? { mode: 'auto' } : undefined);
-    const parentElementId =
-      !!options?.parentTracker && !isEmptyObject(options?.parentTracker)
-        ? options.parentTracker[ElementTrackingAttribute.elementId]
-        : undefined;
+    const parentElementId = options?.parentTracker
+      ? options.parentTracker[ElementTrackingAttribute.elementId]
+      : undefined;
 
     // Clean up the Context instance from discriminatory properties before serializing it
     cleanObjectFromDiscriminatingProperties(instance);
