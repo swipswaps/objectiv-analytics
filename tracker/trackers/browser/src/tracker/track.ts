@@ -53,26 +53,13 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     const { instance, options } = create(parameters, TrackParameters);
 
     // Process options. Gather default attribute values
-    let trackClicks = is(instance, ClickableContext) ? true : undefined;
-    let trackBlurs = is(instance, InputContext) ? true : undefined;
-    let trackVisibility = is(instance, SectionContext) ? { mode: 'auto' } : undefined;
-    let parentElementId = undefined;
-
-    // Process options and apply overrides, if any
-    if (options !== undefined) {
-      if (options.trackClicks !== undefined) {
-        trackClicks = options.trackClicks;
-      }
-      if (options.trackBlurs !== undefined) {
-        trackBlurs = options.trackBlurs;
-      }
-      if (options.trackVisibility !== undefined) {
-        trackVisibility = options.trackVisibility;
-      }
-      if (options.parentTracker !== undefined && !isEmptyObject(options.parentTracker)) {
-        parentElementId = options.parentTracker[ElementTrackingAttribute.elementId];
-      }
-    }
+    const trackClicks = options?.trackClicks ?? (is(instance, ClickableContext) ? true : undefined);
+    const trackBlurs = options?.trackBlurs ?? (is(instance, InputContext) ? true : undefined);
+    const trackVisibility = options?.trackVisibility ?? (is(instance, SectionContext) ? { mode: 'auto' } : undefined);
+    const parentElementId =
+      !!options?.parentTracker && !isEmptyObject(options?.parentTracker)
+        ? options.parentTracker[ElementTrackingAttribute.elementId]
+        : undefined;
 
     // Clean up the Context instance from discriminatory properties before serializing it
     cleanObjectFromDiscriminatingProperties(instance);
