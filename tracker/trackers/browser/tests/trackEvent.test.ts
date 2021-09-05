@@ -12,10 +12,10 @@ import {
 import {
   BrowserTracker,
   configureTracker,
-  ElementTrackingAttribute,
   trackApplicationLoadedEvent,
   trackClick,
   trackEvent,
+  TrackingAttribute,
   trackInputChange,
   trackSectionHiddenEvent,
   trackSectionVisibleEvent,
@@ -73,18 +73,18 @@ describe('trackEvent', () => {
 
   it('should track Tracked Elements with a location stack', () => {
     const testDivToTrack = document.createElement('div');
-    testDivToTrack.setAttribute(ElementTrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'test' })));
+    testDivToTrack.setAttribute(TrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'test' })));
 
     const div = document.createElement('div');
-    div.setAttribute(ElementTrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'div' })));
+    div.setAttribute(TrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'div' })));
 
     const midSection = document.createElement('section');
-    midSection.setAttribute(ElementTrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'mid' })));
+    midSection.setAttribute(TrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'mid' })));
 
     const untrackedSection = document.createElement('div');
 
     const topSection = document.createElement('body');
-    topSection.setAttribute(ElementTrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'top' })));
+    topSection.setAttribute(TrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'top' })));
 
     div.appendChild(testDivToTrack);
     midSection.appendChild(div);
@@ -111,15 +111,15 @@ describe('trackEvent', () => {
 
   it('should track regular Elements with a location stack if their parents are Tracked Elements', () => {
     const div = document.createElement('div');
-    div.setAttribute(ElementTrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'div' })));
+    div.setAttribute(TrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'div' })));
 
     const midSection = document.createElement('section');
-    midSection.setAttribute(ElementTrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'mid' })));
+    midSection.setAttribute(TrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'mid' })));
 
     const untrackedSection = document.createElement('div');
 
     const topSection = document.createElement('body');
-    topSection.setAttribute(ElementTrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'top' })));
+    topSection.setAttribute(TrackingAttribute.context, JSON.stringify(makeSectionContext({ id: 'top' })));
 
     div.appendChild(testElement);
     midSection.appendChild(div);
@@ -145,7 +145,7 @@ describe('trackEvent', () => {
 
   it('should track without a location stack', () => {
     const div = document.createElement('div');
-    div.setAttribute(ElementTrackingAttribute.context, JSON.stringify(null));
+    div.setAttribute(TrackingAttribute.context, JSON.stringify(null));
 
     div.appendChild(testElement);
     document.body.appendChild(div);

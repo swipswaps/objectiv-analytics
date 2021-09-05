@@ -1,9 +1,9 @@
-import { ElementTrackingAttribute, TrackedElement } from '../../src';
+import { TrackedElement, TrackingAttribute } from '../../src';
 
 const makeTrackedElement = (id: string, context: string, tagName: keyof HTMLElementTagNameMap): TrackedElement => {
   const trackedDiv = document.createElement(tagName);
-  trackedDiv.setAttribute(ElementTrackingAttribute.elementId, id);
-  trackedDiv.setAttribute(ElementTrackingAttribute.context, context);
+  trackedDiv.setAttribute(TrackingAttribute.elementId, id);
+  trackedDiv.setAttribute(TrackingAttribute.context, context);
 
   return trackedDiv as TrackedElement;
 };

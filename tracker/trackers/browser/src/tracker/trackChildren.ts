@@ -1,8 +1,4 @@
-import {
-  ChildrenTrackingAttribute,
-  ChildrenTrackingAttributes,
-  StringifiedElementTrackingAttributes,
-} from '../TrackingAttributes';
+import { ChildrenTrackingAttributes, StringifiedTrackingAttributes, TrackingAttribute } from '../TrackingAttributes';
 
 /**
  * The parameters of `trackChildren`
@@ -18,7 +14,7 @@ export type TrackChildrenQueryAll = {
 };
 
 export type TrackChildrenParameters = (TrackChildrenQuery | TrackChildrenQueryAll) & {
-  trackAs: StringifiedElementTrackingAttributes | {};
+  trackAs: StringifiedTrackingAttributes | undefined;
 };
 
 export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
@@ -30,7 +26,7 @@ export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
 export const trackChildren = (childrenParameters: TrackChildrenParameters[]): TrackChildrenReturnValue => {
   // TODO Debuggability: Validate that trackAs is actually valued?
   return {
-    [ChildrenTrackingAttribute.trackChildren]: JSON.stringify(childrenParameters),
+    [TrackingAttribute.trackChildren]: JSON.stringify(childrenParameters),
   };
 };
 

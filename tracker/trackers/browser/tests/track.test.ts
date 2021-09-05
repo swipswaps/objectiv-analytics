@@ -9,7 +9,7 @@ import {
   makeSectionContext,
 } from '@objectiv/tracker-core';
 import { StructError } from 'superstruct';
-import { ElementTrackingAttribute, track, trackElement } from '../src';
+import { track, trackElement, TrackingAttribute } from '../src';
 import matchElementId from './mocks/matchElementId';
 
 describe('track', () => {
@@ -62,12 +62,12 @@ describe('track', () => {
 
   it('should allow overriding whether to track click, blur and visibility events via options', () => {
     expect(trackElement({ id: 'test' })).toStrictEqual({
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
-      [ElementTrackingAttribute.trackClicks]: undefined,
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
+      [TrackingAttribute.trackClicks]: undefined,
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     });
     expect(
       trackElement({
@@ -79,33 +79,33 @@ describe('track', () => {
         },
       })
     ).toStrictEqual({
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
-      [ElementTrackingAttribute.trackClicks]: 'true',
-      [ElementTrackingAttribute.trackBlurs]: 'true',
-      [ElementTrackingAttribute.trackVisibility]: '{"mode":"manual","isVisible":true}',
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
+      [TrackingAttribute.trackClicks]: 'true',
+      [TrackingAttribute.trackBlurs]: 'true',
+      [TrackingAttribute.trackVisibility]: '{"mode":"manual","isVisible":true}',
     });
   });
 
   it('should allow overriding parent auto detection via options', () => {
     const parentTracker = trackElement({ id: 'parent' });
     expect(trackElement({ id: 'test' })).toStrictEqual({
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
-      [ElementTrackingAttribute.trackClicks]: undefined,
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
+      [TrackingAttribute.trackClicks]: undefined,
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     });
     expect(trackElement({ id: 'test', options: { parentTracker: parentTracker } })).toStrictEqual({
-      [ElementTrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.elementId]: matchElementId,
       // @ts-ignore
-      [ElementTrackingAttribute.parentElementId]: parentTracker[ElementTrackingAttribute.elementId],
-      [ElementTrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
-      [ElementTrackingAttribute.trackClicks]: undefined,
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [TrackingAttribute.parentElementId]: parentTracker[TrackingAttribute.elementId],
+      [TrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
+      [TrackingAttribute.trackClicks]: undefined,
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     });
   });
 
@@ -115,16 +115,16 @@ describe('track', () => {
     });
 
     const expectedTrackingAttributes = {
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({
         _context_type: 'ButtonContext',
         id: 'test-button',
         text: 'Click Me',
       }),
-      [ElementTrackingAttribute.trackClicks]: 'true',
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: undefined,
+      [TrackingAttribute.trackClicks]: 'true',
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: undefined,
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -134,15 +134,15 @@ describe('track', () => {
     const trackingAttributes = track({ instance: makeSectionContext({ id: 'test-section' }) });
 
     const expectedTrackingAttributes = {
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({
         _context_type: 'SectionContext',
         id: 'test-section',
       }),
-      [ElementTrackingAttribute.trackClicks]: undefined,
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [TrackingAttribute.trackClicks]: undefined,
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -154,15 +154,15 @@ describe('track', () => {
     });
 
     const expectedTrackingAttributes = {
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({
         _context_type: 'ExpandableSectionContext',
         id: 'test-expandable',
       }),
-      [ElementTrackingAttribute.trackClicks]: 'true',
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [TrackingAttribute.trackClicks]: 'true',
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -172,15 +172,15 @@ describe('track', () => {
     const trackingAttributes = track({ instance: makeInputContext({ id: 'test-input' }) });
 
     const expectedTrackingAttributes = {
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({
         _context_type: 'InputContext',
         id: 'test-input',
       }),
-      [ElementTrackingAttribute.trackClicks]: undefined,
-      [ElementTrackingAttribute.trackBlurs]: 'true',
-      [ElementTrackingAttribute.trackVisibility]: undefined,
+      [TrackingAttribute.trackClicks]: undefined,
+      [TrackingAttribute.trackBlurs]: 'true',
+      [TrackingAttribute.trackVisibility]: undefined,
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -192,17 +192,17 @@ describe('track', () => {
     });
 
     const expectedTrackingAttributes = {
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({
         _context_type: 'LinkContext',
         id: 'link',
         text: 'link',
         href: '/test',
       }),
-      [ElementTrackingAttribute.trackClicks]: 'true',
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: undefined,
+      [TrackingAttribute.trackClicks]: 'true',
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: undefined,
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -212,15 +212,15 @@ describe('track', () => {
     const trackingAttributes = track({ instance: makeMediaPlayerContext({ id: 'test-media-player' }) });
 
     const expectedTrackingAttributes = {
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({
         _context_type: 'MediaPlayerContext',
         id: 'test-media-player',
       }),
-      [ElementTrackingAttribute.trackClicks]: undefined,
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [TrackingAttribute.trackClicks]: undefined,
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -230,15 +230,15 @@ describe('track', () => {
     const trackingAttributes = track({ instance: makeNavigationContext({ id: 'test-nav' }) });
 
     const expectedTrackingAttributes = {
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({
         _context_type: 'NavigationContext',
         id: 'test-nav',
       }),
-      [ElementTrackingAttribute.trackClicks]: undefined,
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [TrackingAttribute.trackClicks]: undefined,
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -248,15 +248,15 @@ describe('track', () => {
     const trackingAttributes = track({ instance: makeOverlayContext({ id: 'test-overlay' }) });
 
     const expectedTrackingAttributes = {
-      [ElementTrackingAttribute.elementId]: matchElementId,
-      [ElementTrackingAttribute.parentElementId]: undefined,
-      [ElementTrackingAttribute.context]: JSON.stringify({
+      [TrackingAttribute.elementId]: matchElementId,
+      [TrackingAttribute.parentElementId]: undefined,
+      [TrackingAttribute.context]: JSON.stringify({
         _context_type: 'OverlayContext',
         id: 'test-overlay',
       }),
-      [ElementTrackingAttribute.trackClicks]: undefined,
-      [ElementTrackingAttribute.trackBlurs]: undefined,
-      [ElementTrackingAttribute.trackVisibility]: '{"mode":"auto"}',
+      [TrackingAttribute.trackClicks]: undefined,
+      [TrackingAttribute.trackBlurs]: undefined,
+      [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);

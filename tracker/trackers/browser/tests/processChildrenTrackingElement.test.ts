@@ -1,11 +1,5 @@
 import { cleanObjectFromDiscriminatingProperties, makeButtonContext } from '@objectiv/tracker-core';
-import {
-  ChildrenTrackingAttribute,
-  ElementTrackingAttribute,
-  isTrackedElement,
-  trackButton,
-  trackElement,
-} from '../src';
+import { isTrackedElement, trackButton, trackElement, TrackingAttribute } from '../src';
 import processChildrenTrackingElement from '../src/observer/processChildrenTrackingElement';
 
 describe('processChildrenTrackingElement', () => {
@@ -17,14 +11,14 @@ describe('processChildrenTrackingElement', () => {
 
   it('should exit with an empty array if the given Element has an invalid children tracking attribute', () => {
     const div = document.createElement('div');
-    div.setAttribute(ChildrenTrackingAttribute.trackChildren, 'null');
+    div.setAttribute(TrackingAttribute.trackChildren, 'null');
 
     expect(processChildrenTrackingElement(div)).toHaveLength(0);
   });
 
   it('should exit with an empty array if the given Element has an empty list of children tracking queries', () => {
     const div = document.createElement('div');
-    div.setAttribute(ChildrenTrackingAttribute.trackChildren, '[]');
+    div.setAttribute(TrackingAttribute.trackChildren, '[]');
 
     expect(processChildrenTrackingElement(div)).toHaveLength(0);
   });
@@ -32,7 +26,7 @@ describe('processChildrenTrackingElement', () => {
   it('should skip queries without valid or empty trackAs, query or queryAll options', () => {
     const div = document.createElement('div');
     div.setAttribute(
-      ChildrenTrackingAttribute.trackChildren,
+      TrackingAttribute.trackChildren,
       JSON.stringify([
         { query: '#some-id-1' },
         { query: '#some-id-2', trackAs: null },
@@ -54,7 +48,7 @@ describe('processChildrenTrackingElement', () => {
   it('should skip queries with failing querySelector expressions', () => {
     const div = document.createElement('div');
     div.setAttribute(
-      ChildrenTrackingAttribute.trackChildren,
+      TrackingAttribute.trackChildren,
       JSON.stringify([
         { query: '#button-id-1', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
         { queryAll: '[class="button"]', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
@@ -72,7 +66,7 @@ describe('processChildrenTrackingElement', () => {
     document.body.appendChild(div);
 
     div.setAttribute(
-      ChildrenTrackingAttribute.trackChildren,
+      TrackingAttribute.trackChildren,
       JSON.stringify([
         { query: '#button-id-1', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
         { queryAll: '[class="button"]', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
@@ -86,8 +80,6 @@ describe('processChildrenTrackingElement', () => {
 
     expect(result).toHaveLength(1);
     expect(isTrackedElement(result[0])).toBe(true);
-    expect(JSON.parse(result[0].getAttribute(ElementTrackingAttribute.context) ?? '')).toStrictEqual(
-      expectedButtonContext
-    );
+    expect(JSON.parse(result[0].getAttribute(TrackingAttribute.context) ?? '')).toStrictEqual(expectedButtonContext);
   });
 });

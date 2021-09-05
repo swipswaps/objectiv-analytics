@@ -1,11 +1,7 @@
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
 import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
 import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
-import {
-  ElementTrackingAttribute,
-  StringifiedElementTrackingAttributes,
-  TrackingAttributeVisibility,
-} from '../TrackingAttributes';
+import { StringifiedTrackingAttributes, TrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
 
 /**
  * Used to decorate a Trackable Element with our Tracking Attributes.
@@ -20,7 +16,7 @@ import {
  *    track({ instance: makeElementContext({ id: 'section-id' }) })
  *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
  */
-export const TrackReturnValue = optional(StringifiedElementTrackingAttributes);
+export const TrackReturnValue = optional(StringifiedTrackingAttributes);
 export type TrackReturnValue = Infer<typeof TrackReturnValue>;
 
 export const TrackOptions = object({
@@ -55,9 +51,7 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     const trackClicks = options?.trackClicks ?? (is(instance, ClickableContext) ? true : undefined);
     const trackBlurs = options?.trackBlurs ?? (is(instance, InputContext) ? true : undefined);
     const trackVisibility = options?.trackVisibility ?? (is(instance, SectionContext) ? { mode: 'auto' } : undefined);
-    const parentElementId = options?.parentTracker
-      ? options.parentTracker[ElementTrackingAttribute.elementId]
-      : undefined;
+    const parentElementId = options?.parentTracker ? options.parentTracker[TrackingAttribute.elementId] : undefined;
 
     // Clean up the Context instance from discriminatory properties before serializing it
     cleanObjectFromDiscriminatingProperties(instance);
@@ -65,13 +59,13 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     // Validate output and return it
     return create(
       {
-        [ElementTrackingAttribute.parentElementId]: parentElementId,
-        [ElementTrackingAttribute.context]: JSON.stringify(instance),
-        [ElementTrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
-        [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
-        [ElementTrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
+        [TrackingAttribute.parentElementId]: parentElementId,
+        [TrackingAttribute.context]: JSON.stringify(instance),
+        [TrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
+        [TrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
+        [TrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
       },
-      StringifiedElementTrackingAttributes
+      StringifiedTrackingAttributes
     );
   } catch (error) {
     return trackErrorHandler(error, parameters);

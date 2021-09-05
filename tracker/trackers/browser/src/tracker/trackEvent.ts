@@ -10,7 +10,7 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../';
-import { ElementTrackingAttribute } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
 import findTrackedParentElements from './findTrackedParentElements';
 
@@ -56,7 +56,7 @@ export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tr
     locationStack = elementsStack.reduce((locationContexts, element) => {
       // TODO we need a proper parsers for these attributes with good validation
       // TODO surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
-      const locationContext = element.getAttribute(ElementTrackingAttribute.context) as string;
+      const locationContext = element.getAttribute(TrackingAttribute.context) as string;
       locationContexts.push(JSON.parse(locationContext));
       return locationContexts;
     }, [] as AbstractLocationContext[]);

@@ -1,4 +1,4 @@
-import { ElementTrackingAttribute, isCustomParentTrackedElement, isTrackedElement } from '../src';
+import { isCustomParentTrackedElement, isTrackedElement, TrackingAttribute } from '../src';
 import findTrackedParentElements from '../src/tracker/findTrackedParentElements';
 
 describe('findTrackedParentElements', () => {
@@ -33,7 +33,7 @@ describe('findTrackedParentElements', () => {
 
   it('should return with only the given Tracked Element when it has no parents', () => {
     const div = document.createElement('div');
-    div.setAttribute(ElementTrackingAttribute.context, 'value');
+    div.setAttribute(TrackingAttribute.context, 'value');
     expect(isTrackedElement(div)).toBe(true);
 
     const trackedParentElements = findTrackedParentElements(div);
@@ -43,15 +43,15 @@ describe('findTrackedParentElements', () => {
 
   it('should return a list of Tracked Elements matching the DOM tree order', () => {
     const div = document.createElement('div');
-    div.setAttribute(ElementTrackingAttribute.context, 'div');
+    div.setAttribute(TrackingAttribute.context, 'div');
 
     const midSection = document.createElement('section');
-    midSection.setAttribute(ElementTrackingAttribute.context, 'mid');
+    midSection.setAttribute(TrackingAttribute.context, 'mid');
 
     const untrackedSection = document.createElement('div');
 
     const topSection = document.createElement('body');
-    topSection.setAttribute(ElementTrackingAttribute.context, 'top');
+    topSection.setAttribute(TrackingAttribute.context, 'top');
 
     expect(isTrackedElement(div)).toBe(true);
     expect(isTrackedElement(midSection)).toBe(true);
@@ -70,17 +70,17 @@ describe('findTrackedParentElements', () => {
 
   it('should return a list of Tracked Elements ignoring the DOM tree order and following the parentElementId', () => {
     const div = document.createElement('div');
-    div.setAttribute(ElementTrackingAttribute.context, 'div');
-    div.setAttribute(ElementTrackingAttribute.parentElementId, 'top');
+    div.setAttribute(TrackingAttribute.context, 'div');
+    div.setAttribute(TrackingAttribute.parentElementId, 'top');
 
     const midSection = document.createElement('section');
-    midSection.setAttribute(ElementTrackingAttribute.context, 'mid');
+    midSection.setAttribute(TrackingAttribute.context, 'mid');
 
     const untrackedSection = document.createElement('div');
 
     const topSection = document.createElement('body');
-    topSection.setAttribute(ElementTrackingAttribute.context, 'top');
-    topSection.setAttribute(ElementTrackingAttribute.elementId, 'top');
+    topSection.setAttribute(TrackingAttribute.context, 'top');
+    topSection.setAttribute(TrackingAttribute.elementId, 'top');
 
     expect(isCustomParentTrackedElement(div)).toBe(true);
     expect(isTrackedElement(midSection)).toBe(true);
@@ -101,11 +101,11 @@ describe('findTrackedParentElements', () => {
     jest.spyOn(global.console, 'error');
 
     const div = document.createElement('div');
-    div.setAttribute(ElementTrackingAttribute.context, 'div');
-    div.setAttribute(ElementTrackingAttribute.parentElementId, 'top');
+    div.setAttribute(TrackingAttribute.context, 'div');
+    div.setAttribute(TrackingAttribute.parentElementId, 'top');
 
     const midSection = document.createElement('section');
-    midSection.setAttribute(ElementTrackingAttribute.context, 'mid');
+    midSection.setAttribute(TrackingAttribute.context, 'mid');
 
     const untrackedSection = document.createElement('div');
 

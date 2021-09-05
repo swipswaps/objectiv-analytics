@@ -1,4 +1,4 @@
-import { ElementTrackingAttribute } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { isCustomParentTrackedElement, isTrackedElement, TrackableElement } from '../typeGuards';
 
 /**
@@ -20,8 +20,8 @@ const findTrackedParentElements = (
 
   // If this element has a Parent Tracked Element Id specified, follow that instead of the DOM parentElement
   if (isCustomParentTrackedElement(element)) {
-    const parentElementId = element.getAttribute(ElementTrackingAttribute.parentElementId);
-    const parentElement = document.querySelector(`[${ElementTrackingAttribute.elementId}='${parentElementId}']`);
+    const parentElementId = element.getAttribute(TrackingAttribute.parentElementId);
+    const parentElement = document.querySelector(`[${TrackingAttribute.elementId}='${parentElementId}']`);
     if (!isTrackedElement(parentElement)) {
       console.error(`[Objectiv] findTrackedParentElements: missing or invalid Parent Element '${parentElementId}'`);
       return parentElements;

@@ -4,7 +4,7 @@ import {
   makeSectionContext,
   makeSectionVisibleEvent,
 } from '@objectiv/tracker-core';
-import { BrowserTracker, configureTracker, ElementTrackingAttribute } from '../src';
+import { BrowserTracker, configureTracker, TrackingAttribute } from '../src';
 import trackNewElement from '../src/observer/trackNewElement';
 import makeTrackedElement from './mocks/makeTrackedElement';
 
@@ -29,7 +29,7 @@ describe('trackNewElement', () => {
   it('should track visibility: visible event', async () => {
     const sectionContext = makeSectionContext({ id: 'test' });
     const trackedDiv = makeTrackedElement('div-id-1', JSON.stringify(sectionContext), 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"auto"}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
     spyOn(trackedDiv, 'addEventListener');
 
     trackNewElement(trackedDiv);
@@ -46,7 +46,7 @@ describe('trackNewElement', () => {
     const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
     const trackedButton = makeTrackedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
-    trackedButton.setAttribute(ElementTrackingAttribute.trackClicks, 'true');
+    trackedButton.setAttribute(TrackingAttribute.trackClicks, 'true');
     document.body.appendChild(trackedButton);
     spyOn(trackedButton, 'addEventListener');
 
@@ -60,7 +60,7 @@ describe('trackNewElement', () => {
   it('should attach blur event listener', async () => {
     const inputContext = makeInputContext({ id: 'test' });
     const trackedInput = makeTrackedElement('input-id-1', JSON.stringify(inputContext), 'input');
-    trackedInput.setAttribute(ElementTrackingAttribute.trackBlurs, 'true');
+    trackedInput.setAttribute(TrackingAttribute.trackBlurs, 'true');
     spyOn(trackedInput, 'addEventListener');
 
     trackNewElement(trackedInput);

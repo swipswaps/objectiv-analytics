@@ -1,5 +1,5 @@
 import { makeSectionContext, makeSectionHiddenEvent } from '@objectiv/tracker-core';
-import { BrowserTracker, configureTracker, ElementTrackingAttribute } from '../src';
+import { BrowserTracker, configureTracker, TrackingAttribute } from '../src';
 import trackRemovedElements from '../src/observer/trackRemovedElements';
 import makeTrackedElement from './mocks/makeTrackedElement';
 
@@ -43,7 +43,7 @@ describe('trackRemovedElements', () => {
     const div = document.createElement('div');
     const sectionContext = makeSectionContext({ id: 'div' });
     const trackedDiv = makeTrackedElement('div', JSON.stringify(sectionContext), 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"auto"}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
     const trackedButton = makeTrackedElement('button', 'null', 'button');
 
     trackedDiv.appendChild(trackedButton);
@@ -63,7 +63,7 @@ describe('trackRemovedElements', () => {
     const div = document.createElement('div');
     const sectionContext = makeSectionContext({ id: 'div' });
     const trackedDiv = makeTrackedElement('div', JSON.stringify(sectionContext), 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
     const trackedButton = makeTrackedElement('button', 'null', 'button');
 
     trackedDiv.appendChild(trackedButton);

@@ -1,6 +1,6 @@
 import { isEmptyObject } from '../isEmptyObject';
 import { TrackChildrenParameters } from '../tracker/trackChildren';
-import { ChildrenTrackingAttribute } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, TrackedElement } from '../typeGuards';
 
 /**
@@ -17,7 +17,7 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
   }
 
   // TODO we need a proper parsers for these attributes with good validation
-  const childrenTrackingQueriesAttribute = element.getAttribute(ChildrenTrackingAttribute.trackChildren);
+  const childrenTrackingQueriesAttribute = element.getAttribute(TrackingAttribute.trackChildren);
   /* istanbul ignore if - this cannot happen but we don't have proper type guards to enforce it */
   if (!childrenTrackingQueriesAttribute) {
     return newlyTrackedElements;
