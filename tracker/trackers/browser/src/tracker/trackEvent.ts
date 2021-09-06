@@ -10,10 +10,11 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import ExtendableError from 'es6-error';
-import { BrowserTracker, getDocument, windowExists } from '../';
+import { BrowserTracker, getDocument } from '../';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
 import findTrackedParentElements from './findTrackedParentElements';
+import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
 
 /**
  * All of our EventFactories have the same signature
@@ -28,8 +29,9 @@ type EventFactory = (props?: {
  */
 export type TrackEventParameters = {
   eventFactory: EventFactory;
-  element: HTMLElement | EventTarget;
+  element: HTMLElement | SVGElement | EventTarget;
   tracker?: BrowserTracker;
+  onError?: TrackOnErrorCallback;
 };
 
 /**
@@ -43,43 +45,40 @@ export class TrackEventError extends ExtendableError {}
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
  */
-export const trackEvent = ({ eventFactory, element, tracker }: TrackEventParameters) => {
-  let trackerInstance = tracker;
-  if (!trackerInstance && windowExists()) {
-    trackerInstance = window.objectiv.tracker;
+export const trackEvent = (parameters: TrackEventParameters) => {
+  try {
+    const { eventFactory, element, tracker = window.objectiv.tracker } = parameters;
+
+    // For trackable Elements traverse the DOM to reconstruct their Location
+    let locationStack: AbstractLocationContext[] = [];
+    if (isTrackableElement(element)) {
+      // Retrieve parent Tracked Elements
+      const elementsStack = findTrackedParentElements(element).reverse();
+
+      // Re-hydrate Location Stack
+      locationStack = elementsStack.reduce((locationContexts, element) => {
+        // TODO we need a proper parsers for these attributes with good validation
+        // TODO surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
+        const locationContext = element.getAttribute(TrackingAttribute.context) as string;
+        locationContexts.push(JSON.parse(locationContext));
+        return locationContexts;
+      }, [] as AbstractLocationContext[]);
+
+      // TODO temporary until we have factories to avoid parsing invalid data from attributes
+      locationStack = locationStack.filter((locationContext) => locationContext);
+    }
+
+    // Create new Event
+    const newEvent = eventFactory({ location_stack: locationStack });
+
+    // Track
+    tracker.trackEvent(newEvent).catch((error) => {
+      // Forward core tracker errors to trackErrorHandler
+      throw error;
+    });
+  } catch (error) {
+    trackErrorHandler(error, parameters, parameters?.onError);
   }
-  // If we didn't get a Tracker we can't continue
-  if (!trackerInstance) {
-    throw new TrackEventError(
-      'Tracker not initialized. Please provide a tracker instance' +
-        (windowExists() ? ' or setup a global one via `configureTracker`' : '.')
-    );
-  }
-
-  // For trackable Elements traverse the DOM to reconstruct their Location
-  let locationStack: AbstractLocationContext[] = [];
-  if (isTrackableElement(element)) {
-    // Retrieve parent Tracked Elements
-    const elementsStack = findTrackedParentElements(element).reverse();
-
-    // Re-hydrate Location Stack
-    locationStack = elementsStack.reduce((locationContexts, element) => {
-      // TODO we need a proper parsers for these attributes with good validation
-      // TODO surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
-      const locationContext = element.getAttribute(TrackingAttribute.context) as string;
-      locationContexts.push(JSON.parse(locationContext));
-      return locationContexts;
-    }, [] as AbstractLocationContext[]);
-
-    // TODO temporary until we have factories to avoid parsing invalid data from attributes
-    locationStack = locationStack.filter((locationContext) => locationContext);
-  }
-
-  // Create new Event
-  const newEvent = eventFactory({ location_stack: locationStack });
-
-  // Track
-  trackerInstance.trackEvent(newEvent);
 };
 
 /**
@@ -134,7 +133,8 @@ export type NonInteractiveTrackHelperParameters = {
 };
 
 export const trackApplicationLoadedEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
-  const { element = getDocument(), tracker = window.objectiv.tracker } = parameters ?? { element: getDocument() };
+  const { element = getDocument(), tracker } = parameters ?? { element: getDocument() };
+  // FIXME, remove this
   if (!element) {
     throw new TrackEventError('Missing Element parameter. Provide a valid Element to track');
   }
@@ -142,7 +142,8 @@ export const trackApplicationLoadedEvent = (parameters?: NonInteractiveTrackHelp
 };
 
 export const trackURLChangeEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
-  const { element = getDocument(), tracker = window.objectiv.tracker } = parameters ?? { element: getDocument() };
+  const { element = getDocument(), tracker } = parameters ?? { element: getDocument() };
+  // FIXME, remove this
   if (!element) {
     throw new TrackEventError('Missing Element parameter. Provide a valid Element to track');
   }

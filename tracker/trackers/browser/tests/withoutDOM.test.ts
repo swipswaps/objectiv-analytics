@@ -12,10 +12,14 @@ describe('Without DOM', () => {
     );
   });
 
-  it('should throw if a Tracker instance cannot be retrieved and was not provided either', async () => {
+  it('should console.error if a Tracker instance cannot be retrieved because DOM is not available', async () => {
+    spyOn(console, 'error');
+
+    const parameters = { eventFactory: makeClickEvent, element: null };
     // @ts-ignore
-    expect(() => trackEvent({ eventFactory: makeClickEvent, element: null })).toThrow(
-      'Tracker not initialized. Please provide a tracker instance.'
-    );
+    trackEvent(parameters);
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenNthCalledWith(1, ReferenceError('window is not defined'), parameters);
   });
 });

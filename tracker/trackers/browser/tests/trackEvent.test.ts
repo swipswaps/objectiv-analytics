@@ -36,23 +36,20 @@ describe('trackEvent', () => {
     spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
-  it('should throw if a Tracker instance cannot be retrieved and was not provided either', async () => {
+  it('should console.error if a Tracker instance cannot be retrieved and was not provided either', async () => {
     // @ts-ignore forcefully wipe the tracker instance
     window.objectiv.tracker = null;
     expect(window.objectiv.tracker).toBe(null);
+    spyOn(console, 'error');
 
-    expect(() => trackEvent({ eventFactory: makeClickEvent, element: testElement })).toThrow(
-      'Tracker not initialized. Please provide a tracker instance or setup a global one via `configureTracker`'
-    );
-  });
+    const parameters = { eventFactory: makeClickEvent, element: testElement };
+    trackEvent(parameters);
 
-  it('should throw if a the given Element is null or undefined', async () => {
-    // @ts-ignore forcefully wipe the tracker instance
-    window.objectiv.tracker = null;
-    expect(window.objectiv.tracker).toBe(null);
-
-    expect(() => trackEvent({ eventFactory: makeClickEvent, element: testElement })).toThrow(
-      'Tracker not initialized. Please provide a tracker instance or setup a global one via `configureTracker`'
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenNthCalledWith(
+      1,
+      new TypeError("Cannot read property 'trackEvent' of null"),
+      parameters
     );
   });
 
