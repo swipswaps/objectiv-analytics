@@ -1,6 +1,6 @@
 import { isEmptyObject } from '../isEmptyObject';
 import { TrackChildrenParameters } from '../tracker/trackChildren';
-import { ChildrenTrackingAttribute } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, TrackedElement } from '../typeGuards';
 
 /**
@@ -17,7 +17,7 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
   }
 
   // TODO we need a proper parsers for these attributes with good validation
-  const childrenTrackingQueriesAttribute = element.getAttribute(ChildrenTrackingAttribute.trackChildren);
+  const childrenTrackingQueriesAttribute = element.getAttribute(TrackingAttribute.trackChildren);
   /* istanbul ignore if - this cannot happen but we don't have proper type guards to enforce it */
   if (!childrenTrackingQueriesAttribute) {
     return newlyTrackedElements;
@@ -33,7 +33,8 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
   childrenTrackingQueries.forEach(({ query, queryAll, trackAs }: TrackChildrenParameters) => {
     const queriedElements = [];
 
-    if (isEmptyObject(trackAs)) {
+    // FIXME remove this and use superstruct guard instead
+    if (!trackAs || isEmptyObject(trackAs)) {
       console.error(`trackAs attributes for query: ${query} are empty`);
       return;
     }
@@ -48,7 +49,7 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
 
     queriedElements.forEach((queriedElement) => {
       if (!queriedElement) {
-        console.error(`Could find Element via querySelector query: ${query}`);
+        console.error(`Could not find Element via querySelector query: ${query}`);
         return;
       }
 

@@ -1,256 +1,73 @@
-import { AbstractLocationContext } from '@objectiv/schema';
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
-import { v4 as uuidv4 } from 'uuid';
-import {
-  ContextType,
-  ContextTypes,
-  TrackBlursDefaultValueByContextType,
-  TrackClicksDefaultValueByContextType,
-  TrackVisibilityDefaultValueByContextType,
-} from '../ContextType';
-import {
-  ElementTrackingAttribute,
-  StringifiedElementTrackingAttributes,
-  TrackingAttributeVisibility,
-} from '../TrackingAttributes';
+import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
+import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
+import { StringifiedTrackingAttributes, TrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
 
 /**
- * It's possible to call `track` with just an ID for SectionContexts aka Elements
- */
-export const DEFAULT_CONTEXT_TYPE = ContextType.element;
-
-/**
- * The options parameter of the `track` function. Used to override default behavior
- */
-export type TrackParameterOptions = {
-  trackClicks?: boolean;
-  trackBlurs?: boolean;
-  trackVisibility?: TrackingAttributeVisibility;
-  parentTracker?: StringifiedElementTrackingAttributes | {};
-};
-
-/**
- * The parameters of `track`
- */
-export type TrackParameters = {
-  id?: string;
-  instance?: AbstractLocationContext;
-  type?: ContextType;
-  extraAttributes?: Record<string, any>;
-  options?: TrackParameterOptions;
-};
-
-export type TrackReturnValue = StringifiedElementTrackingAttributes | {};
-
-/**
- * Used to decorate a Trackable Element with our Tracking Attributes. Can be called in three ways:
- *
- *    trackElement(<id>)
- *    trackElement(<id>, <ContextType>, <extraAttributes object>)
- *    trackElement(<Context Instance>)
- *
- * Examples
- *
- *    trackElement('section id')
- *    trackElement('button', ContextType.button, { text: 'Click Me' })
- *    trackElement(makeButtonContext({ id: 'button', text: 'Click Me' }))
+ * Used to decorate a Trackable Element with our Tracking Attributes.
  *
  * Returns an object containing the tracking attributes. It's properties are supposed to be spread on the target HTML
  * Element. This allows us to identify elements uniquely in a Document and to reconstruct their Location.
  *
- * For most commonly used Elements / Location Contexts see also the helper functions below.
+ * For a higher level api see the trackHelpers module.
+ *
+ * Track Examples
+ *
+ *    track({ instance: makeElementContext({ id: 'section-id' }) })
+ *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
  */
+export const TrackReturnValue = optional(StringifiedTrackingAttributes);
+export type TrackReturnValue = Infer<typeof TrackReturnValue>;
 
-// Overload: Section context by id only
-export function track(parameters: { id: string; options?: TrackParameterOptions }): TrackReturnValue;
+export const TrackOptions = object({
+  trackClicks: optional(boolean()),
+  trackBlurs: optional(boolean()),
+  trackVisibility: optional(TrackingAttributeVisibility),
+  parentTracker: optional(TrackReturnValue),
+});
 
-// Overload: Location contexts without attributes
-export function track(parameters: {
-  id: string;
-  type:
-    | ContextType.element
-    | ContextType.input
-    | ContextType.mediaPlayer
-    | ContextType.navigation
-    | ContextType.overlay;
-  options?: TrackParameterOptions;
-}): TrackReturnValue;
+export const TrackParameters = object({
+  instance: LocationContext,
+  options: optional(TrackOptions),
+  onError: optional(func()),
+});
+export type TrackParameters = Infer<typeof TrackParameters>;
 
-// Overload: Section contexts with visibility
-export function track(parameters: {
-  id: string;
-  type:
-    | ContextType.element
-    | ContextType.expandableElement
-    | ContextType.mediaPlayer
-    | ContextType.navigation
-    | ContextType.overlay;
-  options?: TrackParameterOptions;
-}): TrackReturnValue;
-
-// Overload: Button context
-export function track(parameters: {
-  id: string;
-  type: ContextType.button;
-  extraAttributes: { text: string };
-  options?: TrackParameterOptions;
-}): TrackReturnValue;
-
-// Overload: Link context
-export function track(parameters: {
-  id: string;
-  type: ContextType.link;
-  extraAttributes: { href: string; text: string };
-  options?: TrackParameterOptions;
-}): TrackReturnValue;
-
-// Overload: Any Location Context
-export function track(parameters: {
-  instance: AbstractLocationContext;
-  options?: TrackParameterOptions;
-}): TrackReturnValue;
-
-// Implementation
-export function track({ id, instance, type, extraAttributes, options }: TrackParameters): TrackReturnValue {
-  const elementId = uuidv4();
-
-  // This can happen when feeding dynamic parameters to track. Eg: search or database results.
-  if ((!id && !instance) || (id && instance)) {
-    // TODO use exceptions and make the return value stricter
-    console.error('[Objectiv] track: Unexpected input', { id, instance });
-    return {};
-  }
-
-  // Factor context instance if necessary
-  let contextInstance: AbstractLocationContext | undefined;
-  if (id) {
-    const contextType = type ?? DEFAULT_CONTEXT_TYPE;
-    if (ContextTypes.includes(contextType)) {
-      // TODO Surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
-      contextInstance = {
-        __location_context: true,
-        _context_type: type ?? DEFAULT_CONTEXT_TYPE,
-        id: id,
-        ...extraAttributes,
-      };
-    }
+export const trackErrorHandler = (error: Error, parameters: Pick<TrackParameters, 'onError'>) => {
+  if (parameters?.onError) {
+    parameters.onError(error);
   } else {
-    contextInstance = instance;
+    console.error(error, parameters);
   }
+  return undefined;
+};
 
-  if (!contextInstance) {
-    // TODO use exceptions and make the return value stricter
-    return {};
+export const track = (parameters: TrackParameters): TrackReturnValue => {
+  try {
+    // Validate input
+    const { instance, options } = create(parameters, TrackParameters);
+
+    // Process options. Gather default attribute values
+    const trackClicks = options?.trackClicks ?? (is(instance, ClickableContext) ? true : undefined);
+    const trackBlurs = options?.trackBlurs ?? (is(instance, InputContext) ? true : undefined);
+    const trackVisibility = options?.trackVisibility ?? (is(instance, SectionContext) ? { mode: 'auto' } : undefined);
+    const parentElementId = options?.parentTracker ? options.parentTracker[TrackingAttribute.elementId] : undefined;
+
+    // Clean up the Context instance from discriminatory properties before serializing it
+    cleanObjectFromDiscriminatingProperties(instance);
+
+    // Validate output and return it
+    return create(
+      {
+        [TrackingAttribute.parentElementId]: parentElementId,
+        [TrackingAttribute.context]: JSON.stringify(instance),
+        [TrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
+        [TrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
+        [TrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
+      },
+      StringifiedTrackingAttributes
+    );
+  } catch (error) {
+    return trackErrorHandler(error, parameters);
   }
-
-  // Clean up the instance from discriminatory properties
-  cleanObjectFromDiscriminatingProperties(contextInstance);
-
-  // Get the current _context_type from the instance
-  const contextType = contextInstance._context_type as ContextType;
-
-  // Gather default attribute values
-  let trackClicks = TrackClicksDefaultValueByContextType.get(contextType);
-  let trackBlurs = TrackBlursDefaultValueByContextType.get(contextType);
-  let trackVisibility = TrackVisibilityDefaultValueByContextType.get(contextType);
-
-  // Process options and apply overrides, if any
-  if (options !== undefined) {
-    if (options.trackClicks !== undefined) {
-      trackClicks = options.trackClicks;
-    }
-    if (options.trackBlurs !== undefined) {
-      trackBlurs = options.trackBlurs;
-    }
-    if (options.trackVisibility !== undefined) {
-      trackVisibility = options.trackVisibility;
-    }
-  }
-
-  // Process parent tracker option and extract the Parent tracker Element Id attribute
-  let parentElementId = undefined;
-  // TODO validate parameter, make it stricter and use exceptions
-  if (options && options.parentTracker && options.parentTracker !== {}) {
-    const parentTrackerAttributes = options.parentTracker as StringifiedElementTrackingAttributes;
-    parentElementId = parentTrackerAttributes[ElementTrackingAttribute.elementId];
-  }
-
-  return {
-    [ElementTrackingAttribute.elementId]: elementId,
-    [ElementTrackingAttribute.parentElementId]: parentElementId,
-    [ElementTrackingAttribute.context]: JSON.stringify(contextInstance),
-    [ElementTrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
-    [ElementTrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
-    [ElementTrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
-  };
-}
-
-/**
- * Location Context specific helpers. To make it easier to track common HTML Elements
- */
-type TrackButtonParameters = {
-  id: string;
-  text: string;
-  options?: TrackParameterOptions;
-};
-export const trackButton = ({ id, text, options }: TrackButtonParameters) => {
-  return track({ id, type: ContextType.button, extraAttributes: { text }, options });
-};
-
-type TrackElementParameters = {
-  id: string;
-  options?: TrackParameterOptions;
-};
-export const trackElement = ({ id, options }: TrackElementParameters) => {
-  return track({ id, type: ContextType.element, options });
-};
-
-type TrackExpandableElementParameters = {
-  id: string;
-  options?: TrackParameterOptions;
-};
-export const trackExpandableElement = ({ id, options }: TrackExpandableElementParameters) => {
-  return track({ id, type: ContextType.expandableElement, options });
-};
-
-type TrackInputParameters = {
-  id: string;
-  options?: TrackParameterOptions;
-};
-export const trackInput = ({ id, options }: TrackInputParameters) => {
-  return track({ id, type: ContextType.input, options });
-};
-
-type TrackLinkParameters = {
-  id: string;
-  text: string;
-  href: string;
-  options?: TrackParameterOptions;
-};
-export const trackLink = ({ id, text, href, options }: TrackLinkParameters) => {
-  return track({ id, type: ContextType.link, extraAttributes: { text, href }, options });
-};
-
-type TrackMediaPlayerParameters = {
-  id: string;
-  options?: TrackParameterOptions;
-};
-export const trackMediaPlayer = ({ id, options }: TrackMediaPlayerParameters) => {
-  return track({ id, type: ContextType.mediaPlayer, options });
-};
-
-type TrackNavigationParameters = {
-  id: string;
-  options?: TrackParameterOptions;
-};
-export const trackNavigation = ({ id, options }: TrackNavigationParameters) => {
-  return track({ id, type: ContextType.navigation, options });
-};
-
-type TrackOverlayParameters = {
-  id: string;
-  options?: TrackParameterOptions;
-};
-export const trackOverlay = ({ id, options }: TrackOverlayParameters) => {
-  return track({ id, type: ContextType.overlay, options });
 };

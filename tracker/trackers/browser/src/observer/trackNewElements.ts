@@ -1,5 +1,5 @@
 import { BrowserTracker } from '../tracker/BrowserTracker';
-import { ElementTrackingAttribute } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import processChildrenTrackingElement from './processChildrenTrackingElement';
 import trackNewElement from './trackNewElement';
 
@@ -8,7 +8,7 @@ import trackNewElement from './trackNewElement';
  */
 function trackNewElements(element: Element, tracker: BrowserTracker = window.objectiv.tracker) {
   // Process `track` attributes
-  const trackedElements = element.querySelectorAll(`[${ElementTrackingAttribute.context}]`);
+  const trackedElements = element.querySelectorAll(`[${TrackingAttribute.context}]`);
   [element, ...Array.from(trackedElements)].forEach((element) => trackNewElement(element, tracker));
 
   // Process `trackChildren` attributes

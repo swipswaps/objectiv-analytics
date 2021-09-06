@@ -1,5 +1,5 @@
-import { BrowserTracker, configureTracker, ElementTrackingAttribute } from '../src';
 import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
+import { BrowserTracker, configureTracker, TrackingAttribute } from '../src';
 import trackVisibilityVisibleEvent from '../src/observer/trackVisibilityVisibleEvent';
 import makeTrackedElement from './mocks/makeTrackedElement';
 
@@ -21,7 +21,7 @@ describe('trackVisibilityVisibleEvent', () => {
 
   it('should not track elements with invalid visibility tracking attributes', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, 'null');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, 'null');
 
     trackVisibilityVisibleEvent(trackedDiv);
 
@@ -30,7 +30,7 @@ describe('trackVisibilityVisibleEvent', () => {
 
   it('should track in mode:auto', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"auto"}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
 
     trackVisibilityVisibleEvent(trackedDiv);
 
@@ -40,7 +40,7 @@ describe('trackVisibilityVisibleEvent', () => {
 
   it('should track in mode:manual with isVisible:true', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
 
     trackVisibilityVisibleEvent(trackedDiv);
 
@@ -50,7 +50,7 @@ describe('trackVisibilityVisibleEvent', () => {
 
   it('should not track in mode:manual with isVisible:false', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
 
     trackVisibilityVisibleEvent(trackedDiv);
 

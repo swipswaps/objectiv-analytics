@@ -1,5 +1,5 @@
 import { makeSectionHiddenEvent } from '@objectiv/tracker-core';
-import { BrowserTracker, configureTracker, ElementTrackingAttribute } from '../src';
+import { BrowserTracker, configureTracker, TrackingAttribute } from '../src';
 import trackVisibilityHiddenEvent from '../src/observer/trackVisibilityHiddenEvent';
 import makeTrackedElement from './mocks/makeTrackedElement';
 
@@ -21,7 +21,7 @@ describe('trackVisibilityHiddenEvent', () => {
 
   it('should not track elements with invalid visibility tracking attributes', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, 'null');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, 'null');
 
     trackVisibilityHiddenEvent(trackedDiv);
 
@@ -30,7 +30,7 @@ describe('trackVisibilityHiddenEvent', () => {
 
   it('should not track in mode:auto', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"auto"}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
 
     trackVisibilityHiddenEvent(trackedDiv);
 
@@ -39,7 +39,7 @@ describe('trackVisibilityHiddenEvent', () => {
 
   it('should not track in mode:manual with isVisible:true', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
 
     trackVisibilityHiddenEvent(trackedDiv);
 
@@ -48,7 +48,7 @@ describe('trackVisibilityHiddenEvent', () => {
 
   it('should track in mode:manual with isVisible:false', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
 
     trackVisibilityHiddenEvent(trackedDiv);
 
@@ -61,7 +61,7 @@ describe('trackVisibilityHiddenEvent', () => {
     spyOn(trackerOverride, 'trackEvent');
 
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
-    trackedDiv.setAttribute(ElementTrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
 
     trackVisibilityHiddenEvent(trackedDiv, trackerOverride);
 

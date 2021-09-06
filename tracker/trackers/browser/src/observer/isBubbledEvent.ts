@@ -1,4 +1,4 @@
-import { ElementTrackingAttribute } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement, TrackedElement } from '../typeGuards';
 
 /**
@@ -12,8 +12,8 @@ const isBubbledEvent = (originElement: TrackedElement, eventTarget: EventTarget)
   }
 
   // TODO we need a proper parsers for these attributes with good validation
-  const originElementId = originElement.getAttribute(ElementTrackingAttribute.elementId);
-  const targetElementId = eventTarget.getAttribute(ElementTrackingAttribute.elementId);
+  const originElementId = originElement.getAttribute(TrackingAttribute.elementId);
+  const targetElementId = eventTarget.getAttribute(TrackingAttribute.elementId);
 
   return originElementId !== targetElementId;
 };

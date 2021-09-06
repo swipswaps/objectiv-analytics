@@ -1,6 +1,6 @@
 import { BrowserTracker, BrowserTrackerConfig } from '../tracker/BrowserTracker';
 import { trackApplicationLoadedEvent, trackURLChangeEvent } from '../tracker/trackEvent';
-import { ElementTrackingAttribute } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 import trackNewElements from './trackNewElements';
 import trackRemovedElements from './trackRemovedElements';
@@ -30,7 +30,7 @@ export const startAutoTracking = (options: AutoTrackingOptions, tracker: Browser
     childList: true,
     subtree: true,
     attributes: true,
-    attributeFilter: [ElementTrackingAttribute.trackVisibility],
+    attributeFilter: [TrackingAttribute.trackVisibility],
   });
 
   if (trackApplicationLoaded && !applicationLoaded) {
@@ -68,7 +68,6 @@ export const makeMutationCallback =
     if (trackURLChanges) {
       // Track SPA URL changes
       const currentURL = location.href;
-      console.log(currentURL, previousURL);
       if (currentURL !== previousURL) {
         previousURL = currentURL;
         trackURLChangeEvent({ tracker });

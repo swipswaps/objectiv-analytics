@@ -1,4 +1,4 @@
-export * from './ContextType';
+export * from './Contexts';
 export * from './isEmptyObject';
 export * from './observer/isBubbledEvent';
 export * from './observer/makeBlurEventListener';
@@ -16,6 +16,7 @@ export * from './tracker/findTrackedParentElements';
 export * from './tracker/track';
 export * from './tracker/trackChildren';
 export * from './tracker/trackEvent';
+export * from './tracker/trackHelpers';
 export * from './TrackingAttributes';
 export * from './transport/DebugTransport';
 export * from './transport/FetchAPITransport';
