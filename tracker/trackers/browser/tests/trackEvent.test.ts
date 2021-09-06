@@ -42,7 +42,17 @@ describe('trackEvent', () => {
     expect(window.objectiv.tracker).toBe(null);
 
     expect(() => trackEvent({ eventFactory: makeClickEvent, element: testElement })).toThrow(
-      'Tracker not initialized. Provide a tracker instance or setup a global one via `configureTracker`'
+      'Tracker not initialized. Please provide a tracker instance or setup a global one via `configureTracker`'
+    );
+  });
+
+  it('should throw if a the given Element is null or undefined', async () => {
+    // @ts-ignore forcefully wipe the tracker instance
+    window.objectiv.tracker = null;
+    expect(window.objectiv.tracker).toBe(null);
+
+    expect(() => trackEvent({ eventFactory: makeClickEvent, element: testElement })).toThrow(
+      'Tracker not initialized. Please provide a tracker instance or setup a global one via `configureTracker`'
     );
   });
 

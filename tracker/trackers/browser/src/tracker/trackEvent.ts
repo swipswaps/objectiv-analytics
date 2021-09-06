@@ -10,13 +10,13 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import ExtendableError from 'es6-error';
-import { BrowserTracker, getDocument, getGlobalTracker } from '../';
+import { BrowserTracker, getDocument, windowExists } from '../';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
 import findTrackedParentElements from './findTrackedParentElements';
 
 /**
- * All of our EventFactories have a similar signature
+ * All of our EventFactories have the same signature
  */
 type EventFactory = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -28,8 +28,8 @@ type EventFactory = (props?: {
  */
 export type TrackEventParameters = {
   eventFactory: EventFactory;
-  element: HTMLElement | EventTarget | null;
-  tracker?: BrowserTracker | null;
+  element: HTMLElement | EventTarget;
+  tracker?: BrowserTracker;
 };
 
 /**
@@ -43,17 +43,17 @@ export class TrackEventError extends ExtendableError {}
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
  */
-export const trackEvent = ({ eventFactory, element, tracker = getGlobalTracker() }: TrackEventParameters) => {
-  // If we didn't get a Tracker we can't continue
-  if (!tracker) {
-    throw new TrackEventError(
-      'Tracker not initialized. Provide a tracker instance or setup a global one via `configureTracker`'
-    );
+export const trackEvent = ({ eventFactory, element, tracker }: TrackEventParameters) => {
+  let trackerInstance = tracker;
+  if (!trackerInstance && windowExists()) {
+    trackerInstance = window.objectiv.tracker;
   }
-
-  // If we didn't get an Element we can't continue
-  if (element === null) {
-    throw new TrackEventError('Missing Element parameter. Provide a valid Element to track');
+  // If we didn't get a Tracker we can't continue
+  if (!trackerInstance) {
+    throw new TrackEventError(
+      'Tracker not initialized. Please provide a tracker instance' +
+        (windowExists() ? ' or setup a global one via `configureTracker`' : '.')
+    );
   }
 
   // For trackable Elements traverse the DOM to reconstruct their Location
@@ -79,7 +79,7 @@ export const trackEvent = ({ eventFactory, element, tracker = getGlobalTracker()
   const newEvent = eventFactory({ location_stack: locationStack });
 
   // Track
-  tracker.trackEvent(newEvent);
+  trackerInstance.trackEvent(newEvent);
 };
 
 /**
@@ -87,7 +87,7 @@ export const trackEvent = ({ eventFactory, element, tracker = getGlobalTracker()
  */
 export type TrackEventHelperParameters = {
   element: HTMLElement | EventTarget;
-  tracker?: BrowserTracker | null;
+  tracker?: BrowserTracker;
 };
 
 /**
@@ -130,15 +130,21 @@ export const trackVisibility = ({
  */
 export type NonInteractiveTrackHelperParameters = {
   element?: HTMLElement | EventTarget;
-  tracker?: BrowserTracker | null;
+  tracker?: BrowserTracker;
 };
 
 export const trackApplicationLoadedEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
-  const { element = getDocument(), tracker = getGlobalTracker() } = parameters ?? { element: getDocument() };
+  const { element = getDocument(), tracker = window.objectiv.tracker } = parameters ?? { element: getDocument() };
+  if (!element) {
+    throw new TrackEventError('Missing Element parameter. Provide a valid Element to track');
+  }
   return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
 };
 
 export const trackURLChangeEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
-  const { element = getDocument(), tracker = getGlobalTracker() } = parameters ?? { element: getDocument() };
+  const { element = getDocument(), tracker = window.objectiv.tracker } = parameters ?? { element: getDocument() };
+  if (!element) {
+    throw new TrackEventError('Missing Element parameter. Provide a valid Element to track');
+  }
   return trackEvent({ eventFactory: makeURLChangeEvent, element, tracker });
 };

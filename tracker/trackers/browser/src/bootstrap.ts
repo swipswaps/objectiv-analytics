@@ -17,31 +17,46 @@ declare global {
   }
 }
 
-// Preserve existing namespace or initialize to empty one
-window.objectiv = window.objectiv || {
-  tracker: null,
-};
+/**
+ * Helpers to check if we can access global browser objects
+ */
+export const windowExists = () => typeof window !== 'undefined';
+export const documentExists = () => typeof document !== 'undefined';
+export const locationExists = () => typeof location !== 'undefined';
+export const mutationObserverExists = () => typeof MutationObserver !== 'undefined';
 
-export const getGlobalTracker = (): BrowserTracker | null => {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  if (typeof window.objectiv === 'undefined') {
-    return null;
-  }
-
-  if (typeof window.objectiv.tracker === 'undefined') {
-    return null;
-  }
-
-  return window.objectiv.tracker;
-};
+/**
+ * Initialized window global namespace, unless already existing
+ */
+if (windowExists()) {
+  window.objectiv = window.objectiv || {
+    tracker: null,
+  };
+}
 
 export const getDocument = (): Document | null => {
-  if (typeof document === 'undefined') {
+  if (!documentExists()) {
     return null;
   }
 
   return document;
+};
+
+export const getLocation = (): Location | null => {
+  if (!locationExists()) {
+    return null;
+  }
+
+  return location;
+};
+
+/**
+ * Helper function to get the current Location href
+ */
+export const getLocationHref = () => {
+  if (!locationExists()) {
+    return undefined;
+  }
+
+  return getLocation()?.href;
 };
