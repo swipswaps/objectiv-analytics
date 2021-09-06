@@ -264,7 +264,7 @@ describe('track', () => {
 
   it('should not allow extra attributes', () => {
     const customSectionContext = { ...makeSectionContext({ id: 'test-overlay' }), extraMetadata: { test: 123 } };
-    const trackingAttributes = track({ instance: customSectionContext, onError: (error: Error) => console.log(error) });
+    const trackingAttributes = track({ instance: customSectionContext, onError: (error) => console.log(error) });
 
     expect(trackingAttributes).toBeUndefined();
   });

@@ -1,5 +1,5 @@
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
-import { boolean, create, Infer, is, object, optional } from 'superstruct';
+import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
 import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
 import { StringifiedTrackingAttributes, TrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
 import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
@@ -27,13 +27,18 @@ export const TrackOptions = object({
   trackVisibility: optional(TrackingAttributeVisibility),
   parentTracker: optional(TrackReturnValue),
 });
+export type TrackOptions = Infer<typeof TrackOptions>;
 
 export const TrackParameters = object({
   instance: LocationContext,
   options: optional(TrackOptions),
-  onError: optional(TrackOnErrorCallback),
+  onError: optional(func()),
 });
-export type TrackParameters = Infer<typeof TrackParameters>;
+export type TrackParameters = {
+  instance: Infer<typeof LocationContext>;
+  options?: TrackOptions;
+  onError?: TrackOnErrorCallback;
+};
 
 export const track = (parameters: TrackParameters): TrackReturnValue => {
   try {

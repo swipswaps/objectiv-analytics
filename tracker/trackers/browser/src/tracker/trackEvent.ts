@@ -36,11 +36,9 @@ export type TrackEventParameters = {
  * 2. Uses the component stack to reconstruct a LocationStack
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
- *
- * TODO add a parameter to allow matching closes Tracked Element Parent, instead of doing that magically
- *
  */
 export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tracker }: TrackEventParameters) => {
+  // TODO wrap in trackErrorHandler try catch
   // If we didn't get a Tracker we can't continue
   if (!tracker) {
     throw new Error('Tracker not initialized. Provide a tracker instance or setup a global one via `configureTracker`');
