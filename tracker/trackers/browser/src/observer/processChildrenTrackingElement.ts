@@ -1,5 +1,5 @@
 import { isEmptyObject } from '../isEmptyObject';
-import { TrackChildrenParameters } from '../tracker/trackChildren';
+import { TrackChildParameters } from '../tracker/trackChildren';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, TrackedElement } from '../typeGuards';
 
@@ -30,7 +30,7 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
 
   // TODO add validation for empty arrays (most probably to the attribute parser when we have it)
 
-  childrenTrackingQueries.forEach(({ query, queryAll, trackAs }: TrackChildrenParameters) => {
+  childrenTrackingQueries.forEach(({ query, queryAll, trackAs }: TrackChildParameters) => {
     const queriedElements = [];
 
     // FIXME remove this and use superstruct guard instead
