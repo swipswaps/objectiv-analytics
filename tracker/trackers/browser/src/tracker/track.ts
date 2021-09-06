@@ -11,10 +11,11 @@ import { StringifiedTrackingAttributes, TrackingAttribute, TrackingAttributeVisi
  *
  * For a higher level api see the trackHelpers module.
  *
- * Track Examples
+ * Examples
  *
  *    track({ instance: makeElementContext({ id: 'section-id' }) })
  *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
+ *
  */
 export const TrackReturnValue = optional(StringifiedTrackingAttributes);
 export type TrackReturnValue = Infer<typeof TrackReturnValue>;
