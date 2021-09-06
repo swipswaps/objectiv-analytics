@@ -1,4 +1,4 @@
-import { boolean, defaulted, define, Infer, is, literal, object, optional, string, union } from 'superstruct';
+import { array, boolean, defaulted, define, Infer, is, literal, object, optional, string, union } from 'superstruct';
 import { v4, validate } from 'uuid';
 import { LocationContext } from './Contexts';
 
@@ -81,6 +81,30 @@ export type StringifiedTrackingAttributes = Infer<typeof StringifiedTrackingAttr
 /**
  * The object that `trackChildren` calls return
  */
-export type ChildrenTrackingAttributes = {
-  [TrackingAttribute.trackChildren]: string[];
-};
+export const TrackChildrenQueryOne = object({
+  query: string(),
+  queryAll: literal(undefined),
+});
+export type TrackChildrenQueryOne = Infer<typeof TrackChildrenQueryOne>;
+
+export const TrackChildrenQueryAll = object({
+  query: literal(undefined),
+  queryAll: string(),
+});
+export type TrackChildrenQueryAll = Infer<typeof TrackChildrenQueryAll>;
+
+export const TrackChildrenQuery = union([TrackChildrenQueryOne, TrackChildrenQueryAll]);
+export type TrackChildrenQuery = Infer<typeof TrackChildrenQuery>;
+
+export const ChildrenTrackingAttributes = object({
+  [TrackingAttribute.trackChildren]: array(TrackChildrenQuery),
+});
+export type ChildrenTrackingAttributes = Infer<typeof ChildrenTrackingAttributes>;
+
+/**
+ * The object that `trackChildren` calls return, stringified
+ */
+export const StringifiedChildrenTrackingAttributes = object({
+  [TrackingAttribute.trackChildren]: string(),
+});
+export type StringifiedChildrenTrackingAttributes = Infer<typeof StringifiedChildrenTrackingAttributes>;

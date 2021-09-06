@@ -1,23 +1,12 @@
-import { ChildrenTrackingAttributes, StringifiedTrackingAttributes, TrackingAttribute } from '../TrackingAttributes';
-
-/**
- * The parameters of `trackChildren`
- */
-export type TrackChildrenQuery = {
-  query: string;
-  queryAll?: undefined;
-};
-
-export type TrackChildrenQueryAll = {
-  query?: undefined;
-  queryAll: string;
-};
-
-export type TrackChildrenParameters = (TrackChildrenQuery | TrackChildrenQueryAll) & {
-  trackAs: StringifiedTrackingAttributes | undefined;
-};
-
-export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
+import { array, assert, assign, create, Infer, object, optional, union } from 'superstruct';
+import {
+  StringifiedChildrenTrackingAttributes,
+  StringifiedTrackingAttributes,
+  TrackChildrenQueryAll,
+  TrackChildrenQueryOne,
+  TrackingAttribute,
+} from '../TrackingAttributes';
+import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
 
 /**
  * Used to decorate a Trackable Element with our Children Tracking Attributes.
@@ -51,13 +40,39 @@ export type TrackChildrenReturnValue = ChildrenTrackingAttributes | {};
  *    ])
  *
  */
-export const trackChildren = (childrenParameters: TrackChildrenParameters[]): TrackChildrenReturnValue => {
-  // TODO Debuggability: Validate that trackAs is actually valued?
-  return {
-    [TrackingAttribute.trackChildren]: JSON.stringify(childrenParameters),
-  };
-};
+const TrackAsParameter = object({
+  trackAs: optional(StringifiedTrackingAttributes),
+});
 
+export const TrackChildrenQueryOneParameters = assign(TrackChildrenQueryOne, TrackAsParameter);
+export const TrackChildrenQueryAllParameters = assign(TrackChildrenQueryAll, TrackAsParameter);
+export const TrackChildParameters = union([TrackChildrenQueryOneParameters, TrackChildrenQueryAllParameters]);
+export type TrackChildParameters = Infer<typeof TrackChildParameters>;
+export const TrackChildrenParameters = array(TrackChildParameters);
+export type TrackChildrenParameters = Infer<typeof TrackChildrenParameters>;
+
+export const TrackChildrenReturnValue = optional(StringifiedChildrenTrackingAttributes);
+export type TrackChildrenReturnValue = Infer<typeof TrackChildrenReturnValue>;
+
+export const trackChildren = (
+  parameters: TrackChildrenParameters,
+  onError?: TrackOnErrorCallback
+): TrackChildrenReturnValue => {
+  try {
+    // Validate input
+    assert(parameters, TrackChildrenParameters);
+
+    // Validate output and return it
+    return create(
+      {
+        [TrackingAttribute.trackChildren]: JSON.stringify(parameters),
+      },
+      StringifiedChildrenTrackingAttributes
+    );
+  } catch (error) {
+    return trackErrorHandler(error, parameters, onError);
+  }
+};
 
 /**
  * Syntactic sugar to track only one child.
@@ -75,4 +90,6 @@ export const trackChildren = (childrenParameters: TrackChildrenParameters[]): Tr
  *    })
  *
  */
-export const trackChild = (childParameters: TrackChildrenParameters) => trackChildren([childParameters]);
+export const trackChild = (parameters: TrackChildParameters, onError?: TrackOnErrorCallback) => {
+  return trackChildren([parameters], onError);
+};

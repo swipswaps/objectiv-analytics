@@ -9,7 +9,8 @@ import {
   makeSectionContext,
 } from '@objectiv/tracker-core';
 import { assign, create, Infer, object, pick, string } from 'superstruct';
-import { track, trackErrorHandler, TrackParameters } from '../tracker/track';
+import { track, TrackParameters } from '../tracker/track';
+import { trackErrorHandler } from './trackErrorHandler';
 
 /**
  * Track Location helpers automatically factor Context Instances and use `track` internally.

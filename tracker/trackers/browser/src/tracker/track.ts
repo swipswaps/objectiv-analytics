@@ -1,7 +1,8 @@
 import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
-import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
+import { boolean, create, Infer, is, object, optional } from 'superstruct';
 import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
 import { StringifiedTrackingAttributes, TrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
+import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
 
 /**
  * Used to decorate a Trackable Element with our Tracking Attributes.
@@ -30,18 +31,9 @@ export const TrackOptions = object({
 export const TrackParameters = object({
   instance: LocationContext,
   options: optional(TrackOptions),
-  onError: optional(func()),
+  onError: optional(TrackOnErrorCallback),
 });
 export type TrackParameters = Infer<typeof TrackParameters>;
-
-export const trackErrorHandler = (error: Error, parameters: Pick<TrackParameters, 'onError'>) => {
-  if (parameters?.onError) {
-    parameters.onError(error);
-  } else {
-    console.error(error, parameters);
-  }
-  return undefined;
-};
 
 export const track = (parameters: TrackParameters): TrackReturnValue => {
   try {
@@ -69,6 +61,6 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
       StringifiedTrackingAttributes
     );
   } catch (error) {
-    return trackErrorHandler(error, parameters);
+    return trackErrorHandler(error, parameters, parameters?.onError);
   }
 };
