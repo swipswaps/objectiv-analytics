@@ -73,7 +73,7 @@ describe('track', () => {
       trackElement({
         id: 'test',
         options: {
-          trackClicks: true,
+          trackClicks: false,
           trackBlurs: true,
           trackVisibility: { mode: 'manual', isVisible: true },
         },
@@ -82,7 +82,7 @@ describe('track', () => {
       [TrackingAttribute.elementId]: matchElementId,
       [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({ _context_type: 'SectionContext', id: 'test' }),
-      [TrackingAttribute.trackClicks]: 'true',
+      [TrackingAttribute.trackClicks]: 'false',
       [TrackingAttribute.trackBlurs]: 'true',
       [TrackingAttribute.trackVisibility]: '{"mode":"manual","isVisible":true}',
     });

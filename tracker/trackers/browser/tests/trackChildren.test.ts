@@ -1,10 +1,12 @@
 import { StructError } from 'superstruct';
-import { trackChild, trackElement, TrackingAttribute } from '../src';
+import { trackChild, trackChildren, trackElement, TrackingAttribute } from '../src';
 
-describe('trackChild', () => {
+describe('trackChild and trackChildren', () => {
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
     expect(trackChild()).toBeUndefined();
+    // @ts-ignore
+    expect(trackChildren()).toBeUndefined();
     // @ts-ignore
     expect(trackChild([])).toBeUndefined();
     // @ts-ignore
@@ -51,7 +53,7 @@ describe('trackChild', () => {
     const errorCallback = jest.fn();
 
     // @ts-ignore
-    trackChild({ instance: {} }, errorCallback);
+    trackChild({ query: {} }, errorCallback);
 
     expect(errorCallback).toHaveBeenCalledTimes(1);
     expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(StructError);
@@ -61,7 +63,7 @@ describe('trackChild', () => {
     const consoleErrorMock = spyOn(console, 'error');
 
     // @ts-ignore
-    trackChild({ instance: {} });
+    trackChild({ query: {} });
 
     expect(consoleErrorMock).toHaveBeenCalledTimes(1);
     expect(consoleErrorMock.calls.first().args[0]).toBeInstanceOf(StructError);

@@ -14,6 +14,20 @@ import matchElementId from './mocks/matchElementId';
 describe('trackHelpers', () => {
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
+    expect(trackElement()).toBeUndefined();
+    // @ts-ignore
+    expect(trackExpandableElement()).toBeUndefined();
+    // @ts-ignore
+    expect(trackInput()).toBeUndefined();
+    // @ts-ignore
+    expect(trackLink()).toBeUndefined();
+    // @ts-ignore
+    expect(trackMediaPlayer()).toBeUndefined();
+    // @ts-ignore
+    expect(trackNavigation()).toBeUndefined();
+    // @ts-ignore
+    expect(trackOverlay()).toBeUndefined();
+    // @ts-ignore
     expect(trackButton()).toBeUndefined();
     // @ts-ignore
     expect(trackButton({ wrong: 'test-button' })).toBeUndefined();
