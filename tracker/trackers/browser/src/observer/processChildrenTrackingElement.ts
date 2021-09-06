@@ -33,7 +33,8 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
   childrenTrackingQueries.forEach(({ query, queryAll, trackAs }: TrackChildrenParameters) => {
     const queriedElements = [];
 
-    if (isEmptyObject(trackAs)) {
+    // FIXME remove this and use superstruct guard instead
+    if (!trackAs || isEmptyObject(trackAs)) {
       console.error(`trackAs attributes for query: ${query} are empty`);
       return;
     }

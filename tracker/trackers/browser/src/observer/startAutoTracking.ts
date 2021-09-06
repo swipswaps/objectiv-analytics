@@ -68,7 +68,6 @@ export const makeMutationCallback =
     if (trackURLChanges) {
       // Track SPA URL changes
       const currentURL = location.href;
-      console.log(currentURL, previousURL);
       if (currentURL !== previousURL) {
         previousURL = currentURL;
         trackURLChangeEvent({ tracker });
