@@ -9,7 +9,8 @@ import {
   makeVideoPauseEvent,
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
-import { BrowserTracker } from '../';
+import ExtendableError from 'es6-error';
+import { BrowserTracker, getDocument, getGlobalTracker } from '../';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
 import findTrackedParentElements from './findTrackedParentElements';
@@ -27,9 +28,14 @@ type EventFactory = (props?: {
  */
 export type TrackEventParameters = {
   eventFactory: EventFactory;
-  element: HTMLElement | EventTarget;
-  tracker?: BrowserTracker;
+  element: HTMLElement | EventTarget | null;
+  tracker?: BrowserTracker | null;
 };
+
+/**
+ * A custom error thrown by trackEvent calls.
+ */
+export class TrackEventError extends ExtendableError {}
 
 /**
  * 1. Traverses the DOM to reconstruct the component stack
@@ -37,14 +43,20 @@ export type TrackEventParameters = {
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
  */
-export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tracker }: TrackEventParameters) => {
-  // TODO wrap in trackErrorHandler try catch
+export const trackEvent = ({ eventFactory, element, tracker = getGlobalTracker() }: TrackEventParameters) => {
   // If we didn't get a Tracker we can't continue
   if (!tracker) {
-    throw new Error('Tracker not initialized. Provide a tracker instance or setup a global one via `configureTracker`');
+    throw new TrackEventError(
+      'Tracker not initialized. Provide a tracker instance or setup a global one via `configureTracker`'
+    );
   }
 
-  // For HTML or SVG Elements traverse the DOM to reconstruct their Location
+  // If we didn't get an Element we can't continue
+  if (element === null) {
+    throw new TrackEventError('Missing Element parameter. Provide a valid Element to track');
+  }
+
+  // For trackable Elements traverse the DOM to reconstruct their Location
   let locationStack: AbstractLocationContext[] = [];
   if (isTrackableElement(element)) {
     // Retrieve parent Tracked Elements
@@ -75,7 +87,7 @@ export const trackEvent = ({ eventFactory, element, tracker = window.objectiv.tr
  */
 export type TrackEventHelperParameters = {
   element: HTMLElement | EventTarget;
-  tracker?: BrowserTracker;
+  tracker?: BrowserTracker | null;
 };
 
 /**
@@ -118,15 +130,15 @@ export const trackVisibility = ({
  */
 export type NonInteractiveTrackHelperParameters = {
   element?: HTMLElement | EventTarget;
-  tracker?: BrowserTracker;
+  tracker?: BrowserTracker | null;
 };
 
 export const trackApplicationLoadedEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
-  const { element = document, tracker } = parameters ?? { element: document };
+  const { element = getDocument(), tracker = getGlobalTracker() } = parameters ?? { element: getDocument() };
   return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
 };
 
 export const trackURLChangeEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
-  const { element = document, tracker } = parameters ?? { element: document };
+  const { element = getDocument(), tracker = getGlobalTracker() } = parameters ?? { element: getDocument() };
   return trackEvent({ eventFactory: makeURLChangeEvent, element, tracker });
 };

@@ -1,3 +1,4 @@
+export * from './bootstrap';
 export * from './Contexts';
 export * from './isEmptyObject';
 export * from './observer/isBubbledEvent';

@@ -47,6 +47,8 @@ describe('trackHelpers', () => {
     expect(trackButton({ id: -Infinity, text: 'test' })).toBeUndefined();
     // @ts-ignore
     expect(trackButton({ id: 'test', text: 'test', options: 'nope' })).toBeUndefined();
+    // @ts-ignore
+    expect(trackButton({ id: 'test', text: 'test', options: 'nope' }, null)).toBeUndefined();
   });
 
   it('trackButton', () => {

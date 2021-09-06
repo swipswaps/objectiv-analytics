@@ -18,27 +18,6 @@ import { FetchAPITransport } from '../transport/FetchAPITransport';
 import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
 
 /**
- * The interface of our namespace which will be extending the Window interface
- */
-export interface ObjectivNamespace {
-  tracker: BrowserTracker;
-}
-
-/**
- * Window extension for our namespace
- */
-declare global {
-  interface Window {
-    objectiv: ObjectivNamespace;
-  }
-}
-
-// Preserve existing namespace or initialize to empty one
-window.objectiv = window.objectiv || {
-  tracker: null,
-};
-
-/**
  * Browser Tracker can be configured in a easier way, as opposed to the core tracker, by specifying just an `endpoint`.
  * Internally it will automatically configure the Transport layer for the given `endpoint` with sensible defaults.
  * It also accepts a number of options to configure automatic tracking behavior:

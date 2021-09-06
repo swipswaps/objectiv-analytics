@@ -3,7 +3,7 @@ import { TrackingAttribute, TrackingAttributes } from './TrackingAttributes';
 /**
  * The type of Elements the type guards can work with
  */
-export type GuardElement = Element | Node | EventTarget | null;
+export type GuardElement = Node | EventTarget | null;
 
 /**
  * A Trackable Element is an HTMLElement or an SVGElement

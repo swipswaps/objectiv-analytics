@@ -48,9 +48,9 @@ export const Uuid = define('Uuid', (value: any) => validate(value));
 /**
  * Custom Structs describing stringified booleans
  */
-export const StringTrue = define('StringTrue', (value: any) => value === 'true');
-export const StringFalse = define('StringFalse', (value: any) => value === 'false');
-export const StringBoolean = define('StringBoolean', (value: any) => is(value, union([StringTrue, StringFalse])));
+export const StringTrue = define('StringTrue', (value) => value === 'true');
+export const StringFalse = define('StringFalse', (value) => value === 'false');
+export const StringBoolean = define('StringBoolean', (value) => is(value, union([StringTrue, StringFalse])));
 
 /**
  * The object that `track` calls return

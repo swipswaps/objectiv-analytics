@@ -36,9 +36,7 @@ describe('trackEvent', () => {
     spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
-  // TODO test invalid contexts after we introduce context factories. Currently trackEvent will crash with those
-
-  it('should throw if a Tracker instance cannot be retrieved and was not provided either', () => {
+  it('should throw if a Tracker instance cannot be retrieved and was not provided either', async () => {
     // @ts-ignore forcefully wipe the tracker instance
     window.objectiv.tracker = null;
     expect(window.objectiv.tracker).toBe(null);
