@@ -8,10 +8,10 @@ from typing import List
 
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 from objectiv_backend.schema.validate_events import validate_event_list
-from objectiv_backend.schema.schema import AbstractEvent, make_event_from_dict
+from objectiv_backend.common.types import EventData
 
 
-def hydrate_types_into_event(event_schema: EventSchema, event: AbstractEvent) -> AbstractEvent:
+def hydrate_types_into_event(event_schema: EventSchema, event: EventData) -> EventData:
     """
     Modifies the given event:
         1. adds a "events" field: a list of all inherited event-types (including the event)
@@ -51,7 +51,7 @@ def main(argv: List[str]):
         errors = validate_event_list(event_schema=event_schema, event_data=event_data['events'])
         if errors:
             raise Exception(f'Error in file: {filename} - {errors}')
-        events = [make_event_from_dict(event) for event in event_data['events']]
+        events = event_data['events']
         print(
             json.dumps(
                 [hydrate_types_into_event(event_schema, event) for event in events],

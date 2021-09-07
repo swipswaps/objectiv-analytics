@@ -563,7 +563,7 @@ class AbstractEvent(SchemaEntity, ABC):
                               **kwargs)
 
 
-class NonInteractiveEvent(AbstractEvent):
+class NonInteractiveAbstractEvent(AbstractEvent):
     """
         Non interactive events, are events that are not (directly) triggered by an interaction. For example:
     Consider the following flow of events:
@@ -618,7 +618,7 @@ class NonInteractiveEvent(AbstractEvent):
                                **kwargs)
 
 
-class DocumentLoadedEvent(NonInteractiveEvent):
+class DocumentLoadedEvent(NonInteractiveAbstractEvent):
     """
         A non interactive event that is emitted after a document finishes loading. It should provide a
     `WebDocumentContext` which should describe the state (eg. URL) of the event.
@@ -665,15 +665,15 @@ class DocumentLoadedEvent(NonInteractiveEvent):
         :param time: 
             Timestamp indicating when the event was generated
         """
-        NonInteractiveEvent.__init__(self,
-                                     location_stack=location_stack,
-                                     global_contexts=global_contexts,
-                                     id=id,
-                                     time=time,
-                                     **kwargs)
+        NonInteractiveAbstractEvent.__init__(self,
+                                             location_stack=location_stack,
+                                             global_contexts=global_contexts,
+                                             id=id,
+                                             time=time,
+                                             **kwargs)
 
 
-class URLChangeEvent(NonInteractiveEvent):
+class URLChangeEvent(NonInteractiveAbstractEvent):
     """
         non interactive event that is emitted when the URL of a page has changed. Also contains a `WebDocumentContext`
     that details the change.
@@ -718,15 +718,15 @@ class URLChangeEvent(NonInteractiveEvent):
         :param time: 
             Timestamp indicating when the event was generated
         """
-        NonInteractiveEvent.__init__(self,
-                                     location_stack=location_stack,
-                                     global_contexts=global_contexts,
-                                     id=id,
-                                     time=time,
-                                     **kwargs)
+        NonInteractiveAbstractEvent.__init__(self,
+                                             location_stack=location_stack,
+                                             global_contexts=global_contexts,
+                                             id=id,
+                                             time=time,
+                                             **kwargs)
 
 
-class ApplicationLoadedEvent(NonInteractiveEvent):
+class ApplicationLoadedEvent(NonInteractiveAbstractEvent):
     """
         non interactive event that is emitted after an application (eg. SPA) has finished loading.
     Contains a `SectionContext`
@@ -771,15 +771,15 @@ class ApplicationLoadedEvent(NonInteractiveEvent):
         :param time: 
             Timestamp indicating when the event was generated
         """
-        NonInteractiveEvent.__init__(self,
-                                     location_stack=location_stack,
-                                     global_contexts=global_contexts,
-                                     id=id,
-                                     time=time,
-                                     **kwargs)
+        NonInteractiveAbstractEvent.__init__(self,
+                                             location_stack=location_stack,
+                                             global_contexts=global_contexts,
+                                             id=id,
+                                             time=time,
+                                             **kwargs)
 
 
-class SectionVisibleEvent(NonInteractiveEvent):
+class SectionVisibleEvent(NonInteractiveAbstractEvent):
     """
         Non interactive event, emitted after a section (`SectionContext`) has become visible.
 
@@ -823,15 +823,15 @@ class SectionVisibleEvent(NonInteractiveEvent):
         :param time: 
             Timestamp indicating when the event was generated
         """
-        NonInteractiveEvent.__init__(self,
-                                     location_stack=location_stack,
-                                     global_contexts=global_contexts,
-                                     id=id,
-                                     time=time,
-                                     **kwargs)
+        NonInteractiveAbstractEvent.__init__(self,
+                                             location_stack=location_stack,
+                                             global_contexts=global_contexts,
+                                             id=id,
+                                             time=time,
+                                             **kwargs)
 
 
-class SectionHiddenEvent(NonInteractiveEvent):
+class SectionHiddenEvent(NonInteractiveAbstractEvent):
     """
         Non interactive event, emitted after a section (`SectionContext`) has become invisible.
 
@@ -875,15 +875,15 @@ class SectionHiddenEvent(NonInteractiveEvent):
         :param time: 
             Timestamp indicating when the event was generated
         """
-        NonInteractiveEvent.__init__(self,
-                                     location_stack=location_stack,
-                                     global_contexts=global_contexts,
-                                     id=id,
-                                     time=time,
-                                     **kwargs)
+        NonInteractiveAbstractEvent.__init__(self,
+                                             location_stack=location_stack,
+                                             global_contexts=global_contexts,
+                                             id=id,
+                                             time=time,
+                                             **kwargs)
 
 
-class VideoEvent(NonInteractiveEvent):
+class VideoEvent(NonInteractiveAbstractEvent):
     """
         Family of non interactive events triggered by a video player
 
@@ -927,12 +927,12 @@ class VideoEvent(NonInteractiveEvent):
         :param time: 
             Timestamp indicating when the event was generated
         """
-        NonInteractiveEvent.__init__(self,
-                                     location_stack=location_stack,
-                                     global_contexts=global_contexts,
-                                     id=id,
-                                     time=time,
-                                     **kwargs)
+        NonInteractiveAbstractEvent.__init__(self,
+                                             location_stack=location_stack,
+                                             global_contexts=global_contexts,
+                                             id=id,
+                                             time=time,
+                                             **kwargs)
 
 
 class VideoLoadEvent(VideoEvent):
@@ -1143,7 +1143,7 @@ class VideoPauseEvent(VideoEvent):
                             **kwargs)
 
 
-class InteractiveEvent(AbstractEvent):
+class InteractiveAbstractEvent(AbstractEvent):
     """
         Events that are the direct result of a user interaction. Eg. a Button Click
 
@@ -1195,7 +1195,7 @@ class InteractiveEvent(AbstractEvent):
                                **kwargs)
 
 
-class ClickEvent(InteractiveEvent):
+class ClickEvent(InteractiveAbstractEvent):
     """
         Event triggered by a user clicking on an element
 
@@ -1239,15 +1239,15 @@ class ClickEvent(InteractiveEvent):
         :param time: 
             Timestamp indicating when the event was generated
         """
-        InteractiveEvent.__init__(self,
-                                  location_stack=location_stack,
-                                  global_contexts=global_contexts,
-                                  id=id,
-                                  time=time,
-                                  **kwargs)
+        InteractiveAbstractEvent.__init__(self,
+                                          location_stack=location_stack,
+                                          global_contexts=global_contexts,
+                                          id=id,
+                                          time=time,
+                                          **kwargs)
 
 
-class InputChangeEvent(InteractiveEvent):
+class InputChangeEvent(InteractiveAbstractEvent):
     """
         Event triggered when user input is modified.
 
@@ -1291,12 +1291,12 @@ class InputChangeEvent(InteractiveEvent):
         :param time: 
             Timestamp indicating when the event was generated
         """
-        InteractiveEvent.__init__(self,
-                                  location_stack=location_stack,
-                                  global_contexts=global_contexts,
-                                  id=id,
-                                  time=time,
-                                  **kwargs)
+        InteractiveAbstractEvent.__init__(self,
+                                          location_stack=location_stack,
+                                          global_contexts=global_contexts,
+                                          id=id,
+                                          time=time,
+                                          **kwargs)
 
 
 def make_context(_context_type: str, **kwargs) -> AbstractContext:
@@ -1349,7 +1349,7 @@ def make_event(event: str, **kwargs) -> AbstractEvent:
     if event == "AbstractEvent":
         return AbstractEvent(**kwargs)
     if event == "NonInteractiveEvent":
-        return NonInteractiveEvent(**kwargs)
+        return NonInteractiveAbstractEvent(**kwargs)
     if event == "DocumentLoadedEvent":
         return DocumentLoadedEvent(**kwargs)
     if event == "URLChangeEvent":
@@ -1371,7 +1371,7 @@ def make_event(event: str, **kwargs) -> AbstractEvent:
     if event == "VideoPauseEvent":
         return VideoPauseEvent(**kwargs)
     if event == "InteractiveEvent":
-        return InteractiveEvent(**kwargs)
+        return InteractiveAbstractEvent(**kwargs)
     if event == "ClickEvent":
         return ClickEvent(**kwargs)
     if event == "InputChangeEvent":

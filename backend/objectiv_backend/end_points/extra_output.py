@@ -14,10 +14,10 @@ import boto3
 from botocore.exceptions import ClientError
 
 from objectiv_backend.common.config import get_collector_config
-from objectiv_backend.schema.schema import AbstractEvent
+from objectiv_backend.common.types import EventDataList
 
 
-def events_to_json(events: List[AbstractEvent]) -> str:
+def events_to_json(events: EventDataList) -> str:
     """
     Convert list of events to a string with on each line a json object representing a single event.
     Note that the returned string is not a json list; This format makes it suitable as raw input to AWS

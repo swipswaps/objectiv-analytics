@@ -108,12 +108,12 @@ def test_add_global_context():
 
     # add created context to event
     event_list = json.loads(CLICK_EVENT_JSON)
-    event = event_list['events'][0]
+    event = make_event_from_dict(event_list['events'][0])
     add_global_context_to_event(event, context)
 
     # check if event is still valid
     assert(validate_structure_event_list([event]) == [])
 
     # check if it's there, and holds the proper values
-    generated_context = get_context(event, HttpContext)
+    generated_context = get_context(event, 'HttpContext')
     assert generated_context == context_vars

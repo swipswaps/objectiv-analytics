@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Union
 from flask import Response, Request
 
 from objectiv_backend.common.config import get_collector_config
+from objectiv_backend.common.types import EventData, EventDataList, EventList
 from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import add_global_context_to_event
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
@@ -20,7 +21,7 @@ from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
-from objectiv_backend.schema.schema import HttpContext, CookieIdContext, AbstractEvent, make_event_from_dict
+from objectiv_backend.schema.schema import HttpContext, CookieIdContext, make_event_from_dict
 
 # Some limits on the inputs we accept
 DATA_MAX_SIZE_BYTES = 1_000_000
@@ -33,9 +34,9 @@ def collect() -> Response:
     """
     current_millis = round(time.time() * 1000)
     try:
-        event_data = _get_event_data(flask.request)
-        events: List[AbstractEvent] = event_data['events']
-        transport_time = event_data['transport_time']
+        event_data: EventList = _get_event_data(flask.request)
+        events: EventDataList = event_data['events']
+        transport_time: int = event_data['transport_time']
     except ValueError as exc:
         print(f'Data problem: {exc}')  # todo: real error logging
         return _get_collector_response(error_count=1, event_count=-1, data_error=exc.__str__())
@@ -56,7 +57,7 @@ def collect() -> Response:
         return _get_collector_response(error_count=0, event_count=len(events))
 
 
-def _get_event_data(request: Request) -> Dict[str, Any]:
+def _get_event_data(request: Request) -> EventList:
     """
     Parse the requests data as json and return as a list
 
@@ -79,7 +80,7 @@ def _get_event_data(request: Request) -> Dict[str, Any]:
     if len(post_data) > DATA_MAX_SIZE_BYTES:
         # if it's more than a megabyte, we'll refuse to process
         raise ValueError(f'Data size exceeds limit')
-    event_data = json.loads(post_data)
+    event_data: EventList = json.loads(post_data)
     if not isinstance(event_data, dict):
         raise ValueError('Parsed post data is not a dict')
     if 'events' not in event_data:
@@ -96,9 +97,7 @@ def _get_event_data(request: Request) -> Dict[str, Any]:
     if error_info:
         raise ValueError(f'List of Events not structured well: {error_info[0].info}')
 
-    events = [make_event_from_dict(event) for event in event_data['events']]
-
-    return {k: events if k == 'events' else v for k, v in event_data.items()}
+    return event_data
 
 
 def _get_collector_response(
@@ -127,7 +126,7 @@ def _get_collector_response(
     return get_json_response(status=200, msg=msg)
 
 
-def add_http_contexts(events: List[AbstractEvent]):
+def add_http_contexts(events: EventDataList):
     """
     Modify the given list of events: Add the HttpContext to each event
     """
@@ -137,7 +136,7 @@ def add_http_contexts(events: List[AbstractEvent]):
         add_global_context_to_event(event=event, context=http_context)
 
 
-def add_cookie_id_contexts(events: List[AbstractEvent]):
+def add_cookie_id_contexts(events: EventDataList):
     """
     Modify the given list of events: Add the CookieIdContext to each event, if cookies are enabled.
     """
@@ -150,7 +149,7 @@ def add_cookie_id_contexts(events: List[AbstractEvent]):
         add_global_context_to_event(event, cookie_id_context)
 
 
-def set_time_in_events(events: List[AbstractEvent], current_millis: int, client_millis: int):
+def set_time_in_events(events: EventDataList, current_millis: int, client_millis: int):
     """
     Modify the given list of events: Set the correct time in the events
 
@@ -211,12 +210,10 @@ def _get_http_context() -> HttpContext:
 
     http_headers['id'] = 'http_context'
 
-    http_context: HttpContext = HttpContext(**http_headers)
-
-    return http_context
+    return HttpContext(**http_headers)
 
 
-def write_sync_events(ok_events: List[AbstractEvent], nok_events: List[AbstractEvent]):
+def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):
     """
     Write the events to the following sinks, if configured:
         * postgres
@@ -229,7 +226,9 @@ def write_sync_events(ok_events: List[AbstractEvent], nok_events: List[AbstractE
         connection = get_db_connection(output_config.postgres)
         try:
             with connection:
-                insert_events_into_data(connection, events=ok_events)
+                # ok events are validated, so we use proper objects to insert
+                insert_events_into_data(connection, events=[make_event_from_dict(e) for e in ok_events])
+                # not ok events are inserted as-is
                 insert_events_into_nok_data(connection, events=nok_events)
         finally:
             connection.close()
@@ -244,7 +243,7 @@ def write_sync_events(ok_events: List[AbstractEvent], nok_events: List[AbstractE
             write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 
 
-def write_async_events(events: List[AbstractEvent]):
+def write_async_events(events: EventDataList):
     """
     Write the events to the following sinks, if configured:
         * postgres - To the entry queue
