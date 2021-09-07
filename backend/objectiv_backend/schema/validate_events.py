@@ -12,6 +12,7 @@ import jsonschema
 from jsonschema import ValidationError
 
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
+from objectiv_backend.schema.schema import make_context, AbstractGlobalContext, AbstractLocationContext
 from objectiv_backend.common.config import get_config_timestamp_validation, get_config_event_schema
 
 from objectiv_backend.common.types import EventData
@@ -178,9 +179,23 @@ def _validate_contexts(event_schema: EventSchema, event: EventData) -> List[Erro
     errors = []
     for context in global_contexts:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
+        if len(errors_context) == 0:
+            try:
+                c = make_context(**context)
+            except ValueError:
+                errors_context = [ErrorInfo(context, 'Could not create valid instance')]
+            if not isinstance(c, AbstractGlobalContext):
+                errors_context = [ErrorInfo(context, 'Not an instance of GlobalContext')]
         errors.extend(errors_context)
     for context in location_stack:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
+        if len(errors_context) == 0:
+            try:
+                c = make_context(**context)
+            except ValueError:
+                errors_context = [ErrorInfo(context, 'Could not create valid instance')]
+            if not isinstance(c, AbstractLocationContext):
+                errors_context = [ErrorInfo(context, 'Not an instance of LocationContext')]
         errors.extend(errors_context)
     return errors
 
