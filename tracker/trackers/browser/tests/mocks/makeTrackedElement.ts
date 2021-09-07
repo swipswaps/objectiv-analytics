@@ -1,7 +1,11 @@
-import { makeSectionContext } from "@objectiv/tracker-core";
+import { makeSectionContext } from '@objectiv/tracker-core';
 import { stringifyLocationContext, TrackedElement, TrackingAttribute } from '../../src';
 
-const makeTrackedElement = (id: string, contextId: string | null, tagName: keyof HTMLElementTagNameMap): TrackedElement => {
+const makeTrackedElement = (
+  id: string,
+  contextId: string | null,
+  tagName: keyof HTMLElementTagNameMap
+): TrackedElement => {
   const trackedDiv = document.createElement(tagName);
   trackedDiv.setAttribute(TrackingAttribute.elementId, id);
   if (contextId) {
