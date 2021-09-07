@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from psycopg2.extras import execute_values
 
 from objectiv_backend.common.event_utils import get_context
-from objectiv_backend.common.types import FailureReason, EventList, EventDataList
+from objectiv_backend.common.types import FailureReason, EventDataList
 
 
 def insert_events_into_data(connection, events: EventDataList):

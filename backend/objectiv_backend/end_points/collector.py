@@ -4,7 +4,7 @@ from datetime import datetime
 import flask
 import time
 
-from typing import List, Dict, Any, Union
+from typing import List, Dict
 
 from flask import Response, Request
 
@@ -21,7 +21,7 @@ from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
-from objectiv_backend.schema.schema import HttpContext, CookieIdContext, make_event_from_dict
+from objectiv_backend.schema.schema import HttpContext, CookieIdContext
 
 # Some limits on the inputs we accept
 DATA_MAX_SIZE_BYTES = 1_000_000
@@ -226,9 +226,7 @@ def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):
         connection = get_db_connection(output_config.postgres)
         try:
             with connection:
-                # ok events are validated, so we use proper objects to insert
-                insert_events_into_data(connection, events=[make_event_from_dict(e) for e in ok_events])
-                # not ok events are inserted as-is
+                insert_events_into_data(connection, events=ok_events)
                 insert_events_into_nok_data(connection, events=nok_events)
         finally:
             connection.close()
