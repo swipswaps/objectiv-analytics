@@ -1,4 +1,4 @@
-import { getLocationHref, locationExists } from '../';
+import { getLocationHref, locationExists } from "../";
 import { BrowserTracker, BrowserTrackerConfig } from '../tracker/BrowserTracker';
 import { trackApplicationLoadedEvent, trackURLChangeEvent } from '../tracker/trackEvent';
 import { TrackingAttribute } from '../TrackingAttributes';
@@ -23,7 +23,7 @@ export type AutoTrackingOptions = Pick<BrowserTrackerConfig, 'trackURLChanges' |
  * Initializes our automatic tracking, based on Mutation Observer.
  * Also tracks application Loaded.
  */
-export const startAutoTracking = (options: AutoTrackingOptions, tracker: BrowserTracker) => {
+export const startAutoTracking = (options: AutoTrackingOptions, tracker: BrowserTracker = window.objectiv.tracker) => {
   const trackURLChanges = options.trackURLChanges ?? true;
   const trackApplicationLoaded = options.trackApplicationLoaded ?? true;
 
@@ -64,7 +64,7 @@ export const startAutoTracking = (options: AutoTrackingOptions, tracker: Browser
  * Triggered once
  */
 export const makeMutationCallback =
-  (trackURLChanges: boolean, tracker: BrowserTracker): MutationCallback =>
+  (trackURLChanges: boolean, tracker: BrowserTracker = window.objectiv.tracker): MutationCallback =>
   (mutationsList) => {
     if (trackURLChanges && locationExists()) {
       // Track SPA URL changes

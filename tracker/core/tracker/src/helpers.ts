@@ -1,4 +1,3 @@
-import { DiscriminatingPropertyPrefix } from '@objectiv/schema';
 import { v4 as uuidv4 } from 'uuid';
 
 /**
@@ -32,17 +31,3 @@ export function isNonEmptyArray<T>(array: T[]): array is [T, ...T[]] {
  * A UUID v4 generator
  */
 export const generateUUID = () => uuidv4();
-
-/**
- * Used to clean our Object instances from TS discriminating artifact properties
- */
-export const cleanObjectFromDiscriminatingProperties = <T extends object>(obj: T) => {
-  // All discriminating properties start with this prefix
-  const DISCRIMINATING_PROPERTY_PREFIX: DiscriminatingPropertyPrefix = '__';
-
-  getObjectKeys(obj).forEach((propertyName) => {
-    if (propertyName.toString().startsWith(DISCRIMINATING_PROPERTY_PREFIX)) {
-      delete obj[propertyName];
-    }
-  });
-};

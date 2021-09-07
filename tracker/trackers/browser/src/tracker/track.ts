@@ -1,6 +1,5 @@
-import { cleanObjectFromDiscriminatingProperties } from '@objectiv/tracker-core';
 import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
-import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
+import { ClickableContext, InputContext, LocationContext, SectionContext, stringifyLocationContext } from '../Contexts';
 import { StringifiedTrackingAttributes, TrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
 import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
 
@@ -51,14 +50,11 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     const trackVisibility = options?.trackVisibility ?? (is(instance, SectionContext) ? { mode: 'auto' } : undefined);
     const parentElementId = options?.parentTracker ? options.parentTracker[TrackingAttribute.elementId] : undefined;
 
-    // Clean up the Context instance from discriminatory properties before serializing it
-    cleanObjectFromDiscriminatingProperties(instance);
-
     // Validate output and return it
     return create(
       {
         [TrackingAttribute.parentElementId]: parentElementId,
-        [TrackingAttribute.context]: JSON.stringify(instance),
+        [TrackingAttribute.context]: stringifyLocationContext(instance),
         [TrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
         [TrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
         [TrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),

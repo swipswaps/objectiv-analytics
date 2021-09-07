@@ -1,13 +1,12 @@
 /**
  * AbstractContext
  */
-import { assign, enums, Infer, literal, object, string, union } from 'superstruct';
+import { assign, coerce, create, enums, Infer, literal, object, string, union } from 'superstruct';
 
 export const AbstractContext = object({
   id: string(),
   _context_type: enums([
     'SectionContext', // aka ElementContext
-    'ExpandableSectionContext',
     'ExpandableSectionContext',
     'MediaPlayerContext',
     'NavigationContext',
@@ -175,6 +174,7 @@ export const LocationContext = union([
   ButtonContext,
   LinkContext,
 ]);
+export type LocationContext = Infer<typeof LocationContext>;
 
 /**
  * SectionContext
@@ -201,3 +201,18 @@ export const ActionContext = union([ButtonContext, LinkContext]);
  * ClickableContext
  */
 export const ClickableContext = union([ActionContext, ExpandableSectionContext]);
+
+/**
+ * Stringifier and Parser for Location Contexts
+ */
+export const stringifyLocationContext = (contextObject: LocationContext) =>
+  create(
+    contextObject,
+    coerce(string(), LocationContext, (value) => JSON.stringify(value))
+  );
+
+export const parseLocationContext = (stringifiedContext: string | null) =>
+  create(
+    stringifiedContext,
+    coerce(LocationContext, string(), (value) => JSON.parse(value))
+  );
