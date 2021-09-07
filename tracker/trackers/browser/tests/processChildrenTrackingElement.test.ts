@@ -1,4 +1,4 @@
-import { cleanObjectFromDiscriminatingProperties, makeButtonContext } from '@objectiv/tracker-core';
+import { makeButtonContext } from '@objectiv/tracker-core';
 import { isTrackedElement, trackButton, trackElement, TrackingAttribute } from '../src';
 import processChildrenTrackingElement from '../src/observer/processChildrenTrackingElement';
 
@@ -76,7 +76,6 @@ describe('processChildrenTrackingElement', () => {
     const result = processChildrenTrackingElement(div);
 
     const expectedButtonContext = makeButtonContext({ id: 'button-id', text: 'button' });
-    cleanObjectFromDiscriminatingProperties(expectedButtonContext);
 
     expect(result).toHaveLength(1);
     expect(isTrackedElement(result[0])).toBe(true);

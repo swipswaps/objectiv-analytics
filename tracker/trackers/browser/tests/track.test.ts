@@ -68,7 +68,7 @@ describe('track', () => {
         __location_context: true,
         __section_context: true,
         _context_type: 'SectionContext',
-        id: 'test'
+        id: 'test',
       }),
       [TrackingAttribute.trackClicks]: undefined,
       [TrackingAttribute.trackBlurs]: undefined,
@@ -90,7 +90,7 @@ describe('track', () => {
         __location_context: true,
         __section_context: true,
         _context_type: 'SectionContext',
-        id: 'test'
+        id: 'test',
       }),
       [TrackingAttribute.trackClicks]: 'false',
       [TrackingAttribute.trackBlurs]: 'true',
@@ -107,7 +107,7 @@ describe('track', () => {
         __location_context: true,
         __section_context: true,
         _context_type: 'SectionContext',
-        id: 'test'
+        id: 'test',
       }),
       [TrackingAttribute.trackClicks]: undefined,
       [TrackingAttribute.trackBlurs]: undefined,
@@ -121,7 +121,7 @@ describe('track', () => {
         __location_context: true,
         __section_context: true,
         _context_type: 'SectionContext',
-        id: 'test'
+        id: 'test',
       }),
       [TrackingAttribute.trackClicks]: undefined,
       [TrackingAttribute.trackBlurs]: undefined,

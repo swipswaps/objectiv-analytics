@@ -58,6 +58,9 @@ describe('trackHelpers', () => {
       [TrackingAttribute.elementId]: matchElementId,
       [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        __item_context: true,
+        __action_context: true,
         _context_type: 'ButtonContext',
         id: 'test-button',
         text: 'Click Me',
@@ -77,6 +80,8 @@ describe('trackHelpers', () => {
       [TrackingAttribute.elementId]: matchElementId,
       [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        __section_context: true,
         _context_type: 'SectionContext',
         id: 'test-section',
       }),
@@ -95,6 +100,8 @@ describe('trackHelpers', () => {
       [TrackingAttribute.elementId]: matchElementId,
       [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        __section_context: true,
         _context_type: 'ExpandableSectionContext',
         id: 'test-expandable',
       }),
@@ -113,6 +120,8 @@ describe('trackHelpers', () => {
       [TrackingAttribute.elementId]: matchElementId,
       [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        __item_context: true,
         _context_type: 'InputContext',
         id: 'test-input',
       }),
@@ -131,6 +140,9 @@ describe('trackHelpers', () => {
       [TrackingAttribute.elementId]: matchElementId,
       [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        __item_context: true,
+        __action_context: true,
         _context_type: 'LinkContext',
         id: 'link',
         text: 'Click Me',
@@ -151,6 +163,8 @@ describe('trackHelpers', () => {
       [TrackingAttribute.elementId]: matchElementId,
       [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        __section_context: true,
         _context_type: 'MediaPlayerContext',
         id: 'test-media-player',
       }),
@@ -169,6 +183,8 @@ describe('trackHelpers', () => {
       [TrackingAttribute.elementId]: matchElementId,
       [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        __section_context: true,
         _context_type: 'NavigationContext',
         id: 'test-nav',
       }),
@@ -187,6 +203,8 @@ describe('trackHelpers', () => {
       [TrackingAttribute.elementId]: matchElementId,
       [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        __section_context: true,
         _context_type: 'OverlayContext',
         id: 'test-overlay',
       }),
