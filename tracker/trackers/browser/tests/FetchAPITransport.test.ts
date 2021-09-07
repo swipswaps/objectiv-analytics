@@ -1,31 +1,25 @@
 import { QueuedTransport, TrackerEvent, TrackerQueue, TransportSendError } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
-import MockDate from 'mockdate';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
 
-const mockedMs = 1434319925275;
+const MOCK_ENDPOINT = 'http://test-endpoint';
 
-beforeAll(() => {
-  fetchMock.enableMocks();
-});
-
-beforeEach(() => {
-  fetchMock.resetMocks();
-  jest.useFakeTimers();
-  MockDate.reset();
-  MockDate.set(mockedMs);
-});
-
-afterEach(() => {
-  jest.useRealTimers();
-  MockDate.reset();
+const testEvent = new TrackerEvent({
+  event: 'test-event',
 });
 
 describe('FetchAPITransport', () => {
-  const MOCK_ENDPOINT = 'http://test-endpoint';
+  beforeAll(() => {
+    fetchMock.enableMocks();
+  });
 
-  const testEvent = new TrackerEvent({
-    event: 'test-event',
+  beforeEach(() => {
+    fetchMock.resetMocks();
+    jest.useFakeTimers();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should send using `fetch` API with the default fetch function', async () => {
@@ -44,7 +38,7 @@ describe('FetchAPITransport', () => {
               id,
             },
           ],
-          transport_time: mockedMs,
+          transport_time: Date.now(),
         }),
         ...defaultFetchParameters,
       })
@@ -76,7 +70,7 @@ describe('FetchAPITransport', () => {
               id,
             },
           ],
-          transport_time: mockedMs,
+          transport_time: Date.now(),
         }),
         ...customParameters,
       })
@@ -84,6 +78,8 @@ describe('FetchAPITransport', () => {
   });
 
   it('should enqueue the event instead of sending it right away', async () => {
+    jest.spyOn(global, 'setInterval');
+
     // Create a test queue
     const testQueue = new TrackerQueue();
 
@@ -108,10 +104,10 @@ describe('FetchAPITransport', () => {
     expect(testQueue.store.length).toBe(1);
 
     // Run timers to the next Queue tick.
-    jest.runTimersToTime(testQueue.batchDelayMs);
+    jest.advanceTimersByTime(testQueue.batchDelayMs);
 
     // Await for all promises to be fulfilled
-    await new Promise(setImmediate);
+    await new Promise(jest.requireActual('timers').setImmediate);
 
     // The Queue should have now sent the event by calling the runFunction once
     expect(setInterval).toHaveBeenCalledTimes(1);
@@ -127,7 +123,7 @@ describe('FetchAPITransport', () => {
               id,
             },
           ],
-          transport_time: mockedMs,
+          transport_time: Date.now(),
         }),
         ...defaultFetchParameters,
       })

@@ -1,19 +1,15 @@
 import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
-import MockDate from 'mockdate';
 import xhrMock from 'xhr-mock';
 import { XMLHttpRequestTransport } from '../src';
 
-const mockedMs = 1434319925275;
-
 beforeEach(() => {
   xhrMock.setup();
-  MockDate.reset();
-  MockDate.set(mockedMs);
+  jest.useFakeTimers();
 });
 
 afterEach(() => {
   xhrMock.teardown();
-  MockDate.reset();
+  jest.useRealTimers();
 });
 
 describe('XMLHttpRequestTransport', () => {
@@ -41,7 +37,7 @@ describe('XMLHttpRequestTransport', () => {
               id,
             },
           ],
-          transport_time: mockedMs,
+          transport_time: Date.now(),
         })
       );
       return res.status(200);
@@ -140,7 +136,7 @@ describe('XMLHttpRequestTransport', () => {
     const testTransport = new XMLHttpRequestTransport({
       endpoint: MOCK_ENDPOINT,
     });
-    jest.spyOn(testTransport, 'xmlHttpRequestFunction').and.callThrough();
+    jest.spyOn(testTransport, 'xmlHttpRequestFunction');
 
     // @ts-ignore purposely disable TS and call the handle method anyway
     await testTransport.handle();

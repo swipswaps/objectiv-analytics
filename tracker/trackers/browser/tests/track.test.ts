@@ -57,7 +57,6 @@ describe('track', () => {
     track({ instance: {} });
 
     expect(consoleErrorMock).toHaveBeenCalledTimes(1);
-    expect(consoleErrorMock.calls.first().args[0]).toBeInstanceOf(StructError);
   });
 
   it('should allow overriding whether to track click, blur and visibility events via options', () => {

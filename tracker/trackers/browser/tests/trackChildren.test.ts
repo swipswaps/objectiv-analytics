@@ -2,6 +2,10 @@ import { StructError } from 'superstruct';
 import { trackChild, trackChildren, trackElement, TrackingAttribute } from '../src';
 
 describe('trackChild and trackChildren', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
     expect(trackChild()).toBeUndefined();
@@ -60,22 +64,21 @@ describe('trackChild and trackChildren', () => {
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
-    const consoleErrorMock = jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error');
 
     // @ts-ignore
     trackChild({ query: {} });
 
-    expect(consoleErrorMock).toHaveBeenCalledTimes(1);
-    expect(consoleErrorMock.calls.first().args[0]).toBeInstanceOf(StructError);
+    expect(console.error).toHaveBeenCalledTimes(1);
   });
 
   it('should return query and trackAs attributes', () => {
-    const consoleErrorMock = jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error');
     const parameters = { query: '#two', trackAs: trackElement({ id: 'element-two' }) };
 
     const attributes = trackChild(parameters);
 
-    expect(consoleErrorMock).not.toHaveBeenCalled();
+    expect(console.error).not.toHaveBeenCalled();
     expect(attributes).toStrictEqual({
       [TrackingAttribute.trackChildren]: JSON.stringify([parameters]),
     });

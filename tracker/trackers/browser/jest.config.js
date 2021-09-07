@@ -7,4 +7,5 @@ module.exports = {
     '@objectiv/tracker-core': '<rootDir>/../../core/tracker/src',
     '@objectiv/plugin-(.*)': '<rootDir>/../../plugins/$1/src',
   },
+  setupFilesAfterEnv: ['jest-extended'],
 };

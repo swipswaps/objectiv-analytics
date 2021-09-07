@@ -3,9 +3,9 @@
  * Allows developers to provide an onError callback to handle errors themselves.
  * Default behavior is to console.error.
  */
-export type TrackOnErrorCallback = <T = unknown>(error: Error, parameters?: T) => void;
+export type TrackOnErrorCallback = <T = unknown>(error: unknown, parameters?: T) => void;
 
-export const trackErrorHandler = (error: Error, parameters?: unknown, onError?: TrackOnErrorCallback) => {
+export const trackErrorHandler = (error: unknown, parameters?: unknown, onError?: TrackOnErrorCallback) => {
   if (onError) {
     onError(error);
   } else {

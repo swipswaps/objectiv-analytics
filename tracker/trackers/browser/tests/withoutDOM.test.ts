@@ -11,6 +11,14 @@ import {
 } from '../src';
 
 describe('Without DOM', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error');
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should throw if Window does not exists', async () => {
     // @ts-ignore
     expect(() => configureTracker({ applicationId: 'test', endpoint: 'test' })).toThrow(
@@ -19,8 +27,6 @@ describe('Without DOM', () => {
   });
 
   it('should console.error if a Tracker instance cannot be retrieved because DOM is not available', async () => {
-    jest.spyOn(console, 'error');
-
     const parameters = { eventFactory: makeClickEvent, element: null };
     // @ts-ignore
     trackEvent(parameters);
@@ -30,8 +36,6 @@ describe('Without DOM', () => {
   });
 
   it('should console.error id Application Loaded Event fails at retrieving the document element', () => {
-    jest.spyOn(console, 'error');
-
     trackApplicationLoadedEvent();
 
     expect(console.error).toHaveBeenCalledTimes(1);
@@ -43,8 +47,6 @@ describe('Without DOM', () => {
   });
 
   it('should console.error id URL Change Event fails at retrieving the document element', () => {
-    jest.spyOn(console, 'error');
-
     trackURLChangeEvent();
 
     expect(console.error).toHaveBeenCalledTimes(1);
