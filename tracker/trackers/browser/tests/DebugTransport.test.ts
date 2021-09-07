@@ -9,7 +9,7 @@ describe('DebugTransport', () => {
   it('should `console.debug` the event', async () => {
     const testTransport = new DebugTransport();
     expect(testTransport.isUsable()).toBe(true);
-    spyOn(console, 'debug');
+    jest.spyOn(console, 'debug');
     await testTransport.handle(testEvent);
     expect(console.debug).toHaveBeenCalledWith(testEvent);
   });

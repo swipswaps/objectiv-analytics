@@ -51,7 +51,7 @@ describe('track', () => {
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
-    const consoleErrorMock = spyOn(console, 'error');
+    const consoleErrorMock = jest.spyOn(console, 'error');
 
     // @ts-ignore
     track({ instance: {} });

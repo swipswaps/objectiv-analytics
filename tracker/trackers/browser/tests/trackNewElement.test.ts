@@ -13,12 +13,12 @@ describe('trackNewElement', () => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
     expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    spyOn(window.objectiv.tracker, 'trackEvent');
+    jest.spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
   it('should skip the Element if it is not a Tracked Element', async () => {
     const div = document.createElement('div');
-    spyOn(div, 'addEventListener');
+    jest.spyOn(div, 'addEventListener');
 
     trackNewElement(div, window.objectiv.tracker);
 
@@ -30,7 +30,7 @@ describe('trackNewElement', () => {
     const sectionContext = makeSectionContext({ id: 'test' });
     const trackedDiv = makeTrackedElement('div-id-1', JSON.stringify(sectionContext), 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
-    spyOn(trackedDiv, 'addEventListener');
+    jest.spyOn(trackedDiv, 'addEventListener');
 
     trackNewElement(trackedDiv, window.objectiv.tracker);
 
@@ -48,7 +48,7 @@ describe('trackNewElement', () => {
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TrackingAttribute.trackClicks, 'true');
     document.body.appendChild(trackedButton);
-    spyOn(trackedButton, 'addEventListener');
+    jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, window.objectiv.tracker);
 
@@ -61,7 +61,7 @@ describe('trackNewElement', () => {
     const inputContext = makeInputContext({ id: 'test' });
     const trackedInput = makeTrackedElement('input-id-1', JSON.stringify(inputContext), 'input');
     trackedInput.setAttribute(TrackingAttribute.trackBlurs, 'true');
-    spyOn(trackedInput, 'addEventListener');
+    jest.spyOn(trackedInput, 'addEventListener');
 
     trackNewElement(trackedInput, window.objectiv.tracker);
 

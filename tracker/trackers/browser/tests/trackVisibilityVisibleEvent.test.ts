@@ -8,7 +8,7 @@ describe('trackVisibilityVisibleEvent', () => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
     expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    spyOn(window.objectiv.tracker, 'trackEvent');
+    jest.spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
   it('should not track elements without visibility tracking attributes', async () => {

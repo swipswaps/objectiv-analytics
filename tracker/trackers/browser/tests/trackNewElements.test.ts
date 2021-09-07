@@ -7,7 +7,7 @@ describe('trackNewElements', () => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
     expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    spyOn(window.objectiv.tracker, 'trackEvent');
+    jest.spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
   it('should apply tracking attributes to Elements tracked via Children Tracking and track them right away', async () => {
@@ -26,9 +26,9 @@ describe('trackNewElements', () => {
     const childDiv = document.createElement('div');
     childDiv.setAttribute('id', 'child-div');
 
-    spyOn(div1, 'addEventListener');
-    spyOn(button, 'addEventListener');
-    spyOn(childDiv, 'addEventListener');
+    jest.spyOn(div1, 'addEventListener');
+    jest.spyOn(button, 'addEventListener');
+    jest.spyOn(childDiv, 'addEventListener');
 
     div1.appendChild(button);
     div1.appendChild(childDiv);

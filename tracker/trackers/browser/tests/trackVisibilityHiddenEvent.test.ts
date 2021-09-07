@@ -8,7 +8,7 @@ describe('trackVisibilityHiddenEvent', () => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
     expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    spyOn(window.objectiv.tracker, 'trackEvent');
+    jest.spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
   it('should not track elements without visibility tracking attributes', async () => {
@@ -58,7 +58,7 @@ describe('trackVisibilityHiddenEvent', () => {
 
   it('should use given tracker instead of the global one', async () => {
     const trackerOverride = new BrowserTracker({ applicationId: 'override', endpoint: 'override' });
-    spyOn(trackerOverride, 'trackEvent');
+    jest.spyOn(trackerOverride, 'trackEvent');
 
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');

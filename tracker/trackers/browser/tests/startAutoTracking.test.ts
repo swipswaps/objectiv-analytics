@@ -7,12 +7,12 @@ describe('startAutoTracking', () => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
     expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    spyOn(window.objectiv.tracker, 'trackEvent');
+    jest.spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
   it('should not track application loaded event', () => {
     const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
-    spyOn(tracker, 'trackEvent');
+    jest.spyOn(tracker, 'trackEvent');
 
     startAutoTracking({ trackApplicationLoaded: false, trackURLChanges: false }, tracker);
 
@@ -25,7 +25,7 @@ describe('makeMutationCallback - url changes', () => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
     expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    spyOn(window.objectiv.tracker, 'trackEvent');
+    jest.spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
   it('should not track url changes', () => {
@@ -61,7 +61,7 @@ describe('makeMutationCallback - url changes', () => {
 describe('makeMutationCallback - new nodes', () => {
   it('should track newly added nodes that are Elements and visibility for existing nodes', () => {
     const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
-    spyOn(tracker, 'trackEvent');
+    jest.spyOn(tracker, 'trackEvent');
     const mutationCallback = makeMutationCallback(false, tracker);
     const mutationObserver = new MutationObserver(mutationCallback);
 

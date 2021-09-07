@@ -7,7 +7,7 @@ const UUID_REGEX = /^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[a-f0-9]{4}-[a-f0-9]{1
 describe('WebDocumentLoadedEvent', () => {
   it('should track as expected when document has been loaded already', () => {
     const spyTransport = new SpyTransport();
-    spyOn(spyTransport, 'handle');
+    jest.spyOn(spyTransport, 'handle');
 
     const testTracker = new Tracker({
       applicationId: 'app-id',
@@ -48,7 +48,7 @@ describe('WebDocumentLoadedEvent', () => {
 
   it('should track as expected when document has yet to load', async () => {
     const spyTransport = new SpyTransport();
-    spyOn(spyTransport, 'handle');
+    jest.spyOn(spyTransport, 'handle');
 
     const testTracker = new Tracker({
       applicationId: 'app-id',

@@ -19,7 +19,7 @@ describe('Without DOM', () => {
   });
 
   it('should console.error if a Tracker instance cannot be retrieved because DOM is not available', async () => {
-    spyOn(console, 'error');
+    jest.spyOn(console, 'error');
 
     const parameters = { eventFactory: makeClickEvent, element: null };
     // @ts-ignore
@@ -30,7 +30,7 @@ describe('Without DOM', () => {
   });
 
   it('should console.error id Application Loaded Event fails at retrieving the document element', () => {
-    spyOn(console, 'error');
+    jest.spyOn(console, 'error');
 
     trackApplicationLoadedEvent();
 
@@ -43,7 +43,7 @@ describe('Without DOM', () => {
   });
 
   it('should console.error id URL Change Event fails at retrieving the document element', () => {
-    spyOn(console, 'error');
+    jest.spyOn(console, 'error');
 
     trackURLChangeEvent();
 

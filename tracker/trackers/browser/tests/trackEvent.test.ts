@@ -33,14 +33,14 @@ describe('trackEvent', () => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
     expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    spyOn(window.objectiv.tracker, 'trackEvent');
+    jest.spyOn(window.objectiv.tracker, 'trackEvent');
   });
 
   it('should console.error if a Tracker instance cannot be retrieved and was not provided either', async () => {
     // @ts-ignore forcefully wipe the tracker instance
     window.objectiv.tracker = null;
     expect(window.objectiv.tracker).toBe(null);
-    spyOn(console, 'error');
+    jest.spyOn(console, 'error');
 
     const parameters = { eventFactory: makeClickEvent, element: testElement };
     trackEvent(parameters);
@@ -68,7 +68,7 @@ describe('trackEvent', () => {
 
   it('should use the given tracker instance', () => {
     const trackerOverride = new BrowserTracker({ applicationId: 'override', endpoint: 'override' });
-    spyOn(trackerOverride, 'trackEvent');
+    jest.spyOn(trackerOverride, 'trackEvent');
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
     expect(trackerOverride.trackEvent).not.toHaveBeenCalled();

@@ -60,7 +60,7 @@ describe('trackChild and trackChildren', () => {
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
-    const consoleErrorMock = spyOn(console, 'error');
+    const consoleErrorMock = jest.spyOn(console, 'error');
 
     // @ts-ignore
     trackChild({ query: {} });
@@ -70,7 +70,7 @@ describe('trackChild and trackChildren', () => {
   });
 
   it('should return query and trackAs attributes', () => {
-    const consoleErrorMock = spyOn(console, 'error');
+    const consoleErrorMock = jest.spyOn(console, 'error');
     const parameters = { query: '#two', trackAs: trackElement({ id: 'element-two' }) };
 
     const attributes = trackChild(parameters);
