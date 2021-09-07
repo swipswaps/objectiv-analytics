@@ -3,7 +3,7 @@ import {
   AbstractGlobalContext,
   AbstractLocationContext,
   Contexts,
-  DiscriminatingPropertyPrefix
+  DiscriminatingPropertyPrefix,
 } from '@objectiv/schema';
 import { ContextsConfig } from './Context';
 import { generateUUID, getObjectKeys } from './helpers';
