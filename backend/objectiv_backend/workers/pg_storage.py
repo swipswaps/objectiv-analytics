@@ -29,7 +29,7 @@ def insert_events_into_data(connection, events: EventDataList):
     ISOLATION_LEVEL_READ_COMMITTED set and a lock_timeout is configured.
 
     :param connection: psycopg2 database connection, must have ISOLATION_LEVEL_READ_COMMITTED set.
-    :param events: list of events. Each event must be a valid Event, and must have a CookieIdContext
+    :param events: EventDataList, list of events. Each event must be a valid Event, and must have a CookieIdContext
     :raise Exception: If the database is not available, or if it blocks longer than lock_timeout.
     """
     if not events:
@@ -91,7 +91,7 @@ def insert_events_into_nok_data(connection,
     Insert events into the not-ok data ('nok_data') table
     Does not do any transaction management, this merely issues insert commands.
     :param connection: db connection
-    :param events: list of events. Each event must have a CookieIdContext
+    :param events: EventDataList, list of events. Each event must have a CookieIdContext
     :param reason: Why are these events written to the nok_data table.
     """
     if not events:

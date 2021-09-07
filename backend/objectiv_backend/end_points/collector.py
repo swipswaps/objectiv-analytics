@@ -74,7 +74,7 @@ def _get_event_data(request: Request) -> EventList:
             the validate_structure_data function for more information
 
     :param request: Request from which to parse the data
-    :return: the parsed data, a list of AbstractEvents
+    :return: the parsed data, an EventList (structure as sent by the tracker)
     """
     post_data = request.data
     if len(post_data) > DATA_MAX_SIZE_BYTES:
