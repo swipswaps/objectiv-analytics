@@ -28,7 +28,7 @@ describe('trackNewElement', () => {
 
   it('should track visibility: visible event', async () => {
     const sectionContext = makeSectionContext({ id: 'test' });
-    const trackedDiv = makeTrackedElement('div-id-1', JSON.stringify(sectionContext), 'div');
+    const trackedDiv = makeTrackedElement('div-id-1', 'test', 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
     jest.spyOn(trackedDiv, 'addEventListener');
 

@@ -66,7 +66,7 @@ describe('makeMutationCallback - new nodes', () => {
     const mutationObserver = new MutationObserver(mutationCallback);
 
     const sectionContext = makeSectionContext({ id: 'div' });
-    const trackedDiv = makeTrackedElement('div', JSON.stringify(sectionContext), 'div');
+    const trackedDiv = makeTrackedElement('div', 'div', 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
 
     const mockedMutationRecord: MutationRecord = {

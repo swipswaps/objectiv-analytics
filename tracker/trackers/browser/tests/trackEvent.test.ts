@@ -154,7 +154,6 @@ describe('trackEvent', () => {
 
   it('should track without a location stack', () => {
     const div = document.createElement('div');
-    div.setAttribute(TrackingAttribute.context, JSON.stringify(null));
 
     div.appendChild(testElement);
     document.body.appendChild(div);

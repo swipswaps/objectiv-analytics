@@ -27,8 +27,8 @@ describe('trackRemovedElements', () => {
 
   it('should skip all Elements that do not have visibility tracking attributes', async () => {
     const div = document.createElement('div');
-    const trackedDiv = makeTrackedElement('div', 'null', 'div');
-    const trackedButton = makeTrackedElement('button', 'null', 'button');
+    const trackedDiv = makeTrackedElement('div', null, 'div');
+    const trackedButton = makeTrackedElement('button', null, 'button');
 
     trackedDiv.appendChild(trackedButton);
     div.appendChild(trackedDiv);
@@ -42,9 +42,9 @@ describe('trackRemovedElements', () => {
   it('should trigger a visibility:hidden Event for Tracked Elements with visibility:auto attributes', async () => {
     const div = document.createElement('div');
     const sectionContext = makeSectionContext({ id: 'div' });
-    const trackedDiv = makeTrackedElement('div', JSON.stringify(sectionContext), 'div');
+    const trackedDiv = makeTrackedElement('div', 'div', 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
-    const trackedButton = makeTrackedElement('button', 'null', 'button');
+    const trackedButton = makeTrackedElement('button', null, 'button');
 
     trackedDiv.appendChild(trackedButton);
     div.appendChild(trackedDiv);
@@ -61,10 +61,9 @@ describe('trackRemovedElements', () => {
 
   it('should not trigger a visibility:hidden Event for Tracked Elements with visibility:manual attributes', async () => {
     const div = document.createElement('div');
-    const sectionContext = makeSectionContext({ id: 'div' });
-    const trackedDiv = makeTrackedElement('div', JSON.stringify(sectionContext), 'div');
+    const trackedDiv = makeTrackedElement('div', 'div', 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
-    const trackedButton = makeTrackedElement('button', 'null', 'button');
+    const trackedButton = makeTrackedElement('button', null, 'button');
 
     trackedDiv.appendChild(trackedButton);
     div.appendChild(trackedDiv);

@@ -12,7 +12,7 @@ describe('trackVisibilityVisibleEvent', () => {
   });
 
   it('should not track elements without visibility tracking attributes', async () => {
-    const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
+    const trackedDiv = makeTrackedElement('div-id', null, 'div');
 
     trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);
 
@@ -20,7 +20,7 @@ describe('trackVisibilityVisibleEvent', () => {
   });
 
   it('should not track elements with invalid visibility tracking attributes', async () => {
-    const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
+    const trackedDiv = makeTrackedElement('div-id', null, 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, 'null');
 
     trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);
@@ -29,7 +29,7 @@ describe('trackVisibilityVisibleEvent', () => {
   });
 
   it('should track in mode:auto', async () => {
-    const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
+    const trackedDiv = makeTrackedElement('div-id', null, 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
 
     trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);
@@ -39,7 +39,7 @@ describe('trackVisibilityVisibleEvent', () => {
   });
 
   it('should track in mode:manual with isVisible:true', async () => {
-    const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
+    const trackedDiv = makeTrackedElement('div-id', null, 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
 
     trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);
@@ -49,7 +49,7 @@ describe('trackVisibilityVisibleEvent', () => {
   });
 
   it('should not track in mode:manual with isVisible:false', async () => {
-    const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
+    const trackedDiv = makeTrackedElement('div-id', null, 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
 
     trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);

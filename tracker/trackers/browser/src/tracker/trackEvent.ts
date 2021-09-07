@@ -10,7 +10,7 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import ExtendableError from 'es6-error';
-import { BrowserTracker } from '../';
+import { BrowserTracker, LocationContext, parseLocationContext } from '../';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
 import findTrackedParentElements from './findTrackedParentElements';
@@ -41,7 +41,7 @@ export class TrackEventError extends ExtendableError {}
 
 /**
  * 1. Traverses the DOM to reconstruct the component stack
- * 2. Uses the component stack to reconstruct a LocationStack
+ * 2. Uses the elements stack, inferred either via DOM or parent attributes, to reconstruct a LocationStack
  * 3. Factors a new event with the given eventFactory
  * 4. Tracks the new Event via WebTracker
  */
@@ -50,22 +50,16 @@ export const trackEvent = (parameters: TrackEventParameters) => {
     const { eventFactory, element, tracker = window.objectiv.tracker } = parameters;
 
     // For trackable Elements traverse the DOM to reconstruct their Location
-    let locationStack: AbstractLocationContext[] = [];
+    const locationStack: LocationContext[] = [];
     if (isTrackableElement(element)) {
       // Retrieve parent Tracked Elements
       const elementsStack = findTrackedParentElements(element).reverse();
 
       // Re-hydrate Location Stack
-      locationStack = elementsStack.reduce((locationContexts, element) => {
-        // TODO we need a proper parsers for these attributes with good validation
-        // TODO surely nicer to use our factories for this. A wrapper around them, leveraging ContextType, should do.
-        const locationContext = element.getAttribute(TrackingAttribute.context) as string;
-        locationContexts.push(JSON.parse(locationContext));
-        return locationContexts;
-      }, [] as AbstractLocationContext[]);
-
-      // TODO temporary until we have factories to avoid parsing invalid data from attributes
-      locationStack = locationStack.filter((locationContext) => locationContext);
+      elementsStack.forEach((element) => {
+        // Get, parse, validate, hydrate and push Location Context in the Location Stack
+        locationStack.push(parseLocationContext(element.getAttribute(TrackingAttribute.context)));
+      });
     }
 
     // Create new Event
