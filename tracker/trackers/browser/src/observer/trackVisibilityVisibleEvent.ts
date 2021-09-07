@@ -6,7 +6,7 @@ import { TrackedElement } from '../typeGuards';
 /**
  * Checks if the given Node is a tracked element and if we need to trigger a visibility: visible event for it.
  */
-const trackVisibilityVisibleEvent = (element: TrackedElement, tracker: BrowserTracker = window.objectiv.tracker) => {
+const trackVisibilityVisibleEvent = (element: TrackedElement, tracker: BrowserTracker) => {
   const trackVisibilityAttribute = element.getAttribute(TrackingAttribute.trackVisibility);
   if (trackVisibilityAttribute !== null) {
     // TODO we need a proper parsers for these attributes with good validation

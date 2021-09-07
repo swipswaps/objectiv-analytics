@@ -20,7 +20,7 @@ describe('trackNewElement', () => {
     const div = document.createElement('div');
     spyOn(div, 'addEventListener');
 
-    trackNewElement(div);
+    trackNewElement(div, window.objectiv.tracker);
 
     expect(div.addEventListener).not.toHaveBeenCalled();
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
@@ -32,7 +32,7 @@ describe('trackNewElement', () => {
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
     spyOn(trackedDiv, 'addEventListener');
 
-    trackNewElement(trackedDiv);
+    trackNewElement(trackedDiv, window.objectiv.tracker);
 
     expect(trackedDiv.addEventListener).not.toHaveBeenCalled();
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
@@ -50,7 +50,7 @@ describe('trackNewElement', () => {
     document.body.appendChild(trackedButton);
     spyOn(trackedButton, 'addEventListener');
 
-    trackNewElement(trackedButton);
+    trackNewElement(trackedButton, window.objectiv.tracker);
 
     expect(trackedButton.addEventListener).toHaveBeenCalledTimes(1);
     expect(trackedButton.addEventListener).toHaveBeenNthCalledWith(1, 'click', expect.any(Function));
@@ -63,7 +63,7 @@ describe('trackNewElement', () => {
     trackedInput.setAttribute(TrackingAttribute.trackBlurs, 'true');
     spyOn(trackedInput, 'addEventListener');
 
-    trackNewElement(trackedInput);
+    trackNewElement(trackedInput, window.objectiv.tracker);
 
     expect(trackedInput.addEventListener).toHaveBeenCalledTimes(1);
     expect(trackedInput.addEventListener).toHaveBeenNthCalledWith(1, 'blur', expect.any(Function));

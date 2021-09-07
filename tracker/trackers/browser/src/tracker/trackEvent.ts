@@ -10,7 +10,7 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import ExtendableError from 'es6-error';
-import { BrowserTracker, getDocument } from '../';
+import { BrowserTracker } from '../';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
 import findTrackedParentElements from './findTrackedParentElements';
@@ -72,12 +72,9 @@ export const trackEvent = (parameters: TrackEventParameters) => {
     const newEvent = eventFactory({ location_stack: locationStack });
 
     // Track
-    tracker.trackEvent(newEvent).catch((error) => {
-      // Forward core tracker errors to trackErrorHandler
-      throw error;
-    });
+    tracker.trackEvent(newEvent);
   } catch (error) {
-    trackErrorHandler(error, parameters, parameters?.onError);
+    trackErrorHandler(error, parameters, parameters.onError);
   }
 };
 
@@ -130,22 +127,23 @@ export const trackVisibility = ({
 export type NonInteractiveTrackHelperParameters = {
   element?: HTMLElement | EventTarget;
   tracker?: BrowserTracker;
+  onError?: TrackOnErrorCallback;
 };
 
-export const trackApplicationLoadedEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
-  const { element = getDocument(), tracker } = parameters ?? { element: getDocument() };
-  // FIXME, remove this
-  if (!element) {
-    throw new TrackEventError('Missing Element parameter. Provide a valid Element to track');
+export const trackApplicationLoadedEvent = (parameters: NonInteractiveTrackHelperParameters = {}) => {
+  try {
+    const { element = document, tracker } = parameters;
+    return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
+  } catch (error) {
+    trackErrorHandler(error, parameters, parameters.onError);
   }
-  return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
 };
 
-export const trackURLChangeEvent = (parameters?: NonInteractiveTrackHelperParameters) => {
-  const { element = getDocument(), tracker } = parameters ?? { element: getDocument() };
-  // FIXME, remove this
-  if (!element) {
-    throw new TrackEventError('Missing Element parameter. Provide a valid Element to track');
+export const trackURLChangeEvent = (parameters: NonInteractiveTrackHelperParameters = {}) => {
+  try {
+    const { element = document, tracker } = parameters;
+    return trackEvent({ eventFactory: makeURLChangeEvent, element, tracker });
+  } catch (error) {
+    trackErrorHandler(error, parameters, parameters.onError);
   }
-  return trackEvent({ eventFactory: makeURLChangeEvent, element, tracker });
 };

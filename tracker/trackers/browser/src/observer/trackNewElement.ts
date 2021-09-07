@@ -11,7 +11,7 @@ import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
  * - Elements with the Objectiv Track Click attribute are bound to EventListener for Buttons, Links.
  * - Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
  */
-const trackNewElement = (element: Element, tracker: BrowserTracker = window.objectiv.tracker) => {
+const trackNewElement = (element: Element, tracker: BrowserTracker) => {
   if (isTrackedElement(element)) {
     // Visibility: visible tracking
     trackVisibilityVisibleEvent(element, tracker);

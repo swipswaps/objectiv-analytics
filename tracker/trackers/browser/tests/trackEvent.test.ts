@@ -51,6 +51,10 @@ describe('trackEvent', () => {
       new TypeError("Cannot read property 'trackEvent' of null"),
       parameters
     );
+
+    trackEvent({ ...parameters, onError: console.error });
+    expect(console.error).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError("Cannot read property 'trackEvent' of null"));
   });
 
   it('should use the global tracker instance if available', () => {

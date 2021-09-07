@@ -14,7 +14,7 @@ describe('trackVisibilityHiddenEvent', () => {
   it('should not track elements without visibility tracking attributes', async () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
 
-    trackVisibilityHiddenEvent(trackedDiv);
+    trackVisibilityHiddenEvent(trackedDiv, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
@@ -23,7 +23,7 @@ describe('trackVisibilityHiddenEvent', () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, 'null');
 
-    trackVisibilityHiddenEvent(trackedDiv);
+    trackVisibilityHiddenEvent(trackedDiv, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
@@ -32,7 +32,7 @@ describe('trackVisibilityHiddenEvent', () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"auto"}');
 
-    trackVisibilityHiddenEvent(trackedDiv);
+    trackVisibilityHiddenEvent(trackedDiv, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
@@ -41,7 +41,7 @@ describe('trackVisibilityHiddenEvent', () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
 
-    trackVisibilityHiddenEvent(trackedDiv);
+    trackVisibilityHiddenEvent(trackedDiv, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
@@ -50,7 +50,7 @@ describe('trackVisibilityHiddenEvent', () => {
     const trackedDiv = makeTrackedElement('div-id', 'null', 'div');
     trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
 
-    trackVisibilityHiddenEvent(trackedDiv);
+    trackVisibilityHiddenEvent(trackedDiv, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeSectionHiddenEvent());

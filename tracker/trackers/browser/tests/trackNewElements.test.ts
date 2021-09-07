@@ -33,7 +33,7 @@ describe('trackNewElements', () => {
     div1.appendChild(button);
     div1.appendChild(childDiv);
 
-    trackNewElements(div1);
+    trackNewElements(div1, window.objectiv.tracker);
 
     expect(div1.addEventListener).not.toHaveBeenCalled();
     expect(childDiv.addEventListener).not.toHaveBeenCalled();

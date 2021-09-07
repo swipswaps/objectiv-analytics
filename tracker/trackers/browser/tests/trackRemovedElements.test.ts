@@ -20,7 +20,7 @@ describe('trackRemovedElements', () => {
     div.appendChild(anotherDiv);
     document.body.appendChild(div);
 
-    trackRemovedElements(div);
+    trackRemovedElements(div, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
@@ -34,7 +34,7 @@ describe('trackRemovedElements', () => {
     div.appendChild(trackedDiv);
     document.body.appendChild(div);
 
-    trackRemovedElements(div);
+    trackRemovedElements(div, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
@@ -50,7 +50,7 @@ describe('trackRemovedElements', () => {
     div.appendChild(trackedDiv);
     document.body.appendChild(div);
 
-    trackRemovedElements(div);
+    trackRemovedElements(div, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
@@ -70,7 +70,7 @@ describe('trackRemovedElements', () => {
     div.appendChild(trackedDiv);
     document.body.appendChild(div);
 
-    trackRemovedElements(div);
+    trackRemovedElements(div, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });

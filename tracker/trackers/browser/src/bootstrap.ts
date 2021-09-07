@@ -21,9 +21,6 @@ declare global {
  * Helpers to check if we can access global browser objects
  */
 export const windowExists = () => typeof window !== 'undefined';
-export const documentExists = () => typeof document !== 'undefined';
-export const locationExists = () => typeof location !== 'undefined';
-export const mutationObserverExists = () => typeof MutationObserver !== 'undefined';
 
 /**
  * Initialized window global namespace, unless already existing
@@ -34,29 +31,13 @@ if (windowExists()) {
   };
 }
 
-export const getDocument = (): Document | null => {
-  if (!documentExists()) {
-    return null;
-  }
-
-  return document;
-};
-
-export const getLocation = (): Location | null => {
-  if (!locationExists()) {
-    return null;
-  }
-
-  return location;
-};
-
 /**
  * Helper function to get the current Location href
  */
 export const getLocationHref = () => {
-  if (!locationExists()) {
+  if (typeof location === 'undefined') {
     return undefined;
   }
 
-  return getLocation()?.href;
+  return location.href;
 };
