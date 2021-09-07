@@ -1,4 +1,4 @@
-import { getLocationHref } from '../';
+import { getLocationHref } from '../globals';
 import { BrowserTracker, BrowserTrackerConfig } from '../tracker/BrowserTracker';
 import { trackApplicationLoadedEvent, trackURLChangeEvent } from '../tracker/trackEvent';
 import { TrackingAttribute } from '../TrackingAttributes';

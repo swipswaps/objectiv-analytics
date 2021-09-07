@@ -1,4 +1,4 @@
-import { windowExists } from '../';
+import { windowExists } from '../globals';
 import { startAutoTracking } from '../observer/startAutoTracking';
 import { BrowserTracker, BrowserTrackerConfig } from './BrowserTracker';
 

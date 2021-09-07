@@ -1,3 +1,4 @@
+import { windowExists } from './globals';
 import { BrowserTracker } from './tracker/BrowserTracker';
 
 /**
@@ -18,11 +19,6 @@ declare global {
 }
 
 /**
- * Helpers to check if we can access global browser objects
- */
-export const windowExists = () => typeof window !== 'undefined';
-
-/**
  * Initialized window global namespace, unless already existing
  */
 if (windowExists()) {
@@ -30,14 +26,3 @@ if (windowExists()) {
     tracker: null,
   };
 }
-
-/**
- * Helper function to get the current Location href
- */
-export const getLocationHref = () => {
-  if (typeof location === 'undefined') {
-    return undefined;
-  }
-
-  return location.href;
-};

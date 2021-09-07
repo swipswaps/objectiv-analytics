@@ -1,5 +1,6 @@
 export * from './bootstrap';
 export * from './Contexts';
+export * from './globals';
 export * from './isEmptyObject';
 export * from './observer/isBubbledEvent';
 export * from './observer/makeBlurEventListener';
