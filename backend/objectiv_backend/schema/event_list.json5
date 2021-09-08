@@ -5,7 +5,9 @@
   "properties": {
     "events": {
       "type": "array",
-      "items": "AbstractEvent",
+      "items": {
+        "type": "AbstractEvent"
+      },
       "description": "List/array of events. See the base_schema for the definition of an (abstract)event"
     },
     "transport_time": {
