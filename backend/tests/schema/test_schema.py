@@ -138,7 +138,7 @@ def test_add_context_to_incorrect_scope():
 
     # check event is valid to start with
     event_schema = get_config_event_schema()
-    assert (validate_event_adheres_to_schema(event_schema=event_schema, event=event) == [])
+    assert(validate_event_adheres_to_schema(event_schema=event_schema, event=event) == [])
 
     # manually add it, to circumvent type checking
     event['location_stack'].append(context)
