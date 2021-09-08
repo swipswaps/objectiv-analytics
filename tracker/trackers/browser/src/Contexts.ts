@@ -1,20 +1,10 @@
 /**
  * AbstractContext
  */
-import { assign, enums, Infer, literal, object, string, union } from 'superstruct';
+import { assign, Infer, literal, object, string, union } from 'superstruct';
 
 export const AbstractContext = object({
   id: string(),
-  _context_type: enums([
-    'SectionContext', // aka ElementContext
-    'ExpandableSectionContext',
-    'MediaPlayerContext',
-    'NavigationContext',
-    'OverlayContext',
-    'InputContext',
-    'ButtonContext',
-    'LinkContext',
-  ]),
 });
 export type AbstractContext = Infer<typeof AbstractContext>;
 
@@ -36,13 +26,6 @@ export const AbstractSectionContext = assign(
   AbstractLocationContext,
   object({
     __section_context: literal(true),
-    _context_type: enums([
-      'SectionContext', // aka ElementContext
-      'ExpandableSectionContext',
-      'MediaPlayerContext',
-      'NavigationContext',
-      'OverlayContext',
-    ]),
   })
 );
 export type AbstractSectionContext = Infer<typeof AbstractLocationContext>;
@@ -54,7 +37,6 @@ export const AbstractItemContext = assign(
   AbstractLocationContext,
   object({
     __item_context: literal(true),
-    _context_type: enums(['ItemContext', 'InputContext', 'ActionContext', 'ButtonContext', 'LinkContext']),
   })
 );
 export type AbstractItemContext = Infer<typeof AbstractItemContext>;
@@ -66,7 +48,6 @@ export const AbstractActionContext = assign(
   AbstractItemContext,
   object({
     __action_context: literal(true),
-    _context_type: enums(['ActionContext', 'ButtonContext', 'LinkContext']),
     text: string(),
   })
 );
