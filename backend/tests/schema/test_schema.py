@@ -71,12 +71,17 @@ def test_make_event_from_dict():
     # check resulting event is the same as input event
     assert(json.dumps(sorted_event) == json.dumps(sorted_event_json))
 
+    event_schema = get_config_event_schema()
+
     # check it still validates, eg, returned list of errors is empty
     assert(validate_structure_event_list([event]) == [])
+    assert (validate_event_adheres_to_schema(event_schema=event_schema, event=event) == [])
 
     # check validation actually fails if a required property `time` is not there
     del event['time']
-    assert (validate_structure_event_list([event]) != [])
+
+    assert (validate_structure_event_list([event]) == [])
+    assert(validate_event_adheres_to_schema(event_schema=event_schema, event=event) != [])
 
 
 def test_make_section_context():

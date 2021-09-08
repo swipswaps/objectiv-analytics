@@ -141,6 +141,29 @@ class EventSubSchema:
     def is_valid_event_type(self, event_type: EventType) -> bool:
         return event_type in self.schema
 
+    def get_event_schema(self, event_type: EventType) -> Optional[Dict[str, Any]]:
+        """
+        Give the json-schema for a specific context_type, or None if the context type doesn't exist.
+        """
+        if event_type not in self.schema:
+            return None
+        all_classes = self.get_all_parent_event_types(event_type)
+        properties = {}
+        for klass in all_classes:
+            class_properties = deepcopy(self.schema[klass].get("properties", {}))
+            for key, value in class_properties.items():
+                # we replace any Abstract Context reference with 'object' for proper json-schema validation
+                if 'items' in value and 'type' in value['items'] and re.match('^Abstract.*?Context$', value['items']['type']):
+                    value['items']['type'] = 'object'
+                properties[key] = deepcopy(value)
+
+        schema = {
+            "type": "object",
+            "properties": properties,
+            "required": sorted(properties.keys())
+        }
+        return schema
+
 
 class ContextSubSchema:
     """
@@ -387,6 +410,9 @@ class EventSchema:
 
     def get_context_schema(self, context_type: ContextType) -> Optional[Dict[str, Any]]:
         return self.contexts.get_context_schema(context_type=context_type)
+
+    def get_event_schema(self, event_type: EventType) -> Optional[Dict[str, Any]]:
+        return self.events.get_event_schema(event_type=event_type)
 
 
 def get_event_list_schema() -> EventListSchema:
