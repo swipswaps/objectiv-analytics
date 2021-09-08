@@ -23,6 +23,13 @@ describe('processChildrenTrackingElement', () => {
     expect(processChildrenTrackingElement(div)).toHaveLength(0);
   });
 
+  it('should skip queries without trackAs', () => {
+    const div = document.createElement('div');
+    div.setAttribute(TrackingAttribute.trackChildren, JSON.stringify([{ queryAll: '#some-id-2', trackAs: null }]));
+
+    expect(processChildrenTrackingElement(div)).toHaveLength(0);
+  });
+
   it('should skip queries without valid or empty trackAs, query or queryAll options', () => {
     const div = document.createElement('div');
     div.setAttribute(

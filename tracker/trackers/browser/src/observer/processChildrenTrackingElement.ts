@@ -1,4 +1,5 @@
-import { isEmptyObject } from '../isEmptyObject';
+import { create } from 'superstruct';
+import { parseChildrenAttribute } from '../';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
 import { TrackChildrenQuery, TrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, TrackedElement } from '../typeGuards';
@@ -16,45 +17,13 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
     if (!isChildrenTrackingElement(element)) {
       return newlyTrackedElements;
     }
+    const queries = parseChildrenAttribute(element.getAttribute(TrackingAttribute.trackChildren));
 
-    // TODO we need a proper parsers for these attributes with good validation
-    // TODO we need a proper parsers for these attributes with good validation
-    // TODO we need a proper parsers for these attributes with good validation
-    // TODO we need a proper parsers for these attributes with good validation
-    // TODO we need a proper parsers for these attributes with good validation
-    const childrenTrackingQueriesAttribute = element.getAttribute(TrackingAttribute.trackChildren);
-    /* istanbul ignore if - this cannot happen but we don't have proper type guards to enforce it */
-    if (!childrenTrackingQueriesAttribute) {
-      return newlyTrackedElements;
-    }
+    queries.forEach((query: TrackChildrenQuery) => {
+      const { queryAll, trackAs }: TrackChildrenQuery = create(query, TrackChildrenQuery);
 
-    const childrenTrackingQueries = JSON.parse(childrenTrackingQueriesAttribute);
-    if (!Array.isArray(childrenTrackingQueries)) {
-      return newlyTrackedElements;
-    }
-
-    // TODO add validation for empty arrays (most probably to the attribute parser when we have it)
-
-    childrenTrackingQueries.forEach(({ queryAll, trackAs }: TrackChildrenQuery) => {
-      const queriedElements = [];
-
-      // FIXME remove this and use superstruct guard instead
-      if (!trackAs || isEmptyObject(trackAs)) {
-        console.error(`trackAs attributes for query: ${queryAll} are empty`);
-        return;
-      }
-
-      if (queryAll) {
-        queriedElements.push(...Array.from(element.querySelectorAll(queryAll)));
-      }
-
-      queriedElements.forEach((queriedElement) => {
-        if (!queriedElement) {
-          console.error(`Could not find any Element via querySelector query: ${queryAll}`);
-          return;
-        }
-
-        for (let [key, value] of Object.entries<string>(trackAs)) {
+      element.querySelectorAll(queryAll).forEach((queriedElement) => {
+        for (let [key, value] of Object.entries<string>(trackAs as {})) {
           queriedElement.setAttribute(key, value);
         }
 

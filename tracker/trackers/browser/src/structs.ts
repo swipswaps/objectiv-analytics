@@ -1,4 +1,17 @@
-import { assert, boolean, coerce, create, define, Infer, literal, object, string, Struct, union } from 'superstruct';
+import {
+  array,
+  assert,
+  boolean,
+  coerce,
+  create,
+  define,
+  Infer,
+  literal,
+  object,
+  string,
+  Struct,
+  union,
+} from 'superstruct';
 import { validate as validateUuid } from 'uuid';
 import { LocationContext } from './Contexts';
 import { TrackChildrenParameters } from './tracker/trackChildren';
@@ -91,9 +104,5 @@ export const parseChildrenAttribute = (stringifiedChildrenAttribute: string | nu
   }
 
   const queries = create(JSON.parse(stringifiedChildrenAttribute), TrackChildrenParameters);
-  queries.forEach((query) => {
-    assert(query, ValidTrackChildrenQuery);
-  });
-
-  return queries;
+  return create(queries, array(ValidTrackChildrenQuery));
 };

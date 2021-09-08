@@ -8,7 +8,7 @@ import isBubbledEvent from './isBubbledEvent';
  */
 const makeClickEventListener = (element: TrackedElement, tracker: BrowserTracker) => {
   return (event: Event) => {
-    // istanbul-ignore-next - this cannot be simulated easily in Jest
+    /* istanbul ignore else - This is a difficult case to test and cover in Jest */
     if (!isBubbledEvent(element, event.target)) {
       trackClick({ element, tracker });
     }
