@@ -15,8 +15,8 @@ describe('trackNewElements', () => {
     div1.setAttribute(
       TrackingAttribute.trackChildren,
       JSON.stringify([
-        { query: '#button', trackAs: trackButton({ id: 'button', text: 'button' }) },
-        { query: '#child-div', trackAs: trackElement({ id: 'child-div' }) },
+        { queryAll: '#button', trackAs: trackButton({ id: 'button', text: 'button' }) },
+        { queryAll: '#child-div', trackAs: trackElement({ id: 'child-div' }) },
       ])
     );
 

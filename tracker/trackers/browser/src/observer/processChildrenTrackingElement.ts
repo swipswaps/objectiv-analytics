@@ -1,7 +1,6 @@
 import { isEmptyObject } from '../isEmptyObject';
-import { TrackChildParameters } from '../tracker/trackChildren';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
-import { TrackingAttribute } from '../TrackingAttributes';
+import { TrackChildrenQuery, TrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, TrackedElement } from '../typeGuards';
 
 /**
@@ -36,17 +35,13 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
 
     // TODO add validation for empty arrays (most probably to the attribute parser when we have it)
 
-    childrenTrackingQueries.forEach(({ query, queryAll, trackAs }: TrackChildParameters) => {
+    childrenTrackingQueries.forEach(({ queryAll, trackAs }: TrackChildrenQuery) => {
       const queriedElements = [];
 
       // FIXME remove this and use superstruct guard instead
       if (!trackAs || isEmptyObject(trackAs)) {
-        console.error(`trackAs attributes for query: ${query} are empty`);
+        console.error(`trackAs attributes for query: ${queryAll} are empty`);
         return;
-      }
-
-      if (query) {
-        queriedElements.push(element.querySelector(query));
       }
 
       if (queryAll) {
@@ -55,7 +50,7 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
 
       queriedElements.forEach((queriedElement) => {
         if (!queriedElement) {
-          console.error(`Could not find Element via querySelector query: ${query}`);
+          console.error(`Could not find any Element via querySelector query: ${queryAll}`);
           return;
         }
 

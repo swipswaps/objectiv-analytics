@@ -28,15 +28,10 @@ describe('processChildrenTrackingElement', () => {
     div.setAttribute(
       TrackingAttribute.trackChildren,
       JSON.stringify([
-        { query: '#some-id-1' },
-        { query: '#some-id-2', trackAs: null },
-        { query: '#some-id-3', trackAs: {} },
         { queryAll: '#some-id-1' },
         { queryAll: '#some-id-2', trackAs: null },
         { queryAll: '#some-id-3', trackAs: {} },
         { trackAs: trackElement({ id: 'element-id-1' }) },
-        { query: null, trackAs: trackElement({ id: 'element-id-2' }) },
-        { query: '', trackAs: trackElement({ id: 'element-id-3' }) },
         { queryAll: null, trackAs: trackElement({ id: 'element-id-2' }) },
         { queryAll: '', trackAs: trackElement({ id: 'element-id-3' }) },
       ])
@@ -50,7 +45,7 @@ describe('processChildrenTrackingElement', () => {
     div.setAttribute(
       TrackingAttribute.trackChildren,
       JSON.stringify([
-        { query: '#button-id-1', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
+        { queryAll: '#button-id-1', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
         { queryAll: '[class="button"]', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
       ])
     );
@@ -68,7 +63,7 @@ describe('processChildrenTrackingElement', () => {
     div.setAttribute(
       TrackingAttribute.trackChildren,
       JSON.stringify([
-        { query: '#button-id-1', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
+        { queryAll: '#button-id-1', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
         { queryAll: '[class="button"]', trackAs: trackButton({ id: 'button-id', text: 'button' }) },
       ])
     );

@@ -1,6 +1,8 @@
-import { boolean, coerce, create, define, Infer, literal, object, string, Struct, union } from 'superstruct';
+import { assert, boolean, coerce, create, define, Infer, literal, object, string, Struct, union } from 'superstruct';
 import { validate as validateUuid } from 'uuid';
 import { LocationContext } from './Contexts';
+import { TrackChildrenParameters } from './tracker/trackChildren';
+import { TrackChildrenQuery } from './TrackingAttributes';
 
 /**
  * A custom Struct describing v4 UUIDs
@@ -70,4 +72,24 @@ export const stringifyVisibilityAttribute = (visibility: TrackingAttributeVisibi
 
 export const parseVisibilityAttribute = (stringifiedVisibility: string | null) => {
   return parseStruct(stringifiedVisibility, TrackingAttributeVisibility);
+};
+
+/**
+ * Children Tracking Attribute Stringifier and Parser
+ */
+export const stringifyChildrenAttribute = (queries: TrackChildrenParameters) => {
+  if (!(typeof queries === 'object')) {
+    throw new Error(`Visibility must be an object, received: ${JSON.stringify(queries)}`);
+  }
+  queries.forEach((query) => assert(query, TrackChildrenQuery));
+  return create(JSON.stringify(queries), string());
+};
+
+export const parseChildrenAttribute = (stringifiedChildrenAttribute: string | null) => {
+  if (stringifiedChildrenAttribute === null) {
+    throw new Error('Received `null` while attempting to parse children tracking attribute');
+  }
+  return create(JSON.parse(stringifiedChildrenAttribute), TrackChildrenParameters).map((query) => {
+    assert(query, TrackChildrenQuery);
+  });
 };
