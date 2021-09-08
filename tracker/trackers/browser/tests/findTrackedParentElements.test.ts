@@ -125,8 +125,6 @@ describe('findTrackedParentElements', () => {
     expect(trackedParentElements).toHaveLength(1);
     expect(trackedParentElements).toStrictEqual([div]);
     expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(
-      `[Objectiv] findTrackedParentElements: missing or invalid Parent Element 'top'`
-    );
+    expect(console.error).toHaveBeenCalledWith(`findTrackedParentElements: missing or invalid Parent Element 'top'`);
   });
 });

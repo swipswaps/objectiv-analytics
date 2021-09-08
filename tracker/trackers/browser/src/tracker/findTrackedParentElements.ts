@@ -23,7 +23,7 @@ const findTrackedParentElements = (
     const parentElementId = element.getAttribute(TrackingAttribute.parentElementId);
     const parentElement = document.querySelector(`[${TrackingAttribute.elementId}='${parentElementId}']`);
     if (!isTrackedElement(parentElement)) {
-      console.error(`[Objectiv] findTrackedParentElements: missing or invalid Parent Element '${parentElementId}'`);
+      console.error(`findTrackedParentElements: missing or invalid Parent Element '${parentElementId}'`);
       return parentElements;
     }
     nextElement = parentElement;

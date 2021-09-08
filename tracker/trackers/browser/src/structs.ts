@@ -4,7 +4,6 @@ import {
   boolean,
   coerce,
   create,
-  defaulted,
   define,
   Infer,
   literal,
@@ -14,14 +13,14 @@ import {
   Struct,
   union,
 } from 'superstruct';
-import { v4, validate as validateUuid } from 'uuid';
+import { validate as validateUuid } from 'uuid';
 import { LocationContext } from './Contexts';
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
  * A custom Struct describing v4 UUIDs
  */
-export const Uuid = define('Uuid', (value: any) => validateUuid(value));
+export const Uuid = define<string>('Uuid', (value: any) => validateUuid(value));
 
 /**
  * Generic structs to stringify and parse JSON via create + coerce
@@ -105,7 +104,7 @@ export type TrackingAttributes = Infer<typeof TrackingAttributes>;
  * The object that `track` calls return, stringified
  */
 export const StringifiedTrackingAttributes = object({
-  [TrackingAttribute.elementId]: defaulted(Uuid, () => v4()),
+  [TrackingAttribute.elementId]: Uuid,
   [TrackingAttribute.parentElementId]: optional(Uuid),
   [TrackingAttribute.context]: string(),
   [TrackingAttribute.trackClicks]: optional(StringBoolean),

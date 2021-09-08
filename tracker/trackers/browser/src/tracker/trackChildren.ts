@@ -1,4 +1,4 @@
-import { assert, create, Infer, optional } from 'superstruct';
+import { assert, Infer, optional, validate } from 'superstruct';
 import {
   StringifiedChildrenTrackingAttributes,
   stringifyChildrenAttribute,
@@ -39,13 +39,16 @@ export const trackChildren = (
     // Validate input
     assert(parameters, TrackChildrenParameters);
 
-    // Validate output and return it
-    return create(
-      {
-        [TrackingAttribute.trackChildren]: stringifyChildrenAttribute(parameters),
-      },
-      StringifiedChildrenTrackingAttributes
-    );
+    // Create output attributes object
+    const trackingAttributes = {
+      [TrackingAttribute.trackChildren]: stringifyChildrenAttribute(parameters),
+    };
+
+    // Validate
+    validate(trackingAttributes, StringifiedChildrenTrackingAttributes);
+
+    // Return
+    return trackingAttributes;
   } catch (error) {
     return trackerErrorHandler(error, parameters, onError);
   }

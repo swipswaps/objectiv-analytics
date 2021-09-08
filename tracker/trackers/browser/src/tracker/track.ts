@@ -1,4 +1,6 @@
-import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
+import { getObjectKeys } from '@objectiv/tracker-core';
+import { boolean, create, func, Infer, is, object, optional, validate } from 'superstruct';
+import { v4 } from 'uuid';
 import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
 import {
   StringifiedTrackingAttributes,
@@ -57,17 +59,27 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     const trackVisibility = options?.trackVisibility ?? (is(instance, SectionContext) ? { mode: 'auto' } : undefined);
     const parentElementId = options?.parentTracker ? options.parentTracker[TrackingAttribute.elementId] : undefined;
 
-    // Validate output and return it
-    return create(
-      {
-        [TrackingAttribute.parentElementId]: parentElementId,
-        [TrackingAttribute.context]: stringifyLocationContext(instance),
-        [TrackingAttribute.trackClicks]: runIfNotUndefined(stringifyBoolean, trackClicks),
-        [TrackingAttribute.trackBlurs]: runIfNotUndefined(stringifyBoolean, trackBlurs),
-        [TrackingAttribute.trackVisibility]: runIfNotUndefined(stringifyVisibilityAttribute, trackVisibility),
-      },
-      StringifiedTrackingAttributes
-    );
+    // Create output attributes object
+    const trackingAttributes = {
+      [TrackingAttribute.elementId]: v4(),
+      [TrackingAttribute.parentElementId]: parentElementId,
+      [TrackingAttribute.context]: stringifyLocationContext(instance),
+      [TrackingAttribute.trackClicks]: runIfNotUndefined(stringifyBoolean, trackClicks),
+      [TrackingAttribute.trackBlurs]: runIfNotUndefined(stringifyBoolean, trackBlurs),
+      [TrackingAttribute.trackVisibility]: runIfNotUndefined(stringifyVisibilityAttribute, trackVisibility),
+    };
+
+    // Validate
+    validate(trackingAttributes, StringifiedTrackingAttributes);
+
+    // Strip out undefined attributes and return
+    getObjectKeys(trackingAttributes).forEach((key) => {
+      if (trackingAttributes[key] === undefined) {
+        delete trackingAttributes[key];
+      }
+    });
+
+    return trackingAttributes;
   } catch (error) {
     return trackerErrorHandler(error, parameters, parameters?.onError);
   }

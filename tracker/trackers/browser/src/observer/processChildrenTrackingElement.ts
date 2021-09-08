@@ -1,5 +1,5 @@
 import { create } from 'superstruct';
-import { parseChildrenAttribute, TrackChildrenQuery } from '../structs';
+import { parseChildrenAttribute, StringifiedTrackingAttributes, TrackChildrenQuery } from '../structs';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, TrackedElement } from '../typeGuards';
@@ -21,9 +21,10 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
 
     queries.forEach((query: TrackChildrenQuery) => {
       const { queryAll, trackAs }: TrackChildrenQuery = create(query, TrackChildrenQuery);
+      const trackingAsAttributes = create(trackAs, StringifiedTrackingAttributes);
 
       element.querySelectorAll(queryAll).forEach((queriedElement) => {
-        for (let [key, value] of Object.entries<string>(trackAs as {})) {
+        for (let [key, value] of Object.entries<string>(trackingAsAttributes)) {
           queriedElement.setAttribute(key, value);
         }
 

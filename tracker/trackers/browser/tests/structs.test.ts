@@ -10,6 +10,7 @@ import {
   stringifyVisibilityAttribute,
   TrackChildrenParameters,
   trackElement,
+  TrackingAttribute,
   TrackingAttributeVisibilityAuto,
   TrackingAttributeVisibilityManual,
 } from '../src';
@@ -188,12 +189,18 @@ describe('Custom structs', () => {
         ])
       );
 
-      if (!elementTrackingAttributes) {
-        throw new Error('should not happen');
-      }
-
       const parsedChildren = parseChildrenAttribute(stringifiedChildren);
-      expect(parsedChildren).toStrictEqual(children);
+      expect(parsedChildren).toStrictEqual(
+        children?.map((childQuery) => ({
+          ...childQuery,
+          trackAs: {
+            ...childQuery.trackAs,
+            [TrackingAttribute.parentElementId]: undefined,
+            [TrackingAttribute.trackBlurs]: undefined,
+            [TrackingAttribute.trackClicks]: undefined,
+          },
+        }))
+      );
     });
 
     it('Should not stringify objects that are not Children Attributes objects or invalid ones', () => {

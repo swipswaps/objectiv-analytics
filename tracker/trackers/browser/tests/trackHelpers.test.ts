@@ -56,7 +56,6 @@ describe('trackHelpers', () => {
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
-      [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
@@ -66,8 +65,6 @@ describe('trackHelpers', () => {
         text: 'Click Me',
       }),
       [TrackingAttribute.trackClicks]: 'true',
-      [TrackingAttribute.trackBlurs]: undefined,
-      [TrackingAttribute.trackVisibility]: undefined,
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -78,15 +75,12 @@ describe('trackHelpers', () => {
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
-      [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
         _context_type: 'SectionContext',
         id: 'test-section',
       }),
-      [TrackingAttribute.trackClicks]: undefined,
-      [TrackingAttribute.trackBlurs]: undefined,
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
@@ -98,7 +92,6 @@ describe('trackHelpers', () => {
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
-      [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -106,7 +99,6 @@ describe('trackHelpers', () => {
         id: 'test-expandable',
       }),
       [TrackingAttribute.trackClicks]: 'true',
-      [TrackingAttribute.trackBlurs]: undefined,
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
@@ -118,16 +110,13 @@ describe('trackHelpers', () => {
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
-      [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
         _context_type: 'InputContext',
         id: 'test-input',
       }),
-      [TrackingAttribute.trackClicks]: undefined,
       [TrackingAttribute.trackBlurs]: 'true',
-      [TrackingAttribute.trackVisibility]: undefined,
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -138,7 +127,6 @@ describe('trackHelpers', () => {
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
-      [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
@@ -149,8 +137,6 @@ describe('trackHelpers', () => {
         href: '/test',
       }),
       [TrackingAttribute.trackClicks]: 'true',
-      [TrackingAttribute.trackBlurs]: undefined,
-      [TrackingAttribute.trackVisibility]: undefined,
     };
 
     expect(trackingAttributes).toStrictEqual(expectedTrackingAttributes);
@@ -161,15 +147,12 @@ describe('trackHelpers', () => {
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
-      [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
         _context_type: 'MediaPlayerContext',
         id: 'test-media-player',
       }),
-      [TrackingAttribute.trackClicks]: undefined,
-      [TrackingAttribute.trackBlurs]: undefined,
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
@@ -181,15 +164,12 @@ describe('trackHelpers', () => {
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
-      [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
         _context_type: 'NavigationContext',
         id: 'test-nav',
       }),
-      [TrackingAttribute.trackClicks]: undefined,
-      [TrackingAttribute.trackBlurs]: undefined,
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
@@ -201,15 +181,12 @@ describe('trackHelpers', () => {
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
-      [TrackingAttribute.parentElementId]: undefined,
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
         _context_type: 'OverlayContext',
         id: 'test-overlay',
       }),
-      [TrackingAttribute.trackClicks]: undefined,
-      [TrackingAttribute.trackBlurs]: undefined,
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
