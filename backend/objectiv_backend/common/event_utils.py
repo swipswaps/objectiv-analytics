@@ -1,9 +1,10 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Dict, Any, Optional, List, cast
+from typing import Optional, List, cast
 
 from objectiv_backend.common.types import EventData, ContextData, ContextType
+from objectiv_backend.schema.schema import AbstractGlobalContext
 
 
 def get_optional_context(event: EventData, context_type: ContextType) -> Optional[ContextData]:
@@ -43,24 +44,8 @@ def get_location_stack(event: EventData) -> List[ContextData]:
     return event.get("location_stack", [])
 
 
-def add_global_context_to_event(event: EventData, context: ContextData) -> Dict[str, Any]:
+def add_global_context_to_event(event: EventData, context: AbstractGlobalContext) -> EventData:
     """ Add the global context to the event. Returns the modified event """
     event['global_contexts'].append(context)
     return event
 
-
-def event_add_construct_context(event: EventData,
-                                context_type: ContextType,
-                                context_id: str,
-                                **kwargs) -> EventData:
-    """
-    Create a new Context, and add that to the Event.
-    :return: The modified Event.
-    """
-    context: ContextData = {
-        '_context_type': context_type,
-        'id': context_id,
-    }
-    for key, value in kwargs.items():
-        context[key] = value
-    return add_global_context_to_event(event, context)

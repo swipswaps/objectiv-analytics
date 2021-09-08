@@ -3,15 +3,15 @@ from datetime import datetime
 
 import flask
 import time
-from typing import List, Dict, Any
-import uuid
+
+from typing import List, Dict
 
 from flask import Response, Request
 
 from objectiv_backend.common.config import get_collector_config
+from objectiv_backend.common.types import EventData, EventDataList, EventList
 from objectiv_backend.common.db import get_db_connection
-from objectiv_backend.common.event_utils import event_add_construct_context, add_global_context_to_event
-from objectiv_backend.common.types import EventWithId, EventData, ContextData
+from objectiv_backend.common.event_utils import add_global_context_to_event
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
 from objectiv_backend.end_points.extra_output import events_to_json, write_data_to_fs_if_configured, \
     write_data_to_s3_if_configured
@@ -21,6 +21,7 @@ from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
+from objectiv_backend.schema.schema import HttpContext, CookieIdContext
 
 # Some limits on the inputs we accept
 DATA_MAX_SIZE_BYTES = 1_000_000
@@ -33,9 +34,9 @@ def collect() -> Response:
     """
     current_millis = round(time.time() * 1000)
     try:
-        event_data = _get_event_data(flask.request)
-        events = event_data['events']
-        transport_time = event_data['transport_time']
+        event_data: EventList = _get_event_data(flask.request)
+        events: EventDataList = event_data['events']
+        transport_time: int = event_data['transport_time']
     except ValueError as exc:
         print(f'Data problem: {exc}')  # todo: real error logging
         return _get_collector_response(error_count=1, event_count=-1, data_error=exc.__str__())
@@ -46,23 +47,17 @@ def collect() -> Response:
 
     set_time_in_events(events, current_millis, transport_time)
 
-    """
-    Map event data to a list of EventWithId entities.
-    Event data has been validated against the schema in the _get_event_data above. So all Events will have an `id`. 
-    """
-    events_with_id = [EventWithId(id=uuid.UUID(event.get('id')), event=event) for event in events]
-
     if not get_collector_config().async_mode:
-        ok_events, nok_events, event_errors = process_events_entry(events=events_with_id, current_millis=current_millis)
+        ok_events, nok_events, event_errors = process_events_entry(events=events, current_millis=current_millis)
         print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
         write_sync_events(ok_events=ok_events, nok_events=nok_events)
         return _get_collector_response(error_count=len(nok_events), event_count=len(events), event_errors=event_errors)
     else:
-        write_async_events(events=events_with_id)
+        write_async_events(events=events)
         return _get_collector_response(error_count=0, event_count=len(events))
 
 
-def _get_event_data(request: Request) -> Dict[str, Any]:
+def _get_event_data(request: Request) -> EventList:
     """
     Parse the requests data as json and return as a list
 
@@ -79,13 +74,13 @@ def _get_event_data(request: Request) -> Dict[str, Any]:
             the validate_structure_data function for more information
 
     :param request: Request from which to parse the data
-    :return: the parsed data, a list of EventData
+    :return: the parsed data, an EventList (structure as sent by the tracker)
     """
     post_data = request.data
     if len(post_data) > DATA_MAX_SIZE_BYTES:
         # if it's more than a megabyte, we'll refuse to process
         raise ValueError(f'Data size exceeds limit')
-    event_data = json.loads(post_data)
+    event_data: EventList = json.loads(post_data)
     if not isinstance(event_data, dict):
         raise ValueError('Parsed post data is not a dict')
     if 'events' not in event_data:
@@ -101,6 +96,7 @@ def _get_event_data(request: Request) -> Dict[str, Any]:
     error_info = validate_structure_event_list(event_data=event_data['events'])
     if error_info:
         raise ValueError(f'List of Events not structured well: {error_info[0].info}')
+
     return event_data
 
 
@@ -130,17 +126,17 @@ def _get_collector_response(
     return get_json_response(status=200, msg=msg)
 
 
-def add_http_contexts(events: List[EventData]):
+def add_http_contexts(events: EventDataList):
     """
     Modify the given list of events: Add the HttpContext to each event
     """
     # get http context for current request (same for all events in this request)
-    http_context = _get_http_context()
+    http_context: HttpContext = _get_http_context()
     for event in events:
         add_global_context_to_event(event=event, context=http_context)
 
 
-def add_cookie_id_contexts(events: List[EventData]):
+def add_cookie_id_contexts(events: EventDataList):
     """
     Modify the given list of events: Add the CookieIdContext to each event, if cookies are enabled.
     """
@@ -148,16 +144,12 @@ def add_cookie_id_contexts(events: List[EventData]):
     if not cookie_config:
         return
     cookie_id = get_cookie_id()
+    cookie_id_context = CookieIdContext(id=cookie_id, cookie_id=cookie_id)
     for event in events:
-        event_add_construct_context(
-            event=event,
-            context_type='CookieIdContext',
-            context_id=cookie_id,
-            cookie_id=cookie_id
-        )
+        add_global_context_to_event(event, cookie_id_context)
 
 
-def set_time_in_events(events: List[EventData], current_millis: int, client_millis: int):
+def set_time_in_events(events: EventDataList, current_millis: int, client_millis: int):
     """
     Modify the given list of events: Set the correct time in the events
 
@@ -180,14 +172,14 @@ def set_time_in_events(events: List[EventData], current_millis: int, client_mill
         event['time'] = event['time'] + offset
 
 
-def _get_http_context() -> ContextData:
+def _get_http_context() -> HttpContext:
     """ Create an HttpContext based on the data in the current request. """
     allowed_headers = ['Referer', 'User-Agent']
-    http_context: ContextData = {}
 
+    http_headers: Dict[str, str] = {}
     for h, v in flask.request.headers.items():
         if h in allowed_headers:
-            http_context[h.lower().replace('-', '_')] = v
+            http_headers[h.lower().replace('-', '_')] = v
 
     # try to determine the IP address of the calling user agent, by looking at some standard headers
     # if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
@@ -195,7 +187,7 @@ def _get_http_context() -> ContextData:
     if 'X-Real-IP' in flask.request.headers:
         # any upstream proxy probably know the 'right' IP. If it sets the x-real-ip header to that,
         # we use that.
-        http_context['remote_address'] = flask.request.headers['X-Real-IP']
+        http_headers['remote_address'] = flask.request.headers['X-Real-IP']
     elif 'X-Forwarded-For' in flask.request.headers:
         # x-forwarded-for headers take the form of:
         # client proxy_1...proxy_n
@@ -204,25 +196,24 @@ def _get_http_context() -> ContextData:
         # and non-routable addresses.
         hosts = str(flask.request.headers['X-Forwarded-For']).split()
         if len(hosts) > 1:
-            http_context['remote_address'] = hosts[-1]
+            http_headers['remote_address'] = hosts[-1]
         else:
             # if there's only one address there, we use that.
-            http_context['remote_address'] = flask.request.headers['X-Forwarded-For']
+            http_headers['remote_address'] = flask.request.headers['X-Forwarded-For']
     elif flask.request.remote_addr:
         # if all else fails, look for remote_addr in the request. This is the IP the current connection
         # originates from. Most likely a proxy (which is why this is the last resort).
-        http_context['remote_address'] = flask.request.remote_addr
+        http_headers['remote_address'] = flask.request.remote_addr
     else:
         # this should never happen!
-        http_context['remote_address'] = 'unknown'
+        http_headers['remote_address'] = 'unknown'
 
-    http_context['_context_type'] = 'HttpContext'
-    http_context['id'] = 'http_context'
+    http_headers['id'] = 'http_context'
 
-    return http_context
+    return HttpContext(**http_headers)
 
 
-def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId]):
+def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):
     """
     Write the events to the following sinks, if configured:
         * postgres
@@ -250,7 +241,7 @@ def write_sync_events(ok_events: List[EventWithId], nok_events: List[EventWithId
             write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 
 
-def write_async_events(events: List[EventWithId]):
+def write_async_events(events: EventDataList):
     """
     Write the events to the following sinks, if configured:
         * postgres - To the entry queue

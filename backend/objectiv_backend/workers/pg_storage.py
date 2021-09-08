@@ -3,15 +3,15 @@ Copyright 2021 Objectiv B.V.
 """
 import json
 from datetime import datetime, timedelta
-from typing import List
+
 
 from psycopg2.extras import execute_values
 
 from objectiv_backend.common.event_utils import get_context
-from objectiv_backend.common.types import EventWithId, FailureReason
+from objectiv_backend.common.types import FailureReason, EventDataList
 
 
-def insert_events_into_data(connection, events: List[EventWithId]):
+def insert_events_into_data(connection, events: EventDataList):
     """
     Insert events into the 'data' table.
 
@@ -29,7 +29,7 @@ def insert_events_into_data(connection, events: List[EventWithId]):
     ISOLATION_LEVEL_READ_COMMITTED set and a lock_timeout is configured.
 
     :param connection: psycopg2 database connection, must have ISOLATION_LEVEL_READ_COMMITTED set.
-    :param events: list of events. Each event must be a valid Event, and must have a CookieIdContext
+    :param events: EventDataList, list of events. Each event must be a valid Event, and must have a CookieIdContext
     :raise Exception: If the database is not available, or if it blocks longer than lock_timeout.
     """
     if not events:
@@ -58,13 +58,13 @@ def insert_events_into_data(connection, events: List[EventWithId]):
     '''
     values = []
     for event in events:
-        timestamp = _millis_to_datetime(event.event['time'])
-        cookie_id = get_context(event.event, 'CookieIdContext')['cookie_id']
-        value = (str(event.id),
+        timestamp = _millis_to_datetime(event['time'])
+        cookie_id = get_context(event, 'CookieIdContext')['cookie_id']
+        value = (event['id'],
                  timestamp,
                  timestamp,
                  cookie_id,
-                 json.dumps(event.event))
+                 json.dumps(event))
         values.append(value)
     with connection.cursor() as cursor:
         inserted_event_ids = execute_values(
@@ -72,11 +72,11 @@ def insert_events_into_data(connection, events: List[EventWithId]):
 
     # Determine whether there were any duplicate events that were already in the table
     # In case of duplicate events, we'll add those to the nok_data table for traceability
-    duplicate_events = []
+    duplicate_events: EventDataList = []
     if len(inserted_event_ids) < len(events):
         inserted_event_ids_set = set(inserted_event_ids)
         for event in events:
-            if event.id not in inserted_event_ids_set:
+            if event['id'] not in inserted_event_ids_set:
                 duplicate_events.append(event)
     if duplicate_events:
         print(f'Duplicate events found, count: {len(duplicate_events)}. '
@@ -85,13 +85,13 @@ def insert_events_into_data(connection, events: List[EventWithId]):
 
 
 def insert_events_into_nok_data(connection,
-                                events: List[EventWithId],
+                                events: EventDataList,
                                 reason: FailureReason = FailureReason.FAILED_VALIDATION):
     """
     Insert events into the not-ok data ('nok_data') table
     Does not do any transaction management, this merely issues insert commands.
     :param connection: db connection
-    :param events: list of events. Each event must have a CookieIdContext
+    :param events: EventDataList, list of events. Each event must have a CookieIdContext
     :param reason: Why are these events written to the nok_data table.
     """
     if not events:
@@ -100,13 +100,13 @@ def insert_events_into_nok_data(connection,
     insert_query = f'insert into nok_data (event_id, day, moment, cookie_id, value, reason) values %s'
     values = []
     for event in events:
-        timestamp = _millis_to_datetime(event.event['time'])
-        cookie_id = get_context(event.event, 'CookieIdContext')['cookie_id']
-        value = (str(event.id),
+        timestamp = _millis_to_datetime(event['time'])
+        cookie_id = get_context(event, 'CookieIdContext')['cookie_id']
+        value = (event['id'],
                  timestamp,
                  timestamp,
                  cookie_id,
-                 json.dumps(event.event),
+                 json.dumps(event),
                  reason.value)
         values.append(value)
     with connection.cursor() as cursor:

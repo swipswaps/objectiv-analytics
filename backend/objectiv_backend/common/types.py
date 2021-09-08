@@ -1,20 +1,20 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import uuid
 from enum import Enum
-from typing import NamedTuple, Union, Dict, Any
+from typing import List, Union, Dict, Any
 
+# an event
 EventData = Dict[str, Any]
+# list of events
+EventDataList = List[EventData]
+# eventlist, as sent by the tracker (may contain additional info, like version / timestamps, etc
+EventList = Dict[str, Any]
+# a list of contexts
 ContextData = Dict[str, Union[str, int, float]]
 
 EventType = str
 ContextType = str
-
-
-class EventWithId(NamedTuple):
-    id: uuid.UUID
-    event: EventData
 
 
 class FailureReason(Enum):

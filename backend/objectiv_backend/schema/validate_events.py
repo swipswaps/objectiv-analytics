@@ -11,9 +11,10 @@ import re
 import jsonschema
 from jsonschema import ValidationError
 
-from objectiv_backend.common.types import EventData
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 from objectiv_backend.common.config import get_config_timestamp_validation, get_config_event_schema
+
+from objectiv_backend.common.types import EventData
 
 
 class ErrorInfo(NamedTuple):
@@ -141,7 +142,7 @@ def validate_event_adheres_to_schema(event_schema: EventSchema, event: EventData
     return errors
 
 
-def _validate_required_contexts(event_schema: EventSchema, event: Dict[str, Any]) -> List[ErrorInfo]:
+def _validate_required_contexts(event_schema: EventSchema, event: EventData) -> List[ErrorInfo]:
     """
     Validate that all of the event's required contexts are present
     :param event: event object
@@ -168,7 +169,7 @@ def _validate_required_contexts(event_schema: EventSchema, event: Dict[str, Any]
     return []
 
 
-def _validate_contexts(event_schema: EventSchema, event: Dict[str, Any]) -> List[ErrorInfo]:
+def _validate_contexts(event_schema: EventSchema, event: EventData) -> List[ErrorInfo]:
     """
     Validate that all of the event's contexts ad-here to the schema of the specific contexts.
     """
@@ -177,9 +178,15 @@ def _validate_contexts(event_schema: EventSchema, event: Dict[str, Any]) -> List
     errors = []
     for context in global_contexts:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
+        if 'AbstractGlobalContext' not in event_schema.get_all_parent_context_types(context['_context_type']):
+            errors.append(ErrorInfo(context, 'Not an instance of GlobalContext'))
+
         errors.extend(errors_context)
     for context in location_stack:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
+        if 'AbstractLocationContext' not in event_schema.get_all_parent_context_types(context['_context_type']):
+            errors.append(ErrorInfo(context, 'Not an instance of LocationContext'))
+
         errors.extend(errors_context)
     return errors
 
@@ -213,7 +220,7 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
     """
     with open(filename) as file:
         event_data = json.loads(file.read())
-    errors = validate_event_list(event_schema=event_schema, event_data=event_data)
+    errors = validate_event_list(event_schema=event_schema, event_data=event_data['events'])
     if errors:
         print(f'\n{len(errors)} error(s) found:')
         for error in errors:
@@ -224,7 +231,7 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
     return errors
 
 
-def validate_event_time(event: Dict[str, Any], current_millis: int) -> List[ErrorInfo]:
+def validate_event_time(event: EventData, current_millis: int) -> List[ErrorInfo]:
     """
     Validate timestamps in event to check if it's not too old or too new
     :param event:
