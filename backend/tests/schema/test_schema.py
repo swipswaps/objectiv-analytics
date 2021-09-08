@@ -4,7 +4,7 @@ import json
 from typing import Dict, Any
 from objectiv_backend.common.event_utils import add_global_context_to_event, get_context
 
-from objectiv_backend.schema.validate_events import validate_structure_event_list
+from objectiv_backend.schema.validate_events import validate_structure_event_list, validate_event_adheres_to_schema
 from objectiv_backend.common.config import get_config_event_schema
 
 
@@ -117,3 +117,34 @@ def test_add_global_context():
     # check if it's there, and holds the proper values
     generated_context = get_context(event, 'HttpContext')
     assert generated_context == context_vars
+
+
+def test_add_context_to_incorrect_scope():
+    context_vars = {
+        '_context_type': 'HttpContext',
+        'id': 'test-http-context-id',
+        'referer': 'test-referer',
+        'remote_address': 'test-address',
+        'user_agent': 'test-user_agent'
+    }
+    context = make_context(**context_vars)
+
+    # check if we've created a proper HttpContext Object
+    assert isinstance(context, HttpContext)
+
+    # add created context to event
+    event_list = json.loads(CLICK_EVENT_JSON)
+    event = make_event_from_dict(event_list['events'][0])
+
+    # check event is valid to start with
+    event_schema = get_config_event_schema()
+    assert(validate_event_adheres_to_schema(event_schema=event_schema, event=event) == [])
+
+    # manually add it, to circumvent type checking
+    event['location_stack'].append(context)
+
+    # check if event is still valid
+    assert(validate_structure_event_list([event]) == [])
+
+    # check if event is not valid anymore
+    assert(validate_event_adheres_to_schema(event_schema=event_schema, event=event) != [])

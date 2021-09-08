@@ -178,9 +178,15 @@ def _validate_contexts(event_schema: EventSchema, event: EventData) -> List[Erro
     errors = []
     for context in global_contexts:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
+        if 'AbstractGlobalContext' not in event_schema.get_all_parent_context_types(context['_context_type']):
+            errors.append(ErrorInfo(context, 'Not an instance of GlobalContext'))
+
         errors.extend(errors_context)
     for context in location_stack:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
+        if 'AbstractLocationContext' not in event_schema.get_all_parent_context_types(context['_context_type']):
+            errors.append(ErrorInfo(context, 'Not an instance of LocationContext'))
+
         errors.extend(errors_context)
     return errors
 
