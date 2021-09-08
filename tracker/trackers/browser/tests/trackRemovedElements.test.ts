@@ -26,15 +26,15 @@ describe('trackRemovedElements', () => {
   });
 
   it('should skip all Elements that do not have visibility tracking attributes', async () => {
-    const div = document.createElement('div');
-    const trackedDiv = makeTrackedElement('div', null, 'div');
-    const trackedButton = makeTrackedElement('button', null, 'button');
+    const trackedDiv = makeTrackedElement('div1', 'div1', 'div');
+    const trackedChildDiv = makeTrackedElement('div2', 'div2', 'div');
+    const trackedButton = makeTrackedElement('button', 'button', 'button');
 
-    trackedDiv.appendChild(trackedButton);
-    div.appendChild(trackedDiv);
-    document.body.appendChild(div);
+    trackedDiv.appendChild(trackedChildDiv);
+    trackedChildDiv.appendChild(trackedButton);
+    document.body.appendChild(trackedDiv);
 
-    trackRemovedElements(div, window.objectiv.tracker);
+    trackRemovedElements(trackedDiv, window.objectiv.tracker);
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });

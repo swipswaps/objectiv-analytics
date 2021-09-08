@@ -14,6 +14,9 @@ const trackRemovedElements = (element: Element, tracker: BrowserTracker) => {
     const elements = element.querySelectorAll(`[${TrackingAttribute.trackVisibility}]`);
     [element, ...Array.from(elements)].forEach((element) => {
       if (isTrackedElement(element)) {
+        if (!element.hasAttribute(TrackingAttribute.trackVisibility)) {
+          return;
+        }
         const trackVisibility = parseVisibilityAttribute(element.getAttribute(TrackingAttribute.trackVisibility));
         if (trackVisibility.mode === 'auto') {
           trackSectionHiddenEvent({ element, tracker });
