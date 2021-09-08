@@ -13,6 +13,8 @@ EventList = Dict[str, Any]
 # a list of contexts
 ContextData = Dict[str, Union[str, int, float]]
 
+EventListSchema = Dict[str, Any]
+
 EventType = str
 ContextType = str
 
