@@ -1,12 +1,13 @@
 import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
 import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
 import {
+  StringifiedTrackingAttributes,
   stringifyBoolean,
   stringifyLocationContext,
   stringifyVisibilityAttribute,
   TrackingAttributeVisibility,
 } from '../structs';
-import { StringifiedTrackingAttributes, TrackingAttribute } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
 
 /**

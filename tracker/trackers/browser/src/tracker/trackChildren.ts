@@ -1,6 +1,11 @@
-import { array, assert, create, Infer, optional } from 'superstruct';
-import { stringifyChildrenAttribute } from '../';
-import { StringifiedChildrenTrackingAttributes, TrackChildrenQuery, TrackingAttribute } from '../TrackingAttributes';
+import { assert, create, Infer, optional } from 'superstruct';
+import {
+  StringifiedChildrenTrackingAttributes,
+  stringifyChildrenAttribute,
+  TrackChildrenParameters,
+  TrackChildrenQuery
+} from '../structs';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
 
 /**
@@ -23,9 +28,6 @@ import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler
  *      }
  *    ])
  */
-export const TrackChildrenParameters = array(TrackChildrenQuery);
-export type TrackChildrenParameters = Infer<typeof TrackChildrenParameters>;
-
 export const TrackChildrenReturnValue = optional(StringifiedChildrenTrackingAttributes);
 export type TrackChildrenReturnValue = Infer<typeof TrackChildrenReturnValue>;
 

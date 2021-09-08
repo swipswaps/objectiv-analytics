@@ -1,4 +1,5 @@
-import { TrackingAttribute, TrackingAttributes } from './TrackingAttributes';
+import { TrackingAttributes } from './structs';
+import { TrackingAttribute } from './TrackingAttributes';
 
 /**
  * The type of Elements the type guards can work with

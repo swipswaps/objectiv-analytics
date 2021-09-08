@@ -1,7 +1,7 @@
 import { create } from 'superstruct';
-import { parseChildrenAttribute } from '../';
+import { parseChildrenAttribute, TrackChildrenQuery } from '../structs';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
-import { TrackChildrenQuery, TrackingAttribute } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { isChildrenTrackingElement, TrackedElement } from '../typeGuards';
 
 /**
