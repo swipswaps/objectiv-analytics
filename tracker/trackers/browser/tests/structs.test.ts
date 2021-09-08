@@ -229,6 +229,20 @@ describe('Custom structs', () => {
 
     it('Should not parse strings that are not Visibility Attributes or malformed', () => {
       // @ts-ignore
+      expect(() => parseChildrenAttribute()).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute(null)).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute(undefined)).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute(true)).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute(false)).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute(0)).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute(1)).toThrow();
+      // @ts-ignore
       expect(() => parseChildrenAttribute('undefined')).toThrow();
       // @ts-ignore
       expect(() => parseChildrenAttribute('null')).toThrow();
