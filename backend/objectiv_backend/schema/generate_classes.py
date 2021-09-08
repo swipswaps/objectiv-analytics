@@ -4,7 +4,7 @@ import re
 from objectiv_backend.common.config import get_config_event_schema
 
 
-def get_type(property_description: Dict[str, str]) -> str:
+def get_type(property_description: Dict[str, Any]) -> str:
     """
     Translate (json)schema property type to something Python understands
     :param property_description: from schema
@@ -13,7 +13,7 @@ def get_type(property_description: Dict[str, str]) -> str:
     type_name = property_description['type']
 
     abstract_type = ''
-    if 'items' in property_description:
+    if 'items' in property_description and 'type' in property_description['items']:
         abstract_type = property_description['items']['type']
     if type_name == 'array':
         return f'List[{abstract_type}]'
