@@ -11,7 +11,7 @@ import { isTrackedElement } from '../typeGuards';
  */
 const trackRemovedElements = (element: Element, tracker: BrowserTracker) => {
   try {
-    const elements = element.querySelectorAll(`[${TrackingAttribute.context}]`);
+    const elements = element.querySelectorAll(`[${TrackingAttribute.trackVisibility}]`);
     [element, ...Array.from(elements)].forEach((element) => {
       if (isTrackedElement(element)) {
         const trackVisibility = parseVisibilityAttribute(element.getAttribute(TrackingAttribute.trackVisibility));

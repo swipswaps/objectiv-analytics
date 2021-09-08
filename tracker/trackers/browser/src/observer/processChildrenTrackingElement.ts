@@ -1,3 +1,4 @@
+import { getObjectKeys } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
 import { parseChildrenAttribute, StringifiedTrackingAttributes, TrackChildrenQuery } from '../structs';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
@@ -22,6 +23,13 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
     queries.forEach((query: TrackChildrenQuery) => {
       const { queryAll, trackAs }: TrackChildrenQuery = create(query, TrackChildrenQuery);
       const trackingAsAttributes = create(trackAs, StringifiedTrackingAttributes);
+
+      // Strip out undefined attributes
+      getObjectKeys(trackingAsAttributes).forEach((key) => {
+        if (trackingAsAttributes[key] === undefined) {
+          delete trackingAsAttributes[key];
+        }
+      });
 
       element.querySelectorAll(queryAll).forEach((queriedElement) => {
         for (let [key, value] of Object.entries<string>(trackingAsAttributes)) {
