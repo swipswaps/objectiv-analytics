@@ -12,6 +12,10 @@ const trackRemovedElements = (element: Element, tracker: BrowserTracker) => {
   [element, ...Array.from(elements)].forEach((element) => {
     if (isTrackedElement(element)) {
       // TODO we need a proper parsers for these attributes with good validation
+      // TODO we need a proper parsers for these attributes with good validation
+      // TODO we need a proper parsers for these attributes with good validation
+      // TODO we need a proper parsers for these attributes with good validation
+      // TODO we need a proper parsers for these attributes with good validation
       const trackVisibilityAttribute = element.getAttribute(TrackingAttribute.trackVisibility);
       if (trackVisibilityAttribute !== null) {
         const trackVisibilityConfig: TrackingAttributeVisibility = JSON.parse(trackVisibilityAttribute);

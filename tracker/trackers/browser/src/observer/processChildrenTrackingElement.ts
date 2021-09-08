@@ -17,6 +17,10 @@ const processChildrenTrackingElement = (element: Element): TrackedElement[] => {
   }
 
   // TODO we need a proper parsers for these attributes with good validation
+  // TODO we need a proper parsers for these attributes with good validation
+  // TODO we need a proper parsers for these attributes with good validation
+  // TODO we need a proper parsers for these attributes with good validation
+  // TODO we need a proper parsers for these attributes with good validation
   const childrenTrackingQueriesAttribute = element.getAttribute(TrackingAttribute.trackChildren);
   /* istanbul ignore if - this cannot happen but we don't have proper type guards to enforce it */
   if (!childrenTrackingQueriesAttribute) {

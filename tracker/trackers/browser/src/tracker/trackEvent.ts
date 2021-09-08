@@ -10,7 +10,8 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import ExtendableError from 'es6-error';
-import { BrowserTracker, LocationContext, parseLocationContext } from '../';
+import { BrowserTracker, LocationContext } from '../';
+import { parseLocationContext } from '../structs';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
 import findTrackedParentElements from './findTrackedParentElements';
@@ -57,8 +58,12 @@ export const trackEvent = (parameters: TrackEventParameters) => {
 
       // Re-hydrate Location Stack
       elementsStack.forEach((element) => {
-        // Get, parse, validate, hydrate and push Location Context in the Location Stack
-        locationStack.push(parseLocationContext(element.getAttribute(TrackingAttribute.context)));
+        // Get Context Tracking attribute
+        const stringifiedContext = element.getAttribute(TrackingAttribute.context);
+        if (stringifiedContext !== null) {
+          // Parse, validate, hydrate and push Location Context in the Location Stack
+          locationStack.push(parseLocationContext(stringifiedContext));
+        }
       });
     }
 

@@ -1,6 +1,7 @@
-import { array, boolean, defaulted, define, Infer, is, literal, object, optional, string, union } from 'superstruct';
-import { v4, validate } from 'uuid';
+import { array, boolean, defaulted, Infer, literal, object, optional, string, union } from 'superstruct';
+import { v4 } from 'uuid';
 import { LocationContext } from './Contexts';
+import { StringBoolean, Uuid } from './structs';
 
 /**
  * The possible values of the `trackVisibility` TrackingAttribute.
@@ -39,18 +40,6 @@ export enum TrackingAttribute {
   // A list of serialized ChildTrackingQuery objects
   trackChildren = 'data-objectiv-track-children',
 }
-
-/**
- * A custom Struct describing v4 UUIDs
- */
-export const Uuid = define('Uuid', (value: any) => validate(value));
-
-/**
- * Custom Structs describing stringified booleans
- */
-export const StringTrue = define('StringTrue', (value) => value === 'true');
-export const StringFalse = define('StringFalse', (value) => value === 'false');
-export const StringBoolean = define('StringBoolean', (value) => is(value, union([StringTrue, StringFalse])));
 
 /**
  * The object that `track` calls return

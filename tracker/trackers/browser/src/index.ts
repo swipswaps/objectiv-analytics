@@ -1,3 +1,4 @@
+// TODO review this list and decide what to export publicly
 export * from './bootstrap';
 export * from './Contexts';
 export * from './globals';
@@ -12,6 +13,7 @@ export * from './observer/trackNewElements';
 export * from './observer/trackRemovedElements';
 export * from './observer/trackVisibilityHiddenEvent';
 export * from './observer/trackVisibilityVisibleEvent';
+export * from './structs';
 export * from './tracker/BrowserTracker';
 export * from './tracker/configureTracker';
 export * from './tracker/findTrackedParentElements';

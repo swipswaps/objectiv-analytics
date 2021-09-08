@@ -7,7 +7,7 @@
     "trackers/**"
   ],
   "scripts": {
-    "clean": "yarn exec make clean",
+    "clean": "yarn exec make clean && yarn test --clearCache && yarn cache clean",
     "build": "yarn workspaces foreach --exclude root --verbose run build",
     "build:dev": "dev=true yarn build",
     "prettify": "yarn workspaces foreach --exclude root --verbose run prettify",

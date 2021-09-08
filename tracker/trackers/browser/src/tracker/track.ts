@@ -1,5 +1,6 @@
 import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
-import { ClickableContext, InputContext, LocationContext, SectionContext, stringifyLocationContext } from '../Contexts';
+import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
+import { stringifyBoolean, stringifyLocationContext } from '../structs';
 import { StringifiedTrackingAttributes, TrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
 import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
 
@@ -55,8 +56,8 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
       {
         [TrackingAttribute.parentElementId]: parentElementId,
         [TrackingAttribute.context]: stringifyLocationContext(instance),
-        [TrackingAttribute.trackClicks]: JSON.stringify(trackClicks),
-        [TrackingAttribute.trackBlurs]: JSON.stringify(trackBlurs),
+        [TrackingAttribute.trackClicks]: trackClicks === undefined ? undefined : stringifyBoolean(trackClicks),
+        [TrackingAttribute.trackBlurs]: trackBlurs === undefined ? undefined : stringifyBoolean(trackBlurs),
         [TrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
       },
       StringifiedTrackingAttributes
