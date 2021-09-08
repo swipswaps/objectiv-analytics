@@ -1,11 +1,16 @@
 import { makeSectionContext } from '@objectiv/tracker-core';
 import {
   parseBoolean,
+  parseChildrenAttribute,
   parseLocationContext,
   parseVisibilityAttribute,
   stringifyBoolean,
+  stringifyChildrenAttribute,
   stringifyLocationContext,
   stringifyVisibilityAttribute,
+  TrackChildrenParameters,
+  trackElement,
+  TrackingAttribute,
   TrackingAttributeVisibilityAuto,
   TrackingAttributeVisibilityManual,
 } from '../src';
@@ -158,68 +163,103 @@ describe('Custom structs', () => {
   });
 
   describe('Children Tracking Attribute', () => {
-    // it('Should stringify and parse empty Children Attributes', () => {
-    //   const stringifiedEmptyChildren = stringifyChildrenAttribute([]);
-    //   expect(stringifiedEmptyChildren).toStrictEqual('[]');
-    //
-    //   const parsedEmptyChildren = parseChildrenAttribute(stringifiedEmptyChildren);
-    //   expect(parsedEmptyChildren).toStrictEqual([]);
-    // });
-    // it('Should stringify and parse Children Attributes', () => {
-    //   const children: TrackChildrenParameters = [{
-    //     query: '#id',
-    //     trackAs: trackElement({id: 'test'})
-    //   }]
-    //   const stringifiedChildren = stringifyChildrenAttribute(children);
-    //   expect(stringifiedChildren).toStrictEqual(JSON.stringify([{
-    //     query: '#id',
-    //     trackAs: trackElement({id: 'test'})
-    //   }]));
-    //
-    //   // const parsedEmptyChildren = parseChildrenAttribute(stringifiedEmptyChildren);
-    //   // expect(parsedEmptyChildren).toStrictEqual([]);
-    // });
-    // it('Should not stringify objects that are not Children Attributes objects or invalid ones', () => {
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute('string')).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute(true)).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute([null, 1, 2, 3])).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute([undefined])).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute([true])).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute([false])).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute([{}])).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute([{query: '#id'}])).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute([{query: '#id', trackAs: 'invalid'}])).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute([{queryAll: '#id'}])).toThrow();
-    //   // @ts-ignore
-    //   expect(() => stringifyChildrenAttribute([{queryAll: '#id', trackAs: 'invalid'}])).toThrow();
-    // });
-    // it('Should not parse strings that are not Visibility Attributes or malformed', () => {
-    //   // @ts-ignore
-    //   expect(() => parseVisibilityAttribute('{"mode":auto}')).toThrow();
-    //   // @ts-ignore
-    //   expect(() => parseVisibilityAttribute('{"mode":"auto","isVisible":true}')).toThrow();
-    //   // @ts-ignore
-    //   expect(() => parseVisibilityAttribute('{"mode":"auto","isVisible":false}')).toThrow();
-    //   // @ts-ignore
-    //   expect(() => parseVisibilityAttribute('{"mode":"manual"}')).toThrow();
-    //   // @ts-ignore
-    //   expect(() => parseVisibilityAttribute('{"mode":"manual","isVisible":0}')).toThrow();
-    //   // @ts-ignore
-    //   expect(() => parseVisibilityAttribute('{"mode":"manual","isVisible":1}')).toThrow();
-    //   // @ts-ignore
-    //   expect(() => parseVisibilityAttribute('{"mode":"manual","isVisible":null}')).toThrow();
-    //   // @ts-ignore
-    //   expect(() => parseVisibilityAttribute('{"mode":"manual","isVisible":"true"}')).toThrow();
-    // });
+    it('Should stringify and parse empty Children Attributes', () => {
+      const stringifiedEmptyChildren = stringifyChildrenAttribute([]);
+      expect(stringifiedEmptyChildren).toStrictEqual('[]');
+
+      const parsedEmptyChildren = parseChildrenAttribute(stringifiedEmptyChildren);
+      expect(parsedEmptyChildren).toStrictEqual([]);
+    });
+
+    it('Should stringify and parse Children Attributes', () => {
+      const elementTrackingAttributes = trackElement({ id: 'test' });
+      const children: TrackChildrenParameters = [
+        {
+          queryAll: '#id',
+          trackAs: elementTrackingAttributes,
+        },
+      ];
+      const stringifiedChildren = stringifyChildrenAttribute(children);
+      expect(stringifiedChildren).toStrictEqual(
+        JSON.stringify([
+          {
+            queryAll: '#id',
+            trackAs: elementTrackingAttributes,
+          },
+        ])
+      );
+
+      if (!elementTrackingAttributes) {
+        throw new Error('should not happen');
+      }
+
+      const parsedChildren = parseChildrenAttribute(stringifiedChildren);
+      expect(parsedChildren).toStrictEqual(
+        children?.map((childQuery) => ({
+          ...childQuery,
+          trackAs: {
+            [TrackingAttribute.elementId]: elementTrackingAttributes[TrackingAttribute.elementId],
+            [TrackingAttribute.context]: elementTrackingAttributes[TrackingAttribute.context],
+            [TrackingAttribute.trackVisibility]: elementTrackingAttributes[TrackingAttribute.trackVisibility],
+          },
+        }))
+      );
+    });
+
+    it('Should not stringify objects that are not Children Attributes objects or invalid ones', () => {
+      // @ts-ignore
+      expect(() => stringifyChildrenAttribute('string')).toThrow();
+      // @ts-ignore
+      expect(() => stringifyChildrenAttribute(true)).toThrow();
+      // @ts-ignore
+      expect(() => stringifyChildrenAttribute([null, 1, 2, 3])).toThrow();
+      // @ts-ignore
+      expect(() => stringifyChildrenAttribute([undefined])).toThrow();
+      // @ts-ignore
+      expect(() => stringifyChildrenAttribute([true])).toThrow();
+      // @ts-ignore
+      expect(() => stringifyChildrenAttribute([false])).toThrow();
+      // @ts-ignore
+      expect(() => stringifyChildrenAttribute([{}])).toThrow();
+      // @ts-ignore
+      expect(() => stringifyChildrenAttribute([{ queryAll: '#id' }])).toThrow();
+      // @ts-ignore
+      expect(() => stringifyChildrenAttribute([{ queryAll: '#id', trackAs: 'invalid' }])).toThrow();
+    });
+
+    it('Should not parse strings that are not Visibility Attributes or malformed', () => {
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('undefined')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('null')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('true')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('false')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('0')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('1')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('{}')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('[[]]')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('[null]')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('[true]')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('[false]')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('[0]')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('[1]')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('[{}]')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('[[]]')).toThrow();
+      // @ts-ignore
+      expect(() => parseChildrenAttribute('[{]')).toThrow();
+    });
   });
 });

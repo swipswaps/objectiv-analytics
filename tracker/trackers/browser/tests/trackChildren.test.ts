@@ -60,6 +60,7 @@ describe('trackChild and trackChildren', () => {
     jest.spyOn(console, 'error');
     const parameters = { queryAll: '#two', trackAs: trackElement({ id: 'element-two' }) };
 
+    // @ts-ignore
     const attributes = trackChild(parameters);
 
     expect(console.error).not.toHaveBeenCalled();

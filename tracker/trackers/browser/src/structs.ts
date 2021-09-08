@@ -2,7 +2,7 @@ import { assert, boolean, coerce, create, define, Infer, literal, object, string
 import { validate as validateUuid } from 'uuid';
 import { LocationContext } from './Contexts';
 import { TrackChildrenParameters } from './tracker/trackChildren';
-import { TrackChildrenQuery } from './TrackingAttributes';
+import { ValidTrackChildrenQuery } from './TrackingAttributes';
 
 /**
  * A custom Struct describing v4 UUIDs
@@ -81,7 +81,7 @@ export const stringifyChildrenAttribute = (queries: TrackChildrenParameters) => 
   if (!(typeof queries === 'object')) {
     throw new Error(`Visibility must be an object, received: ${JSON.stringify(queries)}`);
   }
-  queries.forEach((query) => assert(query, TrackChildrenQuery));
+  queries.forEach((query) => assert(query, ValidTrackChildrenQuery));
   return create(JSON.stringify(queries), string());
 };
 
@@ -89,7 +89,11 @@ export const parseChildrenAttribute = (stringifiedChildrenAttribute: string | nu
   if (stringifiedChildrenAttribute === null) {
     throw new Error('Received `null` while attempting to parse children tracking attribute');
   }
-  return create(JSON.parse(stringifiedChildrenAttribute), TrackChildrenParameters).map((query) => {
-    assert(query, TrackChildrenQuery);
+
+  const queries = create(JSON.parse(stringifiedChildrenAttribute), TrackChildrenParameters);
+  queries.forEach((query) => {
+    assert(query, ValidTrackChildrenQuery);
   });
+
+  return queries;
 };

@@ -62,6 +62,10 @@ export const TrackChildrenQuery = object({
   queryAll: string(),
   trackAs: optional(StringifiedTrackingAttributes),
 });
+export const ValidTrackChildrenQuery = object({
+  queryAll: string(),
+  trackAs: StringifiedTrackingAttributes,
+});
 export type TrackChildrenQuery = Infer<typeof TrackChildrenQuery>;
 
 export const ChildrenTrackingAttributes = object({
