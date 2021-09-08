@@ -13,7 +13,7 @@ describe('makeClickEventListener', () => {
 
   it('should track Button Click when invoked from a valid target', () => {
     const trackedButton = makeTrackedElement('button', null, 'button');
-    const clickEventListener = makeClickEventListener(trackedButton);
+    const clickEventListener = makeClickEventListener(trackedButton, window.objectiv.tracker);
 
     trackedButton.addEventListener('click', clickEventListener);
     trackedButton.dispatchEvent(new MouseEvent('click'));
@@ -25,7 +25,7 @@ describe('makeClickEventListener', () => {
   it('should not track Div Click when invoked from a bubbling target', () => {
     const trackedButton = makeTrackedElement('button', null, 'button');
     const trackedDiv = makeTrackedElement('div', null, 'div');
-    const divClickEventListener = jest.fn(makeClickEventListener(trackedDiv));
+    const divClickEventListener = jest.fn(makeClickEventListener(trackedDiv, window.objectiv.tracker));
 
     trackedDiv.addEventListener('click', divClickEventListener);
     trackedButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));

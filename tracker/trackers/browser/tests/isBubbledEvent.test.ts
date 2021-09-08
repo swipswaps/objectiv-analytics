@@ -19,4 +19,13 @@ describe('isBubbledEvent', () => {
     expect(isBubbledEvent(trackedDiv2, trackedDiv2)).toBe(false);
     expect(isBubbledEvent(trackedDiv2, regularDiv)).toBe(false);
   });
+
+  it('should console error', async () => {
+    jest.spyOn(console, 'error');
+    const trackedDiv2 = makeTrackedElement('div-id-2', 'context', 'div');
+
+    // @ts-ignore
+    expect(isBubbledEvent(null, trackedDiv2)).toBe(false);
+    expect(console.error).toHaveBeenCalledTimes(1);
+  });
 });

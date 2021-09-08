@@ -6,7 +6,7 @@ import { isTrackedElement, TrackedElement } from '../typeGuards';
  * Checks if the given origin Tracked Element and the Event Target are the same Tracked Element.
  * TODO: make this behavior configurable per event type
  */
-const isBubbledEvent = (originElement: TrackedElement, eventTarget: EventTarget | null): boolean => {
+export const isBubbledEvent = (originElement: TrackedElement, eventTarget: EventTarget | null): boolean => {
   try {
     // Let Events originating from non Tracked Elements bubble up to, possibly, a parent Tracked Element
     if (!isTrackedElement(eventTarget)) {

@@ -31,7 +31,7 @@ export const stringifyLocationContext = (contextObject: LocationContext) => {
   return stringifyStruct(contextObject, LocationContext);
 };
 
-export const parseLocationContext = (stringifiedContext: string) => {
+export const parseLocationContext = (stringifiedContext: string | null) => {
   return parseStruct(stringifiedContext, LocationContext);
 };
 

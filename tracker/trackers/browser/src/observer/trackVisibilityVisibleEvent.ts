@@ -10,6 +10,9 @@ import { TrackedElement } from '../typeGuards';
  */
 const trackVisibilityVisibleEvent = (element: TrackedElement, tracker: BrowserTracker) => {
   try {
+    if (!element.hasAttribute(TrackingAttribute.trackVisibility)) {
+      return;
+    }
     const trackVisibility = parseVisibilityAttribute(element.getAttribute(TrackingAttribute.trackVisibility));
     if (trackVisibility.mode === 'auto' || (trackVisibility.mode === 'manual' && trackVisibility.isVisible)) {
       trackSectionVisibleEvent({ element, tracker });

@@ -73,4 +73,21 @@ describe('trackRemovedElements', () => {
 
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
+
+  it('should console error', async () => {
+    jest.spyOn(console, 'error');
+    const div = document.createElement('div');
+    const trackedDiv = makeTrackedElement('div', 'div', 'div');
+    trackedDiv.setAttribute(TrackingAttribute.trackVisibility, '{"mode":"broken"}');
+    const trackedButton = makeTrackedElement('button', null, 'button');
+
+    trackedDiv.appendChild(trackedButton);
+    div.appendChild(trackedDiv);
+    document.body.appendChild(div);
+
+    trackRemovedElements(div, window.objectiv.tracker);
+
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledTimes(1);
+  });
 });

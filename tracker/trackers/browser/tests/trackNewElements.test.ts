@@ -51,4 +51,14 @@ describe('trackNewElements', () => {
       })
     );
   });
+
+  it('should console error', async () => {
+    jest.spyOn(console, 'error');
+
+    // @ts-ignore
+    trackNewElements(null, window.objectiv.tracker);
+
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledTimes(1);
+  });
 });

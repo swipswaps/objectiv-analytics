@@ -3,8 +3,11 @@
  */
 import { makeClickEvent } from '@objectiv/tracker-core';
 import {
+  BrowserTracker,
   configureTracker,
   getLocationHref,
+  makeMutationCallback,
+  startAutoTracking,
   trackApplicationLoadedEvent,
   trackEvent,
   trackURLChangeEvent,
@@ -59,5 +62,29 @@ describe('Without DOM', () => {
 
   it('should return undefined', () => {
     expect(getLocationHref()).toBeUndefined();
+  });
+
+  it('should console error when MutationObserver is not available', async () => {
+    jest.spyOn(console, 'error');
+    const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
+    jest.spyOn(tracker, 'trackEvent');
+
+    startAutoTracking({}, tracker);
+
+    expect(tracker.trackEvent).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledTimes(1);
+  });
+
+  it('should console error when mutationCallback receives garbled data', async () => {
+    jest.spyOn(console, 'error');
+    const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
+    jest.spyOn(tracker, 'trackEvent');
+    const mutationCallback = makeMutationCallback(false, tracker);
+
+    // @ts-ignore
+    mutationCallback('not a list');
+
+    expect(tracker.trackEvent).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledTimes(1);
   });
 });

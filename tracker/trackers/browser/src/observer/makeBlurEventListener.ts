@@ -1,5 +1,4 @@
 import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
 import { trackInputChange } from '../tracker/trackEvent';
 import { TrackedElement } from '../typeGuards';
 import isBubbledEvent from './isBubbledEvent';
@@ -9,12 +8,9 @@ import isBubbledEvent from './isBubbledEvent';
  */
 const makeBlurEventListener = (element: TrackedElement, tracker?: BrowserTracker) => {
   return (event: Event) => {
-    try {
-      if (!isBubbledEvent(element, event.target)) {
-        trackInputChange({ element, tracker });
-      }
-    } catch (error) {
-      trackerErrorHandler(error);
+    // istanbul-ignore-next - this cannot be simulated easily in Jest
+    if (!isBubbledEvent(element, event.target)) {
+      trackInputChange({ element, tracker });
     }
   };
 };

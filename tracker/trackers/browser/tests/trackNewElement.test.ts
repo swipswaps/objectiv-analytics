@@ -69,4 +69,19 @@ describe('trackNewElement', () => {
     expect(trackedInput.addEventListener).toHaveBeenNthCalledWith(1, 'blur', expect.any(Function));
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
   });
+
+  it('should console error', async () => {
+    jest.spyOn(console, 'error');
+    const inputContext = makeInputContext({ id: 'test' });
+    const trackedInput = makeTrackedElement('input-id-1', JSON.stringify(inputContext), 'input');
+    trackedInput.setAttribute(TrackingAttribute.trackBlurs, 'true');
+    jest.spyOn(trackedInput, 'addEventListener').mockImplementation(() => {
+      throw new Error('nope');
+    });
+
+    trackNewElement(trackedInput, window.objectiv.tracker);
+
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledTimes(1);
+  });
 });

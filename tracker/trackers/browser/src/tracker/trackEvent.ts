@@ -58,12 +58,8 @@ export const trackEvent = (parameters: TrackEventParameters) => {
 
       // Re-hydrate Location Stack
       elementsStack.forEach((element) => {
-        // Get Context Tracking attribute
-        const stringifiedContext = element.getAttribute(TrackingAttribute.context);
-        if (stringifiedContext !== null) {
-          // Parse, validate, hydrate and push Location Context in the Location Stack
-          locationStack.push(parseLocationContext(stringifiedContext));
-        }
+        // Get, parse, validate, hydrate and push Location Context in the Location Stack
+        locationStack.push(parseLocationContext(element.getAttribute(TrackingAttribute.context)));
       });
     }
 
