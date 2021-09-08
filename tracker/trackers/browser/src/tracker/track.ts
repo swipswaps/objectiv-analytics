@@ -1,8 +1,13 @@
 import { boolean, create, func, Infer, is, object, optional } from 'superstruct';
 import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
-import { stringifyBoolean, stringifyLocationContext } from '../structs';
-import { StringifiedTrackingAttributes, TrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
-import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
+import {
+  stringifyBoolean,
+  stringifyLocationContext,
+  stringifyVisibilityAttribute,
+  TrackingAttributeVisibility,
+} from '../structs';
+import { StringifiedTrackingAttributes, TrackingAttribute } from '../TrackingAttributes';
+import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
 
 /**
  * Used to decorate a Trackable Element with our Tracking Attributes.
@@ -56,13 +61,24 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
       {
         [TrackingAttribute.parentElementId]: parentElementId,
         [TrackingAttribute.context]: stringifyLocationContext(instance),
-        [TrackingAttribute.trackClicks]: trackClicks === undefined ? undefined : stringifyBoolean(trackClicks),
-        [TrackingAttribute.trackBlurs]: trackBlurs === undefined ? undefined : stringifyBoolean(trackBlurs),
-        [TrackingAttribute.trackVisibility]: JSON.stringify(trackVisibility),
+        [TrackingAttribute.trackClicks]: runIfNotUndefined(stringifyBoolean, trackClicks),
+        [TrackingAttribute.trackBlurs]: runIfNotUndefined(stringifyBoolean, trackBlurs),
+        [TrackingAttribute.trackVisibility]: runIfNotUndefined(stringifyVisibilityAttribute, trackVisibility),
       },
       StringifiedTrackingAttributes
     );
   } catch (error) {
-    return trackErrorHandler(error, parameters, parameters?.onError);
+    return trackerErrorHandler(error, parameters, parameters?.onError);
   }
+};
+
+/**
+ * Small helper to execute the given function call only if the given value is not `undefined`
+ */
+export const runIfNotUndefined = (functionToRun: Function, value: unknown) => {
+  if (typeof value === 'undefined') {
+    return undefined;
+  }
+
+  return functionToRun(value);
 };

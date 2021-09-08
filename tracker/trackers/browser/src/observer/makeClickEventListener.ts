@@ -1,4 +1,5 @@
 import { BrowserTracker } from '../tracker/BrowserTracker';
+import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
 import { trackClick } from '../tracker/trackEvent';
 import { TrackedElement } from '../typeGuards';
 import isBubbledEvent from './isBubbledEvent';
@@ -6,14 +7,16 @@ import isBubbledEvent from './isBubbledEvent';
 /**
  * A factory to make the event listener to attach to new Tracked Elements with the `trackClicks` attributes set
  */
-const makeClickEventListener =
-  (element: TrackedElement, tracker: BrowserTracker = window.objectiv.tracker) =>
-  (event: Event) => {
-    // TODO find workaround to test target-less events
-    /* istanbul ignore else - hard to test with jest, skip for now */
-    if (event.target && !isBubbledEvent(element, event.target)) {
-      trackClick({ element, tracker });
+const makeClickEventListener = (element: TrackedElement, tracker: BrowserTracker = window.objectiv.tracker) => {
+  return (event: Event) => {
+    try {
+      if (!isBubbledEvent(element, event.target)) {
+        trackClick({ element, tracker });
+      }
+    } catch (error) {
+      trackerErrorHandler(error);
     }
   };
+};
 
 export default makeClickEventListener;

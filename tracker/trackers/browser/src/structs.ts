@@ -1,4 +1,4 @@
-import { boolean, coerce, create, define, literal, string, Struct, union, validate } from 'superstruct';
+import { boolean, coerce, create, define, Infer, literal, object, string, Struct, union } from 'superstruct';
 import { validate as validateUuid } from 'uuid';
 import { LocationContext } from './Contexts';
 
@@ -10,17 +10,19 @@ export const Uuid = define('Uuid', (value: any) => validateUuid(value));
 /**
  * Generic structs to stringify and parse JSON via create + coerce
  */
-export const stringifyStruct = <T = unknown>(object: T, struct: Struct<T>): string =>
-  create(
+export const stringifyStruct = <T = unknown>(object: T, struct: Struct<T>): string => {
+  return create(
     object,
     coerce(string(), struct, (value) => JSON.stringify(value))
   );
+};
 
-export const parseStruct = <T = unknown>(stringifiedContext: string | null, struct: Struct<T>): T =>
-  create(
+export const parseStruct = <T = unknown>(stringifiedContext: string | null, struct: Struct<T>): T => {
+  return create(
     stringifiedContext,
     coerce(struct, string(), (value) => JSON.parse(value))
   );
+};
 
 /**
  * Stringifier and Parser for Location Contexts
@@ -42,7 +44,30 @@ export const stringifyBoolean = (value: boolean) => {
   return create(JSON.stringify(value), StringBoolean);
 };
 
-export const parseBoolean = (stringifiedBoolean: string) => {
-  validate(stringifiedBoolean, StringBoolean);
+export const parseBoolean = (stringifiedBoolean: string | null) => {
+  if (stringifiedBoolean === null) {
+    throw new Error('Received `null` while attempting to parse boolean');
+  }
   return create(JSON.parse(stringifiedBoolean), boolean());
+};
+
+/**
+ * Custom Structs for the Visibility Tracking Attribute + their Stringifier and Parser
+ */
+export const TrackingAttributeVisibilityAuto = object({ mode: literal('auto') });
+export type TrackingAttributeVisibilityAuto = Infer<typeof TrackingAttributeVisibilityAuto>;
+export const TrackingAttributeVisibilityManual = object({ mode: literal('manual'), isVisible: boolean() });
+export type TrackingAttributeVisibilityManual = Infer<typeof TrackingAttributeVisibilityManual>;
+export const TrackingAttributeVisibility = union([TrackingAttributeVisibilityAuto, TrackingAttributeVisibilityManual]);
+export type TrackingAttributeVisibility = Infer<typeof TrackingAttributeVisibility>;
+
+export const stringifyVisibilityAttribute = (visibility: TrackingAttributeVisibility) => {
+  if (!(typeof visibility === 'object')) {
+    throw new Error(`Visibility must be an object, received: ${JSON.stringify(visibility)}`);
+  }
+  return stringifyStruct(visibility, TrackingAttributeVisibility);
+};
+
+export const parseVisibilityAttribute = (stringifiedVisibility: string | null) => {
+  return parseStruct(stringifiedVisibility, TrackingAttributeVisibility);
 };

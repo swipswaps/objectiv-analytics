@@ -6,7 +6,7 @@ import {
   TrackChildrenQueryOne,
   TrackingAttribute,
 } from '../TrackingAttributes';
-import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
 
 /**
  * Used to decorate a Trackable Element with our Children Tracking Attributes.
@@ -70,7 +70,7 @@ export const trackChildren = (
       StringifiedChildrenTrackingAttributes
     );
   } catch (error) {
-    return trackErrorHandler(error, parameters, onError);
+    return trackerErrorHandler(error, parameters, onError);
   }
 };
 

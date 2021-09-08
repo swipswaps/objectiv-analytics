@@ -1,4 +1,5 @@
 import { BrowserTracker } from '../tracker/BrowserTracker';
+import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 import makeBlurEventListener from './makeBlurEventListener';
@@ -12,19 +13,23 @@ import trackVisibilityVisibleEvent from './trackVisibilityVisibleEvent';
  * - Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
  */
 const trackNewElement = (element: Element, tracker: BrowserTracker) => {
-  if (isTrackedElement(element)) {
-    // Visibility: visible tracking
-    trackVisibilityVisibleEvent(element, tracker);
+  try {
+    if (isTrackedElement(element)) {
+      // Visibility: visible tracking
+      trackVisibilityVisibleEvent(element, tracker);
 
-    // Click tracking (buttons, links)
-    if (element.getAttribute(TrackingAttribute.trackClicks) === 'true') {
-      element.addEventListener('click', makeClickEventListener(element, tracker));
-    }
+      // Click tracking (buttons, links)
+      if (element.getAttribute(TrackingAttribute.trackClicks) === 'true') {
+        element.addEventListener('click', makeClickEventListener(element, tracker));
+      }
 
-    // Blur tracking (inputs)
-    if (element.getAttribute(TrackingAttribute.trackBlurs) === 'true') {
-      element.addEventListener('blur', makeBlurEventListener(element, tracker));
+      // Blur tracking (inputs)
+      if (element.getAttribute(TrackingAttribute.trackBlurs) === 'true') {
+        element.addEventListener('blur', makeBlurEventListener(element, tracker));
+      }
     }
+  } catch (error) {
+    trackerErrorHandler(error);
   }
 };
 

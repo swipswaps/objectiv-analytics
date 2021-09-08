@@ -1,5 +1,6 @@
 import { getLocationHref } from '../globals';
 import { BrowserTracker, BrowserTrackerConfig } from '../tracker/BrowserTracker';
+import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
 import { trackApplicationLoadedEvent, trackURLChangeEvent } from '../tracker/trackEvent';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
@@ -24,19 +25,23 @@ export type AutoTrackingOptions = Pick<BrowserTrackerConfig, 'trackURLChanges' |
  * Also tracks application Loaded.
  */
 export const startAutoTracking = (options: AutoTrackingOptions, tracker: BrowserTracker) => {
-  const trackURLChanges = options.trackURLChanges ?? true;
-  const trackApplicationLoaded = options.trackApplicationLoaded ?? true;
+  try {
+    const trackURLChanges = options.trackURLChanges ?? true;
+    const trackApplicationLoaded = options.trackApplicationLoaded ?? true;
 
-  new MutationObserver(makeMutationCallback(trackURLChanges, tracker)).observe(document, {
-    childList: true,
-    subtree: true,
-    attributes: true,
-    attributeFilter: [TrackingAttribute.trackVisibility],
-  });
+    new MutationObserver(makeMutationCallback(trackURLChanges, tracker)).observe(document, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: [TrackingAttribute.trackVisibility],
+    });
 
-  if (trackApplicationLoaded && !applicationLoaded) {
-    applicationLoaded = true;
-    trackApplicationLoadedEvent({ tracker });
+    if (trackApplicationLoaded && !applicationLoaded) {
+      applicationLoaded = true;
+      trackApplicationLoadedEvent({ tracker });
+    }
+  } catch (error) {
+    trackerErrorHandler(error);
   }
 };
 
@@ -63,38 +68,42 @@ export const startAutoTracking = (options: AutoTrackingOptions, tracker: Browser
  * Application Loaded Event (default enabled, configurable)
  * Triggered once
  */
-export const makeMutationCallback =
-  (trackURLChanges: boolean, tracker: BrowserTracker): MutationCallback =>
-  (mutationsList) => {
-    if (trackURLChanges) {
-      // Track SPA URL changes
-      const currentURL = getLocationHref();
-      if (currentURL !== previousURL) {
-        previousURL = currentURL;
-        trackURLChangeEvent({ tracker });
+export const makeMutationCallback = (trackURLChanges: boolean, tracker: BrowserTracker): MutationCallback => {
+  return (mutationsList) => {
+    try {
+      if (trackURLChanges) {
+        // Track SPA URL changes
+        const currentURL = getLocationHref();
+        if (currentURL !== previousURL) {
+          previousURL = currentURL;
+          trackURLChangeEvent({ tracker });
+        }
       }
+
+      // Track DOM changes
+      mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName }) => {
+        // New DOM nodes mutation: attach event listeners to all Tracked Elements and track visibility:visible events
+        addedNodes.forEach((addedNode) => {
+          if (addedNode instanceof Element) {
+            trackNewElements(addedNode, tracker);
+          }
+        });
+
+        // Removed DOM nodes mutation: track visibility:hidden events
+        removedNodes.forEach((removedNode) => {
+          if (removedNode instanceof Element) {
+            trackRemovedElements(removedNode, tracker);
+          }
+        });
+
+        // Visibility attribute mutation (programmatic visibility change): determine and track visibility events
+        if (attributeName && isTrackedElement(target)) {
+          trackVisibilityVisibleEvent(target, tracker);
+          trackVisibilityHiddenEvent(target, tracker);
+        }
+      });
+    } catch (error) {
+      trackerErrorHandler(error);
     }
-
-    // Track DOM changes
-    mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName }) => {
-      // New DOM nodes mutation: attach event listeners to all Tracked Elements and track visibility:visible events
-      addedNodes.forEach((addedNode) => {
-        if (addedNode instanceof Element) {
-          trackNewElements(addedNode, tracker);
-        }
-      });
-
-      // Removed DOM nodes mutation: track visibility:hidden events
-      removedNodes.forEach((removedNode) => {
-        if (removedNode instanceof Element) {
-          trackRemovedElements(removedNode, tracker);
-        }
-      });
-
-      // Visibility attribute mutation (programmatic visibility change): determine and track visibility events
-      if (attributeName && isTrackedElement(target)) {
-        trackVisibilityVisibleEvent(target, tracker);
-        trackVisibilityHiddenEvent(target, tracker);
-      }
-    });
   };
+};

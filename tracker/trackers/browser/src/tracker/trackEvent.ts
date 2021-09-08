@@ -15,7 +15,7 @@ import { parseLocationContext } from '../structs';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
 import findTrackedParentElements from './findTrackedParentElements';
-import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
 
 /**
  * All of our EventFactories have the same signature
@@ -73,7 +73,7 @@ export const trackEvent = (parameters: TrackEventParameters) => {
     // Track
     tracker.trackEvent(newEvent);
   } catch (error) {
-    trackErrorHandler(error, parameters, parameters.onError);
+    trackerErrorHandler(error, parameters, parameters.onError);
   }
 };
 
@@ -134,7 +134,7 @@ export const trackApplicationLoadedEvent = (parameters: NonInteractiveTrackHelpe
     const { element = document, tracker } = parameters;
     return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
   } catch (error) {
-    trackErrorHandler(error, parameters, parameters.onError);
+    trackerErrorHandler(error, parameters, parameters.onError);
   }
 };
 
@@ -143,6 +143,6 @@ export const trackURLChangeEvent = (parameters: NonInteractiveTrackHelperParamet
     const { element = document, tracker } = parameters;
     return trackEvent({ eventFactory: makeURLChangeEvent, element, tracker });
   } catch (error) {
-    trackErrorHandler(error, parameters, parameters.onError);
+    trackerErrorHandler(error, parameters, parameters.onError);
   }
 };

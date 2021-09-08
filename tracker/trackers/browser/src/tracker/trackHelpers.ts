@@ -10,7 +10,7 @@ import {
 } from '@objectiv/tracker-core';
 import { assign, create, object, pick, string } from 'superstruct';
 import { track, TrackOptions, TrackParameters, TrackReturnValue } from '../tracker/track';
-import { trackErrorHandler, TrackOnErrorCallback } from './trackErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
 
 /**
  * Track Location helpers automatically factor Context Instances and use `track` internally.
@@ -35,7 +35,7 @@ export const trackElement = (parameters: TrackHelperParameters): TrackReturnValu
     const { id, options } = create(parameters, TrackHelperParameters);
     return track({ instance: makeSectionContext({ id }), options, onError: parameters.onError });
   } catch (error) {
-    return trackErrorHandler(error, parameters);
+    return trackerErrorHandler(error, parameters);
   }
 };
 
@@ -47,7 +47,7 @@ export const trackExpandableElement = (parameters: TrackHelperParameters): Track
     const { id, options } = create(parameters, TrackHelperParameters);
     return track({ instance: makeExpandableSectionContext({ id }), options, onError: parameters.onError });
   } catch (error) {
-    return trackErrorHandler(error, parameters);
+    return trackerErrorHandler(error, parameters);
   }
 };
 
@@ -59,7 +59,7 @@ export const trackInput = (parameters: TrackHelperParameters): TrackReturnValue 
     const { id, options } = create(parameters, TrackHelperParameters);
     return track({ instance: makeInputContext({ id }), options, onError: parameters.onError });
   } catch (error) {
-    return trackErrorHandler(error, parameters);
+    return trackerErrorHandler(error, parameters);
   }
 };
 
@@ -73,7 +73,7 @@ export const trackButton = (parameters: TrackButtonParameters): TrackReturnValue
     const { id, text, options } = create(parameters, TrackButtonParameters);
     return track({ instance: makeButtonContext({ id, text }), options, onError: parameters.onError });
   } catch (error) {
-    return trackErrorHandler(error, parameters);
+    return trackerErrorHandler(error, parameters);
   }
 };
 
@@ -87,7 +87,7 @@ export const trackLink = (parameters: TrackLinkParameters): TrackReturnValue => 
     const { id, text, href, options } = create(parameters, TrackLinkParameters);
     return track({ instance: makeLinkContext({ id, text, href }), options, onError: parameters.onError });
   } catch (error) {
-    return trackErrorHandler(error, parameters);
+    return trackerErrorHandler(error, parameters);
   }
 };
 
@@ -99,7 +99,7 @@ export const trackMediaPlayer = (parameters: TrackHelperParameters): TrackReturn
     const { id, options } = create(parameters, TrackHelperParameters);
     return track({ instance: makeMediaPlayerContext({ id }), options, onError: parameters.onError });
   } catch (error) {
-    return trackErrorHandler(error, parameters);
+    return trackerErrorHandler(error, parameters);
   }
 };
 
@@ -111,7 +111,7 @@ export const trackNavigation = (parameters: TrackHelperParameters): TrackReturnV
     const { id, options } = create(parameters, TrackHelperParameters);
     return track({ instance: makeNavigationContext({ id }), options, onError: parameters.onError });
   } catch (error) {
-    return trackErrorHandler(error, parameters);
+    return trackerErrorHandler(error, parameters);
   }
 };
 
@@ -123,6 +123,6 @@ export const trackOverlay = (parameters: TrackHelperParameters): TrackReturnValu
     const { id, options } = create(parameters, TrackHelperParameters);
     return track({ instance: makeOverlayContext({ id }), options, onError: parameters.onError });
   } catch (error) {
-    return trackErrorHandler(error, parameters);
+    return trackerErrorHandler(error, parameters);
   }
 };

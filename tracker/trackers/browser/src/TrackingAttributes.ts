@@ -1,19 +1,7 @@
 import { array, boolean, defaulted, Infer, literal, object, optional, string, union } from 'superstruct';
 import { v4 } from 'uuid';
 import { LocationContext } from './Contexts';
-import { StringBoolean, Uuid } from './structs';
-
-/**
- * The possible values of the `trackVisibility` TrackingAttribute.
- */
-export const TrackingAttributeVisibilityAuto = object({ mode: literal('auto') });
-export type TrackingAttributeVisibilityAuto = Infer<typeof TrackingAttributeVisibilityAuto>;
-
-export const TrackingAttributeVisibilityManual = object({ mode: literal('manual'), isVisible: boolean() });
-export type TrackingAttributeVisibilityManual = Infer<typeof TrackingAttributeVisibilityManual>;
-
-export const TrackingAttributeVisibility = union([TrackingAttributeVisibilityAuto, TrackingAttributeVisibilityManual]);
-export type TrackingAttributeVisibility = Infer<typeof TrackingAttributeVisibility>;
+import { StringBoolean, TrackingAttributeVisibility, Uuid } from './structs';
 
 /**
  * All the attributes that are added to a DOM Element to make it trackable

@@ -19,6 +19,7 @@ export * from './tracker/configureTracker';
 export * from './tracker/findTrackedParentElements';
 export * from './tracker/track';
 export * from './tracker/trackChildren';
+export * from './tracker/trackerErrorHandler';
 export * from './tracker/trackEvent';
 export * from './tracker/trackHelpers';
 export * from './TrackingAttributes';

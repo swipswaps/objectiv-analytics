@@ -5,7 +5,7 @@
  */
 export type TrackOnErrorCallback = <T = unknown>(error: unknown, parameters?: T) => void;
 
-export const trackErrorHandler = (error: unknown, parameters?: unknown, onError?: TrackOnErrorCallback) => {
+export const trackerErrorHandler = (error: unknown, parameters?: unknown, onError?: TrackOnErrorCallback) => {
   if (onError) {
     onError(error);
   } else {

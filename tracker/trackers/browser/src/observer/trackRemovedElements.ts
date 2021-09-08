@@ -1,6 +1,8 @@
+import { parseVisibilityAttribute } from '../structs';
 import { BrowserTracker } from '../tracker/BrowserTracker';
+import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
 import { trackSectionHiddenEvent } from '../tracker/trackEvent';
-import { TrackingAttribute, TrackingAttributeVisibility } from '../TrackingAttributes';
+import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 
 /**
@@ -8,23 +10,19 @@ import { isTrackedElement } from '../typeGuards';
  * Hidden Events are triggered only for automatically tracked Elements.
  */
 const trackRemovedElements = (element: Element, tracker: BrowserTracker) => {
-  const elements = element.querySelectorAll(`[${TrackingAttribute.context}]`);
-  [element, ...Array.from(elements)].forEach((element) => {
-    if (isTrackedElement(element)) {
-      // TODO we need a proper parsers for these attributes with good validation
-      // TODO we need a proper parsers for these attributes with good validation
-      // TODO we need a proper parsers for these attributes with good validation
-      // TODO we need a proper parsers for these attributes with good validation
-      // TODO we need a proper parsers for these attributes with good validation
-      const trackVisibilityAttribute = element.getAttribute(TrackingAttribute.trackVisibility);
-      if (trackVisibilityAttribute !== null) {
-        const trackVisibilityConfig: TrackingAttributeVisibility = JSON.parse(trackVisibilityAttribute);
-        if (trackVisibilityConfig && trackVisibilityConfig.mode === 'auto') {
+  try {
+    const elements = element.querySelectorAll(`[${TrackingAttribute.context}]`);
+    [element, ...Array.from(elements)].forEach((element) => {
+      if (isTrackedElement(element)) {
+        const trackVisibility = parseVisibilityAttribute(element.getAttribute(TrackingAttribute.trackVisibility));
+        if (trackVisibility.mode === 'auto') {
           trackSectionHiddenEvent({ element, tracker });
         }
       }
-    }
-  });
+    });
+  } catch (error) {
+    trackerErrorHandler(error);
+  }
 };
 
 export default trackRemovedElements;
