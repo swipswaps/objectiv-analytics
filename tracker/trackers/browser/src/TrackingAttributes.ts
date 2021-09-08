@@ -23,4 +23,3 @@ export enum TrackingAttribute {
   // A list of serialized ChildTrackingQuery objects
   trackChildren = 'data-objectiv-track-children',
 }
-

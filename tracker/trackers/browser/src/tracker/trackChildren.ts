@@ -3,7 +3,7 @@ import {
   StringifiedChildrenTrackingAttributes,
   stringifyChildrenAttribute,
   TrackChildrenParameters,
-  TrackChildrenQuery
+  TrackChildrenQuery,
 } from '../structs';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
