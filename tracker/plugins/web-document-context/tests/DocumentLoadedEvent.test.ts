@@ -24,7 +24,7 @@ describe('WebDocumentLoadedEvent', () => {
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
       __non_interactive_event: true,
-      event: 'DocumentLoadedEvent',
+      _type: 'DocumentLoadedEvent',
       id: expect.stringMatching(UUID_REGEX),
       global_contexts: [
         {
@@ -80,7 +80,7 @@ describe('WebDocumentLoadedEvent', () => {
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
       __non_interactive_event: true,
-      event: 'DocumentLoadedEvent',
+      _type: 'DocumentLoadedEvent',
       id: expect.stringMatching(UUID_REGEX),
       global_contexts: [
         {
