@@ -82,9 +82,9 @@ describe('useTrackOnToggle', () => {
     fireEvent.click(toggleMenuButton);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(3);
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ event: 'SectionVisibleEvent' }));
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ event: 'SectionHiddenEvent' }));
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(3, expect.objectContaining({ event: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ _type: 'SectionHiddenEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(3, expect.objectContaining({ _type: 'SectionVisibleEvent' }));
   });
 
   it('should allow overriding the tracker with a custom one', () => {
@@ -100,7 +100,7 @@ describe('useTrackOnToggle', () => {
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(2);
-    expect(spyTransport2.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ event: 'SectionVisibleEvent' }));
-    expect(spyTransport2.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ event: 'SectionHiddenEvent' }));
+    expect(spyTransport2.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'SectionVisibleEvent' }));
+    expect(spyTransport2.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ _type: 'SectionHiddenEvent' }));
   });
 });

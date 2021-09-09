@@ -37,7 +37,7 @@ describe('useTrackOnMount', () => {
     render(<Index />);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionVisibleEvent' }));
   });
 
   it('should not execute on unmount', () => {
@@ -46,7 +46,7 @@ describe('useTrackOnMount', () => {
     unmount();
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionVisibleEvent' }));
   });
 
   it('should not execute on rerender', () => {
@@ -57,7 +57,7 @@ describe('useTrackOnMount', () => {
 
     expect(renderSpy).toHaveBeenCalledTimes(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionVisibleEvent' }));
   });
 
   it('should allow overriding the tracker with a custom one', () => {
@@ -67,6 +67,6 @@ describe('useTrackOnMount', () => {
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'SectionVisibleEvent' }));
+    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionVisibleEvent' }));
   });
 });

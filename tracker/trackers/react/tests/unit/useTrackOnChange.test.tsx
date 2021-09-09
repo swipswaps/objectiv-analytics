@@ -85,7 +85,7 @@ describe('useTrackOnChange', () => {
     fireEvent.click(toggleMenuButton);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(3);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'MenuToggleEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'MenuToggleEvent' }));
   });
 
   it('should allow overriding the tracker with a custom one', () => {
@@ -97,6 +97,6 @@ describe('useTrackOnChange', () => {
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'MenuToggleEvent' }));
+    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'MenuToggleEvent' }));
   });
 });

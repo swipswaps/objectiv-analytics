@@ -42,7 +42,7 @@ describe('useTrackApplicationLoaded', () => {
     render(<Index />);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'ApplicationLoadedEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'ApplicationLoadedEvent' }));
   });
 
   it('should not execute on unmount', () => {
@@ -51,7 +51,7 @@ describe('useTrackApplicationLoaded', () => {
     unmount();
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'ApplicationLoadedEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'ApplicationLoadedEvent' }));
   });
 
   it('should not execute on rerender', () => {
@@ -62,7 +62,7 @@ describe('useTrackApplicationLoaded', () => {
 
     expect(renderSpy).toHaveBeenCalledTimes(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'ApplicationLoadedEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'ApplicationLoadedEvent' }));
   });
 
   it('should allow overriding the tracker with a custom one', () => {
@@ -76,6 +76,6 @@ describe('useTrackApplicationLoaded', () => {
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ event: 'ApplicationLoadedEvent' }));
+    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'ApplicationLoadedEvent' }));
   });
 });

@@ -94,7 +94,7 @@ describe('TrackerEvent', () => {
     );
     const jsonStringEvent = JSON.stringify(testEvent, null, 2);
     expect(jsonStringEvent).toEqual(`{
-  "event": "VideoLoadEvent",
+  "_type": "VideoLoadEvent",
   "location_stack": [
     {
       "_type": "OverlayContext",
