@@ -242,11 +242,9 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
         parents.append('ABC')
 
     property_meta: Dict[str, Dict[str, str]] = {}
-    instance_type = ''
+    instance_type = f"_type = '{obj_name}'"
     for property_name, property_description in all_properties.items():
-        if property_name in ['_type', 'event']:
-            instance_type = f"{property_name} = '{obj_name}'"
-            # ignore these properties, as they are reflected in the class name
+        if property_name == '_type':
             continue
 
         # create dict with properties and meta info
