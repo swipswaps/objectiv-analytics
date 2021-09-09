@@ -9,6 +9,7 @@ export * from './observer/processChildrenTrackingElement';
 export * from './observer/startAutoTracking';
 export * from './observer/trackNewElement';
 export * from './observer/trackNewElements';
+export * from './observer/trackRemovedElement';
 export * from './observer/trackRemovedElements';
 export * from './observer/trackVisibilityHiddenEvent';
 export * from './observer/trackVisibilityVisibleEvent';

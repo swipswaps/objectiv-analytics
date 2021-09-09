@@ -90,4 +90,17 @@ describe('trackRemovedElements', () => {
     expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledTimes(1);
   });
+
+  it('should console error', async () => {
+    jest.spyOn(console, 'error');
+    const div = document.createElement('div');
+    jest.spyOn(div, 'querySelectorAll').mockImplementation(() => {
+      throw new Error();
+    });
+
+    trackRemovedElements(div, window.objectiv.tracker);
+
+    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(console.error).toHaveBeenCalledTimes(1);
+  });
 });
