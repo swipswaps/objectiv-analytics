@@ -22,7 +22,7 @@ def hydrate_types_into_event(event_schema: EventSchema, event: EventData) -> Eve
     """
     event_name = event['_type']
     all_event_types = event_schema.get_all_parent_event_types(event_name)
-    event["events"] = sorted(all_event_types)
+    event["_types"] = sorted(all_event_types)
     global_contexts = event['global_contexts']
     for context in global_contexts:
         context["_types"] = sorted(
