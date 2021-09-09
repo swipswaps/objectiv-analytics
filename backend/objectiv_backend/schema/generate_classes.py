@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 import re
 
-from objectiv_backend.common.config import get_config_event_schema
+from objectiv_backend.common.config import get_collector_config
 
 
 def get_type(property_description: Dict[str, Any]) -> str:
