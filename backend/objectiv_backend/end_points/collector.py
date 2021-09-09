@@ -66,7 +66,7 @@ def _get_event_data(request: Request) -> EventList:
         2) the data could not be parsed as JSON
         3) the parsed data isn't a valid dictionary
         4) the key 'events' could not be found in the dictionary
-        5) event_data['events'] is a list
+        5) event_data['events'] is not a list
         6) there are more than DATA_MAX_EVENT_COUNT events in the event list
         7) the structure did not validate as a valid EventList (validate_structure_event_list()
 
