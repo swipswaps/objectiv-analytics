@@ -11,9 +11,11 @@ import re
 import jsonschema
 from jsonschema import ValidationError
 
-from objectiv_backend.common.types import EventData
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
-from objectiv_backend.common.config import get_config_timestamp_validation, get_config_event_schema
+from objectiv_backend.common.config import \
+    get_config_timestamp_validation, get_config_event_schema, get_config_event_list_schema
+
+from objectiv_backend.common.types import EventData
 
 
 class ErrorInfo(NamedTuple):
@@ -43,38 +45,34 @@ def get_event_list_schema() -> Dict[str, Any]:
     """
     event_schema = get_config_event_schema()
     events = event_schema.events.schema
-    contexts = event_schema.contexts.schema
 
     # we use AbstractEvent as the blueprint for what an event should look like
     abstract_event = events['AbstractEvent']
 
-    # list of properties for an event (can be nested)
-    properties: Dict[str, dict] = {}
+    # # list of properties for an event (can be nested)
+    items: Dict[str, dict] = {}
     for property_name, property_desc in abstract_event['properties'].items():
 
-        if 'items' in property_desc and re.match('^Abstract.*?Context$', property_desc['items']):
-            # TODO use the correct AbstractContext (AbstractLocationContext or AbstractGlobalContext) and
-            # infer the properties through the hierarchy
-            context_type = property_desc['items']
-            context = contexts[context_type]
-            parent_context = contexts['AbstractContext']
-
-            # here we merge the properties from the requested context with those of AbstractContext
-            # and replace/override the abstract definition from the base schema with the actual one
-            property_desc = {**context['properties'], ** parent_context['properties']}
-
-        properties[property_name] = property_desc
+        if 'items' in property_desc and re.match('^Abstract.*?Context$', property_desc['items']['type']):
+            # we don't want to go into the validation / schema of contexts here
+            # so a simple object will suffice
+            property_desc['items']['type'] = 'object'
+        items[property_name] = property_desc
 
     # we want a schema for a list of events (the base_schema only specifies a single event)
-    schema: Dict[str, Any] = {
-        "type": "array",
-        "items":  {
-            "type": "object",
-            "properties": properties,
-            "required": list(properties.keys())
+    # the schema wants a list of abstract events. As that is not a valid JSON type,
+    # we replace that type with the more generic 'object' type, and the actual definition of
+    # an abstract event
+    event_list_schema = get_config_event_list_schema()
+    if 'events' in event_list_schema['properties'] and \
+            'items' in event_list_schema['properties']['events'] and \
+            'type' in event_list_schema['properties']['events']['items'] and \
+            event_list_schema['properties']['events']['items']['type'] == 'AbstractEvent':
+        event_list_schema['properties']['events']['items'] = {
+            'type': 'object',
+            'items': items
         }
-    }
-    return schema
+    return event_list_schema
 
 
 def validate_structure_event_list(event_data: Any) -> List[ErrorInfo]:
@@ -108,7 +106,7 @@ def validate_event_list(event_schema: EventSchema, event_data: Any) -> List[Erro
     if errors:
         return errors
 
-    for event in event_data:
+    for event in event_data['events']:
         errors_event = validate_event_adheres_to_schema(event_schema, event)
         errors.extend(errors_event)
     return errors
@@ -134,6 +132,10 @@ def validate_event_adheres_to_schema(event_schema: EventSchema, event: EventData
         return [ErrorInfo(event, f'Unknown event: {event_name}')]
 
     errors = []
+
+    # validate the event itself
+    errors.extend(_validate_event_item(event_schema, event))
+
     # Validate that all of the event's contexts adhere to the schema of the specific contexts
     errors.extend(_validate_contexts(event_schema, event))
     # Validate that all of the event's required contexts are present
@@ -141,7 +143,7 @@ def validate_event_adheres_to_schema(event_schema: EventSchema, event: EventData
     return errors
 
 
-def _validate_required_contexts(event_schema: EventSchema, event: Dict[str, Any]) -> List[ErrorInfo]:
+def _validate_required_contexts(event_schema: EventSchema, event: EventData) -> List[ErrorInfo]:
     """
     Validate that all of the event's required contexts are present
     :param event: event object
@@ -168,7 +170,7 @@ def _validate_required_contexts(event_schema: EventSchema, event: Dict[str, Any]
     return []
 
 
-def _validate_contexts(event_schema: EventSchema, event: Dict[str, Any]) -> List[ErrorInfo]:
+def _validate_contexts(event_schema: EventSchema, event: EventData) -> List[ErrorInfo]:
     """
     Validate that all of the event's contexts ad-here to the schema of the specific contexts.
     """
@@ -177,9 +179,15 @@ def _validate_contexts(event_schema: EventSchema, event: Dict[str, Any]) -> List
     errors = []
     for context in global_contexts:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
+        if 'AbstractGlobalContext' not in event_schema.get_all_parent_context_types(context['_context_type']):
+            errors.append(ErrorInfo(context, 'Not an instance of GlobalContext'))
+
         errors.extend(errors_context)
     for context in location_stack:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
+        if 'AbstractLocationContext' not in event_schema.get_all_parent_context_types(context['_context_type']):
+            errors.append(ErrorInfo(context, 'Not an instance of LocationContext'))
+
         errors.extend(errors_context)
     return errors
 
@@ -204,6 +212,17 @@ def _validate_context_item(event_schema: EventSchema, context) -> List[ErrorInfo
     return []
 
 
+def _validate_event_item(event_schema: EventSchema, event) -> List[ErrorInfo]:
+    event_type = event['event']
+    schema = event_schema.get_event_schema(event_type=event_type)
+    try:
+        jsonschema.validate(instance=event, schema=schema)
+    except ValidationError as exc:
+        return [ErrorInfo(event, f'event validation failed {exc}')]
+
+    return []
+
+
 def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[ErrorInfo]:
     """
     Read given filename, and validate the event data in that file.
@@ -213,7 +232,7 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
     """
     with open(filename) as file:
         event_data = json.loads(file.read())
-    errors = validate_event_list(event_schema=event_schema, event_data=event_data)
+    errors = validate_event_list(event_schema=event_schema, event_data=event_data['events'])
     if errors:
         print(f'\n{len(errors)} error(s) found:')
         for error in errors:
@@ -224,7 +243,7 @@ def validate_events_in_file(event_schema: EventSchema, filename: str) -> List[Er
     return errors
 
 
-def validate_event_time(event: Dict[str, Any], current_millis: int) -> List[ErrorInfo]:
+def validate_event_time(event: EventData, current_millis: int) -> List[ErrorInfo]:
     """
     Validate timestamps in event to check if it's not too old or too new
     :param event:
@@ -249,7 +268,6 @@ def main():
     filenames = args.filenames
     event_schema = get_event_schema(schema_extensions_directory=args.schema_extensions_directory)
 
-    print(f'Schema: {event_schema}')
     for filename in args.filenames:
         print(f'\nChecking {filename}')
         errors_file = validate_events_in_file(event_schema=event_schema,

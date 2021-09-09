@@ -1,11 +1,10 @@
 from typing import List, Dict, Any
 import re
-import json
 
 from objectiv_backend.common.config import get_config_event_schema
 
 
-def get_type(property_description: Dict[str, str]) -> str:
+def get_type(property_description: Dict[str, Any]) -> str:
     """
     Translate (json)schema property type to something Python understands
     :param property_description: from schema
@@ -14,8 +13,8 @@ def get_type(property_description: Dict[str, str]) -> str:
     type_name = property_description['type']
 
     abstract_type = ''
-    if 'items' in property_description:
-        abstract_type = property_description['items']
+    if 'items' in property_description and 'type' in property_description['items']:
+        abstract_type = property_description['items']['type']
     if type_name == 'array':
         return f'List[{abstract_type}]'
     if type_name == 'object':
@@ -137,8 +136,7 @@ def indent_lines(code: str, level: int, spaces: int = 4):
 def get_constructor_description(property_meta: Dict[str, dict]) -> str:
     """
     Build docstring for class constructor. Should be of the form:
-        :param <property_name>: <property_description>
-    :property_meta:
+    :param property_meta <property_meta>: <property_description>
     :return: str - python comment
     """
     params = [f':param {name}: \n{indent_lines(meta["description"], level=1)}'
@@ -244,6 +242,7 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
         parents.append('ABC')
 
     property_meta: Dict[str, Dict[str, str]] = {}
+    instance_type = ''
     for property_name, property_description in all_properties.items():
         if property_name in ['_context_type', 'event']:
             instance_type = f"{property_name} = '{obj_name}'"

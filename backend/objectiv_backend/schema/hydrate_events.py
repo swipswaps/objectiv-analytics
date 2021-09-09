@@ -4,13 +4,14 @@ Copyright 2021 Objectiv B.V.
 import argparse
 import json
 import sys
-from typing import Dict, Any, List
+from typing import List
 
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 from objectiv_backend.schema.validate_events import validate_event_list
+from objectiv_backend.common.types import EventData
 
 
-def hydrate_types_into_event(event_schema: EventSchema, event: Dict[str, Any]) -> Dict[str, Any]:
+def hydrate_types_into_event(event_schema: EventSchema, event: EventData) -> EventData:
     """
     Modifies the given event:
         1. adds a "events" field: a list of all inherited event-types (including the event)
@@ -47,12 +48,13 @@ def main(argv: List[str]):
     for filename in filenames:
         with open(filename) as file:
             event_data = json.loads(file.read())
-        errors = validate_event_list(event_schema=event_schema, event_data=event_data)
+        errors = validate_event_list(event_schema=event_schema, event_data=event_data['events'])
         if errors:
             raise Exception(f'Error in file: {filename} - {errors}')
+        events = event_data['events']
         print(
             json.dumps(
-                [hydrate_types_into_event(event_schema, event) for event in event_data],
+                [hydrate_types_into_event(event_schema, event) for event in events],
                 indent=4
             )
         )

@@ -9,7 +9,8 @@ from typing import NamedTuple, Optional
 # complete overview.
 # These settings should not be accessed by the constants here, but through the functions defined
 # below (e.g. get_config_output())
-from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
+from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema, get_event_list_schema
+from objectiv_backend.common.types import EventListSchema
 
 LOAD_BASE_SCHEMA = os.environ.get('LOAD_BASE_SCHEMA', 'true') == 'true'
 SCHEMA_EXTENSION_DIRECTORY = os.environ.get('SCHEMA_EXTENSION_DIRECTORY')
@@ -160,6 +161,10 @@ def get_config_cookie() -> CookieConfig:
 
 def get_config_event_schema() -> EventSchema:
     return get_event_schema(SCHEMA_EXTENSION_DIRECTORY)
+
+
+def get_config_event_list_schema() -> EventListSchema:
+    return get_event_list_schema()
 
 
 def get_config_timestamp_validation() -> TimestampValidationConfig:

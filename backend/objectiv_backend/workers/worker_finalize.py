@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 import sys
 
 from objectiv_backend.common.config import WORKER_BATCH_SIZE
+from objectiv_backend.common.types import EventDataList
 from objectiv_backend.workers.pg_queues import PostgresQueues, ProcessingStage
 from objectiv_backend.workers.pg_storage import insert_events_into_data
 from objectiv_backend.workers.util import worker_main
@@ -16,8 +17,8 @@ def main_finalize(connection) -> int:
     """
     with connection:
         pg_queues = PostgresQueues(connection=connection)
-        events = pg_queues.get_events(queue=ProcessingStage.FINALIZE, max_items=WORKER_BATCH_SIZE)
-        print(f'event-ids: {sorted(event.id for event in events)}')
+        events: EventDataList = pg_queues.get_events(queue=ProcessingStage.FINALIZE, max_items=WORKER_BATCH_SIZE)
+        print(f'event-ids: {sorted(event["id"] for event in events)}')
         insert_events_into_data(connection, events)
     return len(events)
 
