@@ -45,37 +45,33 @@ def get_event_list_schema() -> Dict[str, Any]:
     """
     event_schema = get_config_event_schema()
     events = event_schema.events.schema
-    contexts = event_schema.contexts.schema
 
     # we use AbstractEvent as the blueprint for what an event should look like
     abstract_event = events['AbstractEvent']
 
-    # list of properties for an event (can be nested)
+    # # list of properties for an event (can be nested)
     items: Dict[str, dict] = {}
     for property_name, property_desc in abstract_event['properties'].items():
 
-        if 'items' in property_desc and re.match('^Abstract.*?Context$', property_desc['items']):
-            # TODO use the correct AbstractContext (AbstractLocationContext or AbstractGlobalContext) and
-            # infer the properties through the hierarchy
-            context_type = property_desc['items']
-            context = contexts[context_type]
-            parent_context = contexts['AbstractContext']
-
-            # here we merge the properties from the requested context with those of AbstractContext
-            # and replace/override the abstract definition from the base schema with the actual one
-            property_desc = {**context['properties'], ** parent_context['properties']}
-
+        if 'items' in property_desc and re.match('^Abstract.*?Context$', property_desc['items']['type']):
+            # we don't want to go into the validation / schema of contexts here
+            # so a simple object will suffice
+            property_desc['items']['type'] = 'object'
         items[property_name] = property_desc
 
     # we want a schema for a list of events (the base_schema only specifies a single event)
-    # we replace the items in the event list schema with the actual definition (from the base_schema)
-    # _if_ it is an item named 'AbstractEvent'
+    # the schema wants a list of abstract events. As that is not a valid JSON type,
+    # we replace that type with the more generic 'object' type, and the actual definition of
+    # an abstract event
     event_list_schema = get_config_event_list_schema()
     if 'events' in event_list_schema['properties'] and \
             'items' in event_list_schema['properties']['events'] and \
-            event_list_schema['properties']['events']['items'] == 'AbstractEvent':
-        event_list_schema['properties']['events']['items'] = items
-
+            'type' in event_list_schema['properties']['events']['items'] and \
+            event_list_schema['properties']['events']['items']['type'] == 'AbstractEvent':
+        event_list_schema['properties']['events']['items'] = {
+            'type': 'object',
+            'items': items
+        }
     return event_list_schema
 
 
@@ -136,6 +132,10 @@ def validate_event_adheres_to_schema(event_schema: EventSchema, event: EventData
         return [ErrorInfo(event, f'Unknown event: {event_name}')]
 
     errors = []
+
+    # validate the event itself
+    errors.extend(_validate_event_item(event_schema, event))
+
     # Validate that all of the event's contexts adhere to the schema of the specific contexts
     errors.extend(_validate_contexts(event_schema, event))
     # Validate that all of the event's required contexts are present
@@ -209,6 +209,17 @@ def _validate_context_item(event_schema: EventSchema, context) -> List[ErrorInfo
         jsonschema.validate(instance=context, schema=schema)
     except ValidationError as exc:
         return [ErrorInfo(context, f'context validation failed: {exc}')]
+    return []
+
+
+def _validate_event_item(event_schema: EventSchema, event) -> List[ErrorInfo]:
+    event_type = event['event']
+    schema = event_schema.get_event_schema(event_type=event_type)
+    try:
+        jsonschema.validate(instance=event, schema=schema)
+    except ValidationError as exc:
+        return [ErrorInfo(event, f'event validation failed {exc}')]
+
     return []
 
 

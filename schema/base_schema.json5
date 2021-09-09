@@ -18,14 +18,18 @@
             The whole stack (list) is needed to exactly pinpoint where in the UI the event originated. \n\
           ",
           "type": "array",
-          "items": "AbstractLocationContext"
+          "items": {
+            "type":"AbstractLocationContext"
+          }
         },
         "global_contexts": {
           "description": "\
             Global contexts add global / general information about the event. They carry information that is not \n\
             related to where the Event originated (location), such as device, platform or business data.",
           "type": "array",
-          "items": "AbstractGlobalContext"
+          "items": {
+            "type":"AbstractGlobalContext"
+          }
         },
         "event": {
           "description": "String containing the name of the event type. (eg. ClickEvent)",
