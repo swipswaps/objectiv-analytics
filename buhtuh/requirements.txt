@@ -1,0 +1,11 @@
+# buhtuh:
+psycopg2-binary
+sqlalchemy
+pandas
+
+# sql_models:
+sqlparse
+
+# below dependencies are only needed for development. Split those out later.
+pytest
+jupyter
