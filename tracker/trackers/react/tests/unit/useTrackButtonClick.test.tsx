@@ -81,11 +81,11 @@ describe('useTrackButtonClick', () => {
       3,
       expect.objectContaining({
         event: 'ClickEvent',
-        global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
+        global_contexts: expect.arrayContaining([expect.objectContaining({ _type: 'DeviceContext' })]),
         location_stack: expect.arrayContaining([
-          expect.objectContaining({ _context_type: 'SectionContext' }),
-          expect.objectContaining({ _context_type: 'NavigationContext' }),
-          expect.objectContaining({ _context_type: 'ButtonContext' }),
+          expect.objectContaining({ _type: 'SectionContext' }),
+          expect.objectContaining({ _type: 'NavigationContext' }),
+          expect.objectContaining({ _type: 'ButtonContext' }),
         ]),
       })
     );
@@ -121,10 +121,10 @@ describe('useTrackButtonClick', () => {
     expect(spyTransport2.handle).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'ClickEvent',
-        global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
+        global_contexts: expect.arrayContaining([expect.objectContaining({ _type: 'DeviceContext' })]),
         location_stack: expect.arrayContaining([
-          expect.not.objectContaining({ _context_type: 'SectionContext' }),
-          expect.objectContaining({ _context_type: 'ButtonContext' }),
+          expect.not.objectContaining({ _type: 'SectionContext' }),
+          expect.objectContaining({ _type: 'ButtonContext' }),
         ]),
       })
     );

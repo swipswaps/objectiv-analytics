@@ -32,7 +32,7 @@ describe('FetchAPITransport', () => {
   const MOCK_ENDPOINT = 'http://test-endpoint';
 
   const testEvent = new TrackerEvent({
-    event: 'test-event',
+    _type: 'test-event',
   });
 
   it('should send using `fetch` API with the default fetch function', async () => {

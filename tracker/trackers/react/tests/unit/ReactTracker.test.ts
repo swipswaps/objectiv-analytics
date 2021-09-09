@@ -47,7 +47,7 @@ describe('ReactTracker', () => {
 
     it('should track Application, WebDocumentContext and DeviceContext Contexts automatically by default', async () => {
       const testTracker = new ReactTracker({ applicationId: 'app-id', endpoint: 'localhost' });
-      const testEvent = new TrackerEvent({ event: 'test-event' });
+      const testEvent = new TrackerEvent({ _type: 'test-event' });
 
       expect(testTracker).toBeInstanceOf(ReactTracker);
       expect(testEvent.global_contexts).toHaveLength(0);
@@ -58,7 +58,7 @@ describe('ReactTracker', () => {
       expect(trackedEvent.location_stack).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            _context_type: 'WebDocumentContext',
+            _type: 'WebDocumentContext',
             id: '#document',
             url: 'http://localhost/',
           }),
@@ -68,11 +68,11 @@ describe('ReactTracker', () => {
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            _context_type: 'ApplicationContext',
+            _type: 'ApplicationContext',
             id: 'app-id',
           }),
           expect.objectContaining({
-            _context_type: 'DeviceContext',
+            _type: 'DeviceContext',
             id: 'device',
             user_agent: USER_AGENT_MOCK_VALUE,
           }),

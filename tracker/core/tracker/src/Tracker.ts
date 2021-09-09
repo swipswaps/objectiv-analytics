@@ -70,7 +70,7 @@ export class Tracker implements Contexts {
         this.location_stack.length
           ? '(' +
             this.location_stack
-              .map((context) => `${context._context_type.replace('Context', '')}:${context.id}`)
+              .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
               .join(' > ') +
             ')'
           : ''
@@ -109,11 +109,11 @@ export class Tracker implements Contexts {
     // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
     if (this.transport && this.transport.isUsable()) {
       console.groupCollapsed(
-        `Objectiv: Tracking ${trackedEvent.event} ${
+        `Objectiv: Tracking ${trackedEvent._type} ${
           this.location_stack.length
             ? '(' +
               this.location_stack
-                .map((context) => `${context._context_type.replace('Context', '')}:${context.id}`)
+                .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
                 .join(' > ') +
               ')'
             : ''

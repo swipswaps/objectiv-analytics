@@ -16,10 +16,10 @@ import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
 
 const testEventName = 'test-event';
 const testContexts: ContextsConfig = {
-  location_stack: [{ __location_context: true, _context_type: 'section', id: 'test' }],
-  global_contexts: [{ __global_context: true, _context_type: 'global', id: 'test' }],
+  location_stack: [{ __location_context: true, _type: 'section', id: 'test' }],
+  global_contexts: [{ __global_context: true, _type: 'global', id: 'test' }],
 };
-const testEvent = new TrackerEvent({ event: testEventName, ...testContexts });
+const testEvent = new TrackerEvent({ _type: testEventName, ...testContexts });
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -72,7 +72,7 @@ describe('TransportSwitch', () => {
     testTracker.trackEvent(testEvent);
 
     expect(transport1.handle).not.toHaveBeenCalled();
-    expect(transport2.handle).toHaveBeenCalledWith(expect.objectContaining({ event: testEvent.event }));
+    expect(transport2.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: testEvent._type }));
   });
 });
 

@@ -29,7 +29,7 @@ describe('WebDocumentLoadedEvent', () => {
       global_contexts: [
         {
           __global_context: true,
-          _context_type: 'ApplicationContext',
+          _type: 'ApplicationContext',
           id: 'app-id',
         },
       ],
@@ -37,7 +37,7 @@ describe('WebDocumentLoadedEvent', () => {
         {
           __location_context: true,
           __section_context: true,
-          _context_type: 'WebDocumentContext',
+          _type: 'WebDocumentContext',
           id: '#document',
           url: '/test',
         },
@@ -85,7 +85,7 @@ describe('WebDocumentLoadedEvent', () => {
       global_contexts: [
         {
           __global_context: true,
-          _context_type: 'ApplicationContext',
+          _type: 'ApplicationContext',
           id: 'app-id',
         },
       ],
@@ -93,7 +93,7 @@ describe('WebDocumentLoadedEvent', () => {
         {
           __location_context: true,
           __section_context: true,
-          _context_type: 'WebDocumentContext',
+          _type: 'WebDocumentContext',
           id: '#document',
           url: '/test',
         },

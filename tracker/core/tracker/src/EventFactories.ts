@@ -30,7 +30,7 @@ import {
 export const makeApplicationLoadedEvent = ( props?: { location_stack?: AbstractLocationContext[]; global_contexts?: AbstractGlobalContext[] }): 
     Omit<ApplicationLoadedEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
-	event: 'ApplicationLoadedEvent',
+	_type: 'ApplicationLoadedEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -47,7 +47,7 @@ export const makeApplicationLoadedEvent = ( props?: { location_stack?: AbstractL
 export const makeClickEvent = ( props?: { location_stack?: AbstractLocationContext[]; global_contexts?: AbstractGlobalContext[] }): 
     Omit<ClickEvent, 'id' | 'time'> => ({
 	__interactive_event: true,
-	event: 'ClickEvent',
+	_type: 'ClickEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -66,7 +66,7 @@ export const makeClickEvent = ( props?: { location_stack?: AbstractLocationConte
 export const makeDocumentLoadedEvent = ( props?: { location_stack?: AbstractLocationContext[]; global_contexts?: AbstractGlobalContext[] }): 
     Omit<DocumentLoadedEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
-	event: 'DocumentLoadedEvent',
+	_type: 'DocumentLoadedEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -83,7 +83,7 @@ export const makeDocumentLoadedEvent = ( props?: { location_stack?: AbstractLoca
 export const makeInputChangeEvent = ( props?: { location_stack?: AbstractLocationContext[]; global_contexts?: AbstractGlobalContext[] }): 
     Omit<InputChangeEvent, 'id' | 'time'> => ({
 	__interactive_event: true,
-	event: 'InputChangeEvent',
+	_type: 'InputChangeEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -100,7 +100,7 @@ export const makeInputChangeEvent = ( props?: { location_stack?: AbstractLocatio
 export const makeInteractiveEvent = ( props?: { location_stack?: AbstractLocationContext[]; global_contexts?: AbstractGlobalContext[] }): 
     Omit<InteractiveEvent, 'id' | 'time'> => ({
 	__interactive_event: true,
-	event: 'InteractiveEvent',
+	_type: 'InteractiveEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -120,7 +120,7 @@ export const makeInteractiveEvent = ( props?: { location_stack?: AbstractLocatio
 export const makeNonInteractiveEvent = ( props?: { location_stack?: AbstractLocationContext[]; global_contexts?: AbstractGlobalContext[] }): 
     Omit<NonInteractiveEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
-	event: 'NonInteractiveEvent',
+	_type: 'NonInteractiveEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -137,7 +137,7 @@ export const makeNonInteractiveEvent = ( props?: { location_stack?: AbstractLoca
 export const makeSectionHiddenEvent = ( props?: { location_stack?: AbstractLocationContext[]; global_contexts?: AbstractGlobalContext[] }): 
     Omit<SectionHiddenEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
-	event: 'SectionHiddenEvent',
+	_type: 'SectionHiddenEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -154,7 +154,7 @@ export const makeSectionHiddenEvent = ( props?: { location_stack?: AbstractLocat
 export const makeSectionVisibleEvent = ( props?: { location_stack?: AbstractLocationContext[]; global_contexts?: AbstractGlobalContext[] }): 
     Omit<SectionVisibleEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
-	event: 'SectionVisibleEvent',
+	_type: 'SectionVisibleEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -172,7 +172,7 @@ export const makeSectionVisibleEvent = ( props?: { location_stack?: AbstractLoca
 export const makeURLChangeEvent = ( props?: { location_stack?: AbstractLocationContext[]; global_contexts?: AbstractGlobalContext[] }): 
     Omit<URLChangeEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
-	event: 'URLChangeEvent',
+	_type: 'URLChangeEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -190,7 +190,7 @@ export const makeVideoEvent = ( props?: { location_stack?: AbstractLocationConte
     Omit<VideoEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
 	__video_event: true,
-	event: 'VideoEvent',
+	_type: 'VideoEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -208,7 +208,7 @@ export const makeVideoLoadEvent = ( props?: { location_stack?: AbstractLocationC
     Omit<VideoLoadEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
 	__video_event: true,
-	event: 'VideoLoadEvent',
+	_type: 'VideoLoadEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -226,7 +226,7 @@ export const makeVideoPauseEvent = ( props?: { location_stack?: AbstractLocation
     Omit<VideoPauseEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
 	__video_event: true,
-	event: 'VideoPauseEvent',
+	_type: 'VideoPauseEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -244,7 +244,7 @@ export const makeVideoStartEvent = ( props?: { location_stack?: AbstractLocation
     Omit<VideoStartEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
 	__video_event: true,
-	event: 'VideoStartEvent',
+	_type: 'VideoStartEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });
@@ -262,7 +262,7 @@ export const makeVideoStopEvent = ( props?: { location_stack?: AbstractLocationC
     Omit<VideoStopEvent, 'id' | 'time'> => ({
 	__non_interactive_event: true,
 	__video_event: true,
-	event: 'VideoStopEvent',
+	_type: 'VideoStopEvent',
 	location_stack: props?.location_stack ?? [],
 	global_contexts: props?.global_contexts ?? [],
 });

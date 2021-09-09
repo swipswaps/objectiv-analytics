@@ -3,7 +3,7 @@ import { TrackerEvent } from '@objectiv/tracker-core';
 
 describe('DebugTransport', () => {
   const testEvent = new TrackerEvent({
-    event: 'test-event',
+    _type: 'test-event',
   });
 
   it('should `console.debug` the event', async () => {

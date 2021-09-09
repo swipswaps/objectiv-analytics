@@ -20,8 +20,8 @@ describe('trackLinkClick', () => {
     expect(spyTransport.handle).toHaveBeenCalledWith(
       expect.objectContaining({
         event: 'ClickEvent',
-        global_contexts: expect.arrayContaining([expect.objectContaining({ _context_type: 'DeviceContext' })]),
-        location_stack: expect.arrayContaining([expect.objectContaining({ _context_type: 'LinkContext' })]),
+        global_contexts: expect.arrayContaining([expect.objectContaining({ _type: 'DeviceContext' })]),
+        location_stack: expect.arrayContaining([expect.objectContaining({ _type: 'LinkContext' })]),
       })
     );
   });

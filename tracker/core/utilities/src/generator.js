@@ -19,8 +19,8 @@ const JSON5 = require('json5');
 const DISCRIMINATING_PROPERTY_PREFIX = '_';
 
 // TODO: naming of these should come from the schema
-const EVENT_DISCRIMINATOR = 'event';
-const CONTEXT_DISCRIMINATOR = '_context_type';
+const EVENT_DISCRIMINATOR = '_type';
+const CONTEXT_DISCRIMINATOR = '_type';
 
 // where to find the base schema files, by default we look in the root of the repository
 const schema_dir = '../../../../schema/';

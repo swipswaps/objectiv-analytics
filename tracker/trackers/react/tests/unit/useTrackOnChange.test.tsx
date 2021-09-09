@@ -16,7 +16,7 @@ describe('useTrackOnChange', () => {
   const renderSpy = jest.fn();
   const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
-  const menuToggleEvent = { event: 'MenuToggleEvent', location_stack: [], global_contexts: [] };
+  const menuToggleEvent = { _type: 'MenuToggleEvent', location_stack: [], global_contexts: [] };
 
   const Index = () => {
     return (
