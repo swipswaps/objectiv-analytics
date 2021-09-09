@@ -1,12 +1,12 @@
-/**
- * AbstractContext
- */
 import { assign, Infer, literal, object, string, union } from 'superstruct';
 
+/**
+ * Abstract Contexts
+ */
 export const AbstractContext = object({
   id: string(),
+  _context_type: string(),
 });
-export type AbstractContext = Infer<typeof AbstractContext>;
 
 /**
  * AbstractLocationContext
@@ -17,7 +17,6 @@ export const AbstractLocationContext = assign(
     __location_context: literal(true),
   })
 );
-export type AbstractLocationContext = Infer<typeof AbstractLocationContext>;
 
 /**
  * AbstractSectionContext
@@ -28,7 +27,6 @@ export const AbstractSectionContext = assign(
     __section_context: literal(true),
   })
 );
-export type AbstractSectionContext = Infer<typeof AbstractLocationContext>;
 
 /**
  * AbstractItemContext
@@ -39,7 +37,6 @@ export const AbstractItemContext = assign(
     __item_context: literal(true),
   })
 );
-export type AbstractItemContext = Infer<typeof AbstractItemContext>;
 
 /**
  * AbstractActionContext
@@ -51,18 +48,38 @@ export const AbstractActionContext = assign(
     text: string(),
   })
 );
-export type AbstractActionContext = Infer<typeof AbstractActionContext>;
 
 /**
- * ElementContext aka SectionContext
+ * ElementContext
  */
-export const ElementContext = assign(
+export const SectionContext = assign(
   AbstractSectionContext,
   object({
     _context_type: literal('SectionContext'),
   })
 );
-export type SectionContext = Infer<typeof ElementContext>;
+
+/**
+ * WebDocumentContext
+ */
+export const WebDocumentContext = assign(
+  AbstractSectionContext,
+  object({
+    _context_type: literal('WebDocumentContext'),
+    url: string(),
+  })
+);
+
+/**
+ * ScreenContext
+ */
+export const ScreenContext = assign(
+  AbstractSectionContext,
+  object({
+    _context_type: literal('ScreenContext'),
+    screen: string(),
+  })
+);
 
 /**
  * ExpandableSectionContext
@@ -73,7 +90,6 @@ export const ExpandableSectionContext = assign(
     _context_type: literal('ExpandableSectionContext'),
   })
 );
-export type ExpandableSectionContext = Infer<typeof ExpandableSectionContext>;
 
 /**
  * MediaPlayerContext
@@ -84,7 +100,6 @@ export const MediaPlayerContext = assign(
     _context_type: literal('MediaPlayerContext'),
   })
 );
-export type MediaPlayerContext = Infer<typeof MediaPlayerContext>;
 
 /**
  * NavigationContext
@@ -95,7 +110,6 @@ export const NavigationContext = assign(
     _context_type: literal('NavigationContext'),
   })
 );
-export type NavigationContext = Infer<typeof NavigationContext>;
 
 /**
  * OverlayContext
@@ -106,7 +120,16 @@ export const OverlayContext = assign(
     _context_type: literal('OverlayContext'),
   })
 );
-export type OverlayContext = Infer<typeof OverlayContext>;
+
+/**
+ * ItemContext
+ */
+export const ItemContext = assign(
+  AbstractItemContext,
+  object({
+    _context_type: literal('ItemContext'),
+  })
+);
 
 /**
  * InputContext
@@ -117,7 +140,16 @@ export const InputContext = assign(
     _context_type: literal('InputContext'),
   })
 );
-export type InputContext = Infer<typeof InputContext>;
+
+/**
+ * ActionContext
+ */
+export const ActionContext = assign(
+  AbstractActionContext,
+  object({
+    _context_type: literal('ActionContext'),
+  })
+);
 
 /**
  * ButtonContext
@@ -128,7 +160,6 @@ export const ButtonContext = assign(
     _context_type: literal('ButtonContext'),
   })
 );
-export type ButtonContext = Infer<typeof ButtonContext>;
 
 /**
  * LinkContext
@@ -140,45 +171,48 @@ export const LinkContext = assign(
     href: string(),
   })
 );
-export type LinkContext = Infer<typeof LinkContext>;
 
 /**
- * LocationContext
+ * Custom Struct to match any LocationContext
  */
-export const LocationContext = union([
-  ElementContext, // aka SectionContext
+export const AnyLocationContext = union([
+  SectionContext,
+  WebDocumentContext,
+  ScreenContext,
   ExpandableSectionContext,
   MediaPlayerContext,
   NavigationContext,
   OverlayContext,
+  ItemContext,
   InputContext,
+  ActionContext,
   ButtonContext,
   LinkContext,
 ]);
-export type LocationContext = Infer<typeof LocationContext>;
+export type AnyLocationContext = Infer<typeof AnyLocationContext>;
 
 /**
- * SectionContext
+ * Struct to match any SectionContext
  */
-export const SectionContext = union([
-  ElementContext, // aka SectionContext
+export const AnySectionContext = union([
+  SectionContext,
+  WebDocumentContext,
+  ScreenContext,
   ExpandableSectionContext,
   MediaPlayerContext,
   NavigationContext,
   OverlayContext,
 ]);
+export type AnySectionContext = Infer<typeof AnySectionContext>;
 
 /**
- * ItemContext
+ * Struct to match any ItemContext
  */
-export const ItemContext = union([InputContext, ButtonContext, LinkContext]);
+export const AnyItemContext = union([ItemContext, InputContext, ActionContext, ButtonContext, LinkContext]);
+export type AnyItemContext = Infer<typeof AnyItemContext>;
 
 /**
- * ActionContext
+ * Struct to match any ActionContext
  */
-export const ActionContext = union([ButtonContext, LinkContext]);
-
-/**
- * ClickableContext
- */
-export const ClickableContext = union([ActionContext, ExpandableSectionContext]);
+export const AnyActionContext = union([ActionContext, ButtonContext, LinkContext]);
+export type AnyActionContext = Infer<typeof AnyActionContext>;

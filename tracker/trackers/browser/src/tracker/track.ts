@@ -1,7 +1,13 @@
 import { getObjectKeys } from '@objectiv/tracker-core';
-import { boolean, create, func, Infer, is, object, optional, validate } from 'superstruct';
+import { boolean, create, func, Infer, is, object, optional, union, validate } from 'superstruct';
 import { v4 } from 'uuid';
-import { ClickableContext, InputContext, LocationContext, SectionContext } from '../Contexts';
+import {
+  AnyActionContext,
+  AnyLocationContext,
+  AnySectionContext,
+  ExpandableSectionContext,
+  InputContext,
+} from '../Contexts';
 import {
   StringifiedTrackingAttributes,
   stringifyBoolean,
@@ -38,15 +44,18 @@ export const TrackOptions = object({
 export type TrackOptions = Infer<typeof TrackOptions>;
 
 export const TrackParameters = object({
-  instance: LocationContext,
+  instance: AnyLocationContext,
   options: optional(TrackOptions),
   onError: optional(func()),
 });
 export type TrackParameters = {
-  instance: Infer<typeof LocationContext>;
+  instance: AnyLocationContext;
   options?: TrackOptions;
   onError?: TrackOnErrorCallback;
 };
+
+// Custom struct to match all Action Contexts + ExpandableSectionContext
+export const AnyClickableContext = union([AnyActionContext, ExpandableSectionContext]);
 
 export const track = (parameters: TrackParameters): TrackReturnValue => {
   try {
@@ -54,9 +63,10 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     const { instance, options } = create(parameters, TrackParameters);
 
     // Process options. Gather default attribute values
-    const trackClicks = options?.trackClicks ?? (is(instance, ClickableContext) ? true : undefined);
+    const trackClicks = options?.trackClicks ?? (is(instance, AnyClickableContext) ? true : undefined);
     const trackBlurs = options?.trackBlurs ?? (is(instance, InputContext) ? true : undefined);
-    const trackVisibility = options?.trackVisibility ?? (is(instance, SectionContext) ? { mode: 'auto' } : undefined);
+    const trackVisibility =
+      options?.trackVisibility ?? (is(instance, AnySectionContext) ? { mode: 'auto' } : undefined);
     const parentElementId = options?.parentTracker ? options.parentTracker[TrackingAttribute.elementId] : undefined;
 
     // Create output attributes object

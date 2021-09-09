@@ -14,7 +14,7 @@ import {
   union,
 } from 'superstruct';
 import { validate as validateUuid } from 'uuid';
-import { LocationContext } from './Contexts';
+import { AnyLocationContext } from './Contexts';
 import { TrackingAttribute } from './TrackingAttributes';
 
 /**
@@ -42,12 +42,12 @@ export const parseStruct = <T = unknown>(stringifiedContext: string | null, stru
 /**
  * Stringifier and Parser for Location Contexts
  */
-export const stringifyLocationContext = (contextObject: LocationContext) => {
-  return stringifyStruct(contextObject, LocationContext);
+export const stringifyLocationContext = (contextObject: AnyLocationContext) => {
+  return stringifyStruct(contextObject, AnyLocationContext);
 };
 
 export const parseLocationContext = (stringifiedContext: string | null) => {
-  return parseStruct(stringifiedContext, LocationContext);
+  return parseStruct(stringifiedContext, AnyLocationContext);
 };
 
 /**
@@ -93,7 +93,7 @@ export const parseVisibilityAttribute = (stringifiedVisibility: string | null) =
 export const TrackingAttributes = object({
   [TrackingAttribute.elementId]: Uuid,
   [TrackingAttribute.parentElementId]: optional(Uuid),
-  [TrackingAttribute.context]: LocationContext,
+  [TrackingAttribute.context]: AnyLocationContext,
   [TrackingAttribute.trackClicks]: optional(boolean()),
   [TrackingAttribute.trackBlurs]: optional(boolean()),
   [TrackingAttribute.trackVisibility]: optional(TrackingAttributeVisibility),

@@ -10,7 +10,7 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import ExtendableError from 'es6-error';
-import { BrowserTracker, LocationContext } from '../';
+import { BrowserTracker, AnyLocationContext } from '../';
 import { parseLocationContext } from '../structs';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
@@ -51,7 +51,7 @@ export const trackEvent = (parameters: TrackEventParameters) => {
     const { eventFactory, element, tracker = window.objectiv.tracker } = parameters;
 
     // For trackable Elements traverse the DOM to reconstruct their Location
-    const locationStack: LocationContext[] = [];
+    const locationStack: AnyLocationContext[] = [];
     if (isTrackableElement(element)) {
       // Retrieve parent Tracked Elements
       const elementsStack = findTrackedParentElements(element).reverse();
