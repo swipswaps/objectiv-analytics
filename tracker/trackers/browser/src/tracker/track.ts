@@ -62,11 +62,15 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     // Validate input
     const { instance, options } = create(parameters, TrackParameters);
 
+    // Determine Context type
+    const isClickable = (is(instance, AnyClickableContext));
+    const isInput = (is(instance, InputContext));
+    const isSection = (is(instance, AnySectionContext));
+
     // Process options. Gather default attribute values
-    const trackClicks = options?.trackClicks ?? (is(instance, AnyClickableContext) ? true : undefined);
-    const trackBlurs = options?.trackBlurs ?? (is(instance, InputContext) ? true : undefined);
-    const trackVisibility =
-      options?.trackVisibility ?? (is(instance, AnySectionContext) ? { mode: 'auto' } : undefined);
+    const trackClicks = options?.trackClicks ?? (isClickable ? true : undefined);
+    const trackBlurs = options?.trackBlurs ?? (isInput ? true : undefined);
+    const trackVisibility = options?.trackVisibility ?? (isSection ? { mode: 'auto' } : undefined);
     const parentElementId = options?.parentTracker ? options.parentTracker[TrackingAttribute.elementId] : undefined;
 
     // Create output attributes object
