@@ -309,7 +309,7 @@ def get_classes(objects: Dict[str, dict]) -> List[str]:
 
 def main():
     # get schema
-    event_schema = get_config_event_schema()
+    event_schema = get_collector_config().event_schema
 
     with open('schema.py', 'w') as output:
         # some imports

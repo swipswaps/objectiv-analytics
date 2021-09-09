@@ -97,7 +97,8 @@ class CollectorConfig(NamedTuple):
     cookie: Optional[CookieConfig]
     error_reporting: bool
     output: OutputConfig
-    schema: EventSchema
+    event_schema: EventSchema
+    event_list_schema: EventListSchema
 
 
 def get_config_output_aws() -> Optional[AwsOutputConfig]:
@@ -184,7 +185,8 @@ def init_collector_config():
         cookie=get_config_cookie(),
         error_reporting=SCHEMA_VALIDATION_ERROR_REPORTING,
         output=get_config_output(),
-        schema=get_config_event_schema()
+        event_schema=get_config_event_schema(),
+        event_list_schema=get_config_event_list_schema()
     )
 
 
