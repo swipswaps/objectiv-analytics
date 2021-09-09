@@ -143,7 +143,7 @@ class EventSubSchema:
 
     def get_event_schema(self, event_type: EventType) -> Optional[Dict[str, Any]]:
         """
-        Give the json-schema for a specific context_type, or None if the context type doesn't exist.
+        Give the json-schema for a specific event_type, or None if the event type doesn't exist.
         """
         if event_type not in self.schema:
             return None

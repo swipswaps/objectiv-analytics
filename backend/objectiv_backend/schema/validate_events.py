@@ -45,7 +45,6 @@ def get_event_list_schema() -> Dict[str, Any]:
     """
     event_schema = get_config_event_schema()
     events = event_schema.events.schema
-    contexts = event_schema.contexts.schema
 
     # we use AbstractEvent as the blueprint for what an event should look like
     abstract_event = events['AbstractEvent']
