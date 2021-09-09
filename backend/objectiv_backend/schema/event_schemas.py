@@ -104,10 +104,10 @@ class EventSubSchema:
         context_types: Set[ContextType] = set(self.schema[event_type].get('requiresContext', []))
         parents: List[EventType] = self.schema[event_type].get('parents', [])
         for parent in parents:
-            parent_event_types, parent_types = \
+            parent_event_types, parent_context_types = \
                 self._compile_parents_and_contexts(event_type=parent, count=count - 1)
             event_types |= parent_event_types
-            context_types |= parent_types
+            context_types |= parent_context_types
 
         result = event_types, context_types
         self._compiled_all_parents_and_required_contexts[event_type] = result
@@ -178,9 +178,9 @@ class ContextSubSchema:
         """
         self.schema: Dict[str, Any] = {}
         # _compiled_* fields are derived fields that need to be calculated after self.schema is set.
-        self._compiled_list_types = []
-        self._compiled_all_parent_types = {}
-        self._compiled_all_child_types = {}
+        self._compiled_list_context_types = []
+        self._compiled_all_parent_context_types = {}
+        self._compiled_all_child_context_types = {}
 
     CONTEXT_NAME_REGEX = r'^[A-Z][a-zA-Z0-9]*Context$'
 
@@ -223,36 +223,36 @@ class ContextSubSchema:
 
     def _compile(self):
         """
-        1) Pre calculate the return values of list_types(), get_all_parent_types(),
-            and get_all_child_types().
+        1) Pre calculate the return values of list_context_types(), get_all_parent_context_types(),
+            and get_all_child_context_types().
         2) Makes sure the event hierarchy has no cycles, and all parent-reference exist.
         Must be called after the schema has changed.
         """
-        self._compiled_list_types = sorted(self.schema.keys())
-        self._compiled_all_parent_types = {}
-        self._compiled_all_child_types = {}
+        self._compiled_list_context_types = sorted(self.schema.keys())
+        self._compiled_all_parent_context_types = {}
+        self._compiled_all_child_context_types = {}
         # Calculate parent relations, and do some basic checks on graph
-        for context_type in self._compiled_list_types:
-            self._compile_parent_types(context_type)
+        for context_type in self._compiled_list_context_types:
+            self._compile_parent_context_types(context_type)
 
         # Calculate child relations based on parent relations
-        for context_type in self._compiled_list_types:
+        for context_type in self._compiled_list_context_types:
             children: Set[str] = set()
-            for ct in self._compiled_list_types:
-                if context_type in self._compiled_all_parent_types[ct]:
+            for ct in self._compiled_list_context_types:
+                if context_type in self._compiled_all_parent_context_types[ct]:
                     children.add(ct)
-            self._compiled_all_child_types[context_type] = children
+            self._compiled_all_child_context_types[context_type] = children
 
-    def _compile_parent_types(self,
+    def _compile_parent_context_types(self,
                                       context_type: ContextType,
                                       count=MAX_HIERARCHY_DEPTH) -> Set[ContextType]:
         """
         * Give the parent context-types of the given context-type (including the given type itself).
-        * Fill self._compiled_all_parent_types for the explored context_types.
+        * Fill self._compiled_all_parent_context_types for the explored context_types.
         * Check for two kind of type-graph errors: 1) non-existing parent context references, 2) cycles
         """
-        if context_type in self._compiled_all_parent_types:
-            return self._compiled_all_parent_types[context_type]
+        if context_type in self._compiled_all_parent_context_types:
+            return self._compiled_all_parent_context_types[context_type]
 
         if count == 0:
             # This is a very crude way to check for cycles, but it works.
@@ -265,25 +265,25 @@ class ContextSubSchema:
         result: Set[ContextType] = {context_type}
         parents: List[ContextType] = self.schema[context_type].get('parents', [])
         for parent in parents:
-            result |= self._compile_parent_types(parent, count=count-1)
-        self._compiled_all_parent_types[context_type] = result
+            result |= self._compile_parent_context_types(parent, count=count-1)
+        self._compiled_all_parent_context_types[context_type] = result
         return result
 
-    def list_types(self) -> List[ContextType]:
+    def list_context_types(self) -> List[ContextType]:
         """ Give a alphabetically sorted list of all context-types. """
-        return self._compiled_list_types
+        return self._compiled_list_context_types
 
-    def get_all_parent_types(self, context_type: ContextType) -> Set[ContextType]:
+    def get_all_parent_context_types(self, context_type: ContextType) -> Set[ContextType]:
         """
         Given a context_type, give a set with that context_type and all its parent context_types
         """
-        return self._compiled_all_parent_types.get(context_type, {context_type})
+        return self._compiled_all_parent_context_types.get(context_type, {context_type})
 
-    def get_all_child_types(self, context_type: ContextType) -> Set[ContextType]:
+    def get_all_child_context_types(self, context_type: ContextType) -> Set[ContextType]:
         """
         Given a context_type, give a set with that context_type and all its child context_types
         """
-        return self._compiled_all_child_types.get(context_type, set())
+        return self._compiled_all_child_context_types.get(context_type, set())
 
     def get_context_schema(self, context_type: ContextType) -> Optional[Dict[str, Any]]:
         """
@@ -291,7 +291,7 @@ class ContextSubSchema:
         """
         if context_type not in self.schema:
             return None
-        all_classes = self.get_all_parent_types(context_type)
+        all_classes = self.get_all_parent_context_types(context_type)
         properties = {}
         for klass in all_classes:
             class_properties = deepcopy(self.schema[klass].get("properties", {}))
@@ -366,7 +366,7 @@ class EventSchema:
         all_required_contexts = set()
         for event_type in events.list_event_types():
             all_required_contexts |= events.get_all_required_contexts(event_type)
-        all_contexts = contexts.list_types()
+        all_contexts = contexts.list_context_types()
         missing_contexts = all_required_contexts - set(all_contexts)
         if missing_contexts:
             raise ValueError(f'Contexts required by events are not defined in context sub schema: '
@@ -399,14 +399,14 @@ class EventSchema:
     def is_valid_event_type(self, event_type: EventType) -> bool:
         return self.events.is_valid_event_type(event_type=event_type)
 
-    def list_types(self) -> List[ContextType]:
-        return self.contexts.list_types()
+    def list_context_types(self) -> List[ContextType]:
+        return self.contexts.list_context_types()
 
-    def get_all_parent_types(self, context_type: ContextType) -> Set[ContextType]:
-        return self.contexts.get_all_parent_types(context_type=context_type)
+    def get_all_parent_context_types(self, context_type: ContextType) -> Set[ContextType]:
+        return self.contexts.get_all_parent_context_types(context_type=context_type)
 
-    def get_all_child_types(self, context_type: ContextType) -> Set[ContextType]:
-        return self.contexts.get_all_child_types(context_type=context_type)
+    def get_all_child_context_types(self, context_type: ContextType) -> Set[ContextType]:
+        return self.contexts.get_all_child_context_types(context_type=context_type)
 
     def get_context_schema(self, context_type: ContextType) -> Optional[Dict[str, Any]]:
         return self.contexts.get_context_schema(context_type=context_type)
@@ -430,7 +430,7 @@ def get_event_schema(schema_extensions_directory: Optional[str]) -> EventSchema:
     schema_extension_directory.
     Files in the extension directory qualify for loading if their name matches [a-z0-9_]+\\.json.
     The files are loaded in alphabetical order.
-    
+
     :param schema_extensions_directory: optional directory path.
     """
 

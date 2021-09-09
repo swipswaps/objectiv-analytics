@@ -152,18 +152,18 @@ def _validate_required_contexts(event_schema: EventSchema, event: EventData) -> 
     event_name = event['_type']
     global_contexts = event['global_contexts']
     location_stack = event['location_stack']
-    required_types = event_schema.get_all_required_contexts(event_name)
+    required_context_types = event_schema.get_all_required_contexts(event_name)
     actual_types = set()
     for context in global_contexts:
-        actual_types |= event_schema.get_all_parent_types(context['_type'])
+        actual_types |= event_schema.get_all_parent_context_types(context['_type'])
     for context in location_stack:
-        actual_types |= event_schema.get_all_parent_types(context['_type'])
+        actual_types |= event_schema.get_all_parent_context_types(context['_type'])
 
-    if not required_types.issubset(actual_types):
+    if not required_context_types.issubset(actual_types):
         error_info = ErrorInfo(
             event,
-            f'Required contexts missing: {required_types - actual_types} '
-            f'required_contexts: {required_types} - '
+            f'Required contexts missing: {required_context_types - actual_types} '
+            f'required_contexts: {required_context_types} - '
             f'found: {actual_types}'
         )
         return [error_info]
@@ -179,13 +179,13 @@ def _validate_contexts(event_schema: EventSchema, event: EventData) -> List[Erro
     errors = []
     for context in global_contexts:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
-        if 'AbstractGlobalContext' not in event_schema.get_all_parent_types(context['_type']):
+        if 'AbstractGlobalContext' not in event_schema.get_all_parent_context_types(context['_type']):
             errors.append(ErrorInfo(context, 'Not an instance of GlobalContext'))
 
         errors.extend(errors_context)
     for context in location_stack:
         errors_context = _validate_context_item(event_schema=event_schema, context=context)
-        if 'AbstractLocationContext' not in event_schema.get_all_parent_types(context['_type']):
+        if 'AbstractLocationContext' not in event_schema.get_all_parent_context_types(context['_type']):
             errors.append(ErrorInfo(context, 'Not an instance of LocationContext'))
 
         errors.extend(errors_context)

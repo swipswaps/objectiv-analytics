@@ -12,14 +12,14 @@ from objectiv_backend.schema.event_schemas import EventSchema
 def test_create_schema_empty():
     schema = EventSchema()
     assert schema.list_event_types() == []
-    assert schema.list_types() == []
+    assert schema.list_context_types() == []
     assert schema.version == {}
 
 
 def test_create_schema_extend():
     schema = EventSchema().get_extended_schema(_SIMPLE_BASE_SCHEMA)
     assert schema.list_event_types() == ['BaseEvent', 'Child2Event', 'ChildEvent', 'GrandChildEvent']
-    assert schema.list_types() == ['BaseContext', 'OtherContext']
+    assert schema.list_context_types() == ['BaseContext', 'OtherContext']
     assert schema.version == {'test_schema': '1.0.0'}
 
 
@@ -29,7 +29,7 @@ def test_create_schema_extend_multiple():
         .get_extended_schema(_EXTENSION_TO_SIMPLE_BASE_SCHEMA)
     assert schema.list_event_types() == \
            ['BaseEvent', 'Child2Event', 'ChildEvent', 'GrandChildEvent', 'GreatGrandChildEvent']
-    assert schema.list_types() == ['BaseContext', 'ExtraContext', 'OtherContext']
+    assert schema.list_context_types() == ['BaseContext', 'ExtraContext', 'OtherContext']
     expected_version = {
         'extension_to_test_schema': '0.5',
         'test_schema': '1.0.0'
@@ -133,28 +133,28 @@ def test_all_required_contexts():
 
 def test_list_types():
     schema = _get_schema()
-    assert schema.list_types() == ['BaseContext', 'ExtraContext', 'OtherContext']
+    assert schema.list_context_types() == ['BaseContext', 'ExtraContext', 'OtherContext']
 
 
-def test_all_parent_types():
+def test_all_parent_context_types():
     schema = _get_schema()
     # If we get a non-existing context we don't complain. Because in operation if we get more data (or
     # more contexts) than required then that's fine.
     # todo: check whether above is good idea. or should we put the leniency in another spot in the code?
-    assert schema.get_all_parent_types('X') == {'X'}
-    assert schema.get_all_parent_types('BaseContext') == {'BaseContext'}
-    assert schema.get_all_parent_types('OtherContext') == {'BaseContext', 'OtherContext'}
-    assert schema.get_all_parent_types('ExtraContext') == \
+    assert schema.get_all_parent_context_types('X') == {'X'}
+    assert schema.get_all_parent_context_types('BaseContext') == {'BaseContext'}
+    assert schema.get_all_parent_context_types('OtherContext') == {'BaseContext', 'OtherContext'}
+    assert schema.get_all_parent_context_types('ExtraContext') == \
            {'BaseContext', 'OtherContext', 'ExtraContext'}
 
 
-def test_all_child_types():
+def test_all_child_context_types():
     schema = _get_schema()
-    assert schema.get_all_child_types('X') == set()
-    assert schema.get_all_child_types('BaseContext') == \
+    assert schema.get_all_child_context_types('X') == set()
+    assert schema.get_all_child_context_types('BaseContext') == \
            {'BaseContext', 'OtherContext', 'ExtraContext'}
-    assert schema.get_all_child_types('OtherContext') == {'ExtraContext', 'OtherContext'}
-    assert schema.get_all_child_types('ExtraContext') == {'ExtraContext'}
+    assert schema.get_all_child_context_types('OtherContext') == {'ExtraContext', 'OtherContext'}
+    assert schema.get_all_child_context_types('ExtraContext') == {'ExtraContext'}
 
 
 def test_get_context_schema():

@@ -26,12 +26,12 @@ def hydrate_types_into_event(event_schema: EventSchema, event: EventData) -> Eve
     global_contexts = event['global_contexts']
     for context in global_contexts:
         context["_types"] = sorted(
-            event_schema.get_all_parent_types(context["_type"])
+            event_schema.get_all_parent_context_types(context["_type"])
         )
     location_stack = event['location_stack']
     for context in location_stack:
         context["_types"] = sorted(
-            event_schema.get_all_parent_types(context["_type"])
+            event_schema.get_all_parent_context_types(context["_type"])
         )
     return event
 
