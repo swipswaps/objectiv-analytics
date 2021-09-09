@@ -1,7 +1,7 @@
 from typing import List, Dict, Any
 import re
 
-from objectiv_backend.common.config import get_config_event_schema
+from objectiv_backend.common.config import get_collector_config
 
 
 def get_type(property_description: Dict[str, Any]) -> str:
@@ -307,7 +307,7 @@ def get_classes(objects: Dict[str, dict]) -> List[str]:
 
 def main():
     # get schema
-    event_schema = get_config_event_schema()
+    event_schema = get_collector_config().event_schema
 
     with open('schema.py', 'w') as output:
         # some imports
