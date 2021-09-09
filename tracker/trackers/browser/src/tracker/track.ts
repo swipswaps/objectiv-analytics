@@ -63,9 +63,9 @@ export const track = (parameters: TrackParameters): TrackReturnValue => {
     const { instance, options } = create(parameters, TrackParameters);
 
     // Determine Context type
-    const isClickable = (is(instance, AnyClickableContext));
-    const isInput = (is(instance, InputContext));
-    const isSection = (is(instance, AnySectionContext));
+    const isClickable = is(instance, AnyClickableContext);
+    const isInput = is(instance, InputContext);
+    const isSection = is(instance, AnySectionContext);
 
     // Process options. Gather default attribute values
     const trackClicks = options?.trackClicks ?? (isClickable ? true : undefined);
