@@ -13,7 +13,7 @@ from jsonschema import ValidationError
 
 from objectiv_backend.schema.event_schemas import EventSchema, get_event_schema
 from objectiv_backend.common.config import \
-    get_config_timestamp_validation, get_config_event_schema, get_config_event_list_schema
+    get_config_timestamp_validation, get_collector_config
 
 from objectiv_backend.common.types import EventData
 
@@ -43,7 +43,7 @@ def get_event_list_schema() -> Dict[str, Any]:
 
     :return: a dictionary containing a JSON schema like string to validate an array of events
     """
-    event_schema = get_config_event_schema()
+    event_schema = get_collector_config().event_schema
     events = event_schema.events.schema
 
     # we use AbstractEvent as the blueprint for what an event should look like
@@ -63,7 +63,7 @@ def get_event_list_schema() -> Dict[str, Any]:
     # the schema wants a list of abstract events. As that is not a valid JSON type,
     # we replace that type with the more generic 'object' type, and the actual definition of
     # an abstract event
-    event_list_schema = get_config_event_list_schema()
+    event_list_schema = get_collector_config().event_list_schema
     if 'events' in event_list_schema['properties'] and \
             'items' in event_list_schema['properties']['events'] and \
             'type' in event_list_schema['properties']['events']['items'] and \
