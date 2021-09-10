@@ -7,7 +7,7 @@ import pytest
 
 from sql_models.graph_operations import get_graph_nodes_info, get_node, get_node_info_selected_node
 from sql_models.model import RefPath, SqlModel
-from tests.sql_models.util import ValueModel, RefModel, JoinModel
+from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel
 
 
 def get_simple_test_graph():

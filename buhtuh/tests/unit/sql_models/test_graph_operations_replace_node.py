@@ -6,7 +6,7 @@ There are a lot of cases to consider for that function, that's why this file has
     test_graph_operations.py
 """
 from sql_models.graph_operations import get_node, replace_node_in_graph, get_graph_nodes_info
-from tests.sql_models.util import ValueModel, RefModel, JoinModel, RefValueModel
+from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel, RefValueModel
 
 
 def test_replace_node_in_graph_trivial():
