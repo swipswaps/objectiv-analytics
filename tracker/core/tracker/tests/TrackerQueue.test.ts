@@ -1,5 +1,4 @@
 import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore } from '../src';
-import spyOn = jest.spyOn;
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -158,7 +157,7 @@ describe('TrackerQueue', () => {
     const testQueue = new TrackerQueue();
     testQueue.setProcessFunction(processFunctionSpy);
 
-    spyOn(testQueue, 'run');
+    jest.spyOn(testQueue, 'run');
     expect(testQueue.run).not.toHaveBeenCalled();
 
     testQueue.startRunner();

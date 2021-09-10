@@ -341,7 +341,7 @@ const files = fs.readdirSync(schema_dir);
 // read all schema files
 const all_schema = {};
 files.forEach((fn) => {
-  if (fn.match(/[a-z0-9_]+\.json5?$/) && !fn.match('event_list.json5') ) {
+  if (fn.match(/[a-z0-9_]+\.json5?$/) && !fn.match('event_list.json5')) {
     const data = fs.readFileSync(schema_dir + fn, 'utf-8');
     all_schema[fn] = JSON5.parse(data, (key, value) => {
       // clean up `description` fields from json5 schema
