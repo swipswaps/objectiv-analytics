@@ -108,6 +108,7 @@ export class Tracker implements Contexts {
 
     // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
     if (this.transport && this.transport.isUsable()) {
+      // istanbul ignore next
       console.groupCollapsed(
         `Objectiv: Tracking ${trackedEvent.event} ${
           this.location_stack.length
@@ -120,6 +121,7 @@ export class Tracker implements Contexts {
         }`
       );
       console.log(`Event ID: ${trackedEvent.id}`);
+      // istanbul ignore next
       console.log(`Time: ${trackedEvent.time ?? 'none'}`);
       console.group(`Location Stack:`);
       console.log(trackedEvent.location_stack);
