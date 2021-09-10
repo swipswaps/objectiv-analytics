@@ -26,7 +26,8 @@ TODO: more information for a first time user of the library. Examples, Links to 
 ## See Also
 * [Pandas](https://github.com/pandas-dev/pandas): the inspiration for the API.
    Pandas has excellent [documentation](https://pandas.pydata.org/docs/) for its API.
-* SQL-models: Related project that is used for generating the underlying sql-queries.
+* SQL-models: Sub-project that is used for generating the underlying sql-queries. Can be found in the
+              `sql_models` package
 
 ## License
 TODO
