@@ -2,4 +2,4 @@
 
 tests:
 	pytest tests/
-	mypy buhtuh
+	mypy buhtuh sql_models
