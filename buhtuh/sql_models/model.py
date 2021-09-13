@@ -13,7 +13,7 @@ import hashlib
 from abc import abstractmethod, ABCMeta
 from copy import deepcopy
 from enum import Enum
-from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type
+from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union
 
 from sql_models.util import extract_format_fields
 
@@ -29,6 +29,9 @@ REFERENCE_UNIQUE_FIELD = 'id'
 
 
 RefPath = Tuple[str, ...]
+
+T = TypeVar('T', bound='SqlModelSpec')
+TB = TypeVar('TB', bound='SqlModelBuilder')
 
 
 class SqlModelSpec:
@@ -85,8 +88,29 @@ class SqlModelSpec:
         # If we switch to jinja templates, then we won't need this function anymore.
         return {key: str(val) for key, val in properties.items()}
 
-
-T = TypeVar('T', bound='SqlModelSpec')
+    def assert_adheres_to_spec(self,
+                               references: Dict[str, 'SqlModel'],
+                               properties: Dict[str, Any]):
+        """
+        Verify that the references and properties adhere to the specifications of self.
+        :raise Exception: If a reference or property is missing
+        """
+        spec = self
+        reference_keys = set(references.keys())
+        property_keys = set(properties.keys())
+        if reference_keys != spec.spec_references:
+            raise Exception(f'Provided references for model {spec.__class__.__name__} '
+                            f'do not match required references: '
+                            f'{sorted(reference_keys)} != {sorted(spec.spec_references)}')
+        for reference_key, reference_value in references.items():
+            if not isinstance(reference_value, SqlModel):
+                raise Exception(f'Provided reference for model {spec.__class__.__name__} is not an '
+                                f'instance of SqlModel. '
+                                f'Reference: {reference_key}, type: {type(reference_value)}')
+        if property_keys != spec.spec_properties:
+            raise Exception(f'Provided properties for model {spec.__class__.__name__} '
+                            f'do not match required properties: '
+                            f'{sorted(property_keys)} != {sorted(spec.spec_properties)}')
 
 
 class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
@@ -108,12 +132,12 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
     def __init__(self, **values: Any):
         # initialize values first, so any indirect calls to references and properties
         # in super.__init__() will work
-        self._references = {}
-        self._properties = {}
+        self._references: Dict[str, Union[SqlModelBuilder, SqlModel]] = {}
+        self._properties: Dict[str, Any] = {}
         super().__init__()
         self.set_values(**values)
         self.materialization = Materialization.CTE
-        self._cache_created_instances: Dict[str, 'SqlModel[T]'] = {}
+        self._cache_created_instances: Dict[str, 'SqlModel'] = {}
 
     @property
     def spec_references(self) -> Set[str]:
@@ -143,7 +167,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         return deepcopy(self._properties)
 
     @classmethod
-    def build(cls: Type[T], **values) -> 'SqlModel[T]':
+    def build(cls: Type[T], **values) -> 'SqlModel[TB]':
         """
         Class method that instantiates this SqlModelBuilder class, and uses it to
         recursively instantiate SqlModel[T].
@@ -151,10 +175,10 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         This might mutate referenced SqlModelBuilder objects, see instantiate_recursively()
         for more information.
         """
-        builder_instance = cls(**values)
+        builder_instance: TB = cls(**values)  # type: ignore
         return builder_instance.instantiate_recursively()
 
-    def instantiate_recursively(self: T) -> 'SqlModel[T]':
+    def instantiate_recursively(self: TB) -> 'SqlModel[TB]':
         """
         Creates an instance of SqlModel[T] like instantiate(), but unlike instantiate()
         this will convert references that are SqlModelBuilder to SqlModel too.
@@ -179,11 +203,11 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
                                     f'type {type(reference_value)}.')
         return self.instantiate()
 
-    def __call__(self: T, **values) -> 'SqlModel[T]':
+    def __call__(self: TB, **values) -> 'SqlModel[TB]':
         self.set_values(**values)
         return self.instantiate()
 
-    def instantiate(self: T) -> 'SqlModel[T]':
+    def instantiate(self: TB) -> 'SqlModel[TB]':
         """
         Create an instance of SqlModel[T] based on the properties, references,
         materialization, and properties_to_sql of self.
@@ -202,7 +226,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
             self._cache_created_instances[instance.hash] = instance
         return self._cache_created_instances[instance.hash]
 
-    def set_values(self: T, **values: Any) -> T:
+    def set_values(self: TB, **values: Any) -> TB:
         """
         Set values that can either be references or properties
         :param values:
@@ -221,7 +245,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
                                  f'Valid properties: {self.spec_properties}.')
         return self
 
-    def set_materialization(self: T, materialization: Materialization) -> T:
+    def set_materialization(self: TB, materialization: Materialization) -> TB:
         """
         Set the materialization
         :return: self
@@ -234,30 +258,6 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         Raises an Exception if either references or properties are missing
         """
         self.assert_adheres_to_spec(references=self.references, properties=self.properties)
-
-    def assert_adheres_to_spec(self,
-                               references: Dict[str, 'SqlModel'],
-                               properties: Dict[str, Any]):
-        """
-        Verify that the references and properties adhere to the specifications of self.
-        :raise Exception: If a reference or property is missing
-        """
-        spec = self
-        reference_keys = set(references.keys())
-        property_keys = set(properties.keys())
-        if reference_keys != spec.spec_references:
-            raise Exception(f'Provided references for model {spec.__class__.__name__} '
-                            f'do not match required references: '
-                            f'{sorted(reference_keys)} != {sorted(spec.spec_references)}')
-        for reference_key, reference_value in references.items():
-            if not isinstance(reference_value, SqlModel):
-                raise Exception(f'Provided reference for model {spec.__class__.__name__} is not an '
-                                f'instance of SqlModel. '
-                                f'Reference: {reference_key}, type: {type(reference_value)}')
-        if property_keys != spec.spec_properties:
-            raise Exception(f'Provided properties for model {spec.__class__.__name__} '
-                            f'do not match required properties: '
-                            f'{sorted(property_keys)} != {sorted(spec.spec_properties)}')
 
 
 class SqlModel(Generic[T]):

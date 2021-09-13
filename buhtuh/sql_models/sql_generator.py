@@ -120,6 +120,8 @@ def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     ctes = raw_sql_to_selects(sql)
     result: List[SemiCompiledTuple] = []
     for cte in ctes[:-1]:
+        # For all CTEs the name should be set. Only for the final select (== cte[-1]) it will be None.
+        assert cte.name is not None
         result.append(SemiCompiledTuple(cte_name=cte.name, sql=cte.select_sql))
     result.append(SemiCompiledTuple(cte_name=model_to_cte_name(model), sql=ctes[-1].select_sql))
 
