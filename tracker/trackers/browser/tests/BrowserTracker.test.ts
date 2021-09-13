@@ -120,7 +120,7 @@ describe('BrowserTracker', () => {
 
     it('should auto-track Application, WebDocument and WebDevice Contexts as global_contexts by default', async () => {
       const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
-      const testEvent = new TrackerEvent({ event: 'test-event' });
+      const testEvent = new TrackerEvent({ _type: 'test-event' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testEvent.global_contexts).toHaveLength(0);
       expect(testEvent.location_stack).toHaveLength(0);
@@ -131,7 +131,7 @@ describe('BrowserTracker', () => {
       expect(trackedEvent.location_stack).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            _context_type: 'WebDocumentContext',
+            _type: 'WebDocumentContext',
             id: '#document',
             url: 'http://localhost/',
           }),
@@ -142,11 +142,11 @@ describe('BrowserTracker', () => {
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            _context_type: 'ApplicationContext',
+            _type: 'ApplicationContext',
             id: 'app-id',
           }),
           expect.objectContaining({
-            _context_type: 'DeviceContext',
+            _type: 'DeviceContext',
             id: 'device',
             user_agent: USER_AGENT_MOCK_VALUE,
           }),

@@ -16,7 +16,7 @@ describe('XMLHttpRequestTransport', () => {
   const MOCK_ENDPOINT = '/test-endpoint';
 
   const testEvent = new TrackerEvent({
-    event: 'test-event',
+    _type: 'test-event',
   });
 
   it('should send using `xhr` with the default xhr function', async () => {

@@ -65,7 +65,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
-        _context_type: 'SectionContext',
+        _type: 'SectionContext',
         id: 'test',
       }),
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -84,7 +84,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
-        _context_type: 'SectionContext',
+        _type: 'SectionContext',
         id: 'test',
       }),
       [TrackingAttribute.trackClicks]: 'false',
@@ -100,7 +100,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
-        _context_type: 'SectionContext',
+        _type: 'SectionContext',
         id: 'test',
       }),
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -112,7 +112,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
-        _context_type: 'SectionContext',
+        _type: 'SectionContext',
         id: 'test',
       }),
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -130,7 +130,7 @@ describe('track', () => {
         __location_context: true,
         __item_context: true,
         __action_context: true,
-        _context_type: 'ButtonContext',
+        _type: 'ButtonContext',
         id: 'test-button',
         text: 'Click Me',
       }),
@@ -148,7 +148,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
-        _context_type: 'SectionContext',
+        _type: 'SectionContext',
         id: 'test-section',
       }),
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -167,7 +167,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
-        _context_type: 'ExpandableSectionContext',
+        _type: 'ExpandableSectionContext',
         id: 'test-expandable',
       }),
       [TrackingAttribute.trackClicks]: 'true',
@@ -185,7 +185,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
-        _context_type: 'InputContext',
+        _type: 'InputContext',
         id: 'test-input',
       }),
       [TrackingAttribute.trackBlurs]: 'true',
@@ -205,7 +205,7 @@ describe('track', () => {
         __location_context: true,
         __item_context: true,
         __action_context: true,
-        _context_type: 'LinkContext',
+        _type: 'LinkContext',
         id: 'link',
         text: 'link',
         href: '/test',
@@ -224,7 +224,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
-        _context_type: 'MediaPlayerContext',
+        _type: 'MediaPlayerContext',
         id: 'test-media-player',
       }),
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -241,7 +241,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
-        _context_type: 'NavigationContext',
+        _type: 'NavigationContext',
         id: 'test-nav',
       }),
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',
@@ -258,7 +258,7 @@ describe('track', () => {
       [TrackingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
-        _context_type: 'OverlayContext',
+        _type: 'OverlayContext',
         id: 'test-overlay',
       }),
       [TrackingAttribute.trackVisibility]: '{"mode":"auto"}',

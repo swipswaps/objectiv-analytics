@@ -3,7 +3,7 @@ import { DebugTransport } from '../src/';
 
 describe('DebugTransport', () => {
   const testEvent = new TrackerEvent({
-    event: 'test-event',
+    _type: 'test-event',
   });
 
   it('should `console.debug` the event', async () => {

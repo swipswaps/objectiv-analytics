@@ -5,7 +5,7 @@ import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from 
 const MOCK_ENDPOINT = 'http://test-endpoint';
 
 const testEvent = new TrackerEvent({
-  event: 'test-event',
+  _type: 'test-event',
 });
 
 describe('FetchAPITransport', () => {

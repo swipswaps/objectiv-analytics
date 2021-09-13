@@ -24,12 +24,12 @@ describe('WebDocumentLoadedEvent', () => {
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
       __non_interactive_event: true,
-      event: 'DocumentLoadedEvent',
+      _type: 'DocumentLoadedEvent',
       id: expect.stringMatching(UUID_REGEX),
       global_contexts: [
         {
           __global_context: true,
-          _context_type: 'ApplicationContext',
+          _type: 'ApplicationContext',
           id: 'app-id',
         },
       ],
@@ -37,7 +37,7 @@ describe('WebDocumentLoadedEvent', () => {
         {
           __location_context: true,
           __section_context: true,
-          _context_type: 'WebDocumentContext',
+          _type: 'WebDocumentContext',
           id: '#document',
           url: '/test',
         },
@@ -80,12 +80,12 @@ describe('WebDocumentLoadedEvent', () => {
 
     expect(spyTransport.handle).toHaveBeenCalledWith({
       __non_interactive_event: true,
-      event: 'DocumentLoadedEvent',
+      _type: 'DocumentLoadedEvent',
       id: expect.stringMatching(UUID_REGEX),
       global_contexts: [
         {
           __global_context: true,
-          _context_type: 'ApplicationContext',
+          _type: 'ApplicationContext',
           id: 'app-id',
         },
       ],
@@ -93,7 +93,7 @@ describe('WebDocumentLoadedEvent', () => {
         {
           __location_context: true,
           __section_context: true,
-          _context_type: 'WebDocumentContext',
+          _type: 'WebDocumentContext',
           id: '#document',
           url: '/test',
         },

@@ -109,10 +109,10 @@ describe('trackEvent', () => {
       expect.objectContaining({
         ...makeClickEvent(),
         location_stack: expect.arrayContaining([
-          { __location_context: true, __section_context: true, _context_type: 'SectionContext', id: 'top' },
-          { __location_context: true, __section_context: true, _context_type: 'SectionContext', id: 'mid' },
-          { __location_context: true, __section_context: true, _context_type: 'SectionContext', id: 'div' },
-          { __location_context: true, __section_context: true, _context_type: 'SectionContext', id: 'test' },
+          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'top' },
+          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'mid' },
+          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'div' },
+          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'test' },
         ]),
       })
     );
@@ -144,9 +144,9 @@ describe('trackEvent', () => {
       expect.objectContaining({
         ...makeClickEvent(),
         location_stack: expect.arrayContaining([
-          { __location_context: true, __section_context: true, _context_type: 'SectionContext', id: 'top' },
-          { __location_context: true, __section_context: true, _context_type: 'SectionContext', id: 'mid' },
-          { __location_context: true, __section_context: true, _context_type: 'SectionContext', id: 'div' },
+          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'top' },
+          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'mid' },
+          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'div' },
         ]),
       })
     );

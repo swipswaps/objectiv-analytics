@@ -5,7 +5,7 @@ import { assign, Infer, literal, object, string, union } from 'superstruct';
  */
 export const AbstractContext = object({
   id: string(),
-  _context_type: string(),
+  _type: string(),
 });
 
 /**
@@ -55,7 +55,7 @@ export const AbstractActionContext = assign(
 export const SectionContext = assign(
   AbstractSectionContext,
   object({
-    _context_type: literal('SectionContext'),
+    _type: literal('SectionContext'),
   })
 );
 
@@ -65,7 +65,7 @@ export const SectionContext = assign(
 export const WebDocumentContext = assign(
   AbstractSectionContext,
   object({
-    _context_type: literal('WebDocumentContext'),
+    _type: literal('WebDocumentContext'),
     url: string(),
   })
 );
@@ -76,7 +76,7 @@ export const WebDocumentContext = assign(
 export const ScreenContext = assign(
   AbstractSectionContext,
   object({
-    _context_type: literal('ScreenContext'),
+    _type: literal('ScreenContext'),
     screen: string(),
   })
 );
@@ -87,7 +87,7 @@ export const ScreenContext = assign(
 export const ExpandableSectionContext = assign(
   AbstractSectionContext,
   object({
-    _context_type: literal('ExpandableSectionContext'),
+    _type: literal('ExpandableSectionContext'),
   })
 );
 
@@ -97,7 +97,7 @@ export const ExpandableSectionContext = assign(
 export const MediaPlayerContext = assign(
   AbstractSectionContext,
   object({
-    _context_type: literal('MediaPlayerContext'),
+    _type: literal('MediaPlayerContext'),
   })
 );
 
@@ -107,7 +107,7 @@ export const MediaPlayerContext = assign(
 export const NavigationContext = assign(
   AbstractSectionContext,
   object({
-    _context_type: literal('NavigationContext'),
+    _type: literal('NavigationContext'),
   })
 );
 
@@ -117,7 +117,7 @@ export const NavigationContext = assign(
 export const OverlayContext = assign(
   AbstractSectionContext,
   object({
-    _context_type: literal('OverlayContext'),
+    _type: literal('OverlayContext'),
   })
 );
 
@@ -127,7 +127,7 @@ export const OverlayContext = assign(
 export const ItemContext = assign(
   AbstractItemContext,
   object({
-    _context_type: literal('ItemContext'),
+    _type: literal('ItemContext'),
   })
 );
 
@@ -137,7 +137,7 @@ export const ItemContext = assign(
 export const InputContext = assign(
   AbstractItemContext,
   object({
-    _context_type: literal('InputContext'),
+    _type: literal('InputContext'),
   })
 );
 
@@ -147,7 +147,7 @@ export const InputContext = assign(
 export const ActionContext = assign(
   AbstractActionContext,
   object({
-    _context_type: literal('ActionContext'),
+    _type: literal('ActionContext'),
   })
 );
 
@@ -157,7 +157,7 @@ export const ActionContext = assign(
 export const ButtonContext = assign(
   AbstractActionContext,
   object({
-    _context_type: literal('ButtonContext'),
+    _type: literal('ButtonContext'),
   })
 );
 
@@ -167,7 +167,7 @@ export const ButtonContext = assign(
 export const LinkContext = assign(
   AbstractActionContext,
   object({
-    _context_type: literal('LinkContext'),
+    _type: literal('LinkContext'),
     href: string(),
   })
 );

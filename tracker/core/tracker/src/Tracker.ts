@@ -69,9 +69,7 @@ export class Tracker implements Contexts {
       `Objectiv: Tracker initialized ${
         this.location_stack.length
           ? '(' +
-            this.location_stack
-              .map((context) => `${context._context_type.replace('Context', '')}:${context.id}`)
-              .join(' > ') +
+            this.location_stack.map((context) => `${context._type.replace('Context', '')}:${context.id}`).join(' > ') +
             ')'
           : ''
       }`
@@ -110,11 +108,11 @@ export class Tracker implements Contexts {
     if (this.transport && this.transport.isUsable()) {
       // istanbul ignore next
       console.groupCollapsed(
-        `Objectiv: Tracking ${trackedEvent.event} ${
+        `Objectiv: Tracking ${trackedEvent._type} ${
           this.location_stack.length
             ? '(' +
               this.location_stack
-                .map((context) => `${context._context_type.replace('Context', '')}:${context.id}`)
+                .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
                 .join(' > ') +
               ')'
             : ''

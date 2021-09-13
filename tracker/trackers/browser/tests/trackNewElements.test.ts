@@ -44,7 +44,7 @@ describe('trackNewElements', () => {
       makeSectionVisibleEvent({
         location_stack: [
           expect.objectContaining({
-            _context_type: 'SectionContext',
+            _type: 'SectionContext',
             id: 'child-div',
           }),
         ],
