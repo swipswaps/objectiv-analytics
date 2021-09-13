@@ -1,0 +1,6 @@
+build/
+dist/
+buhtuh.egg-info/
+venv
+*.pyc
+__pycache__
