@@ -1,4 +1,5 @@
-.PHONY=test
+.PHONY: tests
 
-test:
+tests:
 	pytest tests/
+	mypy buhtuh

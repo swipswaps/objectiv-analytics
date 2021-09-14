@@ -9,7 +9,7 @@ import pytest
 from sql_models.graph_operations import get_node, get_graph_nodes_info
 from sql_models.model import SqlModel, RefPath, CustomSqlModel
 from sql_models.sql_generator import to_sql
-from tests.sql_models.util import RefModel, ValueModel, JoinModel
+from tests.unit.sql_models.util import RefModel, ValueModel, JoinModel
 
 
 def test_builder_cycles_raise_exception():

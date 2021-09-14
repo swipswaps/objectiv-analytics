@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 from typing import List
 
 from sql_models.sql_query_parser import raw_sql_to_selects, CteTuple
-from tests.sql_models.util import assert_roughly_equal_sql
+from tests.unit.sql_models.util import assert_roughly_equal_sql
 
 
 def test_parse_select():

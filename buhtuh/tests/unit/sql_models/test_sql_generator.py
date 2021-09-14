@@ -5,8 +5,8 @@ import pytest
 
 from sql_models.model import SqlModelBuilder
 from sql_models.sql_generator import to_sql
-from tests.sql_models.test_graph_operations import get_simple_test_graph
-from tests.sql_models.util import assert_roughly_equal_sql
+from tests.unit.sql_models.test_graph_operations import get_simple_test_graph
+from tests.unit.sql_models.util import assert_roughly_equal_sql
 
 
 def test_simple():
