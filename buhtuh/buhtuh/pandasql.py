@@ -43,8 +43,14 @@ class BuhTuhDataFrame:
         self._index = copy(index)
         self._data: Dict[str, BuhTuhSeries] = {}
         for key, value in series.items():
-            self._data[key] = series[key]
-            setattr(self, key, series[key])  # TODO: check that attribute doesn't exist yet?
+            if key != value.name:
+                raise ValueError(f'Keys in `series` should match the name of series. '
+                                 f'key: {key}, series.name: {value.name}')
+            self._data[key] = value
+            setattr(self, key, value)  # TODO: check that attribute doesn't exist yet?
+        if set(index.keys()) & set(series.keys()):
+            raise ValueError(f"The names of the index series and data series should not intersect. "
+                             f"Index series: {sorted(index.keys())} data series: {sorted(series.keys())}")
 
     @property
     def engine(self):
@@ -60,8 +66,11 @@ class BuhTuhDataFrame:
 
     @property
     def data(self) -> Dict[str, 'BuhTuhSeries']:
-        # TODO: this assume Series are immutable
         return copy(self._data)
+
+    @property
+    def all_series(self) -> Dict[str, 'BuhTuhSeries']:
+        return {**self.index, **self.data}
 
     @property
     def index_columns(self) -> List[str]:
@@ -347,21 +356,25 @@ class BuhTuhDataFrame:
         :param by: The series to group by
         :return: an object to perform aggregations on
         """
-        _by: Union[List[str], List['BuhTuhSeries']]
-        if isinstance(by, list):
-            _by = by
-        elif by is None:
-            _by = cast(List[str], [])
-        elif isinstance(by, str):
-            _by = [by]
+        group_by_columns: List['BuhTuhSeries'] = []
+        if isinstance(by, str):
+            group_by_columns.append(self.all_series[by])
         elif isinstance(by, BuhTuhSeries):
-            _by = [by]
+            group_by_columns.append(by)
+        elif isinstance(by, list):
+            for by_item in by:
+                if isinstance(by_item, str):
+                    group_by_columns.append(self.all_series[by_item])
+                if isinstance(by_item, BuhTuhSeries):
+                    group_by_columns.append(by_item)
+        elif by is None:
+            pass
         else:
             raise ValueError(f'Value of "by" should be either None, a string, or a Series.')
 
         # TODO We used to create a new instance of this df before passing it on. Did that have value?
 
-        return BuhTuhGroupBy(buh_tuh=self, group_by_columns=_by)
+        return BuhTuhGroupBy(buh_tuh=self, group_by_columns=group_by_columns)
 
     def sort_values(self, sort_order: Union[str,List[str],Dict[str,bool]] = None, ascending: List[bool] = None) -> 'BuhTuhDataFrame':
         if sort_order is None:
@@ -1193,21 +1206,16 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
 class BuhTuhGroupBy:
     def __init__(self,
                  buh_tuh: BuhTuhDataFrame,
-                 group_by_columns: Union[List[str], List['BuhTuhSeries']]):
+                 group_by_columns: List['BuhTuhSeries']):
         self.buh_tuh = buh_tuh
 
         all_series = {**buh_tuh.index, **buh_tuh.data}
         self.groupby = {}
         for col in group_by_columns:
-            if isinstance(col, str):
-                if col not in all_series:
-                    raise ValueError(f'groupby column `{col}` not found!')
-                self.groupby[col] = all_series[col]
-            elif isinstance(col, BuhTuhSeries):
-                assert col.base_node == buh_tuh.base_node and col.index == buh_tuh.index
-                self.groupby[col.name] = col
-            else:
+            if not isinstance(col, BuhTuhSeries):
                 raise ValueError(f'Unsupported groupby argument type: {type(col)}')
+            assert col.base_node == buh_tuh.base_node
+            self.groupby[col.name] = col
 
 
         if len(group_by_columns) == 0:
@@ -1308,7 +1316,7 @@ class BuhTuhGroupBy:
             index=self.groupby,
             series=selected_data
         )
-        return BuhTuhGroupBy(buh_tuh=buh_tuh, group_by_columns=list(self.groupby.keys()))
+        return BuhTuhGroupBy(buh_tuh=buh_tuh, group_by_columns=list(self.groupby.values()))
 
 
 def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],
