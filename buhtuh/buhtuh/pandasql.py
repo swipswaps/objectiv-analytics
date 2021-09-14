@@ -1,7 +1,7 @@
 import datetime
 from abc import abstractmethod, ABC
 from copy import copy
-from typing import List, Union, Dict, Any, Optional, Tuple, cast
+from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast
 
 import numpy
 import pandas as pd
@@ -193,7 +193,7 @@ class BuhTuhDataFrame:
             return df
         return list(df.data.values())[0]
 
-    def __getitem__(self, key: Union[str, List[str], 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
+    def __getitem__(self, key: Union[str, List[str], Set[str], 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
         """
         TODO: Comments
         :param key:
@@ -202,7 +202,7 @@ class BuhTuhDataFrame:
 
         if isinstance(key, str):
             return self.data[key]
-        if isinstance(key, (set, list, tuple)):
+        if isinstance(key, (set, list)):
             key_set = set(key)
             selected_data = {key: data for key, data in self.data.items() if key in key_set}
 
@@ -213,13 +213,8 @@ class BuhTuhDataFrame:
                     series=selected_data
                 )
 
-        if isinstance(key, (slice, int)):
-            if isinstance(key, int):
-                # This is quite retarded, but hey.
-                key = slice(key, key+1)
-
+        if isinstance(key, slice):
             model = self.get_current_node(limit=key)
-
             return self._df_or_series(
                 df=BuhTuhDataFrame(
                     engine=self.engine,
@@ -250,7 +245,7 @@ class BuhTuhDataFrame:
                     dtypes={name: series.dtype for name, series in self.data.items()}
                 )
             )
-        raise NotImplementedError(f"Only int, str, (set|list|tuple)[str], slice or BuhTuhSeriesBoolean are supported, but got {type(key)}")
+        raise NotImplementedError(f"Only str, (set|list)[str], slice or BuhTuhSeriesBoolean are supported, but got {type(key)}")
 
     def __setitem__(self,
                     key: Union[str, List[str]],
@@ -259,6 +254,7 @@ class BuhTuhDataFrame:
             if not isinstance(value, BuhTuhSeries):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
+                setattr(self, key, self._data[key])
                 return
             else:
                 # two cases:
@@ -274,6 +270,7 @@ class BuhTuhDataFrame:
                         dtype=value.dtype,
                         expression=value.expression
                     )
+                    setattr(self, key, self._data[key])
                     return
                 else:
                     # this is the complex case. Maybe don't support this at all?TODO
@@ -293,23 +290,16 @@ class BuhTuhDataFrame:
             series_list = [value.data[col_name] for col_name in value.data_columns]
             for i, sub_key in enumerate(key):
                 self.__setitem__(sub_key, series_list[i])
-        raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
+        else:
+            raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
 
     def __delitem__(self, key):
         if isinstance(key, str):
             del(self._data[key])
-            return
-        if isinstance(key, BuhTuhSeries):
-            remove = [n for n, s in self._data.items() if s == key]
-            for n in remove:
-                del(self._data[n])
-            return
-        if isinstance(key, (list,tuple,set)):
-            for k in key:
-                self.__delitem__(k)
+            delattr(self, key)
             return
         else:
-            raise NotImplementedError(f'Unsupported type {type(key)}')
+            raise TypeError(f'Unsupported type {type(key)}')
 
 
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'BuhTuhDataFrame':
@@ -365,29 +355,27 @@ class BuhTuhDataFrame:
 
         return BuhTuhGroupBy(buh_tuh=self, group_by_columns=group_by_columns)
 
-    def sort_values(self, sort_order: Union[str,List[str],Dict[str,bool]] = None, ascending: List[bool] = None) -> 'BuhTuhDataFrame':
-        if sort_order is None:
-            return self
-        if isinstance(sort_order, str):
-            sort_order = {sort_order: True}
-        if isinstance(sort_order, list):
-            if ascending is None or len(ascending) != len(sort_order):
-                raise ValueError('Must specify ascending for each item if sort_order is a list')
-            sort_order = {f: o for f, o in zip(sort_order, ascending)}
-        if isinstance(sort_order, dict):
-            possible_names = list(self.index.keys()) + list(self.data.keys())
-            missing = [name for name in sort_order.keys() if name not in possible_names]
-            if len(missing) > 0:
-                raise ValueError(f'Some series could not be found in current frame: {missing}')
+    def sort_values(self, by: Union[str,List[str]], ascending: Union[bool,List[bool]] = True) -> 'BuhTuhDataFrame':
+        # TODO needs type check?
+        if isinstance(by, str):
+            by = [by]
+        if isinstance(ascending, bool):
+            ascending = [ascending] * len(by)
+        if len(by) != len(ascending):
+            raise ValueError(f'Length of ascending ({len(ascending)}) != length of by ({len(by)})')
+        sort_order = dict(zip(by, ascending))
+        possible_names = list(self.index.keys()) + list(self.data.keys())
+        missing = [name for name in sort_order.keys() if name not in possible_names]
+        if len(missing) > 0:
+            raise ValueError(f'Some series could not be found in current frame: {missing}')
 
-            model = self.get_current_node(order=sort_order)
-            return BuhTuhDataFrame.get_instance(
-                engine=self.engine,
-                source_node=model,
-                index_dtypes={name: series.dtype for name, series in self.index.items()},
-                dtypes={name: series.dtype for name, series in self.data.items()}
-            )
-        raise NotImplementedError(f'Unsupported argument {type(sort_order)}')
+        model = self.get_current_node(order=sort_order)
+        return BuhTuhDataFrame.get_instance(
+            engine=self.engine,
+            source_node=model,
+            index_dtypes={name: series.dtype for name, series in self.index.items()},
+            dtypes={name: series.dtype for name, series in self.data.items()}
+        )
 
     def head(self, n: int = 5):
         """
@@ -419,10 +407,16 @@ class BuhTuhDataFrame:
                     (limit.stop is not None and limit.stop < 0):
                 raise NotImplementedError("Negative start or stop not supported in slice")
 
-            if limit.stop is not None:
-                limit_str = f'limit {str(limit.stop - limit.start)}'
             if limit.start is not None:
-                limit_str = f'{limit_str} offset {limit.start}'
+                if limit.stop is not None:
+                    if limit.stop <= limit.start:
+                        raise ValueError('limit.stop <= limit.start')
+                    limit_str = f'limit {limit.stop - limit.start} offset {limit.start}'
+                else:
+                    limit_str = f'limit all offset {limit.start}'
+            else:
+                if limit.stop is not None:
+                    limit_str = f'limit {limit.stop}'
 
         if order:
             order_str = ", ".join(f"{name} {'asc' if asc else 'desc'}" for name, asc in order.items())
@@ -443,7 +437,7 @@ class BuhTuhDataFrame:
             order=order_str
         )
 
-    def view_sql(self, limit: int = None) -> str:
+    def view_sql(self, limit: Union[int,slice] = None) -> str:
         model = self.get_current_node(limit=limit)
         sql = to_sql(model)
         return sql
