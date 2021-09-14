@@ -1,7 +1,7 @@
 import { parseVisibilityAttribute } from '../structs';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
-import { trackSectionHiddenEvent } from '../tracker/trackEvent';
+import { trackSectionHidden } from '../tracker/trackEvent';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { TrackedElement } from '../typeGuards';
 
@@ -15,7 +15,7 @@ const trackVisibilityHiddenEvent = (element: TrackedElement, tracker: BrowserTra
     }
     const trackVisibility = parseVisibilityAttribute(element.getAttribute(TrackingAttribute.trackVisibility));
     if (trackVisibility.mode === 'manual' && !trackVisibility.isVisible) {
-      trackSectionHiddenEvent({ element, tracker });
+      trackSectionHidden({ element, tracker });
     }
   } catch (error) {
     trackerErrorHandler(error);

@@ -10,7 +10,7 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import ExtendableError from 'es6-error';
-import { BrowserTracker, AnyLocationContext } from '../';
+import { AnyLocationContext, BrowserTracker } from '../';
 import { parseLocationContext } from '../structs';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
@@ -92,19 +92,19 @@ export const trackInputChange = ({ element, tracker }: TrackEventHelperParameter
   return trackEvent({ eventFactory: makeInputChangeEvent, element, tracker });
 };
 
-export const trackSectionVisibleEvent = ({ element, tracker }: TrackEventHelperParameters) => {
+export const trackSectionVisible = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeSectionVisibleEvent, element, tracker });
 };
 
-export const trackSectionHiddenEvent = ({ element, tracker }: TrackEventHelperParameters) => {
+export const trackSectionHidden = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeSectionHiddenEvent, element, tracker });
 };
 
-export const trackVideoStartEvent = ({ element, tracker }: TrackEventHelperParameters) => {
+export const trackVideoStart = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeVideoStartEvent, element, tracker });
 };
 
-export const trackVideoPauseEvent = ({ element, tracker }: TrackEventHelperParameters) => {
+export const trackVideoPause = ({ element, tracker }: TrackEventHelperParameters) => {
   return trackEvent({ eventFactory: makeVideoPauseEvent, element, tracker });
 };
 
@@ -125,7 +125,7 @@ export type NonInteractiveTrackHelperParameters = {
   onError?: TrackOnErrorCallback;
 };
 
-export const trackApplicationLoadedEvent = (parameters: NonInteractiveTrackHelperParameters = {}) => {
+export const trackApplicationLoaded = (parameters: NonInteractiveTrackHelperParameters = {}) => {
   try {
     const { element = document, tracker } = parameters;
     return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
@@ -134,7 +134,7 @@ export const trackApplicationLoadedEvent = (parameters: NonInteractiveTrackHelpe
   }
 };
 
-export const trackURLChangeEvent = (parameters: NonInteractiveTrackHelperParameters = {}) => {
+export const trackURLChange = (parameters: NonInteractiveTrackHelperParameters = {}) => {
   try {
     const { element = document, tracker } = parameters;
     return trackEvent({ eventFactory: makeURLChangeEvent, element, tracker });

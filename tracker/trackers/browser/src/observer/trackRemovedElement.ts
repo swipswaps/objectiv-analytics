@@ -1,12 +1,12 @@
 import { parseVisibilityAttribute } from '../structs';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
-import { trackSectionHiddenEvent } from '../tracker/trackEvent';
+import { trackSectionHidden } from '../tracker/trackEvent';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 
 /**
- * Given a removed Element nodes it will track whether to track a visibility:hidden event for it
+ * Given a removed Element nodes it will determine whether to track a visibility:hidden event for it
  * Hidden Events are triggered only for automatically tracked Elements.
  */
 const trackRemovedElements = (element: Element, tracker: BrowserTracker) => {
@@ -17,7 +17,7 @@ const trackRemovedElements = (element: Element, tracker: BrowserTracker) => {
       }
       const trackVisibility = parseVisibilityAttribute(element.getAttribute(TrackingAttribute.trackVisibility));
       if (trackVisibility.mode === 'auto') {
-        trackSectionHiddenEvent({ element, tracker });
+        trackSectionHidden({ element, tracker });
       }
     }
   } catch (error) {

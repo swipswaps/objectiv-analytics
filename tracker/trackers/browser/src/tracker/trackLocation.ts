@@ -28,39 +28,39 @@ import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler
  *
  * Examples
  *
- *    track({ instance: makeElementContext({ id: 'section-id' }) })
- *    track({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
+ *    trackLocation({ instance: makeElementContext({ id: 'section-id' }) })
+ *    trackLocation({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
  *
  */
-export const TrackReturnValue = optional(StringifiedTrackingAttributes);
-export type TrackReturnValue = Infer<typeof TrackReturnValue>;
+export const TrackLocationReturnValue = optional(StringifiedTrackingAttributes);
+export type TrackLocationReturnValue = Infer<typeof TrackLocationReturnValue>;
 
-export const TrackOptions = object({
+export const TrackLocationOptions = object({
   trackClicks: optional(boolean()),
   trackBlurs: optional(boolean()),
   trackVisibility: optional(TrackingAttributeVisibility),
-  parentTracker: optional(TrackReturnValue),
+  parentTracker: TrackLocationReturnValue,
 });
-export type TrackOptions = Infer<typeof TrackOptions>;
+export type TrackLocationOptions = Infer<typeof TrackLocationOptions>;
 
-export const TrackParameters = object({
+export const TrackLocationParameters = object({
   instance: AnyLocationContext,
-  options: optional(TrackOptions),
+  options: optional(TrackLocationOptions),
   onError: optional(func()),
 });
-export type TrackParameters = {
+export type TrackLocationParameters = {
   instance: AnyLocationContext;
-  options?: TrackOptions;
+  options?: TrackLocationOptions;
   onError?: TrackOnErrorCallback;
 };
 
 // Custom struct to match all Action Contexts + ExpandableSectionContext
 export const AnyClickableContext = union([AnyActionContext, ExpandableSectionContext]);
 
-export const track = (parameters: TrackParameters): TrackReturnValue => {
+export const trackLocation = (parameters: TrackLocationParameters): TrackLocationReturnValue => {
   try {
     // Validate input
-    const { instance, options } = create(parameters, TrackParameters);
+    const { instance, options } = create(parameters, TrackLocationParameters);
 
     // Determine Context type
     const isClickable = is(instance, AnyClickableContext);

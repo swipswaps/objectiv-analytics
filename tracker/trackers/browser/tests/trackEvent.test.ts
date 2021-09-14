@@ -12,16 +12,16 @@ import {
 import {
   BrowserTracker,
   configureTracker,
-  trackApplicationLoadedEvent,
+  trackApplicationLoaded,
   trackClick,
   trackEvent,
   TrackingAttribute,
   trackInputChange,
-  trackSectionHiddenEvent,
-  trackSectionVisibleEvent,
-  trackURLChangeEvent,
-  trackVideoPauseEvent,
-  trackVideoStartEvent,
+  trackSectionHidden,
+  trackSectionVisible,
+  trackURLChange,
+  trackVideoPause,
+  trackVideoStart,
   trackVisibility,
 } from '../src';
 
@@ -182,7 +182,7 @@ describe('trackEvent', () => {
   });
 
   it('should track a Section Visible Event', () => {
-    trackSectionVisibleEvent({ element: testElement });
+    trackSectionVisible({ element: testElement });
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
@@ -192,7 +192,7 @@ describe('trackEvent', () => {
   });
 
   it('should track a Section Hidden Event', () => {
-    trackSectionHiddenEvent({ element: testElement });
+    trackSectionHidden({ element: testElement });
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
@@ -202,7 +202,7 @@ describe('trackEvent', () => {
   });
 
   it('should track a Video Start Event', () => {
-    trackVideoStartEvent({ element: testElement });
+    trackVideoStart({ element: testElement });
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
@@ -212,7 +212,7 @@ describe('trackEvent', () => {
   });
 
   it('should track a Video Pause Event', () => {
-    trackVideoPauseEvent({ element: testElement });
+    trackVideoPause({ element: testElement });
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
@@ -240,7 +240,7 @@ describe('trackEvent', () => {
   });
 
   it('should track an Application Loaded Event', () => {
-    trackApplicationLoadedEvent();
+    trackApplicationLoaded();
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
@@ -248,7 +248,7 @@ describe('trackEvent', () => {
       expect.objectContaining(makeApplicationLoadedEvent())
     );
 
-    trackApplicationLoadedEvent({ element: testElement });
+    trackApplicationLoaded({ element: testElement });
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(2);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
@@ -258,7 +258,7 @@ describe('trackEvent', () => {
   });
 
   it('should track a URL Change Event', () => {
-    trackURLChangeEvent();
+    trackURLChange();
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
@@ -266,7 +266,7 @@ describe('trackEvent', () => {
       expect.objectContaining(makeURLChangeEvent())
     );
 
-    trackURLChangeEvent({ element: testElement });
+    trackURLChange({ element: testElement });
 
     expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(2);
     expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(

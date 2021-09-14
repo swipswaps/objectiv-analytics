@@ -1,4 +1,3 @@
-// TODO review this list and decide what to export publicly
 export * from './bootstrap';
 export * from './Contexts';
 export * from './globals';
@@ -17,11 +16,11 @@ export * from './structs';
 export * from './tracker/BrowserTracker';
 export * from './tracker/configureTracker';
 export * from './tracker/findTrackedParentElements';
-export * from './tracker/track';
 export * from './tracker/trackChildren';
 export * from './tracker/trackerErrorHandler';
 export * from './tracker/trackEvent';
-export * from './tracker/trackHelpers';
+export * from './tracker/trackLocation';
+export * from './tracker/trackLocationHelpers';
 export * from './TrackingAttributes';
 export * from './transport/DebugTransport';
 export * from './transport/FetchAPITransport';
