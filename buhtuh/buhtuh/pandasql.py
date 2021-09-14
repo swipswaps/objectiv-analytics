@@ -11,15 +11,7 @@ from sql_models.sql_generator import to_sql
 from buhtuh.types import get_series_type_from_dtype, arg_to_type
 
 
-class BuhTuhBase:
-    def __init__(self, engine, source_node):
-        self.engine = engine
-        self.source_node = source_node
-
-
-Columns = Dict[str, str]
-Index = Dict[str, str]
-
+DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
 
 class BuhTuhDataFrame:
     def __init__(
@@ -191,7 +183,7 @@ class BuhTuhDataFrame:
             series=series
         )
 
-    def _df_or_series(self, df: 'BuhTuhDataFrame') -> Union['BuhTuhDataFrame', 'BuhTuhSeries']:
+    def _df_or_series(self, df: 'BuhTuhDataFrame') -> DataFrameOrSeries:
         """
         Figure out whether there is just one series in our data, and return that series instead of the whole frame
         :param df: the df
@@ -201,10 +193,7 @@ class BuhTuhDataFrame:
             return df
         return list(df.data.values())[0]
 
-    def __getitem__(
-            self,
-            key: Union[str, List[str], 'BuhTuhSeriesBoolean']
-    ) -> Union['BuhTuhDataFrame', 'BuhTuhSeries']:
+    def __getitem__(self, key: Union[str, List[str], 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
         """
         TODO: Comments
         :param key:
@@ -466,7 +455,7 @@ class BuhTuhDataFrame:
             column_expressions.append(series.get_column_expression(table_alias))
         return ', '.join(column_expressions)
 
-    def merge(self, other: Union['BuhTuhDataFrame', 'BuhTuhSeries'],
+    def merge(self, other: DataFrameOrSeries,
               conditions: List[
                   Union['BuhTuhSeries', str,
                         Tuple[Union['BuhTuhSeries', str], Union['BuhTuhSeries', str]]
@@ -711,7 +700,7 @@ class BuhTuhSeries(ABC):
     @classmethod
     def get_instance(
             cls,
-            base: Union['BuhTuhDataFrame', 'BuhTuhSeries'],
+            base: DataFrameOrSeries,
             name: str,
             dtype: str,
             expression: str = None
@@ -770,7 +759,7 @@ class BuhTuhSeries(ABC):
 
     @classmethod
     def from_const(cls,
-                   base: Union['BuhTuhDataFrame', 'BuhTuhSeries'],
+                   base: DataFrameOrSeries,
                    value: Any,
                    name: str) -> 'BuhTuhSeries':
         dtype = cast(str, cls.dtype)  # needed for mypy
@@ -1209,7 +1198,6 @@ class BuhTuhGroupBy:
                  group_by_columns: List['BuhTuhSeries']):
         self.buh_tuh = buh_tuh
 
-        all_series = {**buh_tuh.index, **buh_tuh.data}
         self.groupby = {}
         for col in group_by_columns:
             if not isinstance(col, BuhTuhSeries):
@@ -1227,7 +1215,7 @@ class BuhTuhGroupBy:
                                                         expression='1')
             }
 
-        self.aggregated_data = {name : series for name, series in all_series.items() if name not in self.groupby.keys()}
+        self.aggregated_data = {name: series for name, series in buh_tuh.all_series.items() if name not in self.groupby.keys()}
 
 
     def aggregate(self, series: Union[Dict[str, str], List[str]], aggregations: List[str] = None) -> BuhTuhDataFrame:
