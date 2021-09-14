@@ -1,7 +1,7 @@
 import { getLocationHref } from '../globals';
 import { BrowserTracker, BrowserTrackerConfig } from '../tracker/BrowserTracker';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
-import { trackApplicationLoaded, trackURLChange } from '../tracker/trackEvent';
+import { trackApplicationLoaded, trackURLChange } from '../tracker/trackEventHelpers';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 import trackNewElements from './trackNewElements';

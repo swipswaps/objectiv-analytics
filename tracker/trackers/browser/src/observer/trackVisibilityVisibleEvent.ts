@@ -1,7 +1,7 @@
 import { parseVisibilityAttribute } from '../structs';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
-import { trackSectionVisible } from '../tracker/trackEvent';
+import { trackSectionVisible } from '../tracker/trackEventHelpers';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { TrackedElement } from '../typeGuards';
 

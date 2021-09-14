@@ -1,5 +1,5 @@
 import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackInputChange } from '../tracker/trackEvent';
+import { trackInputChange } from '../tracker/trackEventHelpers';
 import { TrackedElement } from '../typeGuards';
 import isBubbledEvent from './isBubbledEvent';
 
