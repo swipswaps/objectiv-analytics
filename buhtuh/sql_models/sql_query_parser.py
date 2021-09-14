@@ -13,6 +13,15 @@ class CteTuple(NamedTuple):
 
 
 def raw_sql_to_selects(sql: str) -> List[CteTuple]:
+    """
+    Given a raw sql select statement, return a list with all CTEs and the final select statement.
+
+    If the sql consists of a simple query without CTEs then the returned list contains a single item.
+    If the sql consists of a CTEs followed by a final select, then the returned list contains all CTEs in
+    the encountered order, followed by the select statement.
+    For each CTE in the returned value the `name` field is guaranteed to be set, for the final select
+    statement it will be None.
+    """
     # TODO: refactor function
     stmts = sqlparse.parse(sql)
     # if len(stmts) != 1:

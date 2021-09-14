@@ -33,10 +33,9 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements-dev.txt -r requirements.txt
       - name: Typecheck with mypy
-        continue-on-error: True  # TODO: set this to false after fixing all mypy problems
         run: |
           cd buhtuh
-          mypy buhtuh
+          mypy buhtuh sql_models
       - name: Test with pytest
         run: |
           cd buhtuh

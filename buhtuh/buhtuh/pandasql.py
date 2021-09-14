@@ -1,7 +1,7 @@
 import datetime
 from abc import abstractmethod, ABC
 from copy import copy
-from typing import List, Union, Dict, Any, Optional, Tuple
+from typing import List, Union, Dict, Any, Optional, Tuple, cast
 
 import numpy
 import pandas as pd
@@ -11,23 +11,15 @@ from sql_models.sql_generator import to_sql
 from buhtuh.types import get_series_type_from_dtype, arg_to_type
 
 
-class BuhTuhBase:
-    def __init__(self, engine, source_node):
-        self.engine = engine
-        self.source_node = source_node
-
-
-Columns = Dict[str, str]
-Index = Dict[str, str]
-
+DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
 
 class BuhTuhDataFrame:
     def __init__(
         self,
         engine,
-        source_node: SqlModel = None,
-        index: Dict[str, 'BuhTuhSeries'] = None,
-        series: Dict[str, 'BuhTuhSeries'] = None
+        source_node: SqlModel,
+        index: Dict[str, 'BuhTuhSeries'],
+        series: Dict[str, 'BuhTuhSeries']
     ):
         """
         TODO: improve this docstring
@@ -43,8 +35,14 @@ class BuhTuhDataFrame:
         self._index = copy(index)
         self._data: Dict[str, BuhTuhSeries] = {}
         for key, value in series.items():
-            self._data[key] = series[key]
-            setattr(self, key, series[key])  # TODO: check that attribute doesn't exist yet?
+            if key != value.name:
+                raise ValueError(f'Keys in `series` should match the name of series. '
+                                 f'key: {key}, series.name: {value.name}')
+            self._data[key] = value
+            setattr(self, key, value)  # TODO: check that attribute doesn't exist yet?
+        if set(index.keys()) & set(series.keys()):
+            raise ValueError(f"The names of the index series and data series should not intersect. "
+                             f"Index series: {sorted(index.keys())} data series: {sorted(series.keys())}")
 
     @property
     def engine(self):
@@ -60,8 +58,11 @@ class BuhTuhDataFrame:
 
     @property
     def data(self) -> Dict[str, 'BuhTuhSeries']:
-        # TODO: this assume Series are immutable
         return copy(self._data)
+
+    @property
+    def all_series(self) -> Dict[str, 'BuhTuhSeries']:
+        return {**self.index, **self.data}
 
     @property
     def index_columns(self) -> List[str]:
@@ -182,7 +183,7 @@ class BuhTuhDataFrame:
             series=series
         )
 
-    def _df_or_series(self, df: 'BuhTuhDataFrame') -> Union['BuhTuhDataFrame', 'BuhTuhSeries']:
+    def _df_or_series(self, df: 'BuhTuhDataFrame') -> DataFrameOrSeries:
         """
         Figure out whether there is just one series in our data, and return that series instead of the whole frame
         :param df: the df
@@ -192,10 +193,7 @@ class BuhTuhDataFrame:
             return df
         return list(df.data.values())[0]
 
-    def __getitem__(
-            self,
-            key: Union[str, List[str], 'BuhTuhSeriesBoolean']
-    ) -> Union['BuhTuhDataFrame', 'BuhTuhSeries']:
+    def __getitem__(self, key: Union[str, List[str], 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
         """
         TODO: Comments
         :param key:
@@ -256,7 +254,7 @@ class BuhTuhDataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['BuhTuhDataFrame', 'BuhTuhSeries', int, str, float]):
+                    value: Union['BuhTuhSeries', int, str, float]):
         if isinstance(key, str):
             if not isinstance(value, BuhTuhSeries):
                 series = const_to_series(base=self, value=value, name=key)
@@ -292,9 +290,9 @@ class BuhTuhDataFrame:
             if len(value.data_columns) != len(key):
                 raise ValueError(f'Number of columns in key and value should match. '
                                  f'Key: {len(key)}, value: {len(value.data_columns)}')
-            series = [value.data[col_name] for col_name in value.data_columns]
+            series_list = [value.data[col_name] for col_name in value.data_columns]
             for i, sub_key in enumerate(key):
-                self.__setitem__(sub_key, series[i])
+                self.__setitem__(sub_key, series_list[i])
         raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
 
     def __delitem__(self, key):
@@ -312,7 +310,6 @@ class BuhTuhDataFrame:
             return
         else:
             raise NotImplementedError(f'Unsupported type {type(key)}')
-
 
 
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'BuhTuhDataFrame':
@@ -348,14 +345,25 @@ class BuhTuhDataFrame:
         :param by: The series to group by
         :return: an object to perform aggregations on
         """
-        if by is None:
-            by = []
-        if isinstance(by, (str, BuhTuhSeries)):
-            by = [by]
+        group_by_columns: List['BuhTuhSeries'] = []
+        if isinstance(by, str):
+            group_by_columns.append(self.all_series[by])
+        elif isinstance(by, BuhTuhSeries):
+            group_by_columns.append(by)
+        elif isinstance(by, list):
+            for by_item in by:
+                if isinstance(by_item, str):
+                    group_by_columns.append(self.all_series[by_item])
+                if isinstance(by_item, BuhTuhSeries):
+                    group_by_columns.append(by_item)
+        elif by is None:
+            pass
+        else:
+            raise ValueError(f'Value of "by" should be either None, a string, or a Series.')
 
         # TODO We used to create a new instance of this df before passing it on. Did that have value?
 
-        return BuhTuhGroupBy(buh_tuh=self, group_by_columns=by)
+        return BuhTuhGroupBy(buh_tuh=self, group_by_columns=group_by_columns)
 
     def sort_values(self, sort_order: Union[str,List[str],Dict[str,bool]] = None, ascending: List[bool] = None) -> 'BuhTuhDataFrame':
         if sort_order is None:
@@ -363,7 +371,9 @@ class BuhTuhDataFrame:
         if isinstance(sort_order, str):
             sort_order = {sort_order: True}
         if isinstance(sort_order, list):
-            sort_order = {f: o for f,o in zip(sort_order, ascending)}
+            if ascending is None or len(ascending) != len(sort_order):
+                raise ValueError('Must specify ascending for each item if sort_order is a list')
+            sort_order = {f: o for f, o in zip(sort_order, ascending)}
         if isinstance(sort_order, dict):
             possible_names = list(self.index.keys()) + list(self.data.keys())
             missing = [name for name in sort_order.keys() if name not in possible_names]
@@ -414,8 +424,11 @@ class BuhTuhDataFrame:
             if limit.start is not None:
                 limit_str = f'{limit_str} offset {limit.start}'
 
-        if order is not None:
-            order = ", ".join([ f"{name} {'asc' if asc else 'desc'}" for name, asc in order.items() ])
+        if order:
+            order_str = ", ".join(f"{name} {'asc' if asc else 'desc'}" for name, asc in order.items())
+            order_str = f'order by {order_str}'
+        else:
+            order_str = ''
 
         model_builder = CustomSqlModel(
             name='view_sql',
@@ -427,7 +440,7 @@ class BuhTuhDataFrame:
             index_str=', '.join(self.index.keys()),
             _last_node=self.base_node,
             limit='' if limit_str is None else f'{limit_str}',
-            order='' if order is None else f'order by {order}'
+            order=order_str
         )
 
     def view_sql(self, limit: int = None) -> str:
@@ -442,7 +455,7 @@ class BuhTuhDataFrame:
             column_expressions.append(series.get_column_expression(table_alias))
         return ', '.join(column_expressions)
 
-    def merge(self, other: Union['BuhTuhDataFrame','BuhTuhSeries'],
+    def merge(self, other: DataFrameOrSeries,
               conditions: List[
                   Union['BuhTuhSeries', str,
                         Tuple[Union['BuhTuhSeries', str], Union['BuhTuhSeries', str]]
@@ -465,13 +478,15 @@ class BuhTuhDataFrame:
         :return: a freshly merged df
         """
         assert isinstance(other, (BuhTuhDataFrame, BuhTuhSeries))
+        if other.index is None:
+            raise NotImplementedError('Merging with a Series that is an index is not supported.')
 
         # Merge on index if matching and no conditions given
         if conditions is None:
             other_index = other.index.keys()
             self_index = self.index.keys()
             if other_index == self_index:
-                conditions = zip(self.index.values(),other.index.values())
+                conditions = list(zip(self.index.values(), other.index.values()))
             else:
                 raise NotImplementedError(f"Merge without conditions without matching indices not supported: {self_index} != {other_index}")
 
@@ -497,10 +512,9 @@ class BuhTuhDataFrame:
             if name in index:
                 continue
 
-            left = left_all.get(name, None)
-            right = right_all.get(name, None)
-
             if name in left_all and name in right_all:
+                left = left_all[name]
+                right = right_all[name]
                 # duplicate, keep both only if from different nodes
                 # this is quite weak duplicate resolution, but okay for now
                 if left.base_node != right.base_node:
@@ -522,9 +536,11 @@ class BuhTuhDataFrame:
                     new_series[name] = left
                     column_sql.append(left.get_column_expression(table_alias='l'))
             elif name in left_all:
+                left = left_all[name]
                 new_series[name] = left
                 column_sql.append(left.get_column_expression(table_alias='l'))
-            else: # right only
+            else:  # right only
+                right = right_all[name]
                 new_series[name] = right
                 column_sql.append(right.get_column_expression(table_alias='r'))
 
@@ -540,7 +556,7 @@ class BuhTuhDataFrame:
                 # convert single to tuple
                 c = (left_all[c.name], right_all[c.name])
 
-            (left, right) = c
+            (left, right) = c  # type: ignore  ## TODO: clean up this function so we don't reuse variables
 
             # convert to BuhTuhSeries if str
             if isinstance(left, str):
@@ -559,7 +575,7 @@ class BuhTuhDataFrame:
 
         if use_using:
             condition_str = 'USING ({fields})'.format(
-                fields=', '.join([left.name for left in on_conditions])
+                fields=', '.join([left.name for left, _ in on_conditions])
             )
         else:
             condition_str = "ON {expr}".format(
@@ -629,7 +645,7 @@ class BuhTuhSeries(ABC):
 
     @staticmethod
     @abstractmethod
-    def constant_to_sql(value: int) -> str:
+    def constant_to_sql(value: Any) -> str:
         raise NotImplementedError()
 
     @staticmethod
@@ -672,6 +688,8 @@ class BuhTuhSeries(ABC):
         return self.to_frame().view_sql()
 
     def to_frame(self) -> BuhTuhDataFrame:
+        if self.index is None:
+            raise Exception('to_frame() is not supported for Series that do not have an index')
         return BuhTuhDataFrame(
             engine=self.engine,
             source_node=self.base_node,
@@ -682,7 +700,7 @@ class BuhTuhSeries(ABC):
     @classmethod
     def get_instance(
             cls,
-            base: 'BuhTuhDataFrame',
+            base: DataFrameOrSeries,
             name: str,
             dtype: str,
             expression: str = None
@@ -741,13 +759,14 @@ class BuhTuhSeries(ABC):
 
     @classmethod
     def from_const(cls,
-                   base: Union['BuhTuhSeries', 'BuhTuhDataFrame'],
-                   value: int,
+                   base: DataFrameOrSeries,
+                   value: Any,
                    name: str) -> 'BuhTuhSeries':
+        dtype = cast(str, cls.dtype)  # needed for mypy
         result = BuhTuhSeries.get_instance(
             base=base,
             name=name,
-            dtype=cls.dtype,
+            dtype=dtype,
             expression=cls.constant_to_sql(value)
         )
         return result
@@ -796,10 +815,10 @@ class BuhTuhSeries(ABC):
     def _comparator_operator(self, other, comparator) -> 'BuhTuhSeriesBoolean':
         raise NotImplementedError()
 
-    def __ne__(self, other) -> 'BuhTuhSeriesBoolean':
+    def __ne__(self, other) -> 'BuhTuhSeriesBoolean':  # type: ignore
         return self._comparator_operator(other, "<>")
 
-    def __eq__(self, other) -> 'BuhTuhSeriesBoolean':
+    def __eq__(self, other) -> 'BuhTuhSeriesBoolean':  # type: ignore
         return self._comparator_operator(other, "=")
 
     def __lt__(self, other) -> 'BuhTuhSeriesBoolean':
@@ -820,7 +839,10 @@ class BuhTuhSeries(ABC):
 
         # any other value we treat as a literal index lookup
         # multiindex not supported atm
-        assert len(self.index) == 1
+        if self.index is None:
+            raise Exception('Function not supported on Series without index')
+        if len(self.index) != 1:
+            raise NotImplementedError('Index only implemented for simple indexes.')
         series = self.to_frame()[list(self.index.values())[0] == key]
         assert isinstance(series, self.__class__)
 
@@ -1173,21 +1195,15 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
 class BuhTuhGroupBy:
     def __init__(self,
                  buh_tuh: BuhTuhDataFrame,
-                 group_by_columns: List[str]):
+                 group_by_columns: List['BuhTuhSeries']):
         self.buh_tuh = buh_tuh
 
-        all_series = {**buh_tuh.index, **buh_tuh.data}
         self.groupby = {}
         for col in group_by_columns:
-            if isinstance(col, str):
-                if col not in all_series:
-                    raise ValueError(f'groupby column `{col}` not found!')
-                self.groupby[col] = all_series[col]
-            elif isinstance(col, BuhTuhSeries):
-                assert col.base_node == buh_tuh.base_node and col.index == buh_tuh.index
-                self.groupby[col.name] = col
-            else:
+            if not isinstance(col, BuhTuhSeries):
                 raise ValueError(f'Unsupported groupby argument type: {type(col)}')
+            assert col.base_node == buh_tuh.base_node
+            self.groupby[col.name] = col
 
 
         if len(group_by_columns) == 0:
@@ -1199,7 +1215,7 @@ class BuhTuhGroupBy:
                                                         expression='1')
             }
 
-        self.aggregated_data = {name : series for name, series in all_series.items() if name not in self.groupby.keys()}
+        self.aggregated_data = {name: series for name, series in buh_tuh.all_series.items() if name not in self.groupby.keys()}
 
 
     def aggregate(self, series: Union[Dict[str, str], List[str]], aggregations: List[str] = None) -> BuhTuhDataFrame:
@@ -1215,15 +1231,21 @@ class BuhTuhGroupBy:
         new_series_dtypes = {}
         aggregate_columns = []
 
-        if isinstance(series, dict):
+        if isinstance(series, list):
+            if not isinstance(aggregations, list):
+                raise ValueError('aggregations must be a list if series is a list')
+            if len(series) != len(aggregations):
+                raise ValueError(f'Length of series should match length of aggregations: '
+                                 f'{len(series)} != {len(aggregations)}')
+        elif isinstance(series, dict):
             aggregations = list(series.values())
             series = list(series.keys())
+        else:
+            raise TypeError()
 
-        assert len(series) == len(aggregations)
-
-        for name, aggregation in list(zip(series,aggregations)):
-            series = self.aggregated_data[name]
-            func = getattr(series, aggregation)
+        for name, aggregation in list(zip(series, aggregations)):
+            data_series = self.aggregated_data[name]
+            func = getattr(data_series, aggregation)
             agg_series = func()
             name = f'{agg_series.name}_{aggregation}'
             agg_series = BuhTuhSeries.get_instance(base=self.buh_tuh,
@@ -1263,7 +1285,7 @@ class BuhTuhGroupBy:
         except AttributeError:
             return lambda: self.aggregate({series_name: attr_name for series_name in self.aggregated_data})
 
-    def __getitem__(self, key: Union[str, List[str]]) -> Union['BuhTuhGroupBy', 'BuhTuhGroupBySeries']:
+    def __getitem__(self, key: Union[str, List[str]]) -> 'BuhTuhGroupBy':
 
         assert isinstance(key, (str, list, tuple)), f'a buhtuh `selection` should be a str or list but got {type(key)} instead.'
 
@@ -1282,7 +1304,7 @@ class BuhTuhGroupBy:
             index=self.groupby,
             series=selected_data
         )
-        return BuhTuhGroupBy(buh_tuh=buh_tuh, group_by_columns=self.groupby.keys())
+        return BuhTuhGroupBy(buh_tuh=buh_tuh, group_by_columns=list(self.groupby.values()))
 
 
 def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],

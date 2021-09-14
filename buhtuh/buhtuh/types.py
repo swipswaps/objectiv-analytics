@@ -1,4 +1,4 @@
-from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING
+from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, cast
 
 """
 Copyright 2021 Objectiv B.V.
@@ -34,8 +34,13 @@ def register_dtype(value_types: List[Type] = None):
     """ Decorator to register a BuhTuhSeries subclass as dtype series"""
     if value_types is None:
         value_types = []
-    def wrapper(cls: T):
-        _registry.register_dtype_series(cls.dtype, cls, value_types)
+
+    def wrapper(cls: Type[T]) -> Type[T]:
+        dtype = cls.dtype
+        # Mypy needs some help here
+        assert value_types is not None
+        assert isinstance(dtype, str)
+        _registry.register_dtype_series(dtype, cls, value_types)
         return cls
     return wrapper
 

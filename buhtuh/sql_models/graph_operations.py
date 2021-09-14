@@ -14,8 +14,10 @@ class NodeInfo(NamedTuple):
     node_id: str
     reference_path: RefPath
     model: SqlModel
-    in_edges: List['NodeInfo']
-    out_edges: List['NodeInfo']
+    # Recursive types are not (yet) supported by MyPy, so we define in_edges and out_edges simply as
+    # `list`, instead of their full types: List['NodeInfo']
+    in_edges: list
+    out_edges: list
 
 
 def get_graph_nodes_info(start_node: SqlModel) -> List[NodeInfo]:
@@ -59,8 +61,8 @@ def get_graph_nodes_info(start_node: SqlModel) -> List[NodeInfo]:
         if referencing_model is not None:
             referencing_id = id(referencing_model)
             referencing_node = nodes[referencing_id]
-            _add_to_node_to_node_list(current_node.out_edges, referencing_node)
-            _add_to_node_to_node_list(referencing_node.in_edges, current_node)
+            _add_node_to_node_list(current_node.out_edges, referencing_node)
+            _add_node_to_node_list(referencing_node.in_edges, current_node)
     return [node for node in nodes.values()][::-1]  # reverse list
 
 
@@ -193,7 +195,7 @@ def _get_all_dependent_node_model_ids(node: NodeInfo) -> Set[int]:
     return dependent_ids
 
 
-def _add_to_node_to_node_list(node_list: List[NodeInfo], node: NodeInfo):
+def _add_node_to_node_list(node_list: List[NodeInfo], node: NodeInfo):
     """ Add node to node_list, if there is no node yet with the same node-id. """
     if all(id(node) != id(list_entry) for list_entry in node_list):
         node_list.append(node)

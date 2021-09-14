@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from sql_models.graph_operations import get_graph_nodes_info
+from sql_models.graph_operations import get_graph_nodes_info, NodeInfo
 from sql_models.model import SqlModel
 
 
@@ -10,7 +10,7 @@ def print_graph_info(model: SqlModel):
         print_node_info(node_info)
 
 
-def print_node_info(node_info):
+def print_node_info(node_info: NodeInfo):
     print('\n----------')
     print(f'name: {node_info.node_id}')
     print(f'hash: {node_info.model.hash}')
