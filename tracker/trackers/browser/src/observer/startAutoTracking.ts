@@ -1,7 +1,7 @@
 import { getLocationHref } from '../globals';
 import { BrowserTracker, BrowserTrackerConfig } from '../tracker/BrowserTracker';
 import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
-import { trackApplicationLoadedEvent, trackURLChangeEvent } from '../tracker/trackEvent';
+import { trackApplicationLoaded, trackURLChange } from '../tracker/trackEventHelpers';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackedElement } from '../typeGuards';
 import trackNewElements from './trackNewElements';
@@ -26,19 +26,19 @@ export type AutoTrackingOptions = Pick<BrowserTrackerConfig, 'trackURLChanges' |
  */
 export const startAutoTracking = (options: AutoTrackingOptions, tracker: BrowserTracker) => {
   try {
-    const trackURLChanges = options.trackURLChanges ?? true;
-    const trackApplicationLoaded = options.trackApplicationLoaded ?? true;
+    const trackURLChangeEvents = options.trackURLChanges ?? true;
+    const trackApplicationLoadedEvents = options.trackApplicationLoaded ?? true;
 
-    new MutationObserver(makeMutationCallback(trackURLChanges, tracker)).observe(document, {
+    new MutationObserver(makeMutationCallback(trackURLChangeEvents, tracker)).observe(document, {
       childList: true,
       subtree: true,
       attributes: true,
       attributeFilter: [TrackingAttribute.trackVisibility],
     });
 
-    if (trackApplicationLoaded && !applicationLoaded) {
+    if (trackApplicationLoadedEvents && !applicationLoaded) {
       applicationLoaded = true;
-      trackApplicationLoadedEvent({ tracker });
+      trackApplicationLoaded({ tracker });
     }
   } catch (error) {
     trackerErrorHandler(error);
@@ -68,15 +68,15 @@ export const startAutoTracking = (options: AutoTrackingOptions, tracker: Browser
  * Application Loaded Event (default enabled, configurable)
  * Triggered once
  */
-export const makeMutationCallback = (trackURLChanges: boolean, tracker: BrowserTracker): MutationCallback => {
+export const makeMutationCallback = (trackURLChangeEvents: boolean, tracker: BrowserTracker): MutationCallback => {
   return (mutationsList) => {
     try {
-      if (trackURLChanges) {
+      if (trackURLChangeEvents) {
         // Track SPA URL changes
         const currentURL = getLocationHref();
         if (currentURL !== previousURL) {
           previousURL = currentURL;
-          trackURLChangeEvent({ tracker });
+          trackURLChange({ tracker });
         }
       }
 

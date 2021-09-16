@@ -9,42 +9,42 @@ import {
   makeSectionContext,
 } from '@objectiv/tracker-core';
 import { StructError } from 'superstruct';
-import { track, trackElement, TrackingAttribute } from '../src';
+import { trackElement, TrackingAttribute, trackLocation } from '../src';
 import matchElementId from './mocks/matchElementId';
 
-describe('track', () => {
+describe('trackLocation', () => {
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
-    expect(track()).toBeUndefined();
+    expect(trackLocation()).toBeUndefined();
     // @ts-ignore
-    expect(track({})).toBeUndefined();
+    expect(trackLocation({})).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: null })).toBeUndefined();
+    expect(trackLocation({ instance: null })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: undefined })).toBeUndefined();
+    expect(trackLocation({ instance: undefined })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: 0 })).toBeUndefined();
+    expect(trackLocation({ instance: 0 })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: false })).toBeUndefined();
+    expect(trackLocation({ instance: false })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: true })).toBeUndefined();
+    expect(trackLocation({ instance: true })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: {} })).toBeUndefined();
+    expect(trackLocation({ instance: {} })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: Infinity })).toBeUndefined();
+    expect(trackLocation({ instance: Infinity })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: -Infinity })).toBeUndefined();
+    expect(trackLocation({ instance: -Infinity })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: 'test' })).toBeUndefined();
+    expect(trackLocation({ instance: 'test' })).toBeUndefined();
     // @ts-ignore
-    expect(track({ instance: makeSectionContext({ id: 'test' }), options: 'invalid' })).toBeUndefined();
+    expect(trackLocation({ instance: makeSectionContext({ id: 'test' }), options: 'invalid' })).toBeUndefined();
   });
 
   it('should call `onError` callback when an error occurs', () => {
     const errorCallback = jest.fn();
 
     // @ts-ignore
-    track({ instance: {}, onError: errorCallback });
+    trackLocation({ instance: {}, onError: errorCallback });
 
     expect(errorCallback).toHaveBeenCalledTimes(1);
     expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(StructError);
@@ -54,7 +54,7 @@ describe('track', () => {
     const consoleErrorMock = jest.spyOn(console, 'error');
 
     // @ts-ignore
-    track({ instance: {} });
+    trackLocation({ instance: {} });
 
     expect(consoleErrorMock).toHaveBeenCalledTimes(1);
   });
@@ -120,7 +120,7 @@ describe('track', () => {
   });
 
   it('should return Button tracking attributes', () => {
-    const trackingAttributes = track({
+    const trackingAttributes = trackLocation({
       instance: makeButtonContext({ id: 'test-button', text: 'Click Me' }),
     });
 
@@ -141,7 +141,7 @@ describe('track', () => {
   });
 
   it('should return Element (Section) tracking attributes', () => {
-    const trackingAttributes = track({ instance: makeSectionContext({ id: 'test-section' }) });
+    const trackingAttributes = trackLocation({ instance: makeSectionContext({ id: 'test-section' }) });
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
@@ -158,7 +158,7 @@ describe('track', () => {
   });
 
   it('should return ExpandableElement (ExpandableSection) tracking attributes', () => {
-    const trackingAttributes = track({
+    const trackingAttributes = trackLocation({
       instance: makeExpandableSectionContext({ id: 'test-expandable' }),
     });
 
@@ -178,7 +178,7 @@ describe('track', () => {
   });
 
   it('should return Input tracking attributes', () => {
-    const trackingAttributes = track({ instance: makeInputContext({ id: 'test-input' }) });
+    const trackingAttributes = trackLocation({ instance: makeInputContext({ id: 'test-input' }) });
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
@@ -195,7 +195,7 @@ describe('track', () => {
   });
 
   it('should return Link tracking attributes', () => {
-    const trackingAttributes = track({
+    const trackingAttributes = trackLocation({
       instance: makeLinkContext({ id: 'link', text: 'link', href: '/test' }),
     });
 
@@ -217,7 +217,7 @@ describe('track', () => {
   });
 
   it('should return MediaPlayer tracking attributes', () => {
-    const trackingAttributes = track({ instance: makeMediaPlayerContext({ id: 'test-media-player' }) });
+    const trackingAttributes = trackLocation({ instance: makeMediaPlayerContext({ id: 'test-media-player' }) });
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
@@ -234,7 +234,7 @@ describe('track', () => {
   });
 
   it('should return Navigation tracking attributes', () => {
-    const trackingAttributes = track({ instance: makeNavigationContext({ id: 'test-nav' }) });
+    const trackingAttributes = trackLocation({ instance: makeNavigationContext({ id: 'test-nav' }) });
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
@@ -251,7 +251,7 @@ describe('track', () => {
   });
 
   it('should return Overlay tracking attributes', () => {
-    const trackingAttributes = track({ instance: makeOverlayContext({ id: 'test-overlay' }) });
+    const trackingAttributes = trackLocation({ instance: makeOverlayContext({ id: 'test-overlay' }) });
 
     const expectedTrackingAttributes = {
       [TrackingAttribute.elementId]: matchElementId,
@@ -269,7 +269,10 @@ describe('track', () => {
 
   it('should not allow extra attributes', () => {
     const customSectionContext = { ...makeSectionContext({ id: 'test-overlay' }), extraMetadata: { test: 123 } };
-    const trackingAttributes = track({ instance: customSectionContext, onError: (error) => console.log(error) });
+    const trackingAttributes = trackLocation({
+      instance: customSectionContext,
+      onError: (error) => console.log(error),
+    });
 
     expect(trackingAttributes).toBeUndefined();
   });

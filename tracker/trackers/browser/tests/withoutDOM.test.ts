@@ -8,9 +8,9 @@ import {
   getLocationHref,
   makeMutationCallback,
   startAutoTracking,
-  trackApplicationLoadedEvent,
+  trackApplicationLoaded,
   trackEvent,
-  trackURLChangeEvent,
+  trackURLChange,
 } from '../src';
 
 describe('Without DOM', () => {
@@ -39,23 +39,23 @@ describe('Without DOM', () => {
   });
 
   it('should console.error id Application Loaded Event fails at retrieving the document element', () => {
-    trackApplicationLoadedEvent();
+    trackApplicationLoaded();
 
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {});
 
-    trackApplicationLoadedEvent({ onError: console.error });
+    trackApplicationLoaded({ onError: console.error });
     expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });
 
   it('should console.error id URL Change Event fails at retrieving the document element', () => {
-    trackURLChangeEvent();
+    trackURLChange();
 
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {});
 
-    trackURLChangeEvent({ onError: console.error });
+    trackURLChange({ onError: console.error });
     expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });

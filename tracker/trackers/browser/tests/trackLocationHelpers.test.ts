@@ -11,7 +11,7 @@ import {
 } from '../src';
 import matchElementId from './mocks/matchElementId';
 
-describe('trackHelpers', () => {
+describe('trackLocationHelpers', () => {
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
     expect(trackElement()).toBeUndefined();
