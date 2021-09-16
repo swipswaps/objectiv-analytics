@@ -91,8 +91,8 @@ def assert_equals_data(
         bt: Union[BuhTuhDataFrame, BuhTuhSeries],
         expected_columns: List[str],
         expected_data: List[list],
-        order_by: str = None,
-    ):
+        order_by: str = None
+):
     """
     Execute sql of ButTuhDataFrame/Series, with the given order_by, and make sure the result matches
     the expected columns and data.
@@ -113,6 +113,7 @@ def assert_equals_data(
     for i, df_row in enumerate(db_values):
         expected_row = expected_data[i]
         assert df_row == expected_row, f'row {i} is not equal: {expected_row} != {df_row}'
+
 
 def df_to_list(df):
     data_list = df.reset_index().to_numpy().tolist()
@@ -159,6 +160,7 @@ def test_get_item_single():
     )
     # todo: pandas supports _a lot_ of way to select columns and/or rows
 
+
 def test_get_series_single():
     bt = _get_bt_with_test_data()
 
@@ -169,6 +171,7 @@ def test_get_series_single():
 
     assert isinstance(value, str)
     assert value == 'Ljouwert'
+
 
 def test_get_item_multiple():
     bt = _get_bt_with_test_data()
@@ -184,8 +187,10 @@ def test_get_item_multiple():
         ]
     )
 
+
 def test_positional_slicing():
     bt = _get_bt_with_test_data(full_data_set=True)
+
     class ReturnSlice:
         def __getitem__(self, key):
             return key
@@ -260,6 +265,7 @@ def test_set_const_str():
         ]
     )
     assert bt.alternative_sport == bt['alternative_sport']
+
 
 def test_set_const_int_from_series():
     bt = _get_bt_with_test_data()[['founding']]
@@ -420,6 +426,7 @@ def test_set_series_expression():
     )
     assert bt.time_travel == bt['time_travel']
 
+
 def test_del_item():
     bt = _get_bt_with_test_data()
 
@@ -430,6 +437,7 @@ def test_del_item():
 
     with pytest.raises(KeyError):
         del(bt['non existing column'])
+
 
 def test_add_int_constant():
     bt = _get_bt_with_test_data()
@@ -554,7 +562,7 @@ def test_string_slice():
     bt = _get_bt_with_test_data()
 
     # Now try some slices
-    for s in [slice(0,3), slice(1,3), slice(3,3), slice(4,3), slice(-4,-2), slice(-2,-2), slice(-2,1)]:
+    for s in [slice(0, 3), slice(1, 3), slice(3, 3), slice(4, 3), slice(-4, -2), slice(-2, -2), slice(-2, 1)]:
         print(f'slice: {s}')
         bts = bt['city'].slice(s.start, s.stop)
         assert isinstance(bts, BuhTuhSeries)
@@ -569,7 +577,7 @@ def test_string_slice():
         )
 
     # Some more with no beginnings or endings
-    for s in [slice(None, 3), slice(3, None),slice(None, -3), slice(-3,None)]:
+    for s in [slice(None, 3), slice(3, None), slice(None, -3), slice(-3, None)]:
         print(f'slice: {s}')
         bts = bt['city'].slice(s.start, s.stop)
         assert isinstance(bts, BuhTuhSeries)
@@ -582,6 +590,7 @@ def test_string_slice():
                 [3, 'Drylts'.__getitem__(s)]
             ]
         )
+
 
 def test_add_string_series():
     bt = _get_bt_with_test_data()
@@ -627,12 +636,13 @@ def test_integer_divide_constant():
         ]
     )
 
+
 def test_sort_values():
     bt = _get_bt_with_test_data(full_data_set=True)
-    kwargs_list = [{'by':'city'},
-                   {'by':['municipality','city']},
-                   {'by':['municipality','city'], 'ascending':False},
-                   {'by':['municipality', 'city'], 'ascending':[False,True]},
+    kwargs_list = [{'by': 'city'},
+                   {'by': ['municipality', 'city']},
+                   {'by': ['municipality', 'city'], 'ascending': False},
+                   {'by': ['municipality', 'city'], 'ascending': [False, True]},
                    ]
     for kwargs in kwargs_list:
         assert_equals_data(
@@ -641,6 +651,7 @@ def test_sort_values():
                               'founding'],
             expected_data=df_to_list(bt.to_df().sort_values(**kwargs))
         )
+
 
 def test_group_by_basics():
     bt = _get_bt_with_test_data(full_data_set=True)
@@ -698,6 +709,7 @@ def test_group_by_basics():
         'skating_order_sum': 'Int64'
     }
 
+
 def test_group_by_all():
     bt = _get_bt_with_test_data(full_data_set=True)
     btg = bt.groupby()
@@ -723,9 +735,10 @@ def test_group_by_all():
         'skating_order_nunique': 'Int64'
     }
 
+
 def test_group_by_expression():
     bt = _get_bt_with_test_data(full_data_set=True)
-    btg = bt.groupby(bt['city'].slice(None,1))
+    btg = bt.groupby(bt['city'].slice(None, 1))
     result_bt = btg.nunique()
 
     assert_equals_data(
@@ -747,6 +760,7 @@ def test_group_by_expression():
         'inhabitants_nunique': 'Int64',
         'skating_order_nunique': 'Int64'
     }
+
 
 def test_group_by_basics_series():
     bt = _get_bt_with_test_data(full_data_set=True)
@@ -773,7 +787,7 @@ def test_group_by_basics_series():
         'inhabitants_count': 'Int64',
     }
 
-    btg_series = btg['inhabitants','founding']
+    btg_series = btg['inhabitants', 'founding']
     result_bt = btg_series.count()
     assert_equals_data(
         result_bt,
@@ -800,7 +814,7 @@ def test_group_by_basics_series():
 def test_group_by_multiple_aggregations_on_same_series():
     bt = _get_bt_with_test_data(full_data_set=True)
     btg = bt.groupby('municipality')
-    result_bt = btg.aggregate(['inhabitants', 'inhabitants'], ['min','max'])
+    result_bt = btg.aggregate(['inhabitants', 'inhabitants'], ['min', 'max'])
     assert_equals_data(
         result_bt,
         order_by='municipality',
@@ -880,8 +894,8 @@ def test_boolean_indexing_same_node():
 
 
 def test_merge_column():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order','city']]
-    mt = _get_bt_with_merge_data()[['skating_order','food']]
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
 
     result = bt.merge(mt, ['skating_order'])
 
@@ -898,8 +912,8 @@ def test_merge_column():
 
 
 def test_merge_index():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order','city']]
-    mt = _get_bt_with_merge_data()[['skating_order','food']]
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
     result = bt.merge(mt)
 
     assert isinstance(result, BuhTuhDataFrame)
@@ -916,8 +930,8 @@ def test_merge_index():
 
 def test_merge_partial_columns():
     bt = _get_bt_with_test_data(full_data_set=False)
-    mt = _get_bt_with_merge_data()[['skating_order','food']]
-    result = bt[['city','inhabitants']].merge(mt[['food']])
+    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
+    result = bt[['city', 'inhabitants']].merge(mt[['food']])
 
     assert_equals_data(
         result,
@@ -960,8 +974,8 @@ def test_merge_preselection():
 
 
 def test_merge_expression_columns():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order','city','inhabitants']]
-    mt = _get_bt_with_merge_data()[['skating_order','food']]
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
+    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
     bt['skating_order'] += 2
     mt['skating_order'] += 2
 
@@ -975,6 +989,7 @@ def test_merge_expression_columns():
             [2, 4, 4, 'Snits', 33520, 'Dúmkes'],
         ]
     )
+
 
 # This needs a better name
 def test_merge_expression_columns_regression():
@@ -994,9 +1009,10 @@ def test_merge_expression_columns_regression():
         ]
     )
 
+
 def test_merge_differently_named_columns():
     bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt =  _get_bt_with_merge_data()[['skating_order', 'food']]
+    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
 
     # create a 'skating_order_sum' column to merge on
     agg = mt.groupby('_index_skating_order')[['skating_order']].sum()
@@ -1042,7 +1058,7 @@ def test_merge_differently_named_columns():
     )
 
     # another one, but slightly more cool :)
-    result = bt.merge(mt, [(bt['city'].slice(0,1), mt['food'].slice(0,1))])[['city', 'food']]
+    result = bt.merge(mt, [(bt['city'].slice(0, 1), mt['food'].slice(0, 1))])[['city', 'food']]
     assert_equals_data(
         result,
         expected_columns=['_index_skating_order', 'city', 'food'],
@@ -1051,9 +1067,10 @@ def test_merge_differently_named_columns():
         ]
     )
 
+
 def test_merge_left_right():
     bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt =  _get_bt_with_merge_data()[['skating_order', 'food']]
+    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
 
     result = bt.merge(mt, how='left')
     assert_equals_data(
@@ -1073,6 +1090,7 @@ def test_merge_left_right():
         ]
     )
 
+
 def test_timestamp_data():
     mt = _get_bt_with_merge_data()[['moment']]
     from datetime import datetime
@@ -1086,7 +1104,8 @@ def test_timestamp_data():
         ]
     )
 
-def test_timestamp_comparator(asstring = False):
+
+def test_timestamp_comparator(asstring=False):
     mt = _get_bt_with_merge_data()[['moment']]
     from datetime import datetime
     dt = datetime(2021, 5, 3, 11, 28, 36, 388000)
@@ -1145,11 +1164,12 @@ def test_timestamp_comparator(asstring = False):
         ]
     )
 
+
 def test_timestamp_comparator_string():
     test_timestamp_comparator(asstring=True)
 
 
-def test_date_comparator(asstring = False):
+def test_date_comparator(asstring=False):
     mt = _get_bt_with_merge_data()[['date']]
 
     # import code has no means to distinguish between date and timestamp
@@ -1211,10 +1231,12 @@ def test_date_comparator(asstring = False):
         ]
     )
 
+
 def test_date_comparator_string():
     test_date_comparator(asstring=True)
 
 # TODO test_time_* tests
+
 
 def test_date_format():
     mt = _get_bt_with_merge_data()[['moment', 'date']]
@@ -1230,8 +1252,8 @@ def test_date_format():
     mt['fday'] = mt['date'].format('Day')
 
     assert_equals_data(
-        mt[['fyyyy','fday']],
-        expected_columns=['_index_skating_order', 'fyyyy','fday'],
+        mt[['fyyyy', 'fday']],
+        expected_columns=['_index_skating_order', 'fyyyy', 'fday'],
         expected_data=[
             [1, '2021', 'Monday   '],
             [2, '2021', 'Tuesday  '],
@@ -1239,11 +1261,12 @@ def test_date_format():
         ]
     )
 
+
 def test_timedelta():
     mt = _get_bt_with_merge_data()[['skating_order', 'moment']]
 
     # import code has no means to distinguish between date and timestamp
-    gb = mt.groupby([]).aggregate(['moment','moment'],['min','max'])
+    gb = mt.groupby([]).aggregate(['moment', 'moment'], ['min', 'max'])
     gb['delta'] = gb['moment_max'] - gb['moment_min']
 
     import datetime
