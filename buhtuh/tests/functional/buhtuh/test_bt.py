@@ -196,7 +196,7 @@ def test_positional_slicing():
             bt[slice],
             expected_columns=['_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants',
                               'founding'],
-            expected_data=df_to_list(bt.head(100)[slice])
+            expected_data=df_to_list(bt.to_df()[slice])
         )
 
 
@@ -420,7 +420,7 @@ def test_del_item():
 
     del(bt['founding'])
     assert 'founding' not in bt.data.keys()
-    with pytest.raises(AttributeError):
+    with pytest.raises(KeyError):
         bt.founding
 
     with pytest.raises(KeyError):
@@ -634,7 +634,7 @@ def test_sort_values():
             bt.sort_values(**kwargs),
             expected_columns=['_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants',
                               'founding'],
-            expected_data=df_to_list(bt.head(100).sort_values(**kwargs))
+            expected_data=df_to_list(bt.to_df().sort_values(**kwargs))
         )
 
 def test_group_by_basics():
@@ -834,8 +834,6 @@ def test_combined_operations1():
             ['Waadhoeke some string', 1],
         ]
     )
-    assert bt.x == bt['x']
-    assert bt.y == bt['y']
 
     result_bt['z'] = result_bt['y_count'] + 10
     result_bt['y_count'] = result_bt['y_count'] + (-1)
@@ -852,7 +850,6 @@ def test_combined_operations1():
             ['Waadhoeke some string', 0, 11],
         ]
     )
-    assert result_bt.z == result_bt['z']
     assert result_bt.y_count == result_bt['y_count']
 
 

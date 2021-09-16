@@ -39,7 +39,6 @@ class BuhTuhDataFrame:
                 raise ValueError(f'Keys in `series` should match the name of series. '
                                  f'key: {key}, series.name: {value.name}')
             self._data[key] = value
-            setattr(self, key, value)  # TODO: check that attribute doesn't exist yet?
         if set(index.keys()) & set(series.keys()):
             raise ValueError(f"The names of the index series and data series should not intersect. "
                              f"Index series: {sorted(index.keys())} data series: {sorted(series.keys())}")
@@ -247,6 +246,9 @@ class BuhTuhDataFrame:
             )
         raise NotImplementedError(f"Only str, (set|list)[str], slice or BuhTuhSeriesBoolean are supported, but got {type(key)}")
 
+    def __getattr__(self, attr):
+        return self._data[attr]
+
     def __setitem__(self,
                     key: Union[str, List[str]],
                     value: Union['BuhTuhSeries', int, str, float]):
@@ -254,7 +256,6 @@ class BuhTuhDataFrame:
             if not isinstance(value, BuhTuhSeries):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
-                setattr(self, key, self._data[key])
                 return
             else:
                 # two cases:
@@ -270,7 +271,6 @@ class BuhTuhDataFrame:
                         dtype=value.dtype,
                         expression=value.expression
                     )
-                    setattr(self, key, self._data[key])
                     return
                 else:
                     # this is the complex case. Maybe don't support this at all?TODO
@@ -296,7 +296,6 @@ class BuhTuhDataFrame:
     def __delitem__(self, key):
         if isinstance(key, str):
             del(self._data[key])
-            delattr(self, key)
             return
         else:
             raise TypeError(f'Unsupported type {type(key)}')
@@ -376,6 +375,13 @@ class BuhTuhDataFrame:
             index_dtypes={name: series.dtype for name, series in self.index.items()},
             dtypes={name: series.dtype for name, series in self.data.items()}
         )
+
+    def to_df(self):
+        conn = self.engine.connect()
+        sql = self.view_sql()
+        df = pd.read_sql_query(sql, conn, index_col=list(self.index.keys()))
+        conn.close()
+        return df
 
     def head(self, n: int = 5):
         """
