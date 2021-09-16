@@ -321,7 +321,7 @@ def test_set_series_column():
             [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 1285, 1285, 'Ljouwert']
         ]
     )
-    assert bt.town == bt['town']
+    assert filtered_bt.town == filtered_bt['town']
 
 
 def test_set_multiple():
