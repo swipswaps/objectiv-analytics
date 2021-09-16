@@ -110,8 +110,7 @@ def assert_equals_data(
         assert df_row == expected_row, f'row {i} is not equal: {expected_row} != {df_row}'
 
 def df_to_list(df):
-    data_list = list(df.reset_index().to_numpy())
-    data_list = [list(x) for x in data_list]
+    data_list = df.reset_index().to_numpy().tolist()
     return(data_list)
 
 
