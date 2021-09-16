@@ -470,6 +470,27 @@ class BuhTuhDataFrame:
             column_expressions.append(series.get_column_expression(table_alias))
         return ', '.join(column_expressions)
 
+    def merge_new(
+            self,
+            right: DataFrameOrSeries,
+            how: str = 'inner',
+            on: Union[str, List[str]] = None,
+            left_on: Union[str, List[str]] = None,      # todo: also support array-like arguments?
+            right_on: Union[str, List[str]] = None,
+            # todo: boolean options not supported. No need to support at this time?
+            # sort: bool = False,
+            suffixes: Tuple[str, str] = ('_x', '_y'),
+            # copy: bool = True,
+            # indicator: bool = False,
+            # validate: bool = None
+    ) -> 'BuhTuhDataFrame':
+        """
+
+        """
+        print(right, how, on, left_on, right_on, suffixes)
+        # TODO: implementation
+        return self
+
     def merge(self, other: DataFrameOrSeries,
               conditions: List[
                   Union[
