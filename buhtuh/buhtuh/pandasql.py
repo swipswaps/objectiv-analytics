@@ -458,7 +458,7 @@ class BuhTuhDataFrame:
             order=order_str
         )
 
-    def view_sql(self, limit:Union[int, slice] = None) -> str:
+    def view_sql(self, limit: Union[int, slice] = None) -> str:
         model = self.get_current_node(limit=limit)
         sql = to_sql(model)
         return sql
