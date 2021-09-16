@@ -1,4 +1,4 @@
-name: "BuhTuh tests: pytest mypy"
+name: "BuhTuh tests: pytest mypy pycodestyle"
 
 on:
   push:
@@ -57,6 +57,10 @@ jobs:
         run: |
           cd buhtuh
           mypy buhtuh sql_models
+      - name: Stylecheck with pycodestyle
+        run: |
+          cd buhtuh
+          pycodestyle --max-line-length=110 buhtuh sql_models
       - name: Unit tests
         run: |
           cd buhtuh
