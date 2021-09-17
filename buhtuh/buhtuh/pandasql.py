@@ -12,6 +12,7 @@ from buhtuh.types import get_series_type_from_dtype, arg_to_type
 
 
 DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
+ColumnNames = Union[str, List[str]]
 
 
 class BuhTuhDataFrame:
@@ -470,27 +471,6 @@ class BuhTuhDataFrame:
             column_expressions.append(series.get_column_expression(table_alias))
         return ', '.join(column_expressions)
 
-    def merge_new(
-            self,
-            right: DataFrameOrSeries,
-            how: str = 'inner',
-            on: Union[str, List[str]] = None,
-            left_on: Union[str, List[str]] = None,      # todo: also support array-like arguments?
-            right_on: Union[str, List[str]] = None,
-            # todo: boolean options not supported. No need to support at this time?
-            # sort: bool = False,
-            suffixes: Tuple[str, str] = ('_x', '_y'),
-            # copy: bool = True,
-            # indicator: bool = False,
-            # validate: bool = None
-    ) -> 'BuhTuhDataFrame':
-        """
-
-        """
-        print(right, how, on, left_on, right_on, suffixes)
-        # TODO: implementation
-        return self
-
     def merge(self, other: DataFrameOrSeries,
               conditions: List[
                   Union[
@@ -647,6 +627,81 @@ class BuhTuhDataFrame:
             index_dtypes={k: v.dtype for k, v in self.index.items()},
             dtypes={k: v.dtype for k, v in new_series.items()}
         )
+
+    def merge_new(
+            self,
+            right: DataFrameOrSeries,
+            how: str = 'inner',
+            on: ColumnNames = None,
+            left_on: ColumnNames = None,      # todo: also support array-like arguments?
+            right_on: ColumnNames = None,
+            # todo: boolean options not supported. No need to support at this time?
+            left_index: bool = False,
+            right_index: bool = False,
+            sort: bool = False,
+            suffixes: Tuple[str, str] = ('_x', '_y'),
+            copy: bool = True,
+            indicator: bool = False,
+            validate: bool = None
+    ) -> 'BuhTuhDataFrame':
+        """
+
+        """
+        from buhtuh.merge import merge
+        return merge(
+            left=self,
+            right=right,
+            how=how,
+            on=on,
+            left_on=left_on,
+            right_on=right_on,
+            left_index=left_index,
+            right_index=right_index,
+            sort=sort,
+            suffixes=suffixes,
+            copy=copy,
+            indicator=indicator,
+            validate=validate
+        )
+        print(right, how, on, left_on, right_on, left_index, right_index, suffixes)
+        # left_cols = set(self.data_columns)
+        # right_cols = set(right.data_columns)
+        # default_on = list(left_cols.intersection(right_cols))  # todo: column sorting?
+        #
+        # if left_on is None:
+        #     if on is not None:
+        #         left_on = on
+        # if right_on is None:
+        #     if on is not None:
+        #         right_on = on
+        # if (left_on is None) is not (right_on is None):
+        #     raise ValueError('Either both left_on and right_on should be specified, or both should be None.')
+        # if isinstance(left_on, str):
+        #     _left_on = [left_on]
+        # elif isinstance(left_on, list):
+        #     _left_on = left_on
+        # elif left_on is None:
+        #     _left_on = default_on
+        # else:
+        #     raise ValueError(f'Type of left_on ({type(left_on)}) is not supported.')
+        #
+        # if isinstance(right_on, str):
+        #     _right_on = [right_on]
+        # elif isinstance(right_on, list):
+        #     _right_on = right_on
+        # elif right_on is None:
+        #     _right_on = default_on
+        # else:
+        #     raise ValueError(f'Type of right_on ({type(right_on)}) is not supported.')
+        #
+        # if len(_left_on) != len(_right_on):
+        #     raise ValueError(f'Len of left_on ({_left_on}) does not match that of right_on ({_right_on}).')
+        #
+
+
+
+        # TODO: implementation
+        return self
 
 
 class BuhTuhSeries(ABC):
