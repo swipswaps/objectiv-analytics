@@ -16,27 +16,70 @@ def _determine_left_on_right_on(
         left_index: bool,
         right_index: bool) -> Tuple[List[str], List[str]]:
     """
-    TODO: comments, tests
+    Determine the columns that should be equal for the merge. Both for the left and the right
+    dataframse/series a list of strings is returned indicating the names of the columns that should be
+    matched.
     :return: tuple with left_on and right_on
     """
     print(right, on, left_on, right_on, left_index, right_index)
 
+    if (left_on is not None) and left_index:
+        raise ValueError('Cannot specify both left_on and left_index.')
+    if (right_on is not None) and right_index:
+        raise ValueError('Cannot specify both right_on and right_index.')
+
+    if left_index:
+        left_on = list(_get_index_names(left))
+    if right_index:
+        right_on = list(_get_index_names(right))
+
     if (left_on is None) is not (right_on is None):
         raise ValueError('Either both left_on and right_on should be specified, or both should be None.')
+    if on is not None and left_on is not None and right_on is not None:
+        raise ValueError('Either specify on or, left_on and right_on, but not all three')
 
-    left_cols = set(left.data_columns)
-    right_cols = set(right.data_columns)
-    default_on = list(left_cols.intersection(right_cols))  # todo: column sorting?
-    final_on = on if on is not None else default_on
+    left_cols =_get_data_columns(left)
+    right_cols = _get_data_columns(right)
+    intersection_columns = list(left_cols.intersection(right_cols))  # todo: column sorting?
+    final_on = on if on is not None else intersection_columns
     final_left_on = _get_x_on(final_on, left_on, 'left_on')
     final_right_on = _get_x_on(final_on, right_on, 'right_on')
     if len(final_left_on) != len(final_right_on):
         raise ValueError(f'Len of left_on ({final_left_on}) does not match that of right_on ({final_right_on}).')
-    # TODO: account for left_index and right_index
+    if len(final_left_on) == 0:
+        raise ValueError('No columns to perform merge on')
+    missing_left = set(final_left_on) - _get_all_series(left)
+    missing_right = set(final_right_on) - _get_all_series(right)
+    if missing_left:
+        raise ValueError(f'Specified column(s) do not exist. left_on: {left_on}. missing: {missing_left}')
+    if missing_right:
+        raise ValueError(f'Specified column(s) do not exist. right_on: {right_on}. missing: {missing_right}')
     return final_left_on, final_right_on
 
 
-def _get_x_on(on: List[str], x_on: ColumnNames, var_name: str) -> List[str]:
+def _get_data_columns(df_series: DataFrameOrSeries) -> Set[str]:
+    """ Get set with the names of all data columns. Works for both dataframe and series. """
+    if isinstance(df_series, BuhTuhDataFrame):
+        return set(df_series.data_columns)
+    if isinstance(df_series, BuhTuhSeries):
+        return {df_series.name}
+    raise TypeError(f'Expected BuhTuhDataFrame or BuhTuhSeries, got {type(df_series)}')
+
+
+def _get_index_names(df_series: DataFrameOrSeries) -> Set[str]:
+    """ Get set the names of the index columns. Works for both dataframe and series. """
+    if df_series.index:
+        return set(df_series.index.keys())
+    else:
+        return set()
+
+
+def _get_all_series(df_series: DataFrameOrSeries) -> Set[str]:
+    """ Get set with the names of all series. Works for both dataframe and series. """
+    return _get_index_names(df_series) | _get_data_columns(df_series)
+
+
+def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> List[str]:
     """ Helper for _determine_left_on_right_on: Give `x_on` as a List[str], or default to `on`. """
     if isinstance(x_on, str):
         return [x_on]
@@ -52,6 +95,7 @@ def _get_x_on(on: List[str], x_on: ColumnNames, var_name: str) -> List[str]:
 
 
 def _determine_result_columns() -> List[str]:
+    # TODO?
     pass
 
 
@@ -74,6 +118,8 @@ def merge(
     """
     TOOD: comments
     """
+    # todo: what to do if left.engine != right.engine?
+
     real_left_on, real_right_on = _determine_left_on_right_on(
         left=left,
         right=right,
@@ -84,6 +130,7 @@ def merge(
         right_index=right_index
     )
     print(real_left_on, real_right_on)
+    # TODO: this doesn't work with series
     left_series_list = [left.all_series[label] for label in real_left_on]
     right_series_list = [right.all_series[label] for label in real_right_on]
 

@@ -16,7 +16,7 @@ def test_merge_basic():
     print(result.view_sql())
     assert_equals_data(
         result,
-        # todo: don't duplicate all columns
+        # todo: don't duplicate all columns?
         expected_columns=[
             '_index_skating_order_x',
             '_index_skating_order_y',
@@ -100,6 +100,36 @@ def test_merge_basic_left_on_right_on_different_column():
         ],
         order_by='_index_station_id'
     )
+
+
+def test_merge_basic_on_indexes():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+
+    expected_columns = [
+        '_index_skating_order_x',
+        '_index_skating_order_y',
+        'skating_order_x',
+        'city',
+        'skating_order_y',
+        'food'
+    ]
+    expected_data = [
+        [1, 1, 1, 'Ljouwert', 1, 'Sûkerbôlle'],
+        [2, 2, 2, 'Snits', 2, 'Dúmkes'],
+    ]
+
+    result = bt.merge_new(mt, left_index=True, right_on='skating_order')
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(result, expected_columns=expected_columns, expected_data=expected_data)
+
+    result = bt.merge_new(mt, left_index=True, right_index=True)
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(result, expected_columns=expected_columns, expected_data=expected_data)
+
+    result = bt.merge_new(mt, left_on='skating_order', right_index=True)
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(result, expected_columns=expected_columns, expected_data=expected_data)
 
 
 # OLD STUFF
