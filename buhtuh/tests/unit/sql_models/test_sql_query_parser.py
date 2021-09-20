@@ -17,7 +17,7 @@ def test_parse_select():
     assert result == [CteTuple(name=None, select_sql=sql)]
 
     sql = '''
-        select t1.a, t2.b, t2.c 
+        select t1.a, t2.b, t2.c
         from table1 as t1
         join table2 as t2 on t1.a = t2.a
         where t2.z > 5

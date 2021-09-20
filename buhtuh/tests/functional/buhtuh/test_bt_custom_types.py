@@ -135,7 +135,6 @@ def test_custom_type_register():
     _registry.value_type_dtype = []
 
 
-
 class ReversedStringType(BuhTuhSeries):
     """ Test class for custom types. """
     dtype = 'reversed_string'
