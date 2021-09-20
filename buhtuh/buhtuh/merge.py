@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Union, List, Tuple, Optional, Dict, Set
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
 
 from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries
 from sql_models.model import CustomSqlModel
@@ -21,8 +21,6 @@ def _determine_left_on_right_on(
     matched.
     :return: tuple with left_on and right_on
     """
-    print(right, on, left_on, right_on, left_index, right_index)
-
     if (left_on is not None) and left_index:
         raise ValueError('Cannot specify both left_on and left_index.')
     if (right_on is not None) and right_index:
@@ -48,8 +46,8 @@ def _determine_left_on_right_on(
         raise ValueError(f'Len of left_on ({final_left_on}) does not match that of right_on ({final_right_on}).')
     if len(final_left_on) == 0:
         raise ValueError('No columns to perform merge on')
-    missing_left = set(final_left_on) - _get_all_series(left)
-    missing_right = set(final_right_on) - _get_all_series(right)
+    missing_left = set(final_left_on) - _get_all_series_names(left)
+    missing_right = set(final_right_on) - _get_all_series_names(right)
     if missing_left:
         raise ValueError(f'Specified column(s) do not exist. left_on: {left_on}. missing: {missing_left}')
     if missing_right:
@@ -74,7 +72,7 @@ def _get_index_names(df_series: DataFrameOrSeries) -> Set[str]:
         return set()
 
 
-def _get_all_series(df_series: DataFrameOrSeries) -> Set[str]:
+def _get_all_series_names(df_series: DataFrameOrSeries) -> Set[str]:
     """ Get set with the names of all series. Works for both dataframe and series. """
     return _get_index_names(df_series) | _get_data_columns(df_series)
 
@@ -94,9 +92,74 @@ def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> Li
     raise ValueError(f'Type of {var_name} is not supported. Type: {type(x_on)}')
 
 
-def _determine_result_columns() -> List[str]:
-    # TODO?
-    pass
+class ResultColumn(NamedTuple):
+    name: str
+    expression: str
+    dtype: str
+
+
+def _determine_result_columns(
+        left: BuhTuhDataFrame,
+        right: DataFrameOrSeries,
+        left_on: List[str],
+        right_on: List[str],
+        suffixes: Tuple[str, str]
+) -> Tuple[List[ResultColumn], List[ResultColumn]]:
+    """
+    Determine which columns should be in the DataFrame after merging left and right, with the given
+    left_on and right_on values.
+    """
+    left_on_pos = {label: i for i, label in enumerate(left_on)}
+    right_on_pos = {label: i for i, label in enumerate(right_on)}
+    # don't add a column from the right to the result if: We are joining on that column and the column in
+    # left has the same name
+    filter_column_from_right = {
+        label: right_on_pos[label] == left_on_pos.get(label)
+        for label in right_on_pos.keys()
+    }
+    left_index = left.index
+    if right.index:
+        right_index = {
+            label: series for label, series in right.index.items()
+            if not filter_column_from_right.get(label, False)
+        }
+    else:
+        right_index = {}
+
+    left_data = left.data
+    if isinstance(right, BuhTuhDataFrame):
+        right_data = right.data
+    elif isinstance(right, BuhTuhSeries):
+        right_data = {right.name: right}
+    else:
+        raise TypeError(f'Right should be DataFrameOrSeries type: {type(right)}')
+    right_data = {
+        label: series for label, series in right_data.items()
+        if not filter_column_from_right.get(label, False)
+    }
+
+    conflicting = set({**left_index, **left_data}.keys()).intersection(set({**right_index, **right_data}))
+    new_index_list = _get_column_name_expr_dtype(left_index, conflicting, suffixes[0], 'l')
+    new_index_list += _get_column_name_expr_dtype(right_index, conflicting, suffixes[1], 'r')
+    new_data_list = _get_column_name_expr_dtype(left_data, conflicting, suffixes[0], 'l')
+    new_data_list += _get_column_name_expr_dtype(right_data, conflicting, suffixes[1], 'r')
+    return new_index_list, new_data_list
+
+
+def _get_column_name_expr_dtype(
+        source_series: Dict[str, BuhTuhSeries],
+        conflicting_names: Set[str],
+        suffix: str,
+        table_alias: str
+) -> List[ResultColumn]:
+    """ Helper of _determine_result_columns. """
+    new_index_list: List[ResultColumn] = []
+    for index_name, series in source_series.items():
+        new_name = index_name
+        if index_name in conflicting_names:
+            new_name = index_name + suffix
+        new_index_list.append(ResultColumn(new_name, series.get_expression(table_alias), series.dtype))
+    return new_index_list
 
 
 def merge(
@@ -106,17 +169,34 @@ def merge(
         on: Union[str, List[str], None],
         left_on: Union[str, List[str],  None],  # todo: also support array-like arguments?
         right_on: Union[str, List[str], None],
-        # todo: boolean options not supported. No need to support at this time?
         left_index: bool,
         right_index: bool,
         sort: bool,
         suffixes: Tuple[str, str],
         copy: bool,
         indicator: bool,
-        validate: Optional[bool]
+        validate: Optional[str]
 ) -> BuhTuhDataFrame:
     """
-    TOOD: comments
+    Join the left and right Dataframes, or a DataFrame (left) and a Series (right). This will return a new
+    DataFrame that contains the combined columns of both dataframes, and the rows that result from joining
+    on the specified columns. The columns that are joined on can consists (partially or fully) out of index
+    columns.
+
+    :param left: left DataFrame
+    :param right: DataFrame or Series to join on left
+    :param how: supported values: {‘left’, ‘right’, ‘outer’, ‘inner’, ‘cross’} TODO: support and add tests
+    :param on: optional, column(s) to join left and right on.
+    :param left_on: optional, column(s) from the left df to join on
+    :param right_on: optional, column(s) from the right df/series to join on
+    :param left_index: If true uses the index of the left df as columns to join on
+    :param right_index: If true uses the index of the right df/series as columns to join on
+    :param sort: ignored, not supported.
+    :param suffixes: Tuple of two strings. Will be used to suffix duplicate column names. Must make column
+        names unique
+    :param copy: ignored, not supported. Always creates a new DataFrame
+    :param indicator: ignored, not supported.
+    :param validate: ignored, not supported.
     """
     # todo: what to do if left.engine != right.engine?
 
@@ -129,25 +209,16 @@ def merge(
         left_index=left_index,
         right_index=right_index
     )
-    print(real_left_on, real_right_on)
-    # TODO: this doesn't work with series
-    left_series_list = [left.all_series[label] for label in real_left_on]
-    right_series_list = [right.all_series[label] for label in real_right_on]
-
-
-    # todo: smart stuff needed from here on
-    # todo: don't duplicate columns on which we join
-    conflicting = set(left.all_series.keys()).intersection(set(right.all_series.keys()))
-    new_index_list = _get_column_name_expr_dtype(left.index, conflicting, suffixes[0], 'l')
-    new_index_list += _get_column_name_expr_dtype(right.index, conflicting, suffixes[1], 'r')
-    new_data_list = _get_column_name_expr_dtype(left.data, conflicting, suffixes[0], 'l')
-    new_data_list += _get_column_name_expr_dtype(right.data, conflicting, suffixes[1], 'r')
-
+    new_index_list, new_data_list = _determine_result_columns(
+        left=left, right=right, left_on=real_left_on, right_on=real_right_on, suffixes=suffixes
+    )
 
     conditions = []
-    for l_series, r_series in zip(left_series_list, right_series_list):
+    for l_label, r_label in zip(real_left_on, real_right_on):
+        l_expr = _get_expression(df_series=left, label=l_label, table_alias='l')
+        r_expr = _get_expression(df_series=right, label=r_label, table_alias='r')
         conditions.append(
-            f'({l_series.get_expression("l")} = {r_series.get_expression("r")})'
+            f'({l_expr} = {r_expr})'
         )
     condition_str = ''
     if conditions:
@@ -175,16 +246,12 @@ def merge(
     )
 
 
-def _get_column_name_expr_dtype(
-        source_series: Dict[str, BuhTuhSeries],
-        conflicting_names: Set[str],
-        suffix: str,
-        table_alias: str):
-    """ """
-    new_index_list: List[Tuple[str, str, str]] = []
-    for index_name, series in source_series.items():
-        new_name = index_name
-        if index_name in conflicting_names:
-            new_name = index_name + suffix
-        new_index_list.append((new_name, series.get_expression(table_alias), series.dtype))
-    return new_index_list
+def _get_expression(df_series: DataFrameOrSeries, label: str, table_alias: str) -> str:
+    """ Helper: TODO comments """
+    if df_series.index and label in df_series.index:
+        return df_series.index[label].get_expression(table_alias)
+    if isinstance(df_series, BuhTuhDataFrame):
+        return df_series.data[label].get_expression(table_alias)
+    if isinstance(df_series, BuhTuhSeries):
+        return df_series.get_expression(table_alias)
+    raise TypeError(f'df_series should be DataFrameOrSeries. type: {type(df_series)}')

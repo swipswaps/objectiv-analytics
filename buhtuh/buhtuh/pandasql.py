@@ -642,10 +642,23 @@ class BuhTuhDataFrame:
             suffixes: Tuple[str, str] = ('_x', '_y'),
             copy: bool = True,
             indicator: bool = False,
-            validate: bool = None
+            validate: str = None
     ) -> 'BuhTuhDataFrame':
         """
-
+        TODO: add comments, or just link to pandas' documentation? Or move this to merge.py? perhaps include
+            the docs from another location like pnadas does?
+        :param right:
+        :param how:
+        :param on:
+        :param left_on:
+        :param right_on:
+        :param left_index:
+        :param right_index:
+        :param sort: ignored, not supported.
+        :param suffixes:
+        :param copy: ignored, not supported. Always creates a new DataFrame
+        :param indicator: ignored, not supported.
+        :param validate: ignored, not supported.
         """
         from buhtuh.merge import merge
         return merge(
@@ -663,45 +676,6 @@ class BuhTuhDataFrame:
             indicator=indicator,
             validate=validate
         )
-        print(right, how, on, left_on, right_on, left_index, right_index, suffixes)
-        # left_cols = set(self.data_columns)
-        # right_cols = set(right.data_columns)
-        # default_on = list(left_cols.intersection(right_cols))  # todo: column sorting?
-        #
-        # if left_on is None:
-        #     if on is not None:
-        #         left_on = on
-        # if right_on is None:
-        #     if on is not None:
-        #         right_on = on
-        # if (left_on is None) is not (right_on is None):
-        #     raise ValueError('Either both left_on and right_on should be specified, or both should be None.')
-        # if isinstance(left_on, str):
-        #     _left_on = [left_on]
-        # elif isinstance(left_on, list):
-        #     _left_on = left_on
-        # elif left_on is None:
-        #     _left_on = default_on
-        # else:
-        #     raise ValueError(f'Type of left_on ({type(left_on)}) is not supported.')
-        #
-        # if isinstance(right_on, str):
-        #     _right_on = [right_on]
-        # elif isinstance(right_on, list):
-        #     _right_on = right_on
-        # elif right_on is None:
-        #     _right_on = default_on
-        # else:
-        #     raise ValueError(f'Type of right_on ({type(right_on)}) is not supported.')
-        #
-        # if len(_left_on) != len(_right_on):
-        #     raise ValueError(f'Len of left_on ({_left_on}) does not match that of right_on ({_right_on}).')
-        #
-
-
-
-        # TODO: implementation
-        return self
 
 
 class BuhTuhSeries(ABC):

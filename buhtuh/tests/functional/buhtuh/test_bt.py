@@ -113,7 +113,7 @@ def assert_equals_data(
         bt: Union[BuhTuhDataFrame, BuhTuhSeries],
         expected_columns: List[str],
         expected_data: List[list],
-        order_by: str = None
+        order_by: Union[str, List[str]] = None
 ):
     """
     Execute sql of ButTuhDataFrame/Series, with the given order_by, and make sure the result matches

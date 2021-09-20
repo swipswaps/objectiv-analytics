@@ -1,8 +1,6 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import pytest
-
 from buhtuh import BuhTuhDataFrame
 from tests.functional.buhtuh.test_bt import _get_bt_with_test_data, _get_bt_with_food_data, \
     assert_equals_data, _get_bt_with_railway_data
@@ -13,7 +11,6 @@ def test_merge_basic():
     mt = _get_bt_with_food_data()[['skating_order', 'food']]
     result = bt.merge_new(mt)
     assert isinstance(result, BuhTuhDataFrame)
-    print(result.view_sql())
     assert_equals_data(
         result,
         # todo: don't duplicate all columns?
@@ -50,6 +47,27 @@ def test_merge_basic_on():
         expected_data=[
             [1, 1, 1, 'Ljouwert', 1, 'Sûkerbôlle'],
             [2, 2, 2, 'Snits', 2, 'Dúmkes'],
+        ]
+    )
+
+
+def test_merge_basic_on_series():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_food_data()['food']
+    result = bt.merge_new(mt, on='_index_skating_order')
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order_x',
+            '_index_skating_order_y',
+            'skating_order',
+            'city',
+            'food'
+        ],
+        expected_data=[
+            [1, 1, 1, 'Ljouwert', 'Sûkerbôlle'],
+            [2, 2, 2, 'Snits', 'Dúmkes'],
         ]
     )
 
@@ -130,6 +148,35 @@ def test_merge_basic_on_indexes():
     result = bt.merge_new(mt, left_on='skating_order', right_index=True)
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(result, expected_columns=expected_columns, expected_data=expected_data)
+
+
+def test_merge_mixed_columns():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_railway_data()[['station', 'platforms']]
+    # join _index_skating_order on the 'platforms' column
+    result = bt.merge_new(mt, left_index=True, right_on='platforms')
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order',
+            '_index_station_id',
+            'skating_order',
+            'city',
+            'station',
+            'platforms'
+        ],
+        expected_data=[
+            [1, 1, 1, 'Ljouwert', 'IJlst', 1],
+            [1, 2, 1, 'Ljouwert', 'Heerenveen', 1],
+            [1, 5, 1, 'Ljouwert', 'Camminghaburen', 1],
+            [2, 3, 2, 'Snits', 'Heerenveen IJsstadion', 2],
+            [2, 6, 2, 'Snits', 'Sneek', 2],
+            [2, 7, 2, 'Snits', 'Sneek Noord', 2],
+
+        ],
+        order_by=['_index_skating_order', '_index_station_id']
+    )
 
 
 # OLD STUFF

@@ -5,8 +5,8 @@ from typing import List
 
 import pytest
 
-from buhtuh import BuhTuhDataFrame, BuhTuhSeriesInt64
-from buhtuh.merge import _determine_left_on_right_on
+from buhtuh import BuhTuhDataFrame, get_series_type_from_dtype
+from buhtuh.merge import _determine_left_on_right_on, _determine_result_columns, ResultColumn
 
 
 def test__determine_left_on_right_on_simple_df_df_happy():
@@ -106,16 +106,65 @@ def test__determine_left_on_right_df_serie_happy():
     assert call__determine_left_on_right_on(left, right, left_index=True, right_index=True) == (['a'], ['a'])
 
 
-def get_fake_df(index_names: List[str], data_names: List[str]):
+def test__determine_result_columns():
+    left = get_fake_df(['a'], ['b', 'c'], 'Int64')
+    right = get_fake_df(['a'], ['c', 'd'], 'Float64')
+    result = _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
+    assert result == (
+        [
+            ResultColumn(name='a', expression='a', dtype='Int64'),
+        ], [
+            ResultColumn(name='b', expression='b', dtype='Int64'),
+            ResultColumn(name='c_x', expression='c', dtype='Int64'),
+            ResultColumn(name='c_y', expression='c', dtype='Float64'),
+            ResultColumn(name='d', expression='d', dtype='Float64')
+        ]
+    )
+    result = _determine_result_columns(left, right, ['c'], ['c'], ('_x', '_y'))
+    assert result == (
+        [
+            ResultColumn(name='a_x', expression='a', dtype='Int64'),
+            ResultColumn(name='a_y', expression='a', dtype='Float64'),
+        ], [
+            ResultColumn(name='b', expression='b', dtype='Int64'),
+            ResultColumn(name='c', expression='c', dtype='Int64'),
+            ResultColumn(name='d', expression='d', dtype='Float64')
+        ]
+    )
+    result = _determine_result_columns(left, right, ['a', 'c'], ['a', 'c'], ('_x', '_y'))
+    assert result == (
+        [
+            ResultColumn(name='a', expression='a', dtype='Int64'),
+        ], [
+            ResultColumn(name='b', expression='b', dtype='Int64'),
+            ResultColumn(name='c', expression='c', dtype='Int64'),
+            ResultColumn(name='d', expression='d', dtype='Float64')
+        ]
+    )
+
+
+def test__determine_result_columns_non_happy_path():
+    # With pandas the following works, there will just be two b_x and two b_y columns, but we cannot
+    # generate sql that has the same column name multiple times, so we raise an error
+    left = get_fake_df(['a'], ['b', 'b_x'], 'Int64')
+    right = get_fake_df(['a'], ['b', 'b_y'], 'Float64')
+    with pytest.raises(ValueError):
+        _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
+
+
+
+
+def get_fake_df(index_names: List[str], data_names: List[str], dtype='Int64'):
     engine = object(),
     source_node = object(),
+    series_type = get_series_type_from_dtype(dtype=dtype)
     index = {
-        name: BuhTuhSeriesInt64(
+        name: series_type(
             engine=engine, base_node=source_node, index=None, name=name, expression=name
         ) for name in index_names
     }
     data = {
-        name: BuhTuhSeriesInt64(
+        name: series_type(
             engine=engine, base_node=source_node, index=index, name=name, expression=name
         ) for name in data_names
     }
