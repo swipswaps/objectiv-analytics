@@ -89,10 +89,10 @@ class TypeRegistry:
             'timedelta': BuhTuhSeriesTimedelta
         }
         self.value_type_dtype = [
-            (bool, 'bool'),
             (int, 'int64'),
             (numpy.int64, 'int64'),
             (float, 'float64'),
+            (bool, 'bool'),
             (str, 'string'),
 
             (datetime.date, 'date'),
