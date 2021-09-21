@@ -478,31 +478,18 @@ class BuhTuhDataFrame:
             on: ColumnNames = None,
             left_on: ColumnNames = None,      # todo: also support array-like arguments?
             right_on: ColumnNames = None,
-            # todo: boolean options not supported. No need to support at this time?
             left_index: bool = False,
             right_index: bool = False,
-            sort: bool = False,
             suffixes: Tuple[str, str] = ('_x', '_y'),
-            copy: bool = True,
-            indicator: bool = False,
-            validate: str = None
     ) -> 'BuhTuhDataFrame':
         """
-        TODO: add comments, or just link to pandas' documentation? Or move this to merge.py? perhaps include
-            the docs from another location like pnadas does?
-        :param right:
-        :param how:
-        :param on:
-        :param left_on:
-        :param right_on:
-        :param left_index:
-        :param right_index:
-        :param sort: ignored, not supported.
-        :param suffixes:
-        :param copy: ignored, not supported. Always creates a new DataFrame
-        :param indicator: ignored, not supported.
-        :param validate: ignored, not supported.
-        :return: A new DataFrame
+        Join the right Dataframe or Series on self.. This will return a new DataFrame that contains the
+        combined columns of both dataframes, and the rows that result from joining on the specified columns.
+        The columns that are joined on can consists (partially or fully) out of index columns.
+
+        See buhtuh.merge.merge() for more information.
+        The interface of this function is similar to pandas' merge, but the following parameters are not
+        supported: sort, copy, indicator, and validate.
         """
         from buhtuh.merge import merge
         return merge(
@@ -514,11 +501,7 @@ class BuhTuhDataFrame:
             right_on=right_on,
             left_index=left_index,
             right_index=right_index,
-            sort=sort,
-            suffixes=suffixes,
-            copy=copy,
-            indicator=indicator,
-            validate=validate
+            suffixes=suffixes
         )
 
 

@@ -161,35 +161,6 @@ def test_merge_basic_on_indexes():
     )
 
 
-def test_merge_mixed_columns():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_railway_data()[['station', 'platforms']]
-    # join _index_skating_order on the 'platforms' column
-    result = bt.merge(mt, left_index=True, right_on='platforms')
-    assert isinstance(result, BuhTuhDataFrame)
-    assert_equals_data(
-        result,
-        expected_columns=[
-            '_index_skating_order',
-            '_index_station_id',
-            'skating_order',
-            'city',
-            'station',
-            'platforms'
-        ],
-        expected_data=[
-            [1, 1, 1, 'Ljouwert', 'IJlst', 1],
-            [1, 2, 1, 'Ljouwert', 'Heerenveen', 1],
-            [1, 5, 1, 'Ljouwert', 'Camminghaburen', 1],
-            [2, 3, 2, 'Snits', 'Heerenveen IJsstadion', 2],
-            [2, 6, 2, 'Snits', 'Sneek', 2],
-            [2, 7, 2, 'Snits', 'Sneek Noord', 2],
-
-        ],
-        order_by=['_index_skating_order', '_index_station_id']
-    )
-
-
 def test_merge_self():
     bt1 = _get_bt_with_test_data(full_data_set=False)[['city']]
     bt2 = _get_bt_with_test_data(full_data_set=False)[['inhabitants']]
@@ -255,26 +226,148 @@ def test_merge_expression_columns_regression():
     )
 
 
-#
-#
-# def test_merge_left_right():
-#     bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-#     mt = _get_bt_with_merge_data()[['skating_order', 'food']]
-#
-#     result = bt.merge(mt, how='left')
-#     assert_equals_data(
-#         result,
-#         expected_columns=['_index_skating_order', 'skating_order_left', 'skating_order_right', 'city', 'food'],
-#         expected_data=[
-#             [1, 1, 1, 'Ljouwert', 'Sûkerbôlle'], [2, 2, 2, 'Snits', 'Dúmkes'],  [3, 3, None, 'Drylts', None]
-#         ]
-#     )
-#
-#     result = mt.merge(bt, how='right')
-#     assert_equals_data(
-#         result,
-#         expected_columns=['_index_skating_order', 'skating_order_left', 'skating_order_right', 'food', 'city'],
-#         expected_data=[
-#             [1, 1, 1, 'Sûkerbôlle', 'Ljouwert'], [2, 2, 2, 'Dúmkes', 'Snits'], [3, None, 3, None, 'Drylts']
-#         ]
-#     )
+def test_merge_mixed_columns():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_railway_data()[['station', 'platforms']]
+    # join _index_skating_order on the 'platforms' column
+    result = bt.merge(mt, how='inner', left_on='skating_order', right_on='platforms')
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order',
+            '_index_station_id',
+            'skating_order',
+            'city',
+            'station',
+            'platforms'
+        ],
+        expected_data=[
+            [1, 1, 1, 'Ljouwert', 'IJlst', 1],
+            [1, 2, 1, 'Ljouwert', 'Heerenveen', 1],
+            [1, 5, 1, 'Ljouwert', 'Camminghaburen', 1],
+            [2, 3, 2, 'Snits', 'Heerenveen IJsstadion', 2],
+            [2, 6, 2, 'Snits', 'Sneek', 2],
+            [2, 7, 2, 'Snits', 'Sneek Noord', 2],
+
+        ],
+        order_by=['_index_skating_order', '_index_station_id']
+    )
+
+
+def test_merge_left_join():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_railway_data()[['station', 'platforms']]
+    # join _index_skating_order on the 'platforms' column
+    result = bt.merge(mt, how='left', left_on='skating_order', right_on='platforms')
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order',
+            '_index_station_id',
+            'skating_order',
+            'city',
+            'station',
+            'platforms'
+        ],
+        expected_data=[
+            [1, 1, 1, 'Ljouwert', 'IJlst', 1],
+            [1, 2, 1, 'Ljouwert', 'Heerenveen', 1],
+            [1, 5, 1, 'Ljouwert', 'Camminghaburen', 1],
+            [2, 3, 2, 'Snits', 'Heerenveen IJsstadion', 2],
+            [2, 6, 2, 'Snits', 'Sneek', 2],
+            [2, 7, 2, 'Snits', 'Sneek Noord', 2],
+            [3, None, 3, 'Drylts', None, None],
+        ],
+        order_by=['_index_skating_order', '_index_station_id']
+    )
+
+
+def test_merge_right_join():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_railway_data()[['station', 'platforms']]
+    result = bt.merge(mt, how='right', left_on='skating_order', right_on='platforms')
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order',
+            '_index_station_id',
+            'skating_order',
+            'city',
+            'station',
+            'platforms'
+        ],
+        expected_data=[
+            [1, 1, 1, 'Ljouwert', 'IJlst', 1],
+            [1, 2, 1, 'Ljouwert', 'Heerenveen', 1],
+            [2, 3, 2, 'Snits', 'Heerenveen IJsstadion', 2],
+            [None, 4, None, None, 'Leeuwarden', 4],
+            [1, 5, 1, 'Ljouwert', 'Camminghaburen', 1],
+            [2, 6, 2, 'Snits', 'Sneek', 2],
+            [2, 7, 2, 'Snits', 'Sneek Noord', 2],
+        ],
+        order_by=['_index_station_id']
+    )
+
+
+def test_merge_outer_join():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_railway_data()[['station', 'platforms']]
+    result = bt.merge(mt, how='outer', left_on='skating_order', right_on='platforms')
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order',
+            '_index_station_id',
+            'skating_order',
+            'city',
+            'station',
+            'platforms'
+        ],
+        # in bt there is no row with skating_order == 4, so for the station with 4 platforms we
+        # expect to join None values.
+        expected_data=[
+            [1, 1, 1, 'Ljouwert', 'IJlst', 1],
+            [1, 2, 1, 'Ljouwert', 'Heerenveen', 1],
+            [2, 3, 2, 'Snits', 'Heerenveen IJsstadion', 2],
+            [None, 4, None, None, 'Leeuwarden', 4],
+            [1, 5, 1, 'Ljouwert', 'Camminghaburen', 1],
+            [2, 6, 2, 'Snits', 'Sneek', 2],
+            [2, 7, 2, 'Snits', 'Sneek Noord', 2],
+            [3, None, 3, 'Drylts', None, None],
+        ],
+        order_by=['_index_station_id']
+    )
+
+
+def test_merge_cross_join():
+    bt = _get_bt_with_test_data(full_data_set=False)[['city']]
+    mt = _get_bt_with_food_data()[['food']]
+    result = bt.merge(mt, how='cross')
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order_x',
+            '_index_skating_order_y',
+            'city',
+            'food'
+        ],
+        # in bt there is no row with skating_order == 4, so for the station with 4 platforms we
+        # expect to join None values.
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Sûkerbôlle'],
+            [1, 2, 'Ljouwert', 'Dúmkes'],
+            [1, 4, 'Ljouwert', 'Grutte Pier Bier'],
+            [2, 1, 'Snits', 'Sûkerbôlle'],
+            [2, 2, 'Snits', 'Dúmkes'],
+            [2, 4, 'Snits', 'Grutte Pier Bier'],
+            [3, 1, 'Drylts', 'Sûkerbôlle'],
+            [3, 2, 'Drylts', 'Dúmkes'],
+            [3, 4, 'Drylts', 'Grutte Pier Bier'],
+        ],
+        order_by=['_index_skating_order_x', '_index_skating_order_y']
+    )

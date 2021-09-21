@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, cast
 
 from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries
 from sql_models.model import CustomSqlModel
@@ -191,11 +191,7 @@ def merge(
         right_on: Union[str, List[str], None],
         left_index: bool,
         right_index: bool,
-        sort: bool,
-        suffixes: Tuple[str, str],
-        copy: bool,
-        indicator: bool,
-        validate: Optional[str]
+        suffixes: Tuple[str, str]
 ) -> BuhTuhDataFrame:
     """
     Join the left and right Dataframes, or a DataFrame (left) and a Series (right). This will return a new
@@ -211,22 +207,28 @@ def merge(
     :param right_on: optional, column(s) from the right df/series to join on
     :param left_index: If true uses the index of the left df as columns to join on
     :param right_index: If true uses the index of the right df/series as columns to join on
-    :param sort: ignored, not supported.
     :param suffixes: Tuple of two strings. Will be used to suffix duplicate column names. Must make column
         names unique
-    :param copy: ignored, not supported. Always creates a new DataFrame
-    :param indicator: ignored, not supported.
-    :param validate: ignored, not supported.
+    :return: A new Dataframe. The original frames are not modified.
     """
-    real_left_on, real_right_on = _determine_left_on_right_on(
-        left=left,
-        right=right,
-        on=on,
-        left_on=left_on,
-        right_on=right_on,
-        left_index=left_index,
-        right_index=right_index
-    )
+    # TODO: improve this, extract it to a function
+    assert how in ('left', 'right', 'outer', 'inner', 'cross')
+    join = how
+    if how == 'outer':
+        join = 'full outer'
+    if how == 'cross':
+        # todo: add elegance
+        real_left_on, real_right_on = cast(List[str], []), cast(List[str], [])
+    else:
+        real_left_on, real_right_on = _determine_left_on_right_on(
+            left=left,
+            right=right,
+            on=on,
+            left_on=left_on,
+            right_on=right_on,
+            left_index=left_index,
+            right_index=right_index
+        )
     new_index_list, new_data_list = _determine_result_columns(
         left=left, right=right, left_on=real_left_on, right_on=real_right_on, suffixes=suffixes
     )
@@ -249,7 +251,7 @@ def merge(
     model = model_builder(
         index_str=', '.join(f'{expr} as {name}' for name, expr, _dtype in new_index_list),
         data_str=', '.join(f'{expr} as {name}' for name, expr, _dtype in new_data_list),
-        join=how,
+        join=join,
         left_node=left.base_node,
         right_node=right.base_node,
         condition_str=condition_str
