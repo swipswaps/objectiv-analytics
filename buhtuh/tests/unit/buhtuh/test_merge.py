@@ -152,8 +152,6 @@ def test__determine_result_columns_non_happy_path():
         _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
 
 
-
-
 def get_fake_df(index_names: List[str], data_names: List[str], dtype='Int64'):
     engine = object(),
     source_node = object(),

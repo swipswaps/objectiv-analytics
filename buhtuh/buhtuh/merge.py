@@ -36,14 +36,15 @@ def _determine_left_on_right_on(
     if on is not None and left_on is not None and right_on is not None:
         raise ValueError('Either specify on or, left_on and right_on, but not all three')
 
-    left_cols =_get_data_columns(left)
+    left_cols = _get_data_columns(left)
     right_cols = _get_data_columns(right)
-    intersection_columns = list(left_cols.intersection(right_cols))  # todo: column sorting?
+    intersection_columns = list(left_cols.intersection(right_cols))
     final_on = on if on is not None else intersection_columns
     final_left_on = _get_x_on(final_on, left_on, 'left_on')
     final_right_on = _get_x_on(final_on, right_on, 'right_on')
     if len(final_left_on) != len(final_right_on):
-        raise ValueError(f'Len of left_on ({final_left_on}) does not match that of right_on ({final_right_on}).')
+        raise ValueError(
+            f'Len of left_on ({final_left_on}) does not match that of right_on ({final_right_on}).')
     if len(final_left_on) == 0:
         raise ValueError('No columns to perform merge on')
     missing_left = set(final_left_on) - _get_all_series_names(left)
@@ -109,19 +110,12 @@ def _determine_result_columns(
     Determine which columns should be in the DataFrame after merging left and right, with the given
     left_on and right_on values.
     """
-    left_on_pos = {label: i for i, label in enumerate(left_on)}
-    right_on_pos = {label: i for i, label in enumerate(right_on)}
-    # don't add a column from the right to the result if: We are joining on that column and the column in
-    # left has the same name
-    filter_column_from_right = {
-        label: right_on_pos[label] == left_on_pos.get(label)
-        for label in right_on_pos.keys()
-    }
+    filter_columns_from_right = _get_filter_columns_from_right(left_on, right_on)
     left_index = left.index
     if right.index:
         right_index = {
             label: series for label, series in right.index.items()
-            if not filter_column_from_right.get(label, False)
+            if label not in filter_columns_from_right
         }
     else:
         right_index = {}
@@ -135,7 +129,7 @@ def _determine_result_columns(
         raise TypeError(f'Right should be DataFrameOrSeries type: {type(right)}')
     right_data = {
         label: series for label, series in right_data.items()
-        if not filter_column_from_right.get(label, False)
+        if label not in filter_columns_from_right
     }
 
     conflicting = set({**left_index, **left_data}.keys()).intersection(set({**right_index, **right_data}))
@@ -143,7 +137,33 @@ def _determine_result_columns(
     new_index_list += _get_column_name_expr_dtype(right_index, conflicting, suffixes[1], 'r')
     new_data_list = _get_column_name_expr_dtype(left_data, conflicting, suffixes[0], 'l')
     new_data_list += _get_column_name_expr_dtype(right_data, conflicting, suffixes[1], 'r')
+    _check_no_column_name_conflicts(new_index_list + new_data_list)
     return new_index_list, new_data_list
+
+
+def _check_no_column_name_conflicts(result_columns: List[ResultColumn]):
+    """ Helper of _determine_result_columns, checks that there are no duplicate names in the list.  """
+    seen = set()
+    for rc in result_columns:
+        if rc.name in seen:
+            raise ValueError(f'Names are not unique. Result contains {rc.name} multiple times')
+        seen.add(rc.name)
+
+
+def _get_filter_columns_from_right(left_on, right_on) -> Set[str]:
+    """
+    Helper of _determine_result_columns: get all columns that should not be included from the right df,
+    as they are matched on the same column on the left.
+    """
+    left_on_pos = {label: i for i, label in enumerate(left_on)}
+    right_on_pos = {label: i for i, label in enumerate(right_on)}
+    # don't add a column from the right to the result if we are joining on that column and the column in
+    # left has the same name
+    filter_column_from_right = {
+        label for label in right_on_pos.keys()
+        if right_on_pos[label] == left_on_pos.get(label)
+    }
+    return filter_column_from_right
 
 
 def _get_column_name_expr_dtype(
@@ -198,8 +218,6 @@ def merge(
     :param indicator: ignored, not supported.
     :param validate: ignored, not supported.
     """
-    # todo: what to do if left.engine != right.engine?
-
     real_left_on, real_right_on = _determine_left_on_right_on(
         left=left,
         right=right,
@@ -217,9 +235,7 @@ def merge(
     for l_label, r_label in zip(real_left_on, real_right_on):
         l_expr = _get_expression(df_series=left, label=l_label, table_alias='l')
         r_expr = _get_expression(df_series=right, label=r_label, table_alias='r')
-        conditions.append(
-            f'({l_expr} = {r_expr})'
-        )
+        conditions.append(f'({l_expr} = {r_expr})')
     condition_str = ''
     if conditions:
         condition_str = 'on ' + ' and '.join(conditions)
@@ -247,7 +263,7 @@ def merge(
 
 
 def _get_expression(df_series: DataFrameOrSeries, label: str, table_alias: str) -> str:
-    """ Helper: TODO comments """
+    """ Helper of merge: give the expression for the column with the given label in df_series as a string """
     if df_series.index and label in df_series.index:
         return df_series.index[label].get_expression(table_alias)
     if isinstance(df_series, BuhTuhDataFrame):
