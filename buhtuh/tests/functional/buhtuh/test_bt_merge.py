@@ -13,18 +13,16 @@ def test_merge_basic():
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
         result,
-        # todo: don't duplicate all columns?
         expected_columns=[
             '_index_skating_order_x',
             '_index_skating_order_y',
-            'skating_order_x',
+            'skating_order',  # skating_order is the 'on' column, so it is not duplicated
             'city',
-            'skating_order_y',
             'food'
         ],
         expected_data=[
-            [1, 1, 1, 'Ljouwert', 1, 'Sûkerbôlle'],
-            [2, 2, 2, 'Snits', 2, 'Dúmkes'],
+            [1, 1, 1, 'Ljouwert', 'Sûkerbôlle'],
+            [2, 2, 2, 'Snits', 'Dúmkes'],
         ]
     )
 
@@ -33,28 +31,6 @@ def test_merge_basic_on():
     bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
     mt = _get_bt_with_food_data()[['skating_order', 'food']]
     result = bt.merge_new(mt, on='skating_order')
-    assert isinstance(result, BuhTuhDataFrame)
-    assert_equals_data(
-        result,
-        expected_columns=[
-            '_index_skating_order_x',
-            '_index_skating_order_y',
-            'skating_order_x',
-            'city',
-            'skating_order_y',
-            'food'
-        ],
-        expected_data=[
-            [1, 1, 1, 'Ljouwert', 1, 'Sûkerbôlle'],
-            [2, 2, 2, 'Snits', 2, 'Dúmkes'],
-        ]
-    )
-
-
-def test_merge_basic_on_series():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_food_data()['food']
-    result = bt.merge_new(mt, on='_index_skating_order')
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
         result,
@@ -72,6 +48,26 @@ def test_merge_basic_on_series():
     )
 
 
+def test_merge_basic_on_series():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_food_data()['food']
+    result = bt.merge_new(mt, on='_index_skating_order')
+    assert isinstance(result, BuhTuhDataFrame)
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order',
+            'skating_order',
+            'city',
+            'food'
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Sûkerbôlle'],
+            [2, 2, 'Snits', 'Dúmkes'],
+        ]
+    )
+
+
 def test_merge_basic_left_on_right_on_same_column():
     bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
     mt = _get_bt_with_food_data()[['skating_order', 'food']]
@@ -82,14 +78,13 @@ def test_merge_basic_left_on_right_on_same_column():
         expected_columns=[
             '_index_skating_order_x',
             '_index_skating_order_y',
-            'skating_order_x',
+            'skating_order',
             'city',
-            'skating_order_y',
             'food'
         ],
         expected_data=[
-            [1, 1, 1, 'Ljouwert', 1, 'Sûkerbôlle'],
-            [2, 2, 2, 'Snits', 2, 'Dúmkes'],
+            [1, 1, 1, 'Ljouwert', 'Sûkerbôlle'],
+            [2, 2, 2, 'Snits', 'Dúmkes'],
         ]
     )
 
@@ -141,13 +136,27 @@ def test_merge_basic_on_indexes():
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(result, expected_columns=expected_columns, expected_data=expected_data)
 
-    result = bt.merge_new(mt, left_index=True, right_index=True)
-    assert isinstance(result, BuhTuhDataFrame)
-    assert_equals_data(result, expected_columns=expected_columns, expected_data=expected_data)
-
     result = bt.merge_new(mt, left_on='skating_order', right_index=True)
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(result, expected_columns=expected_columns, expected_data=expected_data)
+
+    result = bt.merge_new(mt, left_index=True, right_index=True)
+    assert isinstance(result, BuhTuhDataFrame)
+    # `on` column is same for left and right, so it is not duplicated in this case
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order',
+            'skating_order_x',
+            'city',
+            'skating_order_y',
+            'food'
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 1, 'Sûkerbôlle'],
+            [2, 2, 'Snits', 2, 'Dúmkes'],
+        ]
+    )
 
 
 def test_merge_mixed_columns():
