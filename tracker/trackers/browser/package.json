@@ -3,13 +3,19 @@
   "version": "0.0.1",
   "description": "Objectiv Browser Tracker",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "typesVersions": {
+    ">=3.7": {
+      "dist/index.d.ts": [
+        "dist/index.v3.7+.d.ts"
+      ]
+    }
+  },
   "module": "dist/index.js",
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "rollup -c --silent --failAfterWarnings",
+    "build": "rollup -c --silent --failAfterWarnings && mv dist/index.d.ts dist/index.v3.7+.d.ts",
     "build:dev": "dev=true run build",
     "prettify": "prettier --write .",
     "tsc": "tsc --noEmit",
@@ -37,6 +43,10 @@
     "xhr-mock": "^2.5.1"
   },
   "dependencies": {
+    "@objectiv/plugin-web-device-context": "~0.0.1",
+    "@objectiv/plugin-web-document-context": "~0.0.1",
+    "@objectiv/schema": "~0.0.1",
+    "@objectiv/tracker-core": "~0.0.1",
     "superstruct": "^0.15.2",
     "uuid": "^8.3.2"
   }
