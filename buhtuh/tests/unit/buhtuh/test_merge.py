@@ -6,7 +6,8 @@ from typing import List
 import pytest
 
 from buhtuh import BuhTuhDataFrame, get_series_type_from_dtype
-from buhtuh.merge import _determine_left_on_right_on, _determine_result_columns, ResultColumn
+from buhtuh.merge import _determine_left_on_right_on, _determine_result_columns, ResultColumn, merge, How, \
+    _get_merge_sql
 
 
 def test__determine_left_on_right_on_simple_df_df_happy():
@@ -46,6 +47,10 @@ def test__determine_left_on_right_on_on_df_df_non_happy():
     with pytest.raises(ValueError):
         # 'd' does not exist in the left df
         call__determine_left_on_right_on(left, right, on='d')
+    with pytest.raises(ValueError, match='how'):
+        # Cannot specify 'on' with how='cross'
+        call__determine_left_on_right_on(left, right, How.cross, on='c')
+
 
 
 def test__determine_left_on_right_on_left_on_right_on_df_df_happy():
@@ -84,7 +89,9 @@ def test__determine_left_on_right_on_left_on_right_on_df_df_non_happy():
         call__determine_left_on_right_on(left, right, left_on='x', right_on='a')
     with pytest.raises(ValueError):
         call__determine_left_on_right_on(left, right, left_on='x', right_on='x')
-
+    # Cannot specify '*_on' with how='cross'
+    with pytest.raises(ValueError, match='how'):
+        call__determine_left_on_right_on(left, right, How.cross, left_on='c', right_on='c')
 
 def test__determine_left_on_right_index_on_df_df_happy():
     left = get_fake_df(['a'], ['b', 'c'])
@@ -152,9 +159,18 @@ def test__determine_result_columns_non_happy_path():
         _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
 
 
+def test_merge_non_happy_path_how():
+    left = get_fake_df(['a'], ['b', 'b_x'], 'Int64')
+    right = get_fake_df(['a'], ['b', 'b_y'], 'Float64')
+    with pytest.raises(ValueError, match='how'):
+        merge(left, right, 'wrong how',
+              on=None, left_on=None, right_on=None, left_index=True, right_index=True,
+              suffixes=('_x', '_y'))
+
+
 def get_fake_df(index_names: List[str], data_names: List[str], dtype='Int64'):
-    engine = object(),
-    source_node = object(),
+    engine = None,
+    source_node = None,
     series_type = get_series_type_from_dtype(dtype=dtype)
     index = {
         name: series_type(
@@ -171,11 +187,12 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype='Int64'):
 
 def call__determine_left_on_right_on(
         left, right,
-        on=None, left_on=None, right_on=None, left_index=False, right_index=False):
+        how=How.inner, on=None, left_on=None, right_on=None, left_index=False, right_index=False):
     """ Wrapper around _determine_left_on_right_on that fills in the default arguments"""
     return _determine_left_on_right_on(
         left=left,
         right=right,
+        how=how,
         on=on,
         left_on=left_on,
         right_on=right_on,

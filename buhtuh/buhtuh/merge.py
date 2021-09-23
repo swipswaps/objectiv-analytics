@@ -1,17 +1,28 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, cast
+from enum import Enum
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
 
 from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries
 from sql_models.model import CustomSqlModel
 
 
+class How(Enum):
+    """ Enum with all valid values of 'how' parameter """
+    left = 'left'
+    right = 'right'
+    outer = 'outer'
+    inner = 'inner'
+    cross = 'cross'
+
+
 def _determine_left_on_right_on(
         left: BuhTuhDataFrame,
         right: DataFrameOrSeries,
+        how: How,
         on: Optional[ColumnNames],
-        left_on: Optional[ColumnNames],  # todo: also support array-like arguments?
+        left_on: Optional[ColumnNames],
         right_on: Optional[ColumnNames],
         left_index: bool,
         right_index: bool) -> Tuple[List[str], List[str]]:
@@ -21,6 +32,12 @@ def _determine_left_on_right_on(
     matched.
     :return: tuple with left_on and right_on
     """
+    if how == How.cross:
+        if on or left_on or right_on or left_index or right_index:
+            raise ValueError('Cannot specify on, left_on, right_on, left_index, or right_index'
+                             'if how == "cross"')
+        return [], []
+
     if (left_on is not None) and left_index:
         raise ValueError('Cannot specify both left_on and left_index.')
     if (right_on is not None) and right_index:
@@ -201,7 +218,7 @@ def merge(
 
     :param left: left DataFrame
     :param right: DataFrame or Series to join on left
-    :param how: supported values: {‘left’, ‘right’, ‘outer’, ‘inner’, ‘cross’} TODO: support and add tests
+    :param how: supported values: {‘left’, ‘right’, ‘outer’, ‘inner’, ‘cross’}
     :param on: optional, column(s) to join left and right on.
     :param left_on: optional, column(s) from the left df to join on
     :param right_on: optional, column(s) from the right df/series to join on
@@ -211,57 +228,73 @@ def merge(
         names unique
     :return: A new Dataframe. The original frames are not modified.
     """
-    # TODO: improve this, extract it to a function
-    assert how in ('left', 'right', 'outer', 'inner', 'cross')
-    join = how
-    if how == 'outer':
-        join = 'full outer'
-    if how == 'cross':
-        # todo: add elegance
-        real_left_on, real_right_on = cast(List[str], []), cast(List[str], [])
-    else:
-        real_left_on, real_right_on = _determine_left_on_right_on(
-            left=left,
-            right=right,
-            on=on,
-            left_on=left_on,
-            right_on=right_on,
-            left_index=left_index,
-            right_index=right_index
-        )
+    if how not in ('left', 'right', 'outer', 'inner', 'cross'):
+        raise ValueError(f"how must be one of ('left', 'right', 'outer', 'inner', 'cross'), value: {how}")
+    real_how = How(how)
+    real_left_on, real_right_on = _determine_left_on_right_on(
+        left=left,
+        right=right,
+        how=real_how,
+        on=on,
+        left_on=left_on,
+        right_on=right_on,
+        left_index=left_index,
+        right_index=right_index
+    )
     new_index_list, new_data_list = _determine_result_columns(
         left=left, right=right, left_on=real_left_on, right_on=real_right_on, suffixes=suffixes
     )
 
-    conditions = []
-    for l_label, r_label in zip(real_left_on, real_right_on):
-        l_expr = _get_expression(df_series=left, label=l_label, table_alias='l')
-        r_expr = _get_expression(df_series=right, label=r_label, table_alias='r')
-        conditions.append(f'({l_expr} = {r_expr})')
-    condition_str = ''
-    if conditions:
-        condition_str = 'on ' + ' and '.join(conditions)
+    sql = _get_merge_sql(
+        left=left,
+        right=right,
+        how=real_how,
+        real_left_on=real_left_on,
+        real_right_on=real_right_on,
+        new_column_list=new_index_list + new_data_list
+    )
+    model_builder = CustomSqlModel(name='merge_sql', sql=sql)
+    model = model_builder(left_node=left.base_node, right_node=right.base_node)
 
-    model_builder = CustomSqlModel(
-        name='merge_sql',
-        sql='select {index_str}, {data_str} '
-            'from {{left_node}} as l {join} '
-            'join {{right_node}} as r {condition_str}'
-    )
-    model = model_builder(
-        index_str=', '.join(f'{expr} as {name}' for name, expr, _dtype in new_index_list),
-        data_str=', '.join(f'{expr} as {name}' for name, expr, _dtype in new_data_list),
-        join=join,
-        left_node=left.base_node,
-        right_node=right.base_node,
-        condition_str=condition_str
-    )
     return BuhTuhDataFrame.get_instance(
         engine=left.engine,
         source_node=model,
         index_dtypes={name: dtype for name, _expr, dtype in new_index_list},
         dtypes={name: dtype for name, _expr, dtype in new_data_list}
     )
+
+
+def _get_merge_sql(
+        left: BuhTuhDataFrame,
+        right: DataFrameOrSeries,
+        how: How,
+        real_left_on: List[str],
+        real_right_on: List[str],
+        new_column_list: List[ResultColumn],
+) -> str:
+    """
+    Give the sql to join left and right and select the new_column_list.
+    Left and right will be joined with the join type of how, matching rows on real_left_on and real_right_on.
+
+    The returned sql will have two place holders: '{{left_node}}' and '{{right_node}}'
+    """
+    # todo: sql escaping where needed
+    merge_conditions = []
+    for l_label, r_label in zip(real_left_on, real_right_on):
+        l_expr = _get_expression(df_series=left, label=l_label, table_alias='l')
+        r_expr = _get_expression(df_series=right, label=r_label, table_alias='r')
+        merge_conditions.append(f'({l_expr} = {r_expr})')
+
+    columns_str = ', '.join(f'{expr} as {name}' for name, expr, _dtype in new_column_list)
+    join_type = 'full outer' if how == How.outer else how.value
+    on_str = 'on ' + ' and '.join(merge_conditions) if merge_conditions else ''
+
+    sql = f'''
+        select {columns_str}
+        from {{{{left_node}}}} as l {join_type}
+        join {{{{right_node}}}} as r {on_str}
+        '''
+    return sql
 
 
 def _get_expression(df_series: DataFrameOrSeries, label: str, table_alias: str) -> str:
