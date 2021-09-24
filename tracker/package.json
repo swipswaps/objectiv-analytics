@@ -4,7 +4,8 @@
   "workspaces": [
     "core/**",
     "plugins/**",
-    "trackers/**"
+    "trackers/angular",
+    "trackers/browser"
   ],
   "scripts": {
     "clean": "yarn exec make clean && yarn test --clearCache && yarn cache clean",
@@ -17,7 +18,7 @@
     "test": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities  --verbose run test",
     "test:ci": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities  --verbose run test:ci",
     "test:coverage": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities  --verbose run test:coverage",
-    "publish": "yarn workspaces foreach --exclude root --exclude @objectiv/utilities --verbose exec npm publish",
+    "publish": "yarn workspaces foreach --exclude root --exclude @objectiv/utilities --verbose run npm-publish",
     "utils:generate": "yarn workspace @objectiv/utilities generate && yarn prettify:generated && yarn tsc"
   }
 }

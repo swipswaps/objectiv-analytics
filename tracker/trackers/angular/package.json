@@ -8,7 +8,7 @@
     "build": "ng-packagr -p package.json && cp .npmrc dist/.npmrc",
     "prettify": "prettier --write .",
     "tsc": "tsc --noEmit",
-    "publish": "(cd dist && npm publish)"
+    "npm-publish": "(cd dist && npm publish)"
   },
   "peerDependencies": {
     "@objectiv/tracker-browser": "0.0.1"

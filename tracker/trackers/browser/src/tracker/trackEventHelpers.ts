@@ -9,7 +9,7 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import { trackEvent } from '../tracker/trackEvent';
-import { TrackableElement } from "../typeGuards";
+import { TrackableElement } from '../typeGuards';
 import { BrowserTracker } from './BrowserTracker';
 import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
 
@@ -53,9 +53,14 @@ export const trackVisibility = ({
   element,
   tracker,
   isVisible,
-  onError
+  onError,
 }: TrackEventHelperParameters & { isVisible: boolean }) => {
-  return trackEvent({ eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent, element, tracker, onError });
+  return trackEvent({
+    eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent,
+    element,
+    tracker,
+    onError,
+  });
 };
 
 /**
