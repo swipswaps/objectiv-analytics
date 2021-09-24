@@ -1,6 +1,6 @@
 import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext } from '@objectiv/schema';
 import ExtendableError from 'es6-error';
-import { AnyLocationContext, BrowserTracker } from '../';
+import { AnyLocationContext, BrowserTracker, TrackableElement } from '../';
 import { parseLocationContext } from '../structs';
 import { TrackingAttribute } from '../TrackingAttributes';
 import { isTrackableElement } from '../typeGuards';
@@ -20,7 +20,7 @@ type EventFactory = (props?: {
  */
 export type TrackEventParameters = {
   eventFactory: EventFactory;
-  element: HTMLElement | SVGElement | EventTarget;
+  element: TrackableElement | EventTarget;
   tracker?: BrowserTracker;
   onError?: TrackOnErrorCallback;
 };
