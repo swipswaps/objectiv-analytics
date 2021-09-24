@@ -906,6 +906,12 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
                 raise ValueError(f'cannot convert {source_dtype} to bool')
             return f'({expression})::bool'
 
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['bool'], other)
+        expression = f'({self.expression}) {comparator} ({other.expression})'
+        return self._get_derived_series('bool', expression)
+
     def _boolean_operator(self, other, operator) -> 'BuhTuhSeriesBoolean':
         # TODO maybe "other" should have a way to tell us it can be a bool?
         # TODO we're missing "NOT" here. https://www.postgresql.org/docs/13/functions-logical.html
@@ -1155,12 +1161,12 @@ class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
         if source_dtype == 'date':
             return expression
         else:
-            if not source_dtype == 'string':
+            if not source_dtype in ['string','timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to date')
             return f'({expression}::{BuhTuhSeriesDate.db_dtype})'
 
     @staticmethod
-    def constant_to_sql(value: Union[str, datetime.time]) -> str:
+    def constant_to_sql(value: Union[str, datetime.date]) -> str:
         # TODO fix signature and accepted types: datetime.time -> SeriesTime etc
         # This is wrong. We need a timedelta datatype
         if isinstance(value, datetime.date):
@@ -1177,14 +1183,14 @@ class BuhTuhSeriesTime(BuhTuhSeriesTimestamp):
         time without time zone
     """
     dtype = 'time'
-    db_dtype = 'time'
+    db_dtype = 'time without time zone'
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
         if source_dtype == 'time':
             return expression
         else:
-            if not source_dtype == 'string':
+            if not source_dtype in ['string','timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to time')
             return f'({expression}::{BuhTuhSeriesTime.db_dtype})'
 
@@ -1209,11 +1215,11 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         if isinstance(value, (numpy.timedelta64, datetime.timedelta)):
             value = str(value)
         if not isinstance(value, str):
-            raise TypeError(f'value should be str or (datetime.datetime, datetime.date, numpy.timedelta64)'
+            raise TypeError(f'value should be str or (numpy.timedelta64, datetime.timedelta)'
                             f', actual type: {type(value)}')
         # TODO: fix sql injection!
         # Maybe we should do some checking on syntax here?
-        return f"'{value}'"
+        return f"'{value}'::{BuhTuhSeriesTimedelta.db_dtype}"
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
