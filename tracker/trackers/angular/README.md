@@ -7,12 +7,12 @@ To install the most recent stable version:
 
 ### yarn
 ```sh
-yarn add @objectiv/tracker-angular
+yarn add @objectiv/tracker-browser @objectiv/tracker-angular
 ```
 
 ### npm
 ```sh
-npm install @objectiv/tracker-angular
+npm install @objectiv/tracker-browser @objectiv/tracker-angular
 ```
 
 # Usage
