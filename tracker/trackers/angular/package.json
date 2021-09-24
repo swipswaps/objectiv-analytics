@@ -10,7 +10,7 @@
     "tsc": "tsc --noEmit",
     "publish": "(cd dist && npm publish)"
   },
-  "dependencies": {
+  "peerDependencies": {
     "@objectiv/tracker-browser": "0.0.1"
   },
   "devDependencies": {
