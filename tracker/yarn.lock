@@ -2351,14 +2351,10 @@ __metadata:
     "@objectiv/tracker-browser": 0.0.1
     ng-packagr: ^12.2.2
     prettier: ^2.3.2
-    rxjs: ^7.3.0
-    tslib: ^2.3.1
+    rxjs: ^6.5.4
     typescript: 4.3
-    zone.js: ^0.11.4
   peerDependencies:
-    "@angular/core": ^12.2.7
-    rxjs: ^7.3.0
-    zone.js: ^0.11.4
+    "@angular/core": ^8.0.0
   languageName: unknown
   linkType: soft
 
@@ -8470,21 +8466,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"rxjs@npm:^6.5.0":
+"rxjs@npm:^6.5.0, rxjs@npm:^6.5.4":
   version: 6.6.7
   resolution: "rxjs@npm:6.6.7"
   dependencies:
     tslib: ^1.9.0
   checksum: bc334edef1bb8bbf56590b0b25734ba0deaf8825b703256a93714308ea36dff8a11d25533671adf8e104e5e8f256aa6fdfe39b2e248cdbd7a5f90c260acbbd1b
-  languageName: node
-  linkType: hard
-
-"rxjs@npm:^7.3.0":
-  version: 7.3.0
-  resolution: "rxjs@npm:7.3.0"
-  dependencies:
-    tslib: ~2.1.0
-  checksum: e63adb8808ea6c299a020d56d2af92bcf71efe641adf838499932e29b8f5fd5ff00873653ad48ba3ecf6c9fc11c3c595acf995e8d456f9d8cb85c7d37a1fd72e
   languageName: node
   linkType: hard
 
@@ -9262,13 +9249,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tslib@npm:~2.1.0":
-  version: 2.1.0
-  resolution: "tslib@npm:2.1.0"
-  checksum: aa189c8179de0427b0906da30926fd53c59d96ec239dff87d6e6bc831f608df0cbd6f77c61dabc074408bd0aa0b9ae4ec35cb2c15f729e32f37274db5730cb78
-  languageName: node
-  linkType: hard
-
 "tunnel-agent@npm:^0.6.0":
   version: 0.6.0
   resolution: "tunnel-agent@npm:0.6.0"
@@ -9800,14 +9780,5 @@ typescript@^4.4.2:
     y18n: ^5.0.5
     yargs-parser: ^20.2.2
   checksum: 7904ae4cb54c956ed4e2e0920417958e339c0e5305b6f7385a66afd5101a79dc83b38af856064a7dd1fd8458dc442936ee19e53b621349d410f7abebf2769772
-  languageName: node
-  linkType: hard
-
-"zone.js@npm:^0.11.4":
-  version: 0.11.4
-  resolution: "zone.js@npm:0.11.4"
-  dependencies:
-    tslib: ^2.0.0
-  checksum: 20c3e39898019de4747a434a29ed528e5d730a674570c3e72775a57f9d57dba812e70d67c3932ff54e95db9b778f06a9b18119c5184dfd9552d3622544a6729f
   languageName: node
   linkType: hard

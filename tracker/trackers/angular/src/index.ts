@@ -1,3 +1,3 @@
-export { ObjectivTrackerDirective } from './objectiv-tracker.directive';
-export { ObjectivTrackerModule } from './objectiv-tracker.module';
-export { ObjectivTrackerService } from './objectiv-tracker.service';
+export * from './objectiv-tracker.directive';
+export * from './objectiv-tracker.module';
+export * from './objectiv-tracker.token';

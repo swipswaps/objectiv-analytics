@@ -11,6 +11,9 @@ import {
   trackOverlay,
 } from '@objectiv/tracker-browser';
 
+/**
+ * Allows calling Browser Tracker Location Trackers directly from templates
+ */
 @Directive({
   selector:
     '[trackButton], [trackElement], [trackExpandableElement], [trackInput], [trackLink], [trackMediaPlayer], [trackNavigation], [trackOverlay]',
