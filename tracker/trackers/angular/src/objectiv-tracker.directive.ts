@@ -69,10 +69,8 @@ export class ObjectivTrackerDirective {
     const trackingAttributes = { ...(locationTrackingAttributes ?? {}), ...(childrenTrackingAttributes ?? {}) };
 
     // Set all attributes on the nativeElement
-    if (trackingAttributes) {
-      for (let [key, value] of Object.entries<string>(trackingAttributes)) {
-        this.element.nativeElement.setAttribute(key, value);
-      }
+    for (let [key, value] of Object.entries<string>(trackingAttributes)) {
+      this.element.nativeElement.setAttribute(key, value);
     }
   }
 }
