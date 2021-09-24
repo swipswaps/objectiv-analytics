@@ -100,11 +100,11 @@ By default all images will be tagged with `latest`.
 
 ## Running Contain Images Locally
 By default the docker-compose file will try to get images from our container registry. By setting 
-`ROD_CONTAINER_URL` and `OBJECTIV_CONTAINER_URL` we can tell it to use local images.
+`OBJECTIV_CONTAINER_URL` we can tell it to use local images.
 
 ```console
-ROD_CONTAINER_URL=objectiv 
-OBJECTIV_CONTAINER_URL='objectiv docker-compose up'
+OBJECTIV_CONTAINER_URL=objectiv
+docker-compose up
 ```
 
 ## Running the Objectiv Pipeline in Production
