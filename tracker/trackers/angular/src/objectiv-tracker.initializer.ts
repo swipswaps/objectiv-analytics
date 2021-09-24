@@ -9,17 +9,13 @@ export const OBJECTIV_TRACKER_INITIALIZER_PROVIDER: Provider = {
   provide: APP_INITIALIZER,
   multi: true,
   useFactory: ObjectivTrackerInitializer,
-  deps: [
-    OBJECTIV_TRACKER_CONFIG_TOKEN
-  ]
+  deps: [OBJECTIV_TRACKER_CONFIG_TOKEN],
 };
 
 /**
  * Simply calls configureTracker
  */
-export function ObjectivTrackerInitializer(
-  trackerConfig: BrowserTrackerConfig,
-) {
+export function ObjectivTrackerInitializer(trackerConfig: BrowserTrackerConfig) {
   return async () => {
     configureTracker(trackerConfig);
   };
