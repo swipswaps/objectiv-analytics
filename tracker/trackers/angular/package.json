@@ -10,6 +10,9 @@
     "tsc": "tsc --noEmit",
     "publish": "(cd dist && npm publish)"
   },
+  "dependencies": {
+    "@objectiv/tracker-browser": "0.0.1"
+  },
   "devDependencies": {
     "@angular/compiler": "^12.2.7",
     "@angular/compiler-cli": "^12.2.7",
@@ -25,4 +28,4 @@
       "entryFile": "src/index.ts"
     }
   }
-}
+},
