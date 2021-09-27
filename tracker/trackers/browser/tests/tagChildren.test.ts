@@ -60,11 +60,14 @@ describe('tagChild and tagChildren', () => {
     jest.spyOn(console, 'error');
     const parameters = { queryAll: '#two', tagAs: tagElement({ id: 'element-two' }) };
 
-    // @ts-ignore
-    const attributes = tagChild(parameters);
+    const attributes1 = tagChild(parameters);
+    const attributes2 = tagChildren([parameters]);
 
     expect(console.error).not.toHaveBeenCalled();
-    expect(attributes).toStrictEqual({
+    expect(attributes1).toStrictEqual({
+      [TaggingAttribute.tagChildren]: JSON.stringify([parameters]),
+    });
+    expect(attributes2).toStrictEqual({
       [TaggingAttribute.tagChildren]: JSON.stringify([parameters]),
     });
   });
