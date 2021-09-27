@@ -49,14 +49,14 @@ export const defaultFetchFunction = async ({
     })
       .then((response) => {
         if (response.status === 200) {
-          console.groupCollapsed(`｢objectiv:FetchAPITransport｣ Success`);
+          console.groupCollapsed(`｢objectiv:FetchAPITransport｣ Succeeded`);
           console.log(`Events:`);
           console.log(events);
           console.groupEnd();
 
           resolve(response);
         } else {
-          console.groupCollapsed(`｢objectiv:FetchAPITransport｣ Failure`);
+          console.groupCollapsed(`｢objectiv:FetchAPITransport｣ Failed`);
           console.log(`Events:`);
           console.log(events);
           console.log(`Response: ${response}`);
