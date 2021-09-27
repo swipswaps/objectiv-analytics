@@ -20,7 +20,7 @@ import {
 } from '@objectiv/tracker-browser';
 
 /**
- * Allows calling Browser Tracker Location Trackers and Children Tracker directly from templates
+ * Allows calling Browser Tracker Location Taggers and Children Taggers directly from templates
  */
 @Directive({
   selector:
@@ -44,7 +44,7 @@ export class ObjectivTrackerDirective {
     let locationTaggingAttributes: TagLocationReturnValue;
     let childrenTaggingAttributes: TagChildrenReturnValue;
 
-    // Location Trackers
+    // Location Taggers
     if (this.tagLocation) {
       locationTaggingAttributes = tagLocation(this.tagLocation);
     } else if (this.tagButton) {
@@ -65,7 +65,7 @@ export class ObjectivTrackerDirective {
       locationTaggingAttributes = tagOverlay(this.tagOverlay);
     }
 
-    // Children Tracker
+    // Children Tagger
     if (this.tagChildren) {
       childrenTaggingAttributes = tagChildren(this.tagChildren);
     }
