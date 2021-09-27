@@ -1,20 +1,22 @@
 import { Directive, ElementRef, Input } from '@angular/core';
 import {
-  trackButton,
-  TrackButtonParameters,
-  trackChildren,
-  TrackChildrenParameters,
-  TrackChildrenReturnValue,
-  trackElement,
-  trackExpandableElement,
-  trackInput,
-  trackLink,
-  TrackLinkParameters,
-  TrackLocationHelperParameters,
-  TrackLocationReturnValue,
-  trackMediaPlayer,
-  trackNavigation,
-  trackOverlay,
+  ChildrenTaggingQueries,
+  tagButton,
+  TagButtonParameters,
+  tagChildren,
+  TagChildrenReturnValue,
+  tagElement,
+  tagExpandableElement,
+  tagInput,
+  tagLink,
+  TagLinkParameters,
+  tagLocation,
+  TagLocationHelperParameters,
+  TagLocationParameters,
+  TagLocationReturnValue,
+  tagMediaPlayer,
+  tagNavigation,
+  tagOverlay,
 } from '@objectiv/tracker-browser';
 
 /**
@@ -22,54 +24,57 @@ import {
  */
 @Directive({
   selector:
-    '[trackButton], [trackElement], [trackExpandableElement], [trackInput], [trackLink], [trackMediaPlayer], [trackNavigation], [trackOverlay], [trackChildren]',
+    '[tagLocation], [tagButton], [tagElement], [tagExpandableElement], [tagInput], [tagLink], [tagMediaPlayer], [tagNavigation], [tagOverlay], [tagChildren]',
 })
 export class ObjectivTrackerDirective {
-  @Input() trackButton: TrackButtonParameters;
-  @Input() trackElement: TrackLocationHelperParameters;
-  @Input() trackExpandableElement: TrackLocationHelperParameters;
-  @Input() trackInput: TrackLocationHelperParameters;
-  @Input() trackLink: TrackLinkParameters;
-  @Input() trackMediaPlayer: TrackLocationHelperParameters;
-  @Input() trackNavigation: TrackLocationHelperParameters;
-  @Input() trackOverlay: TrackLocationHelperParameters;
-  @Input() trackChildren: TrackChildrenParameters;
+  @Input() tagLocation: TagLocationParameters;
+  @Input() tagButton: TagButtonParameters;
+  @Input() tagElement: TagLocationHelperParameters;
+  @Input() tagExpandableElement: TagLocationHelperParameters;
+  @Input() tagInput: TagLocationHelperParameters;
+  @Input() tagLink: TagLinkParameters;
+  @Input() tagMediaPlayer: TagLocationHelperParameters;
+  @Input() tagNavigation: TagLocationHelperParameters;
+  @Input() tagOverlay: TagLocationHelperParameters;
+  @Input() tagChildren: ChildrenTaggingQueries;
 
   constructor(public element: ElementRef<HTMLElement>) {}
 
   ngOnInit() {
-    let locationTrackingAttributes: TrackLocationReturnValue;
-    let childrenTrackingAttributes: TrackChildrenReturnValue;
+    let locationTaggingAttributes: TagLocationReturnValue;
+    let childrenTaggingAttributes: TagChildrenReturnValue;
 
     // Location Trackers
-    if (this.trackButton) {
-      locationTrackingAttributes = trackButton(this.trackButton);
-    } else if (this.trackElement) {
-      locationTrackingAttributes = trackElement(this.trackElement);
-    } else if (this.trackExpandableElement) {
-      locationTrackingAttributes = trackExpandableElement(this.trackExpandableElement);
-    } else if (this.trackInput) {
-      locationTrackingAttributes = trackInput(this.trackInput);
-    } else if (this.trackLink) {
-      locationTrackingAttributes = trackLink(this.trackLink);
-    } else if (this.trackMediaPlayer) {
-      locationTrackingAttributes = trackMediaPlayer(this.trackMediaPlayer);
-    } else if (this.trackNavigation) {
-      locationTrackingAttributes = trackNavigation(this.trackNavigation);
-    } else if (this.trackOverlay) {
-      locationTrackingAttributes = trackOverlay(this.trackOverlay);
+    if (this.tagLocation) {
+      locationTaggingAttributes = tagLocation(this.tagLocation);
+    } else if (this.tagButton) {
+      locationTaggingAttributes = tagButton(this.tagButton);
+    } else if (this.tagElement) {
+      locationTaggingAttributes = tagElement(this.tagElement);
+    } else if (this.tagExpandableElement) {
+      locationTaggingAttributes = tagExpandableElement(this.tagExpandableElement);
+    } else if (this.tagInput) {
+      locationTaggingAttributes = tagInput(this.tagInput);
+    } else if (this.tagLink) {
+      locationTaggingAttributes = tagLink(this.tagLink);
+    } else if (this.tagMediaPlayer) {
+      locationTaggingAttributes = tagMediaPlayer(this.tagMediaPlayer);
+    } else if (this.tagNavigation) {
+      locationTaggingAttributes = tagNavigation(this.tagNavigation);
+    } else if (this.tagOverlay) {
+      locationTaggingAttributes = tagOverlay(this.tagOverlay);
     }
 
     // Children Tracker
-    if (this.trackChildren) {
-      childrenTrackingAttributes = trackChildren(this.trackChildren);
+    if (this.tagChildren) {
+      childrenTaggingAttributes = tagChildren(this.tagChildren);
     }
 
-    // Merge Location Tracking attributes and Children Tracking Attributes
-    const trackingAttributes = { ...(locationTrackingAttributes ?? {}), ...(childrenTrackingAttributes ?? {}) };
+    // Merge Location Tagging Attributes and Children Tagging Attributes
+    const taggingAttributes = { ...(locationTaggingAttributes ?? {}), ...(childrenTaggingAttributes ?? {}) };
 
     // Set all attributes on the nativeElement
-    for (let [key, value] of Object.entries<string>(trackingAttributes)) {
+    for (let [key, value] of Object.entries<string>(taggingAttributes)) {
       this.element.nativeElement.setAttribute(key, value);
     }
   }
