@@ -93,6 +93,8 @@ class TypeRegistry:
             'interval': BuhTuhSeriesTimedelta,
             'timedelta': BuhTuhSeriesTimedelta
         }
+        # note that order can be important here. value_to_dtype starts at end of this list and for example a
+        # bool can become and 'int64' if int would be later in this list.
         self.value_type_dtype = [
             (int, 'int64'),
             (numpy.int64, 'int64'),
