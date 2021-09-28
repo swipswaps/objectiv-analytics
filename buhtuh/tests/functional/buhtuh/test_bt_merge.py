@@ -161,70 +161,6 @@ def test_merge_basic_on_indexes():
     )
 
 
-def test_merge_self():
-    bt1 = _get_bt_with_test_data(full_data_set=False)[['city']]
-    bt2 = _get_bt_with_test_data(full_data_set=False)[['inhabitants']]
-    result = bt1.merge(bt2, on='_index_skating_order')
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order', 'city', 'inhabitants'],
-        expected_data=[
-            [1, 'Ljouwert', 93485],
-            [2, 'Snits', 33520],
-            [3, 'Drylts', 3055]
-        ]
-    )
-
-
-def test_merge_preselection():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
-    result = bt[bt['skating_order'] != 1].merge(mt[['food']], on='_index_skating_order')
-    assert_equals_data(
-        result,
-        # This is weak. Ordering is broken.
-        expected_columns=['_index_skating_order', 'skating_order', 'city', 'inhabitants', 'food'],
-        expected_data=[
-            [2, 2, 'Snits', 33520, 'Dúmkes'],
-        ]
-    )
-
-
-def test_merge_expression_columns():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
-    bt['skating_order'] += 2
-    mt['skating_order'] += 2
-
-    result = bt.merge(mt, on=['skating_order'])
-    assert_equals_data(
-        result,
-        # This is weak. Ordering is broken.
-        expected_columns=['_index_skating_order_x', '_index_skating_order_y', 'skating_order', 'city', 'inhabitants', 'food'],
-        expected_data=[
-            [1, 1, 3, 'Ljouwert', 93485, 'Sûkerbôlle'],
-            [2, 2, 4, 'Snits', 33520, 'Dúmkes'],
-        ]
-    )
-
-
-def test_merge_expression_columns_regression():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
-    bt['x'] = bt['skating_order'] == 3
-    bt['y'] = bt['skating_order'] == 3
-    bt['z'] = bt['x'] & bt['y']
-    result = bt.merge(mt, on=['skating_order'])
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order_x', '_index_skating_order_y', 'skating_order', 'city',
-                          'inhabitants', 'x', 'y', 'z', 'food'],
-        expected_data=[
-            [1, 1, 1, 'Ljouwert', 93485, False, False, False, 'Sûkerbôlle'],
-            [2, 2, 2, 'Snits', 33520, False, False, False, 'Dúmkes']
-        ]
-    )
-
 
 def test_merge_mixed_columns():
     bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
@@ -370,4 +306,70 @@ def test_merge_cross_join():
             [3, 4, 'Drylts', 'Grutte Pier Bier'],
         ],
         order_by=['_index_skating_order_x', '_index_skating_order_y']
+    )
+
+
+
+def test_merge_self():
+    bt1 = _get_bt_with_test_data(full_data_set=False)[['city']]
+    bt2 = _get_bt_with_test_data(full_data_set=False)[['inhabitants']]
+    result = bt1.merge(bt2, on='_index_skating_order')
+    assert_equals_data(
+        result,
+        expected_columns=['_index_skating_order', 'city', 'inhabitants'],
+        expected_data=[
+            [1, 'Ljouwert', 93485],
+            [2, 'Snits', 33520],
+            [3, 'Drylts', 3055]
+        ]
+    )
+
+
+def test_merge_preselection():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
+    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    result = bt[bt['skating_order'] != 1].merge(mt[['food']], on='_index_skating_order')
+    assert_equals_data(
+        result,
+        # This is weak. Ordering is broken.
+        expected_columns=['_index_skating_order', 'skating_order', 'city', 'inhabitants', 'food'],
+        expected_data=[
+            [2, 2, 'Snits', 33520, 'Dúmkes'],
+        ]
+    )
+
+
+def test_merge_expression_columns():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
+    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt['skating_order'] += 2
+    mt['skating_order'] += 2
+
+    result = bt.merge(mt, on=['skating_order'])
+    assert_equals_data(
+        result,
+        # This is weak. Ordering is broken.
+        expected_columns=['_index_skating_order_x', '_index_skating_order_y', 'skating_order', 'city', 'inhabitants', 'food'],
+        expected_data=[
+            [1, 1, 3, 'Ljouwert', 93485, 'Sûkerbôlle'],
+            [2, 2, 4, 'Snits', 33520, 'Dúmkes'],
+        ]
+    )
+
+
+def test_merge_expression_columns_regression():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
+    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt['x'] = bt['skating_order'] == 3
+    bt['y'] = bt['skating_order'] == 3
+    bt['z'] = bt['x'] & bt['y']
+    result = bt.merge(mt, on=['skating_order'])
+    assert_equals_data(
+        result,
+        expected_columns=['_index_skating_order_x', '_index_skating_order_y', 'skating_order', 'city',
+                          'inhabitants', 'x', 'y', 'z', 'food'],
+        expected_data=[
+            [1, 1, 1, 'Ljouwert', 93485, False, False, False, 'Sûkerbôlle'],
+            [2, 2, 2, 'Snits', 33520, False, False, False, 'Dúmkes']
+        ]
     )
