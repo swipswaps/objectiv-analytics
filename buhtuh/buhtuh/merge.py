@@ -285,7 +285,7 @@ def _get_merge_sql(
         r_expr = _get_expression(df_series=right, label=r_label, table_alias='r')
         merge_conditions.append(f'({l_expr} = {r_expr})')
 
-    columns_str = ', '.join(f'{expr} as {name}' for name, expr, _dtype in new_column_list)
+    columns_str = ', '.join(f'{expr} as "{name}"' for name, expr, _dtype in new_column_list)
     join_type = 'full outer' if how == How.outer else how.value
     on_str = 'on ' + ' and '.join(merge_conditions) if merge_conditions else ''
 

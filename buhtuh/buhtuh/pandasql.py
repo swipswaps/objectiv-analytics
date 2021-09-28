@@ -453,7 +453,7 @@ class BuhTuhDataFrame:
 
         return model_builder(
             columns_sql_str=self.get_all_column_expressions(),
-            index_str=', '.join(self.index.keys()),
+            index_str=', '.join(f'"{index_column}"' for index_column in self.index.keys()),
             _last_node=self.base_node,
             limit='' if limit_str is None else f'{limit_str}',
             order=order_str
