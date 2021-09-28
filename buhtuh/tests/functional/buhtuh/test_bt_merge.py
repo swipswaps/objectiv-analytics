@@ -161,6 +161,28 @@ def test_merge_basic_on_indexes():
     )
 
 
+def test_merge_suffixes():
+    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    result = bt.merge(mt, left_on='_index_skating_order', right_on='skating_order', suffixes=('_AA', '_BB'))
+    assert isinstance(result, BuhTuhDataFrame)
+    print(result.view_sql())
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order_AA',
+            '_index_skating_order_BB',
+            'skating_order_AA',
+            'city',
+            'skating_order_BB',
+            'food'
+        ],
+        expected_data=[
+            [1, 1, 1, 'Ljouwert', 1, 'Sûkerbôlle'],
+            [2, 2, 2, 'Snits', 2, 'Dúmkes'],
+        ]
+    )
+
 
 def test_merge_mixed_columns():
     bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
