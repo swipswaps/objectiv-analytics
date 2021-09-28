@@ -9,7 +9,7 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import { trackEvent } from '../tracker/trackEvent';
-import { TrackableElement } from '../typeGuards';
+import { TaggableElement } from '../typeGuards';
 import { BrowserTracker } from './BrowserTracker';
 import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
 
@@ -17,7 +17,7 @@ import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler
  * The parameters of the Event helper functions
  */
 export type TrackEventHelperParameters = {
-  element: TrackableElement | EventTarget;
+  element: TaggableElement | EventTarget;
   tracker?: BrowserTracker;
   onError?: TrackOnErrorCallback;
 };
@@ -67,7 +67,7 @@ export const trackVisibility = ({
  * The parameters of the Application Loaded and URLChange Event helper functions
  */
 export type NonInteractiveTrackHelperParameters = {
-  element?: TrackableElement | EventTarget;
+  element?: TaggableElement | EventTarget;
   tracker?: BrowserTracker;
   onError?: TrackOnErrorCallback;
 };
