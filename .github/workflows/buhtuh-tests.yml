@@ -60,7 +60,7 @@ jobs:
       - name: Stylecheck with pycodestyle
         run: |
           cd buhtuh
-          pycodestyle --max-line-length=110 buhtuh sql_models
+          pycodestyle buhtuh sql_models
       - name: Unit tests
         run: |
           cd buhtuh
