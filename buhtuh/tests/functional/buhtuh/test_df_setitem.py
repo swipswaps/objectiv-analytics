@@ -82,7 +82,7 @@ def test_set_const_int_from_series():
     max_series = max['founding_sum']
     max_value = max_series[1]
     bt['max_founding'] = max_value
-    assert_db_type(bt['max_founding'], 'integer', BuhTuhSeriesInt64, )
+    assert_db_type(bt['max_founding'], 'bigint', BuhTuhSeriesInt64, )
 
     assert_equals_data(
         bt,
