@@ -4,15 +4,18 @@ Copyright 2021 Objectiv B.V.
 Tests for BuhTuhDataFrame using a very simple dataset.
 
 """
+import datetime
 import os
 from typing import List, Union
 
+import numpy as np
 import pytest
 import sqlalchemy
 from sqlalchemy.engine import ResultProxy
 
-from buhtuh import BuhTuhDataFrame, BuhTuhSeries, BuhTuhSeriesBoolean, BuhTuhSeriesString
-
+from buhtuh import BuhTuhDataFrame, BuhTuhSeries, BuhTuhSeriesBoolean, BuhTuhSeriesString, BuhTuhSeriesInt64, \
+    BuhTuhSeriesFloat64, BuhTuhSeriesDate, BuhTuhSeriesTimestamp, BuhTuhSeriesTime, BuhTuhSeriesTimedelta, \
+    types
 
 DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
 
@@ -141,6 +144,36 @@ def df_to_list(df):
     data_list = df.reset_index().to_numpy().tolist()
     return(data_list)
 
+def check_expected_db_type(bt, expected_series_type, column_name='new_column'):
+    sql = bt[column_name].view_sql()
+    sql = f"with buh as ({sql}) select pg_typeof({column_name}) from buh limit 1"
+    db_rows = run_query(sqlalchemy.create_engine(DB_TEST_URL), sql)
+    db_values = [list(row) for row in db_rows]
+    registi = types.TypeRegistry()
+    registi._real_init()
+    a = registi.dtype_series[db_values[0][0]]
+    b = a(None,None,None,None)
+    assert isinstance(b, expected_series_type)
+
+def check_set_const(constant, expected_series):
+    bt = _get_bt_with_test_data()
+    bt['new_column'] = constant
+    check_expected_db_type(bt, expected_series)
+    assert_equals_data(
+        bt,
+        expected_columns=[
+            '_index_skating_order',  # index
+            'skating_order', 'city', 'municipality', 'inhabitants', 'founding',  # original columns
+            'new_column'  # new
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, constant],
+            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, constant],
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, constant]
+        ]
+    )
+    assert bt.new_column == bt['new_column']
+
 
 def test_get_item_single():
     bt = _get_bt_with_test_data()
@@ -233,60 +266,30 @@ def test_positional_slicing():
 
 
 def test_set_const_int():
-    bt = _get_bt_with_test_data()
-    bt['new_column'] = 5
-    assert_equals_data(
-        bt,
-        expected_columns=[
-            '_index_skating_order',  # index
-            'skating_order', 'city', 'municipality', 'inhabitants', 'founding',  # original columns
-            'new_column'  # new
-        ],
-        expected_data=[
-            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 5],
-            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 5],
-            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 5]
-        ]
-    )
-    assert bt.new_column == bt['new_column']
-
+    check_set_const(np.int64(4), BuhTuhSeriesInt64)
+    check_set_const(5, BuhTuhSeriesInt64)
 
 def test_set_const_float():
-    bt = _get_bt_with_test_data()
-    bt['new_column'] = 5.1
-    assert_equals_data(
-        bt,
-        expected_columns=[
-            '_index_skating_order',  # index
-            'skating_order', 'city', 'municipality', 'inhabitants', 'founding',  # original columns
-            'new_column'  # new
-        ],
-        expected_data=[
-            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 5.1],
-            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 5.1],
-            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 5.1]
-        ]
-    )
-    assert bt.new_column == bt['new_column']
+    check_set_const(5.1, BuhTuhSeriesFloat64)
 
+def test_set_const_bool():
+    check_set_const(True, BuhTuhSeriesBoolean)
 
 def test_set_const_str():
-    bt = _get_bt_with_test_data()
-    bt['alternative_sport'] = 'keatsen'
-    assert_equals_data(
-        bt,
-        expected_columns=[
-            '_index_skating_order',  # index
-            'skating_order', 'city', 'municipality', 'inhabitants', 'founding',  # original columns
-            'alternative_sport'  # new
-        ],
-        expected_data=[
-            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285,  'keatsen'],
-            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 'keatsen'],
-            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 'keatsen']
-        ]
-    )
-    assert bt.alternative_sport == bt['alternative_sport']
+    check_set_const('keatsen', BuhTuhSeriesString)
+
+def test_set_const_date():
+    check_set_const(datetime.date(2019,1,5), BuhTuhSeriesDate)
+
+def test_set_const_datetime():
+    check_set_const(datetime.datetime.now(), BuhTuhSeriesTimestamp)
+
+def test_set_const_time():
+    check_set_const(datetime.time.fromisoformat('00:05:23.283'), BuhTuhSeriesTime)
+
+def test_set_const_timedelta():
+        check_set_const(np.datetime64('2005-02-25T03:30') - np.datetime64('2005-01-25T03:30'), BuhTuhSeriesTimedelta)
+        check_set_const(datetime.datetime.now() - datetime.datetime(2015,4,6), BuhTuhSeriesTimedelta)
 
 
 def test_set_const_int_from_series():
@@ -295,6 +298,7 @@ def test_set_const_int_from_series():
     max_series = max['founding_sum']
     max_value = max_series[1]
     bt['max_founding'] = max_value
+    check_expected_db_type(bt, BuhTuhSeriesInt64, 'max_founding')
 
     assert_equals_data(
         bt,
@@ -313,6 +317,7 @@ def test_set_const_int_from_series():
 def test_set_series_column():
     bt = _get_bt_with_test_data()
     bt['duplicated_column'] = bt['founding']
+    check_expected_db_type(bt, BuhTuhSeriesInt64, 'duplicated_column')
     assert_equals_data(
         bt,
         expected_columns=[
@@ -378,6 +383,7 @@ def test_set_multiple():
 def test_set_existing():
     bt = _get_bt_with_test_data()
     bt['city'] = bt['founding']
+    check_expected_db_type(bt, BuhTuhSeriesInt64, 'city')
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS,
@@ -393,6 +399,7 @@ def test_set_existing():
 def test_set_existing_referencing_other_column_experience():
     bt = _get_bt_with_test_data()
     bt['city'] = bt['city'] + ' test'
+    check_expected_db_type(bt, BuhTuhSeriesString, 'city')
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS,
@@ -421,6 +428,8 @@ def test_set_existing_referencing_other_column_experience():
     )
     bt['skating_order'] = c
     bt['city'] = a + ' - ' + b
+    check_expected_db_type(bt, BuhTuhSeriesInt64, 'skating_order')
+    check_expected_db_type(bt, BuhTuhSeriesString, 'city')
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS,
@@ -437,6 +446,7 @@ def test_set_existing_referencing_other_column_experience():
 def test_set_series_expression():
     bt = _get_bt_with_test_data()
     bt['time_travel'] = bt['founding'] + 1000
+    check_expected_db_type(bt, BuhTuhSeriesInt64, 'time_travel')
     assert_equals_data(
         bt,
         expected_columns=CITIES_INDEX_AND_COLUMNS + ['time_travel'],
@@ -465,6 +475,7 @@ def test_add_int_constant():
     bt = _get_bt_with_test_data()
     bts = bt['founding'] + 200
     assert isinstance(bts, BuhTuhSeries)
+    check_expected_db_type(bt, BuhTuhSeriesInt64, 'founding')
     assert_equals_data(
         bts,
         expected_columns=['_index_skating_order', 'founding'],
@@ -675,6 +686,21 @@ def test_sort_values():
         )
 
 
+def test_series_sort_values():
+    bt = _get_bt_with_test_data(full_data_set=True)
+    bt_series = bt.city
+    kwargs_list = [{'ascending':True},
+                   {'ascending':False},
+                   {}
+                   ]
+    for kwargs in kwargs_list:
+        assert_equals_data(
+            bt_series.sort_values(**kwargs),
+            expected_columns=['_index_skating_order', 'city'],
+            expected_data=df_to_list(bt.to_df()['city'].sort_values(**kwargs))
+        )
+
+
 def test_group_by_basics():
     bt = _get_bt_with_test_data(full_data_set=True)
     btg = bt.groupby('municipality')
@@ -697,11 +723,11 @@ def test_group_by_basics():
         'municipality': 'string'
     }
     assert result_bt.dtypes == {
-        '_index_skating_order_count': 'Int64',
-        'city_count': 'Int64',
-        'founding_count': 'Int64',
-        'inhabitants_count': 'Int64',
-        'skating_order_count': 'Int64'
+        '_index_skating_order_count': 'int64',
+        'city_count': 'int64',
+        'founding_count': 'int64',
+        'inhabitants_count': 'int64',
+        'skating_order_count': 'int64'
     }
 
     # now test multiple different aggregations
@@ -724,11 +750,11 @@ def test_group_by_basics():
         'municipality': 'string'
     }
     assert result_bt.dtypes == {
-        '_index_skating_order_nunique': 'Int64',
-        'city_count': 'Int64',
-        'founding_max': 'Int64',
-        'inhabitants_min': 'Int64',
-        'skating_order_sum': 'Int64'
+        '_index_skating_order_nunique': 'int64',
+        'city_count': 'int64',
+        'founding_max': 'int64',
+        'inhabitants_min': 'int64',
+        'skating_order_sum': 'int64'
     }
 
 
@@ -746,15 +772,15 @@ def test_group_by_all():
         ]
     )
     assert result_bt.index_dtypes == {
-        'index': 'Int64'
+        'index': 'int64'
     }
     assert result_bt.dtypes == {
-        '_index_skating_order_nunique': 'Int64',
-        'city_nunique': 'Int64',
-        'founding_nunique': 'Int64',
-        'inhabitants_nunique': 'Int64',
-        'municipality_nunique': 'Int64',
-        'skating_order_nunique': 'Int64'
+        '_index_skating_order_nunique': 'int64',
+        'city_nunique': 'int64',
+        'founding_nunique': 'int64',
+        'inhabitants_nunique': 'int64',
+        'municipality_nunique': 'int64',
+        'skating_order_nunique': 'int64'
     }
 
 
@@ -776,11 +802,11 @@ def test_group_by_expression():
         'city': 'string'
     }
     assert result_bt.dtypes == {
-        '_index_skating_order_nunique': 'Int64',
-        'municipality_nunique': 'Int64',
-        'founding_nunique': 'Int64',
-        'inhabitants_nunique': 'Int64',
-        'skating_order_nunique': 'Int64'
+        '_index_skating_order_nunique': 'int64',
+        'municipality_nunique': 'int64',
+        'founding_nunique': 'int64',
+        'inhabitants_nunique': 'int64',
+        'skating_order_nunique': 'int64'
     }
 
 
@@ -806,7 +832,7 @@ def test_group_by_basics_series():
         'municipality': 'string'
     }
     assert result_bt.dtypes == {
-        'inhabitants_count': 'Int64',
+        'inhabitants_count': 'int64',
     }
 
     btg_series = btg['inhabitants', 'founding']
@@ -828,8 +854,8 @@ def test_group_by_basics_series():
         'municipality': 'string'
     }
     assert result_bt.dtypes == {
-        'inhabitants_count': 'Int64',
-        'founding_count': 'Int64'
+        'inhabitants_count': 'int64',
+        'founding_count': 'int64'
     }
 
 
@@ -851,8 +877,8 @@ def test_group_by_multiple_aggregations_on_same_series():
         'municipality': 'string'
     }
     assert result_bt.dtypes == {
-        'inhabitants_min': 'Int64',
-        'inhabitants_max': 'Int64',
+        'inhabitants_min': 'int64',
+        'inhabitants_max': 'int64',
     }
 
 
@@ -996,6 +1022,8 @@ def test_date_comparator(asstring: bool):
 
     # import code has no means to distinguish between date and timestamp
     mt['date'] = mt['date'].astype('date')
+
+    check_expected_db_type(mt, BuhTuhSeriesDate, 'date')
 
     from datetime import date
     dt = date(2021, 5, 3)
