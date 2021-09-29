@@ -1,13 +1,26 @@
-import { ContextsConfig, Tracker, TrackerConfig, TrackerEvent, TrackerPlugin, TrackerPlugins } from '../src';
-import { LogTransport, noop, UnusableTransport } from './mocks';
+import {
+  ApplicationContextPlugin,
+  ContextsConfig,
+  Tracker,
+  TrackerConfig,
+  TrackerEvent,
+  TrackerPlugin,
+  TrackerPlugins,
+} from '../src';
+import { LogTransport } from './mocks/LogTransport';
+import { mockConsole } from "./mocks/MockConsole";
+import { UnusableTransport } from './mocks/UnusableTransport';
 
 describe('Tracker', () => {
   it('should instantiate with just applicationId', () => {
-    const testTracker = new Tracker({ applicationId: 'app-id' });
+    jest.spyOn(console, 'log');
+    expect(console.log).not.toHaveBeenCalled();
+    const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
+    const testTracker = new Tracker(trackerConfig);
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toBe(undefined);
     expect(testTracker.plugins).toEqual({
-      list: [
+      plugins: [
         {
           applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
           pluginName: 'ApplicationContextPlugin',
@@ -17,23 +30,23 @@ describe('Tracker', () => {
     expect(testTracker.applicationId).toBe('app-id');
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
+    expect(console.log).not.toHaveBeenCalled();
   });
 
   it('should instantiate with tracker config', () => {
+    expect(mockConsole.log).not.toHaveBeenCalled();
+    const trackerConfig: TrackerConfig = { applicationId: 'app-id', console: mockConsole };
     const testTransport = new LogTransport();
-    const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport });
+    const testTracker = new Tracker({ ...trackerConfig, transport: testTransport });
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
     expect(testTracker.plugins).toEqual({
-      list: [
-        {
-          applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
-          pluginName: 'ApplicationContextPlugin',
-        },
-      ],
+      plugins: [new ApplicationContextPlugin(trackerConfig)],
+      console: mockConsole,
     });
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
+    expect(mockConsole.log).toHaveBeenNthCalledWith(1, 'Application ID: app-id');
   });
 
   it('should instantiate with another Tracker, inheriting its state, yet being independent instances', () => {
@@ -144,6 +157,7 @@ describe('Tracker', () => {
       },
       eventContexts
     );
+    const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
 
     it('should merge Tracker Location Stack and Global Contexts with the Event ones', async () => {
       const trackerContexts: TrackerConfig = {
@@ -181,17 +195,27 @@ describe('Tracker', () => {
     });
 
     it('should execute all plugins implementing the initialize callback', () => {
-      const pluginC: TrackerPlugin = { pluginName: 'pluginC', isUsable: () => true, initialize: jest.fn(noop) };
-      const pluginD: TrackerPlugin = { pluginName: 'pluginD', isUsable: () => true, initialize: jest.fn(noop) };
-      const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([pluginC, pluginD]) });
+      const pluginC: TrackerPlugin = { pluginName: 'pC', isUsable: () => true, initialize: jest.fn() };
+      const pluginD: TrackerPlugin = { pluginName: 'pD', isUsable: () => true, initialize: jest.fn() };
+      const trackerPlugins = new TrackerPlugins({ plugins: [pluginC, pluginD] });
+      const testTracker = new Tracker({ ...trackerConfig, plugins: trackerPlugins });
       expect(pluginC.initialize).toHaveBeenCalledWith(testTracker);
       expect(pluginD.initialize).toHaveBeenCalledWith(testTracker);
     });
 
     it('should execute all plugins implementing the beforeTransport callback', () => {
-      const pluginE: TrackerPlugin = { pluginName: 'pluginE', isUsable: () => true, beforeTransport: jest.fn(noop) };
-      const pluginF: TrackerPlugin = { pluginName: 'pluginF', isUsable: () => true, beforeTransport: jest.fn(noop) };
-      const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([pluginE, pluginF]) });
+      const pluginE: TrackerPlugin = {
+        pluginName: 'pE',
+        isUsable: () => true,
+        beforeTransport: jest.fn(),
+      };
+      const pluginF: TrackerPlugin = {
+        pluginName: 'pF',
+        isUsable: () => true,
+        beforeTransport: jest.fn(),
+      };
+      const trackerPlugins = new TrackerPlugins({ plugins: [pluginE, pluginF] });
+      const testTracker = new Tracker({ applicationId: 'app-id', plugins: trackerPlugins });
       testTracker.trackEvent(testEvent);
       expect(pluginE.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
       expect(pluginF.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));

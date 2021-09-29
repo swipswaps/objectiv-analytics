@@ -1,29 +1,37 @@
 import { ApplicationContext } from '@objectiv/schema';
 import { makeApplicationContext } from './ContextFactories';
+import { TrackerConfig, TrackerConsole } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
-import { TrackerPlugin } from './TrackerPlugin';
+import { TrackerPlugin, TrackerPluginConfig } from './TrackerPlugin';
+
+/**
+ * The ApplicationContextPlugin Config object.
+ */
+export type ApplicationContextPluginConfig = TrackerPluginConfig & Pick<TrackerConfig, 'applicationId'>;
 
 /**
  * The ApplicationContext Plugin adds an ApplicationContext as GlobalContext before events are transported.
  */
 export class ApplicationContextPlugin implements TrackerPlugin {
+  readonly console?: TrackerConsole;
   readonly pluginName = `ApplicationContextPlugin`;
   readonly applicationContext: ApplicationContext;
 
   /**
    * Generates a ApplicationContext from the given config applicationId.
    */
-  constructor(config: { applicationId: string }) {
+  constructor(config: ApplicationContextPluginConfig) {
+    this.console = config.console;
     this.applicationContext = makeApplicationContext({
       id: config.applicationId,
     });
 
-    console.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
-    console.log(`Application ID: ${config.applicationId}`);
-    console.group(`Application Context:`);
-    console.log(this.applicationContext);
-    console.groupEnd();
-    console.groupEnd();
+    this.console?.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
+    this.console?.log(`Application ID: ${config.applicationId}`);
+    this.console?.group(`Application Context:`);
+    this.console?.log(this.applicationContext);
+    this.console?.groupEnd();
+    this.console?.groupEnd();
   }
 
   /**

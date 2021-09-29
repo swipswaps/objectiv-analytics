@@ -1,9 +1,15 @@
-import { makeWebDocumentContext, TrackerEvent, TrackerPlugin } from '@objectiv/tracker-core';
+import {
+  makeWebDocumentContext,
+  TrackerConsole,
+  TrackerEvent,
+  TrackerPlugin,
+  TrackerPluginConfig,
+} from '@objectiv/tracker-core';
 
 /**
  * WebDocumentContextConfig allows to optionally specify a custom ID for the WebDocumentContext
  */
-export type WebDocumentContextPluginConfig = {
+export type WebDocumentContextPluginConfig = TrackerPluginConfig & {
   documentContextId?: string;
 };
 
@@ -12,6 +18,7 @@ export type WebDocumentContextPluginConfig = {
  * It implements the `run` method. This ensures the URL is retrieved before each Event is sent.
  */
 export class WebDocumentContextPlugin implements TrackerPlugin {
+  readonly console?: TrackerConsole;
   readonly pluginName = `WebDocumentContextPlugin`;
   readonly documentContextId: string;
 
@@ -20,11 +27,12 @@ export class WebDocumentContextPlugin implements TrackerPlugin {
    * If no ID is specified the document's `nodeName` is used.
    */
   constructor(config?: WebDocumentContextPluginConfig) {
+    this.console = config?.console;
     this.documentContextId = config?.documentContextId ?? (this.isUsable() ? document.nodeName : 'unknown');
 
-    console.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
-    console.log(`Application ID: ${this.documentContextId}`);
-    console.groupEnd();
+    this.console?.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
+    this.console?.log(`Application ID: ${this.documentContextId}`);
+    this.console?.groupEnd();
   }
 
   /**

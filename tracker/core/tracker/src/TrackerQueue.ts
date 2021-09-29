@@ -1,10 +1,16 @@
 import { isNonEmptyArray, NonEmptyArray } from './helpers';
+import { TrackerConsole } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
 
 /**
  * Our Tracker Queue Store generic interface.
  */
 export interface TrackerQueueStoreInterface {
+  /**
+   * Optional. A TrackerConsole instance for logging.
+   */
+  readonly console?: TrackerConsole;
+
   /**
    * A name describing the Queue Store implementation for debugging purposes
    */
@@ -32,15 +38,27 @@ export interface TrackerQueueStoreInterface {
 }
 
 /**
+ * The TrackerQueueStoreConfig object.
+ */
+export type TrackerQueueStoreConfig = {
+  /**
+   * Optional. A TrackerConsole instance for logging.
+   */
+  console?: TrackerConsole;
+};
+
+/**
  * An in-memory implementation of a TrackerQueueStore.
  */
 export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
+  readonly console?: TrackerConsole;
   queueStoreName = `TrackerQueueMemoryStore`;
   length: number = 0;
   events: TrackerEvent[] = [];
 
-  constructor() {
-    console.log(`%c｢objectiv:${this.queueStoreName}｣ Initialized`, 'font-weight: bold');
+  constructor(config?: TrackerQueueStoreConfig) {
+    this.console = config?.console;
+    this.console?.log(`%c｢objectiv:${this.queueStoreName}｣ Initialized`, 'font-weight: bold');
   }
 
   async read(size?: number, filterPredicate?: (event: TrackerEvent) => boolean): Promise<TrackerEvent[]> {
@@ -76,30 +94,59 @@ type TrackerQueueProcessFunction = (...args: NonEmptyArray<TrackerEvent>) => Pro
  */
 export type TrackerQueueConfig = {
   /**
+   * Optional. A TrackerConsole instance for logging.
+   */
+  console?: TrackerConsole;
+
+  /**
    * Optional. The TrackerQueueStore to use. Defaults to TrackerQueueMemoryStore
    */
-  readonly store?: TrackerQueueStoreInterface;
+  store?: TrackerQueueStoreInterface;
 
   /**
    * Optional. How many events to dequeue at the same time. Defaults to 10;
    */
-  readonly batchSize?: number;
+  batchSize?: number;
 
   /**
    * Optional. How often to re-run and dequeue again, in ms. Defaults to 1000.
    */
-  readonly batchDelayMs?: number;
+  batchDelayMs?: number;
 
   /**
    * Optional. How many batches to process simultaneously. Defaults to 4.
    */
-  readonly concurrency?: number;
+  concurrency?: number;
 };
 
 /**
  * Our Tracker Events Queue generic interface.
  */
-export interface TrackerQueueInterface extends Required<TrackerQueueConfig> {
+export interface TrackerQueueInterface {
+  /**
+   * Optional. A TrackerConsole instance for logging.
+   */
+  readonly console?: TrackerConsole;
+
+  /**
+   * The TrackerQueueStore to use. Defaults to TrackerQueueMemoryStore
+   */
+  readonly store: TrackerQueueStoreInterface;
+
+  /**
+   * How many events to dequeue at the same time. Defaults to 10;
+   */
+  readonly batchSize: number;
+
+  /**
+   * How often to re-run and dequeue again, in ms. Defaults to 1000.
+   */
+  readonly batchDelayMs: number;
+
+  /**
+   * How many batches to process simultaneously. Defaults to 4.
+   */
+  readonly concurrency: number;
   /**
    * The function to execute every batchDelayMs. Must be set with `setProcessFunction` before calling `run`
    */
@@ -140,6 +187,7 @@ export interface TrackerQueueInterface extends Required<TrackerQueueConfig> {
  * A very simple Batched Queue implementation.
  */
 export class TrackerQueue implements TrackerQueueInterface {
+  readonly console?: TrackerConsole;
   readonly queueName = 'TrackerQueue';
   processFunction?: TrackerQueueProcessFunction;
   readonly store: TrackerQueueStoreInterface;
@@ -155,17 +203,18 @@ export class TrackerQueue implements TrackerQueueInterface {
    * Initializes batching configuration with some sensible values.
    */
   constructor(config?: TrackerQueueConfig) {
-    this.store = config?.store ?? new TrackerQueueMemoryStore();
+    this.console = config?.console;
+    this.store = config?.store ?? new TrackerQueueMemoryStore({ console: config?.console });
     this.batchSize = config?.batchSize ?? 10;
     this.batchDelayMs = config?.batchDelayMs ?? 1000;
     this.concurrency = config?.concurrency ?? 4;
 
-    console.groupCollapsed(`｢objectiv:${this.queueName}｣ initialized`);
-    console.log(`Store: ${this.store.queueStoreName}`);
-    console.log(`Batch Size: ${this.batchSize}`);
-    console.log(`Batch Delay (ms): ${this.batchDelayMs}`);
-    console.log(`Concurrency: ${this.concurrency}`);
-    console.groupEnd();
+    this.console?.groupCollapsed(`｢objectiv:${this.queueName}｣ Initialized`);
+    this.console?.log(`Store: ${this.store.queueStoreName}`);
+    this.console?.log(`Batch Size: ${this.batchSize}`);
+    this.console?.log(`Batch Delay (ms): ${this.batchDelayMs}`);
+    this.console?.log(`Concurrency: ${this.concurrency}`);
+    this.console?.groupEnd();
   }
 
   setProcessFunction(processFunction: TrackerQueueProcessFunction) {
@@ -207,10 +256,10 @@ export class TrackerQueue implements TrackerQueueInterface {
         return;
       }
 
-      console.groupCollapsed(`｢objectiv:${this.queueName}｣ Batch read`);
-      console.log(`Events:`);
-      console.log(eventsBatch);
-      console.groupEnd();
+      this.console?.groupCollapsed(`｢objectiv:${this.queueName}｣ Batch read`);
+      this.console?.log(`Events:`);
+      this.console?.log(eventsBatch);
+      this.console?.groupEnd();
 
       // Gather Event Ids. Used for both deletion and processingEventIds cleanup.
       const eventsBatchIds = eventsBatch.map((event) => event.id);
