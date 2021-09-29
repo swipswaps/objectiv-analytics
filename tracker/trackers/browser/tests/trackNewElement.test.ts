@@ -12,18 +12,18 @@ describe('trackNewElement', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    expect(window.objectiv.trackers.get()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(window.objectiv.trackers.get(), 'trackEvent');
   });
 
   it('should skip the Element if it is not a Tracked Element', async () => {
     const div = document.createElement('div');
     jest.spyOn(div, 'addEventListener');
 
-    trackNewElement(div, window.objectiv.tracker);
+    trackNewElement(div, window.objectiv.trackers.get());
 
     expect(div.addEventListener).not.toHaveBeenCalled();
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
   });
 
   it('should track visibility: visible event', async () => {
@@ -32,11 +32,11 @@ describe('trackNewElement', () => {
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"auto"}');
     jest.spyOn(trackedDiv, 'addEventListener');
 
-    trackNewElement(trackedDiv, window.objectiv.tracker);
+    trackNewElement(trackedDiv, window.objectiv.trackers.get());
 
     expect(trackedDiv.addEventListener).not.toHaveBeenCalled();
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       makeSectionVisibleEvent({ location_stack: [sectionContext] })
     );
@@ -50,11 +50,11 @@ describe('trackNewElement', () => {
     document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
-    trackNewElement(trackedButton, window.objectiv.tracker);
+    trackNewElement(trackedButton, window.objectiv.trackers.get());
 
     expect(trackedButton.addEventListener).toHaveBeenCalledTimes(1);
     expect(trackedButton.addEventListener).toHaveBeenNthCalledWith(1, 'click', expect.any(Function));
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
   });
 
   it('should attach blur event listener', async () => {
@@ -63,11 +63,11 @@ describe('trackNewElement', () => {
     trackedInput.setAttribute(TaggingAttribute.trackBlurs, 'true');
     jest.spyOn(trackedInput, 'addEventListener');
 
-    trackNewElement(trackedInput, window.objectiv.tracker);
+    trackNewElement(trackedInput, window.objectiv.trackers.get());
 
     expect(trackedInput.addEventListener).toHaveBeenCalledTimes(1);
     expect(trackedInput.addEventListener).toHaveBeenNthCalledWith(1, 'blur', expect.any(Function));
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
   });
 
   it('should console error', async () => {
@@ -79,9 +79,9 @@ describe('trackNewElement', () => {
       throw new Error('nope');
     });
 
-    trackNewElement(trackedInput, window.objectiv.tracker);
+    trackNewElement(trackedInput, window.objectiv.trackers.get());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledTimes(1);
   });
 });

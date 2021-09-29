@@ -6,8 +6,8 @@ describe('trackNewElements', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    expect(window.objectiv.trackers.get()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(window.objectiv.trackers.get(), 'trackEvent');
   });
 
   it('should apply tagging attributes to Elements tracked via Children Tracking and track them right away', async () => {
@@ -33,13 +33,13 @@ describe('trackNewElements', () => {
     div1.appendChild(button);
     div1.appendChild(childDiv);
 
-    trackNewElements(div1, window.objectiv.tracker);
+    trackNewElements(div1, window.objectiv.trackers.get());
 
     expect(div1.addEventListener).not.toHaveBeenCalled();
     expect(childDiv.addEventListener).not.toHaveBeenCalled();
     expect(button.addEventListener).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       makeSectionVisibleEvent({
         location_stack: [
@@ -56,9 +56,9 @@ describe('trackNewElements', () => {
     jest.spyOn(console, 'error');
 
     // @ts-ignore
-    trackNewElements(null, window.objectiv.tracker);
+    trackNewElements(null, window.objectiv.trackers.get());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledTimes(1);
   });
 });

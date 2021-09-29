@@ -32,50 +32,53 @@ describe('trackEvent', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    expect(window.objectiv.trackers.get()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(window.objectiv.trackers.get(), 'trackEvent');
   });
 
   it('should console.error if a Tracker instance cannot be retrieved and was not provided either', async () => {
-    // @ts-ignore forcefully wipe the tracker instance
-    window.objectiv.tracker = null;
-    expect(window.objectiv.tracker).toBe(null);
+    window.objectiv.trackers.delete('test');
+    expect(window.objectiv.trackers.get()).toBeUndefined();
     jest.spyOn(console, 'error');
 
     const parameters = { eventFactory: makeClickEvent, element: testElement };
     trackEvent(parameters);
 
-    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(
       1,
-      new TypeError("Cannot read property 'trackEvent' of null"),
+      '｢objectiv:TrackerRepository｣ No Tracker Instances. Use `configureTracker` to create one.',
+    );
+    expect(console.error).toHaveBeenNthCalledWith(
+      2,
+      new TypeError("Cannot read property 'trackEvent' of undefined"),
       parameters
     );
 
     trackEvent({ ...parameters, onError: console.error });
-    expect(console.error).toHaveBeenCalledTimes(2);
-    expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError("Cannot read property 'trackEvent' of null"));
+    expect(console.error).toHaveBeenCalledTimes(4);
+    expect(console.error).toHaveBeenNthCalledWith(4, new ReferenceError("Cannot read property 'trackEvent' of undefined"));
   });
 
   it('should use the global tracker instance if available', () => {
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
 
     trackEvent({ eventFactory: makeClickEvent, element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeClickEvent());
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(1, makeClickEvent());
   });
 
   it('should use the given tracker instance', () => {
     const trackerOverride = new BrowserTracker({ applicationId: 'override', endpoint: 'override' });
     jest.spyOn(trackerOverride, 'trackEvent');
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
     expect(trackerOverride.trackEvent).not.toHaveBeenCalled();
 
     trackEvent({ eventFactory: makeClickEvent, element: testElement, tracker: trackerOverride });
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
     expect(trackerOverride.trackEvent).toHaveBeenCalledTimes(1);
     expect(trackerOverride.trackEvent).toHaveBeenNthCalledWith(1, makeClickEvent());
   });
@@ -103,8 +106,8 @@ describe('trackEvent', () => {
 
     trackEvent({ eventFactory: makeClickEvent, element: testDivToTrack });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         ...makeClickEvent(),
@@ -138,8 +141,8 @@ describe('trackEvent', () => {
 
     trackEvent({ eventFactory: makeClickEvent, element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
         ...makeClickEvent(),
@@ -160,22 +163,22 @@ describe('trackEvent', () => {
 
     trackEvent({ eventFactory: makeClickEvent, element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
   });
 
   it('should track a Click Event', () => {
     trackClick({ element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
   });
 
   it('should track a Input Change Event', () => {
     trackInputChange({ element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(makeInputChangeEvent())
     );
@@ -184,8 +187,8 @@ describe('trackEvent', () => {
   it('should track a Section Visible Event', () => {
     trackSectionVisible({ element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(makeSectionVisibleEvent())
     );
@@ -194,8 +197,8 @@ describe('trackEvent', () => {
   it('should track a Section Hidden Event', () => {
     trackSectionHidden({ element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(makeSectionHiddenEvent())
     );
@@ -204,8 +207,8 @@ describe('trackEvent', () => {
   it('should track a Video Start Event', () => {
     trackVideoStart({ element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(makeVideoStartEvent())
     );
@@ -214,8 +217,8 @@ describe('trackEvent', () => {
   it('should track a Video Pause Event', () => {
     trackVideoPause({ element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(makeVideoPauseEvent())
     );
@@ -224,16 +227,16 @@ describe('trackEvent', () => {
   it('should track either a Section Visible or Section Hidden Event based on the given state', () => {
     trackVisibility({ element: testElement, isVisible: true });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(makeSectionVisibleEvent())
     );
 
     trackVisibility({ element: testElement, isVisible: false });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(2);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(2);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining(makeSectionHiddenEvent())
     );
@@ -242,16 +245,16 @@ describe('trackEvent', () => {
   it('should track an Application Loaded Event', () => {
     trackApplicationLoaded();
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(makeApplicationLoadedEvent())
     );
 
     trackApplicationLoaded({ element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(2);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(2);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining(makeApplicationLoadedEvent())
     );
@@ -260,16 +263,16 @@ describe('trackEvent', () => {
   it('should track a URL Change Event', () => {
     trackURLChange();
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(makeURLChangeEvent())
     );
 
     trackURLChange({ element: testElement });
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(2);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(2);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining(makeURLChangeEvent())
     );

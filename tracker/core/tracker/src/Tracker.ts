@@ -18,9 +18,14 @@ export type TrackerConsole = Pick<
  */
 export type TrackerConfig = ContextsConfig & {
   /**
-   * Application ID. Used to generate ApplicationContext (global context)
+   * Application ID. Used to generate ApplicationContext (global context).
    */
   applicationId: string;
+
+  /**
+   * Optional. Unique identifier for the TrackerInstance. Defaults to the same value of `applicationId`.
+   */
+  trackerId?: string;
 
   /**
    * Optional. TrackerTransport instance. Responsible for sending or storing Events.
@@ -51,6 +56,7 @@ export const getDefaultTrackerPluginsList = (trackerConfig: TrackerConfig) => [
 export class Tracker implements Contexts, TrackerConfig {
   readonly console?: TrackerConsole;
   readonly applicationId: string;
+  readonly trackerId: string;
   readonly transport?: TrackerTransport;
   readonly plugins: TrackerPlugins;
 
@@ -69,6 +75,7 @@ export class Tracker implements Contexts, TrackerConfig {
   constructor(trackerConfig: TrackerConfig, ...contextConfigs: ContextsConfig[]) {
     this.console = trackerConfig.console;
     this.applicationId = trackerConfig.applicationId;
+    this.trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
     this.transport = trackerConfig.transport;
     this.plugins =
       trackerConfig.plugins ??
@@ -85,7 +92,7 @@ export class Tracker implements Contexts, TrackerConfig {
     this.global_contexts = new_global_contexts;
 
     this.console?.groupCollapsed(
-      `｢objectiv:Tracker｣ Initialized ${
+      `｢objectiv:Tracker:${this.trackerId}｣ Initialized ${
         this.location_stack.length
           ? '(' +
             this.location_stack.map((context) => `${context._type.replace('Context', '')}:${context.id}`).join(' > ') +
@@ -127,7 +134,7 @@ export class Tracker implements Contexts, TrackerConfig {
     if (this.transport && this.transport.isUsable()) {
       // istanbul ignore next
       this.console?.groupCollapsed(
-        `｢objectiv:Tracker｣ Tracking ${trackedEvent._type} ${
+        `｢objectiv:Tracker:${this.trackerId}｣ Tracking ${trackedEvent._type} ${
           this.location_stack.length
             ? '(' +
               this.location_stack

@@ -10,9 +10,12 @@ export const configureTracker = (trackerConfig: BrowserTrackerConfig) => {
     throw new Error('Cannot access the Window interface. Tracker cannot be initialized.');
   }
 
-  // Create and store Tracker instance in window interface
-  window.objectiv.tracker = new BrowserTracker(trackerConfig);
+  // Create new Tracker Instance
+  const newTracker = new BrowserTracker(trackerConfig);
+
+  // Add new Tracker Instance to the TrackerRepository
+  window.objectiv.trackers.add(newTracker);
 
   // Initialize auto Tracker
-  startAutoTracking(trackerConfig, window.objectiv.tracker);
+  startAutoTracking(trackerConfig, window.objectiv.trackers.get(newTracker.trackerId));
 };

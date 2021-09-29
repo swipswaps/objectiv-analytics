@@ -7,8 +7,8 @@ describe('trackRemovedElements', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    expect(window.objectiv.trackers.get()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(window.objectiv.trackers.get(), 'trackEvent');
   });
 
   it('should skip all Elements that are not Tracked Element', async () => {
@@ -20,9 +20,9 @@ describe('trackRemovedElements', () => {
     div.appendChild(anotherDiv);
     document.body.appendChild(div);
 
-    trackRemovedElements(div, window.objectiv.tracker);
+    trackRemovedElements(div, window.objectiv.trackers.get());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
   });
 
   it('should skip all Elements that do not have visibility tagging attributes', async () => {
@@ -34,9 +34,9 @@ describe('trackRemovedElements', () => {
     trackedChildDiv.appendChild(trackedButton);
     document.body.appendChild(trackedDiv);
 
-    trackRemovedElements(trackedDiv, window.objectiv.tracker);
+    trackRemovedElements(trackedDiv, window.objectiv.trackers.get());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
   });
 
   it('should trigger a visibility:hidden Event for Tracked Elements with visibility:auto attributes', async () => {
@@ -50,10 +50,10 @@ describe('trackRemovedElements', () => {
     div.appendChild(trackedDiv);
     document.body.appendChild(div);
 
-    trackRemovedElements(div, window.objectiv.tracker);
+    trackRemovedElements(div, window.objectiv.trackers.get());
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
       1,
       makeSectionHiddenEvent({ location_stack: [sectionContext] })
     );
@@ -69,9 +69,9 @@ describe('trackRemovedElements', () => {
     div.appendChild(trackedDiv);
     document.body.appendChild(div);
 
-    trackRemovedElements(div, window.objectiv.tracker);
+    trackRemovedElements(div, window.objectiv.trackers.get());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
   });
 
   it('should console error', async () => {
@@ -85,9 +85,9 @@ describe('trackRemovedElements', () => {
     div.appendChild(trackedDiv);
     document.body.appendChild(div);
 
-    trackRemovedElements(div, window.objectiv.tracker);
+    trackRemovedElements(div, window.objectiv.trackers.get());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledTimes(1);
   });
 
@@ -98,9 +98,9 @@ describe('trackRemovedElements', () => {
       throw new Error();
     });
 
-    trackRemovedElements(div, window.objectiv.tracker);
+    trackRemovedElements(div, window.objectiv.trackers.get());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledTimes(1);
   });
 });

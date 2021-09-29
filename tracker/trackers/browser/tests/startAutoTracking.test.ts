@@ -6,8 +6,8 @@ describe('startAutoTracking', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    expect(window.objectiv.trackers.get()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(window.objectiv.trackers.get(), 'trackEvent');
   });
 
   it('should not track application loaded event', () => {
@@ -24,12 +24,12 @@ describe('makeMutationCallback - url changes', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    expect(window.objectiv.trackers.get()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(window.objectiv.trackers.get(), 'trackEvent');
   });
 
   it('should not track url changes', () => {
-    const mutationCallback = makeMutationCallback(false, window.objectiv.tracker);
+    const mutationCallback = makeMutationCallback(false, window.objectiv.trackers.get());
     const mutationObserver = new MutationObserver(mutationCallback);
 
     Object.defineProperty(window, 'location', {
@@ -39,11 +39,11 @@ describe('makeMutationCallback - url changes', () => {
     });
     mutationCallback([], mutationObserver);
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(window.objectiv.trackers.get().trackEvent).not.toHaveBeenCalled();
   });
 
   it('should track url changes with the global tracker', () => {
-    const mutationCallback = makeMutationCallback(true, window.objectiv.tracker);
+    const mutationCallback = makeMutationCallback(true, window.objectiv.trackers.get());
     const mutationObserver = new MutationObserver(mutationCallback);
 
     Object.defineProperty(window, 'location', {
@@ -53,8 +53,8 @@ describe('makeMutationCallback - url changes', () => {
     });
     mutationCallback([], mutationObserver);
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeURLChangeEvent());
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(1, makeURLChangeEvent());
   });
 });
 

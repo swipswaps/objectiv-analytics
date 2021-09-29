@@ -1,12 +1,12 @@
 import { windowExists } from './globals';
-import { BrowserTracker } from './tracker/BrowserTracker';
+import { TrackerRepository } from './tracker/TrackerRepository';
 
 /**
  * The interface of our namespace which will be extending the Window interface
  */
 
 export interface ObjectivNamespace {
-  tracker: BrowserTracker;
+  trackers: TrackerRepository;
 }
 
 /**
@@ -23,6 +23,6 @@ declare global {
  */
 if (windowExists()) {
   window.objectiv = window.objectiv || {
-    tracker: null,
+    trackers: new TrackerRepository(),
   };
 }
