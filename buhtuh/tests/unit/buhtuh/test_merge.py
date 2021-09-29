@@ -6,8 +6,7 @@ from typing import List
 import pytest
 
 from buhtuh import BuhTuhDataFrame, get_series_type_from_dtype
-from buhtuh.merge import _determine_left_on_right_on, _determine_result_columns, ResultColumn, merge, How, \
-    _get_merge_sql
+from buhtuh.merge import _determine_left_on_right_on, _determine_result_columns, ResultColumn, merge, How
 
 
 def test__determine_left_on_right_on_simple_df_df_happy():
@@ -52,7 +51,6 @@ def test__determine_left_on_right_on_on_df_df_non_happy():
         call__determine_left_on_right_on(left, right, How.cross, on='c')
 
 
-
 def test__determine_left_on_right_on_left_on_right_on_df_df_happy():
     left = get_fake_df(['a'], ['b', 'c'])
     right = get_fake_df(['a'], ['c', 'd'])
@@ -92,6 +90,7 @@ def test__determine_left_on_right_on_left_on_right_on_df_df_non_happy():
     # Cannot specify '*_on' with how='cross'
     with pytest.raises(ValueError, match='how'):
         call__determine_left_on_right_on(left, right, How.cross, left_on='c', right_on='c')
+
 
 def test__determine_left_on_right_index_on_df_df_happy():
     left = get_fake_df(['a'], ['b', 'c'])

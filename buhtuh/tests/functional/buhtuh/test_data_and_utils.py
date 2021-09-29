@@ -150,5 +150,5 @@ def check_expected_db_type(bt, expected_series_type, column_name='new_column'):
     registi = types.TypeRegistry()
     registi._real_init()
     a = registi.dtype_series[db_values[0][0]]
-    b = a(None,None,None,None)
+    b = a(None, None, None, None)
     assert isinstance(b, expected_series_type)

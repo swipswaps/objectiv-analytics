@@ -8,7 +8,7 @@ import numpy as np
 from buhtuh import BuhTuhSeriesInt64, BuhTuhSeriesString, BuhTuhSeriesFloat64, BuhTuhSeriesBoolean, \
     BuhTuhSeriesDate, BuhTuhSeriesTimestamp, BuhTuhSeriesTime, BuhTuhSeriesTimedelta
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, check_expected_db_type, \
-    assert_equals_data, CITIES_INDEX_AND_COLUMNS, df_to_list
+    assert_equals_data, CITIES_INDEX_AND_COLUMNS
 
 
 def check_set_const(constant, expected_series):
@@ -35,27 +35,34 @@ def test_set_const_int():
     check_set_const(np.int64(4), BuhTuhSeriesInt64)
     check_set_const(5, BuhTuhSeriesInt64)
 
+
 def test_set_const_float():
     check_set_const(5.1, BuhTuhSeriesFloat64)
+
 
 def test_set_const_bool():
     check_set_const(True, BuhTuhSeriesBoolean)
 
+
 def test_set_const_str():
     check_set_const('keatsen', BuhTuhSeriesString)
 
+
 def test_set_const_date():
-    check_set_const(datetime.date(2019,1,5), BuhTuhSeriesDate)
+    check_set_const(datetime.date(2019, 1, 5), BuhTuhSeriesDate)
+
 
 def test_set_const_datetime():
     check_set_const(datetime.datetime.now(), BuhTuhSeriesTimestamp)
 
+
 def test_set_const_time():
     check_set_const(datetime.time.fromisoformat('00:05:23.283'), BuhTuhSeriesTime)
 
+
 def test_set_const_timedelta():
-        check_set_const(np.datetime64('2005-02-25T03:30') - np.datetime64('2005-01-25T03:30'), BuhTuhSeriesTimedelta)
-        check_set_const(datetime.datetime.now() - datetime.datetime(2015,4,6), BuhTuhSeriesTimedelta)
+    check_set_const(np.datetime64('2005-02-25T03:30') - np.datetime64('2005-01-25T03:30'), BuhTuhSeriesTimedelta)
+    check_set_const(datetime.datetime.now() - datetime.datetime(2015, 4, 6), BuhTuhSeriesTimedelta)
 
 
 def test_set_const_int_from_series():
