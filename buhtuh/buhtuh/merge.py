@@ -216,6 +216,10 @@ def merge(
     on the specified columns. The columns that are joined on can consists (partially or fully) out of index
     columns.
 
+    If the column names on the left and right conflict, then the suffixes are used to distinguish them in the
+    resulting DataFrame. The algorithm for determining the resulting columns and their names is similar to
+    Pandas, but has slight differences when joining on indices and column names conflict.
+
     :param left: left DataFrame
     :param right: DataFrame or Series to join on left
     :param how: supported values: {‘left’, ‘right’, ‘outer’, ‘inner’, ‘cross’}

@@ -134,6 +134,16 @@ def test_merge_basic_on_indexes():
         [2, 2, 2, 'Snits', 2, 'Dúmkes'],
     ]
 
+    # Note that the results here do not match exactly with Pandas. This is a known discrepancy, reproducing
+    # Pandas logic is not trivial and perhaps not a 'better' solution. For now we'll just leave this as it
+    # is.
+    # Code to reproduce this test in pure pandas:
+    #  bt = pd.DataFrame([(1, 1, 2), (2, 2, 3), (3, 3, 4)], columns=['_index_skating_order', 'skating_order', 'city'])
+    #  bt.set_index(['_index_skating_order'], inplace=True)
+    #  mt = pd.DataFrame([(1, 1, 2), (2, 2, 3), (4, 4, 4)], columns=['_index_skating_order', 'skating_order', 'food'])
+    #  mt.set_index(['_index_skating_order'], inplace=True)
+    #  bt.merge(mt, left_index=True, right_on='skating_order')
+
     result = bt.merge(mt, left_index=True, right_on='skating_order')
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(result, expected_columns=expected_columns, expected_data=expected_data)

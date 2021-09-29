@@ -483,13 +483,15 @@ class BuhTuhDataFrame:
             suffixes: Tuple[str, str] = ('_x', '_y'),
     ) -> 'BuhTuhDataFrame':
         """
-        Join the right Dataframe or Series on self.. This will return a new DataFrame that contains the
+        Join the right Dataframe or Series on self. This will return a new DataFrame that contains the
         combined columns of both dataframes, and the rows that result from joining on the specified columns.
-        The columns that are joined on can consists (partially or fully) out of index columns.
+        The columns that are joined on can consist (partially or fully) out of index columns.
 
         See buhtuh.merge.merge() for more information.
         The interface of this function is similar to pandas' merge, but the following parameters are not
         supported: sort, copy, indicator, and validate.
+        Additionally when merging two frames that have conflicting columns names, and joining on indices,
+        then the resulting columns/column names can differ slightly from Pandas.
         """
         from buhtuh.merge import merge
         return merge(
