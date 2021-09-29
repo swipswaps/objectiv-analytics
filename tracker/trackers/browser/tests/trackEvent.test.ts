@@ -47,7 +47,7 @@ describe('trackEvent', () => {
     expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(
       1,
-      '｢objectiv:TrackerRepository｣ No Tracker Instances. Use `configureTracker` to create one.',
+      '｢objectiv:TrackerRepository｣ No Tracker Instances. Use `configureTracker` to create one.'
     );
     expect(console.error).toHaveBeenNthCalledWith(
       2,
@@ -57,7 +57,10 @@ describe('trackEvent', () => {
 
     trackEvent({ ...parameters, onError: console.error });
     expect(console.error).toHaveBeenCalledTimes(4);
-    expect(console.error).toHaveBeenNthCalledWith(4, new ReferenceError("Cannot read property 'trackEvent' of undefined"));
+    expect(console.error).toHaveBeenNthCalledWith(
+      4,
+      new ReferenceError("Cannot read property 'trackEvent' of undefined")
+    );
   });
 
   it('should use the global tracker instance if available', () => {
@@ -164,14 +167,20 @@ describe('trackEvent', () => {
     trackEvent({ eventFactory: makeClickEvent, element: testElement });
 
     expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeClickEvent())
+    );
   });
 
   it('should track a Click Event', () => {
     trackClick({ element: testElement });
 
     expect(window.objectiv.trackers.get().trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
+    expect(window.objectiv.trackers.get().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeClickEvent())
+    );
   });
 
   it('should track a Input Change Event', () => {
