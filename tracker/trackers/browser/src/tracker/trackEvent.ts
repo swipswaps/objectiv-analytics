@@ -5,7 +5,7 @@ import { parseLocationContext } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { isTaggableElement } from '../typeGuards';
 import { findTaggedParentElements } from './findTaggedParentElements';
-import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
 
 /**
  * All of our EventFactories have the same signature
