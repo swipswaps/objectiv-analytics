@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "module": "dist/index.js",
   "scripts": {
-    "build": "ng-packagr -p package.json && cp .npmrc dist/.npmrc",
+    "build": "ng-packagr -p package.json && node postbuild.js",
     "prettify": "prettier --write .",
     "tsc": "tsc --noEmit",
     "npm-publish": "(cd dist && npm publish)"
