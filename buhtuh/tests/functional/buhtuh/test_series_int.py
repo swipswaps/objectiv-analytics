@@ -22,6 +22,27 @@ def test_add_int_constant():
     )
 
 
+def test_create_big_int_constant():
+    bt = get_bt_with_test_data()
+    # just under max size of a 4 byte integer
+    bt = bt[['city']]
+    bt['new'] = 2147483647
+    # now over the max size of a 4 byte integer
+    bt['new_big'] = 2147483648
+    bt['calc'] = bt['new'] + 100
+    bt['calc_big'] = bt['new'] + 100000
+    assert_db_type(bt['calc_big'], 'bigint', BuhTuhSeriesInt64)
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'city', 'new', 'new_big', 'calc', 'calc_big'],
+        expected_data=[
+            [1, 'Ljouwert', 2147483647, 2147483648, 2147483747, 2147583647],
+            [2, 'Snits', 2147483647, 2147483648, 2147483747, 2147583647],
+            [3, 'Drylts', 2147483647, 2147483648, 2147483747, 2147583647],
+        ]
+    )
+
+
 def test_comparator_int_constant_boolean():
     bt = get_bt_with_test_data()
     # [1, 1285],
