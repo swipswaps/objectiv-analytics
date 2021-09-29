@@ -8,7 +8,7 @@ import {
   TrackerPlugins,
 } from '../src';
 import { LogTransport } from './mocks/LogTransport';
-import { mockConsole } from "./mocks/MockConsole";
+import { mockConsole } from './mocks/MockConsole';
 import { UnusableTransport } from './mocks/UnusableTransport';
 
 describe('Tracker', () => {

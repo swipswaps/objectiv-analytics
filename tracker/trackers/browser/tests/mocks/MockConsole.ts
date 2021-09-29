@@ -1,4 +1,4 @@
-import { TrackerConsole } from "@objectiv/tracker-core";
+import { TrackerConsole } from '@objectiv/tracker-core';
 
 export const mockConsole: TrackerConsole = {
   debug: jest.fn(),

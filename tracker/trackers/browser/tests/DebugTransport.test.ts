@@ -1,6 +1,6 @@
 import { TrackerEvent } from '@objectiv/tracker-core';
 import { DebugTransport } from '../src/';
-import { mockConsole } from "./mocks/MockConsole";
+import { mockConsole } from './mocks/MockConsole';
 
 describe('DebugTransport', () => {
   const testEvent = new TrackerEvent({

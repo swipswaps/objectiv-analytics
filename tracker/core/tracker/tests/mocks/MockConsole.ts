@@ -1,4 +1,4 @@
-import { TrackerConsole, } from '../../src';
+import { TrackerConsole } from '../../src';
 
 export const mockConsole: TrackerConsole = {
   debug: jest.fn(),

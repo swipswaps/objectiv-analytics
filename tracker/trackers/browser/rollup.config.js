@@ -1,6 +1,5 @@
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import strip from '@rollup/plugin-strip';
 import filesize from 'rollup-plugin-filesize';
 import sizes from 'rollup-plugin-sizes';
 import { terser } from 'rollup-plugin-terser';
@@ -19,21 +18,6 @@ export default [
         sourcemap: dev,
       },
     ],
-    plugins: [
-      nodeResolve(),
-      commonjs(),
-      ts(),
-      ...(dev
-        ? []
-        : [
-            strip({
-              include: ['**/*.(js|jsx|ts|tsx)'],
-              functions: ['console.*'],
-            }),
-            terser(),
-          ]),
-      sizes(),
-      filesize(),
-    ],
+    plugins: [nodeResolve(), commonjs(), ts(), ...(dev ? [] : [terser()]), sizes(), filesize()],
   },
 ];
