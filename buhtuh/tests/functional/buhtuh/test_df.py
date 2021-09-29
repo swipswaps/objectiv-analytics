@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 from buhtuh import BuhTuhDataFrame, BuhTuhSeriesBoolean
-from tests.functional.buhtuh.data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list
+from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list
 
 
 def test_del_item():

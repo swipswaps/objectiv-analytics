@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from buhtuh import BuhTuhSeriesDate
-from tests.functional.buhtuh.data_and_utils import assert_equals_data, get_bt_with_food_data, \
+from tests.functional.buhtuh.test_data_and_utils import assert_equals_data, get_bt_with_food_data, \
     check_expected_db_type
 
 

@@ -7,7 +7,7 @@ import numpy as np
 
 from buhtuh import BuhTuhSeriesInt64, BuhTuhSeriesString, BuhTuhSeriesFloat64, BuhTuhSeriesBoolean, \
     BuhTuhSeriesDate, BuhTuhSeriesTimestamp, BuhTuhSeriesTime, BuhTuhSeriesTimedelta
-from tests.functional.buhtuh.data_and_utils import get_bt_with_test_data, check_expected_db_type, \
+from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, check_expected_db_type, \
     assert_equals_data, CITIES_INDEX_AND_COLUMNS, df_to_list
 
 

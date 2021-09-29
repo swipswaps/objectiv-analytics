@@ -1,8 +1,10 @@
 """
 Copyright 2021 Objectiv B.V.
 
-Utilities and a very simple dataset for testing BuhTuh DataFrames
+Utilities and a very simple dataset for testing BuhTuh DataFrames.
 
+This file does not contain any test, but having the file's name start with `test_` makes pytest treat it
+as a test file. This makes pytest rewrite the asserts to give clearer errors.
 """
 import os
 from typing import List, Union
@@ -138,6 +140,7 @@ def assert_equals_data(
 def df_to_list(df):
     data_list = df.reset_index().to_numpy().tolist()
     return(data_list)
+
 
 def check_expected_db_type(bt, expected_series_type, column_name='new_column'):
     sql = bt[column_name].view_sql()
