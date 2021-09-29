@@ -16,8 +16,15 @@ from buhtuh import BuhTuhDataFrame, BuhTuhSeries, BuhTuhSeriesBoolean, BuhTuhSer
 
 DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
 
+# Three data tables for testing are defined here that can be used in tests
+# 1. cities: 3 rows (or 11 for the full dataset) of data on cities
+# 2. food: 3 rows of food data
+# 3. railways: 7 rows of data on railway stations
 
-FULL_TEST_DATA = [
+# cities is the main table and should be used when sufficient. The other tables can be used in addition
+# for more complex scenarios (e.g. merging)
+
+TEST_DATA_CITIES_FULL = [
     [1, 'Ljouwert', 'Leeuwarden', 93485, 1285],
     [2, 'Snits', 'Súdwest-Fryslân', 33520, 1456],
     [3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268],
@@ -31,20 +38,31 @@ FULL_TEST_DATA = [
     [11, 'Dokkum', 'Noardeast-Fryslân', 12675, 1298],
 ]
 # The TEST_DATA set that we'll use in most tests is limited to 3 rows for convenience.
-TEST_DATA = FULL_TEST_DATA[:3]
-TEST_COLUMNS = ['skating_order', 'city', 'municipality', 'inhabitants', 'founding']
+TEST_DATA_CITIES = TEST_DATA_CITIES_FULL[:3]
+CITIES_COLUMNS = ['skating_order', 'city', 'municipality', 'inhabitants', 'founding']
 # The default dataframe has skating_order as index, so that column will be prepended before the actual
 # data in the query results.
-INDEX_AND_COLUMNS = ['_index_skating_order'] + TEST_COLUMNS
+CITIES_INDEX_AND_COLUMNS = ['_index_skating_order'] + CITIES_COLUMNS
 
-MERGE_TEST_DATA = [
-
+TEST_DATA_FOOD = [
     [1, 'Sûkerbôlle', '2021-05-03 11:28:36.388', '2021-05-03'],
     [2, 'Dúmkes', '2021-05-04 23:28:36.388', '2021-05-04'],
     [4, 'Grutte Pier Bier', '2022-05-03 14:13:13.388', '2022-05-03']
 ]
-MERGE_COLUMNS = ['skating_order', 'food', 'moment', 'date']
-MERGE_INDEX_AND_COLUMNS = ['_index_skating_order'] + MERGE_COLUMNS
+FOOD_COLUMNS = ['skating_order', 'food', 'moment', 'date']
+FOOD_INDEX_AND_COLUMNS = ['_index_skating_order'] + FOOD_COLUMNS
+
+TEST_DATA_RAILWAYS = [
+    [1, 'Drylts', 'IJlst', 1],
+    [2, 'It Hearrenfean', 'Heerenveen', 1],
+    [3, 'It Hearrenfean', 'Heerenveen IJsstadion', 2],
+    [4, 'Ljouwert', 'Leeuwarden', 4],
+    [5, 'Ljouwert', 'Camminghaburen', 1],
+    [6, 'Snits', 'Sneek', 2],
+    [7, 'Snits', 'Sneek Noord', 2],
+]
+RAILWAYS_COLUMNS = ['station_id', 'town', 'station', 'platforms']
+RAILWAYS_INDEX_AND_COLUMNS = ['_index_station_id'] + RAILWAYS_COLUMNS
 
 
 def _get_bt(table, dataset, columns) -> BuhTuhDataFrame:
@@ -71,14 +89,18 @@ def _get_bt(table, dataset, columns) -> BuhTuhDataFrame:
 
 def _get_bt_with_test_data(full_data_set: bool = False) -> BuhTuhDataFrame:
     if full_data_set:
-        test_data = FULL_TEST_DATA
+        test_data = TEST_DATA_CITIES_FULL
     else:
-        test_data = TEST_DATA
-    return _get_bt('test_table', test_data, TEST_COLUMNS)
+        test_data = TEST_DATA_CITIES
+    return _get_bt('test_table', test_data, CITIES_COLUMNS)
 
 
-def _get_bt_with_merge_data() -> BuhTuhDataFrame:
-    return _get_bt('test_merge_table', MERGE_TEST_DATA, MERGE_COLUMNS)
+def _get_bt_with_food_data() -> BuhTuhDataFrame:
+    return _get_bt('test_merge_table_1', TEST_DATA_FOOD, FOOD_COLUMNS)
+
+
+def _get_bt_with_railway_data() -> BuhTuhDataFrame:
+    return _get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS)
 
 
 def run_query(engine: sqlalchemy.engine, sql: str) -> ResultProxy:
@@ -91,7 +113,7 @@ def assert_equals_data(
         bt: Union[BuhTuhDataFrame, BuhTuhSeries],
         expected_columns: List[str],
         expected_data: List[list],
-        order_by: str = None
+        order_by: Union[str, List[str]] = None
 ):
     """
     Execute sql of ButTuhDataFrame/Series, with the given order_by, and make sure the result matches
@@ -341,7 +363,7 @@ def test_set_multiple():
     bt['leet'] = 1337
     assert_equals_data(
         bt,
-        expected_columns=INDEX_AND_COLUMNS + ['duplicated_column', 'alternative_sport', 'leet'],
+        expected_columns=CITIES_INDEX_AND_COLUMNS + ['duplicated_column', 'alternative_sport', 'leet'],
         expected_data=[
             [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 1285, 'keatsen', 1337],
             [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 1456, 'keatsen', 1337],
@@ -358,7 +380,7 @@ def test_set_existing():
     bt['city'] = bt['founding']
     assert_equals_data(
         bt,
-        expected_columns=INDEX_AND_COLUMNS,
+        expected_columns=CITIES_INDEX_AND_COLUMNS,
         expected_data=[
             [1, 1, 1285, 'Leeuwarden', 93485, 1285],
             [2, 2, 1456, 'Súdwest-Fryslân', 33520, 1456],
@@ -373,7 +395,7 @@ def test_set_existing_referencing_other_column_experience():
     bt['city'] = bt['city'] + ' test'
     assert_equals_data(
         bt,
-        expected_columns=INDEX_AND_COLUMNS,
+        expected_columns=CITIES_INDEX_AND_COLUMNS,
         expected_data=[
             [1, 1, 'Ljouwert test', 'Leeuwarden', 93485, 1285],
             [2, 2, 'Snits test', 'Súdwest-Fryslân', 33520, 1456],
@@ -390,7 +412,7 @@ def test_set_existing_referencing_other_column_experience():
     bt['city'] = ''
     assert_equals_data(
         bt,
-        expected_columns=INDEX_AND_COLUMNS,
+        expected_columns=CITIES_INDEX_AND_COLUMNS,
         expected_data=[
             [1, 0, '', 'Leeuwarden', 93485, 1285],
             [2, 0, '', 'Súdwest-Fryslân', 33520, 1456],
@@ -401,7 +423,7 @@ def test_set_existing_referencing_other_column_experience():
     bt['city'] = a + ' - ' + b
     assert_equals_data(
         bt,
-        expected_columns=INDEX_AND_COLUMNS,
+        expected_columns=CITIES_INDEX_AND_COLUMNS,
         expected_data=[
             [1, 2, 'Ljouwert test1 - Ljouwert test2', 'Leeuwarden', 93485, 1285],
             [2, 4, 'Snits test1 - Snits test2', 'Súdwest-Fryslân', 33520, 1456],
@@ -417,7 +439,7 @@ def test_set_series_expression():
     bt['time_travel'] = bt['founding'] + 1000
     assert_equals_data(
         bt,
-        expected_columns=INDEX_AND_COLUMNS + ['time_travel'],
+        expected_columns=CITIES_INDEX_AND_COLUMNS + ['time_travel'],
         expected_data=[
             [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 2285],
             [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 2456],
@@ -893,206 +915,8 @@ def test_boolean_indexing_same_node():
     )
 
 
-def test_merge_column():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
-
-    result = bt.merge(mt, ['skating_order'])
-
-    assert isinstance(result, BuhTuhDataFrame)
-    assert_equals_data(
-        result,
-        # This is weak. Ordering is broken.
-        expected_columns=['_index_skating_order', 'skating_order_left', 'skating_order_right', 'city', 'food'],
-        expected_data=[
-            [1, 1, 1, 'Ljouwert', 'Sûkerbôlle'],
-            [2, 2, 2, 'Snits', 'Dúmkes'],
-        ]
-    )
-
-
-def test_merge_index():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
-    result = bt.merge(mt)
-
-    assert isinstance(result, BuhTuhDataFrame)
-    assert_equals_data(
-        result,
-        # This is weak. Ordering is broken.
-        expected_columns=['_index_skating_order', 'skating_order_left', 'skating_order_right', 'city', 'food'],
-        expected_data=[
-            [1, 1, 1, 'Ljouwert', 'Sûkerbôlle'],
-            [2, 2, 2, 'Snits', 'Dúmkes'],
-        ]
-    )
-
-
-def test_merge_partial_columns():
-    bt = _get_bt_with_test_data(full_data_set=False)
-    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
-    result = bt[['city', 'inhabitants']].merge(mt[['food']])
-
-    assert_equals_data(
-        result,
-        # This is weak. Ordering is broken.
-        expected_columns=['_index_skating_order', 'city', 'inhabitants', 'food'],
-        expected_data=[
-            [1, 'Ljouwert', 93485, 'Sûkerbôlle'],
-            [2, 'Snits', 33520, 'Dúmkes'],
-        ]
-    )
-
-
-def test_merge_self():
-    bt1 = _get_bt_with_test_data(full_data_set=False)[['city']]
-    bt2 = _get_bt_with_test_data(full_data_set=False)[['inhabitants']]
-    result = bt1.merge(bt2)
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order', 'city', 'inhabitants'],
-        expected_data=[
-            [1, 'Ljouwert', 93485],
-            [2, 'Snits', 33520],
-            [3, 'Drylts', 3055]
-        ]
-    )
-
-
-def test_merge_preselection():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
-    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
-    result = bt[bt['skating_order'] != 1].merge(mt[['food']])
-    assert_equals_data(
-        result,
-        # This is weak. Ordering is broken.
-        expected_columns=['_index_skating_order', 'skating_order', 'city', 'inhabitants', 'food'],
-        expected_data=[
-            [2, 2, 'Snits', 33520, 'Dúmkes'],
-        ]
-    )
-
-
-def test_merge_expression_columns():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
-    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
-    bt['skating_order'] += 2
-    mt['skating_order'] += 2
-
-    result = bt.merge(mt, ['skating_order'])
-    assert_equals_data(
-        result,
-        # This is weak. Ordering is broken.
-        expected_columns=['_index_skating_order', 'skating_order_left', 'skating_order_right', 'city', 'inhabitants', 'food'],
-        expected_data=[
-            [1, 3, 3, 'Ljouwert', 93485, 'Sûkerbôlle'],
-            [2, 4, 4, 'Snits', 33520, 'Dúmkes'],
-        ]
-    )
-
-
-# This needs a better name
-def test_merge_expression_columns_regression():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
-    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
-    bt['x'] = bt['skating_order'] == 3
-    bt['y'] = bt['skating_order'] == 3
-    bt['z'] = bt['x'] & bt['y']
-    result = bt.merge(mt, ['skating_order'])
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order', 'skating_order_left', 'skating_order_right', 'city', 'inhabitants', 'x', 'y',
-                          'z', 'food'],
-        expected_data=[
-            [1, 1, 1, 'Ljouwert', 93485, False, False, False, 'Sûkerbôlle'],
-            [2, 2, 2, 'Snits', 33520, False, False, False, 'Dúmkes']
-        ]
-    )
-
-
-def test_merge_differently_named_columns():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
-
-    # create a 'skating_order_sum' column to merge on
-    agg = mt.groupby('_index_skating_order')[['skating_order']].sum()
-    result = bt.merge(agg, [('skating_order', 'skating_order_sum')])
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order', 'skating_order', 'city', 'skating_order_sum'],
-        expected_data=[
-            [1, 1, 'Ljouwert', 1], [2, 2, 'Snits', 2]
-        ]
-    )
-
-    with pytest.raises(KeyError):
-        # swap left and right columns
-        agg = mt.groupby('_index_skating_order')[['skating_order']].sum()
-        bt.merge(agg, [('skating_order_sum', 'skating_order')]).head(1)
-
-    # now do the same, but using the series
-    agg = mt.groupby('_index_skating_order')[['skating_order']].sum()
-    result = bt.merge(agg, [(bt['skating_order'], agg['skating_order_sum'])])
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order', 'skating_order', 'city', 'skating_order_sum'],
-        expected_data=[
-            [1, 1, 'Ljouwert', 1], [2, 2, 'Snits', 2]
-        ]
-    )
-
-    with pytest.raises(KeyError):
-        # swap left and right columns
-        agg = mt.groupby('_index_skating_order')[['skating_order']].sum()
-        bt.merge(agg, [(agg['skating_order_sum']), bt['skating_order']]).head(1)
-
-    # now do the same, but using the series with expression
-    agg = mt.groupby('_index_skating_order')[['skating_order']].sum()
-    result = bt.merge(agg, [(bt['skating_order']+1, agg['skating_order_sum']+1)])
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order', 'skating_order', 'city', 'skating_order_sum'],
-        expected_data=[
-            [1, 1, 'Ljouwert', 1], [2, 2, 'Snits', 2]
-        ]
-    )
-
-    # another one, but slightly more cool :)
-    result = bt.merge(mt, [(bt['city'].slice(0, 1), mt['food'].slice(0, 1))])[['city', 'food']]
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order', 'city', 'food'],
-        expected_data=[
-            [3, 'Drylts', 'Dúmkes'], [2, 'Snits', 'Sûkerbôlle']
-        ]
-    )
-
-
-def test_merge_left_right():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_merge_data()[['skating_order', 'food']]
-
-    result = bt.merge(mt, how='left')
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order', 'skating_order_left', 'skating_order_right', 'city', 'food'],
-        expected_data=[
-            [1, 1, 1, 'Ljouwert', 'Sûkerbôlle'], [2, 2, 2, 'Snits', 'Dúmkes'],  [3, 3, None, 'Drylts', None]
-        ]
-    )
-
-    result = mt.merge(bt, how='right')
-    assert_equals_data(
-        result,
-        expected_columns=['_index_skating_order', 'skating_order_left', 'skating_order_right', 'food', 'city'],
-        expected_data=[
-            [1, 1, 1, 'Sûkerbôlle', 'Ljouwert'], [2, 2, 2, 'Dúmkes', 'Snits'], [3, None, 3, None, 'Drylts']
-        ]
-    )
-
-
 def test_timestamp_data():
-    mt = _get_bt_with_merge_data()[['moment']]
+    mt = _get_bt_with_food_data()[['moment']]
     from datetime import datetime
     assert_equals_data(
         mt,
@@ -1105,8 +929,9 @@ def test_timestamp_data():
     )
 
 
-def test_timestamp_comparator(asstring=False):
-    mt = _get_bt_with_merge_data()[['moment']]
+@pytest.mark.parametrize("asstring", [True, False])
+def test_timestamp_comparator(asstring: bool):
+    mt = _get_bt_with_food_data()[['moment']]
     from datetime import datetime
     dt = datetime(2021, 5, 3, 11, 28, 36, 388000)
 
@@ -1165,12 +990,9 @@ def test_timestamp_comparator(asstring=False):
     )
 
 
-def test_timestamp_comparator_string():
-    test_timestamp_comparator(asstring=True)
-
-
-def test_date_comparator(asstring=False):
-    mt = _get_bt_with_merge_data()[['date']]
+@pytest.mark.parametrize("asstring", [True, False])
+def test_date_comparator(asstring: bool):
+    mt = _get_bt_with_food_data()[['date']]
 
     # import code has no means to distinguish between date and timestamp
     mt['date'] = mt['date'].astype('date')
@@ -1232,14 +1054,11 @@ def test_date_comparator(asstring=False):
     )
 
 
-def test_date_comparator_string():
-    test_date_comparator(asstring=True)
-
 # TODO test_time_* tests
 
 
 def test_date_format():
-    mt = _get_bt_with_merge_data()[['moment', 'date']]
+    mt = _get_bt_with_food_data()[['moment', 'date']]
 
     mt['date'] = mt['date'].astype('date')
 
@@ -1263,7 +1082,7 @@ def test_date_format():
 
 
 def test_timedelta():
-    mt = _get_bt_with_merge_data()[['skating_order', 'moment']]
+    mt = _get_bt_with_food_data()[['skating_order', 'moment']]
 
     # import code has no means to distinguish between date and timestamp
     gb = mt.groupby([]).aggregate(['moment', 'moment'], ['min', 'max'])

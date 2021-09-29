@@ -12,6 +12,7 @@ from buhtuh.types import get_series_type_from_dtype, arg_to_type
 
 
 DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
+ColumnNames = Union[str, List[str]]
 
 
 class BuhTuhDataFrame:
@@ -452,7 +453,7 @@ class BuhTuhDataFrame:
 
         return model_builder(
             columns_sql_str=self.get_all_column_expressions(),
-            index_str=', '.join(self.index.keys()),
+            index_str=', '.join(f'"{index_column}"' for index_column in self.index.keys()),
             _last_node=self.base_node,
             limit='' if limit_str is None else f'{limit_str}',
             order=order_str
@@ -470,161 +471,39 @@ class BuhTuhDataFrame:
             column_expressions.append(series.get_column_expression(table_alias))
         return ', '.join(column_expressions)
 
-    def merge(self, other: DataFrameOrSeries,
-              conditions: List[
-                  Union[
-                      'BuhTuhSeries', str, Tuple[Union['BuhTuhSeries', str], Union['BuhTuhSeries', str]]
-                  ]
-              ] = None,
-              how: str = 'inner') -> 'BuhTuhDataFrame':
+    def merge(
+            self,
+            right: DataFrameOrSeries,
+            how: str = 'inner',
+            on: ColumnNames = None,
+            left_on: ColumnNames = None,      # todo: also support array-like arguments?
+            right_on: ColumnNames = None,
+            left_index: bool = False,
+            right_index: bool = False,
+            suffixes: Tuple[str, str] = ('_x', '_y'),
+    ) -> 'BuhTuhDataFrame':
         """
-        Merge this dataframe to another.
+        Join the right Dataframe or Series on self. This will return a new DataFrame that contains the
+        combined columns of both dataframes, and the rows that result from joining on the specified columns.
+        The columns that are joined on can consist (partially or fully) out of index columns.
 
-        :param other: the df or series(right) to merge into ourself (left)
-        :param conditions:
-                    None (default): merge on index
-                    List of conditions to use:
-                        * str: use the series that exist on both sides with the same name to merge
-                        * BuhTuhSeries: use the name of this series to find the series on both sides
-                        * Tuple (str, str), (str, BuhTuhSeries), (BuhTuhSeries, str),
-                            or (BuhTuhSeries,BuhTuhSeries): match the combinations as specified
-
-        :param how: left, right, inner (default)
-        :return: a freshly merged df
+        See buhtuh.merge.merge() for more information.
+        The interface of this function is similar to pandas' merge, but the following parameters are not
+        supported: sort, copy, indicator, and validate.
+        Additionally when merging two frames that have conflicting columns names, and joining on indices,
+        then the resulting columns/column names can differ slightly from Pandas.
         """
-        assert isinstance(other, (BuhTuhDataFrame, BuhTuhSeries))
-        if other.index is None:
-            raise NotImplementedError('Merging with a Series that is an index is not supported.')
-
-        # Merge on index if matching and no conditions given
-        if conditions is None:
-            other_index = other.index.keys()
-            self_index = self.index.keys()
-            if other_index == self_index:
-                conditions = list(zip(self.index.values(), other.index.values()))
-            else:
-                raise NotImplementedError(f"Merge without conditions without matching indices "
-                                          f"not supported: {self_index} != {other_index}")
-
-        left_all = {**self.index, **self.data}
-        if isinstance(other, BuhTuhSeries):
-            right_all = {**other.index, other.name: other}
-        else:
-            right_all = {**other.index, **other.data}
-
-        new_series = {}
-        column_sql = []
-
-        # test whether how is valid and use as a selector
-        idx = ['left', 'right', 'inner'].index(how.lower())
-        index = [self.index, other.index, self.index][idx]
-        index_lr = 'lrl'[idx]
-
-        names = list(left_all.keys())
-        names += [k for k in right_all.keys() if k not in names]
-
-        # create new set of series after merge is done
-        for name in names:
-            if name in index:
-                continue
-
-            if name in left_all and name in right_all:
-                left = left_all[name]
-                right = right_all[name]
-                # duplicate, keep both only if from different nodes
-                # this is quite weak duplicate resolution, but okay for now
-                if left.base_node != right.base_node:
-                    left_uq = BuhTuhSeries.get_instance(base=self,
-                                                        name=name + '_left',
-                                                        dtype=left.dtype,
-                                                        expression=left.expression)
-                    new_series[name + '_left'] = left_uq
-                    column_sql.append(left_uq.get_column_expression(table_alias='l'))
-
-                    right_uq = BuhTuhSeries.get_instance(base=self,
-                                                         name=name + '_right',
-                                                         dtype=right.dtype,
-                                                         expression=right.expression)
-                    new_series[name + '_right'] = right_uq
-                    column_sql.append(right_uq.get_column_expression(table_alias='r'))
-                else:
-                    # not unique, keep one
-                    new_series[name] = left
-                    column_sql.append(left.get_column_expression(table_alias='l'))
-            elif name in left_all:
-                left = left_all[name]
-                new_series[name] = left
-                column_sql.append(left.get_column_expression(table_alias='l'))
-            else:  # right only
-                right = right_all[name]
-                new_series[name] = right
-                column_sql.append(right.get_column_expression(table_alias='r'))
-
-        on_conditions = []
-        use_using = True
-
-        for c in conditions:
-            # Convert string indexed columns in data to their Series representation
-            if isinstance(c, str):
-                c = (left_all[c], right_all[c])
-
-            elif isinstance(c, BuhTuhSeries):
-                # convert single to tuple
-                c = (left_all[c.name], right_all[c.name])
-
-            (left, right) = c  # type: ignore  ## TODO: clean up this function so we don't reuse variables
-
-            # convert to BuhTuhSeries if str
-            if isinstance(left, str):
-                left = left_all[left]
-            if isinstance(right, str):
-                right = right_all[right]
-
-            # Make sure the series are actually there (will actually raise KeyError before raising
-            # AssertionError)
-            assert left_all[left.name] and right_all[right.name]
-
-            # if names are not equal, or one of the series is actually an expression, we cannot use
-            # "USING(...)"
-            if left.name != right.name or \
-                    left.name != left.get_expression() or \
-                    right.name != right.get_expression():
-                use_using = False
-
-            on_conditions.append((left, right))
-
-        if use_using:
-            condition_str = 'USING ({fields})'.format(
-                fields=', '.join([left.name for left, _ in on_conditions])
-            )
-        else:
-            condition_str = "ON {expr}".format(
-                expr=' AND '.join(
-                    ['{left} = {right}'.format(
-                        left=left.get_expression('l'),
-                        right=right.get_expression('r')
-                    ) for (left, right) in on_conditions]
-                )
-            )
-
-        model_builder = CustomSqlModel(
-            name='merge_sql',
-            sql='select {index_str}, {columns_sql_str} '
-                'from {{left_node}} as l {join} JOIN {{right_node}} as r {condition_str}'
-        )
-        model = model_builder(
-            index_str=', '.join([s.get_column_expression(index_lr) for s in index.values()]),
-            columns_sql_str=', '.join(column_sql),
-            join=how.upper(),
-            left_node=self.base_node,
-            right_node=other.base_node,
-            condition_str=condition_str
-        )
-        return BuhTuhDataFrame.get_instance(
-            engine=self.engine,
-            source_node=model,
-            index_dtypes={k: v.dtype for k, v in self.index.items()},
-            dtypes={k: v.dtype for k, v in new_series.items()}
+        from buhtuh.merge import merge
+        return merge(
+            left=self,
+            right=right,
+            how=how,
+            on=on,
+            left_on=left_on,
+            right_on=right_on,
+            left_index=left_index,
+            right_index=right_index,
+            suffixes=suffixes
         )
 
 
