@@ -3,14 +3,14 @@ Copyright 2021 Objectiv B.V.
 """
 from buhtuh import BuhTuhSeries, BuhTuhSeriesInt64
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
-    check_expected_db_type
+    assert_db_type
 
 
 def test_add_int_constant():
     bt = get_bt_with_test_data()
     bts = bt['founding'] + 200
     assert isinstance(bts, BuhTuhSeries)
-    check_expected_db_type(bt, BuhTuhSeriesInt64, 'founding')
+    assert_db_type(bt['founding'], 'bigint', BuhTuhSeriesInt64)
     assert_equals_data(
         bts,
         expected_columns=['_index_skating_order', 'founding'],
