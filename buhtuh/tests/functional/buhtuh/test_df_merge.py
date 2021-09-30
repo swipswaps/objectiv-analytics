@@ -338,7 +338,6 @@ def test_merge_cross_join():
     )
 
 
-
 def test_merge_self():
     bt1 = get_bt_with_test_data(full_data_set=False)[['city']]
     bt2 = get_bt_with_test_data(full_data_set=False)[['inhabitants']]

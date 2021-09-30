@@ -7,8 +7,8 @@ from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, a
 def test_series_sort_values():
     bt = get_bt_with_test_data(full_data_set=True)
     bt_series = bt.city
-    kwargs_list = [{'ascending':True},
-                   {'ascending':False},
+    kwargs_list = [{'ascending': True},
+                   {'ascending': False},
                    {}
                    ]
     for kwargs in kwargs_list:

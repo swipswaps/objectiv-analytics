@@ -5,7 +5,7 @@ import pytest
 
 from buhtuh import BuhTuhSeriesDate
 from tests.functional.buhtuh.test_data_and_utils import assert_equals_data, get_bt_with_food_data, \
-    check_expected_db_type
+    assert_db_type
 
 
 @pytest.mark.parametrize("asstring", [True, False])
@@ -15,7 +15,7 @@ def test_date_comparator(asstring: bool):
     # import code has no means to distinguish between date and timestamp
     mt['date'] = mt['date'].astype('date')
 
-    check_expected_db_type(mt, BuhTuhSeriesDate, 'date')
+    assert_db_type(mt['date'], 'date', BuhTuhSeriesDate)
 
     from datetime import date
     dt = date(2021, 5, 3)

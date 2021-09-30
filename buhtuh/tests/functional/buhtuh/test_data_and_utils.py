@@ -7,7 +7,7 @@ This file does not contain any test, but having the file's name start with `test
 as a test file. This makes pytest rewrite the asserts to give clearer errors.
 """
 import os
-from typing import List, Union
+from typing import List, Union, Type
 
 import sqlalchemy
 from sqlalchemy.engine import ResultProxy
@@ -109,6 +109,11 @@ def run_query(engine: sqlalchemy.engine, sql: str) -> ResultProxy:
         return res
 
 
+def df_to_list(df):
+    data_list = df.reset_index().to_numpy().tolist()
+    return(data_list)
+
+
 def assert_equals_data(
         bt: Union[BuhTuhDataFrame, BuhTuhSeries],
         expected_columns: List[str],
@@ -137,18 +142,27 @@ def assert_equals_data(
         assert df_row == expected_row, f'row {i} is not equal: {expected_row} != {df_row}'
 
 
-def df_to_list(df):
-    data_list = df.reset_index().to_numpy().tolist()
-    return(data_list)
-
-
-def check_expected_db_type(bt, expected_series_type, column_name='new_column'):
-    sql = bt[column_name].view_sql()
-    sql = f"with buh as ({sql}) select pg_typeof({column_name}) from buh limit 1"
+def assert_db_type(
+        series: BuhTuhSeries,
+        expected_db_type: str,
+        expected_series_type: Type[BuhTuhSeries]
+):
+    """
+    Check that the given BuhTuhSeries has the expected data type in the database, and that it has the
+    expected BuhTuhSeries type after being read back from the database.
+    :param series: Series object to check the type of
+    :param expected_db_type: one of the types listed on https://www.postgresql.org/docs/current/datatype.html
+    :param expected_series_type: Subclass of BuhTuhSeries
+    """
+    sql = series.to_frame().view_sql()
+    sql = f'with check_type as ({sql}) select pg_typeof("{series.name}") from check_type limit 1'
     db_rows = run_query(sqlalchemy.create_engine(DB_TEST_URL), sql)
     db_values = [list(row) for row in db_rows]
-    registi = types.TypeRegistry()
-    registi._real_init()
-    a = registi.dtype_series[db_values[0][0]]
-    b = a(None,None,None,None)
-    assert isinstance(b, expected_series_type)
+    db_type = db_values[0][0]
+    if expected_db_type:
+        assert db_type == expected_db_type
+    registry = types.TypeRegistry()
+    registry._real_init()
+    series_type = registry.dtype_series[db_type]
+    assert series_type == expected_series_type
+
