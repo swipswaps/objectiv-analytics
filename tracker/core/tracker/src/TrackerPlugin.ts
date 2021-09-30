@@ -115,11 +115,13 @@ export class TrackerPlugins implements TrackerPluginLifecycle {
     this.console = trackerPluginsConfig.console;
     this.plugins = trackerPluginsConfig.plugins;
 
-    this.console?.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
-    this.console?.group(`Plugins:`);
-    this.console?.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
-    this.console?.groupEnd();
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
+      this.console.group(`Plugins:`);
+      this.console.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
+      this.console.groupEnd();
+      this.console.groupEnd();
+    }
   }
 
   /**

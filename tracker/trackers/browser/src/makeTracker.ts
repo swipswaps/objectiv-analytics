@@ -9,7 +9,7 @@ export const makeTracker = (trackerConfig: BrowserTrackerConfig): BrowserTracker
   const newTracker = new BrowserTracker(trackerConfig);
   const trackerRepository = getTrackerRepository();
 
-  trackerRepository.add(newTracker)
+  trackerRepository.add(newTracker);
   startAutoTracking(trackerConfig, getTracker(newTracker.trackerId));
 
   return newTracker;

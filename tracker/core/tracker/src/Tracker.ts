@@ -91,27 +91,25 @@ export class Tracker implements Contexts, TrackerConfig {
     this.location_stack = new_location_stack;
     this.global_contexts = new_global_contexts;
 
-    this.console?.groupCollapsed(
-      `｢objectiv:Tracker:${this.trackerId}｣ Initialized ${
-        this.location_stack.length
-          ? '(' +
-            this.location_stack.map((context) => `${context._type.replace('Context', '')}:${context.id}`).join(' > ') +
-            ')'
-          : ''
-      }`
-    );
-    this.console?.log(`Application ID: ${this.applicationId}`);
-    this.console?.log(`Transport: ${this.transport?.transportName ?? 'none'}`);
-    this.console?.group(`Plugins:`);
-    this.console?.log(this.plugins.plugins.map((plugin) => plugin.pluginName).join(', '));
-    this.console?.groupEnd();
-    this.console?.group(`Location Stack:`);
-    this.console?.log(this.location_stack);
-    this.console?.groupEnd();
-    this.console?.group(`Global Contexts:`);
-    this.console?.log(this.global_contexts);
-    this.console?.groupEnd();
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(
+        `｢objectiv:Tracker:${this.trackerId}｣ Initialized (${this.location_stack
+          .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
+          .join(' > ')})`
+      );
+      this.console.log(`Application ID: ${this.applicationId}`);
+      this.console.log(`Transport: ${this.transport?.transportName ?? 'none'}`);
+      this.console.group(`Plugins:`);
+      this.console.log(this.plugins.plugins.map((plugin) => plugin.pluginName).join(', '));
+      this.console.groupEnd();
+      this.console.group(`Location Stack:`);
+      this.console.log(this.location_stack);
+      this.console.groupEnd();
+      this.console.group(`Global Contexts:`);
+      this.console.log(this.global_contexts);
+      this.console.groupEnd();
+      this.console.groupEnd();
+    }
 
     // Execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
     this.plugins.initialize(this);
@@ -132,28 +130,22 @@ export class Tracker implements Contexts, TrackerConfig {
 
     // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
     if (this.transport && this.transport.isUsable()) {
-      // istanbul ignore next
-      this.console?.groupCollapsed(
-        `｢objectiv:Tracker:${this.trackerId}｣ Tracking ${trackedEvent._type} ${
-          this.location_stack.length
-            ? '(' +
-              this.location_stack
-                .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
-                .join(' > ') +
-              ')'
-            : ''
-        }`
-      );
-      this.console?.log(`Event ID: ${trackedEvent.id}`);
-      // istanbul ignore next
-      this.console?.log(`Time: ${trackedEvent.time ?? 'none'}`);
-      this.console?.group(`Location Stack:`);
-      this.console?.log(trackedEvent.location_stack);
-      this.console?.groupEnd();
-      this.console?.group(`Global Contexts:`);
-      this.console?.log(trackedEvent.global_contexts);
-      this.console?.groupEnd();
-      this.console?.groupEnd();
+      if (this.console) {
+        this.console.groupCollapsed(
+          `｢objectiv:Tracker:${this.trackerId}｣ Tracking ${trackedEvent._type} (${this.location_stack
+            .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
+            .join(' > ')})`
+        );
+        this.console.log(`Event ID: ${trackedEvent.id}`);
+        this.console.log(`Time: ${trackedEvent.time}`);
+        this.console.group(`Location Stack:`);
+        this.console.log(trackedEvent.location_stack);
+        this.console.groupEnd();
+        this.console.group(`Global Contexts:`);
+        this.console.log(trackedEvent.global_contexts);
+        this.console.groupEnd();
+        this.console.groupEnd();
+      }
 
       await this.transport.handle(trackedEvent);
     }

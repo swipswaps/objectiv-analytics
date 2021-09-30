@@ -1,4 +1,5 @@
 import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore } from '../src';
+import { mockConsole } from "./mocks/MockConsole";
 
 beforeEach(() => {
   jest.useFakeTimers();
@@ -14,7 +15,7 @@ describe('TrackerQueueMemoryStore', () => {
   const TrackerEvent3 = new TrackerEvent({ _type: 'c' });
 
   it('should read all Events', async () => {
-    const trackerQueueStore = new TrackerQueueMemoryStore();
+    const trackerQueueStore = new TrackerQueueMemoryStore({console: mockConsole});
     await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(trackerQueueStore.length).toBe(3);
 
@@ -40,7 +41,7 @@ describe('TrackerQueue', () => {
   const TrackerEvent3 = new TrackerEvent({ _type: 'c' });
 
   it('should instantiate to a 0 length Queue', () => {
-    const testQueue = new TrackerQueue();
+    const testQueue = new TrackerQueue({console: mockConsole});
     expect(testQueue.store.length).toBe(0);
   });
 
@@ -64,7 +65,7 @@ describe('TrackerQueue', () => {
   it('should enqueue and dequeue in the expected order', async () => {
     const processFunctionSpy = jest.fn(() => Promise.resolve());
     const memoryStore = new TrackerQueueMemoryStore();
-    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, store: memoryStore });
+    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, store: memoryStore, console: mockConsole });
     testQueue.setProcessFunction(processFunctionSpy);
     expect(testQueue.store.length).toBe(0);
 

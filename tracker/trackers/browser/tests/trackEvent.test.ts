@@ -10,7 +10,9 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import {
-  BrowserTracker, getTracker, makeTracker,
+  BrowserTracker,
+  getTracker,
+  makeTracker,
   TaggingAttribute,
   trackApplicationLoaded,
   trackClick,
@@ -166,123 +168,84 @@ describe('trackEvent', () => {
     trackEvent({ eventFactory: makeClickEvent, element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeClickEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
   });
 
   it('should track a Click Event', () => {
     trackClick({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeClickEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
   });
 
   it('should track a Input Change Event', () => {
     trackInputChange({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeInputChangeEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeInputChangeEvent()));
   });
 
   it('should track a Section Visible Event', () => {
     trackSectionVisible({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeSectionVisibleEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionVisibleEvent()));
   });
 
   it('should track a Section Hidden Event', () => {
     trackSectionHidden({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeSectionHiddenEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()));
   });
 
   it('should track a Video Start Event', () => {
     trackVideoStart({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeVideoStartEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVideoStartEvent()));
   });
 
   it('should track a Video Pause Event', () => {
     trackVideoPause({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeVideoPauseEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVideoPauseEvent()));
   });
 
   it('should track either a Section Visible or Section Hidden Event based on the given state', () => {
     trackVisibility({ element: testElement, isVisible: true });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeSectionVisibleEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionVisibleEvent()));
 
     trackVisibility({ element: testElement, isVisible: false });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining(makeSectionHiddenEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeSectionHiddenEvent()));
   });
 
   it('should track an Application Loaded Event', () => {
     trackApplicationLoaded();
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeApplicationLoadedEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeApplicationLoadedEvent()));
 
     trackApplicationLoaded({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining(makeApplicationLoadedEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeApplicationLoadedEvent()));
   });
 
   it('should track a URL Change Event', () => {
     trackURLChange();
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeURLChangeEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeURLChangeEvent()));
 
     trackURLChange({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining(makeURLChangeEvent())
-    );
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeURLChangeEvent()));
   });
 });

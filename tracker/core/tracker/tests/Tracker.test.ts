@@ -161,6 +161,8 @@ describe('Tracker', () => {
 
     it('should merge Tracker Location Stack and Global Contexts with the Event ones', async () => {
       const trackerContexts: TrackerConfig = {
+        console: mockConsole,
+        transport: new LogTransport({ console: mockConsole }),
         applicationId: 'app-id',
         location_stack: [
           { __location_context: true, _type: 'section', id: 'root' },
@@ -198,7 +200,7 @@ describe('Tracker', () => {
       const pluginC: TrackerPlugin = { pluginName: 'pC', isUsable: () => true, initialize: jest.fn() };
       const pluginD: TrackerPlugin = { pluginName: 'pD', isUsable: () => true, initialize: jest.fn() };
       const trackerPlugins = new TrackerPlugins({ plugins: [pluginC, pluginD] });
-      const testTracker = new Tracker({ ...trackerConfig, plugins: trackerPlugins });
+      const testTracker = new Tracker({ ...trackerConfig, plugins: trackerPlugins, console: mockConsole });
       expect(pluginC.initialize).toHaveBeenCalledWith(testTracker);
       expect(pluginD.initialize).toHaveBeenCalledWith(testTracker);
     });
@@ -233,7 +235,7 @@ describe('Tracker', () => {
       const unusableTransport = new UnusableTransport();
       expect(unusableTransport.isUsable()).toEqual(false);
       jest.spyOn(unusableTransport, 'handle');
-      const testTracker = new Tracker({ applicationId: 'app-id', transport: unusableTransport });
+      const testTracker = new Tracker({ applicationId: 'app-id', transport: unusableTransport, console: mockConsole });
       testTracker.trackEvent(testEvent);
       expect(unusableTransport.handle).not.toHaveBeenCalled();
     });

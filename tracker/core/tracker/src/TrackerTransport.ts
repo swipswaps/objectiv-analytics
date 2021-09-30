@@ -81,10 +81,12 @@ export class TransportSwitch implements TrackerTransport {
     this.console = config.console;
     this.firstUsableTransport = config.transports.find((trackerTransport) => trackerTransport.isUsable());
 
-    this.console?.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
-    this.console?.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
-    this.console?.log(`First usable Transport: ${this.firstUsableTransport?.transportName ?? 'none'}`);
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
+      this.console.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
+      this.console.log(`First usable Transport: ${this.firstUsableTransport?.transportName ?? 'none'}`);
+      this.console.groupEnd();
+    }
   }
 
   /**
@@ -131,12 +133,14 @@ export class TransportGroup implements TrackerTransport {
     this.console = config.console;
     this.usableTransports = config.transports.filter((transport) => transport.isUsable());
 
-    this.console?.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
-    this.console?.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
-    this.console?.log(
-      `Usable Transports: ${this.usableTransports.map((transport) => transport.transportName).join(', ')}`
-    );
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
+      this.console.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
+      this.console.log(
+        `Usable Transports: ${this.usableTransports.map((transport) => transport.transportName).join(', ')}`
+      );
+      this.console.groupEnd();
+    }
   }
 
   /**
@@ -181,10 +185,12 @@ export class QueuedTransport implements TrackerTransport {
     this.transport = config.transport;
     this.queue = config.queue;
 
-    this.console?.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
-    this.console?.log(`Transport: ${this.transport.transportName}`);
-    this.console?.log(`Queue: ${this.queue.queueName}`);
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
+      this.console.log(`Transport: ${this.transport.transportName}`);
+      this.console.log(`Queue: ${this.queue.queueName}`);
+      this.console.groupEnd();
+    }
 
     if (this.isUsable()) {
       // Bind the handle function to its Transport instance to preserve its scope
@@ -196,7 +202,9 @@ export class QueuedTransport implements TrackerTransport {
       // And start the Queue runner
       this.queue.startRunner();
 
-      this.console?.log(`%c｢objectiv:QueuedTransport｣ ${this.queue.queueName} runner started`, 'font-weight:bold');
+      if (this.console) {
+        this.console.log(`%c｢objectiv:QueuedTransport｣ ${this.queue.queueName} runner started`, 'font-weight:bold');
+      }
     }
   }
 
@@ -292,17 +300,19 @@ export class RetryTransportAttempt implements RetryTransportAttemptInterface {
     this.attemptCount = 1;
     this.startTime = Date.now();
 
-    this.console?.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Created`);
-    this.console?.log(`Transport: ${this.transport.transportName}`);
-    this.console?.log(`Max Attempts: ${this.maxAttempts}`);
-    this.console?.log(`Max Retry (ms): ${this.maxRetryMs}`);
-    this.console?.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
-    this.console?.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
-    this.console?.log(`Retry Factor: ${this.retryFactor}`);
-    this.console?.group(`Events:`);
-    this.console?.log(this.events);
-    this.console?.groupEnd();
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Created`);
+      this.console.log(`Transport: ${this.transport.transportName}`);
+      this.console.log(`Max Attempts: ${this.maxAttempts}`);
+      this.console.log(`Max Retry (ms): ${this.maxRetryMs}`);
+      this.console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
+      this.console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
+      this.console.log(`Retry Factor: ${this.retryFactor}`);
+      this.console.group(`Events:`);
+      this.console.log(this.events);
+      this.console.groupEnd();
+      this.console.groupEnd();
+    }
   }
 
   /**
@@ -329,30 +339,36 @@ export class RetryTransportAttempt implements RetryTransportAttemptInterface {
       return Promise.reject(this.errors);
     }
 
-    this.console?.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Running`);
-    this.console?.log(`Attempt Count: ${this.attemptCount}`);
-    this.console?.log(`Events:`);
-    this.console?.log(this.events);
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Running`);
+      this.console.log(`Attempt Count: ${this.attemptCount}`);
+      this.console.log(`Events:`);
+      this.console.log(this.events);
+      this.console.groupEnd();
+    }
 
     // Attempt to transport the given Events. Catch any rejections and have `retry` handle them.
     return this.transport
       .handle(...this.events)
       .then((response) => {
-        this.console?.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Succeeded`);
-        this.console?.log(`Response:`);
-        this.console?.log(response);
-        this.console?.groupEnd();
+        if (this.console) {
+          this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Succeeded`);
+          this.console.log(`Response:`);
+          this.console.log(response);
+          this.console.groupEnd();
+        }
 
         return response;
       })
       .catch((error) => {
-        this.console?.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Failed`);
-        this.console?.log(`Error:`);
-        this.console?.log(error);
-        this.console?.log(`Events:`);
-        this.console?.log(this.events);
-        this.console?.groupEnd();
+        if (this.console) {
+          this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Failed`);
+          this.console.log(`Error:`);
+          this.console.log(error);
+          this.console.log(`Events:`);
+          this.console.log(this.events);
+          this.console.groupEnd();
+        }
 
         // Retry TransportSendErrors
         if (error instanceof TransportSendError) {
@@ -377,14 +393,16 @@ export class RetryTransportAttempt implements RetryTransportAttemptInterface {
     // Increment number of attempts
     this.attemptCount++;
 
-    this.console?.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Retrying`);
-    this.console?.log(`Attempt Count: ${this.attemptCount}`);
-    this.console?.log(`Waited: ${nextTimeoutMs}`);
-    this.console?.log(`Error:`);
-    this.console?.log(error);
-    this.console?.log(`Events:`);
-    this.console?.log(this.events);
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Retrying`);
+      this.console.log(`Attempt Count: ${this.attemptCount}`);
+      this.console.log(`Waited: ${nextTimeoutMs}`);
+      this.console.log(`Error:`);
+      this.console.log(error);
+      this.console.log(`Events:`);
+      this.console.log(this.events);
+      this.console.groupEnd();
+    }
 
     // Run again
     return this.run();
@@ -432,14 +450,16 @@ export class RetryTransport implements TrackerTransport {
       throw new Error('minTimeoutMs cannot be bigger than maxTimeoutMs');
     }
 
-    this.console?.groupCollapsed(`｢objectiv:RetryTransport｣ Initialized`);
-    this.console?.log(`Transport: ${this.transport.transportName}`);
-    this.console?.log(`Max Attempts: ${this.maxAttempts}`);
-    this.console?.log(`Max Retry (ms): ${this.maxRetryMs}`);
-    this.console?.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
-    this.console?.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
-    this.console?.log(`Retry Factor: ${this.retryFactor}`);
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:RetryTransport｣ Initialized`);
+      this.console.log(`Transport: ${this.transport.transportName}`);
+      this.console.log(`Max Attempts: ${this.maxAttempts}`);
+      this.console.log(`Max Retry (ms): ${this.maxRetryMs}`);
+      this.console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
+      this.console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
+      this.console.log(`Retry Factor: ${this.retryFactor}`);
+      this.console.groupEnd();
+    }
   }
 
   /**

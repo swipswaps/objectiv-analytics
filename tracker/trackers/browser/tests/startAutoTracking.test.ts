@@ -5,7 +5,7 @@ import {
   makeMutationCallback,
   startAutoTracking,
   TaggingAttribute,
-  getTracker
+  getTracker,
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 

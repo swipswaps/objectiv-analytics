@@ -17,6 +17,10 @@ export class TrackerRepository implements TrackerRepository {
   trackersMap = new Map<string, BrowserTracker>();
 
   add(newInstance: BrowserTracker) {
+    if (this.trackersMap.has(newInstance.trackerId)) {
+      console.error(`｢objectiv:TrackerRepository｣ Tracker \`${newInstance.trackerId}\` already exists.`);
+      return;
+    }
     this.trackersMap.set(newInstance.trackerId, newInstance);
   }
 

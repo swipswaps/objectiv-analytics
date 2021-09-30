@@ -58,7 +58,10 @@ export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
 
   constructor(config?: TrackerQueueStoreConfig) {
     this.console = config?.console;
-    this.console?.log(`%c｢objectiv:${this.queueStoreName}｣ Initialized`, 'font-weight: bold');
+
+    if (this.console) {
+      this.console.log(`%c｢objectiv:${this.queueStoreName}｣ Initialized`, 'font-weight: bold');
+    }
   }
 
   async read(size?: number, filterPredicate?: (event: TrackerEvent) => boolean): Promise<TrackerEvent[]> {
@@ -209,12 +212,14 @@ export class TrackerQueue implements TrackerQueueInterface {
     this.batchDelayMs = config?.batchDelayMs ?? 1000;
     this.concurrency = config?.concurrency ?? 4;
 
-    this.console?.groupCollapsed(`｢objectiv:${this.queueName}｣ Initialized`);
-    this.console?.log(`Store: ${this.store.queueStoreName}`);
-    this.console?.log(`Batch Size: ${this.batchSize}`);
-    this.console?.log(`Batch Delay (ms): ${this.batchDelayMs}`);
-    this.console?.log(`Concurrency: ${this.concurrency}`);
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.queueName}｣ Initialized`);
+      this.console.log(`Store: ${this.store.queueStoreName}`);
+      this.console.log(`Batch Size: ${this.batchSize}`);
+      this.console.log(`Batch Delay (ms): ${this.batchDelayMs}`);
+      this.console.log(`Concurrency: ${this.concurrency}`);
+      this.console.groupEnd();
+    }
   }
 
   setProcessFunction(processFunction: TrackerQueueProcessFunction) {
@@ -256,10 +261,12 @@ export class TrackerQueue implements TrackerQueueInterface {
         return;
       }
 
-      this.console?.groupCollapsed(`｢objectiv:${this.queueName}｣ Batch read`);
-      this.console?.log(`Events:`);
-      this.console?.log(eventsBatch);
-      this.console?.groupEnd();
+      if (this.console) {
+        this.console.groupCollapsed(`｢objectiv:${this.queueName}｣ Batch read`);
+        this.console.log(`Events:`);
+        this.console.log(eventsBatch);
+        this.console.groupEnd();
+      }
 
       // Gather Event Ids. Used for both deletion and processingEventIds cleanup.
       const eventsBatchIds = eventsBatch.map((event) => event.id);

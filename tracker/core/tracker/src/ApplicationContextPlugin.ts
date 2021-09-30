@@ -26,12 +26,14 @@ export class ApplicationContextPlugin implements TrackerPlugin {
       id: config.applicationId,
     });
 
-    this.console?.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
-    this.console?.log(`Application ID: ${config.applicationId}`);
-    this.console?.group(`Application Context:`);
-    this.console?.log(this.applicationContext);
-    this.console?.groupEnd();
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
+      this.console.log(`Application ID: ${config.applicationId}`);
+      this.console.group(`Application Context:`);
+      this.console.log(this.applicationContext);
+      this.console.groupEnd();
+      this.console.groupEnd();
+    }
   }
 
   /**

@@ -1,4 +1,4 @@
-import { windowExists } from "./helpers";
+import { windowExists } from './helpers';
 import { TrackerRepository } from './tracker/TrackerRepository';
 
 /**
@@ -35,7 +35,7 @@ export const getTrackerRepository = () => {
   }
 
   return window.objectiv.trackers;
-}
+};
 
 /**
  * Retrieves a specific instance of the tracker from the TrackerRepository.
@@ -49,4 +49,4 @@ export const getTracker = (trackerId?: string) => {
   }
 
   return window.objectiv.trackers.get(trackerId);
-}
+};

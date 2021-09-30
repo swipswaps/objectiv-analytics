@@ -13,6 +13,7 @@ import {
 } from '../src';
 import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
 import { LogTransport } from './mocks/LogTransport';
+import { mockConsole } from "./mocks/MockConsole";
 import { UnusableTransport } from './mocks/UnusableTransport';
 
 const testEventName = 'test-event';
@@ -42,7 +43,7 @@ describe('TransportSwitch', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TransportSwitch({ transports: [transport1, transport2] });
+    const transports = new TransportSwitch({ transports: [transport1, transport2], console: mockConsole });
     expect(transports.firstUsableTransport).toBe(undefined);
     expect(transports.isUsable()).toBe(false);
 
@@ -64,7 +65,7 @@ describe('TransportSwitch', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TransportSwitch({ transports: [transport1, transport2] });
+    const transports = new TransportSwitch({ transports: [transport1, transport2], console: mockConsole });
     expect(transports.firstUsableTransport).toBe(transport2);
     expect(transports.isUsable()).toBe(true);
 
@@ -89,7 +90,7 @@ describe('TransportGroup', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TransportGroup({ transports: [transport1, transport2] });
+    const transports = new TransportGroup({ transports: [transport1, transport2], console: mockConsole });
     expect(transports.usableTransports).toStrictEqual([]);
     expect(transports.isUsable()).toBe(false);
 
@@ -111,7 +112,7 @@ describe('TransportGroup', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TransportGroup({ transports: [transport1, transport2] });
+    const transports = new TransportGroup({ transports: [transport1, transport2], console: mockConsole });
     expect(transports.usableTransports).toStrictEqual([transport1, transport2]);
     expect(transports.isUsable()).toBe(true);
 
@@ -235,6 +236,7 @@ describe('QueuedTransport', () => {
     const testQueuedTransport = new QueuedTransport({
       queue: trackerQueue,
       transport: logTransport,
+      console: mockConsole
     });
     jest.runAllTimers();
 
@@ -252,33 +254,41 @@ describe('QueuedTransport', () => {
 
     const testQueuedTransport = new QueuedTransport({
       queue: trackerQueue,
+      transport: logTransport
+    });
+
+    const testQueuedTransportWithConsole = new QueuedTransport({
+      queue: trackerQueue,
       transport: logTransport,
+      console: mockConsole
     });
 
     jest.spyOn(trackerQueue, 'processFunction');
 
     expect(testQueuedTransport.isUsable()).toBe(true);
+    expect(testQueuedTransportWithConsole.isUsable()).toBe(true);
 
     expect(trackerQueue.processFunction).not.toBeUndefined();
     expect(trackerQueue.processFunction).not.toHaveBeenCalled();
-    expect(setInterval).toHaveBeenCalledTimes(1);
+    expect(setInterval).toHaveBeenCalledTimes(2);
 
     await testQueuedTransport.handle(testEvent);
+    await testQueuedTransportWithConsole.handle(testEvent);
 
-    expect(queueStore.length).toBe(1);
+    expect(queueStore.length).toBe(2);
     expect(trackerQueue.processFunction).not.toHaveBeenCalled();
 
     await trackerQueue.run();
 
     expect(trackerQueue.processingEventIds).toHaveLength(0);
     expect(trackerQueue.processFunction).toHaveBeenCalledTimes(1);
-    expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, testEvent);
+    expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, testEvent, testEvent);
   });
 });
 
 describe('RetryTransport', () => {
   it('should generate exponential timeouts', () => {
-    const retryTransport = new RetryTransport({ transport: new UnusableTransport() });
+    const retryTransport = new RetryTransport({ transport: new UnusableTransport(), console: mockConsole });
     const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
     const timeouts = Array.from(Array(10).keys()).map(
       retryTransportAttempt.calculateNextTimeoutMs.bind(retryTransport)
@@ -321,7 +331,7 @@ describe('RetryTransport', () => {
     const logTransport = new LogTransport();
     jest.spyOn(logTransport, 'handle');
 
-    const retryTransport = new RetryTransport({ transport: logTransport });
+    const retryTransport = new RetryTransport({ transport: logTransport, console: mockConsole });
     // @ts-ignore
     jest.spyOn(retryTransport.attempts, 'push');
     // @ts-ignore
@@ -384,6 +394,7 @@ describe('RetryTransport', () => {
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
       retryFactor: 1,
+      console: mockConsole
     });
     const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
     jest.spyOn(retryTransportAttempt, 'retry');

@@ -101,6 +101,6 @@ describe('trackRemovedElements', () => {
     trackRemovedElements(div, getTracker());
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledTimes(2);
   });
 });
