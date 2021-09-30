@@ -8,10 +8,13 @@ describe('DebugTransport', () => {
 
   it('should `console.debug` the event', async () => {
     expect(mockConsole.debug).not.toHaveBeenCalled();
-    const testTransport = new DebugTransport({ console: mockConsole });
+    const testTransport = new DebugTransport();
+    const testTransportWithConsole = new DebugTransport({ console: mockConsole });
     expect(testTransport.isUsable()).toBe(true);
+    expect(testTransportWithConsole.isUsable()).toBe(true);
     jest.spyOn(mockConsole, 'debug');
     await testTransport.handle(testEvent);
+    await testTransportWithConsole.handle(testEvent);
     expect(mockConsole.debug).toHaveBeenCalledWith(testEvent);
   });
 });

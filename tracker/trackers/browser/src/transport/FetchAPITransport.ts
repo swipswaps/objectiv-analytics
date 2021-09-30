@@ -38,10 +38,12 @@ export const defaultFetchFunction = async ({
   console?: TrackerConsole;
 }): Promise<Response> => {
   return new Promise(function (resolve, reject) {
-    console?.groupCollapsed(`｢objectiv:FetchAPITransport｣ Sending`);
-    console?.log(`Events:`);
-    console?.log(events);
-    console?.groupEnd();
+    if (console) {
+      console.groupCollapsed(`｢objectiv:FetchAPITransport｣ Sending`);
+      console.log(`Events:`);
+      console.log(events);
+      console.groupEnd();
+    }
 
     fetch(endpoint, {
       ...parameters,
@@ -54,27 +56,33 @@ export const defaultFetchFunction = async ({
     })
       .then((response) => {
         if (response.status === 200) {
-          console?.groupCollapsed(`｢objectiv:FetchAPITransport｣ Succeeded`);
-          console?.log(`Events:`);
-          console?.log(events);
-          console?.groupEnd();
+          if (console) {
+            console.groupCollapsed(`｢objectiv:FetchAPITransport｣ Succeeded`);
+            console.log(`Events:`);
+            console.log(events);
+            console.groupEnd();
+          }
 
           resolve(response);
         } else {
-          console?.groupCollapsed(`｢objectiv:FetchAPITransport｣ Failed`);
-          console?.log(`Events:`);
-          console?.log(events);
-          console?.log(`Response: ${response}`);
-          console?.groupEnd();
+          if (console) {
+            console.groupCollapsed(`｢objectiv:FetchAPITransport｣ Failed`);
+            console.log(`Events:`);
+            console.log(events);
+            console.log(`Response: ${response}`);
+            console.groupEnd();
+          }
 
           reject(new TransportSendError());
         }
       })
       .catch(() => {
-        console?.groupCollapsed(`｢objectiv:FetchAPITransport｣ Error`);
-        console?.log(`Events:`);
-        console?.log(events);
-        console?.groupEnd();
+        if (console) {
+          console.groupCollapsed(`｢objectiv:FetchAPITransport｣ Error`);
+          console.log(`Events:`);
+          console.log(events);
+          console.groupEnd();
+        }
 
         reject(new TransportSendError());
       });
@@ -111,11 +119,7 @@ export class FetchAPITransport implements TrackerTransport {
   async handle(...args: NonEmptyArray<TransportableEvent>): Promise<Response | void> {
     const events = await Promise.all(args);
 
-    if (!this.endpoint) {
-      throw new Error('FetchAPITransport requires an endpoint to be configured.');
-    }
-
-    if (isNonEmptyArray(events)) {
+    if (this.endpoint && isNonEmptyArray(events)) {
       return this.fetchFunction({ endpoint: this.endpoint, console: this.console, events });
     }
   }

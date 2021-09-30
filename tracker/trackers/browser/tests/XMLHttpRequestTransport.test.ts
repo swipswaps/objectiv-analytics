@@ -1,4 +1,4 @@
-import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
+import { mockConsole, TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
 import xhrMock from 'xhr-mock';
 import { XMLHttpRequestTransport } from '../src';
 
@@ -21,10 +21,15 @@ describe('XMLHttpRequestTransport', () => {
 
   it('should send using `xhr` with the default xhr function', async () => {
     const testTransport = new XMLHttpRequestTransport({
+      endpoint: MOCK_ENDPOINT
+    });
+    const testTransportWithConsole = new XMLHttpRequestTransport({
       endpoint: MOCK_ENDPOINT,
+      console: mockConsole
     });
 
     expect(testTransport.isUsable()).toBe(true);
+    expect(testTransportWithConsole.isUsable()).toBe(true);
 
     xhrMock.post(MOCK_ENDPOINT, (req, res) => {
       expect(req.header('Content-Type')).toEqual('text/plain');
@@ -44,11 +49,16 @@ describe('XMLHttpRequestTransport', () => {
     });
 
     await testTransport.handle(testEvent);
+    await testTransportWithConsole.handle(testEvent);
   });
 
   it('should send using `xhr` with the default xhr function - 500 error example', async () => {
     const testTransport = new XMLHttpRequestTransport({
       endpoint: MOCK_ENDPOINT,
+    });
+    const testTransportWithConsole = new XMLHttpRequestTransport({
+      endpoint: MOCK_ENDPOINT,
+      console: mockConsole
     });
 
     xhrMock.post(MOCK_ENDPOINT, {
@@ -62,12 +72,23 @@ describe('XMLHttpRequestTransport', () => {
       expect(error).toStrictEqual(new TransportSendError());
     }
 
+    try {
+      await testTransportWithConsole.handle(testEvent);
+    } catch (error) {
+      expect(error).toStrictEqual(new TransportSendError());
+    }
+
     await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
+    await expect(testTransportWithConsole.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
   });
 
   it('should send using `xhr` with the default xhr function - onError example', async () => {
     const testTransport = new XMLHttpRequestTransport({
       endpoint: MOCK_ENDPOINT,
+    });
+    const testTransportWithConsole = new XMLHttpRequestTransport({
+      endpoint: MOCK_ENDPOINT,
+      console: mockConsole
     });
 
     xhrMock.post(MOCK_ENDPOINT, () => Promise.reject());
@@ -78,7 +99,14 @@ describe('XMLHttpRequestTransport', () => {
       expect(error).toStrictEqual(new TransportSendError());
     }
 
+    try {
+      await testTransportWithConsole.handle(testEvent);
+    } catch (error) {
+      expect(error).toStrictEqual(new TransportSendError());
+    }
+
     await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
+    await expect(testTransportWithConsole.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
   });
 
   it('should send using `xhr` with the provided customized xhr function', async () => {

@@ -10,7 +10,7 @@ import {
   startAutoTracking,
   trackApplicationLoaded,
   trackEvent,
-  trackURLChange,
+  trackURLChange, getTracker,
 } from '../src';
 
 describe('Without DOM', () => {
@@ -23,8 +23,11 @@ describe('Without DOM', () => {
   });
 
   it('should throw if Window does not exists', async () => {
-    // @ts-ignore
     expect(() => makeTracker({ applicationId: 'test', endpoint: 'test' })).toThrow(
+      'Cannot access the Window interface.'
+    );
+
+    expect(() => getTracker()).toThrow(
       'Cannot access the Window interface.'
     );
   });

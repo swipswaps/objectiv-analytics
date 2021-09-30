@@ -23,10 +23,12 @@ export const defaultXMLHttpRequestFunction = ({
   console?: TrackerConsole;
 }): Promise<unknown> => {
   return new Promise(function (resolve, reject) {
-    console?.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Sending`);
-    console?.log(`Events:`);
-    console?.log(events);
-    console?.groupEnd();
+    if(console) {
+      console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Sending`);
+      console.log(`Events:`);
+      console.log(events);
+      console.groupEnd();
+    }
 
     const xhr = new XMLHttpRequest();
     const async = true;
@@ -35,27 +37,33 @@ export const defaultXMLHttpRequestFunction = ({
     xhr.withCredentials = true;
     xhr.onload = () => {
       if (xhr.status === 200) {
-        console?.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Succeeded`);
-        console?.log(`Events:`);
-        console?.log(events);
-        console?.groupEnd();
+        if(console) {
+          console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Succeeded`);
+          console.log(`Events:`);
+          console.log(events);
+          console.groupEnd();
+        }
 
         resolve(xhr.response);
       } else {
-        console?.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Failed`);
-        console?.log(`Events:`);
-        console?.log(events);
-        console?.log(`Response: ${xhr}`);
-        console?.groupEnd();
+        if(console) {
+          console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Failed`);
+          console.log(`Events:`);
+          console.log(events);
+          console.log(`Response: ${xhr}`);
+          console.groupEnd();
+        }
 
         reject(new TransportSendError());
       }
     };
     xhr.onerror = () => {
-      console?.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Error`);
-      console?.log(`Events:`);
-      console?.log(events);
-      console?.groupEnd();
+      if(console) {
+        console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Error`);
+        console.log(`Events:`);
+        console.log(events);
+        console.groupEnd();
+      }
 
       reject(new TransportSendError());
     };
@@ -100,11 +108,7 @@ export class XMLHttpRequestTransport implements TrackerTransport {
   async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
     const events = await Promise.all(args);
 
-    if (!this.endpoint) {
-      throw new Error('FetchAPITransport requires an endpoint to be configured.');
-    }
-
-    if (isNonEmptyArray(events)) {
+    if (this.endpoint && isNonEmptyArray(events)) {
       return this.xmlHttpRequestFunction({ endpoint: this.endpoint, console: this.console, events });
     }
   }
