@@ -155,15 +155,14 @@ def assert_db_type(
     :param expected_series_type: Subclass of BuhTuhSeries
     """
     sql = series.to_frame().view_sql()
-    sql = f'with buh as ({sql}) select pg_typeof("{series.name}") from buh limit 1'
+    sql = f'with check_type as ({sql}) select pg_typeof("{series.name}") from check_type limit 1'
     db_rows = run_query(sqlalchemy.create_engine(DB_TEST_URL), sql)
     db_values = [list(row) for row in db_rows]
     db_type = db_values[0][0]
     if expected_db_type:
         assert db_type == expected_db_type
-    registi = types.TypeRegistry()
-    registi._real_init()
-    a = registi.dtype_series[db_type]
-    b = a(None, None, None, None)
-    if expected_series_type:
-        assert isinstance(b, expected_series_type)
+    registry = types.TypeRegistry()
+    registry._real_init()
+    series_type = registry.dtype_series[db_type]
+    assert series_type == expected_series_type
+
