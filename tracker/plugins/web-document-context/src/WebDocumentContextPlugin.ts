@@ -30,9 +30,11 @@ export class WebDocumentContextPlugin implements TrackerPlugin {
     this.console = config?.console;
     this.documentContextId = config?.documentContextId ?? (this.isUsable() ? document.nodeName : 'unknown');
 
-    this.console?.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
-    this.console?.log(`Application ID: ${this.documentContextId}`);
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
+      this.console.log(`Application ID: ${this.documentContextId}`);
+      this.console.groupEnd();
+    }
   }
 
   /**
