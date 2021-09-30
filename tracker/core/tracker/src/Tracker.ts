@@ -132,7 +132,7 @@ export class Tracker implements Contexts, TrackerConfig {
     if (this.transport && this.transport.isUsable()) {
       if (this.console) {
         this.console.groupCollapsed(
-          `｢objectiv:Tracker:${this.trackerId}｣ Tracking ${trackedEvent._type} (${this.location_stack
+          `｢objectiv:Tracker:${this.trackerId}｣ Tracking ${trackedEvent._type} (${trackedEvent.location_stack
             .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
             .join(' > ')})`
         );
