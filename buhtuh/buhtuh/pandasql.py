@@ -4,7 +4,9 @@ from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast
 
 import numpy
+import pandas
 import pandas as pd
+from sqlalchemy.engine import Engine
 
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
@@ -12,20 +14,45 @@ from buhtuh.types import get_series_type_from_dtype, arg_to_type
 
 
 DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
+ColumnNames = Union[str, List[str]]
 
 
 class BuhTuhDataFrame:
+    """
+    A mutable DataFrame representing tabular data in a database and enabling operations on that data.
+
+    The data of this DataFrame is always held in the database and operations on the data are performed
+    by the database, not in local memory. Data will only be transferred to local memory when an
+    explicit call is made to one of the functions that transfers data:
+    * head()
+    * to_df()
+    Other functions will not transfer data, nor will they trigger any operations to run on the database.
+    Operations on the DataFrame are combined and translated to a single SQL query, which is executed
+    only when one of the above mentioned data-transfer functions is called.
+
+    The initial data of the DataFrame is the result of the SQL query that the `source_node` parameter
+    contains. That can be a simple query on a table, but also a complicated query in itself. Operations
+    on the data will result in SQL queries that build on top of the query of the source_node. The
+    index and series parameters contain meta information about the data in the source_node.
+
+    The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
+    DataFrames see https://pandas.pydata.org/docs/reference/frame.html
+    """
     def __init__(
         self,
-        engine,
+        engine: Engine,
         source_node: SqlModel,
         index: Dict[str, 'BuhTuhSeries'],
         series: Dict[str, 'BuhTuhSeries']
     ):
         """
-        TODO: improve this docstring
+        Instantiate a new BuhTuhDataFrame.
+        There are utility class methods to easily create a BuhTuhDataFrame from existing data such as a
+        table (`from_table()`) or already instantiated sql-model (`from_model()`).
+
         :param engine: db connection
-        :param source_node: sqlmodel, must contain all expressions in series
+        :param source_node: sql-model of a select statement that must contain all columns/expressions that
+            are present in the series parameter.
         :param index: Dictionary mapping the name of each index-column to a Series object representing
             the column.
         :param series: Dictionary mapping the name of each data-column to a Series object representing
@@ -98,11 +125,22 @@ class BuhTuhDataFrame:
 
     @classmethod
     def from_table(cls, engine, table_name: str, index: List[str]) -> 'BuhTuhDataFrame':
+        """
+        Instantiate a new BuhTuhDataFrame based on the content of an existing table in the database.
+        This will create and remove a temporary table to asses meta data.
+        """
+        # todo: don't create a temporary table, the real table (and its meta data) already exists
         model = CustomSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
         return cls._from_node(engine, model, index)
 
     @classmethod
     def from_model(cls, engine, model: SqlModel, index: List[str]) -> 'BuhTuhDataFrame':
+        """
+        Instantiate a new BuhTuhDataFrame based on the result of the query defines in `model`
+        :param engine: db connection
+        :param model: sql model.
+        :param index: list of column names that make up the index.
+        """
         # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
         # select expressions, where clauses, or limits
         wrapped_model = CustomSqlModel(sql='SELECT * FROM {{model}}')(model=model)
@@ -124,7 +162,12 @@ class BuhTuhDataFrame:
         )
 
     @classmethod
-    def from_dataframe(cls, df, name, engine, if_exists: str = 'fail'):
+    def from_dataframe(cls, df: pandas.DataFrame, name: str, engine: Engine, if_exists: str = 'fail'):
+        """
+        Instantiate a new BuhTuhDataFrame based on the content of a Pandas DataFrame. This will first load
+        the data into the database using pandas' df.to_sql() method.
+        """
+
         if df.index.name is None:  # for now only one index allowed
             index = '_index_0'
         else:
@@ -194,7 +237,8 @@ class BuhTuhDataFrame:
             return df
         return list(df.data.values())[0]
 
-    def __getitem__(self, key: Union[str, List[str], Set[str], 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
+    def __getitem__(self,
+                    key: Union[str, List[str], Set[str], slice, 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
         """
         TODO: Comments
         :param key:
@@ -205,6 +249,8 @@ class BuhTuhDataFrame:
             return self.data[key]
         if isinstance(key, (set, list)):
             key_set = set(key)
+            if not key_set.issubset(set(self.data_columns)):
+                raise KeyError(f"Keys {key_set.difference(set(self.data_columns))} not in data_columns")
             selected_data = {key: data for key, data in self.data.items() if key in key_set}
 
             return BuhTuhDataFrame(
@@ -227,13 +273,17 @@ class BuhTuhDataFrame:
 
         if isinstance(key, BuhTuhSeriesBoolean):
             # We only support first level boolean indices for now
-            assert(key.base_node == self._base_node)
+            if key.base_node != self.base_node:
+                raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
+                                 'Hint: make sure the Boolean series is derived from this DataFrame. '
+                                 'Alternative: use df.merge(series) to merge the series with the df first,'
+                                 'and then create a new Boolean series on the resulting merged data.')
             model_builder = CustomSqlModel(
                 name='boolean_selection',
                 sql='select {index_str}, {columns_sql_str} from {{_last_node}} where {where}'
             )
             model = model_builder(
-                columns_sql_str=self.get_all_column_expressions(),
+                columns_sql_str=self._get_all_column_expressions(),
                 index_str=', '.join(self.index.keys()),
                 _last_node=self.base_node,
                 where=key.get_expression(),
@@ -255,6 +305,10 @@ class BuhTuhDataFrame:
     def __setitem__(self,
                     key: Union[str, List[str]],
                     value: Union['BuhTuhSeries', int, str, float]):
+        """
+        TODO: Comments
+        """
+        # TODO: all types from types.TypeRegistry are supported.
         if isinstance(key, str):
             if not isinstance(value, BuhTuhSeries):
                 series = const_to_series(base=self, value=value, name=key)
@@ -296,7 +350,8 @@ class BuhTuhDataFrame:
         else:
             raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
 
-    def __delitem__(self, key):
+    def __delitem__(self, key: str):
+        """ TODO: comments """
         if isinstance(key, str):
             del(self._data[key])
             return
@@ -304,6 +359,17 @@ class BuhTuhDataFrame:
             raise TypeError(f'Unsupported type {type(key)}')
 
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'BuhTuhDataFrame':
+        """
+        Cast all or some of the data columns to a certain type.
+
+        Only data columns can be cast, index columns cannot be cast.
+
+        This does not modify the current DataFrame, instead it returns a new DataFrame.
+        :param dtype: either
+            * A single str, in which case all data columns are cast to this dtype
+            * A dictionary mapping column labels to dtype.
+        :return: New DataFrame with the specified column(s) cast to the specified type
+        """
         # Check and/or convert parameters
         if isinstance(dtype, str):
             dtype = {column: dtype for column in self.data_columns}
@@ -365,7 +431,14 @@ class BuhTuhDataFrame:
             ascending: Union[bool, List[bool]] = True
     ) -> 'BuhTuhDataFrame':
         """
-        TODO: comments
+        Create a new DataFrame with the specified sorting order.
+
+        This does not modify the current DataFrame, instead it returns a new DataFrame.
+
+        :param by: column label or list of labels to sort by.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            by must also be a list and len(ascending) == len(by)
+        :return: a new DataFrame with the specified ordering
         """
         # TODO needs type check?
         if isinstance(by, str):
@@ -388,16 +461,26 @@ class BuhTuhDataFrame:
             dtypes={name: series.dtype for name, series in self.data.items()}
         )
 
-    def to_df(self):
+    def to_df(self) -> pandas.DataFrame:
+        """
+        Run a SQL query representing the current state of this DataFrame against the database and return the
+        resulting data as a Pandas DataFrame.
+
+        This function queries the database.
+        """
         conn = self.engine.connect()
         sql = self.view_sql()
         df = pd.read_sql_query(sql, conn, index_col=list(self.index.keys()))
         conn.close()
         return df
 
-    def head(self, n: int = 5):
+    def head(self, n: int = 5) -> pandas.DataFrame:
         """
-        Return the first `n` rows.
+        Similar to `to_df` but only returns the first `n` rows.
+
+        This function queries the database.
+
+        :param n: number of rows to query from database.
         """
         conn = self.engine.connect()
         sql = self.view_sql(limit=n)
@@ -410,11 +493,11 @@ class BuhTuhDataFrame:
             limit: Union[int, slice] = None, order: Dict[str, bool] = None
     ) -> SqlModel[CustomSqlModel]:
         """
-        Wrap the current set op series in a model builder
+        Translate the current state of this DataFrame into a SqlModel.
         :param limit: The limit to use
         :param order: The data series to order by, where the bool specifies ASC or DESC.
                       If missing will use index ASC otherwise)
-        :return: The model builder for the current state
+        :return: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
 
         if isinstance(limit, int):
@@ -451,180 +534,63 @@ class BuhTuhDataFrame:
         )
 
         return model_builder(
-            columns_sql_str=self.get_all_column_expressions(),
-            index_str=', '.join(self.index.keys()),
+            columns_sql_str=self._get_all_column_expressions(),
+            index_str=', '.join(f'"{index_column}"' for index_column in self.index.keys()),
             _last_node=self.base_node,
             limit='' if limit_str is None else f'{limit_str}',
             order=order_str
         )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
+        """
+        Translate the current state of this DataFrame into a SQL query.
+        :param limit: limit on which rows to select in the query
+        :return: SQL query
+        """
         model = self.get_current_node(limit=limit)
         sql = to_sql(model)
         return sql
 
-    def get_all_column_expressions(self, table_alias=''):
+    def _get_all_column_expressions(self, table_alias=''):
         column_expressions = []
         for column in self.data_columns:
             series = self.data[column]
             column_expressions.append(series.get_column_expression(table_alias))
         return ', '.join(column_expressions)
 
-    def merge(self, other: DataFrameOrSeries,
-              conditions: List[
-                  Union[
-                      'BuhTuhSeries', str, Tuple[Union['BuhTuhSeries', str], Union['BuhTuhSeries', str]]
-                  ]
-              ] = None,
-              how: str = 'inner') -> 'BuhTuhDataFrame':
+    def merge(
+            self,
+            right: DataFrameOrSeries,
+            how: str = 'inner',
+            on: ColumnNames = None,
+            left_on: ColumnNames = None,
+            right_on: ColumnNames = None,
+            left_index: bool = False,
+            right_index: bool = False,
+            suffixes: Tuple[str, str] = ('_x', '_y'),
+    ) -> 'BuhTuhDataFrame':
         """
-        Merge this dataframe to another.
+        Join the right Dataframe or Series on self. This will return a new DataFrame that contains the
+        combined columns of both dataframes, and the rows that result from joining on the specified columns.
+        The columns that are joined on can consist (partially or fully) out of index columns.
 
-        :param other: the df or series(right) to merge into ourself (left)
-        :param conditions:
-                    None (default): merge on index
-                    List of conditions to use:
-                        * str: use the series that exist on both sides with the same name to merge
-                        * BuhTuhSeries: use the name of this series to find the series on both sides
-                        * Tuple (str, str), (str, BuhTuhSeries), (BuhTuhSeries, str),
-                            or (BuhTuhSeries,BuhTuhSeries): match the combinations as specified
-
-        :param how: left, right, inner (default)
-        :return: a freshly merged df
+        See buhtuh.merge.merge() for more information.
+        The interface of this function is similar to pandas' merge, but the following parameters are not
+        supported: sort, copy, indicator, and validate.
+        Additionally when merging two frames that have conflicting columns names, and joining on indices,
+        then the resulting columns/column names can differ slightly from Pandas.
         """
-        assert isinstance(other, (BuhTuhDataFrame, BuhTuhSeries))
-        if other.index is None:
-            raise NotImplementedError('Merging with a Series that is an index is not supported.')
-
-        # Merge on index if matching and no conditions given
-        if conditions is None:
-            other_index = other.index.keys()
-            self_index = self.index.keys()
-            if other_index == self_index:
-                conditions = list(zip(self.index.values(), other.index.values()))
-            else:
-                raise NotImplementedError(f"Merge without conditions without matching indices "
-                                          f"not supported: {self_index} != {other_index}")
-
-        left_all = {**self.index, **self.data}
-        if isinstance(other, BuhTuhSeries):
-            right_all = {**other.index, other.name: other}
-        else:
-            right_all = {**other.index, **other.data}
-
-        new_series = {}
-        column_sql = []
-
-        # test whether how is valid and use as a selector
-        idx = ['left', 'right', 'inner'].index(how.lower())
-        index = [self.index, other.index, self.index][idx]
-        index_lr = 'lrl'[idx]
-
-        names = list(left_all.keys())
-        names += [k for k in right_all.keys() if k not in names]
-
-        # create new set of series after merge is done
-        for name in names:
-            if name in index:
-                continue
-
-            if name in left_all and name in right_all:
-                left = left_all[name]
-                right = right_all[name]
-                # duplicate, keep both only if from different nodes
-                # this is quite weak duplicate resolution, but okay for now
-                if left.base_node != right.base_node:
-                    left_uq = BuhTuhSeries.get_instance(base=self,
-                                                        name=name + '_left',
-                                                        dtype=left.dtype,
-                                                        expression=left.expression)
-                    new_series[name + '_left'] = left_uq
-                    column_sql.append(left_uq.get_column_expression(table_alias='l'))
-
-                    right_uq = BuhTuhSeries.get_instance(base=self,
-                                                         name=name + '_right',
-                                                         dtype=right.dtype,
-                                                         expression=right.expression)
-                    new_series[name + '_right'] = right_uq
-                    column_sql.append(right_uq.get_column_expression(table_alias='r'))
-                else:
-                    # not unique, keep one
-                    new_series[name] = left
-                    column_sql.append(left.get_column_expression(table_alias='l'))
-            elif name in left_all:
-                left = left_all[name]
-                new_series[name] = left
-                column_sql.append(left.get_column_expression(table_alias='l'))
-            else:  # right only
-                right = right_all[name]
-                new_series[name] = right
-                column_sql.append(right.get_column_expression(table_alias='r'))
-
-        on_conditions = []
-        use_using = True
-
-        for c in conditions:
-            # Convert string indexed columns in data to their Series representation
-            if isinstance(c, str):
-                c = (left_all[c], right_all[c])
-
-            elif isinstance(c, BuhTuhSeries):
-                # convert single to tuple
-                c = (left_all[c.name], right_all[c.name])
-
-            (left, right) = c  # type: ignore  ## TODO: clean up this function so we don't reuse variables
-
-            # convert to BuhTuhSeries if str
-            if isinstance(left, str):
-                left = left_all[left]
-            if isinstance(right, str):
-                right = right_all[right]
-
-            # Make sure the series are actually there (will actually raise KeyError before raising
-            # AssertionError)
-            assert left_all[left.name] and right_all[right.name]
-
-            # if names are not equal, or one of the series is actually an expression, we cannot use
-            # "USING(...)"
-            if left.name != right.name or \
-                    left.name != left.get_expression() or \
-                    right.name != right.get_expression():
-                use_using = False
-
-            on_conditions.append((left, right))
-
-        if use_using:
-            condition_str = 'USING ({fields})'.format(
-                fields=', '.join([left.name for left, _ in on_conditions])
-            )
-        else:
-            condition_str = "ON {expr}".format(
-                expr=' AND '.join(
-                    ['{left} = {right}'.format(
-                        left=left.get_expression('l'),
-                        right=right.get_expression('r')
-                    ) for (left, right) in on_conditions]
-                )
-            )
-
-        model_builder = CustomSqlModel(
-            name='merge_sql',
-            sql='select {index_str}, {columns_sql_str} '
-                'from {{left_node}} as l {join} JOIN {{right_node}} as r {condition_str}'
-        )
-        model = model_builder(
-            index_str=', '.join([s.get_column_expression(index_lr) for s in index.values()]),
-            columns_sql_str=', '.join(column_sql),
-            join=how.upper(),
-            left_node=self.base_node,
-            right_node=other.base_node,
-            condition_str=condition_str
-        )
-        return BuhTuhDataFrame.get_instance(
-            engine=self.engine,
-            source_node=model,
-            index_dtypes={k: v.dtype for k, v in self.index.items()},
-            dtypes={k: v.dtype for k, v in new_series.items()}
+        from buhtuh.merge import merge
+        return merge(
+            left=self,
+            right=right,
+            how=how,
+            on=on,
+            left_on=left_on,
+            right_on=right_on,
+            left_index=left_index,
+            right_index=right_index,
+            suffixes=suffixes
         )
 
 
@@ -700,9 +666,9 @@ class BuhTuhSeries(ABC):
         # TODO get a series directly instead of ripping it out of the df?
         return self.to_frame().head(n)[self.name]
 
-    def sort_values(self, sort_order):
+    def sort_values(self, ascending=True):
         # TODO sort series directly instead of ripping it out of the df?
-        return self.to_frame().sort_values(sort_order)[self.name]
+        return self.to_frame().sort_values(by=self.name, ascending=ascending)[self.name]
 
     def view_sql(self):
         return self.to_frame().view_sql()
@@ -757,7 +723,10 @@ class BuhTuhSeries(ABC):
     def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'BuhTuhSeries'):
 
         if self.base_node != other.base_node:
-            raise NotImplementedError("Operations on different graph nodes are currently not supported.")
+            raise ValueError(f'Cannot apply {operation_name} on two series with different base_node. '
+                             f'Hint: make sure both series belong to or are derived from the same '
+                             f'DataFrame. '
+                             f'Alternative: use merge() to create a DataFrame with both series. ')
 
         if other.dtype.lower() not in supported_dtypes:
             raise ValueError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
@@ -898,7 +867,15 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
         if source_dtype == 'bool':
             return expression
         else:
+            if source_dtype not in ['int64', 'string']:
+                raise ValueError(f'cannot convert {source_dtype} to bool')
             return f'({expression})::bool'
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['bool'], other)
+        expression = f'({self.expression}) {comparator} ({other.expression})'
+        return self._get_derived_series('bool', expression)
 
     def _boolean_operator(self, other, operator) -> 'BuhTuhSeriesBoolean':
         # TODO maybe "other" should have a way to tell us it can be a bool?
@@ -960,7 +937,7 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
 
 
 class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
-    dtype = 'Int64'
+    dtype = 'int64'
 
     @staticmethod
     def constant_to_sql(value: int) -> str:
@@ -970,14 +947,16 @@ class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
-        if source_dtype == 'Int64':
+        if source_dtype == 'int64':
             return expression
         else:
+            if source_dtype not in ['float64', 'bool', 'string']:
+                raise ValueError(f'cannot convert {source_dtype} to int64')
             return f'({expression})::int'
 
 
 class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
-    dtype = 'Float64'
+    dtype = 'float64'
 
     @staticmethod
     def constant_to_sql(value: float) -> str:
@@ -987,9 +966,11 @@ class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
-        if source_dtype == 'Float64':
+        if source_dtype == 'float64':
             return expression
         else:
+            if source_dtype not in ['int64', 'string']:
+                raise ValueError(f'cannot convert {source_dtype} to float64')
             return f'({expression})::float'
 
 
@@ -1005,7 +986,7 @@ class BuhTuhSeriesString(BuhTuhSeries):
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
-        if source_dtype == 'String':
+        if source_dtype == 'string':
             return expression
         else:
             return f'({expression})::varchar'
@@ -1080,31 +1061,30 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
         timestamp without time zone
     """
     dtype = 'timestamp'
-
-    db_dtype = 'timezone without time zone'
+    db_dtype = 'timestamp without time zone'
 
     @staticmethod
     def constant_to_sql(value: Union[str, datetime.datetime]) -> str:
-        # This is wrong. We need a timedelta datatype
-        if isinstance(value, (datetime.datetime, datetime.date, numpy.timedelta64)):
+        if isinstance(value, datetime.date):
             value = str(value)
         if not isinstance(value, str):
-            raise TypeError(f'value should be str or (datetime.datetime, datetime.date, numpy.timedelta64)'
-                            f', actual type: {type(value)}')
+            raise TypeError(f'value should be str or datetime.datetime, actual type: {type(value)}')
         # TODO: fix sql injection!
         # Maybe we should do some checking on syntax here?
-        return f"'{value}'"
+        return f"'{value}'::{BuhTuhSeriesTimestamp.db_dtype}"
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
         if source_dtype == 'timestamp':
             return expression
         else:
+            if source_dtype not in ['string', 'date']:
+                raise ValueError(f'cannot convert {source_dtype} to timestamp')
             return f'({expression}::{BuhTuhSeriesTimestamp.db_dtype})'
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['timestamp', 'date', 'time', 'string'], other)
+        self._check_supported(f"comparator '{comparator}'", ['timestamp', 'date', 'string'], other)
         expression = f'({self.expression}) {comparator} ({other.expression})'
         return self._get_derived_series('bool', expression)
 
@@ -1138,10 +1118,22 @@ class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
         if source_dtype == 'date':
             return expression
         else:
+            if source_dtype not in ['string', 'timestamp']:
+                raise ValueError(f'cannot convert {source_dtype} to date')
             return f'({expression}::{BuhTuhSeriesDate.db_dtype})'
 
+    @staticmethod
+    def constant_to_sql(value: Union[str, datetime.date]) -> str:
+        if isinstance(value, datetime.date):
+            value = str(value)
+        if not isinstance(value, str):
+            raise TypeError(f'value should be str or datetime.date, actual type: {type(value)}')
+        # TODO: fix sql injection!
+        # Maybe we should do some checking on syntax here?
+        return f"'{value}'::{BuhTuhSeriesDate.db_dtype}"
 
-class BuhTuhSeriesTime(BuhTuhSeriesTimestamp):
+
+class BuhTuhSeriesTime(BuhTuhSeries):
     """
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         time without time zone
@@ -1150,11 +1142,29 @@ class BuhTuhSeriesTime(BuhTuhSeriesTimestamp):
     db_dtype = 'time without time zone'
 
     @staticmethod
+    def constant_to_sql(value: Union[str, datetime.time]) -> str:
+        if isinstance(value, datetime.time):
+            value = str(value)
+        if not isinstance(value, str):
+            raise TypeError(f'value should be str or datetime.time, actual type: {type(value)}')
+        # TODO: fix sql injection!
+        # Maybe we should do some checking on syntax here?
+        return f"'{value}'::{BuhTuhSeriesTime.db_dtype}"
+
+    @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
         if source_dtype == 'time':
             return expression
         else:
+            if source_dtype not in ['string', 'timestamp']:
+                raise ValueError(f'cannot convert {source_dtype} to time')
             return f'({expression}::{BuhTuhSeriesTime.db_dtype})'
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['time', 'string'], other)
+        expression = f'({self.expression}) {comparator} ({other.expression})'
+        return self._get_derived_series('bool', expression)
 
 
 class BuhTuhSeriesTimedelta(BuhTuhSeries):
@@ -1162,21 +1172,23 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
     db_dtype = 'interval'
 
     @staticmethod
-    def constant_to_sql(value: Union[str, datetime.datetime]) -> str:
+    def constant_to_sql(value: Union[str, numpy.timedelta64, datetime.timedelta]) -> str:
         if isinstance(value, (numpy.timedelta64, datetime.timedelta)):
             value = str(value)
         if not isinstance(value, str):
-            raise TypeError(f'value should be str or (datetime.datetime, datetime.date, numpy.timedelta64)'
-                            f', actual type: {type(value)}')
+            raise TypeError(f'value should be str or (numpy.timedelta64, datetime.timedelta), '
+                            f'actual type: {type(value)}')
         # TODO: fix sql injection!
         # Maybe we should do some checking on syntax here?
-        return f"'{value}'"
+        return f"'{value}'::{BuhTuhSeriesTimedelta.db_dtype}"
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
         if source_dtype == 'timedelta':
             return expression
         else:
+            if not source_dtype == 'string':
+                raise ValueError(f'cannot convert {source_dtype} to timedelta')
             return f'({expression}::{BuhTuhSeriesTimedelta.db_dtype})'
 
     def _comparator_operator(self, other, comparator):
