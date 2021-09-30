@@ -26,11 +26,13 @@ export class WebDeviceContextPlugin implements TrackerPlugin {
       user_agent: this.isUsable() ? navigator.userAgent : 'unknown',
     });
 
-    this.console?.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
-    this.console?.group(`Device Context:`);
-    this.console?.log(this.webDeviceContext);
-    this.console?.groupEnd();
-    this.console?.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
+      this.console.group(`Device Context:`);
+      this.console.log(this.webDeviceContext);
+      this.console.groupEnd();
+      this.console.groupEnd();
+    }
   }
 
   /**

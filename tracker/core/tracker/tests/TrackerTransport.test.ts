@@ -13,7 +13,7 @@ import {
 } from '../src';
 import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
 import { LogTransport } from './mocks/LogTransport';
-import { mockConsole } from "./mocks/MockConsole";
+import { mockConsole } from './mocks/MockConsole';
 import { UnusableTransport } from './mocks/UnusableTransport';
 
 const testEventName = 'test-event';
@@ -236,7 +236,7 @@ describe('QueuedTransport', () => {
     const testQueuedTransport = new QueuedTransport({
       queue: trackerQueue,
       transport: logTransport,
-      console: mockConsole
+      console: mockConsole,
     });
     jest.runAllTimers();
 
@@ -254,13 +254,13 @@ describe('QueuedTransport', () => {
 
     const testQueuedTransport = new QueuedTransport({
       queue: trackerQueue,
-      transport: logTransport
+      transport: logTransport,
     });
 
     const testQueuedTransportWithConsole = new QueuedTransport({
       queue: trackerQueue,
       transport: logTransport,
-      console: mockConsole
+      console: mockConsole,
     });
 
     jest.spyOn(trackerQueue, 'processFunction');
@@ -394,7 +394,7 @@ describe('RetryTransport', () => {
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
       retryFactor: 1,
-      console: mockConsole
+      console: mockConsole,
     });
     const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
     jest.spyOn(retryTransportAttempt, 'retry');

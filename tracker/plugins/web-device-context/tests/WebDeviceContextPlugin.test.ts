@@ -1,4 +1,4 @@
-import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { ContextsConfig, mockConsole, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 import { WebDeviceContextPlugin } from '../src';
 
 const origin = global.navigator.userAgent;
@@ -31,7 +31,7 @@ describe('WebDeviceContextPlugin', () => {
   });
 
   it('should generate a DeviceContext when constructed', () => {
-    const testWebDeviceContextPlugin = new WebDeviceContextPlugin();
+    const testWebDeviceContextPlugin = new WebDeviceContextPlugin({ console: mockConsole });
     expect(testWebDeviceContextPlugin.webDeviceContext).toEqual({
       __global_context: true,
       _type: 'DeviceContext',
