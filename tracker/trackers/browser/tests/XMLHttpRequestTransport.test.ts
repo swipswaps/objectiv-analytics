@@ -1,6 +1,7 @@
-import { mockConsole, TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
+import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
 import xhrMock from 'xhr-mock';
 import { XMLHttpRequestTransport } from '../src';
+import { mockConsole } from './mocks/MockConsole';
 
 beforeEach(() => {
   xhrMock.setup();
@@ -21,11 +22,11 @@ describe('XMLHttpRequestTransport', () => {
 
   it('should send using `xhr` with the default xhr function', async () => {
     const testTransport = new XMLHttpRequestTransport({
-      endpoint: MOCK_ENDPOINT
+      endpoint: MOCK_ENDPOINT,
     });
     const testTransportWithConsole = new XMLHttpRequestTransport({
       endpoint: MOCK_ENDPOINT,
-      console: mockConsole
+      console: mockConsole,
     });
 
     expect(testTransport.isUsable()).toBe(true);
@@ -58,7 +59,7 @@ describe('XMLHttpRequestTransport', () => {
     });
     const testTransportWithConsole = new XMLHttpRequestTransport({
       endpoint: MOCK_ENDPOINT,
-      console: mockConsole
+      console: mockConsole,
     });
 
     xhrMock.post(MOCK_ENDPOINT, {
@@ -88,7 +89,7 @@ describe('XMLHttpRequestTransport', () => {
     });
     const testTransportWithConsole = new XMLHttpRequestTransport({
       endpoint: MOCK_ENDPOINT,
-      console: mockConsole
+      console: mockConsole,
     });
 
     xhrMock.post(MOCK_ENDPOINT, () => Promise.reject());

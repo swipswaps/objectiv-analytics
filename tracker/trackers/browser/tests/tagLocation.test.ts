@@ -7,11 +7,11 @@ import {
   makeNavigationContext,
   makeOverlayContext,
   makeSectionContext,
-  mockConsole,
 } from '@objectiv/tracker-core';
 import { StructError } from 'superstruct';
 import { tagElement, TaggingAttribute, tagLocation } from '../src';
 import { matchElementId } from './mocks/matchElementId';
+import { mockConsole } from './mocks/MockConsole';
 
 describe('tagLocation', () => {
   it('should return an empty object when error occurs', () => {

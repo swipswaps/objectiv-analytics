@@ -23,7 +23,7 @@ export const defaultXMLHttpRequestFunction = ({
   console?: TrackerConsole;
 }): Promise<unknown> => {
   return new Promise(function (resolve, reject) {
-    if(console) {
+    if (console) {
       console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Sending`);
       console.log(`Events:`);
       console.log(events);
@@ -37,7 +37,7 @@ export const defaultXMLHttpRequestFunction = ({
     xhr.withCredentials = true;
     xhr.onload = () => {
       if (xhr.status === 200) {
-        if(console) {
+        if (console) {
           console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Succeeded`);
           console.log(`Events:`);
           console.log(events);
@@ -46,7 +46,7 @@ export const defaultXMLHttpRequestFunction = ({
 
         resolve(xhr.response);
       } else {
-        if(console) {
+        if (console) {
           console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Failed`);
           console.log(`Events:`);
           console.log(events);
@@ -58,7 +58,7 @@ export const defaultXMLHttpRequestFunction = ({
       }
     };
     xhr.onerror = () => {
-      if(console) {
+      if (console) {
         console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Error`);
         console.log(`Events:`);
         console.log(events);

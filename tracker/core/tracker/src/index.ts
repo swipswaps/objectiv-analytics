@@ -8,4 +8,3 @@ export * from './TrackerEvent';
 export * from './TrackerPlugin';
 export * from './TrackerQueue';
 export * from './TrackerTransport';
-export * from '../tests/mocks/MockConsole';

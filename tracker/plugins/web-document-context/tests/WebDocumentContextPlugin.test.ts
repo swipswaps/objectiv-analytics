@@ -1,9 +1,10 @@
-import { ContextsConfig, mockConsole, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 import { WebDocumentContextPlugin } from '../src';
+import { mockConsole } from './mocks/MockConsole';
 
 describe('WebDocumentContextPlugin', () => {
   it('should instantiate as unusable', () => {
-    const testWebDocumentContextPlugin = new WebDocumentContextPlugin({console: mockConsole});
+    const testWebDocumentContextPlugin = new WebDocumentContextPlugin({ console: mockConsole });
     expect(testWebDocumentContextPlugin.documentContextId).toBe(document.nodeName);
   });
 

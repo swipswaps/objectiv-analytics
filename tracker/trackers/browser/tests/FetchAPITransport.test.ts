@@ -1,6 +1,7 @@
-import { mockConsole, QueuedTransport, TrackerEvent, TrackerQueue, TransportSendError } from '@objectiv/tracker-core';
+import { QueuedTransport, TrackerEvent, TrackerQueue, TransportSendError } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
+import { mockConsole } from './mocks/MockConsole';
 
 const MOCK_ENDPOINT = 'http://test-endpoint';
 
@@ -25,7 +26,7 @@ describe('FetchAPITransport', () => {
   it('should send using `fetch` API with the default fetch function', async () => {
     const testTransport = new FetchAPITransport({
       endpoint: MOCK_ENDPOINT,
-      console: mockConsole
+      console: mockConsole,
     });
     await testTransport.handle(testEvent);
     const { id, ...otherProps } = testEvent;
@@ -147,11 +148,11 @@ describe('FetchAPITransport', () => {
   it('should reject with TransportSendError on http status !== 200', async () => {
     // Create our Fetch Transport Instance
     const testTransport = new FetchAPITransport({
-      endpoint: MOCK_ENDPOINT
+      endpoint: MOCK_ENDPOINT,
     });
     const testTransportWithConsole = new FetchAPITransport({
       endpoint: MOCK_ENDPOINT,
-      console: mockConsole
+      console: mockConsole,
     });
 
     fetchMock.mockResponse('oops', { status: 500 });
@@ -176,11 +177,11 @@ describe('FetchAPITransport', () => {
   it('should reject with TransportSendError on network failures', async () => {
     // Create our Fetch Transport Instance
     const testTransport = new FetchAPITransport({
-      endpoint: MOCK_ENDPOINT
+      endpoint: MOCK_ENDPOINT,
     });
     const testTransportWithConsole = new FetchAPITransport({
       endpoint: MOCK_ENDPOINT,
-      console: mockConsole
+      console: mockConsole,
     });
 
     fetchMock.mockReject();

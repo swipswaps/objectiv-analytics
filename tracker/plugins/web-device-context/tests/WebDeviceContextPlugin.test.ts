@@ -1,5 +1,6 @@
-import { ContextsConfig, mockConsole, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 import { WebDeviceContextPlugin } from '../src';
+import { mockConsole } from './mocks/MockConsole';
 
 const origin = global.navigator.userAgent;
 const cleared = Symbol('clear');

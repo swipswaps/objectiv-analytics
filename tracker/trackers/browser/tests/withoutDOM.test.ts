@@ -10,7 +10,8 @@ import {
   startAutoTracking,
   trackApplicationLoaded,
   trackEvent,
-  trackURLChange, getTracker,
+  trackURLChange,
+  getTracker,
 } from '../src';
 
 describe('Without DOM', () => {
@@ -27,9 +28,7 @@ describe('Without DOM', () => {
       'Cannot access the Window interface.'
     );
 
-    expect(() => getTracker()).toThrow(
-      'Cannot access the Window interface.'
-    );
+    expect(() => getTracker()).toThrow('Cannot access the Window interface.');
   });
 
   it('should console.error if a Tracker instance cannot be retrieved because DOM is not available', async () => {

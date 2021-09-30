@@ -5,7 +5,7 @@ import {
   tagChild,
   tagChildren,
   tagElement,
-  TaggingAttribute
+  TaggingAttribute,
 } from '../src';
 
 describe('tagChild and tagChildren', () => {
