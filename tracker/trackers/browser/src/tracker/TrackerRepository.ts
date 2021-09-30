@@ -26,7 +26,7 @@ export class TrackerRepository implements TrackerRepository {
 
   get(trackerId?: string) {
     if (this.trackersMap.size === 0) {
-      console.error(`｢objectiv:TrackerRepository｣ No Tracker Instances. Use \`configureTracker\` to create one.`);
+      console.error(`｢objectiv:TrackerRepository｣ No Tracker Instances. Use \`makeTracker\` to create one.`);
       return;
     }
 

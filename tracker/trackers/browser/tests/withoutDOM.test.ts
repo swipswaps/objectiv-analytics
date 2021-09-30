@@ -4,7 +4,7 @@
 import { makeClickEvent } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
-  configureTracker,
+  makeTracker,
   getLocationHref,
   makeMutationCallback,
   startAutoTracking,
@@ -24,8 +24,8 @@ describe('Without DOM', () => {
 
   it('should throw if Window does not exists', async () => {
     // @ts-ignore
-    expect(() => configureTracker({ applicationId: 'test', endpoint: 'test' })).toThrow(
-      'Cannot access the Window interface. Tracker cannot be initialized.'
+    expect(() => makeTracker({ applicationId: 'test', endpoint: 'test' })).toThrow(
+      'Cannot access the Window interface.'
     );
   });
 

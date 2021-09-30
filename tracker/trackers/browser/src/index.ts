@@ -1,6 +1,7 @@
-export * from './bootstrap';
-export * from './Contexts';
 export * from './globals';
+export * from './Contexts';
+export * from './helpers';
+export * from './makeTracker';
 export * from './observer/isBubbledEvent';
 export * from './observer/makeBlurEventListener';
 export * from './observer/makeClickEventListener';
@@ -16,7 +17,6 @@ export * from './structs';
 export * from './TaggingAttribute';
 export * from './trackerErrorHandler';
 export * from './tracker/BrowserTracker';
-export * from './tracker/configureTracker';
 export * from './tracker/findTaggedParentElements';
 export * from './tracker/tagChildren';
 export * from './tracker/tagLocation';
