@@ -1,16 +1,14 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import pytest
-
 from buhtuh import BuhTuhDataFrame
-from tests.functional.buhtuh.test_bt import _get_bt_with_test_data, _get_bt_with_food_data, \
-    assert_equals_data, _get_bt_with_railway_data
+from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, get_bt_with_food_data, \
+    assert_equals_data, get_bt_with_railway_data
 
 
 def test_merge_basic():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_food_data()[['skating_order', 'food']]
     result = bt.merge(mt)
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
@@ -30,8 +28,8 @@ def test_merge_basic():
 
 
 def test_merge_basic_on():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_food_data()[['skating_order', 'food']]
     result = bt.merge(mt, on='skating_order')
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
@@ -51,8 +49,8 @@ def test_merge_basic_on():
 
 
 def test_merge_basic_on_series():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_food_data()['food']
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_food_data()['food']
     result = bt.merge(mt, on='_index_skating_order')
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
@@ -71,8 +69,8 @@ def test_merge_basic_on_series():
 
 
 def test_merge_basic_left_on_right_on_same_column():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_food_data()[['skating_order', 'food']]
     result = bt.merge(mt, left_on='skating_order', right_on='skating_order')
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
@@ -92,8 +90,8 @@ def test_merge_basic_left_on_right_on_same_column():
 
 
 def test_merge_basic_left_on_right_on_different_column():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_railway_data()[['town', 'station']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_railway_data()[['town', 'station']]
     result = bt.merge(mt, left_on='city', right_on='town')
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
@@ -118,8 +116,8 @@ def test_merge_basic_left_on_right_on_different_column():
 
 
 def test_merge_basic_on_indexes():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_food_data()[['skating_order', 'food']]
 
     expected_columns = [
         '_index_skating_order_x',
@@ -172,8 +170,8 @@ def test_merge_basic_on_indexes():
 
 
 def test_merge_suffixes():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_food_data()[['skating_order', 'food']]
     result = bt.merge(mt, left_on='_index_skating_order', right_on='skating_order', suffixes=('_AA', '_BB'))
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
@@ -194,8 +192,8 @@ def test_merge_suffixes():
 
 
 def test_merge_mixed_columns():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_railway_data()[['station', 'platforms']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_railway_data()[['station', 'platforms']]
     # join _index_skating_order on the 'platforms' column
     result = bt.merge(mt, how='inner', left_on='skating_order', right_on='platforms')
     assert isinstance(result, BuhTuhDataFrame)
@@ -223,8 +221,8 @@ def test_merge_mixed_columns():
 
 
 def test_merge_left_join():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_railway_data()[['station', 'platforms']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_railway_data()[['station', 'platforms']]
     # join _index_skating_order on the 'platforms' column
     result = bt.merge(mt, how='left', left_on='skating_order', right_on='platforms')
     assert isinstance(result, BuhTuhDataFrame)
@@ -252,8 +250,8 @@ def test_merge_left_join():
 
 
 def test_merge_right_join():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_railway_data()[['station', 'platforms']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_railway_data()[['station', 'platforms']]
     result = bt.merge(mt, how='right', left_on='skating_order', right_on='platforms')
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
@@ -280,8 +278,8 @@ def test_merge_right_join():
 
 
 def test_merge_outer_join():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
-    mt = _get_bt_with_railway_data()[['station', 'platforms']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    mt = get_bt_with_railway_data()[['station', 'platforms']]
     result = bt.merge(mt, how='outer', left_on='skating_order', right_on='platforms')
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
@@ -311,8 +309,8 @@ def test_merge_outer_join():
 
 
 def test_merge_cross_join():
-    bt = _get_bt_with_test_data(full_data_set=False)[['city']]
-    mt = _get_bt_with_food_data()[['food']]
+    bt = get_bt_with_test_data(full_data_set=False)[['city']]
+    mt = get_bt_with_food_data()[['food']]
     result = bt.merge(mt, how='cross')
     assert isinstance(result, BuhTuhDataFrame)
     assert_equals_data(
@@ -342,8 +340,8 @@ def test_merge_cross_join():
 
 
 def test_merge_self():
-    bt1 = _get_bt_with_test_data(full_data_set=False)[['city']]
-    bt2 = _get_bt_with_test_data(full_data_set=False)[['inhabitants']]
+    bt1 = get_bt_with_test_data(full_data_set=False)[['city']]
+    bt2 = get_bt_with_test_data(full_data_set=False)[['inhabitants']]
     result = bt1.merge(bt2, on='_index_skating_order')
     assert_equals_data(
         result,
@@ -357,8 +355,8 @@ def test_merge_self():
 
 
 def test_merge_preselection():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
+    mt = get_bt_with_food_data()[['skating_order', 'food']]
     result = bt[bt['skating_order'] != 1].merge(mt[['food']], on='_index_skating_order')
     assert_equals_data(
         result,
@@ -371,8 +369,8 @@ def test_merge_preselection():
 
 
 def test_merge_expression_columns():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
+    mt = get_bt_with_food_data()[['skating_order', 'food']]
     bt['skating_order'] += 2
     mt['skating_order'] += 2
 
@@ -389,8 +387,8 @@ def test_merge_expression_columns():
 
 
 def test_merge_expression_columns_regression():
-    bt = _get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
-    mt = _get_bt_with_food_data()[['skating_order', 'food']]
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
+    mt = get_bt_with_food_data()[['skating_order', 'food']]
     bt['x'] = bt['skating_order'] == 3
     bt['y'] = bt['skating_order'] == 3
     bt['z'] = bt['x'] & bt['y']
