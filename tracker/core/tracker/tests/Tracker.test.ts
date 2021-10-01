@@ -239,5 +239,35 @@ describe('Tracker', () => {
       testTracker.trackEvent(testEvent);
       expect(unusableTransport.handle).not.toHaveBeenCalled();
     });
+
+    it('should not send the Event when tracker has been deactivated', () => {
+      const testTransport = new LogTransport();
+      jest.spyOn(testTransport, 'handle');
+      const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport, active: false });
+      testTracker.trackEvent(testEvent);
+      expect(testTransport.handle).not.toHaveBeenCalled();
+      testTracker.setActive(false);
+      testTracker.trackEvent(testEvent);
+      expect(testTransport.handle).not.toHaveBeenCalled();
+      testTracker.setActive(true);
+      testTracker.trackEvent(testEvent);
+      expect(testTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: testEvent._type }));
+    });
+
+    it('should console.log when Tracker changes active state', () => {
+      const testTransport = new LogTransport();
+      jest.spyOn(testTransport, 'handle');
+      const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport, console: mockConsole });
+      jest.resetAllMocks();
+      testTracker.setActive(false);
+      testTracker.setActive(true);
+      testTracker.setActive(false);
+      testTracker.trackEvent(testEvent);
+      expect(testTransport.handle).not.toHaveBeenCalled();
+      expect(mockConsole.log).toHaveBeenCalledTimes(3)
+      expect(mockConsole.log).toHaveBeenNthCalledWith(1, `%c｢objectiv:Tracker:app-id｣ New state: inactive`, "font-weight: bold")
+      expect(mockConsole.log).toHaveBeenNthCalledWith(2, `%c｢objectiv:Tracker:app-id｣ New state: active`, "font-weight: bold")
+      expect(mockConsole.log).toHaveBeenNthCalledWith(3, `%c｢objectiv:Tracker:app-id｣ New state: inactive`, "font-weight: bold")
+    });
   });
 });

@@ -23,10 +23,10 @@ describe('makeTracker', () => {
     makeTracker({ applicationId: 'app-id-2', endpoint: 'localhost' });
     makeTracker({ applicationId: 'app-id-3', endpoint: 'localhost' });
     expect(window.objectiv.trackers.trackersMap.size).toBe(3);
-    expect(getTracker()?.applicationId).toBe('app-id-1');
-    expect(getTracker('app-id-1')?.applicationId).toBe('app-id-1');
-    expect(getTracker('app-id-2')?.applicationId).toBe('app-id-2');
-    expect(getTracker('app-id-3')?.applicationId).toBe('app-id-3');
+    expect(getTracker().applicationId).toBe('app-id-1');
+    expect(getTracker('app-id-1').applicationId).toBe('app-id-1');
+    expect(getTracker('app-id-2').applicationId).toBe('app-id-2');
+    expect(getTracker('app-id-3').applicationId).toBe('app-id-3');
   });
 
   it('should allow changing default Browser Tracker', () => {
@@ -34,13 +34,13 @@ describe('makeTracker', () => {
     makeTracker({ applicationId: 'app-id-2', endpoint: 'localhost' });
     makeTracker({ applicationId: 'app-id-3', endpoint: 'localhost' });
     expect(window.objectiv.trackers.trackersMap.size).toBe(3);
-    expect(getTracker()?.applicationId).toBe('app-id-1');
-    setDefaultTracker('app-id-2')
-    expect(getTracker()?.applicationId).toBe('app-id-2');
-    setDefaultTracker('app-id-3')
-    expect(getTracker()?.applicationId).toBe('app-id-3');
-    setDefaultTracker('app-id-1')
-    expect(getTracker()?.applicationId).toBe('app-id-1');
+    expect(getTracker().applicationId).toBe('app-id-1');
+    setDefaultTracker('app-id-2');
+    expect(getTracker().applicationId).toBe('app-id-2');
+    setDefaultTracker('app-id-3');
+    expect(getTracker().applicationId).toBe('app-id-3');
+    setDefaultTracker('app-id-1');
+    expect(getTracker().applicationId).toBe('app-id-1');
   });
 
   it('should allow creating multiple Browser Trackers for the same application', () => {
@@ -51,9 +51,9 @@ describe('makeTracker', () => {
     expect(() => getTracker('app-id-1')).toThrow('No Tracker found. Please create one via `makeTracker`.');
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenCalledWith('｢objectiv:TrackerRepository｣ Tracker `app-id-1` not found.');
-    expect(getTracker('tracker-1')?.applicationId).toBe('app-id');
-    expect(getTracker('tracker-2')?.applicationId).toBe('app-id');
-    expect(getTracker('tracker-3')?.applicationId).toBe('app-id');
+    expect(getTracker('tracker-1').applicationId).toBe('app-id');
+    expect(getTracker('tracker-2').applicationId).toBe('app-id');
+    expect(getTracker('tracker-3').applicationId).toBe('app-id');
   });
 
   it('should not allow overwriting an existing Browser Trackers instance', () => {
