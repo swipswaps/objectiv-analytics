@@ -157,6 +157,6 @@ def assert_db_type(
         assert db_type == expected_db_type
     registry = types.TypeRegistry()
     registry._real_init()
-    series_type = registry.dtype_series[db_type]
+    series_type = registry.get_series_type_from_db_dtype(db_type)
     assert series_type == expected_series_type
 

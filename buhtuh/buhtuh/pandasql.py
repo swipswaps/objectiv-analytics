@@ -10,7 +10,7 @@ from sqlalchemy.engine import Engine
 
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
-from buhtuh.types import get_series_type_from_dtype, arg_to_type
+from buhtuh.types import get_series_type_from_dtype, value_to_dtype
 
 
 DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
@@ -683,7 +683,7 @@ class BuhTuhSeries(ABC):
     @property
     @classmethod
     @abstractmethod
-    def db_dtype(cls) -> str:
+    def db_dtype(cls) -> Optional[str]:
         raise NotImplementedError
 
     @staticmethod
@@ -1432,6 +1432,6 @@ def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],
     if isinstance(value, BuhTuhSeries):
         return value
     name = '__tmp' if name is None else name
-    dtype = arg_to_type(value)
+    dtype = value_to_dtype(value)
     series_type = get_series_type_from_dtype(dtype)
     return series_type.from_const(base=base, value=value, name=name)
