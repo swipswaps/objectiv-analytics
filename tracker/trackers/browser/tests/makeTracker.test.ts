@@ -1,4 +1,4 @@
-import { BrowserTracker, getTracker, makeTracker } from '../src/';
+import { BrowserTracker, getTracker, makeTracker, setDefaultTracker } from '../src/';
 
 describe('makeTracker', () => {
   afterEach(() => {
@@ -27,6 +27,20 @@ describe('makeTracker', () => {
     expect(getTracker('app-id-1')?.applicationId).toBe('app-id-1');
     expect(getTracker('app-id-2')?.applicationId).toBe('app-id-2');
     expect(getTracker('app-id-3')?.applicationId).toBe('app-id-3');
+  });
+
+  it('should allow changing default Browser Tracker', () => {
+    makeTracker({ applicationId: 'app-id-1', endpoint: 'localhost' });
+    makeTracker({ applicationId: 'app-id-2', endpoint: 'localhost' });
+    makeTracker({ applicationId: 'app-id-3', endpoint: 'localhost' });
+    expect(window.objectiv.trackers.trackersMap.size).toBe(3);
+    expect(getTracker()?.applicationId).toBe('app-id-1');
+    setDefaultTracker('app-id-2')
+    expect(getTracker()?.applicationId).toBe('app-id-2');
+    setDefaultTracker('app-id-3')
+    expect(getTracker()?.applicationId).toBe('app-id-3');
+    setDefaultTracker('app-id-1')
+    expect(getTracker()?.applicationId).toBe('app-id-1');
   });
 
   it('should allow creating multiple Browser Trackers for the same application', () => {
