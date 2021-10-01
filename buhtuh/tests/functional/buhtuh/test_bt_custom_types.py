@@ -95,6 +95,7 @@ def test_custom_type_register():
     class TestStringType(BuhTuhSeries):
         """ Test class for custom types. """
         dtype = 'test_type'
+        dtype_aliases = ('test_type_1337', )
 
     # make sure to reset type-registry, as we might manipulate that in multiple tests.
     #  todo: use some pytest paradigm to reset registry?
@@ -113,6 +114,7 @@ def test_custom_type_register():
     class TestStringType(BuhTuhSeries):
         """ Test class for custom types. """
         dtype = 'test_type'
+        dtype_aliases = ('test_type_1337',)
 
     assert get_series_type_from_dtype('test_type') is TestStringType
     assert arg_to_type('a string') == 'string'
@@ -125,6 +127,7 @@ def test_custom_type_register():
     class TestStringType(BuhTuhSeries):
         """ Test class for custom types. """
         dtype = 'test_type'
+        dtype_aliases = ('test_type_1337',)
     assert get_series_type_from_dtype('test_type') is TestStringType
     assert arg_to_type('a string') == 'test_type'
     assert arg_to_type(123) == 'test_type'
@@ -138,6 +141,7 @@ def test_custom_type_register():
 class ReversedStringType(BuhTuhSeries):
     """ Test class for custom types. """
     dtype = 'reversed_string'
+    dtype_aliases = ('reversed_text', 'backwards_string')
 
     @staticmethod
     def constant_to_sql(value: str) -> str:

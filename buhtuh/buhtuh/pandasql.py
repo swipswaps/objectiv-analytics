@@ -1,7 +1,7 @@
 import datetime
 from abc import abstractmethod, ABC
 from copy import copy
-from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast
+from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Hashable
 
 import numpy
 import pandas
@@ -625,8 +625,21 @@ class BuhTuhSeries(ABC):
             self._expression = f'{{table_alias}}"{self.name}"'
 
     @property
+    @classmethod
     @abstractmethod
-    def dtype(self) -> str:
+    def dtype(cls) -> str:
+        raise NotImplementedError
+
+    @property
+    @classmethod
+    @abstractmethod
+    def dtype_aliases(cls) -> Tuple[Hashable, ...]:
+        raise NotImplementedError
+
+    @property
+    @classmethod
+    @abstractmethod
+    def db_dtype(cls) -> str:
         raise NotImplementedError
 
     @staticmethod
@@ -854,7 +867,9 @@ class BuhTuhSeries(ABC):
 
 
 class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
-    dtype = "bool"
+    dtype = 'bool'
+    dtype_aliases = ('boolean', '?')
+    db_dtype = 'boolean'
 
     @staticmethod
     def constant_to_sql(value: bool) -> str:
@@ -938,6 +953,8 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
 
 class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
     dtype = 'int64'
+    dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64)
+    db_dtype = 'bigint'
 
     @staticmethod
     def constant_to_sql(value: int) -> str:
@@ -957,6 +974,8 @@ class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
 
 class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
     dtype = 'float64'
+    dtype_aliases = ('float', 'double', 'f8', float, numpy.float64, 'double precision')
+    db_dtype = 'double precision'
 
     @staticmethod
     def constant_to_sql(value: float) -> str:
@@ -976,6 +995,8 @@ class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
 
 class BuhTuhSeriesString(BuhTuhSeries):
     dtype = 'string'
+    dtype_aliases = ('text', str, 'json', 'uuid')  # todo: create more specific types for json and uuid
+    db_dtype = 'text'
 
     @staticmethod
     def constant_to_sql(value: str) -> str:
@@ -1061,6 +1082,7 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
         timestamp without time zone
     """
     dtype = 'timestamp'
+    dtype_aliases = ('datetime64', 'datetime64[ns]', numpy.datetime64)
     db_dtype = 'timestamp without time zone'
 
     @staticmethod
@@ -1111,6 +1133,7 @@ class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
         date
     """
     dtype = 'date'
+    dtype_aliases = tuple()  # type: ignore
     db_dtype = 'date'
 
     @staticmethod
@@ -1139,6 +1162,7 @@ class BuhTuhSeriesTime(BuhTuhSeries):
         time without time zone
     """
     dtype = 'time'
+    dtype_aliases = tuple()  # type: ignore
     db_dtype = 'time without time zone'
 
     @staticmethod
@@ -1169,6 +1193,7 @@ class BuhTuhSeriesTime(BuhTuhSeries):
 
 class BuhTuhSeriesTimedelta(BuhTuhSeries):
     dtype = 'timedelta'
+    dtype_aliases = ('interval',)
     db_dtype = 'interval'
 
     @staticmethod
