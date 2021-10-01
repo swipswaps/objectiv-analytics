@@ -65,17 +65,11 @@ RAILWAYS_COLUMNS = ['station_id', 'town', 'station', 'platforms']
 RAILWAYS_INDEX_AND_COLUMNS = ['_index_station_id'] + RAILWAYS_COLUMNS
 
 
-def _get_bt(table, dataset, columns) -> BuhTuhDataFrame:
+def _get_bt(table, dataset, columns, convert_objects) -> BuhTuhDataFrame:
     engine = sqlalchemy.create_engine(DB_TEST_URL)
     import pandas as pd
     df = pd.DataFrame.from_records(dataset, columns=columns)
-    # by default the strings are marked as 'object' not as string type, fix that:
-    df = df.convert_dtypes()
-
     df.set_index(columns[0], drop=False, inplace=True)
-    # I'm not so sure about this one. Int64 columns as an index becomes 'Object' for which we have no decent Series type
-    # let's restore it to what it whas when it was still a column.
-    df.index = df.index.astype('int64')
 
     if 'moment' in df.columns:
         df['moment'] = df['moment'].astype('datetime64')
@@ -83,7 +77,7 @@ def _get_bt(table, dataset, columns) -> BuhTuhDataFrame:
     if 'date' in df.columns:
         df['date'] = df['date'].astype('datetime64')
 
-    buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine, if_exists='replace')
+    buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects, if_exists='replace')
     return buh_tuh
 
 
@@ -92,15 +86,15 @@ def get_bt_with_test_data(full_data_set: bool = False) -> BuhTuhDataFrame:
         test_data = TEST_DATA_CITIES_FULL
     else:
         test_data = TEST_DATA_CITIES
-    return _get_bt('test_table', test_data, CITIES_COLUMNS)
+    return _get_bt('test_table', test_data, CITIES_COLUMNS, True)
 
 
 def get_bt_with_food_data() -> BuhTuhDataFrame:
-    return _get_bt('test_merge_table_1', TEST_DATA_FOOD, FOOD_COLUMNS)
+    return _get_bt('test_merge_table_1', TEST_DATA_FOOD, FOOD_COLUMNS, True)
 
 
 def get_bt_with_railway_data() -> BuhTuhDataFrame:
-    return _get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS)
+    return _get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
 
 
 def run_query(engine: sqlalchemy.engine, sql: str) -> ResultProxy:
