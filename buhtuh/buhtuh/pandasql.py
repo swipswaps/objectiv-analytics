@@ -162,29 +162,61 @@ class BuhTuhDataFrame:
         )
 
     @classmethod
-    def from_dataframe(cls, df: pandas.DataFrame, name: str, engine: Engine, if_exists: str = 'fail'):
+    def from_dataframe(cls,
+                       df: pandas.DataFrame,
+                       name: str,
+                       engine: Engine,
+                       convert_objects: bool = False,
+                       if_exists: str = 'fail'):
         """
-        Instantiate a new BuhTuhDataFrame based on the content of a Pandas DataFrame. This will first load
-        the data into the database using pandas' df.to_sql() method.
+        Instantiate a new BuhTuhDataFrame based on the content of a Pandas DataFrame. Supported dtypes are
+        'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
+        This will first load the data into the database using pandas' df.to_sql() method.
         """
-
-        if df.index.name is None:  # for now only one index allowed
+        if df.index.name is None:  # for now only one index allowed todo check this
             index = '_index_0'
         else:
             index = f'_index_{df.index.name}'
+
+        # set the index as a normal column, this makes it easier to convert the dtype
+        df_copy = df.rename_axis(index).reset_index()
+
+        if convert_objects:
+            df_copy = df_copy.convert_dtypes(convert_integer=False,
+                                             convert_boolean=False,
+                                             convert_floating=False)
+
+        # todo add support for 'timedelta64[ns]'. pd.to_sql writes timedelta as bigint to sql, so
+        # not implemented yet
+        supported_types = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool']
+        index_dtype = df_copy[index].dtype.name
+        if index_dtype not in supported_types:
+            raise ValueError(f"index is of type '{index_dtype}', should one of {supported_types}. "
+                             f"For 'object' columns convert_objects=True can be used to convert these columns"
+                             f"to type 'string'.")
+        dtypes = {column_name: dtype.name for column_name, dtype in df_copy.dtypes.items()
+                  if column_name in df.columns}
+        unsupported_dtypes = {column_name: dtype for column_name, dtype in dtypes.items()
+                              if dtype not in supported_types}
+        if unsupported_dtypes:
+            raise ValueError(f"dtypes {unsupported_dtypes} are not supported, should one of "
+                             f"{supported_types}. "
+                             f"For 'object' columns convert_objects=True can be used to convert these columns"
+                             f"to type 'string'.")
+
+        # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
         conn = engine.connect()
-        df.to_sql(name=name, con=conn, if_exists=if_exists, index_label=index)
+        df_copy.to_sql(name=name, con=conn, if_exists=if_exists, index=False)
         conn.close()
 
         # Todo, this should use from_table from here on.
         model = CustomSqlModel(sql=f'SELECT * FROM {name}').instantiate()
 
-        dtypes = {column_name: dtype.name for column_name, dtype in df.dtypes.items()}
         # Should this also use _df_or_series?
         return cls.get_instance(
             engine=engine,
             source_node=model,
-            index_dtypes={index: df.index.dtype.name},
+            index_dtypes={index: index_dtype},
             dtypes=dtypes
         )
 

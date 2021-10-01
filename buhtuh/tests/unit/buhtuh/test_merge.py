@@ -152,22 +152,22 @@ def test__determine_result_columns():
 def test__determine_result_columns_non_happy_path():
     # With pandas the following works, there will just be two b_x and two b_y columns, but we cannot
     # generate sql that has the same column name multiple times, so we raise an error
-    left = get_fake_df(['a'], ['b', 'b_x'], 'Int64')
-    right = get_fake_df(['a'], ['b', 'b_y'], 'Float64')
+    left = get_fake_df(['a'], ['b', 'b_x'], 'int64')
+    right = get_fake_df(['a'], ['b', 'b_y'], 'float64')
     with pytest.raises(ValueError):
         _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
 
 
 def test_merge_non_happy_path_how():
-    left = get_fake_df(['a'], ['b', 'b_x'], 'Int64')
-    right = get_fake_df(['a'], ['b', 'b_y'], 'Float64')
+    left = get_fake_df(['a'], ['b', 'b_x'], 'int64')
+    right = get_fake_df(['a'], ['b', 'b_y'], 'float64')
     with pytest.raises(ValueError, match='how'):
         merge(left, right, 'wrong how',
               on=None, left_on=None, right_on=None, left_index=True, right_index=True,
               suffixes=('_x', '_y'))
 
 
-def get_fake_df(index_names: List[str], data_names: List[str], dtype='Int64'):
+def get_fake_df(index_names: List[str], data_names: List[str], dtype='int64'):
     engine = None,
     source_node = None,
     series_type = get_series_type_from_dtype(dtype=dtype)
