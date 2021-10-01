@@ -42,11 +42,7 @@ export const getTrackerRepository = (): TrackerRepository<BrowserTracker> => {
  * Retrieves a specific instance of the tracker from the TrackerRepository.
  */
 export const getTracker = (trackerId?: string): BrowserTracker => {
-  if (!windowExists()) {
-    throw new Error('Cannot access the Window interface.');
-  }
-
-  const tracker = window.objectiv.trackers.get(trackerId);
+  const tracker = getTrackerRepository().get(trackerId);
 
   // Throw if we did not manage to get a tracker instance
   if (!tracker) {
