@@ -122,8 +122,10 @@ export class Tracker implements Contexts, TrackerConfig {
       this.console.groupEnd();
     }
 
-    // Execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
-    this.plugins.initialize(this);
+    // If active execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
+    if (this.active) {
+      this.plugins.initialize(this);
+    }
   }
 
   /**
@@ -132,6 +134,11 @@ export class Tracker implements Contexts, TrackerConfig {
   setActive(newActiveState: boolean) {
     if (newActiveState !== this.active) {
       this.active = newActiveState;
+
+      if (this.active) {
+        this.plugins.initialize(this);
+      }
+
       if (this.console) {
         this.console.log(
           `%c｢objectiv:Tracker:${this.trackerId}｣ New state: ${this.active ? 'active' : 'inactive'}`,
