@@ -4,12 +4,10 @@ Welcome to BuhTuh's documentation!
 ==================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
    
    api
-   buhtuh
-   sql_models
 
 
 
@@ -18,8 +16,6 @@ Indices and tables
 
 * :ref:`genindex`
 * :ref:`modindex`
-
-* :ref:`api`
 
 
 
@@ -31,6 +27,7 @@ Indices and tables
     
     In [3]: assert extract_format_fields('{test} more text {test}') == {'test'}
     
+    @doctest
     In [4]: assert extract_format_fields('text{test} more {{text}} {test2} te{x}t{test}') == {'test', 'test2', 'x'}
     Out [4]: bier
     

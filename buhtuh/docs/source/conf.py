@@ -24,8 +24,8 @@ sys.path.extend([
 # -- Project information -----------------------------------------------------
 
 project = 'BuhTuh'
-copyright = '2021, bt'
-author = 'bt'
+copyright = '2021, Objectiv'
+author = 'Objectiv BV'
 
 
 autosummary_generate = True
@@ -41,7 +41,8 @@ extensions = [
     'sphinx.ext.linkcode',
     'sphinx.ext.viewcode',
     'IPython.sphinxext.ipython_directive',
-    'IPython.sphinxext.ipython_console_highlighting'
+    'IPython.sphinxext.ipython_console_highlighting',
+    'sphinx_markdown_builder'
 ]
 
 autodoc_default_options = {
@@ -79,7 +80,7 @@ html_theme = "pydata_sphinx_theme"
 # given in html_static_path.
 # html_style = 'statsmodels.css'
 
-html_sidebars = {'**': []}
+html_sidebars = {'**': 'sidebar-nav-bs.html'}
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
