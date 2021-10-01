@@ -172,6 +172,18 @@ class BuhTuhDataFrame:
         Instantiate a new BuhTuhDataFrame based on the content of a Pandas DataFrame. Supported dtypes are
         'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
         This will first load the data into the database using pandas' df.to_sql() method.
+
+        :param df: Pandas DataFrame to instantiate as BuhTuhDataFrame
+        :param name: name of the sql table the Pandas DataFrame will be written to
+        :param engine: db connection
+        :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
+            pd.convert_dtypes() method where possible.
+        :param if_exists: {'fail', 'replace', 'append'}, default 'fail'
+            How to behave if the table already exists.
+
+            * fail: Raise a ValueError.
+            * replace: Drop the table before inserting new values.
+            * append: Insert new values to the existing table.
         """
         if df.index.name is None:  # for now only one index allowed todo check this
             index = '_index_0'
