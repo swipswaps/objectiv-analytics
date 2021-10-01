@@ -1,16 +1,18 @@
 /**
  * The interface of the TrackerRepository
  */
-import { Tracker } from "./Tracker";
+import { Tracker } from './Tracker';
 
 /**
  * Generic type for TrackerRepository.
  */
 export interface TrackerRepositoryInterface<T extends Tracker> {
   trackersMap: Map<string, T>;
+  defaultTracker?: T;
   add(newInstance: T): void;
   delete(trackerId: string): void;
-  get(trackerId?: string): T;
+  get(trackerId?: string): T | undefined;
+  setDefault(trackerId: string): void;
 }
 
 /**
@@ -18,6 +20,7 @@ export interface TrackerRepositoryInterface<T extends Tracker> {
  */
 export class TrackerRepository<T extends Tracker> implements TrackerRepositoryInterface<T> {
   trackersMap = new Map<string, T>();
+  defaultTracker?: T;
 
   add(newInstance: T) {
     if (this.trackersMap.has(newInstance.trackerId)) {
@@ -25,35 +28,52 @@ export class TrackerRepository<T extends Tracker> implements TrackerRepositoryIn
       return;
     }
     this.trackersMap.set(newInstance.trackerId, newInstance);
+    if (!this.defaultTracker) {
+      this.defaultTracker = newInstance;
+    }
   }
 
   delete(trackerId: string) {
+    if (this.defaultTracker && this.defaultTracker.trackerId === trackerId) {
+      if (this.trackersMap.size > 1) {
+        console.error(
+          `｢objectiv:TrackerRepository｣ \`${trackerId}\` is the default Tracker. Please set another as default before deleting it.`
+        );
+        return;
+      }
+
+      this.defaultTracker = undefined;
+    }
+
     this.trackersMap.delete(trackerId);
   }
 
   get(trackerId?: string) {
     if (this.trackersMap.size === 0) {
-      console.error(`｢objectiv:TrackerRepository｣ There are no Tracker Instances.`);
+      console.error(`｢objectiv:TrackerRepository｣ There are no Trackers.`);
       return;
     }
 
-    if (this.trackersMap.size !== 1 && !trackerId) {
-      console.error(`｢objectiv:TrackerRepository｣ Multiple Tracker Instances. Please provide a \`trackerId\`.`);
-      return;
-    }
-
-    let trackerInstance;
     if (trackerId) {
-      trackerInstance = this.trackersMap.get(trackerId);
-    } else {
-      trackerInstance = this.trackersMap.values().next().value;
+      const trackerInstance = this.trackersMap.get(trackerId);
+
+      if (!trackerInstance) {
+        console.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
+        return;
+      }
+
+      return this.trackersMap.get(trackerId);
     }
 
-    if (!trackerInstance) {
+    return this.defaultTracker;
+  }
+
+  setDefault(trackerId: string) {
+    if (!this.trackersMap.has(trackerId)) {
       console.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
       return;
     }
 
-    return trackerInstance;
+    this.defaultTracker = this.trackersMap.get(trackerId);
   }
 }

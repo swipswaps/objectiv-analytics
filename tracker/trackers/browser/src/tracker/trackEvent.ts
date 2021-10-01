@@ -1,6 +1,6 @@
 import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext } from '@objectiv/schema';
 import ExtendableError from 'es6-error';
-import { AnyLocationContext, BrowserTracker, TaggableElement } from '../';
+import { AnyLocationContext, BrowserTracker, getTracker, TaggableElement } from '../';
 import { parseLocationContext } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
@@ -39,7 +39,7 @@ export class TrackEventError extends ExtendableError {}
  */
 export const trackEvent = (parameters: TrackEventParameters) => {
   try {
-    const { eventFactory, element, tracker = window.objectiv.trackers.get(parameters.trackerId) } = parameters;
+    const { eventFactory, element, tracker = getTracker(parameters.trackerId) } = parameters;
 
     // For trackable Elements traverse the DOM to reconstruct their Location
     const locationStack: AnyLocationContext[] = [];

@@ -1,6 +1,6 @@
-import { TrackerRepository } from "@objectiv/tracker-core";
+import { TrackerRepository } from '@objectiv/tracker-core';
 import { windowExists } from './helpers';
-import { BrowserTracker } from "./tracker/BrowserTracker";
+import { BrowserTracker } from './tracker/BrowserTracker';
 
 /**
  * The interface of our namespace which will be extending the Window interface
@@ -30,7 +30,7 @@ if (windowExists()) {
 /**
  * Retrieves the TrackerRepository instance from the window.objectiv global namespace
  */
-export const getTrackerRepository = () => {
+export const getTrackerRepository = (): TrackerRepository<BrowserTracker> => {
   if (!windowExists()) {
     throw new Error('Cannot access the Window interface.');
   }
@@ -40,14 +40,18 @@ export const getTrackerRepository = () => {
 
 /**
  * Retrieves a specific instance of the tracker from the TrackerRepository.
- *
- * The `trackerId` parameter is optional only when a single Tracker instance has been configured.
- * When multiple Tracker instances have been configured, providing a `trackerId` becomes a requirement.
  */
-export const getTracker = (trackerId?: string) => {
+export const getTracker = (trackerId?: string): BrowserTracker => {
   if (!windowExists()) {
     throw new Error('Cannot access the Window interface.');
   }
 
-  return window.objectiv.trackers.get(trackerId);
+  const tracker = window.objectiv.trackers.get(trackerId);
+
+  // Throw if we did not manage to get a tracker instance
+  if (!tracker) {
+    throw new Error('No Tracker found. Please create one via `makeTracker`.');
+  }
+
+  return tracker;
 };

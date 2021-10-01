@@ -12,7 +12,43 @@ describe('TrackerRepository', () => {
     const trackerRepository = new TrackerRepository();
     expect(trackerRepository.trackersMap.size).toBe(0);
     expect(trackerRepository.get()).toBeUndefined();
-    expect(console.error).toHaveBeenCalledWith('｢objectiv:TrackerRepository｣ There are no Tracker Instances.');
+    expect(console.error).toHaveBeenCalledWith('｢objectiv:TrackerRepository｣ There are no Trackers.');
+  });
+
+  it('should console.error when attempting to set a default Tracker that does not exist', () => {
+    const trackerRepository = new TrackerRepository();
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-1' }));
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-2' }));
+    expect(trackerRepository.trackersMap.size).toBe(2);
+    trackerRepository.setDefault('app-id-3');
+    expect(console.error).toHaveBeenCalledWith('｢objectiv:TrackerRepository｣ Tracker `app-id-3` not found.');
+  });
+
+  it('should make only the first added new Tracker the default tracker', () => {
+    const trackerRepository = new TrackerRepository();
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-1' }));
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-2' }));
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-3' }));
+    expect(trackerRepository.defaultTracker?.applicationId).toBe('app-id-1');
+  });
+
+  it('should not allow deleting the default Tracker when there are multiple trackers', () => {
+    const trackerRepository = new TrackerRepository();
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-1' }));
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-2' }));
+    expect(trackerRepository.trackersMap.size).toBe(2);
+    expect(trackerRepository.defaultTracker?.applicationId).toBe('app-id-1');
+    trackerRepository.delete('app-id-1');
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith(
+      '｢objectiv:TrackerRepository｣ `app-id-1` is the default Tracker. Please set another as default before deleting it.'
+    );
+    expect(trackerRepository.trackersMap.size).toBe(2);
+    expect(trackerRepository.defaultTracker?.applicationId).toBe('app-id-1');
+    trackerRepository.setDefault('app-id-2');
+    trackerRepository.delete('app-id-1');
+    expect(trackerRepository.trackersMap.size).toBe(1);
+    expect(trackerRepository.defaultTracker?.applicationId).toBe('app-id-2');
   });
 
   it('should add a new Tracker in the trackersMap', () => {
@@ -20,7 +56,7 @@ describe('TrackerRepository', () => {
     trackerRepository.add(new Tracker({ applicationId: 'app-id' }));
     expect(trackerRepository.trackersMap.size).toBe(1);
     expect(trackerRepository.get()).toBeInstanceOf(Tracker);
-    expect(trackerRepository.get().applicationId).toBe('app-id');
+    expect(trackerRepository.get()?.applicationId).toBe('app-id');
     expect(console.error).not.toHaveBeenCalled();
   });
 
@@ -29,27 +65,23 @@ describe('TrackerRepository', () => {
     trackerRepository.add(new Tracker({ applicationId: 'app-id' }));
     expect(trackerRepository.trackersMap.size).toBe(1);
     expect(trackerRepository.get()).toBeInstanceOf(Tracker);
-    expect(trackerRepository.get().applicationId).toBe('app-id');
+    expect(trackerRepository.get()?.applicationId).toBe('app-id');
     expect(console.error).not.toHaveBeenCalled();
     trackerRepository.delete('app-id');
     expect(trackerRepository.trackersMap.size).toBe(0);
     expect(console.error).not.toHaveBeenCalled();
   });
 
-  it('should create three new Trackers and get should work only when specifying a trackerId', () => {
+  it('should create three new Trackers and get should return the first one', () => {
     const trackerRepository = new TrackerRepository();
     trackerRepository.add(new Tracker({ applicationId: 'app-id-1' }));
     trackerRepository.add(new Tracker({ applicationId: 'app-id-2' }));
     trackerRepository.add(new Tracker({ applicationId: 'app-id-3' }));
     expect(trackerRepository.trackersMap.size).toBe(3);
-    expect(trackerRepository.get()).toBeUndefined();
-    expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(
-      '｢objectiv:TrackerRepository｣ Multiple Tracker Instances. Please provide a `trackerId`.'
-    );
-    expect(trackerRepository.get('app-id-1').applicationId).toBe('app-id-1');
-    expect(trackerRepository.get('app-id-2').applicationId).toBe('app-id-2');
-    expect(trackerRepository.get('app-id-3').applicationId).toBe('app-id-3');
+    expect(trackerRepository.get()?.applicationId).toBe('app-id-1');
+    expect(trackerRepository.get('app-id-1')?.applicationId).toBe('app-id-1');
+    expect(trackerRepository.get('app-id-2')?.applicationId).toBe('app-id-2');
+    expect(trackerRepository.get('app-id-3')?.applicationId).toBe('app-id-3');
   });
 
   it('should allow creating multiple Trackers for the same application', () => {
@@ -61,9 +93,9 @@ describe('TrackerRepository', () => {
     expect(trackerRepository.get('app-id-1')).toBeUndefined();
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenCalledWith('｢objectiv:TrackerRepository｣ Tracker `app-id-1` not found.');
-    expect(trackerRepository.get('tracker-1').applicationId).toBe('app-id');
-    expect(trackerRepository.get('tracker-2').applicationId).toBe('app-id');
-    expect(trackerRepository.get('tracker-3').applicationId).toBe('app-id');
+    expect(trackerRepository.get('tracker-1')?.applicationId).toBe('app-id');
+    expect(trackerRepository.get('tracker-2')?.applicationId).toBe('app-id');
+    expect(trackerRepository.get('tracker-3')?.applicationId).toBe('app-id');
   });
 
   it('should not allow overwriting an existing Tracker instance', () => {

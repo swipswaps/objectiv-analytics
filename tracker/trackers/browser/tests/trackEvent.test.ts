@@ -39,20 +39,17 @@ describe('trackEvent', () => {
 
   it('should console.error if a Tracker instance cannot be retrieved and was not provided either', async () => {
     window.objectiv.trackers.delete('test');
-    expect(getTracker()).toBeUndefined();
+    expect(() => getTracker()).toThrow();
     jest.spyOn(console, 'error');
 
     const parameters = { eventFactory: makeClickEvent, element: testElement };
     trackEvent(parameters);
 
     expect(console.error).toHaveBeenCalledTimes(2);
-    expect(console.error).toHaveBeenNthCalledWith(
-      1,
-      '｢objectiv:TrackerRepository｣ There are no Tracker Instances.'
-    );
+    expect(console.error).toHaveBeenNthCalledWith(1, '｢objectiv:TrackerRepository｣ There are no Trackers.');
     expect(console.error).toHaveBeenNthCalledWith(
       2,
-      new TypeError("Cannot read property 'trackEvent' of undefined"),
+      new Error('No Tracker found. Please create one via `makeTracker`.'),
       parameters
     );
 
@@ -60,7 +57,7 @@ describe('trackEvent', () => {
     expect(console.error).toHaveBeenCalledTimes(4);
     expect(console.error).toHaveBeenNthCalledWith(
       4,
-      new ReferenceError("Cannot read property 'trackEvent' of undefined")
+      new Error('No Tracker found. Please create one via `makeTracker`.')
     );
   });
 
