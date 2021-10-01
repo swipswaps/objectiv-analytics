@@ -124,16 +124,12 @@ class TypeRegistry:
                               value_types: List[Type]):
         """ TODO: comments"""
         self._real_init()
-        # todo: use dtypes consistently, so we don't have to lower() it in some places
-        dtype = dtype.lower()
         self.dtype_series[dtype] = series_type
         for value_type in value_types:
             self.value_type_dtype.append((value_type, dtype))
 
     def get_series_type_from_dtype(self, dtype: str) -> Type['BuhTuhSeries']:
         self._real_init()
-        # todo: use dtypes consistently, so we don't have to lower() it in some places
-        dtype = dtype.lower()
         if dtype not in self.dtype_series:
             raise ValueError(f'Unknown dtype: {dtype}')
         return self.dtype_series[dtype]
@@ -147,8 +143,7 @@ class TypeRegistry:
         # exception for values that are BuhTuhSeries. Check: do we need this exception?
         from buhtuh.pandasql import BuhTuhSeries
         if isinstance(value, BuhTuhSeries):
-            # todo: use dtypes consistently, so we don't have to lower() it in some places
-            return value.dtype.lower()
+            return value.dtype
         # iterate in reverse, the last item added that matches is used in case where multiple entries
         # match.
         for type_object, dtype in self.value_type_dtype[::-1]:
