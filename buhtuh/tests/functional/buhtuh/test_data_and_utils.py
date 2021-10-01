@@ -12,7 +12,7 @@ from typing import List, Union, Type
 import sqlalchemy
 from sqlalchemy.engine import ResultProxy
 
-from buhtuh import BuhTuhDataFrame, BuhTuhSeries, types
+from buhtuh import BuhTuhDataFrame, BuhTuhSeries, types, get_series_type_from_db_dtype
 
 DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
 
@@ -155,8 +155,6 @@ def assert_db_type(
     db_type = db_values[0][0]
     if expected_db_type:
         assert db_type == expected_db_type
-    registry = types.TypeRegistry()
-    registry._real_init()
-    series_type = registry.get_series_type_from_db_dtype(db_type)
+    series_type = get_series_type_from_db_dtype(db_type)
     assert series_type == expected_series_type
 

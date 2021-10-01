@@ -10,8 +10,8 @@ from sqlalchemy.engine import Engine
 
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
-from buhtuh.types import get_series_type_from_dtype, value_to_dtype
-
+from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_series_type_from_db_dtype, \
+    get_dtype_from_db_dtype
 
 DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
 ColumnNames = Union[str, List[str]]
@@ -108,7 +108,7 @@ class BuhTuhDataFrame:
         return {column: data.dtype for column, data in self.data.items()}
 
     @classmethod
-    def _get_dtypes(cls, engine, node):
+    def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
         new_node = CustomSqlModel(sql='select * from {{previous}} limit 0')(previous=node)
         select_statement = to_sql(new_node)
         sql = f"""
@@ -121,7 +121,7 @@ class BuhTuhDataFrame:
         """
         with engine.connect() as conn:
             res = conn.execute(sql)
-        return {x[0]: x[1] for x in res.fetchall()}
+        return {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
 
     @classmethod
     def from_table(cls, engine, table_name: str, index: List[str]) -> 'BuhTuhDataFrame':

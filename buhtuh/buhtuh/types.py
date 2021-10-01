@@ -21,6 +21,16 @@ def get_series_type_from_dtype(dtype: str) -> Type['BuhTuhSeries']:
     return _registry.get_series_type_from_dtype(dtype)
 
 
+def get_series_type_from_db_dtype(db_dtype: str) -> Type['BuhTuhSeries']:
+    """ Given a database datatype, return the correct BuhTuhSeries subclass. """
+    return _registry.get_series_type_from_db_dtype(db_dtype)
+
+
+def get_dtype_from_db_dtype(db_dtype: str) -> str:
+    """ Given a database datatype, return the dtype of the BuhTuhSeries subclass for that datatype. """
+    return get_series_type_from_db_dtype(db_dtype).dtype  # type: ignore
+
+
 def value_to_dtype(value: Any) -> str:
     """
     Give the dtype, as a string of the given value.
@@ -119,7 +129,6 @@ class TypeRegistry:
             self.dtype_to_series[dtype_alias] = klass
 
     def _register_db_dtype_klass(self, klass: Type['BuhTuhSeries'], override=False):
-        # TODO: do we even need this? We only use this in a test case it seems?
         if klass.db_dtype is None:
             return
         db_dtype = cast(str, klass.db_dtype)
