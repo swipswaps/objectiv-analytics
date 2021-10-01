@@ -48,7 +48,7 @@ describe('trackEvent', () => {
     expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(
       1,
-      '｢objectiv:TrackerRepository｣ No Tracker Instances. Use `makeTracker` to create one.'
+      '｢objectiv:TrackerRepository｣ There are no Tracker Instances.'
     );
     expect(console.error).toHaveBeenNthCalledWith(
       2,

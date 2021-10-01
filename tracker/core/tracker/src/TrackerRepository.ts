@@ -1,22 +1,25 @@
 /**
  * The interface of the TrackerRepository
  */
-import { BrowserTracker } from '@objectiv/tracker-browser';
+import { Tracker } from "./Tracker";
 
-export interface TrackerRepository {
-  trackersMap: Map<string, BrowserTracker>;
-  add(newInstance: BrowserTracker): void;
+/**
+ * Generic type for TrackerRepository.
+ */
+export interface TrackerRepositoryInterface<T extends Tracker> {
+  trackersMap: Map<string, T>;
+  add(newInstance: T): void;
   delete(trackerId: string): void;
-  getDefault(trackerId?: string): BrowserTracker;
+  get(trackerId?: string): T;
 }
 
 /**
  * TrackerRepository allows developers to create and use multiple Tracker instances in the same Application.
  */
-export class TrackerRepository implements TrackerRepository {
-  trackersMap = new Map<string, BrowserTracker>();
+export class TrackerRepository<T extends Tracker> implements TrackerRepositoryInterface<T> {
+  trackersMap = new Map<string, T>();
 
-  add(newInstance: BrowserTracker) {
+  add(newInstance: T) {
     if (this.trackersMap.has(newInstance.trackerId)) {
       console.error(`｢objectiv:TrackerRepository｣ Tracker \`${newInstance.trackerId}\` already exists.`);
       return;
@@ -30,7 +33,7 @@ export class TrackerRepository implements TrackerRepository {
 
   get(trackerId?: string) {
     if (this.trackersMap.size === 0) {
-      console.error(`｢objectiv:TrackerRepository｣ No Tracker Instances. Use \`makeTracker\` to create one.`);
+      console.error(`｢objectiv:TrackerRepository｣ There are no Tracker Instances.`);
       return;
     }
 
