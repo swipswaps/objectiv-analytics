@@ -13,6 +13,8 @@ export interface TrackerRepositoryInterface<T extends Tracker> {
   delete(trackerId: string): void;
   get(trackerId?: string): T | undefined;
   setDefault(trackerId: string): void;
+  activateAll(): void;
+  deactivateAll(): void;
 }
 
 /**
@@ -75,5 +77,13 @@ export class TrackerRepository<T extends Tracker> implements TrackerRepositoryIn
     }
 
     this.defaultTracker = this.trackersMap.get(trackerId);
+  }
+
+  activateAll() {
+    this.trackersMap.forEach((tracker) => tracker.setActive(true));
+  }
+
+  deactivateAll() {
+    this.trackersMap.forEach((tracker) => tracker.setActive(false));
   }
 }

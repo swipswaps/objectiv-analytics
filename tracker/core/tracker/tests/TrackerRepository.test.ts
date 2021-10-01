@@ -1,4 +1,5 @@
 import { Tracker, TrackerRepository } from '../src';
+import { mockConsole } from './mocks/MockConsole';
 
 describe('TrackerRepository', () => {
   afterEach(() => {
@@ -111,6 +112,46 @@ describe('TrackerRepository', () => {
     expect(console.error).toHaveBeenNthCalledWith(
       2,
       '｢objectiv:TrackerRepository｣ Tracker `tracker-1` already exists.'
+    );
+  });
+
+  it('should activate all inactive Tracker instances', () => {
+    const trackerRepository = new TrackerRepository();
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-1', active: false, console: mockConsole }));
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-2', console: mockConsole }));
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-3', active: false, console: mockConsole }));
+    jest.resetAllMocks();
+    trackerRepository.activateAll();
+    expect(mockConsole.log).toHaveBeenCalledTimes(2);
+    expect(mockConsole.log).toHaveBeenNthCalledWith(
+      1,
+      '%c｢objectiv:Tracker:app-id-1｣ New state: active',
+      'font-weight: bold'
+    );
+    expect(mockConsole.log).toHaveBeenNthCalledWith(
+      2,
+      '%c｢objectiv:Tracker:app-id-3｣ New state: active',
+      'font-weight: bold'
+    );
+  });
+
+  it('should deactivate all active Tracker instances', () => {
+    const trackerRepository = new TrackerRepository();
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-1', console: mockConsole }));
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-2', active: false, console: mockConsole }));
+    trackerRepository.add(new Tracker({ applicationId: 'app-id-3', console: mockConsole }));
+    jest.resetAllMocks();
+    trackerRepository.deactivateAll();
+    expect(mockConsole.log).toHaveBeenCalledTimes(2);
+    expect(mockConsole.log).toHaveBeenNthCalledWith(
+      1,
+      '%c｢objectiv:Tracker:app-id-1｣ New state: inactive',
+      'font-weight: bold'
+    );
+    expect(mockConsole.log).toHaveBeenNthCalledWith(
+      2,
+      '%c｢objectiv:Tracker:app-id-3｣ New state: inactive',
+      'font-weight: bold'
     );
   });
 });

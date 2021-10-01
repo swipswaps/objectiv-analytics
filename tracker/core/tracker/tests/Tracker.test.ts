@@ -264,10 +264,22 @@ describe('Tracker', () => {
       testTracker.setActive(false);
       testTracker.trackEvent(testEvent);
       expect(testTransport.handle).not.toHaveBeenCalled();
-      expect(mockConsole.log).toHaveBeenCalledTimes(3)
-      expect(mockConsole.log).toHaveBeenNthCalledWith(1, `%c｢objectiv:Tracker:app-id｣ New state: inactive`, "font-weight: bold")
-      expect(mockConsole.log).toHaveBeenNthCalledWith(2, `%c｢objectiv:Tracker:app-id｣ New state: active`, "font-weight: bold")
-      expect(mockConsole.log).toHaveBeenNthCalledWith(3, `%c｢objectiv:Tracker:app-id｣ New state: inactive`, "font-weight: bold")
+      expect(mockConsole.log).toHaveBeenCalledTimes(3);
+      expect(mockConsole.log).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:Tracker:app-id｣ New state: inactive`,
+        'font-weight: bold'
+      );
+      expect(mockConsole.log).toHaveBeenNthCalledWith(
+        2,
+        `%c｢objectiv:Tracker:app-id｣ New state: active`,
+        'font-weight: bold'
+      );
+      expect(mockConsole.log).toHaveBeenNthCalledWith(
+        3,
+        `%c｢objectiv:Tracker:app-id｣ New state: inactive`,
+        'font-weight: bold'
+      );
     });
   });
 });
