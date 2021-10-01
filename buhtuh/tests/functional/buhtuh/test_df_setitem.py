@@ -33,8 +33,10 @@ def check_set_const(constant, db_type: str, expected_series: Type[BuhTuhSeries])
 
 
 def test_set_const_int():
-    check_set_const(np.int64(4), 'integer', BuhTuhSeriesInt64)  # TODO: should be bigint?
-    check_set_const(5, 'integer', BuhTuhSeriesInt64)  # TODO: should be bigint?
+    check_set_const(np.int64(4), 'bigint', BuhTuhSeriesInt64)
+    check_set_const(5, 'bigint', BuhTuhSeriesInt64)
+    check_set_const(2147483647, 'bigint', BuhTuhSeriesInt64)
+    check_set_const(2147483648, 'bigint', BuhTuhSeriesInt64)
 
 
 def test_set_const_float():
@@ -80,7 +82,7 @@ def test_set_const_int_from_series():
     max_series = max['founding_sum']
     max_value = max_series[1]
     bt['max_founding'] = max_value
-    assert_db_type(bt['max_founding'], 'integer', BuhTuhSeriesInt64, )
+    assert_db_type(bt['max_founding'], 'bigint', BuhTuhSeriesInt64, )
 
     assert_equals_data(
         bt,

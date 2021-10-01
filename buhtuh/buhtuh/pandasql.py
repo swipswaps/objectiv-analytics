@@ -975,7 +975,7 @@ class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
     def constant_to_sql(value: int) -> str:
         if not isinstance(value, (int, numpy.int64)):
             raise TypeError(f'value should be int, actual type: {type(value)}')
-        return str(value)
+        return f'{value}::bigint'
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
@@ -984,7 +984,7 @@ class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
         else:
             if source_dtype not in ['float64', 'bool', 'string']:
                 raise ValueError(f'cannot convert {source_dtype} to int64')
-            return f'({expression})::int'
+            return f'({expression})::bigint'
 
 
 class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
