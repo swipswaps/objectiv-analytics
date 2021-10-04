@@ -12,7 +12,8 @@ from typing import List, Union, Type
 import sqlalchemy
 from sqlalchemy.engine import ResultProxy
 
-from buhtuh import BuhTuhDataFrame, BuhTuhSeries, types, get_series_type_from_db_dtype
+from buhtuh import BuhTuhDataFrame, BuhTuhSeries
+from buhtuh.types import get_series_type_from_db_dtype
 
 DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
 

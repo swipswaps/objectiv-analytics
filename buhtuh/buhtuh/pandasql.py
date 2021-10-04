@@ -1,7 +1,7 @@
 import datetime
 from abc import abstractmethod, ABC
 from copy import copy
-from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Hashable
+from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Type
 
 import numpy
 import pandas
@@ -10,8 +10,7 @@ from sqlalchemy.engine import Engine
 
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
-from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_series_type_from_db_dtype, \
-    get_dtype_from_db_dtype
+from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_dtype_from_db_dtype
 
 DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
 ColumnNames = Union[str, List[str]]
@@ -106,6 +105,22 @@ class BuhTuhDataFrame:
     @property
     def dtypes(self):
         return {column: data.dtype for column, data in self.data.items()}
+
+    def __eq__(self, other: Any) -> bool:
+        # TODO: add test
+        if not isinstance(other, BuhTuhDataFrame):
+            return False
+        # We cannot just compare the data and index properties, because the BuhTuhSeries objects have
+        # overridden the __eq__ function in a way that makes normal comparisons not useful. We have to use
+        # equals() instead
+        if self.index.keys() != other.index.keys():
+            return False
+        if self.data.keys() != other.data.keys():
+            return False
+        for key in self.all_series.keys():
+            if not self.all_series[key].equals(other.all_series[key]):
+                return False
+        return self.engine == other.engine and self.base_node == other.base_node
 
     @classmethod
     def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
@@ -415,10 +430,8 @@ class BuhTuhDataFrame:
         :return: New DataFrame with the specified column(s) cast to the specified type
         """
         # Check and/or convert parameters
-        if isinstance(dtype, str):
+        if not isinstance(dtype, dict):
             dtype = {column: dtype for column in self.data_columns}
-        if not isinstance(dtype, dict) or not all(isinstance(column, str) for column in dtype.values()):
-            raise ValueError(f'dtype should either be a string or a dictionary mapping to strings.')
         not_existing_columns = set(dtype.keys()) - set(self.data_columns)
         if not_existing_columns:
             raise ValueError(f'Specified columns do not exist: {not_existing_columns}')
@@ -672,28 +685,66 @@ class BuhTuhSeries(ABC):
     @classmethod
     @abstractmethod
     def dtype(cls) -> str:
-        raise NotImplementedError
-
-    @property
-    @classmethod
-    @abstractmethod
-    def dtype_aliases(cls) -> Tuple[Hashable, ...]:
-        raise NotImplementedError
-
-    @property
-    @classmethod
-    @abstractmethod
-    def db_dtype(cls) -> Optional[str]:
-        raise NotImplementedError
-
-    @staticmethod
-    @abstractmethod
-    def constant_to_sql(value: Any) -> str:
+        """
+        The dtype of this BuhTuhSeries. The dtype is used to uniquely identify data of the type that is
+        represented by this BuhTuhSeries subclass. The dtype should be unique among all BuhTuhSeries
+        subclasses.
+        """
         raise NotImplementedError()
 
-    @staticmethod
+    @property
+    @classmethod
+    def dtype_aliases(cls) -> Tuple[Union[Type, str], ...]:
+        """
+        One or more aliases for the dtype.
+        For example a BuhTuhBooleanSeries might have dtype 'bool', and as an alias the string 'boolean' and
+        the builtin `bool`. An alias can be used in a similar way as the real dtype, e.g. to cast data to a
+        certain type: `x.astype('boolean')` is the same as `x.astype('bool')`.
+
+        Subclasses can override this value to indicate what strings they consider aliases for their dtype.
+        """
+        return tuple()
+
+    @property
+    @classmethod
+    def supported_db_dtype(cls) -> Optional[str]:
+        """
+        Database level data type, that can be expressed using this BuhTuhSeries type.
+        Example: 'double precision' for a float in Postgres
+
+        Subclasses should override this value if they intend to be the default class to handle such types.
+        When creating a BuhTuhDataFrame from existing data in a database, this field will be used to
+        determine what BuhTuhSeries to instantiate for a column.
+        """
+        return None
+
+    @property
+    @classmethod
+    def supported_value_types(cls) -> Tuple[Type, ...]:
+        """
+        List of python types that can be converted to database values using the `value_to_sql()` method.
+
+        Subclasses can override this value to indicate what types are supported by value_to_sql().
+        """
+        return tuple()
+
+    @classmethod
     @abstractmethod
-    def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
+    def value_to_sql(cls, value: Any) -> str:
+        """
+        Give the sql expression for the given value.
+        :return: sql expression of the value
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: str) -> str:
+        """
+        Give the sql expression to convert the given expression, of the given source dtype to the dtype of
+        this Series.
+        :return: sql expression
+        """
         raise NotImplementedError()
 
     @property
@@ -796,12 +847,14 @@ class BuhTuhSeries(ABC):
             expression=expression
         )
 
-    def astype(self, dtype: str) -> 'BuhTuhSeries':
-        if dtype == self.dtype:
+    def astype(self, dtype: Union[str, Type]) -> 'BuhTuhSeries':
+        if dtype == self.dtype or dtype in self.dtype_aliases:
             return self
         series_type = get_series_type_from_dtype(dtype)
         expression = series_type.from_dtype_to_sql(self.dtype, self.get_expression())
-        return self._get_derived_series(new_dtype=dtype, expression=expression)
+        # get the real dtype, in case the provided dtype was an alias. mypy needs some help
+        new_dtype = cast(str, series_type.dtype)
+        return self._get_derived_series(new_dtype=new_dtype, expression=expression)
 
     @classmethod
     def from_const(cls,
@@ -813,9 +866,32 @@ class BuhTuhSeries(ABC):
             base=base,
             name=name,
             dtype=dtype,
-            expression=cls.constant_to_sql(value)
+            expression=cls.value_to_sql(value)
         )
         return result
+
+    def equals(self, other: Any) -> bool:
+        """
+        Checks whether other is the same as self. This implements the check that would normally be
+        implemented in __eq__, but we already use that method for other purposes.
+        This strictly checks that other is the same type as self. If other is a subclass this will return
+        False.
+        """
+        # TODO: add test
+        if not isinstance(other, self.__class__) or not isinstance(self, other.__class__):
+            return False
+        if (self.index is None) != (other.index is None):
+            return False
+        if self.index is not None and other.index is not None:
+            if self.index.keys() != other.index.keys():
+                return False
+            for key in self.index.keys():
+                if not self.index[key].equals(other.index[key]):
+                    return False
+        return self.engine == other.engine and \
+            self.base_node == other.base_node and \
+            self.name == other.name and \
+            self.expression == other.expression
 
     # Below methods are not abstract, as they can be optionally be implemented by subclasses.
     def __add__(self, other) -> 'BuhTuhSeries':
@@ -912,12 +988,13 @@ class BuhTuhSeries(ABC):
 
 class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
     dtype = 'bool'
-    dtype_aliases = ('boolean', '?')
-    db_dtype = 'boolean'
+    dtype_aliases = ('boolean', '?', bool)
+    supported_db_dtype = 'boolean'
+    supported_value_types = (bool, )
 
-    @staticmethod
-    def constant_to_sql(value: bool) -> str:
-        if not isinstance(value, bool):
+    @classmethod
+    def value_to_sql(cls, value: bool) -> str:
+        if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be bool, actual type: {type(value)}')
         return str(value)
 
@@ -998,11 +1075,12 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
 class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
     dtype = 'int64'
     dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64)
-    db_dtype = 'bigint'
+    supported_db_dtype = 'bigint'
+    supported_value_types = (int, numpy.int64)
 
-    @staticmethod
-    def constant_to_sql(value: int) -> str:
-        if not isinstance(value, (int, numpy.int64)):
+    @classmethod
+    def value_to_sql(cls, value: int) -> str:
+        if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be int, actual type: {type(value)}')
         return f'{value}::bigint'
 
@@ -1019,11 +1097,12 @@ class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
 class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
     dtype = 'float64'
     dtype_aliases = ('float', 'double', 'f8', float, numpy.float64, 'double precision')
-    db_dtype = 'double precision'
+    supported_db_dtype = 'double precision'
+    supported_value_types = (float, numpy.float64)
 
-    @staticmethod
-    def constant_to_sql(value: float) -> str:
-        if not isinstance(value, float):
+    @classmethod
+    def value_to_sql(cls, value: Union[float, numpy.float64]) -> str:
+        if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be float, actual type: {type(value)}')
         return f'{value}::float'
 
@@ -1040,11 +1119,12 @@ class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
 class BuhTuhSeriesString(BuhTuhSeries):
     dtype = 'string'
     dtype_aliases = ('text', str, 'json', 'uuid')  # todo: create more specific types for json and uuid
-    db_dtype = 'text'
+    supported_db_dtype = 'text'
+    supported_value_types = (str, )
 
-    @staticmethod
-    def constant_to_sql(value: str) -> str:
-        if not isinstance(value, str):
+    @classmethod
+    def value_to_sql(cls, value: str) -> str:
+        if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be str, actual type: {type(value)}')
         # TODO: fix sql injection!
         return f"'{value}'"
@@ -1127,17 +1207,18 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
     """
     dtype = 'timestamp'
     dtype_aliases = ('datetime64', 'datetime64[ns]', numpy.datetime64)
-    db_dtype = 'timestamp without time zone'
+    supported_db_dtype = 'timestamp without time zone'
+    supported_value_types = (datetime.datetime, datetime.date, str)
 
-    @staticmethod
-    def constant_to_sql(value: Union[str, datetime.datetime]) -> str:
+    @classmethod
+    def value_to_sql(cls, value: Union[str, datetime.datetime]) -> str:
         if isinstance(value, datetime.date):
             value = str(value)
         if not isinstance(value, str):
             raise TypeError(f'value should be str or datetime.datetime, actual type: {type(value)}')
         # TODO: fix sql injection!
         # Maybe we should do some checking on syntax here?
-        return f"'{value}'::{BuhTuhSeriesTimestamp.db_dtype}"
+        return f"'{value}'::{BuhTuhSeriesTimestamp.supported_db_dtype}"
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
@@ -1146,7 +1227,7 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
         else:
             if source_dtype not in ['string', 'date']:
                 raise ValueError(f'cannot convert {source_dtype} to timestamp')
-            return f'({expression}::{BuhTuhSeriesTimestamp.db_dtype})'
+            return f'({expression}::{BuhTuhSeriesTimestamp.supported_db_dtype})'
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
@@ -1158,7 +1239,7 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
         """
         Allow standard PG formatting of this Series (to a string type)
 
-        :param format: The format as defined in https://www.postgresql.org/docs/9.1/functions-formatting.html
+        :param format: The format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
         :return: a derived Series that accepts and returns formatted timestamp strings
         """
         expr = f"to_char({self.expression}, '{format}')"
@@ -1178,7 +1259,18 @@ class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
     """
     dtype = 'date'
     dtype_aliases = tuple()  # type: ignore
-    db_dtype = 'date'
+    supported_db_dtype = 'date'
+    supported_value_types = (datetime.datetime, datetime.date, str)
+
+    @classmethod
+    def value_to_sql(cls, value: Union[str, datetime.date]) -> str:
+        if isinstance(value, datetime.date):
+            value = str(value)
+        if not isinstance(value, str):
+            raise TypeError(f'value should be str or datetime.date, actual type: {type(value)}')
+        # TODO: fix sql injection!
+        # Maybe we should do some checking on syntax here?
+        return f"'{value}'::{BuhTuhSeriesDate.supported_db_dtype}"
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
@@ -1187,17 +1279,7 @@ class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to date')
-            return f'({expression}::{BuhTuhSeriesDate.db_dtype})'
-
-    @staticmethod
-    def constant_to_sql(value: Union[str, datetime.date]) -> str:
-        if isinstance(value, datetime.date):
-            value = str(value)
-        if not isinstance(value, str):
-            raise TypeError(f'value should be str or datetime.date, actual type: {type(value)}')
-        # TODO: fix sql injection!
-        # Maybe we should do some checking on syntax here?
-        return f"'{value}'::{BuhTuhSeriesDate.db_dtype}"
+            return f'({expression}::{BuhTuhSeriesDate.supported_db_dtype})'
 
 
 class BuhTuhSeriesTime(BuhTuhSeries):
@@ -1207,17 +1289,18 @@ class BuhTuhSeriesTime(BuhTuhSeries):
     """
     dtype = 'time'
     dtype_aliases = tuple()  # type: ignore
-    db_dtype = 'time without time zone'
+    supported_db_dtype = 'time without time zone'
+    supported_value_types = (datetime.time, str)
 
-    @staticmethod
-    def constant_to_sql(value: Union[str, datetime.time]) -> str:
+    @classmethod
+    def value_to_sql(cls, value: Union[str, datetime.time]) -> str:
         if isinstance(value, datetime.time):
             value = str(value)
         if not isinstance(value, str):
             raise TypeError(f'value should be str or datetime.time, actual type: {type(value)}')
         # TODO: fix sql injection!
         # Maybe we should do some checking on syntax here?
-        return f"'{value}'::{BuhTuhSeriesTime.db_dtype}"
+        return f"'{value}'::{BuhTuhSeriesTime.supported_db_dtype}"
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
@@ -1226,7 +1309,7 @@ class BuhTuhSeriesTime(BuhTuhSeries):
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to time')
-            return f'({expression}::{BuhTuhSeriesTime.db_dtype})'
+            return f'({expression}::{BuhTuhSeriesTime.supported_db_dtype})'
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
@@ -1238,10 +1321,11 @@ class BuhTuhSeriesTime(BuhTuhSeries):
 class BuhTuhSeriesTimedelta(BuhTuhSeries):
     dtype = 'timedelta'
     dtype_aliases = ('interval',)
-    db_dtype = 'interval'
+    supported_db_dtype = 'interval'
+    supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
 
-    @staticmethod
-    def constant_to_sql(value: Union[str, numpy.timedelta64, datetime.timedelta]) -> str:
+    @classmethod
+    def value_to_sql(cls, value: Union[str, numpy.timedelta64, datetime.timedelta]) -> str:
         if isinstance(value, (numpy.timedelta64, datetime.timedelta)):
             value = str(value)
         if not isinstance(value, str):
@@ -1249,7 +1333,7 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
                             f'actual type: {type(value)}')
         # TODO: fix sql injection!
         # Maybe we should do some checking on syntax here?
-        return f"'{value}'::{BuhTuhSeriesTimedelta.db_dtype}"
+        return f"'{value}'::{BuhTuhSeriesTimedelta.supported_db_dtype}"
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
@@ -1258,7 +1342,7 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         else:
             if not source_dtype == 'string':
                 raise ValueError(f'cannot convert {source_dtype} to timedelta')
-            return f'({expression}::{BuhTuhSeriesTimedelta.db_dtype})'
+            return f'({expression}::{BuhTuhSeriesTimedelta.supported_db_dtype})'
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
