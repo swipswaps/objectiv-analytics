@@ -27,6 +27,7 @@
    :toctree:
    :recursive:
 
+   buhtuh.merge
    buhtuh.pandasql
    buhtuh.types
 
