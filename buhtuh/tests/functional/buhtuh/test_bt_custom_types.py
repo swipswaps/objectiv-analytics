@@ -4,25 +4,21 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from buhtuh import BuhTuhSeries
-from buhtuh.types import register_dtype, get_series_type_from_dtype, value_to_dtype
+from buhtuh.types import register_dtype, get_series_type_from_dtype, value_to_dtype, TypeRegistry
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
-def test_custom_type_register():
+def test_custom_type_register(monkeypatch):
+    # make sure monkeypatch the type-registry, as it should be restored after this test finishes.
+    monkeypatch.setattr('buhtuh.types._registry', TypeRegistry())
+
     class TestStringType(BuhTuhSeries):
         """ Test class for custom types. """
         dtype = 'test_type'
         dtype_aliases = ('test_type_1337', )
         supported_db_dtype = 'test_type'
-        supported_value_types = ()
+        supported_value_types = (str, int)
 
-    # make sure to reset type-registry, as we might manipulate that in multiple tests.
-    #  todo: use some pytest paradigm to reset registry?
-    from buhtuh.types import _registry
-    # todo: reset nicer
-    _registry.dtype_to_series = {}
-    _registry.value_type_to_series = []
-    _registry.db_dtype_to_series = {}
     # 'test_type' should not yet exist as dtype
     # and 'string' should be the dtype for a string value
     with pytest.raises(Exception):
@@ -35,13 +31,12 @@ def test_custom_type_register():
         """ Test class for custom types. """
         dtype = 'test_type'
         dtype_aliases = ('test_type_1337',)
+        supported_db_dtype = 'test_type'
+        supported_value_types = (str, int)
 
     assert get_series_type_from_dtype('test_type') is TestStringType
     assert value_to_dtype('a string') == 'string'
-    # todo: reset nicer
-    _registry.dtype_to_series = {}
-    _registry.value_type_to_series = []
-    _registry.db_dtype_to_series = {}
+    monkeypatch.setattr('buhtuh.types._registry', TypeRegistry())
 
     # now recreate TestStringType, and with registration decorator as default type for strings, and ints
     @register_dtype([str, int], override_registered_types=True)
@@ -57,17 +52,13 @@ def test_custom_type_register():
     assert value_to_dtype(123) == 'test_type'
     assert value_to_dtype(123.45) == 'float64'
 
-    # todo: reset nicer
-    _registry.dtype_to_series = {}
-    _registry.value_type_to_series = []
-    _registry.db_dtype_to_series = {}
-
 
 class ReversedStringType(BuhTuhSeries):
     """ Test class for custom types. """
     dtype = 'reversed_string'
     dtype_aliases = ('reversed_text', 'backwards_string')
     supported_db_dtype = 'text'
+    supported_value_types = (str,)
 
     @staticmethod
     def value_to_sql(value: str) -> str:
@@ -86,15 +77,17 @@ class ReversedStringType(BuhTuhSeries):
             return f'reverse(({expression})::text)'
 
 
-def test_custom_type():
+def test_custom_type(monkeypatch):
+    # make sure monkeypatch the type-registry, as it should be restored after this test finishes.
+    monkeypatch.setattr('buhtuh.types._registry', TypeRegistry())
+    # import after monkeypatching
+    from buhtuh.types import _registry
+
     bt = get_bt_with_test_data()
     bt_city = bt[['city']]
     with pytest.raises(Exception):
         # 'reversed_string' has not be registerd yet
         bt_city.astype('reversed_string')
-
-    #
-    from buhtuh.types import _registry
 
     # the db_dtype 'text' is already taken, so registering ReversedStringType should give an error
     with pytest.raises(Exception, match='db_dtype text, which is already assigned'):
@@ -127,7 +120,3 @@ def test_custom_type():
             [3, 'stlyrD']
         ]
     )
-    # todo: reset nicer
-    _registry.dtype_to_series = {}
-    _registry.value_type_to_series = []
-    _registry.db_dtype_to_series = {}
