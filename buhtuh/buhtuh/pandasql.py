@@ -107,15 +107,14 @@ class BuhTuhDataFrame:
         return {column: data.dtype for column, data in self.data.items()}
 
     def __eq__(self, other: Any) -> bool:
-        # TODO: add test
         if not isinstance(other, BuhTuhDataFrame):
             return False
         # We cannot just compare the data and index properties, because the BuhTuhSeries objects have
         # overridden the __eq__ function in a way that makes normal comparisons not useful. We have to use
         # equals() instead
-        if self.index.keys() != other.index.keys():
+        if list(self.index.keys()) != list(other.index.keys()):
             return False
-        if self.data.keys() != other.data.keys():
+        if list(self.data.keys()) != list(other.data.keys()):
             return False
         for key in self.all_series.keys():
             if not self.all_series[key].equals(other.all_series[key]):
@@ -877,13 +876,12 @@ class BuhTuhSeries(ABC):
         This strictly checks that other is the same type as self. If other is a subclass this will return
         False.
         """
-        # TODO: add test
         if not isinstance(other, self.__class__) or not isinstance(self, other.__class__):
             return False
         if (self.index is None) != (other.index is None):
             return False
         if self.index is not None and other.index is not None:
-            if self.index.keys() != other.index.keys():
+            if list(self.index.keys()) != list(other.index.keys()):
                 return False
             for key in self.index.keys():
                 if not self.index[key].equals(other.index[key]):
