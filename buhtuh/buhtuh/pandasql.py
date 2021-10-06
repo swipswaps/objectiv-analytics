@@ -1,7 +1,7 @@
 import datetime
 from abc import abstractmethod, ABC
 from copy import copy
-from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Type
+from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Type, NamedTuple
 
 import numpy
 import pandas
@@ -14,6 +14,11 @@ from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_dtype_f
 
 DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
 ColumnNames = Union[str, List[str]]
+
+
+class SortColumn(NamedTuple):
+    expression: str
+    asc: bool
 
 
 class BuhTuhDataFrame:
@@ -42,7 +47,8 @@ class BuhTuhDataFrame:
         engine: Engine,
         source_node: SqlModel,
         index: Dict[str, 'BuhTuhSeries'],
-        series: Dict[str, 'BuhTuhSeries']
+        series: Dict[str, 'BuhTuhSeries'],
+        order_by: List[SortColumn] = None
     ):
         """
         Instantiate a new BuhTuhDataFrame.
@@ -56,11 +62,13 @@ class BuhTuhDataFrame:
             the column.
         :param series: Dictionary mapping the name of each data-column to a Series object representing
             the column.
+        :param order_by: Optional list of sort-columns to order the DataFrame by
         """
         self._engine = engine
         self._base_node = source_node
         self._index = copy(index)
         self._data: Dict[str, BuhTuhSeries] = {}
+        self._order_by = order_by if order_by is not None else []
         for key, value in series.items():
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
@@ -172,7 +180,8 @@ class BuhTuhDataFrame:
             engine=engine,
             source_node=model,
             index_dtypes=index_dtypes,
-            dtypes=series_dtypes
+            dtypes=series_dtypes,
+            order_by=[]
         )
 
     @classmethod
@@ -243,7 +252,8 @@ class BuhTuhDataFrame:
             engine=engine,
             source_node=model,
             index_dtypes={index: index_dtype},
-            dtypes=dtypes
+            dtypes=dtypes,
+            order_by=None
         )
 
     @classmethod
@@ -252,7 +262,8 @@ class BuhTuhDataFrame:
             engine,
             source_node: SqlModel,
             index_dtypes: Dict[str, str],
-            dtypes: Dict[str, str]
+            dtypes: Dict[str, str],
+            order_by: List[SortColumn] = None
     ) -> 'BuhTuhDataFrame':
         """
         Get an instance with the right series instantiated based on the dtypes array. This assumes that
@@ -281,7 +292,8 @@ class BuhTuhDataFrame:
             engine=engine,
             source_node=source_node,
             index=index,
-            series=series
+            series=series,
+            order_by=order_by
         )
 
     def _df_or_series(self, df: 'BuhTuhDataFrame') -> DataFrameOrSeries:
@@ -315,7 +327,8 @@ class BuhTuhDataFrame:
                     engine=self.engine,
                     source_node=self.base_node,
                     index=self.index,
-                    series=selected_data
+                    series=selected_data,
+                    order_by=self._order_by
                 )
 
         if isinstance(key, slice):
@@ -325,7 +338,8 @@ class BuhTuhDataFrame:
                     engine=self.engine,
                     source_node=model,
                     index=self.index,
-                    series=self.data
+                    series=self.data,
+                    order_by=self._order_by
                 )
             )
 
@@ -351,7 +365,8 @@ class BuhTuhDataFrame:
                     engine=self.engine,
                     source_node=model,
                     index_dtypes={name: series.dtype for name, series in self.index.items()},
-                    dtypes={name: series.dtype for name, series in self.data.items()}
+                    dtypes={name: series.dtype for name, series in self.data.items()},
+                    order_by=[]  # filtering rows resets any sorting
                 )
             )
         raise NotImplementedError(f"Only str, (set|list)[str], slice or BuhTuhSeriesBoolean are supported, "
@@ -448,7 +463,8 @@ class BuhTuhDataFrame:
             engine=self.engine,
             source_node=self.base_node,
             index=self.index,
-            series=new_data
+            series=new_data,
+            order_by=self._order_by
         )
 
     def groupby(
@@ -491,30 +507,37 @@ class BuhTuhDataFrame:
 
         This does not modify the current DataFrame, instead it returns a new DataFrame.
 
+        The sorting will remain in the returned DataFrame as long as no operations are performed on that
+        frame that materially change the selected data. Operations that materially change the selected data
+        are for example groupby(), merge(), and filtering out rows. Adding or removing a column does not
+        materially change the selected data.
+
         :param by: column label or list of labels to sort by.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             by must also be a list and len(ascending) == len(by)
         :return: a new DataFrame with the specified ordering
         """
-        # TODO needs type check?
         if isinstance(by, str):
             by = [by]
+        elif not isinstance(by, list) or not all(isinstance(by_item, str) for by_item in by):
+            raise TypeError('by should be a str, or a list of str')
         if isinstance(ascending, bool):
             ascending = [ascending] * len(by)
         if len(by) != len(ascending):
             raise ValueError(f'Length of ascending ({len(ascending)}) != length of by ({len(by)})')
-        sort_order = dict(zip(by, ascending))
-        possible_names = list(self.index.keys()) + list(self.data.keys())
-        missing = [name for name in sort_order.keys() if name not in possible_names]
+        missing = set(by) - set(self.all_series.keys())
         if len(missing) > 0:
-            raise ValueError(f'Some series could not be found in current frame: {missing}')
+            raise KeyError(f'Some series could not be found in current frame: {missing}')
 
-        model = self.get_current_node(order=sort_order)
-        return BuhTuhDataFrame.get_instance(
+        by_series_list = [self.all_series[by_name] for by_name in by]
+        order_by = [SortColumn(expression=by_series.get_expression(), asc=asc_item)
+                    for by_series, asc_item in zip(by_series_list, ascending)]
+        return BuhTuhDataFrame(
             engine=self.engine,
-            source_node=model,
-            index_dtypes={name: series.dtype for name, series in self.index.items()},
-            dtypes={name: series.dtype for name, series in self.data.items()}
+            source_node=self.base_node,
+            index=self.index,
+            series=self.data,
+            order_by=order_by
         )
 
     def to_df(self) -> pandas.DataFrame:
@@ -544,15 +567,10 @@ class BuhTuhDataFrame:
         conn.close()
         return df
 
-    def get_current_node(
-            self,
-            limit: Union[int, slice] = None, order: Dict[str, bool] = None
-    ) -> SqlModel[CustomSqlModel]:
+    def get_current_node(self, limit: Union[int, slice] = None) -> SqlModel[CustomSqlModel]:
         """
         Translate the current state of this DataFrame into a SqlModel.
         :param limit: The limit to use
-        :param order: The data series to order by, where the bool specifies ASC or DESC.
-                      If missing will use index ASC otherwise)
         :return: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
 
@@ -578,8 +596,8 @@ class BuhTuhDataFrame:
                 if limit.stop is not None:
                     limit_str = f'limit {limit.stop}'
 
-        if order:
-            order_str = ", ".join(f"{name} {'asc' if asc else 'desc'}" for name, asc in order.items())
+        if self._order_by:
+            order_str = ", ".join(f"{sc.expression} {'asc' if sc.asc else 'desc'}" for sc in self._order_by)
             order_str = f'order by {order_str}'
         else:
             order_str = ''
@@ -775,6 +793,7 @@ class BuhTuhSeries(ABC):
 
     def sort_values(self, ascending=True):
         # TODO sort series directly instead of ripping it out of the df?
+        # TODO: does it even make sense to support this?
         return self.to_frame().sort_values(by=self.name, ascending=ascending)[self.name]
 
     def view_sql(self):
@@ -787,7 +806,8 @@ class BuhTuhSeries(ABC):
             engine=self.engine,
             source_node=self.base_node,
             index=self.index,
-            series={self.name: self}
+            series={self.name: self},
+            order_by=[]  # we don't have sorting information for this series
         )
 
     @classmethod
@@ -1464,7 +1484,8 @@ class BuhTuhGroupBy:
             engine=self.buh_tuh.engine,
             source_node=model,
             index_dtypes={n: t.dtype for n, t in self.groupby.items()},
-            dtypes=new_series_dtypes
+            dtypes=new_series_dtypes,
+            order_by=[]
         )
 
     def __getattr__(self, attr_name: str) -> Any:
@@ -1492,7 +1513,9 @@ class BuhTuhGroupBy:
             engine=self.buh_tuh.engine,
             source_node=self.buh_tuh.base_node,
             index=self.groupby,
-            series=selected_data
+            series=selected_data,
+            # We don't guarantee sorting after groupby(), so we can just set order_by to None
+            order_by=[]
         )
         return BuhTuhGroupBy(buh_tuh=buh_tuh, group_by_columns=list(self.groupby.values()))
 
