@@ -24,7 +24,7 @@ GROUP BY event_id
 ORDER BY event_id
 )
 SELECT *,
-       md5(concat(stack_selection,event)) as feature_hash
+       md5(concat(stack_selection,event_type)) as feature_hash
 FROM {{extracted_contexts}}
 JOIN selected_stacks_{{id}} USING (event_id)
 '''

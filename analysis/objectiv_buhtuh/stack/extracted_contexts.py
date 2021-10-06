@@ -18,6 +18,6 @@ SELECT *,
         JSON_EXTRACT_PATH(value, 'global_contexts') AS global_contexts,
         JSON_EXTRACT_PATH(value, 'location_stack') AS location_stack,
         JSON_EXTRACT_PATH(value, 'time') AS time,
-        JSON_EXTRACT_PATH(value, '_types') AS events
+        JSON_EXTRACT_PATH(value, '_types') AS event_types
  FROM data
  '''
