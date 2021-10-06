@@ -677,7 +677,8 @@ class BuhTuhSeries(ABC):
                  base_node: SqlModel,
                  index: Optional[Dict[str, 'BuhTuhSeries']],
                  name: str,
-                 expression: str = None):
+                 expression: str = None,
+                 sorted_ascending: Optional[bool] = None):
         """
         TODO: docstring
         :param engine:
@@ -686,6 +687,7 @@ class BuhTuhSeries(ABC):
                         this Series' index
         :param name:
         :param expression:
+        :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
         """
         self._engine = engine
         self._base_node = base_node
@@ -697,6 +699,7 @@ class BuhTuhSeries(ABC):
             self._expression = expression
         else:
             self._expression = f'{{table_alias}}"{self.name}"'
+        self._sorted_ascending = sorted_ascending
 
     @property
     @classmethod
@@ -792,9 +795,20 @@ class BuhTuhSeries(ABC):
         return self.to_frame().head(n)[self.name]
 
     def sort_values(self, ascending=True):
-        # TODO sort series directly instead of ripping it out of the df?
-        # TODO: does it even make sense to support this?
-        return self.to_frame().sort_values(by=self.name, ascending=ascending)[self.name]
+        """
+        Returns a copy of this Series that is sorted by its values. Returns self if self is already sorted
+        in that way.
+        :param ascending: Whether to sort ascending (True) or descending (False)
+        """
+        if self._sorted_ascending is not None and self._sorted_ascending == ascending:
+            return self
+        return BuhTuhSeries.get_instance(
+            base=self,
+            name=self.name,
+            dtype=self.dtype,
+            expression=self.expression,
+            sorted_ascending=ascending
+        )
 
     def view_sql(self):
         return self.to_frame().view_sql()
@@ -802,12 +816,16 @@ class BuhTuhSeries(ABC):
     def to_frame(self) -> BuhTuhDataFrame:
         if self.index is None:
             raise Exception('to_frame() is not supported for Series that do not have an index')
+        if self._sorted_ascending is not None:
+            order_by = [SortColumn(expression=self.get_expression(), asc=self._sorted_ascending)]
+        else:
+            order_by = []
         return BuhTuhDataFrame(
             engine=self.engine,
             source_node=self.base_node,
             index=self.index,
             series={self.name: self},
-            order_by=[]  # we don't have sorting information for this series
+            order_by=order_by
         )
 
     @classmethod
@@ -816,7 +834,8 @@ class BuhTuhSeries(ABC):
             base: DataFrameOrSeries,
             name: str,
             dtype: str,
-            expression: str = None
+            expression: str = None,
+            sorted_ascending: Optional[bool] = None
     ) -> 'BuhTuhSeries':
         """
         Create an instance of the right sub-class of BuhTuhSeries.
@@ -828,7 +847,8 @@ class BuhTuhSeries(ABC):
             base_node=base.base_node,
             index=base.index,
             name=name,
-            expression=expression
+            expression=expression,
+            sorted_ascending=sorted_ascending
         )
 
     def get_expression(self, table_alias='') -> str:
