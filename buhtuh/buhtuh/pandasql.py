@@ -128,7 +128,10 @@ class BuhTuhDataFrame:
         for key in self.all_series.keys():
             if not self.all_series[key].equals(other.all_series[key]):
                 return False
-        return self.engine == other.engine and self.base_node == other.base_node
+        return \
+            self.engine == other.engine and \
+            self.base_node == other.base_node and \
+            self._order_by == other._order_by
 
     @classmethod
     def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
@@ -253,8 +256,7 @@ class BuhTuhDataFrame:
             engine=engine,
             source_node=model,
             index_dtypes={index: index_dtype},
-            dtypes=dtypes,
-            order_by=None
+            dtypes=dtypes
         )
 
     @classmethod
@@ -930,7 +932,8 @@ class BuhTuhSeries(ABC):
         return self.engine == other.engine and \
             self.base_node == other.base_node and \
             self.name == other.name and \
-            self.expression == other.expression
+            self.expression == other.expression and \
+            self._sorted_ascending == other._sorted_ascending
 
     # Below methods are not abstract, as they can be optionally be implemented by subclasses.
     def __add__(self, other) -> 'BuhTuhSeries':
