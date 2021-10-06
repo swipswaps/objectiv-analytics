@@ -2,6 +2,7 @@ import datetime
 from abc import abstractmethod, ABC
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Type
+from uuid import UUID
 
 import numpy
 import pandas
@@ -1116,7 +1117,7 @@ class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
 
 class BuhTuhSeriesString(BuhTuhSeries):
     dtype = 'string'
-    dtype_aliases = ('text', str, 'json', 'uuid')  # todo: create more specific types for json and uuid
+    dtype_aliases = ('text', str)
     supported_db_dtype = 'text'
     supported_value_types = (str, )
 
@@ -1196,6 +1197,26 @@ class BuhTuhSeriesString(BuhTuhSeries):
                         expression = "''"
 
         return self._get_derived_series('string', expression)
+
+
+class BuhTuhSeriesUuid(BuhTuhSeriesString):
+    """
+    TODO: make this a proper class, not just a string subclass
+    """
+    dtype = 'uuid'
+    dtype_aliases = ()
+    supported_db_dtype = 'uuid'
+    supported_value_types = (UUID, )
+
+
+class BuhTuhSeriesJson(BuhTuhSeriesString):
+    """
+    TODO: make this a proper class, not just a string subclass
+    """
+    dtype = 'json'
+    dtype_aliases = ()
+    supported_db_dtype = 'json'
+    supported_value_types = (dict, list, str, int, float)
 
 
 class BuhTuhSeriesTimestamp(BuhTuhSeries):

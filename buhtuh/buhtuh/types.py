@@ -1,5 +1,7 @@
 from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Hashable, cast, Union
 import datetime
+from uuid import UUID
+
 import numpy
 
 """
@@ -96,10 +98,11 @@ class TypeRegistry:
         # Import locally to prevent cyclic imports
         from buhtuh.pandasql import BuhTuhSeriesBoolean, BuhTuhSeriesInt64, \
             BuhTuhSeriesFloat64, BuhTuhSeriesString, BuhTuhSeriesTimestamp, \
-            BuhTuhSeriesDate, BuhTuhSeriesTime, BuhTuhSeriesTimedelta
+            BuhTuhSeriesDate, BuhTuhSeriesTime, BuhTuhSeriesTimedelta, BuhTuhSeriesUuid, BuhTuhSeriesJson
         standard_types: List[Type[BuhTuhSeries]] = [
             BuhTuhSeriesBoolean, BuhTuhSeriesInt64, BuhTuhSeriesFloat64, BuhTuhSeriesString,
-            BuhTuhSeriesTimestamp, BuhTuhSeriesDate, BuhTuhSeriesTime, BuhTuhSeriesTimedelta
+            BuhTuhSeriesTimestamp, BuhTuhSeriesDate, BuhTuhSeriesTime, BuhTuhSeriesTimedelta,
+            BuhTuhSeriesUuid, BuhTuhSeriesJson
         ]
 
         for klass in standard_types:
@@ -122,6 +125,7 @@ class TypeRegistry:
         self._register_value_klass(datetime.datetime,  BuhTuhSeriesTimestamp)
         self._register_value_klass(datetime.timedelta, BuhTuhSeriesTimedelta)
         self._register_value_klass(numpy.timedelta64,  BuhTuhSeriesTimedelta)
+        self._register_value_klass(UUID,               BuhTuhSeriesUuid)
 
     def _register_dtype_klass(self, klass: Type['BuhTuhSeries'], override=False):
         dtype_and_aliases: List[Union[Type, str]] = [klass.dtype] + list(klass.dtype_aliases)  # type: ignore
