@@ -1204,9 +1204,9 @@ class BuhTuhSeriesUuid(BuhTuhSeriesString):
     TODO: make this a proper class, not just a string subclass
     """
     dtype = 'uuid'
-    dtype_aliases = ()
+    dtype_aliases = ()  # type: ignore
     supported_db_dtype = 'uuid'
-    supported_value_types = (UUID, )
+    supported_value_types = (UUID, )  # type: ignore
 
 
 class BuhTuhSeriesJson(BuhTuhSeriesString):
@@ -1214,9 +1214,9 @@ class BuhTuhSeriesJson(BuhTuhSeriesString):
     TODO: make this a proper class, not just a string subclass
     """
     dtype = 'json'
-    dtype_aliases = ()
+    dtype_aliases = ()  # type: ignore
     supported_db_dtype = 'json'
-    supported_value_types = (dict, list, str, int, float)
+    supported_value_types = (dict, list, str, int, float)  # type: ignore
 
 
 class BuhTuhSeriesTimestamp(BuhTuhSeries):
