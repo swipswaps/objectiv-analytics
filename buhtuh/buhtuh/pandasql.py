@@ -1150,7 +1150,8 @@ class BuhTuhSeriesString(BuhTuhSeries):
         """
         Get a python string slice using DB functions. Format follows standard slice format
         Note: this is called 'slice' to not destroy index selection logic
-        :param item: an int for a single character, or a slice for some nice slicing
+        :param start: TODO
+        :param stop: TODO
         :return: BuhTuhSeriesString with the slice applied
         """
         if isinstance(start, (int, type(None))):

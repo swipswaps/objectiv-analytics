@@ -9,7 +9,8 @@ def test_string_slice():
     bt = get_bt_with_test_data()
 
     # Now try some slices
-    for s in [slice(0, 3), slice(1, 3), slice(3, 3), slice(4, 3), slice(-4, -2), slice(-2, -2), slice(-2, 1)]:
+    for s in [slice(0, 3), slice(1, 3), slice(3, 3), slice(4, 3), slice(-4, -2), slice(-2, -2), slice(-2, 1),
+              slice(1, -2)]:
         print(f'slice: {s}')
         bts = bt['city'].slice(s.start, s.stop)
         assert isinstance(bts, BuhTuhSeries)
