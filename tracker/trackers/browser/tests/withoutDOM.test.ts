@@ -4,14 +4,15 @@
 import { makeClickEvent } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
-  makeTracker,
   getLocationHref,
+  getTracker,
   makeMutationCallback,
+  makeTracker,
   startAutoTracking,
   trackApplicationLoaded,
+  TrackerQueueLocalStorageStore,
   trackEvent,
   trackURLChange,
-  getTracker,
 } from '../src';
 
 describe('Without DOM', () => {
@@ -88,5 +89,11 @@ describe('Without DOM', () => {
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledTimes(1);
+  });
+
+  it('should throw if TrackerQueueLocalStorageStore gets constructed', async () => {
+    expect(() => new TrackerQueueLocalStorageStore({ trackerId: 'app-id' })).toThrow(
+      'TrackerQueueLocalStorageStore: failed to initialize: window.localStorage is not available.'
+    );
   });
 });

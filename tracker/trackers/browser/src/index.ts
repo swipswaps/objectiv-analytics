@@ -25,5 +25,6 @@ export * from './tracker/trackEvent';
 export * from './tracker/trackEventHelpers';
 export * from './transport/DebugTransport';
 export * from './transport/FetchAPITransport';
+export * from './transport/TrackerQueueLocalStorageStore';
 export * from './transport/XMLHttpRequestTransport';
 export * from './typeGuards';
