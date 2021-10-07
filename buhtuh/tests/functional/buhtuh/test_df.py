@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 from buhtuh import BuhTuhDataFrame, BuhTuhSeriesBoolean
-from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list
+from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
 def test_del_item():
@@ -16,22 +16,6 @@ def test_del_item():
 
     with pytest.raises(KeyError):
         del(bt['non existing column'])
-
-
-def test_sort_values():
-    bt = get_bt_with_test_data(full_data_set=True)
-    kwargs_list = [{'by': 'city'},
-                   {'by': ['municipality', 'city']},
-                   {'by': ['municipality', 'city'], 'ascending': False},
-                   {'by': ['municipality', 'city'], 'ascending': [False, True]},
-                   ]
-    for kwargs in kwargs_list:
-        assert_equals_data(
-            bt.sort_values(**kwargs),
-            expected_columns=['_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants',
-                              'founding'],
-            expected_data=df_to_list(bt.to_df().sort_values(**kwargs))
-        )
 
 
 def test_combined_operations1():
