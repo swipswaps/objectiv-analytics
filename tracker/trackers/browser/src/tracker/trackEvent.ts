@@ -1,6 +1,7 @@
 import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext } from '@objectiv/schema';
 import ExtendableError from 'es6-error';
-import { AnyLocationContext, BrowserTracker, getTracker, TaggableElement } from '../';
+import { AnyLocationContext, BrowserTracker, TaggableElement } from '../';
+import { getTracker } from '../globals';
 import { parseLocationContext } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';

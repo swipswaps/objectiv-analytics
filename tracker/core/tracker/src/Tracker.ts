@@ -41,6 +41,11 @@ export type TrackerConfig = ContextsConfig & {
    * Optional. A TrackerConsole instance for logging.
    */
   console?: TrackerConsole;
+
+  /**
+   * Optional. Determines if the TrackerInstance.trackEvent will process Events or not.
+   */
+  active?: boolean;
 };
 
 /**
@@ -59,6 +64,8 @@ export class Tracker implements Contexts, TrackerConfig {
   readonly trackerId: string;
   readonly transport?: TrackerTransport;
   readonly plugins: TrackerPlugins;
+
+  active: boolean;
 
   // Contexts interface
   readonly location_stack: AbstractLocationContext[];
@@ -81,6 +88,9 @@ export class Tracker implements Contexts, TrackerConfig {
       trackerConfig.plugins ??
       new TrackerPlugins({ console: trackerConfig.console, plugins: getDefaultTrackerPluginsList(trackerConfig) });
 
+    // By default Tracker Instances are active
+    this.active = trackerConfig.active ?? true;
+
     // Process ContextConfigs
     let new_location_stack: AbstractLocationContext[] = trackerConfig.location_stack ?? [];
     let new_global_contexts: AbstractGlobalContext[] = trackerConfig.global_contexts ?? [];
@@ -97,6 +107,7 @@ export class Tracker implements Contexts, TrackerConfig {
           .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
           .join(' > ')})`
       );
+      this.console.log(`Active: ${this.active}`);
       this.console.log(`Application ID: ${this.applicationId}`);
       this.console.log(`Transport: ${this.transport?.transportName ?? 'none'}`);
       this.console.group(`Plugins:`);
@@ -111,8 +122,30 @@ export class Tracker implements Contexts, TrackerConfig {
       this.console.groupEnd();
     }
 
-    // Execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
-    this.plugins.initialize(this);
+    // If active execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
+    if (this.active) {
+      this.plugins.initialize(this);
+    }
+  }
+
+  /**
+   * Setter for the Tracker Instance `active` state
+   */
+  setActive(newActiveState: boolean) {
+    if (newActiveState !== this.active) {
+      this.active = newActiveState;
+
+      if (this.active) {
+        this.plugins.initialize(this);
+      }
+
+      if (this.console) {
+        this.console.log(
+          `%c｢objectiv:Tracker:${this.trackerId}｣ New state: ${this.active ? 'active' : 'inactive'}`,
+          'font-weight: bold'
+        );
+      }
+    }
   }
 
   /**
@@ -121,6 +154,11 @@ export class Tracker implements Contexts, TrackerConfig {
   async trackEvent(event: TrackerEventConfig): Promise<TrackerEvent> {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
     const trackedEvent = new TrackerEvent(event, this);
+
+    // Do nothing if the TrackerInstance is inactive
+    if (!this.active) {
+      return trackedEvent;
+    }
 
     // Set tracking time
     trackedEvent.setTime();
