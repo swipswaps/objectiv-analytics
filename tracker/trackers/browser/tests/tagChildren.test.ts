@@ -1,5 +1,12 @@
 import { StructError } from 'superstruct';
-import { tagChild, tagChildren, tagElement, TaggingAttribute } from '../src';
+import {
+  parseChildrenTaggingAttribute,
+  stringifyChildrenTaggingAttribute,
+  tagChild,
+  tagChildren,
+  tagElement,
+  TaggingAttribute,
+} from '../src';
 
 describe('tagChild and tagChildren', () => {
   afterEach(() => {
@@ -8,7 +15,11 @@ describe('tagChild and tagChildren', () => {
 
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
-    expect(tagChild()).toBeUndefined();
+    expect(() => stringifyChildrenTaggingAttribute('')).toThrow();
+    // @ts-ignore
+    expect(() => parseChildrenTaggingAttribute(null)).toThrow();
+    // @ts-ignore
+    expect(tagChild('')).toBeUndefined();
     // @ts-ignore
     expect(tagChildren()).toBeUndefined();
     // @ts-ignore

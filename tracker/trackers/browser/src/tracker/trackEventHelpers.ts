@@ -11,7 +11,7 @@ import {
 import { trackEvent } from '../tracker/trackEvent';
 import { TaggableElement } from '../typeGuards';
 import { BrowserTracker } from './BrowserTracker';
-import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
 
 /**
  * The parameters of the Event helper functions

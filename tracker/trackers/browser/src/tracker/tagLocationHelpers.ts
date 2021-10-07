@@ -10,7 +10,7 @@ import {
 } from '@objectiv/tracker-core';
 import { assign, create, object, pick, string } from 'superstruct';
 import { tagLocation, TagLocationOptions, TagLocationParameters, TagLocationReturnValue } from '../tracker/tagLocation';
-import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
 
 /**
  * Tag Location helpers automatically factor Context Instances and use `tagLocation` internally.

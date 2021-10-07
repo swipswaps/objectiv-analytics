@@ -1,13 +1,13 @@
 import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
-import { BrowserTracker, configureTracker, tagButton, tagElement, TaggingAttribute } from '../src';
+import { BrowserTracker, getTracker, makeTracker, tagButton, tagElement, TaggingAttribute } from '../src';
 import { trackNewElements } from '../src/observer/trackNewElements';
 
 describe('trackNewElements', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    expect(getTracker()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(getTracker(), 'trackEvent');
   });
 
   it('should apply tagging attributes to Elements tracked via Children Tracking and track them right away', async () => {
@@ -33,13 +33,13 @@ describe('trackNewElements', () => {
     div1.appendChild(button);
     div1.appendChild(childDiv);
 
-    trackNewElements(div1, window.objectiv.tracker);
+    trackNewElements(div1, getTracker());
 
     expect(div1.addEventListener).not.toHaveBeenCalled();
     expect(childDiv.addEventListener).not.toHaveBeenCalled();
     expect(button.addEventListener).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       makeSectionVisibleEvent({
         location_stack: [
@@ -56,9 +56,9 @@ describe('trackNewElements', () => {
     jest.spyOn(console, 'error');
 
     // @ts-ignore
-    trackNewElements(null, window.objectiv.tracker);
+    trackNewElements(null, getTracker());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledTimes(1);
   });
 });

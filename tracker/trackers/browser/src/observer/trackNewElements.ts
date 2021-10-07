@@ -1,6 +1,6 @@
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
+import { trackerErrorHandler } from '../trackerErrorHandler';
 import { processChildrenTaggingElement } from './processChildrenTaggingElement';
 import { trackNewElement } from './trackNewElement';
 

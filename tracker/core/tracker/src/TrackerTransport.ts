@@ -1,5 +1,6 @@
 import ExtendableError from 'es6-error';
 import { isNonEmptyArray, NonEmptyArray } from './helpers';
+import { TrackerConsole } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerQueue } from './TrackerQueue';
 
@@ -24,6 +25,11 @@ export class TransportSendError extends ExtendableError {}
  */
 export interface TrackerTransport {
   /**
+   * Optional. A TrackerConsole instance for logging.
+   */
+  readonly console?: TrackerConsole;
+
+  /**
    * A name describing the Transport implementation for debugging purposes
    */
   readonly transportName: string;
@@ -40,6 +46,23 @@ export interface TrackerTransport {
 }
 
 /**
+ * The configuration of TrackerTransportTransportSwitch
+ */
+export type TrackerTransportConfig = {
+  /**
+   * Optional. A TrackerConsole instance for logging.
+   */
+  console?: TrackerConsole;
+};
+
+/**
+ * The configuration of TransportSwitch.
+ */
+export type TransportSwitchConfig = TrackerTransportConfig & {
+  transports: [TrackerTransport, TrackerTransport, ...TrackerTransport[]];
+};
+
+/**
  * TransportSwitch provides a fallback mechanism to pick the first usable transport in a list of them.
  * The switch is usable if at least one of the given TrackerTransports is usable.
  *
@@ -47,19 +70,23 @@ export interface TrackerTransport {
  * have TransportSwitch test each of them via the `isUsable` method to determine the topmost usable one.
  */
 export class TransportSwitch implements TrackerTransport {
+  readonly console?: TrackerConsole;
   readonly transportName = 'TransportSwitch';
   readonly firstUsableTransport?: TrackerTransport;
 
   /**
    * Finds the first TrackerTransport which `isUsable()`.
    */
-  constructor(...args: [TrackerTransport, TrackerTransport, ...TrackerTransport[]]) {
-    this.firstUsableTransport = args.find((trackerTransport) => trackerTransport.isUsable());
+  constructor(config: TransportSwitchConfig) {
+    this.console = config.console;
+    this.firstUsableTransport = config.transports.find((trackerTransport) => trackerTransport.isUsable());
 
-    console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
-    console.log(`Transports: ${args.map((transport) => transport.transportName).join(', ')}`);
-    console.log(`First usable Transport: ${this.firstUsableTransport?.transportName ?? 'none'}`);
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
+      this.console.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
+      this.console.log(`First usable Transport: ${this.firstUsableTransport?.transportName ?? 'none'}`);
+      this.console.groupEnd();
+    }
   }
 
   /**
@@ -82,25 +109,38 @@ export class TransportSwitch implements TrackerTransport {
 }
 
 /**
+ * The configuration of TransportGroup.
+ */
+export type TransportGroupConfig = TrackerTransportConfig & {
+  transports: [TrackerTransport, TrackerTransport, ...TrackerTransport[]];
+};
+
+/**
  * TransportGroup provides a mechanism to hand over TrackerEvents to multiple transports. The group is usable
  * if at least one of the given TrackerTransports is usable.
  *
  * This can be used when having multiple Collectors but also for simpler development needs, such as handling & logging
  */
 export class TransportGroup implements TrackerTransport {
+  readonly console?: TrackerConsole;
   readonly transportName = 'TransportGroup';
   readonly usableTransports: TrackerTransport[];
 
   /**
    * Filter and store the list of usable transports, received as construction parameters, in state
    */
-  constructor(...args: [TrackerTransport, TrackerTransport, ...TrackerTransport[]]) {
-    this.usableTransports = args.filter((transport) => transport.isUsable());
+  constructor(config: TransportSwitchConfig) {
+    this.console = config.console;
+    this.usableTransports = config.transports.filter((transport) => transport.isUsable());
 
-    console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
-    console.log(`Transports: ${args.map((transport) => transport.transportName).join(', ')}`);
-    console.log(`Usable Transports: ${this.usableTransports.map((transport) => transport.transportName).join(', ')}`);
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
+      this.console.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
+      this.console.log(
+        `Usable Transports: ${this.usableTransports.map((transport) => transport.transportName).join(', ')}`
+      );
+      this.console.groupEnd();
+    }
   }
 
   /**
@@ -125,7 +165,7 @@ export class TransportGroup implements TrackerTransport {
 /**
  * The configuration object of a QueuedTransport. Requires a Queue and Transport instances.
  */
-export type QueuedTransportConfig = {
+export type QueuedTransportConfig = TrackerTransportConfig & {
   queue: TrackerQueue;
   transport: TrackerTransport;
 };
@@ -135,18 +175,22 @@ export type QueuedTransportConfig = {
  * The queue runner is executed at construction. It's a simplistic implementation for now, just to test the concept.
  */
 export class QueuedTransport implements TrackerTransport {
+  readonly console?: TrackerConsole;
   readonly transportName = 'QueuedTransport';
   readonly transport: TrackerTransport;
   readonly queue: TrackerQueue;
 
   constructor(config: QueuedTransportConfig) {
+    this.console = config.console;
     this.transport = config.transport;
     this.queue = config.queue;
 
-    console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
-    console.log(`Transport: ${this.transport.transportName}`);
-    console.log(`Queue: ${this.queue.queueName}`);
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
+      this.console.log(`Transport: ${this.transport.transportName}`);
+      this.console.log(`Queue: ${this.queue.queueName}`);
+      this.console.groupEnd();
+    }
 
     if (this.isUsable()) {
       // Bind the handle function to its Transport instance to preserve its scope
@@ -158,7 +202,9 @@ export class QueuedTransport implements TrackerTransport {
       // And start the Queue runner
       this.queue.startRunner();
 
-      console.log(`%c｢objectiv:QueuedTransport｣ ${this.queue.queueName} runner started`, 'font-weight:bold');
+      if (this.console) {
+        this.console.log(`%c｢objectiv:QueuedTransport｣ ${this.queue.queueName} runner started`, 'font-weight:bold');
+      }
     }
   }
 
@@ -202,10 +248,17 @@ export type RetryTransportConfig = {
 };
 
 /**
+ * The Interface of RetryTransportAttempts
+ */
+export type RetryTransportAttemptInterface = TrackerTransportConfig & Required<RetryTransportConfig>;
+
+/**
  * A RetryTransportAttempt is a TransportRetry worker.
  * TransportRetry creates a RetryTransportAttempt instance whenever its `handle` method is invoked.
  */
-export class RetryTransportAttempt implements Required<RetryTransportConfig> {
+export class RetryTransportAttempt implements RetryTransportAttemptInterface {
+  readonly console?: TrackerConsole;
+
   // RetryTransport State
   readonly transport: TrackerTransport;
   readonly maxAttempts: number;
@@ -235,6 +288,7 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
   startTime: number;
 
   constructor(retryTransportInstance: RetryTransport, events: NonEmptyArray<TransportableEvent>) {
+    this.console = retryTransportInstance.console;
     this.transport = retryTransportInstance.transport;
     this.maxAttempts = retryTransportInstance.maxAttempts;
     this.maxRetryMs = retryTransportInstance.maxRetryMs;
@@ -246,17 +300,19 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
     this.attemptCount = 1;
     this.startTime = Date.now();
 
-    console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Created`);
-    console.log(`Transport: ${this.transport.transportName}`);
-    console.log(`Max Attempts: ${this.maxAttempts}`);
-    console.log(`Max Retry (ms): ${this.maxRetryMs}`);
-    console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
-    console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
-    console.log(`Retry Factor: ${this.retryFactor}`);
-    console.group(`Events:`);
-    console.log(this.events);
-    console.groupEnd();
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Created`);
+      this.console.log(`Transport: ${this.transport.transportName}`);
+      this.console.log(`Max Attempts: ${this.maxAttempts}`);
+      this.console.log(`Max Retry (ms): ${this.maxRetryMs}`);
+      this.console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
+      this.console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
+      this.console.log(`Retry Factor: ${this.retryFactor}`);
+      this.console.group(`Events:`);
+      this.console.log(this.events);
+      this.console.groupEnd();
+      this.console.groupEnd();
+    }
   }
 
   /**
@@ -283,36 +339,44 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
       return Promise.reject(this.errors);
     }
 
-    console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Running`);
-    console.log(`Attempt Count: ${this.attemptCount}`);
-    console.log(`Events:`);
-    console.log(this.events);
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Running`);
+      this.console.log(`Attempt Count: ${this.attemptCount}`);
+      this.console.log(`Events:`);
+      this.console.log(this.events);
+      this.console.groupEnd();
+    }
 
     // Attempt to transport the given Events. Catch any rejections and have `retry` handle them.
-    return this.transport.handle(...this.events)
+    return this.transport
+      .handle(...this.events)
       .then((response) => {
-        console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Succeeded`);
-        console.log(`Response:`);
-        console.log(response);
-        console.groupEnd();
+        if (this.console) {
+          this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Succeeded`);
+          this.console.log(`Response:`);
+          this.console.log(response);
+          this.console.groupEnd();
+        }
+
         return response;
       })
       .catch((error) => {
-      console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Failed`);
-      console.log(`Error:`);
-      console.log(error);
-      console.log(`Events:`);
-      console.log(this.events);
-      console.groupEnd();
+        if (this.console) {
+          this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Failed`);
+          this.console.log(`Error:`);
+          this.console.log(error);
+          this.console.log(`Events:`);
+          this.console.log(this.events);
+          this.console.groupEnd();
+        }
 
-      // Retry TransportSendErrors
-      if (error instanceof TransportSendError) {
-        return this.retry(error);
-      }
-      // And ignore any other errors
-      return Promise.reject(error);
-    });
+        // Retry TransportSendErrors
+        if (error instanceof TransportSendError) {
+          return this.retry(error);
+        }
+        // And ignore any other errors
+        return Promise.reject(error);
+      });
   }
 
   /**
@@ -329,14 +393,16 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
     // Increment number of attempts
     this.attemptCount++;
 
-    console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Retrying`);
-    console.log(`Attempt Count: ${this.attemptCount}`);
-    console.log(`Waited: ${nextTimeoutMs}`);
-    console.log(`Error:`);
-    console.log(error);
-    console.log(`Events:`);
-    console.log(this.events);
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:RetryTransportAttempt｣ Retrying`);
+      this.console.log(`Attempt Count: ${this.attemptCount}`);
+      this.console.log(`Waited: ${nextTimeoutMs}`);
+      this.console.log(`Error:`);
+      this.console.log(error);
+      this.console.log(`Events:`);
+      this.console.log(this.events);
+      this.console.groupEnd();
+    }
 
     // Run again
     return this.run();
@@ -348,6 +414,7 @@ export class RetryTransportAttempt implements Required<RetryTransportConfig> {
  * It allows to also specify maximum retry time and number of attempts.
  */
 export class RetryTransport implements TrackerTransport {
+  readonly console?: TrackerConsole;
   readonly transportName = 'RetryTransport';
 
   // RetryTransportConfig
@@ -361,7 +428,8 @@ export class RetryTransport implements TrackerTransport {
   // A list of attempts that are currently running
   attempts: RetryTransportAttempt[] = [];
 
-  constructor(config: RetryTransportConfig) {
+  constructor(config: TrackerTransportConfig & RetryTransportConfig) {
+    this.console = config.console;
     this.transport = config.transport;
 
     /**
@@ -382,14 +450,16 @@ export class RetryTransport implements TrackerTransport {
       throw new Error('minTimeoutMs cannot be bigger than maxTimeoutMs');
     }
 
-    console.groupCollapsed(`｢objectiv:RetryTransport｣ Initialized`);
-    console.log(`Transport: ${this.transport.transportName}`);
-    console.log(`Max Attempts: ${this.maxAttempts}`);
-    console.log(`Max Retry (ms): ${this.maxRetryMs}`);
-    console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
-    console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
-    console.log(`Retry Factor: ${this.retryFactor}`);
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:RetryTransport｣ Initialized`);
+      this.console.log(`Transport: ${this.transport.transportName}`);
+      this.console.log(`Max Attempts: ${this.maxAttempts}`);
+      this.console.log(`Max Retry (ms): ${this.maxRetryMs}`);
+      this.console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
+      this.console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
+      this.console.log(`Retry Factor: ${this.retryFactor}`);
+      this.console.groupEnd();
+    }
   }
 
   /**

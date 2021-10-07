@@ -86,7 +86,7 @@ describe('BrowserTracker', () => {
     it('should have some Web Plugins configured by default when no `plugins` have been specified', () => {
       const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
-      expect(testTracker.plugins?.list).toEqual(
+      expect(testTracker.plugins?.plugins).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ pluginName: 'WebDocumentContextPlugin' }),
           expect.objectContaining({ pluginName: 'WebDeviceContextPlugin' }),
@@ -98,10 +98,10 @@ describe('BrowserTracker', () => {
       const testTracker = new BrowserTracker({
         applicationId: 'app-id',
         endpoint: 'localhost',
-        plugins: new TrackerPlugins([]),
+        plugins: new TrackerPlugins({ plugins: [] }),
       });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
-      expect(testTracker.plugins?.list).toStrictEqual([]);
+      expect(testTracker.plugins?.plugins).toStrictEqual([]);
     });
   });
 

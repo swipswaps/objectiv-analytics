@@ -1,5 +1,5 @@
 import { APP_INITIALIZER, Provider } from '@angular/core';
-import { BrowserTrackerConfig, configureTracker } from '@objectiv/tracker-browser';
+import { BrowserTrackerConfig, makeTracker } from '@objectiv/tracker-browser';
 import { OBJECTIV_TRACKER_CONFIG_TOKEN } from './objectiv-tracker.token';
 
 /**
@@ -13,10 +13,10 @@ export const OBJECTIV_TRACKER_INITIALIZER_PROVIDER: Provider = {
 };
 
 /**
- * Simply calls configureTracker
+ * Simply calls makeTracker
  */
 export function ObjectivTrackerInitializer(trackerConfig: BrowserTrackerConfig) {
   return async () => {
-    configureTracker(trackerConfig);
+    makeTracker(trackerConfig);
   };
 }

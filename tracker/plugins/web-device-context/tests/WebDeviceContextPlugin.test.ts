@@ -1,5 +1,6 @@
-import { WebDeviceContextPlugin } from '../src';
 import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { WebDeviceContextPlugin } from '../src';
+import { mockConsole } from './mocks/MockConsole';
 
 const origin = global.navigator.userAgent;
 const cleared = Symbol('clear');
@@ -31,7 +32,7 @@ describe('WebDeviceContextPlugin', () => {
   });
 
   it('should generate a DeviceContext when constructed', () => {
-    const testWebDeviceContextPlugin = new WebDeviceContextPlugin();
+    const testWebDeviceContextPlugin = new WebDeviceContextPlugin({ console: mockConsole });
     expect(testWebDeviceContextPlugin.webDeviceContext).toEqual({
       __global_context: true,
       _type: 'DeviceContext',
@@ -41,7 +42,10 @@ describe('WebDeviceContextPlugin', () => {
   });
 
   it('should add the DeviceContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
-    const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([WebDeviceContextPlugin]) });
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: new TrackerPlugins({ plugins: [new WebDeviceContextPlugin()] }),
+    });
     const eventContexts: ContextsConfig = {
       global_contexts: [
         { __global_context: true, _type: 'section', id: 'X' },

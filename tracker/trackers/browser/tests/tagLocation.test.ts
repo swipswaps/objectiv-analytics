@@ -11,6 +11,7 @@ import {
 import { StructError } from 'superstruct';
 import { tagElement, TaggingAttribute, tagLocation } from '../src';
 import { matchElementId } from './mocks/matchElementId';
+import { mockConsole } from './mocks/MockConsole';
 
 describe('tagLocation', () => {
   it('should return an empty object when error occurs', () => {
@@ -268,12 +269,14 @@ describe('tagLocation', () => {
   });
 
   it('should not allow extra attributes', () => {
+    expect(mockConsole.log).not.toHaveBeenCalled();
     const customSectionContext = { ...makeSectionContext({ id: 'test-overlay' }), extraMetadata: { test: 123 } };
     const taggingAttributes = tagLocation({
       instance: customSectionContext,
-      onError: (error) => console.log(error),
+      onError: (error) => mockConsole.log(error),
     });
 
     expect(taggingAttributes).toBeUndefined();
+    expect(mockConsole.log).toHaveBeenCalled();
   });
 });

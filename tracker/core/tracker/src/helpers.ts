@@ -1,16 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 
 /**
- * Generic decorator to extend Interfaces and ensure they will have a class constructor
- */
-export type Newable<T> = { new (...args: Record<string, unknown>[]): T };
-
-/**
- * A more flexible implementation of Partial that allows to specify which properties should be Partial
- */
-export type PartialBy<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
-/**
  * A TypeScript friendly Object.keys
  */
 export const getObjectKeys = Object.keys as <T extends object>(obj: T) => Array<keyof T>;
@@ -23,7 +13,7 @@ export type NonEmptyArray<T> = [T, ...T[]];
 /**
  * A TypeScript NonEmptyArray guard
  */
-export function isNonEmptyArray<T>(array: T[]): array is [T, ...T[]] {
+export function isNonEmptyArray<T>(array: T[]): array is NonEmptyArray<T> {
   return array.length > 0;
 }
 

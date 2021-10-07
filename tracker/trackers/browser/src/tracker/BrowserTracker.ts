@@ -34,29 +34,37 @@ export type BrowserTrackerConfig = TrackerConfig & {
 };
 
 /**
- * A factory to create the default Transport of Browser Tracker. Requires an endpoint as its only parameter.
+ * A factory to create the default Transport of Browser Tracker.
  */
-export const makeBrowserTrackerDefaultTransport = (config: { endpoint: string }): TrackerTransport =>
-  new TransportGroup(
-    new QueuedTransport({
-      queue: new TrackerQueue(),
-      transport: new RetryTransport({
-        transport: new TransportSwitch(
-          new FetchAPITransport({ endpoint: config.endpoint }),
-          new XMLHttpRequestTransport({ endpoint: config.endpoint })
-        ),
+export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransport =>
+  new TransportGroup({
+    console: trackerConfig.console,
+    transports: [
+      new QueuedTransport({
+        console: trackerConfig.console,
+        queue: new TrackerQueue({ console: trackerConfig.console }),
+        transport: new RetryTransport({
+          console: trackerConfig.console,
+          transport: new TransportSwitch({
+            console: trackerConfig.console,
+            transports: [
+              new FetchAPITransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+              new XMLHttpRequestTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+            ],
+          }),
+        }),
       }),
-    }),
-    new DebugTransport()
-  );
+      new DebugTransport({ console: trackerConfig.console }),
+    ],
+  });
 
 /**
  * The default list of Plugins of Browser Tracker
  */
-export const getDefaultBrowserTrackerPluginsList = (config: BrowserTrackerConfig) => [
-  ...getDefaultTrackerPluginsList(config),
-  WebDocumentContextPlugin,
-  WebDeviceContextPlugin,
+export const getDefaultBrowserTrackerPluginsList = (trackerConfig: BrowserTrackerConfig) => [
+  ...getDefaultTrackerPluginsList(trackerConfig),
+  new WebDocumentContextPlugin({ console: trackerConfig.console }),
+  new WebDeviceContextPlugin({ console: trackerConfig.console }),
 ];
 
 /**
@@ -103,7 +111,7 @@ export class BrowserTracker extends Tracker {
     if (config.endpoint) {
       config = {
         ...config,
-        transport: makeBrowserTrackerDefaultTransport({ endpoint: config.endpoint }),
+        transport: makeBrowserTrackerDefaultTransport(config),
       };
     }
 
@@ -111,7 +119,10 @@ export class BrowserTracker extends Tracker {
     if (!config.plugins) {
       config = {
         ...config,
-        plugins: new TrackerPlugins(getDefaultBrowserTrackerPluginsList(config)),
+        plugins: new TrackerPlugins({
+          console: trackerConfig.console,
+          plugins: getDefaultBrowserTrackerPluginsList(config),
+        }),
       };
     }
 
