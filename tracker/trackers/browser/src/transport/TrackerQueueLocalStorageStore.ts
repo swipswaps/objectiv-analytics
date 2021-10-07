@@ -5,7 +5,6 @@ import {
   TrackerQueueStoreConfig,
   TrackerQueueStoreInterface,
 } from '@objectiv/tracker-core';
-import { windowExists } from '../';
 
 /**
  * The TrackerQueueLocalStorageStoreConfig object.
@@ -28,7 +27,7 @@ export class TrackerQueueLocalStorageStore implements TrackerQueueStoreInterface
   constructor(config: TrackerQueueLocalStorageStoreConfig) {
     this.console = config.console;
 
-    if (!windowExists() || typeof localStorage === 'undefined') {
+    if (typeof localStorage === 'undefined') {
       throw new Error(`${this.queueStoreName}: failed to initialize: window.localStorage is not available.`);
     }
 
@@ -39,23 +38,29 @@ export class TrackerQueueLocalStorageStore implements TrackerQueueStoreInterface
     }
   }
 
-  getEventsFromLocalStorage (): TrackerEvent[] {
+  getEventsFromLocalStorage(): TrackerEvent[] {
     try {
       return JSON.parse(localStorage.getItem(this.localStorageKey) ?? '[]');
     } catch (error) {
       if (this.console) {
-        this.console.error(`%c｢objectiv:${this.queueStoreName}｣ Failed to parse Events from localStorage: ${error}`, 'font-weight: bold');
+        this.console.error(
+          `%c｢objectiv:${this.queueStoreName}｣ Failed to parse Events from localStorage: ${error}`,
+          'font-weight: bold'
+        );
       }
     }
     return [];
   }
 
-  writeEventsToLocalStorage (events: TrackerEvent[]) {
+  writeEventsToLocalStorage(events: TrackerEvent[]) {
     try {
       localStorage.setItem(this.localStorageKey, JSON.stringify(events));
     } catch (error) {
       if (this.console) {
-        this.console.error(`%c｢objectiv:${this.queueStoreName}｣ Failed to write Events to localStorage: ${error}`, 'font-weight: bold');
+        this.console.error(
+          `%c｢objectiv:${this.queueStoreName}｣ Failed to write Events to localStorage: ${error}`,
+          'font-weight: bold'
+        );
       }
     }
   }

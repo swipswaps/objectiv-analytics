@@ -10,11 +10,10 @@ import {
   TrackerPlugins,
   TrackerQueue,
   TrackerTransport,
-  TransportGroup,
   TransportSwitch,
 } from '@objectiv/tracker-core';
-import { DebugTransport } from '../transport/DebugTransport';
 import { FetchAPITransport } from '../transport/FetchAPITransport';
+import { TrackerQueueLocalStorageStore } from '../transport/TrackerQueueLocalStorageStore';
 import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
 
 /**
@@ -37,25 +36,25 @@ export type BrowserTrackerConfig = TrackerConfig & {
  * A factory to create the default Transport of Browser Tracker.
  */
 export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransport =>
-  new TransportGroup({
+  new QueuedTransport({
     console: trackerConfig.console,
-    transports: [
-      new QueuedTransport({
+    queue: new TrackerQueue({
+      store: new TrackerQueueLocalStorageStore({
+        trackerId: trackerConfig.trackerId ?? trackerConfig.applicationId,
         console: trackerConfig.console,
-        queue: new TrackerQueue({ console: trackerConfig.console }),
-        transport: new RetryTransport({
-          console: trackerConfig.console,
-          transport: new TransportSwitch({
-            console: trackerConfig.console,
-            transports: [
-              new FetchAPITransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
-              new XMLHttpRequestTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
-            ],
-          }),
-        }),
       }),
-      new DebugTransport({ console: trackerConfig.console }),
-    ],
+      console: trackerConfig.console,
+    }),
+    transport: new RetryTransport({
+      console: trackerConfig.console,
+      transport: new TransportSwitch({
+        console: trackerConfig.console,
+        transports: [
+          new FetchAPITransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+          new XMLHttpRequestTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+        ],
+      }),
+    }),
   });
 
 /**

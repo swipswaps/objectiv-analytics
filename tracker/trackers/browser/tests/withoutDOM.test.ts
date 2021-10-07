@@ -4,6 +4,7 @@
 import { makeClickEvent } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
+  DebugTransport,
   getLocationHref,
   getTracker,
   makeMutationCallback,
@@ -25,7 +26,7 @@ describe('Without DOM', () => {
   });
 
   it('should throw if Window does not exists', async () => {
-    expect(() => makeTracker({ applicationId: 'test', endpoint: 'test' })).toThrow(
+    expect(() => makeTracker({ applicationId: 'test', transport: new DebugTransport() })).toThrow(
       'Cannot access the Window interface.'
     );
 
@@ -69,7 +70,7 @@ describe('Without DOM', () => {
 
   it('should console error when MutationObserver is not available', async () => {
     jest.spyOn(console, 'error');
-    const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
+    const tracker = new BrowserTracker({ applicationId: 'app', transport: new DebugTransport() });
     jest.spyOn(tracker, 'trackEvent');
 
     startAutoTracking({}, tracker);
@@ -80,7 +81,7 @@ describe('Without DOM', () => {
 
   it('should console error when mutationCallback receives garbled data', async () => {
     jest.spyOn(console, 'error');
-    const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
+    const tracker = new BrowserTracker({ applicationId: 'app', transport: new DebugTransport() });
     jest.spyOn(tracker, 'trackEvent');
     const mutationCallback = makeMutationCallback(false, tracker);
 
