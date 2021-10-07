@@ -83,13 +83,13 @@ export const getDefaultBrowserTrackerPluginsList = (trackerConfig: BrowserTracke
  *  const xmlHttpRequestTransport = new XMLHttpRequestTransport({ endpoint: '/endpoint' });
  *  const transportSwitch = new TransportSwitch(fetchTransport, xmlHttpRequestTransport);
  *  const retryTransport = new RetryTransport({ transport: transportSwitch});
- *  const debugTransport = new DebugTransport();
- *  const transportGroup = new TransportGroup(retryTransport, debugTransport);
  *  const trackerQueue = new TrackerQueue();
- *  const transport = new QueuedTransport({ transport: transportGroup, queue: trackerQueue });
+ *  const transport = new QueuedTransport({ transport: retryTransport, queue: trackerQueue });
  *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id' });
  *  const plugins = new TrackerPlugins([ applicationContextPlugin, WebDocumentContextPlugin, WebDeviceContextPlugin ]);
  *  const tracker = new Tracker({ transport, plugins });
+ *
+ *  See also `makeBrowserTrackerDefaultTransport` for the actual implementation.
  *
  */
 export class BrowserTracker extends Tracker {
