@@ -1,16 +1,18 @@
+import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { trackInputChange } from '../tracker/trackEventHelpers';
-import { TaggedElement } from '../typeGuards';
-import { isBubbledEvent } from './isBubbledEvent';
+import { isTaggedElement, TaggedElement } from '../typeGuards';
 
 /**
  * A factory to make the event listener to attach to new TaggedElements with the `trackBlurs` attributes set
  */
-export const makeBlurEventListener = (element: TaggedElement, tracker?: BrowserTracker) => {
-  return (event: Event) => {
-    /* istanbul ignore else - This is a difficult case to test and cover in Jest */
-    if (!isBubbledEvent(element, event.target)) {
-      trackInputChange({ element, tracker });
-    }
-  };
+export const makeBlurEventListener = (element: TaggedElement, tracker?: BrowserTracker) => (event: Event) => {
+  if (
+    // Either the Event's target is the TaggedElement itself
+    event.target === element ||
+    // Or the Event's currentTarget is am Element tagged to track Clicks (eg: the Event bubbled up to from a child)
+    (isTaggedElement(event.currentTarget) && event.currentTarget.hasAttribute(TaggingAttribute.trackBlurs))
+  ) {
+    trackInputChange({ element, tracker });
+  }
 };

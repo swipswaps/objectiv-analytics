@@ -2,7 +2,6 @@ export * from './globals';
 export * from './Contexts';
 export * from './helpers';
 export * from './makeTracker';
-export * from './observer/isBubbledEvent';
 export * from './observer/makeBlurEventListener';
 export * from './observer/makeClickEventListener';
 export * from './observer/processChildrenTaggingElement';

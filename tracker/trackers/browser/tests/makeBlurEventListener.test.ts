@@ -1,4 +1,4 @@
-import { makeInputChangeEvent } from '@objectiv/tracker-core';
+import { makeInputChangeEvent, makeInputContext } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, makeTracker } from '../src/';
 import { makeBlurEventListener } from '../src/observer/makeBlurEventListener';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
@@ -31,5 +31,35 @@ describe('makeBlurEventListener', () => {
     unrelatedInput.dispatchEvent(new FocusEvent('blur'));
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('should not track Input Change when current target is not a click-tracking tagged element', () => {
+    const span = document.createElement('span');
+    const trackedInput = makeTaggedElement('input', 'input', 'input', false, false);
+    trackedInput.appendChild(span);
+    const inputEventListener = jest.fn(makeBlurEventListener(trackedInput, getTracker()));
+
+    trackedInput.addEventListener('blur', inputEventListener);
+    span.dispatchEvent(new MouseEvent('blur', { bubbles: true }));
+
+    expect(inputEventListener).toHaveBeenCalled();
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('should track Input Change when invoked from a non-tagged child', () => {
+    const span = document.createElement('span');
+    const trackedInput = makeTaggedElement('input', 'input', 'input', false, true);
+    trackedInput.appendChild(span);
+    const inputEventListener = jest.fn(makeBlurEventListener(trackedInput, getTracker()));
+
+    trackedInput.addEventListener('blur', inputEventListener);
+    span.dispatchEvent(new MouseEvent('blur', { bubbles: true }));
+
+    expect(inputEventListener).toHaveBeenCalled();
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      makeInputChangeEvent({ location_stack: [makeInputContext({ id: 'input' })] })
+    );
   });
 });

@@ -20,12 +20,12 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
 
       // Click tracking (buttons, links)
       if (element.getAttribute(TaggingAttribute.trackClicks) === 'true') {
-        element.addEventListener('click', makeClickEventListener(element, tracker));
+        element.addEventListener('click', makeClickEventListener(element, tracker), { passive: true });
       }
 
       // Blur tracking (inputs)
       if (element.getAttribute(TaggingAttribute.trackBlurs) === 'true') {
-        element.addEventListener('blur', makeBlurEventListener(element, tracker));
+        element.addEventListener('blur', makeBlurEventListener(element, tracker), { passive: true });
       }
     }
   } catch (error) {

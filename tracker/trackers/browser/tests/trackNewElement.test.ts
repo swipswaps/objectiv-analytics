@@ -53,7 +53,7 @@ describe('trackNewElement', () => {
     trackNewElement(trackedButton, getTracker());
 
     expect(trackedButton.addEventListener).toHaveBeenCalledTimes(1);
-    expect(trackedButton.addEventListener).toHaveBeenNthCalledWith(1, 'click', expect.any(Function));
+    expect(trackedButton.addEventListener).toHaveBeenNthCalledWith(1, 'click', expect.any(Function), { passive: true });
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 
@@ -66,7 +66,7 @@ describe('trackNewElement', () => {
     trackNewElement(trackedInput, getTracker());
 
     expect(trackedInput.addEventListener).toHaveBeenCalledTimes(1);
-    expect(trackedInput.addEventListener).toHaveBeenNthCalledWith(1, 'blur', expect.any(Function));
+    expect(trackedInput.addEventListener).toHaveBeenNthCalledWith(1, 'blur', expect.any(Function), { passive: true });
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 
