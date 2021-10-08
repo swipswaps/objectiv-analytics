@@ -71,3 +71,29 @@ def test_uuid_generate_random_uuit():
     uuid_values = [row['x'] for row in db_rows]
     assert all(isinstance(val, uuid.UUID) for val in uuid_values)
     assert len(set(uuid_values)) == 3
+
+
+def test_uuid_compare():
+    bt = get_bt_with_test_data()[['city']]
+    bt['a'] = uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')
+    bt['b'] = uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')
+    bt['c'] = BuhTuhSeriesUuid.generate_random_uuid(bt)
+    bt['x'] = bt['a'] == bt['b']
+    bt['y'] = bt['b'] == bt['c']
+    bt['z'] = bt['b'] != bt['c']
+
+    # non-happy path: compare with a different type
+    with pytest.raises(TypeError):
+        bt['u'] = bt['b'] == bt['city']
+
+    # clear long columns, and check results
+    bt = bt[['city', 'x', 'y', 'z']]
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'city', 'x', 'y', 'z'],
+        expected_data=[
+            [1, 'Ljouwert', True, False, True],
+            [2, 'Snits', True, False, True],
+            [3, 'Drylts', True, False, True],
+        ]
+    )

@@ -837,7 +837,7 @@ class BuhTuhSeries(ABC):
                              f'Alternative: use merge() to create a DataFrame with both series. ')
 
         if other.dtype.lower() not in supported_dtypes:
-            raise ValueError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
+            raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
 
     def _get_derived_series(self, new_dtype: str, expression: str):
         return BuhTuhSeries.get_instance(
@@ -1227,12 +1227,19 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
     @classmethod
     def generate_random_uuid(cls, base: DataFrameOrSeries) -> 'BuhTuhSeriesUuid':
         """ Create a new Seriees object with for every row a random uuid."""
-        return cls.get_instance(
+        result = cls.get_instance(
             base=base,
             name='__tmp',
             dtype='uuid',
             expression='gen_random_uuid()'
         )
+        return cast(BuhTuhSeriesUuid, result)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['uuid'], other)
+        expression = f'({self.expression}) {comparator} ({other.expression})'
+        return self._get_derived_series('uuid', expression)
 
 
 class BuhTuhSeriesJson(BuhTuhSeriesString):
@@ -1545,7 +1552,7 @@ class BuhTuhGroupBy:
 
 
 def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],
-                    value: Union[BuhTuhSeries, int, float, str],
+                    value: Union[BuhTuhSeries, int, float, str, UUID],
                     name: str = None) -> BuhTuhSeries:
     """
     Take a value and return a BuhTuhSeries representing a column with that value.
