@@ -805,10 +805,9 @@ class BuhTuhSeries(ABC):
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
             return self
-        return BuhTuhSeries.get_instance(
+        return self.get_class_instance(
             base=self,
             name=self.name,
-            dtype=self.dtype,
             expression=self.expression,
             sorted_ascending=ascending
         )
@@ -845,7 +844,23 @@ class BuhTuhSeries(ABC):
         The subclass is based on the provided dtype. See docstring of __init__ for other parameters.
         """
         series_type = get_series_type_from_dtype(dtype=dtype)
-        return series_type(
+        return series_type.get_class_instance(
+            base=base,
+            name=name,
+            expression=expression,
+            sorted_ascending=sorted_ascending
+        )
+
+    @classmethod
+    def get_class_instance(
+            cls,
+            base: DataFrameOrSeries,
+            name: str,
+            expression: str = None,
+            sorted_ascending: Optional[bool] = None
+    ):
+        """ Create an instance of this class. """
+        return cls(
             engine=base.engine,
             base_node=base.base_node,
             index=base.index,
@@ -903,11 +918,9 @@ class BuhTuhSeries(ABC):
                    base: DataFrameOrSeries,
                    value: Any,
                    name: str) -> 'BuhTuhSeries':
-        dtype = cast(str, cls.dtype)  # needed for mypy
-        result = BuhTuhSeries.get_instance(
+        result = cls.get_class_instance(
             base=base,
             name=name,
-            dtype=dtype,
             expression=cls.value_to_sql(value)
         )
         return result
@@ -1270,13 +1283,11 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
     @classmethod
     def generate_random_uuid(cls, base: DataFrameOrSeries) -> 'BuhTuhSeriesUuid':
         """ Create a new Seriees object with for every row a random uuid."""
-        result = cls.get_instance(
+        return cls.get_class_instance(
             base=base,
             name='__tmp',
-            dtype='uuid',
             expression='gen_random_uuid()'
         )
-        return cast(BuhTuhSeriesUuid, result)
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
@@ -1490,10 +1501,9 @@ class BuhTuhGroupBy:
         if len(group_by_columns) == 0:
             # create new dummy column so we can aggregate over everything
             self.groupby = {
-                'index': BuhTuhSeriesInt64.get_instance(base=buh_tuh,
-                                                        name='index',
-                                                        dtype='int64',
-                                                        expression='1')
+                'index': BuhTuhSeriesInt64.get_class_instance(base=buh_tuh,
+                                                              name='index',
+                                                              expression='1')
             }
 
         self.aggregated_data = {name: series
