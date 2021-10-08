@@ -11,10 +11,17 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * - All Elements will be checked for visibility tracking and appropriate events will be triggered for them.
  * - Elements with the Objectiv Track Click attribute are bound to EventListener for Buttons, Links.
  * - Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
+ * - All processed Elements are decorated with the `tracked` Tagging Attribute so we won't process them again.
  */
 export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
   try {
     if (isTaggedElement(element)) {
+      // Prevent Elements from being tracked multiple times
+      if (element.hasAttribute(TaggingAttribute.tracked)) {
+        return;
+      }
+      element.setAttribute(TaggingAttribute.tracked, 'true');
+
       // Visibility: visible tracking
       trackVisibilityVisibleEvent(element, tracker);
 
