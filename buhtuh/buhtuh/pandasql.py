@@ -363,7 +363,7 @@ class BuhTuhDataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['BuhTuhSeries', int, str, float]):
+                    value: Union['BuhTuhSeries', int, str, float, UUID]):
         """
         TODO: Comments
         """
@@ -1132,8 +1132,7 @@ class BuhTuhSeriesString(BuhTuhSeries):
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
         if source_dtype == 'string':
             return expression
-        else:
-            return f'({expression})::varchar'
+        return f'cast(({expression}) as text)'
 
     def __add__(self, other) -> 'BuhTuhSeries':
         other = const_to_series(base=self, value=other)
@@ -1199,14 +1198,41 @@ class BuhTuhSeriesString(BuhTuhSeries):
         return self._get_derived_series('string', expression)
 
 
-class BuhTuhSeriesUuid(BuhTuhSeriesString):
+class BuhTuhSeriesUuid(BuhTuhSeries):
     """
-    TODO: make this a proper class, not just a string subclass
+    Series representing UUID values.
     """
     dtype = 'uuid'
-    dtype_aliases = ()  # type: ignore
+    dtype_aliases = ()
     supported_db_dtype = 'uuid'
-    supported_value_types = (UUID, )  # type: ignore
+    supported_value_types = (UUID, )
+
+    @classmethod
+    def value_to_sql(cls, value: UUID) -> str:
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be uuid, actual type: {type(value)}')
+        return f"cast('{value}' as uuid)"
+
+    @classmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: str) -> str:
+        if source_dtype == 'uuid':
+            return expression
+        if source_dtype == 'string':
+            # If the format is wrong, then this will give an error later on, but there is not much we can
+            # do about that here.
+            return f'cast(({expression}) as uuid)'
+        # As far as we know the other types we support cannot be directly cast to uuid.
+        raise ValueError(f'cannot convert {source_dtype} to uuid.')
+
+    @classmethod
+    def generate_random_uuid(cls, base: DataFrameOrSeries) -> 'BuhTuhSeriesUuid':
+        """ Create a new Seriees object with for every row a random uuid."""
+        return cls.get_instance(
+            base=base,
+            name='__tmp',
+            dtype='uuid',
+            expression='gen_random_uuid()'
+        )
 
 
 class BuhTuhSeriesJson(BuhTuhSeriesString):
