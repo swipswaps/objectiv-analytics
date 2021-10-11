@@ -35,10 +35,10 @@ class BuhTuhDataFrame:
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
     only when one of the above mentioned data-transfer functions is called.
 
-    The initial data of the DataFrame is the result of the SQL query that the `source_node` parameter
+    The initial data of the DataFrame is the result of the SQL query that the `base_node` parameter
     contains. That can be a simple query on a table, but also a complicated query in itself. Operations
-    on the data will result in SQL queries that build on top of the query of the source_node. The
-    index and series parameters contain meta information about the data in the source_node.
+    on the data will result in SQL queries that build on top of the query of the base_node. The
+    index and series parameters contain meta information about the data in the base_node.
 
     The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
     DataFrames see https://pandas.pydata.org/docs/reference/frame.html
@@ -46,7 +46,7 @@ class BuhTuhDataFrame:
     def __init__(
         self,
         engine: Engine,
-        source_node: SqlModel,
+        base_node: SqlModel,
         index: Dict[str, 'BuhTuhSeries'],
         series: Dict[str, 'BuhTuhSeries'],
         order_by: List[SortColumn] = None
@@ -57,7 +57,7 @@ class BuhTuhDataFrame:
         table (`from_table()`) or already instantiated sql-model (`from_model()`).
 
         :param engine: db connection
-        :param source_node: sql-model of a select statement that must contain all columns/expressions that
+        :param base_node: sql-model of a select statement that must contain all columns/expressions that
             are present in the series parameter.
         :param index: Dictionary mapping the name of each index-column to a Series object representing
             the column.
@@ -66,7 +66,7 @@ class BuhTuhDataFrame:
         :param order_by: Optional list of sort-columns to order the DataFrame by
         """
         self._engine = engine
-        self._base_node = source_node
+        self._base_node = base_node
         self._index = copy(index)
         self._data: Dict[str, BuhTuhSeries] = {}
         self._order_by = order_by if order_by is not None else []
@@ -182,7 +182,7 @@ class BuhTuhDataFrame:
         # Should this also use _df_or_series?
         return cls.get_instance(
             engine=engine,
-            source_node=model,
+            base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             order_by=[]
@@ -254,7 +254,7 @@ class BuhTuhDataFrame:
         # Should this also use _df_or_series?
         return cls.get_instance(
             engine=engine,
-            source_node=model,
+            base_node=model,
             index_dtypes={index: index_dtype},
             dtypes=dtypes
         )
@@ -263,14 +263,14 @@ class BuhTuhDataFrame:
     def get_instance(
             cls,
             engine,
-            source_node: SqlModel,
+            base_node: SqlModel,
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             order_by: List[SortColumn] = None
     ) -> 'BuhTuhDataFrame':
         """
         Get an instance with the right series instantiated based on the dtypes array. This assumes that
-        source_node has a column for all names in index_dtypes and dtypes.
+        base_node has a column for all names in index_dtypes and dtypes.
         """
 
         index: Dict[str, BuhTuhSeries] = {}
@@ -278,7 +278,7 @@ class BuhTuhDataFrame:
             index_type = get_series_type_from_dtype(value)
             index[key] = index_type(
                 engine=engine,
-                base_node=source_node,
+                base_node=base_node,
                 index=None,  # No index for index
                 name=key
             )
@@ -287,13 +287,13 @@ class BuhTuhDataFrame:
             series_type = get_series_type_from_dtype(value)
             series[key] = series_type(
                 engine=engine,
-                base_node=source_node,
+                base_node=base_node,
                 index=index,
                 name=key
             )
         return BuhTuhDataFrame(
             engine=engine,
-            source_node=source_node,
+            base_node=base_node,
             index=index,
             series=series,
             order_by=order_by
@@ -328,7 +328,7 @@ class BuhTuhDataFrame:
 
         return self.get_instance(
             engine=self.engine,
-            source_node=model,
+            base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             order_by=[]
@@ -352,7 +352,7 @@ class BuhTuhDataFrame:
 
             return BuhTuhDataFrame(
                     engine=self.engine,
-                    source_node=self.base_node,
+                    base_node=self.base_node,
                     index=self.index,
                     series=selected_data,
                     order_by=self._order_by
@@ -363,7 +363,7 @@ class BuhTuhDataFrame:
             return self._df_or_series(
                 df=BuhTuhDataFrame(
                     engine=self.engine,
-                    source_node=model,
+                    base_node=model,
                     index=self.index,
                     series=self.data,
                     order_by=self._order_by
@@ -390,7 +390,7 @@ class BuhTuhDataFrame:
             return self._df_or_series(
                 BuhTuhDataFrame.get_instance(
                     engine=self.engine,
-                    source_node=model,
+                    base_node=model,
                     index_dtypes={name: series.dtype for name, series in self.index.items()},
                     dtypes={name: series.dtype for name, series in self.data.items()},
                     order_by=[]  # filtering rows resets any sorting
@@ -488,7 +488,7 @@ class BuhTuhDataFrame:
 
         return BuhTuhDataFrame(
             engine=self.engine,
-            source_node=self.base_node,
+            base_node=self.base_node,
             index=self.index,
             series=new_data,
             order_by=self._order_by
@@ -561,7 +561,7 @@ class BuhTuhDataFrame:
                     for by_series, asc_item in zip(by_series_list, ascending)]
         return BuhTuhDataFrame(
             engine=self.engine,
-            source_node=self.base_node,
+            base_node=self.base_node,
             index=self.index,
             series=self.data,
             order_by=order_by
@@ -848,7 +848,7 @@ class BuhTuhSeries(ABC):
             order_by = []
         return BuhTuhDataFrame(
             engine=self.engine,
-            source_node=self.base_node,
+            base_node=self.base_node,
             index=self.index,
             series={self.name: self},
             order_by=order_by
@@ -1608,7 +1608,7 @@ class BuhTuhGroupBy:
 
         return BuhTuhDataFrame.get_instance(
             engine=self.buh_tuh.engine,
-            source_node=model,
+            base_node=model,
             index_dtypes={n: t.dtype for n, t in self.groupby.items()},
             dtypes=new_series_dtypes,
             order_by=[]
@@ -1637,7 +1637,7 @@ class BuhTuhGroupBy:
         selected_data = {key: data for key, data in self.aggregated_data.items() if key in key_set}
         buh_tuh = BuhTuhDataFrame(
             engine=self.buh_tuh.engine,
-            source_node=self.buh_tuh.base_node,
+            base_node=self.buh_tuh.base_node,
             index=self.groupby,
             series=selected_data,
             # We don't guarantee sorting after groupby(), so we can just set order_by to None
