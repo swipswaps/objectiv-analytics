@@ -310,6 +310,30 @@ class BuhTuhDataFrame:
             return df
         return list(df.data.values())[0]
 
+    def get_df_materialized_model(self) -> 'BuhTuhDataFrame':
+        """
+        Create a copy of this DataFrame with as base_node the current DataFrame's state.
+
+        This effectively adds a node to the underlying SqlModel graph. Generally adding nodes increases
+        the size of the generated SQL query. But this can be useful if the current DataFrame contains
+        expressions that you want to evaluate before further expressions are build on top of them. This might
+        make sense for very large expressions, or for non-deterministic expressions (e.g. see
+        BuhTuhSeriesUuid.sql_gen_random_uuid()).
+
+        :return: New DataFrame with the current DataFrame's state as base_node
+        """
+        model = self.get_current_node()
+        index_dtypes = {k: v.dtype for k, v in self.index.items()}
+        series_dtypes = {k: v.dtype for k, v in self.data.items()}
+
+        return self.get_instance(
+            engine=self.engine,
+            source_node=model,
+            index_dtypes=index_dtypes,
+            dtypes=series_dtypes,
+            order_by=[]
+        )
+
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
         """
@@ -512,8 +536,8 @@ class BuhTuhDataFrame:
 
         The sorting will remain in the returned DataFrame as long as no operations are performed on that
         frame that materially change the selected data. Operations that materially change the selected data
-        are for example groupby(), merge(), and filtering out rows. Adding or removing a column does not
-        materially change the selected data.
+        are for example groupby(), merge(), get_df_materialized_model(), and filtering out rows. Adding or
+        removing a column does not materially change the selected data.
 
         :param by: column label or list of labels to sort by.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
@@ -1283,8 +1307,20 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
     @classmethod
     def sql_gen_random_uuid(cls, base: DataFrameOrSeries) -> 'BuhTuhSeriesUuid':
         """
-        Create a new Series object with for every row gen_random_uuid(), which will translate to a random
-        uuid for each row.
+        Create a new Series object with for every row the `gen_random_uuid()` expression, which will
+        evaluate to a random uuid for each row.
+
+        Note that this is non-deterministic expression, it will give a different result each time it is run.
+        This can have some unexpected consequences. Considers the following code:
+            df['x'] = BuhTuhSeriesUuid.sql_gen_random_uuid(df)
+            df['y'] = df['x']
+            df['different'] = df['y'] != df['x']
+        The df['different'] column will be True for all rows, because the second statement copies the
+        unevaluated expression, not the result of the expression. So at evaluation time the expression will
+        be evaluated twice for each row, for the 'x' column and the 'y' column, giving different results both
+        times. One way to work around this is to materialize the dataframe in its current state (using
+        get_df_materialized_model()), before adding any columns that reference a column that's created with
+        this function.
         """
         return cls.get_class_instance(
             base=base,
