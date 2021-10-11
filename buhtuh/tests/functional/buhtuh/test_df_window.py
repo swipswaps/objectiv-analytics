@@ -1,7 +1,8 @@
 import pytest
 
-from buhtuh import BuhTuhWindow
-from tests.functional.buhtuh.test_data_and_utils import assert_equals_data, get_bt_with_test_data
+from buhtuh.partitioning import BuhTuhWindow
+from tests.functional.buhtuh.test_data_and_utils import assert_equals_data, get_bt_with_test_data, get_bt_with_food_data
+
 
 def test_windowing_frame_clause():
     bt = get_bt_with_test_data(full_data_set=True)
@@ -263,3 +264,8 @@ def test_windowing_expressions():
     )
 
 
+def test_windowing_datetime():
+    bt = get_bt_with_food_data()
+
+    bt['previous'] = bt.date.window_lag(bt.window('date')
+                                        )
