@@ -11,7 +11,6 @@ class BuhTuhGroupBy:
                  group_by_columns: List['BuhTuhSeries']):
         self.buh_tuh = buh_tuh
 
-
         self.groupby = {}
         for col in group_by_columns:
             if not isinstance(col, BuhTuhSeries):
