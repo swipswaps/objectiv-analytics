@@ -1,8 +1,153 @@
 import pytest
 
-import buhtuh
+from buhtuh import BuhTuhWindow
 from tests.functional.buhtuh.test_data_and_utils import assert_equals_data, get_bt_with_test_data
 
+def test_windowing_frame_clause():
+    bt = get_bt_with_test_data(full_data_set=True)
+    w = bt.window()
+    # Check the default
+    assert (w.frame_clause == "RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW")
+
+    def frame_clause_equals(expected, **kwargs):
+        w2 = w.set_frame_clause(**kwargs)
+        assert(w2.frame_clause == expected)
+        ## Run a query to check whether the SQL is valid if we generated what we expected.
+        bt.inhabitants.window_last_value(w2).head()
+
+    # Again, check the default but through set_frame_clause in this case
+    frame_clause_equals("RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW")
+
+    # ROWS happy paths
+    frame_clause_equals("ROWS BETWEEN CURRENT ROW AND CURRENT ROW",
+                        mode=BuhTuhWindow.FrameMode.ROWS,
+                        start_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW)
+
+    frame_clause_equals("ROWS BETWEEN CURRENT ROW AND CURRENT ROW",
+                        mode=BuhTuhWindow.FrameMode.ROWS,
+                        start_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        start_value=None,
+                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        end_value=None)
+
+    frame_clause_equals("ROWS BETWEEN 2 PRECEDING AND CURRENT ROW",
+                        mode=BuhTuhWindow.FrameMode.ROWS,
+                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        start_value=2,
+                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        end_value=None)
+
+    frame_clause_equals("ROWS BETWEEN 2 PRECEDING AND 1 PRECEDING",
+                        mode=BuhTuhWindow.FrameMode.ROWS,
+                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        start_value=2,
+                        end_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        end_value=1)
+
+    frame_clause_equals("ROWS BETWEEN 1 PRECEDING AND 2 FOLLOWING",
+                        mode=BuhTuhWindow.FrameMode.ROWS,
+                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        start_value=1,
+                        end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                        end_value=2)
+
+    frame_clause_equals("ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING",
+                        mode=BuhTuhWindow.FrameMode.ROWS,
+                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        start_value=None,
+                        end_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        end_value=1)
+
+    frame_clause_equals("ROWS BETWEEN 1 PRECEDING AND UNBOUNDED FOLLOWING",
+                        mode=BuhTuhWindow.FrameMode.ROWS,
+                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        start_value=1,
+                        end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                        end_value=None)
+
+    frame_clause_equals("ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING",
+                        mode=BuhTuhWindow.FrameMode.ROWS,
+                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        start_value=None,
+                        end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                        end_value=None)
+
+    # RANGE happy paths
+    frame_clause_equals("RANGE BETWEEN CURRENT ROW AND CURRENT ROW",
+                        mode=BuhTuhWindow.FrameMode.RANGE,
+                        start_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW)
+
+    frame_clause_equals("RANGE BETWEEN CURRENT ROW AND CURRENT ROW",
+                        mode=BuhTuhWindow.FrameMode.RANGE,
+                        start_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        start_value=None,
+                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        end_value=None)
+
+    frame_clause_equals("RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING",
+                        mode=BuhTuhWindow.FrameMode.RANGE,
+                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        start_value=None,
+                        end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                        end_value=None)
+
+    #     The value PRECEDING and value FOLLOWING cases are currently only allowed in ROWS mode.
+    #     They indicate that the frame starts or ends with the row that many rows before or after
+    #     the current row.
+    with pytest.raises(ValueError):
+        frame_clause_equals("",
+                            mode=BuhTuhWindow.FrameMode.RANGE,
+                            start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            start_value=1,
+                            end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            end_value = None)
+
+    with pytest.raises(ValueError):
+        frame_clause_equals("",
+                            mode=BuhTuhWindow.FrameMode.RANGE,
+                            start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            start_value= None,
+                            end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            end_value = 2)
+
+    #     Restrictions are that
+    #     - frame_start cannot be UNBOUNDED FOLLOWING,
+    with pytest.raises(ValueError):
+        frame_clause_equals("",
+                            mode=BuhTuhWindow.FrameMode.RANGE,
+                            start_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            start_value=None,
+                            end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            end_value = None)
+
+    #     - frame_end cannot be UNBOUNDED PRECEDING
+    with pytest.raises(ValueError):
+        frame_clause_equals("",
+                            mode=BuhTuhWindow.FrameMode.RANGE,
+                            start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            start_value=None,
+                            end_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            end_value = None)
+
+    #     - frame_end choice cannot appear earlier in the above list than the frame_start choice:
+    #         for example RANGE BETWEEN CURRENT ROW AND value PRECEDING is not allowed.
+    with pytest.raises(ValueError):
+        frame_clause_equals("",
+                            mode=BuhTuhWindow.FrameMode.ROWS,
+                            start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            start_value=2,
+                            end_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            end_value = 3)
+
+    with pytest.raises(ValueError):
+        frame_clause_equals("",
+                            mode=BuhTuhWindow.FrameMode.ROWS,
+                            start_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            start_value=3,
+                            end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            end_value = 2)
 
 def test_windowing_windows():
     ## Just test that different windows don't generate SQL errors. Logic will be checked in different tests.
@@ -57,11 +202,16 @@ def test_windowing_functions_agg():
     )
 
 
-
 def test_windowing_functions_basics():
     # just check the results in too many ways
     bt = get_bt_with_test_data(full_data_set=True)
-    window = bt.sort_values('inhabitants').window('municipality')
+    # Create an unbounded window to make sure we can easily relate to the results.
+    window = bt.sort_values('inhabitants').window('municipality',
+                                                  mode=BuhTuhWindow.FrameMode.ROWS,
+                                                  start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                                                  start_value=None,
+                                                  end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                                                  end_value=None)
     bt['row_number'] = bt.inhabitants.window_row_number(window)
     bt['rank'] = bt.inhabitants.window_rank(window)
     bt['dense_rank'] = bt.inhabitants.window_dense_rank(window)
@@ -74,7 +224,6 @@ def test_windowing_functions_basics():
     bt['last_value'] = bt.inhabitants.window_last_value(window)
     bt['nth_value'] = bt.inhabitants.window_nth_value(window, 2)
 
-
     assert_equals_data(
         bt,
         order_by='inhabitants',
@@ -84,36 +233,16 @@ def test_windowing_functions_basics():
             'first_value', 'last_value', 'nth_value'
         ], expected_data=[
             [4, 4, 'Sleat', 'De Friese Meren', 700, 1426, 1, 1, 1, 0.0, 1.0, 1, 9999, 9999, 700, 700, None],
-            [6, 6, 'Hylpen', 'Súdwest-Fryslân', 870, 1225, 1, 1, 1, 0.0, 0.16666666666666666, 1, 9999, 3055, 870, 870, None],
-            [5, 5, 'Starum', 'Súdwest-Fryslân', 960, 1061, 2, 2, 2, 0.2, 0.3333333333333333, 1, 9999, 4440, 870, 960, 960],
-            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 3, 3, 3, 0.4, 0.5, 2, 870, 10120, 870, 3055, 960],
-            [7, 7, 'Warkum', 'Súdwest-Fryslân', 4440, 1399, 4, 4, 4, 0.6, 0.6666666666666666, 2, 960, 33520, 870, 4440, 960],
-            [8, 8, 'Boalsert', 'Súdwest-Fryslân', 10120, 1455, 5, 5, 5, 0.8, 0.8333333333333334, 3, 3055, 9999, 870, 10120, 960],
+            [6, 6, 'Hylpen', 'Súdwest-Fryslân', 870, 1225, 1, 1, 1, 0.0, 0.16666666666666666, 1, 9999, 3055, 870, 33520, 960],
+            [5, 5, 'Starum', 'Súdwest-Fryslân', 960, 1061, 2, 2, 2, 0.2, 0.3333333333333333, 1, 9999, 4440, 870, 33520, 960],
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 3, 3, 3, 0.4, 0.5, 2, 870, 10120, 870, 33520, 960],
+            [7, 7, 'Warkum', 'Súdwest-Fryslân', 4440, 1399, 4, 4, 4, 0.6, 0.6666666666666666, 2, 960, 33520, 870, 33520, 960],
+            [8, 8, 'Boalsert', 'Súdwest-Fryslân', 10120, 1455, 5, 5, 5, 0.8, 0.8333333333333334, 3, 3055, 9999, 870, 33520, 960],
             [11, 11, 'Dokkum', 'Noardeast-Fryslân', 12675, 1298, 1, 1, 1, 0.0, 1.0, 1, 9999, 9999, 12675, 12675, None],
             [10, 10, 'Frjentsjer', 'Waadhoeke', 12760, 1374, 1, 1, 1, 0.0, 1.0, 1, 9999, 9999, 12760, 12760, None],
             [9, 9, 'Harns', 'Harlingen', 14740, 1234, 1, 1, 1, 0.0, 1.0, 1, 9999, 9999, 14740, 14740, None],
             [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 6, 6, 6, 1.0, 1.0, 3, 4440, 9999, 870, 33520, 960],
             [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 1, 1, 1, 0.0, 1.0, 1, 9999, 9999, 93485, 93485, None]
-        ]
-    )
-
-def test_windowing_basics_lag():
-    bt = get_bt_with_test_data(full_data_set=True)
-    bt['lag'] = bt.inhabitants.window_lag(bt.sort_values('inhabitants').window())
-    bt['lag2'] = bt.inhabitants.window_lag(bt.sort_values('inhabitants').window('municipality'), 2, 9999)
-    bt['lag_muni'] = bt.inhabitants.window_lag(bt.sort_values('inhabitants').window('municipality'))
-
-    assert_equals_data(
-        bt[['municipality','inhabitants', 'lag', 'lag2', 'lag_muni']],
-        order_by='inhabitants',
-        expected_columns=['_index_skating_order', 'municipality', 'inhabitants', 'lag', 'lag2', 'lag_muni'],
-        expected_data=[
-            [4, 'De Friese Meren', 700, None, 9999, None], [6, 'Súdwest-Fryslân', 870, 700, 9999, None],
-            [5, 'Súdwest-Fryslân', 960, 870, 9999, 870], [3, 'Súdwest-Fryslân', 3055, 960, 870, 960],
-            [7, 'Súdwest-Fryslân', 4440, 3055, 960, 3055], [8, 'Súdwest-Fryslân', 10120, 4440, 3055, 4440],
-            [11, 'Noardeast-Fryslân', 12675, 10120, 9999, None], [10, 'Waadhoeke', 12760, 12675, 9999, None],
-            [9, 'Harlingen', 14740, 12760, 9999, None], [2, 'Súdwest-Fryslân', 33520, 14740, 4440, 10120],
-            [1, 'Leeuwarden', 93485, 33520, 9999, None]
         ]
     )
 

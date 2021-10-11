@@ -1,6 +1,7 @@
 import datetime
 from abc import abstractmethod, ABC
 from copy import copy
+from enum import Enum
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Type, NamedTuple
 from uuid import UUID
 
@@ -78,6 +79,24 @@ class BuhTuhDataFrame:
         if set(index.keys()) & set(series.keys()):
             raise ValueError(f"The names of the index series and data series should not intersect. "
                              f"Index series: {sorted(index.keys())} data series: {sorted(series.keys())}")
+
+    def copy_override(
+            self,
+            engine: Engine = None,
+            source_node: SqlModel = None,
+            index: Dict[str, 'BuhTuhSeries'] = None,
+            series: Dict[str, 'BuhTuhSeries'] = None,
+            order_by: List[SortColumn] = None) -> 'BuhTuhDataFrame':
+        """
+        Create a copy of self, with the given arguments overriden
+        """
+        return BuhTuhDataFrame(
+            engine=engine or self.engine,
+            source_node=source_node or self._base_node,
+            index=index or self._index,
+            series=series or self._data,
+            order_by=order_by or self._order_by
+        )
 
     @property
     def engine(self):
@@ -326,25 +345,11 @@ class BuhTuhDataFrame:
                 raise KeyError(f"Keys {key_set.difference(set(self.data_columns))} not in data_columns")
             selected_data = {key: data for key, data in self.data.items() if key in key_set}
 
-            return BuhTuhDataFrame(
-                    engine=self.engine,
-                    source_node=self.base_node,
-                    index=self.index,
-                    series=selected_data,
-                    order_by=self._order_by
-                )
+            return self.copy_override(series=selected_data)
 
         if isinstance(key, slice):
             model = self.get_current_node(limit=key)
-            return self._df_or_series(
-                df=BuhTuhDataFrame(
-                    engine=self.engine,
-                    source_node=model,
-                    index=self.index,
-                    series=self.data,
-                    order_by=self._order_by
-                )
-            )
+            return self._df_or_series(df=self.copy_override(source_node=model))
 
         if isinstance(key, BuhTuhSeriesBoolean):
             # We only support first level boolean indices for now
@@ -462,16 +467,13 @@ class BuhTuhDataFrame:
             else:
                 new_data[column] = series
 
-        return BuhTuhDataFrame(
-            engine=self.engine,
-            source_node=self.base_node,
-            index=self.index,
-            series=new_data,
-            order_by=self._order_by
-        )
+        return self.copy_override(series=new_data)
 
-
-    def _group_by_columns(self, by: Union[str, 'BuhTuhSeries', List[str]]):
+    def _partition_by_columns(self, by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None]
+                              ) -> List['BuhTuhSeries']:
+        """
+        Helper method to check and compile a partitioning list
+        """
         group_by_columns: List['BuhTuhSeries'] = []
         if isinstance(by, str):
             group_by_columns.append(self.all_series[by])
@@ -492,7 +494,7 @@ class BuhTuhDataFrame:
 
     def groupby(
             self,
-            by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries']] = None
+            by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
     ) -> 'BuhTuhGroupBy':
         """
         Group by any of the series currently in this dataframe, both from index
@@ -500,15 +502,19 @@ class BuhTuhDataFrame:
         :param by: The series to group by
         :return: an object to perform aggregations on
         """
-        return BuhTuhGroupBy(buh_tuh=self, group_by_columns=self._group_by_columns(by))
+        return BuhTuhGroupBy(buh_tuh=self.copy_override(), group_by_columns=self._partition_by_columns(by))
 
     def window(self,
-               by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries']] = None,
-               frame_clause: str = None):
+               by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None,
+               **frame_args):
         """
-        Group
+        Create a window on the current dataframe and its sorting.
+        TODO Better argument typing, needs fancy import logic
+        :see: BuhTuhWindow __init__ for frame args
         """
-        return BuhTuhWindow(buh_tuh=self, group_by_columns=self._group_by_columns(by), frame_clause=frame_clause)
+        return BuhTuhWindow(buh_tuh=self.copy_override(),
+                            group_by_columns=self._partition_by_columns(by),
+                            **frame_args)
 
     def sort_values(
             self,
@@ -545,13 +551,7 @@ class BuhTuhDataFrame:
         by_series_list = [self.all_series[by_name] for by_name in by]
         order_by = [SortColumn(expression=by_series.get_expression(), asc=asc_item)
                     for by_series, asc_item in zip(by_series_list, ascending)]
-        return BuhTuhDataFrame(
-            engine=self.engine,
-            source_node=self.base_node,
-            index=self.index,
-            series=self.data,
-            order_by=order_by
-        )
+        return self.copy_override(order_by=order_by)
 
     def to_df(self) -> pandas.DataFrame:
         """
@@ -580,7 +580,7 @@ class BuhTuhDataFrame:
         conn.close()
         return df
 
-    def _get_order_by_expression(self):
+    def get_order_by_expression(self):
         """
         Get a properly formatted order by expression based on this df's order_by.
         Will return an empty string in case ordering in not requested.
@@ -632,7 +632,7 @@ class BuhTuhDataFrame:
             index_str=', '.join(f'"{index_column}"' for index_column in self.index.keys()),
             _last_node=self.base_node,
             limit='' if limit_str is None else f'{limit_str}',
-            order=self._get_order_by_expression()
+            order=self.get_order_by_expression()
         )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
@@ -1030,33 +1030,32 @@ class BuhTuhSeries(ABC):
         # this is massively ugly
         return series.head(1).values[0]
 
-
-    def _window_or_agg_func(self, window: 'BuhTuhWindow', func: str, derived_dtype: str):
-        if window is None:
+    def _window_or_agg_func(self, partition: Union['BuhTuhGroupBy', None], func: str, derived_dtype: str):
+        if partition is None or not isinstance(partition, BuhTuhWindow):
             return self._get_derived_series(derived_dtype, func)
         else:
-            return self._get_derived_series(derived_dtype, window.get_window_expression(func))
+            return self._get_derived_series(derived_dtype, partition.get_window_expression(func))
 
     # Maybe the aggregation methods should be defined on a more subclass of the actual Series call
     # so we can be more restrictive in calling these.
-    def min(self, window: 'BuhTuhWindow' = None):
-        return self._window_or_agg_func(window, f'min({self.expression})', self.dtype)
+    def min(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(partition, f'min({self.expression})', self.dtype)
 
-    def max(self, window: 'BuhTuhWindow' = None):
-        return self._window_or_agg_func(window, f'max({self.expression})', self.dtype)
+    def max(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(partition, f'max({self.expression})', self.dtype)
 
-    def count(self, window: 'BuhTuhWindow' = None):
-        return self._window_or_agg_func(window, f'count({self.expression})', 'int64')
+    def count(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(partition, f'count({self.expression})', 'int64')
 
-    def nunique(self, window: 'BuhTuhWindow' = None):
-        if window is not None:
+    def nunique(self, partition: 'BuhTuhGroupBy' = None):
+        if partition is not None and isinstance(partition, BuhTuhWindow):
             raise Exception("unique counts in window functions not supported (by PG at least)")
         return self._get_derived_series('int64', f'count(distinct {self.expression})')
 
-
-    ## Window functions applicable for all types of data, but only with a window
+    # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
-    # TODO make group_by optional, but for that we need some way to access the series' underlying df to access sorting
+    # TODO make group_by optional, but for that we need some way to access the series' underlying
+    #      df to access sorting
     def window_row_number(self, window: 'BuhTuhWindow'):
         """
         Returns the number of the current row within its partition, counting from 1.
@@ -1065,19 +1064,22 @@ class BuhTuhSeries(ABC):
 
     def window_rank(self, window: 'BuhTuhWindow'):
         """
-        Returns the rank of the current row, with gaps; that is, the row_number of the first row in its peer group.
+        Returns the rank of the current row, with gaps; that is, the row_number of the first row
+        in its peer group.
         """
         return self._window_or_agg_func(window, f'rank()', 'int64')
 
     def window_dense_rank(self, window: 'BuhTuhWindow'):
         """
-        Returns the rank of the current row, without gaps; this function effectively counts peer groups.
+        Returns the rank of the current row, without gaps; this function effectively counts peer
+        groups.
         """
         return self._window_or_agg_func(window, f'dense_rank()', "int64")
 
     def window_percent_rank(self, window: 'BuhTuhWindow'):
         """
-        Returns the relative rank of the current row, that is (rank - 1) / (total partition rows - 1).
+        Returns the relative rank of the current row, that is
+            (rank - 1) / (total partition rows - 1).
         The value thus ranges from 0 to 1 inclusive.
         """
         return self._window_or_agg_func(window, f'percent_rank()', "double precision")
@@ -1092,19 +1094,25 @@ class BuhTuhSeries(ABC):
 
     def window_ntile(self, window: 'BuhTuhWindow', num_buckets: int = 1):
         """
-        Returns an integer ranging from 1 to the argument value, dividing the partition as equally as possible.
+        Returns an integer ranging from 1 to the argument value,
+        dividing the partition as equally as possible.
         """
         return self._window_or_agg_func(window, f'ntile({num_buckets})', "int64")
 
     def window_lag(self, window: 'BuhTuhWindow', offset: int = 1, default: Any = None):
         """
-        Returns value evaluated at the row that is offset rows before the current row within the partition;
-        if there is no such row, instead returns default (which must be of the same type as value).
+        Returns value evaluated at the row that is offset rows before the current row
+        within the partition; if there is no such row, instead returns default
+        (which must be of the same type as value).
+
         Both offset and default are evaluated with respect to the current row.
         If omitted, offset defaults to 1 and default to None
         """
         default_sql = self.value_to_sql(default)
-        return self._window_or_agg_func(window, f'lag({self.get_expression()}, {offset}, {default_sql})', self.dtype)
+        return self._window_or_agg_func(
+            window,
+            f'lag({self.get_expression()}, {offset}, {default_sql})', self.dtype
+        )
 
     def window_lead(self, window: 'BuhTuhWindow', offset: int = 1, default: Any = None):
         """
@@ -1114,7 +1122,10 @@ class BuhTuhSeries(ABC):
         If omitted, offset defaults to 1 and default to None.
         """
         default_sql = self.value_to_sql(default)
-        return self._window_or_agg_func(window, f'lead({self.get_expression()}, {offset}, {default_sql})', self.dtype)
+        return self._window_or_agg_func(
+            window,
+            f'lead({self.get_expression()}, {offset}, {default_sql})', self.dtype
+        )
 
     def window_first_value(self, window: 'BuhTuhWindow'):
         """
@@ -1130,9 +1141,13 @@ class BuhTuhSeries(ABC):
 
     def window_nth_value(self, window: 'BuhTuhWindow', n: int):
         """
-        Returns value evaluated at the row that is the n'th row of the window frame (counting from 1); returns NULL if there is no such row.
+        Returns value evaluated at the row that is the n'th row of the window frame
+        (counting from 1); returns NULL if there is no such row.
         """
-        return self._window_or_agg_func(window, f'nth_value({self.get_expression()}, {n})', self.dtype)
+        return self._window_or_agg_func(
+            window,
+            f'nth_value({self.get_expression()}, {n})', self.dtype
+        )
 
     def window_max(self, window: 'BuhTuhWindow'):
         """
@@ -1222,10 +1237,12 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
         expression = f'({self.expression})::int / ({other.expression})::int'
         return self._get_derived_series('int64', expression)
 
-    def sum(self):
+    def sum(self, partition: 'BuhTuhGroupBy' = None):
         # TODO: This cast here is rather nasty
-        return self._get_derived_series('int64', f'sum({self.expression})::bigint')
+        return self._window_or_agg_func(partition, f'sum({self.expression})::bigint', 'int64')
 
+    def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesFloat64':
+        return self._window_or_agg_func(partition, f'avg({self.expression})', 'double precision')
 
 
 class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
@@ -1236,8 +1253,9 @@ class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
 
     @classmethod
     def value_to_sql(cls, value: int) -> str:
-        # TOOD validate this
-        if value is None: return 'NULL'
+        # TODO validate this, should be part of Nullable logic?
+        if value is None:
+            return 'NULL'
         if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be int, actual type: {type(value)}')
         return f'{value}::bigint'
@@ -1550,11 +1568,11 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         expression = f'({self.expression}) - ({other.expression})'
         return self._get_derived_series('timedelta', expression)
 
-    def sum(self) -> 'BuhTuhSeriesTimedelta':
-        return self._get_derived_series('timedelta', f'sum({self.expression})')
+    def sum(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
+        return self._window_or_agg_func(partition, f'sum({self.expression})', 'timedelta')
 
-    def average(self) -> 'BuhTuhSeriesTimedelta':
-        return self._get_derived_series('timedelta', f'avg({self.expression})')
+    def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
+        return self._window_or_agg_func(partition, f'avg({self.expression})', 'timedelta')
 
 
 class BuhTuhGroupBy:
@@ -1682,19 +1700,146 @@ class BuhTuhGroupBy:
         )
         return BuhTuhGroupBy(buh_tuh=buh_tuh, group_by_columns=list(self.groupby.values()))
 
+    def window(self,
+               by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries']] = None,
+               **frame_args):
+        """
+        Convenience function to turn this groupby into a window.
+        TODO Better argument typing, needs fancy import logic
+        :see: BuhTuhWindow __init__ for frame args
+        """
+        return BuhTuhWindow(buh_tuh=self.buh_tuh, group_by_columns=list(self.groupby.values()), **frame_args)
 
 
 class BuhTuhWindow(BuhTuhGroupBy):
+    """
+    { RANGE | ROWS } frame_start
+    { RANGE | ROWS } BETWEEN frame_start AND frame_end
+    where frame_start and frame_end can be one of
+
+    UNBOUNDED PRECEDING
+    value PRECEDING
+    CURRENT ROW
+    value FOLLOWING
+    UNBOUNDED FOLLOWING
+
+    The frame_clause specifies the set of rows constituting the window frame, for those window
+    functions that act on the frame instead of the whole partition.
+
+    If frame_end is omitted it
+    defaults to CURRENT ROW.
+
+    Restrictions are that
+    - frame_start cannot be UNBOUNDED FOLLOWING,
+    - frame_end cannot be UNBOUNDED PRECEDING
+    - frame_end choice cannot appear earlier in the above list than the frame_start choice:
+        for example RANGE BETWEEN CURRENT ROW AND value PRECEDING is not allowed.
+
+    The default framing option is RANGE UNBOUNDED PRECEDING, which is the same as
+    RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW; it sets the frame to be all rows from
+    the partition start up through the current row's last peer in the ORDER BY ordering
+    (which means all rows if there is no ORDER BY).
+
+    In general, UNBOUNDED PRECEDING means that the frame starts with the first row of the
+    partition, and similarly UNBOUNDED FOLLOWING means that the frame ends with the last row
+    of the partition (regardless of RANGE or ROWS mode).
+
+    In ROWS mode, CURRENT ROW means that the frame starts or ends with the current row;
+    In RANGE mode it means that the frame starts or ends with the current row's first or
+    last peer in the ORDER BY ordering.
+
+    The value PRECEDING and value FOLLOWING cases are currently only allowed in ROWS mode.
+    They indicate that the frame starts or ends with the row that many rows before or after
+    the current row.
+
+    value must be an integer expression not containing any variables, aggregate functions,
+    or window functions. The value must not be null or negative; but it can be zero,
+    which selects the current row itself.
+    """
+    frame_clause: str
+
+    class FrameMode(Enum):
+        ROWS = 0
+        RANGE = 1
+
+    class FrameBoundary(Enum):
+        # Order is important here (see third restriction above)
+        PRECEDING = 0
+        CURRENT_ROW = 1
+        FOLLOWING = 2
+
+        def frame_clause(self, value):
+            if self == self.CURRENT_ROW:
+                if value is not None:
+                    raise ValueError('Value not supported with CURRENT ROW')
+                return 'CURRENT ROW'
+            else:
+                if value is None:
+                    return f'UNBOUNDED {self.name}'
+                else:
+                    return f'{value} {self.name}'
 
     def __init__(self, buh_tuh: BuhTuhDataFrame,
                  group_by_columns: List['BuhTuhSeries'],
-                 frame_clause: str = None):
+                 mode: FrameMode = FrameMode.RANGE,
+                 start_boundary: FrameBoundary = FrameBoundary.PRECEDING,
+                 start_value: int = None,
+                 end_boundary: FrameBoundary = FrameBoundary.CURRENT_ROW,
+                 end_value: int = None):
         """
         Basically a partitioned, sorted DataFrame, with a frame clause defining the window
         See 4.2.8. in https://www.postgresql.org/docs/9.1/sql-expressions.html what that means :)
         """
         super().__init__(buh_tuh, group_by_columns)
-        self.frame_clause = frame_clause
+
+        if mode is None:
+            raise ValueError("Mode needs to be defined")
+
+        if start_boundary is None:
+            raise ValueError("At least start_boundary needs to be defined")
+
+        if start_boundary == BuhTuhWindow.FrameBoundary.FOLLOWING and start_value is None:
+            raise ValueError("Start of frame can not be unbounded following")
+
+        if end_boundary == BuhTuhWindow.FrameBoundary.PRECEDING and end_value is None:
+            raise ValueError("End of frame can not be unbounded following")
+
+        if (start_value is not None and start_value < 0) or \
+                (end_value is not None and end_value < 0):
+            raise ValueError("start_value and end_value must be greater than or equal to zero.")
+
+        if mode == BuhTuhWindow.FrameMode.RANGE and (start_value is not None or end_value is not None):
+            raise ValueError("start_value or end_value cases only supported in ROWS mode.")
+
+        if end_boundary is not None:
+            if start_boundary.value > end_boundary.value:
+                raise ValueError("frame boundaries defined in wrong order.")
+
+            if start_boundary == end_boundary:
+                if start_boundary == BuhTuhWindow.FrameBoundary.PRECEDING \
+                        and start_value is not None \
+                        and end_value is not None \
+                        and start_value < end_value:
+                    raise ValueError("frame boundaries defined in wrong order.")
+
+            if start_boundary == end_boundary:
+                if start_boundary == BuhTuhWindow.FrameBoundary.FOLLOWING \
+                        and start_value is not None \
+                        and end_value is not None \
+                        and start_value > end_value:
+                    raise ValueError("frame boundaries defined in wrong order.")
+
+        self._mode = mode
+        self._start_boundary = start_boundary
+        self._start_value = start_value
+        self._end_boundary = end_boundary
+        self._end_value = end_value
+
+        if end_boundary is None:
+            self.frame_clause = f'{mode.name} {start_boundary.frame_clause(start_value)}'
+        else:
+            self.frame_clause = f'{mode.name} BETWEEN {start_boundary.frame_clause(start_value)}' \
+                            f' AND {end_boundary.frame_clause(end_value)}'
 
     def sort_values(self, **kwargs) -> 'BuhTuhWindow':
         """
@@ -1704,18 +1849,25 @@ class BuhTuhWindow(BuhTuhGroupBy):
         new_bt = self.buh_tuh.sort_values(**kwargs)
         return BuhTuhWindow(buh_tuh=new_bt,
                             group_by_columns=list(self.groupby.values()),
-                            frame_clause=self.frame_clause)
+                            mode=self._mode,
+                            start_boundary=self._start_boundary, start_value=self._start_value,
+                            end_boundary=self._end_boundary, end_value=self._end_value)
 
-    def set_frame_clause(self, frame_clause: str) -> 'BuhTuhWindow':
+    def set_frame_clause(self,
+                         mode: FrameMode = FrameMode.RANGE,
+                         start_boundary: FrameBoundary = FrameBoundary.PRECEDING,
+                         start_value: int = None,
+                         end_boundary: FrameBoundary = FrameBoundary.CURRENT_ROW,
+                         end_value: int = None) -> 'BuhTuhWindow':
         """
-        Set the frame clause.
-        TODO: this needs a decent interface, but for now, it provides some flexibility
-        @return
+        Convenience function to clone this window with new frame parameters
+        :see: __init__()
         """
         return BuhTuhWindow(buh_tuh=self.buh_tuh,
                             group_by_columns=list(self.groupby.values()),
-                            frame_clause=frame_clause)
-
+                            mode=mode,
+                            start_boundary=start_boundary, start_value=start_value,
+                            end_boundary=end_boundary, end_value=end_value)
 
     def get_window_expression(self, window_func: str) -> str:
         """
@@ -1725,7 +1877,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
         partition = self._get_partition_expression()
 
         # TODO implement NULLS FIRST / NULLS LAST, probably not here but in the sorting logic.
-        order_by = self.buh_tuh._get_order_by_expression()
+        order_by = self.buh_tuh.get_order_by_expression()
 
         if self.frame_clause is None:
             frame_clause = ''
