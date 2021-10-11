@@ -1,12 +1,8 @@
 # buhtuh:
 psycopg2-binary
-sqlalchemy~=1.4.13
-pandas~=1.2.4
+sqlalchemy
+pandas
+numpy
 
 # sql_models:
-sqlparse~=0.3.1
-
-buhtuh~=0.0.1
-pytest~=6.2.5
-numpy~=1.20.2
-setuptools~=44.0.0
+sqlparse
