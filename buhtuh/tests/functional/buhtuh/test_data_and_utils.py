@@ -66,7 +66,7 @@ RAILWAYS_COLUMNS = ['station_id', 'town', 'station', 'platforms']
 RAILWAYS_INDEX_AND_COLUMNS = ['_index_station_id'] + RAILWAYS_COLUMNS
 
 
-def _get_bt(table, dataset, columns, convert_objects) -> BuhTuhDataFrame:
+def _get_bt(table, dataset, columns, convert_objects, dtype_override=None) -> BuhTuhDataFrame:
     engine = sqlalchemy.create_engine(DB_TEST_URL)
     import pandas as pd
     df = pd.DataFrame.from_records(dataset, columns=columns)
@@ -78,7 +78,10 @@ def _get_bt(table, dataset, columns, convert_objects) -> BuhTuhDataFrame:
     if 'date' in df.columns:
         df['date'] = df['date'].astype('datetime64')
 
-    buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects, if_exists='replace')
+    buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine,
+                                             convert_objects=convert_objects,
+                                             if_exists='replace',
+                                             dtype_override=dtype_override)
     return buh_tuh
 
 
