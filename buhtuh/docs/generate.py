@@ -13,33 +13,25 @@ buhtuh = 'buhtuh'
 docs_target = f'{docusaurus_dir}/{docs}/{buhtuh}'
 static_target = f'{docusaurus_dir}/{static}/{buhtuh}'
 
-"""
-generated=src/generated/buhtuh
-target=static/buhtuh
-
-rm -rf $generated
-mkdir -p $generated
-cp -r ../objectiv-analytics/buhtuh/docs/build/html/* $generated
-cp -r $generated/_images docs/buhtuh
-"""
-
+# whitelist of pages to consider
 patterns = [
     '^index.html$',
     'api/.*?',
 ]
 
+# make sure we can find docusaurus
+if not path.isdir(docusaurus_dir):
+    print(f'Could not find docusaurus here {docusaurus_dir}')
+    exit(1)
+
 for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
-
-
     # this is the url to the original html fragment
     # it's an absolute url, docusaurus will take care of the rest
     real_url = url.replace(html_dir, "")
 
-    print(f'checking: {real_url}')
     match = False
     for pattern in patterns:
         if re.match(pattern, real_url):
-            print(f'match {pattern} for {real_url}')
             match = True
     if not match:
         print(f'ignoring {real_url}')
@@ -67,7 +59,7 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
 
     # little magic around the index:
     # make sure it comes first, and change the name to introduction
-    title = path.basename(url).replace('.html', '') 
+    title = path.basename(url).replace('.html', '')
     if title == 'index':
         sidebar_label = 'Introduction'
         sidebar_position = 1
@@ -78,7 +70,7 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
     mdx = \
-f"""---
+        f"""---
 id: {title}
 hide_title: true
 sidebar_position: {sidebar_position}
@@ -93,11 +85,10 @@ import useBaseUrl from '@docusaurus/useBaseUrl'
 <SphinxPages url={{useBaseUrl('{buhtuh}/{real_url}')}} />
 """
     # set target path to generated .mdx file
-    #target_path = url.replace(html_dir, '').replace('.html', '.mdx')
+    # target_path = url.replace(html_dir, '').replace('.html', '.mdx')
     target_path = f'{docs_target}/{real_url.replace(".html", ".mdx")}'
 
     print(f'writing to {target_path}')
 
     with open(target_path, 'w') as target_handle:
         target_handle.write(mdx)
-
