@@ -1,11 +1,10 @@
+import { Tracker, TrackerConsole } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
-import { Newable } from './helpers';
-import { Tracker } from './Tracker';
 
 /**
- * All possible callbacks of a TrackerPlugin.
+ * All possible lifecycle methods of a TrackerPlugin.
  */
-export interface PluginCallbacks {
+export interface TrackerPluginLifecycle {
   /**
    * Executed when the Tracker initializes.
    * Useful to register event listeners that execute autonomously. Eg: URLChangeEvent
@@ -20,17 +19,35 @@ export interface PluginCallbacks {
 }
 
 /**
- * A TrackerPlugin must define its own `pluginName` and may define PluginCallbacks callbacks.
+ * A TrackerPlugin must define its own `pluginName` and may define TrackerPluginLifecycle callbacks.
  * It also defines a method to determine if the plugin can be used. Similarly to the Transport interface, this can
  * be used to check environment requirements, APIs availability, etc.
  */
-export interface TrackerPlugin extends PluginCallbacks {
+export interface TrackerPlugin extends TrackerPluginLifecycle {
+  readonly console?: TrackerConsole;
   readonly pluginName: string;
 
   /**
    * Should return if the TrackerPlugin can be used. Eg: a browser based plugin may want to return `false` during SSR.
    */
   isUsable(): boolean;
+}
+
+/**
+ * The TrackerPluginConfig.
+ */
+export type TrackerPluginConfig = {
+  /**
+   * Optional. A TrackerConsole instance for logging.
+   */
+  console?: TrackerConsole;
+};
+
+/**
+ * The TrackerPlugin constructor interface.
+ */
+export interface TrackerPluginConstructor {
+  new (pluginConfig: TrackerPluginConfig): TrackerPlugin;
 }
 
 /**
@@ -75,7 +92,9 @@ export interface TrackerPlugin extends PluginCallbacks {
  *    } as TrackerPlugin
  *
  */
-export type TrackerPluginsConfiguration = (TrackerPlugin | Newable<TrackerPlugin>)[];
+export type TrackerPluginsConfiguration = TrackerPluginConfig & {
+  plugins: TrackerPlugin[];
+};
 
 /**
  * TrackerPlugins is responsible for constructing TrackerPlugin instances and orchestrating their callbacks.
@@ -85,33 +104,37 @@ export type TrackerPluginsConfiguration = (TrackerPlugin | Newable<TrackerPlugin
  * Plugins mutations. For example a plugin meant to access the finalized version of the TrackerEvent should be placed
  * at the bottom of the list.
  */
-export class TrackerPlugins implements PluginCallbacks {
-  readonly list: TrackerPlugin[];
+export class TrackerPlugins implements TrackerPluginLifecycle {
+  readonly console?: TrackerConsole;
+  readonly plugins: TrackerPlugin[];
 
   /**
    * Plugins can be lazy. Map through them to instantiate them.
    */
-  constructor(plugins: TrackerPluginsConfiguration) {
-    this.list = plugins.map((plugin) => (typeof plugin === 'object' ? plugin : new plugin()));
+  constructor(trackerPluginsConfig: TrackerPluginsConfiguration) {
+    this.console = trackerPluginsConfig.console;
+    this.plugins = trackerPluginsConfig.plugins;
 
-    console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
-    console.group(`Plugins:`);
-    console.log(this.list.map((plugin) => plugin.pluginName).join(', '));
-    console.groupEnd();
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
+      this.console.group(`Plugins:`);
+      this.console.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
+      this.console.groupEnd();
+      this.console.groupEnd();
+    }
   }
 
   /**
    * Calls each Plugin's `initialize` callback function, if defined
    */
   initialize(tracker: Tracker): void {
-    this.list.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(tracker));
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(tracker));
   }
 
   /**
    * Calls each Plugin's `beforeTransport` callback function, if defined
    */
   beforeTransport(event: TrackerEvent): void {
-    this.list.forEach((plugin) => plugin.isUsable() && plugin.beforeTransport && plugin.beforeTransport(event));
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.beforeTransport && plugin.beforeTransport(event));
   }
 }

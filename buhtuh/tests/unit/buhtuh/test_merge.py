@@ -7,6 +7,7 @@ import pytest
 
 from buhtuh import BuhTuhDataFrame, get_series_type_from_dtype
 from buhtuh.merge import _determine_left_on_right_on, _determine_result_columns, ResultColumn, merge, How
+from tests.unit.buhtuh.util import get_fake_df
 
 
 def test__determine_left_on_right_on_simple_df_df_happy():
@@ -165,23 +166,6 @@ def test_merge_non_happy_path_how():
         merge(left, right, 'wrong how',
               on=None, left_on=None, right_on=None, left_index=True, right_index=True,
               suffixes=('_x', '_y'))
-
-
-def get_fake_df(index_names: List[str], data_names: List[str], dtype='int64'):
-    engine = None,
-    source_node = None,
-    series_type = get_series_type_from_dtype(dtype=dtype)
-    index = {
-        name: series_type(
-            engine=engine, base_node=source_node, index=None, name=name, expression=name
-        ) for name in index_names
-    }
-    data = {
-        name: series_type(
-            engine=engine, base_node=source_node, index=index, name=name, expression=name
-        ) for name in data_names
-    }
-    return BuhTuhDataFrame(engine=engine, source_node=source_node, index=index, series=data)
 
 
 def call__determine_left_on_right_on(

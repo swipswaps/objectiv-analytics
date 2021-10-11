@@ -1,6 +1,5 @@
 import commonjs from '@rollup/plugin-commonjs';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import strip from '@rollup/plugin-strip';
 import filesize from 'rollup-plugin-filesize';
 import peerDepsExternal from 'rollup-plugin-peer-deps-external';
 import sizes from 'rollup-plugin-sizes';
@@ -20,22 +19,6 @@ export default [
         sourcemap: dev,
       },
     ],
-    plugins: [
-      peerDepsExternal(),
-      nodeResolve(),
-      commonjs(),
-      ts(),
-      ...(dev
-        ? []
-        : [
-            strip({
-              include: ['**/*.(js|jsx|ts|tsx)'],
-              functions: ['console.*'],
-            }),
-            terser(),
-          ]),
-      sizes(),
-      filesize(),
-    ],
+    plugins: [peerDepsExternal(), nodeResolve(), commonjs(), ts(), ...(dev ? [] : [terser()]), sizes(), filesize()],
   },
 ];

@@ -16,7 +16,7 @@ import {
   TaggingAttributeVisibility,
 } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
-import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
 
 /**
  * Used to decorate a Taggable Element with our Tagging Attributes.

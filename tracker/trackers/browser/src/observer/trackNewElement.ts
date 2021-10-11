@@ -1,6 +1,6 @@
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
+import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
 import { makeBlurEventListener } from './makeBlurEventListener';
 import { makeClickEventListener } from './makeClickEventListener';

@@ -4,13 +4,14 @@
 import { makeClickEvent } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
-  configureTracker,
+  makeTracker,
   getLocationHref,
   makeMutationCallback,
   startAutoTracking,
   trackApplicationLoaded,
   trackEvent,
   trackURLChange,
+  getTracker,
 } from '../src';
 
 describe('Without DOM', () => {
@@ -23,10 +24,11 @@ describe('Without DOM', () => {
   });
 
   it('should throw if Window does not exists', async () => {
-    // @ts-ignore
-    expect(() => configureTracker({ applicationId: 'test', endpoint: 'test' })).toThrow(
-      'Cannot access the Window interface. Tracker cannot be initialized.'
+    expect(() => makeTracker({ applicationId: 'test', endpoint: 'test' })).toThrow(
+      'Cannot access the Window interface.'
     );
+
+    expect(() => getTracker()).toThrow('Cannot access the Window interface.');
   });
 
   it('should console.error if a Tracker instance cannot be retrieved because DOM is not available', async () => {
@@ -35,7 +37,7 @@ describe('Without DOM', () => {
     trackEvent(parameters);
 
     expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenNthCalledWith(1, ReferenceError('window is not defined'), parameters);
+    expect(console.error).toHaveBeenNthCalledWith(1, Error('Cannot access the Window interface.'), parameters);
   });
 
   it('should console.error id Application Loaded Event fails at retrieving the document element', () => {

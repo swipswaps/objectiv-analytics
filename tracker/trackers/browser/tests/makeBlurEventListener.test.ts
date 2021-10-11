@@ -1,14 +1,14 @@
 import { makeInputChangeEvent } from '@objectiv/tracker-core';
-import { BrowserTracker, configureTracker } from '../src/';
+import { BrowserTracker, getTracker, makeTracker } from '../src/';
 import { makeBlurEventListener } from '../src/observer/makeBlurEventListener';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
 describe('makeBlurEventListener', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    expect(getTracker()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(getTracker(), 'trackEvent');
   });
 
   it('should track Input Change when invoked from a valid target', () => {
@@ -18,8 +18,8 @@ describe('makeBlurEventListener', () => {
     trackedInput.addEventListener('blur', blurEventListener);
     trackedInput.dispatchEvent(new FocusEvent('blur'));
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeInputChangeEvent());
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, makeInputChangeEvent());
   });
 
   it('should not track Input Change when invoked from a bubbling target', () => {
@@ -30,6 +30,6 @@ describe('makeBlurEventListener', () => {
     trackedInput.addEventListener('blur', blurEventListener);
     unrelatedInput.dispatchEvent(new FocusEvent('blur'));
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 });

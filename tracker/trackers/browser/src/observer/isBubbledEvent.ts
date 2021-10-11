@@ -1,5 +1,5 @@
 import { TaggingAttribute } from '../TaggingAttribute';
-import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
+import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement, TaggedElement } from '../typeGuards';
 
 /**

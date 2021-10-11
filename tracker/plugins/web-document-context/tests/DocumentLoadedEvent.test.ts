@@ -71,7 +71,7 @@ describe('WebDocumentLoadedEvent', () => {
     trackDocumentLoadedEvent(testTracker);
 
     // Re-trigger DOMContentLoaded manually
-    await window.document.dispatchEvent(
+    window.document.dispatchEvent(
       new Event('DOMContentLoaded', {
         bubbles: true,
         cancelable: true,

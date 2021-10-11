@@ -1,13 +1,25 @@
-import { NonEmptyArray, TrackerTransport, TransportableEvent } from '@objectiv/tracker-core';
+import {
+  NonEmptyArray,
+  TrackerConsole,
+  TrackerTransport,
+  TrackerTransportConfig,
+  TransportableEvent,
+} from '@objectiv/tracker-core';
 
 /**
  * A TrackerTransport that simply logs TrackerEvents to the console as debug messages.
  */
 export class DebugTransport implements TrackerTransport {
+  readonly console?: TrackerConsole;
   readonly transportName = 'DebugTransport';
+
+  constructor(config?: TrackerTransportConfig) {
+    this.console = config?.console;
+  }
+
   async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
     // We stringify and re-parse the TrackerEvent for our custom serializer to clean up discriminatory properties
-    (await Promise.all(args)).forEach((trackerEvent) => console.debug(JSON.parse(JSON.stringify(trackerEvent))));
+    (await Promise.all(args)).forEach((trackerEvent) => this.console?.debug(JSON.parse(JSON.stringify(trackerEvent))));
   }
 
   isUsable(): boolean {

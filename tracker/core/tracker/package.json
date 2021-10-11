@@ -23,7 +23,6 @@
     "@objectiv/schema": "~0.0.1",
     "@rollup/plugin-commonjs": "^20.0.0",
     "@rollup/plugin-node-resolve": "^13.0.4",
-    "@rollup/plugin-strip": "^2.1.0",
     "@types/jest": "^27.0.1",
     "@types/uuid": "^8.3.1",
     "jest": "^27.1.0",

@@ -1,8 +1,8 @@
-import { getLocationHref } from '../globals';
+import { getLocationHref } from '../helpers';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker, BrowserTrackerConfig } from '../tracker/BrowserTracker';
-import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
 import { trackApplicationLoaded, trackURLChange } from '../tracker/trackEventHelpers';
+import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
 import { trackNewElements } from './trackNewElements';
 import { trackRemovedElements } from './trackRemovedElements';

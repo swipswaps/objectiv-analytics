@@ -14,10 +14,10 @@ class ExtractedContexts(SqlModelBuilder):
 _SQL = \
 '''
 SELECT *,
-        value->>'event' AS event,
+        value->>'_type' AS event_type,
         JSON_EXTRACT_PATH(value, 'global_contexts') AS global_contexts,
         JSON_EXTRACT_PATH(value, 'location_stack') AS location_stack,
         JSON_EXTRACT_PATH(value, 'time') AS time,
-        JSON_EXTRACT_PATH(value, 'events') AS events
+        JSON_EXTRACT_PATH(value, '_types') AS event_types
  FROM data
  '''
