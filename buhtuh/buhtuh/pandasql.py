@@ -1281,8 +1281,11 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
         raise ValueError(f'cannot convert {source_dtype} to uuid.')
 
     @classmethod
-    def generate_random_uuid(cls, base: DataFrameOrSeries) -> 'BuhTuhSeriesUuid':
-        """ Create a new Seriees object with for every row a random uuid."""
+    def sql_gen_random_uuid(cls, base: DataFrameOrSeries) -> 'BuhTuhSeriesUuid':
+        """
+        Create a new Series object with for every row gen_random_uuid(), which will translate to a random
+        uuid for each row.
+        """
         return cls.get_class_instance(
             base=base,
             name='__tmp',
