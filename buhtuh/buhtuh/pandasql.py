@@ -1164,6 +1164,8 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
 
     @classmethod
     def value_to_sql(cls, value: bool) -> str:
+        if value is None:
+            return 'NULL'
         if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be bool, actual type: {type(value)}')
         return str(value)
@@ -1278,6 +1280,8 @@ class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
 
     @classmethod
     def value_to_sql(cls, value: Union[float, numpy.float64]) -> str:
+        if value is None:
+            return 'NULL'
         if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be float, actual type: {type(value)}')
         return f'{value}::float'
@@ -1300,6 +1304,8 @@ class BuhTuhSeriesString(BuhTuhSeries):
 
     @classmethod
     def value_to_sql(cls, value: str) -> str:
+        if value is None:
+            return 'NULL'
         if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be str, actual type: {type(value)}')
         # TODO: fix sql injection!
@@ -1408,6 +1414,8 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
 
     @classmethod
     def value_to_sql(cls, value: Union[str, datetime.datetime]) -> str:
+        if value is None:
+            return 'NULL'
         if isinstance(value, datetime.date):
             value = str(value)
         if not isinstance(value, str):
@@ -1460,6 +1468,8 @@ class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
 
     @classmethod
     def value_to_sql(cls, value: Union[str, datetime.date]) -> str:
+        if value is None:
+            return 'NULL'
         if isinstance(value, datetime.date):
             value = str(value)
         if not isinstance(value, str):
@@ -1490,6 +1500,8 @@ class BuhTuhSeriesTime(BuhTuhSeries):
 
     @classmethod
     def value_to_sql(cls, value: Union[str, datetime.time]) -> str:
+        if value is None:
+            return 'NULL'
         if isinstance(value, datetime.time):
             value = str(value)
         if not isinstance(value, str):
@@ -1522,6 +1534,8 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
 
     @classmethod
     def value_to_sql(cls, value: Union[str, numpy.timedelta64, datetime.timedelta]) -> str:
+        if value is None:
+            return 'NULL'
         if isinstance(value, (numpy.timedelta64, datetime.timedelta)):
             value = str(value)
         if not isinstance(value, str):
