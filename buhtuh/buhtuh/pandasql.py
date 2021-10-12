@@ -37,10 +37,10 @@ class BuhTuhDataFrame:
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
     only when one of the above mentioned data-transfer functions is called.
 
-    The initial data of the DataFrame is the result of the SQL query that the `source_node` parameter
+    The initial data of the DataFrame is the result of the SQL query that the `base_node` parameter
     contains. That can be a simple query on a table, but also a complicated query in itself. Operations
-    on the data will result in SQL queries that build on top of the query of the source_node. The
-    index and series parameters contain meta information about the data in the source_node.
+    on the data will result in SQL queries that build on top of the query of the base_node. The
+    index and series parameters contain meta information about the data in the base_node.
 
     The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
     DataFrames see https://pandas.pydata.org/docs/reference/frame.html
@@ -48,7 +48,7 @@ class BuhTuhDataFrame:
     def __init__(
         self,
         engine: Engine,
-        source_node: SqlModel,
+        base_node: SqlModel,
         index: Dict[str, 'BuhTuhSeries'],
         series: Dict[str, 'BuhTuhSeries'],
         order_by: List[SortColumn] = None
@@ -59,7 +59,7 @@ class BuhTuhDataFrame:
         table (`from_table()`) or already instantiated sql-model (`from_model()`).
 
         :param engine: db connection
-        :param source_node: sql-model of a select statement that must contain all columns/expressions that
+        :param base_node: sql-model of a select statement that must contain all columns/expressions that
             are present in the series parameter.
         :param index: Dictionary mapping the name of each index-column to a Series object representing
             the column.
@@ -68,7 +68,7 @@ class BuhTuhDataFrame:
         :param order_by: Optional list of sort-columns to order the DataFrame by
         """
         self._engine = engine
-        self._base_node = source_node
+        self._base_node = base_node
         self._index = copy(index)
         self._data: Dict[str, BuhTuhSeries] = {}
         self._order_by = order_by if order_by is not None else []
@@ -84,7 +84,7 @@ class BuhTuhDataFrame:
     def copy_override(
             self,
             engine: Engine = None,
-            source_node: SqlModel = None,
+            base_node: SqlModel = None,
             index: Dict[str, 'BuhTuhSeries'] = None,
             series: Dict[str, 'BuhTuhSeries'] = None,
             order_by: List[SortColumn] = None) -> 'BuhTuhDataFrame':
@@ -93,7 +93,7 @@ class BuhTuhDataFrame:
         """
         return BuhTuhDataFrame(
             engine=engine if engine is not None else self.engine,
-            source_node=source_node if source_node is not None else self._base_node,
+            base_node=base_node if base_node is not None else self._base_node,
             index=index if index is not None else self._index,
             series=series if series is not None else self._data,
             order_by=order_by if order_by is not None else self._order_by
@@ -202,7 +202,7 @@ class BuhTuhDataFrame:
         # Should this also use _df_or_series?
         return cls.get_instance(
             engine=engine,
-            source_node=model,
+            base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             order_by=[]
@@ -274,7 +274,7 @@ class BuhTuhDataFrame:
         # Should this also use _df_or_series?
         return cls.get_instance(
             engine=engine,
-            source_node=model,
+            base_node=model,
             index_dtypes={index: index_dtype},
             dtypes=dtypes
         )
@@ -283,14 +283,14 @@ class BuhTuhDataFrame:
     def get_instance(
             cls,
             engine,
-            source_node: SqlModel,
+            base_node: SqlModel,
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             order_by: List[SortColumn] = None
     ) -> 'BuhTuhDataFrame':
         """
         Get an instance with the right series instantiated based on the dtypes array. This assumes that
-        source_node has a column for all names in index_dtypes and dtypes.
+        base_node has a column for all names in index_dtypes and dtypes.
         """
 
         index: Dict[str, BuhTuhSeries] = {}
@@ -298,7 +298,7 @@ class BuhTuhDataFrame:
             index_type = get_series_type_from_dtype(value)
             index[key] = index_type(
                 engine=engine,
-                base_node=source_node,
+                base_node=base_node,
                 index=None,  # No index for index
                 name=key
             )
@@ -307,13 +307,13 @@ class BuhTuhDataFrame:
             series_type = get_series_type_from_dtype(value)
             series[key] = series_type(
                 engine=engine,
-                base_node=source_node,
+                base_node=base_node,
                 index=index,
                 name=key
             )
         return BuhTuhDataFrame(
             engine=engine,
-            source_node=source_node,
+            base_node=base_node,
             index=index,
             series=series,
             order_by=order_by
@@ -329,6 +329,30 @@ class BuhTuhDataFrame:
         if len(df.data) > 1:
             return df
         return list(df.data.values())[0]
+
+    def get_df_materialized_model(self) -> 'BuhTuhDataFrame':
+        """
+        Create a copy of this DataFrame with as base_node the current DataFrame's state.
+
+        This effectively adds a node to the underlying SqlModel graph. Generally adding nodes increases
+        the size of the generated SQL query. But this can be useful if the current DataFrame contains
+        expressions that you want to evaluate before further expressions are build on top of them. This might
+        make sense for very large expressions, or for non-deterministic expressions (e.g. see
+        BuhTuhSeriesUuid.sql_gen_random_uuid()).
+
+        :return: New DataFrame with the current DataFrame's state as base_node
+        """
+        model = self.get_current_node()
+        index_dtypes = {k: v.dtype for k, v in self.index.items()}
+        series_dtypes = {k: v.dtype for k, v in self.data.items()}
+
+        return self.get_instance(
+            engine=self.engine,
+            base_node=model,
+            index_dtypes=index_dtypes,
+            dtypes=series_dtypes,
+            order_by=[]
+        )
 
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
@@ -350,7 +374,7 @@ class BuhTuhDataFrame:
 
         if isinstance(key, slice):
             model = self.get_current_node(limit=key)
-            return self._df_or_series(df=self.copy_override(source_node=model))
+            return self._df_or_series(df=self.copy_override(base_node=model))
 
         if isinstance(key, BuhTuhSeriesBoolean):
             # We only support first level boolean indices for now
@@ -372,7 +396,7 @@ class BuhTuhDataFrame:
             return self._df_or_series(
                 BuhTuhDataFrame.get_instance(
                     engine=self.engine,
-                    source_node=model,
+                    base_node=model,
                     index_dtypes={name: series.dtype for name, series in self.index.items()},
                     dtypes={name: series.dtype for name, series in self.data.items()},
                     order_by=[]  # filtering rows resets any sorting
@@ -386,7 +410,7 @@ class BuhTuhDataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['BuhTuhSeries', int, str, float]):
+                    value: Union['BuhTuhSeries', int, str, float, UUID]):
         """
         TODO: Comments
         """
@@ -531,8 +555,8 @@ class BuhTuhDataFrame:
 
         The sorting will remain in the returned DataFrame as long as no operations are performed on that
         frame that materially change the selected data. Operations that materially change the selected data
-        are for example groupby(), merge(), and filtering out rows. Adding or removing a column does not
-        materially change the selected data.
+        are for example groupby(), merge(), get_df_materialized_model(), and filtering out rows. Adding or
+        removing a column does not materially change the selected data.
 
         :param by: column label or list of labels to sort by.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
@@ -825,10 +849,9 @@ class BuhTuhSeries(ABC):
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
             return self
-        return BuhTuhSeries.get_instance(
+        return self.get_class_instance(
             base=self,
             name=self.name,
-            dtype=self.dtype,
             expression=self.expression,
             sorted_ascending=ascending
         )
@@ -845,7 +868,7 @@ class BuhTuhSeries(ABC):
             order_by = []
         return BuhTuhDataFrame(
             engine=self.engine,
-            source_node=self.base_node,
+            base_node=self.base_node,
             index=self.index,
             series={self.name: self},
             order_by=order_by
@@ -865,7 +888,23 @@ class BuhTuhSeries(ABC):
         The subclass is based on the provided dtype. See docstring of __init__ for other parameters.
         """
         series_type = get_series_type_from_dtype(dtype=dtype)
-        return series_type(
+        return series_type.get_class_instance(
+            base=base,
+            name=name,
+            expression=expression,
+            sorted_ascending=sorted_ascending
+        )
+
+    @classmethod
+    def get_class_instance(
+            cls,
+            base: DataFrameOrSeries,
+            name: str,
+            expression: str = None,
+            sorted_ascending: Optional[bool] = None
+    ):
+        """ Create an instance of this class. """
+        return cls(
             engine=base.engine,
             base_node=base.base_node,
             index=base.index,
@@ -899,7 +938,7 @@ class BuhTuhSeries(ABC):
                              f'Alternative: use merge() to create a DataFrame with both series. ')
 
         if other.dtype.lower() not in supported_dtypes:
-            raise ValueError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
+            raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
 
     def _get_derived_series(self, new_dtype: str, expression: str):
         return BuhTuhSeries.get_instance(
@@ -923,11 +962,9 @@ class BuhTuhSeries(ABC):
                    base: DataFrameOrSeries,
                    value: Any,
                    name: str) -> 'BuhTuhSeries':
-        dtype = cast(str, cls.dtype)  # needed for mypy
-        result = BuhTuhSeries.get_instance(
+        result = cls.get_class_instance(
             base=base,
             name=name,
-            dtype=dtype,
             expression=cls.value_to_sql(value)
         )
         return result
@@ -1348,8 +1385,7 @@ class BuhTuhSeriesString(BuhTuhSeries):
     def from_dtype_to_sql(source_dtype: str, expression: str) -> str:
         if source_dtype == 'string':
             return expression
-        else:
-            return f'({expression})::varchar'
+        return f'cast(({expression}) as text)'
 
     def __add__(self, other) -> 'BuhTuhSeries':
         other = const_to_series(base=self, value=other)
@@ -1415,14 +1451,61 @@ class BuhTuhSeriesString(BuhTuhSeries):
         return self._get_derived_series('string', expression)
 
 
-class BuhTuhSeriesUuid(BuhTuhSeriesString):
+class BuhTuhSeriesUuid(BuhTuhSeries):
     """
-    TODO: make this a proper class, not just a string subclass
+    Series representing UUID values.
     """
     dtype = 'uuid'
-    dtype_aliases = ()  # type: ignore
+    dtype_aliases = ()
     supported_db_dtype = 'uuid'
-    supported_value_types = (UUID, )  # type: ignore
+    supported_value_types = (UUID, )
+
+    @classmethod
+    def value_to_sql(cls, value: UUID) -> str:
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be uuid, actual type: {type(value)}')
+        return f"cast('{value}' as uuid)"
+
+    @classmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: str) -> str:
+        if source_dtype == 'uuid':
+            return expression
+        if source_dtype == 'string':
+            # If the format is wrong, then this will give an error later on, but there is not much we can
+            # do about that here.
+            return f'cast(({expression}) as uuid)'
+        # As far as we know the other types we support cannot be directly cast to uuid.
+        raise ValueError(f'cannot convert {source_dtype} to uuid.')
+
+    @classmethod
+    def sql_gen_random_uuid(cls, base: DataFrameOrSeries) -> 'BuhTuhSeriesUuid':
+        """
+        Create a new Series object with for every row the `gen_random_uuid()` expression, which will
+        evaluate to a random uuid for each row.
+
+        Note that this is non-deterministic expression, it will give a different result each time it is run.
+        This can have some unexpected consequences. Considers the following code:
+            df['x'] = BuhTuhSeriesUuid.sql_gen_random_uuid(df)
+            df['y'] = df['x']
+            df['different'] = df['y'] != df['x']
+        The df['different'] column will be True for all rows, because the second statement copies the
+        unevaluated expression, not the result of the expression. So at evaluation time the expression will
+        be evaluated twice for each row, for the 'x' column and the 'y' column, giving different results both
+        times. One way to work around this is to materialize the dataframe in its current state (using
+        get_df_materialized_model()), before adding any columns that reference a column that's created with
+        this function.
+        """
+        return cls.get_class_instance(
+            base=base,
+            name='__tmp',
+            expression='gen_random_uuid()'
+        )
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['uuid'], other)
+        expression = f'({self.expression}) {comparator} ({other.expression})'
+        return self._get_derived_series('uuid', expression)
 
 
 class BuhTuhSeriesJson(BuhTuhSeriesString):
@@ -1623,7 +1706,7 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
 
 
 def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],
-                    value: Union[BuhTuhSeries, int, float, str],
+                    value: Union[BuhTuhSeries, int, float, str, UUID],
                     name: str = None) -> BuhTuhSeries:
     """
     Take a value and return a BuhTuhSeries representing a column with that value.

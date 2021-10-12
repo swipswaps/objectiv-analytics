@@ -94,7 +94,7 @@ class BuhTuhGroupBy:
 
         return BuhTuhDataFrame.get_instance(
             engine=self.buh_tuh.engine,
-            source_node=model,
+            base_node=model,
             index_dtypes={n: t.dtype for n, t in self.groupby.items()},
             dtypes=new_series_dtypes,
             order_by=[]
@@ -123,7 +123,7 @@ class BuhTuhGroupBy:
         selected_data = {key: data for key, data in self.aggregated_data.items() if key in key_set}
         buh_tuh = BuhTuhDataFrame(
             engine=self.buh_tuh.engine,
-            source_node=self.buh_tuh.base_node,
+            base_node=self.buh_tuh.base_node,
             index=self.groupby,
             series=selected_data,
             # We don't guarantee sorting after groupby(), so we can just set order_by to None
