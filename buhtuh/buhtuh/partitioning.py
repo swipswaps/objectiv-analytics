@@ -183,7 +183,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
     class that would alter it returns a fresh copy. It can be reused many time if the window
     is reused.
 
-    A Window for us this is basically a partitioned, sorted view on a DataFrame, where the frame
+    A Window for us is basically a partitioned, sorted view on a DataFrame, where the frame
     boundaries as given in the constructor, or in set_frame_clause(), define the window.
 
     A frame is defined in PG as follows:
