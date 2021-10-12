@@ -129,12 +129,20 @@ def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     return result
 
 
-def _format_sql(sql, values, model):
-    """ execute sql.format(**values), and if that fails raise a clear exception. """
+def _format_sql(sql: str, values: Dict[str, str], model: SqlModel):
+    """
+    Escape the values, and execute sql.format(**values), and if that fails raise a clear exception.
+    """
+    escaped_values = {key: _escape_value(value) for key, value in values.items()}
     try:
-        sql = sql.format(**values)
+        sql = sql.format(**escaped_values)
     except Exception as exc:
         raise Exception(f'Failed to format sql for model {model.generic_name}. \n'
                         f'Format values: {values}. \n'
                         f'Sql: {sql}') from exc
     return sql
+
+
+def _escape_value(value: str) -> str:
+    """ escape value for python's format() function """
+    return value.replace('{', '{{').replace('}', '}}')
