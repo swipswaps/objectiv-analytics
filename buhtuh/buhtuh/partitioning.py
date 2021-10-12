@@ -187,7 +187,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
     boundaries as given in the constructor, or in set_frame_clause(), define the window.
 
     A frame is defined in PG as follows:
-    ( See 4.2.8. in https://www.postgresql.org/docs/9.1/sql-expressions.html )
+    (See https://www.postgresql.org/docs/14/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS)
 
     { RANGE | ROWS } frame_start
     { RANGE | ROWS } BETWEEN frame_start AND frame_end
