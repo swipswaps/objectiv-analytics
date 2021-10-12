@@ -1225,7 +1225,7 @@ class BuhTuhSeriesJson(BuhTuhSeries):
     dtype = 'json'
     dtype_aliases = (object, )  # type: ignore
     supported_db_dtype = 'json'
-    supported_value_types = (dict, )
+    supported_value_types = (dict, list)
 
     def __init__(self,
                  engine,
@@ -1256,6 +1256,15 @@ class BuhTuhSeriesJson(BuhTuhSeries):
             if source_dtype != 'string':
                 raise ValueError(f'cannot convert {source_dtype} to json')
             return f'({expression})::{BuhTuhSeriesJson.supported_db_dtype}'
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['json'], other)
+        expression = f'({self.expression})::jsonb {comparator} ({other.expression})::jsonb'
+        return self._get_derived_series('bool', expression)
+
+    def __le__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._comparator_operator(other, "<@")
 
 
 class BuhTuhSeriesTimestamp(BuhTuhSeries):
