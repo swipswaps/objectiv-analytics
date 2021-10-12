@@ -92,11 +92,11 @@ class BuhTuhDataFrame:
         Create a copy of self, with the given arguments overriden
         """
         return BuhTuhDataFrame(
-            engine=engine or self.engine,
-            source_node=source_node or self._base_node,
-            index=index or self._index,
-            series=series or self._data,
-            order_by=order_by or self._order_by
+            engine=engine if engine is not None else self.engine,
+            source_node=source_node if source_node is not None else self._base_node,
+            index=index if index is not None else self._index,
+            series=series if series is not None else self._data,
+            order_by=order_by if order_by is not None else self._order_by
         )
 
     @property
@@ -1066,6 +1066,9 @@ class BuhTuhSeries(ABC):
         """
         Returns the number of the current row within its partition, counting from 1.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         return self._window_or_agg_func(window, f'row_number()', 'int64')
 
     def window_rank(self, window: 'BuhTuhWindow'):
@@ -1073,6 +1076,9 @@ class BuhTuhSeries(ABC):
         Returns the rank of the current row, with gaps; that is, the row_number of the first row
         in its peer group.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         return self._window_or_agg_func(window, f'rank()', 'int64')
 
     def window_dense_rank(self, window: 'BuhTuhWindow'):
@@ -1080,6 +1086,9 @@ class BuhTuhSeries(ABC):
         Returns the rank of the current row, without gaps; this function effectively counts peer
         groups.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         return self._window_or_agg_func(window, f'dense_rank()', "int64")
 
     def window_percent_rank(self, window: 'BuhTuhWindow'):
@@ -1088,6 +1097,9 @@ class BuhTuhSeries(ABC):
             (rank - 1) / (total partition rows - 1).
         The value thus ranges from 0 to 1 inclusive.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         return self._window_or_agg_func(window, f'percent_rank()', "double precision")
 
     def window_cume_dist(self, window: 'BuhTuhWindow'):
@@ -1096,6 +1108,9 @@ class BuhTuhSeries(ABC):
             (number of partition rows preceding or peers with current row) / (total partition rows).
         The value thus ranges from 1/N to 1.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         return self._window_or_agg_func(window, f'cume_dist()', "double precision")
 
     def window_ntile(self, window: 'BuhTuhWindow', num_buckets: int = 1):
@@ -1103,6 +1118,9 @@ class BuhTuhSeries(ABC):
         Returns an integer ranging from 1 to the argument value,
         dividing the partition as equally as possible.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         return self._window_or_agg_func(window, f'ntile({num_buckets})', "int64")
 
     def window_lag(self, window: 'BuhTuhWindow', offset: int = 1, default: Any = None):
@@ -1114,6 +1132,9 @@ class BuhTuhSeries(ABC):
         Both offset and default are evaluated with respect to the current row.
         If omitted, offset defaults to 1 and default to None
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         default_sql = self.value_to_sql(default)
         return self._window_or_agg_func(
             window,
@@ -1127,6 +1148,9 @@ class BuhTuhSeries(ABC):
         Both offset and default are evaluated with respect to the current row.
         If omitted, offset defaults to 1 and default to None.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         default_sql = self.value_to_sql(default)
         return self._window_or_agg_func(
             window,
@@ -1137,12 +1161,18 @@ class BuhTuhSeries(ABC):
         """
         Returns value evaluated at the row that is the first row of the window frame.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         return self._window_or_agg_func(window, f'first_value({self.get_expression()})', self.dtype)
 
     def window_last_value(self, window: 'BuhTuhWindow'):
         """
         Returns value evaluated at the row that is the last row of the window frame.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         return self._window_or_agg_func(window, f'last_value({self.get_expression()})', self.dtype)
 
     def window_nth_value(self, window: 'BuhTuhWindow', n: int):
@@ -1150,16 +1180,13 @@ class BuhTuhSeries(ABC):
         Returns value evaluated at the row that is the n'th row of the window frame
         (counting from 1); returns NULL if there is no such row.
         """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(window, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
         return self._window_or_agg_func(
             window,
             f'nth_value({self.get_expression()}, {n})', self.dtype
         )
-
-    def window_max(self, window: 'BuhTuhWindow'):
-        """
-        Returns value evaluated at the row that is the last row of the window frame.
-        """
-        return self._window_or_agg_func(window, f'max({self.get_expression()})', self.dtype)
 
 
 class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):

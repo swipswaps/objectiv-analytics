@@ -169,6 +169,10 @@ def test_windowing_windows():
     for w in [p0,p1,p2,p3]:
         bt.inhabitants.window_first_value(w).head()
 
+    with pytest.raises(ValueError):
+        # Specific indow functions should fail on being passed a groupby
+        bt.inhabitants.window_first_value(bt.groupby())
+
 
 def test_windowing_functions_agg():
     bt = get_bt_with_test_data(full_data_set=True)
@@ -264,8 +268,10 @@ def test_windowing_expressions():
     )
 
 
-def test_windowing_datetime():
-    bt = get_bt_with_food_data()
+def test_windowing_boolean_functions():
+    # Windowing function are not allowed as boolean row selectors.
+    # TODO We need the flags to check for this though.
+    pass
 
-    bt['previous'] = bt.date.window_lag(bt.window('date')
-                                        )
+
+
