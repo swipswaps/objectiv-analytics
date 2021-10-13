@@ -1,7 +1,7 @@
 import pytest
 
-from buhtuh.partitioning import BuhTuhWindow
-from tests.functional.buhtuh.test_data_and_utils import assert_equals_data, get_bt_with_test_data, get_bt_with_food_data
+from buhtuh.partitioning import BuhTuhWindow, BuhTuhWindowFrameMode, BuhTuhWindowFrameBoundary
+from tests.functional.buhtuh.test_data_and_utils import assert_equals_data, get_bt_with_test_data
 
 
 def test_windowing_frame_clause():
@@ -21,77 +21,77 @@ def test_windowing_frame_clause():
 
     # ROWS happy paths
     frame_clause_equals("ROWS BETWEEN CURRENT ROW AND CURRENT ROW",
-                        mode=BuhTuhWindow.FrameMode.ROWS,
-                        start_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
-                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW)
+                        mode=BuhTuhWindowFrameMode.ROWS,
+                        start_boundary=BuhTuhWindowFrameBoundary.CURRENT_ROW,
+                        end_boundary=BuhTuhWindowFrameBoundary.CURRENT_ROW)
 
     frame_clause_equals("ROWS BETWEEN CURRENT ROW AND CURRENT ROW",
-                        mode=BuhTuhWindow.FrameMode.ROWS,
-                        start_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        mode=BuhTuhWindowFrameMode.ROWS,
+                        start_boundary=BuhTuhWindowFrameBoundary.CURRENT_ROW,
                         start_value=None,
-                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        end_boundary=BuhTuhWindowFrameBoundary.CURRENT_ROW,
                         end_value=None)
 
     frame_clause_equals("ROWS BETWEEN 2 PRECEDING AND CURRENT ROW",
-                        mode=BuhTuhWindow.FrameMode.ROWS,
-                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        mode=BuhTuhWindowFrameMode.ROWS,
+                        start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                         start_value=2,
-                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        end_boundary=BuhTuhWindowFrameBoundary.CURRENT_ROW,
                         end_value=None)
 
     frame_clause_equals("ROWS BETWEEN 2 PRECEDING AND 1 PRECEDING",
-                        mode=BuhTuhWindow.FrameMode.ROWS,
-                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        mode=BuhTuhWindowFrameMode.ROWS,
+                        start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                         start_value=2,
-                        end_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        end_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                         end_value=1)
 
     frame_clause_equals("ROWS BETWEEN 1 PRECEDING AND 2 FOLLOWING",
-                        mode=BuhTuhWindow.FrameMode.ROWS,
-                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        mode=BuhTuhWindowFrameMode.ROWS,
+                        start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                         start_value=1,
-                        end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                        end_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                         end_value=2)
 
     frame_clause_equals("ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING",
-                        mode=BuhTuhWindow.FrameMode.ROWS,
-                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        mode=BuhTuhWindowFrameMode.ROWS,
+                        start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                         start_value=None,
-                        end_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        end_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                         end_value=1)
 
     frame_clause_equals("ROWS BETWEEN 1 PRECEDING AND UNBOUNDED FOLLOWING",
-                        mode=BuhTuhWindow.FrameMode.ROWS,
-                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        mode=BuhTuhWindowFrameMode.ROWS,
+                        start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                         start_value=1,
-                        end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                        end_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                         end_value=None)
 
     frame_clause_equals("ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING",
-                        mode=BuhTuhWindow.FrameMode.ROWS,
-                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        mode=BuhTuhWindowFrameMode.ROWS,
+                        start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                         start_value=None,
-                        end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                        end_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                         end_value=None)
 
     # RANGE happy paths
     frame_clause_equals("RANGE BETWEEN CURRENT ROW AND CURRENT ROW",
-                        mode=BuhTuhWindow.FrameMode.RANGE,
-                        start_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
-                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW)
+                        mode=BuhTuhWindowFrameMode.RANGE,
+                        start_boundary=BuhTuhWindowFrameBoundary.CURRENT_ROW,
+                        end_boundary=BuhTuhWindowFrameBoundary.CURRENT_ROW)
 
     frame_clause_equals("RANGE BETWEEN CURRENT ROW AND CURRENT ROW",
-                        mode=BuhTuhWindow.FrameMode.RANGE,
-                        start_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        mode=BuhTuhWindowFrameMode.RANGE,
+                        start_boundary=BuhTuhWindowFrameBoundary.CURRENT_ROW,
                         start_value=None,
-                        end_boundary=BuhTuhWindow.FrameBoundary.CURRENT_ROW,
+                        end_boundary=BuhTuhWindowFrameBoundary.CURRENT_ROW,
                         end_value=None)
 
     frame_clause_equals("RANGE BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING",
-                        mode=BuhTuhWindow.FrameMode.RANGE,
-                        start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                        mode=BuhTuhWindowFrameMode.RANGE,
+                        start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                         start_value=None,
-                        end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                        end_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                         end_value=None)
 
     #     The value PRECEDING and value FOLLOWING cases are currently only allowed in ROWS mode.
@@ -99,55 +99,55 @@ def test_windowing_frame_clause():
     #     the current row.
     with pytest.raises(ValueError):
         frame_clause_equals("",
-                            mode=BuhTuhWindow.FrameMode.RANGE,
-                            start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            mode=BuhTuhWindowFrameMode.RANGE,
+                            start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                             start_value=1,
-                            end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            end_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                             end_value = None)
 
     with pytest.raises(ValueError):
         frame_clause_equals("",
-                            mode=BuhTuhWindow.FrameMode.RANGE,
-                            start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            mode=BuhTuhWindowFrameMode.RANGE,
+                            start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                             start_value= None,
-                            end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            end_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                             end_value = 2)
 
     #     Restrictions are that
     #     - frame_start cannot be UNBOUNDED FOLLOWING,
     with pytest.raises(ValueError):
         frame_clause_equals("",
-                            mode=BuhTuhWindow.FrameMode.RANGE,
-                            start_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            mode=BuhTuhWindowFrameMode.RANGE,
+                            start_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                             start_value=None,
-                            end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            end_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                             end_value = None)
 
     #     - frame_end cannot be UNBOUNDED PRECEDING
     with pytest.raises(ValueError):
         frame_clause_equals("",
-                            mode=BuhTuhWindow.FrameMode.RANGE,
-                            start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            mode=BuhTuhWindowFrameMode.RANGE,
+                            start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                             start_value=None,
-                            end_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            end_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                             end_value = None)
 
     #     - frame_end choice cannot appear earlier in the above list than the frame_start choice:
     #         for example RANGE BETWEEN CURRENT ROW AND value PRECEDING is not allowed.
     with pytest.raises(ValueError):
         frame_clause_equals("",
-                            mode=BuhTuhWindow.FrameMode.ROWS,
-                            start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            mode=BuhTuhWindowFrameMode.ROWS,
+                            start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                             start_value=2,
-                            end_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                            end_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                             end_value = 3)
 
     with pytest.raises(ValueError):
         frame_clause_equals("",
-                            mode=BuhTuhWindow.FrameMode.ROWS,
-                            start_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            mode=BuhTuhWindowFrameMode.ROWS,
+                            start_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                             start_value=3,
-                            end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                            end_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                             end_value = 2)
 
 def test_windowing_windows():
@@ -168,6 +168,10 @@ def test_windowing_windows():
 
     for w in [p0,p1,p2,p3]:
         bt.inhabitants.window_first_value(w).head()
+
+    with pytest.raises(ValueError):
+        # Specific indow functions should fail on being passed a groupby
+        bt.inhabitants.window_first_value(bt.groupby())
 
 
 def test_windowing_functions_agg():
@@ -208,10 +212,10 @@ def test_windowing_functions_basics():
     bt = get_bt_with_test_data(full_data_set=True)
     # Create an unbounded window to make sure we can easily relate to the results.
     window = bt.sort_values('inhabitants').window('municipality',
-                                                  mode=BuhTuhWindow.FrameMode.ROWS,
-                                                  start_boundary=BuhTuhWindow.FrameBoundary.PRECEDING,
+                                                  mode=BuhTuhWindowFrameMode.ROWS,
+                                                  start_boundary=BuhTuhWindowFrameBoundary.PRECEDING,
                                                   start_value=None,
-                                                  end_boundary=BuhTuhWindow.FrameBoundary.FOLLOWING,
+                                                  end_boundary=BuhTuhWindowFrameBoundary.FOLLOWING,
                                                   end_value=None)
     bt['row_number'] = bt.inhabitants.window_row_number(window)
     bt['rank'] = bt.inhabitants.window_rank(window)
@@ -264,8 +268,10 @@ def test_windowing_expressions():
     )
 
 
-def test_windowing_datetime():
-    bt = get_bt_with_food_data()
+def test_windowing_boolean_functions():
+    # Windowing function are not allowed as boolean row selectors.
+    # TODO We need the flags to check for this though.
+    pass
 
-    bt['previous'] = bt.date.window_lag(bt.window('date')
-                                        )
+
+
