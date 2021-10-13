@@ -43,8 +43,8 @@ class BuhTuhGroupBy:
         Execute requested aggregations on this groupby
 
         :param series: a dict containing 'name': 'aggregation_method'.
-            In case you need duplicates: a list of 'name's is also supported, but aggregations should have
-            the same length list with the aggregation methods requested
+            In case you need duplicates: a list of 'name's is also supported, but aggregations
+            should have the same length list with the aggregation methods requested
         :param aggregations: The aggregation methods requested in case series is a list.
         :return: a new BuhTuhDataFrame containing the requested aggregations
         """
@@ -105,19 +105,20 @@ class BuhTuhGroupBy:
         try:
             return super().__getattribute__(attr_name)
         except AttributeError:
-            return lambda: self.aggregate({series_name: attr_name for series_name in self.aggregated_data})
+            return lambda: self.aggregate({series_name: attr_name
+                                           for series_name in self.aggregated_data})
 
     def __getitem__(self, key: Union[str, List[str]]) -> 'BuhTuhGroupBy':
 
-        assert isinstance(key, (str, list, tuple)), f'a buhtuh `selection` should be a str or list but ' \
-                                                    f'got {type(key)} instead.'
+        assert isinstance(key, (str, list, tuple)), \
+            f'a buhtuh `selection` should be a str or list but got {type(key)} instead.'
 
         if isinstance(key, str):
             key = [key]
 
         key_set = set(key)
-        # todo: check that the key_set is not in group_by_data, or make sure we fix the duplicate column
-        #  name problem?
+        # todo: check that the key_set is not in group_by_data, or make sure we fix the
+        # duplicate column name problem?
         assert key_set.issubset(set(self.aggregated_data.keys()))
 
         selected_data = {key: data for key, data in self.aggregated_data.items() if key in key_set}
@@ -139,11 +140,55 @@ class BuhTuhGroupBy:
         TODO Better argument typing, needs fancy import logic
         :see: BuhTuhWindow __init__ for frame args
         """
-        return BuhTuhWindow(buh_tuh=self.buh_tuh, group_by_columns=list(self.groupby.values()), **frame_args)
+        return BuhTuhWindow(buh_tuh=self.buh_tuh,
+                            group_by_columns=list(self.groupby.values()), **frame_args)
+
+
+class BuhTuhWindowFrameMode(Enum):
+    """
+    Class representing the frame mode in a BuhTuhWindow
+    """
+    ROWS = 0
+    RANGE = 1
+
+
+class BuhTuhWindowFrameBoundary(Enum):
+    """
+    Class representing the frame boundaries in a BuhTuhWindow
+    """
+
+    # Order is important here (see third restriction above)
+    PRECEDING = 0
+    CURRENT_ROW = 1
+    FOLLOWING = 2
+
+    def frame_clause(self, value: int = None) -> str:
+        """
+        Generate the frame boundary sub-string
+        """
+        if self == self.CURRENT_ROW:
+            if value is not None:
+                raise ValueError('Value not supported with CURRENT ROW')
+            return 'CURRENT ROW'
+        else:
+            if value is None:
+                return f'UNBOUNDED {self.name}'
+            else:
+                return f'{value} {self.name}'
 
 
 class BuhTuhWindow(BuhTuhGroupBy):
     """
+    Class representing an "immutable" window as defined in the SQL standard. Any operation on this
+    class that would alter it returns a fresh copy. It can be reused many time if the window
+    is reused.
+
+    A Window for us is basically a partitioned, sorted view on a DataFrame, where the frame
+    boundaries as given in the constructor, or in set_frame_clause(), define the window.
+
+    A frame is defined in PG as follows:
+    (See https://www.postgresql.org/docs/14/sql-expressions.html#SYNTAX-WINDOW-FUNCTIONS)
+
     { RANGE | ROWS } frame_start
     { RANGE | ROWS } BETWEEN frame_start AND frame_end
     where frame_start and frame_end can be one of
@@ -189,37 +234,17 @@ class BuhTuhWindow(BuhTuhGroupBy):
     """
     frame_clause: str
 
-    class FrameMode(Enum):
-        ROWS = 0
-        RANGE = 1
-
-    class FrameBoundary(Enum):
-        # Order is important here (see third restriction above)
-        PRECEDING = 0
-        CURRENT_ROW = 1
-        FOLLOWING = 2
-
-        def frame_clause(self, value):
-            if self == self.CURRENT_ROW:
-                if value is not None:
-                    raise ValueError('Value not supported with CURRENT ROW')
-                return 'CURRENT ROW'
-            else:
-                if value is None:
-                    return f'UNBOUNDED {self.name}'
-                else:
-                    return f'{value} {self.name}'
-
     def __init__(self, buh_tuh: BuhTuhDataFrame,
                  group_by_columns: List['BuhTuhSeries'],
-                 mode: FrameMode = FrameMode.RANGE,
-                 start_boundary: FrameBoundary = FrameBoundary.PRECEDING,
+                 mode: BuhTuhWindowFrameMode = BuhTuhWindowFrameMode.RANGE,
+                 start_boundary: BuhTuhWindowFrameBoundary = BuhTuhWindowFrameBoundary.PRECEDING,
                  start_value: int = None,
-                 end_boundary: FrameBoundary = FrameBoundary.CURRENT_ROW,
+                 end_boundary: BuhTuhWindowFrameBoundary = BuhTuhWindowFrameBoundary.CURRENT_ROW,
                  end_value: int = None):
         """
-        Basically a partitioned, sorted DataFrame, with a frame clause defining the window
-        See 4.2.8. in https://www.postgresql.org/docs/9.1/sql-expressions.html what that means :)
+        Define a window on a DataFrame, by giving the partitioning series and the frame definition
+        :see: class definition for more info on the frame definition, and BuhTuhGroupBy for more
+              info on grouping / partitioning
         """
         super().__init__(buh_tuh, group_by_columns)
 
@@ -229,17 +254,20 @@ class BuhTuhWindow(BuhTuhGroupBy):
         if start_boundary is None:
             raise ValueError("At least start_boundary needs to be defined")
 
-        if start_boundary == BuhTuhWindow.FrameBoundary.FOLLOWING and start_value is None:
+        if start_boundary == BuhTuhWindowFrameBoundary.FOLLOWING \
+                and start_value is None:
             raise ValueError("Start of frame can not be unbounded following")
 
-        if end_boundary == BuhTuhWindow.FrameBoundary.PRECEDING and end_value is None:
+        if end_boundary == BuhTuhWindowFrameBoundary.PRECEDING \
+                and end_value is None:
             raise ValueError("End of frame can not be unbounded preceding")
 
         if (start_value is not None and start_value < 0) or \
                 (end_value is not None and end_value < 0):
             raise ValueError("start_value and end_value must be greater than or equal to zero.")
 
-        if mode == BuhTuhWindow.FrameMode.RANGE and (start_value is not None or end_value is not None):
+        if mode == BuhTuhWindowFrameMode.RANGE \
+                and (start_value is not None or end_value is not None):
             raise ValueError("start_value or end_value cases only supported in ROWS mode.")
 
         if end_boundary is not None:
@@ -247,14 +275,14 @@ class BuhTuhWindow(BuhTuhGroupBy):
                 raise ValueError("frame boundaries defined in wrong order.")
 
             if start_boundary == end_boundary:
-                if start_boundary == BuhTuhWindow.FrameBoundary.PRECEDING \
+                if start_boundary == BuhTuhWindowFrameBoundary.PRECEDING \
                         and start_value is not None \
                         and end_value is not None \
                         and start_value < end_value:
                     raise ValueError("frame boundaries defined in wrong order.")
 
             if start_boundary == end_boundary:
-                if start_boundary == BuhTuhWindow.FrameBoundary.FOLLOWING \
+                if start_boundary == BuhTuhWindowFrameBoundary.FOLLOWING \
                         and start_value is not None \
                         and end_value is not None \
                         and start_value > end_value:
@@ -285,10 +313,13 @@ class BuhTuhWindow(BuhTuhGroupBy):
                             end_boundary=self._end_boundary, end_value=self._end_value)
 
     def set_frame_clause(self,
-                         mode: FrameMode = FrameMode.RANGE,
-                         start_boundary: FrameBoundary = FrameBoundary.PRECEDING,
+                         mode:
+                         BuhTuhWindowFrameMode = BuhTuhWindowFrameMode.RANGE,
+                         start_boundary:
+                         BuhTuhWindowFrameBoundary = BuhTuhWindowFrameBoundary.PRECEDING,
                          start_value: int = None,
-                         end_boundary: FrameBoundary = FrameBoundary.CURRENT_ROW,
+                         end_boundary:
+                         BuhTuhWindowFrameBoundary = BuhTuhWindowFrameBoundary.CURRENT_ROW,
                          end_value: int = None) -> 'BuhTuhWindow':
         """
         Convenience function to clone this window with new frame parameters
