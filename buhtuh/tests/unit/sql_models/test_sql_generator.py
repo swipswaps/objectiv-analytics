@@ -17,6 +17,7 @@ def test_simple():
 
 
 def assert_escape_compare_value(value):
+    """ helper for test__escape_value. Assert that the escaped value, after formatting equals the original"""
     escaped = _escape_value(value)
     assert escaped.format() == value
 
@@ -25,6 +26,9 @@ def test__escape_value():
     assert_escape_compare_value('test')
     assert_escape_compare_value('te{s}t')
     assert_escape_compare_value('te{{s}}t')
+    assert_escape_compare_value('te{st')
+    assert_escape_compare_value('te{{s}t')
+    assert_escape_compare_value('te{{st')
     full_string = '{test}' + _escape_value('{test}') + '{test}'
     assert full_string.format(test='x') == 'x{test}x'
     full_string = '{test}' + _escape_value('{{test}}') + '{test}'
@@ -32,6 +36,7 @@ def test__escape_value():
 
 
 def test_format_injection():
+    # Make sure that (parts of) format strings in the properties of a model don't mess up the sql generation.
     mb = CustomSqlModel('select {a} from x')
     result = to_sql(mb(a='y'))
     assert result == 'select y from x'
@@ -41,6 +46,8 @@ def test_format_injection():
     assert result == "select '{{y}}' from x"
     result = to_sql(mb(a="'{{{y}}}'"))
     assert result == "select '{{{y}}}' from x"
+    result = to_sql(mb(a="'{{{y}'"))
+    assert result == "select '{{{y}' from x"
 
     model = mb(a="'{{y}}'")
     mb = CustomSqlModel('select {a} from {{x}}')

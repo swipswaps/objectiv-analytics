@@ -110,7 +110,10 @@ def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     if model.hash in compiler_cache:
         return compiler_cache[model.hash]
     sql = model.sql
-    sql = _format_sql(sql=sql, values=model.properties_formatted, model=model)
+    # Make sure that if there are any format strings in the properties that they get escaped. Otherwise this
+    # would cause trouble the next time we call format() below for the references
+    escaped_properties = {key: _escape_value(value) for key, value in model.properties_formatted.items()}
+    sql = _format_sql(sql=sql, values=escaped_properties, model=model)
     # {{id}} (==REFERENCE_UNIQUE_FIELD) is a special placeholder that gets the unique model identifier,
     # which can be used in templates to make sure that if a model gets used multiple times,
     # the cte-names are still unique.
@@ -130,12 +133,9 @@ def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
 
 
 def _format_sql(sql: str, values: Dict[str, str], model: SqlModel):
-    """
-    Escape the values, and execute sql.format(**values), and if that fails raise a clear exception.
-    """
-    escaped_values = {key: _escape_value(value) for key, value in values.items()}
+    """ Execute sql.format(**values), and if that fails raise a clear exception. """
     try:
-        sql = sql.format(**escaped_values)
+        sql = sql.format(**values)
     except Exception as exc:
         raise Exception(f'Failed to format sql for model {model.generic_name}. \n'
                         f'Format values: {values}. \n'
@@ -144,5 +144,5 @@ def _format_sql(sql: str, values: Dict[str, str], model: SqlModel):
 
 
 def _escape_value(value: str) -> str:
-    """ escape value for python's format() function """
+    """ Escape value for python's format() function. i.e. `_escape_value(value).format() == value` """
     return value.replace('{', '{{').replace('}', '}}')
