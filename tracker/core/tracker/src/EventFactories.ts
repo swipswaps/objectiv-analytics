@@ -26,8 +26,8 @@ import {
  *         The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global / general information about the event. They carry information that is not
  *         related to where the Event originated (location), such as device, platform or business data.
- * @returns {Omit<AbortedEvent, 'id' | 'time'>} - AbortedEvent: A non interactive event, that would be emitted when an action fails or is aborted, eg a form that
- * 	is posted, but not succesfully.
+ * @returns {Omit<AbortedEvent, 'id' | 'time'>} - AbortedEvent: A non interactive event, that would be emitted when an action fails or is aborted, e.g. a form that
+ * 	is posted, but not successfully.
  */
 export const makeAbortedEvent = (props?: {
   location_stack?: AbstractLocationContext[];
@@ -85,7 +85,7 @@ export const makeClickEvent = (props?: {
  *         The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
  * @param {AbstractGlobalContext[]} props.global_contexts - Global contexts add global / general information about the event. They carry information that is not
  *         related to where the Event originated (location), such as device, platform or business data.
- * @returns {Omit<CompletedEvent, 'id' | 'time'>} - CompletedEvent: A non interactive event, that would be emitted when an action completes succesfully, eg a form that
+ * @returns {Omit<CompletedEvent, 'id' | 'time'>} - CompletedEvent: A non interactive event, that would be emitted when an action completes successfully, e.g. a form that
  * 	is posted.
  */
 export const makeCompletedEvent = (props?: {
