@@ -71,7 +71,7 @@
         is posted, but not succesfully. \
       ",
       "parents": ["NonInteractiveEvent"],
-      "requiresContext": []
+      "requiresContext": ["ErrorContext"]
     },
     "DocumentLoadedEvent": {
       "description": "\
