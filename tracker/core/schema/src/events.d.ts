@@ -15,7 +15,7 @@ export interface NonInteractiveEvent extends AbstractNonInteractiveEvent {
 }
 
 /**
- * A non interactive event, that would be emitted when an action completes succesfully, eg a form that
+ * A non interactive event, that would be emitted when an action completes succesfully, e.g. a form that
  * is posted.
  * Inheritance: CompletedEvent -> AbstractNonInteractiveEvent -> AbstractEvent
  */
@@ -27,7 +27,7 @@ export interface CompletedEvent extends AbstractNonInteractiveEvent {
 }
 
 /**
- * A non interactive event, that would be emitted when an action fails or is aborted, eg a form that
+ * A non interactive event, that would be emitted when an action fails or is aborted, e.g. a form that
  * is posted, but not succesfully.
  * Inheritance: AbortedEvent -> AbstractNonInteractiveEvent -> AbstractEvent
  */
