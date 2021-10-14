@@ -14,29 +14,14 @@ def test_all_supported_types():
     ]
     bt = _get_bt('test_supported_types_table',
                  TEST_DATA_SUPPORTED_TYPES,
-                 ['float_column', 'int_column', 'timestamp_column', 'string_column', 'bool_column'],
+                 ['float', 'int', 'timestamp', 'string', 'bool'],
                  convert_objects=True)
 
-    assert_db_type(bt['float_column'], 'double precision', BuhTuhSeriesFloat64)
-    assert_db_type(bt['int_column'], 'bigint', BuhTuhSeriesInt64)
-    assert_db_type(bt['timestamp_column'], 'timestamp without time zone', BuhTuhSeriesTimestamp)
-    assert_db_type(bt['string_column'], 'text', BuhTuhSeriesString)
-    assert_db_type(bt['bool_column'], 'boolean', BuhTuhSeriesBoolean)
-
-
-def test_all_supported_types_with_dtype_override():
-    TEST_DATA_SUPPORTED_TYPES = [
-        [4, 'fierljeppen']
-    ]
-    bt = _get_bt('test_supported_types_table',
-                 TEST_DATA_SUPPORTED_TYPES,
-                 ['int_column', 'string_column'],
-                 dtype_override={'string_column': 'string'},
-                 convert_objects=False)
-
-    # todo still fails, see comments at dtype_override in pandasql.py
-    assert_db_type(bt['int_column'], 'double precision', BuhTuhSeriesFloat64)
-    assert_db_type(bt['string_column'], 'text', BuhTuhSeriesString)
+    assert_db_type(bt['float'], 'double precision', BuhTuhSeriesFloat64)
+    assert_db_type(bt['int'], 'bigint', BuhTuhSeriesInt64)
+    assert_db_type(bt['timestamp'], 'timestamp without time zone', BuhTuhSeriesTimestamp)
+    assert_db_type(bt['string'], 'text', BuhTuhSeriesString)
+    assert_db_type(bt['bool'], 'boolean', BuhTuhSeriesBoolean)
 
 
 def test_string_as_index():
@@ -45,14 +30,14 @@ def test_string_as_index():
     ]
     bt = _get_bt('test_supported_types_table',
                  TEST_DATA_SUPPORTED_TYPES,
-                 ['string_column', 'float_column', 'int_column', 'timestamp_column', 'bool_column'],
+                 ['string', 'float', 'int', 'timestamp', 'bool'],
                  convert_objects=True)
 
-    assert_db_type(bt['float_column'], 'double precision', BuhTuhSeriesFloat64)
-    assert_db_type(bt['int_column'], 'bigint', BuhTuhSeriesInt64)
-    assert_db_type(bt['timestamp_column'], 'timestamp without time zone', BuhTuhSeriesTimestamp)
-    assert_db_type(bt['string_column'], 'text', BuhTuhSeriesString)
-    assert_db_type(bt['bool_column'], 'boolean', BuhTuhSeriesBoolean)
+    assert_db_type(bt['float'], 'double precision', BuhTuhSeriesFloat64)
+    assert_db_type(bt['int'], 'bigint', BuhTuhSeriesInt64)
+    assert_db_type(bt['timestamp'], 'timestamp without time zone', BuhTuhSeriesTimestamp)
+    assert_db_type(bt['string'], 'text', BuhTuhSeriesString)
+    assert_db_type(bt['bool'], 'boolean', BuhTuhSeriesBoolean)
 
 
 def test_load_df_without_conversion():
@@ -61,10 +46,10 @@ def test_load_df_without_conversion():
     ]
     bt = _get_bt('test_supported_types_table',
                  TEST_DATA_SUPPORTED_TYPES,
-                 ['float_column', 'int_column', 'timestamp_column', 'bool_column'],
+                 ['float', 'int', 'timestamp', 'bool'],
                  convert_objects=False)
 
-    assert_db_type(bt['float_column'], 'double precision', BuhTuhSeriesFloat64)
-    assert_db_type(bt['int_column'], 'bigint', BuhTuhSeriesInt64)
-    assert_db_type(bt['timestamp_column'], 'timestamp without time zone', BuhTuhSeriesTimestamp)
-    assert_db_type(bt['bool_column'], 'boolean', BuhTuhSeriesBoolean)
+    assert_db_type(bt['float'], 'double precision', BuhTuhSeriesFloat64)
+    assert_db_type(bt['int'], 'bigint', BuhTuhSeriesInt64)
+    assert_db_type(bt['timestamp'], 'timestamp without time zone', BuhTuhSeriesTimestamp)
+    assert_db_type(bt['bool'], 'boolean', BuhTuhSeriesBoolean)

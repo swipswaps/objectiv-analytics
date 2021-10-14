@@ -11,7 +11,6 @@ from sqlalchemy.engine import Engine
 from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
-from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_dtype_from_db_dtype
 from buhtuh.json import Json
 
 if TYPE_CHECKING:
@@ -217,8 +216,7 @@ class BuhTuhDataFrame:
                        name: str,
                        engine: Engine,
                        convert_objects: bool = False,
-                       if_exists: str = 'fail',
-                       dtype_override: dict = None):
+                       if_exists: str = 'fail'):
         """
         Instantiate a new BuhTuhDataFrame based on the content of a Pandas DataFrame. Supported dtypes are
         'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
@@ -250,13 +248,8 @@ class BuhTuhDataFrame:
                                              convert_floating=False)
 
         # todo add support for 'timedelta64[ns]'. pd.to_sql writes timedelta as bigint to sql, so
-        #  not implemented yet
-        # todo: dtype_override is half implemented and can be used to convert objects to any supported dtype
-        #  in the future this can be used to load a column with json from a dataframe
-        #  it works a little bit: ie when using to_sql with an int column it writes ints, dtype_override
-        #  {'int_column': 'float64'} gives a BuhTuhSeriesFloat64 but in the db it is type int
-        supported_types = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool',
-                           'json']
+        # not implemented yet
+        supported_types = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool']
         index_dtype = df_copy[index].dtype.name
         if index_dtype not in supported_types:
             raise ValueError(f"index is of type '{index_dtype}', should one of {supported_types}. "
@@ -264,8 +257,6 @@ class BuhTuhDataFrame:
                              f"to type 'string'.")
         dtypes = {column_name: dtype.name for column_name, dtype in df_copy.dtypes.items()
                   if column_name in df.columns}
-        if dtype_override:
-            dtypes = {key: dtype_override.get(key, dtypes[key]) for key in dtypes}
         unsupported_dtypes = {column_name: dtype for column_name, dtype in dtypes.items()
                               if dtype not in supported_types}
         if unsupported_dtypes:
@@ -1533,12 +1524,14 @@ class BuhTuhSeriesJson(BuhTuhSeries):
                  base_node: SqlModel,
                  index: Optional[Dict[str, 'BuhTuhSeries']],
                  name: str,
-                 expression: str = None):
+                 expression: str = None,
+                 sorted_ascending: Optional[bool] = None):
         super().__init__(engine,
                          base_node,
                          index,
                          name,
-                         expression)
+                         expression,
+                         sorted_ascending)
         self.json = Json(self)
 
     @classmethod
