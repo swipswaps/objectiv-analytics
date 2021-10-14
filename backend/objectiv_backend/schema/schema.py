@@ -620,7 +620,7 @@ class NonInteractiveEvent(AbstractEvent):
 
 class CompletedEvent(NonInteractiveEvent):
     """
-        A non interactive event, that would be emitted when an action completes succesfully, eg a form that
+        A non interactive event, that would be emitted when an action completes succesfully, e.g. a form that
     is posted.
 
         Attributes:
@@ -673,7 +673,7 @@ class CompletedEvent(NonInteractiveEvent):
 
 class AbortedEvent(NonInteractiveEvent):
     """
-        A non interactive event, that would be emitted when an action fails or is aborted, eg a form that
+        A non interactive event, that would be emitted when an action fails or is aborted, e.g. a form that
     is posted, but not succesfully.
 
         Attributes:

@@ -59,7 +59,7 @@
     },
     "CompletedEvent": {
       "description": "\
-        A non interactive event, that would be emitted when an action completes succesfully, eg a form that \n\
+        A non interactive event, that would be emitted when an action completes succesfully, e.g. a form that \n\
         is posted. \
       ",
       "parents": ["NonInteractiveEvent"],
@@ -67,7 +67,7 @@
     },
     "AbortedEvent": {
       "description": "\
-        A non interactive event, that would be emitted when an action fails or is aborted, eg a form that \n\
+        A non interactive event, that would be emitted when an action fails or is aborted, e.g. a form that \n\
         is posted, but not succesfully. \
       ",
       "parents": ["NonInteractiveEvent"],
