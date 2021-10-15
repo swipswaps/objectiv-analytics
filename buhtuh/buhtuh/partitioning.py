@@ -5,6 +5,39 @@ from buhtuh.pandasql import BuhTuhSeries, BuhTuhSeriesInt64, BuhTuhDataFrame
 from sql_models.model import CustomSqlModel
 
 
+class BuhTuhWindowFrameMode(Enum):
+    """
+    Class representing the frame mode in a BuhTuhWindow
+    """
+    ROWS = 0
+    RANGE = 1
+
+
+class BuhTuhWindowFrameBoundary(Enum):
+    """
+    Class representing the frame boundaries in a BuhTuhWindow
+    """
+
+    # Order is important here (see third restriction above)
+    PRECEDING = 0
+    CURRENT_ROW = 1
+    FOLLOWING = 2
+
+    def frame_clause(self, value: int = None) -> str:
+        """
+        Generate the frame boundary sub-string
+        """
+        if self == self.CURRENT_ROW:
+            if value is not None:
+                raise ValueError('Value not supported with CURRENT ROW')
+            return 'CURRENT ROW'
+        else:
+            if value is None:
+                return f'UNBOUNDED {self.name}'
+            else:
+                return f'{value} {self.name}'
+
+
 class BuhTuhGroupBy:
     """
     Class to build GROUP BY expressions. This is the basic building block to create more complex
@@ -142,14 +175,20 @@ class BuhTuhGroupBy:
         )
         return type(self)(buh_tuh=buh_tuh, group_by_columns=list(self.groupby.values()))
 
-    def window(self, **frame_args) -> 'BuhTuhWindow':
+    def window(self, mode: BuhTuhWindowFrameMode = BuhTuhWindowFrameMode.RANGE,
+               start_boundary: BuhTuhWindowFrameBoundary = BuhTuhWindowFrameBoundary.PRECEDING,
+               start_value: int = None,
+               end_boundary: BuhTuhWindowFrameBoundary = BuhTuhWindowFrameBoundary.CURRENT_ROW,
+               end_value: int = None) -> 'BuhTuhWindow':
         """
         Convenience function to turn this groupby into a window.
-        TODO Better argument typing, needs fancy import logic
         :see: BuhTuhWindow __init__ for frame args
         """
         return BuhTuhWindow(buh_tuh=self.buh_tuh,
-                            group_by_columns=list(self.groupby.values()), **frame_args)
+                            group_by_columns=list(self.groupby.values()),
+                            mode=mode,
+                            start_boundary=start_boundary, start_value=start_value,
+                            end_boundary=end_boundary, end_value=end_value)
 
     def cube(self) -> 'BuhTuhCube':
         """
@@ -249,39 +288,6 @@ class BuhTuhGroupingSet(BuhTuhGroupingList):
         for g in self.grouping_list:
             grouping_str_list.append(f'({g._get_partition_expression()})')
         return f'GROUPING SETS ({", ".join(grouping_str_list)})'
-
-
-class BuhTuhWindowFrameMode(Enum):
-    """
-    Class representing the frame mode in a BuhTuhWindow
-    """
-    ROWS = 0
-    RANGE = 1
-
-
-class BuhTuhWindowFrameBoundary(Enum):
-    """
-    Class representing the frame boundaries in a BuhTuhWindow
-    """
-
-    # Order is important here (see third restriction above)
-    PRECEDING = 0
-    CURRENT_ROW = 1
-    FOLLOWING = 2
-
-    def frame_clause(self, value: int = None) -> str:
-        """
-        Generate the frame boundary sub-string
-        """
-        if self == self.CURRENT_ROW:
-            if value is not None:
-                raise ValueError('Value not supported with CURRENT ROW')
-            return 'CURRENT ROW'
-        else:
-            if value is None:
-                return f'UNBOUNDED {self.name}'
-            else:
-                return f'{value} {self.name}'
 
 
 class BuhTuhWindow(BuhTuhGroupBy):
