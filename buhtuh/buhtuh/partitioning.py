@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List, Union, Dict, Any
 
+from buhtuh import Expression
 from buhtuh.pandasql import BuhTuhSeries, BuhTuhSeriesInt64, BuhTuhDataFrame
 from sql_models.model import CustomSqlModel
 
@@ -24,7 +25,7 @@ class BuhTuhGroupBy:
                 'index': BuhTuhSeriesInt64.get_instance(base=buh_tuh,
                                                         name='index',
                                                         dtype='int64',
-                                                        expression='1')
+                                                        expression=Expression.construct('1'))
             }
 
         self.aggregated_data = {name: series
@@ -300,7 +301,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
                             start_boundary=start_boundary, start_value=start_value,
                             end_boundary=end_boundary, end_value=end_value)
 
-    def get_window_expression(self, window_func: str) -> str:
+    def get_window_expression(self, window_func: Expression) -> Expression:
         """
         Given the window_func generate a statement like:
             {window_func} OVER (PARTITION BY .. ORDER BY ... frame_clause)
@@ -315,4 +316,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
         else:
             frame_clause = self.frame_clause
 
-        return f'{window_func} OVER (PARTITION BY {partition} {order_by} {frame_clause})'
+        return Expression.construct(
+            f'{{}} OVER (PARTITION BY {partition} {order_by} {frame_clause})',
+            window_func
+        )
