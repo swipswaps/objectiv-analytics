@@ -1,4 +1,5 @@
 import datetime
+import json
 from abc import abstractmethod, ABC
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Type, NamedTuple, TYPE_CHECKING
@@ -12,6 +13,7 @@ from buhtuh.expression import Expression
 from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
+from buhtuh.json import Json
 
 if TYPE_CHECKING:
     from buhtuh.partitioning import BuhTuhWindow, BuhTuhGroupBy
@@ -1114,13 +1116,20 @@ class BuhTuhSeries(ABC):
     # TODO more specific docs
     # TODO make group_by optional, but for that we need some way to access the series' underlying
     #      df to access sorting
+
+    def _check_window(self, partition: Any):
+        """
+        Validate that the given partition is a true BuhTuhWindow or raise an exception
+        """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(partition, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
+
     def window_row_number(self, window: 'BuhTuhWindow'):
         """
         Returns the number of the current row within its partition, counting from 1.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('row_number()'), 'int64')
 
     def window_rank(self, window: 'BuhTuhWindow'):
@@ -1128,9 +1137,7 @@ class BuhTuhSeries(ABC):
         Returns the rank of the current row, with gaps; that is, the row_number of the first row
         in its peer group.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('rank()'), 'int64')
 
     def window_dense_rank(self, window: 'BuhTuhWindow'):
@@ -1138,9 +1145,7 @@ class BuhTuhSeries(ABC):
         Returns the rank of the current row, without gaps; this function effectively counts peer
         groups.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('dense_rank()'), 'int64')
 
     def window_percent_rank(self, window: 'BuhTuhWindow'):
@@ -1149,9 +1154,7 @@ class BuhTuhSeries(ABC):
             (rank - 1) / (total partition rows - 1).
         The value thus ranges from 0 to 1 inclusive.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('percent_rank()'), "double precision")
 
     def window_cume_dist(self, window: 'BuhTuhWindow'):
@@ -1160,9 +1163,7 @@ class BuhTuhSeries(ABC):
             (number of partition rows preceding or peers with current row) / (total partition rows).
         The value thus ranges from 1/N to 1.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('cume_dist()'), "double precision")
 
     def window_ntile(self, window: 'BuhTuhWindow', num_buckets: int = 1):
@@ -1170,9 +1171,7 @@ class BuhTuhSeries(ABC):
         Returns an integer ranging from 1 to the argument value,
         dividing the partition as equally as possible.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
 
     def window_lag(self, window: 'BuhTuhWindow', offset: int = 1, default: Any = None):
@@ -1184,9 +1183,7 @@ class BuhTuhSeries(ABC):
         Both offset and default are evaluated with respect to the current row.
         If omitted, offset defaults to 1 and default to None
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         default_sql = self.value_to_sql(default)
         return self._window_or_agg_func(
             window,
@@ -1201,9 +1198,7 @@ class BuhTuhSeries(ABC):
         Both offset and default are evaluated with respect to the current row.
         If omitted, offset defaults to 1 and default to None.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         default_sql = self.value_to_sql(default)
         return self._window_or_agg_func(
             window,
@@ -1215,9 +1210,7 @@ class BuhTuhSeries(ABC):
         """
         Returns value evaluated at the row that is the first row of the window frame.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         return self._window_or_agg_func(
             window,
             Expression.construct('first_value({})', self.expression),
@@ -1228,9 +1221,7 @@ class BuhTuhSeries(ABC):
         """
         Returns value evaluated at the row that is the last row of the window frame.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         return self._window_or_agg_func(
             window,
             Expression.construct('last_value({})', self.expression),
@@ -1242,9 +1233,7 @@ class BuhTuhSeries(ABC):
         Returns value evaluated at the row that is the n'th row of the window frame
         (counting from 1); returns NULL if there is no such row.
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(window, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        self._check_window(window)
         return self._window_or_agg_func(
             window,
             Expression.construct(f'nth_value({{}}, {n})', self.expression),
@@ -1550,14 +1539,57 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
         return self._get_derived_series('uuid', expression)
 
 
-class BuhTuhSeriesJson(BuhTuhSeriesString):
+class BuhTuhSeriesJson(BuhTuhSeries):
     """
     TODO: make this a proper class, not just a string subclass
     """
     dtype = 'json'
-    dtype_aliases = ()  # type: ignore
+    dtype_aliases = (object, )  # type: ignore
     supported_db_dtype = 'json'
-    supported_value_types = (dict, list, str, int, float)  # type: ignore
+    supported_value_types = (dict, list)
+
+    def __init__(self,
+                 engine,
+                 base_node: SqlModel,
+                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 name: str,
+                 expression: Expression = None,
+                 sorted_ascending: Optional[bool] = None):
+        super().__init__(engine,
+                         base_node,
+                         index,
+                         name,
+                         expression,
+                         sorted_ascending)
+        self.json = Json(self)
+
+    @classmethod
+    def value_to_sql(cls, value: dict) -> str:
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be dict, actual type: {type(value)}')
+        json_value = json.dumps(value)
+        escaped_json_value = json_value.replace("'", "''")
+        return f"cast('{escaped_json_value}' to json)"
+
+    @classmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'json':
+            return expression
+        if source_dtype != 'string':
+            raise ValueError(f'cannot convert {source_dtype} to json')
+        return Expression.construct('cast({} as json)', expression)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['json'], other)
+        expression = Expression.construct(
+            f'({{}})::jsonb {comparator} ({{}})::jsonb',
+            self.expression, other.expression
+        )
+        return self._get_derived_series('bool', expression)
+
+    def __le__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._comparator_operator(other, "<@")
 
 
 class BuhTuhSeriesTimestamp(BuhTuhSeries):
