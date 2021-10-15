@@ -212,7 +212,6 @@ def test_cube_basics():
 def test_rollup_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    # instant stonks through variable naming
     btc = bt.groupby(['municipality','city']).rollup()
 
     result_bt = btc['inhabitants'].sum()
@@ -254,7 +253,6 @@ def test_rollup_basics():
 def test_grouping_list_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    # instant stonks through variable naming
     btm = bt.groupby(['municipality'])
     btc = bt.groupby(['city'])
     bts = BuhTuhGroupingList([btm,btc])
