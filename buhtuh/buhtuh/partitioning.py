@@ -6,9 +6,20 @@ from sql_models.model import CustomSqlModel
 
 
 class BuhTuhGroupBy:
+    """
+    Class to build GROUP BY expressions. This is the basic building block to create more complex
+    expressions. This class represents a grouping/partitioning by columns/series or expressions
+    thereof.
+
+    For more complex grouping expressions, this class should be extended.
+    """
+    buh_tuh: BuhTuhDataFrame
+    groupby: Dict[str, BuhTuhSeries]
+    aggregated_data: Dict[str, BuhTuhSeries]
+
     def __init__(self,
-                 buh_tuh: 'BuhTuhDataFrame',
-                 group_by_columns: List['BuhTuhSeries']):
+                 buh_tuh: BuhTuhDataFrame,
+                 group_by_columns: List[BuhTuhSeries]):
         self.buh_tuh = buh_tuh
 
         self.groupby = {}
@@ -38,7 +49,7 @@ class BuhTuhGroupBy:
             self,
             series: Union[Dict[str, str], List[str]],
             aggregations: List[str] = None
-    ) -> 'BuhTuhDataFrame':
+    ) -> BuhTuhDataFrame:
         """
         Execute requested aggregations on this groupby
 
@@ -79,7 +90,6 @@ class BuhTuhGroupBy:
         model_builder = CustomSqlModel(  # setting this stuff could also be part of __init__
             sql="""
                 select {group_by_columns}, {aggregate_columns}
-
                 from {{prev}}
                 group by {group_by_expression}
                 """
@@ -130,11 +140,9 @@ class BuhTuhGroupBy:
             # We don't guarantee sorting after groupby(), so we can just set order_by to None
             order_by=[]
         )
-        return BuhTuhGroupBy(buh_tuh=buh_tuh, group_by_columns=list(self.groupby.values()))
+        return type(self)(buh_tuh=buh_tuh, group_by_columns=list(self.groupby.values()))
 
-    def window(self,
-               by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries']] = None,
-               **frame_args):
+    def window(self, **frame_args) -> 'BuhTuhWindow':
         """
         Convenience function to turn this groupby into a window.
         TODO Better argument typing, needs fancy import logic
@@ -142,6 +150,105 @@ class BuhTuhGroupBy:
         """
         return BuhTuhWindow(buh_tuh=self.buh_tuh,
                             group_by_columns=list(self.groupby.values()), **frame_args)
+
+    def cube(self) -> 'BuhTuhCube':
+        """
+        Convenience function to turn this groupby into a cube.
+        :see: BuhTuhCube for more info
+        """
+        return BuhTuhCube(buh_tuh=self.buh_tuh, group_by_columns=list(self.groupby.values()))
+
+    def rollup(self) -> 'BuhTuhRollup':
+        """
+        Convenience function to turn this groupby into a rollup.
+        :see: BuhTuhRollup for more info
+        """
+        return BuhTuhRollup(buh_tuh=self.buh_tuh, group_by_columns=list(self.groupby.values()))
+
+
+class BuhTuhCube(BuhTuhGroupBy):
+    """
+    Very simple abstraction to support cubes
+    """
+    def _get_partition_expression(self):
+        return f'CUBE ({super()._get_partition_expression()})'
+
+
+class BuhTuhRollup(BuhTuhGroupBy):
+    """
+    Very simple abstraction to support rollups
+    """
+    def _get_partition_expression(self):
+        return f'ROLLUP ({super()._get_partition_expression()})'
+
+
+class BuhTuhGroupingList(BuhTuhGroupBy):
+    """
+    Abstraction to support SQL's
+    GROUP BY (colA,colB), CUBE(ColC,ColD), ROLLUP(ColC,ColE)
+    like expressions
+    """
+    grouping_list: List[BuhTuhGroupBy]
+
+    def __init__(self, grouping_list: List[BuhTuhGroupBy]):
+        """
+        Given the list of groupbys, construct a combined groupby
+        """
+        self.grouping_list = grouping_list
+
+        self.groupby = {}
+        self.aggregated_data = {}
+
+        buh_tuh = None
+
+        for g in grouping_list:
+            if not isinstance(g, BuhTuhGroupBy):
+                raise ValueError("Only BuhTuhGroupBy items are supported")
+            if buh_tuh is None:
+                buh_tuh = g.buh_tuh
+            if buh_tuh.base_node != g.buh_tuh.base_node:
+                raise ValueError("BuhTuhGroupBy items should have the same underlying base node")
+            for name, series in g.groupby.items():
+                if name not in self.groupby:
+                    self.groupby[name] = series
+
+            for name, series in g.aggregated_data.items():
+                if name not in self.groupby and name not in self.aggregated_data:
+                    self.aggregated_data[name] = series
+
+        if buh_tuh is None:
+            # Mainly to keep mypy happy, but doesn't hurt.
+            raise ValueError("Not a single useable dataframe in list")
+        self.buh_tuh = buh_tuh
+
+    def __getitem__(self, key: Union[str, List[str]]) -> 'BuhTuhGroupBy':
+        """
+        Delegate to underyling groupbys' __getitem__
+        :see: BuhTuhGroupBy.__getitem__()
+        """
+        new_grouping_list = []
+        for g in self.grouping_list:
+            new_grouping_list.append(g.__getitem__(key))
+        return type(self)(new_grouping_list)
+
+    def _get_partition_expression(self):
+        grouping_str_list: List[str] = []
+        for g in self.grouping_list:
+            grouping_str_list.append(f'({g._get_partition_expression()})')
+        return f'{", ".join(grouping_str_list)}'
+
+
+class BuhTuhGroupingSet(BuhTuhGroupingList):
+    """
+    Abstraction to support SQLs
+    GROUP BY GROUPING SETS ((colA,colB),(ColA),(ColC))
+    """
+
+    def _get_partition_expression(self):
+        grouping_str_list: List[str] = []
+        for g in self.grouping_list:
+            grouping_str_list.append(f'({g._get_partition_expression()})')
+        return f'GROUPING SETS ({", ".join(grouping_str_list)})'
 
 
 class BuhTuhWindowFrameMode(Enum):
@@ -302,8 +409,8 @@ class BuhTuhWindow(BuhTuhGroupBy):
 
     def sort_values(self, **kwargs) -> 'BuhTuhWindow':
         """
-        Convenience passthrough for
-        @see BuhTuhDataFrame.sort_values()
+        Convenience pass-through for
+        :see: BuhTuhDataFrame.sort_values()
         """
         new_bt = self.buh_tuh.sort_values(**kwargs)
         return BuhTuhWindow(buh_tuh=new_bt,
