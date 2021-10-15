@@ -24,17 +24,19 @@ buhtuh.pandasql
    .. autosummary::
    
       BuhTuhDataFrame
-      BuhTuhGroupBy
       BuhTuhSeries
       BuhTuhSeriesAbstractNumeric
       BuhTuhSeriesBoolean
       BuhTuhSeriesDate
       BuhTuhSeriesFloat64
       BuhTuhSeriesInt64
+      BuhTuhSeriesJson
       BuhTuhSeriesString
       BuhTuhSeriesTime
       BuhTuhSeriesTimedelta
       BuhTuhSeriesTimestamp
+      BuhTuhSeriesUuid
+      SortColumn
    
    
 

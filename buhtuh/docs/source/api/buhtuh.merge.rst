@@ -1,4 +1,4 @@
-﻿buhtuh.merge
+buhtuh.merge
 ============
 
 .. automodule:: buhtuh.merge

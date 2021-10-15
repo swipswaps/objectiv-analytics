@@ -13,9 +13,11 @@ buhtuh.types
 
    .. autosummary::
    
-      arg_to_type
+      get_dtype_from_db_dtype
+      get_series_type_from_db_dtype
       get_series_type_from_dtype
       register_dtype
+      value_to_dtype
    
    
 
