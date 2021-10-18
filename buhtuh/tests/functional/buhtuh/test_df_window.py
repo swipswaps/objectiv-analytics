@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 import pytest
 
 from buhtuh.partitioning import BuhTuhWindow, BuhTuhWindowFrameMode, BuhTuhWindowFrameBoundary
@@ -13,7 +15,7 @@ def test_windowing_frame_clause():
     def frame_clause_equals(expected, **kwargs):
         w2 = w.set_frame_clause(**kwargs)
         assert(w2.frame_clause == expected)
-        ## Run a query to check whether the SQL is valid if we generated what we expected.
+        # Run a query to check whether the SQL is valid if we generated what we expected.
         bt.inhabitants.window_last_value(w2).head()
 
     # Again, check the default but through set_frame_clause in this case
@@ -274,12 +276,6 @@ def test_windowing_boolean_functions():
     pass
 
 
-import numpy as np
-import pandas as pd
-
-from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data
-
-
 def test_rolling_defaults():
     bt = get_bt_with_test_data(full_data_set=True)[['skating_order']]
 
@@ -303,12 +299,10 @@ def test_expanding_defaults():
     # Create a pandas version of this stuff
     pdf: pd.DataFrame = bt.head(11)
 
-    def test_expanding(**kwargs):
-        for min_periods in (0, 11):
-            pd_values = pdf.expanding(min_periods=min_periods, **kwargs).sum().iloc[:, 0].values
-            bt_values = bt.expanding(min_periods=min_periods, **kwargs).sum().head(11).iloc[:, 0].values
-            np.testing.assert_equal(pd_values, bt_values)
+    for min_periods in (0, 11):
+        pd_values = pdf.expanding(min_periods=min_periods).sum().iloc[:, 0].values
+        bt_values = bt.expanding(min_periods=min_periods).sum().head(11).iloc[:, 0].values
+        np.testing.assert_equal(pd_values, bt_values)
 
-    test_expanding()
 
 
