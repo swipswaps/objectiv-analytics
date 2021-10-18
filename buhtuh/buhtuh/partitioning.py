@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List, Union, Dict, Any
 
+from buhtuh import Expression
 from buhtuh.pandasql import BuhTuhSeries, BuhTuhSeriesInt64, BuhTuhDataFrame
 from sql_models.model import CustomSqlModel
 
@@ -68,7 +69,7 @@ class BuhTuhGroupBy:
                 'index': BuhTuhSeriesInt64.get_instance(base=buh_tuh,
                                                         name='index',
                                                         dtype='int64',
-                                                        expression='1')
+                                                        expression=Expression.construct('1'))
             }
 
         self.aggregated_data = {name: series
@@ -453,7 +454,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
                             start_boundary=start_boundary, start_value=start_value,
                             end_boundary=end_boundary, end_value=end_value)
 
-    def get_window_expression(self, window_func: str) -> str:
+    def get_window_expression(self, window_func: Expression) -> Expression:
         """
         Given the window_func generate a statement like:
             {window_func} OVER (PARTITION BY .. ORDER BY ... frame_clause)
@@ -471,14 +472,14 @@ class BuhTuhWindow(BuhTuhGroupBy):
         over = f'OVER (PARTITION BY {partition} {order_by} {frame_clause})'
 
         if self._min_values is None or self._min_values == 0:
-            return f'{window_func} {over}'
+            return Expression.construct(f'{{}} {over}', window_func)
         else:
             # Only return a value when then minimum amount of observations (including NULLs)
             # has been reached.
-            return f"""
+            return Expression.construct(f"""
                 CASE WHEN (count(1) {over}) >= {self._min_values}
-                THEN {window_func} {over}
-                ELSE NULL END"""
+                THEN {{}} {over}
+                ELSE NULL END""", window_func)
 
     def _get_group_by_expression(self):
         """
