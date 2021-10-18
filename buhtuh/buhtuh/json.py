@@ -97,9 +97,9 @@ class Json:
                     ' Context', '') || ': ' || (value ->> 'id')
                 ),
             ' => ')
-            from json_array_elements({self._series_object.name}) with ordinality
-            where ordinality = json_array_length({self._series_object.name})) || case
-                when json_array_length({self._series_object.name}) > 1
+            from json_array_elements({{}}) with ordinality
+            where ordinality = json_array_length({{}})) || case
+                when json_array_length({{}}) > 1
                     then ' located at ' || (select array_to_string(
                 array_agg(
                     replace(
@@ -107,8 +107,8 @@ class Json:
                     ' Context', '') || ': ' || (value ->> 'id')
                 ),
             ' => ')
-            from json_array_elements({self._series_object.name}) with ordinality
-            where ordinality = json_array_length({self._series_object.name})
+            from json_array_elements({{}}) with ordinality
+            where ordinality = json_array_length({{}})
             ) else '' end""",
             self._series_object.expression,
             self._series_object.expression,
