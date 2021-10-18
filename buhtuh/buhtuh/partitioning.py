@@ -75,7 +75,7 @@ class BuhTuhGroupBy:
                                 for name, series in buh_tuh.all_series.items()
                                 if name not in self.groupby.keys()}
 
-    def _get_partition_expression(self):
+    def _get_group_by_expression(self):
         return ', '.join(g.get_expression() for g in self.groupby.values())
 
     def aggregate(
@@ -111,7 +111,7 @@ class BuhTuhGroupBy:
         for name, aggregation in list(zip(series, aggregations)):
             data_series = self.aggregated_data[name]
             func = getattr(data_series, aggregation)
-            agg_series = func()
+            agg_series = func(self)
             name = f'{agg_series.name}_{aggregation}'
             agg_series = BuhTuhSeries.get_instance(base=self.buh_tuh,
                                                    name=name,
@@ -120,17 +120,23 @@ class BuhTuhGroupBy:
             aggregate_columns.append(agg_series.get_column_expression())
             new_series_dtypes[agg_series.name] = agg_series.dtype
 
+        group_by_expression = self._get_group_by_expression()
+        if group_by_expression is None:
+            group_by_expression = ''
+        else:
+            group_by_expression = f'group by {group_by_expression}'
+
         model_builder = CustomSqlModel(  # setting this stuff could also be part of __init__
             sql="""
                 select {group_by_columns}, {aggregate_columns}
                 from {{prev}}
-                group by {group_by_expression}
+                {group_by_expression}
                 """
         )
         model = model_builder(
             group_by_columns=', '.join(g.get_column_expression() for g in self.groupby.values()),
             aggregate_columns=', '.join(aggregate_columns),
-            group_by_expression=self._get_partition_expression(),
+            group_by_expression=group_by_expression,
             # TODO: get final node, or at least make sure we 'freeze' the node?
             prev=self.buh_tuh.base_node
         )
@@ -209,16 +215,16 @@ class BuhTuhCube(BuhTuhGroupBy):
     """
     Very simple abstraction to support cubes
     """
-    def _get_partition_expression(self):
-        return f'CUBE ({super()._get_partition_expression()})'
+    def _get_group_by_expression(self):
+        return f'CUBE ({super()._get_group_by_expression()})'
 
 
 class BuhTuhRollup(BuhTuhGroupBy):
     """
     Very simple abstraction to support rollups
     """
-    def _get_partition_expression(self):
-        return f'ROLLUP ({super()._get_partition_expression()})'
+    def _get_group_by_expression(self):
+        return f'ROLLUP ({super()._get_group_by_expression()})'
 
 
 class BuhTuhGroupingList(BuhTuhGroupBy):
@@ -270,10 +276,10 @@ class BuhTuhGroupingList(BuhTuhGroupBy):
             new_grouping_list.append(g.__getitem__(key))
         return type(self)(new_grouping_list)
 
-    def _get_partition_expression(self):
+    def _get_group_by_expression(self):
         grouping_str_list: List[str] = []
         for g in self.grouping_list:
-            grouping_str_list.append(f'({g._get_partition_expression()})')
+            grouping_str_list.append(f'({g._get_group_by_expression()})')
         return f'{", ".join(grouping_str_list)}'
 
 
@@ -283,10 +289,10 @@ class BuhTuhGroupingSet(BuhTuhGroupingList):
     GROUP BY GROUPING SETS ((colA,colB),(ColA),(ColC))
     """
 
-    def _get_partition_expression(self):
+    def _get_group_by_expression(self):
         grouping_str_list: List[str] = []
         for g in self.grouping_list:
-            grouping_str_list.append(f'({g._get_partition_expression()})')
+            grouping_str_list.append(f'({g._get_group_by_expression()})')
         return f'GROUPING SETS ({", ".join(grouping_str_list)})'
 
 
@@ -346,6 +352,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
     which selects the current row itself.
     """
     frame_clause: str
+    min_values: int
 
     def __init__(self, buh_tuh: BuhTuhDataFrame,
                  group_by_columns: List['BuhTuhSeries'],
@@ -353,7 +360,8 @@ class BuhTuhWindow(BuhTuhGroupBy):
                  start_boundary: BuhTuhWindowFrameBoundary = BuhTuhWindowFrameBoundary.PRECEDING,
                  start_value: int = None,
                  end_boundary: BuhTuhWindowFrameBoundary = BuhTuhWindowFrameBoundary.CURRENT_ROW,
-                 end_value: int = None):
+                 end_value: int = None,
+                 min_values: int = None):
         """
         Define a window on a DataFrame, by giving the partitioning series and the frame definition
         :see: class definition for more info on the frame definition, and BuhTuhGroupBy for more
@@ -406,6 +414,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
         self._start_value = start_value
         self._end_boundary = end_boundary
         self._end_value = end_value
+        self._min_values = 0 if min_values is None else min_values
 
         if end_boundary is None:
             self.frame_clause = f'{mode.name} {start_boundary.frame_clause(start_value)}'
@@ -449,7 +458,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
         Given the window_func generate a statement like:
             {window_func} OVER (PARTITION BY .. ORDER BY ... frame_clause)
         """
-        partition = self._get_partition_expression()
+        partition = ', '.join(g.get_expression() for g in self.groupby.values())
 
         # TODO implement NULLS FIRST / NULLS LAST, probably not here but in the sorting logic.
         order_by = self.buh_tuh.get_order_by_expression()
@@ -459,4 +468,20 @@ class BuhTuhWindow(BuhTuhGroupBy):
         else:
             frame_clause = self.frame_clause
 
-        return f'{window_func} OVER (PARTITION BY {partition} {order_by} {frame_clause})'
+        over = f'OVER (PARTITION BY {partition} {order_by} {frame_clause})'
+
+        if self._min_values is None or self._min_values == 0:
+            return f'{window_func} {over}'
+        else:
+            # Only return a value when then minimum amount of observations (including NULLs)
+            # has been reached.
+            return f"""
+                CASE WHEN (count(1) {over}) >= {self._min_values}
+                THEN {window_func} {over}
+                ELSE NULL END"""
+
+    def _get_group_by_expression(self):
+        """
+        On a Window, there is no default group_by clause
+        """
+        return None

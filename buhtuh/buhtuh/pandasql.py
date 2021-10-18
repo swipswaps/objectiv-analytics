@@ -545,6 +545,93 @@ class BuhTuhDataFrame:
                             group_by_columns=self._partition_by_columns(by),
                             **frame_args)
 
+    def rolling(self, window: int,
+                min_periods: int = None,
+                center: bool = False,
+                on: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None,
+                closed: str = 'right') -> 'BuhTuhWindow':
+        """
+        A rolling window of size 'window', by default right aligned
+
+        :param: window: the window size
+        :param: min_periods: the min amount of rows included in the window before an actual value is
+                returned
+        :param: center: center the result, or align the result on the right
+        :param: on: the partition to use, see window()
+        :param: closed:  Make the interval closed on the ‘right’, ‘left’, ‘both’ or ‘neither’
+                endpoints. Defaults to ‘right’, and the rest is currently unsupported.
+        :note:  win_type,axis and method parameters as supported by pandas, are currently not implemented.
+        :note:  the `on` parameter behaves differently from pandas, where it can be use to select to series
+                to iterate over.
+        """
+        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, BuhTuhWindow
+
+        if min_periods is None:
+            min_periods = window
+
+        if min_periods > window:
+            raise ValueError(f'min_periods {min_periods} must be <= window {window}')
+
+        if closed != 'right':
+            raise NotImplementedError("Only closed=right is supported")
+
+        mode = BuhTuhWindowFrameMode.ROWS
+        end_value: Optional[int]
+        if center:
+            end_value = (window - 1) // 2
+        else:
+            end_value = 0
+
+        start_boundary = BuhTuhWindowFrameBoundary.PRECEDING
+        start_value = (window - 1) - end_value
+
+        if end_value == 0:
+            end_boundary = BuhTuhWindowFrameBoundary.CURRENT_ROW
+            end_value = None
+        else:
+            end_boundary = BuhTuhWindowFrameBoundary.FOLLOWING
+
+        return BuhTuhWindow(buh_tuh=self.copy_override(),
+                            group_by_columns=self._partition_by_columns(on),
+                            mode=mode,
+                            start_boundary=start_boundary, start_value=start_value,
+                            end_boundary=end_boundary, end_value=end_value,
+                            min_values=min_periods)
+
+    def expanding(self,
+                  min_periods: int = 1,
+                  center: bool = False,
+                  on: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
+                  ) -> 'BuhTuhWindow':
+        """
+        Create an expanding window starting with the first row in the group, with at least min_period
+        observations. The result will be right-aligned in the window
+
+        :param: min_periods:    The minimum amount of observations in the window before a value is reported
+        :param: center:         Whether to center the result, currently not supported
+        :param: on:             The partition that will be applied. Note: this is different from pandas, where
+                                The partition is determined earlier in the process.
+        """
+        # TODO We could move the partitioning to BuhTuhGroupBy
+        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, BuhTuhWindow
+
+        if center:
+            # Will never be implemented probably, as it's also deprecated in pandas
+            raise NotImplementedError("centering is not implemented.")
+
+        mode = BuhTuhWindowFrameMode.ROWS
+        start_boundary = BuhTuhWindowFrameBoundary.PRECEDING
+        start_value = None
+        end_boundary = BuhTuhWindowFrameBoundary.CURRENT_ROW
+        end_value = None
+
+        return BuhTuhWindow(buh_tuh=self.copy_override(),
+                            group_by_columns=self._partition_by_columns(on),
+                            mode=mode,
+                            start_boundary=start_boundary, start_value=start_value,
+                            end_boundary=end_boundary, end_value=end_value,
+                            min_values=min_periods)
+
     def sort_values(
             self,
             by: Union[str, List[str]],
@@ -1070,7 +1157,7 @@ class BuhTuhSeries(ABC):
         assert isinstance(series, self.__class__)
 
         # this is massively ugly
-        return series.head(1).values[0]
+        return series.head(1).astype(series.dtype).values[0]
 
     def _window_or_agg_func(self, partition: Union['BuhTuhGroupBy', None], func: str, derived_dtype: str):
 
@@ -1093,6 +1180,7 @@ class BuhTuhSeries(ABC):
         return self._window_or_agg_func(partition, f'count({self.expression})', 'int64')
 
     def nunique(self, partition: 'BuhTuhGroupBy' = None):
+        from buhtuh.partitioning import BuhTuhWindow
         if partition is not None and isinstance(partition, BuhTuhWindow):
             raise Exception("unique counts in window functions not supported (by PG at least)")
         return self._get_derived_series('int64', f'count(distinct {self.expression})')
@@ -1299,8 +1387,7 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
         return self._get_derived_series('int64', expression)
 
     def sum(self, partition: 'BuhTuhGroupBy' = None):
-        # TODO: This cast here is rather nasty
-        return self._window_or_agg_func(partition, f'sum({self.expression})::bigint', 'int64')
+        return self._window_or_agg_func(partition, f'sum({self.expression})', self.dtype)
 
     def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesFloat64':
         return self._window_or_agg_func(partition, f'avg({self.expression})', 'double precision')
@@ -1729,10 +1816,10 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         return self._get_derived_series('timedelta', expression)
 
     def sum(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
-        return self._window_or_agg_func(partition, f'sum({self.expression})', 'timedelta')
+        return self._window_or_agg_func(partition, f'sum({self.expression})', self.dtype)
 
     def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
-        return self._window_or_agg_func(partition, f'avg({self.expression})', 'timedelta')
+        return self._window_or_agg_func(partition, f'avg({self.expression})', self.dtype)
 
 
 def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],

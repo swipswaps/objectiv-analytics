@@ -274,4 +274,41 @@ def test_windowing_boolean_functions():
     pass
 
 
+import numpy as np
+import pandas as pd
+
+from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data
+
+
+def test_rolling_defaults():
+    bt = get_bt_with_test_data(full_data_set=True)[['skating_order']]
+
+    # Create a pandas version of this stuff
+    pdf: pd.DataFrame = bt.head(11)
+
+    def test_rolling(**kwargs):
+        for window in range(1,11):
+            for min_periods in (0,window):
+                pd_values = pdf.rolling(window=window, min_periods=min_periods, **kwargs).sum().iloc[:,0].values
+                bt_values = bt.rolling(window=window, min_periods=min_periods, **kwargs).sum().head(11).iloc[:,0].values
+                np.testing.assert_equal(pd_values,bt_values)
+
+    for center in [False, True]:
+        test_rolling(center=center)
+
+
+def test_expanding_defaults():
+    bt = get_bt_with_test_data(full_data_set=True)[['skating_order']]
+
+    # Create a pandas version of this stuff
+    pdf: pd.DataFrame = bt.head(11)
+
+    def test_expanding(**kwargs):
+        for min_periods in (0, 11):
+            pd_values = pdf.expanding(min_periods=min_periods, **kwargs).sum().iloc[:, 0].values
+            bt_values = bt.expanding(min_periods=min_periods, **kwargs).sum().head(11).iloc[:, 0].values
+            np.testing.assert_equal(pd_values, bt_values)
+
+    test_expanding()
+
 
