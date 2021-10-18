@@ -1875,6 +1875,7 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         )
         return cast('BuhTuhSeriesTimedelta', result)
 
+
 def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],
                     value: Union[BuhTuhSeries, int, float, str, UUID],
                     name: str = None) -> BuhTuhSeries:
