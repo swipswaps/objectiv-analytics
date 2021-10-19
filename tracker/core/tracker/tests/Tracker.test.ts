@@ -4,7 +4,7 @@ import {
   Tracker,
   TrackerConfig,
   TrackerEvent,
-  TrackerPlugin,
+  TrackerPluginInterface,
   TrackerPlugins,
 } from '../src';
 import { LogTransport } from './mocks/LogTransport';
@@ -197,8 +197,8 @@ describe('Tracker', () => {
     });
 
     it('should execute all plugins implementing the initialize callback', () => {
-      const pluginC: TrackerPlugin = { pluginName: 'pC', isUsable: () => true, initialize: jest.fn() };
-      const pluginD: TrackerPlugin = { pluginName: 'pD', isUsable: () => true, initialize: jest.fn() };
+      const pluginC: TrackerPluginInterface = { pluginName: 'pC', isUsable: () => true, initialize: jest.fn() };
+      const pluginD: TrackerPluginInterface = { pluginName: 'pD', isUsable: () => true, initialize: jest.fn() };
       const trackerPlugins = new TrackerPlugins({ plugins: [pluginC, pluginD] });
       const testTracker = new Tracker({ ...trackerConfig, plugins: trackerPlugins, console: mockConsole });
       expect(pluginC.initialize).toHaveBeenCalledWith(testTracker);
@@ -206,12 +206,12 @@ describe('Tracker', () => {
     });
 
     it('should execute all plugins implementing the beforeTransport callback', () => {
-      const pluginE: TrackerPlugin = {
+      const pluginE: TrackerPluginInterface = {
         pluginName: 'pE',
         isUsable: () => true,
         beforeTransport: jest.fn(),
       };
-      const pluginF: TrackerPlugin = {
+      const pluginF: TrackerPluginInterface = {
         pluginName: 'pF',
         isUsable: () => true,
         beforeTransport: jest.fn(),

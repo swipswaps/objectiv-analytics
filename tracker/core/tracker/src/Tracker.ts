@@ -2,7 +2,7 @@ import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objec
 import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
-import { TrackerPlugins } from './TrackerPlugin';
+import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerTransport } from './TrackerTransport';
 
 /**
