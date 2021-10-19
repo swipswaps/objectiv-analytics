@@ -3,7 +3,7 @@ import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
-import { TrackerTransport } from './TrackerTransport';
+import { TrackerTransportInterface } from "./TrackerTransportInterface";
 
 /**
  * TrackerConsole is a simplified implementation of Console.
@@ -30,7 +30,7 @@ export type TrackerConfig = ContextsConfig & {
   /**
    * Optional. TrackerTransport instance. Responsible for sending or storing Events.
    */
-  transport?: TrackerTransport;
+  transport?: TrackerTransportInterface;
 
   /**
    * Optional. Plugins that will be executed when the Tracker initializes and before the Event is sent.
@@ -62,7 +62,7 @@ export class Tracker implements Contexts, TrackerConfig {
   readonly console?: TrackerConsole;
   readonly applicationId: string;
   readonly trackerId: string;
-  readonly transport?: TrackerTransport;
+  readonly transport?: TrackerTransportInterface;
   readonly plugins: TrackerPlugins;
 
   active: boolean;
