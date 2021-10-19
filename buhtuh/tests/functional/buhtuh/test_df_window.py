@@ -276,33 +276,75 @@ def test_windowing_boolean_functions():
     pass
 
 
-def test_rolling_defaults():
-    bt = get_bt_with_test_data(full_data_set=True)[['skating_order']]
+def test_rolling_defaults_vs_pandas():
+    bt = get_bt_with_test_data(full_data_set=True)[['skating_order', 'founding', 'inhabitants']]
 
     # Create a pandas version of this stuff
-    pdf: pd.DataFrame = bt.head(11)
+    for series in bt.data_columns:
+        for center in [False, True]:
+            for window in range(1, 11):
+                for min_periods in range(0, window):
+                    pdf: pd.DataFrame = bt[[series]].to_df()
+                    pd_values = pdf.rolling(window=window, min_periods=min_periods, center=center)\
+                        .sum()
+                    bt_values = bt.rolling(window=window, min_periods=min_periods, center=center)\
+                        .sum()[[series + '_sum']].to_df()
+                    np.testing.assert_equal(pd_values.values, bt_values.values)
 
-    def test_rolling(**kwargs):
-        for window in range(1,11):
-            for min_periods in (0,window):
-                pd_values = pdf.rolling(window=window, min_periods=min_periods, **kwargs).sum().iloc[:,0].values
-                bt_values = bt.rolling(window=window, min_periods=min_periods, **kwargs).sum().head(11).iloc[:,0].values
-                np.testing.assert_equal(pd_values,bt_values)
 
-    for center in [False, True]:
-        test_rolling(center=center)
+def test_rolling_variations():
+    bt = get_bt_with_test_data(full_data_set=True)[['skating_order', 'founding', 'inhabitants']]
+
+    def _test_full_df_vs_selection(series, **kwargs):
+        r1 = bt.rolling(**kwargs).sum()[[series + '_sum']]
+        # the last [] is required because running this on a df will include the index as a series
+        r2 = bt[[series]].rolling(**kwargs).sum()[[series + '_sum']]
+        np.testing.assert_equal(r1.to_df().values, r2.to_df().values)
+
+    def _test_series_vs_full_df(series, **kwargs):
+        # get the series
+        r1 = bt[series].sum(bt.rolling(**kwargs)).to_frame()
+        # get the frame selection
+        # the last [] is required because running this on a df will include the index as a series
+        r2 = bt[[series]].rolling(**kwargs).sum()[[series + '_sum']]
+        np.testing.assert_equal(r1.to_df().values, r2.to_df().values)
+
+    for s in bt.data_columns:
+        for window in [1, 5, 11]:
+            _test_full_df_vs_selection(s, window=window)
+            _test_series_vs_full_df(s, window=window)
 
 
-def test_expanding_defaults():
-    bt = get_bt_with_test_data(full_data_set=True)[['skating_order']]
+def test_expanding_defaults_vs_pandas():
+    bt = get_bt_with_test_data(full_data_set=True)[['skating_order', 'founding', 'inhabitants']]
 
     # Create a pandas version of this stuff
-    pdf: pd.DataFrame = bt.head(11)
+    for series in bt.data_columns:
+        for min_periods in range(0, 11):
+            pdf: pd.DataFrame = bt[[series]].to_df()
+            pd_values = pdf.expanding(min_periods=min_periods).sum()
+            bt_values = bt.expanding(min_periods=min_periods).sum()[[series + '_sum']].to_df()
+            np.testing.assert_equal(pd_values.values, bt_values.values)
 
-    for min_periods in (0, 11):
-        pd_values = pdf.expanding(min_periods=min_periods).sum().iloc[:, 0].values
-        bt_values = bt.expanding(min_periods=min_periods).sum().head(11).iloc[:, 0].values
-        np.testing.assert_equal(pd_values, bt_values)
 
+def test_expanding_variations():
+    bt = get_bt_with_test_data(full_data_set=True)[['skating_order', 'founding', 'inhabitants']]
 
+    def _test_full_df_vs_selection(series, **kwargs):
+        r1 = bt.expanding(**kwargs).sum()[[series + '_sum']]
+        # the last [] is required because running this on a df will include the index as a series
+        r2 = bt[[series]].expanding(**kwargs).sum()[[series + '_sum']]
+        np.testing.assert_equal(r1.to_df().values, r2.to_df().values)
 
+    def _test_series_vs_full_df(series, **kwargs):
+        # get the series
+        r1 = bt[series].sum(bt.expanding(**kwargs)).to_frame()
+        # get the frame selection
+        # the last [] is required because running this on a df will include the index as a series
+        r2 = bt[[series]].expanding(**kwargs).sum()[[series + '_sum']]
+        np.testing.assert_equal(r1.to_df().values, r2.to_df().values)
+
+    for series in bt.data_columns:
+        for min_periods in [1,5,11]:
+            _test_full_df_vs_selection(series, min_periods=min_periods)
+            _test_series_vs_full_df(series, min_periods=min_periods)

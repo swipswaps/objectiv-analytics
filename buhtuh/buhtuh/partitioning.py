@@ -158,8 +158,7 @@ class BuhTuhGroupBy:
             return lambda: self.aggregate({series_name: attr_name
                                            for series_name in self.aggregated_data})
 
-    def __getitem__(self, key: Union[str, List[str]]) -> 'BuhTuhGroupBy':
-
+    def _get_getitem_selection(self, key: Union[str, List[str]]) -> BuhTuhDataFrame:
         assert isinstance(key, (str, list, tuple)), \
             f'a buhtuh `selection` should be a str or list but got {type(key)} instead.'
 
@@ -172,7 +171,7 @@ class BuhTuhGroupBy:
         assert key_set.issubset(set(self.aggregated_data.keys()))
 
         selected_data = {key: data for key, data in self.aggregated_data.items() if key in key_set}
-        buh_tuh = BuhTuhDataFrame(
+        return BuhTuhDataFrame(
             engine=self.buh_tuh.engine,
             base_node=self.buh_tuh.base_node,
             index=self.groupby,
@@ -180,7 +179,10 @@ class BuhTuhGroupBy:
             # We don't guarantee sorting after groupby(), so we can just set order_by to None
             order_by=[]
         )
-        return type(self)(buh_tuh=buh_tuh, group_by_columns=list(self.groupby.values()))
+
+    def __getitem__(self, key: Union[str, List[str]]) -> 'BuhTuhGroupBy':
+        return type(self)(buh_tuh=self._get_getitem_selection(key),
+                          group_by_columns=list(self.groupby.values()))
 
     def window(self, mode: BuhTuhWindowFrameMode = BuhTuhWindowFrameMode.RANGE,
                start_boundary: BuhTuhWindowFrameBoundary = BuhTuhWindowFrameBoundary.PRECEDING,
@@ -422,6 +424,16 @@ class BuhTuhWindow(BuhTuhGroupBy):
         else:
             self.frame_clause = f'{mode.name} BETWEEN {start_boundary.frame_clause(start_value)}' \
                             f' AND {end_boundary.frame_clause(end_value)}'
+
+    def __getitem__(self, key: Union[str, List[str]]) -> 'BuhTuhWindow':
+        return type(self)(buh_tuh=self._get_getitem_selection(key),
+                          group_by_columns=list(self.groupby.values()),
+                          mode=self._mode,
+                          start_boundary=self._start_boundary,
+                          start_value=self._start_value,
+                          end_boundary=self._end_boundary,
+                          end_value=self._end_value,
+                          min_values=self._min_values)
 
     def sort_values(self, **kwargs) -> 'BuhTuhWindow':
         """
