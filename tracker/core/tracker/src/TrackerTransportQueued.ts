@@ -1,7 +1,7 @@
 import { isNonEmptyArray, NonEmptyArray } from './helpers';
 import { TrackerConsole } from './Tracker';
 import { TrackerQueue } from './TrackerQueue';
-import { TrackerTransportConfig, TrackerTransportInterface, TransportableEvent } from "./TrackerTransportInterface";
+import { TrackerTransportConfig, TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
 
 /**
  * The configuration object of a TrackerTransportQueued. Requires a Queue and Transport instances.
@@ -44,7 +44,10 @@ export class TrackerTransportQueued implements TrackerTransportInterface {
       this.queue.startRunner();
 
       if (this.console) {
-        this.console.log(`%c｢objectiv:${this.transportName}｣ ${this.queue.queueName} runner started`, 'font-weight:bold');
+        this.console.log(
+          `%c｢objectiv:${this.transportName}｣ ${this.queue.queueName} runner started`,
+          'font-weight:bold'
+        );
       }
     }
   }

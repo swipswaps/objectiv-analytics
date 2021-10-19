@@ -1,7 +1,8 @@
 import {
   makeAbortedEvent,
   makeApplicationLoadedEvent,
-  makeClickEvent, makeCompletedEvent,
+  makeClickEvent,
+  makeCompletedEvent,
   makeDeviceContext,
   makeDocumentLoadedEvent,
   makeInputChangeEvent,

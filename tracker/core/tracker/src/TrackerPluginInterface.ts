@@ -1,5 +1,5 @@
 import { TrackerConsole } from './Tracker';
-import { TrackerPluginLifecycleInterface } from "./TrackerPluginLifecycleInterface";
+import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
 
 /**
  * The TrackerPluginConfig.

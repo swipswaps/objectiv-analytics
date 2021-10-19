@@ -1,4 +1,4 @@
-import { QueuedTransport, TrackerEvent, TrackerQueue, TransportSendError } from '@objectiv/tracker-core';
+import { TrackerEvent, TrackerQueue, TrackerTransportQueued, TransportSendError } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
 import { mockConsole } from './mocks/MockConsole';
@@ -91,7 +91,7 @@ describe('FetchAPITransport', () => {
     });
 
     // Combine the two in a Queued Transport
-    const testQueuedTransport = new QueuedTransport({
+    const testQueuedTransport = new TrackerTransportQueued({
       queue: testQueue,
       transport: testTransport,
     });

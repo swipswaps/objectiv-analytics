@@ -1,9 +1,9 @@
 import { isNonEmptyArray, NonEmptyArray } from './helpers';
 import { TrackerConsole } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
-import { TrackerQueueInterface, TrackerQueueProcessFunction } from "./TrackerQueueInterface";
-import { TrackerQueueMemoryStore } from "./TrackerQueueMemoryStore";
-import { TrackerQueueStoreInterface } from "./TrackerQueueStoreInterface";
+import { TrackerQueueInterface, TrackerQueueProcessFunction } from './TrackerQueueInterface';
+import { TrackerQueueMemoryStore } from './TrackerQueueMemoryStore';
+import { TrackerQueueStoreInterface } from './TrackerQueueStoreInterface';
 
 /**
  * The configuration of a TrackerQueue

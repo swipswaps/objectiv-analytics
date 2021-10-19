@@ -2,7 +2,7 @@ import { ApplicationContext } from '@objectiv/schema';
 import { makeApplicationContext } from './ContextFactories';
 import { TrackerConfig, TrackerConsole } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
-import { TrackerPluginConfig, TrackerPluginInterface } from "./TrackerPluginInterface";
+import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
 
 /**
  * The ApplicationContextPlugin Config object.

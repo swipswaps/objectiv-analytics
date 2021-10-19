@@ -4,9 +4,9 @@ import {
   TrackerTransportConfig,
   TrackerTransportInterface,
   TransportableEvent,
-  TransportSendError
-} from "./TrackerTransportInterface";
-import { TrackerTransportRetry, TrackerTransportRetryConfig } from "./TrackerTransportRetry";
+  TransportSendError,
+} from './TrackerTransportInterface';
+import { TrackerTransportRetry, TrackerTransportRetryConfig } from './TrackerTransportRetry';
 
 /**
  * The Interface of RetryTransportAttempts

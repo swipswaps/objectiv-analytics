@@ -1,6 +1,6 @@
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './Tracker';
-import { TrackerTransportConfig, TrackerTransportInterface, TransportableEvent } from "./TrackerTransportInterface";
+import { TrackerTransportConfig, TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
 
 /**
  * The configuration of TrackerTransportGroup.

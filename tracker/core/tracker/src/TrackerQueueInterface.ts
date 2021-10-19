@@ -1,7 +1,7 @@
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
-import { TrackerQueueStoreInterface } from "./TrackerQueueStoreInterface";
+import { TrackerQueueStoreInterface } from './TrackerQueueStoreInterface';
 
 /**
  * The definition of the runner function. Gets executed every batchDelayMs to process the Queue.

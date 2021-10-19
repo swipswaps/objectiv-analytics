@@ -3,7 +3,7 @@ import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
-import { TrackerTransportInterface } from "./TrackerTransportInterface";
+import { TrackerTransportInterface } from './TrackerTransportInterface';
 
 /**
  * TrackerConsole is a simplified implementation of Console.

@@ -3,14 +3,14 @@ import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context'
 import {
   ContextsConfig,
   getDefaultTrackerPluginsList,
-  QueuedTransport,
-  RetryTransport,
   Tracker,
   TrackerConfig,
   TrackerPlugins,
   TrackerQueue,
-  TrackerTransport,
-  TransportSwitch,
+  TrackerTransportInterface,
+  TrackerTransportQueued,
+  TrackerTransportRetry,
+  TrackerTransportSwitch,
 } from '@objectiv/tracker-core';
 import { FetchAPITransport } from '../transport/FetchAPITransport';
 import { TrackerQueueLocalStorageStore } from '../transport/TrackerQueueLocalStorageStore';
@@ -35,8 +35,8 @@ export type BrowserTrackerConfig = TrackerConfig & {
 /**
  * A factory to create the default Transport of Browser Tracker.
  */
-export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransport =>
-  new QueuedTransport({
+export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransportInterface =>
+  new TrackerTransportQueued({
     console: trackerConfig.console,
     queue: new TrackerQueue({
       store: new TrackerQueueLocalStorageStore({
@@ -45,9 +45,9 @@ export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTracker
       }),
       console: trackerConfig.console,
     }),
-    transport: new RetryTransport({
+    transport: new TrackerTransportRetry({
       console: trackerConfig.console,
-      transport: new TransportSwitch({
+      transport: new TrackerTransportSwitch({
         console: trackerConfig.console,
         transports: [
           new FetchAPITransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),

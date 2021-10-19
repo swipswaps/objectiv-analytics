@@ -1,4 +1,4 @@
-import { QueuedTransport, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { TrackerEvent, TrackerPlugins, TrackerTransportQueued } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 import { BrowserTracker, defaultFetchFunction, FetchAPITransport } from '../src/';
@@ -29,9 +29,9 @@ describe('BrowserTracker', () => {
   it('should instantiate with `applicationId` and `endpoint`', () => {
     const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
     expect(testTracker).toBeInstanceOf(BrowserTracker);
-    expect(testTracker.transport).toBeInstanceOf(QueuedTransport);
+    expect(testTracker.transport).toBeInstanceOf(TrackerTransportQueued);
     expect(testTracker.transport).toEqual({
-      transportName: 'QueuedTransport',
+      transportName: 'TrackerTransportQueued',
       queue: {
         queueName: 'TrackerQueue',
         batchDelayMs: 1000,
@@ -45,7 +45,7 @@ describe('BrowserTracker', () => {
         },
       },
       transport: {
-        transportName: 'RetryTransport',
+        transportName: 'TrackerTransportRetry',
         maxAttempts: 10,
         maxRetryMs: Infinity,
         maxTimeoutMs: Infinity,
@@ -53,7 +53,7 @@ describe('BrowserTracker', () => {
         retryFactor: 2,
         attempts: [],
         transport: {
-          transportName: 'TransportSwitch',
+          transportName: 'TrackerTransportSwitch',
           firstUsableTransport: {
             transportName: 'FetchAPITransport',
             endpoint: 'localhost',

@@ -1,7 +1,7 @@
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
-import { TrackerQueueStoreConfig, TrackerQueueStoreInterface } from "./TrackerQueueStoreInterface";
+import { TrackerQueueStoreConfig, TrackerQueueStoreInterface } from './TrackerQueueStoreInterface';
 
 /**
  * An in-memory implementation of a TrackerQueueStore.

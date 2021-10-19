@@ -1,5 +1,5 @@
 import { Tracker } from './Tracker';
-import { TrackerRepositoryInterface } from "./TrackerRepositoryInterface";
+import { TrackerRepositoryInterface } from './TrackerRepositoryInterface';
 
 /**
  * TrackerRepository allows developers to create and use multiple Tracker instances in the same Application.

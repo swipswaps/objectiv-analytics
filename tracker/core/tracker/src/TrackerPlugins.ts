@@ -1,7 +1,7 @@
 import { Tracker, TrackerConsole } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
-import { TrackerPluginConfig, TrackerPluginInterface } from "./TrackerPluginInterface";
-import { TrackerPluginLifecycleInterface } from "./TrackerPluginLifecycleInterface";
+import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
+import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
 
 /**
  * TrackerPlugins can be specified by instance, name or even on the fly as Objects.

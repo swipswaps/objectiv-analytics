@@ -1,7 +1,7 @@
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './Tracker';
-import { TrackerTransportConfig, TrackerTransportInterface, TransportableEvent } from "./TrackerTransportInterface";
-import { TrackerTransportRetryAttempt } from "./TrackerTransportRetryAttempt";
+import { TrackerTransportConfig, TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
+import { TrackerTransportRetryAttempt } from './TrackerTransportRetryAttempt';
 
 /**
  * The configuration object of a RetryTransport. Requires a TrackerTransport instance.
