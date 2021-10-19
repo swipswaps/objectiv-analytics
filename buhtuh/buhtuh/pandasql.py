@@ -1539,13 +1539,14 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
         return self._get_derived_series('uuid', expression)
 
 
-class BuhTuhSeriesJson(BuhTuhSeries):
+class BuhTuhSeriesJsonb(BuhTuhSeries):
     """
-    TODO: make this a proper class, not just a string subclass
+    this a proper class, not just a string subclass
     """
-    dtype = 'json'
-    dtype_aliases = (object, )  # type: ignore
-    supported_db_dtype = 'json'
+    dtype = 'jsonb'
+    # todo can only assign a type to one series type, and object is quite generic
+    dtype_aliases = tuple()  # type: ignore
+    supported_db_dtype = 'jsonb'
     supported_value_types = (dict, list)
 
     def __init__(self,
@@ -1564,32 +1565,60 @@ class BuhTuhSeriesJson(BuhTuhSeries):
         self.json = Json(self)
 
     @classmethod
-    def value_to_sql(cls, value: dict) -> str:
+    def value_to_sql(cls, value: Union[dict, list]) -> str:
         if not isinstance(value, cls.supported_value_types):
             raise TypeError(f'value should be dict, actual type: {type(value)}')
         json_value = json.dumps(value)
         escaped_json_value = json_value.replace("'", "''")
-        return f"cast('{escaped_json_value}' to json)"
+        print(escaped_json_value)
+        return f"cast('{escaped_json_value}' as jsonb)"
 
     @classmethod
     def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
-        if source_dtype == 'json':
+        if source_dtype in ['jsonb', 'json']:
             return expression
         if source_dtype != 'string':
-            raise ValueError(f'cannot convert {source_dtype} to json')
-        return Expression.construct('cast({} as json)', expression)
+            raise ValueError(f'cannot convert {source_dtype} to jsonb')
+        return Expression.construct('cast({} as jsonb)', expression)
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['json'], other)
+        self._check_supported(f"comparator '{comparator}'", ['json', 'jsonb'], other)
         expression = Expression.construct(
-            f'({{}})::jsonb {comparator} ({{}})::jsonb',
+            f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
             self.expression, other.expression
         )
         return self._get_derived_series('bool', expression)
 
     def __le__(self, other) -> 'BuhTuhSeriesBoolean':
         return self._comparator_operator(other, "<@")
+
+
+class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
+    """
+    this a proper class, not just a string subclass
+    """
+    dtype = 'json'
+    dtype_aliases = tuple()  # type: ignore
+    supported_db_dtype = 'json'
+
+    def __init__(self,
+                 engine,
+                 base_node: SqlModel,
+                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 name: str,
+                 expression: Expression = None,
+                 sorted_ascending: Optional[bool] = None):
+
+        if expression is None:
+            expression = Expression.construct_table_field(name)
+
+        super().__init__(engine,
+                         base_node,
+                         index,
+                         name,
+                         Expression.construct(f'cast({{}} as jsonb)', expression),
+                         sorted_ascending)
 
 
 class BuhTuhSeriesTimestamp(BuhTuhSeries):
