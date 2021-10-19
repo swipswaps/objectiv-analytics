@@ -46,6 +46,58 @@ def test_drop_items():
     bt.drop(columns=['non existing column'], errors='ignore')
 
 
+def test_rename():
+    bt = get_bt_with_test_data()
+
+    nbt = bt.rename(columns={'founding': 'fnd'}, copy=True)
+    assert 'founding' in nbt.data.keys()
+    assert 'fnd' in nbt.data.keys()
+    assert 'founding' in bt.data.keys()
+    assert 'fnd' not in bt.data.keys()
+
+    nbt = bt.rename(columns={'founding': 'fnd'}, copy=False)
+    assert 'founding' not in nbt.data.keys()
+    assert 'fnd' in nbt.data.keys()
+    assert 'founding' in bt.data.keys()
+    assert 'fnd' not in bt.data.keys()
+
+    nbt = bt.rename(columns={'founding': 'fnd'}, inplace=True, copy=False)
+    assert 'founding' not in nbt.data.keys()
+    assert 'fnd' in nbt.data.keys()
+    assert 'founding' not in bt.data.keys()
+    assert 'fnd' in bt.data.keys()
+
+    # multiple
+    bt = get_bt_with_test_data()
+    nbt = bt.rename(columns={'founding': 'fnd', 'city': 'cty'}, copy=False)
+    assert 'founding' not in nbt.data.keys()
+    assert 'fnd' in nbt.data.keys()
+    assert 'founding' in bt.data.keys()
+    assert 'fnd' not in bt.data.keys()
+    assert 'city' not in nbt.data.keys()
+    assert 'cty' in nbt.data.keys()
+    assert 'city' in bt.data.keys()
+    assert 'cty' not in bt.data.keys()
+
+    # through mapper dict
+    bt = get_bt_with_test_data()
+    nbt = bt.rename(mapper={'city':'cty'}, axis = 1, copy=False)
+    assert 'city' not in nbt.data.keys()
+    assert 'cty' in nbt.data.keys()
+    assert 'city' in bt.data.keys()
+    assert 'cty' not in bt.data.keys()
+
+    # through mapper lambda
+    bt = get_bt_with_test_data()
+    nbt = bt.rename(mapper=lambda x: x[::-1], axis = 1, copy=False)
+    assert 'city' not in nbt.data.keys()
+    assert 'ytic' in nbt.data.keys()
+    assert 'city' in bt.data.keys()
+    assert 'ytic' not in bt.data.keys()
+
+    bt.rename(columns={'non existing column': 'new name'}, errors='ignore')
+
+
 def test_combined_operations1():
     bt = get_bt_with_test_data(full_data_set=True)
     bt['x'] = bt['municipality'] + ' some string'

@@ -2,7 +2,8 @@ import datetime
 import json
 from abc import abstractmethod, ABC
 from copy import copy
-from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Type, NamedTuple, TYPE_CHECKING
+from typing import List, Set, Union, Dict, Any, Optional, \
+    Tuple, cast, Type, NamedTuple, TYPE_CHECKING, Callable
 from uuid import UUID
 
 import numpy
@@ -10,10 +11,10 @@ import pandas
 from sqlalchemy.engine import Engine
 
 from buhtuh.expression import Expression
+from buhtuh.json import Json
 from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
-from buhtuh.json import Json
 
 if TYPE_CHECKING:
     from buhtuh.partitioning import BuhTuhWindow, BuhTuhGroupBy
@@ -460,6 +461,62 @@ class BuhTuhDataFrame:
                 self.__setitem__(sub_key, series_list[i])
         else:
             raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
+
+    def rename(self, mapper: Union[Dict[str, str], Callable[[str], str]] = None,
+               index: Union[Dict[str, str], Callable[[str], str]] = None,
+               columns: Union[Dict[str, str], Callable[[str], str]] = None,
+               axis: int = 0,
+               copy: bool = True,
+               inplace: bool = False,
+               level: int = None,
+               errors: str = 'ignore'):
+        """
+        :param: mapper: please use columns
+        :param: index: not supported
+        :param: columns: dict str:str to rename columns, or a function that takes column
+            names as an argument and returns the new one.
+        :param: axis: axis = 1 is supported, rest is not.
+        :param: copy:  copy the column, or really rename
+        :param: inplace: update this df or make a copy first
+        :param: level: not supported
+        :param: errors: whether to raise or ignore errors. Errors throw in the mapper function
+            are not suppressed.
+        """
+        if level is not None or\
+            index is not None or\
+                (mapper is not None and axis == 0):
+            raise NotImplementedError("index renames not supported")
+
+        if mapper is not None:
+            columns = mapper
+
+        if inplace:
+            df = self
+        else:
+            df = self.copy_override()
+
+        if isinstance(columns, dict):
+            for f, t in columns.items():
+                try:
+                    df[t] = cast('BuhTuhSeries', df[f])
+                    if not copy:
+                        del(df[f])
+                except Exception as e:
+                    if errors == "raise":
+                        raise e
+        elif callable(columns):
+            for f in df.data_columns:
+                t = columns(f)
+                try:
+                    df[t] = cast('BuhTuhSeries', df[f])
+                    if not copy:
+                        del(df[f])
+                except Exception as e:
+                    if errors == "raise":
+                        raise e
+        else:
+            raise TypeError(f'unsupported argument type for columns or mappers: {type(columns)}')
+        return df
 
     def __delitem__(self, key: str):
         """ TODO: comments """
