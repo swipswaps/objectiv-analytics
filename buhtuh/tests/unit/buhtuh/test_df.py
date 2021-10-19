@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from buhtuh import SortColumn
+from buhtuh import SortColumn, Expression
 from tests.unit.buhtuh.util import get_fake_df
 
 
@@ -35,9 +35,9 @@ def test__eq__():
     assert left != right
     left._base_node = 'test'
     assert left == right
-    right._order_by = [SortColumn(expression='test', asc=True)]
+    right._order_by = [SortColumn(expression=Expression.column_reference('a'), asc=True)]
     assert left != right
-    left._order_by = [SortColumn(expression='test', asc=False)]
+    left._order_by = [SortColumn(expression=Expression.column_reference('a'), asc=False)]
     assert left != right
-    left._order_by = [SortColumn(expression='test', asc=True)]
+    left._order_by = [SortColumn(expression=Expression.column_reference('a'), asc=True)]
     assert left == right

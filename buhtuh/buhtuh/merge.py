@@ -112,7 +112,7 @@ def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> Li
 
 class ResultColumn(NamedTuple):
     name: str
-    expression: str
+    expression_sql: str
     dtype: str
 
 
@@ -195,7 +195,13 @@ def _get_column_name_expr_dtype(
         new_name = index_name
         if index_name in conflicting_names:
             new_name = index_name + suffix
-        new_index_list.append(ResultColumn(new_name, series.get_expression(table_alias), series.dtype))
+        new_index_list.append(
+                ResultColumn(
+                    name=new_name,
+                    expression_sql=series.expression.to_sql(table_alias),
+                    dtype=series.dtype
+                )
+        )
     return new_index_list
 
 
@@ -288,7 +294,7 @@ def _get_merge_sql_model(
         r_expr = _get_expression(df_series=right, label=r_label)
         merge_conditions.append(f'({l_expr.to_sql("l")} = {r_expr.to_sql("r")})')
 
-    columns_str = ', '.join(f'{expr} as "{name}"' for name, expr, _dtype in new_column_list)
+    columns_str = ', '.join(f'{rc.expression_sql} as "{rc.name}"' for rc in new_column_list)
     join_type = 'full outer' if how == How.outer else how.value
     on_str = 'on ' + ' and '.join(merge_conditions) if merge_conditions else ''
 

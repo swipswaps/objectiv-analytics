@@ -113,7 +113,8 @@ def expression_to_sql(expression: Expression, table_name: Optional[str] = None) 
         elif isinstance(data_item, StringValueToken):
             result.append(quote_string(data_item.value))
         else:
-            raise Exception("This should never happen; programming error.")
+            raise Exception("This should never happen. "
+                            "expression_to_sql() doesn't cover all Expression subtypes.")
     return ''.join(result)
 
 

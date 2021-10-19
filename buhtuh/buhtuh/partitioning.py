@@ -77,7 +77,7 @@ class BuhTuhGroupBy:
                                 if name not in self.groupby.keys()}
 
     def _get_partition_expression(self):
-        return ', '.join(g.get_expression() for g in self.groupby.values())
+        return ', '.join(g.expression.to_sql() for g in self.groupby.values())
 
     def aggregate(
             self,
@@ -453,7 +453,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
         partition = self._get_partition_expression()
 
         # TODO implement NULLS FIRST / NULLS LAST, probably not here but in the sorting logic.
-        order_by = self.buh_tuh.get_order_by_expression()
+        order_by = self.buh_tuh.get_order_by_sql()
 
         if self.frame_clause is None:
             frame_clause = ''

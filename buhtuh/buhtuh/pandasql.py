@@ -24,8 +24,7 @@ ColumnNames = Union[str, List[str]]
 
 
 class SortColumn(NamedTuple):
-    # todo: use Expression?
-    expression: str
+    expression: Expression
     asc: bool
 
 
@@ -396,7 +395,7 @@ class BuhTuhDataFrame:
                 columns_sql_str=self._get_all_column_expressions(),
                 index_str=', '.join(self.index.keys()),
                 _last_node=self.base_node,
-                where=key.get_expression(),
+                where=key.expression.to_sql(),
             )
             return self._df_or_series(
                 BuhTuhDataFrame.get_instance(
@@ -581,7 +580,7 @@ class BuhTuhDataFrame:
             raise KeyError(f'Some series could not be found in current frame: {missing}')
 
         by_series_list = [self.all_series[by_name] for by_name in by]
-        order_by = [SortColumn(expression=by_series.get_expression(), asc=asc_item)
+        order_by = [SortColumn(expression=by_series.expression, asc=asc_item)
                     for by_series, asc_item in zip(by_series_list, ascending)]
         return self.copy_override(order_by=order_by)
 
@@ -612,13 +611,16 @@ class BuhTuhDataFrame:
         conn.close()
         return df
 
-    def get_order_by_expression(self):
+    def get_order_by_sql(self) -> str:
         """
-        Get a properly formatted order by expression based on this df's order_by.
+        Get a properly formatted order by clause based on this df's order_by.
         Will return an empty string in case ordering in not requested.
         """
         if self._order_by:
-            order_str = ", ".join(f"{sc.expression} {'asc' if sc.asc else 'desc'}" for sc in self._order_by)
+            order_str = ", ".join(
+                f"{sc.expression.to_sql()} {'asc' if sc.asc else 'desc'}"
+                for sc in self._order_by
+            )
             order_str = f'order by {order_str}'
         else:
             order_str = ''
@@ -664,7 +666,7 @@ class BuhTuhDataFrame:
             index_str=', '.join(f'"{index_column}"' for index_column in self.index.keys()),
             _last_node=self.base_node,
             limit='' if limit_str is None else f'{limit_str}',
-            order=self.get_order_by_expression()
+            order=self.get_order_by_sql()
         )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
@@ -866,7 +868,7 @@ class BuhTuhSeries(ABC):
         if self.index is None:
             raise Exception('to_frame() is not supported for Series that do not have an index')
         if self._sorted_ascending is not None:
-            order_by = [SortColumn(expression=self.get_expression(), asc=self._sorted_ascending)]
+            order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
             order_by = []
         return BuhTuhDataFrame(
@@ -921,11 +923,11 @@ class BuhTuhSeries(ABC):
 
     def get_column_expression(self, table_alias='') -> str:
         # TODO BLOCKER! escape the stuff
-        expression = self.get_expression(table_alias)
-        if expression != self.name:
-            return f'{expression} as "{self.name}"'
+        expression_sql = self.expression.to_sql(table_alias)
+        if expression_sql != self.name:
+            return f'{expression_sql} as "{self.name}"'
         else:
-            return expression
+            return expression_sql
 
     def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'BuhTuhSeries'):
 
