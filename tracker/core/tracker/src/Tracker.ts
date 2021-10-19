@@ -149,7 +149,7 @@ export class Tracker implements Contexts, TrackerConfig {
 
         if (this.console) {
           this.console.log(
-            `%c｢objectiv:${this.transport.transportName}｣ ${this.queue.queueName} runner started`,
+            `%c｢objectiv:Tracker:${this.trackerId}｣ ${this.queue.queueName} runner for ${this.transport.transportName} started`,
             'font-weight:bold'
           );
         }
@@ -218,6 +218,7 @@ export class Tracker implements Contexts, TrackerConfig {
       }
 
       if (this.queue) {
+        // TODO return all queue promises when pushing a new event, so we may wait on them if needed
         await this.queue.push(trackedEvent);
       } else {
         await this.transport.handle(trackedEvent);
