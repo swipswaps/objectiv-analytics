@@ -9,7 +9,7 @@ import numpy
 import pandas
 from sqlalchemy.engine import Engine
 
-from buhtuh.expression import Expression
+from buhtuh.expression import Expression, expression_to_sql
 from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
@@ -745,12 +745,10 @@ class BuhTuhSeries(ABC):
         self._base_node = base_node
         self._index = index
         self._name = name
-        # todo: change expression in an ast-like object, that can be a constant, column, operator, and/or
-        #   refer other series
         if expression:
             self._expression = expression
         else:
-            self._expression = Expression.construct_table_field(self.name)
+            self._expression = Expression.column_reference(self.name)
         self._sorted_ascending = sorted_ascending
 
     @property
@@ -919,13 +917,7 @@ class BuhTuhSeries(ABC):
         )
 
     def get_expression(self, table_alias='') -> str:
-        return self.expression.to_string(table_alias)
-        # # TODO BLOCKER! escape the stuff
-        #
-        # if table_alias != '' and table_alias[-1] != '.':
-        #     table_alias = table_alias + '.'
-        #
-        # return self.expression.format(table_alias=table_alias)
+        return expression_to_sql(self.expression, table_name=table_alias)
 
     def get_column_expression(self, table_alias='') -> str:
         # TODO BLOCKER! escape the stuff
@@ -971,7 +963,7 @@ class BuhTuhSeries(ABC):
         result = cls.get_class_instance(
             base=base,
             name=name,
-            expression=Expression.construct_raw(cls.value_to_sql(value))
+            expression=Expression.raw(cls.value_to_sql(value))
         )
         return result
 

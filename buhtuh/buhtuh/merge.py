@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 from enum import Enum
 from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
 
-from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries
+from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries, Expression
 from sql_models.model import CustomSqlModel, SqlModel
 
 
@@ -284,9 +284,9 @@ def _get_merge_sql_model(
     # todo: sql escaping where needed
     merge_conditions = []
     for l_label, r_label in zip(real_left_on, real_right_on):
-        l_expr = _get_expression(df_series=left, label=l_label, table_alias='l')
-        r_expr = _get_expression(df_series=right, label=r_label, table_alias='r')
-        merge_conditions.append(f'({l_expr} = {r_expr})')
+        l_expr = _get_expression(df_series=left, label=l_label)
+        r_expr = _get_expression(df_series=right, label=r_label)
+        merge_conditions.append(f'({l_expr.to_sql("l")} = {r_expr.to_sql("r")})')
 
     columns_str = ', '.join(f'{expr} as "{name}"' for name, expr, _dtype in new_column_list)
     join_type = 'full outer' if how == How.outer else how.value
@@ -308,12 +308,12 @@ def _get_merge_sql_model(
     return model
 
 
-def _get_expression(df_series: DataFrameOrSeries, label: str, table_alias: str) -> str:
-    """ Helper of merge: give the expression for the column with the given label in df_series as a string """
+def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
+    """ Helper of merge: give the expression for the column with the given label in df_series """
     if df_series.index and label in df_series.index:
-        return df_series.index[label].get_expression(table_alias)
+        return df_series.index[label].expression
     if isinstance(df_series, BuhTuhDataFrame):
-        return df_series.data[label].get_expression(table_alias)
+        return df_series.data[label].expression
     if isinstance(df_series, BuhTuhSeries):
-        return df_series.get_expression(table_alias)
+        return df_series.expression
     raise TypeError(f'df_series should be DataFrameOrSeries. type: {type(df_series)}')
