@@ -10,7 +10,9 @@ import {
   makeMutationCallback,
   makeTracker,
   startAutoTracking,
+  trackAborted,
   trackApplicationLoaded,
+  trackCompleted,
   TrackerQueueLocalStorageStore,
   trackEvent,
   trackURLChange,
@@ -60,6 +62,28 @@ describe('Without DOM', () => {
     expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {});
 
     trackURLChange({ onError: console.error });
+    expect(console.error).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
+  });
+
+  it('should console.error id Completed Event fails at retrieving the document element', () => {
+    trackCompleted();
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {});
+
+    trackCompleted({ onError: console.error });
+    expect(console.error).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
+  });
+
+  it('should console.error id Aborted Event fails at retrieving the document element', () => {
+    trackAborted();
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {});
+
+    trackAborted({ onError: console.error });
     expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });

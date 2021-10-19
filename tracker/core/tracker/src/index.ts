@@ -16,7 +16,6 @@ export * from './TrackerRepository';
 export * from './TrackerRepositoryInterface';
 export * from './TrackerTransportGroup';
 export * from './TrackerTransportInterface';
-export * from './TrackerTransportQueued';
 export * from './TrackerTransportRetry';
 export * from './TrackerTransportRetryAttempt';
 export * from './TrackerTransportSwitch';

@@ -7,8 +7,8 @@ import {
   TrackerConfig,
   TrackerPlugins,
   TrackerQueue,
+  TrackerQueueInterface,
   TrackerTransportInterface,
-  TrackerTransportQueued,
   TrackerTransportRetry,
   TrackerTransportSwitch,
 } from '@objectiv/tracker-core';
@@ -36,25 +36,27 @@ export type BrowserTrackerConfig = TrackerConfig & {
  * A factory to create the default Transport of Browser Tracker.
  */
 export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransportInterface =>
-  new TrackerTransportQueued({
+  new TrackerTransportRetry({
     console: trackerConfig.console,
-    queue: new TrackerQueue({
-      store: new TrackerQueueLocalStorageStore({
-        trackerId: trackerConfig.trackerId ?? trackerConfig.applicationId,
-        console: trackerConfig.console,
-      }),
+    transport: new TrackerTransportSwitch({
+      console: trackerConfig.console,
+      transports: [
+        new FetchAPITransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+        new XMLHttpRequestTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+      ],
+    }),
+  });
+
+/**
+ * A factory to create the default Queue of Browser Tracker.
+ */
+export const makeBrowserTrackerDefaultQueue = (trackerConfig: BrowserTrackerConfig): TrackerQueueInterface =>
+  new TrackerQueue({
+    store: new TrackerQueueLocalStorageStore({
+      trackerId: trackerConfig.trackerId ?? trackerConfig.applicationId,
       console: trackerConfig.console,
     }),
-    transport: new TrackerTransportRetry({
-      console: trackerConfig.console,
-      transport: new TrackerTransportSwitch({
-        console: trackerConfig.console,
-        transports: [
-          new FetchAPITransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
-          new XMLHttpRequestTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
-        ],
-      }),
-    }),
+    console: trackerConfig.console,
   });
 
 /**
@@ -71,25 +73,31 @@ export const getDefaultBrowserTrackerPluginsList = (trackerConfig: BrowserTracke
  * It initializes with a Queued Fetch and XMLHttpRequest Transport Switch wrapped in a Retry Transport automatically.
  * The resulting Queue has some sensible defaults (10 events every 100ms) for sending events in batches.
  * The Retry logic is configured for 10 retries with exponential backoff starting at 1000ms.
- * The transport is also grouped with a DebugTransport for logging the handled events to console.
  *
  * This statement:
  *
- *  const tracker = new BrowserTracker({ applicationId: 'app-id', endpoint: '/endpoint' });
+ *  const tracker = new BrowserTracker({ applicationId: 'app-id', endpoint: '/endpoint', console: console });
  *
  * is equivalent to:
  *
- *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint' });
- *  const xmlHttpRequestTransport = new XMLHttpRequestTransport({ endpoint: '/endpoint' });
- *  const transportSwitch = new TransportSwitch(fetchTransport, xmlHttpRequestTransport);
- *  const retryTransport = new RetryTransport({ transport: transportSwitch});
- *  const trackerQueue = new TrackerQueue();
- *  const transport = new QueuedTransport({ transport: retryTransport, queue: trackerQueue });
- *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id' });
- *  const plugins = new TrackerPlugins([ applicationContextPlugin, WebDocumentContextPlugin, WebDeviceContextPlugin ]);
- *  const tracker = new Tracker({ transport, plugins });
+ *  const trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
+ *  const console = trackerConfig.console;
+ *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint', console });
+ *  const xmlHttpRequestTransport = new XMLHttpRequestTransport({ endpoint: '/endpoint', console });
+ *  const transportSwitch = new TransportSwitch({ transports: [fetchTransport, xmlHttpRequestTransport], console });
+ *  const transport = new RetryTransport({ transport: transportSwitch, console });
+ *  const queueStorage = new TrackerQueueLocalStorageStore({ trackerId, console })
+ *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
+ *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
+ *  const webDocumentContextPlugin = new WebDocumentContextPlugin({ console });
+ *  const webDeviceContextPlugin = new WebDeviceContextPlugin({ console });
+ *  const plugins = new TrackerPlugins({
+ *    plugins: [ applicationContextPlugin, webDocumentContextPlugin, webDeviceContextPlugin ],
+ *    console
+ *  });
+ *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
- *  See also `makeBrowserTrackerDefaultTransport` for the actual implementation.
+ *  See also `makeBrowserTrackerDefaultTransport` and `makeBrowserTrackerDefaultQueue` for the actual implementation.
  *
  */
 export class BrowserTracker extends Tracker {
@@ -111,6 +119,7 @@ export class BrowserTracker extends Tracker {
       config = {
         ...config,
         transport: makeBrowserTrackerDefaultTransport(config),
+        queue: makeBrowserTrackerDefaultQueue(config),
       };
     }
 

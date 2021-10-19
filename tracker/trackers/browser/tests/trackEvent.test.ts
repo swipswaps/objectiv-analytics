@@ -1,6 +1,7 @@
 import {
+  makeAbortedEvent,
   makeApplicationLoadedEvent,
-  makeClickEvent,
+  makeClickEvent, makeCompletedEvent,
   makeInputChangeEvent,
   makeSectionContext,
   makeSectionHiddenEvent,
@@ -13,9 +14,9 @@ import {
   BrowserTracker,
   getTracker,
   makeTracker,
-  TaggingAttribute,
+  TaggingAttribute, trackAborted,
   trackApplicationLoaded,
-  trackClick,
+  trackClick, trackCompleted,
   trackEvent,
   trackInputChange,
   trackSectionHidden,
@@ -244,5 +245,29 @@ describe('trackEvent', () => {
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeURLChangeEvent()));
+  });
+
+  it('should track a Completed Event', () => {
+    trackCompleted();
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeCompletedEvent()));
+
+    trackCompleted({ element: testElement });
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeCompletedEvent()));
+  });
+
+  it('should track an Aborted Event', () => {
+    trackAborted();
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeAbortedEvent()));
+
+    trackAborted({ element: testElement });
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeAbortedEvent()));
   });
 });

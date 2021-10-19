@@ -3,6 +3,7 @@ import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
+import { TrackerQueueInterface } from './TrackerQueueInterface';
 import { TrackerTransportInterface } from './TrackerTransportInterface';
 
 /**
@@ -28,7 +29,12 @@ export type TrackerConfig = ContextsConfig & {
   trackerId?: string;
 
   /**
-   * Optional. TrackerTransport instance. Responsible for sending or storing Events.
+   * Optional. TrackerQueue instance. Responsible for queueing and batching Events. Queuing occurs before Transport.
+   */
+  queue?: TrackerQueueInterface;
+
+  /**
+   * Optional. TrackerTransport instance. Responsible for sending or storing Events. Transport occurs after Queueing.
    */
   transport?: TrackerTransportInterface;
 
@@ -62,6 +68,7 @@ export class Tracker implements Contexts, TrackerConfig {
   readonly console?: TrackerConsole;
   readonly applicationId: string;
   readonly trackerId: string;
+  readonly queue?: TrackerQueueInterface;
   readonly transport?: TrackerTransportInterface;
   readonly plugins: TrackerPlugins;
 
@@ -83,6 +90,7 @@ export class Tracker implements Contexts, TrackerConfig {
     this.console = trackerConfig.console;
     this.applicationId = trackerConfig.applicationId;
     this.trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
+    this.queue = trackerConfig.queue;
     this.transport = trackerConfig.transport;
     this.plugins =
       trackerConfig.plugins ??
@@ -109,6 +117,7 @@ export class Tracker implements Contexts, TrackerConfig {
       );
       this.console.log(`Active: ${this.active}`);
       this.console.log(`Application ID: ${this.applicationId}`);
+      this.console.log(`Queue: ${this.queue?.queueName ?? 'none'}`);
       this.console.log(`Transport: ${this.transport?.transportName ?? 'none'}`);
       this.console.group(`Plugins:`);
       this.console.log(this.plugins.plugins.map((plugin) => plugin.pluginName).join(', '));
@@ -122,9 +131,29 @@ export class Tracker implements Contexts, TrackerConfig {
       this.console.groupEnd();
     }
 
-    // If active execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
+    // If active, initialize plugins and queue, if any
     if (this.active) {
+      // Execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
       this.plugins.initialize(this);
+
+      // If we have a Queue and a usable Transport, start Queue runner
+      if (this.queue && this.transport && this.transport.isUsable()) {
+        // Bind the handle function to its Transport instance to preserve its scope
+        const processFunction = this.transport.handle.bind(this.transport);
+
+        // Set the queue processFunction to transport.handle method: the queue will run Transport.handle for each batch
+        this.queue.setProcessFunction(processFunction);
+
+        // And start the Queue runner
+        this.queue.startRunner();
+
+        if (this.console) {
+          this.console.log(
+            `%c｢objectiv:${this.transport.transportName}｣ ${this.queue.queueName} runner started`,
+            'font-weight:bold'
+          );
+        }
+      }
     }
   }
 
@@ -166,11 +195,14 @@ export class Tracker implements Contexts, TrackerConfig {
     // Execute all plugins `beforeTransport` callback. Plugins may enrich or add Contexts to the TrackerEvent
     this.plugins.beforeTransport(trackedEvent);
 
-    // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
+    // Hand over TrackerEvent to TrackerTransport or TrackerQueue, if enabled and usable.
     if (this.transport && this.transport.isUsable()) {
+
       if (this.console) {
         this.console.groupCollapsed(
-          `｢objectiv:Tracker:${this.trackerId}｣ Tracking ${trackedEvent._type} (${trackedEvent.location_stack
+          `｢objectiv:Tracker:${this.trackerId}｣ ${this.queue ? 'Queuing' : 'Tracking'} ${
+            trackedEvent._type
+          } (${trackedEvent.location_stack
             .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
             .join(' > ')})`
         );
@@ -185,7 +217,11 @@ export class Tracker implements Contexts, TrackerConfig {
         this.console.groupEnd();
       }
 
-      await this.transport.handle(trackedEvent);
+      if (this.queue) {
+        await this.queue.push(trackedEvent);
+      } else {
+        await this.transport.handle(trackedEvent);
+      }
     }
 
     return trackedEvent;

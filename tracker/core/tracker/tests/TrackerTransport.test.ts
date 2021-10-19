@@ -2,10 +2,7 @@ import {
   ContextsConfig,
   Tracker,
   TrackerEvent,
-  TrackerQueue,
-  TrackerQueueMemoryStore,
   TrackerTransportGroup,
-  TrackerTransportQueued,
   TrackerTransportRetry,
   TrackerTransportRetryAttempt,
   TrackerTransportSwitch,
@@ -215,74 +212,6 @@ describe('TrackerTransport complex configurations', () => {
     expect(pigeon.handle).not.toHaveBeenCalled();
     expect(consoleLog.handle).toHaveBeenCalled();
     expect(errorLog.handle).not.toHaveBeenCalled();
-  });
-});
-
-describe('QueuedTransport', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-    jest.spyOn(global, 'setInterval');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should do nothing if the given transport is not usable', () => {
-    const logTransport = new UnusableTransport();
-    jest.spyOn(logTransport, 'handle');
-    const trackerQueue = new TrackerQueue();
-
-    const testQueuedTransport = new TrackerTransportQueued({
-      queue: trackerQueue,
-      transport: logTransport,
-      console: mockConsole,
-    });
-    jest.runAllTimers();
-
-    expect(testQueuedTransport.isUsable()).toBe(false);
-    expect(trackerQueue.store.length).toBe(0);
-    expect(logTransport.handle).not.toHaveBeenCalled();
-    expect(setInterval).not.toHaveBeenCalled();
-  });
-
-  it('should queue events in the TrackerQueue and send them in batches via the LogTransport', async () => {
-    jest.spyOn(global, 'setInterval');
-    const queueStore = new TrackerQueueMemoryStore();
-    const logTransport = new LogTransport();
-    const trackerQueue = new TrackerQueue({ store: queueStore });
-
-    const testQueuedTransport = new TrackerTransportQueued({
-      queue: trackerQueue,
-      transport: logTransport,
-    });
-
-    const testQueuedTransportWithConsole = new TrackerTransportQueued({
-      queue: trackerQueue,
-      transport: logTransport,
-      console: mockConsole,
-    });
-
-    jest.spyOn(trackerQueue, 'processFunction');
-
-    expect(testQueuedTransport.isUsable()).toBe(true);
-    expect(testQueuedTransportWithConsole.isUsable()).toBe(true);
-
-    expect(trackerQueue.processFunction).not.toBeUndefined();
-    expect(trackerQueue.processFunction).not.toHaveBeenCalled();
-    expect(setInterval).toHaveBeenCalledTimes(2);
-
-    await testQueuedTransport.handle(testEvent);
-    await testQueuedTransportWithConsole.handle(testEvent);
-
-    expect(queueStore.length).toBe(2);
-    expect(trackerQueue.processFunction).not.toHaveBeenCalled();
-
-    await trackerQueue.run();
-
-    expect(trackerQueue.processingEventIds).toHaveLength(0);
-    expect(trackerQueue.processFunction).toHaveBeenCalledTimes(1);
-    expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, testEvent, testEvent);
   });
 });
 
