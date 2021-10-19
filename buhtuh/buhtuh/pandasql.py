@@ -469,6 +469,47 @@ class BuhTuhDataFrame:
         else:
             raise TypeError(f'Unsupported type {type(key)}')
 
+    def drop(self,
+             labels: List[str] = None,
+             index: List[str] = None,
+             columns: List[str] = None,
+             level: int = None,
+             inplace: bool = False,
+             errors: str = 'raise') -> 'BuhTuhDataFrame':
+        """
+        Drop labels/columns from the dataframe
+
+        :param: labels: not supported
+        :param: index: not supported
+        :param: columns: the list of columns to drop
+        :param: level: not supported
+        :param: inplace: whether to update this df of make a copy first
+        :param: errors: 'raise' or 'ignore' missing key errors
+        """
+        if labels or index is not None:
+            # TODO we could do this using a boolean __series__
+            raise NotImplementedError('dropping labels from index not supported.')
+
+        if level is not None:
+            raise NotImplementedError('dropping index levels not supported.')
+
+        if columns is None:
+            raise ValueError("columns needs to be an (empty) list of strings.")
+
+        if inplace:
+            df = self
+        else:
+            df = self.copy_override()
+
+        try:
+            for key in columns:
+                del(df[key])
+        except Exception as e:
+            if errors == "raise":
+                raise e
+
+        return df
+
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'BuhTuhDataFrame':
         """
         Cast all or some of the data columns to a certain type.
