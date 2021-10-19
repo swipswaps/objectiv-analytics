@@ -1489,7 +1489,7 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
     dtype = 'uuid'
     dtype_aliases = ()
     supported_db_dtype = 'uuid'
-    supported_value_types = (UUID, )
+    supported_value_types = (UUID, str)
 
     @classmethod
     def value_to_sql(cls, value: UUID) -> str:
@@ -1534,9 +1534,15 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['uuid'], other)
-        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self.expression, other.expression)
-        return self._get_derived_series('uuid', expression)
+        self._check_supported(f"comparator '{comparator}'", ['uuid', 'string'], other)
+        if other.dtype == 'uuid':
+            expression = Expression.construct(f'({{}}) {comparator} ({{}})',
+                                              self.expression, other.expression)
+        else:
+            expression = Expression.construct(f'({{}}) {comparator} (cast({{}} as uuid))',
+                                              self.expression, other.expression)
+
+        return self._get_derived_series('boolean', expression)
 
 
 class BuhTuhSeriesJson(BuhTuhSeries):
