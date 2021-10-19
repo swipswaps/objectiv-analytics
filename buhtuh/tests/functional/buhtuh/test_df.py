@@ -61,6 +61,11 @@ def test_rename():
     assert 'founding' in bt.data.keys()
     assert 'fnd' not in bt.data.keys()
 
+    bt = get_bt_with_test_data()
+    nbt = bt.rename(columns={'city': 'city'}, copy=False)
+    assert 'city' in nbt.data.keys()
+    assert 'city' in bt.data.keys()
+
     nbt = bt.rename(columns={'founding': 'fnd'}, inplace=True, copy=False)
     assert 'founding' not in nbt.data.keys()
     assert 'fnd' in nbt.data.keys()
@@ -94,6 +99,11 @@ def test_rename():
     assert 'ytic' in nbt.data.keys()
     assert 'city' in bt.data.keys()
     assert 'ytic' not in bt.data.keys()
+
+    bt = get_bt_with_test_data()
+    nbt = bt.rename(mapper=lambda x: x, axis = 1, copy=False)
+    assert 'city' in nbt.data.keys()
+    assert 'city' in bt.data.keys()
 
     bt.rename(columns={'non existing column': 'new name'}, errors='ignore')
 

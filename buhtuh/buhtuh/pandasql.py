@@ -497,6 +497,8 @@ class BuhTuhDataFrame:
 
         if isinstance(columns, dict):
             for f, t in columns.items():
+                if f == t:
+                    continue
                 try:
                     df[t] = cast('BuhTuhSeries', df[f])
                     if not copy:
@@ -507,6 +509,8 @@ class BuhTuhDataFrame:
         elif callable(columns):
             for f in df.data_columns:
                 t = columns(f)
+                if f == t:
+                    continue
                 try:
                     df[t] = cast('BuhTuhSeries', df[f])
                     if not copy:
