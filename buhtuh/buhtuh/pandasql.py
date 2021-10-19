@@ -9,7 +9,7 @@ import numpy
 import pandas
 from sqlalchemy.engine import Engine
 
-from buhtuh.expression import Expression, expression_to_sql
+from buhtuh.expression import Expression, quote_identifier
 from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
@@ -392,8 +392,8 @@ class BuhTuhDataFrame:
                 sql='select {index_str}, {columns_sql_str} from {{_last_node}} where {where}'
             )
             model = model_builder(
-                columns_sql_str=self._get_all_column_expressions(),
-                index_str=', '.join(self.index.keys()),
+                columns_sql_str=self._get_all_column_expressions_sql(),
+                index_str=self._get_all_index_expressions_sql(),
                 _last_node=self.base_node,
                 where=key.expression.to_sql(),
             )
@@ -662,8 +662,8 @@ class BuhTuhDataFrame:
         )
 
         return model_builder(
-            columns_sql_str=self._get_all_column_expressions(),
-            index_str=', '.join(f'"{index_column}"' for index_column in self.index.keys()),
+            columns_sql_str=self._get_all_column_expressions_sql(),
+            index_str=self._get_all_index_expressions_sql(),
             _last_node=self.base_node,
             limit='' if limit_str is None else f'{limit_str}',
             order=self.get_order_by_sql()
@@ -679,12 +679,11 @@ class BuhTuhDataFrame:
         sql = to_sql(model)
         return sql
 
-    def _get_all_column_expressions(self, table_alias=''):
-        column_expressions = []
-        for column in self.data_columns:
-            series = self.data[column]
-            column_expressions.append(series.get_column_expression(table_alias))
-        return ', '.join(column_expressions)
+    def _get_all_index_expressions_sql(self) -> str:
+        return ', '.join(quote_identifier(index_column) for index_column in self.index.keys())
+
+    def _get_all_column_expressions_sql(self):
+        return ', '.join(series.get_column_expression() for series in self.data.values())
 
     def merge(
             self,
@@ -918,16 +917,12 @@ class BuhTuhSeries(ABC):
             sorted_ascending=sorted_ascending
         )
 
-    def get_expression(self, table_alias='') -> str:
-        return expression_to_sql(self.expression, table_name=table_alias)
-
     def get_column_expression(self, table_alias='') -> str:
-        # TODO BLOCKER! escape the stuff
         expression_sql = self.expression.to_sql(table_alias)
-        if expression_sql != self.name:
-            return f'{expression_sql} as "{self.name}"'
-        else:
+        quoted_column_name = quote_identifier(self.name)
+        if expression_sql == quoted_column_name:
             return expression_sql
+        return f'{expression_sql} as {quoted_column_name}'
 
     def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'BuhTuhSeries'):
 
