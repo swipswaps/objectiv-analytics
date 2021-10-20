@@ -200,6 +200,7 @@ def test_group_by_multiple_aggregations_on_same_series():
             'inhabitants_max': 'int64',
         }
 
+
 def test_dataframe_agg():
     bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants']]
 
@@ -226,7 +227,6 @@ def test_dataframe_agg_numeric_only():
         bt.agg('sum')
     result_bt_str = bt.agg('sum', numeric_only=True)
     result_bt_func = bt.agg(BuhTuhSeriesAbstractNumeric.sum, numeric_only=True)
-
 
     for result_bt in [result_bt_str, result_bt_func]:
 

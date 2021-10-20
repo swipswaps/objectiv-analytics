@@ -960,6 +960,83 @@ class BuhTuhDataFrame:
         else:
             raise TypeError(f'Unsupported type for func: {type(func)}')
 
+    def _aggregate_func(self, func, axis, level, numeric_only, *args, **kwargs):
+        if level is not None:
+            raise NotImplementedError("index levels are currently not implemented")
+        return self.agg(func, axis, numeric_only, *args, **kwargs)
+
+    # AGGREGATES
+    def count(self, axis=0, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('count', axis, level, numeric_only, **kwargs)
+
+    # def kurt(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+    #     return self._aggregate_func('kurt', axis, level, numeric_only,
+    #                                 skipna=skipna, **kwargs)
+    #
+    # def kurtosis(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+    #     return self._aggregate_func('kurtosis', axis, level, numeric_only,
+    #                                 skipna=skipna, **kwargs)
+
+    # def mad(self, axis=None, skipna=None, level=None, numeric_only=False, **kwargs):
+    #     return self._aggregate_func('mad', axis, level, numeric_only,
+    #                                 skipna=skipna, **kwargs)
+
+    def max(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        return self._aggregate_func('max', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def min(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        return self._aggregate_func('min', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def mean(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        return self._aggregate_func('mean', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def median(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        return self._aggregate_func('median', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def mode(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+        # slight deviation from pd.mode(axis=0, numeric_only=False, dropna=True)
+        return self._aggregate_func('mode', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def nunique(self, axis=0, skipna=True, **kwargs):
+        # deviation from horrible pd.nunique(axis=0, dropna=True)
+        return self._aggregate_func('nunique', axis=axis,
+                                    level=None, numeric_only=False, skipna=skipna, **kwargs)
+
+    # def skew(self, axis=None, skipna=None, level=None, numeric_only=None, **kwargs):
+    #     return self._aggregate_func('skew', axis, level, numeric_only,
+    #                                 skipna=skipna, **kwargs)
+
+    def prod(self, axis=None, skipna=None, level=None, numeric_only=None, min_count=0, **kwargs):
+        return self._aggregate_func('prod', axis, level, numeric_only,
+                                    skipna=skipna, min_count=min_count, **kwargs)
+
+    def product(self, axis=None, skipna=None, level=None, numeric_only=None, min_count=0, **kwargs):
+        return self._aggregate_func('product', axis, level, numeric_only,
+                                    skipna=skipna, min_count=min_count, **kwargs)
+
+    def sem(self, axis=None, skipna=None, level=None, ddof=1, numeric_only=None, **kwargs):
+        return self._aggregate_func('sem', axis, level, numeric_only,
+                                    skipna=skipna, ddof=ddof, **kwargs)
+
+    def std(self, axis=None, skipna=None, level=None, ddof=1, numeric_only=None, **kwargs):
+        return self._aggregate_func('std', axis, level, numeric_only,
+                                    skipna=skipna, ddof=ddof, **kwargs)
+
+    def sum(self, axis=None, skipna=None, level=None, numeric_only=None, min_count=0, **kwargs):
+        return self._aggregate_func('sum', axis, level, numeric_only,
+                                    skipna=skipna, min_count=min_count, **kwargs)
+
+
+    def var(self, axis=None, skipna=None, level=None, ddof=1, numeric_only=None, **kwargs):
+        return self._aggregate_func('var', axis, level, numeric_only,
+                                    skipna=skipna, ddof=ddof, **kwargs)
+
+
 class BuhTuhSeries(ABC):
     """
     Immutable class representing a column/expression in a query.
@@ -1329,22 +1406,37 @@ class BuhTuhSeries(ABC):
         else:
             return self._get_derived_series(derived_dtype, partition.get_window_expression(expression))
 
+    def _derived_agg_func(self, partition, func, dtype = None):
+        return self._window_or_agg_func(
+            partition,
+            Expression.construct(f'{func}({{}})', self.expression),
+            self.dtype if dtype is None else dtype
+        )
+
     # Maybe the aggregation methods should be defined on a more subclass of the actual Series call
     # so we can be more restrictive in calling these.
-    def min(self, partition: 'BuhTuhGroupBy' = None):
-        return self._window_or_agg_func(partition,
-                                        Expression.construct('min({})', self.expression),
-                                        self.dtype)
+    def count(self, partition: 'BuhTuhGroupBy' = None):
+        return self._derived_agg_func(partition, 'count', 'int64')
 
     def max(self, partition: 'BuhTuhGroupBy' = None):
-        return self._window_or_agg_func(partition,
-                                        Expression.construct('max({})', self.expression),
-                                        self.dtype)
+        return self._derived_agg_func(partition, 'max')
 
-    def count(self, partition: 'BuhTuhGroupBy' = None):
-        return self._window_or_agg_func(partition,
-                                        Expression.construct('count({})', self.expression),
-                                        'int64')
+    def median(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(
+            partition,
+            Expression.construct(f'percentile_disc(0.5) WITHIN GROUP (ORDER BY {{}})', self.expression),
+            self.dtype
+        )
+
+    def min(self, partition: 'BuhTuhGroupBy' = None):
+        return self._derived_agg_func(partition, 'min')
+
+    def mode(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(
+            partition,
+            Expression.construct(f'mode() within group (order by {{}})', self.expression),
+            self.dtype
+        )
 
     def nunique(self, partition: 'BuhTuhGroupBy' = None):
         from buhtuh.partitioning import BuhTuhWindow
@@ -1568,20 +1660,23 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
         expression = Expression.construct('cast({} as bigint) / ({})', self.expression, other.expression)
         return self._get_derived_series('int64', expression)
 
-    def sum(self, partition: 'BuhTuhGroupBy' = None):
+    def prod(self, partition: 'BuhTuhGroupBy' = None):
+        return self.product(self, partition)
+
+    def product(self, partition: 'BuhTuhGroupBy' = None):
+        # https://stackoverflow.com/questions/13156055/product-aggregate-in-postgresql
+        # horrible solution, but best we have until we support custom defined aggregates
         return self._window_or_agg_func(
             partition,
-            Expression.construct('sum({})', self.expression),
+            Expression.construct(f'exp(sum(ln({{}})))', self.expression),
             self.dtype
         )
 
-    def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesFloat64':
-        result = self._window_or_agg_func(
-            partition,
-            Expression.construct('avg({})', self.expression),
-            'double precision'
-        )
-        return cast('BuhTuhSeriesFloat64', result)
+    def sum(self, partition: 'BuhTuhGroupBy' = None):
+        return self._derived_agg_func( partition, 'sum')
+
+    def mean(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesFloat64':
+        return self._derived_agg_func(partition, 'avg', 'double precision')
 
 
 class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
