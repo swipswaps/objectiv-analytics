@@ -207,6 +207,7 @@ describe('TrackerQueue', () => {
     await testQueue.flush();
 
     expect(testQueue.store.length).toBe(0);
+    expect(testQueue.isIdle()).toBe(true);
   });
 
   it('startRunner should start the setInterval that will execute `run` automatically after enough time', async () => {
