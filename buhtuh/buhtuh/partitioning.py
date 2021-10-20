@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Union, Dict, Any, Callable
 
-from buhtuh.series import BuhTuhSeries, BuhTuhSeriesInt64
+from buhtuh.series import BuhTuhSeries, BuhTuhSeriesInt64, BuhTuhSeriesAbstractNumeric
 from buhtuh.expression import Expression
 from buhtuh.pandasql import BuhTuhDataFrame
 from sql_models.model import CustomSqlModel

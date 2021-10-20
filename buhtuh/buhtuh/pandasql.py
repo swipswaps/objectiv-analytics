@@ -1,3 +1,6 @@
+import datetime
+import json
+from abc import abstractmethod, ABC
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable
@@ -7,6 +10,7 @@ import pandas
 from sqlalchemy.engine import Engine
 
 from buhtuh.expression import Expression
+from buhtuh.json import Json
 from buhtuh.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
@@ -361,7 +365,6 @@ class BuhTuhDataFrame:
         :param key:
         :return:
         """
-        from buhtuh.series import BuhTuhSeriesBoolean
 
         if isinstance(key, str):
             return self.data[key]
@@ -416,10 +419,9 @@ class BuhTuhDataFrame:
         TODO: Comments
         """
         # TODO: all types from types.TypeRegistry are supported.
-        from buhtuh.series import BuhTuhSeries
+        from buhtuh.series import BuhTuhSeries, const_to_series
         if isinstance(key, str):
             if not isinstance(value, BuhTuhSeries):
-                from buhtuh.series import const_to_series
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
                 return
@@ -957,3 +959,1107 @@ class BuhTuhDataFrame:
             return self.groupby().aggregate(aggregation_series, *args, **kwargs)
         else:
             raise TypeError(f'Unsupported type for func: {type(func)}')
+
+class BuhTuhSeries(ABC):
+    """
+    Immutable class representing a column/expression in a query.
+    """
+    def __init__(self,
+                 engine,
+                 base_node: SqlModel,
+                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 name: str,
+                 expression: Expression = None,
+                 sorted_ascending: Optional[bool] = None):
+        """
+        TODO: docstring
+        :param engine:
+        :param base_node:
+        :param index: None if this Series is part of an index. Otherwise a dict with the Series that are
+                        this Series' index
+        :param name:
+        :param expression:
+        :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
+        """
+        self._engine = engine
+        self._base_node = base_node
+        self._index = index
+        self._name = name
+        # todo: change expression in an ast-like object, that can be a constant, column, operator, and/or
+        #   refer other series
+        if expression:
+            self._expression = expression
+        else:
+            self._expression = Expression.construct_table_field(self.name)
+        self._sorted_ascending = sorted_ascending
+
+    @property
+    @classmethod
+    @abstractmethod
+    def dtype(cls) -> str:
+        """
+        The dtype of this BuhTuhSeries. The dtype is used to uniquely identify data of the type that is
+        represented by this BuhTuhSeries subclass. The dtype should be unique among all BuhTuhSeries
+        subclasses.
+        """
+        raise NotImplementedError()
+
+    @property
+    @classmethod
+    def dtype_aliases(cls) -> Tuple[Union[Type, str], ...]:
+        """
+        One or more aliases for the dtype.
+        For example a BuhTuhBooleanSeries might have dtype 'bool', and as an alias the string 'boolean' and
+        the builtin `bool`. An alias can be used in a similar way as the real dtype, e.g. to cast data to a
+        certain type: `x.astype('boolean')` is the same as `x.astype('bool')`.
+
+        Subclasses can override this value to indicate what strings they consider aliases for their dtype.
+        """
+        return tuple()
+
+    @property
+    @classmethod
+    def supported_db_dtype(cls) -> Optional[str]:
+        """
+        Database level data type, that can be expressed using this BuhTuhSeries type.
+        Example: 'double precision' for a float in Postgres
+
+        Subclasses should override this value if they intend to be the default class to handle such types.
+        When creating a BuhTuhDataFrame from existing data in a database, this field will be used to
+        determine what BuhTuhSeries to instantiate for a column.
+        """
+        return None
+
+    @property
+    @classmethod
+    def supported_value_types(cls) -> Tuple[Type, ...]:
+        """
+        List of python types that can be converted to database values using the `value_to_sql()` method.
+
+        Subclasses can override this value to indicate what types are supported by value_to_sql().
+        """
+        return tuple()
+
+    @classmethod
+    @abstractmethod
+    def value_to_sql(cls, value: Any) -> str:
+        """
+        Give the sql expression for the given value.
+        :return: sql expression of the value
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    @abstractmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+        """
+        Give the sql expression to convert the given expression, of the given source dtype to the dtype of
+        this Series.
+        :return: sql expression
+        """
+        raise NotImplementedError()
+
+    @property
+    def engine(self):
+        return self._engine
+
+    @property
+    def base_node(self) -> SqlModel:
+        return self._base_node
+
+    @property
+    def index(self) -> Optional[Dict[str, 'BuhTuhSeries']]:
+        return copy(self._index)
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def expression(self) -> Expression:
+        return self._expression
+
+    def head(self, n: int = 5):
+        """
+        Return the first `n` rows.
+        """
+        # TODO get a series directly instead of ripping it out of the df?
+        return self.to_frame().head(n)[self.name]
+
+    def sort_values(self, ascending=True):
+        """
+        Returns a copy of this Series that is sorted by its values. Returns self if self is already sorted
+        in that way.
+        :param ascending: Whether to sort ascending (True) or descending (False)
+        """
+        if self._sorted_ascending is not None and self._sorted_ascending == ascending:
+            return self
+        return self.get_class_instance(
+            base=self,
+            name=self.name,
+            expression=self.expression,
+            sorted_ascending=ascending
+        )
+
+    def view_sql(self):
+        return self.to_frame().view_sql()
+
+    def to_frame(self) -> BuhTuhDataFrame:
+        if self.index is None:
+            raise Exception('to_frame() is not supported for Series that do not have an index')
+        if self._sorted_ascending is not None:
+            order_by = [SortColumn(expression=self.get_expression(), asc=self._sorted_ascending)]
+        else:
+            order_by = []
+        return BuhTuhDataFrame(
+            engine=self.engine,
+            base_node=self.base_node,
+            index=self.index,
+            series={self.name: self},
+            order_by=order_by
+        )
+
+    @classmethod
+    def get_instance(
+            cls,
+            base: DataFrameOrSeries,
+            name: str,
+            dtype: str,
+            expression: Expression = None,
+            sorted_ascending: Optional[bool] = None
+    ) -> 'BuhTuhSeries':
+        """
+        Create an instance of the right sub-class of BuhTuhSeries.
+        The subclass is based on the provided dtype. See docstring of __init__ for other parameters.
+        """
+        series_type = get_series_type_from_dtype(dtype=dtype)
+        return series_type.get_class_instance(
+            base=base,
+            name=name,
+            expression=expression,
+            sorted_ascending=sorted_ascending
+        )
+
+    @classmethod
+    def get_class_instance(
+            cls,
+            base: DataFrameOrSeries,
+            name: str,
+            expression: Expression = None,
+            sorted_ascending: Optional[bool] = None
+    ):
+        """ Create an instance of this class. """
+        return cls(
+            engine=base.engine,
+            base_node=base.base_node,
+            index=base.index,
+            name=name,
+            expression=expression,
+            sorted_ascending=sorted_ascending
+        )
+
+    def get_expression(self, table_alias='') -> str:
+        return self.expression.to_string(table_alias)
+        # # TODO BLOCKER! escape the stuff
+        #
+        # if table_alias != '' and table_alias[-1] != '.':
+        #     table_alias = table_alias + '.'
+        #
+        # return self.expression.format(table_alias=table_alias)
+
+    def get_column_expression(self, table_alias='') -> str:
+        # TODO BLOCKER! escape the stuff
+        expression = self.get_expression(table_alias)
+        if expression != self.name:
+            return f'{expression} as "{self.name}"'
+        else:
+            return expression
+
+    def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'BuhTuhSeries'):
+
+        if self.base_node != other.base_node:
+            raise ValueError(f'Cannot apply {operation_name} on two series with different base_node. '
+                             f'Hint: make sure both series belong to or are derived from the same '
+                             f'DataFrame. '
+                             f'Alternative: use merge() to create a DataFrame with both series. ')
+
+        if other.dtype.lower() not in supported_dtypes:
+            raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
+
+    def _get_derived_series(self, new_dtype: str, expression: Expression):
+        return BuhTuhSeries.get_instance(
+            base=self,
+            name=self.name,
+            dtype=new_dtype,
+            expression=expression
+        )
+
+    def astype(self, dtype: Union[str, Type]) -> 'BuhTuhSeries':
+        if dtype == self.dtype or dtype in self.dtype_aliases:
+            return self
+        series_type = get_series_type_from_dtype(dtype)
+        expression = series_type.from_dtype_to_sql(self.dtype, self.expression)
+        # get the real dtype, in case the provided dtype was an alias. mypy needs some help
+        new_dtype = cast(str, series_type.dtype)
+        return self._get_derived_series(new_dtype=new_dtype, expression=expression)
+
+    @classmethod
+    def from_const(cls,
+                   base: DataFrameOrSeries,
+                   value: Any,
+                   name: str) -> 'BuhTuhSeries':
+        result = cls.get_class_instance(
+            base=base,
+            name=name,
+            expression=Expression.construct_raw(cls.value_to_sql(value))
+        )
+        return result
+
+    def equals(self, other: Any) -> bool:
+        """
+        Checks whether other is the same as self. This implements the check that would normally be
+        implemented in __eq__, but we already use that method for other purposes.
+        This strictly checks that other is the same type as self. If other is a subclass this will return
+        False.
+        """
+        if not isinstance(other, self.__class__) or not isinstance(self, other.__class__):
+            return False
+        if (self.index is None) != (other.index is None):
+            return False
+        if self.index is not None and other.index is not None:
+            if list(self.index.keys()) != list(other.index.keys()):
+                return False
+            for key in self.index.keys():
+                if not self.index[key].equals(other.index[key]):
+                    return False
+        return self.engine == other.engine and \
+            self.base_node == other.base_node and \
+            self.name == other.name and \
+            self.expression == other.expression and \
+            self._sorted_ascending == other._sorted_ascending
+
+    # Below methods are not abstract, as they can be optionally be implemented by subclasses.
+    def __add__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def __sub__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def __mul__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    # TODO, answer: What about __matmul__?
+
+    def __truediv__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def __floordiv__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def __mod__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    # TODO, answer: What about __divmod__?
+
+    def __pow__(self, other, modulo=None) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def __lshift__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def __rshift__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def __and__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def __xor__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def __or__(self, other) -> 'BuhTuhSeries':
+        raise NotImplementedError()
+
+    def _comparator_operator(self, other, comparator) -> 'BuhTuhSeriesBoolean':
+        raise NotImplementedError()
+
+    def __ne__(self, other) -> 'BuhTuhSeriesBoolean':  # type: ignore
+        return self._comparator_operator(other, "<>")
+
+    def __eq__(self, other) -> 'BuhTuhSeriesBoolean':  # type: ignore
+        return self._comparator_operator(other, "=")
+
+    def __lt__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._comparator_operator(other, "<")
+
+    def __le__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._comparator_operator(other, "<=")
+
+    def __ge__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._comparator_operator(other, ">=")
+
+    def __gt__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._comparator_operator(other, ">")
+
+    def __getitem__(self, key: Union[Any, slice]):
+        if isinstance(key, slice):
+            raise NotImplementedError("index slices currently not supported")
+
+        # any other value we treat as a literal index lookup
+        # multiindex not supported atm
+        if self.index is None:
+            raise Exception('Function not supported on Series without index')
+        if len(self.index) != 1:
+            raise NotImplementedError('Index only implemented for simple indexes.')
+        series = self.to_frame()[list(self.index.values())[0] == key]
+        assert isinstance(series, self.__class__)
+
+        # this is massively ugly
+        return series.head(1).astype(series.dtype).values[0]
+
+    def _window_or_agg_func(
+            self,
+            partition: Optional['BuhTuhGroupBy'],
+            expression: Expression,
+            derived_dtype: str) -> 'BuhTuhSeries':
+
+        from buhtuh.partitioning import BuhTuhWindow
+
+        if partition is None or not isinstance(partition, BuhTuhWindow):
+            return self._get_derived_series(derived_dtype, expression)
+        else:
+            return self._get_derived_series(derived_dtype, partition.get_window_expression(expression))
+
+    # Maybe the aggregation methods should be defined on a more subclass of the actual Series call
+    # so we can be more restrictive in calling these.
+    def min(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(partition,
+                                        Expression.construct('min({})', self.expression),
+                                        self.dtype)
+
+    def max(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(partition,
+                                        Expression.construct('max({})', self.expression),
+                                        self.dtype)
+
+    def count(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(partition,
+                                        Expression.construct('count({})', self.expression),
+                                        'int64')
+
+    def nunique(self, partition: 'BuhTuhGroupBy' = None):
+        from buhtuh.partitioning import BuhTuhWindow
+        if partition is not None and isinstance(partition, BuhTuhWindow):
+            raise Exception("unique counts in window functions not supported (by PG at least)")
+
+        return self._get_derived_series('int64', Expression.construct('count(distinct {})', self.expression))
+
+    # Window functions applicable for all types of data, but only with a window
+    # TODO more specific docs
+    # TODO make group_by optional, but for that we need some way to access the series' underlying
+    #      df to access sorting
+
+    def _check_window(self, partition: Any):
+        """
+        Validate that the given partition is a true BuhTuhWindow or raise an exception
+        """
+        from buhtuh.partitioning import BuhTuhWindow
+        if not isinstance(partition, BuhTuhWindow):
+            raise ValueError("Window functions need a BuhTuhWindow")
+
+    def window_row_number(self, window: 'BuhTuhWindow'):
+        """
+        Returns the number of the current row within its partition, counting from 1.
+        """
+        self._check_window(window)
+        return self._window_or_agg_func(window, Expression.construct('row_number()'), 'int64')
+
+    def window_rank(self, window: 'BuhTuhWindow'):
+        """
+        Returns the rank of the current row, with gaps; that is, the row_number of the first row
+        in its peer group.
+        """
+        self._check_window(window)
+        return self._window_or_agg_func(window, Expression.construct('rank()'), 'int64')
+
+    def window_dense_rank(self, window: 'BuhTuhWindow'):
+        """
+        Returns the rank of the current row, without gaps; this function effectively counts peer
+        groups.
+        """
+        self._check_window(window)
+        return self._window_or_agg_func(window, Expression.construct('dense_rank()'), 'int64')
+
+    def window_percent_rank(self, window: 'BuhTuhWindow'):
+        """
+        Returns the relative rank of the current row, that is
+            (rank - 1) / (total partition rows - 1).
+        The value thus ranges from 0 to 1 inclusive.
+        """
+        self._check_window(window)
+        return self._window_or_agg_func(window, Expression.construct('percent_rank()'), "double precision")
+
+    def window_cume_dist(self, window: 'BuhTuhWindow'):
+        """
+        Returns the cumulative distribution, that is
+            (number of partition rows preceding or peers with current row) / (total partition rows).
+        The value thus ranges from 1/N to 1.
+        """
+        self._check_window(window)
+        return self._window_or_agg_func(window, Expression.construct('cume_dist()'), "double precision")
+
+    def window_ntile(self, window: 'BuhTuhWindow', num_buckets: int = 1):
+        """
+        Returns an integer ranging from 1 to the argument value,
+        dividing the partition as equally as possible.
+        """
+        self._check_window(window)
+        return self._window_or_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
+
+    def window_lag(self, window: 'BuhTuhWindow', offset: int = 1, default: Any = None):
+        """
+        Returns value evaluated at the row that is offset rows before the current row
+        within the partition; if there is no such row, instead returns default
+        (which must be of the same type as value).
+
+        Both offset and default are evaluated with respect to the current row.
+        If omitted, offset defaults to 1 and default to None
+        """
+        self._check_window(window)
+        default_sql = self.value_to_sql(default)
+        return self._window_or_agg_func(
+            window,
+            Expression.construct(f'lag({{}}, {offset}, {default_sql})', self.expression),
+            self.dtype
+        )
+
+    def window_lead(self, window: 'BuhTuhWindow', offset: int = 1, default: Any = None):
+        """
+        Returns value evaluated at the row that is offset rows after the current row within the partition;
+        if there is no such row, instead returns default (which must be of the same type as value).
+        Both offset and default are evaluated with respect to the current row.
+        If omitted, offset defaults to 1 and default to None.
+        """
+        self._check_window(window)
+        default_sql = self.value_to_sql(default)
+        return self._window_or_agg_func(
+            window,
+            Expression.construct(f'lead({{}}, {offset}, {default_sql})', self.expression),
+            self.dtype
+        )
+
+    def window_first_value(self, window: 'BuhTuhWindow'):
+        """
+        Returns value evaluated at the row that is the first row of the window frame.
+        """
+        self._check_window(window)
+        return self._window_or_agg_func(
+            window,
+            Expression.construct('first_value({})', self.expression),
+            self.dtype
+        )
+
+    def window_last_value(self, window: 'BuhTuhWindow'):
+        """
+        Returns value evaluated at the row that is the last row of the window frame.
+        """
+        self._check_window(window)
+        return self._window_or_agg_func(
+            window,
+            Expression.construct('last_value({})', self.expression),
+            self.dtype
+        )
+
+    def window_nth_value(self, window: 'BuhTuhWindow', n: int):
+        """
+        Returns value evaluated at the row that is the n'th row of the window frame
+        (counting from 1); returns NULL if there is no such row.
+        """
+        self._check_window(window)
+        return self._window_or_agg_func(
+            window,
+            Expression.construct(f'nth_value({{}}, {n})', self.expression),
+            self.dtype
+        )
+
+
+class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
+    dtype = 'bool'
+    dtype_aliases = ('boolean', '?', bool)
+    supported_db_dtype = 'boolean'
+    supported_value_types = (bool, )
+
+    @classmethod
+    def value_to_sql(cls, value: bool) -> str:
+        if value is None:
+            return 'NULL'
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be bool, actual type: {type(value)}')
+        return str(value)
+
+    @staticmethod
+    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'bool':
+            return expression
+        if source_dtype not in ['int64', 'string']:
+            raise ValueError(f'cannot convert {source_dtype} to bool')
+        return Expression.construct('cast({} as bool)', expression)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['bool'], other)
+        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self.expression, other.expression)
+        return self._get_derived_series('bool', expression)
+
+    def _boolean_operator(self, other, operator: str) -> 'BuhTuhSeriesBoolean':
+        # TODO maybe "other" should have a way to tell us it can be a bool?
+        # TODO we're missing "NOT" here. https://www.postgresql.org/docs/13/functions-logical.html
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"boolean operator '{operator}'", ['bool', 'int64', 'float'], other)
+        if other.dtype != 'bool':
+            expression = Expression.construct(
+                f'(({{}}) {operator} ({{}}::bool))', self.expression, other.expression
+            )
+        else:
+            expression = Expression.construct(
+                f'(({{}}) {operator} ({{}}))', self.expression, other.expression
+            )
+        return self._get_derived_series('bool', expression)
+
+    def __and__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._boolean_operator(other, 'AND')
+
+    def __or__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._boolean_operator(other, 'OR')
+
+
+class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
+    """
+    Base class that defines shared logic between BuhTuhSeriesInt64 and BuhTuhSeriesFloat64
+    """
+    def __add__(self, other) -> 'BuhTuhSeries':
+        other = const_to_series(base=self, value=other)
+        self._check_supported('add', ['int64', 'float64'], other)
+        expression = Expression.construct('({}) + ({})', self.expression, other.expression)
+        new_dtype = 'float64' if 'float64' in (self.dtype, other.dtype) else 'int64'
+        return self._get_derived_series(new_dtype, expression)
+
+    def __sub__(self, other) -> 'BuhTuhSeries':
+        other = const_to_series(base=self, value=other)
+        self._check_supported('sub', ['int64', 'float64'], other)
+        expression = Expression.construct('({}) - ({})', self.expression, other.expression)
+        new_dtype = 'float64' if 'float64' in (self.dtype, other.dtype) else 'int64'
+        return self._get_derived_series(new_dtype, expression)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['int64', 'float64'], other)
+        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self.expression, other.expression)
+        return self._get_derived_series('bool', expression)
+
+    def __truediv__(self, other):
+        other = const_to_series(base=self, value=other)
+        self._check_supported('division', ['int64', 'float64'], other)
+        expression = Expression.construct('cast({} as float) / ({})', self.expression, other.expression)
+        return self._get_derived_series('float64', expression)
+
+    def __floordiv__(self, other):
+        other = const_to_series(base=self, value=other)
+        self._check_supported('division', ['int64', 'float64'], other)
+        expression = Expression.construct('cast({} as bigint) / ({})', self.expression, other.expression)
+        return self._get_derived_series('int64', expression)
+
+    def sum(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(
+            partition,
+            Expression.construct('sum({})', self.expression),
+            self.dtype
+        )
+
+    def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesFloat64':
+        result = self._window_or_agg_func(
+            partition,
+            Expression.construct('avg({})', self.expression),
+            'double precision'
+        )
+        return cast('BuhTuhSeriesFloat64', result)
+
+
+class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
+    dtype = 'int64'
+    dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64)
+    supported_db_dtype = 'bigint'
+    supported_value_types = (int, numpy.int64)
+
+    @classmethod
+    def value_to_sql(cls, value: int) -> str:
+        # TODO validate this, should be part of Nullable logic?
+        if value is None:
+            return 'NULL'
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be int, actual type: {type(value)}')
+        return f'{value}::bigint'
+
+    @staticmethod
+    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'int64':
+            return expression
+        if source_dtype not in ['float64', 'bool', 'string']:
+            raise ValueError(f'cannot convert {source_dtype} to int64')
+        return Expression.construct('cast({} as bigint)', expression)
+
+
+class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
+    dtype = 'float64'
+    dtype_aliases = ('float', 'double', 'f8', float, numpy.float64, 'double precision')
+    supported_db_dtype = 'double precision'
+    supported_value_types = (float, numpy.float64)
+
+    @classmethod
+    def value_to_sql(cls, value: Union[float, numpy.float64]) -> str:
+        if value is None:
+            return 'NULL'
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be float, actual type: {type(value)}')
+        return f'{value}::float'
+
+    @staticmethod
+    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'float64':
+            return expression
+        if source_dtype not in ['int64', 'string']:
+            raise ValueError(f'cannot convert {source_dtype} to float64')
+        return Expression.construct('cast({} as float)', expression)
+
+
+class BuhTuhSeriesString(BuhTuhSeries):
+    dtype = 'string'
+    dtype_aliases = ('text', str)
+    supported_db_dtype = 'text'
+    supported_value_types = (str, )
+
+    @classmethod
+    def value_to_sql(cls, value: str) -> str:
+        if value is None:
+            return 'NULL'
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be str, actual type: {type(value)}')
+        # TODO: fix sql injection!
+        return f"'{value}'"
+
+    @classmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'string':
+            return expression
+        return Expression.construct('cast(({}) as text)', expression)
+
+    def __add__(self, other) -> 'BuhTuhSeries':
+        other = const_to_series(base=self, value=other)
+        self._check_supported('add', ['string'], other)
+        expression = Expression.construct('({}) || ({})', self.expression, other.expression)
+        return self._get_derived_series('string', expression)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['string'], other)
+        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self.expression, other.expression)
+        return self._get_derived_series('bool', expression)
+
+    def slice(self, start: Union[int, slice], stop: int = None) -> 'BuhTuhSeriesString':
+        """
+        Get a python string slice using DB functions. Format follows standard slice format
+        Note: this is called 'slice' to not destroy index selection logic
+        :param item: an int for a single character, or a slice for some nice slicing
+        :return: BuhTuhSeriesString with the slice applied
+        """
+        if isinstance(start, (int, type(None))):
+            item = slice(start, stop)
+        elif isinstance(start, slice):
+            item = start
+        else:
+            raise ValueError(f'Type not supported {type(start)}')
+
+        expression = self.expression
+
+        if item.start is not None and item.start < 0:
+            expression = Expression.construct(f'right({{}}, {abs(item.start)})', expression)
+            if item.stop is not None:
+                if item.stop < 0 and item.stop > item.start:
+                    # we needed to check stop < 0, because that would mean we're going the wrong direction
+                    # and that's not supported
+                    expression = Expression.construct(f'left({{}}, {item.stop - item.start})', expression)
+                else:
+                    expression = Expression.construct("''")
+
+        elif item.stop is not None and item.stop < 0:
+            # we need to get the full string, minus abs(stop) chars.
+            expression = Expression.construct(
+                f'substr({{}}, 1, greatest(0, length({{}}){item.stop}))',
+                expression, expression
+            )
+
+        else:
+            # positives only
+            if item.stop is None:
+                if item.start is None:
+                    # full string, what are we doing here?
+                    # current expression is okay.
+                    pass
+                else:
+                    # full string starting at start
+                    expression = Expression.construct(f'substr({{}}, {item.start+1})', expression)
+            else:
+                if item.start is None:
+                    expression = Expression.construct(f'left({{}}, {item.stop})', expression)
+                else:
+                    if item.stop > item.start:
+                        expression = Expression.construct(
+                            f'substr({{}}, {item.start+1}, {item.stop-item.start})',
+                            expression
+                        )
+                    else:
+                        expression = Expression.construct("''")
+
+        return self._get_derived_series('string', expression)
+
+
+class BuhTuhSeriesUuid(BuhTuhSeries):
+    """
+    Series representing UUID values.
+    """
+    dtype = 'uuid'
+    dtype_aliases = ()
+    supported_db_dtype = 'uuid'
+    supported_value_types = (UUID, str)
+
+    @classmethod
+    def value_to_sql(cls, value: UUID) -> str:
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be uuid, actual type: {type(value)}')
+        return f"cast('{value}' as uuid)"
+
+    @classmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'uuid':
+            return expression
+        if source_dtype == 'string':
+            # If the format is wrong, then this will give an error later on, but there is not much we can
+            # do about that here.
+            return Expression.construct('cast(({}) as uuid)', expression)
+        # As far as we know the other types we support cannot be directly cast to uuid.
+        raise ValueError(f'cannot convert {source_dtype} to uuid.')
+
+    @classmethod
+    def sql_gen_random_uuid(cls, base: DataFrameOrSeries) -> 'BuhTuhSeriesUuid':
+        """
+        Create a new Series object with for every row the `gen_random_uuid()` expression, which will
+        evaluate to a random uuid for each row.
+
+        Note that this is non-deterministic expression, it will give a different result each time it is run.
+        This can have some unexpected consequences. Considers the following code:
+            df['x'] = BuhTuhSeriesUuid.sql_gen_random_uuid(df)
+            df['y'] = df['x']
+            df['different'] = df['y'] != df['x']
+        The df['different'] column will be True for all rows, because the second statement copies the
+        unevaluated expression, not the result of the expression. So at evaluation time the expression will
+        be evaluated twice for each row, for the 'x' column and the 'y' column, giving different results both
+        times. One way to work around this is to materialize the dataframe in its current state (using
+        get_df_materialized_model()), before adding any columns that reference a column that's created with
+        this function.
+        """
+        return cls.get_class_instance(
+            base=base,
+            name='__tmp',
+            expression=Expression.construct('gen_random_uuid()')
+        )
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['uuid', 'string'], other)
+        if other.dtype == 'uuid':
+            expression = Expression.construct(f'({{}}) {comparator} ({{}})',
+                                              self.expression, other.expression)
+        else:
+            expression = Expression.construct(f'({{}}) {comparator} (cast({{}} as uuid))',
+                                              self.expression, other.expression)
+
+        return self._get_derived_series('boolean', expression)
+
+
+class BuhTuhSeriesJsonb(BuhTuhSeries):
+    """
+    this a proper class, not just a string subclass
+    """
+    dtype = 'jsonb'
+    # todo can only assign a type to one series type, and object is quite generic
+    dtype_aliases = tuple()  # type: ignore
+    supported_db_dtype = 'jsonb'
+    supported_value_types = (dict, list)
+
+    def __init__(self,
+                 engine,
+                 base_node: SqlModel,
+                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 name: str,
+                 expression: Expression = None,
+                 sorted_ascending: Optional[bool] = None):
+        super().__init__(engine,
+                         base_node,
+                         index,
+                         name,
+                         expression,
+                         sorted_ascending)
+        self.json = Json(self)
+
+    @classmethod
+    def value_to_sql(cls, value: Union[dict, list]) -> str:
+        if not isinstance(value, cls.supported_value_types):
+            raise TypeError(f'value should be dict, actual type: {type(value)}')
+        json_value = json.dumps(value)
+        escaped_json_value = json_value.replace("'", "''")
+        print(escaped_json_value)
+        return f"cast('{escaped_json_value}' as jsonb)"
+
+    @classmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype in ['jsonb', 'json']:
+            return expression
+        if source_dtype != 'string':
+            raise ValueError(f'cannot convert {source_dtype} to jsonb')
+        return Expression.construct('cast({} as jsonb)', expression)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['json', 'jsonb'], other)
+        expression = Expression.construct(
+            f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
+            self.expression, other.expression
+        )
+        return self._get_derived_series('bool', expression)
+
+    def __le__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._comparator_operator(other, "<@")
+
+
+class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
+    """
+    this a proper class, not just a string subclass
+    """
+    dtype = 'json'
+    dtype_aliases = tuple()  # type: ignore
+    supported_db_dtype = 'json'
+
+    def __init__(self,
+                 engine,
+                 base_node: SqlModel,
+                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 name: str,
+                 expression: Expression = None,
+                 sorted_ascending: Optional[bool] = None):
+
+        if expression is None:
+            expression = Expression.construct_table_field(name)
+
+        super().__init__(engine,
+                         base_node,
+                         index,
+                         name,
+                         Expression.construct(f'cast({{}} as jsonb)', expression),
+                         sorted_ascending)
+
+
+class BuhTuhSeriesTimestamp(BuhTuhSeries):
+    """
+    Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
+        timestamp without time zone
+    """
+    dtype = 'timestamp'
+    dtype_aliases = ('datetime64', 'datetime64[ns]', numpy.datetime64)
+    supported_db_dtype = 'timestamp without time zone'
+    supported_value_types = (datetime.datetime, datetime.date, str)
+
+    @classmethod
+    def value_to_sql(cls, value: Union[str, datetime.datetime]) -> str:
+        if value is None:
+            return 'NULL'
+        if isinstance(value, datetime.date):
+            value = str(value)
+        if not isinstance(value, str):
+            raise TypeError(f'value should be str or datetime.datetime, actual type: {type(value)}')
+        # TODO: fix sql injection!
+        # Maybe we should do some checking on syntax here?
+        return f"'{value}'::{BuhTuhSeriesTimestamp.supported_db_dtype}"
+
+    @staticmethod
+    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'timestamp':
+            return expression
+        else:
+            if source_dtype not in ['string', 'date']:
+                raise ValueError(f'cannot convert {source_dtype} to timestamp')
+            return Expression.construct(f'({{}}::{BuhTuhSeriesTimestamp.supported_db_dtype})', expression)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['timestamp', 'date', 'string'], other)
+        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self.expression, other.expression)
+        return self._get_derived_series('bool', expression)
+
+    def format(self, format) -> 'BuhTuhSeriesString':
+        """
+        Allow standard PG formatting of this Series (to a string type)
+
+        :param format: The format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
+        :return: a derived Series that accepts and returns formatted timestamp strings
+        """
+        expr = Expression.construct(f"to_char({{}}, '{format}')", self.expression)
+        return self._get_derived_series('string', expr)
+
+    def __sub__(self, other) -> 'BuhTuhSeriesTimestamp':
+        other = const_to_series(base=self, value=other)
+        self._check_supported('sub', ['timestamp', 'date', 'time'], other)
+        expression = Expression.construct('({}) - ({})', self.expression, other.expression)
+        return self._get_derived_series('timedelta', expression)
+
+
+class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
+    """
+    Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
+        date
+    """
+    dtype = 'date'
+    dtype_aliases = tuple()  # type: ignore
+    supported_db_dtype = 'date'
+    supported_value_types = (datetime.datetime, datetime.date, str)
+
+    @classmethod
+    def value_to_sql(cls, value: Union[str, datetime.date]) -> str:
+        if value is None:
+            return 'NULL'
+        if isinstance(value, datetime.date):
+            value = str(value)
+        if not isinstance(value, str):
+            raise TypeError(f'value should be str or datetime.date, actual type: {type(value)}')
+        # TODO: fix sql injection!
+        # Maybe we should do some checking on syntax here?
+        return f"'{value}'::{BuhTuhSeriesDate.supported_db_dtype}"
+
+    @staticmethod
+    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'date':
+            return expression
+        else:
+            if source_dtype not in ['string', 'timestamp']:
+                raise ValueError(f'cannot convert {source_dtype} to date')
+            return Expression.construct(f'({{}}::{BuhTuhSeriesDate.supported_db_dtype})', expression)
+
+
+class BuhTuhSeriesTime(BuhTuhSeries):
+    """
+    Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
+        time without time zone
+    """
+    dtype = 'time'
+    dtype_aliases = tuple()  # type: ignore
+    supported_db_dtype = 'time without time zone'
+    supported_value_types = (datetime.time, str)
+
+    @classmethod
+    def value_to_sql(cls, value: Union[str, datetime.time]) -> str:
+        if value is None:
+            return 'NULL'
+        if isinstance(value, datetime.time):
+            value = str(value)
+        if not isinstance(value, str):
+            raise TypeError(f'value should be str or datetime.time, actual type: {type(value)}')
+        # TODO: fix sql injection!
+        # Maybe we should do some checking on syntax here?
+        return f"'{value}'::{BuhTuhSeriesTime.supported_db_dtype}"
+
+    @staticmethod
+    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'time':
+            return expression
+        else:
+            if source_dtype not in ['string', 'timestamp']:
+                raise ValueError(f'cannot convert {source_dtype} to time')
+            return Expression.construct('({{}}::{BuhTuhSeriesTime.supported_db_dtype})', expression)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['time', 'string'], other)
+        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self.expression, other.expression)
+        return self._get_derived_series('bool', expression)
+
+
+class BuhTuhSeriesTimedelta(BuhTuhSeries):
+    dtype = 'timedelta'
+    dtype_aliases = ('interval',)
+    supported_db_dtype = 'interval'
+    supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
+
+    @classmethod
+    def value_to_sql(cls, value: Union[str, numpy.timedelta64, datetime.timedelta]) -> str:
+        if value is None:
+            return 'NULL'
+        if isinstance(value, (numpy.timedelta64, datetime.timedelta)):
+            value = str(value)
+        if not isinstance(value, str):
+            raise TypeError(f'value should be str or (numpy.timedelta64, datetime.timedelta), '
+                            f'actual type: {type(value)}')
+        # TODO: fix sql injection!
+        # Maybe we should do some checking on syntax here?
+        return f"'{value}'::{BuhTuhSeriesTimedelta.supported_db_dtype}"
+
+    @staticmethod
+    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'timedelta':
+            return expression
+        else:
+            if not source_dtype == 'string':
+                raise ValueError(f'cannot convert {source_dtype} to timedelta')
+            return Expression.construct('cast({} as interval)', expression)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['timedelta', 'date', 'time', 'string'], other)
+        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self.expression, other.expression)
+        return self._get_derived_series('bool', expression)
+
+    def format(self, format) -> 'BuhTuhSeriesString':
+        """
+        Allow standard PG formatting of this Series (to a string type)
+
+        :param format: The format as defined in https://www.postgresql.org/docs/9.1/functions-formatting.html
+        :return: a derived Series that accepts and returns formatted timestamp strings
+        """
+        expr = Expression.construct(f"to_char({{}}, '{format}')", self.expression)
+        return self._get_derived_series('string', expr)
+
+    def __add__(self, other) -> 'BuhTuhSeriesTimedelta':
+        other = const_to_series(base=self, value=other)
+        self._check_supported('add', ['timedelta', 'timestamp', 'date', 'time'], other)
+        expression = Expression.construct('({}) + ({})', self.expression, other.expression)
+        return self._get_derived_series('timedelta', expression)
+
+    def __sub__(self, other) -> 'BuhTuhSeriesTimedelta':
+        other = const_to_series(base=self, value=other)
+        self._check_supported('sub', ['timedelta', 'timestamp', 'date', 'time'], other)
+        expression = Expression.construct('({}) - ({})', self.expression, other.expression)
+        return self._get_derived_series('timedelta', expression)
+
+    def sum(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
+        result = self._window_or_agg_func(
+            partition,
+            Expression.construct('sum({})', self.expression),
+            self.dtype
+        )
+        return cast('BuhTuhSeriesTimedelta', result)
+
+    def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
+        result = self._window_or_agg_func(
+            partition,
+            Expression.construct('avg({})', self.expression),
+            self.dtype
+        )
+        return cast('BuhTuhSeriesTimedelta', result)
+
