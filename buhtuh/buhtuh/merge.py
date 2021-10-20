@@ -286,7 +286,6 @@ def _get_merge_sql_model(
     Give the SqlModel to join left and right and select the new_column_list. This model also uses the
     join-type of how, matching rows on real_left_on and real_right_on.
     """
-    # todo: sql escaping where needed
     merge_conditions = []
     for l_label, r_label in zip(real_left_on, real_right_on):
         l_expr = _get_expression(df_series=left, label=l_label)
