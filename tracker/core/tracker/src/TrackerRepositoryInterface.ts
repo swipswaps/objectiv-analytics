@@ -43,4 +43,9 @@ export interface TrackerRepositoryInterface<T extends Tracker> {
    * Sets all Tracker instances as inactive
    */
   deactivateAll(): void;
+
+  /**
+   * Flushes all Tracker instances Queues
+   */
+  flushAllQueues(): void;
 }

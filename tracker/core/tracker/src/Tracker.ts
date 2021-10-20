@@ -178,6 +178,15 @@ export class Tracker implements Contexts, TrackerConfig {
   }
 
   /**
+   * Flushes the Queue
+   */
+  flushQueue() {
+    if (this.queue) {
+      this.queue.flush();
+    }
+  }
+
+  /**
    * Merges Tracker Location and Global contexts, runs all Plugins and sends the Event via the TrackerTransport.
    */
   async trackEvent(event: TrackerEventConfig): Promise<TrackerEvent> {
@@ -197,7 +206,6 @@ export class Tracker implements Contexts, TrackerConfig {
 
     // Hand over TrackerEvent to TrackerTransport or TrackerQueue, if enabled and usable.
     if (this.transport && this.transport.isUsable()) {
-
       if (this.console) {
         this.console.groupCollapsed(
           `｢objectiv:Tracker:${this.trackerId}｣ ${this.queue ? 'Queuing' : 'Tracking'} ${

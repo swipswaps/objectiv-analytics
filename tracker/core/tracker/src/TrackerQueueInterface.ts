@@ -70,4 +70,9 @@ export interface TrackerQueueInterface {
    * Fetches a batch of Events from the Queue and executes the given `processFunction` with them.
    */
   run(): Promise<any>;
+
+  /**
+   * Empties the Queue
+   */
+  flush(): Promise<any>;
 }

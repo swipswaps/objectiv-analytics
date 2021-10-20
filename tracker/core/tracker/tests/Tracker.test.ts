@@ -310,7 +310,7 @@ describe('Tracker', () => {
       const testTracker = new Tracker({
         applicationId: 'app-id',
         transport: logTransport,
-        queue: trackerQueue
+        queue: trackerQueue,
       });
       jest.runAllTimers();
 
@@ -328,7 +328,7 @@ describe('Tracker', () => {
       const testTracker = new Tracker({
         applicationId: 'app-id',
         queue: trackerQueue,
-        transport: logTransport
+        transport: logTransport,
       });
 
       const testTrackerWithConsole = new Tracker({
@@ -366,6 +366,47 @@ describe('Tracker', () => {
           id: testEvent.id,
         })
       );
+    });
+
+    it('should flush pending events', async () => {
+      const logTransport = new LogTransport();
+      const queueStore = new TrackerQueueMemoryStore();
+      const trackerQueue = new TrackerQueue({ store: queueStore, concurrency: 1, batchSize: 1, batchDelayMs: 1 });
+
+      const trackerWithoutQueue = new Tracker({
+        applicationId: 'app-id',
+        transport: logTransport,
+      });
+      // Should be safe to call when no queue has been specified
+      trackerWithoutQueue.flushQueue();
+
+      const testTracker = new Tracker({
+        applicationId: 'app-id',
+        queue: trackerQueue,
+        transport: logTransport,
+      });
+
+      jest.spyOn(trackerQueue, 'processFunction');
+
+      expect(testTracker.transport?.isUsable()).toBe(true);
+
+      expect(trackerQueue.processFunction).not.toBeUndefined();
+      expect(trackerQueue.processFunction).not.toHaveBeenCalled();
+      expect(setInterval).toHaveBeenCalledTimes(1);
+
+      await testTracker.trackEvent(testEvent);
+      await testTracker.trackEvent(testEvent);
+      await testTracker.trackEvent(testEvent);
+      await testTracker.trackEvent(testEvent);
+
+      testTracker.flushQueue();
+
+      expect(queueStore.length).toBe(0);
+
+      await trackerQueue.run();
+
+      expect(trackerQueue.processingEventIds).toHaveLength(0);
+      expect(trackerQueue.processFunction).not.toHaveBeenCalled();
     });
   });
 });

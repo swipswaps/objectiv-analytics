@@ -136,4 +136,8 @@ export class TrackerQueue implements TrackerQueueInterface {
 
     return Promise.all(processPromises);
   }
+
+  async flush(): Promise<any> {
+    return this.store.clear();
+  }
 }
