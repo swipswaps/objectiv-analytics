@@ -2,7 +2,10 @@
 Copyright 2021 Objectiv B.V.
 """
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Union, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from buhtuh.pandasql import BuhTuhSeries
 
 
 @dataclass(frozen=True)
@@ -49,16 +52,19 @@ class Expression:
     data: List[ExpressionToken] = field(default_factory=list)
 
     @classmethod
-    def construct(cls, fmt: str, *args: 'Expression') -> 'Expression':
+    def construct(cls, fmt: str, *args: Union['Expression', 'BuhTuhSeries']) -> 'Expression':
         """
         Construct an Expression using a format string that can refer existing expressions.
         Every occurrence of `{}` in the fmt string will be replace with a provided expression (in order that
         they are given). All other parts of fmt will be converted to RawTokens.
+
+        As a convenience, instead of Expressions it is also possible to give BuhTuhSeries as args, in that
+        case the series's expression is taken as Expression.
+
         :param fmt: format string
-        :param args: 0 or more Expressions. Number of Expressions must exactly match number of `{}`
+        :param args: 0 or more Expressions or BuhTuhSeries. Number of args must exactly match number of `{}`
             occurrences in fmt.
         """
-        # todo: maybe use a different placeholder than {}, so as not to clash with format?
         sub_strs = fmt.split('{}')
         data = []
         if len(args) != len(sub_strs) - 1:
@@ -66,7 +72,12 @@ class Expression:
                              f'Found {{}}: {len(sub_strs) - 1}, provided expressions: {len(args)}')
         for i, sub_str in enumerate(sub_strs):
             if i > 0:
-                data.extend(args[i - 1].data)
+                arg = args[i - 1]
+                if not isinstance(arg, Expression):  # arg is a BuhTuhSeries
+                    arg_expr = arg.expression
+                else:
+                    arg_expr = arg
+                data.extend(arg_expr.data)
             if sub_str != '':
                 data.append(RawToken(raw=sub_str))
         return cls(data=data)
