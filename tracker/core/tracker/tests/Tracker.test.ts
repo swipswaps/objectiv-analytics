@@ -35,11 +35,12 @@ describe('Tracker', () => {
     expect(console.log).not.toHaveBeenCalled();
   });
 
-  it('should instantiate with tracker config', () => {
+  it('should instantiate with tracker config', async () => {
     expect(mockConsole.log).not.toHaveBeenCalled();
     const trackerConfig: TrackerConfig = { applicationId: 'app-id', console: mockConsole };
     const testTransport = new LogTransport();
     const testTracker = new Tracker({ ...trackerConfig, transport: testTransport });
+    await expect(testTracker.waitForQueue()).resolves.toBe(undefined);
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
     expect(testTracker.plugins).toEqual({
@@ -330,6 +331,7 @@ describe('Tracker', () => {
         queue: trackerQueue,
         transport: logTransport,
       });
+      await expect(testTracker.waitForQueue()).resolves.toBe(undefined);
 
       const testTrackerWithConsole = new Tracker({
         applicationId: 'app-id',
@@ -337,6 +339,7 @@ describe('Tracker', () => {
         transport: logTransport,
         console: mockConsole,
       });
+      await expect(testTracker.waitForQueue({ timeoutMs: 1, intervalMs: 1 })).resolves.toBe(undefined);
 
       jest.spyOn(trackerQueue, 'processFunction');
 
