@@ -61,7 +61,7 @@ class ReversedStringType(BuhTuhSeries):
     supported_value_types = (str,)
 
     @staticmethod
-    def value_to_sql(value: str) -> str:
+    def supported_value_to_expression(value: str) -> str:
         if not isinstance(value, str):
             raise TypeError(f'value should be str, actual type: {type(value)}')
         # TODO: fix sql injection!

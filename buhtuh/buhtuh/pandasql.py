@@ -1,5 +1,6 @@
 import datetime
 import json
+import math
 from abc import abstractmethod, ABC
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, Type, NamedTuple, TYPE_CHECKING
@@ -9,7 +10,7 @@ import numpy
 import pandas
 from sqlalchemy.engine import Engine
 
-from buhtuh.expression import Expression, quote_identifier
+from buhtuh.expression import Expression, quote_identifier, quote_string
 from buhtuh.types import get_series_type_from_dtype, value_to_dtype, get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
@@ -921,18 +922,29 @@ class BuhTuhSeries(ABC):
     @classmethod
     def supported_value_types(cls) -> Tuple[Type, ...]:
         """
-        List of python types that can be converted to database values using the `value_to_sql()` method.
+        List of python types that can be converted to database values using
+        the `supported_value_to_expression()` method.
 
-        Subclasses can override this value to indicate what types are supported by value_to_sql().
+        Subclasses can override this value to indicate what types are supported
+        by supported_value_to_expression().
         """
         return tuple()
 
     @classmethod
     @abstractmethod
-    def value_to_sql(cls, value: Any) -> str:
+    def supported_value_to_expression(cls, value: Any) -> Expression:
         """
-        Give the sql expression for the given value.
-        :return: sql expression of the value
+        Give the expression for the given value. Consider calling the wrapper value_to_expression() instead.
+
+        Implementations of this function are responsible for correctly quoting and escaping special
+        characters in the given value. Either by using ExpressionTokens that allow unsafe values (e.g.
+        StringValueToken), or by making sure that the quoting and escaping is done already on the value
+        inside the ExpressionTokens.
+
+        Implementations only need to be able to support the value specified by supported_value_types.
+
+        :param value: All values of types listed by self.supported_value_types should be supported.
+        :return: Expression representing the the value
         """
         raise NotImplementedError()
 
@@ -1081,14 +1093,34 @@ class BuhTuhSeries(ABC):
         return self._get_derived_series(new_dtype=new_dtype, expression=expression)
 
     @classmethod
+    def value_to_expression(cls, value: Optional[Any]) -> Expression:
+        """
+        Give the expression for the given value.
+        Wrapper around cls.supported_value_to_expression() that handles two generic cases:
+            If value is None a simple 'NULL' expresison is returned.
+            If value is not in supported_value_types raises an error.
+        :raises TypeError: if value is not an instance of cls.supported_value_types, and not None
+        """
+        if value is None:
+            return Expression.raw('NULL')
+        supported_types = cast(Tuple[Type, ...], cls.supported_value_types)  # help mypy
+        if not isinstance(value, supported_types):
+            raise TypeError(f'value should be one of {supported_types}'
+                            f', actual type: {type(value)}')
+        return cls.supported_value_to_expression(value)
+
+    @classmethod
     def from_const(cls,
                    base: DataFrameOrSeries,
                    value: Any,
                    name: str) -> 'BuhTuhSeries':
+        """
+        Create an instance of this class, that represents a column with the given value.
+        """
         result = cls.get_class_instance(
             base=base,
             name=name,
-            expression=Expression.raw(cls.value_to_sql(value))
+            expression=cls.value_to_expression(value)
         )
         return result
 
@@ -1302,10 +1334,10 @@ class BuhTuhSeries(ABC):
         If omitted, offset defaults to 1 and default to None
         """
         self._check_window(window)
-        default_sql = self.value_to_sql(default)
+        default_expr = self.value_to_expression(default)
         return self._window_or_agg_func(
             window,
-            Expression.construct(f'lag({{}}, {offset}, {default_sql})', self.expression),
+            Expression.construct(f'lag({{}}, {offset}, {{}})', self.expression, default_expr),
             self.dtype
         )
 
@@ -1317,10 +1349,10 @@ class BuhTuhSeries(ABC):
         If omitted, offset defaults to 1 and default to None.
         """
         self._check_window(window)
-        default_sql = self.value_to_sql(default)
+        default_expr = self.value_to_expression(default)
         return self._window_or_agg_func(
             window,
-            Expression.construct(f'lead({{}}, {offset}, {default_sql})', self.expression),
+            Expression.construct(f'lead({{}}, {offset}, {{}})', self.expression, default_expr),
             self.dtype
         )
 
@@ -1366,12 +1398,10 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
     supported_value_types = (bool, )
 
     @classmethod
-    def value_to_sql(cls, value: bool) -> str:
-        if value is None:
-            return 'NULL'
-        if not isinstance(value, cls.supported_value_types):
-            raise TypeError(f'value should be bool, actual type: {type(value)}')
-        return str(value)
+    def supported_value_to_expression(cls, value: bool) -> Expression:
+        # 'True' and 'False' are valid boolean literals in Postgres
+        # See https://www.postgresql.org/docs/14/datatype-boolean.html
+        return Expression.raw(str(value))
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
@@ -1468,13 +1498,12 @@ class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
     supported_value_types = (int, numpy.int64)
 
     @classmethod
-    def value_to_sql(cls, value: int) -> str:
-        # TODO validate this, should be part of Nullable logic?
-        if value is None:
-            return 'NULL'
-        if not isinstance(value, cls.supported_value_types):
-            raise TypeError(f'value should be int, actual type: {type(value)}')
-        return f'{value}::bigint'
+    def supported_value_to_expression(cls, value: int) -> Expression:
+        # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
+        # consistently get bigints, so always cast the result
+        # See the section on numeric constants in the Postgres documentation
+        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+        return Expression.construct('cast({} as bigint)', Expression.raw(str(value)))
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
@@ -1492,12 +1521,16 @@ class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
     supported_value_types = (float, numpy.float64)
 
     @classmethod
-    def value_to_sql(cls, value: Union[float, numpy.float64]) -> str:
-        if value is None:
-            return 'NULL'
-        if not isinstance(value, cls.supported_value_types):
-            raise TypeError(f'value should be float, actual type: {type(value)}')
-        return f'{value}::float'
+    def supported_value_to_expression(cls, value: Union[float, numpy.float64]) -> Expression:
+        # Postgres will automatically parse any number with a decimal point as a number of type `numeric`,
+        # which could be casted to float. However we specify the value always as a string, as there are some
+        # values that cannot be expressed as a numeric literal directly (NaN, infinity, and -infinity), and
+        # a value that cannot be represented as numeric (-0.0).
+        # See the sections on numeric constants, and on fLoating-point types in the Postgres documentation
+        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+        # https://www.postgresql.org/docs/14/datatype-numeric.html#DATATYPE-FLOAT
+        str_value = str(value)
+        return Expression.construct("cast({} as float)", Expression.string_value(str_value))
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
@@ -1515,13 +1548,8 @@ class BuhTuhSeriesString(BuhTuhSeries):
     supported_value_types = (str, )
 
     @classmethod
-    def value_to_sql(cls, value: str) -> str:
-        if value is None:
-            return 'NULL'
-        if not isinstance(value, cls.supported_value_types):
-            raise TypeError(f'value should be str, actual type: {type(value)}')
-        # TODO: fix sql injection!
-        return f"'{value}'"
+    def supported_value_to_expression(cls, value: str) -> Expression:
+        return Expression.string_value(value)
 
     @classmethod
     def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
@@ -1609,10 +1637,12 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
     supported_value_types = (UUID, str)
 
     @classmethod
-    def value_to_sql(cls, value: UUID) -> str:
-        if not isinstance(value, cls.supported_value_types):
-            raise TypeError(f'value should be uuid, actual type: {type(value)}')
-        return f"cast('{value}' as uuid)"
+    def supported_value_to_expression(cls, value: Union[UUID, str]) -> Expression:
+        if isinstance(value, str):
+            # Check that the string value is a valid UUID by converting it to a UUID
+            value = UUID(value)
+        uuid_as_str = str(value)
+        return Expression.construct('cast({} as uuid)', Expression.string_value(uuid_as_str))
 
     @classmethod
     def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
@@ -1688,13 +1718,9 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
         self.json = Json(self)
 
     @classmethod
-    def value_to_sql(cls, value: Union[dict, list]) -> str:
-        if not isinstance(value, cls.supported_value_types):
-            raise TypeError(f'value should be dict, actual type: {type(value)}')
+    def supported_value_to_expression(cls, value: Union[dict, list]) -> Expression:
         json_value = json.dumps(value)
-        escaped_json_value = json_value.replace("'", "''")
-        print(escaped_json_value)
-        return f"cast('{escaped_json_value}' as jsonb)"
+        return Expression.construct('cast({} as jsonb)', Expression.string_value(json_value))
 
     @classmethod
     def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
@@ -1755,16 +1781,12 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
-    def value_to_sql(cls, value: Union[str, datetime.datetime]) -> str:
-        if value is None:
-            return 'NULL'
-        if isinstance(value, datetime.date):
-            value = str(value)
-        if not isinstance(value, str):
-            raise TypeError(f'value should be str or datetime.datetime, actual type: {type(value)}')
-        # TODO: fix sql injection!
-        # Maybe we should do some checking on syntax here?
-        return f"'{value}'::{BuhTuhSeriesTimestamp.supported_db_dtype}"
+    def supported_value_to_expression(cls, value: Union[str, datetime.datetime]) -> Expression:
+        value = str(value)
+        # TODO: check here already that the string has the correct format
+        return Expression.construct(
+            f'cast({{}} as {cls.supported_db_dtype})', Expression.string_value(value)
+        )
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
@@ -1809,16 +1831,13 @@ class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
-    def value_to_sql(cls, value: Union[str, datetime.date]) -> str:
-        if value is None:
-            return 'NULL'
+    def supported_value_to_expression(cls, value: Union[str, datetime.date]) -> Expression:
         if isinstance(value, datetime.date):
             value = str(value)
-        if not isinstance(value, str):
-            raise TypeError(f'value should be str or datetime.date, actual type: {type(value)}')
-        # TODO: fix sql injection!
-        # Maybe we should do some checking on syntax here?
-        return f"'{value}'::{BuhTuhSeriesDate.supported_db_dtype}"
+        # TODO: check here already that the string has the correct format
+        return Expression.construct(
+            f'cast({{}} as {cls.supported_db_dtype})', Expression.string_value(value)
+        )
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
@@ -1841,16 +1860,12 @@ class BuhTuhSeriesTime(BuhTuhSeries):
     supported_value_types = (datetime.time, str)
 
     @classmethod
-    def value_to_sql(cls, value: Union[str, datetime.time]) -> str:
-        if value is None:
-            return 'NULL'
-        if isinstance(value, datetime.time):
-            value = str(value)
-        if not isinstance(value, str):
-            raise TypeError(f'value should be str or datetime.time, actual type: {type(value)}')
-        # TODO: fix sql injection!
-        # Maybe we should do some checking on syntax here?
-        return f"'{value}'::{BuhTuhSeriesTime.supported_db_dtype}"
+    def supported_value_to_expression(cls, value: Union[str, datetime.time]) -> Expression:
+        value = str(value)
+        # TODO: check here already that the string has the correct format
+        return Expression.construct(
+            f'cast({{}} as {cls.supported_db_dtype})', Expression.string_value(value)
+        )
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
@@ -1875,17 +1890,15 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
     supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
 
     @classmethod
-    def value_to_sql(cls, value: Union[str, numpy.timedelta64, datetime.timedelta]) -> str:
-        if value is None:
-            return 'NULL'
-        if isinstance(value, (numpy.timedelta64, datetime.timedelta)):
-            value = str(value)
-        if not isinstance(value, str):
-            raise TypeError(f'value should be str or (numpy.timedelta64, datetime.timedelta), '
-                            f'actual type: {type(value)}')
-        # TODO: fix sql injection!
-        # Maybe we should do some checking on syntax here?
-        return f"'{value}'::{BuhTuhSeriesTimedelta.supported_db_dtype}"
+    def supported_value_to_expression(
+            cls,
+            value: Union[str, numpy.timedelta64, datetime.timedelta]
+    ) -> Expression:
+        value = str(value)
+        # TODO: check here already that the string has the correct format
+        return Expression.construct(
+            f'cast({{}} as {cls.supported_db_dtype})', Expression.string_value(value)
+        )
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:

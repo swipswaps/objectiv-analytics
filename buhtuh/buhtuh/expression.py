@@ -27,6 +27,7 @@ class ColumnReferenceToken(ExpressionToken):
 
 @dataclass(frozen=True)
 class StringValueToken(ExpressionToken):
+    """ Wraps a string value. The value in this object is unescaped and unquoted. """
     value: str
 
 
@@ -77,7 +78,10 @@ class Expression:
 
     @classmethod
     def string_value(cls, value: str) -> 'Expression':
-        """ Return an expression that contains a single string constant. """
+        """
+        Return an expression that contains a single StringValueToken with the value.
+        :param value: unquoted, unescaped string value.
+        """
         return Expression([StringValueToken(value)])
 
     @classmethod
