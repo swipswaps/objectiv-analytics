@@ -54,7 +54,7 @@ def test_rename():
     assert 'fnd' in nbt.data.keys()
     assert 'founding' in bt.data.keys()
     assert 'fnd' not in bt.data.keys()
-    assert bt.founding.get_expression() == nbt.fnd.get_expression()
+    assert bt.founding.expression == nbt.fnd.expression
 
     # rename to self
     bt = get_bt_with_test_data()
@@ -64,21 +64,21 @@ def test_rename():
 
     # swap
     bt = get_bt_with_test_data()
-    expr_inhabitants = bt.inhabitants.get_expression()
-    expr_city = bt.city.get_expression()
+    expr_inhabitants = bt.inhabitants.expression
+    expr_city = bt.city.expression
     nbt = bt.rename(columns={'city': 'inhabitants', 'inhabitants': 'city'})
     assert 'city' in nbt.data.keys()
     assert 'inhabitants' in nbt.data.keys()
-    assert nbt.city.get_expression() == expr_inhabitants
-    assert nbt.inhabitants.get_expression() == expr_city
+    assert nbt.city.expression == expr_inhabitants
+    assert nbt.inhabitants.expression == expr_city
 
-    expr = bt.founding.get_expression()
+    expr = bt.founding.expression
     nbt = bt.rename(columns={'founding': 'fnd'}, inplace=True)
     assert 'founding' not in nbt.data.keys()
     assert 'fnd' in nbt.data.keys()
     assert 'founding' not in bt.data.keys()
     assert 'fnd' in bt.data.keys()
-    assert bt.fnd.get_expression() == expr
+    assert bt.fnd.expression == expr
 
     # multiple
     bt = get_bt_with_test_data()
@@ -109,12 +109,12 @@ def test_rename():
     assert 'ytic' not in bt.data.keys()
 
     # mapper func no rename
-    expr = bt.city.get_expression()
+    expr = bt.city.expression
     bt = get_bt_with_test_data()
     nbt = bt.rename(mapper=lambda x: x, axis = 1)
     assert 'city' in nbt.data.keys()
     assert 'city' in bt.data.keys()
-    assert bt.city.get_expression() == expr
+    assert bt.city.expression == expr
 
     bt.rename(columns={'non existing column': 'new name'}, errors='ignore')
 
@@ -205,9 +205,9 @@ def test_get_df_materialized_model():
     # have an expression that's simply the name of the column for all data columns, as the complex expression
     # has been moved to the new underlying base_node.
     for series in bt.data.values():
-        assert series.get_expression() != f'"{series.name}"'
+        assert series.expression.to_sql() != f'"{series.name}"'
     for series in bt_materialized.data.values():
-        assert series.get_expression() == f'"{series.name}"'
+        assert series.expression.to_sql() == f'"{series.name}"'
 
     # The materialized graph should have one extra node
     node_info_orig = get_graph_nodes_info(bt.get_current_node())

@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from buhtuh import BuhTuhSeries, Expression
+from buhtuh.expression import quote_string
 from buhtuh.types import register_dtype, get_series_type_from_dtype, value_to_dtype, TypeRegistry
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
@@ -60,12 +61,9 @@ class ReversedStringType(BuhTuhSeries):
     supported_db_dtype = 'text'
     supported_value_types = (str,)
 
-    @staticmethod
-    def value_to_sql(value: str) -> str:
-        if not isinstance(value, str):
-            raise TypeError(f'value should be str, actual type: {type(value)}')
-        # TODO: fix sql injection!
-        return f"'{reversed(value)}'"
+    @classmethod
+    def supported_value_to_expression(cls, value: str) -> Expression:
+        return Expression.string_value(str(reversed(value)))
 
     @staticmethod
     def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:

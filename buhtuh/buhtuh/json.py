@@ -15,7 +15,7 @@ class Json:
         if isinstance(key, int):
             return self._series_object._get_derived_series(
                 'jsonb',
-                Expression.construct(f'{{}}->{key}', self._series_object.expression)
+                Expression.construct(f'{{}}->{key}', self._series_object)
             )
         if isinstance(key, slice):
             expression_references = 0
@@ -67,7 +67,7 @@ class Json:
                 'jsonb',
                 Expression.construct(
                     combined_expression,
-                    *([self._series_object.expression] * expression_references)
+                    *([self._series_object] * expression_references)
                 ))
         TypeError(f'key should be int or slice, actual type: {type(key)}')
 
@@ -80,10 +80,7 @@ class Json:
         if as_str:
             return_as_string_operator = '>'
             return_dtype = 'string'
-        expression = Expression.construct(
-            f"{{}}->{return_as_string_operator}'{key}'",
-            self._series_object.expression
-        )
+        expression = Expression.construct(f"{{}}->{return_as_string_operator}'{key}'", self._series_object)
         return self._series_object._get_derived_series(return_dtype, expression)
 
     # objectiv features below:
@@ -93,7 +90,7 @@ class Json:
             f"""(select (array_agg(value->>'cookie_id'))[1]
             from jsonb_array_elements({{}})
             where value ->> '_type' = 'CookieIdContext')""",
-            self._series_object.expression
+            self._series_object
         )
         return self._series_object._get_derived_series('string', expression)
 
@@ -103,7 +100,7 @@ class Json:
             f"""(select (array_agg(value->>'user_agent'))[1]
             from jsonb_array_elements({{}})
             where value ->> '_type' = 'HttpContext')""",
-            self._series_object.expression
+            self._series_object
         )
         return self._series_object._get_derived_series('string', expression)
 
@@ -131,10 +128,10 @@ class Json:
             from jsonb_array_elements({{}}) with ordinality
             where ordinality = jsonb_array_length({{}})
             ) else '' end""",
-            self._series_object.expression,
-            self._series_object.expression,
-            self._series_object.expression,
-            self._series_object.expression,
-            self._series_object.expression
+            self._series_object,
+            self._series_object,
+            self._series_object,
+            self._series_object,
+            self._series_object
         )
         return self._series_object._get_derived_series('string', expression)

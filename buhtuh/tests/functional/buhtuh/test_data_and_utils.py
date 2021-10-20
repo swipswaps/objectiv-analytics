@@ -131,6 +131,7 @@ def assert_equals_data(
     """
     Execute sql of ButTuhDataFrame/Series, with the given order_by, and make sure the result matches
     the expected columns and data.
+    :return: the values queried from the database
     """
     if len(expected_data) == 0:
         raise ValueError("Cannot check data if 0 rows are expected.")
@@ -148,6 +149,7 @@ def assert_equals_data(
     for i, df_row in enumerate(db_values):
         expected_row = expected_data[i]
         assert df_row == expected_row, f'row {i} is not equal: {expected_row} != {df_row}'
+    return db_values
 
 
 def assert_db_type(
