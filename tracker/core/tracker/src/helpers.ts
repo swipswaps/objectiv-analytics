@@ -24,7 +24,7 @@ export const generateUUID = () => uuid();
 
 /**
  * Executes the given predicate every `intervalMs` for a maximum of `timeoutMs`.
- * It resolves if the predicate returns true. Rejects if `maxWaitMs` is reached.
+ * It resolves if the predicate returns true. Rejects if `timeoutMs` is reached.
  */
 export const waitForPromise = async ({
   predicate,
