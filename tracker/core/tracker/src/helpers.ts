@@ -45,21 +45,21 @@ export const waitForPromise = async ({
   let pollingTimer: ReturnType<typeof setTimeout>;
 
   // A promise that will resolve when `predicate` is truthy. It polls every `intervalMs`.
-  const isIdlePromiseResolver = (resolve: Function) => {
+  const resolutionPromiseResolver = (resolve: Function) => {
     if (predicate()) {
       resolve();
     } else {
       clearTimeout(pollingTimer);
-      pollingTimer = setTimeout(() => isIdlePromiseResolver(resolve), intervalMs);
+      pollingTimer = setTimeout(() => resolutionPromiseResolver(resolve), intervalMs);
     }
   };
-  const isIdlePromise = new Promise<void>(isIdlePromiseResolver);
+  const resolutionPromise = new Promise<void>(resolutionPromiseResolver);
 
   // A promise that will reject after its timeout reaches `intervalMs`.
   const timeoutPromise = new Promise((_resolve, reject) => (timeoutTimer = setTimeout(reject, timeoutMs)));
 
-  // Race `predicate` polling against the timeoutPromise. Either the predicate resolves first or we reject on timeout.
-  return Promise.race([timeoutPromise, isIdlePromise]).finally(() => {
+  // Race resolutionPromise against the timeoutPromise. Either the predicate resolves first or we reject on timeout.
+  return Promise.race([timeoutPromise, resolutionPromise]).finally(() => {
     clearTimeout(pollingTimer);
     clearTimeout(timeoutTimer);
   });
