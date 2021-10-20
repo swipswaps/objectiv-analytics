@@ -466,7 +466,6 @@ class BuhTuhDataFrame:
                index: Union[Dict[str, str], Callable[[str], str]] = None,
                columns: Union[Dict[str, str], Callable[[str], str]] = None,
                axis: int = 0,
-               copy: bool = True,
                inplace: bool = False,
                level: int = None,
                errors: str = 'ignore'):
@@ -476,11 +475,11 @@ class BuhTuhDataFrame:
         :param: columns: dict str:str to rename columns, or a function that takes column
             names as an argument and returns the new one.
         :param: axis: axis = 1 is supported, rest is not.
-        :param: copy:  copy the column, or really rename
         :param: inplace: update this df or make a copy first
         :param: level: not supported
         :param: errors: whether to raise or ignore errors. Errors throw in the mapper function
             are not suppressed.
+        :note: copy parameter is not supported since it makes very little sense for db backed series
         """
         if level is not None or\
             index is not None or\
@@ -495,31 +494,31 @@ class BuhTuhDataFrame:
         else:
             df = self.copy_override()
 
-        if isinstance(columns, dict):
-            for f, t in columns.items():
-                if f == t:
-                    continue
-                try:
-                    df[t] = cast('BuhTuhSeries', df[f])
-                    if not copy:
-                        del(df[f])
-                except Exception as e:
-                    if errors == "raise":
-                        raise e
-        elif callable(columns):
-            for f in df.data_columns:
-                t = columns(f)
-                if f == t:
-                    continue
-                try:
-                    df[t] = cast('BuhTuhSeries', df[f])
-                    if not copy:
-                        del(df[f])
-                except Exception as e:
-                    if errors == "raise":
-                        raise e
-        else:
+        if callable(columns):
+            columns = {source: columns(source) for source in df.data_columns}
+
+        if not isinstance(columns, dict):
             raise TypeError(f'unsupported argument type for columns or mappers: {type(columns)}')
+
+        # copy, remove, add strategy to support swaps
+        copies: Dict[str, 'BuhTuhSeries'] = {}
+        for source, target in columns.items():
+            if source == target:
+                continue
+            try:
+                copies[target] = cast('BuhTuhSeries', df[source])
+                del(df[source])
+            except Exception as e:
+                if errors == "raise":
+                    raise e
+
+        for target, series in copies.items():
+            try:
+                df[target] = series
+            except Exception as e:
+                if errors == "raise":
+                    raise e
+
         return df
 
     def __delitem__(self, key: str):
