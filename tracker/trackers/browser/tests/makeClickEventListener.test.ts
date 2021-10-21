@@ -1,9 +1,9 @@
 import { makeButtonContext, makeClickEvent } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, makeTracker } from '../src/';
-import { makeClickEventListener } from '../src/observer/makeClickEventListener';
+import { makeClickEventHandler } from '../src/observer/makeClickEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-describe('makeClickEventListener', () => {
+describe('makeClickEventHandler', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     makeTracker({ applicationId: 'test', endpoint: 'test' });
@@ -13,7 +13,7 @@ describe('makeClickEventListener', () => {
 
   it('should track Button Click when invoked from a valid target', () => {
     const trackedButton = makeTaggedElement('button', null, 'button');
-    const clickEventListener = makeClickEventListener(trackedButton, getTracker());
+    const clickEventListener = makeClickEventHandler(trackedButton, getTracker());
 
     trackedButton.addEventListener('click', clickEventListener);
     trackedButton.dispatchEvent(new MouseEvent('click'));
@@ -25,7 +25,7 @@ describe('makeClickEventListener', () => {
   it('should not track Div Click when invoked from a bubbling target', () => {
     const trackedButton = makeTaggedElement('button', null, 'button');
     const trackedDiv = makeTaggedElement('div', null, 'div');
-    const divClickEventListener = jest.fn(makeClickEventListener(trackedDiv, getTracker()));
+    const divClickEventListener = jest.fn(makeClickEventHandler(trackedDiv, getTracker()));
 
     trackedDiv.addEventListener('click', divClickEventListener);
     trackedButton.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -38,7 +38,7 @@ describe('makeClickEventListener', () => {
     const span = document.createElement('span');
     const trackedButton = makeTaggedElement('button', 'button', 'button', false);
     trackedButton.appendChild(span);
-    const buttonClickEventListener = jest.fn(makeClickEventListener(trackedButton, getTracker()));
+    const buttonClickEventListener = jest.fn(makeClickEventHandler(trackedButton, getTracker()));
 
     trackedButton.addEventListener('click', buttonClickEventListener);
     span.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -51,7 +51,7 @@ describe('makeClickEventListener', () => {
     const span = document.createElement('span');
     const trackedButton = makeTaggedElement('button', 'button', 'button', true);
     trackedButton.appendChild(span);
-    const buttonClickEventListener = jest.fn(makeClickEventListener(trackedButton, getTracker()));
+    const buttonClickEventListener = jest.fn(makeClickEventHandler(trackedButton, getTracker()));
 
     trackedButton.addEventListener('click', buttonClickEventListener);
     span.dispatchEvent(new MouseEvent('click', { bubbles: true }));

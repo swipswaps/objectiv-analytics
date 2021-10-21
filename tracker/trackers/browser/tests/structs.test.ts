@@ -198,6 +198,7 @@ describe('Custom structs', () => {
             [TaggingAttribute.parentElementId]: undefined,
             [TaggingAttribute.trackBlurs]: undefined,
             [TaggingAttribute.trackClicks]: undefined,
+            [TaggingAttribute.waitUntilTracked]: undefined,
           },
         }))
       );

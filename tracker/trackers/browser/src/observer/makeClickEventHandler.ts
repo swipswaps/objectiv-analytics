@@ -4,9 +4,9 @@ import { trackClick } from '../tracker/trackEventHelpers';
 import { isTaggedElement, TaggedElement } from '../typeGuards';
 
 /**
- * A factory to make the event listener to attach to new TaggedElements with the `trackClicks` attributes set
+ * A factory to make the event handler to attach to new TaggedElements with the `trackClicks` attributes set
  */
-export const makeClickEventListener = (element: TaggedElement, tracker: BrowserTracker) => (event: Event) => {
+export const makeClickEventHandler = (element: TaggedElement, tracker: BrowserTracker) => (event: Event) => {
   if (
     // Either the Event's target is the TaggedElement itself
     event.target === element ||

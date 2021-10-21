@@ -2,8 +2,9 @@ import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
-import { makeBlurEventListener } from './makeBlurEventListener';
-import { makeClickEventListener } from './makeClickEventListener';
+import { makeBlurEventHandler } from './makeBlurEventHandler';
+import { makeClickEventHandler } from './makeClickEventHandler';
+import { makeFlushQueueEventHandler } from "./makeFlushQueueEventHandler";
 import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
 
 /**
@@ -27,12 +28,16 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
 
       // Click tracking (buttons, links)
       if (element.getAttribute(TaggingAttribute.trackClicks) === 'true') {
-        element.addEventListener('click', makeClickEventListener(element, tracker), { passive: true });
+        // Determine if this element Event needs an extra event handler to wait for the Tracker Queue or flush it
+        if (element.hasAttribute(TaggingAttribute.waitUntilTracked)) {
+          element.addEventListener('click', makeFlushQueueEventHandler(element, tracker), true);
+        }
+        element.addEventListener('click', makeClickEventHandler(element, tracker), { passive: true });
       }
 
       // Blur tracking (inputs)
       if (element.getAttribute(TaggingAttribute.trackBlurs) === 'true') {
-        element.addEventListener('blur', makeBlurEventListener(element, tracker), { passive: true });
+        element.addEventListener('blur', makeBlurEventHandler(element, tracker), { passive: true });
       }
     }
   } catch (error) {

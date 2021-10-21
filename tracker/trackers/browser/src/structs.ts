@@ -97,6 +97,7 @@ export const TaggingAttributes = object({
   [TaggingAttribute.trackClicks]: optional(boolean()),
   [TaggingAttribute.trackBlurs]: optional(boolean()),
   [TaggingAttribute.trackVisibility]: optional(TaggingAttributeVisibility),
+  [TaggingAttribute.waitUntilTracked]: optional(boolean()),
 });
 export type TaggingAttributes = Infer<typeof TaggingAttributes>;
 
@@ -110,6 +111,7 @@ export const StringifiedTaggingAttributes = object({
   [TaggingAttribute.trackClicks]: optional(StringBoolean),
   [TaggingAttribute.trackBlurs]: optional(StringBoolean),
   [TaggingAttribute.trackVisibility]: optional(string()),
+  [TaggingAttribute.waitUntilTracked]: optional(StringBoolean),
 });
 export type StringifiedTaggingAttributes = Infer<typeof StringifiedTaggingAttributes>;
 

@@ -39,6 +39,7 @@ export const TagLocationOptions = object({
   trackBlurs: optional(boolean()),
   trackVisibility: optional(TaggingAttributeVisibility),
   parent: TagLocationReturnValue,
+  waitUntilTracked: optional(boolean()),
 });
 export type TagLocationOptions = Infer<typeof TagLocationOptions>;
 
@@ -67,10 +68,16 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
     const isSection = is(instance, AnySectionContext);
 
     // Process options. Gather default attribute values
-    const trackClicks = options?.trackClicks ?? (isClickable ? true : undefined);
-    const trackBlurs = options?.trackBlurs ?? (isInput ? true : undefined);
-    const trackVisibility = options?.trackVisibility ?? (isSection ? { mode: 'auto' } : undefined);
-    const parentElementId = options?.parent ? options.parent[TaggingAttribute.elementId] : undefined;
+    const {
+      trackClicks = isClickable ? true : undefined,
+      trackBlurs = isInput ? true : undefined,
+      trackVisibility = isSection ? { mode: 'auto' } : undefined,
+      parent,
+      waitUntilTracked,
+    } = options ?? {};
+
+    // Get elementId from parent, if possible
+    const parentElementId = parent ? parent[TaggingAttribute.elementId] : undefined;
 
     // Create output attributes object
     const taggingAttributes = {
@@ -80,6 +87,7 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
       [TaggingAttribute.trackClicks]: runIfNotUndefined(stringifyBoolean, trackClicks),
       [TaggingAttribute.trackBlurs]: runIfNotUndefined(stringifyBoolean, trackBlurs),
       [TaggingAttribute.trackVisibility]: runIfNotUndefined(stringifyVisibilityAttribute, trackVisibility),
+      [TaggingAttribute.waitUntilTracked]: runIfNotUndefined(stringifyBoolean, waitUntilTracked),
     };
 
     // Validate

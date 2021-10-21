@@ -25,4 +25,7 @@ export enum TaggingAttribute {
 
   // Set to `true` by the Mutation Observer when an Element has been processed for auto-tracking
   tracked = 'data-objectiv-tracked',
+
+  // Instructs the Mutation Observer to attach a non-passive blocking event
+  waitUntilTracked = 'data-objectiv-wait-until-tracked',
 }
