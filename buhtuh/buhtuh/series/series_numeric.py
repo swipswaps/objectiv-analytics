@@ -49,13 +49,15 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
         expression = Expression.construct('cast({} as bigint) / ({})', self, other)
         return self._get_derived_series('int64', expression)
 
-    def round(self, decimals=0):
+    def round(self, decimals: int = 0):
         return self._get_derived_series(
             self.dtype,
+            # cast to numeric, as double precision values can not be rounded
+            # if you round, you don't care about precision anyway ;)
             Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
 
-    def _ddof_unsupported(self, ddof):
+    def _ddof_unsupported(self, ddof: float):
         if ddof is not None and ddof != 1:
             raise NotImplementedError("ddof != 1 currently not implemented")
 

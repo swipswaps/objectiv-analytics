@@ -463,6 +463,9 @@ class BuhTuhSeries(ABC):
     def fillna(self, constant_value):
         """
         Fill any n/a or NULL value with the given constant
+        :param constant_value: the value to replace the na / NULL values with. Should be a supported
+            type by the series, or a TypeError is raised.
+        :note: you can replace None with None, have fun, forever!
         """
         return self._get_derived_series(
             self.dtype,
