@@ -76,10 +76,13 @@ JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
 
 
 def _get_bt(table, dataset, columns, convert_objects) -> BuhTuhDataFrame:
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     import pandas as pd
     df = pd.DataFrame.from_records(dataset, columns=columns)
-    df.set_index(columns[0], drop=False, inplace=True)
+    return get_from_df(table, df, convert_objects)
+
+
+def get_from_df(table, df, convert_objects = True):
+    df.set_index(df.columns[0], drop=False, inplace=True)
 
     if 'moment' in df.columns:
         df['moment'] = df['moment'].astype('datetime64')
@@ -87,6 +90,7 @@ def _get_bt(table, dataset, columns, convert_objects) -> BuhTuhDataFrame:
     if 'date' in df.columns:
         df['date'] = df['date'].astype('datetime64')
 
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
     buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects, if_exists='replace')
     return buh_tuh
 

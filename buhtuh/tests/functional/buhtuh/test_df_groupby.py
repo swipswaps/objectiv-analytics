@@ -220,6 +220,7 @@ def test_dataframe_agg():
             'inhabitants_nunique': 'int64'
         }
 
+
 def test_dataframe_agg_numeric_only():
     bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants']]
     with pytest.raises(AttributeError):
@@ -240,6 +241,16 @@ def test_dataframe_agg_numeric_only():
         assert result_bt.dtypes == {
             'inhabitants_sum': 'int64'
         }
+
+
+def test_series_agg():
+    bt = get_bt_with_test_data(full_data_set=True)
+    s = bt['inhabitants']
+    assert s.agg('sum').head().iloc[0,0] == 187325
+
+    with pytest.raises(NotImplementedError):
+        # direct call to sum not supported until we implement some sort of scalar wrapper.
+        assert s.sum().head().iloc[0,0] == 187325
 
 
 def test_cube_basics():

@@ -49,20 +49,68 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
         expression = Expression.construct('cast({} as bigint) / ({})', self, other)
         return self._get_derived_series('int64', expression)
 
-    def sum(self, partition: 'BuhTuhGroupBy' = None):
+    def _ddof_unsupported(self, ddof):
+        if ddof is not None and ddof != 1:
+            raise NotImplementedError("ddof != 1 currently not implemented")
+
+    def kurt(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        return self.kurtosis(partition, skipna)
+
+    def kurtosis(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        raise NotImplementedError("kurtosis currently not implemented")
+
+    def mad(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        raise NotImplementedError("mad currently not implemented")
+
+    def prod(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        return self.product(partition, skipna)
+
+    def product(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        self._skipna_unsupported(skipna)
+
+        # https://stackoverflow.com/questions/13156055/product-aggregate-in-postgresql
+        # horrible solution, but best we have until we support custom defined aggregates
         return self._window_or_agg_func(
             partition,
-            Expression.construct('sum({})', self),
-            self.dtype
+            Expression.construct(f'exp(sum(ln({{}})))', self)
         )
 
-    def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesFloat64':
-        result = self._window_or_agg_func(
+    def skew(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        raise NotImplementedError("skew currently not implemented")
+
+    def sem(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True, ddof: float = None):
+        self._skipna_unsupported(skipna)
+        self._ddof_unsupported(ddof)
+
+        return self._window_or_agg_func(
             partition,
-            Expression.construct('avg({})', self),
-            'double precision'
+            Expression.construct(f'{{}}/sqrt({{}})',
+                                 self.std(partition, skipna=skipna, ddof=ddof),
+                                 self.count(partition, skipna=skipna))
         )
-        return cast('BuhTuhSeriesFloat64', result)
+
+    def std(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True, ddof: float = None):
+        # sample standard deviation of the input values
+        self._ddof_unsupported(ddof)
+        return self._derived_agg_func(partition, 'stddev_samp', skipna=skipna)
+
+    def sum(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True, min_count: int = None):
+        if min_count is not None:
+            return self._window_or_agg_func(
+                partition,
+                Expression.construct(f'CASE WHEN {{}} >= {min_count} THEN {{}} ELSE NULL END',
+                                     self.count(partition, skipna=skipna),
+                                     self._derived_agg_func(partition, 'sum', skipna=skipna)))
+        else:
+            return self._derived_agg_func(partition, 'sum', skipna=skipna)
+
+    def mean(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True) -> 'BuhTuhSeriesFloat64':
+        return self._derived_agg_func(partition, 'avg', 'double precision', skipna=skipna)
+
+    def var(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True, ddof: float = None):
+        # sample variance of the input values (square of the sample standard deviation)
+        self._ddof_unsupported(ddof)
+        return self._derived_agg_func(partition, 'var_samp', skipna=skipna)
 
 
 class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):

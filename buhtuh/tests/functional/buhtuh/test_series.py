@@ -1,6 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import pytest
+
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list
 
 
@@ -47,3 +49,14 @@ def test_type_agnostic_aggregation_functions():
         'index': 'int64'
     }
     assert result_bt.dtypes == result_series_dtypes
+
+
+def test_dataframe_agg_skipna_parameter():
+    # test full parameter traversal
+    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+
+    series_agg = ['count', 'max', 'median', 'min', 'mode', 'nunique']
+    for agg in series_agg:
+        with pytest.raises(NotImplementedError):
+            # currently not supported anywhere, so needs to raise
+            bt.agg(agg, skipna=False)
