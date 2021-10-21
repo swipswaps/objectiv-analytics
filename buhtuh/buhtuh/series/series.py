@@ -313,6 +313,22 @@ class BuhTuhSeries(ABC):
             self.expression == other.expression and \
             self._sorted_ascending == other._sorted_ascending
 
+    def __getitem__(self, key: Union[Any, slice]):
+        if isinstance(key, slice):
+            raise NotImplementedError("index slices currently not supported")
+
+        # any other value we treat as a literal index lookup
+        # multiindex not supported atm
+        if self.index is None:
+            raise Exception('Function not supported on Series without index')
+        if len(self.index) != 1:
+            raise NotImplementedError('Index only implemented for simple indexes.')
+        series = self.to_frame()[list(self.index.values())[0] == key]
+        assert isinstance(series, self.__class__)
+
+        # this is massively ugly
+        return series.head(1).astype(series.dtype).values[0]
+
     # Below methods are not abstract, as they can be optionally be implemented by subclasses.
     def __add__(self, other) -> 'BuhTuhSeries':
         raise NotImplementedError()
@@ -374,22 +390,6 @@ class BuhTuhSeries(ABC):
 
     def __gt__(self, other) -> 'BuhTuhSeriesBoolean':
         return self._comparator_operator(other, ">")
-
-    def __getitem__(self, key: Union[Any, slice]):
-        if isinstance(key, slice):
-            raise NotImplementedError("index slices currently not supported")
-
-        # any other value we treat as a literal index lookup
-        # multiindex not supported atm
-        if self.index is None:
-            raise Exception('Function not supported on Series without index')
-        if len(self.index) != 1:
-            raise NotImplementedError('Index only implemented for simple indexes.')
-        series = self.to_frame()[list(self.index.values())[0] == key]
-        assert isinstance(series, self.__class__)
-
-        # this is massively ugly
-        return series.head(1).astype(series.dtype).values[0]
 
     def aggregate(self,
                   func: Union[str, Callable, List[Union[str, Callable]]],
@@ -460,8 +460,17 @@ class BuhTuhSeries(ABC):
             self.dtype if dtype is None else dtype
         )
 
-    # Maybe the aggregation methods should be defined on a more subclass of the actual Series call
-    # so we can be more restrictive in calling these.
+    def fillna(self, constant_value):
+        """
+        Fill any n/a or NULL value with the given constant
+        """
+        return self._get_derived_series(
+            self.dtype,
+            Expression.construct('COALESCE({}, {})', self, self.value_to_expression(constant_value))
+        )
+
+    # If these aggregation methods are called with partition = None, we should return a single
+    # value. TODO
     def count(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
         return self._derived_agg_func(partition, 'count', 'int64', skipna=skipna)
 
@@ -494,9 +503,7 @@ class BuhTuhSeries(ABC):
 
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
-    # TODO make group_by optional, but for that we need some way to access the series' underlying
-    #      df to access sorting
-
+    # TODO make group_by optional, but for that we need to use current series sorting
     def _check_window(self, partition: Any):
         """
         Validate that the given partition is a true BuhTuhWindow or raise an exception

@@ -2,8 +2,17 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import buhtuh
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, get_from_df
+
+
+def test_round():
+    values = [ 1.9, 3.0, 4.123, 6.425124, 2.00000000001, 2.1, np.nan, 7.]
+    pdf = pd.DataFrame(data=values)
+    bt = get_from_df('test_round', pdf)
+    for i in 0, 3, 5, 9:
+        np.testing.assert_equal(pdf[0].round(i).values, bt['0'].round(i).head(10).values)
+        np.testing.assert_equal(pdf[0].round(decimals=i).values, bt['0'].round(decimals=i).head(10).values)
+
 
 
 def test_dataframe_agg_skipna_parameter():

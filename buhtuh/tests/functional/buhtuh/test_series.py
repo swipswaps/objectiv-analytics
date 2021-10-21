@@ -1,9 +1,12 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import numpy as np
+import pandas as pd
 import pytest
 
-from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list
+from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
+    get_from_df
 
 
 def test_series_sort_values():
@@ -19,6 +22,25 @@ def test_series_sort_values():
             expected_columns=['_index_skating_order', 'city'],
             expected_data=df_to_list(bt.to_df()['city'].sort_values(**kwargs))
         )
+
+
+def test_fillna():
+    values = [1, np.nan, 3, np.nan, 7]
+    pdf = pd.DataFrame(data=values)
+    bt = get_from_df('test_fillna', pdf)
+    tf = lambda x: \
+        np.testing.assert_equal(pdf[0].fillna(x).values, bt['0'].fillna(x).head(10).values)
+
+    assert(bt['0'].dtype == 'float64')
+    tf(1.25)
+    tf(float(99))
+    tf(np.nan)
+
+    # pandas allows this, but we can't
+    for val in [int(99), 'nope']:
+        with pytest.raises(TypeError):
+            bt['0'].fillna(val)
+
 
 
 def test_type_agnostic_aggregation_functions():
