@@ -63,9 +63,11 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
     if title == 'index':
         sidebar_label = 'Introduction'
         sidebar_position = 1
+        slug = '/buhtuh'
     else:
         sidebar_label = title
         sidebar_position = 99
+        slug = f'/buhtuh/{title}'
 
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
@@ -73,6 +75,7 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
         f"""---
 id: {title}
 hide_title: true
+slug: {slug}
 sidebar_position: {sidebar_position}
 sidebar_label: {sidebar_label}
 ---
