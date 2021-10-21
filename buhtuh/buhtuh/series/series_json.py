@@ -10,7 +10,7 @@ from buhtuh.json import Json
 from sql_models.model import SqlModel
 
 if TYPE_CHECKING:
-    from buhtuh import BuhTuhSeriesBoolean
+    from buhtuh.series import BuhTuhSeriesBoolean
 
 
 class BuhTuhSeriesJsonb(BuhTuhSeries):
