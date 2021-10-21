@@ -41,7 +41,6 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
             return Expression.construct(f'({{}}::{BuhTuhSeriesTimestamp.supported_db_dtype})', expression)
 
     def _comparator_operator(self, other, comparator):
-        from buhtuh.series import const_to_series
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['timestamp', 'date', 'string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
@@ -58,7 +57,6 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
         return self._get_derived_series('string', expr)
 
     def __sub__(self, other) -> 'BuhTuhSeriesTimestamp':
-        from buhtuh.series import const_to_series
         other = const_to_series(base=self, value=other)
         self._check_supported('sub', ['timestamp', 'date', 'time'], other)
         expression = Expression.construct('({}) - ({})', self, other)
@@ -150,7 +148,6 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
             return Expression.construct('cast({} as interval)', expression)
 
     def _comparator_operator(self, other, comparator):
-        from buhtuh.series import const_to_series
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['timedelta', 'date', 'time', 'string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
