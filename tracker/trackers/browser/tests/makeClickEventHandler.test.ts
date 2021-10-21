@@ -1,4 +1,4 @@
-import { makeButtonContext, makeClickEvent } from '@objectiv/tracker-core';
+import { makeButtonContext, makeClickEvent, TrackerQueue, TrackerQueueMemoryStore } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, makeTracker } from '../src/';
 import { makeClickEventHandler } from '../src/observer/makeClickEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
@@ -6,7 +6,11 @@ import { makeTaggedElement } from './mocks/makeTaggedElement';
 describe('makeClickEventHandler', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    makeTracker({
+      applicationId: 'test',
+      endpoint: 'test',
+      queue: new TrackerQueue({ store: new TrackerQueueMemoryStore() }),
+    });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
   });
@@ -62,5 +66,19 @@ describe('makeClickEventHandler', () => {
       1,
       makeClickEvent({ location_stack: [makeButtonContext({ id: 'button', text: 'button' })] })
     );
+  });
+
+  it('should waitUntilTracked', async () => {
+    const trackedButton = makeTaggedElement('button', null, 'button');
+    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), true);
+
+    const mockEvent = {
+      ...new Event('click'),
+      preventDefault: jest.fn(),
+      stopImmediatePropagation: jest.fn(),
+    };
+    mockEvent.constructor = Event;
+
+    await clickEventListener({ ...mockEvent, target: trackedButton });
   });
 });

@@ -42,7 +42,7 @@ describe('trackNewElement', () => {
     );
   });
 
-  it('should attach click event listener', async () => {
+  it('should attach click event listener - passive', async () => {
     const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
@@ -54,6 +54,22 @@ describe('trackNewElement', () => {
 
     expect(trackedButton.addEventListener).toHaveBeenCalledTimes(1);
     expect(trackedButton.addEventListener).toHaveBeenNthCalledWith(1, 'click', expect.any(Function), { passive: true });
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
+  });
+
+  it('should attach click event listener - capture', async () => {
+    const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
+    const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
+    trackedButton.setAttribute('data-testid', 'test-button');
+    trackedButton.setAttribute(TaggingAttribute.trackClicks, 'true');
+    trackedButton.setAttribute(TaggingAttribute.waitUntilTracked, 'true');
+    document.body.appendChild(trackedButton);
+    jest.spyOn(trackedButton, 'addEventListener');
+
+    trackNewElement(trackedButton, getTracker());
+
+    expect(trackedButton.addEventListener).toHaveBeenCalledTimes(1);
+    expect(trackedButton.addEventListener).toHaveBeenNthCalledWith(1, 'click', expect.any(Function), true);
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 

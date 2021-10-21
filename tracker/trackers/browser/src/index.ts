@@ -4,7 +4,6 @@ export * from './helpers';
 export * from './makeTracker';
 export * from './observer/makeBlurEventHandler';
 export * from './observer/makeBlurEventHandler';
-export * from './observer/makeFlushQueueEventHandler';
 export * from './observer/processChildrenTaggingElement';
 export * from './observer/startAutoTracking';
 export * from './observer/trackNewElement';

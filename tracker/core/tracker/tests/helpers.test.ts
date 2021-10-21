@@ -9,7 +9,7 @@ describe('helpers', () => {
           intervalMs: 1,
           timeoutMs: 1,
         })
-      ).resolves.toBe(undefined);
+      ).resolves.toBe(true);
     });
 
     it('resolves - async', () => {
@@ -19,7 +19,7 @@ describe('helpers', () => {
           intervalMs: 1,
           timeoutMs: 1,
         })
-      ).resolves.toBe(undefined);
+      ).resolves.toBe(true);
     });
 
     it('rejects - timeout', () => {
@@ -29,7 +29,7 @@ describe('helpers', () => {
           intervalMs: 1,
           timeoutMs: 1,
         })
-      ).rejects.toBe(undefined);
+      ).resolves.toBe(false);
     });
   });
 });
