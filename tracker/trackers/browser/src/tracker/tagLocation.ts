@@ -68,16 +68,11 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
     const isSection = is(instance, AnySectionContext);
 
     // Process options. Gather default attribute values
-    const {
-      trackClicks = isClickable ? true : undefined,
-      trackBlurs = isInput ? true : undefined,
-      trackVisibility = isSection ? { mode: 'auto' } : undefined,
-      parent,
-      waitUntilTracked,
-    } = options ?? {};
-
-    // Get elementId from parent, if possible
-    const parentElementId = parent ? parent[TaggingAttribute.elementId] : undefined;
+    const trackClicks = options?.trackClicks ?? (isClickable ? true : undefined);
+    const trackBlurs = options?.trackBlurs ?? (isInput ? true : undefined);
+    const trackVisibility = options?.trackVisibility ?? (isSection ? { mode: 'auto' } : undefined);
+    const parentElementId = options?.parent ? options.parent[TaggingAttribute.elementId] : undefined;
+    const waitUntilTracked = options?.waitUntilTracked;
 
     // Create output attributes object
     const taggingAttributes = {
