@@ -67,7 +67,7 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
     else:
         sidebar_label = title
         sidebar_position = 99
-        slug = f'/buhtuh/{title}'
+        slug = f'/buhtuh/api/{title}'
 
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
