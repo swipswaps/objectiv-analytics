@@ -71,7 +71,7 @@ describe('Without DOM', () => {
     const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
     jest.spyOn(tracker, 'trackEvent');
 
-    startAutoTracking({}, tracker);
+    startAutoTracking();
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledTimes(1);
@@ -81,7 +81,7 @@ describe('Without DOM', () => {
     jest.spyOn(console, 'error');
     const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
     jest.spyOn(tracker, 'trackEvent');
-    const mutationCallback = makeMutationCallback(false, tracker);
+    const mutationCallback = makeMutationCallback(false);
 
     // @ts-ignore
     mutationCallback('not a list');
