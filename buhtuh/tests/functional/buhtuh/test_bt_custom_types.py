@@ -3,8 +3,8 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
-from buhtuh import BuhTuhSeries, Expression
-from buhtuh.expression import quote_string
+from buhtuh import BuhTuhSeries
+from buhtuh.expression import Expression
 from buhtuh.types import register_dtype, get_series_type_from_dtype, value_to_dtype, TypeRegistry
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 

@@ -6,9 +6,9 @@ from typing import Type
 
 import numpy as np
 
-from buhtuh import BuhTuhSeriesInt64, BuhTuhSeriesString, BuhTuhSeriesFloat64, BuhTuhSeriesBoolean, \
-    BuhTuhSeriesDate, BuhTuhSeriesTimestamp, BuhTuhSeriesTime, BuhTuhSeriesTimedelta, BuhTuhSeries, \
-    BuhTuhSeriesJsonb
+from buhtuh import BuhTuhSeriesInt64, BuhTuhSeriesString, BuhTuhSeriesFloat64, BuhTuhSeriesDate, BuhTuhSeriesTimestamp, \
+    BuhTuhSeriesTime, BuhTuhSeriesTimedelta, BuhTuhSeries, \
+    BuhTuhSeriesJsonb, BuhTuhSeriesBoolean
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_db_type, \
     assert_equals_data, CITIES_INDEX_AND_COLUMNS
 

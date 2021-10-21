@@ -1,0 +1,115 @@
+"""
+Copyright 2021 Objectiv B.V.
+"""
+from abc import ABC
+from typing import cast, Union, TYPE_CHECKING
+
+import numpy
+
+from buhtuh.series import BuhTuhSeries, const_to_series
+from buhtuh.expression import Expression
+
+if TYPE_CHECKING:
+    from buhtuh.partitioning import BuhTuhGroupBy
+
+
+class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
+    """
+    Base class that defines shared logic between BuhTuhSeriesInt64 and BuhTuhSeriesFloat64
+    """
+    def __add__(self, other) -> 'BuhTuhSeries':
+        other = const_to_series(base=self, value=other)
+        self._check_supported('add', ['int64', 'float64'], other)
+        expression = Expression.construct('({}) + ({})', self, other)
+        new_dtype = 'float64' if 'float64' in (self.dtype, other.dtype) else 'int64'
+        return self._get_derived_series(new_dtype, expression)
+
+    def __sub__(self, other) -> 'BuhTuhSeries':
+        other = const_to_series(base=self, value=other)
+        self._check_supported('sub', ['int64', 'float64'], other)
+        expression = Expression.construct('({}) - ({})', self, other)
+        new_dtype = 'float64' if 'float64' in (self.dtype, other.dtype) else 'int64'
+        return self._get_derived_series(new_dtype, expression)
+
+    def _comparator_operator(self, other, comparator):
+        other = const_to_series(base=self, value=other)
+        self._check_supported(f"comparator '{comparator}'", ['int64', 'float64'], other)
+        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
+        return self._get_derived_series('bool', expression)
+
+    def __truediv__(self, other):
+        other = const_to_series(base=self, value=other)
+        self._check_supported('division', ['int64', 'float64'], other)
+        expression = Expression.construct('cast({} as float) / ({})', self, other)
+        return self._get_derived_series('float64', expression)
+
+    def __floordiv__(self, other):
+        other = const_to_series(base=self, value=other)
+        self._check_supported('division', ['int64', 'float64'], other)
+        expression = Expression.construct('cast({} as bigint) / ({})', self, other)
+        return self._get_derived_series('int64', expression)
+
+    def sum(self, partition: 'BuhTuhGroupBy' = None):
+        return self._window_or_agg_func(
+            partition,
+            Expression.construct('sum({})', self),
+            self.dtype
+        )
+
+    def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesFloat64':
+        result = self._window_or_agg_func(
+            partition,
+            Expression.construct('avg({})', self),
+            'double precision'
+        )
+        return cast('BuhTuhSeriesFloat64', result)
+
+
+class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
+    dtype = 'int64'
+    dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64)
+    supported_db_dtype = 'bigint'
+    supported_value_types = (int, numpy.int64)
+
+    @classmethod
+    def supported_value_to_expression(cls, value: int) -> Expression:
+        # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
+        # consistently get bigints, so always cast the result
+        # See the section on numeric constants in the Postgres documentation
+        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+        return Expression.construct('cast({} as bigint)', Expression.raw(str(value)))
+
+    @staticmethod
+    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'int64':
+            return expression
+        if source_dtype not in ['float64', 'bool', 'string']:
+            raise ValueError(f'cannot convert {source_dtype} to int64')
+        return Expression.construct('cast({} as bigint)', expression)
+
+
+class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
+    dtype = 'float64'
+    dtype_aliases = ('float', 'double', 'f8', float, numpy.float64, 'double precision')
+    supported_db_dtype = 'double precision'
+    supported_value_types = (float, numpy.float64)
+
+    @classmethod
+    def supported_value_to_expression(cls, value: Union[float, numpy.float64]) -> Expression:
+        # Postgres will automatically parse any number with a decimal point as a number of type `numeric`,
+        # which could be casted to float. However we specify the value always as a string, as there are some
+        # values that cannot be expressed as a numeric literal directly (NaN, infinity, and -infinity), and
+        # a value that cannot be represented as numeric (-0.0).
+        # See the sections on numeric constants, and on fLoating-point types in the Postgres documentation
+        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+        # https://www.postgresql.org/docs/14/datatype-numeric.html#DATATYPE-FLOAT
+        str_value = str(value)
+        return Expression.construct("cast({} as float)", Expression.string_value(str_value))
+
+    @staticmethod
+    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+        if source_dtype == 'float64':
+            return expression
+        if source_dtype not in ['int64', 'string']:
+            raise ValueError(f'cannot convert {source_dtype} to float64')
+        return Expression.construct('cast({} as float)', expression)

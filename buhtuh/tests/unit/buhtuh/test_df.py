@@ -1,7 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from buhtuh import SortColumn, Expression
+from buhtuh import SortColumn
+from buhtuh.expression import Expression
 from tests.unit.buhtuh.util import get_fake_df
 
 
