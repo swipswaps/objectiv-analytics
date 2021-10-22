@@ -117,7 +117,7 @@ class BuhTuhDataFrame:
 
     @property
     def order_by(self) -> List[SortColumn]:
-        return copy(self.order_by)
+        return copy(self._order_by)
 
     @property
     def all_series(self) -> Dict[str, 'BuhTuhSeries']:
