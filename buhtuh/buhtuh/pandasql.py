@@ -71,7 +71,7 @@ class BuhTuhDataFrame:
         self._base_node = base_node
         self._index = copy(index)
         self._data: Dict[str, BuhTuhSeries] = {}
-        self._order_by = order_by if order_by is not None else []
+        self._order_by = copy(order_by) if order_by is not None else []
         for key, value in series.items():
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '

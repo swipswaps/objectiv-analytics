@@ -51,7 +51,7 @@ class BuhTuhSeries(ABC):
         """
         self._engine = engine
         self._base_node = base_node
-        self._index = index
+        self._index = copy(index)
         self._name = name
         self._expression = expression
         self._sorted_ascending = sorted_ascending
