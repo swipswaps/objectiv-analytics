@@ -26,34 +26,27 @@ export const makeClickEventHandler = (
         const { flushQueue, ...waitForQueueOptions } = waitUntilTrackedOptions;
 
         // Clone the original Event before altering it - `as any` needed due to TS constructors being just `Function`s
-        console.log(`cloning Event`);
         const eventClone = new (event.constructor as any)(event.type, event);
 
         // Prevent this event from being processed by the user agent and to stop propagating to any other handler
-        console.log(`preventing Event from being processed`);
         event.preventDefault();
         event.stopImmediatePropagation();
 
         // Attempt to wait for the Tracker to finish up its work - this is best-effort: may or may not timeout
-        console.log(`waiting for Queue`);
         const isQueueEmpty = await tracker.waitForQueue(waitForQueueOptions);
 
         // Flush the Queue - unless waitUntilTrackedOptions has been specifically set not to do so
         if (flushQueue === undefined || flushQueue === true || (flushQueue === 'onTimeout' && !isQueueEmpty)) {
-          console.log(`flushing Queue`);
           tracker.flushQueue();
         }
 
         // Remove our event handler. This allows us to dispatch the original Event without our handler interfering
-        console.log(`removing ${event.type} eventHandler`);
         element.removeEventListener(event.type, clickEventHandler, true);
 
         // Dispatch the original Event via its clone - since our event handler is gone it will dispatch normally
-        console.log(`re-dispatching original event`);
         element.dispatchEvent(eventClone);
 
         // Re-attach a new event handler to the original element
-        console.log(`re-attaching ${event.type} eventHandler`);
         element.addEventListener(event.type, makeClickEventHandler(element, tracker, waitUntilTrackedOptions), true);
       }
     }
