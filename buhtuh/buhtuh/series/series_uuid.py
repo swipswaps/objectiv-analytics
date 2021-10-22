@@ -27,7 +27,7 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
         return Expression.construct('cast({} as uuid)', Expression.string_value(uuid_as_str))
 
     @classmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'uuid':
             return expression
         if source_dtype == 'string':

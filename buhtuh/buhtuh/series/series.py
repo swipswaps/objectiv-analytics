@@ -125,7 +125,7 @@ class BuhTuhSeries(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         """
         Give the sql expression to convert the given expression, of the given source dtype to the dtype of
         this Series.
@@ -294,7 +294,7 @@ class BuhTuhSeries(ABC):
         if dtype == self.dtype or dtype in self.dtype_aliases:
             return self
         series_type = get_series_type_from_dtype(dtype)
-        expression = series_type.from_dtype_to_sql(self.dtype, self.expression)
+        expression = series_type.dtype_to_expression(self.dtype, self.expression)
         # get the real dtype, in case the provided dtype was an alias. mypy needs some help
         new_dtype = cast(str, series_type.dtype)
         return self._get_derived_series(new_dtype=new_dtype, expression=expression)

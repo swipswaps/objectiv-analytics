@@ -66,7 +66,7 @@ class ReversedStringType(BuhTuhSeries):
         return Expression.string_value(str(reversed(value)))
 
     @classmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'reversed_string':
             return expression
         elif source_dtype == 'String':
