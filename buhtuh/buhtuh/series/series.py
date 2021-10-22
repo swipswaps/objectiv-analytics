@@ -133,8 +133,12 @@ class BuhTuhSeries(ABC):
         return self._base_node
 
     @property
-    def index(self) -> Optional[Union[Dict[str, 'BuhTuhSeries'], 'BuhTuhGroupBy']]:
-        return copy(self._index)
+    def index(self) -> Optional[Dict[str, 'BuhTuhSeries']]:
+        from buhtuh.partitioning import BuhTuhGroupBy
+        if not isinstance(self._index, BuhTuhGroupBy):
+            return copy(self._index)
+        # Should we return the future index here or die?
+        return copy(self._index.index)
 
     @property
     def name(self) -> str:
@@ -159,34 +163,30 @@ class BuhTuhSeries(ABC):
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
             return self
-        return self.get_class_instance(
-            base=self,
-            name=self.name,
-            expression=self.expression,
-            sorted_ascending=ascending
-        )
+        return self.copy_override(sorted_ascending=ascending)
 
     def view_sql(self):
         return self.to_frame().view_sql()
 
     def to_frame(self) -> BuhTuhDataFrame:
-        from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhWindow
+        from buhtuh.partitioning import BuhTuhGroupBy
 
         if self._sorted_ascending is not None:
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
             order_by = []
-        if self.index is None:
+
+        if self._index is None:
             raise Exception('to_frame() is not supported for Series that do not have an index')
-        elif isinstance(self.index, BuhTuhGroupBy):
+        elif isinstance(self._index, BuhTuhGroupBy):
             # create a new base_node based on the group_by
-            index = self.index.index
-            node = self.index.get_node([self.get_column_expression()])
-            series = {self._name: self._get_derived_series(self.dtype, Expression.column_reference(self._name))}
+            index = self._index.index
+            node = self._index.get_node([self.get_column_expression()])
+            series = {self._name: self.copy_override(expression=Expression.column_reference(self._name))}
         else:
-            index = self.index
-            node = self.base_node
-            series = {self.name: self}
+            index = self._index
+            node = self._base_node
+            series = {self._name: self}
 
         return BuhTuhDataFrame(
             engine=self.engine,
@@ -194,27 +194,6 @@ class BuhTuhSeries(ABC):
             index=index,
             series=series,
             order_by=order_by
-        )
-
-    @classmethod
-    def get_instance(
-            cls,
-            base: DataFrameOrSeries,
-            name: str,
-            dtype: str,
-            expression: Expression = None,
-            sorted_ascending: Optional[bool] = None
-    ) -> 'BuhTuhSeries':
-        """
-        Create an instance of the right sub-class of BuhTuhSeries.
-        The subclass is based on the provided dtype. See docstring of __init__ for other parameters.
-        """
-        series_type = get_series_type_from_dtype(dtype=dtype)
-        return series_type.get_class_instance(
-            base=base,
-            name=name,
-            expression=expression,
-            sorted_ascending=sorted_ascending
         )
 
     @classmethod
@@ -233,6 +212,24 @@ class BuhTuhSeries(ABC):
             name=name,
             expression=expression,
             sorted_ascending=sorted_ascending
+        )
+
+    def copy_override(self,
+                      dtype=None,
+                      engine=None,
+                      base_node=None,
+                      index=None,
+                      name=None,
+                      expression=None,
+                      sorted_ascending=None):
+        klass = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
+        return klass(
+            engine=self._engine if engine is None else engine,
+            base_node=self._base_node if base_node is None else base_node,
+            index=self._index if index is None else index,
+            name=self._name if name is None else name,
+            expression=self._expression if expression is None else expression,
+            sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending
         )
 
     def get_column_expression(self, table_alias='') -> str:
@@ -254,12 +251,7 @@ class BuhTuhSeries(ABC):
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
 
     def _get_derived_series(self, new_dtype: str, expression: Expression):
-        return BuhTuhSeries.get_instance(
-            base=self,
-            name=self.name,
-            dtype=new_dtype,
-            expression=expression
-        )
+        return self.copy_override(dtype=new_dtype, expression=expression)
 
     def astype(self, dtype: Union[str, Type]) -> 'BuhTuhSeries':
         if dtype == self.dtype or dtype in self.dtype_aliases:
@@ -308,6 +300,8 @@ class BuhTuhSeries(ABC):
         implemented in __eq__, but we already use that method for other purposes.
         This strictly checks that other is the same type as self. If other is a subclass this will return
         False.
+        :note: currently uses the external index, meaning the potention future index for a group by
+            is used in the comparison. Not ideal, but better than what we had.
         """
         if not isinstance(other, self.__class__) or not isinstance(self, other.__class__):
             return False
@@ -331,11 +325,13 @@ class BuhTuhSeries(ABC):
 
         # any other value we treat as a literal index lookup
         # multiindex not supported atm
-        if self.index is None:
+        if self._index is None:
             raise Exception('Function not supported on Series without index')
-        if len(self.index) != 1:
+        if not isinstance(self._index, dict):
+            raise Exception('Function not supported on Series with future / groupby index yet')
+        if len(self._index) != 1:
             raise NotImplementedError('Index only implemented for simple indexes.')
-        series = self.to_frame()[list(self.index.values())[0] == key]
+        series = self.to_frame()[list(self._index.values())[0] == key]
         assert isinstance(series, self.__class__)
 
         # this is massively ugly
@@ -421,12 +417,8 @@ class BuhTuhSeries(ABC):
         :param kwargs: Keyword arguments to pass through to the aggregation function
         """
         if isinstance(func, (str, list)) or callable(func):
-            aggregation_series = {}
-            aggregation_series[self.name] = func
-
             # TODO this is quite broken. We should return a wrapped scalar here
-            buhtuh = self.to_frame()
-            return buhtuh.groupby().aggregate(aggregation_series, *args, **kwargs)
+            return self.to_frame().groupby().aggregate({self.name: func}, *args, **kwargs)
         else:
             raise TypeError(f'Unsupported type for func: {type(func)}')
 
@@ -456,22 +448,20 @@ class BuhTuhSeries(ABC):
                                       "through Series.agg() for now.")
 
         if not isinstance(partition, BuhTuhWindow):
-            return get_series_type_from_dtype(derived_dtype)(
-                engine=self._engine,
-                base_node=self._base_node,
-                index=partition,
-                name=self._name,
-                expression=expression,
-                sorted_ascending=self._sorted_ascending)
+            return self.copy_override(dtype=derived_dtype,
+                                      index=partition,
+                                      expression=expression)
         else:
-            return self._get_derived_series(derived_dtype, partition.get_window_expression(expression))
+            return self.copy_override(dtype=derived_dtype,
+                                      expression=partition.get_window_expression(expression))
 
-    def _check_unwrapped_groupby(self, wrapped: Union['BuhTuhAggregator', 'BuhTuhGroupBy'],
-                                 isin=None, notin=()) -> Optional['BuhTuhGroupBy']:
+    def _check_unwrapped_groupby(self,
+                                 wrapped: Union['BuhTuhAggregator', 'BuhTuhGroupBy'],
+                                 isin=None, notin=()) -> 'BuhTuhGroupBy':
         from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhAggregator
         isin = BuhTuhGroupBy if isin is None else isin
 
-        if isinstance(wrapped, BuhTuhAggregator):
+        if wrapped is not None and isinstance(wrapped, BuhTuhAggregator):
             group_by = wrapped.group_by
         else:
             group_by = wrapped
@@ -486,7 +476,7 @@ class BuhTuhSeries(ABC):
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
 
-    def _derived_agg_func(self, partition, func, dtype: str = None, skipna: bool = True):
+    def _derived_agg_func(self, partition, expression, dtype: str = None, skipna: bool = True):
         from buhtuh.partitioning import BuhTuhGroupBy
         if partition is None:
             # create an aggregation over the entire input
@@ -495,11 +485,13 @@ class BuhTuhSeries(ABC):
         else:
             partition = self._check_unwrapped_groupby(partition)
 
+        if isinstance(expression, str):
+            expression = Expression.construct(f'{expression}({{}})', self)
         self._skipna_unsupported(skipna)
         return self._window_or_agg_func(
-            partition,
-            Expression.construct(f'{func}({{}})', self),
-            self.dtype if dtype is None else dtype
+            partition=partition,
+            expression=expression,
+            derived_dtype=self.dtype if dtype is None else dtype
         )
 
     def fillna(self, constant_value):
@@ -541,9 +533,12 @@ class BuhTuhSeries(ABC):
 
     def nunique(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
         from buhtuh.partitioning import BuhTuhWindow
-        partition = self._check_unwrapped_groupby(partition, notin=(BuhTuhWindow))
+        if partition is not None:
+            self._check_unwrapped_groupby(partition, notin=BuhTuhWindow)
         self._skipna_unsupported(skipna)
-        return self._get_derived_series('int64', Expression.construct('count(distinct {})', self))
+        return self._derived_agg_func(partition, dtype='int64',
+                                      expression=Expression.construct('count(distinct {})', self),
+                                      skipna=skipna)
 
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
@@ -552,9 +547,8 @@ class BuhTuhSeries(ABC):
         """
         Validate that the given partition is a true BuhTuhWindow or raise an exception
         """
-        from buhtuh.partitioning import BuhTuhWindow, BuhTuhAggregator
-        return self._check_unwrapped_groupby(window, isin=(BuhTuhWindow))
-
+        from buhtuh.partitioning import BuhTuhWindow
+        return cast(BuhTuhWindow, self._check_unwrapped_groupby(window, isin=BuhTuhWindow))
 
     def window_row_number(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
@@ -605,7 +599,8 @@ class BuhTuhSeries(ABC):
         window = self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
 
-    def window_lag(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'], offset: int = 1, default: Any = None):
+    def window_lag(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'],
+                   offset: int = 1, default: Any = None):
         """
         Returns value evaluated at the row that is offset rows before the current row
         within the partition; if there is no such row, instead returns default
@@ -622,7 +617,8 @@ class BuhTuhSeries(ABC):
             self.dtype
         )
 
-    def window_lead(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'], offset: int = 1, default: Any = None):
+    def window_lead(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'],
+                    offset: int = 1, default: Any = None):
         """
         Returns value evaluated at the row that is offset rows after the current row within the partition;
         if there is no such row, instead returns default (which must be of the same type as value).

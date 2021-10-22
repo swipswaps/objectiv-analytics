@@ -430,12 +430,7 @@ class BuhTuhDataFrame:
                     raise ValueError(f'Index of assigned value does not match index of DataFrame. '
                                      f'Value: {value.index}, df: {self.index}')
                 if value.base_node == self.base_node:
-                    self._data[key] = BuhTuhSeries.get_instance(
-                        base=self,
-                        name=key,
-                        dtype=value.dtype,
-                        expression=value.expression
-                    )
+                    self._data[key] = value.copy_override(name=key)
                     return
                 else:
                     # this is the complex case. Maybe don't support this at all?TODO

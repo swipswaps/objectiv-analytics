@@ -48,11 +48,6 @@ class BuhTuhGroupBy:
 
     For more complex grouping expressions, this class should be extended.
     """
-    # The index after grouping / columns to group on
-    index: Dict[str, BuhTuhSeries]
-    engine
-    base_node: SqlModel
-
     def __init__(self,
                  engine,
                  base_node: SqlModel,
@@ -296,13 +291,23 @@ class BuhTuhWindow(BuhTuhGroupBy):
         self._end_value = end_value
         self._min_values = 0 if min_values is None else min_values
 
+        # TODO This should probably be an expression
+        self._frame_clause: str
         if end_boundary is None:
-            self.frame_clause = f'{mode.name} {start_boundary.frame_clause(start_value)}'
+            self._frame_clause = f'{mode.name} {start_boundary.frame_clause(start_value)}'
         else:
-            self.frame_clause = f'{mode.name} BETWEEN {start_boundary.frame_clause(start_value)}'\
+            self._frame_clause = f'{mode.name} BETWEEN {start_boundary.frame_clause(start_value)}'\
                                 f' AND {end_boundary.frame_clause(end_value)}'
 
         self._order_by = order_by
+
+    @property
+    def frame_clause(self) -> str:
+        return self._frame_clause
+
+    @property
+    def order_by(self) -> List[SortColumn]:
+        return self._order_by
 
     def set_frame_clause(self,
                          mode:
@@ -374,15 +379,16 @@ class BuhTuhWindow(BuhTuhGroupBy):
 
 
 class BuhTuhAggregator:
-    buh_tuh: BuhTuhDataFrame
     group_by: 'BuhTuhGroupBy'
     aggregated_data: Dict[str, BuhTuhSeries]
 
     def __init__(self,
                  buh_tuh: BuhTuhDataFrame,
                  group_by: 'BuhTuhGroupBy'):
-        self.buh_tuh = buh_tuh
         self.group_by = group_by
+
+        # We only carry this for the convenience functions. Do not use internally. TODO remove.
+        self.buh_tuh = buh_tuh
 
         self.aggregated_data = {name: series
                                 for name, series in buh_tuh.all_series.items()
@@ -454,18 +460,14 @@ class BuhTuhAggregator:
                     agg_func = agg_func.__func__  # type: ignore[attr-defined]
 
                 agg_series = agg_func(data_series, self.group_by, *args, **kwargs)
-                # FIXME I don't think we need this? We just got a copy from func()?
-                agg_series = BuhTuhSeries.get_instance(base=self.buh_tuh,
-                                                       name=agg_series_name,
-                                                       dtype=agg_series.dtype,
-                                                       expression=agg_series.expression)
+                agg_series = agg_series.copy_override(name=agg_series_name)
                 aggregate_columns.append(agg_series.get_column_expression())
                 new_series_dtypes[agg_series.name] = agg_series.dtype
 
         node = self.group_by.get_node(aggregate_columns)
 
         return BuhTuhDataFrame.get_instance(
-            engine=self.buh_tuh.engine,
+            engine=self.group_by.engine,
             base_node=node,
             index_dtypes={n: t.dtype for n, t in self.group_by.index.items()},
             dtypes=new_series_dtypes,
@@ -493,8 +495,8 @@ class BuhTuhAggregator:
 
         selected_data = {key: data for key, data in self.aggregated_data.items() if key in key_set}
         return BuhTuhDataFrame(
-            engine=self.buh_tuh.engine,
-            base_node=self.buh_tuh.base_node,
+            engine=self.group_by.engine,
+            base_node=self.group_by.base_node,
             index=self.group_by.index,
             series=selected_data,
             # We don't guarantee sorting after groupby(), so we can just set order_by to None
@@ -514,9 +516,12 @@ class BuhTuhAggregator:
         Convenience function to turn this groupby into a window.
         :see: BuhTuhWindow __init__ for frame args
         """
-        window = BuhTuhWindow(engine=self.buh_tuh.engine, base_node=self.buh_tuh.base_node,
+        order_by = self.group_by.order_by if isinstance(self.group_by, BuhTuhWindow)\
+            else self.buh_tuh.order_by
+
+        window = BuhTuhWindow(engine=self.group_by.engine, base_node=self.group_by.base_node,
                               group_by_columns=list(self.group_by.index.values()),
-                              order_by=self.buh_tuh.order_by,
+                              order_by=order_by,
                               mode=mode,
                               start_boundary=start_boundary, start_value=start_value,
                               end_boundary=end_boundary, end_value=end_value)
@@ -527,7 +532,7 @@ class BuhTuhAggregator:
         Convenience function to turn this groupby into a cube.
         :see: BuhTuhCube for more info
         """
-        cube = BuhTuhCube(engine=self.buh_tuh.engine, base_node=self.buh_tuh.base_node,
+        cube = BuhTuhCube(engine=self.group_by.engine, base_node=self.group_by.base_node,
                           group_by_columns=list(self.group_by.index.values()))
         return BuhTuhAggregator(buh_tuh=self.buh_tuh, group_by=cube)
 
@@ -536,7 +541,7 @@ class BuhTuhAggregator:
         Convenience function to turn this groupby into a rollup.
         :see: BuhTuhRollup for more info
         """
-        rollup = BuhTuhRollup(engine=self.buh_tuh.engine, base_node=self.buh_tuh.base_node,
+        rollup = BuhTuhRollup(engine=self.group_by.engine, base_node=self.group_by.base_node,
                               group_by_columns=list(self.group_by.index.values()))
         return BuhTuhAggregator(buh_tuh=self.buh_tuh, group_by=rollup)
 
@@ -568,4 +573,3 @@ class BuhTuhAggregator:
         :param other: another aggregator, or a list thereof
         """
         return self._grouping_set_or_list(other, BuhTuhGroupingList)
-
