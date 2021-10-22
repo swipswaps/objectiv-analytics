@@ -78,8 +78,8 @@ def test_set_const_timedelta():
 
 
 def test_set_const_json():
-    check_set_const(['a','b','c'], 'jsonb', BuhTuhSeriesJsonb)
-    check_set_const({'a':'b','c':'d'}, 'jsonb', BuhTuhSeriesJsonb)
+    check_set_const(['a', 'b', 'c'], 'jsonb', BuhTuhSeriesJsonb)
+    check_set_const({'a': 'b', 'c': 'd'}, 'jsonb', BuhTuhSeriesJsonb)
 
 
 def test_set_const_int_from_series():

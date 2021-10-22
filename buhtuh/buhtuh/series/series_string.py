@@ -18,7 +18,7 @@ class BuhTuhSeriesString(BuhTuhSeries):
         return Expression.string_value(value)
 
     @classmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'string':
             return expression
         return Expression.construct('cast(({}) as text)', expression)

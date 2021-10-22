@@ -31,14 +31,14 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
             'cast({} as timestamp without time zone)', Expression.string_value(value)
         )
 
-    @staticmethod
-    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+    @classmethod
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'timestamp':
             return expression
         else:
             if source_dtype not in ['string', 'date']:
                 raise ValueError(f'cannot convert {source_dtype} to timestamp')
-            return Expression.construct(f'({{}}::{BuhTuhSeriesTimestamp.supported_db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
@@ -80,14 +80,14 @@ class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
         # TODO: check here already that the string has the correct format
         return Expression.construct(f'cast({{}} as date)', Expression.string_value(value))
 
-    @staticmethod
-    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+    @classmethod
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'date':
             return expression
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to date')
-            return Expression.construct(f'({{}}::{BuhTuhSeriesDate.supported_db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
 
 
 class BuhTuhSeriesTime(BuhTuhSeries):
@@ -106,14 +106,14 @@ class BuhTuhSeriesTime(BuhTuhSeries):
         # TODO: check here already that the string has the correct format
         return Expression.construct('cast({} as time without time zone)', Expression.string_value(value))
 
-    @staticmethod
-    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+    @classmethod
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'time':
             return expression
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to time')
-            return Expression.construct('({{}}::{BuhTuhSeriesTime.supported_db_dtype})', expression)
+            return Expression.construct(f'cast ({{}} as {cls.supported_db_dtype})', expression)
 
     def _comparator_operator(self, other, comparator):
         from buhtuh.series import const_to_series
@@ -138,8 +138,8 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         # TODO: check here already that the string has the correct format
         return Expression.construct('cast({} as interval)', Expression.string_value(value))
 
-    @staticmethod
-    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+    @classmethod
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'timedelta':
             return expression
         else:

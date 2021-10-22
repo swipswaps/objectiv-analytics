@@ -94,7 +94,7 @@ def test_rename():
 
     # through mapper dict
     bt = get_bt_with_test_data()
-    nbt = bt.rename(mapper={'city':'cty'}, axis = 1)
+    nbt = bt.rename(mapper={'city': 'cty'}, axis=1)
     assert 'city' not in nbt.data.keys()
     assert 'cty' in nbt.data.keys()
     assert 'city' in bt.data.keys()
@@ -102,7 +102,7 @@ def test_rename():
 
     # through mapper lambda
     bt = get_bt_with_test_data()
-    nbt = bt.rename(mapper=lambda x: x[::-1], axis = 1)
+    nbt = bt.rename(mapper=lambda x: x[::-1], axis=1)
     assert 'city' not in nbt.data.keys()
     assert 'ytic' in nbt.data.keys()
     assert 'city' in bt.data.keys()
@@ -111,7 +111,7 @@ def test_rename():
     # mapper func no rename
     expr = bt.city.expression
     bt = get_bt_with_test_data()
-    nbt = bt.rename(mapper=lambda x: x, axis = 1)
+    nbt = bt.rename(mapper=lambda x: x, axis=1)
     assert 'city' in nbt.data.keys()
     assert 'city' in bt.data.keys()
     assert bt.city.expression == expr
