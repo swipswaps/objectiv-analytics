@@ -28,7 +28,7 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
                  base_node: SqlModel,
                  index: Optional[Dict[str, 'BuhTuhSeries']],
                  name: str,
-                 expression: Expression = None,
+                 expression: Expression,
                  sorted_ascending: Optional[bool] = None):
         super().__init__(engine,
                          base_node,
@@ -77,11 +77,8 @@ class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
                  base_node: SqlModel,
                  index: Optional[Dict[str, 'BuhTuhSeries']],
                  name: str,
-                 expression: Expression = None,
+                 expression: Expression,
                  sorted_ascending: Optional[bool] = None):
-
-        if expression is None:
-            expression = Expression.column_reference(name)
 
         super().__init__(engine,
                          base_node,

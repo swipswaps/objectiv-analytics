@@ -18,33 +18,42 @@ if TYPE_CHECKING:
 
 class BuhTuhSeries(ABC):
     """
-    Immutable class representing a column/expression in a query.
+    Mostly immutable* class representing a column/expression in a query.
+
+    * Mostly immutable: The attributes of this class are either immutable, or this class is guaranteed not
+        to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
+        and is shared with other Series and DataFrames that can change it's state.
     """
     def __init__(self,
                  engine,
                  base_node: SqlModel,
                  index: Optional[Dict[str, 'BuhTuhSeries']],
                  name: str,
-                 expression: Expression = None,
+                 expression: Expression,
                  sorted_ascending: Optional[bool] = None):
         """
-        TODO: docstring
-        :param engine:
-        :param base_node:
+        Initialize a new BuhTuhSeries object.
+        Normally a BuhTuhSeries is associated with a BuhTuhDataFrame. The engine, base_node and index should
+        match in that case. Additionally the name should match the name of this Series object in the
+        DataFrame.
+
+        To create a new BuhTuhSeries object from scratch there are class helper methods get_instance(),
+        get_class_instance(), and from_const().
+
+        :param engine: db connection
+        :param base_node: sql-model of a select statement that must contain the columns/expressions that
+            expression relies on.
         :param index: None if this Series is part of an index. Otherwise a dict with the Series that are
                         this Series' index
-        :param name:
-        :param expression:
+        :param name: name of this Series
+        :param expression: Expression that this Series represents
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
         """
         self._engine = engine
         self._base_node = base_node
         self._index = index
         self._name = name
-        if expression:
-            self._expression = expression
-        else:
-            self._expression = Expression.column_reference(self.name)
+        self._expression = expression
         self._sorted_ascending = sorted_ascending
 
     @property
@@ -190,7 +199,7 @@ class BuhTuhSeries(ABC):
             base: DataFrameOrSeries,
             name: str,
             dtype: str,
-            expression: Expression = None,
+            expression: Expression,
             sorted_ascending: Optional[bool] = None
     ) -> 'BuhTuhSeries':
         """
@@ -210,7 +219,7 @@ class BuhTuhSeries(ABC):
             cls,
             base: DataFrameOrSeries,
             name: str,
-            expression: Expression = None,
+            expression: Expression,
             sorted_ascending: Optional[bool] = None
     ):
         """ Create an instance of this class. """
