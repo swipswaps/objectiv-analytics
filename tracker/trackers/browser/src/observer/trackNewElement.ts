@@ -29,12 +29,11 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
       if (element.getAttribute(TaggingAttribute.trackClicks) === 'true') {
         // Determine if this element needs active handlers to track synchronously
         const waitUntilTracked = element.hasAttribute(TaggingAttribute.waitUntilTracked);
-        element.addEventListener(
-          'click',
-          makeClickEventHandler(element, tracker, waitUntilTracked),
-          // waitUntilTracked changes the event type from passive to capture so we may call `preventDefault`
-          waitUntilTracked ? true : { passive: true }
-        );
+
+        // Change listener from `passive` to `useCapture` (so we may call `preventDefault`) based on `waitUntilTracked`
+        const listenerOptions = waitUntilTracked ? true : { passive: true };
+
+        element.addEventListener('click', makeClickEventHandler(element, tracker, waitUntilTracked), listenerOptions);
       }
 
       // Blur tracking (inputs)
