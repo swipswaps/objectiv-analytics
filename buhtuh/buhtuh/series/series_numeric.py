@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from abc import ABC
-from typing import cast, Union, TYPE_CHECKING
+from typing import cast, Union, TYPE_CHECKING, Optional
 
 import numpy
 
@@ -57,7 +57,7 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
             Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
 
-    def _ddof_unsupported(self, ddof: float):
+    def _ddof_unsupported(self, ddof: Optional[float]):
         if ddof is not None and ddof != 1:
             raise NotImplementedError("ddof != 1 currently not implemented")
 
