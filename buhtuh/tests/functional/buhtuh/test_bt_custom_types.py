@@ -93,8 +93,6 @@ def test_custom_type(monkeypatch):
     # with override_dtype=True, the error should disappear and 'reversed_string' should be registered
     _registry.register_dtype_series(ReversedStringType, [], override_registered_types=True)
 
-
-
     bt_city_special = bt_city.astype('reversed_string')
 
     assert bt_city.dtypes == {'city': 'string'}
