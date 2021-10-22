@@ -11,8 +11,10 @@ import {
   StringifiedTaggingAttributes,
   stringifyBoolean,
   stringifyLocationContext,
-  stringifyVisibilityAttribute,
-  TaggingAttributeVisibility,
+  stringifyTrackClicksAttribute,
+  stringifyTrackVisibilityAttribute,
+  TrackClicksAttribute,
+  TrackVisibilityAttribute,
 } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
@@ -35,11 +37,10 @@ export const TagLocationReturnValue = optional(StringifiedTaggingAttributes);
 export type TagLocationReturnValue = Infer<typeof TagLocationReturnValue>;
 
 export const TagLocationOptions = object({
-  trackClicks: optional(boolean()),
+  trackClicks: optional(TrackClicksAttribute),
   trackBlurs: optional(boolean()),
-  trackVisibility: optional(TaggingAttributeVisibility),
+  trackVisibility: optional(TrackVisibilityAttribute),
   parent: TagLocationReturnValue,
-  waitUntilTracked: optional(boolean()),
 });
 export type TagLocationOptions = Infer<typeof TagLocationOptions>;
 
@@ -72,17 +73,15 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
     const trackBlurs = options?.trackBlurs ?? (isInput ? true : undefined);
     const trackVisibility = options?.trackVisibility ?? (isSection ? { mode: 'auto' } : undefined);
     const parentElementId = options?.parent ? options.parent[TaggingAttribute.elementId] : undefined;
-    const waitUntilTracked = options?.waitUntilTracked;
 
     // Create output attributes object
     const taggingAttributes = {
       [TaggingAttribute.elementId]: generateUUID(),
       [TaggingAttribute.parentElementId]: parentElementId,
       [TaggingAttribute.context]: stringifyLocationContext(instance),
-      [TaggingAttribute.trackClicks]: runIfNotUndefined(stringifyBoolean, trackClicks),
+      [TaggingAttribute.trackClicks]: runIfNotUndefined(stringifyTrackClicksAttribute, trackClicks),
       [TaggingAttribute.trackBlurs]: runIfNotUndefined(stringifyBoolean, trackBlurs),
-      [TaggingAttribute.trackVisibility]: runIfNotUndefined(stringifyVisibilityAttribute, trackVisibility),
-      [TaggingAttribute.waitUntilTracked]: runIfNotUndefined(stringifyBoolean, waitUntilTracked),
+      [TaggingAttribute.trackVisibility]: runIfNotUndefined(stringifyTrackVisibilityAttribute, trackVisibility),
     };
 
     // Validate

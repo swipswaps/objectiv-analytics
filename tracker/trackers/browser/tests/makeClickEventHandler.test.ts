@@ -1,5 +1,5 @@
 import { makeButtonContext, makeClickEvent, TrackerQueue, TrackerQueueMemoryStore } from '@objectiv/tracker-core';
-import { BrowserTracker, getTracker, makeTracker } from '../src/';
+import { BrowserTracker, getTracker, makeTracker, trackClick } from '../src/';
 import { makeClickEventHandler } from '../src/observer/makeClickEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
@@ -9,7 +9,7 @@ describe('makeClickEventHandler', () => {
     makeTracker({
       applicationId: 'test',
       endpoint: 'test',
-      queue: new TrackerQueue({ store: new TrackerQueueMemoryStore() }),
+      queue: new TrackerQueue({ store: new TrackerQueueMemoryStore(), batchDelayMs: 1 }),
     });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
@@ -69,8 +69,9 @@ describe('makeClickEventHandler', () => {
   });
 
   it('should waitUntilTracked', async () => {
+    jest.spyOn(getTracker(), 'flushQueue');
     const trackedButton = makeTaggedElement('button', null, 'button');
-    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), true);
+    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), { timeoutMs: 1, intervalMs: 1 });
 
     const mockEvent = {
       ...new Event('click'),
@@ -80,5 +81,63 @@ describe('makeClickEventHandler', () => {
     mockEvent.constructor = Event;
 
     await clickEventListener({ ...mockEvent, target: trackedButton });
+    expect(getTracker().flushQueue).toHaveBeenCalled();
+  });
+
+  it('should flush the queue - explicit setting', async () => {
+    jest.spyOn(getTracker(), 'flushQueue');
+    const trackedButton = makeTaggedElement('button', null, 'button');
+    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
+      flushQueue: true,
+      timeoutMs: 1,
+      intervalMs: 1,
+    });
+
+    const mockEvent = {
+      ...new Event('click'),
+      preventDefault: jest.fn(),
+      stopImmediatePropagation: jest.fn(),
+    };
+    mockEvent.constructor = Event;
+
+    await clickEventListener({ ...mockEvent, target: trackedButton });
+    expect(getTracker().flushQueue).toHaveBeenCalled();
+  });
+
+  it('should flush the queue - onTimeout', async () => {
+    jest.spyOn(getTracker(), 'flushQueue');
+    const trackedButton = makeTaggedElement('button', null, 'button');
+    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), { flushQueue: 'onTimeout' });
+
+    const mockEvent = {
+      ...new Event('click'),
+      preventDefault: jest.fn(),
+      stopImmediatePropagation: jest.fn(),
+    };
+    mockEvent.constructor = Event;
+
+    trackClick({ element: trackedButton, tracker: getTracker() });
+    await clickEventListener({ ...mockEvent, target: trackedButton });
+    // FIXME This cannot be tested: JSDOM crashes. Seems to be a problem with timers in promises and Jest.
+  });
+
+  it('should not flush the queue', async () => {
+    jest.spyOn(getTracker(), 'flushQueue');
+    const trackedButton = makeTaggedElement('button', null, 'button');
+    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
+      flushQueue: false,
+      timeoutMs: 1,
+      intervalMs: 1,
+    });
+
+    const mockEvent = {
+      ...new Event('click'),
+      preventDefault: jest.fn(),
+      stopImmediatePropagation: jest.fn(),
+    };
+    mockEvent.constructor = Event;
+
+    await clickEventListener({ ...mockEvent, target: trackedButton });
+    expect(getTracker().flushQueue).not.toHaveBeenCalled();
   });
 });

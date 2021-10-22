@@ -1,3 +1,4 @@
+import { parseTrackClicksAttribute, WaitUntilTrackedOptions } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { trackerErrorHandler } from '../trackerErrorHandler';
@@ -26,14 +27,32 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
       trackVisibilityVisibleEvent(element, tracker);
 
       // Click tracking (buttons, links)
-      if (element.getAttribute(TaggingAttribute.trackClicks) === 'true') {
-        // Determine if this element needs active handlers to track synchronously
-        const waitUntilTracked = element.hasAttribute(TaggingAttribute.waitUntilTracked);
+      if (element.hasAttribute(TaggingAttribute.trackClicks)) {
+        // Parse and validate attribute
+        const trackClicks = parseTrackClicksAttribute(element.getAttribute(TaggingAttribute.trackClicks));
 
-        // Change listener from `passive` to `useCapture` (so we may call `preventDefault`) based on `waitUntilTracked`
-        const listenerOptions = waitUntilTracked ? true : { passive: true };
+        // If trackClicks is specifically set to `false`, nothing to do
+        if (trackClicks === false) {
+          return;
+        }
 
-        element.addEventListener('click', makeClickEventHandler(element, tracker, waitUntilTracked), listenerOptions);
+        // If it's true, attach a `passive` event handler
+        if (trackClicks === true) {
+          element.addEventListener('click', makeClickEventHandler(element, tracker), { passive: true });
+        } else {
+          // Else it must be an object - it wouldn't have validated otherwise
+          let waitUntilTrackedOptions: WaitUntilTrackedOptions;
+
+          // waitUntilTracked can either `true` or an object with options - process `true` first
+          if (trackClicks.waitUntilTracked === true) {
+            waitUntilTrackedOptions = { flushQueue: true };
+          } else {
+            waitUntilTrackedOptions = trackClicks.waitUntilTracked;
+          }
+
+          // Attach a `useCapture` event handler and
+          element.addEventListener('click', makeClickEventHandler(element, tracker, waitUntilTrackedOptions), true);
+        }
       }
 
       // Blur tracking (inputs)

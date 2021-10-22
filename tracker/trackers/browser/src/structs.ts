@@ -7,6 +7,7 @@ import {
   define,
   Infer,
   literal,
+  number,
   object,
   optional,
   string,
@@ -67,24 +68,50 @@ export const parseBoolean = (stringifiedBoolean: string | null) => {
 };
 
 /**
- * Custom Structs for the Visibility Tagging Attribute + their Stringifier and Parser
+ * Custom Structs for the trackClicks Tagging Attribute + their Stringifier and Parser
  */
-export const TaggingAttributeVisibilityAuto = object({ mode: literal('auto') });
-export type TaggingAttributeVisibilityAuto = Infer<typeof TaggingAttributeVisibilityAuto>;
-export const TaggingAttributeVisibilityManual = object({ mode: literal('manual'), isVisible: boolean() });
-export type TaggingAttributeVisibilityManual = Infer<typeof TaggingAttributeVisibilityManual>;
-export const TaggingAttributeVisibility = union([TaggingAttributeVisibilityAuto, TaggingAttributeVisibilityManual]);
-export type TaggingAttributeVisibility = Infer<typeof TaggingAttributeVisibility>;
+export const WaitUntilTrackedOptions = object({
+  intervalMs: optional(number()),
+  timeoutMs: optional(number()),
+  flushQueue: optional(union([literal(false), literal(true), literal('onTimeout')])),
+});
+export type WaitUntilTrackedOptions = Infer<typeof WaitUntilTrackedOptions>;
 
-export const stringifyVisibilityAttribute = (visibility: TaggingAttributeVisibility) => {
-  if (!(typeof visibility === 'object')) {
-    throw new Error(`Visibility must be an object, received: ${JSON.stringify(visibility)}`);
-  }
-  return stringifyStruct(visibility, TaggingAttributeVisibility);
+export const TrackClicksAttribute = union([
+  boolean(),
+  object({
+    waitUntilTracked: union([literal(true), WaitUntilTrackedOptions]),
+  }),
+]);
+export type TrackClicksAttribute = Infer<typeof TrackClicksAttribute>;
+
+export const stringifyTrackClicksAttribute = (trackClicksAttribute: TrackClicksAttribute) => {
+  return stringifyStruct(trackClicksAttribute, TrackClicksAttribute);
 };
 
-export const parseVisibilityAttribute = (stringifiedVisibility: string | null) => {
-  return parseStruct(stringifiedVisibility, TaggingAttributeVisibility);
+export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: string | null) => {
+  return parseStruct(stringifiedTrackClicksAttribute, TrackClicksAttribute);
+};
+
+/**
+ * Custom Structs for the trackVisibility Tagging Attribute + their Stringifier and Parser
+ */
+export const TrackVisibilityAttributeAuto = object({ mode: literal('auto') });
+export type TrackVisibilityAttributeAuto = Infer<typeof TrackVisibilityAttributeAuto>;
+export const TrackVisibilityAttributeManual = object({ mode: literal('manual'), isVisible: boolean() });
+export type TrackVisibilityAttributeManual = Infer<typeof TrackVisibilityAttributeManual>;
+export const TrackVisibilityAttribute = union([TrackVisibilityAttributeAuto, TrackVisibilityAttributeManual]);
+export type TrackVisibilityAttribute = Infer<typeof TrackVisibilityAttribute>;
+
+export const stringifyTrackVisibilityAttribute = (trackVisibilityAttribute: TrackVisibilityAttribute) => {
+  if (!(typeof trackVisibilityAttribute === 'object')) {
+    throw new Error(`trackVisibility must be an object, received: ${JSON.stringify(trackVisibilityAttribute)}`);
+  }
+  return stringifyStruct(trackVisibilityAttribute, TrackVisibilityAttribute);
+};
+
+export const parseTrackVisibilityAttribute = (stringifiedTrackVisibilityAttribute: string | null) => {
+  return parseStruct(stringifiedTrackVisibilityAttribute, TrackVisibilityAttribute);
 };
 
 /**
@@ -94,10 +121,9 @@ export const TaggingAttributes = object({
   [TaggingAttribute.elementId]: Uuid,
   [TaggingAttribute.parentElementId]: optional(Uuid),
   [TaggingAttribute.context]: AnyLocationContext,
-  [TaggingAttribute.trackClicks]: optional(boolean()),
+  [TaggingAttribute.trackClicks]: optional(TrackClicksAttribute),
   [TaggingAttribute.trackBlurs]: optional(boolean()),
-  [TaggingAttribute.trackVisibility]: optional(TaggingAttributeVisibility),
-  [TaggingAttribute.waitUntilTracked]: optional(boolean()),
+  [TaggingAttribute.trackVisibility]: optional(TrackVisibilityAttribute),
 });
 export type TaggingAttributes = Infer<typeof TaggingAttributes>;
 
@@ -108,10 +134,9 @@ export const StringifiedTaggingAttributes = object({
   [TaggingAttribute.elementId]: Uuid,
   [TaggingAttribute.parentElementId]: optional(Uuid),
   [TaggingAttribute.context]: string(),
-  [TaggingAttribute.trackClicks]: optional(StringBoolean),
+  [TaggingAttribute.trackClicks]: optional(string()),
   [TaggingAttribute.trackBlurs]: optional(StringBoolean),
   [TaggingAttribute.trackVisibility]: optional(string()),
-  [TaggingAttribute.waitUntilTracked]: optional(StringBoolean),
 });
 export type StringifiedTaggingAttributes = Infer<typeof StringifiedTaggingAttributes>;
 
