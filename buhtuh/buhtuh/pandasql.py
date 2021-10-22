@@ -469,6 +469,10 @@ class BuhTuhDataFrame:
                level: int = None,
                errors: str = 'ignore'):
         """
+        Rename columns.
+
+        The interface is similar to Panda's DataFrame.rename(). However we don't support renaming indexes, so
+            recommended usage is `rename(columns=...)`
         :param: mapper: please use columns
         :param: index: not supported
         :param: columns: dict str:str to rename columns, or a function that takes column

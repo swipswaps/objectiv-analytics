@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
-from tests.unit.buhtuh.util import get_fake_df_test_data
+from tests.unit.buhtuh.util import get_fake_df_test_data, get_fake_df
 
 
 def test_rename_basic():
@@ -103,3 +103,16 @@ def test_rename_ignore_errors():
 
     with pytest.raises(KeyError):
         bt.rename(columns={'non existing column': 'new name'}, errors='raise')
+
+
+def test_rename_fail_on_duplicate_columns():
+    bt = get_fake_df(['i', 'ii'], ['a', 'b'])
+
+    with pytest.raises(ValueError, match='column name already exists'):
+        bt.rename(columns={'a': 'b'})
+    with pytest.raises(ValueError, match='column name already exists'):
+        bt.rename(columns={'b': 'a'})
+    with pytest.raises(ValueError, match='column name already exists'):
+        bt.rename(columns={'a': 'c', 'b': 'c'})
+    with pytest.raises(ValueError, match='column name already exists'):
+        bt.rename(columns={'a': 'i'})
