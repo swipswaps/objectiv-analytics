@@ -9,6 +9,22 @@ from sql_models.graph_operations import get_graph_nodes_info
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
+def test_basic():
+    bt = get_bt_with_test_data()
+    assert_equals_data(
+        bt,
+        expected_columns=[
+            '_index_skating_order',  # index
+            'skating_order', 'city', 'municipality', 'inhabitants', 'founding',  # data columns
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285],
+            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456],
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268]
+        ]
+    )
+
+
 def test_del_item():
     bt = get_bt_with_test_data()
 

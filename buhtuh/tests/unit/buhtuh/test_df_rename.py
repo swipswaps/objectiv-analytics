@@ -25,6 +25,15 @@ def test_rename_self():
     assert 'city' in bt.data.keys()
 
 
+def test_rename_check_order():
+    # regression guard: make sure the order of columns is correct
+    bt = get_fake_df_test_data()
+    nbt = bt.rename(columns={'city': 'city', 'municipality': 'muni', 'founding': 'fnd'})
+    assert 'city' in nbt.data.keys()
+    assert 'city' in bt.data.keys()
+    assert nbt.data_columns == ['skating_order', 'city', 'muni', 'inhabitants', 'fnd']
+
+
 def test_rename_swap():
     bt = get_fake_df_test_data()
     expr_inhabitants = bt.inhabitants.expression
