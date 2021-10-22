@@ -93,10 +93,10 @@ class BuhTuhDataFrame:
         """
         return BuhTuhDataFrame(
             engine=engine if engine is not None else self.engine,
-            base_node=base_node if base_node is not None else self._base_node,
-            index=index if index is not None else self._index,
-            series=series if series is not None else self._data,
-            order_by=order_by if order_by is not None else self._order_by
+            base_node=base_node if base_node is not None else self.base_node,
+            index=index if index is not None else self.index,
+            series=series if series is not None else self.data,
+            order_by=order_by if order_by is not None else self.order_by
         )
 
     @property
@@ -114,6 +114,10 @@ class BuhTuhDataFrame:
     @property
     def data(self) -> Dict[str, 'BuhTuhSeries']:
         return copy(self._data)
+
+    @property
+    def order_by(self) -> List[SortColumn]:
+        return copy(self.order_by)
 
     @property
     def all_series(self) -> Dict[str, 'BuhTuhSeries']:
@@ -409,7 +413,7 @@ class BuhTuhDataFrame:
                                   f"but got {type(key)}")
 
     def __getattr__(self, attr):
-        return self._data[attr]
+        return self.data[attr]
 
     def __setitem__(self,
                     key: Union[str, List[str]],
@@ -420,6 +424,9 @@ class BuhTuhDataFrame:
         # TODO: all types from types.TypeRegistry are supported.
         from buhtuh.series import BuhTuhSeries
         if isinstance(key, str):
+            if key in self.index:
+                # Cannot set an index column, and cannot have a column both in self.index and self.data
+                raise ValueError(f'Column name "{key}" already exists as index.')
             if not isinstance(value, BuhTuhSeries):
                 from buhtuh.series import const_to_series
                 series = const_to_series(base=self, value=value, name=key)
