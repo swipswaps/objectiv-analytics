@@ -4,8 +4,8 @@ Copyright 2021 Objectiv B.V.
 from enum import Enum
 from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
 
-from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries, Expression
-from buhtuh.expression import quote_identifier
+from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries
+from buhtuh.expression import quote_identifier, Expression
 from sql_models.model import CustomSqlModel, SqlModel
 
 

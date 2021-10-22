@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from buhtuh.pandasql import BuhTuhSeries
+    from buhtuh import BuhTuhSeries
 
 
 @dataclass(frozen=True)

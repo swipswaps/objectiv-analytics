@@ -3,9 +3,8 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
-from buhtuh import Expression
 from buhtuh.expression import RawToken, ColumnReferenceToken, expression_to_sql, quote_string, \
-    quote_identifier, StringValueToken
+    quote_identifier, StringValueToken, Expression
 from tests.unit.buhtuh.util import get_fake_df
 
 

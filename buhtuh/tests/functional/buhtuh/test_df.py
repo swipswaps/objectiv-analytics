@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 from unittest.mock import ANY
 
 import pytest
-from buhtuh import BuhTuhDataFrame, BuhTuhSeriesBoolean, BuhTuhSeriesUuid, BuhTuhSeriesInt64, BuhTuhSeriesString
+from buhtuh import BuhTuhDataFrame, BuhTuhSeriesUuid, BuhTuhSeriesBoolean
 from sql_models.graph_operations import get_graph_nodes_info
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
