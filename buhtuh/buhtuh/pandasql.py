@@ -1,3 +1,6 @@
+import datetime
+import json
+from abc import abstractmethod, ABC
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable
@@ -253,9 +256,9 @@ class BuhTuhDataFrame:
             raise ValueError(f"index is of type '{index_dtype}', should one of {supported_types}. "
                              f"For 'object' columns convert_objects=True can be used to convert these columns"
                              f"to type 'string'.")
-        dtypes = {column_name: dtype.name for column_name, dtype in df_copy.dtypes.items()
+        dtypes = {str(column_name): dtype.name for column_name, dtype in df_copy.dtypes.items()
                   if column_name in df.columns}
-        unsupported_dtypes = {column_name: dtype for column_name, dtype in dtypes.items()
+        unsupported_dtypes = {str(column_name): dtype for column_name, dtype in dtypes.items()
                               if dtype not in supported_types}
         if unsupported_dtypes:
             raise ValueError(f"dtypes {unsupported_dtypes} are not supported, should one of "
@@ -418,10 +421,9 @@ class BuhTuhDataFrame:
         TODO: Comments
         """
         # TODO: all types from types.TypeRegistry are supported.
-        from buhtuh.series import BuhTuhSeries
+        from buhtuh.series import BuhTuhSeries, const_to_series
         if isinstance(key, str):
             if not isinstance(value, BuhTuhSeries):
-                from buhtuh.series import const_to_series
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
                 return
@@ -966,3 +968,78 @@ class BuhTuhDataFrame:
             return self.groupby().aggregate(aggregation_series, *args, **kwargs)
         else:
             raise TypeError(f'Unsupported type for func: {type(func)}')
+
+    def _aggregate_func(self, func, axis, level, numeric_only, *args, **kwargs):
+        if level is not None:
+            raise NotImplementedError("index levels are currently not implemented")
+        return self.agg(func, axis, numeric_only, *args, **kwargs)
+
+    # AGGREGATES
+    def count(self, axis=0, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('count', axis, level, numeric_only, **kwargs)
+
+    def kurt(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('kurt', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def kurtosis(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('kurtosis', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def mad(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('mad', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def max(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('max', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def min(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('min', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def mean(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('mean', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def median(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('median', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def mode(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        # slight deviation from pd.mode(axis=0, numeric_only=False, dropna=True)
+        return self._aggregate_func('mode', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def nunique(self, axis=0, skipna=True, **kwargs):
+        # deviation from horrible pd.nunique(axis=0, dropna=True)
+        return self._aggregate_func('nunique', axis=axis,
+                                    level=None, numeric_only=False, skipna=skipna, **kwargs)
+
+    def skew(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        return self._aggregate_func('skew', axis, level, numeric_only,
+                                    skipna=skipna, **kwargs)
+
+    def prod(self, axis=None, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
+        return self._aggregate_func('prod', axis, level, numeric_only,
+                                    skipna=skipna, min_count=min_count, **kwargs)
+
+    def product(self, axis=None, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
+        return self._aggregate_func('product', axis, level, numeric_only,
+                                    skipna=skipna, min_count=min_count, **kwargs)
+
+    def sem(self, axis=None, skipna=True, level=None, ddof=1, numeric_only=False, **kwargs):
+        return self._aggregate_func('sem', axis, level, numeric_only,
+                                    skipna=skipna, ddof=ddof, **kwargs)
+
+    def std(self, axis=None, skipna=True, level=None, ddof=1, numeric_only=False, **kwargs):
+        return self._aggregate_func('std', axis, level, numeric_only,
+                                    skipna=skipna, ddof=ddof, **kwargs)
+
+    def sum(self, axis=None, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
+        return self._aggregate_func('sum', axis, level, numeric_only,
+                                    skipna=skipna, min_count=min_count, **kwargs)
+
+    def var(self, axis=None, skipna=True, level=None, ddof=1, numeric_only=False, **kwargs):
+        return self._aggregate_func('var', axis, level, numeric_only,
+                                    skipna=skipna, ddof=ddof, **kwargs)

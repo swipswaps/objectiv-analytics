@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING
+from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable
 from uuid import UUID
 
 from buhtuh import BuhTuhDataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
@@ -322,6 +322,22 @@ class BuhTuhSeries(ABC):
             self.expression == other.expression and \
             self._sorted_ascending == other._sorted_ascending
 
+    def __getitem__(self, key: Union[Any, slice]):
+        if isinstance(key, slice):
+            raise NotImplementedError("index slices currently not supported")
+
+        # any other value we treat as a literal index lookup
+        # multiindex not supported atm
+        if self.index is None:
+            raise Exception('Function not supported on Series without index')
+        if len(self.index) != 1:
+            raise NotImplementedError('Index only implemented for simple indexes.')
+        series = self.to_frame()[list(self.index.values())[0] == key]
+        assert isinstance(series, self.__class__)
+
+        # this is massively ugly
+        return series.head(1).astype(series.dtype).values[0]
+
     # Below methods are not abstract, as they can be optionally be implemented by subclasses.
     def __add__(self, other) -> 'BuhTuhSeries':
         raise NotImplementedError()
@@ -384,58 +400,122 @@ class BuhTuhSeries(ABC):
     def __gt__(self, other) -> 'BuhTuhSeriesBoolean':
         return self._comparator_operator(other, ">")
 
-    def __getitem__(self, key: Union[Any, slice]):
-        if isinstance(key, slice):
-            raise NotImplementedError("index slices currently not supported")
+    def aggregate(self,
+                  func: Union[str, Callable, List[Union[str, Callable]]],
+                  *args, **kwargs) -> 'BuhTuhDataFrame':
+        """
+        use agg(..)
+        """
+        return self.agg(func, *args, **kwargs)
 
-        # any other value we treat as a literal index lookup
-        # multiindex not supported atm
-        if self.index is None:
-            raise Exception('Function not supported on Series without index')
-        if len(self.index) != 1:
-            raise NotImplementedError('Index only implemented for simple indexes.')
-        series = self.to_frame()[list(self.index.values())[0] == key]
-        assert isinstance(series, self.__class__)
+    def agg(self,
+            func: Union[str, Callable, List[Union[str, Callable]]],
+            *args, **kwargs) -> 'BuhTuhDataFrame':
+        """
+        :param func: the aggregation function to look for on all series.
+            See BuhTuhGroupby.agg() for supported arguments
+        :param args: Positional arguments to pass through to the aggregation function
+        :param kwargs: Keyword arguments to pass through to the aggregation function
+        """
+        if isinstance(func, (str, list)) or callable(func):
+            aggregation_series = {}
+            aggregation_series[self.name] = func
 
-        # this is massively ugly
-        return series.head(1).astype(series.dtype).values[0]
+            # TODO this is quite broken. We should return a wrapped scalar here
+            buhtuh = self.to_frame()
+            return buhtuh.groupby().aggregate(aggregation_series, *args, **kwargs)
+        else:
+            raise TypeError(f'Unsupported type for func: {type(func)}')
 
     def _window_or_agg_func(
             self,
             partition: Optional['BuhTuhGroupBy'],
             expression: Expression,
-            derived_dtype: str) -> 'BuhTuhSeries':
+            derived_dtype: str = None) -> 'BuhTuhSeries':
+        """
+        Creates a new Series for the given aggregation expression.
+
+         If no partition is given, and empty groupby() is created on a new dataframe containing
+         just this series.
+         If a Window partition is given, it is used to generate an "OVER" clause.
+        """
 
         from buhtuh.partitioning import BuhTuhWindow
 
-        if partition is None or not isinstance(partition, BuhTuhWindow):
+        if derived_dtype is None:
+            derived_dtype = self.dtype
+
+        if partition is None:
+            # Should we keep the partition with this new series?
+            # It's not able to execute without it ... hmm.
+            # We probably need a nice wrapper around single value series anyway..
+            raise NotImplementedError("Please call aggegation functions through agg() or "
+                                      "through Series.agg() for now.")
+
+        if not isinstance(partition, BuhTuhWindow):
             return self._get_derived_series(derived_dtype, expression)
         else:
             return self._get_derived_series(derived_dtype, partition.get_window_expression(expression))
 
-    # Maybe the aggregation methods should be defined on a more subclass of the actual Series call
-    # so we can be more restrictive in calling these.
-    def min(self, partition: 'BuhTuhGroupBy' = None):
-        return self._window_or_agg_func(partition, Expression.construct('min({})', self), self.dtype)
+    def _skipna_unsupported(self, skipna):
+        if not skipna:
+            raise NotImplementedError('Not skipping n/a is not supported')
 
-    def max(self, partition: 'BuhTuhGroupBy' = None):
-        return self._window_or_agg_func(partition, Expression.construct('max({})', self), self.dtype)
+    def _derived_agg_func(self, partition, func, dtype: str = None, skipna: bool = True):
+        self._skipna_unsupported(skipna)
+        return self._window_or_agg_func(
+            partition,
+            Expression.construct(f'{func}({{}})', self),
+            self.dtype if dtype is None else dtype
+        )
 
-    def count(self, partition: 'BuhTuhGroupBy' = None):
-        return self._window_or_agg_func(partition, Expression.construct('count({})', self), 'int64')
+    def fillna(self, constant_value):
+        """
+        Fill any n/a or NULL value with the given constant
+        :param constant_value: the value to replace the na / NULL values with. Should be a supported
+            type by the series, or a TypeError is raised.
+        :note: you can replace None with None, have fun, forever!
+        """
+        return self._get_derived_series(
+            self.dtype,
+            Expression.construct('COALESCE({}, {})', self, self.value_to_expression(constant_value))
+        )
 
-    def nunique(self, partition: 'BuhTuhGroupBy' = None):
+    # If these aggregation methods are called with partition = None, we should return a single
+    # value. TODO
+    def count(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        return self._derived_agg_func(partition, 'count', 'int64', skipna=skipna)
+
+    def max(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        return self._derived_agg_func(partition, 'max', skipna=skipna)
+
+    def median(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        self._skipna_unsupported(skipna)
+        return self._window_or_agg_func(
+            partition,
+            Expression.construct(f'percentile_disc(0.5) WITHIN GROUP (ORDER BY {{}})', self)
+        )
+
+    def min(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        return self._derived_agg_func(partition, 'min', skipna=skipna)
+
+    def mode(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+        self._skipna_unsupported(skipna)
+        return self._window_or_agg_func(
+            partition,
+            Expression.construct(f'mode() within group (order by {{}})', self)
+        )
+
+    def nunique(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
         from buhtuh.partitioning import BuhTuhWindow
         if partition is not None and isinstance(partition, BuhTuhWindow):
-            raise Exception("unique counts in window functions not supported (by PG at least)")
-
+            raise NotImplementedError("unique counts in window functions not supported (by PG at least)")
+        self._skipna_unsupported(skipna)
         return self._get_derived_series('int64', Expression.construct('count(distinct {})', self))
 
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
-    # TODO make group_by optional, but for that we need some way to access the series' underlying
-    #      df to access sorting
-
+    # TODO make group_by optional, but for that we need to use current series sorting
     def _check_window(self, partition: Any):
         """
         Validate that the given partition is a true BuhTuhWindow or raise an exception
