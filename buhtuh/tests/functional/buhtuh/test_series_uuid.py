@@ -24,7 +24,6 @@ def test_uuid_value_to_expression():
         bt['yyyy'] = BuhTuhSeriesUuid.from_const(
             base=bt, value='0022c7dd.074b.4a44.a7cb.b7716b668264', name='tmp')
 
-
     assert_equals_data(
         bt,
         expected_columns=['_index_skating_order', 'city', 'x', 'y', 'yy', 'z', 'zz', 'zzz'],
@@ -131,4 +130,3 @@ def test_uuid_compare():
             [3, 'Drylts', True, False, True, True, False],
         ]
     )
-

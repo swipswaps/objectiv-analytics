@@ -18,33 +18,42 @@ if TYPE_CHECKING:
 
 class BuhTuhSeries(ABC):
     """
-    Immutable class representing a column/expression in a query.
+    Mostly immutable* class representing a column/expression in a query.
+
+    * Mostly immutable: The attributes of this class are either immutable, or this class is guaranteed not
+        to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
+        and is shared with other Series and DataFrames that can change it's state.
     """
     def __init__(self,
                  engine,
                  base_node: SqlModel,
                  index: Optional[Dict[str, 'BuhTuhSeries']],
                  name: str,
-                 expression: Expression = None,
+                 expression: Expression,
                  sorted_ascending: Optional[bool] = None):
         """
-        TODO: docstring
-        :param engine:
-        :param base_node:
+        Initialize a new BuhTuhSeries object.
+        Normally a BuhTuhSeries is associated with a BuhTuhDataFrame. The engine, base_node and index should
+        match in that case. Additionally the name should match the name of this Series object in the
+        DataFrame.
+
+        To create a new BuhTuhSeries object from scratch there are class helper methods get_instance(),
+        get_class_instance(), and from_const().
+
+        :param engine: db connection
+        :param base_node: sql-model of a select statement that must contain the columns/expressions that
+            expression relies on.
         :param index: None if this Series is part of an index. Otherwise a dict with the Series that are
                         this Series' index
-        :param name:
-        :param expression:
+        :param name: name of this Series
+        :param expression: Expression that this Series represents
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
         """
         self._engine = engine
         self._base_node = base_node
         self._index = index
         self._name = name
-        if expression:
-            self._expression = expression
-        else:
-            self._expression = Expression.column_reference(self.name)
+        self._expression = expression
         self._sorted_ascending = sorted_ascending
 
     @property
@@ -116,7 +125,7 @@ class BuhTuhSeries(ABC):
 
     @classmethod
     @abstractmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         """
         Give the sql expression to convert the given expression, of the given source dtype to the dtype of
         this Series.
@@ -143,6 +152,103 @@ class BuhTuhSeries(ABC):
     @property
     def expression(self) -> Expression:
         return self._expression
+
+    @classmethod
+    def get_instance(
+            cls,
+            base: DataFrameOrSeries,
+            name: str,
+            dtype: str,
+            expression: Expression,
+            sorted_ascending: Optional[bool] = None
+    ) -> 'BuhTuhSeries':
+        """
+        Create an instance of the right sub-class of BuhTuhSeries.
+        The subclass is based on the provided dtype. See docstring of __init__ for other parameters.
+        """
+        series_type = get_series_type_from_dtype(dtype=dtype)
+        return series_type.get_class_instance(
+            base=base,
+            name=name,
+            expression=expression,
+            sorted_ascending=sorted_ascending
+        )
+
+    @classmethod
+    def get_class_instance(
+            cls,
+            base: DataFrameOrSeries,
+            name: str,
+            expression: Expression,
+            sorted_ascending: Optional[bool] = None
+    ):
+        """ Create an instance of this class. """
+        return cls(
+            engine=base.engine,
+            base_node=base.base_node,
+            index=base.index,
+            name=name,
+            expression=expression,
+            sorted_ascending=sorted_ascending
+        )
+
+    @classmethod
+    def value_to_expression(cls, value: Optional[Any]) -> Expression:
+        """
+        Give the expression for the given value.
+        Wrapper around cls.supported_value_to_expression() that handles two generic cases:
+            If value is None a simple 'NULL' expresison is returned.
+            If value is not in supported_value_types raises an error.
+        :raises TypeError: if value is not an instance of cls.supported_value_types, and not None
+        """
+        if value is None:
+            return Expression.raw('NULL')
+        supported_types = cast(Tuple[Type, ...], cls.supported_value_types)  # help mypy
+        if not isinstance(value, supported_types):
+            raise TypeError(f'value should be one of {supported_types}'
+                            f', actual type: {type(value)}')
+        return cls.supported_value_to_expression(value)
+
+    @classmethod
+    def from_const(cls,
+                   base: DataFrameOrSeries,
+                   value: Any,
+                   name: str) -> 'BuhTuhSeries':
+        """
+        Create an instance of this class, that represents a column with the given value.
+        """
+        result = cls.get_class_instance(
+            base=base,
+            name=name,
+            expression=cls.value_to_expression(value)
+        )
+        return result
+
+    def get_column_expression(self, table_alias='') -> str:
+        expression_sql = self.expression.to_sql(table_alias)
+        quoted_column_name = quote_identifier(self.name)
+        if expression_sql == quoted_column_name:
+            return expression_sql
+        return f'{expression_sql} as {quoted_column_name}'
+
+    def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'BuhTuhSeries'):
+
+        if self.base_node != other.base_node:
+            raise ValueError(f'Cannot apply {operation_name} on two series with different base_node. '
+                             f'Hint: make sure both series belong to or are derived from the same '
+                             f'DataFrame. '
+                             f'Alternative: use merge() to create a DataFrame with both series. ')
+
+        if other.dtype.lower() not in supported_dtypes:
+            raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
+
+    def _get_derived_series(self, new_dtype: str, expression: Expression):
+        return BuhTuhSeries.get_instance(
+            base=self,
+            name=self.name,
+            dtype=new_dtype,
+            expression=expression
+        )
 
     def head(self, n: int = 5):
         """
@@ -184,111 +290,14 @@ class BuhTuhSeries(ABC):
             order_by=order_by
         )
 
-    @classmethod
-    def get_instance(
-            cls,
-            base: DataFrameOrSeries,
-            name: str,
-            dtype: str,
-            expression: Expression = None,
-            sorted_ascending: Optional[bool] = None
-    ) -> 'BuhTuhSeries':
-        """
-        Create an instance of the right sub-class of BuhTuhSeries.
-        The subclass is based on the provided dtype. See docstring of __init__ for other parameters.
-        """
-        series_type = get_series_type_from_dtype(dtype=dtype)
-        return series_type.get_class_instance(
-            base=base,
-            name=name,
-            expression=expression,
-            sorted_ascending=sorted_ascending
-        )
-
-    @classmethod
-    def get_class_instance(
-            cls,
-            base: DataFrameOrSeries,
-            name: str,
-            expression: Expression = None,
-            sorted_ascending: Optional[bool] = None
-    ):
-        """ Create an instance of this class. """
-        return cls(
-            engine=base.engine,
-            base_node=base.base_node,
-            index=base.index,
-            name=name,
-            expression=expression,
-            sorted_ascending=sorted_ascending
-        )
-
-    def get_column_expression(self, table_alias='') -> str:
-        expression_sql = self.expression.to_sql(table_alias)
-        quoted_column_name = quote_identifier(self.name)
-        if expression_sql == quoted_column_name:
-            return expression_sql
-        return f'{expression_sql} as {quoted_column_name}'
-
-    def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'BuhTuhSeries'):
-
-        if self.base_node != other.base_node:
-            raise ValueError(f'Cannot apply {operation_name} on two series with different base_node. '
-                             f'Hint: make sure both series belong to or are derived from the same '
-                             f'DataFrame. '
-                             f'Alternative: use merge() to create a DataFrame with both series. ')
-
-        if other.dtype.lower() not in supported_dtypes:
-            raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
-
-    def _get_derived_series(self, new_dtype: str, expression: Expression):
-        return BuhTuhSeries.get_instance(
-            base=self,
-            name=self.name,
-            dtype=new_dtype,
-            expression=expression
-        )
-
     def astype(self, dtype: Union[str, Type]) -> 'BuhTuhSeries':
         if dtype == self.dtype or dtype in self.dtype_aliases:
             return self
         series_type = get_series_type_from_dtype(dtype)
-        expression = series_type.from_dtype_to_sql(self.dtype, self.expression)
+        expression = series_type.dtype_to_expression(self.dtype, self.expression)
         # get the real dtype, in case the provided dtype was an alias. mypy needs some help
         new_dtype = cast(str, series_type.dtype)
         return self._get_derived_series(new_dtype=new_dtype, expression=expression)
-
-    @classmethod
-    def value_to_expression(cls, value: Optional[Any]) -> Expression:
-        """
-        Give the expression for the given value.
-        Wrapper around cls.supported_value_to_expression() that handles two generic cases:
-            If value is None a simple 'NULL' expresison is returned.
-            If value is not in supported_value_types raises an error.
-        :raises TypeError: if value is not an instance of cls.supported_value_types, and not None
-        """
-        if value is None:
-            return Expression.raw('NULL')
-        supported_types = cast(Tuple[Type, ...], cls.supported_value_types)  # help mypy
-        if not isinstance(value, supported_types):
-            raise TypeError(f'value should be one of {supported_types}'
-                            f', actual type: {type(value)}')
-        return cls.supported_value_to_expression(value)
-
-    @classmethod
-    def from_const(cls,
-                   base: DataFrameOrSeries,
-                   value: Any,
-                   name: str) -> 'BuhTuhSeries':
-        """
-        Create an instance of this class, that represents a column with the given value.
-        """
-        result = cls.get_class_instance(
-            base=base,
-            name=name,
-            expression=cls.value_to_expression(value)
-        )
-        return result
 
     def equals(self, other: Any) -> bool:
         """

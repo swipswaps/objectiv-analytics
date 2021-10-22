@@ -304,7 +304,8 @@ class BuhTuhDataFrame:
                 engine=engine,
                 base_node=base_node,
                 index=None,  # No index for index
-                name=key
+                name=key,
+                expression=Expression.column_reference(key)
             )
         series: Dict[str, BuhTuhSeries] = {}
         for key, value in dtypes.items():
@@ -313,7 +314,8 @@ class BuhTuhDataFrame:
                 engine=engine,
                 base_node=base_node,
                 index=index,
-                name=key
+                name=key,
+                expression=Expression.column_reference(key)
             )
         return BuhTuhDataFrame(
             engine=engine,

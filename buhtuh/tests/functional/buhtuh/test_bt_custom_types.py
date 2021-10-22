@@ -65,14 +65,14 @@ class ReversedStringType(BuhTuhSeries):
     def supported_value_to_expression(cls, value: str) -> Expression:
         return Expression.string_value(str(reversed(value)))
 
-    @staticmethod
-    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+    @classmethod
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'reversed_string':
             return expression
         elif source_dtype == 'String':
             return Expression.construct('reverse({})', expression)
         else:
-            return Expression.construct('reverse(({})::text)', expression)
+            return Expression.construct('reverse(cast({} as text))', expression)
 
 
 def test_custom_type(monkeypatch):
@@ -92,8 +92,6 @@ def test_custom_type(monkeypatch):
         _registry.register_dtype_series(ReversedStringType, [], False)
     # with override_dtype=True, the error should disappear and 'reversed_string' should be registered
     _registry.register_dtype_series(ReversedStringType, [], override_registered_types=True)
-
-
 
     bt_city_special = bt_city.astype('reversed_string')
 
