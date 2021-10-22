@@ -425,7 +425,7 @@ class BuhTuhDataFrame:
         from buhtuh.series import BuhTuhSeries
         if isinstance(key, str):
             if key in self.index:
-                # Cannot set an index column, and cannot have a column both in self.index and self.data
+                # Cannot set an index column, and cannot have a column name both in self.index and self.data
                 raise ValueError(f'Column name "{key}" already exists as index.')
             if not isinstance(value, BuhTuhSeries):
                 from buhtuh.series import const_to_series
