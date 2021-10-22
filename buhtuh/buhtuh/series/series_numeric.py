@@ -79,8 +79,8 @@ class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
         # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
         return Expression.construct('cast({} as bigint)', Expression.raw(str(value)))
 
-    @staticmethod
-    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+    @classmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'int64':
             return expression
         if source_dtype not in ['float64', 'bool', 'string']:
@@ -106,8 +106,8 @@ class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
         str_value = str(value)
         return Expression.construct("cast({} as float)", Expression.string_value(str_value))
 
-    @staticmethod
-    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+    @classmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'float64':
             return expression
         if source_dtype not in ['int64', 'string']:

@@ -19,8 +19,8 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
         # See https://www.postgresql.org/docs/14/datatype-boolean.html
         return Expression.raw(str(value))
 
-    @staticmethod
-    def from_dtype_to_sql(source_dtype: str, expression: Expression) -> Expression:
+    @classmethod
+    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'bool':
             return expression
         if source_dtype not in ['int64', 'string']:
@@ -39,7 +39,7 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
         other = const_to_series(base=self, value=other)
         self._check_supported(f"boolean operator '{operator}'", ['bool', 'int64', 'float'], other)
         if other.dtype != 'bool':
-            expression = Expression.construct(f'(({{}}) {operator} ({{}}::bool))', self, other)
+            expression = Expression.construct(f'(({{}}) {operator} cast({{}} as bool))', self, other)
         else:
             expression = Expression.construct(f'(({{}}) {operator} ({{}}))', self, other)
         return self._get_derived_series('bool', expression)
