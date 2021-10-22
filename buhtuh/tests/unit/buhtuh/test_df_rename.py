@@ -6,7 +6,7 @@ import pytest
 from tests.unit.buhtuh.util import get_fake_df_test_data
 
 
-def test_rename():
+def test_rename_basic():
     bt = get_fake_df_test_data()
 
     nbt = bt.rename(columns={'founding': 'fnd'})
@@ -16,13 +16,16 @@ def test_rename():
     assert 'fnd' not in bt.data.keys()
     assert bt.founding.expression == nbt.fnd.expression
 
+
+def test_rename_self():
     # rename to self
     bt = get_fake_df_test_data()
     nbt = bt.rename(columns={'city': 'city'})
     assert 'city' in nbt.data.keys()
     assert 'city' in bt.data.keys()
 
-    # swap
+
+def test_rename_swap():
     bt = get_fake_df_test_data()
     expr_inhabitants = bt.inhabitants.expression
     expr_city = bt.city.expression
@@ -32,6 +35,9 @@ def test_rename():
     assert nbt.city.expression == expr_inhabitants
     assert nbt.inhabitants.expression == expr_city
 
+
+def test_rename_inplace():
+    bt = get_fake_df_test_data()
     expr = bt.founding.expression
     nbt = bt.rename(columns={'founding': 'fnd'}, inplace=True)
     assert 'founding' not in nbt.data.keys()
@@ -40,7 +46,8 @@ def test_rename():
     assert 'fnd' in bt.data.keys()
     assert bt.fnd.expression == expr
 
-    # multiple
+
+def test_rename_multiple():
     bt = get_fake_df_test_data()
     nbt = bt.rename(columns={'founding': 'fnd', 'city': 'cty'})
     assert 'founding' not in nbt.data.keys()
@@ -52,7 +59,8 @@ def test_rename():
     assert 'city' in bt.data.keys()
     assert 'cty' not in bt.data.keys()
 
-    # through mapper dict
+
+def test_rename_mapper_dict():
     bt = get_fake_df_test_data()
     nbt = bt.rename(mapper={'city': 'cty'}, axis=1)
     assert 'city' not in nbt.data.keys()
@@ -60,7 +68,8 @@ def test_rename():
     assert 'city' in bt.data.keys()
     assert 'cty' not in bt.data.keys()
 
-    # through mapper lambda
+
+def test_rename_mapper_function():
     bt = get_fake_df_test_data()
     nbt = bt.rename(mapper=lambda x: x[::-1], axis=1)
     assert 'city' not in nbt.data.keys()
@@ -68,7 +77,9 @@ def test_rename():
     assert 'city' in bt.data.keys()
     assert 'ytic' not in bt.data.keys()
 
-    # mapper func no rename
+
+def test_rename_mapper_self():
+    bt = get_fake_df_test_data()
     expr = bt.city.expression
     bt = get_fake_df_test_data()
     nbt = bt.rename(mapper=lambda x: x, axis=1)
@@ -76,6 +87,9 @@ def test_rename():
     assert 'city' in bt.data.keys()
     assert bt.city.expression == expr
 
+
+def test_rename_ignore_errors():
+    bt = get_fake_df_test_data()
     bt.rename(columns={'non existing column': 'new name'}, errors='ignore')
 
     with pytest.raises(KeyError):
