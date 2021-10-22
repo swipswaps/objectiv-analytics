@@ -1,6 +1,3 @@
-import datetime
-import json
-from abc import abstractmethod, ABC
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable
@@ -10,13 +7,12 @@ import pandas
 from sqlalchemy.engine import Engine
 
 from buhtuh.expression import Expression
-from buhtuh.json import Json
 from buhtuh.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
 
 if TYPE_CHECKING:
-    from buhtuh.partitioning import BuhTuhWindow, BuhTuhGroupBy
+    from buhtuh.partitioning import BuhTuhWindow, BuhTuhGroupBy, BuhTuhAggregator
     from buhtuh.series import BuhTuhSeries, BuhTuhSeriesBoolean, BuhTuhSeriesAbstractNumeric
 
 DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
@@ -627,15 +623,17 @@ class BuhTuhDataFrame:
     def groupby(
             self,
             by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
-    ) -> 'BuhTuhGroupBy':
+    ) -> 'BuhTuhAggregator':
         """
         Group by any of the series currently in this dataframe, both from index
         as well as data.
         :param by: The series to group by
         :return: an object to perform aggregations on
         """
-        from buhtuh.partitioning import BuhTuhGroupBy
-        return BuhTuhGroupBy(buh_tuh=self.copy_override(), group_by_columns=self._partition_by_columns(by))
+        from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhAggregator
+        group_by = BuhTuhGroupBy(engine=self.engine, base_node=self.base_node,
+                                 group_by_columns=self._partition_by_columns(by))
+        return BuhTuhAggregator(buh_tuh=self.copy_override(), group_by=group_by)
 
     def window(self,
                by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None,
@@ -645,16 +643,18 @@ class BuhTuhDataFrame:
         TODO Better argument typing, needs fancy import logic
         :see: BuhTuhWindow __init__ for frame args
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        return BuhTuhWindow(buh_tuh=self.copy_override(),
-                            group_by_columns=self._partition_by_columns(by),
-                            **frame_args)
+        from buhtuh.partitioning import BuhTuhWindow, BuhTuhAggregator
+        window = BuhTuhWindow(engine=self.engine, base_node=self.base_node,
+                              group_by_columns=self._partition_by_columns(by),
+                              order_by=self._order_by,
+                              **frame_args)
+        return BuhTuhAggregator(buh_tuh=self.copy_override(), group_by=window)
 
     def rolling(self, window: int,
                 min_periods: int = None,
                 center: bool = False,
                 on: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None,
-                closed: str = 'right') -> 'BuhTuhWindow':
+                closed: str = 'right') -> 'BuhTuhAggregator':
         """
         A rolling window of size 'window', by default right aligned
 
@@ -669,7 +669,8 @@ class BuhTuhDataFrame:
         :note:  the `on` parameter behaves differently from pandas, where it can be use to select to series
                 to iterate over.
         """
-        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, BuhTuhWindow
+        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, \
+            BuhTuhWindow, BuhTuhAggregator
 
         if min_periods is None:
             min_periods = window
@@ -696,18 +697,20 @@ class BuhTuhDataFrame:
         else:
             end_boundary = BuhTuhWindowFrameBoundary.FOLLOWING
 
-        return BuhTuhWindow(buh_tuh=self.copy_override(),
-                            group_by_columns=self._partition_by_columns(on),
-                            mode=mode,
-                            start_boundary=start_boundary, start_value=start_value,
-                            end_boundary=end_boundary, end_value=end_value,
-                            min_values=min_periods)
+        group_by = BuhTuhWindow(engine=self.engine, base_node=self.base_node,
+                                group_by_columns=self._partition_by_columns(on),
+                                order_by=self._order_by,
+                                mode=mode,
+                                start_boundary=start_boundary, start_value=start_value,
+                                end_boundary=end_boundary, end_value=end_value,
+                                min_values=min_periods)
+        return BuhTuhAggregator(buh_tuh=self.copy_override(), group_by=group_by)
 
     def expanding(self,
                   min_periods: int = 1,
                   center: bool = False,
                   on: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
-                  ) -> 'BuhTuhWindow':
+                  ) -> 'BuhTuhAggregator':
         """
         Create an expanding window starting with the first row in the group, with at least min_period
         observations. The result will be right-aligned in the window
@@ -718,7 +721,8 @@ class BuhTuhDataFrame:
                                 The partition is determined earlier in the process.
         """
         # TODO We could move the partitioning to BuhTuhGroupBy
-        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, BuhTuhWindow
+        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, \
+            BuhTuhWindow, BuhTuhAggregator
 
         if center:
             # Will never be implemented probably, as it's also deprecated in pandas
@@ -730,12 +734,14 @@ class BuhTuhDataFrame:
         end_boundary = BuhTuhWindowFrameBoundary.CURRENT_ROW
         end_value = None
 
-        return BuhTuhWindow(buh_tuh=self.copy_override(),
-                            group_by_columns=self._partition_by_columns(on),
-                            mode=mode,
-                            start_boundary=start_boundary, start_value=start_value,
-                            end_boundary=end_boundary, end_value=end_value,
-                            min_values=min_periods)
+        window = BuhTuhWindow(engine=self.engine, base_node=self.base_node,
+                              group_by_columns=self._partition_by_columns(on),
+                              order_by=self._order_by,
+                              mode=mode,
+                              start_boundary=start_boundary, start_value=start_value,
+                              end_boundary=end_boundary, end_value=end_value,
+                              min_values=min_periods)
+        return BuhTuhAggregator(buh_tuh=self.copy_override(), group_by=window)
 
     def sort_values(
             self,

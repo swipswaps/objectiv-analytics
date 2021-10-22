@@ -12,7 +12,7 @@ from buhtuh.types import value_to_dtype
 from sql_models.model import SqlModel
 
 if TYPE_CHECKING:
-    from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhWindow
+    from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhWindow, BuhTuhAggregator
     from buhtuh.series import BuhTuhSeriesBoolean
 
 
@@ -23,7 +23,7 @@ class BuhTuhSeries(ABC):
     def __init__(self,
                  engine,
                  base_node: SqlModel,
-                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 index: Optional[Union[Dict[str, 'BuhTuhSeries'], 'BuhTuhGroupBy']],
                  name: str,
                  expression: Expression = None,
                  sorted_ascending: Optional[bool] = None):
@@ -32,7 +32,7 @@ class BuhTuhSeries(ABC):
         :param engine:
         :param base_node:
         :param index: None if this Series is part of an index. Otherwise a dict with the Series that are
-                        this Series' index
+                        this Series' index. If this series is part of a group by set, this will be the index.
         :param name:
         :param expression:
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
@@ -133,7 +133,7 @@ class BuhTuhSeries(ABC):
         return self._base_node
 
     @property
-    def index(self) -> Optional[Dict[str, 'BuhTuhSeries']]:
+    def index(self) -> Optional[Union[Dict[str, 'BuhTuhSeries'], 'BuhTuhGroupBy']]:
         return copy(self._index)
 
     @property
@@ -170,17 +170,29 @@ class BuhTuhSeries(ABC):
         return self.to_frame().view_sql()
 
     def to_frame(self) -> BuhTuhDataFrame:
-        if self.index is None:
-            raise Exception('to_frame() is not supported for Series that do not have an index')
+        from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhWindow
+
         if self._sorted_ascending is not None:
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
             order_by = []
+        if self.index is None:
+            raise Exception('to_frame() is not supported for Series that do not have an index')
+        elif isinstance(self.index, BuhTuhGroupBy):
+            # create a new base_node based on the group_by
+            index = self.index.index
+            node = self.index.get_node([self.get_column_expression()])
+            series = {self._name: self._get_derived_series(self.dtype, Expression.column_reference(self._name))}
+        else:
+            index = self.index
+            node = self.base_node
+            series = {self.name: self}
+
         return BuhTuhDataFrame(
             engine=self.engine,
-            base_node=self.base_node,
-            index=self.index,
-            series={self.name: self},
+            base_node=node,
+            index=index,
+            series=series,
             order_by=order_by
         )
 
@@ -444,15 +456,45 @@ class BuhTuhSeries(ABC):
                                       "through Series.agg() for now.")
 
         if not isinstance(partition, BuhTuhWindow):
-            return self._get_derived_series(derived_dtype, expression)
+            return get_series_type_from_dtype(derived_dtype)(
+                engine=self._engine,
+                base_node=self._base_node,
+                index=partition,
+                name=self._name,
+                expression=expression,
+                sorted_ascending=self._sorted_ascending)
         else:
             return self._get_derived_series(derived_dtype, partition.get_window_expression(expression))
+
+    def _check_unwrapped_groupby(self, wrapped: Union['BuhTuhAggregator', 'BuhTuhGroupBy'],
+                                 isin=None, notin=()) -> Optional['BuhTuhGroupBy']:
+        from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhAggregator
+        isin = BuhTuhGroupBy if isin is None else isin
+
+        if isinstance(wrapped, BuhTuhAggregator):
+            group_by = wrapped.group_by
+        else:
+            group_by = wrapped
+
+        if not isinstance(group_by, isin):
+            raise ValueError(f'group_by {type(group_by)} not in {isin}')
+        if isinstance(group_by, notin):
+            raise ValueError(f'group_by {type(group_by)} not supported')
+        return group_by
 
     def _skipna_unsupported(self, skipna):
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
 
     def _derived_agg_func(self, partition, func, dtype: str = None, skipna: bool = True):
+        from buhtuh.partitioning import BuhTuhGroupBy
+        if partition is None:
+            # create an aggregation over the entire input
+            partition = BuhTuhGroupBy(engine=self.engine, base_node=self.base_node,
+                                      group_by_columns=[])
+        else:
+            partition = self._check_unwrapped_groupby(partition)
+
         self._skipna_unsupported(skipna)
         return self._window_or_agg_func(
             partition,
@@ -499,72 +541,71 @@ class BuhTuhSeries(ABC):
 
     def nunique(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
         from buhtuh.partitioning import BuhTuhWindow
-        if partition is not None and isinstance(partition, BuhTuhWindow):
-            raise NotImplementedError("unique counts in window functions not supported (by PG at least)")
+        partition = self._check_unwrapped_groupby(partition, notin=(BuhTuhWindow))
         self._skipna_unsupported(skipna)
         return self._get_derived_series('int64', Expression.construct('count(distinct {})', self))
 
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
     # TODO make group_by optional, but for that we need to use current series sorting
-    def _check_window(self, partition: Any):
+    def _check_window(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']) -> 'BuhTuhWindow':
         """
         Validate that the given partition is a true BuhTuhWindow or raise an exception
         """
-        from buhtuh.partitioning import BuhTuhWindow
-        if not isinstance(partition, BuhTuhWindow):
-            raise ValueError("Window functions need a BuhTuhWindow")
+        from buhtuh.partitioning import BuhTuhWindow, BuhTuhAggregator
+        return self._check_unwrapped_groupby(window, isin=(BuhTuhWindow))
 
-    def window_row_number(self, window: 'BuhTuhWindow'):
+
+    def window_row_number(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
         Returns the number of the current row within its partition, counting from 1.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('row_number()'), 'int64')
 
-    def window_rank(self, window: 'BuhTuhWindow'):
+    def window_rank(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
         Returns the rank of the current row, with gaps; that is, the row_number of the first row
         in its peer group.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('rank()'), 'int64')
 
-    def window_dense_rank(self, window: 'BuhTuhWindow'):
+    def window_dense_rank(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
         Returns the rank of the current row, without gaps; this function effectively counts peer
         groups.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('dense_rank()'), 'int64')
 
-    def window_percent_rank(self, window: 'BuhTuhWindow'):
+    def window_percent_rank(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
         Returns the relative rank of the current row, that is
             (rank - 1) / (total partition rows - 1).
         The value thus ranges from 0 to 1 inclusive.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('percent_rank()'), "double precision")
 
-    def window_cume_dist(self, window: 'BuhTuhWindow'):
+    def window_cume_dist(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
         Returns the cumulative distribution, that is
             (number of partition rows preceding or peers with current row) / (total partition rows).
         The value thus ranges from 1/N to 1.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('cume_dist()'), "double precision")
 
-    def window_ntile(self, window: 'BuhTuhWindow', num_buckets: int = 1):
+    def window_ntile(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'], num_buckets: int = 1):
         """
         Returns an integer ranging from 1 to the argument value,
         dividing the partition as equally as possible.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
 
-    def window_lag(self, window: 'BuhTuhWindow', offset: int = 1, default: Any = None):
+    def window_lag(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'], offset: int = 1, default: Any = None):
         """
         Returns value evaluated at the row that is offset rows before the current row
         within the partition; if there is no such row, instead returns default
@@ -573,7 +614,7 @@ class BuhTuhSeries(ABC):
         Both offset and default are evaluated with respect to the current row.
         If omitted, offset defaults to 1 and default to None
         """
-        self._check_window(window)
+        window = self._check_window(window)
         default_expr = self.value_to_expression(default)
         return self._window_or_agg_func(
             window,
@@ -581,14 +622,14 @@ class BuhTuhSeries(ABC):
             self.dtype
         )
 
-    def window_lead(self, window: 'BuhTuhWindow', offset: int = 1, default: Any = None):
+    def window_lead(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'], offset: int = 1, default: Any = None):
         """
         Returns value evaluated at the row that is offset rows after the current row within the partition;
         if there is no such row, instead returns default (which must be of the same type as value).
         Both offset and default are evaluated with respect to the current row.
         If omitted, offset defaults to 1 and default to None.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         default_expr = self.value_to_expression(default)
         return self._window_or_agg_func(
             window,
@@ -596,30 +637,30 @@ class BuhTuhSeries(ABC):
             self.dtype
         )
 
-    def window_first_value(self, window: 'BuhTuhWindow'):
+    def window_first_value(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
         Returns value evaluated at the row that is the first row of the window frame.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         return self._window_or_agg_func(
             window,
             Expression.construct('first_value({})', self),
             self.dtype
         )
 
-    def window_last_value(self, window: 'BuhTuhWindow'):
+    def window_last_value(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
         Returns value evaluated at the row that is the last row of the window frame.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         return self._window_or_agg_func(window, Expression.construct('last_value({})', self), self.dtype)
 
-    def window_nth_value(self, window: 'BuhTuhWindow', n: int):
+    def window_nth_value(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'], n: int):
         """
         Returns value evaluated at the row that is the n'th row of the window frame
         (counting from 1); returns NULL if there is no such row.
         """
-        self._check_window(window)
+        window = self._check_window(window)
         return self._window_or_agg_func(
             window,
             Expression.construct(f'nth_value({{}}, {n})', self),

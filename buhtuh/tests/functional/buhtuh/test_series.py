@@ -82,3 +82,11 @@ def test_dataframe_agg_skipna_parameter():
         with pytest.raises(NotImplementedError):
             # currently not supported anywhere, so needs to raise
             bt.agg(agg, skipna=False)
+
+
+def test_series_direct_aggregation():
+    # test full parameter traversal
+    bt = get_bt_with_test_data(full_data_set=True)
+
+    btg = bt.groupby('municipality')
+    print(bt.inhabitants.sum(btg).head())

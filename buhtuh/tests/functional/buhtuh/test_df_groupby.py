@@ -247,10 +247,7 @@ def test_series_agg():
     bt = get_bt_with_test_data(full_data_set=True)
     s = bt['inhabitants']
     assert s.agg('sum').head().iloc[0,0] == 187325
-
-    with pytest.raises(NotImplementedError):
-        # direct call to sum not supported until we implement some sort of scalar wrapper.
-        assert s.sum().head().iloc[0,0] == 187325
+    assert s.sum().head().iloc[0] == 187325
 
 
 def test_cube_basics():
@@ -323,7 +320,7 @@ def test_grouping_list_basics():
 
     btm = bt.groupby(['municipality'])
     btc = bt.groupby(['city'])
-    bts = BuhTuhGroupingList([btm,btc])
+    bts = btm.grouping_list(btc)
 
     result_bt = bts['inhabitants'].sum()
     assert_equals_data(
@@ -340,7 +337,7 @@ def test_grouping_set_basics():
 
     btm = bt.groupby(['municipality'])
     btc = bt.groupby(['city'])
-    bts = BuhTuhGroupingSet([btm, btc])
+    bts = btm.grouping_set(btc)
 
     result_bt = bts['inhabitants'].sum()
     assert_equals_data(
