@@ -469,15 +469,21 @@ class BuhTuhDataFrame:
                level: int = None,
                errors: str = 'ignore'):
         """
+        Rename columns.
+
+        The interface is similar to Panda's DataFrame.rename(). However we don't support renaming indexes, so
+            recommended usage is `rename(columns=...)`
         :param: mapper: please use columns
         :param: index: not supported
         :param: columns: dict str:str to rename columns, or a function that takes column
-            names as an argument and returns the new one.
+            names as an argument and returns the new one. The new column names must not clash with other
+            column names in either self.data or self.index, after renaming is complete.
         :param: axis: axis = 1 is supported, rest is not.
         :param: inplace: update this df or make a copy first
         :param: level: not supported
-        :param: errors: whether to raise or ignore errors. Errors throw in the mapper function
-            are not suppressed.
+        :param: errors: Either 'ignore' or 'raise'. When set to 'ignore' KeyErrors about non-existing
+            column names in `columns` or `mapper` are ignored. Errors thrown in the mapper function or about
+            invalid target column names are not suppressed.
         :note: copy parameter is not supported since it makes very little sense for db backed series
         """
         if level is not None or\
@@ -499,25 +505,26 @@ class BuhTuhDataFrame:
         if not isinstance(columns, dict):
             raise TypeError(f'unsupported argument type for columns or mappers: {type(columns)}')
 
-        # copy, remove, add strategy to support swaps
-        copies: Dict[str, 'BuhTuhSeries'] = {}
-        for source, target in columns.items():
-            if source == target:
-                continue
-            try:
-                copies[target] = cast('BuhTuhSeries', df[source])
-                del(df[source])
-            except Exception as e:
-                if errors == "raise":
-                    raise e
+        non_existing_columns = set(columns.keys()) - set(df.data.keys())
+        if errors == 'raise' and non_existing_columns:
+            raise KeyError(f'No such column(s): {non_existing_columns}')
 
-        for target, series in copies.items():
-            try:
-                df[target] = series
-            except Exception as e:
-                if errors == "raise":
-                    raise e
-
+        from buhtuh.series import BuhTuhSeries
+        new_data: Dict[str, 'BuhTuhSeries'] = {}
+        for column_name in df.data_columns:
+            new_name = columns.get(column_name, column_name)
+            if new_name in df.index or new_name in new_data:
+                # This error doesn't happen in Pandas, as Pandas allows duplicate column names, but we don't.
+                raise ValueError(f'Cannot set {column_name} as {new_name}. New column name already exists.')
+            series = df.data[column_name]
+            if new_name != series.name:
+                series = series.get_class_instance(
+                        base=df,
+                        name=new_name,
+                        expression=series.expression
+                    )
+            new_data[new_name] = series
+        df._data = new_data
         return df
 
     def __delitem__(self, key: str):
