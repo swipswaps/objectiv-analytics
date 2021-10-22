@@ -66,10 +66,10 @@ RAILWAYS_COLUMNS = ['station_id', 'town', 'station', 'platforms']
 RAILWAYS_INDEX_AND_COLUMNS = ['_index_station_id'] + RAILWAYS_COLUMNS
 
 TEST_DATA_JSON = [
-    [0, '{"a": "b"}','[{"a": "b"}, {"c": "d"}]'],
-    [1, '{"_type": "SectionContext", "id": "home"}','["a","b","c","d"]'],
-    [2, '{"a": "b", "c": {"a": "c"}}','[{"_type": "a", "id": "b"},{"_type": "c", "id": "d"},{"_type": "e", "id": "f"}]'],
-    [3, '{"a": "b", "e": [{"a": "b"}, {"c": "d"}]}','[{"_type":"WebDocumentContext","id":"#document"},{"_type":"SectionContext","id":"home"},{"_type":"SectionContext","id":"top-10"},{"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]']
+    [0, '{"a": "b"}', '[{"a": "b"}, {"c": "d"}]'],
+    [1, '{"_type": "SectionContext", "id": "home"}', '["a","b","c","d"]'],
+    [2, '{"a": "b", "c": {"a": "c"}}', '[{"_type": "a", "id": "b"},{"_type": "c", "id": "d"},{"_type": "e", "id": "f"}]'],
+    [3, '{"a": "b", "e": [{"a": "b"}, {"c": "d"}]}', '[{"_type":"WebDocumentContext","id":"#document"},{"_type":"SectionContext","id":"home"},{"_type":"SectionContext","id":"top-10"},{"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]']
 ]
 JSON_COLUMNS = ['row', 'dict_column', 'list_column']
 JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
@@ -173,4 +173,3 @@ def assert_db_type(
         assert db_type == expected_db_type
     series_type = get_series_type_from_db_dtype(db_type)
     assert series_type == expected_series_type
-

@@ -80,7 +80,7 @@ class BuhTuhSeriesInt64(BuhTuhSeriesAbstractNumeric):
         return Expression.construct('cast({} as bigint)', Expression.raw(str(value)))
 
     @classmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'int64':
             return expression
         if source_dtype not in ['float64', 'bool', 'string']:
@@ -107,7 +107,7 @@ class BuhTuhSeriesFloat64(BuhTuhSeriesAbstractNumeric):
         return Expression.construct("cast({} as float)", Expression.string_value(str_value))
 
     @classmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'float64':
             return expression
         if source_dtype not in ['int64', 'string']:

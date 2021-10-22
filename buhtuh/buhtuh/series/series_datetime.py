@@ -32,7 +32,7 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
         )
 
     @classmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'timestamp':
             return expression
         else:
@@ -81,7 +81,7 @@ class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
         return Expression.construct(f'cast({{}} as date)', Expression.string_value(value))
 
     @classmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'date':
             return expression
         else:
@@ -107,7 +107,7 @@ class BuhTuhSeriesTime(BuhTuhSeries):
         return Expression.construct('cast({} as time without time zone)', Expression.string_value(value))
 
     @classmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'time':
             return expression
         else:
@@ -139,7 +139,7 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         return Expression.construct('cast({} as interval)', Expression.string_value(value))
 
     @classmethod
-    def from_dtype_to_sql(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'timedelta':
             return expression
         else:

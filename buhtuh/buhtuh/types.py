@@ -1,9 +1,3 @@
-from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Hashable, cast, Union
-import datetime
-from uuid import UUID
-
-import numpy
-
 """
 Copyright 2021 Objectiv B.V.
 
@@ -13,6 +7,13 @@ types.
 To prevent cyclic imports, the functions in this file should not be used by pandasql.py before the file
 is fully initialized (that is, only use within functions).
 """
+
+from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Hashable, cast, Union
+import datetime
+from uuid import UUID
+
+import numpy
+
 if TYPE_CHECKING:
     from buhtuh.series import BuhTuhSeries
 
