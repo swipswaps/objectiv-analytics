@@ -91,7 +91,6 @@ class Json:
     def __init__(self, series_object):
         self._series_object = series_object
 
-    # todo use expression instead of self._series_object.name
     def __getitem__(self, key: Union[int, slice]):
         if isinstance(key, int):
             return self._series_object._get_derived_series(
