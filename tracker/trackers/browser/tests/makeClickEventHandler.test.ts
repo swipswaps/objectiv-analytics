@@ -72,7 +72,6 @@ describe('makeClickEventHandler', () => {
     jest.spyOn(getTracker(), 'flushQueue');
     const trackedButton = makeTaggedElement('button', null, 'button');
     const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
-      enabled: true,
       flushQueue: true,
       waitForQueue: { timeoutMs: 1, intervalMs: 1 },
     });
@@ -92,7 +91,6 @@ describe('makeClickEventHandler', () => {
     jest.spyOn(getTracker(), 'flushQueue');
     const trackedButton = makeTaggedElement('button', null, 'button');
     const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
-      enabled: true,
       flushQueue: true,
       waitForQueue: {
         timeoutMs: 1,
@@ -115,7 +113,6 @@ describe('makeClickEventHandler', () => {
     jest.spyOn(getTracker(), 'flushQueue');
     const trackedButton = makeTaggedElement('button', null, 'button');
     const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
-      enabled: true,
       flushQueue: 'onTimeout',
     });
 
@@ -135,7 +132,6 @@ describe('makeClickEventHandler', () => {
     jest.spyOn(getTracker(), 'flushQueue');
     const trackedButton = makeTaggedElement('button', null, 'button');
     const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
-      enabled: true,
       flushQueue: false,
       waitForQueue: {
         timeoutMs: 1,

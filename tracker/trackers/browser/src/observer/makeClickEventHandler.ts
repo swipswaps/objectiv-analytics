@@ -22,7 +22,7 @@ export const makeClickEventHandler = (
       trackClick({ element, tracker });
 
       // If required prevent this event from propagating and attempt to wait for it to be fully executed
-      if (trackClicksOptions?.enabled) {
+      if (trackClicksOptions) {
         const { waitForQueue, flushQueue } = trackClicksOptions;
 
         // Clone the original Event before altering it - `as any` needed due to TS constructors being just `Function`s

@@ -284,43 +284,43 @@ describe('Custom structs', () => {
     }[] = [
       {
         attribute: false,
-        options: { enabled: false },
+        options: undefined,
       },
       {
         attribute: true,
-        options: { enabled: true },
+        options: {},
       },
       {
         attribute: { waitUntilTracked: true },
-        options: { enabled: true, waitForQueue: {}, flushQueue: true },
+        options: { waitForQueue: {}, flushQueue: true },
       },
       {
         attribute: { waitUntilTracked: {} },
-        options: { enabled: true, waitForQueue: {}, flushQueue: true },
+        options: { waitForQueue: {}, flushQueue: true },
       },
       {
         attribute: { waitUntilTracked: { timeoutMs: 1 } },
-        options: { enabled: true, waitForQueue: { timeoutMs: 1 }, flushQueue: true },
+        options: { waitForQueue: { timeoutMs: 1 }, flushQueue: true },
       },
       {
         attribute: { waitUntilTracked: { intervalMs: 2 } },
-        options: { enabled: true, waitForQueue: { intervalMs: 2 }, flushQueue: true },
+        options: { waitForQueue: { intervalMs: 2 }, flushQueue: true },
       },
       {
         attribute: { waitUntilTracked: { timeoutMs: 3, intervalMs: 4 } },
-        options: { enabled: true, waitForQueue: { timeoutMs: 3, intervalMs: 4 }, flushQueue: true },
+        options: { waitForQueue: { timeoutMs: 3, intervalMs: 4 }, flushQueue: true },
       },
       {
         attribute: { waitUntilTracked: { flushQueue: true } },
-        options: { enabled: true, waitForQueue: {}, flushQueue: true },
+        options: { waitForQueue: {}, flushQueue: true },
       },
       {
         attribute: { waitUntilTracked: { flushQueue: false } },
-        options: { enabled: true, waitForQueue: {}, flushQueue: false },
+        options: { waitForQueue: {}, flushQueue: false },
       },
       {
         attribute: { waitUntilTracked: { flushQueue: 'onTimeout' } },
-        options: { enabled: true, waitForQueue: {}, flushQueue: 'onTimeout' },
+        options: { waitForQueue: {}, flushQueue: 'onTimeout' },
       },
     ];
 

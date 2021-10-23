@@ -32,7 +32,7 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
         const trackClicksOptions = parseTrackClicksAttribute(element.getAttribute(TaggingAttribute.trackClicks));
 
         // If trackClicks is specifically disabled, nothing to do
-        if (!trackClicksOptions.enabled) {
+        if (!trackClicksOptions) {
           return;
         }
 

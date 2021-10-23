@@ -103,11 +103,13 @@ export type WaitForQueueOptions = Infer<typeof WaitForQueueOptions>;
 export const FlushQueueOptions = union([literal(false), literal(true), literal('onTimeout')]);
 export type FlushQueueOptions = Infer<typeof FlushQueueOptions>;
 
-export const TrackClicksOptions = object({
-  enabled: boolean(),
-  waitForQueue: optional(WaitForQueueOptions),
-  flushQueue: optional(FlushQueueOptions),
-});
+export const TrackClicksOptions = union([
+  literal(undefined),
+  object({
+    waitForQueue: optional(WaitForQueueOptions),
+    flushQueue: optional(FlushQueueOptions),
+  }),
+]);
 export type TrackClicksOptions = Infer<typeof TrackClicksOptions>;
 
 export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: string | null): TrackClicksOptions => {
@@ -115,11 +117,11 @@ export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: strin
 
   // Process `true` and `false` shorthands onto their verbose options counterparts
   if (typeof parsedTrackClicks == 'boolean') {
-    return { enabled: parsedTrackClicks };
+    return parsedTrackClicks ? {} : undefined;
   }
 
   // Else it must be already an object, from here on trackClicks.enabled will always be `true`
-  let trackClickOptions: TrackClicksOptions = { enabled: true };
+  let trackClickOptions: TrackClicksOptions = {};
   const { waitUntilTracked } = parsedTrackClicks;
 
   // Process `waitUntilTracked` shorthands - we only have a `true` shorthands to process, `false` means no option
