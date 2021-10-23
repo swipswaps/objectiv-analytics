@@ -20,31 +20,45 @@ class BuhTuhSeries(ABC):
     """
     Mostly immutable* class representing a column/expression in a query.
 
+    A series is defined by an expression and a name, and it exists within the scope of the base_node.
+    Its index can be a simple (list of) Series in case of an already materialised base_node, or
+    an instance of BuhTuhGroupBy derived classes. In the latter case, that object represents the
+    future index of this Series; the series can not be used before the aggregation as defined by
+    GroupBy is executed/materialized.
+
     * Mostly immutable: The attributes of this class are either immutable, or this class is guaranteed not
         to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
         and is shared with other Series and DataFrames that can change it's state.
+
     """
     def __init__(self,
                  engine,
                  base_node: SqlModel,
-                 index: Optional[Union[Dict[str, 'BuhTuhSeries'], 'BuhTuhGroupBy']],
+                 index: Union[Dict[str, 'BuhTuhSeries'], 'BuhTuhGroupBy'],
                  name: str,
                  expression: Expression,
                  sorted_ascending: Optional[bool] = None):
         """
         Initialize a new BuhTuhSeries object.
-        Normally a BuhTuhSeries is associated with a BuhTuhDataFrame. The engine, base_node and index should
-        match in that case. Additionally the name should match the name of this Series object in the
+        If a BuhTuhSeries is associated with a BuhTuhDataFrame. The engine, base_node and index
+        should match. Additionally the name should match the name of this Series object in the
         DataFrame.
 
-        To create a new BuhTuhSeries object from scratch there are class helper methods get_instance(),
-        get_class_instance(), and from_const().
+        A BuhTuhSeries can also become a future aggregation, and thus decoupled from its current
+        DataFrame. In that case, the index will be a BuhTuhGroupBy instance, expressing that it
+        can not be used in a dataframe before [aggregation has taken place / the group by has been
+        executed].
+
+        To create a new BuhTuhSeries object from scratch there are class helper methods
+        from_const(), get_class_instance().
+        It is very common to clone a Series with little changes. Use copy_override() for that.
 
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain the columns/expressions that
             expression relies on.
-        :param index: None if this Series is part of an index. Otherwise a dict with the Series that are
-            this Series' index
+        :param index: {} if this Series is part of an index, or a dict with the Series that are
+            this Series' index. If this series is part of an aggregation that still needs to take place,
+            the index will be a BuhTuhGroupBy instance expressing that future aggregation.
         :param name: name of this Series
         :param expression: Expression that this Series represents
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
@@ -142,7 +156,7 @@ class BuhTuhSeries(ABC):
         return self._base_node
 
     @property
-    def index(self) -> Optional[Dict[str, 'BuhTuhSeries']]:
+    def index(self) -> Dict[str, 'BuhTuhSeries']:
         from buhtuh.partitioning import BuhTuhGroupBy
         if not isinstance(self._index, BuhTuhGroupBy):
             return copy(self._index)
@@ -274,23 +288,15 @@ class BuhTuhSeries(ABC):
         else:
             order_by = []
 
-        if self._index is None:
+        if isinstance(self._index, BuhTuhGroupBy):
+            return self._index.to_frame([self])
+        if len(self._index) == 0:
             raise Exception('to_frame() is not supported for Series that do not have an index')
-        elif isinstance(self._index, BuhTuhGroupBy):
-            # create a new base_node based on the group_by
-            index = self._index.index
-            node = self._index.get_node([self.get_column_expression()])
-            series = {self._name: self.copy_override(expression=Expression.column_reference(self._name))}
-        else:
-            index = self._index
-            node = self._base_node
-            series = {self._name: self}
-
         return BuhTuhDataFrame(
             engine=self.engine,
-            base_node=node,
-            index=index,
-            series=series,
+            base_node=self._base_node,
+            index= self._index,
+            series={self._name: self},
             order_by=order_by
         )
 
@@ -309,19 +315,17 @@ class BuhTuhSeries(ABC):
         implemented in __eq__, but we already use that method for other purposes.
         This strictly checks that other is the same type as self. If other is a subclass this will return
         False.
-        :note: currently uses the external index, meaning the potention future index for a group by
+        :note: currently uses the external index, meaning the potential future index for a group by
             is used in the comparison. Not ideal, but better than what we had.
         """
         if not isinstance(other, self.__class__) or not isinstance(self, other.__class__):
             return False
-        if (self.index is None) != (other.index is None):
+
+        if list(self.index.keys()) != list(other.index.keys()):
             return False
-        if self.index is not None and other.index is not None:
-            if list(self.index.keys()) != list(other.index.keys()):
+        for key in self.index.keys():
+            if not self.index[key].equals(other.index[key]):
                 return False
-            for key in self.index.keys():
-                if not self.index[key].equals(other.index[key]):
-                    return False
         return self.engine == other.engine and \
             self.base_node == other.base_node and \
             self.name == other.name and \
@@ -334,11 +338,11 @@ class BuhTuhSeries(ABC):
 
         # any other value we treat as a literal index lookup
         # multiindex not supported atm
-        if self._index is None:
-            raise Exception('Function not supported on Series without index')
         if not isinstance(self._index, dict):
             raise Exception('Function not supported on Series with future / groupby index yet')
-        if len(self._index) != 1:
+        if len(self.index) == 0:
+            raise Exception('Function not supported on Series without index')
+        if len(self.index) > 1:
             raise NotImplementedError('Index only implemented for simple indexes.')
         series = self.to_frame()[list(self._index.values())[0] == key]
         assert isinstance(series, self.__class__)
@@ -408,65 +412,92 @@ class BuhTuhSeries(ABC):
     def __gt__(self, other) -> 'BuhTuhSeriesBoolean':
         return self._comparator_operator(other, ">")
 
+    def apply_func(self,
+                   func: Union[str, Callable, List[Union[str, Callable]]],
+                   *args, **kwargs) -> List['BuhTuhSeries']:
+        """
+        Apply the given func to this Series. If multiple are given, multiple new series will
+        be returned.
+        :param func: the function to look for on all series, either as a str, or callable,
+            or a list of such
+        :param args: Positional arguments to pass through to the aggregation function
+        :param kwargs: Keyword arguments to pass through to the aggregation function
+        :returns: List of BuhTuhSeries with the func applied
+        :note: you should probably not use this method directly.
+        """
+        if isinstance(func, str) or callable(func):
+            func = [func]
+        if not isinstance(func, list):
+            raise TypeError(f'Unsupported type for func: {type(func)}')
+        if len(func) == 0:
+            raise Exception('Nothing to do.')
+
+        series = {}
+        for fn in func:
+            if isinstance(fn, str):
+                series_name = f'{self.name}_{fn}'
+                fn = cast(Callable, getattr(self, fn))
+            elif callable(fn):
+                series_name = f'{self._name}_{fn.__name__}'
+            else:
+                raise ValueError("func {fn} is not callable")
+
+            # If the method is bound yet (__self__ set), we need to use the unbound function
+            # to make sure call the method on the right series
+            if hasattr(fn, '__self__'):
+                fn = cast(Callable, fn.__func__)  # type: ignore[attr-defined]
+
+            fn_applied_series = fn(self, *args, **kwargs)
+            if series_name in series:
+                raise ValueError(f'duplicate series target name {series_name}')
+            series[series_name] = fn_applied_series.copy_override(name=series_name)
+
+        return list(series.values())
+
     def aggregate(self,
                   func: Union[str, Callable, List[Union[str, Callable]]],
-                  *args, **kwargs) -> 'BuhTuhDataFrame':
+                  group_by: 'BuhTuhGroupBy' = None,
+                  *args, **kwargs) -> DataFrameOrSeries:
         """
         use agg(..)
         """
-        return self.agg(func, *args, **kwargs)
+        return self.agg(func, group_by, *args, **kwargs)
 
     def agg(self,
             func: Union[str, Callable, List[Union[str, Callable]]],
-            *args, **kwargs) -> 'BuhTuhDataFrame':
+            group_by: 'BuhTuhGroupBy' = None,
+            *args, **kwargs) -> DataFrameOrSeries:
         """
         :param func: the aggregation function to look for on all series.
-            See BuhTuhGroupby.agg() for supported arguments
+            See BuhTuhGroupBy.agg() for supported arguments
+        :param group_by: the group_by to use, or aggregation over full base_node if None
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
+        :returns: Aggregated BuhTuhSeries, or BuhTuhDataFrame if multiple series are returned
         """
-        if isinstance(func, (str, list)) or callable(func):
-            # TODO this is quite broken. We should return a wrapped scalar here
-            return self.to_frame().groupby().aggregate({self.name: func}, *args, **kwargs)
-        else:
-            raise TypeError(f'Unsupported type for func: {type(func)}')
+        if group_by is None:
+            from buhtuh.partitioning import BuhTuhGroupBy
+            group_by = BuhTuhGroupBy(self.engine, self.base_node, [])
 
-    def _window_or_agg_func(
-            self,
-            partition: Optional['BuhTuhGroupBy'],
-            expression: Expression,
-            derived_dtype: str = None) -> 'BuhTuhSeries':
+        series = self.apply_func(func, group_by, *args, **kwargs)
+        if len(series) == 1:
+            return series[0]
+
+        return group_by.to_frame(series)
+
+    def _check_unwrap_groupby(self,
+                              wrapped: Union['BuhTuhAggregator', 'BuhTuhGroupBy'],
+                              isin=None, notin=()) -> 'BuhTuhGroupBy':
         """
-        Creates a new Series for the given aggregation expression.
+        Unwrap the GroupBy from the Aggregator if one is given, else use the GroupBy directly
+        and perform some checks:
+        - Make sure that the GroupBy instance is of a type in the set `isin`, defaulting
+          to make sure it's a BuhTuhGroupBy if `isin` is None
+        - Make sure that it's instance type is not in `notin`
 
-         If no partition is given, and empty groupby() is created on a new dataframe containing
-         just this series.
-         If a Window partition is given, it is used to generate an "OVER" clause.
+        Exceptions will be raised when check don't pass
+        :returns: The potentially unwrapped BuhTuhGroupBy
         """
-
-        from buhtuh.partitioning import BuhTuhWindow
-
-        if derived_dtype is None:
-            derived_dtype = self.dtype
-
-        if partition is None:
-            # Should we keep the partition with this new series?
-            # It's not able to execute without it ... hmm.
-            # We probably need a nice wrapper around single value series anyway..
-            raise NotImplementedError("Please call aggegation functions through agg() or "
-                                      "through Series.agg() for now.")
-
-        if not isinstance(partition, BuhTuhWindow):
-            return self.copy_override(dtype=derived_dtype,
-                                      index=partition,
-                                      expression=expression)
-        else:
-            return self.copy_override(dtype=derived_dtype,
-                                      expression=partition.get_window_expression(expression))
-
-    def _check_unwrapped_groupby(self,
-                                 wrapped: Union['BuhTuhAggregator', 'BuhTuhGroupBy'],
-                                 isin=None, notin=()) -> 'BuhTuhGroupBy':
         from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhAggregator
         isin = BuhTuhGroupBy if isin is None else isin
 
@@ -481,33 +512,57 @@ class BuhTuhSeries(ABC):
             raise ValueError(f'group_by {type(group_by)} not supported')
         return group_by
 
-    def _skipna_unsupported(self, skipna):
+    def _derived_agg_func(self,
+                          partition: Optional[Union['BuhTuhGroupBy', 'BuhTuhAggregator']],
+                          expression: Union[str, Expression],
+                          dtype: str = None,
+                          skipna: bool = True) -> 'BuhTuhSeries':
+        """
+        Create a derived Series that aggregates underlying Series through the given expression.
+        If no partition to aggregate on is given, it will create one that
+        aggregates the entire series without any partitions. This allows for calls like:
+          someseries.sum()
+
+        Skipna will also be checked here as to make the callers life as simple as possible.
+        :param partition: The BuhTuhAggregator containing the GroupBy, or just the GroupBy
+            to execute the expression within.
+        :param expression: str or Expression of the aggregation function.
+        :param dtype: Will be used for derived series if not None.
+        :param skipna: skipna parameter for support check.
+        :returns: The correctly typed derived Series, with either the current index in case of
+            a Window function, or the GroupBy otherwise.
+        """
+        from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhWindow
+
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
 
-    def _derived_agg_func(self, partition, expression, dtype: str = None, skipna: bool = True):
-        from buhtuh.partitioning import BuhTuhGroupBy
         if partition is None:
             # create an aggregation over the entire input
             partition = BuhTuhGroupBy(engine=self.engine, base_node=self.base_node,
                                       group_by_columns=[])
         else:
-            partition = self._check_unwrapped_groupby(partition)
+            partition = self._check_unwrap_groupby(partition)
 
         if isinstance(expression, str):
             expression = Expression.construct(f'{expression}({{}})', self)
-        self._skipna_unsupported(skipna)
-        return self._window_or_agg_func(
-            partition=partition,
-            expression=expression,
-            derived_dtype=self.dtype if dtype is None else dtype
-        )
+
+        derived_dtype = self.dtype if dtype is None else dtype
+
+        if not isinstance(partition, BuhTuhWindow):
+            return self.copy_override(dtype=derived_dtype,
+                                      index=partition,
+                                      expression=expression)
+        else:
+            return self.copy_override(dtype=derived_dtype,
+                                      expression=partition.get_window_expression(expression))
 
     def fillna(self, constant_value):
         """
-        Fill any n/a or NULL value with the given constant
-        :param constant_value: the value to replace the na / NULL values with. Should be a supported
+        Fill any NULL value with the given constant
+        :param constant_value: the value to replace the NULL values with. Should be a supported
             type by the series, or a TypeError is raised.
+        :note: Pandas replaces np.nan values, we can only replace NULL.
         :note: you can replace None with None, have fun, forever!
         """
         return self._get_derived_series(
@@ -517,35 +572,47 @@ class BuhTuhSeries(ABC):
 
     # If these aggregation methods are called with partition = None, we should return a single
     # value. TODO
-    def count(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+    def count(self,
+              partition: Union['BuhTuhGroupBy', 'BuhTuhAggregator'] = None,
+              skipna: bool = True):
         return self._derived_agg_func(partition, 'count', 'int64', skipna=skipna)
 
-    def max(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+    def max(self,
+            partition: Union['BuhTuhGroupBy', 'BuhTuhAggregator'] = None,
+            skipna: bool = True):
         return self._derived_agg_func(partition, 'max', skipna=skipna)
 
-    def median(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
-        self._skipna_unsupported(skipna)
-        return self._window_or_agg_func(
-            partition,
-            Expression.construct(f'percentile_disc(0.5) WITHIN GROUP (ORDER BY {{}})', self)
+    def median(self,
+               partition: Union['BuhTuhGroupBy', 'BuhTuhAggregator'] = None,
+               skipna: bool = True):
+        return self._derived_agg_func(
+            partition=partition,
+            expression=Expression.construct(f'percentile_disc(0.5) WITHIN GROUP (ORDER BY {{}})', self),
+            skipna=skipna
         )
 
-    def min(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+    def min(self,
+            partition: Union['BuhTuhGroupBy', 'BuhTuhAggregator'] = None,
+            skipna: bool = True):
         return self._derived_agg_func(partition, 'min', skipna=skipna)
 
-    def mode(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
-        self._skipna_unsupported(skipna)
-        return self._window_or_agg_func(
-            partition,
-            Expression.construct(f'mode() within group (order by {{}})', self)
+    def mode(self,
+             partition: Union['BuhTuhGroupBy', 'BuhTuhAggregator'] = None,
+             skipna: bool = True):
+        return self._derived_agg_func(
+            partition=partition,
+            expression=Expression.construct(f'mode() within group (order by {{}})', self),
+            skipna=skipna
         )
 
-    def nunique(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+    def nunique(self,
+                partition: Union['BuhTuhGroupBy', 'BuhTuhAggregator'] = None,
+                skipna: bool = True):
         from buhtuh.partitioning import BuhTuhWindow
         if partition is not None:
-            self._check_unwrapped_groupby(partition, notin=BuhTuhWindow)
-        self._skipna_unsupported(skipna)
-        return self._derived_agg_func(partition, dtype='int64',
+            partition = self._check_unwrap_groupby(partition, notin=BuhTuhWindow)
+        return self._derived_agg_func(partition=partition,
+                                      dtype='int64',
                                       expression=Expression.construct('count(distinct {})', self),
                                       skipna=skipna)
 
@@ -557,14 +624,14 @@ class BuhTuhSeries(ABC):
         Validate that the given partition is a true BuhTuhWindow or raise an exception
         """
         from buhtuh.partitioning import BuhTuhWindow
-        return cast(BuhTuhWindow, self._check_unwrapped_groupby(window, isin=BuhTuhWindow))
+        return cast(BuhTuhWindow, self._check_unwrap_groupby(window, isin=BuhTuhWindow))
 
     def window_row_number(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
         Returns the number of the current row within its partition, counting from 1.
         """
         window = self._check_window(window)
-        return self._window_or_agg_func(window, Expression.construct('row_number()'), 'int64')
+        return self._derived_agg_func(window, Expression.construct('row_number()'), 'int64')
 
     def window_rank(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
@@ -572,7 +639,7 @@ class BuhTuhSeries(ABC):
         in its peer group.
         """
         window = self._check_window(window)
-        return self._window_or_agg_func(window, Expression.construct('rank()'), 'int64')
+        return self._derived_agg_func(window, Expression.construct('rank()'), 'int64')
 
     def window_dense_rank(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
@@ -580,7 +647,7 @@ class BuhTuhSeries(ABC):
         groups.
         """
         window = self._check_window(window)
-        return self._window_or_agg_func(window, Expression.construct('dense_rank()'), 'int64')
+        return self._derived_agg_func(window, Expression.construct('dense_rank()'), 'int64')
 
     def window_percent_rank(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
@@ -589,7 +656,7 @@ class BuhTuhSeries(ABC):
         The value thus ranges from 0 to 1 inclusive.
         """
         window = self._check_window(window)
-        return self._window_or_agg_func(window, Expression.construct('percent_rank()'), "double precision")
+        return self._derived_agg_func(window, Expression.construct('percent_rank()'), "double precision")
 
     def window_cume_dist(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator']):
         """
@@ -598,7 +665,7 @@ class BuhTuhSeries(ABC):
         The value thus ranges from 1/N to 1.
         """
         window = self._check_window(window)
-        return self._window_or_agg_func(window, Expression.construct('cume_dist()'), "double precision")
+        return self._derived_agg_func(window, Expression.construct('cume_dist()'), "double precision")
 
     def window_ntile(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'], num_buckets: int = 1):
         """
@@ -606,7 +673,7 @@ class BuhTuhSeries(ABC):
         dividing the partition as equally as possible.
         """
         window = self._check_window(window)
-        return self._window_or_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
+        return self._derived_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
 
     def window_lag(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'],
                    offset: int = 1, default: Any = None):
@@ -620,7 +687,7 @@ class BuhTuhSeries(ABC):
         """
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
-        return self._window_or_agg_func(
+        return self._derived_agg_func(
             window,
             Expression.construct(f'lag({{}}, {offset}, {{}})', self, default_expr),
             self.dtype
@@ -636,7 +703,7 @@ class BuhTuhSeries(ABC):
         """
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
-        return self._window_or_agg_func(
+        return self._derived_agg_func(
             window,
             Expression.construct(f'lead({{}}, {offset}, {{}})', self, default_expr),
             self.dtype
@@ -647,7 +714,7 @@ class BuhTuhSeries(ABC):
         Returns value evaluated at the row that is the first row of the window frame.
         """
         window = self._check_window(window)
-        return self._window_or_agg_func(
+        return self._derived_agg_func(
             window,
             Expression.construct('first_value({})', self),
             self.dtype
@@ -658,7 +725,7 @@ class BuhTuhSeries(ABC):
         Returns value evaluated at the row that is the last row of the window frame.
         """
         window = self._check_window(window)
-        return self._window_or_agg_func(window, Expression.construct('last_value({})', self), self.dtype)
+        return self._derived_agg_func(window, Expression.construct('last_value({})', self), self.dtype)
 
     def window_nth_value(self, window: Union['BuhTuhWindow', 'BuhTuhAggregator'], n: int):
         """
@@ -666,7 +733,7 @@ class BuhTuhSeries(ABC):
         (counting from 1); returns NULL if there is no such row.
         """
         window = self._check_window(window)
-        return self._window_or_agg_func(
+        return self._derived_agg_func(
             window,
             Expression.construct(f'nth_value({{}}, {n})', self),
             self.dtype

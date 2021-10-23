@@ -4,7 +4,6 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from buhtuh import BuhTuhSeries, BuhTuhSeriesAbstractNumeric
-from buhtuh.partitioning import BuhTuhGroupingList, BuhTuhGroupingSet
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
@@ -146,7 +145,7 @@ def test_group_by_basics_series():
         'inhabitants_count': 'int64',
     }
 
-    btg_series = btg['inhabitants', 'founding']
+    btg_series = btg[['inhabitants', 'founding']]
     result_bt = btg_series.count()
     assert_equals_data(
         result_bt,
@@ -246,15 +245,32 @@ def test_dataframe_agg_numeric_only():
 def test_series_agg():
     bt = get_bt_with_test_data(full_data_set=True)
     s = bt['inhabitants']
-    assert s.agg('sum').head().iloc[0,0] == 187325
-    assert s.sum().head().iloc[0] == 187325
+    # single series results
+    a1 = s.agg('sum')
+    assert isinstance(a1, type(s))
+    assert a1.head().iloc[0] == 187325
+
+    a2 = s.sum()
+    assert isinstance(a2, type(s))
+    assert a2.head().iloc[0] == 187325
+
+    df1 = s.agg(['sum', 'count'])
+    assert isinstance(df1.inhabitants_sum, type(s))
+    assert isinstance(df1.inhabitants_count, type(s))
+    # multiple series results return
+    assert df1.inhabitants_sum.head().iloc[0] == 187325
+    assert df1.inhabitants_count.head().iloc[0] == 11
+
+    # duplicate result series should raise
+    with pytest.raises(ValueError, match="duplicate"):
+        s.agg(['sum','sum'])
 
 
 def test_cube_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
     # instant stonks through variable naming
-    btc = bt.groupby(['municipality','city']).cube()
+    btc = bt.cube(['municipality','city'])
 
     result_bt = btc['inhabitants'].sum()
     assert_equals_data(
@@ -277,7 +293,7 @@ def test_cube_basics():
 def test_rollup_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    btc = bt.groupby(['municipality','city']).rollup()
+    btc = bt.rollup(['municipality','city'])
 
     result_bt = btc['inhabitants'].sum()
     assert_equals_data(
@@ -298,7 +314,7 @@ def test_rollup_basics():
 def test_rollup_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    btr = bt.groupby(['municipality','city']).rollup()
+    btr = bt.rollup(['municipality','city'])
 
     result_bt = btr['inhabitants'].sum()
     assert_equals_data(

@@ -10,6 +10,7 @@ from sql_models.model import SqlModel
 
 if TYPE_CHECKING:
     from buhtuh.series import BuhTuhSeriesBoolean
+    from buhtuh.partitioning import BuhTuhGroupBy
 
 
 class BuhTuhSeriesJsonb(BuhTuhSeries):
@@ -25,7 +26,7 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
     def __init__(self,
                  engine,
                  base_node: SqlModel,
-                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 index: Union[Dict[str, 'BuhTuhSeries'], 'BuhTuhGroupBy'],
                  name: str,
                  expression: Expression,
                  sorted_ascending: Optional[bool] = None):
@@ -74,7 +75,7 @@ class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
     def __init__(self,
                  engine,
                  base_node: SqlModel,
-                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 index: Union[Dict[str, 'BuhTuhSeries'], 'BuhTuhGroupBy'],
                  name: str,
                  expression: Expression,
                  sorted_ascending: Optional[bool] = None):

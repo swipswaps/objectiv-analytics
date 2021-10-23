@@ -176,7 +176,7 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         return self._get_derived_series('timedelta', expression)
 
     def sum(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
-        result = self._window_or_agg_func(
+        result = self._derived_agg_func(
             partition,
             Expression.construct('sum({})', self.expression),
             self.dtype
@@ -184,7 +184,7 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         return cast('BuhTuhSeriesTimedelta', result)
 
     def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
-        result = self._window_or_agg_func(
+        result = self._derived_agg_func(
             partition,
             Expression.construct('avg({})', self.expression),
             self.dtype

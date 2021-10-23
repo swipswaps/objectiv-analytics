@@ -299,7 +299,7 @@ class BuhTuhDataFrame:
             index[key] = index_type(
                 engine=engine,
                 base_node=base_node,
-                index=None,  # No index for index
+                index={},  # Empty index for index series
                 name=key,
                 expression=Expression.column_reference(key)
             )
@@ -647,6 +647,30 @@ class BuhTuhDataFrame:
                               **frame_args)
         return BuhTuhAggregator(buh_tuh=self.copy_override(), group_by=window)
 
+    def cube(self,
+             by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
+             ) -> 'BuhTuhAggregator':
+        """
+        Convenience function to turn this groupby into a cube.
+        :see: BuhTuhCube for more info
+        """
+        from buhtuh.partitioning import BuhTuhCube, BuhTuhAggregator
+        cube = BuhTuhCube(engine=self.engine, base_node=self.base_node,
+                          group_by_columns=self._partition_by_columns(by))
+        return BuhTuhAggregator(buh_tuh=self, group_by=cube)
+
+    def rollup(self,
+               by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
+               ) -> 'BuhTuhAggregator':
+        """
+        Convenience function to turn this groupby into a rollup.
+        :see: BuhTuhRollup for more info
+        """
+        from buhtuh.partitioning import BuhTuhRollup, BuhTuhAggregator
+        rollup = BuhTuhRollup(engine=self.engine, base_node=self.base_node,
+                              group_by_columns=self._partition_by_columns(by))
+        return BuhTuhAggregator(buh_tuh=self, group_by=rollup)
+
     def rolling(self, window: int,
                 min_periods: int = None,
                 center: bool = False,
@@ -914,6 +938,89 @@ class BuhTuhDataFrame:
             suffixes=suffixes
         )
 
+    def _apply_func_to_series(self,
+                              func: Union[str, Callable, List[Union[str, Callable]],
+                                          Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
+                              axis: int = 1,
+                              numeric_only: bool = False,
+                              exclude_non_applied: bool = False,
+                              *args, **kwargs) -> List['BuhTuhSeries']:
+        """
+        :param func: function, str, list or dict to apply to all series
+            Function to use on the data. If a function, must work when passed a
+            BuhTuhSeries.
+
+            Accepted combinations are:
+            - function
+            - string function name
+            - list of functions and/or function names, e.g. [BuhTuhSeriesInt64.sum, 'mean']
+            - dict of axis labels -> functions, function names or list of such.
+        :param axis: the axis
+        :param numeric_only: Whether to apply to numeric series only, or attempt all.
+        :param exclude_non_applied: Exclude series where applying was not attempted / failed
+        :param args: Positional arguments to pass through to the aggregation function
+        :param kwargs: Keyword arguments to pass through to the aggregation function
+        :note: Pandas has numeric_only=None to attempt all columns but ignore failing ones
+            silently. This is currently not implemented.
+        :note: axis defaults to 1, because 0 is currently unsupported
+        """
+        from buhtuh.series import BuhTuhSeriesAbstractNumeric
+        if axis == 0:
+            raise NotImplementedError("Only axis=1 is currently implemented")
+
+        if numeric_only is None:
+            raise NotImplementedError("numeric_only=None to attempt all columns but ignore "
+                                      "failing ones silently is currently not implemented.")
+
+        apply_dict: Dict[str, List[Union[str, Callable]]] = {}
+        if isinstance(func, dict):
+            # make sure the keys are series we know
+            for k, v in func.items():
+                if k not in self._data:
+                    raise KeyError(f'{k} not found in group by series')
+                if isinstance(v, str) or callable(v):
+                    apply_dict[k] = [v]
+                elif isinstance(v, list):
+                    apply_dict[k] = v
+                else:
+                    raise TypeError(f'Unsupported value type {type(func)} in func dict for key {k}')
+        elif isinstance(func, (str, list)) or callable(func):
+            apply_dict = {}
+            # check whether we need to exclude non-numeric
+            for name, series in self.data.items():
+                if numeric_only and not isinstance(series, BuhTuhSeriesAbstractNumeric):
+                    continue
+                if isinstance(func, list):
+                    apply_dict[name] = func
+                else:
+                    apply_dict[name] = [func]
+        else:
+            raise TypeError(f'Unsupported type for func: {type(func)}')
+
+        new_series = {}
+        for name, series in self._data.items():
+            if name not in apply_dict:
+                if not exclude_non_applied:
+                    new_series[name] = series.copy_override()
+                continue
+            for applied in series.apply_func(apply_dict[name], *args, **kwargs):
+                if applied.name in new_series:
+                    raise ValueError("duplicate result series: {applied.name}")
+                new_series[applied.name] = applied
+
+        return list(new_series.values())
+
+    def apply_func(self, func: Union[str, Callable, List[Union[str, Callable]],
+                                     Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
+                   axis: int = 1,
+                   numeric_only: bool = False,
+                   exclude_non_applied: bool = False,
+                   *args, **kwargs) -> 'BuhTuhDataFrame':
+        """ see apply_to_series() """
+        series = self._apply_func_to_series(func, axis, numeric_only,
+                                            exclude_non_applied, *args, ** kwargs)
+        return cast('BuhTuhDataFrame', self.copy_override(series={s.name: s for s in series}))
+
     def aggregate(self,
                   func: Union[str, Callable, List[Union[str, Callable]],
                               Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
@@ -930,39 +1037,27 @@ class BuhTuhDataFrame:
                         Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
             axis: int = 1,
             numeric_only: bool = False,
-            *args, **kwargs) -> 'BuhTuhDataFrame':
+            *args,
+            group_by: 'BuhTuhGroupBy' = None,
+            **kwargs) -> 'BuhTuhDataFrame':
         """
-        :param func: the aggregation function to look for on all series.
-            See BuhTuhGroupby.agg() for supported arguments
+        :param func: the aggregations to apply on all series.
+            See apply_func() for supported arguments
         :param axis: the aggregation axis
         :param numeric_only: Whether to aggregate numeric series only, or attempt all.
+        :param group_by: The grouping to use, defaults to entire dataframe
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
         :note: Pandas has numeric_only=None to attempt all columns but ignore failing ones
             silently. This is currently not implemented.
         :note: axis defaults to 1, because 0 is currently unsupported
         """
-        from buhtuh.series import BuhTuhSeriesAbstractNumeric
-
-        if axis == 0:
-            raise NotImplementedError("Only axis=1 is currently implemented")
-
-        if numeric_only is None:
-            raise NotImplementedError("numeric_only=None to attempt all columns but ignore "
-                                      "failing ones silently is currently not implemented.")
-
-        if isinstance(func, dict):
-            return self.groupby().aggregate(func, *args, **kwargs)
-        elif isinstance(func, (str, list)) or callable(func):
-            aggregation_series = {}
-            # check whether we need to exclude non-numeric
-            for name, series in self.data.items():
-                if numeric_only and not isinstance(series, BuhTuhSeriesAbstractNumeric):
-                    continue
-                aggregation_series[name] = func
-            return self.groupby().aggregate(aggregation_series, *args, **kwargs)
-        else:
-            raise TypeError(f'Unsupported type for func: {type(func)}')
+        from buhtuh.partitioning import BuhTuhGroupBy
+        group_by = BuhTuhGroupBy(self.engine, self.base_node, []) if group_by is None else group_by
+        series = self._apply_func_to_series(func, axis, numeric_only,
+                                            True,  # exclude_non_applied, must be positional arg.
+                                            group_by, *args, **kwargs)
+        return group_by.to_frame(series)
 
     def _aggregate_func(self, func, axis, level, numeric_only, *args, **kwargs):
         if level is not None:
@@ -1023,11 +1118,11 @@ class BuhTuhDataFrame:
         return self._aggregate_func('product', axis, level, numeric_only,
                                     skipna=skipna, min_count=min_count, **kwargs)
 
-    def sem(self, axis=None, skipna=True, level=None, ddof=1, numeric_only=False, **kwargs):
+    def sem(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('sem', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
-    def std(self, axis=None, skipna=True, level=None, ddof=1, numeric_only=False, **kwargs):
+    def std(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('std', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
@@ -1035,6 +1130,6 @@ class BuhTuhDataFrame:
         return self._aggregate_func('sum', axis, level, numeric_only,
                                     skipna=skipna, min_count=min_count, **kwargs)
 
-    def var(self, axis=None, skipna=True, level=None, ddof=1, numeric_only=False, **kwargs):
+    def var(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)

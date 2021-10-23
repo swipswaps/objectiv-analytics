@@ -31,31 +31,31 @@ def test_equals():
 
     int_type = get_series_type_from_dtype('int64')
     float_type = get_series_type_from_dtype('float64')
-    sleft = int_type(engine=None, base_node=None, index=None, name='test', expression='test')
-    sright = int_type(engine=None, base_node=None, index=None, name='test', expression='test')
+    sleft = int_type(engine=None, base_node=None, index={}, name='test', expression='test')
+    sright = int_type(engine=None, base_node=None, index={}, name='test', expression='test')
     assert sleft.equals(sright)
 
     # different expression
-    sright = int_type(engine=None, base_node=None, index=None, name='test', expression='test::text')
+    sright = int_type(engine=None, base_node=None, index={}, name='test', expression='test::text')
     assert not sleft.equals(sright)
 
     # different name
-    sright = int_type(engine=None, base_node=None, index=None, name='test_2', expression='test')
+    sright = int_type(engine=None, base_node=None, index={}, name='test_2', expression='test')
     assert not sleft.equals(sright)
 
     # different base_node
-    sright = int_type(engine=None, base_node='test', index=None, name='test', expression='test')
+    sright = int_type(engine=None, base_node='test', index={}, name='test', expression='test')
     assert not sleft.equals(sright)
 
     # different engine
-    sright = int_type(engine='test', base_node=None, index=None, name='test', expression='test')
+    sright = int_type(engine='test', base_node=None, index={}, name='test', expression='test')
     assert not sleft.equals(sright)
 
     # different type
-    sright = float_type(engine=None, base_node=None, index=None, name='test', expression='test')
+    sright = float_type(engine=None, base_node=None, index={}, name='test', expression='test')
     assert not sleft.equals(sright)
 
     # different sorting
-    sright = float_type(engine=None, base_node=None, index=None, name='test', expression='test',
+    sright = float_type(engine=None, base_node=None, index={}, name='test', expression='test',
                         sorted_ascending=True)
     assert not sleft.equals(sright)

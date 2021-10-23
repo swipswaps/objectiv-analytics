@@ -15,7 +15,7 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype='int64'):
         name: series_type(
             engine=engine,
             base_node=base_node,
-            index=None,
+            index={},
             name=name,
             expression=Expression.column_reference(name)
         ) for name in index_names
