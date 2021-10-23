@@ -651,7 +651,8 @@ class BuhTuhDataFrame:
              by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
              ) -> 'BuhTuhAggregator':
         """
-        Convenience function to turn this groupby into a cube.
+        Create a cube on any of the series currently in this dataframe, both from index
+        as well as data.
         :see: BuhTuhCube for more info
         """
         from buhtuh.partitioning import BuhTuhCube, BuhTuhAggregator
@@ -663,7 +664,8 @@ class BuhTuhDataFrame:
                by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
                ) -> 'BuhTuhAggregator':
         """
-        Convenience function to turn this groupby into a rollup.
+        Create a rollup on any of the series currently in this dataframe, both from index
+        as well as data.
         :see: BuhTuhRollup for more info
         """
         from buhtuh.partitioning import BuhTuhRollup, BuhTuhAggregator
