@@ -293,9 +293,9 @@ class BuhTuhSeries(ABC):
         if len(self._index) == 0:
             raise Exception('to_frame() is not supported for Series that do not have an index')
         return BuhTuhDataFrame(
-            engine=self.engine,
+            engine=self._engine,
             base_node=self._base_node,
-            index= self._index,
+            index=self._index,
             series={self._name: self},
             order_by=order_by
         )
