@@ -1,4 +1,4 @@
-import { WaitUntilTrackedOptions } from '../structs';
+import { TrackClicksOptions } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { trackClick } from '../tracker/trackEventHelpers';
@@ -10,7 +10,7 @@ import { isTaggedElement, TaggedElement } from '../typeGuards';
 export const makeClickEventHandler = (
   element: TaggedElement,
   tracker: BrowserTracker,
-  waitUntilTrackedOptions?: WaitUntilTrackedOptions
+  trackClicksOptions?: TrackClicksOptions
 ) => {
   return async function clickEventHandler(event: Event) {
     if (
@@ -22,8 +22,8 @@ export const makeClickEventHandler = (
       trackClick({ element, tracker });
 
       // If required prevent this event from propagating and attempt to wait for it to be fully executed
-      if (waitUntilTrackedOptions) {
-        const { flushQueue, ...waitForQueueOptions } = waitUntilTrackedOptions;
+      if (trackClicksOptions?.enabled) {
+        const { waitForQueue, flushQueue } = trackClicksOptions;
 
         // Clone the original Event before altering it - `as any` needed due to TS constructors being just `Function`s
         console.log(`cloning Event`);
@@ -34,12 +34,15 @@ export const makeClickEventHandler = (
         event.preventDefault();
         event.stopImmediatePropagation();
 
-        // Attempt to wait for the Tracker to finish up its work - this is best-effort: may or may not timeout
-        console.log(`waiting for Queue`);
-        const isQueueEmpty = await tracker.waitForQueue(waitForQueueOptions);
+        let isQueueEmpty = true;
+        if (waitForQueue) {
+          // Attempt to wait for the Tracker to finish up its work - this is best-effort: may or may not timeout
+          console.log(`waiting for Queue`);
+          isQueueEmpty = await tracker.waitForQueue(waitForQueue);
+        }
 
         // Flush the Queue - unless waitUntilTrackedOptions has been specifically set not to do so
-        if (flushQueue === undefined || flushQueue === true || (flushQueue === 'onTimeout' && !isQueueEmpty)) {
+        if (flushQueue === true || (flushQueue === 'onTimeout' && !isQueueEmpty)) {
           console.log(`flushing Queue`);
           tracker.flushQueue();
         }
@@ -54,7 +57,7 @@ export const makeClickEventHandler = (
 
         // Re-attach a new event handler to the original element
         console.log(`re-attaching ${event.type} eventHandler`);
-        element.addEventListener(event.type, makeClickEventHandler(element, tracker, waitUntilTrackedOptions), true);
+        element.addEventListener(event.type, makeClickEventHandler(element, tracker, trackClicksOptions), true);
       }
     }
   };

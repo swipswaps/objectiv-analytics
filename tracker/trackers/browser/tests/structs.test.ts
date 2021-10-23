@@ -4,14 +4,17 @@ import {
   parseBoolean,
   parseChildrenTaggingAttribute,
   parseLocationContext,
+  parseTrackClicksAttribute,
+  parseTrackVisibilityAttribute,
   stringifyBoolean,
   stringifyChildrenTaggingAttribute,
   stringifyLocationContext,
-  TaggingAttribute,
-  tagElement,
-  TrackVisibilityAttributeAuto,
   stringifyTrackVisibilityAttribute,
-  parseTrackVisibilityAttribute,
+  tagElement,
+  TaggingAttribute,
+  TrackClicksAttribute,
+  TrackClicksOptions,
+  TrackVisibilityAttributeAuto,
   TrackVisibilityAttributeManual,
 } from '../src';
 
@@ -271,6 +274,65 @@ describe('Custom structs', () => {
       expect(() => parseChildrenAttribute('[[]]')).toThrow();
       // @ts-ignore
       expect(() => parseChildrenAttribute('[{]')).toThrow();
+    });
+  });
+
+  describe('Track Clicks Attribute to Options parsing', () => {
+    const trackClicksTestCases: {
+      attribute: TrackClicksAttribute;
+      options: TrackClicksOptions;
+    }[] = [
+      {
+        attribute: false,
+        options: { enabled: false },
+      },
+      {
+        attribute: true,
+        options: { enabled: true },
+      },
+      {
+        attribute: { waitUntilTracked: true },
+        options: { enabled: true, waitForQueue: {}, flushQueue: true },
+      },
+      {
+        attribute: { waitUntilTracked: {} },
+        options: { enabled: true, waitForQueue: {}, flushQueue: true },
+      },
+      {
+        attribute: { waitUntilTracked: { timeoutMs: 1 } },
+        options: { enabled: true, waitForQueue: { timeoutMs: 1 }, flushQueue: true },
+      },
+      {
+        attribute: { waitUntilTracked: { intervalMs: 2 } },
+        options: { enabled: true, waitForQueue: { intervalMs: 2 }, flushQueue: true },
+      },
+      {
+        attribute: { waitUntilTracked: { timeoutMs: 3, intervalMs: 4 } },
+        options: { enabled: true, waitForQueue: { timeoutMs: 3, intervalMs: 4 }, flushQueue: true },
+      },
+      {
+        attribute: { waitUntilTracked: { flushQueue: true } },
+        options: { enabled: true, waitForQueue: {}, flushQueue: true },
+      },
+      {
+        attribute: { waitUntilTracked: { flushQueue: false } },
+        options: { enabled: true, waitForQueue: {}, flushQueue: false },
+      },
+      {
+        attribute: { waitUntilTracked: { flushQueue: 'onTimeout' } },
+        options: { enabled: true, waitForQueue: {}, flushQueue: 'onTimeout' },
+      },
+    ];
+
+    trackClicksTestCases.forEach((testCase) => {
+      it(`parses \`${JSON.stringify(testCase.attribute)}\` to \`${JSON.stringify(testCase.options)}\``, () => {
+        const trackClicks: TrackClicksAttribute = testCase.attribute;
+        const stringifiedTrackClicks = JSON.stringify(trackClicks);
+
+        const trackClickOptions = parseTrackClicksAttribute(stringifiedTrackClicks);
+
+        expect(trackClickOptions).toStrictEqual(testCase.options);
+      });
     });
   });
 });

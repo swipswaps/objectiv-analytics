@@ -89,8 +89,53 @@ export const stringifyTrackClicksAttribute = (trackClicksAttribute: TrackClicksA
   return stringifyStruct(trackClicksAttribute, TrackClicksAttribute);
 };
 
-export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: string | null) => {
-  return parseStruct(stringifiedTrackClicksAttribute, TrackClicksAttribute);
+/**
+ * TrackClicks Options Parser
+ */
+export const WaitForQueueOptions = union([
+  object({
+    intervalMs: optional(number()),
+    timeoutMs: optional(number()),
+  }),
+]);
+export type WaitForQueueOptions = Infer<typeof WaitForQueueOptions>;
+
+export const FlushQueueOptions = union([literal(false), literal(true), literal('onTimeout')]);
+export type FlushQueueOptions = Infer<typeof FlushQueueOptions>;
+
+export const TrackClicksOptions = object({
+  enabled: boolean(),
+  waitForQueue: optional(WaitForQueueOptions),
+  flushQueue: optional(FlushQueueOptions),
+});
+export type TrackClicksOptions = Infer<typeof TrackClicksOptions>;
+
+export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: string | null): TrackClicksOptions => {
+  const parsedTrackClicks = parseStruct(stringifiedTrackClicksAttribute, TrackClicksAttribute);
+
+  // Process `true` and `false` shorthands onto their verbose options counterparts
+  if (typeof parsedTrackClicks == 'boolean') {
+    return { enabled: parsedTrackClicks };
+  }
+
+  // Else it must be already an object, from here on trackClicks.enabled will always be `true`
+  let trackClickOptions: TrackClicksOptions = { enabled: true };
+  const { waitUntilTracked } = parsedTrackClicks;
+
+  // Process `waitUntilTracked` shorthands - we only have a `true` shorthands to process, `false` means no option
+  if (typeof waitUntilTracked == 'boolean') {
+    // An empty object means `waitForQueue` will use default internal values for both `timeoutMs` and `intervalMs`
+    trackClickOptions.waitForQueue = {};
+    // The default `flushQueue` value is to always flush
+    trackClickOptions.flushQueue = true;
+  } else {
+    // waitUntilTracked must be an object
+    const { flushQueue, ...waitForQueue } = waitUntilTracked;
+    trackClickOptions.flushQueue = flushQueue !== undefined ? flushQueue : true;
+    trackClickOptions.waitForQueue = waitForQueue;
+  }
+
+  return trackClickOptions;
 };
 
 /**

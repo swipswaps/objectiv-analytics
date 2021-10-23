@@ -1,4 +1,4 @@
-import { parseTrackClicksAttribute, WaitUntilTrackedOptions } from '../structs';
+import { parseTrackClicksAttribute } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { trackerErrorHandler } from '../trackerErrorHandler';
@@ -28,30 +28,19 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
 
       // Click tracking (buttons, links)
       if (element.hasAttribute(TaggingAttribute.trackClicks)) {
-        // Parse and validate attribute
-        const trackClicks = parseTrackClicksAttribute(element.getAttribute(TaggingAttribute.trackClicks));
+        // Parse and validate attribute - then convert it into options
+        const trackClicksOptions = parseTrackClicksAttribute(element.getAttribute(TaggingAttribute.trackClicks));
 
-        // If trackClicks is specifically set to `false`, nothing to do
-        if (trackClicks === false) {
+        // If trackClicks is specifically disabled, nothing to do
+        if (!trackClicksOptions.enabled) {
           return;
         }
 
-        // If it's true, attach a `passive` event handler
-        if (trackClicks === true) {
+        // If we don't need to wait for Queue, attach a `passive` event handler - else a `useCapture` one
+        if (!trackClicksOptions.waitForQueue) {
           element.addEventListener('click', makeClickEventHandler(element, tracker), { passive: true });
         } else {
-          // Else it must be an object - it wouldn't have validated otherwise
-          let waitUntilTrackedOptions: WaitUntilTrackedOptions;
-
-          // waitUntilTracked can either `true` or an object with options - process `true` first
-          if (trackClicks.waitUntilTracked === true) {
-            waitUntilTrackedOptions = { flushQueue: true };
-          } else {
-            waitUntilTrackedOptions = trackClicks.waitUntilTracked;
-          }
-
-          // Attach a `useCapture` event handler and
-          element.addEventListener('click', makeClickEventHandler(element, tracker, waitUntilTrackedOptions), true);
+          element.addEventListener('click', makeClickEventHandler(element, tracker, trackClicksOptions), true);
         }
       }
 

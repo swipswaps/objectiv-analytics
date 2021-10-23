@@ -71,7 +71,11 @@ describe('makeClickEventHandler', () => {
   it('should waitUntilTracked', async () => {
     jest.spyOn(getTracker(), 'flushQueue');
     const trackedButton = makeTaggedElement('button', null, 'button');
-    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), { timeoutMs: 1, intervalMs: 1 });
+    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
+      enabled: true,
+      flushQueue: true,
+      waitForQueue: { timeoutMs: 1, intervalMs: 1 },
+    });
 
     const mockEvent = {
       ...new Event('click'),
@@ -88,9 +92,12 @@ describe('makeClickEventHandler', () => {
     jest.spyOn(getTracker(), 'flushQueue');
     const trackedButton = makeTaggedElement('button', null, 'button');
     const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
+      enabled: true,
       flushQueue: true,
-      timeoutMs: 1,
-      intervalMs: 1,
+      waitForQueue: {
+        timeoutMs: 1,
+        intervalMs: 1,
+      },
     });
 
     const mockEvent = {
@@ -107,7 +114,10 @@ describe('makeClickEventHandler', () => {
   it('should flush the queue - onTimeout', async () => {
     jest.spyOn(getTracker(), 'flushQueue');
     const trackedButton = makeTaggedElement('button', null, 'button');
-    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), { flushQueue: 'onTimeout' });
+    const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
+      enabled: true,
+      flushQueue: 'onTimeout',
+    });
 
     const mockEvent = {
       ...new Event('click'),
@@ -125,9 +135,12 @@ describe('makeClickEventHandler', () => {
     jest.spyOn(getTracker(), 'flushQueue');
     const trackedButton = makeTaggedElement('button', null, 'button');
     const clickEventListener = makeClickEventHandler(trackedButton, getTracker(), {
+      enabled: true,
       flushQueue: false,
-      timeoutMs: 1,
-      intervalMs: 1,
+      waitForQueue: {
+        timeoutMs: 1,
+        intervalMs: 1,
+      },
     });
 
     const mockEvent = {
