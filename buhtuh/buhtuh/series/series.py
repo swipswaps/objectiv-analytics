@@ -359,13 +359,12 @@ class BuhTuhSeries(ABC):
 
         # any other value we treat as a literal index lookup
         # multiindex not supported atm
-        if self._group_by:
-            raise Exception('Function not supported on Series with future / groupby yet')
         if len(self.index) == 0:
             raise Exception('Function not supported on Series without index')
         if len(self.index) > 1:
             raise NotImplementedError('Index only implemented for simple indexes.')
-        series = self.to_frame()[list(self._index.values())[0] == key]
+        frame = self.to_frame()
+        series = frame[list(frame.index.values())[0] == key]
         assert isinstance(series, self.__class__)
 
         # this is massively ugly
@@ -592,6 +591,7 @@ class BuhTuhSeries(ABC):
             if self._group_by and self._group_by != partition:
                 raise ValueError('passed partition does not match series partition. I\'m confused')
             return self.copy_override(dtype=derived_dtype,
+                                      index=partition.index,
                                       group_by=[partition],
                                       expression=expression)
         else:
