@@ -12,7 +12,7 @@ from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
 
 if TYPE_CHECKING:
-    from buhtuh.partitioning import BuhTuhWindow, BuhTuhGroupBy, BuhTuhAggregator
+    from buhtuh.partitioning import BuhTuhWindow, BuhTuhGroupBy
     from buhtuh.series import BuhTuhSeries, BuhTuhSeriesBoolean, BuhTuhSeriesAbstractNumeric
 
 DataFrameOrSeries = Union['BuhTuhDataFrame', 'BuhTuhSeries']
@@ -51,6 +51,7 @@ class BuhTuhDataFrame:
         base_node: SqlModel,
         index: Dict[str, 'BuhTuhSeries'],
         series: Dict[str, 'BuhTuhSeries'],
+        group_by: 'BuhTuhGroupBy',
         order_by: List[SortColumn] = None
     ):
         """
@@ -71,12 +72,24 @@ class BuhTuhDataFrame:
         self._base_node = base_node
         self._index = copy(index)
         self._data: Dict[str, BuhTuhSeries] = {}
+        self._group_by = group_by
         self._order_by = order_by if order_by is not None else []
         for key, value in series.items():
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
                                  f'key: {key}, series.name: {value.name}')
+            if value.index != self._index:
+                raise ValueError(f'Indices in `series` should match dataframe. '
+                                 f'df: {value.index}, series.index: {self._index}')
             self._data[key] = value
+        for value in index.values():
+            if value.index != {}:
+                raise ValueError('Index series can not have non-empty index property')
+
+        if group_by is not None:
+            if group_by.index != index:
+                raise ValueError('Index should match group_by index')
+
         if set(index.keys()) & set(series.keys()):
             raise ValueError(f"The names of the index series and data series should not intersect. "
                              f"Index series: {sorted(index.keys())} data series: {sorted(series.keys())}")
@@ -87,6 +100,7 @@ class BuhTuhDataFrame:
             base_node: SqlModel = None,
             index: Dict[str, 'BuhTuhSeries'] = None,
             series: Dict[str, 'BuhTuhSeries'] = None,
+            group_by: 'BuhTuhGroupBy' = None,
             order_by: List[SortColumn] = None) -> 'BuhTuhDataFrame':
         """
         Create a copy of self, with the given arguments overriden
@@ -96,6 +110,7 @@ class BuhTuhDataFrame:
             base_node=base_node if base_node is not None else self._base_node,
             index=index if index is not None else self._index,
             series=series if series is not None else self._data,
+            group_by=group_by if group_by is not None else self._group_by,
             order_by=order_by if order_by is not None else self._order_by
         )
 
@@ -135,6 +150,10 @@ class BuhTuhDataFrame:
     def dtypes(self):
         return {column: data.dtype for column, data in self.data.items()}
 
+    @property
+    def group_by(self):
+        return copy(self._group_by)
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, BuhTuhDataFrame):
             return False
@@ -151,6 +170,7 @@ class BuhTuhDataFrame:
         return \
             self.engine == other.engine and \
             self.base_node == other.base_node and \
+            self._group_by == other._group_by and \
             self._order_by == other._order_by
 
     @classmethod
@@ -205,6 +225,7 @@ class BuhTuhDataFrame:
             base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
+            group_by=cast('BuhTuhGroupBy', None),
             order_by=[]
         )
 
@@ -276,7 +297,8 @@ class BuhTuhDataFrame:
             engine=engine,
             base_node=model,
             index_dtypes={index: index_dtype},
-            dtypes=dtypes
+            dtypes=dtypes,
+            group_by=cast('BuhTuhGroupBy', None)
         )
 
     @classmethod
@@ -286,6 +308,7 @@ class BuhTuhDataFrame:
             base_node: SqlModel,
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
+            group_by: 'BuhTuhGroupBy',
             order_by: List[SortColumn] = None
     ) -> 'BuhTuhDataFrame':
         """
@@ -301,7 +324,8 @@ class BuhTuhDataFrame:
                 base_node=base_node,
                 index={},  # Empty index for index series
                 name=key,
-                expression=Expression.column_reference(key)
+                expression=Expression.column_reference(key),
+                group_by=group_by
             )
         series: Dict[str, BuhTuhSeries] = {}
         for key, value in dtypes.items():
@@ -311,13 +335,15 @@ class BuhTuhDataFrame:
                 base_node=base_node,
                 index=index,
                 name=key,
-                expression=Expression.column_reference(key)
+                expression=Expression.column_reference(key),
+                group_by=group_by
             )
         return BuhTuhDataFrame(
             engine=engine,
             base_node=base_node,
             index=index,
             series=series,
+            group_by=group_by,
             order_by=order_by
         )
 
@@ -353,6 +379,7 @@ class BuhTuhDataFrame:
             base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
+            group_by=cast('BuhTuhGroupBy', None),
             order_by=[]
         )
 
@@ -366,7 +393,8 @@ class BuhTuhDataFrame:
         from buhtuh.series import BuhTuhSeriesBoolean
 
         if isinstance(key, str):
-            return self.data[key]
+            # if this series is detached from the df, make sure it remembers its aggregation
+            return self.data[key].copy_override(group_by=[self._group_by])
         if isinstance(key, (set, list)):
             key_set = set(key)
             if not key_set.issubset(set(self.data_columns)):
@@ -380,6 +408,9 @@ class BuhTuhDataFrame:
             return self._df_or_series(df=self.copy_override(base_node=model))
 
         if isinstance(key, BuhTuhSeriesBoolean):
+            if self._group_by is not None:
+                raise NotImplementedError("HAVING is not implemented yet")
+
             # We only support first level boolean indices for now
             if key.base_node != self.base_node:
                 raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
@@ -402,6 +433,7 @@ class BuhTuhDataFrame:
                     base_node=model,
                     index_dtypes={name: series.dtype for name, series in self.index.items()},
                     dtypes={name: series.dtype for name, series in self.data.items()},
+                    group_by=None,
                     order_by=[]  # filtering rows resets any sorting
                 )
             )
@@ -432,7 +464,11 @@ class BuhTuhDataFrame:
                     raise ValueError(f'Index of assigned value does not match index of DataFrame. '
                                      f'Value: {value.index}, df: {self.index}')
                 if value.base_node == self.base_node:
-                    self._data[key] = value.copy_override(name=key)
+                    if self._group_by != value.group_by:
+                        raise ValueError(f'GroupBy of assigned value does not match DataFrame. '
+                                         f'Value: {value.group_by}, df: {self._group_by}')
+                    # unset group_by as we are now "responsible" for it again
+                    self._data[key] = value.copy_override(name=key, group_by=[None])
                     return
                 else:
                     # this is the complex case. Maybe don't support this at all?TODO
@@ -593,8 +629,9 @@ class BuhTuhDataFrame:
 
         return self.copy_override(series=new_data)
 
-    def _partition_by_columns(self, by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None]
-                              ) -> List['BuhTuhSeries']:
+    def _partition_by_series(self,
+                             by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None],
+                             ) -> List['BuhTuhSeries']:
         """
         Helper method to check and compile a partitioning list
         """
@@ -619,65 +656,96 @@ class BuhTuhDataFrame:
 
     def groupby(
             self,
-            by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
-    ) -> 'BuhTuhAggregator':
+            by: Union[str, 'BuhTuhSeries',
+                      List[Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']]]],
+                      None] = None
+    ) -> 'BuhTuhDataFrame':
         """
         Group by any of the series currently in this dataframe, both from index
         as well as data.
-        :param by: The series to group by
+        :param by: The series to group by. Supported are: a str containing a series name,
+            a series, or a list of those. If `by` is a list of lists, we'll create a grouping set,
+            else a normal group by will be created.
+        :note: if the dataframe is already grouped, we'll create a grouping list from the initial
+            grouping combined with this one.
         :return: an object to perform aggregations on
         """
-        from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhAggregator
-        group_by = BuhTuhGroupBy(engine=self.engine, base_node=self.base_node,
-                                 group_by_columns=self._partition_by_columns(by))
-        return BuhTuhAggregator(buh_tuh=self.copy_override(), group_by=group_by)
+        from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhGroupingList, BuhTuhGroupingSet
+
+        group_by: BuhTuhGroupBy
+        if isinstance(by, list) and len([b for b in by if isinstance(b, list)]) > 0:
+            # by is a list containing at least one other list. We're creating a grouping set
+            # aka "Jow dog, I heard you like GroupBys, ..."
+            group_by = BuhTuhGroupingSet(
+                [BuhTuhGroupBy(engine=self.engine,
+                               base_node=self.base_node,
+                               group_by_columns=self._partition_by_series(b))
+                 for b in by]
+            )
+        else:
+            by_mypy = cast(Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None],
+                           by)
+            group_by = BuhTuhGroupBy(engine=self.engine, base_node=self.base_node,
+                                     group_by_columns=self._partition_by_series(by_mypy))
+
+        # if there already was a group_by, combine into list
+        if self._group_by:
+            group_by = BuhTuhGroupingList([self._group_by, group_by])
+
+        data = [s for n, s in self.all_series.items() if n not in group_by.index]
+        return group_by.to_frame(data, materialized=False)
 
     def window(self,
-               by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None,
-               **frame_args):
+               by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+               **frame_args) -> 'BuhTuhDataFrame':
         """
         Create a window on the current dataframe and its sorting.
         TODO Better argument typing, needs fancy import logic
         :see: BuhTuhWindow __init__ for frame args
         """
-        from buhtuh.partitioning import BuhTuhWindow, BuhTuhAggregator
+        from buhtuh.partitioning import BuhTuhWindow
+        index = self._partition_by_series(by)
         window = BuhTuhWindow(engine=self.engine, base_node=self.base_node,
-                              group_by_columns=self._partition_by_columns(by),
+                              group_by_columns=index,
                               order_by=self._order_by,
                               **frame_args)
-        return BuhTuhAggregator(buh_tuh=self.copy_override(), group_by=window)
+        data = [s for n, s in self.all_series.items() if n not in window.index]
+        return window.to_frame(data, materialized=False)
 
     def cube(self,
-             by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
-             ) -> 'BuhTuhAggregator':
+             by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+             ) -> 'BuhTuhDataFrame':
         """
         Create a cube on any of the series currently in this dataframe, both from index
         as well as data.
         :see: BuhTuhCube for more info
         """
-        from buhtuh.partitioning import BuhTuhCube, BuhTuhAggregator
-        cube = BuhTuhCube(engine=self.engine, base_node=self.base_node,
-                          group_by_columns=self._partition_by_columns(by))
-        return BuhTuhAggregator(buh_tuh=self, group_by=cube)
+        from buhtuh.partitioning import BuhTuhCube
+        index = self._partition_by_series(by)
+        cube = BuhTuhCube(engine=self.engine, base_node=self.base_node, group_by_columns=index)
+        data = [s for n, s in self.all_series.items() if n not in cube.index]
+        return cube.to_frame(data, materialized=False)
 
     def rollup(self,
-               by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
-               ) -> 'BuhTuhAggregator':
+               by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+               ) -> 'BuhTuhDataFrame':
         """
         Create a rollup on any of the series currently in this dataframe, both from index
         as well as data.
         :see: BuhTuhRollup for more info
         """
-        from buhtuh.partitioning import BuhTuhRollup, BuhTuhAggregator
+        from buhtuh.partitioning import BuhTuhRollup
+        index = self._partition_by_series(by)
         rollup = BuhTuhRollup(engine=self.engine, base_node=self.base_node,
-                              group_by_columns=self._partition_by_columns(by))
-        return BuhTuhAggregator(buh_tuh=self, group_by=rollup)
+                              group_by_columns=index)
+        data = [s for n, s in self.all_series.items() if n not in rollup.index]
+        return rollup.to_frame(data, materialized=False)
 
     def rolling(self, window: int,
                 min_periods: int = None,
                 center: bool = False,
-                on: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None,
-                closed: str = 'right') -> 'BuhTuhAggregator':
+                on: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+                closed: str = 'right') -> 'BuhTuhDataFrame':
         """
         A rolling window of size 'window', by default right aligned
 
@@ -693,7 +761,7 @@ class BuhTuhDataFrame:
                 to iterate over.
         """
         from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, \
-            BuhTuhWindow, BuhTuhAggregator
+            BuhTuhWindow
 
         if min_periods is None:
             min_periods = window
@@ -720,20 +788,22 @@ class BuhTuhDataFrame:
         else:
             end_boundary = BuhTuhWindowFrameBoundary.FOLLOWING
 
+        index = self._partition_by_series(on)
         group_by = BuhTuhWindow(engine=self.engine, base_node=self.base_node,
-                                group_by_columns=self._partition_by_columns(on),
+                                group_by_columns=index,
                                 order_by=self._order_by,
                                 mode=mode,
                                 start_boundary=start_boundary, start_value=start_value,
                                 end_boundary=end_boundary, end_value=end_value,
                                 min_values=min_periods)
-        return BuhTuhAggregator(buh_tuh=self.copy_override(), group_by=group_by)
+        data = [s for n, s in self.all_series.items() if n not in group_by.index]
+        return group_by.to_frame(data, materialized=False)
 
     def expanding(self,
                   min_periods: int = 1,
                   center: bool = False,
-                  on: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
-                  ) -> 'BuhTuhAggregator':
+                  on: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+                  ) -> 'BuhTuhDataFrame':
         """
         Create an expanding window starting with the first row in the group, with at least min_period
         observations. The result will be right-aligned in the window
@@ -745,7 +815,7 @@ class BuhTuhDataFrame:
         """
         # TODO We could move the partitioning to BuhTuhGroupBy
         from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, \
-            BuhTuhWindow, BuhTuhAggregator
+            BuhTuhWindow
 
         if center:
             # Will never be implemented probably, as it's also deprecated in pandas
@@ -757,14 +827,16 @@ class BuhTuhDataFrame:
         end_boundary = BuhTuhWindowFrameBoundary.CURRENT_ROW
         end_value = None
 
+        index = self._partition_by_series(on)
         window = BuhTuhWindow(engine=self.engine, base_node=self.base_node,
-                              group_by_columns=self._partition_by_columns(on),
+                              group_by_columns=index,
                               order_by=self._order_by,
                               mode=mode,
                               start_boundary=start_boundary, start_value=start_value,
                               end_boundary=end_boundary, end_value=end_value,
                               min_values=min_periods)
-        return BuhTuhAggregator(buh_tuh=self.copy_override(), group_by=window)
+        data = [s for n, s in self.all_series.items() if n not in window.index]
+        return window.to_frame(data, materialized=False)
 
     def sort_values(
             self,
@@ -1040,7 +1112,6 @@ class BuhTuhDataFrame:
             axis: int = 1,
             numeric_only: bool = False,
             *args,
-            group_by: 'BuhTuhGroupBy' = None,
             **kwargs) -> 'BuhTuhDataFrame':
         """
         :param func: the aggregations to apply on all series.
@@ -1055,7 +1126,8 @@ class BuhTuhDataFrame:
         :note: axis defaults to 1, because 0 is currently unsupported
         """
         from buhtuh.partitioning import BuhTuhGroupBy
-        group_by = BuhTuhGroupBy(self.engine, self.base_node, []) if group_by is None else group_by
+        group_by = BuhTuhGroupBy(self.engine, self.base_node, []) \
+            if self._group_by is None else self._group_by
         series = self._apply_func_to_series(func, axis, numeric_only,
                                             True,  # exclude_non_applied, must be positional arg.
                                             group_by, *args, **kwargs)
@@ -1067,7 +1139,7 @@ class BuhTuhDataFrame:
         return self.agg(func, axis, numeric_only, *args, **kwargs)
 
     # AGGREGATES
-    def count(self, axis=0, level=None, numeric_only=False, **kwargs):
+    def count(self, axis=None, level=None, numeric_only=False, **kwargs):
         return self._aggregate_func('count', axis, level, numeric_only, **kwargs)
 
     def kurt(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
@@ -1103,7 +1175,7 @@ class BuhTuhDataFrame:
         return self._aggregate_func('mode', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
-    def nunique(self, axis=0, skipna=True, **kwargs):
+    def nunique(self, axis=None, skipna=True, **kwargs):
         # deviation from horrible pd.nunique(axis=0, dropna=True)
         return self._aggregate_func('nunique', axis=axis,
                                     level=None, numeric_only=False, skipna=skipna, **kwargs)

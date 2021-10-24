@@ -126,7 +126,7 @@ def test_combined_operations1():
     bt = get_bt_with_test_data(full_data_set=True)
     bt['x'] = bt['municipality'] + ' some string'
     bt['y'] = bt['skating_order'] + bt['skating_order']
-    result_bt = bt.groupby('x')['y'].count()
+    result_bt = bt.groupby('x')[['y']].count()
     print(result_bt.view_sql())
     assert_equals_data(
         result_bt,

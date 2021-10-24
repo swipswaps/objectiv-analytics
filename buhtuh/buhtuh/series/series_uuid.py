@@ -1,12 +1,15 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Union
+from typing import Union, cast, TYPE_CHECKING
 from uuid import UUID
 
 from buhtuh import DataFrameOrSeries
 from buhtuh.series import BuhTuhSeries, const_to_series
 from buhtuh.expression import Expression
+
+if TYPE_CHECKING:
+    from buhtuh.partitioning import BuhTuhGroupBy
 
 
 class BuhTuhSeriesUuid(BuhTuhSeries):
@@ -58,7 +61,8 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
         return cls.get_class_instance(
             base=base,
             name='__tmp',
-            expression=Expression.construct('gen_random_uuid()')
+            expression=Expression.construct('gen_random_uuid()'),
+            group_by=cast('BuhTuhGroupBy', None)
         )
 
     def _comparator_operator(self, other, comparator):

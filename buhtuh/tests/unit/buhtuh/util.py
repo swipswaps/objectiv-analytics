@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import List
+from typing import List, cast
 
 from buhtuh import get_series_type_from_dtype, BuhTuhDataFrame
 from buhtuh.expression import Expression
@@ -17,7 +17,8 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype='int64'):
             base_node=base_node,
             index={},
             name=name,
-            expression=Expression.column_reference(name)
+            expression=Expression.column_reference(name),
+            group_by=cast('BuhTuhGroupBy', None)
         ) for name in index_names
     }
     data = {
@@ -26,7 +27,9 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype='int64'):
             base_node=base_node,
             index=index,
             name=name,
-            expression=Expression.column_reference(name)
+            expression=Expression.column_reference(name),
+            group_by=cast('BuhTuhGroupBy', None)
         ) for name in data_names
     }
-    return BuhTuhDataFrame(engine=engine, base_node=base_node, index=index, series=data)
+    return BuhTuhDataFrame(engine=engine, base_node=base_node,
+                           index=index, series=data, group_by=None)

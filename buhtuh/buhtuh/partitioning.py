@@ -61,7 +61,7 @@ class BuhTuhGroupBy:
             if not isinstance(col, BuhTuhSeries):
                 raise ValueError(f'Unsupported argument type: {type(col)}')
             assert col.base_node == base_node
-            self.index[col.name] = col
+            self.index[col.name] = col.copy_override(index={})
 
         if len(group_by_columns) == 0:
             # create new dummy column so we can aggregate over everything
@@ -71,8 +71,19 @@ class BuhTuhGroupBy:
                     base_node=self.base_node,
                     index={},
                     name='index',
-                    expression=Expression.construct('1'))
+                    expression=Expression.construct('1'),
+                    group_by=self)
             }
+
+    def __eq__(self, other):
+        if not isinstance(other, BuhTuhGroupBy):
+            return False
+        return (
+            self.engine == other.engine and
+            self.base_node == other.base_node and
+            self.index.keys() == other.index.keys() and
+            all([self.index[n].equals(other.index[n]) for n in self.index.keys()])
+        )
 
     def _get_group_by_columns(self):
         return ', '.join(g.get_column_expression() for g in self.index.values())
@@ -103,16 +114,30 @@ class BuhTuhGroupBy:
         )
         return node
 
-    def to_frame(self, series: List[BuhTuhSeries]) -> BuhTuhDataFrame:
+    def to_frame(self, series: List[BuhTuhSeries], materialized=True) -> BuhTuhDataFrame:
         """ Create a dataframe for this GroupBy """
-        node = self.get_node(series)
-        return BuhTuhDataFrame.get_instance(
-            engine=self.engine,
-            base_node=node,
-            index_dtypes={n: t.dtype for n, t in self.index.items()},
-            dtypes={a.name: a.dtype for a in series},
-            order_by=[]
-        )
+        # We don't check whether series / index are correct here. The Dataframe __init__
+        # will do that for us.
+        if materialized:
+            node = self.get_node(series)
+            return BuhTuhDataFrame.get_instance(
+                engine=self.engine,
+                base_node=node,
+                index_dtypes={n: t.dtype for n, t in self.index.items()},
+                dtypes={a.name: a.dtype for a in series},
+                group_by=cast('BuhTuhGroupBy', None),
+                order_by=[]
+            )
+        # We give the series the same index as the df, but not yet the groupby
+        # until we actually apply an aggregation function
+        new_series = {s.name: s.copy_override(index=self.index) for s in series}
+        return BuhTuhDataFrame(engine=self.engine,
+                               base_node=self.base_node,
+                               index=self.index,
+                               series=new_series,
+                               group_by=self,
+                               order_by=[]
+                               )
 
 
 class BuhTuhCube(BuhTuhGroupBy):
@@ -324,6 +349,10 @@ class BuhTuhWindow(BuhTuhGroupBy):
     def order_by(self) -> List[SortColumn]:
         return self._order_by
 
+    @property
+    def min_values(self) -> int:
+        return self._min_values
+
     def set_frame_clause(self,
                          mode:
                          BuhTuhWindowFrameMode = BuhTuhWindowFrameMode.RANGE,
@@ -391,94 +420,3 @@ class BuhTuhWindow(BuhTuhGroupBy):
         On a Window, there is no default group_by clause
         """
         return ''
-
-
-class BuhTuhAggregator:
-    """
-    A wrapper to do aggregations on multiple series in a convenient way
-
-    Uses the group_by that has been given at __init__ time and allows selection
-    of series, multiple aggregations at once, etc.
-    Proxies all of the series selection to BuhTuhDataFrame, and use BuhTuhGroupBy for tracking
-    the aggregation.
-    """
-    buh_tuh: BuhTuhDataFrame
-    group_by: BuhTuhGroupBy
-
-    def __init__(self,
-                 buh_tuh: BuhTuhDataFrame,
-                 group_by: BuhTuhGroupBy):
-        self.group_by = group_by
-
-        aggregated_data = {name: series
-                           for name, series in buh_tuh.all_series.items()
-                           if name not in group_by.index.keys()}
-
-        self.buh_tuh = buh_tuh.copy_override(
-            index=group_by.index,
-            series=aggregated_data
-        )
-
-    def aggregate(self,
-                  func: Union[str, Callable, List[Union[str, Callable]],
-                              Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
-                  *args,
-                  **kwargs) -> BuhTuhDataFrame:
-        """ use/see agg() """
-        return self.agg(func, *args, **kwargs)
-
-    def agg(self,
-            func: Union[str, Callable, List[Union[str, Callable]],
-                        Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
-            *args,
-            **kwargs) -> BuhTuhDataFrame:
-        """
-        see BuhTuhDataFrame.agg()
-        """
-        return self.buh_tuh.agg(func, *args, group_by=self.group_by, **kwargs)
-
-    def __getattr__(self, attr_name: str) -> Any:
-        """ All methods that do not exists yet are potential aggregation methods. """
-        try:
-            return super().__getattribute__(attr_name)
-        except AttributeError:
-            return lambda *args, **kwargs: self.agg(attr_name, *args, **kwargs)
-
-    def __getitem__(self, key: Union[str, List[str]]) -> 'BuhTuhAggregator':
-        if not isinstance(key, (str, list, tuple)):
-            raise KeyError(f'key should be a str or list but got {type(key)} instead.')
-        if isinstance(key, str):
-            key = [key]
-
-        # Since key is a list, we get a dataframe, help mypy
-        buh_tuh = cast(BuhTuhDataFrame, self.buh_tuh[key])
-        return BuhTuhAggregator(buh_tuh, self.group_by)
-
-    def _grouping_set_or_list(self,
-                              other: Union['BuhTuhAggregator', List['BuhTuhAggregator']],
-                              cls) -> 'BuhTuhAggregator':
-        if not isinstance(other, list):
-            other = [self, other]
-        else:
-            other = [self] + other
-
-        return BuhTuhAggregator(buh_tuh=self.buh_tuh,
-                                group_by=cls([a.group_by for a in other]))
-
-    def grouping_set(self,
-                     other: Union['BuhTuhAggregator', List['BuhTuhAggregator']],
-                     ) -> 'BuhTuhAggregator':
-        """
-        Create a grouping set by combining this one with the ones given.
-        :param other: another aggregator, or a list thereof
-        """
-        return self._grouping_set_or_list(other, BuhTuhGroupingSet)
-
-    def grouping_list(self,
-                      other: Union['BuhTuhAggregator', List['BuhTuhAggregator']]
-                      ) -> 'BuhTuhAggregator':
-        """
-        Create a grouping set by combining this one with the ones given.
-        :param other: another aggregator, or a list thereof
-        """
-        return self._grouping_set_or_list(other, BuhTuhGroupingList)

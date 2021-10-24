@@ -2,11 +2,14 @@
 Copyright 2021 Objectiv B.V.
 """
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, cast, TYPE_CHECKING
 
 from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries
 from buhtuh.expression import quote_identifier, Expression
 from sql_models.model import CustomSqlModel, SqlModel
+
+if TYPE_CHECKING:
+    from buhtuh.partitioning import BuhTuhGroupBy
 
 
 class How(Enum):
@@ -241,6 +244,8 @@ def merge(
     """
     if how not in ('left', 'right', 'outer', 'inner', 'cross'):
         raise ValueError(f"how must be one of ('left', 'right', 'outer', 'inner', 'cross'), value: {how}")
+    if left.group_by or right.group_by:
+        raise ValueError('merge not supported for aggregated frames that have not been materialized')
     real_how = How(how)
     real_left_on, real_right_on = _determine_left_on_right_on(
         left=left,
@@ -270,6 +275,7 @@ def merge(
         base_node=model,
         index_dtypes={rc.name: rc.dtype for rc in new_index_list},
         dtypes={rc.name: rc.dtype for rc in new_data_list},
+        group_by=cast('BuhTuhGroupBy', None),
         order_by=[]  # merging resets any sorting
     )
 

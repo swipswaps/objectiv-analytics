@@ -26,15 +26,17 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
     def __init__(self,
                  engine,
                  base_node: SqlModel,
-                 index: Union[Dict[str, 'BuhTuhSeries'], 'BuhTuhGroupBy'],
+                 index: Dict[str, 'BuhTuhSeries'],
                  name: str,
                  expression: Expression,
+                 group_by: 'BuhTuhGroupBy',
                  sorted_ascending: Optional[bool] = None):
         super().__init__(engine,
                          base_node,
                          index,
                          name,
                          expression,
+                         group_by,
                          sorted_ascending)
         self.json = Json(self)
 
@@ -75,9 +77,10 @@ class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
     def __init__(self,
                  engine,
                  base_node: SqlModel,
-                 index: Union[Dict[str, 'BuhTuhSeries'], 'BuhTuhGroupBy'],
+                 index: Dict[str, 'BuhTuhSeries'],
                  name: str,
                  expression: Expression,
+                 group_by: 'BuhTuhGroupBy',
                  sorted_ascending: Optional[bool] = None):
 
         super().__init__(engine,
@@ -85,6 +88,7 @@ class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
                          index,
                          name,
                          Expression.construct(f'cast({{}} as jsonb)', expression),
+                         group_by,
                          sorted_ascending)
 
 

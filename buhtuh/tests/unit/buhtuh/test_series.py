@@ -2,6 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from buhtuh import get_series_type_from_dtype
+from buhtuh.partitioning import BuhTuhGroupBy
 from tests.unit.buhtuh.util import get_fake_df
 
 
@@ -31,31 +32,36 @@ def test_equals():
 
     int_type = get_series_type_from_dtype('int64')
     float_type = get_series_type_from_dtype('float64')
-    sleft = int_type(engine=None, base_node=None, index={}, name='test', expression='test')
-    sright = int_type(engine=None, base_node=None, index={}, name='test', expression='test')
+    sleft = int_type(engine=None, base_node=None, index={}, name='test', expression='test', group_by=None)
+    sright = int_type(engine=None, base_node=None, index={}, name='test', expression='test', group_by=None)
     assert sleft.equals(sright)
 
     # different expression
-    sright = int_type(engine=None, base_node=None, index={}, name='test', expression='test::text')
+    sright = int_type(engine=None, base_node=None, index={}, name='test', expression='test::text', group_by=None)
     assert not sleft.equals(sright)
 
     # different name
-    sright = int_type(engine=None, base_node=None, index={}, name='test_2', expression='test')
+    sright = int_type(engine=None, base_node=None, index={}, name='test_2', expression='test', group_by=None)
     assert not sleft.equals(sright)
 
     # different base_node
-    sright = int_type(engine=None, base_node='test', index={}, name='test', expression='test')
+    sright = int_type(engine=None, base_node='test', index={}, name='test', expression='test', group_by=None)
     assert not sleft.equals(sright)
 
     # different engine
-    sright = int_type(engine='test', base_node=None, index={}, name='test', expression='test')
+    sright = int_type(engine='test', base_node=None, index={}, name='test', expression='test', group_by=None)
     assert not sleft.equals(sright)
 
     # different type
-    sright = float_type(engine=None, base_node=None, index={}, name='test', expression='test')
+    sright = float_type(engine=None, base_node=None, index={}, name='test', expression='test', group_by=None)
+    assert not sleft.equals(sright)
+
+    # different group_by
+    sright = float_type(engine=None, base_node=None, index={}, name='test', expression='test',
+                        group_by=BuhTuhGroupBy(engine=None, base_node=None, group_by_columns=[]))
     assert not sleft.equals(sright)
 
     # different sorting
     sright = float_type(engine=None, base_node=None, index={}, name='test', expression='test',
-                        sorted_ascending=True)
+                        sorted_ascending=True, group_by=None)
     assert not sleft.equals(sright)
