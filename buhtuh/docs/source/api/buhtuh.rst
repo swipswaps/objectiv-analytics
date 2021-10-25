@@ -28,9 +28,9 @@
    :recursive:
 
    buhtuh.expression
-   buhtuh.json
    buhtuh.merge
    buhtuh.pandasql
    buhtuh.partitioning
+   buhtuh.series
    buhtuh.types
 

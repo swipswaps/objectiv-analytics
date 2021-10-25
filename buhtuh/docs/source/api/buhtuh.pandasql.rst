@@ -9,12 +9,6 @@ buhtuh.pandasql
 
    
    
-   .. rubric:: Functions
-
-   .. autosummary::
-   
-      const_to_series
-   
    
 
    
@@ -24,19 +18,6 @@ buhtuh.pandasql
    .. autosummary::
    
       BuhTuhDataFrame
-      BuhTuhSeries
-      BuhTuhSeriesAbstractNumeric
-      BuhTuhSeriesBoolean
-      BuhTuhSeriesDate
-      BuhTuhSeriesFloat64
-      BuhTuhSeriesInt64
-      BuhTuhSeriesJson
-      BuhTuhSeriesJsonb
-      BuhTuhSeriesString
-      BuhTuhSeriesTime
-      BuhTuhSeriesTimedelta
-      BuhTuhSeriesTimestamp
-      BuhTuhSeriesUuid
       SortColumn
    
    
