@@ -51,7 +51,7 @@ class BuhTuhDataFrame:
         base_node: SqlModel,
         index: Dict[str, 'BuhTuhSeries'],
         series: Dict[str, 'BuhTuhSeries'],
-        group_by: 'BuhTuhGroupBy',
+        group_by: Optional['BuhTuhGroupBy'],
         order_by: List[SortColumn] = None
     ):
         """
@@ -100,17 +100,20 @@ class BuhTuhDataFrame:
             base_node: SqlModel = None,
             index: Dict[str, 'BuhTuhSeries'] = None,
             series: Dict[str, 'BuhTuhSeries'] = None,
-            group_by: 'BuhTuhGroupBy' = None,
+            group_by: List[Union['BuhTuhGroupBy', None]] = None,  # List so [None] != None
             order_by: List[SortColumn] = None) -> 'BuhTuhDataFrame':
         """
         Create a copy of self, with the given arguments overriden
+
+        Big fat warning: group_by can legally be None, but if you want to set that,
+        set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
         """
         return BuhTuhDataFrame(
             engine=engine if engine is not None else self.engine,
             base_node=base_node if base_node is not None else self._base_node,
             index=index if index is not None else self._index,
             series=series if series is not None else self._data,
-            group_by=group_by if group_by is not None else self._group_by,
+            group_by=self._group_by if group_by is None else group_by[0],
             order_by=order_by if order_by is not None else self._order_by
         )
 
@@ -225,7 +228,7 @@ class BuhTuhDataFrame:
             base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
-            group_by=cast('BuhTuhGroupBy', None),
+            group_by=None,
             order_by=[]
         )
 
@@ -298,7 +301,7 @@ class BuhTuhDataFrame:
             base_node=model,
             index_dtypes={index: index_dtype},
             dtypes=dtypes,
-            group_by=cast('BuhTuhGroupBy', None)
+            group_by=None
         )
 
     @classmethod
@@ -308,7 +311,7 @@ class BuhTuhDataFrame:
             base_node: SqlModel,
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
-            group_by: 'BuhTuhGroupBy',
+            group_by: Optional['BuhTuhGroupBy'],
             order_by: List[SortColumn] = None
     ) -> 'BuhTuhDataFrame':
         """
@@ -379,7 +382,7 @@ class BuhTuhDataFrame:
             base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
-            group_by=cast('BuhTuhGroupBy', None),
+            group_by=None,
             order_by=[]
         )
 
@@ -678,7 +681,7 @@ class BuhTuhDataFrame:
         group_by: BuhTuhGroupBy
         if isinstance(by, list) and len([b for b in by if isinstance(b, list)]) > 0:
             # by is a list containing at least one other list. We're creating a grouping set
-            # aka "Jow dog, I heard you like GroupBys, ..."
+            # aka "Yo dawg, I heard you like GroupBys, ..."
             group_by = BuhTuhGroupingSet(
                 [BuhTuhGroupBy(engine=self.engine,
                                base_node=self.base_node,

@@ -2,14 +2,13 @@
 Copyright 2021 Objectiv B.V.
 """
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, cast, TYPE_CHECKING
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, TYPE_CHECKING
 
 from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries
 from buhtuh.expression import quote_identifier, Expression
 from sql_models.model import CustomSqlModel, SqlModel
 
 if TYPE_CHECKING:
-    from buhtuh.partitioning import BuhTuhGroupBy
     from buhtuh.expression import Expression
 
 
@@ -276,7 +275,7 @@ def merge(
         base_node=model,
         index_dtypes={rc.name: rc.dtype for rc in new_index_list},
         dtypes={rc.name: rc.dtype for rc in new_data_list},
-        group_by=cast('BuhTuhGroupBy', None),
+        group_by=None,
         order_by=[]  # merging resets any sorting
     )
 
