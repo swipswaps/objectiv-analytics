@@ -4,9 +4,9 @@ import { trackInputChange } from '../tracker/trackEventHelpers';
 import { isTaggedElement, TaggedElement } from '../typeGuards';
 
 /**
- * A factory to make the event listener to attach to new TaggedElements with the `trackBlurs` attributes set
+ * A factory to make the event handler to attach to new TaggedElements with the `trackBlurs` attributes set
  */
-export const makeBlurEventListener = (element: TaggedElement, tracker?: BrowserTracker) => (event: Event) => {
+export const makeBlurEventHandler = (element: TaggedElement, tracker?: BrowserTracker) => (event: Event) => {
   if (
     // Either the Event's target is the TaggedElement itself
     event.target === element ||
