@@ -1,5 +1,5 @@
 import { BrowserTracker } from '../tracker/BrowserTracker';
-import { getTrackerRepository } from "./getTrackerRepository";
+import { getTrackerRepository } from './getTrackerRepository';
 
 /**
  * Retrieves a specific instance of the tracker from the TrackerRepository.
@@ -14,4 +14,3 @@ export const getTracker = (trackerId?: string): BrowserTracker => {
 
   return tracker;
 };
-

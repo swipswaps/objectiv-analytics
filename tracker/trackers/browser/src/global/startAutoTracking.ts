@@ -3,7 +3,7 @@ import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTrackerConfig } from '../tracker/BrowserTracker';
 import { trackApplicationLoaded } from '../tracker/trackEventHelpers';
 import { trackerErrorHandler } from '../trackerErrorHandler';
-import { AutoTrackingState } from "./AutoTrackingState";
+import { AutoTrackingState } from './AutoTrackingState';
 import { getTracker } from './getTracker';
 
 /**

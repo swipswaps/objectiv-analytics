@@ -1,4 +1,4 @@
-import { AutoTrackingState } from "../global/AutoTrackingState";
+import { AutoTrackingState } from '../global/AutoTrackingState';
 import { getTracker } from '../global/getTracker';
 import { getLocationHref } from '../helpers';
 import { trackURLChange } from '../tracker/trackEventHelpers';
