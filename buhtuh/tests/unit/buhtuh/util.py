@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import List, Dict, Union
+from typing import List, Dict, Union, cast
 
 from buhtuh import get_series_type_from_dtype, BuhTuhDataFrame
 from buhtuh.expression import Expression
@@ -26,18 +26,19 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype: Union[str,
             name=name,
             expression=Expression.column_reference(name),
             group_by=cast('BuhTuhGroupBy', None)
-        ) for name in index_names
-    }
-    data = {
-        name: series_type(
+        )
+
+    data: Dict[str, 'BuhTuhSeries'] = {}
+    for name in data_names:
+        series_type = get_series_type_from_dtype(dtype=dtype.get(name, 'int64'))
+        data[name] = series_type(
             engine=engine,
             base_node=base_node,
             index=index,
             name=name,
             expression=Expression.column_reference(name),
-            group_by=cast('BuhTuhGroupBy', None)
-        ) for name in data_names
-    }
+            group_by=cast('BuhTuhGroupBy', None))
+
     return BuhTuhDataFrame(engine=engine, base_node=base_node,
                            index=index, series=data, group_by=None)
 

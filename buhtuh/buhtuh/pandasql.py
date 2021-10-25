@@ -548,11 +548,7 @@ class BuhTuhDataFrame:
                 raise ValueError(f'Cannot set {column_name} as {new_name}. New column name already exists.')
             series = df.data[column_name]
             if new_name != series.name:
-                series = series.get_class_instance(
-                        base=df,
-                        name=new_name,
-                        expression=series.expression
-                    )
+                series = series.copy_override(name=new_name)
             new_data[new_name] = series
         df._data = new_data
         return df
