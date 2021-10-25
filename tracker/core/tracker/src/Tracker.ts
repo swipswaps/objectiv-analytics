@@ -228,9 +228,7 @@ export class Tracker implements Contexts, TrackerConfig {
         this.console.groupCollapsed(
           `｢objectiv:Tracker:${this.trackerId}｣ ${this.queue ? 'Queuing' : 'Tracking'} ${
             trackedEvent._type
-          } (${trackedEvent.location_stack
-            .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
-            .join(' > ')})`
+          } (${getLocationPath(trackedEvent.location_stack)})`
         );
         this.console.log(`Event ID: ${trackedEvent.id}`);
         this.console.log(`Time: ${trackedEvent.time}`);

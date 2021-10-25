@@ -11,7 +11,7 @@ export type LocationPath = string;
  */
 export const getLocationPath = (locationStack: LocationStack) => {
   return locationStack
-    .map((context) => `${context._type}:${context.id}`)
+    .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
     .join('.')
 }
 
