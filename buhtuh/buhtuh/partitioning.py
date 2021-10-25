@@ -87,7 +87,6 @@ class BuhTuhGroupBy:
 
     def _get_group_by_expression(self):
         fmtstr = ", ".join(['{}'] * len(self.index.values()))
-        fmtstr = f'{fmtstr}'
         return Expression.construct(fmtstr, *[g.expression for g in self.index.values()])
 
     def get_node(self, series: List[BuhTuhSeries]):

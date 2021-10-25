@@ -422,11 +422,11 @@ class BuhTuhDataFrame:
                                  'and then create a new Boolean series on the resulting merged data.')
             model_builder = CustomSqlModel(
                 name='boolean_selection',
-                sql='select {index_str}, {columns_sql_str} from {{_last_node}} where {where}'
+                sql='select {index}, {columns} from {{_last_node}} where {where}'
             )
             model = model_builder(
-                columns_sql_str=self._get_all_column_expressions(),
-                index_str=self._get_all_index_expressions(),
+                columns=self._get_all_column_expressions(),
+                index=self._get_all_index_expressions(),
                 _last_node=self.base_node,
                 where=key.expression.resolve_column_references(),
             )
