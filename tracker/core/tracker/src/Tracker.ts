@@ -189,9 +189,9 @@ export class Tracker implements Contexts, TrackerConfig {
 
   /**
    * Waits for Queue `isIdle` in an attempt to wait for it to finish its job.
-   * Resolves if the Queue reaches an idle state and rejects if the timeout is reached.
+   * Resolves regardless if the Queue reaches an idle state or timeout is reached.
    */
-  async waitForQueue(parameters?: { intervalMs: number; timeoutMs: number }): Promise<any> {
+  async waitForQueue(parameters?: { intervalMs?: number; timeoutMs?: number }): Promise<boolean> {
     if (this.queue) {
       // Some - hopefully - sensible defaults. 100ms for polling and double the Queue's batch delay as timeout.
       const intervalMs = parameters?.intervalMs ?? 100;
@@ -202,6 +202,7 @@ export class Tracker implements Contexts, TrackerConfig {
 
       return waitForPromise({ predicate, intervalMs, timeoutMs });
     }
+    return true;
   }
 
   /**

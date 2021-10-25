@@ -1,9 +1,10 @@
+import { parseTrackClicksAttribute } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
-import { makeBlurEventListener } from './makeBlurEventListener';
-import { makeClickEventListener } from './makeClickEventListener';
+import { makeBlurEventHandler } from './makeBlurEventHandler';
+import { makeClickEventHandler } from './makeClickEventHandler';
 import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
 
 /**
@@ -26,13 +27,26 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
       trackVisibilityVisibleEvent(element, tracker);
 
       // Click tracking (buttons, links)
-      if (element.getAttribute(TaggingAttribute.trackClicks) === 'true') {
-        element.addEventListener('click', makeClickEventListener(element, tracker), { passive: true });
+      if (element.hasAttribute(TaggingAttribute.trackClicks)) {
+        // Parse and validate attribute - then convert it into options
+        const trackClicksOptions = parseTrackClicksAttribute(element.getAttribute(TaggingAttribute.trackClicks));
+
+        // If trackClicks is specifically disabled, nothing to do
+        if (!trackClicksOptions) {
+          return;
+        }
+
+        // If we don't need to wait for Queue, attach a `passive` event handler - else a `useCapture` one
+        if (!trackClicksOptions.waitForQueue) {
+          element.addEventListener('click', makeClickEventHandler(element, tracker), { passive: true });
+        } else {
+          element.addEventListener('click', makeClickEventHandler(element, tracker, trackClicksOptions), true);
+        }
       }
 
       // Blur tracking (inputs)
       if (element.getAttribute(TaggingAttribute.trackBlurs) === 'true') {
-        element.addEventListener('blur', makeBlurEventListener(element, tracker), { passive: true });
+        element.addEventListener('blur', makeBlurEventHandler(element, tracker), { passive: true });
       }
     }
   } catch (error) {
