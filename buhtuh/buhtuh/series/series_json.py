@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 import json
-from typing import Optional, Dict, Union, TYPE_CHECKING
+from typing import Optional, Dict, Union, TYPE_CHECKING, Any
 
 from buhtuh.series import BuhTuhSeries, const_to_series
 from buhtuh.expression import Expression
@@ -37,6 +37,23 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
                          sorted_ascending)
         self.json = Json(self)
 
+    def __getitem__(self, key: Union[Any, slice]):
+        # this method is overridden because there is not pandas dtype for json(b)
+        if isinstance(key, slice):
+            raise NotImplementedError("index slices currently not supported")
+
+        # any other value we treat as a literal index lookup
+        # multiindex not supported atm
+        if self.index is None:
+            raise Exception('Function not supported on Series without index')
+        if len(self.index) != 1:
+            raise NotImplementedError('Index only implemented for simple indexes.')
+        series = self.to_frame()[list(self.index.values())[0] == key]
+        assert isinstance(series, self.__class__)
+
+        # this is massively ugly
+        return series.head(1).values[0]
+
     @classmethod
     def supported_value_to_expression(cls, value: Union[dict, list]) -> Expression:
         json_value = json.dumps(value)
@@ -61,6 +78,9 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
 
     def __le__(self, other) -> 'BuhTuhSeriesBoolean':
         return self._comparator_operator(other, "<@")
+
+    def __ge__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._comparator_operator(other, "@>")
 
 
 class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
@@ -91,13 +111,15 @@ class Json:
     def __init__(self, series_object):
         self._series_object = series_object
 
-    def __getitem__(self, key: Union[int, slice]):
+    def __getitem__(self, key: Union[str, int, slice]):
         if isinstance(key, int):
             return self._series_object._get_derived_series(
                 'jsonb',
                 Expression.construct(f'{{}}->{key}', self._series_object)
             )
-        if isinstance(key, slice):
+        elif isinstance(key, str):
+            return self.get_value(key)
+        elif isinstance(key, slice):
             expression_references = 0
             if key.step:
                 raise NotImplementedError('slice steps not supported')
@@ -109,11 +131,7 @@ class Json:
                         expression_references += 1
                     stop = f'{negative_stop} {key.stop} - 1'
                 elif isinstance(key.stop, (dict, str)):
-                    import json
-                    key_stop = json.dumps(key.stop)
-                    key_stop = key_stop.replace("'", "''")
-                    stop = f"""(select min(case when ('{key_stop}'::jsonb) <@ value then ordinality end) -1
-                    from jsonb_array_elements({{}}) with ordinality)"""
+                    stop = self._find_in_json_list(key.stop)
                     expression_references += 1
                 else:
                     TypeError('cant')
@@ -125,11 +143,7 @@ class Json:
                         expression_references += 1
                     start = f'{negative_start} {key.start}'
                 elif isinstance(key.start, (dict, str)):
-                    import json
-                    key_start = json.dumps(key.start)
-                    key_start = key_start.replace("'", "''")
-                    start = f"""(select min(case when ('{key_start}'::jsonb) <@ value then ordinality end) -1
-                    from jsonb_array_elements({{}}) with ordinality)"""
+                    start = self._find_in_json_list(key.start)
                     expression_references += 1
                 else:
                     TypeError('cant')
@@ -151,12 +165,23 @@ class Json:
                 ))
         TypeError(f'key should be int or slice, actual type: {type(key)}')
 
+    def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
+        if isinstance(key, (dict, str)):
+            import json
+            key = json.dumps(key)
+            key = key.replace("'", "''")
+            expression_str = f"""(select min(case when ('{key}'::jsonb) <@ value then ordinality end) -1
+            from jsonb_array_elements({{}}) with ordinality)"""
+            return expression_str
+        else:
+            TypeError(f'key should be int or slice, actual type: {type(key)}')
+
     def get_value(self, key: str, as_str=False):
         '''
         as_str: if True, it returns a string, else json
         '''
         return_as_string_operator = ''
-        return_dtype = 'json'
+        return_dtype = 'jsonb'
         if as_str:
             return_as_string_operator = '>'
             return_dtype = 'string'

@@ -89,9 +89,10 @@ def test_astype_to_int():
 
 
 def test_astype_to_json():
-    bt = get_bt_with_json_data()
+    bt = get_bt_with_json_data(as_json=False)
     bt_json_dict = bt.dict_column.astype('jsonb')
     bt_json_list = bt.list_column.astype('jsonb')
+    bt_json_mixed = bt.mixed_column.astype('jsonb')
     assert_equals_data(
         bt_json_dict,
         expected_columns=['_index_row', 'dict_column'],
@@ -109,6 +110,16 @@ def test_astype_to_json():
             [0, [{"a": "b"}, {"c": "d"}]],
             [1, ["a", "b", "c", "d"]],
             [2, [{"_type": "a", "id": "b"}, {"_type": "c", "id": "d"}, {"_type": "e", "id": "f"}]],
+            [3, [{"_type": "WebDocumentContext", "id": "#document"}, {"_type": "SectionContext", "id": "home"}, {"_type": "SectionContext", "id": "top-10"}, {"_type": "ItemContext", "id": "5o7Wv5Q5ZE"}]]
+        ]
+    )
+    assert_equals_data(
+        bt_json_mixed,
+        expected_columns=['_index_row', 'mixed_column'],
+        expected_data=[
+            [0, {"a": "b"}],
+            [1, ["a", "b", "c", "d"]],
+            [2, {"a": "b", "c": {"a": "c"}}],
             [3, [{"_type": "WebDocumentContext", "id": "#document"}, {"_type": "SectionContext", "id": "home"}, {"_type": "SectionContext", "id": "top-10"}, {"_type": "ItemContext", "id": "5o7Wv5Q5ZE"}]]
         ]
     )
