@@ -42,7 +42,7 @@ class BuhTuhSeries(ABC):
                  index: Dict[str, 'BuhTuhSeries'],
                  name: str,
                  expression: Expression,
-                 group_by: 'BuhTuhGroupBy',
+                 group_by: Optional['BuhTuhGroupBy'],
                  sorted_ascending: Optional[bool] = None):
         """
         Initialize a new BuhTuhSeries object.
@@ -177,7 +177,7 @@ class BuhTuhSeries(ABC):
         return self._name
 
     @property
-    def group_by(self) -> 'BuhTuhGroupBy':
+    def group_by(self) -> Optional['BuhTuhGroupBy']:
         return copy(self._group_by)
 
     @property
@@ -190,7 +190,7 @@ class BuhTuhSeries(ABC):
             base: DataFrameOrSeries,
             name: str,
             expression: Expression,
-            group_by: 'BuhTuhGroupBy',
+            group_by: Optional['BuhTuhGroupBy'],
             sorted_ascending: Optional[bool] = None
     ):
         """ Create an instance of this class. """
@@ -233,7 +233,7 @@ class BuhTuhSeries(ABC):
             base=base,
             name=name,
             expression=cls.value_to_expression(value),
-            group_by=cast('BuhTuhGroupBy', None),
+            group_by=None,
         )
         return result
 
@@ -246,6 +246,10 @@ class BuhTuhSeries(ABC):
                       expression=None,
                       group_by: List[Union['BuhTuhGroupBy', None]] = None,  # List so [None] != None
                       sorted_ascending=None):
+        """
+        Big fat warning: group_by can legally be None, but if you want to set that,
+        set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
+        """
         klass = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
         return klass(
             engine=self._engine if engine is None else engine,
@@ -253,7 +257,7 @@ class BuhTuhSeries(ABC):
             index=self._index if index is None else index,
             name=self._name if name is None else name,
             expression=self._expression if expression is None else expression,
-            group_by=cast('BuhTuhGroupBy', self._group_by if group_by is None else group_by[0]),
+            group_by=self._group_by if group_by is None else group_by[0],
             sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending
         )
 
@@ -314,7 +318,7 @@ class BuhTuhSeries(ABC):
             base_node=self._base_node,
             index=self._index,
             series={self._name: self},
-            group_by=cast('BuhTuhGroupBy', None),
+            group_by=None,
             order_by=order_by
         )
 

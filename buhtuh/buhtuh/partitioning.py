@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Union, Dict, Any, Callable, cast
+from typing import List
 
 from buhtuh.series import BuhTuhSeries, BuhTuhSeriesInt64
 from buhtuh.expression import Expression
@@ -125,7 +125,7 @@ class BuhTuhGroupBy:
                 base_node=node,
                 index_dtypes={n: t.dtype for n, t in self.index.items()},
                 dtypes={a.name: a.dtype for a in series},
-                group_by=cast('BuhTuhGroupBy', None),
+                group_by=None,
                 order_by=[]
             )
         # We give the series the same index as the df, but not yet the groupby
