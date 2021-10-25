@@ -1,9 +1,9 @@
 import { makeInputChangeEvent, makeInputContext } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, makeTracker } from '../src/';
-import { makeBlurEventListener } from '../src/observer/makeBlurEventListener';
+import { makeBlurEventHandler } from '../src/observer/makeBlurEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-describe('makeBlurEventListener', () => {
+describe('makeBlurEventHandler', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     makeTracker({ applicationId: 'test', endpoint: 'test' });
@@ -13,7 +13,7 @@ describe('makeBlurEventListener', () => {
 
   it('should track Input Change when invoked from a valid target', () => {
     const trackedInput = makeTaggedElement('input', null, 'input');
-    const blurEventListener = makeBlurEventListener(trackedInput);
+    const blurEventListener = makeBlurEventHandler(trackedInput);
 
     trackedInput.addEventListener('blur', blurEventListener);
     trackedInput.dispatchEvent(new FocusEvent('blur'));
@@ -25,7 +25,7 @@ describe('makeBlurEventListener', () => {
   it('should not track Input Change when invoked from a bubbling target', () => {
     const trackedInput = makeTaggedElement('input1', null, 'input');
     const unrelatedInput = makeTaggedElement('input2', null, 'input');
-    const blurEventListener = makeBlurEventListener(trackedInput);
+    const blurEventListener = makeBlurEventHandler(trackedInput);
 
     trackedInput.addEventListener('blur', blurEventListener);
     unrelatedInput.dispatchEvent(new FocusEvent('blur'));
@@ -37,7 +37,7 @@ describe('makeBlurEventListener', () => {
     const span = document.createElement('span');
     const trackedInput = makeTaggedElement('input', 'input', 'input', false, false);
     trackedInput.appendChild(span);
-    const inputEventListener = jest.fn(makeBlurEventListener(trackedInput, getTracker()));
+    const inputEventListener = jest.fn(makeBlurEventHandler(trackedInput, getTracker()));
 
     trackedInput.addEventListener('blur', inputEventListener);
     span.dispatchEvent(new MouseEvent('blur', { bubbles: true }));
@@ -50,7 +50,7 @@ describe('makeBlurEventListener', () => {
     const span = document.createElement('span');
     const trackedInput = makeTaggedElement('input', 'input', 'input', false, true);
     trackedInput.appendChild(span);
-    const inputEventListener = jest.fn(makeBlurEventListener(trackedInput, getTracker()));
+    const inputEventListener = jest.fn(makeBlurEventHandler(trackedInput, getTracker()));
 
     trackedInput.addEventListener('blur', inputEventListener);
     span.dispatchEvent(new MouseEvent('blur', { bubbles: true }));

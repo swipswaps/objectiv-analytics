@@ -89,11 +89,25 @@ describe('makeMutationCallback - new nodes', () => {
     expect(tracker.trackEvent).toHaveBeenCalledTimes(2);
     expect(tracker.trackEvent).toHaveBeenNthCalledWith(
       1,
-      makeSectionVisibleEvent({ location_stack: [expect.objectContaining(sectionContext)] })
+      makeSectionVisibleEvent({
+        location_stack: [
+          expect.objectContaining({
+            _type: sectionContext._type,
+            id: sectionContext.id,
+          }),
+        ],
+      })
     );
     expect(tracker.trackEvent).toHaveBeenNthCalledWith(
       2,
-      makeSectionVisibleEvent({ location_stack: [expect.objectContaining(sectionContext)] })
+      makeSectionVisibleEvent({
+        location_stack: [
+          expect.objectContaining({
+            _type: sectionContext._type,
+            id: sectionContext.id,
+          }),
+        ],
+      })
     );
   });
 });

@@ -36,6 +36,7 @@ export interface TrackerQueueInterface {
    * How many batches to process simultaneously. Defaults to 4.
    */
   readonly concurrency: number;
+
   /**
    * The function to execute every batchDelayMs. Must be set with `setProcessFunction` before calling `run`
    */
@@ -70,4 +71,14 @@ export interface TrackerQueueInterface {
    * Fetches a batch of Events from the Queue and executes the given `processFunction` with them.
    */
   run(): Promise<any>;
+
+  /**
+   * Empties the Queue
+   */
+  flush(): Promise<any>;
+
+  /**
+   * Returns whether all Events have been processed.
+   */
+  isIdle(): boolean;
 }

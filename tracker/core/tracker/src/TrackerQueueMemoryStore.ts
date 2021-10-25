@@ -9,7 +9,6 @@ import { TrackerQueueStoreConfig, TrackerQueueStoreInterface } from './TrackerQu
 export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
   readonly console?: TrackerConsole;
   queueStoreName = `TrackerQueueMemoryStore`;
-  length: number = 0;
   events: TrackerEvent[] = [];
 
   constructor(config?: TrackerQueueStoreConfig) {
@@ -30,15 +29,17 @@ export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
 
   async write(...args: NonEmptyArray<TrackerEvent>): Promise<any> {
     this.events.push(...args);
-    this.updateLength();
   }
 
   async delete(trackerEventIds: string[]): Promise<any> {
     this.events = this.events.filter((trackerEvent) => !trackerEventIds.includes(trackerEvent.id));
-    this.updateLength();
   }
 
-  updateLength(): void {
-    this.length = this.events.length;
+  async clear(): Promise<any> {
+    this.events = [];
+  }
+
+  get length(): number {
+    return this.events.length;
   }
 }

@@ -58,6 +58,17 @@ describe('TrackerQueueLocalStorageStore', () => {
       expect(trackerQueueStore.length).toBe(0);
       expect(await trackerQueueStore.read()).toStrictEqual([]);
     });
+
+    it('should delete all Events', async () => {
+      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id' });
+      await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
+      expect(trackerQueueStore.length).toBe(3);
+
+      await trackerQueueStore.clear();
+
+      expect(trackerQueueStore.length).toBe(0);
+      expect(await trackerQueueStore.read()).toStrictEqual([]);
+    });
   });
 
   describe('Persistence', () => {

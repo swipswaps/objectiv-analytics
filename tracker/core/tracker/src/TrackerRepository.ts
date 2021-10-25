@@ -70,4 +70,8 @@ export class TrackerRepository<T extends Tracker> implements TrackerRepositoryIn
   deactivateAll() {
     this.trackersMap.forEach((tracker) => tracker.setActive(false));
   }
+
+  flushAllQueues() {
+    this.trackersMap.forEach((tracker) => tracker.flushQueue());
+  }
 }

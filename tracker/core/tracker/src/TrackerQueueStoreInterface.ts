@@ -42,7 +42,12 @@ export interface TrackerQueueStoreInterface {
   write(...args: NonEmptyArray<TrackerEvent>): Promise<any>;
 
   /**
-   * Delete TrackerEvents from the store
+   * Delete TrackerEvents from the store by id
    */
   delete(TrackerEventIds: string[]): Promise<any>;
+
+  /**
+   * Delete all TrackerEvents from the store
+   */
+  clear(): Promise<any>;
 }
