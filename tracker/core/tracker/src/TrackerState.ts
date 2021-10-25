@@ -2,6 +2,13 @@ import { LocationStack } from "./Context";
 import { TrackerEvent } from "./TrackerEvent";
 
 /**
+ * Represent the target Element that originated the Event, carries metadata used for debugging checks
+ */
+export type TrackedElement = {
+  id: string
+};
+
+/**
  * A stringified Location Stack, in the form of `<context1.type>:<context1.id>.<context2.type>:<context2.id>...`
  */
 export type LocationPath = string;
@@ -20,20 +27,23 @@ export const getLocationPath = (locationStack: LocationStack) => {
  */
 export const TrackerState: {
   /**
-   * A map of Events by their LocationPaths
+   * A map of TrackedElement by their LocationPaths
    */
-  locations: Map<LocationPath, TrackerEvent[]>;
+  locations: Map<LocationPath, Array<TrackedElement | undefined>>;
 
   /**
-   * Shorthand to add a new item to the `locations` map
+   * Shorthand to add a new item to the `locations` map and check if it's unique
    */
-  addLocation: (event: TrackerEvent) => void;
+  checkLocation: (parameters: { event: TrackerEvent, element?: TrackedElement }) => boolean;
 } = {
   locations: new Map(),
 
-  addLocation: (event: TrackerEvent) => {
+  checkLocation: ({ event, element }: { event: TrackerEvent, element?: TrackedElement }) => {
     const locationPath = getLocationPath(event.location_stack);
-    const locationEvents: TrackerEvent[] = TrackerState.locations.get(locationPath) ?? [];
-    TrackerState.locations.set(locationPath, [...locationEvents, event]);
+    const knownElements: Array<TrackedElement | undefined> = TrackerState.locations.get(locationPath) ?? [];
+    const newKnownElements = [...knownElements.filter(knownElement=> knownElement?.id !== element?.id ), element];
+    TrackerState.locations.set(locationPath, newKnownElements);
+
+    return newKnownElements.length === 1;
   }
 };

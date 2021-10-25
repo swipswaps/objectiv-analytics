@@ -5,7 +5,7 @@ import { waitForPromise } from './helpers';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerQueueInterface } from './TrackerQueueInterface';
-import { getLocationPath } from "./TrackerState";
+import { getLocationPath, TrackedElement, TrackerState } from "./TrackerState";
 import { TrackerTransportInterface } from './TrackerTransportInterface';
 
 /**
@@ -207,7 +207,7 @@ export class Tracker implements Contexts, TrackerConfig {
   /**
    * Merges Tracker Location and Global contexts, runs all Plugins and sends the Event via the TrackerTransport.
    */
-  async trackEvent(event: TrackerEventConfig): Promise<TrackerEvent> {
+  async trackEvent(event: TrackerEventConfig, element?: TrackedElement): Promise<TrackerEvent> {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
     const trackedEvent = new TrackerEvent(event, this);
 
@@ -222,13 +222,29 @@ export class Tracker implements Contexts, TrackerConfig {
     // Execute all plugins `beforeTransport` callback. Plugins may enrich or add Contexts to the TrackerEvent
     this.plugins.beforeTransport(trackedEvent);
 
+    // Build Location Path - used both for uniqueness check and logging
+    const locationPath = getLocationPath(trackedEvent.location_stack)
+
+    // Store this Event and its LocationPath in the TrackerState to check for uniqueness
+    const isUnique = TrackerState.checkLocation({ event: trackedEvent, element })
+
+    // If location was not unique, log the issue
+    if (!isUnique && this.console) {
+      this.console.group(`｢objectiv:Tracker:${this.trackerId}｣ ${trackedEvent._type} is not unique`);
+      this.console.error(`Location Path: ${locationPath}`);
+      this.console.group(`Location Stack:`);
+      this.console.log(trackedEvent.location_stack);
+      this.console.groupEnd();
+      this.console.groupEnd();
+    }
+
     // Hand over TrackerEvent to TrackerTransport or TrackerQueue, if enabled and usable.
     if (this.transport && this.transport.isUsable()) {
       if (this.console) {
         this.console.groupCollapsed(
           `｢objectiv:Tracker:${this.trackerId}｣ ${this.queue ? 'Queuing' : 'Tracking'} ${
             trackedEvent._type
-          } (${getLocationPath(trackedEvent.location_stack)})`
+          } (${locationPath})`
         );
         this.console.log(`Event ID: ${trackedEvent.id}`);
         this.console.log(`Time: ${trackedEvent.time}`);

@@ -6,7 +6,7 @@ describe('TrackerRepository', () => {
     jest.resetAllMocks();
   });
   beforeEach(() => {
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   it('should console.error when attempting to get a Tracker from an empty TrackerRepository', () => {
