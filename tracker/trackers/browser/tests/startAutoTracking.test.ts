@@ -5,7 +5,10 @@ import {
   makeMutationCallback,
   startAutoTracking,
   TaggingAttribute,
-  getTracker, getTrackerRepository, stopAutoTracking, AutoTrackingState,
+  getTracker,
+  getTrackerRepository,
+  stopAutoTracking,
+  AutoTrackingState,
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
@@ -44,13 +47,15 @@ describe('startAutoTracking', () => {
   it('should console.error', () => {
     jest.spyOn(console, 'error');
     startAutoTracking();
-    expect(console.error).not.toHaveBeenCalled()
+    expect(console.error).not.toHaveBeenCalled();
     // @ts-ignore
     AutoTrackingState.observerInstance = {
-      disconnect: () => { throw new Error('oops') }
-    }
+      disconnect: () => {
+        throw new Error('oops');
+      },
+    };
     stopAutoTracking();
-    expect(console.error).toHaveBeenCalledTimes(1)
+    expect(console.error).toHaveBeenCalledTimes(1);
   });
 
   it('should not track application loaded event', () => {
@@ -172,6 +177,10 @@ describe('makeMutationCallback - new nodes', () => {
     mutationCallback([mockedMutationRecord], mutationObserver);
     expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(1, `｢objectiv:TrackerRepository｣ There are no Trackers.`);
-    expect(console.error).toHaveBeenNthCalledWith(2, new Error(`No Tracker found. Please create one via \`makeTracker\`.`), undefined);
+    expect(console.error).toHaveBeenNthCalledWith(
+      2,
+      new Error(`No Tracker found. Please create one via \`makeTracker\`.`),
+      undefined
+    );
   });
 });

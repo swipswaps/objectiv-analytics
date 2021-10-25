@@ -14,9 +14,9 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * Global state
  */
 export const AutoTrackingState: {
-  observerInstance: MutationObserver | null,
-  applicationLoaded: boolean,
-  previousURL: string | undefined,
+  observerInstance: MutationObserver | null;
+  applicationLoaded: boolean;
+  previousURL: string | undefined;
 } = {
   /**
    * Holds the instance to the Tagged Elements Mutation Observer created by `startAutoTracking`
@@ -32,7 +32,7 @@ export const AutoTrackingState: {
    * Holds the last seen URL
    */
   previousURL: getLocationHref(),
-}
+};
 
 /**
  * The options that `startAutoTracking` accepts
@@ -47,7 +47,7 @@ export type AutoTrackingOptions = Pick<BrowserTrackerConfig, 'trackURLChanges' |
 export const startAutoTracking = (options?: AutoTrackingOptions) => {
   try {
     // Nothing to do if we are already auto-tracking
-    if(AutoTrackingState.observerInstance) {
+    if (AutoTrackingState.observerInstance) {
       return;
     }
 
@@ -78,12 +78,12 @@ export const startAutoTracking = (options?: AutoTrackingOptions) => {
 export const stopAutoTracking = () => {
   try {
     // Nothing to do if we are not auto-tracking
-    if(!AutoTrackingState.observerInstance) {
+    if (!AutoTrackingState.observerInstance) {
       return;
     }
 
     // Stop Mutation Observer
-    AutoTrackingState.observerInstance.disconnect()
+    AutoTrackingState.observerInstance.disconnect();
     AutoTrackingState.observerInstance = null;
   } catch (error) {
     trackerErrorHandler(error);

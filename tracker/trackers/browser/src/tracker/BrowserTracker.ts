@@ -115,7 +115,7 @@ export class BrowserTracker extends Tracker {
     }
 
     // If node is in `development` mode and console has not been configured, automatically use the browser's console
-    if(!config.console && process.env.NODE_ENV?.startsWith('dev')) {
+    if (!config.console && process.env.NODE_ENV?.startsWith('dev')) {
       config.console = console;
     }
 

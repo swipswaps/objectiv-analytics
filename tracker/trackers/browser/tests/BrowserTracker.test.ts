@@ -2,7 +2,7 @@ import { TrackerEvent, TrackerPlugins, TrackerQueue, TrackerTransportRetry } fro
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 import { BrowserTracker, defaultFetchFunction, FetchAPITransport } from '../src/';
-import { mockConsole } from "./mocks/MockConsole";
+import { mockConsole } from './mocks/MockConsole';
 
 describe('BrowserTracker', () => {
   it('should not instantiate without either `transport` or `endpoint`', () => {
@@ -111,7 +111,7 @@ describe('BrowserTracker', () => {
       const testTracker = new BrowserTracker({
         applicationId: 'app-id',
         transport: new FetchAPITransport({ endpoint: 'localhost' }),
-        console: mockConsole
+        console: mockConsole,
       });
 
       expect(testTracker.console).toEqual(mockConsole);
