@@ -14,6 +14,7 @@ export * from './TrackerQueueMemoryStore';
 export * from './TrackerQueueStoreInterface';
 export * from './TrackerRepository';
 export * from './TrackerRepositoryInterface';
+export * from './TrackerState';
 export * from './TrackerTransportGroup';
 export * from './TrackerTransportInterface';
 export * from './TrackerTransportRetry';

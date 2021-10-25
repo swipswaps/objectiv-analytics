@@ -5,6 +5,7 @@ import { waitForPromise } from './helpers';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerQueueInterface } from './TrackerQueueInterface';
+import { getLocationPath } from "./TrackerState";
 import { TrackerTransportInterface } from './TrackerTransportInterface';
 
 /**
@@ -112,9 +113,7 @@ export class Tracker implements Contexts, TrackerConfig {
 
     if (this.console) {
       this.console.groupCollapsed(
-        `｢objectiv:Tracker:${this.trackerId}｣ Initialized (${this.location_stack
-          .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
-          .join(' > ')})`
+        `｢objectiv:Tracker:${this.trackerId}｣ Initialized (${getLocationPath(this.location_stack)})`
       );
       this.console.log(`Active: ${this.active}`);
       this.console.log(`Application ID: ${this.applicationId}`);
