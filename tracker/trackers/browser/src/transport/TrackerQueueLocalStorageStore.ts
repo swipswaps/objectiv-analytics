@@ -89,4 +89,8 @@ export class TrackerQueueLocalStorageStore implements TrackerQueueStoreInterface
     events = events.filter((trackerEvent) => !trackerEventIds.includes(trackerEvent.id));
     this.writeEventsToLocalStorage(events);
   }
+
+  async clear(): Promise<any> {
+    this.writeEventsToLocalStorage([]);
+  }
 }
