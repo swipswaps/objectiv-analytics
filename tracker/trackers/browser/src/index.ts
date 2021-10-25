@@ -1,7 +1,6 @@
 export * from './globals';
 export * from './Contexts';
 export * from './helpers';
-export * from './makeTracker';
 export * from './observer/makeBlurEventHandler';
 export * from './observer/makeBlurEventHandler';
 export * from './observer/processChildrenTaggingElement';

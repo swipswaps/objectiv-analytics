@@ -1,6 +1,7 @@
 import { TrackerRepository } from '@objectiv/tracker-core';
 import { windowExists } from './helpers';
-import { BrowserTracker } from './tracker/BrowserTracker';
+import { startAutoTracking } from "./observer/startAutoTracking";
+import { BrowserTracker, BrowserTrackerConfig } from './tracker/BrowserTracker';
 
 /**
  * The interface of our namespace which will be extending the Window interface
@@ -36,6 +37,19 @@ export const getTrackerRepository = (): TrackerRepository<BrowserTracker> => {
   }
 
   return window.objectiv.trackers;
+};
+
+/**
+ * Allows to easily create and configure a new BrowserTracker instance and also starts auto tracking
+ */
+export const makeTracker = (trackerConfig: BrowserTrackerConfig): BrowserTracker => {
+  const newTracker = new BrowserTracker(trackerConfig);
+  const trackerRepository = getTrackerRepository();
+
+  trackerRepository.add(newTracker);
+  startAutoTracking(trackerConfig);
+
+  return newTracker;
 };
 
 /**
