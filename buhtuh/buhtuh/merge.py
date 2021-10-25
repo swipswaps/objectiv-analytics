@@ -10,6 +10,7 @@ from sql_models.model import CustomSqlModel, SqlModel
 
 if TYPE_CHECKING:
     from buhtuh.partitioning import BuhTuhGroupBy
+    from buhtuh.expression import Expression
 
 
 class How(Enum):
@@ -116,7 +117,7 @@ def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> Li
 
 class ResultColumn(NamedTuple):
     name: str
-    expression_sql: str
+    expression: 'Expression'
     dtype: str
 
 
@@ -202,7 +203,7 @@ def _get_column_name_expr_dtype(
         new_index_list.append(
                 ResultColumn(
                     name=new_name,
-                    expression_sql=series.expression.to_sql(table_alias),
+                    expression=series.expression.resolve_column_references(table_alias),
                     dtype=series.dtype
                 )
         )
@@ -296,22 +297,29 @@ def _get_merge_sql_model(
     for l_label, r_label in zip(real_left_on, real_right_on):
         l_expr = _get_expression(df_series=left, label=l_label)
         r_expr = _get_expression(df_series=right, label=r_label)
-        merge_conditions.append(f'({l_expr.to_sql("l")} = {r_expr.to_sql("r")})')
+        merge_conditions.append(l_expr.resolve_column_references("l"))
+        merge_conditions.append(r_expr.resolve_column_references("r"))
 
-    columns_str = ', '.join(f'{rc.expression_sql} as {quote_identifier(rc.name)}' for rc in new_column_list)
-    join_type = 'full outer' if how == How.outer else how.value
-    on_str = ('on ' + ' and '.join(merge_conditions)) if merge_conditions else ''
+    if merge_conditions:
+        fmt_str = 'on ' + 'and '.join(['({} = {})'] * (len(merge_conditions)//2))
+        on_expr = Expression.construct(fmt_str, *merge_conditions)
+    else:
+        on_expr = Expression.construct('')
+
+    columns_fmt_str = ", ".join(f'{{}} as {quote_identifier(rc.name)}' for rc in new_column_list)
+    columns_expr = Expression.construct(columns_fmt_str, *[rc.expression for rc in new_column_list])
+    join_type_expr = Expression.construct('full outer' if how == How.outer else how.value)
 
     sql = '''
-        select {columns_str}
+        select {columns}
         from {{left_node}} as l {join_type}
-        join {{right_node}} as r {on_str}
+        join {{right_node}} as r {on}
         '''
     model_builder = CustomSqlModel(name='merge_sql', sql=sql)
     model = model_builder(
-        columns_str=columns_str,
-        join_type=join_type,
-        on_str=on_str,
+        columns=columns_expr,
+        join_type=join_type_expr,
+        on=on_expr,
         left_node=left.base_node,
         right_node=right.base_node
     )

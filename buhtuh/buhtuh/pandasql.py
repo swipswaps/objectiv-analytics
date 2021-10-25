@@ -422,10 +422,10 @@ class BuhTuhDataFrame:
                 sql='select {index_str}, {columns_sql_str} from {{_last_node}} where {where}'
             )
             model = model_builder(
-                columns_sql_str=self._get_all_column_expressions_sql(),
-                index_str=self._get_all_index_expressions_sql(),
+                columns_sql_str=self._get_all_column_expressions(),
+                index_str=self._get_all_index_expressions(),
                 _last_node=self.base_node,
-                where=key.expression.to_sql(),
+                where=key.expression.resolve_column_references(),
             )
             return self._df_or_series(
                 BuhTuhDataFrame.get_instance(
@@ -905,21 +905,17 @@ class BuhTuhDataFrame:
         conn.close()
         return df
 
-    def get_order_by_sql(self) -> str:
+    def get_order_by_expression(self) -> Expression:
         """
         Get a properly formatted order by clause based on this df's order_by.
         Will return an empty string in case ordering in not requested.
         """
         if self._order_by:
-            order_str = ", ".join(
-                f"{sc.expression.to_sql()} {'asc' if sc.asc else 'desc'}"
-                for sc in self._order_by
-            )
-            order_str = f'order by {order_str}'
+            exprs = [sc.expression for sc in self._order_by]
+            fmtstr = [f"{{}} {'asc' if sc.asc else 'desc'}" for sc in self._order_by]
+            return Expression.construct(f'order by {", ".join(fmtstr)}', *exprs)
         else:
-            order_str = ''
-
-        return order_str
+            return Expression.construct('')
 
     def get_current_node(self, limit: Union[int, slice] = None) -> SqlModel[CustomSqlModel]:
         """
@@ -952,15 +948,15 @@ class BuhTuhDataFrame:
 
         model_builder = CustomSqlModel(
             name='view_sql',
-            sql='select {index_str}, {columns_sql_str} from {{_last_node}} {order} {limit}'
+            sql='select {index}, {columns} from {{_last_node}} {order} {limit}'
         )
 
         return model_builder(
-            columns_sql_str=self._get_all_column_expressions_sql(),
-            index_str=self._get_all_index_expressions_sql(),
+            columns=self._get_all_column_expressions(),
+            index=self._get_all_index_expressions(),
             _last_node=self.base_node,
-            limit='' if limit_str is None else f'{limit_str}',
-            order=self.get_order_by_sql()
+            limit=Expression.construct('' if limit_str is None else f'{limit_str}'),
+            order=self.get_order_by_expression().resolve_column_references()
         )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
@@ -973,12 +969,13 @@ class BuhTuhDataFrame:
         sql = to_sql(model)
         return sql
 
-    def _get_all_index_expressions_sql(self) -> str:
-        from buhtuh.expression import quote_identifier
-        return ', '.join(quote_identifier(index_column) for index_column in self.index.keys())
+    def _get_all_index_expressions(self, table_name: str = None) -> List[Expression]:
+        return [Expression.column_reference(index_column).resolve_column_references(table_name)
+                for index_column in self.index.keys()]
 
-    def _get_all_column_expressions_sql(self):
-        return ', '.join(series.get_column_expression() for series in self.data.values())
+    def _get_all_column_expressions(self, table_name: str = None) -> List[Expression]:
+        return [series.get_column_expression().resolve_column_references(table_name)
+                for series in self.data.values()]
 
     def merge(
             self,

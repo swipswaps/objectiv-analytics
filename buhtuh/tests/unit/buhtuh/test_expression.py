@@ -40,28 +40,28 @@ def test_construct_series():
         ColumnReferenceToken('a'),
         RawToken(' as text)')
     ])
-    assert expression_to_sql(result) == 'cast("a" as text)'
+    assert expression_to_sql(result.resolve_column_references()) == 'cast("a" as text)'
 
     result = Expression.construct('{}, {}, {}', df.a, Expression.raw('test'), df.b)
-    assert expression_to_sql(result) == '"a", test, "b"'
+    assert expression_to_sql(result.resolve_column_references()) == '"a", test, "b"'
 
 
 def test_column_reference():
     expr = Expression.column_reference('city')
     assert expr == Expression([ColumnReferenceToken('city')])
-    assert expression_to_sql(expr) == '"city"'
-    assert expression_to_sql(expr, '') == '"city"'
-    assert expression_to_sql(expr, 'tab') == '"tab"."city"'
+    assert expression_to_sql(expr.resolve_column_references()) == '"city"'
+    assert expression_to_sql(expr.resolve_column_references('')) == '"city"'
+    assert expression_to_sql(expr.resolve_column_references('tab')) == '"tab"."city"'
 
 
 def test_string():
     expr = Expression.string_value('a string')
     assert expr == Expression([StringValueToken('a string')])
-    assert expression_to_sql(expr) == "'a string'"
-    assert expression_to_sql(expr, 'tab') == "'a string'"
+    assert expression_to_sql(expr.resolve_column_references()) == "'a string'"
+    assert expression_to_sql(expr.resolve_column_references('tab')) == "'a string'"
     expr = Expression.string_value('a string \' with quotes\'\' in it')
     assert expr == Expression([StringValueToken('a string \' with quotes\'\' in it')])
-    assert expression_to_sql(expr) == "'a string '' with quotes'''' in it'"
+    assert expression_to_sql(expr.resolve_column_references()) == "'a string '' with quotes'''' in it'"
 
 
 def test_combined():
@@ -70,9 +70,9 @@ def test_combined():
     expr2 = Expression.construct('cast({} as bigint)', df.duration)
     expr_sum = Expression.construct('{} + {}', expr1, expr2)
     expr_str = Expression.construct('"Finished in " || cast(({}) as text) || " or later."', expr_sum)
-    assert expression_to_sql(expr_str) == \
+    assert expression_to_sql(expr_str.resolve_column_references()) == \
            '"Finished in " || cast(("year" + cast("duration" as bigint)) as text) || " or later."'
-    assert expression_to_sql(expr_str, 'table_name') == \
+    assert expression_to_sql(expr_str.resolve_column_references('table_name')) == \
            '"Finished in " || cast(("table_name"."year" + cast("table_name"."duration" as bigint)) as text) || " or later."'
 
 

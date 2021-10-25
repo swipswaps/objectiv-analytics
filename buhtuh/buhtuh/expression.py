@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from dataclasses import dataclass, field
-from typing import List, Optional, Union, TYPE_CHECKING
+from typing import List, Union, TYPE_CHECKING
 
 if TYPE_CHECKING:
     from buhtuh import BuhTuhSeries
@@ -100,12 +100,23 @@ class Expression:
         """ Construct an expression for field-name, where field-name is a column in a table or CTE. """
         return Expression([ColumnReferenceToken(field_name)])
 
-    def to_sql(self, table_name: Optional[str] = None) -> str:
-        """ Short cut for expression_to_sql(self, table_name). """
-        return expression_to_sql(self, table_name)
+    def to_sql(self) -> str:
+        """ Short cut for expression_to_sql(self). """
+        return expression_to_sql(self)
+
+    def resolve_column_references(self, table_name: str = None):
+        """ resolve the table name aliases for all columns in this expression """
+        result: List[ExpressionToken] = []
+        for data_item in self.data:
+            if isinstance(data_item, ColumnReferenceToken):
+                t = f'{quote_identifier(table_name)}.' if table_name else ''
+                result.append(RawToken(f'{t}{quote_identifier(data_item.column_name)}'))
+            else:
+                result.append(data_item)
+        return Expression(result)
 
 
-def expression_to_sql(expression: Expression, table_name: Optional[str] = None) -> str:
+def expression_to_sql(expression: Expression) -> str:
     """
     Compile the expression to a SQL fragment.
         * RawTokens will be represented by the raw string they embed.
@@ -120,16 +131,16 @@ def expression_to_sql(expression: Expression, table_name: Optional[str] = None) 
     result: List[str] = []
     for data_item in expression.data:
         if isinstance(data_item, ColumnReferenceToken):
-            if table_name:
-                result.append(f'{quote_identifier(table_name)}.')
-            result.append(quote_identifier(data_item.column_name))
+            raise ValueError('ColumnReferenceTokens should be resolved first using '
+                             'Expression.resolve_column_references')
         elif isinstance(data_item, RawToken):
             result.append(data_item.raw)
         elif isinstance(data_item, StringValueToken):
             result.append(quote_string(data_item.value))
         else:
             raise Exception("This should never happen. "
-                            "expression_to_sql() doesn't cover all Expression subtypes.")
+                            "expression_to_sql() doesn't cover all Expression subtypes."
+                            f"type: {type(data_item)}")
     return ''.join(result)
 
 

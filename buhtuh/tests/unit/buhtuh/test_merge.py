@@ -6,6 +6,7 @@ from typing import List
 import pytest
 
 from buhtuh import BuhTuhDataFrame, get_series_type_from_dtype
+from buhtuh.expression import Expression
 from buhtuh.merge import _determine_left_on_right_on, _determine_result_columns, ResultColumn, merge, How
 from tests.unit.buhtuh.util import get_fake_df
 
@@ -119,33 +120,33 @@ def test__determine_result_columns():
     result = _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
     assert result == (
         [
-            ResultColumn(name='a', expression_sql='"l"."a"', dtype='int64'),
+            ResultColumn(name='a', expression=Expression.construct('"l"."a"'), dtype='int64'),
         ], [
-            ResultColumn(name='b', expression_sql='"l"."b"', dtype='int64'),
-            ResultColumn(name='c_x', expression_sql='"l"."c"', dtype='int64'),
-            ResultColumn(name='c_y', expression_sql='"r"."c"', dtype='float64'),
-            ResultColumn(name='d', expression_sql='"r"."d"', dtype='float64')
+            ResultColumn(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
+            ResultColumn(name='c_x', expression=Expression.construct('"l"."c"'), dtype='int64'),
+            ResultColumn(name='c_y', expression=Expression.construct('"r"."c"'), dtype='float64'),
+            ResultColumn(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
     result = _determine_result_columns(left, right, ['c'], ['c'], ('_x', '_y'))
     assert result == (
         [
-            ResultColumn(name='a_x', expression_sql='"l"."a"', dtype='int64'),
-            ResultColumn(name='a_y', expression_sql='"r"."a"', dtype='float64'),
+            ResultColumn(name='a_x', expression=Expression.construct('"l"."a"'), dtype='int64'),
+            ResultColumn(name='a_y', expression=Expression.construct('"r"."a"'), dtype='float64'),
         ], [
-            ResultColumn(name='b', expression_sql='"l"."b"', dtype='int64'),
-            ResultColumn(name='c', expression_sql='"l"."c"', dtype='int64'),
-            ResultColumn(name='d', expression_sql='"r"."d"', dtype='float64')
+            ResultColumn(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
+            ResultColumn(name='c', expression=Expression.construct('"l"."c"'), dtype='int64'),
+            ResultColumn(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
     result = _determine_result_columns(left, right, ['a', 'c'], ['a', 'c'], ('_x', '_y'))
     assert result == (
         [
-            ResultColumn(name='a', expression_sql='"l"."a"', dtype='int64'),
+            ResultColumn(name='a', expression=Expression.construct('"l"."a"'), dtype='int64'),
         ], [
-            ResultColumn(name='b', expression_sql='"l"."b"', dtype='int64'),
-            ResultColumn(name='c', expression_sql='"l"."c"', dtype='int64'),
-            ResultColumn(name='d', expression_sql='"r"."d"', dtype='float64')
+            ResultColumn(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
+            ResultColumn(name='c', expression=Expression.construct('"l"."c"'), dtype='int64'),
+            ResultColumn(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
 

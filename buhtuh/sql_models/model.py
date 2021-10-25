@@ -13,9 +13,12 @@ import hashlib
 from abc import abstractmethod, ABCMeta
 from copy import deepcopy
 from enum import Enum
-from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union
+from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, TYPE_CHECKING, List, cast
 
 from sql_models.util import extract_format_fields
+
+if TYPE_CHECKING:
+    from buhtuh.expression import Expression
 
 
 class Materialization(Enum):
@@ -203,7 +206,8 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
                                     f'type {type(reference_value)}.')
         return self.instantiate()
 
-    def __call__(self: TB, **values) -> 'SqlModel[TB]':
+    def __call__(self: TB, **values: Union[int, str, 'Expression', List['Expression'],
+                                           'SqlModel', 'SqlModelBuilder']) -> 'SqlModel[TB]':
         self.set_values(**values)
         return self.instantiate()
 
@@ -226,18 +230,31 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
             self._cache_created_instances[instance.hash] = instance
         return self._cache_created_instances[instance.hash]
 
-    def set_values(self: TB, **values: Any) -> TB:
+    def set_values(self: TB, **values: Union[int, str, 'Expression', List['Expression'],
+                                             'SqlModel', 'SqlModelBuilder']) -> TB:
         """
         Set values that can either be references or properties
         :param values:
         :return: self
         """
         # todo: check that values are of the correct types
+        from buhtuh.expression import Expression
+
         for key, value in values.items():
             if key in self.spec_references:
+                if not isinstance(value, (SqlModel, SqlModelBuilder)):
+                    raise ValueError(f'reference of incorrect type: {type(value)}')
                 self._references[key] = value
             elif key in self.spec_properties:
-                self._properties[key] = value
+                if isinstance(value, list):
+                    self._properties[key] = ", ".join([v.to_sql() for v in value])
+                else:
+                    if isinstance(value, Expression):
+                        self._properties[key] = value.to_sql()
+                    elif isinstance(value, (int, str)):
+                        self._properties[key] = value
+                    else:
+                        raise ValueError(f'value type should be int, str or Expression but got {type(value)}')
             else:
                 raise ValueError(f'Provided parameter {key} is not a valid property nor reference for '
                                  f'class {self.__class__.__name__}. '

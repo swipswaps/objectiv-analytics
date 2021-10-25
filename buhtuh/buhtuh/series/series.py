@@ -257,12 +257,12 @@ class BuhTuhSeries(ABC):
             sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending
         )
 
-    def get_column_expression(self, table_alias='') -> str:
-        expression_sql = self.expression.to_sql(table_alias)
+    def get_column_expression(self, table_alias: str = None) -> Expression:
+        expression = self.expression.resolve_column_references(table_alias)
         quoted_column_name = quote_identifier(self.name)
-        if expression_sql == quoted_column_name:
-            return expression_sql
-        return f'{expression_sql} as {quoted_column_name}'
+        if expression.to_sql() == quoted_column_name:
+            return expression
+        return Expression.construct(f'{{}} as {quoted_column_name}', expression)
 
     def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'BuhTuhSeries'):
 
