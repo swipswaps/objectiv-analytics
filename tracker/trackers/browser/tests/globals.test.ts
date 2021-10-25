@@ -8,7 +8,7 @@ describe('globals', () => {
   });
   beforeEach(() => {
     expect(window.objectiv.trackers.trackersMap.size).toBe(0);
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   it('should create a new Browser Tracker in window.object.tracker and start auto tracking', () => {

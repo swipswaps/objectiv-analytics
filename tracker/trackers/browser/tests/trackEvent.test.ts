@@ -1,4 +1,5 @@
 import {
+  generateUUID,
   makeAbortedEvent,
   makeApplicationLoadedEvent,
   makeClickEvent,
@@ -14,6 +15,7 @@ import {
 import {
   BrowserTracker,
   getTracker,
+  getTrackerRepository,
   makeTracker,
   TaggingAttribute,
   trackAborted,
@@ -36,15 +38,22 @@ describe('trackEvent', () => {
 
   beforeEach(() => {
     jest.resetAllMocks();
-    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
   });
 
+  afterEach(() => {
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
+  });
+
   it('should console.error if a Tracker instance cannot be retrieved and was not provided either', async () => {
-    window.objectiv.trackers.delete('test');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
     expect(() => getTracker()).toThrow();
-    jest.spyOn(console, 'error');
+    jest.resetAllMocks();
 
     const parameters = { eventFactory: makeClickEvent, element: testElement };
     trackEvent(parameters);
@@ -117,10 +126,10 @@ describe('trackEvent', () => {
       expect.objectContaining({
         ...makeClickEvent(),
         location_stack: expect.arrayContaining([
-          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'top' },
-          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'mid' },
-          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'div' },
-          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'test' },
+          expect.objectContaining({ _type: 'SectionContext', id: 'top' }),
+          expect.objectContaining({ _type: 'SectionContext', id: 'mid' }),
+          expect.objectContaining({ _type: 'SectionContext', id: 'div' }),
+          expect.objectContaining({ _type: 'SectionContext', id: 'test' }),
         ]),
       })
     );
@@ -152,9 +161,9 @@ describe('trackEvent', () => {
       expect.objectContaining({
         ...makeClickEvent(),
         location_stack: expect.arrayContaining([
-          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'top' },
-          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'mid' },
-          { __location_context: true, __section_context: true, _type: 'SectionContext', id: 'div' },
+          expect.objectContaining({ _type: 'SectionContext', id: 'top' }),
+          expect.objectContaining({ _type: 'SectionContext', id: 'mid' }),
+          expect.objectContaining({ _type: 'SectionContext', id: 'div' }),
         ]),
       })
     );

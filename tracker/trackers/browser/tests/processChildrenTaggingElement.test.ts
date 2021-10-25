@@ -3,6 +3,13 @@ import { isTaggedElement, tagButton, tagElement, TaggingAttribute } from '../src
 import { processChildrenTaggingElement } from '../src/observer/processChildrenTaggingElement';
 
 describe('processChildrenTrackingElement', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should exit with an empty array if the given Element has no children tagging attribute', () => {
     const div = document.createElement('div');
 
