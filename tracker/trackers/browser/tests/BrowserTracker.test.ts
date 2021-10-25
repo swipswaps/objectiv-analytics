@@ -5,6 +5,16 @@ import { BrowserTracker, defaultFetchFunction, FetchAPITransport } from '../src/
 import { mockConsole } from './mocks/MockConsole';
 
 describe('BrowserTracker', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'group').mockImplementation(() => {});
+    jest.spyOn(console, 'groupCollapsed').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should not instantiate without either `transport` or `endpoint`', () => {
     expect(
       () =>

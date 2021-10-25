@@ -1,4 +1,5 @@
 import {
+  generateUUID,
   makeButtonContext,
   makeInputContext,
   makeSectionContext,
@@ -11,7 +12,7 @@ import { makeTaggedElement } from './mocks/makeTaggedElement';
 describe('trackNewElement', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
   });
@@ -102,7 +103,7 @@ describe('trackNewElement', () => {
   });
 
   it('should not attach click event listener and console.error', async () => {
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
@@ -132,7 +133,7 @@ describe('trackNewElement', () => {
 
   it('should console error', async () => {
     jest.resetAllMocks();
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     const inputContext = makeInputContext({ id: 'test' });
     const trackedInput = makeTaggedElement('input-id-1', JSON.stringify(inputContext), 'input');
     trackedInput.setAttribute(TaggingAttribute.trackBlurs, 'true');

@@ -1,4 +1,4 @@
-import { makeSectionContext, makeSectionVisibleEvent, makeURLChangeEvent } from '@objectiv/tracker-core';
+import { generateUUID, makeSectionContext, makeSectionVisibleEvent, makeURLChangeEvent } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
   makeTracker,
@@ -15,7 +15,7 @@ import { makeTaggedElement } from './mocks/makeTaggedElement';
 describe('startAutoTracking', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
   });
@@ -45,7 +45,7 @@ describe('startAutoTracking', () => {
   });
 
   it('should console.error', () => {
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     startAutoTracking();
     expect(console.error).not.toHaveBeenCalled();
     // @ts-ignore
@@ -71,7 +71,7 @@ describe('startAutoTracking', () => {
 describe('makeMutationCallback - url changes', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
   });
@@ -156,7 +156,7 @@ describe('makeMutationCallback - new nodes', () => {
   });
 
   it('should console.error if there are no Trackers', () => {
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     getTrackerRepository().trackersMap = new Map();
     const mutationCallback = makeMutationCallback(false);
     const mutationObserver = new MutationObserver(mutationCallback);
