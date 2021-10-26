@@ -80,9 +80,6 @@ class BuhTuhSeries(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
 
-        if group_by is not None and group_by.base_node != base_node:
-            raise ValueError("group_by should have matching base_node")
-
     @property
     @classmethod
     @abstractmethod
@@ -498,7 +495,8 @@ class BuhTuhSeries(ABC):
         """
         if group_by is None:
             from buhtuh.partitioning import BuhTuhGroupBy
-            group_by = BuhTuhGroupBy(self.engine, self.base_node, [])
+            group_by = BuhTuhGroupBy([BuhTuhGroupBy.get_dummy_index_series(
+                engine=self._engine, base_node=self._base_node)])
 
         series = self.apply_func(func, group_by, *args, **kwargs)
         if len(series) == 1:
@@ -573,8 +571,8 @@ class BuhTuhSeries(ABC):
                 partition = self._group_by
             else:
                 # create an aggregation over the entire input
-                partition = BuhTuhGroupBy(engine=self.engine, base_node=self.base_node,
-                                          group_by_columns=[])
+                partition = BuhTuhGroupBy([BuhTuhGroupBy.get_dummy_index_series(
+                    engine=self._engine, base_node=self._base_node)])
         else:
             partition = self._check_unwrap_groupby(partition)
 

@@ -663,6 +663,11 @@ class BuhTuhDataFrame:
         else:
             raise ValueError(f'Value of "by" should be either None, a string, or a Series.')
 
+        if len(group_by_columns) == 0:
+            from buhtuh.partitioning import BuhTuhGroupBy
+            return [BuhTuhGroupBy.get_dummy_index_series(
+                engine=self._engine, base_node=self._base_node)]
+
         return group_by_columns
 
     def _groupby_to_frame(self, df: 'BuhTuhDataFrame', group_by: 'BuhTuhGroupBy'):
@@ -713,19 +718,14 @@ class BuhTuhDataFrame:
             # by is a list containing at least one other list. We're creating a grouping set
             # aka "Yo dawg, I heard you like GroupBys, ..."
             group_by = BuhTuhGroupingSet(
-                [BuhTuhGroupBy(engine=df.engine,
-                               base_node=df.base_node,
-                               group_by_columns=df._partition_by_series(b)) for b in by]
+                [BuhTuhGroupBy(group_by_columns=df._partition_by_series(b)) for b in by]
             )
         elif isinstance(by, list) and len([b for b in by if isinstance(b, (tuple, list))]) > 0:
             group_by = BuhTuhGroupingList(
-                [BuhTuhGroupBy(engine=df.engine,
-                               base_node=df.base_node,
-                               group_by_columns=df._partition_by_series(b)) for b in by])
+                [BuhTuhGroupBy(group_by_columns=df._partition_by_series(b)) for b in by])
         else:
             by_mypy = cast(Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None], by)
-            group_by = BuhTuhGroupBy(engine=df.engine, base_node=df.base_node,
-                                     group_by_columns=df._partition_by_series(by_mypy))
+            group_by = BuhTuhGroupBy(group_by_columns=df._partition_by_series(by_mypy))
 
         return self._groupby_to_frame(df, group_by)
 
@@ -739,8 +739,7 @@ class BuhTuhDataFrame:
         """
         from buhtuh.partitioning import BuhTuhWindow
         index = self._partition_by_series(by)
-        group_by = BuhTuhWindow(engine=self.engine, base_node=self.base_node,
-                                group_by_columns=index,
+        group_by = BuhTuhWindow(group_by_columns=index,
                                 order_by=self._order_by,
                                 **frame_args)
         return self._groupby_to_frame(self, group_by)
@@ -755,7 +754,7 @@ class BuhTuhDataFrame:
         """
         from buhtuh.partitioning import BuhTuhCube
         index = self._partition_by_series(by)
-        group_by = BuhTuhCube(engine=self.engine, base_node=self.base_node, group_by_columns=index)
+        group_by = BuhTuhCube(group_by_columns=index)
         return self._groupby_to_frame(self, group_by)
 
     def rollup(self,
@@ -768,8 +767,7 @@ class BuhTuhDataFrame:
         """
         from buhtuh.partitioning import BuhTuhRollup
         index = self._partition_by_series(by)
-        group_by = BuhTuhRollup(engine=self.engine, base_node=self.base_node,
-                                group_by_columns=index)
+        group_by = BuhTuhRollup(group_by_columns=index)
         return self._groupby_to_frame(self, group_by)
 
     def rolling(self, window: int,
@@ -820,8 +818,7 @@ class BuhTuhDataFrame:
             end_boundary = BuhTuhWindowFrameBoundary.FOLLOWING
 
         index = self._partition_by_series(on)
-        group_by = BuhTuhWindow(engine=self.engine, base_node=self.base_node,
-                                group_by_columns=index,
+        group_by = BuhTuhWindow(group_by_columns=index,
                                 order_by=self._order_by,
                                 mode=mode,
                                 start_boundary=start_boundary, start_value=start_value,
@@ -859,8 +856,7 @@ class BuhTuhDataFrame:
         end_value = None
 
         index = self._partition_by_series(on)
-        group_by = BuhTuhWindow(engine=self.engine, base_node=self.base_node,
-                                group_by_columns=index,
+        group_by = BuhTuhWindow(group_by_columns=index,
                                 order_by=self._order_by,
                                 mode=mode,
                                 start_boundary=start_boundary, start_value=start_value,
@@ -1184,7 +1180,7 @@ class BuhTuhDataFrame:
 
         group_by = self._group_by
         if group_by is None:
-            group_by = BuhTuhGroupBy(self.engine, self.base_node, [])
+            group_by = BuhTuhGroupBy(self._partition_by_series([]))
 
         new_series = self._apply_func_to_series(func, axis, numeric_only,
                                                 True,  # exclude_non_applied, must be positional arg.
