@@ -5,7 +5,7 @@ import { waitForPromise } from './helpers';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerQueueInterface } from './TrackerQueueInterface';
-import { getLocationPath, TrackedElement, TrackerState } from "./TrackerState";
+import { getLocationPath, TrackerState } from './TrackerState';
 import { TrackerTransportInterface } from './TrackerTransportInterface';
 
 /**
@@ -207,7 +207,7 @@ export class Tracker implements Contexts, TrackerConfig {
   /**
    * Merges Tracker Location and Global contexts, runs all Plugins and sends the Event via the TrackerTransport.
    */
-  async trackEvent(event: TrackerEventConfig, element?: TrackedElement): Promise<TrackerEvent> {
+  async trackEvent(event: TrackerEventConfig, elementId?: string): Promise<TrackerEvent> {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
     const trackedEvent = new TrackerEvent(event, this);
 
@@ -223,10 +223,10 @@ export class Tracker implements Contexts, TrackerConfig {
     this.plugins.beforeTransport(trackedEvent);
 
     // Build Location Path - used both for uniqueness check and logging
-    const locationPath = getLocationPath(trackedEvent.location_stack)
+    const locationPath = getLocationPath(trackedEvent.location_stack);
 
     // Store this Event and its LocationPath in the TrackerState to check for uniqueness
-    const isUnique = TrackerState.checkLocation({ event: trackedEvent, element })
+    const isUnique = elementId ? TrackerState.addElementLocation({ elementId, locationPath }) : true;
 
     // If location was not unique, log the issue
     if (!isUnique && this.console) {

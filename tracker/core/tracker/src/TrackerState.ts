@@ -1,49 +1,66 @@
-import { LocationStack } from "./Context";
-import { TrackerEvent } from "./TrackerEvent";
-
-/**
- * Represent the target Element that originated the Event, carries metadata used for debugging checks
- */
-export type TrackedElement = {
-  id: string
-};
-
-/**
- * A stringified Location Stack, in the form of `<context1.type>:<context1.id>.<context2.type>:<context2.id>...`
- */
-export type LocationPath = string;
+import { LocationStack } from './Context';
 
 /**
  * Converts a Location Stack onto its Location Path
  */
 export const getLocationPath = (locationStack: LocationStack) => {
-  return locationStack
-    .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
-    .join('.')
-}
+  return locationStack.map((context) => `${context._type.replace('Context', '')}:${context.id}`).join('.');
+};
 
 /**
  * Trackers global state
  */
-export const TrackerState: {
+export const TrackerState = {
   /**
-   * A map of TrackedElement by their LocationPaths
+   * An Map of Locations by Elements
    */
-  locations: Map<LocationPath, Array<TrackedElement | undefined>>;
+  elementLocations: new Map<string, string[]>(),
 
   /**
-   * Shorthand to add a new item to the `locations` map and check if it's unique
+   * Clears the state
    */
-  checkLocation: (parameters: { event: TrackerEvent, element?: TrackedElement }) => boolean;
-} = {
-  locations: new Map(),
+  clear: () => {
+    TrackerState.elementLocations = new Map();
+  },
 
-  checkLocation: ({ event, element }: { event: TrackerEvent, element?: TrackedElement }) => {
-    const locationPath = getLocationPath(event.location_stack);
-    const knownElements: Array<TrackedElement | undefined> = TrackerState.locations.get(locationPath) ?? [];
-    const newKnownElements = [...knownElements.filter(knownElement=> knownElement?.id !== element?.id ), element];
-    TrackerState.locations.set(locationPath, newKnownElements);
+  /**
+   * Binds and Element to a specific Location:
+   *  - Returns `undefined` if the given Location path is empty
+   *  - Binds the Element to the Location and returns `true` if Location uniqueness passes
+   *  - Returns `false` if Location uniqueness fails, without updating the state
+   */
+  addElementLocation: ({ elementId, locationPath }: { elementId: string; locationPath: string }) => {
+    // We can't really do any checking without a Location
+    if (!locationPath) {
+      return undefined;
+    }
 
-    return newKnownElements.length === 1;
-  }
+    // If a different Element with the same location exists, return false
+    for (let [existingElement, locations] of Array.from(TrackerState.elementLocations.entries())) {
+      if (existingElement !== elementId && locations.includes(locationPath)) {
+        return false;
+      }
+    }
+
+    // Retrieve existingLocations for the given Element
+    const existingLocations = TrackerState.elementLocations.get(elementId) ?? [];
+
+    // Store new Location in state, if not already there
+    if (!existingLocations.includes(locationPath)) {
+      TrackerState.elementLocations.set(elementId, [...existingLocations, locationPath]);
+    }
+
+    return true;
+  },
+
+  /**
+   * Removes an Element from TrackerState. Used when Elements unmount
+   */
+  removeElement: (elementToRemove: string | undefined) => {
+    if (!elementToRemove) {
+      return false;
+    }
+
+    return TrackerState.elementLocations.delete(elementToRemove);
+  },
 };

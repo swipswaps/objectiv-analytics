@@ -1,54 +1,111 @@
-import {
-  getLocationPath,
-  LocationPath,
-  LocationStack, makeButtonContext,
-  makeSectionContext,
-  TrackedElement,
-  TrackerEvent,
-  TrackerState
-} from '../src';
+import { getLocationPath, LocationStack, makeButtonContext, makeSectionContext, TrackerState } from '../src';
 
 describe('TrackerState', () => {
+  beforeAll(() => {
+    TrackerState.clear();
+  });
+
+  const rootSectionContext = makeSectionContext({ id: 'root' });
+  const overlayContext = makeButtonContext({ id: 'overlay', text: 'modal' });
+  const buttonContext = makeButtonContext({ id: 'button', text: 'ok' });
+
   it('getLocationPath', () => {
-    const testCases: [LocationStack, LocationPath][] = [
+    const testCases: [LocationStack, string][] = [
       [[], ''],
       [[makeSectionContext({ id: 'test' })], 'Section:test'],
       [[makeSectionContext({ id: 'parent' }), makeSectionContext({ id: 'child' })], 'Section:parent.Section:child'],
-    ]
+    ];
     testCases.forEach(([locationStack, locationPath]) => {
       expect(getLocationPath(locationStack)).toMatch(locationPath);
-    })
+    });
   });
 
-  it('checkLocation', () => {
-    const testCases: [locationStack: LocationStack, element: TrackedElement | undefined, isUnique: boolean][] = [
-      // Events without Location, we can't really deduce anything and thus will always be treated as unique
-      [[], undefined, true],
-      [[], undefined, true],
-      [[], undefined, true],
+  describe('addElementLocation', () => {
+    const testCases: [locationStack: LocationStack, elementId: string, isUnique: boolean | undefined][] = [
+      // First time an Element provides a never-seen Location it should succeed. This location is now claimed by btn-4
+      [[rootSectionContext, buttonContext], 'btn-4', true],
 
-      // An Element without Location, should fail because `empty` location stack has been already registered above
-      [[], { id: 'btn-1' }, false],
+      // Subsequent locations from the same Element should be fine as well
+      [[rootSectionContext, buttonContext], 'btn-4', true],
+      [[rootSectionContext, buttonContext], 'btn-4', true],
 
-      // Events with a Location, but no Element specified, same as above, we can't determine much without an Element
-      [[makeSectionContext({ id: 'root' })], undefined, true],
-      [[makeSectionContext({ id: 'root' })], undefined, true],
-      [[makeSectionContext({ id: 'root' })], undefined, true],
+      // Another Elements providing an already-seen Location should fail. This location was already claimed by btn-4
+      [[rootSectionContext, buttonContext], 'btn-5', false],
 
-      // An Element with an already seen Location, similarly to the previous failure case, it should fail
-      [[makeSectionContext({ id: 'root' })], { id: 'btn-2' }, false],
+      // An Element can have multiple Locations - in this example the button has been reused in a modal
+      [[rootSectionContext, overlayContext, buttonContext], 'btn-4', true],
 
-      // Events with a Location and an Element, should be able to trigger as many times it likes
-      [[makeSectionContext({ id: 'root' }), makeButtonContext({ id: 'button', text: 'ok' })], { id: 'btn-3' }, true],
-      [[makeSectionContext({ id: 'root' }), makeButtonContext({ id: 'button', text: 'ok' })], { id: 'btn-3' }, true],
-      [[makeSectionContext({ id: 'root' }), makeButtonContext({ id: 'button', text: 'ok' })], { id: 'btn-3' }, true],
+      // Again, another Element attempting to use the same location should fail the uniqueness check.
+      [[rootSectionContext, overlayContext, buttonContext], 'btn-6', false],
 
-      // Another Element with a different identifier but same location stack as previous case, should fail
-      [[makeSectionContext({ id: 'root' }), makeButtonContext({ id: 'button', text: 'ok' })], { id: 'btn-4' }, false],
-    ]
-    testCases.forEach(([location_stack, element, isUnique]) => {
-      const event = new TrackerEvent({ id: 'test', _type: 'test', location_stack });
-      expect(TrackerState.checkLocation({ event, element })).toBe(isUnique);
-    })
+      // No Location - this can happen when developers trigger event manually and provide wrong locations
+      [[], 'btn-1', undefined],
+      [[], 'btn-2', undefined],
+    ];
+    testCases.forEach(([location_stack, elementId, isUnique]) => {
+      const locationPath = getLocationPath(location_stack);
+      it(`${locationPath} - ${elementId}`, () => {
+        expect(TrackerState.addElementLocation({ locationPath, elementId })).toBe(isUnique);
+      });
+    });
+  });
+
+  describe('removeElement', () => {
+    beforeEach(() => {
+      TrackerState.elementLocations = new Map([
+        [
+          'button-1',
+          [
+            'Section:root.Button:button1',
+            'Section:root.Overlay:modal1.Button:button1',
+            'Section:root.Overlay:modal2.Button:button1',
+          ],
+        ],
+        [
+          'button-2',
+          [
+            'Section:root.Button:button2',
+            'Section:root.Overlay:modal2.Button:button2',
+            'Section:root.Overlay:modal3.Button:button2',
+          ],
+        ],
+      ]);
+    });
+
+    it('returns false if a non-existing element is provided', () => {
+      expect(TrackerState.removeElement('button-nope')).toBe(false);
+    });
+
+    it('removes button-1 and all of its locations from state', () => {
+      expect(TrackerState.removeElement('button-1')).toBe(true);
+      expect(TrackerState.elementLocations).toStrictEqual(
+        new Map([
+          [
+            'button-2',
+            [
+              'Section:root.Button:button2',
+              'Section:root.Overlay:modal2.Button:button2',
+              'Section:root.Overlay:modal3.Button:button2',
+            ],
+          ],
+        ])
+      );
+    });
+
+    it('removes button-2 and all of its locations from state', () => {
+      expect(TrackerState.removeElement('button-2')).toBe(true);
+      expect(TrackerState.elementLocations).toStrictEqual(
+        new Map([
+          [
+            'button-1',
+            [
+              'Section:root.Button:button1',
+              'Section:root.Overlay:modal1.Button:button1',
+              'Section:root.Overlay:modal2.Button:button1',
+            ],
+          ],
+        ])
+      );
+    });
   });
 });
