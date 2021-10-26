@@ -176,7 +176,7 @@ class BuhTuhGroupingList(BuhTuhGroupBy):
 
         for g in grouping_list:
             if not isinstance(g, BuhTuhGroupBy):
-                raise ValueError("Only BuhTuhGroupBy or BuhTuhAggregator items are supported")
+                raise ValueError("Only BuhTuhGroupBy items are supported")
             if base_node is None:
                 base_node = g.base_node
                 engine = g.engine
