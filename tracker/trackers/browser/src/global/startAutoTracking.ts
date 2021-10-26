@@ -31,7 +31,8 @@ export const startAutoTracking = (options?: AutoTrackingOptions) => {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: [TaggingAttribute.trackVisibility],
+      attributeOldValue: true,
+      attributeFilter: [TaggingAttribute.trackVisibility, TaggingAttribute.elementId],
     });
 
     // Track ApplicationLoaded Event - once

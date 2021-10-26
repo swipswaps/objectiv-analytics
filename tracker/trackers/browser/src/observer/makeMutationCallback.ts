@@ -1,3 +1,5 @@
+import { TaggingAttribute } from "@objectiv/tracker-browser";
+import { TrackerState } from "@objectiv/tracker-core";
 import { AutoTrackingState } from '../global/AutoTrackingState';
 import { getTracker } from '../global/getTracker';
 import { getLocationHref } from '../helpers';
@@ -47,7 +49,7 @@ export const makeMutationCallback = (trackURLChangeEvents: boolean): MutationCal
       }
 
       // Track DOM changes
-      mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName }) => {
+      mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName, oldValue }) => {
         // New DOM nodes mutation: attach event listeners to all Tracked Elements and track visibility:visible events
         addedNodes.forEach((addedNode) => {
           if (addedNode instanceof Element) {
@@ -63,9 +65,14 @@ export const makeMutationCallback = (trackURLChangeEvents: boolean): MutationCal
         });
 
         // Visibility attribute mutation (programmatic visibility change): determine and track visibility events
-        if (attributeName && isTaggedElement(target)) {
+        if (attributeName === TaggingAttribute.trackVisibility && isTaggedElement(target)) {
           trackVisibilityVisibleEvent(target, tracker);
           trackVisibilityHiddenEvent(target, tracker);
+        }
+
+        // Element ID change for programmatically instrumented elements - keep TrackerState in sync
+        if(attributeName === TaggingAttribute.elementId && oldValue) {
+          TrackerState.removeElement(oldValue);
         }
       });
     } catch (error) {

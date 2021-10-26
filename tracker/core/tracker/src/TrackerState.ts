@@ -8,6 +8,15 @@ export const getLocationPath = (locationStack: LocationStack) => {
 };
 
 /**
+ * Represents a Location collision. Returned by TrackerState.addElementLocation whenever the uniqueness check fails.
+ */
+export type LocationCollision = {
+  locationPath: string;
+  existingElementId: string;
+  collidingElementId: string;
+};
+
+/**
  * Trackers global state
  */
 export const TrackerState = {
@@ -29,16 +38,26 @@ export const TrackerState = {
    *  - Binds the Element to the Location and returns `true` if Location uniqueness passes
    *  - Returns `false` if Location uniqueness fails, without updating the state
    */
-  addElementLocation: ({ elementId, locationPath }: { elementId: string; locationPath: string }) => {
+  addElementLocation: ({
+    elementId,
+    locationPath,
+  }: {
+    elementId: string;
+    locationPath: string;
+  }): true | LocationCollision => {
     // We can't really do any checking without a Location
     if (!locationPath) {
-      return undefined;
+      return true;
     }
 
     // If a different Element with the same location exists, return false
-    for (let [existingElement, locations] of Array.from(TrackerState.elementLocations.entries())) {
-      if (existingElement !== elementId && locations.includes(locationPath)) {
-        return false;
+    for (let [existingElementId, locations] of Array.from(TrackerState.elementLocations.entries())) {
+      if (existingElementId !== elementId && locations.includes(locationPath)) {
+        return {
+          locationPath,
+          existingElementId,
+          collidingElementId: elementId,
+        };
       }
     }
 

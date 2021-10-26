@@ -226,14 +226,20 @@ export class Tracker implements Contexts, TrackerConfig {
     const locationPath = getLocationPath(trackedEvent.location_stack);
 
     // Store this Event and its LocationPath in the TrackerState to check for uniqueness
-    const isUnique = elementId ? TrackerState.addElementLocation({ elementId, locationPath }) : true;
+    const locationCheckResult = elementId ? TrackerState.addElementLocation({ elementId, locationPath }) : true;
 
     // If location was not unique, log the issue
-    if (!isUnique && this.console) {
+    if (locationCheckResult !== true && this.console) {
       this.console.group(`｢objectiv:Tracker:${this.trackerId}｣ ${trackedEvent._type} is not unique`);
-      this.console.error(`Location Path: ${locationPath}`);
+      this.console.error(`Location Path: ${locationCheckResult.locationPath}`);
+      this.console.error(`Existing Element Id: ${locationCheckResult.existingElementId}`);
+      this.console.error(`Colliding Element Id: ${locationCheckResult.collidingElementId}`);
+      this.console.group(`Event:`);
+      this.console.error(`Event type: ${trackedEvent._type}`);
+      this.console.error(`Event id: ${trackedEvent.id}`);
       this.console.group(`Location Stack:`);
       this.console.log(trackedEvent.location_stack);
+      this.console.groupEnd();
       this.console.groupEnd();
       this.console.groupEnd();
     }
