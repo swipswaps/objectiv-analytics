@@ -1085,7 +1085,7 @@ class BuhTuhDataFrame:
                 continue
             for applied in series.apply_func(apply_dict[name], *args, **kwargs):
                 if applied.name in new_series:
-                    raise ValueError("duplicate result series: {applied.name}")
+                    raise ValueError(f"duplicate result series: {applied.name}")
                 new_series[applied.name] = applied
 
         return list(new_series.values())
