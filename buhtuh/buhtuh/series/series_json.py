@@ -215,7 +215,7 @@ class Json:
 
     @property
     def navigation_features(self):
-        return self[{'_type': 'NavigationContext'}:]
+        return self[{'_type': 'NavigationContext'}: None]
 
     @property
     def cookie_id(self):
