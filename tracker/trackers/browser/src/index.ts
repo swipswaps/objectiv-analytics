@@ -23,6 +23,7 @@ export * from './TaggingAttribute';
 export * from './trackerErrorHandler';
 export * from './tracker/BrowserTracker';
 export * from './tracker/findTaggedParentElements';
+export * from './tracker/getElementLocationStack';
 export * from './tracker/tagChildren';
 export * from './tracker/tagLocation';
 export * from './tracker/tagLocationHelpers';

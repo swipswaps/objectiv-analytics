@@ -1,6 +1,8 @@
+import { getLocationPath, TrackerElementLocations } from '@objectiv/tracker-core';
 import { parseTrackClicksAttribute } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
+import { getElementLocationStack } from '../tracker/getElementLocationStack';
 import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
 import { makeBlurEventHandler } from './makeBlurEventHandler';
@@ -22,6 +24,27 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
         return;
       }
       element.setAttribute(TaggingAttribute.tracked, 'true');
+
+      // Add this element to TrackerState - this will also check if its Location is unique
+      const elementId = element.getAttribute(TaggingAttribute.elementId);
+      if (elementId) {
+        const locationStack = getElementLocationStack({ element, tracker });
+        const locationPath = getLocationPath(locationStack);
+        const locationAddResult = TrackerElementLocations.add({ elementId, locationPath });
+
+        // If location was not unique, log the issue
+        if (locationAddResult !== true) {
+          // FIXME fix console injection
+          console.group(`｢objectiv:trackNewElement｣ Element ${elementId} as non-unique Location ${locationPath}`);
+          console.error(`Existing Element Id: ${locationAddResult.existingElementId}`);
+          console.error(`Colliding Element Id: ${locationAddResult.collidingElementId}`);
+          console.error(`Location Path: ${locationPath}`);
+          console.group(`Location Stack:`);
+          console.log(locationStack);
+          console.groupEnd();
+          console.groupEnd();
+        }
+      }
 
       // Visibility: visible tracking
       trackVisibilityVisibleEvent(element, tracker);

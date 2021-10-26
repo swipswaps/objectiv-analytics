@@ -26,25 +26,12 @@ export const TrackerElementLocations = {
   elementLocations: new Map<string, string[]>(),
 
   /**
-   * Clears the state
-   */
-  clear: () => {
-    TrackerElementLocations.elementLocations = new Map();
-  },
-
-  /**
    * Binds and Element to a specific Location:
    *  - Returns `undefined` if the given Location path is empty
    *  - Binds the Element to the Location and returns `true` if Location uniqueness passes
    *  - Returns `false` if Location uniqueness fails, without updating the state
    */
-  add: ({
-    elementId,
-    locationPath,
-  }: {
-    elementId: string;
-    locationPath: string;
-  }): true | LocationCollision => {
+  add: ({ elementId, locationPath }: { elementId: string; locationPath: string }): true | LocationCollision => {
     // We can't really do any checking without a Location
     if (!locationPath) {
       return true;
@@ -75,11 +62,18 @@ export const TrackerElementLocations = {
   /**
    * Removes an Element from TrackerState. Used when Elements unmount
    */
-  delete: (elementId: string | undefined) => {
+  delete: (elementId: string | undefined | null) => {
     if (!elementId) {
       return false;
     }
 
     return TrackerElementLocations.elementLocations.delete(elementId);
+  },
+
+  /**
+   * Clears the state
+   */
+  clear: () => {
+    TrackerElementLocations.elementLocations.clear();
   },
 };

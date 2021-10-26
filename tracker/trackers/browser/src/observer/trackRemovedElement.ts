@@ -1,8 +1,7 @@
-import { TrackerElementLocations } from "@objectiv/tracker-core";
+import { TrackerElementLocations } from '@objectiv/tracker-core';
 import { parseTrackVisibilityAttribute } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
-import { getElementId } from '../tracker/getElementId';
 import { trackSectionHidden } from '../tracker/trackEventHelpers';
 import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
@@ -23,7 +22,7 @@ export const trackRemovedElement = (element: Element, tracker: BrowserTracker) =
       }
 
       // Remove this element from TrackerState - this will allow it to re-render
-      TrackerElementLocations.delete(getElementId(element));
+      TrackerElementLocations.delete(element.getAttribute(TaggingAttribute.elementId));
     }
   } catch (error) {
     trackerErrorHandler(error);

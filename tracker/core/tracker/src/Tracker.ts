@@ -2,10 +2,10 @@ import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objec
 import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
 import { waitForPromise } from './helpers';
+import { getLocationPath } from './TrackerElementLocations';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerQueueInterface } from './TrackerQueueInterface';
-import { getLocationPath, TrackerElementLocations } from './TrackerElementLocations';
 import { TrackerTransportInterface } from './TrackerTransportInterface';
 
 /**
@@ -207,7 +207,7 @@ export class Tracker implements Contexts, TrackerConfig {
   /**
    * Merges Tracker Location and Global contexts, runs all Plugins and sends the Event via the TrackerTransport.
    */
-  async trackEvent(event: TrackerEventConfig, elementId?: string): Promise<TrackerEvent> {
+  async trackEvent(event: TrackerEventConfig): Promise<TrackerEvent> {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
     const trackedEvent = new TrackerEvent(event, this);
 
@@ -222,36 +222,13 @@ export class Tracker implements Contexts, TrackerConfig {
     // Execute all plugins `beforeTransport` callback. Plugins may enrich or add Contexts to the TrackerEvent
     this.plugins.beforeTransport(trackedEvent);
 
-    // Build Location Path - used both for uniqueness check and logging
-    const locationPath = getLocationPath(trackedEvent.location_stack);
-
-    // FIXME move this out of here and in the Observer
-    // Store this Event and its LocationPath in the TrackerState to check for uniqueness
-    const locationCheckResult = elementId ? TrackerElementLocations.add({ elementId, locationPath }) : true;
-
-    // If location was not unique, log the issue
-    if (locationCheckResult !== true && this.console) {
-      this.console.group(`｢objectiv:Tracker:${this.trackerId}｣ ${trackedEvent._type} is not unique`);
-      this.console.error(`Location Path: ${locationCheckResult.locationPath}`);
-      this.console.error(`Existing Element Id: ${locationCheckResult.existingElementId}`);
-      this.console.error(`Colliding Element Id: ${locationCheckResult.collidingElementId}`);
-      this.console.group(`Event:`);
-      this.console.error(`Event type: ${trackedEvent._type}`);
-      this.console.error(`Event id: ${trackedEvent.id}`);
-      this.console.group(`Location Stack:`);
-      this.console.log(trackedEvent.location_stack);
-      this.console.groupEnd();
-      this.console.groupEnd();
-      this.console.groupEnd();
-    }
-
     // Hand over TrackerEvent to TrackerTransport or TrackerQueue, if enabled and usable.
     if (this.transport && this.transport.isUsable()) {
       if (this.console) {
         this.console.groupCollapsed(
           `｢objectiv:Tracker:${this.trackerId}｣ ${this.queue ? 'Queuing' : 'Tracking'} ${
             trackedEvent._type
-          } (${locationPath})`
+          } (${getLocationPath(trackedEvent.location_stack)})`
         );
         this.console.log(`Event ID: ${trackedEvent.id}`);
         this.console.log(`Time: ${trackedEvent.time}`);

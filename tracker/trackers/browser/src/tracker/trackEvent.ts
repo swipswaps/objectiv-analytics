@@ -7,7 +7,6 @@ import { TaggingAttribute } from '../TaggingAttribute';
 import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
 import { isTaggableElement } from '../typeGuards';
 import { findTaggedParentElements } from './findTaggedParentElements';
-import { getElementId } from './getElementId';
 
 /**
  * All of our EventFactories have the same signature
@@ -60,7 +59,7 @@ export const trackEvent = (parameters: TrackEventParameters) => {
     const newEvent = eventFactory({ location_stack: locationStack });
 
     // Track
-    tracker.trackEvent(newEvent, getElementId(element));
+    tracker.trackEvent(newEvent);
   } catch (error) {
     trackerErrorHandler(error, parameters, parameters.onError);
   }
