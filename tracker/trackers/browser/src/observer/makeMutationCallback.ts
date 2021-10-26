@@ -1,8 +1,8 @@
-import { TaggingAttribute } from '@objectiv/tracker-browser';
 import { TrackerState } from '@objectiv/tracker-core';
 import { AutoTrackingState } from '../global/AutoTrackingState';
 import { getTracker } from '../global/getTracker';
 import { getLocationHref } from '../helpers';
+import { TaggingAttribute } from '../TaggingAttribute';
 import { trackURLChange } from '../tracker/trackEventHelpers';
 import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
