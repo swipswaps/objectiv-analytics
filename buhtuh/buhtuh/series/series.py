@@ -330,8 +330,6 @@ class BuhTuhSeries(ABC):
         implemented in __eq__, but we already use that method for other purposes.
         This strictly checks that other is the same type as self. If other is a subclass this will return
         False.
-        :note: currently uses the external index, meaning the potential future index for a group by
-            is used in the comparison. Not ideal, but better than what we had.
         """
         if not isinstance(other, self.__class__) or not isinstance(self, other.__class__):
             return False
