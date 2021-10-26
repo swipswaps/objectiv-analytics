@@ -52,8 +52,6 @@ export const makeMutationCallback = (trackURLChangeEvents: boolean): MutationCal
       mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName, oldValue }) => {
         // Element ID change for programmatically instrumented elements - keep TrackerState in sync
         if (attributeName === TaggingAttribute.elementId && oldValue) {
-          console.debug(`attribute change ${oldValue}`)
-          console.debug(target)
           TrackerElementLocations.delete(oldValue);
         }
 

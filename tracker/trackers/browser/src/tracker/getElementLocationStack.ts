@@ -11,14 +11,19 @@ import { findTaggedParentElements } from './findTaggedParentElements';
  * 2. Retrieves the Tracker's Location Stack
  * 3. Merges the two Location Stacks to reconstruct the full Location
  */
-export const getElementLocationStack = (parameters: { element: TaggableElement | EventTarget; tracker: BrowserTracker }) => {
+export const getElementLocationStack = (parameters: {
+  element: TaggableElement | EventTarget;
+  tracker?: BrowserTracker;
+}) => {
   const locationStack: LocationStack = [];
 
   try {
     const { element, tracker } = parameters;
 
     // Add Tracker's location to the locationStack
-    locationStack.push(...tracker.location_stack);
+    if (tracker) {
+      locationStack.push(...tracker.location_stack);
+    }
 
     // Traverse the DOM to reconstruct Element's Location
     if (isTaggableElement(element)) {

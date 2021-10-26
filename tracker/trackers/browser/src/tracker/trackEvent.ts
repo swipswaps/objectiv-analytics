@@ -1,12 +1,10 @@
 import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext } from '@objectiv/schema';
 import ExtendableError from 'es6-error';
-import { AnyLocationContext, BrowserTracker, TaggableElement } from '../';
 import { getTracker } from '../global/getTracker';
-import { parseLocationContext } from '../structs';
-import { TaggingAttribute } from '../TaggingAttribute';
+import { BrowserTracker } from '../tracker/BrowserTracker';
+import { getElementLocationStack } from '../tracker/getElementLocationStack';
 import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
-import { isTaggableElement } from '../typeGuards';
-import { findTaggedParentElements } from './findTaggedParentElements';
+import { TaggableElement } from '../typeGuards';
 
 /**
  * All of our EventFactories have the same signature
@@ -43,17 +41,7 @@ export const trackEvent = (parameters: TrackEventParameters) => {
     const { eventFactory, element, tracker = getTracker(parameters.trackerId) } = parameters;
 
     // For trackable Elements traverse the DOM to reconstruct their Location
-    const locationStack: AnyLocationContext[] = [];
-    if (isTaggableElement(element)) {
-      // Retrieve parent Tracked Elements
-      const elementsStack = findTaggedParentElements(element).reverse();
-
-      // Re-hydrate Location Stack
-      elementsStack.forEach((element) => {
-        // Get, parse, validate, hydrate and push Location Context in the Location Stack
-        locationStack.push(parseLocationContext(element.getAttribute(TaggingAttribute.context)));
-      });
-    }
+    const locationStack = getElementLocationStack({ element });
 
     // Create new Event
     const newEvent = eventFactory({ location_stack: locationStack });
