@@ -126,6 +126,18 @@ describe('BrowserTracker', () => {
 
       expect(testTracker.console).toEqual(mockConsole);
     });
+
+    it('Should not automatically bind to global console if `null` has been specified ', () => {
+      process.env.NODE_ENV = 'dev';
+
+      const testTracker = new BrowserTracker({
+        applicationId: 'app-id',
+        transport: new FetchAPITransport({ endpoint: 'localhost' }),
+        console: mockConsole,
+      });
+
+      expect(testTracker.console).toEqual(mockConsole);
+    });
   });
 
   describe('Default Plugins', () => {

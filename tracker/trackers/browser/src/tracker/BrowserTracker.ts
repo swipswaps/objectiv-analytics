@@ -22,13 +22,19 @@ import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
  * It also accepts a number of options to configure automatic tracking behavior:
  */
 export type BrowserTrackerConfig = TrackerConfig & {
-  // The collector endpoint URL
+  /**
+   * The collector endpoint URL.
+   */
   endpoint?: string;
 
-  // Whether to track application loaded events automatically. Enabled by default.
+  /**
+   * Optional. Whether to track application loaded events automatically. Enabled by default.
+   */
   trackApplicationLoaded?: boolean;
 
-  // Whether to track URL change events automatically. Enabled by default.
+  /**
+   * Optional. Whether to track URL change events automatically. Enabled by default.
+   */
   trackURLChanges?: boolean;
 };
 
