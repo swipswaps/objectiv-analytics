@@ -4,7 +4,7 @@ import { LocationStack } from './Context';
  * Converts a Location Stack onto its Location Path
  */
 export const getLocationPath = (locationStack: LocationStack) => {
-  return locationStack.map((context) => `${context._type.replace('Context', '')}:${context.id}`).join('.');
+  return locationStack.map((context) => `${context._type.replace('Context', '')}:${context.id}`).join(' / ');
 };
 
 /**
