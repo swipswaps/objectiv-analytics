@@ -81,7 +81,7 @@ class BuhTuhGroupBy:
         return (
             self.engine == other.engine and
             self.base_node == other.base_node and
-            self.index.keys() == other.index.keys() and
+            list(self.index.keys()) == list(other.index.keys()) and
             all([self.index[n].equals(other.index[n]) for n in self.index.keys()])
         )
 
