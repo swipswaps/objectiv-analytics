@@ -334,10 +334,10 @@ def test_rollup_basics():
 def test_grouping_list_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    btm = bt.groupby(['municipality'])
-    bts = btm.groupby(['city'])
+    # make it explicit
+    btl = bt.groupby(list([['municipality'], ['city']]))
 
-    result_bt = bts[['inhabitants']].sum()
+    result_bt = btl[['inhabitants']].sum()
     assert_equals_data(
         result_bt,
         order_by=['municipality','city'],
@@ -350,16 +350,26 @@ def test_grouping_list_basics():
 def test_grouping_set_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    bts = bt.groupby([['municipality'],['city']])
+    bts = bt.groupby({('municipality'), ('city')})
     result_bt = bts[['inhabitants']].sum()
+
+    expected_columns = ['municipality', 'city', 'inhabitants_sum']
+    expected_data = [
+        ['Leeuwarden', None, 93485], ['Súdwest-Fryslân', None, 36575],
+        [None, 'Drylts', 3055], [None, 'Ljouwert', 93485], [None, 'Snits', 33520]
+    ]
+
+    # order of index is dynamic since it's a set. Make sure it's in the right order.
+    index_keys = list(result_bt.index.keys())
+    index_0 = index_keys.index(expected_columns[0])
+    index_1 = index_keys.index(expected_columns[1])
+    expected_data = [[r[index_0], r[index_1], r[2]] for r in expected_data]
+
     assert_equals_data(
         result_bt,
-        order_by=['municipality','city'],
-        expected_columns=['municipality', 'city', 'inhabitants_sum'],
-        expected_data=[
-            ['Leeuwarden', None, 93485], ['Súdwest-Fryslân', None, 36575],
-            [None, 'Drylts', 3055], [None, 'Ljouwert', 93485], [None, 'Snits', 33520]
-        ]
+        order_by=['municipality', 'city'],
+        expected_columns=list(result_bt.index.keys()) + ['inhabitants_sum'],
+        expected_data=expected_data
     )
 
 
@@ -432,4 +442,36 @@ def test_groupby_frame_split_recombine():
                 ['Súdwest-Fryslân', 36575, 2724]
             ]
         )
+
+def test_groupby_frame_split_recombine_aggregation_applied():
+    bt = get_bt_with_test_data(full_data_set=False)[['municipality', 'inhabitants', 'founding']]
+    group1 = bt.groupby('municipality')
+    subgroup = group1[['founding', 'inhabitants']]
+    inhabitants_sum = subgroup['inhabitants'].sum()
+    founding_inhabitants_sum = group1[['founding', 'inhabitants']].sum()
+    only_inhabitants = founding_inhabitants_sum[['inhabitants_sum']]
+    founding_mean = group1['founding'].mean()
+
+    # recombine
+    founding_inhabitants_sum['founding_mean'] = founding_mean
+
+    r1 = inhabitants_sum.to_frame()
+    r1['founding_sum'] = group1['founding'].sum()
+    r1['founding_mean'] = founding_mean
+    r1.rename(columns={'inhabitants': 'inhabitants_sum'}, inplace=True)
+
+    for r in [founding_inhabitants_sum, r1]:
+        assert_equals_data(
+            r,
+            order_by=['municipality'],
+            expected_columns=['municipality', 'inhabitants_sum', 'founding_sum', 'founding_mean'],
+
+            expected_data=[
+                ['Leeuwarden', 93485, 1285, 1285],
+                ['Súdwest-Fryslân', 36575, 2724, 1362]
+            ]
+        )
+
+
+
 

@@ -82,78 +82,30 @@ class BuhTuhGroupBy:
             self.engine == other.engine and
             self.base_node == other.base_node and
             self.index.keys() == other.index.keys() and
-            all([self.index[n].equals(other.index[n]) for n in self.index.keys()])
+            all([self.index[n].equals(other.index[n], recursion='BuhTuhGroupBy') for n in self.index.keys()])
         )
 
-    def _get_group_by_columns(self):
+    def get_index_columns_sql(self):
         return ', '.join(g.get_column_expression() for g in self.index.values())
 
-    def _get_group_by_expression(self):
+    def get_group_by_columns_sql(self):
         return ', '.join(g.expression.to_sql() for g in self.index.values())
-
-    def get_node(self, series: List[BuhTuhSeries]):
-        """
-        Build a new node on our base_node, executing the group by, using the given series'
-        setup with an aggregation function.
-        """
-        group_by_expression = self._get_group_by_expression()
-        group_by_expression = f'group by {group_by_expression}' if group_by_expression != '' else ''
-
-        model_builder = CustomSqlModel(
-            sql="""
-                select {group_by_columns}, {aggregate_columns}
-                from {{prev}}
-                {group_by_expression}
-                """
-        )
-        node = model_builder(
-            group_by_columns=self._get_group_by_columns(),
-            aggregate_columns=', '.join([s.get_column_expression() for s in series]),
-            group_by_expression=group_by_expression,
-            prev=self.base_node
-        )
-        return node
-
-    def to_frame(self, series: List[BuhTuhSeries], materialized=True) -> BuhTuhDataFrame:
-        """ Create a dataframe for this GroupBy """
-        # We don't check whether series / index are correct here. The Dataframe __init__
-        # will do that for us.
-        if materialized:
-            node = self.get_node(series)
-            return BuhTuhDataFrame.get_instance(
-                engine=self.engine,
-                base_node=node,
-                index_dtypes={n: t.dtype for n, t in self.index.items()},
-                dtypes={a.name: a.dtype for a in series},
-                group_by=None,
-                order_by=[]
-            )
-        # We give the series the same index as the df, but not yet the groupby
-        # until we actually apply an aggregation function
-        new_series = {s.name: s.copy_override(index=self.index) for s in series}
-        return BuhTuhDataFrame(engine=self.engine,
-                               base_node=self.base_node,
-                               index=self.index,
-                               series=new_series,
-                               group_by=self,
-                               order_by=[]
-                               )
 
 
 class BuhTuhCube(BuhTuhGroupBy):
     """
     Very simple abstraction to support cubes
     """
-    def _get_group_by_expression(self):
-        return f'CUBE ({super()._get_group_by_expression()})'
+    def get_group_by_columns_sql(self):
+        return f'CUBE ({super().get_group_by_columns_sql()})'
 
 
 class BuhTuhRollup(BuhTuhGroupBy):
     """
     Very simple abstraction to support rollups
     """
-    def _get_group_by_expression(self):
-        return f'ROLLUP ({super()._get_group_by_expression()})'
+    def get_group_by_columns_sql(self):
+        return f'ROLLUP ({super().get_group_by_columns_sql()})'
 
 
 class BuhTuhGroupingList(BuhTuhGroupBy):
@@ -194,10 +146,10 @@ class BuhTuhGroupingList(BuhTuhGroupBy):
         super().__init__(engine=engine, base_node=base_node,
                          group_by_columns=list(group_by_columns.values()))
 
-    def _get_group_by_expression(self):
+    def get_group_by_columns_sql(self):
         grouping_str_list: List[str] = []
         for g in self.grouping_list:
-            grouping_str_list.append(f'({g._get_group_by_expression()})')
+            grouping_str_list.append(f'({g.get_group_by_columns_sql()})')
         return f'{", ".join(grouping_str_list)}'
 
 
@@ -206,10 +158,10 @@ class BuhTuhGroupingSet(BuhTuhGroupingList):
     Abstraction to support SQLs
     GROUP BY GROUPING SETS ((colA,colB),(ColA),(ColC))
     """
-    def _get_group_by_expression(self):
+    def get_group_by_columns_sql(self):
         grouping_str_list: List[str] = []
         for g in self.grouping_list:
-            grouping_str_list.append(f'({g._get_group_by_expression()})')
+            grouping_str_list.append(f'({g.get_group_by_columns_sql()})')
         return f'GROUPING SETS ({", ".join(grouping_str_list)})'
 
 
@@ -415,7 +367,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
                 THEN {{}} {over}
                 ELSE NULL END""", window_func)
 
-    def _get_group_by_expression(self):
+    def get_group_by_columns_sql(self):
         """
         On a Window, there is no default group_by clause
         """

@@ -47,8 +47,8 @@ class BuhTuhSeries(ABC):
         """
         Initialize a new BuhTuhSeries object.
         If a BuhTuhSeries is associated with a BuhTuhDataFrame. The engine, base_node and index
-        should match. Additionally the name should match the name of this Series object in the
-        DataFrame.
+        should match, as well as group_by (can be None, but then both are). Additionally the name
+        should match the name of this Series object in the DataFrame.
 
         A BuhTuhSeries can also become a future aggregation, and thus decoupled from its current
         DataFrame. In that case, the index will be set to the future index. If this Series is
@@ -299,18 +299,14 @@ class BuhTuhSeries(ABC):
             return self
         return self.copy_override(sorted_ascending=ascending)
 
-    def view_sql(self, materialized=True):
-        return self.to_frame(materialized).view_sql()
+    def view_sql(self):
+        return self.to_frame().view_sql()
 
-    def to_frame(self, materialized=True) -> BuhTuhDataFrame:
+    def to_frame(self) -> BuhTuhDataFrame:
         if self._sorted_ascending is not None:
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
             order_by = []
-
-        if self._group_by:
-            # FIXME This fails when no aggregation func has been called on this series.
-            return self._group_by.to_frame([self], materialized)
         if len(self._index) == 0:
             raise Exception('to_frame() is not supported for Series that do not have an index')
         return BuhTuhDataFrame(
@@ -318,7 +314,7 @@ class BuhTuhSeries(ABC):
             base_node=self._base_node,
             index=self._index,
             series={self._name: self},
-            group_by=None,
+            group_by=self._group_by,
             order_by=order_by
         )
 
@@ -331,7 +327,7 @@ class BuhTuhSeries(ABC):
         new_dtype = cast(str, series_type.dtype)
         return self._get_derived_series(new_dtype=new_dtype, expression=expression)
 
-    def equals(self, other: Any) -> bool:
+    def equals(self, other: Any, recursion: str = None) -> bool:
         """
         Checks whether other is the same as self. This implements the check that would normally be
         implemented in __eq__, but we already use that method for other purposes.
@@ -353,7 +349,8 @@ class BuhTuhSeries(ABC):
                 self.base_node == other.base_node and
                 self.name == other.name and
                 self.expression == other.expression and
-                self.group_by == other.group_by and
+                # avoid loops here.
+                (recursion == 'BuhTuhGroupBy' or self.group_by == other.group_by) and
                 self._sorted_ascending == other._sorted_ascending
         )
 
@@ -367,7 +364,7 @@ class BuhTuhSeries(ABC):
             raise Exception('Function not supported on Series without index')
         if len(self.index) > 1:
             raise NotImplementedError('Index only implemented for simple indexes.')
-        frame = self.to_frame()
+        frame = self.to_frame().get_df_materialized_model()
         series = frame[list(frame.index.values())[0] == key]
         assert isinstance(series, self.__class__)
 
@@ -507,7 +504,12 @@ class BuhTuhSeries(ABC):
         if len(series) == 1:
             return series[0]
 
-        return group_by.to_frame(series)
+        return BuhTuhDataFrame(engine=self.engine,
+                               base_node=self.base_node,
+                               index=group_by.index,
+                               series={s.name: s for s in series},
+                               group_by=group_by,
+                               order_by=[])
 
     def _check_unwrap_groupby(self,
                               wrapped: Union['BuhTuhDataFrame', 'BuhTuhGroupBy'],
