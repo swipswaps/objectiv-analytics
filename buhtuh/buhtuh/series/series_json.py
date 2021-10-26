@@ -5,7 +5,7 @@ import json
 from typing import Optional, Dict, Union, TYPE_CHECKING, Any
 
 from buhtuh.series import BuhTuhSeries, const_to_series
-from buhtuh.expression import Expression
+from buhtuh.expression import Expression, quote_string
 from sql_models.model import SqlModel
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
 
         # any other value we treat as a literal index lookup
         # multiindex not supported atm
-        if self.index is None:
+        if not self.index:
             raise Exception('Function not supported on Series without index')
         if len(self.index) != 1:
             raise NotImplementedError('Index only implemented for simple indexes.')
@@ -134,7 +134,7 @@ class Json:
                     stop = self._find_in_json_list(key.stop)
                     expression_references += 1
                 else:
-                    TypeError('cant')
+                    raise TypeError('cant')
             if key.start is not None:
                 if isinstance(key.start, int):
                     negative_start = ''
@@ -146,7 +146,7 @@ class Json:
                     start = self._find_in_json_list(key.start)
                     expression_references += 1
                 else:
-                    TypeError('cant')
+                    raise TypeError('cant')
                 if key.stop is not None:
                     where = f'between {start} and {stop}'
                 else:
@@ -163,18 +163,17 @@ class Json:
                     combined_expression,
                     *([self._series_object] * expression_references)
                 ))
-        TypeError(f'key should be int or slice, actual type: {type(key)}')
+        raise TypeError(f'key should be int or slice, actual type: {type(key)}')
 
     def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
         if isinstance(key, (dict, str)):
-            import json
             key = json.dumps(key)
-            key = key.replace("'", "''")
-            expression_str = f"""(select min(case when ('{key}'::jsonb) <@ value then ordinality end) -1
-            from jsonb_array_elements({{}}) with ordinality)"""
+            quoted_key = quote_string(key)
+            expression_str = f"""(select min(case when ({quoted_key}::jsonb) <@ value
+            then ordinality end) -1 from jsonb_array_elements({{}}) with ordinality)"""
             return expression_str
         else:
-            TypeError(f'key should be int or slice, actual type: {type(key)}')
+            raise TypeError(f'key should be int or slice, actual type: {type(key)}')
 
     def get_value(self, key: str, as_str=False):
         '''
