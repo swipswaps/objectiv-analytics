@@ -1,5 +1,6 @@
+from copy import copy
 from enum import Enum
-from typing import List
+from typing import List, Dict
 
 from buhtuh.series import BuhTuhSeries, BuhTuhSeriesInt64
 from buhtuh.expression import Expression
@@ -48,48 +49,48 @@ class BuhTuhGroupBy:
 
     For more complex grouping expressions, this class should be extended.
     """
-    def __init__(self,
-                 engine,
-                 base_node: SqlModel,
-                 group_by_columns: List[BuhTuhSeries]):
+    def __init__(self, group_by_columns: List[BuhTuhSeries]):
 
-        self.engine = engine
-        self.base_node = base_node
-        self.index = {}
+        self._index = {}
 
         for col in group_by_columns:
             if not isinstance(col, BuhTuhSeries):
                 raise ValueError(f'Unsupported argument type: {type(col)}')
-            assert col.base_node == base_node
-            self.index[col.name] = col.copy_override(index={})
+            self._index[col.name] = col.copy_override(index={}, group_by=[self])
 
         if len(group_by_columns) == 0:
-            # create new dummy column so we can aggregate over everything
-            self.index = {
-                'index': BuhTuhSeriesInt64(
-                    engine=self.engine,
-                    base_node=self.base_node,
-                    index={},
-                    name='index',
-                    expression=Expression.construct('1'),
-                    group_by=self)
-            }
+            raise ValueError('Pass a dummy column for DataFrame-wide aggregations; use '
+                             'BuhTuhGroupBy.get_dummy_index_series() to create one')
 
     def __eq__(self, other):
         if not isinstance(other, BuhTuhGroupBy):
             return False
         return (
-            self.engine == other.engine and
-            self.base_node == other.base_node and
-            list(self.index.keys()) == list(other.index.keys()) and
-            all([self.index[n].equals(other.index[n], recursion='BuhTuhGroupBy') for n in self.index.keys()])
+            list(self._index.keys()) == list(other.index.keys()) and
+            all([self._index[n].equals(other.index[n], recursion='BuhTuhGroupBy')
+                 for n in self._index.keys()])
         )
 
+    @property
+    def index(self) -> Dict[str, BuhTuhSeries]:
+        return copy(self._index)
+
+    @classmethod
+    def get_dummy_index_series(cls, engine, base_node, name="index"):
+        return BuhTuhSeriesInt64(
+                engine=engine,
+                base_node=base_node,
+                index={},
+                name='index',
+                expression=Expression.construct('1'),
+                # Will be set the moment it's passed to BuhTuhGroupBy.__init__
+                group_by=None)
+
     def get_index_columns_sql(self):
-        return ', '.join(g.get_column_expression() for g in self.index.values())
+        return ', '.join(g.get_column_expression() for g in self._index.values())
 
     def get_group_by_columns_sql(self):
-        return ', '.join(g.expression.to_sql() for g in self.index.values())
+        return ', '.join(g.expression.to_sql() for g in self._index.values())
 
 
 class BuhTuhCube(BuhTuhGroupBy):
@@ -114,41 +115,29 @@ class BuhTuhGroupingList(BuhTuhGroupBy):
     GROUP BY (colA,colB), CUBE(ColC,ColD), ROLLUP(ColC,ColE)
     like expressions
     """
-    grouping_list: List[BuhTuhGroupBy]
+    _grouping_list: List[BuhTuhGroupBy]
 
     def __init__(self, grouping_list: List[BuhTuhGroupBy]):
         """
         Given the list of groupbys, construct a combined groupby
         """
-        self.grouping_list = grouping_list
+        self._grouping_list = grouping_list
 
-        base_node = None
-        engine = None
         group_by_columns = {}
 
         for g in grouping_list:
             if not isinstance(g, BuhTuhGroupBy):
                 raise ValueError("Only BuhTuhGroupBy items are supported")
-            if base_node is None:
-                base_node = g.base_node
-                engine = g.engine
-            if base_node != g.base_node:
-                raise ValueError("BuhTuhGroupBy items should have the same underlying base node")
 
-            for name, series in g.index.items():
+            for name, series in g._index.items():
                 if name not in group_by_columns:
                     group_by_columns[name] = series
 
-        if engine is None or base_node is None:
-            # mostly to keep mypy happy
-            raise ValueError("Could not find a engine/base_node")
-
-        super().__init__(engine=engine, base_node=base_node,
-                         group_by_columns=list(group_by_columns.values()))
+        super().__init__(group_by_columns=list(group_by_columns.values()))
 
     def get_group_by_columns_sql(self):
         grouping_str_list: List[str] = []
-        for g in self.grouping_list:
+        for g in self._grouping_list:
             grouping_str_list.append(f'({g.get_group_by_columns_sql()})')
         return f'{", ".join(grouping_str_list)}'
 
@@ -160,7 +149,7 @@ class BuhTuhGroupingSet(BuhTuhGroupingList):
     """
     def get_group_by_columns_sql(self):
         grouping_str_list: List[str] = []
-        for g in self.grouping_list:
+        for g in self._grouping_list:
             grouping_str_list.append(f'({g.get_group_by_columns_sql()})')
         return f'GROUPING SETS ({", ".join(grouping_str_list)})'
 
@@ -221,8 +210,6 @@ class BuhTuhWindow(BuhTuhGroupBy):
     which selects the current row itself.
     """
     def __init__(self,
-                 engine,
-                 base_node: SqlModel,
                  group_by_columns: List['BuhTuhSeries'],
                  order_by: List[SortColumn],
                  mode: BuhTuhWindowFrameMode = BuhTuhWindowFrameMode.RANGE,
@@ -236,7 +223,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
         :see: class definition for more info on the frame definition, and BuhTuhGroupBy for more
               info on grouping / partitioning
         """
-        super().__init__(engine=engine, base_node=base_node, group_by_columns=group_by_columns)
+        super().__init__(group_by_columns=group_by_columns)
 
         if mode is None:
             raise ValueError("Mode needs to be defined")
@@ -318,8 +305,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
         Convenience function to clone this window with new frame parameters
         :see: __init__()
         """
-        return BuhTuhWindow(engine=self.engine, base_node=self.base_node,
-                            group_by_columns=list(self.index.values()),
+        return BuhTuhWindow(group_by_columns=list(self._index.values()),
                             order_by=self._order_by, mode=mode,
                             start_boundary=start_boundary, start_value=start_value,
                             end_boundary=end_boundary, end_value=end_value)
@@ -345,7 +331,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
         Given the window_func generate a statement like:
             {window_func} OVER (PARTITION BY .. ORDER BY ... frame_clause)
         """
-        partition = ', '.join(g.expression.to_sql() for g in self.index.values())
+        partition = ', '.join(g.expression.to_sql() for g in self._index.values())
 
         # TODO implement NULLS FIRST / NULLS LAST, probably not here but in the sorting logic.
         order_by = self._get_order_by_sql()
