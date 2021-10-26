@@ -5,7 +5,7 @@ import { waitForPromise } from './helpers';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerQueueInterface } from './TrackerQueueInterface';
-import { getLocationPath, TrackerState } from './TrackerState';
+import { getLocationPath, TrackerElementLocations } from './TrackerElementLocations';
 import { TrackerTransportInterface } from './TrackerTransportInterface';
 
 /**
@@ -227,7 +227,7 @@ export class Tracker implements Contexts, TrackerConfig {
 
     // FIXME move this out of here and in the Observer
     // Store this Event and its LocationPath in the TrackerState to check for uniqueness
-    const locationCheckResult = elementId ? TrackerState.addElementLocation({ elementId, locationPath }) : true;
+    const locationCheckResult = elementId ? TrackerElementLocations.add({ elementId, locationPath }) : true;
 
     // If location was not unique, log the issue
     if (locationCheckResult !== true && this.console) {

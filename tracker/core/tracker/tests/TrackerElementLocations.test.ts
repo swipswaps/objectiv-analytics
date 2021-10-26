@@ -4,12 +4,12 @@ import {
   LocationStack,
   makeButtonContext,
   makeSectionContext,
-  TrackerState,
+  TrackerElementLocations,
 } from '../src';
 
-describe('TrackerState', () => {
+describe('TrackerElementLocations', () => {
   beforeAll(() => {
-    TrackerState.clear();
+    TrackerElementLocations.clear();
   });
 
   const rootSectionContext = makeSectionContext({ id: 'root' });
@@ -64,14 +64,14 @@ describe('TrackerState', () => {
     testCases.forEach(([location_stack, elementId, isUnique]) => {
       const locationPath = getLocationPath(location_stack);
       it(`${locationPath} - ${elementId}`, () => {
-        expect(TrackerState.addElementLocation({ locationPath, elementId })).toStrictEqual(isUnique);
+        expect(TrackerElementLocations.add({ locationPath, elementId })).toStrictEqual(isUnique);
       });
     });
   });
 
   describe('removeElement', () => {
     beforeEach(() => {
-      TrackerState.elementLocations = new Map([
+      TrackerElementLocations.elementLocations = new Map([
         [
           'button-1',
           [
@@ -92,12 +92,12 @@ describe('TrackerState', () => {
     });
 
     it('returns false if a non-existing element is provided', () => {
-      expect(TrackerState.removeElement('button-nope')).toBe(false);
+      expect(TrackerElementLocations.delete('button-nope')).toBe(false);
     });
 
     it('removes button-1 and all of its locations from state', () => {
-      expect(TrackerState.removeElement('button-1')).toBe(true);
-      expect(TrackerState.elementLocations).toStrictEqual(
+      expect(TrackerElementLocations.delete('button-1')).toBe(true);
+      expect(TrackerElementLocations.elementLocations).toStrictEqual(
         new Map([
           [
             'button-2',
@@ -112,8 +112,8 @@ describe('TrackerState', () => {
     });
 
     it('removes button-2 and all of its locations from state', () => {
-      expect(TrackerState.removeElement('button-2')).toBe(true);
-      expect(TrackerState.elementLocations).toStrictEqual(
+      expect(TrackerElementLocations.delete('button-2')).toBe(true);
+      expect(TrackerElementLocations.elementLocations).toStrictEqual(
         new Map([
           [
             'button-1',

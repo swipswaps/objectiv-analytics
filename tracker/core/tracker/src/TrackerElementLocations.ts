@@ -17,9 +17,9 @@ export type LocationCollision = {
 };
 
 /**
- * Trackers global state
+ * Provides a global state to store and retrieve Element's Location Stacks, as well as validating their uniqueness
  */
-export const TrackerState = {
+export const TrackerElementLocations = {
   /**
    * An Map of Locations by Elements
    */
@@ -29,7 +29,7 @@ export const TrackerState = {
    * Clears the state
    */
   clear: () => {
-    TrackerState.elementLocations = new Map();
+    TrackerElementLocations.elementLocations = new Map();
   },
 
   /**
@@ -38,7 +38,7 @@ export const TrackerState = {
    *  - Binds the Element to the Location and returns `true` if Location uniqueness passes
    *  - Returns `false` if Location uniqueness fails, without updating the state
    */
-  addElementLocation: ({
+  add: ({
     elementId,
     locationPath,
   }: {
@@ -51,7 +51,7 @@ export const TrackerState = {
     }
 
     // If a different Element with the same location exists, return false
-    for (let [existingElementId, locations] of Array.from(TrackerState.elementLocations.entries())) {
+    for (let [existingElementId, locations] of Array.from(TrackerElementLocations.elementLocations.entries())) {
       if (existingElementId !== elementId && locations.includes(locationPath)) {
         return {
           locationPath,
@@ -62,11 +62,11 @@ export const TrackerState = {
     }
 
     // Retrieve existingLocations for the given Element
-    const existingLocations = TrackerState.elementLocations.get(elementId) ?? [];
+    const existingLocations = TrackerElementLocations.elementLocations.get(elementId) ?? [];
 
     // Store new Location in state, if not already there
     if (!existingLocations.includes(locationPath)) {
-      TrackerState.elementLocations.set(elementId, [...existingLocations, locationPath]);
+      TrackerElementLocations.elementLocations.set(elementId, [...existingLocations, locationPath]);
     }
 
     return true;
@@ -75,11 +75,11 @@ export const TrackerState = {
   /**
    * Removes an Element from TrackerState. Used when Elements unmount
    */
-  removeElement: (elementToRemove: string | undefined) => {
-    if (!elementToRemove) {
+  delete: (elementId: string | undefined) => {
+    if (!elementId) {
       return false;
     }
 
-    return TrackerState.elementLocations.delete(elementToRemove);
+    return TrackerElementLocations.elementLocations.delete(elementId);
   },
 };
