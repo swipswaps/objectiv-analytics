@@ -81,7 +81,7 @@ class BuhTuhGroupBy:
         return (
             self.engine == other.engine and
             self.base_node == other.base_node and
-            self.index.keys() == other.index.keys() and
+            list(self.index.keys()) == list(other.index.keys()) and
             all([self.index[n].equals(other.index[n], recursion='BuhTuhGroupBy') for n in self.index.keys()])
         )
 
@@ -128,7 +128,7 @@ class BuhTuhGroupingList(BuhTuhGroupBy):
 
         for g in grouping_list:
             if not isinstance(g, BuhTuhGroupBy):
-                raise ValueError("Only BuhTuhGroupBy or BuhTuhAggregator items are supported")
+                raise ValueError("Only BuhTuhGroupBy items are supported")
             if base_node is None:
                 base_node = g.base_node
                 engine = g.engine
