@@ -35,13 +35,12 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
         // If location was not unique, log the issue
         if (locationAddResult !== true) {
           // FIXME fix console injection
-          console.group(`｢objectiv:trackNewElement｣ Element ${elementId} as non-unique Location ${locationPath}`);
-          console.error(`Existing Element Id: ${locationAddResult.existingElementId}`);
-          console.error(`Colliding Element Id: ${locationAddResult.collidingElementId}`);
-          console.error(`Location Path: ${locationPath}`);
-          console.group(`Location Stack:`);
-          console.log(locationStack);
-          console.groupEnd();
+          const { existingElementId, collidingElementId } = locationAddResult;
+          const existingElement = document.querySelector(`[${TaggingAttribute.elementId}='${existingElementId}']`)
+          const collidingElement = document.querySelector(`[${TaggingAttribute.elementId}='${collidingElementId}']`)
+          console.group(`｢objectiv:trackNewElement｣ Location collision detected: ${locationPath}`);
+          console.error(`Existing Element:`, existingElement);
+          console.error(`Colliding Element:`, collidingElement);
           console.groupEnd();
         }
       }
