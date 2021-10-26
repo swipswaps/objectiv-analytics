@@ -1,5 +1,5 @@
-import { TaggingAttribute } from "@objectiv/tracker-browser";
-import { TrackerState } from "@objectiv/tracker-core";
+import { TaggingAttribute } from '@objectiv/tracker-browser';
+import { TrackerState } from '@objectiv/tracker-core';
 import { AutoTrackingState } from '../global/AutoTrackingState';
 import { getTracker } from '../global/getTracker';
 import { getLocationHref } from '../helpers';
@@ -71,7 +71,7 @@ export const makeMutationCallback = (trackURLChangeEvents: boolean): MutationCal
         }
 
         // Element ID change for programmatically instrumented elements - keep TrackerState in sync
-        if(attributeName === TaggingAttribute.elementId && oldValue) {
+        if (attributeName === TaggingAttribute.elementId && oldValue) {
           TrackerState.removeElement(oldValue);
         }
       });

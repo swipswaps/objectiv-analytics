@@ -4,7 +4,7 @@ import {
   LocationStack,
   makeButtonContext,
   makeSectionContext,
-  TrackerState
+  TrackerState,
 } from '../src';
 
 describe('TrackerState', () => {
@@ -37,13 +37,25 @@ describe('TrackerState', () => {
       [[rootSectionContext, buttonContext], 'btn-4', true],
 
       // Another Elements providing an already-seen Location should fail. This location was already claimed by btn-4
-      [[rootSectionContext, buttonContext], 'btn-5', {"collidingElementId": "btn-5", "existingElementId": "btn-4", "locationPath": "Section:root / Button:button"}],
+      [
+        [rootSectionContext, buttonContext],
+        'btn-5',
+        { collidingElementId: 'btn-5', existingElementId: 'btn-4', locationPath: 'Section:root / Button:button' },
+      ],
 
       // An Element can have multiple Locations - in this example the button has been reused in a modal
       [[rootSectionContext, overlayContext, buttonContext], 'btn-4', true],
 
       // Again, another Element attempting to use the same location should fail the uniqueness check.
-      [[rootSectionContext, overlayContext, buttonContext], 'btn-6', {"collidingElementId": "btn-6", "existingElementId": "btn-4", "locationPath": "Section:root / Button:overlay / Button:button"}],
+      [
+        [rootSectionContext, overlayContext, buttonContext],
+        'btn-6',
+        {
+          collidingElementId: 'btn-6',
+          existingElementId: 'btn-4',
+          locationPath: 'Section:root / Button:overlay / Button:button',
+        },
+      ],
 
       // No Location - this can happen when developers trigger event manually and provide wrong locations
       [[], 'btn-1', true],
