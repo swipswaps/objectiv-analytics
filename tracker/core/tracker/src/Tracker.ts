@@ -225,6 +225,7 @@ export class Tracker implements Contexts, TrackerConfig {
     // Build Location Path - used both for uniqueness check and logging
     const locationPath = getLocationPath(trackedEvent.location_stack);
 
+    // FIXME move this out of here and in the Observer
     // Store this Event and its LocationPath in the TrackerState to check for uniqueness
     const locationCheckResult = elementId ? TrackerState.addElementLocation({ elementId, locationPath }) : true;
 
