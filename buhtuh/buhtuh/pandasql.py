@@ -1108,7 +1108,7 @@ class BuhTuhDataFrame:
                 elif isinstance(v, list):
                     apply_dict[k] = v
                 else:
-                    raise TypeError(f'Unsupported value type {type(func)} in func dict for key {k}')
+                    raise TypeError(f'Unsupported value type {type(v)} in func dict for key {k}')
         elif isinstance(func, (str, list)) or callable(func):
             apply_dict = {}
             # check whether we need to exclude non-numeric
@@ -1144,7 +1144,7 @@ class BuhTuhDataFrame:
         """ see apply_to_series() """
         series = self._apply_func_to_series(func, axis, numeric_only,
                                             exclude_non_applied, *args, **kwargs)
-        return cast('BuhTuhDataFrame', self.copy_override(series={s.name: s for s in series}))
+        return self.copy_override(series={s.name: s for s in series})
 
     def aggregate(self,
                   func: Union[str, Callable, List[Union[str, Callable]],

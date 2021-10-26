@@ -4,8 +4,7 @@ from typing import List, Dict
 
 from buhtuh.series import BuhTuhSeries, BuhTuhSeriesInt64
 from buhtuh.expression import Expression
-from buhtuh.pandasql import BuhTuhDataFrame, SortColumn
-from sql_models.model import CustomSqlModel, SqlModel
+from buhtuh.pandasql import SortColumn
 
 
 class BuhTuhWindowFrameMode(Enum):
@@ -70,8 +69,8 @@ class BuhTuhGroupBy:
             return False
         return (
             list(self._index.keys()) == list(other.index.keys()) and
-            all([self._index[n].equals(other.index[n], recursion='BuhTuhGroupBy')
-                 for n in self._index.keys()])
+            all(self._index[n].equals(other.index[n], recursion='BuhTuhGroupBy')
+                for n in self._index.keys())
         )
 
     @property
@@ -79,12 +78,12 @@ class BuhTuhGroupBy:
         return copy(self._index)
 
     @classmethod
-    def get_dummy_index_series(cls, engine, base_node, name="index"):
+    def get_dummy_index_series(cls, engine, base_node, name='index'):
         return BuhTuhSeriesInt64(
                 engine=engine,
                 base_node=base_node,
                 index={},
-                name='index',
+                name=name,
                 expression=Expression.construct('1'),
                 # Will be set the moment it's passed to BuhTuhGroupBy.__init__
                 group_by=None)
