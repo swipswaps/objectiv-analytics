@@ -187,26 +187,47 @@ class Json:
         expression = Expression.construct(f"{{}}->{return_as_string_operator}'{key}'", self._series_object)
         return self._series_object._get_derived_series(return_dtype, expression)
 
-    # objectiv features below:
-    @property
-    def cookie_id(self):
+    def sub_dict(self, keys: list):
+        jsonb_build_object_str = [f"'{key}', value -> '{key}'" for key in keys]
+        expression_str = f'''(select jsonb_agg(jsonb_build_object({", ".join(jsonb_build_object_str)}))
+        from jsonb_array_elements({{}}))'''
         expression = Expression.construct(
-            f"""(select (array_agg(value->>'cookie_id'))[1]
-            from jsonb_array_elements({{}})
-            where value ->> '_type' = 'CookieIdContext')""",
+            expression_str,
             self._series_object
         )
-        return self._series_object._get_derived_series('string', expression)
+        return expression
+
+    # objectiv features below:
+    def get_from_context_with_type_series(self, type, key, dtype='string'):
+        expression_str = f'jsonb_path_query_first({{}}, \'$[*] ? (@._type == "{type}")\') ->> \'{key}\''
+        expression = Expression.construct(
+            expression_str,
+            self._series_object
+        )
+        series = self._series_object._get_derived_series(dtype, expression)
+        return series
+
+    @property
+    def feature_stack(self):
+        expression = self.sub_dict(['_type', 'id'])
+        series = self._series_object._get_derived_series('jsonb', expression)
+        return series
+
+    @property
+    def navigation_features(self):
+        return self[{'_type': 'NavigationContext'}:]
+
+    @property
+    def cookie_id(self):
+        return self.get_from_context_with_type_series("CookieIdContext", "cookie_id")
 
     @property
     def user_agent(self):
-        expression = Expression.construct(
-            f"""(select (array_agg(value->>'user_agent'))[1]
-            from jsonb_array_elements({{}})
-            where value ->> '_type' = 'HttpContext')""",
-            self._series_object
-        )
-        return self._series_object._get_derived_series('string', expression)
+        return self.get_from_context_with_type_series("HttpContext", "user_agent")
+
+    @property
+    def application(self):
+        return self.get_from_context_with_type_series("ApplicationContext", "id")
 
     @property
     def nice_name(self):
@@ -230,7 +251,7 @@ class Json:
                 ),
             ' => ')
             from jsonb_array_elements({{}}) with ordinality
-            where ordinality = jsonb_array_length({{}})
+            where ordinality < jsonb_array_length({{}})
             ) else '' end""",
             self._series_object,
             self._series_object,

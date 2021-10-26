@@ -338,6 +338,22 @@ class BuhTuhSeries(ABC):
         # this is massively ugly
         return series.head(1).astype(series.dtype).values[0]
 
+    def isnull(self):
+        expression_str = f'{{}} is null'
+        expression = Expression.construct(
+            expression_str,
+            self
+        )
+        return self._get_derived_series('bool', expression)
+
+    def notnull(self):
+        expression_str = f'{{}} is not null'
+        expression = Expression.construct(
+            expression_str,
+            self
+        )
+        return self._get_derived_series('bool', expression)
+
     # Below methods are not abstract, as they can be optionally be implemented by subclasses.
     def __add__(self, other) -> 'BuhTuhSeries':
         raise NotImplementedError()
