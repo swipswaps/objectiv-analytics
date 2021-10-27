@@ -6,16 +6,19 @@ import {
   parseLocationContext,
   parseTrackClicksAttribute,
   parseTrackVisibilityAttribute,
+  parseValidateAttribute,
   stringifyBoolean,
   stringifyChildrenTaggingAttribute,
   stringifyLocationContext,
   stringifyTrackVisibilityAttribute,
+  stringifyValidateAttribute,
   tagElement,
   TaggingAttribute,
   TrackClicksAttribute,
   TrackClicksOptions,
   TrackVisibilityAttributeAuto,
   TrackVisibilityAttributeManual,
+  ValidateAttribute,
 } from '../src';
 
 describe('Custom structs', () => {
@@ -99,6 +102,56 @@ describe('Custom structs', () => {
       expect(() => parseTrackVisibilityAttribute('{"mode":"manual","isVisible":null}')).toThrow();
       // @ts-ignore
       expect(() => parseTrackVisibilityAttribute('{"mode":"manual","isVisible":"true"}')).toThrow();
+    });
+  });
+
+  describe('Validate Attribute', () => {
+    it('Should parse to { locationUniqueness: true } by default', () => {
+      const parsedValidateEmptyObject = parseValidateAttribute('{}');
+      expect(parsedValidateEmptyObject).toStrictEqual({ locationUniqueness: true });
+
+      const parsedValidateNull = parseValidateAttribute(null);
+      expect(parsedValidateNull).toStrictEqual({ locationUniqueness: true });
+    });
+
+    it('Should stringify locationUniqueness as expected', () => {
+      const validateLocationFalse: ValidateAttribute = { locationUniqueness: false };
+      const stringifiedValidateLocationFalse = stringifyValidateAttribute(validateLocationFalse);
+      expect(stringifiedValidateLocationFalse).toStrictEqual(JSON.stringify(validateLocationFalse));
+
+      const validateLocationTrue: ValidateAttribute = { locationUniqueness: true };
+      const stringifiedValidateLocationTrue = stringifyValidateAttribute(validateLocationTrue);
+      expect(stringifiedValidateLocationTrue).toStrictEqual(JSON.stringify(validateLocationTrue));
+    });
+
+    it('Should not stringify objects that are not Validate Attributes objects or invalid ones', () => {
+      // @ts-ignore
+      expect(() => stringifyValidateAttribute('string')).toThrow();
+      // @ts-ignore
+      expect(() => stringifyValidateAttribute(true)).toThrow();
+      // @ts-ignore
+      expect(() => stringifyValidateAttribute({})).toThrow();
+      // @ts-ignore
+      expect(() => stringifyValidateAttribute({ locationUniqueness: 'what' })).toThrow();
+      // @ts-ignore
+      expect(() => stringifyValidateAttribute({ locationUniqueness: undefined })).toThrow();
+      // @ts-ignore
+      expect(() => stringifyValidateAttribute({ locationUniqueness: null })).toThrow();
+    });
+
+    it('Should not parse strings that are not Visibility Attributes or malformed', () => {
+      // @ts-ignore
+      expect(() => parseValidateAttribute('')).toThrow();
+      // @ts-ignore
+      expect(() => parseValidateAttribute('{"whatIsThis":true}')).toThrow();
+      // @ts-ignore
+      expect(() => parseValidateAttribute('{"locationUniqueness":"wrong"}')).toThrow();
+      // @ts-ignore
+      expect(() => parseValidateAttribute('{"locationUniqueness":"false"}')).toThrow();
+      // @ts-ignore
+      expect(() => parseValidateAttribute('{"locationUniqueness":1}')).toThrow();
+      // @ts-ignore
+      expect(() => parseValidateAttribute('{"locationUniqueness":null}')).toThrow();
     });
   });
 
@@ -201,6 +254,7 @@ describe('Custom structs', () => {
             [TaggingAttribute.parentElementId]: undefined,
             [TaggingAttribute.trackBlurs]: undefined,
             [TaggingAttribute.trackClicks]: undefined,
+            [TaggingAttribute.validate]: undefined,
           },
         }))
       );

@@ -40,6 +40,20 @@ describe('trackNewElement', () => {
     expect(TrackerElementLocations.add).not.toHaveBeenCalled();
   });
 
+  it('should skip collision checks if the Element has the `validate` attribute disabling location check', async () => {
+    const div = makeTaggedElement('div', 'div', 'div');
+    jest.spyOn(TrackerElementLocations, 'add');
+
+    trackNewElement(div, getTracker());
+    expect(TrackerElementLocations.add).toHaveBeenCalledTimes(1);
+
+    jest.resetAllMocks();
+
+    div.setAttribute(TaggingAttribute.validate, JSON.stringify({ locationUniqueness: false }));
+    trackNewElement(div, getTracker());
+    expect(TrackerElementLocations.add).not.toHaveBeenCalled();
+  });
+
   it('should console.error if TrackerElementLocations.add returns a LocationCollision', async () => {
     const div = makeTaggedElement('div', 'div', 'div');
     const mockCollision: LocationCollision = {

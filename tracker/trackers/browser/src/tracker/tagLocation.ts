@@ -13,8 +13,10 @@ import {
   stringifyLocationContext,
   stringifyTrackClicksAttribute,
   stringifyTrackVisibilityAttribute,
+  stringifyValidateAttribute,
   TrackClicksAttribute,
   TrackVisibilityAttribute,
+  ValidateAttribute,
 } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
@@ -41,6 +43,7 @@ export const TagLocationOptions = object({
   trackBlurs: optional(boolean()),
   trackVisibility: optional(TrackVisibilityAttribute),
   parent: TagLocationReturnValue,
+  validate: optional(ValidateAttribute),
 });
 export type TagLocationOptions = Infer<typeof TagLocationOptions>;
 
@@ -82,6 +85,7 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
       [TaggingAttribute.trackClicks]: runIfNotUndefined(stringifyTrackClicksAttribute, trackClicks),
       [TaggingAttribute.trackBlurs]: runIfNotUndefined(stringifyBoolean, trackBlurs),
       [TaggingAttribute.trackVisibility]: runIfNotUndefined(stringifyTrackVisibilityAttribute, trackVisibility),
+      [TaggingAttribute.validate]: runIfNotUndefined(stringifyValidateAttribute, options?.validate),
     };
 
     // Validate

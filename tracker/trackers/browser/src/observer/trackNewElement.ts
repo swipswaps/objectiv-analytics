@@ -1,5 +1,5 @@
 import { getLocationPath, TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
-import { parseTrackClicksAttribute } from '../structs';
+import { parseTrackClicksAttribute, parseValidateAttribute } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
 import { getElementLocationStack } from '../tracker/getElementLocationStack';
@@ -25,10 +25,12 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker, conso
       }
       element.setAttribute(TaggingAttribute.tracked, 'true');
 
-      // FIXME skip this if the dev disabled collision detection globally or for this specific element
-      // Add this element to TrackerState - this will also check if its Location is unique
+      // Gather Element id and Validate attributes to determine whether we can and if we should validate the Location
       const elementId = element.getAttribute(TaggingAttribute.elementId);
-      if (elementId) {
+      const validate = parseValidateAttribute(element.getAttribute(TaggingAttribute.validate));
+
+      // Add this element to TrackerState - this will also check if its Location is unique
+      if (elementId && validate.locationUniqueness) {
         const locationStack = getElementLocationStack({ element, tracker });
         const locationPath = getLocationPath(locationStack);
         const locationAddResult = TrackerElementLocations.add({ elementId, locationPath });

@@ -27,5 +27,5 @@ export enum TaggingAttribute {
   tracked = 'data-objectiv-tracked',
 
   // Holds validation options. They may be used to disable or configure certain automatic checks.
-  validation = 'data-objectiv-check-location',
+  validate = 'data-objectiv-validate',
 }
