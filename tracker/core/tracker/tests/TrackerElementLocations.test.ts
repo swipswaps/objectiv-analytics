@@ -27,7 +27,7 @@ describe('TrackerElementLocations', () => {
     });
   });
 
-  describe('addElementLocation', () => {
+  describe('add', () => {
     const testCases: [locationStack: LocationStack, elementId: string, isUnique: boolean | LocationCollision][] = [
       // First time an Element provides a never-seen Location it should succeed. This location is now claimed by btn-4
       [[rootSectionContext, buttonContext], 'btn-4', true],
@@ -69,7 +69,13 @@ describe('TrackerElementLocations', () => {
     });
   });
 
-  describe('removeElement', () => {
+  describe('delete', () => {
+    it('returns false if no elementId is specified', () => {
+      expect(TrackerElementLocations.delete(null)).toBe(false);
+      expect(TrackerElementLocations.delete(undefined)).toBe(false);
+      expect(TrackerElementLocations.delete('')).toBe(false);
+    });
+
     beforeEach(() => {
       TrackerElementLocations.elementLocations = new Map([
         [
