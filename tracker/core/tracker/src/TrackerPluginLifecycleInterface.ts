@@ -1,5 +1,4 @@
-import { Tracker } from './Tracker';
-import { TrackerEvent } from './TrackerEvent';
+import { ContextsConfig } from "./Context";
 
 /**
  * All possible lifecycle methods of a TrackerPlugin.
@@ -7,13 +6,13 @@ import { TrackerEvent } from './TrackerEvent';
 export interface TrackerPluginLifecycleInterface {
   /**
    * Executed when the Tracker initializes.
-   * Useful to register event listeners that execute autonomously. Eg: URLChangeEvent
+   * Useful to factor Contexts that will not change during this tracking session.
    */
-  initialize?: (tracker: Tracker) => void;
+  initialize?: (contexts: Required<ContextsConfig>) => void;
 
   /**
    * Executed before the TrackerEvent is handed over to the TrackerTransport.
-   * Useful to gather Contexts that may have changed from the last TrackerEvent tracking. Eg: URL, Time, User, etc
+   * Useful to factor Contexts that may have changed from the last TrackerEvent tracking. Eg: URL, Time, User, etc
    */
-  beforeTransport?: (event: TrackerEvent) => void;
+  beforeTransport?: (contexts: Required<ContextsConfig>) => void;
 }

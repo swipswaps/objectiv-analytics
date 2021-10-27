@@ -25,6 +25,7 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
       }
       element.setAttribute(TaggingAttribute.tracked, 'true');
 
+      // FIXME skip this if the dev disabled collision detection globally or for this specific element
       // Add this element to TrackerState - this will also check if its Location is unique
       const elementId = element.getAttribute(TaggingAttribute.elementId);
       if (elementId) {
@@ -34,10 +35,10 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
 
         // If location was not unique, log the issue
         if (locationAddResult !== true) {
-          // FIXME fix console injection
           const { existingElementId, collidingElementId } = locationAddResult;
           const existingElement = document.querySelector(`[${TaggingAttribute.elementId}='${existingElementId}']`)
           const collidingElement = document.querySelector(`[${TaggingAttribute.elementId}='${collidingElementId}']`)
+          // FIXME don't use the global console, instead use the console from the tracker config
           console.group(`｢objectiv:trackNewElement｣ Location collision detected: ${locationPath}`);
           console.error(`Existing Element:`, existingElement);
           console.error(`Colliding Element:`, collidingElement);

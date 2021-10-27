@@ -1,7 +1,7 @@
 import {
+  ContextsConfig,
   makeWebDocumentContext,
   TrackerConsole,
-  TrackerEvent,
   TrackerPluginConfig,
   TrackerPluginInterface,
 } from '@objectiv/tracker-core';
@@ -40,12 +40,12 @@ export class WebDocumentContextPlugin implements TrackerPluginInterface {
   /**
    * Generate a fresh WebDocumentContext before each TrackerEvent is handed over to the TrackerTransport.
    */
-  beforeTransport(event: TrackerEvent): void {
+  beforeTransport(contexts: Required<ContextsConfig>): void {
     const webDocumentContext = makeWebDocumentContext({
       id: this.documentContextId,
       url: document.location.href,
     });
-    event.location_stack.unshift(webDocumentContext);
+    contexts.location_stack.unshift(webDocumentContext);
   }
 
   /**
