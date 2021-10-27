@@ -27,6 +27,18 @@ describe('trackNewElement', () => {
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 
+  it('should skip the Element if it is already Tracked', async () => {
+    const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
+    const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
+    trackedButton.setAttribute(TaggingAttribute.tracked, 'true');
+    jest.spyOn(trackedButton, 'addEventListener');
+
+    trackNewElement(trackedButton, getTracker());
+
+    expect(trackedButton.addEventListener).not.toHaveBeenCalled();
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
+  });
+
   it('should not attach click event listener', async () => {
     const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');

@@ -1,4 +1,10 @@
-import { generateUUID, makeSectionContext, makeSectionVisibleEvent, makeURLChangeEvent } from '@objectiv/tracker-core';
+import {
+  generateUUID,
+  makeSectionContext,
+  makeSectionHiddenEvent,
+  makeSectionVisibleEvent,
+  makeURLChangeEvent
+} from '@objectiv/tracker-core';
 import {
   BrowserTracker,
   makeTracker,
@@ -82,22 +88,36 @@ describe('makeMutationCallback - url changes', () => {
 
     Object.defineProperty(window, 'location', {
       value: {
-        href: 'http://localhost/new',
+        href: 'http://localhost/new-url',
       },
+      writable: true
     });
     mutationCallback([], mutationObserver);
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 
-  it('should track url changes with the global tracker', () => {
+  it('should track url changes only urls change', () => {
     const mutationCallback = makeMutationCallback(true);
     const mutationObserver = new MutationObserver(mutationCallback);
 
     Object.defineProperty(window, 'location', {
       value: {
-        href: 'http://localhost/new',
+        href: 'http://localhost/',
       },
+      writable: true
+    });
+    AutoTrackingState.previousURL = 'http://localhost/';
+
+    mutationCallback([], mutationObserver);
+
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
+
+    Object.defineProperty(window, 'location', {
+      value: {
+        href: 'http://localhost/another-url',
+      },
+      writable: true
     });
     mutationCallback([], mutationObserver);
 
@@ -181,6 +201,43 @@ describe('makeMutationCallback - new nodes', () => {
       2,
       new Error(`No Tracker found. Please create one via \`makeTracker\`.`),
       undefined
+    );
+  });
+});
+
+describe('makeMutationCallback - removed nodes', () => {
+  it('should track visibility:hidden events for removed nodes', () => {
+    const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
+    const trackerRepository = getTrackerRepository();
+    trackerRepository.add(tracker);
+    trackerRepository.setDefault(tracker.trackerId);
+    jest.spyOn(tracker, 'trackEvent');
+    const mutationCallback = makeMutationCallback(false);
+    const mutationObserver = new MutationObserver(mutationCallback);
+
+    const sectionContext = makeSectionContext({ id: 'div' });
+    const trackedDiv = makeTaggedElement('div', 'div', 'div');
+    trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"auto"}');
+
+    const mockedMutationRecord: MutationRecord = {
+      // @ts-ignore
+      addedNodes: [],
+      // @ts-ignore
+      removedNodes: [trackedDiv],
+    };
+    mutationCallback([mockedMutationRecord], mutationObserver);
+
+    expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      makeSectionHiddenEvent({
+        location_stack: [
+          expect.objectContaining({
+            _type: sectionContext._type,
+            id: sectionContext.id,
+          }),
+        ],
+      })
     );
   });
 });
