@@ -47,8 +47,8 @@ class BuhTuhSeries(ABC):
         """
         Initialize a new BuhTuhSeries object.
         If a BuhTuhSeries is associated with a BuhTuhDataFrame. The engine, base_node and index
-        should match. Additionally the name should match the name of this Series object in the
-        DataFrame.
+        should match, as well as group_by (can be None, but then both are). Additionally the name
+        should match the name of this Series object in the DataFrame.
 
         A BuhTuhSeries can also become a future aggregation, and thus decoupled from its current
         DataFrame. In that case, the index will be set to the future index. If this Series is
@@ -79,9 +79,6 @@ class BuhTuhSeries(ABC):
         self._expression = expression
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
-
-        if group_by is not None and group_by.base_node != base_node:
-            raise ValueError("group_by should have matching base_node")
 
     @property
     @classmethod
@@ -279,9 +276,6 @@ class BuhTuhSeries(ABC):
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
 
-    def _get_derived_series(self, new_dtype: str, expression: Expression):
-        return self.copy_override(dtype=new_dtype, expression=expression)
-
     def head(self, n: int = 5):
         """
         Return the first `n` rows.
@@ -299,18 +293,14 @@ class BuhTuhSeries(ABC):
             return self
         return self.copy_override(sorted_ascending=ascending)
 
-    def view_sql(self, materialized=True):
-        return self.to_frame(materialized).view_sql()
+    def view_sql(self):
+        return self.to_frame().view_sql()
 
-    def to_frame(self, materialized=True) -> BuhTuhDataFrame:
+    def to_frame(self) -> BuhTuhDataFrame:
         if self._sorted_ascending is not None:
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
             order_by = []
-
-        if self._group_by:
-            # FIXME This fails when no aggregation func has been called on this series.
-            return self._group_by.to_frame([self], materialized)
         if len(self._index) == 0:
             raise Exception('to_frame() is not supported for Series that do not have an index')
         return BuhTuhDataFrame(
@@ -318,7 +308,7 @@ class BuhTuhSeries(ABC):
             base_node=self._base_node,
             index=self._index,
             series={self._name: self},
-            group_by=None,
+            group_by=self._group_by,
             order_by=order_by
         )
 
@@ -329,16 +319,14 @@ class BuhTuhSeries(ABC):
         expression = series_type.dtype_to_expression(self.dtype, self.expression)
         # get the real dtype, in case the provided dtype was an alias. mypy needs some help
         new_dtype = cast(str, series_type.dtype)
-        return self._get_derived_series(new_dtype=new_dtype, expression=expression)
+        return self.copy_override(dtype=new_dtype, expression=expression)
 
-    def equals(self, other: Any) -> bool:
+    def equals(self, other: Any, recursion: str = None) -> bool:
         """
         Checks whether other is the same as self. This implements the check that would normally be
         implemented in __eq__, but we already use that method for other purposes.
         This strictly checks that other is the same type as self. If other is a subclass this will return
         False.
-        :note: currently uses the external index, meaning the potential future index for a group by
-            is used in the comparison. Not ideal, but better than what we had.
         """
         if not isinstance(other, self.__class__) or not isinstance(self, other.__class__):
             return False
@@ -353,7 +341,8 @@ class BuhTuhSeries(ABC):
                 self.base_node == other.base_node and
                 self.name == other.name and
                 self.expression == other.expression and
-                self.group_by == other.group_by and
+                # avoid loops here.
+                (recursion == 'BuhTuhGroupBy' or self.group_by == other.group_by) and
                 self._sorted_ascending == other._sorted_ascending
         )
 
@@ -367,12 +356,28 @@ class BuhTuhSeries(ABC):
             raise Exception('Function not supported on Series without index')
         if len(self.index) > 1:
             raise NotImplementedError('Index only implemented for simple indexes.')
-        frame = self.to_frame()
+        frame = self.to_frame().get_df_materialized_model()
         series = frame[list(frame.index.values())[0] == key]
         assert isinstance(series, self.__class__)
 
         # this is massively ugly
         return series.head(1).astype(series.dtype).values[0]
+
+    def isnull(self):
+        expression_str = f'{{}} is null'
+        expression = Expression.construct(
+            expression_str,
+            self
+        )
+        return self.copy_override(dtype='bool', expression=expression)
+
+    def notnull(self):
+        expression_str = f'{{}} is not null'
+        expression = Expression.construct(
+            expression_str,
+            self
+        )
+        return self.copy_override(dtype='bool', expression=expression)
 
     # Below methods are not abstract, as they can be optionally be implemented by subclasses.
     def __add__(self, other) -> 'BuhTuhSeries':
@@ -501,13 +506,19 @@ class BuhTuhSeries(ABC):
         """
         if group_by is None:
             from buhtuh.partitioning import BuhTuhGroupBy
-            group_by = BuhTuhGroupBy(self.engine, self.base_node, [])
+            group_by = BuhTuhGroupBy([BuhTuhGroupBy.get_dummy_index_series(
+                engine=self._engine, base_node=self._base_node)])
 
         series = self.apply_func(func, group_by, *args, **kwargs)
         if len(series) == 1:
             return series[0]
 
-        return group_by.to_frame(series)
+        return BuhTuhDataFrame(engine=self.engine,
+                               base_node=self.base_node,
+                               index=group_by.index,
+                               series={s.name: s for s in series},
+                               group_by=group_by,
+                               order_by=[])
 
     def _check_unwrap_groupby(self,
                               wrapped: Union['BuhTuhDataFrame', 'BuhTuhGroupBy'],
@@ -571,8 +582,8 @@ class BuhTuhSeries(ABC):
                 partition = self._group_by
             else:
                 # create an aggregation over the entire input
-                partition = BuhTuhGroupBy(engine=self.engine, base_node=self.base_node,
-                                          group_by_columns=[])
+                partition = BuhTuhGroupBy([BuhTuhGroupBy.get_dummy_index_series(
+                    engine=self._engine, base_node=self._base_node)])
         else:
             partition = self._check_unwrap_groupby(partition)
 
@@ -610,9 +621,10 @@ class BuhTuhSeries(ABC):
         :note: Pandas replaces np.nan values, we can only replace NULL.
         :note: you can replace None with None, have fun, forever!
         """
-        return self._get_derived_series(
-            self.dtype,
-            Expression.construct('COALESCE({}, {})', self, self.value_to_expression(constant_value))
+        return self.copy_override(
+            expression=Expression.construct(
+                'COALESCE({}, {})', self, self.value_to_expression(constant_value)
+            )
         )
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):

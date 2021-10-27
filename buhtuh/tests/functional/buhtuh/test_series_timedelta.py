@@ -21,7 +21,7 @@ def test_timedelta():
         ]
     )
 
-    r2 = gb[['delta']].groupby([]).mean()
+    r2 = gb[['delta']].groupby().mean()
     assert_equals_data(
         r2,
         expected_columns=['index', 'delta_mean'],

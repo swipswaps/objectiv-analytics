@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 Functions for looking up the right classes to handle types and values, and for registering new custom
 types.
 
-To prevent cyclic imports, the functions in this file should not be used by pandasql.py before the file
+To prevent cyclic imports, the functions in this file should not be used by dataframe.py before the file
 is fully initialized (that is, only use within functions).
 """
 

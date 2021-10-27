@@ -58,7 +58,10 @@ def test_equals():
 
     # different group_by
     sright = float_type(engine=None, base_node=None, index={}, name='test', expression='test',
-                        group_by=BuhTuhGroupBy(engine=None, base_node=None, group_by_columns=[]))
+                        group_by=BuhTuhGroupBy(
+                            group_by_columns=[
+                                BuhTuhGroupBy.get_dummy_index_series(engine=None, base_node=None)
+                            ]))
     assert not sleft.equals(sright)
 
     # different sorting
