@@ -1,6 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+from decimal import Decimal
+
 from buhtuh import BuhTuhDataFrame
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, get_bt_with_food_data, \
     assert_equals_data, get_bt_with_railway_data
@@ -401,3 +403,24 @@ def test_merge_expression_columns_regression():
             [2, 2, 2, 'Snits', 33520, False, False, False, 'Dúmkes']
         ]
     )
+
+def test_merge_non_materialized():
+    bt = get_bt_with_test_data(full_data_set=False)[['municipality', 'inhabitants']]
+    mt1 = bt.groupby('municipality')[['inhabitants']].sum()
+    mt2 = bt.groupby('municipality')[['inhabitants']].mean()
+
+    # check that merge properly materializes if required
+    r1 = mt1.get_df_materialized_model().merge(mt2.get_df_materialized_model(), on='municipality')
+    r2 = mt1.merge(mt2, on='municipality')
+    r3 = mt1.get_df_materialized_model().merge(mt2, on='municipality')
+    r4 = mt1.merge(mt2.get_df_materialized_model(), on='municipality')
+
+    for r in [r1, r2, r3, r4]:
+        assert_equals_data(
+            r,
+            expected_columns=['municipality', 'inhabitants_sum', 'inhabitants_mean'],
+            expected_data=[
+                ['Leeuwarden', Decimal('93485'), Decimal('93485.000000000000')],
+                ['Súdwest-Fryslân', Decimal('36575'), Decimal('18287.500000000000')]
+            ]
+        )
