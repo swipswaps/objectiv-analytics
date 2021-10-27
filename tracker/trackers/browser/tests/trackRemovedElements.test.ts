@@ -18,7 +18,6 @@ describe('trackRemovedElements', () => {
 
     anotherDiv.appendChild(button);
     div.appendChild(anotherDiv);
-    document.body.appendChild(div);
 
     trackRemovedElements(div, getTracker());
 
@@ -32,7 +31,6 @@ describe('trackRemovedElements', () => {
 
     trackedDiv.appendChild(trackedChildDiv);
     trackedChildDiv.appendChild(trackedButton);
-    document.body.appendChild(trackedDiv);
 
     trackRemovedElements(trackedDiv, getTracker());
 
@@ -48,7 +46,6 @@ describe('trackRemovedElements', () => {
 
     trackedDiv.appendChild(trackedButton);
     div.appendChild(trackedDiv);
-    document.body.appendChild(div);
 
     trackRemovedElements(div, getTracker());
 
@@ -67,7 +64,6 @@ describe('trackRemovedElements', () => {
 
     trackedDiv.appendChild(trackedButton);
     div.appendChild(trackedDiv);
-    document.body.appendChild(div);
 
     trackRemovedElements(div, getTracker());
 
@@ -83,7 +79,6 @@ describe('trackRemovedElements', () => {
 
     trackedDiv.appendChild(trackedButton);
     div.appendChild(trackedDiv);
-    document.body.appendChild(div);
 
     trackRemovedElements(div, getTracker());
 

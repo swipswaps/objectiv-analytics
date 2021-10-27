@@ -32,7 +32,6 @@ describe('trackNewElement', () => {
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, 'false');
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
@@ -62,7 +61,6 @@ describe('trackNewElement', () => {
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, 'true');
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
@@ -77,7 +75,6 @@ describe('trackNewElement', () => {
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, JSON.stringify({ waitUntilTracked: true }));
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
@@ -92,7 +89,6 @@ describe('trackNewElement', () => {
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, JSON.stringify({ waitUntilTracked: { timeoutMs: 5000 } }));
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
@@ -108,7 +104,6 @@ describe('trackNewElement', () => {
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, JSON.stringify({ waitUntilTracked: false }));
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
