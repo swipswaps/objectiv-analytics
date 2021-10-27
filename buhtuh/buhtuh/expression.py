@@ -4,18 +4,11 @@ Copyright 2021 Objectiv B.V.
 from dataclasses import dataclass, field
 from typing import List, Union, TYPE_CHECKING
 
+import sql_models.expression
+from sql_models.expression import Expression, ExpressionToken, quote_string, quote_identifier
+
 if TYPE_CHECKING:
     from buhtuh import BuhTuhSeries
-
-
-@dataclass(frozen=True)
-class ExpressionToken:
-    """ Abstract base class of ExpressionTokens"""
-
-    def __post_init__(self):
-        # Make sure that other code can rely on an ExpressionToken always being a subclass of this class.
-        if self.__class__ == ExpressionToken:
-            raise TypeError("Cannot instantiate ExpressionToken directly. Instantiate a subclass.")
 
 
 @dataclass(frozen=True)
@@ -35,7 +28,7 @@ class StringValueToken(ExpressionToken):
 
 
 @dataclass(frozen=True)
-class Expression:
+class Expression(sql_models.expression.Expression):
     """
     An Expression object represents a fragment of SQL as a series of sql-tokens.
 
@@ -102,7 +95,7 @@ class Expression:
 
     def to_sql(self) -> str:
         """ Short cut for expression_to_sql(self). """
-        return expression_to_sql(self)
+        return expression_to_sql(self.resolve_column_references())
 
     def resolve_column_references(self, table_name: str = None):
         """ resolve the table name aliases for all columns in this expression """
@@ -142,41 +135,3 @@ def expression_to_sql(expression: Expression) -> str:
                             "expression_to_sql() doesn't cover all Expression subtypes."
                             f"type: {type(data_item)}")
     return ''.join(result)
-
-
-def quote_string(value: str) -> str:
-    """
-    Add single quotes around the value and escape any quotes in the value.
-
-    This is in accordance with the Postgres string notation format, no guarantees for other databses.
-    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
-
-    Examples:
-    >>> quote_string("test")
-    "'test'"
-    >>> quote_string("te'st")
-    "'te''st'"
-    >>> quote_string("'te''st'")
-    "'''te''''st'''"
-    """
-    replaced_chars = value.replace("'", "''")
-    return f"'{replaced_chars}'"
-
-
-def quote_identifier(name: str) -> str:
-    """
-    Add quotes around an identifier (e.g. a table or column name), and escape special characters in the name.
-
-    This is in accordance with the Postgres string notation format, no guarantees for other databses.
-    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
-
-    Examples:
-    >>> quote_identifier('test')
-    '"test"'
-    >>> quote_identifier('te"st')
-    '"te""st"'
-    >>> quote_identifier('"te""st"')
-    "\"\"\"te\"\"\"\"st\"\"\""
-    """
-    replaced_chars = name.replace('"', '""')
-    return f'"{replaced_chars}"'

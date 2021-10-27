@@ -432,7 +432,7 @@ class BuhTuhDataFrame:
                 columns=self._get_all_column_expressions(),
                 index=self._get_all_index_expressions(),
                 _last_node=self.base_node,
-                where=key.expression.resolve_column_references(),
+                where=key.expression,
             )
             return self._df_or_series(
                 BuhTuhDataFrame.get_instance(
@@ -978,18 +978,25 @@ class BuhTuhDataFrame:
         limit_expr = Expression.construct('' if limit_str is None else f'{limit_str}')
 
         if self._group_by:
+
+            group_by_expr = self.group_by.get_group_by_column_expression()
+            if group_by_expr:
+                group_by_expr = Expression.construct('group by {}', group_by_expr)
+            else:
+                group_by_expr = Expression.construct('')
             model_builder = CustomSqlModel(
                 sql="""
                     select {group_by_columns}, {aggregate_columns}
                     from {{prev}}
-                    group by {group_by}
+                    {group_by}
                     {order_by} {limit}
                     """
             )
             return model_builder(
-                group_by_columns=self.group_by.get_index_column_expressions(),
-                aggregate_columns=[s.get_column_expression() for s in self._data.values()],
-                group_by=self.group_by.get_group_by_column_expressions(),
+                group_by_columns=self.group_by.get_index_column_expression(),
+                aggregate_columns=[s.get_column_expression()
+                                   for s in self._data.values()],
+                group_by=group_by_expr,
                 order_by=self.get_order_by_expression(),
                 limit=limit_expr,
                 prev=self.base_node
@@ -1005,7 +1012,7 @@ class BuhTuhDataFrame:
                 index_str=self._get_all_index_expressions(),
                 _last_node=self.base_node,
                 limit=limit_expr,
-                order=self.get_order_by_expression().resolve_column_references()
+                order=self.get_order_by_expression()
             )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:

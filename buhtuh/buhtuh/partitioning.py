@@ -73,11 +73,14 @@ class BuhTuhGroupBy:
                 for n in self._index.keys())
         )
 
-    def get_index_column_expressions(self):
-        return [g.get_column_expression() for g in self._index.values()]
+    def get_index_column_expression(self) -> Expression:
+        fmtstr = ', '.join(['{}'] * len(self._index))
+        return Expression.construct(fmtstr, *[g.get_column_expression()
+                                              for g in self._index.values()])
 
-    def get_group_by_column_expressions(self):
-        return [g.expression for g in self.index.values()]
+    def get_group_by_column_expression(self) -> Expression:
+        fmtstr = ', '.join(['{}'] * len(self._index))
+        return Expression.construct(fmtstr, *[g.expression for g in self._index.values()])
 
     @property
     def index(self) -> Dict[str, BuhTuhSeries]:
@@ -95,22 +98,20 @@ class BuhTuhGroupBy:
                 group_by=None)
 
 
-
 class BuhTuhCube(BuhTuhGroupBy):
     """
     Very simple abstraction to support cubes
     """
-    def get_group_by_expression(self):
-        return Expression.construct('cube ({})', super().get_group_by_expression())
-
+    def get_group_by_column_expression(self):
+        return Expression.construct('cube ({})', super().get_group_by_column_expression())
 
 
 class BuhTuhRollup(BuhTuhGroupBy):
     """
     Very simple abstraction to support rollups
     """
-    def get_group_by_expression(self):
-        return Expression.construct('rollup ({})', super()._get_group_by_expression())
+    def get_group_by_column_expression(self):
+        return Expression.construct('rollup ({})', super().get_group_by_column_expression())
 
 
 class BuhTuhGroupingList(BuhTuhGroupBy):
@@ -139,8 +140,8 @@ class BuhTuhGroupingList(BuhTuhGroupBy):
 
         super().__init__(group_by_columns=list(group_by_columns.values()))
 
-    def get_group_by_expression(self):
-        grouping_expr_list = [g._get_group_by_expression() for g in self.grouping_list]
+    def get_group_by_column_expression(self):
+        grouping_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
         fmtstr = ", ".join(["({})"] * len(grouping_expr_list))
         return Expression.construct(fmtstr, *grouping_expr_list)
 
@@ -150,8 +151,8 @@ class BuhTuhGroupingSet(BuhTuhGroupingList):
     Abstraction to support SQLs
     GROUP BY GROUPING SETS ((colA,colB),(ColA),(ColC))
     """
-    def get_group_by_expression(self):
-        grouping_expr_list = [g._get_group_by_expression() for g in self.grouping_list]
+    def get_group_by_column_expression(self):
+        grouping_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
         fmtstr = ", ".join(["({})"] * len(grouping_expr_list))
         fmtstr = f'grouping sets ({fmtstr})'
         return Expression.construct(fmtstr, *grouping_expr_list)
@@ -355,7 +356,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
                 then {{}} {{}}
                 else NULL end""", over_expr, window_func, over_expr)
 
-    def get_group_by_columns_sql(self):
+    def get_group_by_column_expression(self):
         """
         On a Window, there is no default group_by clause
         """

@@ -276,8 +276,8 @@ def test_cube_basics():
     btc = bt.cube(['municipality','city'])
 
     assert(isinstance(btc.group_by, BuhTuhCube))
-    assert(btc.group_by.get_group_by_columns_sql()
-           == 'CUBE ("municipality", "city")')
+    assert(btc.group_by.get_group_by_column_expression().to_sql()
+           == 'cube ("municipality", "city")')
 
     result_bt = btc[['inhabitants']].sum()
     assert_equals_data(
@@ -302,8 +302,8 @@ def test_rollup_basics():
 
     btr = bt.rollup(['municipality','city'])
     assert(isinstance(btr.group_by, BuhTuhRollup))
-    assert(btr.group_by.get_group_by_columns_sql()
-           == 'ROLLUP ("municipality", "city")')
+    assert(btr.group_by.get_group_by_column_expression().to_sql()
+           == 'rollup ("municipality", "city")')
 
     result_bt = btr[['inhabitants']].sum()
     assert_equals_data(
@@ -333,7 +333,7 @@ def test_grouping_list_basics():
 
     # This is not the greatest test, but at least it tests the interface.
     assert(isinstance(btl1.group_by, BuhTuhGroupingList))
-    assert(btl1.group_by.get_group_by_columns_sql()
+    assert(btl1.group_by.get_group_by_column_expression().to_sql()
            == '("municipality"), ("city")')
 
     result_bt = btl1[['inhabitants']].sum()
@@ -359,8 +359,8 @@ def test_grouping_set_basics():
     assert(bts1 == bts3)
 
     assert(isinstance(bts1.group_by, BuhTuhGroupingSet))
-    assert(bts1.group_by.get_group_by_columns_sql()
-           == 'GROUPING SETS (("municipality"), ("city"))')
+    assert(bts1.group_by.get_group_by_column_expression().to_sql()
+           == 'grouping sets (("municipality"), ("city"))')
 
     result_bt = bts1[['inhabitants']].sum()
 
