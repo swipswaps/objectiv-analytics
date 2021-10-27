@@ -4,7 +4,7 @@ from typing import List, Dict
 
 from buhtuh.series import BuhTuhSeries, BuhTuhSeriesInt64
 from buhtuh.expression import Expression
-from buhtuh.pandasql import SortColumn
+from buhtuh.dataframe import SortColumn
 
 
 class BuhTuhWindowFrameMode(Enum):
