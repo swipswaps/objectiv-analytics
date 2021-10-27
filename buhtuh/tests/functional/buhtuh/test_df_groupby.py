@@ -4,7 +4,6 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from buhtuh import BuhTuhSeries, BuhTuhSeriesAbstractNumeric
-from buhtuh.partitioning import BuhTuhGroupingList, BuhTuhGroupingSet
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
@@ -124,7 +123,7 @@ def test_group_by_expression():
 def test_group_by_basics_series():
     bt = get_bt_with_test_data(full_data_set=True)
     btg = bt.groupby('municipality')
-    btg_series = btg['inhabitants']
+    btg_series = btg[['inhabitants']]
     result_bt = btg_series.count()
     assert_equals_data(
         result_bt,
@@ -146,7 +145,7 @@ def test_group_by_basics_series():
         'inhabitants_count': 'int64',
     }
 
-    btg_series = btg['inhabitants', 'founding']
+    btg_series = btg[['inhabitants', 'founding']]
     result_bt = btg_series.count()
     assert_equals_data(
         result_bt,
@@ -246,20 +245,34 @@ def test_dataframe_agg_numeric_only():
 def test_series_agg():
     bt = get_bt_with_test_data(full_data_set=True)
     s = bt['inhabitants']
-    assert s.agg('sum').head().iloc[0,0] == 187325
+    # single series results
+    a1 = s.agg('sum')
+    assert isinstance(a1, type(s))
+    assert a1.head().iloc[0] == 187325
 
-    with pytest.raises(NotImplementedError):
-        # direct call to sum not supported until we implement some sort of scalar wrapper.
-        assert s.sum().head().iloc[0,0] == 187325
+    a2 = s.sum()
+    assert isinstance(a2, type(s))
+    assert a2.head().iloc[0] == 187325
+
+    df1 = s.agg(['sum', 'count'])
+    assert isinstance(df1.inhabitants_sum, type(s))
+    assert isinstance(df1.inhabitants_count, type(s))
+    # multiple series results return
+    assert df1.inhabitants_sum.head().iloc[0] == 187325
+    assert df1.inhabitants_count.head().iloc[0] == 11
+
+    # duplicate result series should raise
+    with pytest.raises(ValueError, match="duplicate"):
+        s.agg(['sum','sum'])
 
 
 def test_cube_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
     # instant stonks through variable naming
-    btc = bt.groupby(['municipality','city']).cube()
+    btc = bt.cube(['municipality','city'])
 
-    result_bt = btc['inhabitants'].sum()
+    result_bt = btc[['inhabitants']].sum()
     assert_equals_data(
         result_bt,
         order_by=['municipality','city'],
@@ -280,7 +293,7 @@ def test_cube_basics():
 def test_rollup_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    btc = bt.groupby(['municipality','city']).rollup()
+    btc = bt.rollup(['municipality','city'])
 
     result_bt = btc['inhabitants'].sum()
     assert_equals_data(
@@ -301,9 +314,9 @@ def test_rollup_basics():
 def test_rollup_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    btr = bt.groupby(['municipality','city']).rollup()
+    btr = bt.rollup(['municipality','city'])
 
-    result_bt = btr['inhabitants'].sum()
+    result_bt = btr[['inhabitants']].sum()
     assert_equals_data(
         result_bt,
         order_by=['municipality','city'],
@@ -321,11 +334,10 @@ def test_rollup_basics():
 def test_grouping_list_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    btm = bt.groupby(['municipality'])
-    btc = bt.groupby(['city'])
-    bts = BuhTuhGroupingList([btm,btc])
+    # make it explicit
+    btl = bt.groupby(list([['municipality'], ['city']]))
 
-    result_bt = bts['inhabitants'].sum()
+    result_bt = btl[['inhabitants']].sum()
     assert_equals_data(
         result_bt,
         order_by=['municipality','city'],
@@ -338,17 +350,128 @@ def test_grouping_list_basics():
 def test_grouping_set_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    btm = bt.groupby(['municipality'])
-    btc = bt.groupby(['city'])
-    bts = BuhTuhGroupingSet([btm, btc])
+    bts = bt.groupby({('municipality'), ('city')})
+    result_bt = bts[['inhabitants']].sum()
 
-    result_bt = bts['inhabitants'].sum()
+    expected_columns = ['municipality', 'city', 'inhabitants_sum']
+    expected_data = [
+        ['Leeuwarden', None, 93485], ['Súdwest-Fryslân', None, 36575],
+        [None, 'Drylts', 3055], [None, 'Ljouwert', 93485], [None, 'Snits', 33520]
+    ]
+
+    # order of index is dynamic since it's a set. Make sure it's in the right order.
+    index_keys = list(result_bt.index.keys())
+    index_0 = index_keys.index(expected_columns[0])
+    index_1 = index_keys.index(expected_columns[1])
+    expected_data = [[r[index_0], r[index_1], r[2]] for r in expected_data]
+
     assert_equals_data(
         result_bt,
-        order_by=['municipality','city'],
-        expected_columns=['municipality', 'city', 'inhabitants_sum'],
-        expected_data=[
-            ['Leeuwarden', None, 93485], ['Súdwest-Fryslân', None, 36575],
-            [None, 'Drylts', 3055], [None, 'Ljouwert', 93485], [None, 'Snits', 33520]
-        ]
+        order_by=['municipality', 'city'],
+        expected_columns=list(result_bt.index.keys()) + ['inhabitants_sum'],
+        expected_data=expected_data
     )
+
+
+def test_groupby_frame_split_series_aggregation():
+    bt = get_bt_with_test_data(full_data_set=False)[['municipality', 'inhabitants', 'founding']]
+    btg1 = bt.groupby(['municipality'])
+
+    r1 = btg1['founding'].sum()
+    r2 = bt.groupby(['municipality']).sum()['founding_sum']
+    r3 = bt.groupby(['municipality'])[['founding']].sum()['founding_sum']
+    assert (r1.head().values == r2.head().values).all()
+    assert (r1.head().values == r3.head().values).all()
+
+    # Does math work?
+    r4 = btg1['inhabitants'].sum()
+    r5 = btg1['founding'].sum() + btg1['inhabitants'].sum()
+    assert ((r1.head().values + r4.head().values) == r5.head().values).all()
+
+    # FIXME aggregation functions can not be nested without materialization in between
+    r6 = r4.sum()  # This should raise
+    with pytest.raises(Exception):
+        r6.head() # this should not, but that's not how it currently works
+
+
+def test_groupby_frame_split_recombine():
+    bt = get_bt_with_test_data(full_data_set=False)[['municipality', 'inhabitants', 'founding']]
+    btg1 = bt.groupby(['municipality'])[['inhabitants', 'founding']]
+    btg1a = btg1[['inhabitants']]
+    btg1b = btg1['founding']
+
+    r0 = btg1.sum()
+
+    assert btg1.group_by == btg1a.group_by
+    assert btg1.group_by == btg1b.group_by
+
+    # recombine from same parent
+    btg1a['founding'] = btg1b
+    r1 = btg1a.sum()
+    assert btg1a == btg1
+
+    # can not add columns from grouped df to ungrouped df
+    with pytest.raises(ValueError, match="Index of assigned value does not match index of DataFrame"):
+        bt2 = bt.drop(columns=['founding'])
+        bt2['founding'] = btg1b
+
+    # can not add columns from ungrouped df to grouped df
+    with pytest.raises(ValueError, match="Index of assigned value does not match index of DataFrame"):
+        bt2 = btg1.drop(columns=['founding'])
+        bt2['founding'] = bt['founding']
+
+    # create new grouping df, but with same grouping
+    btg2 = bt.groupby(['municipality'])[['inhabitants', 'founding']]
+    assert btg1.group_by == btg2.group_by
+    assert btg1 == btg2
+
+    # recombine from different parent with same grouping
+    btg2.drop(columns=['founding'], inplace=True)
+    btg2['founding'] = btg1b
+    r2 = btg1a.sum()
+    assert btg2 == btg1
+
+    for r in [r0, r1, r2]:
+        assert_equals_data(
+            r,
+            order_by=['municipality'],
+            expected_columns=['municipality', 'inhabitants_sum', 'founding_sum'],
+
+            expected_data=[
+                ['Leeuwarden', 93485, 1285],
+                ['Súdwest-Fryslân', 36575, 2724]
+            ]
+        )
+
+def test_groupby_frame_split_recombine_aggregation_applied():
+    bt = get_bt_with_test_data(full_data_set=False)[['municipality', 'inhabitants', 'founding']]
+    group1 = bt.groupby('municipality')
+    subgroup = group1[['founding', 'inhabitants']]
+    inhabitants_sum = subgroup['inhabitants'].sum()
+    founding_inhabitants_sum = group1[['founding', 'inhabitants']].sum()
+    only_inhabitants = founding_inhabitants_sum[['inhabitants_sum']]
+    founding_mean = group1['founding'].mean()
+
+    # recombine
+    founding_inhabitants_sum['founding_mean'] = founding_mean
+
+    r1 = inhabitants_sum.to_frame()
+    r1['founding_sum'] = group1['founding'].sum()
+    r1['founding_mean'] = founding_mean
+    r1.rename(columns={'inhabitants': 'inhabitants_sum'}, inplace=True)
+
+    for r in [founding_inhabitants_sum, r1]:
+        assert_equals_data(
+            r,
+            order_by=['municipality'],
+            expected_columns=['municipality', 'inhabitants_sum', 'founding_sum', 'founding_mean'],
+
+            expected_data=[
+                ['Leeuwarden', 93485, 1285, 1285],
+                ['Súdwest-Fryslân', 36575, 2724, 1362]
+            ]
+        )
+
+
+
+

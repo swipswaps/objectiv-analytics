@@ -6,8 +6,10 @@ from typing import cast, Union, TYPE_CHECKING, Optional
 
 import numpy
 
+from buhtuh import BuhTuhDataFrame
 from buhtuh.series import BuhTuhSeries, const_to_series
 from buhtuh.expression import Expression
+from buhtuh.series.series import WrappedPartition
 
 if TYPE_CHECKING:
     from buhtuh.partitioning import BuhTuhGroupBy
@@ -17,6 +19,7 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
     """
     Base class that defines shared logic between BuhTuhSeriesInt64 and BuhTuhSeriesFloat64
     """
+
     def __add__(self, other) -> 'BuhTuhSeries':
         other = const_to_series(base=self, value=other)
         self._check_supported('add', ['int64', 'float64'], other)
@@ -57,65 +60,57 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
             Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
 
-    def _ddof_unsupported(self, ddof: Optional[float]):
+    def _ddof_unsupported(self, ddof: Optional[int]):
         if ddof is not None and ddof != 1:
             raise NotImplementedError("ddof != 1 currently not implemented")
 
-    def kurt(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+    def kurt(self, partition: WrappedPartition = None, skipna: bool = True):
         return self.kurtosis(partition, skipna)
 
-    def kurtosis(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+    def kurtosis(self, partition: WrappedPartition = None, skipna: bool = True):
         raise NotImplementedError("kurtosis currently not implemented")
 
-    def mad(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+    def mad(self, partition: WrappedPartition = None, skipna: bool = True):
         raise NotImplementedError("mad currently not implemented")
 
-    def prod(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+    def prod(self, partition: WrappedPartition = None, skipna: bool = True):
         return self.product(partition, skipna)
 
-    def product(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
-        self._skipna_unsupported(skipna)
-
+    def product(self, partition: WrappedPartition = None, skipna: bool = True):
         # https://stackoverflow.com/questions/13156055/product-aggregate-in-postgresql
         # horrible solution, but best we have until we support custom defined aggregates
-        return self._window_or_agg_func(
+        return self._derived_agg_func(
             partition,
-            Expression.construct(f'exp(sum(ln({{}})))', self)
+            Expression.construct(f'exp(sum(ln({{}})))', self),
+            skipna=skipna
         )
 
-    def skew(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True):
+    def skew(self, partition: WrappedPartition = None, skipna: bool = True):
         raise NotImplementedError("skew currently not implemented")
 
-    def sem(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True, ddof: float = None):
-        self._skipna_unsupported(skipna)
+    def sem(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
         self._ddof_unsupported(ddof)
-
-        return self._window_or_agg_func(
+        return self._derived_agg_func(
             partition,
             Expression.construct(f'{{}}/sqrt({{}})',
                                  self.std(partition, skipna=skipna, ddof=ddof),
-                                 self.count(partition, skipna=skipna))
+                                 self.count(partition, skipna=skipna)),
+            skipna=skipna
         )
 
-    def std(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True, ddof: float = None):
+    def std(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
         # sample standard deviation of the input values
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(partition, 'stddev_samp', skipna=skipna)
 
-    def sum(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True, min_count: int = None):
-        if min_count is not None:
-            return self._window_or_agg_func(
-                partition,
-                Expression.construct(f'CASE WHEN {{}} >= {min_count} THEN {{}} ELSE NULL END',
-                                     self.count(partition, skipna=skipna),
-                                     self._derived_agg_func(partition, 'sum', skipna=skipna)))
-        else:
-            return self._derived_agg_func(partition, 'sum', skipna=skipna)
+    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
+        return self._derived_agg_func(partition, 'sum', skipna=skipna, min_count=min_count)
 
-    def mean(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True) -> 'BuhTuhSeriesFloat64':
-        return self._derived_agg_func(partition, 'avg', 'double precision', skipna=skipna)
+    def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'BuhTuhSeriesFloat64':
+        return cast('BuhTuhSeriesFloat64',  # for the mypies
+                    self._derived_agg_func(partition, 'avg', 'double precision', skipna=skipna))
 
-    def var(self, partition: 'BuhTuhGroupBy' = None, skipna: bool = True, ddof: float = None):
+    def var(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
         # sample variance of the input values (square of the sample standard deviation)
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(partition, 'var_samp', skipna=skipna)

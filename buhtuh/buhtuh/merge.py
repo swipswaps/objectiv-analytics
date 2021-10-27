@@ -241,6 +241,8 @@ def merge(
     """
     if how not in ('left', 'right', 'outer', 'inner', 'cross'):
         raise ValueError(f"how must be one of ('left', 'right', 'outer', 'inner', 'cross'), value: {how}")
+    if left.group_by or right.group_by:
+        raise ValueError('merge not supported for aggregated frames that have not been materialized')
     real_how = How(how)
     real_left_on, real_right_on = _determine_left_on_right_on(
         left=left,
@@ -270,6 +272,7 @@ def merge(
         base_node=model,
         index_dtypes={rc.name: rc.dtype for rc in new_index_list},
         dtypes={rc.name: rc.dtype for rc in new_data_list},
+        group_by=None,
         order_by=[]  # merging resets any sorting
     )
 

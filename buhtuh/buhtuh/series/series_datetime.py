@@ -6,8 +6,10 @@ from typing import Union, cast, TYPE_CHECKING
 
 import numpy
 
+from buhtuh import BuhTuhDataFrame
 from buhtuh.series import BuhTuhSeries, BuhTuhSeriesString, const_to_series
 from buhtuh.expression import Expression
+from buhtuh.series.series import WrappedPartition
 
 if TYPE_CHECKING:
     from buhtuh.partitioning import BuhTuhGroupBy
@@ -175,18 +177,20 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         expression = Expression.construct('({}) - ({})', self, other)
         return self._get_derived_series('timedelta', expression)
 
-    def sum(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
-        result = self._window_or_agg_func(
-            partition,
-            Expression.construct('sum({})', self.expression),
-            self.dtype
+    def sum(self, partition: WrappedPartition = None,
+            skipna: bool = True, min_count: int = None) -> 'BuhTuhSeriesTimedelta':
+        result = self._derived_agg_func(
+            partition=partition,
+            expression=Expression.construct('sum({})', self.expression),
+            skipna=skipna,
+            min_count=min_count
         )
         return cast('BuhTuhSeriesTimedelta', result)
 
-    def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
-        result = self._window_or_agg_func(
-            partition,
-            Expression.construct('avg({})', self.expression),
-            self.dtype
+    def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'BuhTuhSeriesTimedelta':
+        result = self._derived_agg_func(
+            partition=partition,
+            expression=Expression.construct('avg({})', self.expression),
+            skipna=skipna
         )
         return cast('BuhTuhSeriesTimedelta', result)

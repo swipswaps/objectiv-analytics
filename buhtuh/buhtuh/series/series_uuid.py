@@ -58,7 +58,8 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
         return cls.get_class_instance(
             base=base,
             name='__tmp',
-            expression=Expression.construct('gen_random_uuid()')
+            expression=Expression.construct('gen_random_uuid()'),
+            group_by=None
         )
 
     def _comparator_operator(self, other, comparator):

@@ -1,6 +1,3 @@
-import datetime
-import json
-from abc import abstractmethod, ABC
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable
@@ -54,6 +51,7 @@ class BuhTuhDataFrame:
         base_node: SqlModel,
         index: Dict[str, 'BuhTuhSeries'],
         series: Dict[str, 'BuhTuhSeries'],
+        group_by: Optional['BuhTuhGroupBy'],
         order_by: List[SortColumn] = None
     ):
         """
@@ -74,12 +72,27 @@ class BuhTuhDataFrame:
         self._base_node = base_node
         self._index = copy(index)
         self._data: Dict[str, BuhTuhSeries] = {}
+        self._group_by = group_by
         self._order_by = order_by if order_by is not None else []
         for key, value in series.items():
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
                                  f'key: {key}, series.name: {value.name}')
+            if value.index != self._index:
+                raise ValueError(f'Indices in `series` should match dataframe. '
+                                 f'df: {value.index}, series.index: {self._index}')
+            if value.group_by and group_by and value.group_by != group_by:
+                raise ValueError(f'Group_by in `series` should match dataframe. '
+                                 f'df: {value.group_by}, series.index: {group_by}')
             self._data[key] = value
+        for value in index.values():
+            if value.index != {}:
+                raise ValueError('Index series can not have non-empty index property')
+
+        if group_by is not None:
+            if group_by.index != index:
+                raise ValueError('Index should match group_by index')
+
         if set(index.keys()) & set(series.keys()):
             raise ValueError(f"The names of the index series and data series should not intersect. "
                              f"Index series: {sorted(index.keys())} data series: {sorted(series.keys())}")
@@ -90,15 +103,20 @@ class BuhTuhDataFrame:
             base_node: SqlModel = None,
             index: Dict[str, 'BuhTuhSeries'] = None,
             series: Dict[str, 'BuhTuhSeries'] = None,
+            group_by: List[Union['BuhTuhGroupBy', None]] = None,  # List so [None] != None
             order_by: List[SortColumn] = None) -> 'BuhTuhDataFrame':
         """
         Create a copy of self, with the given arguments overriden
+
+        Big fat warning: group_by can legally be None, but if you want to set that,
+        set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
         """
         return BuhTuhDataFrame(
             engine=engine if engine is not None else self.engine,
             base_node=base_node if base_node is not None else self._base_node,
             index=index if index is not None else self._index,
             series=series if series is not None else self._data,
+            group_by=self._group_by if group_by is None else group_by[0],
             order_by=order_by if order_by is not None else self._order_by
         )
 
@@ -138,6 +156,10 @@ class BuhTuhDataFrame:
     def dtypes(self):
         return {column: data.dtype for column, data in self.data.items()}
 
+    @property
+    def group_by(self):
+        return copy(self._group_by)
+
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, BuhTuhDataFrame):
             return False
@@ -154,6 +176,7 @@ class BuhTuhDataFrame:
         return \
             self.engine == other.engine and \
             self.base_node == other.base_node and \
+            self._group_by == other._group_by and \
             self._order_by == other._order_by
 
     @classmethod
@@ -208,6 +231,7 @@ class BuhTuhDataFrame:
             base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
+            group_by=None,
             order_by=[]
         )
 
@@ -279,7 +303,8 @@ class BuhTuhDataFrame:
             engine=engine,
             base_node=model,
             index_dtypes={index: index_dtype},
-            dtypes=dtypes
+            dtypes=dtypes,
+            group_by=None
         )
 
     @classmethod
@@ -289,6 +314,7 @@ class BuhTuhDataFrame:
             base_node: SqlModel,
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
+            group_by: Optional['BuhTuhGroupBy'],
             order_by: List[SortColumn] = None
     ) -> 'BuhTuhDataFrame':
         """
@@ -302,9 +328,10 @@ class BuhTuhDataFrame:
             index[key] = index_type(
                 engine=engine,
                 base_node=base_node,
-                index=None,  # No index for index
+                index={},  # Empty index for index series
                 name=key,
-                expression=Expression.column_reference(key)
+                expression=Expression.column_reference(key),
+                group_by=group_by
             )
         series: Dict[str, BuhTuhSeries] = {}
         for key, value in dtypes.items():
@@ -314,13 +341,15 @@ class BuhTuhDataFrame:
                 base_node=base_node,
                 index=index,
                 name=key,
-                expression=Expression.column_reference(key)
+                expression=Expression.column_reference(key),
+                group_by=group_by
             )
         return BuhTuhDataFrame(
             engine=engine,
             base_node=base_node,
             index=index,
             series=series,
+            group_by=group_by,
             order_by=order_by
         )
 
@@ -347,15 +376,16 @@ class BuhTuhDataFrame:
 
         :return: New DataFrame with the current DataFrame's state as base_node
         """
-        model = self.get_current_node()
         index_dtypes = {k: v.dtype for k, v in self.index.items()}
         series_dtypes = {k: v.dtype for k, v in self.data.items()}
 
+        model = self.get_current_node()
         return self.get_instance(
             engine=self.engine,
             base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
+            group_by=None,
             order_by=[]
         )
 
@@ -383,6 +413,9 @@ class BuhTuhDataFrame:
             return self._df_or_series(df=self.copy_override(base_node=model))
 
         if isinstance(key, BuhTuhSeriesBoolean):
+            if self._group_by is not None:
+                raise NotImplementedError("HAVING is not implemented yet")
+
             # We only support first level boolean indices for now
             if key.base_node != self.base_node:
                 raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
@@ -405,6 +438,7 @@ class BuhTuhDataFrame:
                     base_node=model,
                     index_dtypes={name: series.dtype for name, series in self.index.items()},
                     dtypes={name: series.dtype for name, series in self.data.items()},
+                    group_by=None,
                     order_by=[]  # filtering rows resets any sorting
                 )
             )
@@ -435,12 +469,10 @@ class BuhTuhDataFrame:
                     raise ValueError(f'Index of assigned value does not match index of DataFrame. '
                                      f'Value: {value.index}, df: {self.index}')
                 if value.base_node == self.base_node:
-                    self._data[key] = BuhTuhSeries.get_instance(
-                        base=self,
-                        name=key,
-                        dtype=value.dtype,
-                        expression=value.expression
-                    )
+                    if self._group_by != value.group_by:
+                        raise ValueError(f'GroupBy of assigned value does not match DataFrame. '
+                                         f'Value: {value.group_by}, df: {self._group_by}')
+                    self._data[key] = value.copy_override(name=key)
                     return
                 else:
                     # this is the complex case. Maybe don't support this at all?TODO
@@ -488,8 +520,8 @@ class BuhTuhDataFrame:
             invalid target column names are not suppressed.
         :note: copy parameter is not supported since it makes very little sense for db backed series
         """
-        if level is not None or\
-            index is not None or\
+        if level is not None or \
+                index is not None or \
                 (mapper is not None and axis == 0):
             raise NotImplementedError("index renames not supported")
 
@@ -520,11 +552,7 @@ class BuhTuhDataFrame:
                 raise ValueError(f'Cannot set {column_name} as {new_name}. New column name already exists.')
             series = df.data[column_name]
             if new_name != series.name:
-                series = series.get_class_instance(
-                        base=df,
-                        name=new_name,
-                        expression=series.expression
-                    )
+                series = series.copy_override(name=new_name)
             new_data[new_name] = series
         df._data = new_data
         return df
@@ -532,7 +560,7 @@ class BuhTuhDataFrame:
     def __delitem__(self, key: str):
         """ TODO: comments """
         if isinstance(key, str):
-            del(self._data[key])
+            del (self._data[key])
             return
         else:
             raise TypeError(f'Unsupported type {type(key)}')
@@ -571,7 +599,7 @@ class BuhTuhDataFrame:
 
         try:
             for key in columns:
-                del(df[key])
+                del (df[key])
         except Exception as e:
             if errors == "raise":
                 raise e
@@ -608,8 +636,13 @@ class BuhTuhDataFrame:
 
         return self.copy_override(series=new_data)
 
-    def _partition_by_columns(self, by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None]
-                              ) -> List['BuhTuhSeries']:
+    # Some typing help required here.
+    GroupBySingleType = Union[str, 'BuhTuhSeries']
+
+    def _partition_by_series(self,
+                             by: Union[GroupBySingleType,
+                                       Union[List[GroupBySingleType], Tuple[GroupBySingleType]],
+                                       None]) -> List['BuhTuhSeries']:
         """
         Helper method to check and compile a partitioning list
         """
@@ -630,39 +663,118 @@ class BuhTuhDataFrame:
         else:
             raise ValueError(f'Value of "by" should be either None, a string, or a Series.')
 
+        if len(group_by_columns) == 0:
+            from buhtuh.partitioning import BuhTuhGroupBy
+            return [BuhTuhGroupBy.get_dummy_index_series(
+                engine=self._engine, base_node=self._base_node)]
+
         return group_by_columns
+
+    def _groupby_to_frame(self, df: 'BuhTuhDataFrame', group_by: 'BuhTuhGroupBy'):
+        """
+        Given a group_by, and a df create a new DataFrame that has all the right stuff set.
+        It will not materialize, just prepared for more operations
+        """
+        # update the series to also contain our group_by and group_by index
+        # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
+        new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index)
+                      for n, s in df.all_series.items() if n not in group_by.index.keys()}
+        return BuhTuhDataFrame(engine=df.engine,
+                               base_node=df.base_node,
+                               index=group_by.index,
+                               series=new_series,
+                               group_by=group_by,
+                               order_by=[])
 
     def groupby(
             self,
-            by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
-    ) -> 'BuhTuhGroupBy':
+            by: Union[GroupBySingleType,  # single series group_by
+                      Set[Union[GroupBySingleType, Tuple[GroupBySingleType]]],  # for GroupingSets
+                      List[Union[GroupBySingleType,                             # multi series
+                                 List[GroupBySingleType],                       # for grouping lists
+                                 Tuple[GroupBySingleType]]],                    # for grouping lists
+                      None] = None) -> 'BuhTuhDataFrame':
         """
         Group by any of the series currently in this dataframe, both from index
         as well as data.
-        :param by: The series to group by
+        :param by: The series to group by. Supported are: a str containing a series name,
+            a series, or a list of those.
+            If `by` is a list of (lists or tuples) , we'll create a grouping list
+            If `by` is a set of tuples, we'll create a grouping set,
+            else a normal group by will be created.
+        :note: if the dataframe is already grouped, we'll create a grouping list from the initial
+            grouping combined with this one.
         :return: an object to perform aggregations on
         """
-        from buhtuh.partitioning import BuhTuhGroupBy
-        return BuhTuhGroupBy(buh_tuh=self.copy_override(), group_by_columns=self._partition_by_columns(by))
+        from buhtuh.partitioning import BuhTuhGroupBy, BuhTuhGroupingList, BuhTuhGroupingSet
+
+        df = self
+        if self._group_by:
+            # We need to materialize this node first, we can't stack aggregations (yet)
+            df = self.get_df_materialized_model()
+
+        group_by: BuhTuhGroupBy
+        if isinstance(by, set):
+            # by is a list containing at least one other list. We're creating a grouping set
+            # aka "Yo dawg, I heard you like GroupBys, ..."
+            group_by = BuhTuhGroupingSet(
+                [BuhTuhGroupBy(group_by_columns=df._partition_by_series(b)) for b in by]
+            )
+        elif isinstance(by, list) and len([b for b in by if isinstance(b, (tuple, list))]) > 0:
+            group_by = BuhTuhGroupingList(
+                [BuhTuhGroupBy(group_by_columns=df._partition_by_series(b)) for b in by])
+        else:
+            by_mypy = cast(Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None], by)
+            group_by = BuhTuhGroupBy(group_by_columns=df._partition_by_series(by_mypy))
+
+        return self._groupby_to_frame(df, group_by)
 
     def window(self,
-               by: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None,
-               **frame_args):
+               by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+               **frame_args) -> 'BuhTuhDataFrame':
         """
         Create a window on the current dataframe and its sorting.
         TODO Better argument typing, needs fancy import logic
         :see: BuhTuhWindow __init__ for frame args
         """
         from buhtuh.partitioning import BuhTuhWindow
-        return BuhTuhWindow(buh_tuh=self.copy_override(),
-                            group_by_columns=self._partition_by_columns(by),
-                            **frame_args)
+        index = self._partition_by_series(by)
+        group_by = BuhTuhWindow(group_by_columns=index,
+                                order_by=self._order_by,
+                                **frame_args)
+        return self._groupby_to_frame(self, group_by)
+
+    def cube(self,
+             by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+             ) -> 'BuhTuhDataFrame':
+        """
+        Create a cube on any of the series currently in this dataframe, both from index
+        as well as data.
+        :see: BuhTuhCube for more info
+        """
+        from buhtuh.partitioning import BuhTuhCube
+        index = self._partition_by_series(by)
+        group_by = BuhTuhCube(group_by_columns=index)
+        return self._groupby_to_frame(self, group_by)
+
+    def rollup(self,
+               by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+               ) -> 'BuhTuhDataFrame':
+        """
+        Create a rollup on any of the series currently in this dataframe, both from index
+        as well as data.
+        :see: BuhTuhRollup for more info
+        """
+        from buhtuh.partitioning import BuhTuhRollup
+        index = self._partition_by_series(by)
+        group_by = BuhTuhRollup(group_by_columns=index)
+        return self._groupby_to_frame(self, group_by)
 
     def rolling(self, window: int,
                 min_periods: int = None,
                 center: bool = False,
-                on: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None,
-                closed: str = 'right') -> 'BuhTuhWindow':
+                on: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+                closed: str = 'right') -> 'BuhTuhDataFrame':
         """
         A rolling window of size 'window', by default right aligned
 
@@ -677,7 +789,8 @@ class BuhTuhDataFrame:
         :note:  the `on` parameter behaves differently from pandas, where it can be use to select to series
                 to iterate over.
         """
-        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, BuhTuhWindow
+        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, \
+            BuhTuhWindow
 
         if min_periods is None:
             min_periods = window
@@ -704,18 +817,21 @@ class BuhTuhDataFrame:
         else:
             end_boundary = BuhTuhWindowFrameBoundary.FOLLOWING
 
-        return BuhTuhWindow(buh_tuh=self.copy_override(),
-                            group_by_columns=self._partition_by_columns(on),
-                            mode=mode,
-                            start_boundary=start_boundary, start_value=start_value,
-                            end_boundary=end_boundary, end_value=end_value,
-                            min_values=min_periods)
+        index = self._partition_by_series(on)
+        group_by = BuhTuhWindow(group_by_columns=index,
+                                order_by=self._order_by,
+                                mode=mode,
+                                start_boundary=start_boundary, start_value=start_value,
+                                end_boundary=end_boundary, end_value=end_value,
+                                min_values=min_periods)
+
+        return self._groupby_to_frame(self, group_by)
 
     def expanding(self,
                   min_periods: int = 1,
                   center: bool = False,
-                  on: Union[str, 'BuhTuhSeries', List[str], List['BuhTuhSeries'], None] = None
-                  ) -> 'BuhTuhWindow':
+                  on: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
+                  ) -> 'BuhTuhDataFrame':
         """
         Create an expanding window starting with the first row in the group, with at least min_period
         observations. The result will be right-aligned in the window
@@ -726,7 +842,8 @@ class BuhTuhDataFrame:
                                 The partition is determined earlier in the process.
         """
         # TODO We could move the partitioning to BuhTuhGroupBy
-        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, BuhTuhWindow
+        from buhtuh.partitioning import BuhTuhWindowFrameBoundary, BuhTuhWindowFrameMode, \
+            BuhTuhWindow
 
         if center:
             # Will never be implemented probably, as it's also deprecated in pandas
@@ -738,12 +855,15 @@ class BuhTuhDataFrame:
         end_boundary = BuhTuhWindowFrameBoundary.CURRENT_ROW
         end_value = None
 
-        return BuhTuhWindow(buh_tuh=self.copy_override(),
-                            group_by_columns=self._partition_by_columns(on),
-                            mode=mode,
-                            start_boundary=start_boundary, start_value=start_value,
-                            end_boundary=end_boundary, end_value=end_value,
-                            min_values=min_periods)
+        index = self._partition_by_series(on)
+        group_by = BuhTuhWindow(group_by_columns=index,
+                                order_by=self._order_by,
+                                mode=mode,
+                                start_boundary=start_boundary, start_value=start_value,
+                                end_boundary=end_boundary, end_value=end_value,
+                                min_values=min_periods)
+
+        return self._groupby_to_frame(self, group_by)
 
     def sort_values(
             self,
@@ -854,18 +974,42 @@ class BuhTuhDataFrame:
                 if limit.stop is not None:
                     limit_str = f'limit {limit.stop}'
 
-        model_builder = CustomSqlModel(
-            name='view_sql',
-            sql='select {index_str}, {columns_sql_str} from {{_last_node}} {order} {limit}'
-        )
+        order_by_sql = self.get_order_by_sql()
+        limit_sql = '' if limit_str is None else f'{limit_str}'
 
-        return model_builder(
-            columns_sql_str=self._get_all_column_expressions_sql(),
-            index_str=self._get_all_index_expressions_sql(),
-            _last_node=self.base_node,
-            limit='' if limit_str is None else f'{limit_str}',
-            order=self.get_order_by_sql()
-        )
+        if self._group_by:
+            group_by_sql = self._group_by.get_group_by_columns_sql()
+            group_by_sql = f'group by {group_by_sql}' if group_by_sql != '' else ''
+
+            model_builder = CustomSqlModel(
+                sql="""
+                    select {group_by_columns}, {aggregate_columns}
+                    from {{prev}}
+                    {group_by}
+                    {order_by} {limit}
+                    """
+            )
+            return model_builder(
+                group_by_columns=self.group_by.get_index_columns_sql(),
+                aggregate_columns=', '.join([s.get_column_expression() for s in self._data.values()]),
+                group_by=group_by_sql,
+                order_by=order_by_sql,
+                limit=limit_sql,
+                prev=self.base_node
+            )
+        else:
+            model_builder = CustomSqlModel(
+                name='view_sql',
+                sql='select {index_str}, {columns_sql_str} from {{_last_node}} {order} {limit}'
+            )
+
+            return model_builder(
+                columns_sql_str=self._get_all_column_expressions_sql(),
+                index_str=self._get_all_index_expressions_sql(),
+                _last_node=self.base_node,
+                limit=limit_sql,
+                order=order_by_sql
+            )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
         """
@@ -919,6 +1063,89 @@ class BuhTuhDataFrame:
             suffixes=suffixes
         )
 
+    def _apply_func_to_series(self,
+                              func: Union[str, Callable, List[Union[str, Callable]],
+                                          Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
+                              axis: int = 1,
+                              numeric_only: bool = False,
+                              exclude_non_applied: bool = False,
+                              *args, **kwargs) -> List['BuhTuhSeries']:
+        """
+        :param func: function, str, list or dict to apply to all series
+            Function to use on the data. If a function, must work when passed a
+            BuhTuhSeries.
+
+            Accepted combinations are:
+            - function
+            - string function name
+            - list of functions and/or function names, e.g. [BuhTuhSeriesInt64.sum, 'mean']
+            - dict of axis labels -> functions, function names or list of such.
+        :param axis: the axis
+        :param numeric_only: Whether to apply to numeric series only, or attempt all.
+        :param exclude_non_applied: Exclude series where applying was not attempted / failed
+        :param args: Positional arguments to pass through to the aggregation function
+        :param kwargs: Keyword arguments to pass through to the aggregation function
+        :note: Pandas has numeric_only=None to attempt all columns but ignore failing ones
+            silently. This is currently not implemented.
+        :note: axis defaults to 1, because 0 is currently unsupported
+        """
+        from buhtuh.series import BuhTuhSeriesAbstractNumeric
+        if axis == 0:
+            raise NotImplementedError("Only axis=1 is currently implemented")
+
+        if numeric_only is None:
+            raise NotImplementedError("numeric_only=None to attempt all columns but ignore "
+                                      "failing ones silently is currently not implemented.")
+
+        apply_dict: Dict[str, List[Union[str, Callable]]] = {}
+        if isinstance(func, dict):
+            # make sure the keys are series we know
+            for k, v in func.items():
+                if k not in self._data:
+                    raise KeyError(f'{k} not found in group by series')
+                if isinstance(v, str) or callable(v):
+                    apply_dict[k] = [v]
+                elif isinstance(v, list):
+                    apply_dict[k] = v
+                else:
+                    raise TypeError(f'Unsupported value type {type(v)} in func dict for key {k}')
+        elif isinstance(func, (str, list)) or callable(func):
+            apply_dict = {}
+            # check whether we need to exclude non-numeric
+            for name, series in self.data.items():
+                if numeric_only and not isinstance(series, BuhTuhSeriesAbstractNumeric):
+                    continue
+                if isinstance(func, list):
+                    apply_dict[name] = func
+                else:
+                    apply_dict[name] = [func]
+        else:
+            raise TypeError(f'Unsupported type for func: {type(func)}')
+
+        new_series = {}
+        for name, series in self._data.items():
+            if name not in apply_dict:
+                if not exclude_non_applied:
+                    new_series[name] = series.copy_override()
+                continue
+            for applied in series.apply_func(apply_dict[name], *args, **kwargs):
+                if applied.name in new_series:
+                    raise ValueError(f'duplicate result series: {applied.name}')
+                new_series[applied.name] = applied
+
+        return list(new_series.values())
+
+    def apply_func(self, func: Union[str, Callable, List[Union[str, Callable]],
+                                     Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
+                   axis: int = 1,
+                   numeric_only: bool = False,
+                   exclude_non_applied: bool = False,
+                   *args, **kwargs) -> 'BuhTuhDataFrame':
+        """ see apply_to_series() """
+        series = self._apply_func_to_series(func, axis, numeric_only,
+                                            exclude_non_applied, *args, **kwargs)
+        return self.copy_override(series={s.name: s for s in series})
+
     def aggregate(self,
                   func: Union[str, Callable, List[Union[str, Callable]],
                               Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
@@ -935,39 +1162,33 @@ class BuhTuhDataFrame:
                         Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
             axis: int = 1,
             numeric_only: bool = False,
-            *args, **kwargs) -> 'BuhTuhDataFrame':
+            *args,
+            **kwargs) -> 'BuhTuhDataFrame':
         """
-        :param func: the aggregation function to look for on all series.
-            See BuhTuhGroupby.agg() for supported arguments
+        :param func: the aggregations to apply on all series.
+            See apply_func() for supported arguments
         :param axis: the aggregation axis
         :param numeric_only: Whether to aggregate numeric series only, or attempt all.
+        :param group_by: The grouping to use, defaults to entire dataframe
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
         :note: Pandas has numeric_only=None to attempt all columns but ignore failing ones
             silently. This is currently not implemented.
         :note: axis defaults to 1, because 0 is currently unsupported
         """
-        from buhtuh.series import BuhTuhSeriesAbstractNumeric
+        from buhtuh.partitioning import BuhTuhGroupBy
 
-        if axis == 0:
-            raise NotImplementedError("Only axis=1 is currently implemented")
+        group_by = self._group_by
+        if group_by is None:
+            group_by = BuhTuhGroupBy(self._partition_by_series([]))
 
-        if numeric_only is None:
-            raise NotImplementedError("numeric_only=None to attempt all columns but ignore "
-                                      "failing ones silently is currently not implemented.")
-
-        if isinstance(func, dict):
-            return self.groupby().aggregate(func, *args, **kwargs)
-        elif isinstance(func, (str, list)) or callable(func):
-            aggregation_series = {}
-            # check whether we need to exclude non-numeric
-            for name, series in self.data.items():
-                if numeric_only and not isinstance(series, BuhTuhSeriesAbstractNumeric):
-                    continue
-                aggregation_series[name] = func
-            return self.groupby().aggregate(aggregation_series, *args, **kwargs)
-        else:
-            raise TypeError(f'Unsupported type for func: {type(func)}')
+        new_series = self._apply_func_to_series(func, axis, numeric_only,
+                                                True,  # exclude_non_applied, must be positional arg.
+                                                group_by, *args, **kwargs)
+        return self.copy_override(index=group_by.index,
+                                  series={s.name: s for s in new_series},
+                                  group_by=[group_by],
+                                  order_by=[])
 
     def _aggregate_func(self, func, axis, level, numeric_only, *args, **kwargs):
         if level is not None:
@@ -975,7 +1196,7 @@ class BuhTuhDataFrame:
         return self.agg(func, axis, numeric_only, *args, **kwargs)
 
     # AGGREGATES
-    def count(self, axis=0, level=None, numeric_only=False, **kwargs):
+    def count(self, axis=None, level=None, numeric_only=False, **kwargs):
         return self._aggregate_func('count', axis, level, numeric_only, **kwargs)
 
     def kurt(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
@@ -1011,7 +1232,7 @@ class BuhTuhDataFrame:
         return self._aggregate_func('mode', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
-    def nunique(self, axis=0, skipna=True, **kwargs):
+    def nunique(self, axis=None, skipna=True, **kwargs):
         # deviation from horrible pd.nunique(axis=0, dropna=True)
         return self._aggregate_func('nunique', axis=axis,
                                     level=None, numeric_only=False, skipna=skipna, **kwargs)
@@ -1028,11 +1249,11 @@ class BuhTuhDataFrame:
         return self._aggregate_func('product', axis, level, numeric_only,
                                     skipna=skipna, min_count=min_count, **kwargs)
 
-    def sem(self, axis=None, skipna=True, level=None, ddof=1, numeric_only=False, **kwargs):
+    def sem(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('sem', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
-    def std(self, axis=None, skipna=True, level=None, ddof=1, numeric_only=False, **kwargs):
+    def std(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('std', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
@@ -1040,6 +1261,6 @@ class BuhTuhDataFrame:
         return self._aggregate_func('sum', axis, level, numeric_only,
                                     skipna=skipna, min_count=min_count, **kwargs)
 
-    def var(self, axis=None, skipna=True, level=None, ddof=1, numeric_only=False, **kwargs):
+    def var(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
