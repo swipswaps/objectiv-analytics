@@ -7,7 +7,7 @@ describe('getElementLocationStack', () => {
   });
 
   it('should console.error', () => {
-    jest.spyOn(console, 'error')
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     // @ts-ignore
     expect(getElementLocationStack(null)).toHaveLength(0);
     expect(console.error).toHaveBeenCalledTimes(1);

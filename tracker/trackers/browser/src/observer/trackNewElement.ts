@@ -1,4 +1,4 @@
-import { getLocationPath, TrackerElementLocations } from '@objectiv/tracker-core';
+import { getLocationPath, TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
 import { parseTrackClicksAttribute } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
@@ -16,7 +16,7 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * - Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
  * - All processed Elements are decorated with the `tracked` Tagging Attribute so we won't process them again.
  */
-export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
+export const trackNewElement = (element: Element, tracker: BrowserTracker, console?: TrackerConsole) => {
   try {
     if (isTaggedElement(element)) {
       // Prevent Elements from being tracked multiple times
@@ -34,11 +34,10 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
         const locationAddResult = TrackerElementLocations.add({ elementId, locationPath });
 
         // If location was not unique, log the issue
-        if (locationAddResult !== true) {
+        if (console && locationAddResult !== true) {
           const { existingElementId, collidingElementId } = locationAddResult;
-          const existingElement = document.querySelector(`[${TaggingAttribute.elementId}='${existingElementId}']`)
-          const collidingElement = document.querySelector(`[${TaggingAttribute.elementId}='${collidingElementId}']`)
-          // FIXME don't use the global console, instead use the console from the tracker config
+          const existingElement = document.querySelector(`[${TaggingAttribute.elementId}='${existingElementId}']`);
+          const collidingElement = document.querySelector(`[${TaggingAttribute.elementId}='${collidingElementId}']`);
           console.group(`｢objectiv:trackNewElement｣ Location collision detected: ${locationPath}`);
           console.error(`Existing Element:`, existingElement);
           console.error(`Colliding Element:`, collidingElement);

@@ -9,7 +9,7 @@ import { getTracker } from './getTracker';
 /**
  * The options that `startAutoTracking` accepts
  */
-export type AutoTrackingOptions = Pick<BrowserTrackerConfig, 'trackURLChanges' | 'trackApplicationLoaded'>;
+export type AutoTrackingOptions = Pick<BrowserTrackerConfig, 'trackURLChanges' | 'trackApplicationLoaded' | 'console'>;
 
 /**
  * Initializes our automatic tracking, based on Mutation Observer.
@@ -23,8 +23,11 @@ export const startAutoTracking = (options?: AutoTrackingOptions) => {
       return;
     }
 
+    // Create Mutation Observer Callback
+    const mutationCallback = makeMutationCallback(options?.trackURLChanges ?? true, options?.console);
+
     // Create Mutation Observer
-    AutoTrackingState.observerInstance = new MutationObserver(makeMutationCallback(options?.trackURLChanges ?? true));
+    AutoTrackingState.observerInstance = new MutationObserver(mutationCallback);
 
     // Start observing DOM
     AutoTrackingState.observerInstance.observe(document, {

@@ -1,4 +1,4 @@
-import { ContextsConfig } from "./Context";
+import { ContextsConfig } from './Context';
 
 /**
  * All possible lifecycle methods of a TrackerPlugin.

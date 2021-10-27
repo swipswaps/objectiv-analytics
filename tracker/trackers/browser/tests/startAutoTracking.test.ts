@@ -3,7 +3,7 @@ import {
   makeSectionContext,
   makeSectionHiddenEvent,
   makeSectionVisibleEvent,
-  makeURLChangeEvent
+  makeURLChangeEvent,
 } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
@@ -90,7 +90,7 @@ describe('makeMutationCallback - url changes', () => {
       value: {
         href: 'http://localhost/new-url',
       },
-      writable: true
+      writable: true,
     });
     mutationCallback([], mutationObserver);
 
@@ -105,7 +105,7 @@ describe('makeMutationCallback - url changes', () => {
       value: {
         href: 'http://localhost/',
       },
-      writable: true
+      writable: true,
     });
     AutoTrackingState.previousURL = 'http://localhost/';
 
@@ -117,7 +117,7 @@ describe('makeMutationCallback - url changes', () => {
       value: {
         href: 'http://localhost/another-url',
       },
-      writable: true
+      writable: true,
     });
     mutationCallback([], mutationObserver);
 
@@ -262,7 +262,7 @@ describe('makeMutationCallback - attribute changes', () => {
       // @ts-ignore
       target: trackedDiv,
       attributeName: TaggingAttribute.elementId,
-      oldValue
+      oldValue,
     };
     mutationCallback([mockedMutationRecord], mutationObserver);
   });

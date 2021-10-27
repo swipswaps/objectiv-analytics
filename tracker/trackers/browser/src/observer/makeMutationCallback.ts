@@ -1,4 +1,4 @@
-import { TrackerElementLocations } from '@objectiv/tracker-core';
+import { TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
 import { AutoTrackingState } from '../global/AutoTrackingState';
 import { getTracker } from '../global/getTracker';
 import { getLocationHref } from '../helpers';
@@ -34,7 +34,7 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * Application Loaded Event (default enabled, configurable)
  * Triggered once
  */
-export const makeMutationCallback = (trackURLChangeEvents: boolean): MutationCallback => {
+export const makeMutationCallback = (trackURLChangeEvents: boolean, console?: TrackerConsole): MutationCallback => {
   return (mutationsList) => {
     try {
       const tracker = getTracker();
@@ -58,7 +58,7 @@ export const makeMutationCallback = (trackURLChangeEvents: boolean): MutationCal
         // New DOM nodes mutation: attach event listeners to all Tracked Elements and track visibility:visible events
         addedNodes.forEach((addedNode) => {
           if (addedNode instanceof Element) {
-            trackNewElements(addedNode, tracker);
+            trackNewElements(addedNode, tracker, console);
           }
         });
 

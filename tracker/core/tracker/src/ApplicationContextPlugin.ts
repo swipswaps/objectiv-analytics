@@ -1,5 +1,5 @@
 import { ApplicationContext } from '@objectiv/schema';
-import { ContextsConfig } from "./Context";
+import { ContextsConfig } from './Context';
 import { makeApplicationContext } from './ContextFactories';
 import { TrackerConfig } from './Tracker';
 import { TrackerConsole } from './TrackerConsole';

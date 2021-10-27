@@ -1,4 +1,4 @@
-import { ContextsConfig } from "./Context";
+import { ContextsConfig } from './Context';
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
