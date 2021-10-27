@@ -34,7 +34,6 @@ import {
 
 describe('trackEvent', () => {
   const testElement = document.createElement('div');
-  document.body.appendChild(testElement);
 
   beforeEach(() => {
     jest.resetAllMocks();
@@ -46,32 +45,6 @@ describe('trackEvent', () => {
   afterEach(() => {
     getTrackerRepository().trackersMap = new Map();
     getTrackerRepository().defaultTracker = undefined;
-  });
-
-  it('should console.error if a Tracker instance cannot be retrieved and was not provided either', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    getTrackerRepository().trackersMap = new Map();
-    getTrackerRepository().defaultTracker = undefined;
-    expect(() => getTracker()).toThrow();
-    jest.resetAllMocks();
-
-    const parameters = { eventFactory: makeClickEvent, element: testElement };
-    trackEvent(parameters);
-
-    expect(console.error).toHaveBeenCalledTimes(2);
-    expect(console.error).toHaveBeenNthCalledWith(1, '｢objectiv:TrackerRepository｣ There are no Trackers.');
-    expect(console.error).toHaveBeenNthCalledWith(
-      2,
-      new Error('No Tracker found. Please create one via `makeTracker`.'),
-      parameters
-    );
-
-    trackEvent({ ...parameters, onError: console.error });
-    expect(console.error).toHaveBeenCalledTimes(4);
-    expect(console.error).toHaveBeenNthCalledWith(
-      4,
-      new Error('No Tracker found. Please create one via `makeTracker`.')
-    );
   });
 
   it('should use the global tracker instance if available', () => {
@@ -116,7 +89,6 @@ describe('trackEvent', () => {
     midSection.appendChild(div);
     untrackedSection.appendChild(midSection);
     topSection.appendChild(untrackedSection);
-    document.body.appendChild(topSection);
 
     trackEvent({ eventFactory: makeClickEvent, element: testDivToTrack });
 
@@ -151,7 +123,6 @@ describe('trackEvent', () => {
     midSection.appendChild(div);
     untrackedSection.appendChild(midSection);
     topSection.appendChild(untrackedSection);
-    document.body.appendChild(topSection);
 
     trackEvent({ eventFactory: makeClickEvent, element: testElement });
 
@@ -173,7 +144,6 @@ describe('trackEvent', () => {
     const div = document.createElement('div');
 
     div.appendChild(testElement);
-    document.body.appendChild(div);
 
     trackEvent({ eventFactory: makeClickEvent, element: testElement });
 
@@ -281,5 +251,34 @@ describe('trackEvent', () => {
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeAbortedEvent()));
+  });
+});
+
+describe('trackEvent', () => {
+  const testElement = document.createElement('div');
+
+  getTrackerRepository().trackersMap = new Map();
+  getTrackerRepository().defaultTracker = undefined;
+
+  it('should console.error if a Tracker instance cannot be retrieved and was not provided either', () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const parameters = { eventFactory: makeClickEvent, element: testElement };
+    trackEvent(parameters);
+
+    expect(console.error).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenNthCalledWith(1, '｢objectiv:TrackerRepository｣ There are no Trackers.');
+    expect(console.error).toHaveBeenNthCalledWith(
+      2,
+      new Error('No Tracker found. Please create one via `makeTracker`.'),
+      parameters
+    );
+
+    trackEvent({ ...parameters, onError: console.error });
+    expect(console.error).toHaveBeenCalledTimes(4);
+    expect(console.error).toHaveBeenNthCalledWith(
+      4,
+      new Error('No Tracker found. Please create one via `makeTracker`.')
+    );
   });
 });

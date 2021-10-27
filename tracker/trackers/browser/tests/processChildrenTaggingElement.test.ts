@@ -72,7 +72,6 @@ describe('processChildrenTrackingElement', () => {
     const childButton = document.createElement('button');
     childButton.setAttribute('id', 'button-id-1');
     div.appendChild(childButton);
-    document.body.appendChild(div);
 
     div.setAttribute(
       TaggingAttribute.tagChildren,
