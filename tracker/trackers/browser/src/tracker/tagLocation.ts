@@ -45,7 +45,13 @@ export const TagLocationOptions = object({
   parent: TagLocationReturnValue,
   validate: optional(ValidateAttribute),
 });
-export type TagLocationOptions = Infer<typeof TagLocationOptions>;
+export type TagLocationOptions = {
+  trackClicks?: TrackClicksAttribute,
+  trackBlurs?: boolean,
+  trackVisibility?: TrackVisibilityAttribute,
+  parent?: TagLocationReturnValue,
+  validate?: ValidateAttribute,
+};
 
 export const TagLocationParameters = object({
   instance: AnyLocationContext,
