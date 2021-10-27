@@ -1,9 +1,12 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+from decimal import Decimal
+
 import pytest
 
 from buhtuh import BuhTuhSeries, BuhTuhSeriesAbstractNumeric
+from buhtuh.partitioning import BuhTuhGroupingList, BuhTuhGroupingSet, BuhTuhRollup, BuhTuhCube
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
@@ -272,6 +275,10 @@ def test_cube_basics():
     # instant stonks through variable naming
     btc = bt.cube(['municipality','city'])
 
+    assert(isinstance(btc.group_by, BuhTuhCube))
+    assert(btc.group_by.get_group_by_columns_sql()
+           == 'CUBE ("municipality", "city")')
+
     result_bt = btc[['inhabitants']].sum()
     assert_equals_data(
         result_bt,
@@ -293,28 +300,10 @@ def test_cube_basics():
 def test_rollup_basics():
     bt = get_bt_with_test_data(full_data_set=False)
 
-    btc = bt.rollup(['municipality','city'])
-
-    result_bt = btc['inhabitants'].sum()
-    assert_equals_data(
-        result_bt,
-        order_by=['municipality','city'],
-        expected_columns=['municipality', 'city', 'inhabitants_sum'],
-        expected_data=[
-            ['Leeuwarden', 'Ljouwert', 93485],
-            ['Leeuwarden', None, 93485],
-            ['Súdwest-Fryslân', 'Drylts', 3055],
-            ['Súdwest-Fryslân', 'Snits', 33520],
-            ['Súdwest-Fryslân', None, 36575],
-            [None, None, 130060]
-        ]
-    )
-
-
-def test_rollup_basics():
-    bt = get_bt_with_test_data(full_data_set=False)
-
     btr = bt.rollup(['municipality','city'])
+    assert(isinstance(btr.group_by, BuhTuhRollup))
+    assert(btr.group_by.get_group_by_columns_sql()
+           == 'ROLLUP ("municipality", "city")')
 
     result_bt = btr[['inhabitants']].sum()
     assert_equals_data(
@@ -331,45 +320,64 @@ def test_rollup_basics():
         ]
     )
 
+
 def test_grouping_list_basics():
+    # This is not the greatest test, but at least it tests the interface.
     bt = get_bt_with_test_data(full_data_set=False)
+    btl1 = bt.groupby([['municipality'], ['city']])
+    btl2 = bt.groupby([['municipality'], 'city'])
+    btl3 = bt.groupby(['municipality', ['city']])
 
-    # make it explicit
-    btl = bt.groupby(list([['municipality'], ['city']]))
+    assert(btl1 == btl2)
+    assert(btl1 == btl3)
 
-    result_bt = btl[['inhabitants']].sum()
+    # This is not the greatest test, but at least it tests the interface.
+    assert(isinstance(btl1.group_by, BuhTuhGroupingList))
+    assert(btl1.group_by.get_group_by_columns_sql()
+           == '("municipality"), ("city")')
+
+    result_bt = btl1[['inhabitants']].sum()
     assert_equals_data(
         result_bt,
-        order_by=['municipality','city'],
+        order_by=['municipality', 'city'],
         expected_columns=['municipality', 'city', 'inhabitants_sum'],
         expected_data=[
-            ['Leeuwarden', 'Ljouwert', 93485], ['Súdwest-Fryslân', 'Drylts', 3055], ['Súdwest-Fryslân', 'Snits', 33520]
+            ['Leeuwarden', 'Ljouwert', Decimal('93485')],
+            ['Súdwest-Fryslân', 'Drylts', Decimal('3055')],
+            ['Súdwest-Fryslân', 'Snits', Decimal('33520')]
         ]
     )
 
 def test_grouping_set_basics():
+    # This is not the greatest test, but at least it tests the interface.
     bt = get_bt_with_test_data(full_data_set=False)
+    bts1 = bt.groupby((('municipality'), ('city')))
+    bts2 = bt.groupby((('municipality'), 'city'))
+    bts3 = bt.groupby(('municipality', ('city')))
 
-    bts = bt.groupby({('municipality'), ('city')})
-    result_bt = bts[['inhabitants']].sum()
+    assert(bts1 == bts2)
+    assert(bts1 == bts3)
 
-    expected_columns = ['municipality', 'city', 'inhabitants_sum']
-    expected_data = [
-        ['Leeuwarden', None, 93485], ['Súdwest-Fryslân', None, 36575],
-        [None, 'Drylts', 3055], [None, 'Ljouwert', 93485], [None, 'Snits', 33520]
-    ]
+    assert(isinstance(bts1.group_by, BuhTuhGroupingSet))
+    assert(bts1.group_by.get_group_by_columns_sql()
+           == 'GROUPING SETS (("municipality"), ("city"))')
+
+    result_bt = bts1[['inhabitants']].sum()
 
     # order of index is dynamic since it's a set. Make sure it's in the right order.
-    index_keys = list(result_bt.index.keys())
-    index_0 = index_keys.index(expected_columns[0])
-    index_1 = index_keys.index(expected_columns[1])
-    expected_data = [[r[index_0], r[index_1], r[2]] for r in expected_data]
+    # index_keys = list(result_bt.index.keys())
+    # index_0 = index_keys.index(expected_columns[0])
+    # index_1 = index_keys.index(expected_columns[1])
+    # expected_data = [[r[index_0], r[index_1], r[2]] for r in expected_data]
 
     assert_equals_data(
         result_bt,
         order_by=['municipality', 'city'],
-        expected_columns=list(result_bt.index.keys()) + ['inhabitants_sum'],
-        expected_data=expected_data
+        expected_columns=['municipality', 'city', 'inhabitants_sum'],
+        expected_data = [
+            ['Leeuwarden', None, 93485], ['Súdwest-Fryslân', None, 36575],
+            [None, 'Drylts', 3055], [None, 'Ljouwert', 93485], [None, 'Snits', 33520]
+        ]
     )
 
 

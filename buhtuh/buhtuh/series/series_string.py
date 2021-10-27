@@ -27,13 +27,13 @@ class BuhTuhSeriesString(BuhTuhSeries):
         other = const_to_series(base=self, value=other)
         self._check_supported('add', ['string'], other)
         expression = Expression.construct('({}) || ({})', self, other)
-        return self._get_derived_series('string', expression)
+        return self.copy_override(dtype='string', expression=expression)
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     def slice(self, start: Union[int, slice], stop: int = None) -> 'BuhTuhSeriesString':
         """
@@ -90,4 +90,4 @@ class BuhTuhSeriesString(BuhTuhSeries):
                     else:
                         expression = Expression.construct("''")
 
-        return self._get_derived_series('string', expression)
+        return self.copy_override(dtype='string', expression=expression)

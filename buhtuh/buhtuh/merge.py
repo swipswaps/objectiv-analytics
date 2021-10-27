@@ -241,8 +241,15 @@ def merge(
     """
     if how not in ('left', 'right', 'outer', 'inner', 'cross'):
         raise ValueError(f"how must be one of ('left', 'right', 'outer', 'inner', 'cross'), value: {how}")
-    if left.group_by or right.group_by:
-        raise ValueError('merge not supported for aggregated frames that have not been materialized')
+
+    if left.group_by:
+        left = left.get_df_materialized_model()
+
+    if right.group_by:
+        if isinstance(right, BuhTuhSeries):
+            right = right.to_frame()
+        right = right.get_df_materialized_model()
+
     real_how = How(how)
     real_left_on, real_right_on = _determine_left_on_right_on(
         left=left,

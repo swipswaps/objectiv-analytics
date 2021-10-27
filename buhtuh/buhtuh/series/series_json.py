@@ -77,7 +77,7 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
             f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
             self.expression, other.expression
         )
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     def __le__(self, other) -> 'BuhTuhSeriesBoolean':
         return self._comparator_operator(other, "<@")
@@ -118,9 +118,9 @@ class Json:
 
     def __getitem__(self, key: Union[str, int, slice]):
         if isinstance(key, int):
-            return self._series_object._get_derived_series(
-                'jsonb',
-                Expression.construct(f'{{}}->{key}', self._series_object)
+            return self._series_object.copy_override(
+                dtype='jsonb',
+                expression=Expression.construct(f'{{}}->{key}', self._series_object)
             )
         elif isinstance(key, str):
             return self.get_value(key)
@@ -162,9 +162,9 @@ class Json:
             from jsonb_array_elements({{}}) with ordinality x
             where ordinality - 1 {where})"""
             expression_references += 1
-            return self._series_object._get_derived_series(
-                'jsonb',
-                Expression.construct(
+            return self._series_object.copy_override(
+                dtype='jsonb',
+                expression=Expression.construct(
                     combined_expression,
                     *([self._series_object] * expression_references)
                 ))
@@ -190,7 +190,7 @@ class Json:
             return_as_string_operator = '>'
             return_dtype = 'string'
         expression = Expression.construct(f"{{}}->{return_as_string_operator}'{key}'", self._series_object)
-        return self._series_object._get_derived_series(return_dtype, expression)
+        return self._series_object.copy_override(dtype=return_dtype, expression=expression)
 
     def sub_dict(self, keys: list):
         jsonb_build_object_str = [f"'{key}', value -> '{key}'" for key in keys]
@@ -209,14 +209,12 @@ class Json:
             expression_str,
             self._series_object
         )
-        series = self._series_object._get_derived_series(dtype, expression)
-        return series
+        return self._series_object.copy_override(dtype=dtype, expression=expression)
 
     @property
     def feature_stack(self):
         expression = self.sub_dict(['_type', 'id'])
-        series = self._series_object._get_derived_series('jsonb', expression)
-        return series
+        return self._series_object.copy_override(dtype='jsonb', expression=expression)
 
     @property
     def navigation_features(self):
@@ -264,4 +262,4 @@ class Json:
             self._series_object,
             self._series_object
         )
-        return self._series_object._get_derived_series('string', expression)
+        return self._series_object.copy_override(dtype='string', expression=expression)

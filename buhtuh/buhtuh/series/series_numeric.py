@@ -25,39 +25,36 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
         self._check_supported('add', ['int64', 'float64'], other)
         expression = Expression.construct('({}) + ({})', self, other)
         new_dtype = 'float64' if 'float64' in (self.dtype, other.dtype) else 'int64'
-        return self._get_derived_series(new_dtype, expression)
+        return self.copy_override(dtype=new_dtype, expression=expression)
 
     def __sub__(self, other) -> 'BuhTuhSeries':
         other = const_to_series(base=self, value=other)
         self._check_supported('sub', ['int64', 'float64'], other)
         expression = Expression.construct('({}) - ({})', self, other)
         new_dtype = 'float64' if 'float64' in (self.dtype, other.dtype) else 'int64'
-        return self._get_derived_series(new_dtype, expression)
+        return self.copy_override(dtype=new_dtype, expression=expression)
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['int64', 'float64'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     def __truediv__(self, other):
         other = const_to_series(base=self, value=other)
         self._check_supported('division', ['int64', 'float64'], other)
         expression = Expression.construct('cast({} as float) / ({})', self, other)
-        return self._get_derived_series('float64', expression)
+        return self.copy_override(dtype='float64', expression=expression)
 
     def __floordiv__(self, other):
         other = const_to_series(base=self, value=other)
         self._check_supported('division', ['int64', 'float64'], other)
         expression = Expression.construct('cast({} as bigint) / ({})', self, other)
-        return self._get_derived_series('int64', expression)
+        return self.copy_override(dtype='int64', expression=expression)
 
     def round(self, decimals: int = 0):
-        return self._get_derived_series(
-            self.dtype,
-            # cast to numeric, as double precision values can not be rounded
-            # if you round, you don't care about precision anyway ;)
-            Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
+        return self.copy_override(
+            expression=Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
 
     def _ddof_unsupported(self, ddof: Optional[int]):
