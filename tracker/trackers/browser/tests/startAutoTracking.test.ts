@@ -241,3 +241,29 @@ describe('makeMutationCallback - removed nodes', () => {
     );
   });
 });
+
+describe('makeMutationCallback - attribute changes', () => {
+  it('should remove element from TrackerElementLocations when its id changes', () => {
+    const mutationCallback = makeMutationCallback(false);
+    const mutationObserver = new MutationObserver(mutationCallback);
+
+    const trackedDiv = makeTaggedElement('div', 'div', 'div');
+
+    const oldValue = 'old-id';
+    const mockedMutationRecord: MutationRecord = {
+      attributeNamespace: null,
+      nextSibling: null,
+      previousSibling: null,
+      // @ts-ignore
+      addedNodes: [],
+      // @ts-ignore
+      removedNodes: [],
+      type: 'attributes',
+      // @ts-ignore
+      target: trackedDiv,
+      attributeName: TaggingAttribute.elementId,
+      oldValue
+    };
+    mutationCallback([mockedMutationRecord], mutationObserver);
+  });
+});
