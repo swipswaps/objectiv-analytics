@@ -276,9 +276,6 @@ class BuhTuhSeries(ABC):
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
 
-    def _get_derived_series(self, new_dtype: str, expression: Expression):
-        return self.copy_override(dtype=new_dtype, expression=expression)
-
     def head(self, n: int = 5):
         """
         Return the first `n` rows.
@@ -322,7 +319,7 @@ class BuhTuhSeries(ABC):
         expression = series_type.dtype_to_expression(self.dtype, self.expression)
         # get the real dtype, in case the provided dtype was an alias. mypy needs some help
         new_dtype = cast(str, series_type.dtype)
-        return self._get_derived_series(new_dtype=new_dtype, expression=expression)
+        return self.copy_override(dtype=new_dtype, expression=expression)
 
     def equals(self, other: Any, recursion: str = None) -> bool:
         """
@@ -372,7 +369,7 @@ class BuhTuhSeries(ABC):
             expression_str,
             self
         )
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     def notnull(self):
         expression_str = f'{{}} is not null'
@@ -380,7 +377,7 @@ class BuhTuhSeries(ABC):
             expression_str,
             self
         )
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     # Below methods are not abstract, as they can be optionally be implemented by subclasses.
     def __add__(self, other) -> 'BuhTuhSeries':
@@ -624,9 +621,10 @@ class BuhTuhSeries(ABC):
         :note: Pandas replaces np.nan values, we can only replace NULL.
         :note: you can replace None with None, have fun, forever!
         """
-        return self._get_derived_series(
-            self.dtype,
-            Expression.construct('COALESCE({}, {})', self, self.value_to_expression(constant_value))
+        return self.copy_override(
+            expression=Expression.construct(
+                'COALESCE({}, {})', self, self.value_to_expression(constant_value)
+            )
         )
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):

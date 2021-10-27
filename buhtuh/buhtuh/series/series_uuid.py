@@ -70,4 +70,4 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
         else:
             expression = Expression.construct(f'({{}}) {comparator} (cast({{}} as uuid))', self, other)
 
-        return self._get_derived_series('boolean', expression)
+        return self.copy_override(dtype='bool', expression=expression)
