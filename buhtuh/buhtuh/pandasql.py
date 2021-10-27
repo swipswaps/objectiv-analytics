@@ -413,15 +413,18 @@ class BuhTuhDataFrame:
             return self._df_or_series(df=self.copy_override(base_node=model))
 
         if isinstance(key, BuhTuhSeriesBoolean):
-            if self._group_by is not None:
-                raise NotImplementedError("HAVING is not implemented yet")
-
             # We only support first level boolean indices for now
             if key.base_node != self.base_node:
                 raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
                                  'Hint: make sure the Boolean series is derived from this DataFrame. '
                                  'Alternative: use df.merge(series) to merge the series with the df first,'
                                  'and then create a new Boolean series on the resulting merged data.')
+            if self._group_by is not None:
+                # HAVING is not implemented yet
+                self.get_df_materialized_model()
+                raise ValueError("Please materialize this the DataFrame before creating the expression. "
+                                 "Use df.get_df_materialized_model() to do so.")
+
             model_builder = CustomSqlModel(
                 name='boolean_selection',
                 sql='select {index_str}, {columns_sql_str} from {{_last_node}} where {where}'
@@ -641,7 +644,7 @@ class BuhTuhDataFrame:
 
     def _partition_by_series(self,
                              by: Union[GroupBySingleType,
-                                       Union[List[GroupBySingleType], Tuple[GroupBySingleType]],
+                                       Union[List[GroupBySingleType], Tuple[GroupBySingleType, ...]],
                                        None]) -> List['BuhTuhSeries']:
         """
         Helper method to check and compile a partitioning list
@@ -670,7 +673,8 @@ class BuhTuhDataFrame:
 
         return group_by_columns
 
-    def _groupby_to_frame(self, df: 'BuhTuhDataFrame', group_by: 'BuhTuhGroupBy'):
+    @classmethod
+    def _groupby_to_frame(cls, df: 'BuhTuhDataFrame', group_by: 'BuhTuhGroupBy'):
         """
         Given a group_by, and a df create a new DataFrame that has all the right stuff set.
         It will not materialize, just prepared for more operations
@@ -679,20 +683,21 @@ class BuhTuhDataFrame:
         # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
         new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index)
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
-        return BuhTuhDataFrame(engine=df.engine,
-                               base_node=df.base_node,
-                               index=group_by.index,
-                               series=new_series,
-                               group_by=group_by,
-                               order_by=[])
+        return cls(engine=df.engine,
+                   base_node=df.base_node,
+                   index=group_by.index,
+                   series=new_series,
+                   group_by=group_by,
+                   order_by=[])
 
     def groupby(
             self,
             by: Union[GroupBySingleType,  # single series group_by
-                      Set[Union[GroupBySingleType, Tuple[GroupBySingleType]]],  # for GroupingSets
+                      # for GroupingSets
+                      Tuple[Union[GroupBySingleType, Tuple[GroupBySingleType, ...]], ...],
                       List[Union[GroupBySingleType,                             # multi series
                                  List[GroupBySingleType],                       # for grouping lists
-                                 Tuple[GroupBySingleType]]],                    # for grouping lists
+                                 Tuple[GroupBySingleType, ...]]],                    # for grouping lists
                       None] = None) -> 'BuhTuhDataFrame':
         """
         Group by any of the series currently in this dataframe, both from index
@@ -700,7 +705,7 @@ class BuhTuhDataFrame:
         :param by: The series to group by. Supported are: a str containing a series name,
             a series, or a list of those.
             If `by` is a list of (lists or tuples) , we'll create a grouping list
-            If `by` is a set of tuples, we'll create a grouping set,
+            If `by` is a tuple of tuples, we'll create a grouping set,
             else a normal group by will be created.
         :note: if the dataframe is already grouped, we'll create a grouping list from the initial
             grouping combined with this one.
@@ -714,7 +719,7 @@ class BuhTuhDataFrame:
             df = self.get_df_materialized_model()
 
         group_by: BuhTuhGroupBy
-        if isinstance(by, set):
+        if isinstance(by, tuple):
             # by is a list containing at least one other list. We're creating a grouping set
             # aka "Yo dawg, I heard you like GroupBys, ..."
             group_by = BuhTuhGroupingSet(
@@ -724,10 +729,11 @@ class BuhTuhDataFrame:
             group_by = BuhTuhGroupingList(
                 [BuhTuhGroupBy(group_by_columns=df._partition_by_series(b)) for b in by])
         else:
-            by_mypy = cast(Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None], by)
+            by_mypy = cast(Union[str, 'BuhTuhSeries',
+                                 List[BuhTuhDataFrame.GroupBySingleType], None], by)
             group_by = BuhTuhGroupBy(group_by_columns=df._partition_by_series(by_mypy))
 
-        return self._groupby_to_frame(df, group_by)
+        return BuhTuhDataFrame._groupby_to_frame(df, group_by)
 
     def window(self,
                by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
@@ -742,7 +748,7 @@ class BuhTuhDataFrame:
         group_by = BuhTuhWindow(group_by_columns=index,
                                 order_by=self._order_by,
                                 **frame_args)
-        return self._groupby_to_frame(self, group_by)
+        return BuhTuhDataFrame._groupby_to_frame(self, group_by)
 
     def cube(self,
              by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
@@ -755,7 +761,7 @@ class BuhTuhDataFrame:
         from buhtuh.partitioning import BuhTuhCube
         index = self._partition_by_series(by)
         group_by = BuhTuhCube(group_by_columns=index)
-        return self._groupby_to_frame(self, group_by)
+        return BuhTuhDataFrame._groupby_to_frame(self, group_by)
 
     def rollup(self,
                by: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']], None] = None,
@@ -768,7 +774,7 @@ class BuhTuhDataFrame:
         from buhtuh.partitioning import BuhTuhRollup
         index = self._partition_by_series(by)
         group_by = BuhTuhRollup(group_by_columns=index)
-        return self._groupby_to_frame(self, group_by)
+        return BuhTuhDataFrame._groupby_to_frame(self, group_by)
 
     def rolling(self, window: int,
                 min_periods: int = None,
@@ -825,7 +831,7 @@ class BuhTuhDataFrame:
                                 end_boundary=end_boundary, end_value=end_value,
                                 min_values=min_periods)
 
-        return self._groupby_to_frame(self, group_by)
+        return BuhTuhDataFrame._groupby_to_frame(self, group_by)
 
     def expanding(self,
                   min_periods: int = 1,
@@ -863,7 +869,7 @@ class BuhTuhDataFrame:
                                 end_boundary=end_boundary, end_value=end_value,
                                 min_values=min_periods)
 
-        return self._groupby_to_frame(self, group_by)
+        return BuhTuhDataFrame._groupby_to_frame(self, group_by)
 
     def sort_values(
             self,

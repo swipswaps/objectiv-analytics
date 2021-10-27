@@ -1,6 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import pytest
+
 from buhtuh import BuhTuhDataFrame, BuhTuhSeriesString, BuhTuhSeries
 from tests.functional.buhtuh.test_data_and_utils import assert_equals_data, get_bt_with_test_data, df_to_list
 
@@ -93,3 +95,11 @@ def test_positional_slicing():
                               'founding'],
             expected_data=df_to_list(bt.to_df()[slice])
         )
+
+def test_get_item_materialize():
+    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants']]
+    bt = bt.groupby('municipality')[['inhabitants']].sum()
+
+    with pytest.raises(ValueError, match='materialize this the DataFrame '
+                                         'before creating the expression'):
+        bt[bt.inhabitants_sum != 10]
