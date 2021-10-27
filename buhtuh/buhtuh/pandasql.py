@@ -413,15 +413,18 @@ class BuhTuhDataFrame:
             return self._df_or_series(df=self.copy_override(base_node=model))
 
         if isinstance(key, BuhTuhSeriesBoolean):
-            if self._group_by is not None:
-                raise NotImplementedError("HAVING is not implemented yet")
-
             # We only support first level boolean indices for now
             if key.base_node != self.base_node:
                 raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
                                  'Hint: make sure the Boolean series is derived from this DataFrame. '
                                  'Alternative: use df.merge(series) to merge the series with the df first,'
                                  'and then create a new Boolean series on the resulting merged data.')
+            if self._group_by is not None:
+                # HAVING is not implemented yet
+                self.get_df_materialized_model()
+                raise ValueError("Please materialize this the DataFrame before creating the expression. "
+                                 "Use df.get_df_materialized_model() to do so.")
+
             model_builder = CustomSqlModel(
                 name='boolean_selection',
                 sql='select {index_str}, {columns_sql_str} from {{_last_node}} where {where}'
