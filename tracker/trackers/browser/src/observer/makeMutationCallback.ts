@@ -21,10 +21,10 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  *
  * Existing nodes changing.
  * The same Observer is also configured to monitor changes in our visibility attribute.
- * When we detect a change in the visibility of a tracked element we trigger the corresponding visibility events.
+ * When we detect a change in the visibility of a tagged element we trigger the corresponding visibility events.
  *
  * Existing nodes being removed.
- * We also monitor nodes that are removed. If those nodes are Tracked Elements of which we were tracking visibility
+ * We also monitor nodes that are removed. If those nodes are Tagged Elements of which we were tracking visibility
  * we will trigger visibility: hidden events for them.
  *
  * SPA URL changes (default enabled, configurable)
@@ -55,7 +55,7 @@ export const makeMutationCallback = (trackURLChangeEvents: boolean, console?: Tr
           TrackerElementLocations.delete(oldValue);
         }
 
-        // New DOM nodes mutation: attach event listeners to all Tracked Elements and track visibility:visible events
+        // New DOM nodes mutation: attach event listeners to all Tagged Elements and track visibility:visible events
         addedNodes.forEach((addedNode) => {
           if (addedNode instanceof Element) {
             trackNewElements(addedNode, tracker, console);

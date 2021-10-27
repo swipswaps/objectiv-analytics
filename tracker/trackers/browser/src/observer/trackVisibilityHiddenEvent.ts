@@ -6,6 +6,7 @@ import { trackerErrorHandler } from '../trackerErrorHandler';
 import { TaggedElement } from '../typeGuards';
 
 /**
+ * FIXME
  * Checks if the given Node is a tracked element and if we need to trigger a visibility: hidden event for it.
  */
 export const trackVisibilityHiddenEvent = (element: TaggedElement, tracker: BrowserTracker) => {

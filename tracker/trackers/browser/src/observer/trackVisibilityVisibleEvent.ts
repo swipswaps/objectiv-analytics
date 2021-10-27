@@ -6,7 +6,8 @@ import { trackerErrorHandler } from '../trackerErrorHandler';
 import { TaggedElement } from '../typeGuards';
 
 /**
- * Checks if the given Node is a tracked element and if we need to trigger a visibility: visible event for it.
+ * Given a newly added Element node it will determine whether to track a visibility:visible event for it.
+ * Visible Events are triggered only Elements that have their visibility auto-tracked or manually set to visible.
  */
 export const trackVisibilityVisibleEvent = (element: TaggedElement, tracker: BrowserTracker) => {
   try {

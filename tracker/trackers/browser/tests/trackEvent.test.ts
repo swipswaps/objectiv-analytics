@@ -70,7 +70,7 @@ describe('trackEvent', () => {
     expect(trackerOverride.trackEvent).toHaveBeenNthCalledWith(1, makeClickEvent());
   });
 
-  it('should track Tracked Elements with a location stack', () => {
+  it('should track Tagged Elements with a location stack', () => {
     const testDivToTrack = document.createElement('div');
     testDivToTrack.setAttribute(TaggingAttribute.context, JSON.stringify(makeSectionContext({ id: 'test' })));
 
@@ -107,7 +107,7 @@ describe('trackEvent', () => {
     );
   });
 
-  it('should track regular Elements with a location stack if their parents are Tracked Elements', () => {
+  it('should track regular Elements with a location stack if their parents are Tagged Elements', () => {
     const div = document.createElement('div');
     div.setAttribute(TaggingAttribute.context, JSON.stringify(makeSectionContext({ id: 'div' })));
 

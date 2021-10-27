@@ -7,8 +7,13 @@ import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
 
 /**
- * Given a removed Element nodes it will determine whether to track a visibility:hidden event for it
- * Hidden Events are triggered only for automatically tracked Elements.
+ * Given a removed Element node it will:
+ *
+ *   1. Determine whether to track a visibility:hidden event for it.
+ *      Hidden Events are triggered only for automatically tracked Elements.
+ *
+ *   2. Remove the Element from the TrackerElementLocations state.
+ *      This is both a clean-up and a way to allow it to be re-rendered as-is, as it happens with some UI libraries.
  */
 export const trackRemovedElement = (element: Element, tracker: BrowserTracker) => {
   try {

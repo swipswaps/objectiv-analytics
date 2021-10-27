@@ -18,7 +18,7 @@ export const findTaggedParentElements = (
 
   let nextElement: TaggableElement | null = element.parentElement;
 
-  // If this element has a Parent Tracked Element Id specified, follow that instead of the DOM parentElement
+  // If this element has a Parent Tagged Element Id specified, follow that instead of the DOM parentElement
   if (isCustomParentTaggedElement(element)) {
     const parentElementId = element.getAttribute(TaggingAttribute.parentElementId);
     const parentElement = document.querySelector(`[${TaggingAttribute.elementId}='${parentElementId}']`);

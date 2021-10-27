@@ -30,7 +30,7 @@ export const getElementLocationStack = (parameters: {
 
     // Traverse the DOM to reconstruct Element's Location
     if (isTaggableElement(element)) {
-      // Retrieve parent Tracked Elements
+      // Retrieve Tagged Parent Elements
       const elementsStack = findTaggedParentElements(element).reverse();
 
       // Re-hydrate Location Stack
