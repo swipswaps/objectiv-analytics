@@ -85,8 +85,8 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
     // All discriminating properties start with this prefix
     const DISCRIMINATING_PROPERTY_PREFIX: DiscriminatingPropertyPrefix = '__';
 
-    // Clone the TrackerEvent to avoid mutating the original
-    const cleanedTrackerEvent: TrackerEvent = new TrackerEvent(this);
+    // Deep-clone the TrackerEvent to avoid mutating the original
+    const cleanedTrackerEvent: TrackerEvent = { ...this };
 
     // Our cleaning function
     const cleanObjectFromDiscriminatingProperties = <T extends object>(obj: T) => {
