@@ -452,7 +452,7 @@ class BuhTuhDataFrame:
                                   f"but got {type(key)}")
 
     def __getattr__(self, attr):
-        return self.data[attr]
+        return self._data[attr]
 
     def __setitem__(self,
                     key: Union[str, List[str]],
