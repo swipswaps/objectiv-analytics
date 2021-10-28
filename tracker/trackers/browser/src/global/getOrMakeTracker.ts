@@ -3,7 +3,7 @@ import { getTrackerRepository } from './getTrackerRepository';
 import { makeTracker } from './makeTracker';
 
 /**
- * Retrieves a specific Tracker's instance  from the TrackerRepository or creates one if it doesn't exists.
+ * Retrieves a specific Tracker's instance from the TrackerRepository or creates one if it doesn't exists.
  * Throws if the given Tracker ID exists but its configuration doesn't match the given one.
  */
 export const getOrMakeTracker = (trackerConfig: BrowserTrackerConfig): BrowserTracker => {
