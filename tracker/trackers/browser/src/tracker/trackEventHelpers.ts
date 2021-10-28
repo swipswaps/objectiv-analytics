@@ -13,9 +13,9 @@ import {
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
 import { trackEvent } from '../tracker/trackEvent';
+import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
 import { TaggableElement } from '../typeGuards';
 import { BrowserTracker } from './BrowserTracker';
-import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
 
 /**
  * The parameters of the Event helper functions
