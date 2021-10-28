@@ -9,7 +9,7 @@ import {
   tagNavigation,
   tagOverlay,
 } from '../src';
-import { matchElementId } from './mocks/matchElementId';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('tagLocationHelpers', () => {
   beforeEach(() => {
@@ -62,7 +62,7 @@ describe('tagLocationHelpers', () => {
     const taggingAttributes = tagButton({ id: 'test-button', text: 'Click Me' });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
@@ -81,7 +81,7 @@ describe('tagLocationHelpers', () => {
     const taggingAttributes = tagElement({ id: 'test-section' });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -98,7 +98,7 @@ describe('tagLocationHelpers', () => {
     const taggingAttributes = tagExpandableElement({ id: 'test-expandable' });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -116,7 +116,7 @@ describe('tagLocationHelpers', () => {
     const taggingAttributes = tagInput({ id: 'test-input' });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
@@ -133,7 +133,7 @@ describe('tagLocationHelpers', () => {
     const taggingAttributes = tagLink({ id: 'link', text: 'Click Me', href: '/test' });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
@@ -153,7 +153,7 @@ describe('tagLocationHelpers', () => {
     const taggingAttributes = tagMediaPlayer({ id: 'test-media-player' });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -170,7 +170,7 @@ describe('tagLocationHelpers', () => {
     const taggingAttributes = tagNavigation({ id: 'test-nav' });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -187,7 +187,7 @@ describe('tagLocationHelpers', () => {
     const taggingAttributes = tagOverlay({ id: 'test-overlay' });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,

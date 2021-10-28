@@ -2,6 +2,7 @@ import { generateUUID, makeInputChangeEvent } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker } from '../src/';
 import { makeBlurEventHandler } from '../src/observer/makeBlurEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('makeBlurEventHandler', () => {
   beforeEach(() => {
@@ -14,6 +15,7 @@ describe('makeBlurEventHandler', () => {
   afterEach(() => {
     getTrackerRepository().trackersMap = new Map();
     getTrackerRepository().defaultTracker = undefined;
+    jest.resetAllMocks();
   });
 
   it('should track Input Change when invoked from a valid target', () => {
@@ -24,7 +26,15 @@ describe('makeBlurEventHandler', () => {
     trackedInput.dispatchEvent(new FocusEvent('blur'));
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, makeInputChangeEvent());
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'InputChangeEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 
   it('should not track Input Change when invoked from a bubbling target', () => {

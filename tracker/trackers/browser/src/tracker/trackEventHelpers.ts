@@ -1,4 +1,6 @@
 import {
+  GlobalContexts,
+  LocationStack,
   makeAbortedEvent,
   makeApplicationLoadedEvent,
   makeClickEvent,
@@ -20,6 +22,8 @@ import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandle
  */
 export type TrackEventHelperParameters = {
   element: TaggableElement | EventTarget;
+  locationStack?: LocationStack;
+  globalContexts?: GlobalContexts;
   tracker?: BrowserTracker;
   onError?: TrackOnErrorCallback;
 };
@@ -27,38 +31,108 @@ export type TrackEventHelperParameters = {
 /**
  * Event specific helpers. To make it easier to track common Events
  */
-export const trackClick = ({ element, tracker, onError }: TrackEventHelperParameters) => {
-  return trackEvent({ eventFactory: makeClickEvent, element, tracker, onError });
+export const trackClick = ({
+  element,
+  locationStack,
+  globalContexts,
+  tracker,
+  onError,
+}: TrackEventHelperParameters) => {
+  return trackEvent({
+    event: makeClickEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    element,
+    tracker,
+    onError,
+  });
 };
 
-export const trackInputChange = ({ element, tracker, onError }: TrackEventHelperParameters) => {
-  return trackEvent({ eventFactory: makeInputChangeEvent, element, tracker, onError });
+export const trackInputChange = ({
+  element,
+  locationStack,
+  globalContexts,
+  tracker,
+  onError,
+}: TrackEventHelperParameters) => {
+  return trackEvent({
+    event: makeInputChangeEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    element,
+    tracker,
+    onError,
+  });
 };
 
-export const trackSectionVisible = ({ element, tracker, onError }: TrackEventHelperParameters) => {
-  return trackEvent({ eventFactory: makeSectionVisibleEvent, element, tracker, onError });
+export const trackSectionVisible = ({
+  element,
+  locationStack,
+  globalContexts,
+  tracker,
+  onError,
+}: TrackEventHelperParameters) => {
+  return trackEvent({
+    event: makeSectionVisibleEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    element,
+    tracker,
+    onError,
+  });
 };
 
-export const trackSectionHidden = ({ element, tracker, onError }: TrackEventHelperParameters) => {
-  return trackEvent({ eventFactory: makeSectionHiddenEvent, element, tracker, onError });
+export const trackSectionHidden = ({
+  element,
+  locationStack,
+  globalContexts,
+  tracker,
+  onError,
+}: TrackEventHelperParameters) => {
+  return trackEvent({
+    event: makeSectionHiddenEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    element,
+    tracker,
+    onError,
+  });
 };
 
-export const trackVideoStart = ({ element, tracker, onError }: TrackEventHelperParameters) => {
-  return trackEvent({ eventFactory: makeVideoStartEvent, element, tracker, onError });
+export const trackVideoStart = ({
+  element,
+  locationStack,
+  globalContexts,
+  tracker,
+  onError,
+}: TrackEventHelperParameters) => {
+  return trackEvent({
+    event: makeVideoStartEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    element,
+    tracker,
+    onError,
+  });
 };
 
-export const trackVideoPause = ({ element, tracker, onError }: TrackEventHelperParameters) => {
-  return trackEvent({ eventFactory: makeVideoPauseEvent, element, tracker, onError });
+export const trackVideoPause = ({
+  element,
+  locationStack,
+  globalContexts,
+  tracker,
+  onError,
+}: TrackEventHelperParameters) => {
+  return trackEvent({
+    event: makeVideoPauseEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    element,
+    tracker,
+    onError,
+  });
 };
 
 export const trackVisibility = ({
   element,
+  locationStack,
+  globalContexts,
   tracker,
   isVisible,
   onError,
 }: TrackEventHelperParameters & { isVisible: boolean }) => {
   return trackEvent({
-    eventFactory: isVisible ? makeSectionVisibleEvent : makeSectionHiddenEvent,
+    event: isVisible
+      ? makeSectionVisibleEvent({ location_stack: locationStack, global_contexts: globalContexts })
+      : makeSectionHiddenEvent({ location_stack: locationStack, global_contexts: globalContexts }),
     element,
     tracker,
     onError,
@@ -66,18 +140,19 @@ export const trackVisibility = ({
 };
 
 /**
- * The parameters of the Application Loaded and URLChange Event helper functions
+ * The parameters of the Application Loaded and URLChange Event helper functions.
+ * It's the same object of Interactive Track Helpers, but all attributes are optional.
  */
-export type NonInteractiveTrackHelperParameters = {
-  element?: TaggableElement | EventTarget;
-  tracker?: BrowserTracker;
-  onError?: TrackOnErrorCallback;
-};
+export type NonInteractiveTrackHelperParameters = Partial<TrackEventHelperParameters>;
 
 export const trackApplicationLoaded = (parameters: NonInteractiveTrackHelperParameters = {}) => {
   try {
-    const { element = document, tracker } = parameters;
-    return trackEvent({ eventFactory: makeApplicationLoadedEvent, element, tracker });
+    const { element = document, locationStack, globalContexts, tracker } = parameters;
+    return trackEvent({
+      event: makeApplicationLoadedEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+      element,
+      tracker,
+    });
   } catch (error) {
     trackerErrorHandler(error, parameters, parameters.onError);
   }
@@ -85,8 +160,12 @@ export const trackApplicationLoaded = (parameters: NonInteractiveTrackHelperPara
 
 export const trackURLChange = (parameters: NonInteractiveTrackHelperParameters = {}) => {
   try {
-    const { element = document, tracker } = parameters;
-    return trackEvent({ eventFactory: makeURLChangeEvent, element, tracker });
+    const { element = document, locationStack, globalContexts, tracker } = parameters;
+    return trackEvent({
+      event: makeURLChangeEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+      element,
+      tracker,
+    });
   } catch (error) {
     trackerErrorHandler(error, parameters, parameters.onError);
   }
@@ -94,8 +173,12 @@ export const trackURLChange = (parameters: NonInteractiveTrackHelperParameters =
 
 export const trackCompleted = (parameters: NonInteractiveTrackHelperParameters = {}) => {
   try {
-    const { element = document, tracker } = parameters;
-    return trackEvent({ eventFactory: makeCompletedEvent, element, tracker });
+    const { element = document, locationStack, globalContexts, tracker } = parameters;
+    return trackEvent({
+      event: makeCompletedEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+      element,
+      tracker,
+    });
   } catch (error) {
     trackerErrorHandler(error, parameters, parameters.onError);
   }
@@ -103,8 +186,12 @@ export const trackCompleted = (parameters: NonInteractiveTrackHelperParameters =
 
 export const trackAborted = (parameters: NonInteractiveTrackHelperParameters = {}) => {
   try {
-    const { element = document, tracker } = parameters;
-    return trackEvent({ eventFactory: makeAbortedEvent, element, tracker });
+    const { element = document, locationStack, globalContexts, tracker } = parameters;
+    return trackEvent({
+      event: makeAbortedEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+      element,
+      tracker,
+    });
   } catch (error) {
     trackerErrorHandler(error, parameters, parameters.onError);
   }
