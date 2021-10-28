@@ -31,7 +31,7 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['bool'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     def _boolean_operator(self, other, operator: str) -> 'BuhTuhSeriesBoolean':
         # TODO maybe "other" should have a way to tell us it can be a bool?
@@ -42,7 +42,7 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
             expression = Expression.construct(f'(({{}}) {operator} cast({{}} as bool))', self, other)
         else:
             expression = Expression.construct(f'(({{}}) {operator} ({{}}))', self, other)
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     def __and__(self, other) -> 'BuhTuhSeriesBoolean':
         return self._boolean_operator(other, 'AND')

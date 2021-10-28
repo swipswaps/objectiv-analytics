@@ -21,19 +21,19 @@ def test_timedelta():
         ]
     )
 
-    r2 = gb.groupby([])['delta'].average()
+    r2 = gb[['delta']].groupby().mean()
     assert_equals_data(
         r2,
-        expected_columns=['index', 'delta_average'],
+        expected_columns=['index', 'delta_mean'],
         expected_data=[
             [1, datetime.timedelta(days=365, seconds=9877)]
         ]
     )
 
-    r3 = r2['delta_average'] + datetime.timedelta()
+    r3 = r2['delta_mean'] + datetime.timedelta()
     assert_equals_data(
         r3,
-        expected_columns=['index', 'delta_average'],
+        expected_columns=['index', 'delta_mean'],
         expected_data=[
             [1, datetime.timedelta(days=365, seconds=9877)]
         ]

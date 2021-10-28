@@ -2,14 +2,15 @@
 Copyright 2021 Objectiv B.V.
 """
 import json
-from typing import Optional, Dict, Union, TYPE_CHECKING
+from typing import Optional, Dict, Union, TYPE_CHECKING, Any
 
 from buhtuh.series import BuhTuhSeries, const_to_series
-from buhtuh.expression import Expression
+from buhtuh.expression import Expression, quote_string
 from sql_models.model import SqlModel
 
 if TYPE_CHECKING:
     from buhtuh.series import BuhTuhSeriesBoolean
+    from buhtuh.partitioning import BuhTuhGroupBy
 
 
 class BuhTuhSeriesJsonb(BuhTuhSeries):
@@ -25,17 +26,36 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
     def __init__(self,
                  engine,
                  base_node: SqlModel,
-                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 index: Dict[str, 'BuhTuhSeries'],
                  name: str,
                  expression: Expression,
+                 group_by: 'BuhTuhGroupBy',
                  sorted_ascending: Optional[bool] = None):
         super().__init__(engine,
                          base_node,
                          index,
                          name,
                          expression,
+                         group_by,
                          sorted_ascending)
         self.json = Json(self)
+
+    def __getitem__(self, key: Union[Any, slice]):
+        # this method is overridden because there is not pandas dtype for json(b)
+        if isinstance(key, slice):
+            raise NotImplementedError("index slices currently not supported")
+
+        # any other value we treat as a literal index lookup
+        # multiindex not supported atm
+        if not self.index:
+            raise Exception('Function not supported on Series without index')
+        if len(self.index) != 1:
+            raise NotImplementedError('Index only implemented for simple indexes.')
+        series = self.to_frame()[list(self.index.values())[0] == key]
+        assert isinstance(series, self.__class__)
+
+        # this is massively ugly
+        return series.head(1).values[0]
 
     @classmethod
     def supported_value_to_expression(cls, value: Union[dict, list]) -> Expression:
@@ -57,10 +77,13 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
             f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
             self.expression, other.expression
         )
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     def __le__(self, other) -> 'BuhTuhSeriesBoolean':
         return self._comparator_operator(other, "<@")
+
+    def __ge__(self, other) -> 'BuhTuhSeriesBoolean':
+        return self._comparator_operator(other, "@>")
 
 
 class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
@@ -74,9 +97,10 @@ class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
     def __init__(self,
                  engine,
                  base_node: SqlModel,
-                 index: Optional[Dict[str, 'BuhTuhSeries']],
+                 index: Dict[str, 'BuhTuhSeries'],
                  name: str,
                  expression: Expression,
+                 group_by: 'BuhTuhGroupBy',
                  sorted_ascending: Optional[bool] = None):
 
         super().__init__(engine,
@@ -84,6 +108,7 @@ class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
                          index,
                          name,
                          Expression.construct(f'cast({{}} as jsonb)', expression),
+                         group_by,
                          sorted_ascending)
 
 
@@ -91,13 +116,15 @@ class Json:
     def __init__(self, series_object):
         self._series_object = series_object
 
-    def __getitem__(self, key: Union[int, slice]):
+    def __getitem__(self, key: Union[str, int, slice]):
         if isinstance(key, int):
-            return self._series_object._get_derived_series(
-                'jsonb',
-                Expression.construct(f'{{}}->{key}', self._series_object)
+            return self._series_object.copy_override(
+                dtype='jsonb',
+                expression=Expression.construct(f'{{}}->{key}', self._series_object)
             )
-        if isinstance(key, slice):
+        elif isinstance(key, str):
+            return self.get_value(key)
+        elif isinstance(key, slice):
             expression_references = 0
             if key.step:
                 raise NotImplementedError('slice steps not supported')
@@ -109,14 +136,10 @@ class Json:
                         expression_references += 1
                     stop = f'{negative_stop} {key.stop} - 1'
                 elif isinstance(key.stop, (dict, str)):
-                    import json
-                    key_stop = json.dumps(key.stop)
-                    key_stop = key_stop.replace("'", "''")
-                    stop = f"""(select min(case when ('{key_stop}'::jsonb) <@ value then ordinality end) -1
-                    from jsonb_array_elements({{}}) with ordinality)"""
+                    stop = self._find_in_json_list(key.stop)
                     expression_references += 1
                 else:
-                    TypeError('cant')
+                    raise TypeError('cant')
             if key.start is not None:
                 if isinstance(key.start, int):
                     negative_start = ''
@@ -125,14 +148,10 @@ class Json:
                         expression_references += 1
                     start = f'{negative_start} {key.start}'
                 elif isinstance(key.start, (dict, str)):
-                    import json
-                    key_start = json.dumps(key.start)
-                    key_start = key_start.replace("'", "''")
-                    start = f"""(select min(case when ('{key_start}'::jsonb) <@ value then ordinality end) -1
-                    from jsonb_array_elements({{}}) with ordinality)"""
+                    start = self._find_in_json_list(key.start)
                     expression_references += 1
                 else:
-                    TypeError('cant')
+                    raise TypeError('cant')
                 if key.stop is not None:
                     where = f'between {start} and {stop}'
                 else:
@@ -143,46 +162,75 @@ class Json:
             from jsonb_array_elements({{}}) with ordinality x
             where ordinality - 1 {where})"""
             expression_references += 1
-            return self._series_object._get_derived_series(
-                'jsonb',
-                Expression.construct(
+            return self._series_object.copy_override(
+                dtype='jsonb',
+                expression=Expression.construct(
                     combined_expression,
                     *([self._series_object] * expression_references)
                 ))
-        TypeError(f'key should be int or slice, actual type: {type(key)}')
+        raise TypeError(f'key should be int or slice, actual type: {type(key)}')
+
+    def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
+        if isinstance(key, (dict, str)):
+            key = json.dumps(key)
+            quoted_key = quote_string(key)
+            expression_str = f"""(select min(case when ({quoted_key}::jsonb) <@ value
+            then ordinality end) -1 from jsonb_array_elements({{}}) with ordinality)"""
+            return expression_str
+        else:
+            raise TypeError(f'key should be int or slice, actual type: {type(key)}')
 
     def get_value(self, key: str, as_str=False):
         '''
         as_str: if True, it returns a string, else json
         '''
         return_as_string_operator = ''
-        return_dtype = 'json'
+        return_dtype = 'jsonb'
         if as_str:
             return_as_string_operator = '>'
             return_dtype = 'string'
         expression = Expression.construct(f"{{}}->{return_as_string_operator}'{key}'", self._series_object)
-        return self._series_object._get_derived_series(return_dtype, expression)
+        return self._series_object.copy_override(dtype=return_dtype, expression=expression)
 
-    # objectiv features below:
-    @property
-    def cookie_id(self):
+    def sub_dict(self, keys: list):
+        jsonb_build_object_str = [f"'{key}', value -> '{key}'" for key in keys]
+        expression_str = f'''(select jsonb_agg(jsonb_build_object({", ".join(jsonb_build_object_str)}))
+        from jsonb_array_elements({{}}))'''
         expression = Expression.construct(
-            f"""(select (array_agg(value->>'cookie_id'))[1]
-            from jsonb_array_elements({{}})
-            where value ->> '_type' = 'CookieIdContext')""",
+            expression_str,
             self._series_object
         )
-        return self._series_object._get_derived_series('string', expression)
+        return expression
+
+    # objectiv features below:
+    def get_from_context_with_type_series(self, type, key, dtype='string'):
+        expression_str = f'jsonb_path_query_first({{}}, \'$[*] ? (@._type == "{type}")\') ->> \'{key}\''
+        expression = Expression.construct(
+            expression_str,
+            self._series_object
+        )
+        return self._series_object.copy_override(dtype=dtype, expression=expression)
+
+    @property
+    def feature_stack(self):
+        expression = self.sub_dict(['_type', 'id'])
+        return self._series_object.copy_override(dtype='jsonb', expression=expression)
+
+    @property
+    def navigation_features(self):
+        return self[{'_type': 'NavigationContext'}: None]
+
+    @property
+    def cookie_id(self):
+        return self.get_from_context_with_type_series("CookieIdContext", "cookie_id")
 
     @property
     def user_agent(self):
-        expression = Expression.construct(
-            f"""(select (array_agg(value->>'user_agent'))[1]
-            from jsonb_array_elements({{}})
-            where value ->> '_type' = 'HttpContext')""",
-            self._series_object
-        )
-        return self._series_object._get_derived_series('string', expression)
+        return self.get_from_context_with_type_series("HttpContext", "user_agent")
+
+    @property
+    def application(self):
+        return self.get_from_context_with_type_series("ApplicationContext", "id")
 
     @property
     def nice_name(self):
@@ -206,7 +254,7 @@ class Json:
                 ),
             ' => ')
             from jsonb_array_elements({{}}) with ordinality
-            where ordinality = jsonb_array_length({{}})
+            where ordinality < jsonb_array_length({{}})
             ) else '' end""",
             self._series_object,
             self._series_object,
@@ -214,4 +262,4 @@ class Json:
             self._series_object,
             self._series_object
         )
-        return self._series_object._get_derived_series('string', expression)
+        return self._series_object.copy_override(dtype='string', expression=expression)

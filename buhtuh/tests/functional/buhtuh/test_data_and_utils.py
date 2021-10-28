@@ -66,20 +66,45 @@ RAILWAYS_COLUMNS = ['station_id', 'town', 'station', 'platforms']
 RAILWAYS_INDEX_AND_COLUMNS = ['_index_station_id'] + RAILWAYS_COLUMNS
 
 TEST_DATA_JSON = [
-    [0, '{"a": "b"}', '[{"a": "b"}, {"c": "d"}]'],
-    [1, '{"_type": "SectionContext", "id": "home"}', '["a","b","c","d"]'],
-    [2, '{"a": "b", "c": {"a": "c"}}', '[{"_type": "a", "id": "b"},{"_type": "c", "id": "d"},{"_type": "e", "id": "f"}]'],
-    [3, '{"a": "b", "e": [{"a": "b"}, {"c": "d"}]}', '[{"_type":"WebDocumentContext","id":"#document"},{"_type":"SectionContext","id":"home"},{"_type":"SectionContext","id":"top-10"},{"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]']
+    [0,
+     '{"a": "b"}',
+     '[{"a": "b"}, {"c": "d"}]',
+     '{"a": "b"}'
+     ],
+    [1,
+     '{"_type": "SectionContext", "id": "home"}',
+     '["a","b","c","d"]',
+     '["a","b","c","d"]'
+     ],
+    [2,
+     '{"a": "b", "c": {"a": "c"}}',
+     '[{"_type": "a", "id": "b"},{"_type": "c", "id": "d"},{"_type": "e", "id": "f"}]',
+     '{"a": "b", "c": {"a": "c"}}'
+     ],
+    [3,
+     '{"a": "b", "e": [{"a": "b"}, {"c": "d"}]}',
+     '[{"_type":"WebDocumentContext","id":"#document"},'
+      '{"_type":"SectionContext","id":"home"},'
+      '{"_type":"SectionContext","id":"top-10"},'
+      '{"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]',
+     '[{"_type":"WebDocumentContext","id":"#document"},'
+      '{"_type":"SectionContext","id":"home"},'
+      '{"_type":"SectionContext","id":"top-10"},'
+      '{"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]'
+     ]
 ]
-JSON_COLUMNS = ['row', 'dict_column', 'list_column']
+JSON_COLUMNS = ['row', 'dict_column', 'list_column', 'mixed_column']
 JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
 
 
 def _get_bt(table, dataset, columns, convert_objects) -> BuhTuhDataFrame:
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
     import pandas as pd
     df = pd.DataFrame.from_records(dataset, columns=columns)
-    df.set_index(columns[0], drop=False, inplace=True)
+    return get_from_df(table, df, convert_objects)
+
+
+def get_from_df(table, df, convert_objects = True):
+    df.set_index(df.columns[0], drop=False, inplace=True)
 
     if 'moment' in df.columns:
         df['moment'] = df['moment'].astype('datetime64')
@@ -87,6 +112,7 @@ def _get_bt(table, dataset, columns, convert_objects) -> BuhTuhDataFrame:
     if 'date' in df.columns:
         df['date'] = df['date'].astype('datetime64')
 
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
     buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects, if_exists='replace')
     return buh_tuh
 
@@ -107,8 +133,13 @@ def get_bt_with_railway_data() -> BuhTuhDataFrame:
     return _get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
 
 
-def get_bt_with_json_data() -> BuhTuhDataFrame:
-    return _get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)
+def get_bt_with_json_data(as_json=True) -> BuhTuhDataFrame:
+    bt = _get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)
+    if as_json==True:
+        bt['dict_column'] = bt.dict_column.astype('jsonb')
+        bt['list_column'] = bt.list_column.astype('jsonb')
+        bt['mixed_column'] = bt.mixed_column.astype('jsonb')
+    return bt
 
 
 def run_query(engine: sqlalchemy.engine, sql: str) -> ResultProxy:

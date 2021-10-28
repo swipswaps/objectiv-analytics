@@ -84,7 +84,7 @@ def test_set_const_json():
 
 def test_set_const_int_from_series():
     bt = get_bt_with_test_data()[['founding']]
-    max = bt.groupby()['founding'].sum()
+    max = bt.groupby()[['founding']].sum()
     max_series = max['founding_sum']
     max_value = max_series[1]
     bt['max_founding'] = max_value

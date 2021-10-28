@@ -8,7 +8,7 @@ from tests.functional.buhtuh.test_data_and_utils import assert_equals_data, get_
 
 def test_windowing_frame_clause():
     bt = get_bt_with_test_data(full_data_set=True)
-    w = bt.window()
+    w = bt.window().group_by
     # Check the default
     assert (w.frame_clause == "RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW")
 
