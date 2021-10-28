@@ -84,13 +84,13 @@ TEST_DATA_JSON = [
     [3,
      '{"a": "b", "e": [{"a": "b"}, {"c": "d"}]}',
      '[{"_type":"WebDocumentContext","id":"#document"},'
-      '{"_type":"SectionContext","id":"home"},'
-      '{"_type":"SectionContext","id":"top-10"},'
-      '{"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]',
+     ' {"_type":"SectionContext","id":"home"},'
+     ' {"_type":"SectionContext","id":"top-10"},'
+     ' {"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]',
      '[{"_type":"WebDocumentContext","id":"#document"},'
-      '{"_type":"SectionContext","id":"home"},'
-      '{"_type":"SectionContext","id":"top-10"},'
-      '{"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]'
+     ' {"_type":"SectionContext","id":"home"},'
+     ' {"_type":"SectionContext","id":"top-10"},'
+     ' {"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]'
      ]
 ]
 JSON_COLUMNS = ['row', 'dict_column', 'list_column', 'mixed_column']
@@ -122,7 +122,7 @@ def _get_bt(
     return _TABLE_DATAFRAME_CACHE[lookup_key].copy_override()
 
 
-def get_from_df(table, df, convert_objects = True):
+def get_from_df(table, df, convert_objects=True):
     df.set_index(df.columns[0], drop=False, inplace=True)
 
     if 'moment' in df.columns:
@@ -132,7 +132,8 @@ def get_from_df(table, df, convert_objects = True):
         df['date'] = df['date'].astype('datetime64')
 
     engine = sqlalchemy.create_engine(DB_TEST_URL)
-    buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects, if_exists='replace')
+    buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects,
+                                             if_exists='replace')
     return buh_tuh
 
 
@@ -152,7 +153,7 @@ def get_bt_with_railway_data() -> BuhTuhDataFrame:
 
 def get_bt_with_json_data(as_json=True) -> BuhTuhDataFrame:
     bt = _get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)
-    if as_json==True:
+    if as_json:
         bt['dict_column'] = bt.dict_column.astype('jsonb')
         bt['list_column'] = bt.list_column.astype('jsonb')
         bt['mixed_column'] = bt.mixed_column.astype('jsonb')
