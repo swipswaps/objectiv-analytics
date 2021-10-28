@@ -6,8 +6,10 @@ from typing import Union, cast, TYPE_CHECKING
 
 import numpy
 
+from buhtuh import BuhTuhDataFrame
 from buhtuh.series import BuhTuhSeries, BuhTuhSeriesString, const_to_series
 from buhtuh.expression import Expression
+from buhtuh.series.series import WrappedPartition
 
 if TYPE_CHECKING:
     from buhtuh.partitioning import BuhTuhGroupBy
@@ -44,7 +46,7 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['timestamp', 'date', 'string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     def format(self, format) -> BuhTuhSeriesString:
         """
@@ -53,14 +55,14 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
         :param format: The format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
         :return: a derived Series that accepts and returns formatted timestamp strings
         """
-        expr = Expression.construct(f"to_char({{}}, '{format}')", self)
-        return self._get_derived_series('string', expr)
+        expression = Expression.construct(f"to_char({{}}, '{format}')", self)
+        return self.copy_override(dtype='string', expression=expression)
 
     def __sub__(self, other) -> 'BuhTuhSeriesTimestamp':
         other = const_to_series(base=self, value=other)
         self._check_supported('sub', ['timestamp', 'date', 'time'], other)
         expression = Expression.construct('({}) - ({})', self, other)
-        return self._get_derived_series('timedelta', expression)
+        return self.copy_override(dtype='timedelta', expression=expression)
 
 
 class BuhTuhSeriesDate(BuhTuhSeriesTimestamp):
@@ -120,7 +122,7 @@ class BuhTuhSeriesTime(BuhTuhSeries):
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['time', 'string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
 
 class BuhTuhSeriesTimedelta(BuhTuhSeries):
@@ -151,7 +153,7 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['timedelta', 'date', 'time', 'string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self._get_derived_series('bool', expression)
+        return self.copy_override(dtype='bool', expression=expression)
 
     def format(self, format) -> BuhTuhSeriesString:
         """
@@ -160,33 +162,35 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
         :param format: The format as defined in https://www.postgresql.org/docs/9.1/functions-formatting.html
         :return: a derived Series that accepts and returns formatted timestamp strings
         """
-        expr = Expression.construct(f"to_char({{}}, '{format}')", self)
-        return self._get_derived_series('string', expr)
+        expression = Expression.construct(f"to_char({{}}, '{format}')", self)
+        return self.copy_override(dtype='string', expression=expression)
 
     def __add__(self, other) -> 'BuhTuhSeriesTimedelta':
         other = const_to_series(base=self, value=other)
         self._check_supported('add', ['timedelta', 'timestamp', 'date', 'time'], other)
         expression = Expression.construct('({}) + ({})', self, other)
-        return self._get_derived_series('timedelta', expression)
+        return self.copy_override(dtype='timedelta', expression=expression)
 
     def __sub__(self, other) -> 'BuhTuhSeriesTimedelta':
         other = const_to_series(base=self, value=other)
         self._check_supported('sub', ['timedelta', 'timestamp', 'date', 'time'], other)
         expression = Expression.construct('({}) - ({})', self, other)
-        return self._get_derived_series('timedelta', expression)
+        return self.copy_override(dtype='timedelta', expression=expression)
 
-    def sum(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
-        result = self._window_or_agg_func(
-            partition,
-            Expression.construct('sum({})', self.expression),
-            self.dtype
+    def sum(self, partition: WrappedPartition = None,
+            skipna: bool = True, min_count: int = None) -> 'BuhTuhSeriesTimedelta':
+        result = self._derived_agg_func(
+            partition=partition,
+            expression=Expression.construct('sum({})', self.expression),
+            skipna=skipna,
+            min_count=min_count
         )
         return cast('BuhTuhSeriesTimedelta', result)
 
-    def average(self, partition: 'BuhTuhGroupBy' = None) -> 'BuhTuhSeriesTimedelta':
-        result = self._window_or_agg_func(
-            partition,
-            Expression.construct('avg({})', self.expression),
-            self.dtype
+    def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'BuhTuhSeriesTimedelta':
+        result = self._derived_agg_func(
+            partition=partition,
+            expression=Expression.construct('avg({})', self.expression),
+            skipna=skipna
         )
         return cast('BuhTuhSeriesTimedelta', result)

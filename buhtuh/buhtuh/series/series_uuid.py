@@ -58,7 +58,8 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
         return cls.get_class_instance(
             base=base,
             name='__tmp',
-            expression=Expression.construct('gen_random_uuid()')
+            expression=Expression.construct('gen_random_uuid()'),
+            group_by=None
         )
 
     def _comparator_operator(self, other, comparator):
@@ -69,4 +70,4 @@ class BuhTuhSeriesUuid(BuhTuhSeries):
         else:
             expression = Expression.construct(f'({{}}) {comparator} (cast({{}} as uuid))', self, other)
 
-        return self._get_derived_series('boolean', expression)
+        return self.copy_override(dtype='bool', expression=expression)

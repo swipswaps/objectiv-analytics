@@ -9,6 +9,18 @@ from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, a
     get_from_df
 
 
+def test_series__getitem__():
+    bt = get_bt_with_test_data(full_data_set=False)
+    assert bt.city[1] == 'Ljouwert'
+    assert bt.count().city_count[1] == 3
+
+    # make sure getitem works when multiple nodes are in play.
+    l1 = bt.groupby('municipality').count()
+    l2 = l1.groupby().city_count.sum()
+    assert l2[1] == 3
+
+
+
 def test_series_sort_values():
     bt = get_bt_with_test_data(full_data_set=True)
     bt_series = bt.city
@@ -82,3 +94,11 @@ def test_dataframe_agg_skipna_parameter():
         with pytest.raises(NotImplementedError):
             # currently not supported anywhere, so needs to raise
             bt.agg(agg, skipna=False)
+
+
+def test_series_direct_aggregation():
+    # test full parameter traversal
+    bt = get_bt_with_test_data(full_data_set=True)
+
+    btg = bt.groupby('municipality')
+    print(bt.inhabitants.sum(btg).head())
