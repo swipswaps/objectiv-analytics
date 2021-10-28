@@ -107,6 +107,9 @@ export const getDefaultBrowserTrackerPluginsList = (trackerConfig: BrowserTracke
  *
  */
 export class BrowserTracker extends Tracker {
+  // A copy of the original configuration
+  readonly trackerConfig: TrackerConfig;
+
   constructor(trackerConfig: BrowserTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = trackerConfig;
 
@@ -147,5 +150,8 @@ export class BrowserTracker extends Tracker {
 
     // Initialize core Tracker
     super(config, ...contextConfigs);
+
+    // Store original config for comparison with other instances of Browser Tracker
+    this.trackerConfig = trackerConfig;
   }
 }
