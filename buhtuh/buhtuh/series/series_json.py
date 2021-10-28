@@ -189,31 +189,33 @@ class Json:
         if as_str:
             return_as_string_operator = '>'
             return_dtype = 'string'
-        expression = Expression.construct(f"{{}}->{return_as_string_operator}'{key}'", self._series_object)
+        expression = Expression.construct(f"{{}}->{return_as_string_operator}{{}}",
+                                          self._series_object,
+                                          Expression.string_value(key))
         return self._series_object.copy_override(dtype=return_dtype, expression=expression)
 
-    def sub_dict(self, keys: list):
-        jsonb_build_object_str = [f"'{key}', value -> '{key}'" for key in keys]
+    # objectiv features below:
+    def get_from_context_with_type_series(self, type, key, dtype='string'):
+        expression_str = 'jsonb_path_query_first({}, \'$[*] ? (@._type == $type)\', \'{"type":{}}\') ->> {}'
+        print(Expression.string_value(type))
+        expression = Expression.construct(
+            expression_str,
+            self._series_object,
+            Expression.column_reference(type),
+            Expression.string_value(key)
+        )
+        return self._series_object.copy_override(dtype=dtype, expression=expression)
+
+    @property
+    def feature_stack(self):
+        keys = ['_type', 'id']
+        jsonb_build_object_str = [f"{quote_string(key)}, value -> {quote_string(key)}" for key in keys]
         expression_str = f'''(select jsonb_agg(jsonb_build_object({", ".join(jsonb_build_object_str)}))
         from jsonb_array_elements({{}}))'''
         expression = Expression.construct(
             expression_str,
             self._series_object
         )
-        return expression
-
-    # objectiv features below:
-    def get_from_context_with_type_series(self, type, key, dtype='string'):
-        expression_str = f'jsonb_path_query_first({{}}, \'$[*] ? (@._type == "{type}")\') ->> \'{key}\''
-        expression = Expression.construct(
-            expression_str,
-            self._series_object
-        )
-        return self._series_object.copy_override(dtype=dtype, expression=expression)
-
-    @property
-    def feature_stack(self):
-        expression = self.sub_dict(['_type', 'id'])
         return self._series_object.copy_override(dtype='jsonb', expression=expression)
 
     @property
