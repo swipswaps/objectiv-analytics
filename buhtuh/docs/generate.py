@@ -2,6 +2,9 @@ import glob
 import re
 from os import path, makedirs, remove
 from shutil import copyfile
+import json
+from typing import List
+from lxml import html
 
 html_dir = 'build/html/'
 
@@ -9,15 +12,53 @@ docusaurus_dir = '../../../objectiv.io'
 docs = 'docs'
 static = 'static'
 
-module = 'buhtuh'
+module = 'modeling'
 docs_target = f'{docusaurus_dir}/{docs}/{module}'
 static_target = f'{docusaurus_dir}/{static}/{module}'
 
 # whitelist of pages to consider
 patterns = [
     '^index.html$',
-    'api/.*?',
+    'buhtuh/.*?',
+    'sql_models/.*?'
 ]
+
+
+def toc_from_links(html_doc, xpath, node_xpath) -> List:
+    """
+    Parses Sphinx generated html fragment to construct part of the toc
+
+    :param html_doc: lxml html parser
+    :param xpath: xpath query that returns s list of anchor html fragments
+    :param scope: should be Function or Classes
+    :return: dictionary with TOC items for docusaurus
+    """
+    links = html_doc.xpath(xpath)
+
+    if links:
+        entries = []
+        for f in links:
+            # get simple function name from span in table
+            nodes = f.xpath(node_xpath)
+            if len(nodes) > 0:
+                node = nodes[0]
+                simple_name = ''.join(node.itertext()).strip()
+            else:
+                simple_name = f.get('title')
+
+            print(f'jow: -> {f.get("titlle")} -- {f.get("id")}')
+            entries.append({
+                'value': simple_name,
+                'id': f.get('title') or f.get('id'),
+                'children': [],
+                'level': 2
+            })
+
+        return entries
+
+    print('no links')
+    return []
+
 
 # make sure we can find docusaurus
 if not path.isdir(docusaurus_dir):
@@ -69,6 +110,41 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
         sidebar_position = 99
         slug = f'/{module}/{real_url.replace(".html", "")}'
 
+    # table of contents
+    toc = [{
+        'value': title,
+        'id': '',
+        'children': [],
+        'level': 2
+    }]
+    doc = html.parse(url)
+    functions = toc_from_links(doc, '//p[@class="rubric" and text()="Functions"]/following-sibling::*[1]//tr//a', 'code/span')
+    if functions:
+        toc.append({
+            'value': 'Functions',
+            'id': '',
+            'children': functions,
+            'level': 2})
+    classes = toc_from_links(doc, '//p[@class="rubric" and text()="Classes"]/following-sibling::*[1]//tr//a', 'code/span')
+    if classes:
+        for c in classes:
+
+            xpath = f'//dl[@class="py class"]/dt[@id="{c["id"]}"]/following-sibling::dd//dl[@class="py method" or @class="py attribute"]/dt'
+            print(f'cheking class: {c["id"]} with {xpath}')
+            p = toc_from_links(doc, xpath, 'span')
+            print(f'dusL: {p}')
+            for method in p:
+                c['children'].append(method)
+                # c['children'].append(toc_from_links(doc, xpath, ''))
+        #print(classes)
+        toc.append({
+            'value': 'Classes',
+            'id': '',
+            'children': classes,
+            'level': 2})
+
+    print(json.dumps(toc, indent=4))
+
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
     mdx = \
@@ -79,6 +155,8 @@ slug: {slug}
 sidebar_position: {sidebar_position}
 sidebar_label: {sidebar_label}
 ---
+
+export const toc = {json.dumps(toc)};
 
 
 import SphinxPages from '@site/src/components/sphinx-page'
