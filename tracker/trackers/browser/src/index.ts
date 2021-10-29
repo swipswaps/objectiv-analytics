@@ -3,6 +3,7 @@ export * from '@objectiv/tracker-core';
 export * from './Contexts';
 export * from './helpers';
 export * from './global/AutoTrackingState';
+export * from './global/getOrMakeTracker';
 export * from './global/getTracker';
 export * from './global/getTrackerRepository';
 export * from './global/makeTracker';
