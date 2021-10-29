@@ -1,6 +1,8 @@
+import { TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
 import { AutoTrackingState } from '../global/AutoTrackingState';
 import { getTracker } from '../global/getTracker';
 import { getLocationHref } from '../helpers';
+import { TaggingAttribute } from '../TaggingAttribute';
 import { trackURLChange } from '../tracker/trackEventHelpers';
 import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
@@ -19,10 +21,10 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  *
  * Existing nodes changing.
  * The same Observer is also configured to monitor changes in our visibility attribute.
- * When we detect a change in the visibility of a tracked element we trigger the corresponding visibility events.
+ * When we detect a change in the visibility of a tagged element we trigger the corresponding visibility events.
  *
  * Existing nodes being removed.
- * We also monitor nodes that are removed. If those nodes are Tracked Elements of which we were tracking visibility
+ * We also monitor nodes that are removed. If those nodes are Tagged Elements of which we were tracking visibility
  * we will trigger visibility: hidden events for them.
  *
  * SPA URL changes (default enabled, configurable)
@@ -32,7 +34,7 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * Application Loaded Event (default enabled, configurable)
  * Triggered once
  */
-export const makeMutationCallback = (trackURLChangeEvents: boolean): MutationCallback => {
+export const makeMutationCallback = (trackURLChangeEvents: boolean, console?: TrackerConsole): MutationCallback => {
   return (mutationsList) => {
     try {
       const tracker = getTracker();
@@ -47,11 +49,16 @@ export const makeMutationCallback = (trackURLChangeEvents: boolean): MutationCal
       }
 
       // Track DOM changes
-      mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName }) => {
-        // New DOM nodes mutation: attach event listeners to all Tracked Elements and track visibility:visible events
+      mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName, oldValue }) => {
+        // Element ID change for programmatically instrumented elements - keep TrackerState in sync
+        if (attributeName === TaggingAttribute.elementId && oldValue) {
+          TrackerElementLocations.delete(oldValue);
+        }
+
+        // New DOM nodes mutation: attach event listeners to all Tagged Elements and track visibility:visible events
         addedNodes.forEach((addedNode) => {
           if (addedNode instanceof Element) {
-            trackNewElements(addedNode, tracker);
+            trackNewElements(addedNode, tracker, console);
           }
         });
 
@@ -63,7 +70,7 @@ export const makeMutationCallback = (trackURLChangeEvents: boolean): MutationCal
         });
 
         // Visibility attribute mutation (programmatic visibility change): determine and track visibility events
-        if (attributeName && isTaggedElement(target)) {
+        if (attributeName === TaggingAttribute.trackVisibility && isTaggedElement(target)) {
           trackVisibilityVisibleEvent(target, tracker);
           trackVisibilityHiddenEvent(target, tracker);
         }

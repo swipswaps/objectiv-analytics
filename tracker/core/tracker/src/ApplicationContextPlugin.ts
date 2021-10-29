@@ -1,8 +1,8 @@
 import { ApplicationContext } from '@objectiv/schema';
+import { ContextsConfig } from './Context';
 import { makeApplicationContext } from './ContextFactories';
 import { TrackerConfig } from './Tracker';
 import { TrackerConsole } from './TrackerConsole';
-import { TrackerEvent } from './TrackerEvent';
 import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
 
 /**
@@ -40,8 +40,8 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
   /**
    * Add the the ApplicationContext to the Event's Global Contexts
    */
-  beforeTransport(event: TrackerEvent): void {
-    event.global_contexts.push(this.applicationContext);
+  beforeTransport(contexts: Required<ContextsConfig>): void {
+    contexts.global_contexts.push(this.applicationContext);
   }
 
   /**

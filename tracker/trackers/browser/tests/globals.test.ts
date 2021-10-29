@@ -1,4 +1,4 @@
-import { BrowserTracker, getTracker, makeTracker, setDefaultTracker } from '../src/';
+import { BrowserTracker, getOrMakeTracker, getTracker, makeTracker, setDefaultTracker } from '../src/';
 
 describe('globals', () => {
   afterEach(() => {
@@ -89,6 +89,34 @@ describe('globals', () => {
     expect(console.error).toHaveBeenNthCalledWith(
       2,
       '｢objectiv:TrackerRepository｣ Tracker `tracker-1` already exists.'
+    );
+  });
+
+  it('should create a new Browser Tracker ', () => {
+    expect(window.objectiv.trackers.trackersMap.size).toBe(0);
+    expect(getOrMakeTracker({ applicationId: 'app-id', trackerId: 'tracker1', endpoint: 'localhost' })).toBeInstanceOf(
+      BrowserTracker
+    );
+    expect(window.objectiv.trackers.trackersMap.size).toBe(1);
+  });
+
+  it('should return the existing Browser Tracker', () => {
+    expect(window.objectiv.trackers.trackersMap.size).toBe(0);
+    const trackerConfig = { applicationId: 'app-id', endpoint: 'localhost' };
+    makeTracker(trackerConfig);
+    expect(window.objectiv.trackers.trackersMap.size).toBe(1);
+    expect(getOrMakeTracker(trackerConfig)).toBeInstanceOf(BrowserTracker);
+    expect(window.objectiv.trackers.trackersMap.size).toBe(1);
+  });
+
+  it('should throw because a Browser Tracker exists with the same Tracker Id but has a different configuration', () => {
+    const trackerConfig1 = { applicationId: 'app-id', endpoint: 'localhost' };
+    const trackerConfig2 = { applicationId: 'app-id', endpoint: 'http://collector' };
+    expect(window.objectiv.trackers.trackersMap.size).toBe(0);
+    makeTracker(trackerConfig1);
+    expect(window.objectiv.trackers.trackersMap.size).toBe(1);
+    expect(() => getOrMakeTracker(trackerConfig2)).toThrow(
+      "Tracker `app-id` exists but its configuration doesn't match the given one."
     );
   });
 });

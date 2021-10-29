@@ -7,6 +7,7 @@ import { TaggedElement } from '../typeGuards';
 
 /**
  * Checks if the given Node is a tracked element and if we need to trigger a visibility: hidden event for it.
+ * Hidden Events are triggered only for Elements that have their visibility manually set to not visible.
  */
 export const trackVisibilityHiddenEvent = (element: TaggedElement, tracker: BrowserTracker) => {
   try {

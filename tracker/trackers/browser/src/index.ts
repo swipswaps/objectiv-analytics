@@ -1,7 +1,9 @@
 export * from './globals';
+export * from '@objectiv/tracker-core';
 export * from './Contexts';
 export * from './helpers';
 export * from './global/AutoTrackingState';
+export * from './global/getOrMakeTracker';
 export * from './global/getTracker';
 export * from './global/getTrackerRepository';
 export * from './global/makeTracker';
@@ -23,6 +25,7 @@ export * from './TaggingAttribute';
 export * from './trackerErrorHandler';
 export * from './tracker/BrowserTracker';
 export * from './tracker/findTaggedParentElements';
+export * from './tracker/getElementLocationStack';
 export * from './tracker/tagChildren';
 export * from './tracker/tagLocation';
 export * from './tracker/tagLocationHelpers';
