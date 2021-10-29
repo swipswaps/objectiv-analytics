@@ -594,7 +594,7 @@ class BuhTuhDataFrame:
         if self._group_by:
             if not materialize:
                 raise NotImplementedError("reset_index not supported on non-materialized groupbys."
-                                          "pass materialized=True, or materialize manually.")
+                                          "pass materialize=True, or materialize manually.")
             df = df.get_df_materialized_model(inplace)
 
         # build the new index, appending if necessary
