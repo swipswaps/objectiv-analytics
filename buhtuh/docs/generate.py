@@ -24,7 +24,7 @@ patterns = [
 ]
 
 
-def toc_from_links(html_doc, xpath, node_xpath) -> List:
+def toc_from_links(html_doc, xpath, node_xpath, level) -> List:
     """
     Parses Sphinx generated html fragment to construct part of the toc
 
@@ -42,16 +42,15 @@ def toc_from_links(html_doc, xpath, node_xpath) -> List:
             nodes = f.xpath(node_xpath)
             if len(nodes) > 0:
                 node = nodes[0]
-                simple_name = ''.join(node.itertext()).strip()
+                simple_name = node.text
             else:
                 simple_name = f.get('title')
 
-            print(f'jow: -> {f.get("titlle")} -- {f.get("id")}')
             entries.append({
                 'value': simple_name,
                 'id': f.get('title') or f.get('id'),
                 'children': [],
-                'level': 2
+                'level': level
             })
 
         return entries
@@ -65,7 +64,12 @@ if not path.isdir(docusaurus_dir):
     print(f'Could not find docusaurus here {docusaurus_dir}')
     exit(1)
 
-for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
+
+position = 2
+
+# sort urls alphabetically, remove .html
+urls = sorted(glob.glob(f"{html_dir}/**/*.html", recursive=True), key=lambda k: k.replace('.html', ''))
+for url in urls:
     # this is the url to the original html fragment
     # it's an absolute url, docusaurus will take care of the rest
     real_url = url.replace(html_dir, "")
@@ -98,52 +102,58 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
     print(f'copy "{url}" -> {target_file}')
     copyfile(url, target_file)
 
-    # little magic around the index:
-    # make sure it comes first, and change the name to introduction
     title = path.basename(url).replace('.html', '')
-    if title == 'index':
-        sidebar_label = 'Introduction'
-        sidebar_position = 1
-        slug = f'/{module}'
-    else:
-        sidebar_label = title
-        sidebar_position = 99
-        slug = f'/{module}/{real_url.replace(".html", "")}'
 
     # table of contents
-    toc = [{
-        'value': title,
-        'id': '',
-        'children': [],
-        'level': 2
-    }]
+    toc = []
     doc = html.parse(url)
-    functions = toc_from_links(doc, '//p[@class="rubric" and text()="Functions"]/following-sibling::*[1]//tr//a', 'code/span')
+    headers = toc_from_links(doc, '//main//section', '*[self::h1 or self::h2 or self::h3]', 2)
+    for header in headers:
+        toc.append(header)
+
+    modules = toc_from_links(doc, '//p[@class="rubric" and text()="Modules"]/following-sibling::*[1]//tr//a', 'code/span', 3)
+    if modules:
+        toc.append({
+            'value': 'Modules',
+            'id': '',
+            'children': modules,
+            'level': 2})
+
+    functions = toc_from_links(doc, '//p[@class="rubric" and text()="Functions"]/following-sibling::*[1]//tr//a', 'code/span', 3)
     if functions:
         toc.append({
             'value': 'Functions',
             'id': '',
             'children': functions,
             'level': 2})
-    classes = toc_from_links(doc, '//p[@class="rubric" and text()="Classes"]/following-sibling::*[1]//tr//a', 'code/span')
+
+    classes = toc_from_links(doc, '//p[@class="rubric" and text()="Classes"]/following-sibling::*[1]//tr//a', 'code/span', 3)
     if classes:
         for c in classes:
 
             xpath = f'//dl[@class="py class"]/dt[@id="{c["id"]}"]/following-sibling::dd//dl[@class="py method" or @class="py attribute"]/dt'
-            print(f'cheking class: {c["id"]} with {xpath}')
-            p = toc_from_links(doc, xpath, 'span')
-            print(f'dusL: {p}')
-            for method in p:
-                c['children'].append(method)
-                # c['children'].append(toc_from_links(doc, xpath, ''))
-        #print(classes)
+            attrs = toc_from_links(doc, xpath, 'span/span', 3)
+            for attr in attrs:
+                print(f'adding attr: {attr}')
+                c['children'].append(attr)
         toc.append({
             'value': 'Classes',
             'id': '',
             'children': classes,
             'level': 2})
 
-    print(json.dumps(toc, indent=4))
+    # little magic around the index:
+    # make sure it comes first, and change the name to introduction
+    if title == 'index':
+        sidebar_label = 'Introduction'
+        sidebar_position = 1
+        slug = f'/{module}'
+        toc = []
+    else:
+        sidebar_label = title
+        sidebar_position = position
+        position += 1
+        slug = f'/{module}/{real_url.replace(".html", "")}'
 
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
@@ -156,7 +166,7 @@ sidebar_position: {sidebar_position}
 sidebar_label: {sidebar_label}
 ---
 
-export const toc = {json.dumps(toc)};
+export const toc = {json.dumps(toc, indent=4)};
 
 
 import SphinxPages from '@site/src/components/sphinx-page'
