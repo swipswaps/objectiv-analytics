@@ -1,6 +1,6 @@
-import { TrackerConfig } from '@objectiv/tracker-core';
-import { BrowserTracker, BrowserTrackerConfig } from '../tracker/BrowserTracker';
 import { getTrackerRepository } from './getTrackerRepository';
+import { BrowserTracker, BrowserTrackerConfig } from './internal/BrowserTracker';
+import { compareTrackerConfigs } from './internal/compareTrackerConfigs';
 import { makeTracker } from './makeTracker';
 
 /**
@@ -23,26 +23,9 @@ export const getOrMakeTracker = (trackerConfig: BrowserTrackerConfig): BrowserTr
   }
 
   // We found a Tracker instance but, before returning it, ensure its config matches the given configuration
-  if (!compareTrackerConfig(tracker.trackerConfig, trackerConfig)) {
+  if (!compareTrackerConfigs(tracker.trackerConfig, trackerConfig)) {
     throw new Error(`Tracker \`${trackerId}\` exists but its configuration doesn't match the given one.`);
   }
 
   return tracker;
-};
-
-/**
- * Compares two TrackerConfig objects ignoring mutable attributes.
- * Returns true if configurations are equivalent, false otherwise.
- */
-export const compareTrackerConfig = (trackerConfigA: TrackerConfig, trackerConfigB: TrackerConfig) => {
-  // Clone both configurations onto new mutable objects
-  let trackerConfigAClone = { ...trackerConfigA };
-  let trackerConfigBClone = { ...trackerConfigB };
-
-  // Get rid of mutable attributes
-  delete trackerConfigAClone.active;
-  delete trackerConfigBClone.active;
-
-  // Compare resulting objects by stringify them
-  return JSON.stringify(trackerConfigAClone) === JSON.stringify(trackerConfigBClone);
 };

@@ -1,6 +1,6 @@
-import { TaggingAttribute } from '../TaggingAttribute';
-import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackerErrorHandler } from '../trackerErrorHandler';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { BrowserTracker } from '../internal/BrowserTracker';
+import { trackerErrorHandler } from '../internal/trackerErrorHandler';
 import { trackRemovedElement } from './trackRemovedElement';
 
 /**

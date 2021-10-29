@@ -1,6 +1,6 @@
 import { TrackerRepository } from '@objectiv/tracker-core';
-import { windowExists } from '../helpers';
-import { BrowserTracker } from '../tracker/BrowserTracker';
+import { BrowserTracker } from './internal/BrowserTracker';
+import { windowExists } from './internal/windowExists';
 
 /**
  * Retrieves the TrackerRepository instance from the window.objectiv global namespace

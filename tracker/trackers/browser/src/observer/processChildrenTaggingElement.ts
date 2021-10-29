@@ -1,9 +1,11 @@
 import { getObjectKeys } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
-import { ChildrenTaggingQuery, parseChildrenTaggingAttribute, StringifiedTaggingAttributes } from '../structs';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { trackerErrorHandler } from '../trackerErrorHandler';
-import { isChildrenTaggingElement, TaggedElement } from '../typeGuards';
+import { isChildrenTaggingElement, TaggedElement } from '../definitions/elements';
+import { parseChildrenTaggingAttribute } from '../definitions/structChildrenTaggingAttribute';
+import { ChildrenTaggingQuery } from "../definitions/structChildrenTaggingQuery";
+import { StringifiedTaggingAttributes } from '../definitions/structTaggingAttributes';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { trackerErrorHandler } from '../internal/trackerErrorHandler';
 
 /**
  * Check if Element is a ChildrenTaggingElement. If so:

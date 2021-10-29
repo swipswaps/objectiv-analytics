@@ -1,7 +1,7 @@
-import { getLocationHref } from '../helpers';
+import { getLocationHref } from '../internal/getLocationHref';
 
 /**
- * Global state
+ * Hold an instance of the Mutation Observer and some state for some global events, like URLs and Application Loaded.
  */
 export const AutoTrackingState: {
   observerInstance: MutationObserver | null;

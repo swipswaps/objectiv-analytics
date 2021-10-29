@@ -1,5 +1,10 @@
-import { isChildrenTaggingElement, isCustomParentTaggedElement, TaggingAttribute } from '../src';
-import { isTaggableElement, isTaggedElement } from '../src/typeGuards';
+import {
+  isChildrenTaggingElement,
+  isParentTaggedElement,
+  isTaggableElement,
+  isTaggedElement,
+  TaggingAttribute,
+} from '../src';
 
 describe('isTrackableElement', () => {
   it('should return false', () => {
@@ -109,7 +114,7 @@ describe('isChildrenTrackingElement', () => {
   });
 });
 
-describe('isCustomParentTrackedElement', () => {
+describe('isParentTaggedElement', () => {
   const div = document.createElement('div');
   const section = document.createElement('section');
   const button = document.createElement('button');
@@ -125,15 +130,15 @@ describe('isCustomParentTrackedElement', () => {
   it('should return true', () => {
     div.setAttribute(TaggingAttribute.context, 'value');
     div.setAttribute(TaggingAttribute.parentElementId, 'value');
-    expect(isCustomParentTaggedElement(div)).toBe(true);
+    expect(isParentTaggedElement(div)).toBe(true);
 
     section.setAttribute(TaggingAttribute.context, 'value');
     section.setAttribute(TaggingAttribute.parentElementId, 'value');
-    expect(isCustomParentTaggedElement(section)).toBe(true);
+    expect(isParentTaggedElement(section)).toBe(true);
 
     button.setAttribute(TaggingAttribute.context, 'value');
     button.setAttribute(TaggingAttribute.parentElementId, 'value');
-    expect(isCustomParentTaggedElement(button)).toBe(true);
+    expect(isParentTaggedElement(button)).toBe(true);
 
     // TODO cover negative cases
   });

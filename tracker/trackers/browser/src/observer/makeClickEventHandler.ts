@@ -1,8 +1,8 @@
-import { TrackClicksOptions } from '../structs';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackClick } from '../tracker/trackEventHelpers';
-import { isTaggedElement, TaggedElement } from '../typeGuards';
+import { isTaggedElement, TaggedElement } from '../definitions/elements';
+import { TrackClicksOptions } from '../definitions/structTaggingAttributes';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { BrowserTracker } from '../internal/BrowserTracker';
+import { trackClick } from '../trackEventHelpers';
 
 /**
  * A factory to make the event handler to attach to new TaggedElements with the `trackClicks` attributes set

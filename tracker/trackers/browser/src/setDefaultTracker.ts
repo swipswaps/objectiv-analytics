@@ -1,4 +1,4 @@
-import { FlushQueueOptions, WaitForQueueOptions } from '../structs';
+import { FlushQueueOptions, WaitForQueueOptions } from './definitions/structTaggingAttributes';
 import { getTracker } from './getTracker';
 import { getTrackerRepository } from './getTrackerRepository';
 

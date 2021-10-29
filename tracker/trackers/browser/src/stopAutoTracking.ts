@@ -1,5 +1,5 @@
-import { trackerErrorHandler } from '../trackerErrorHandler';
-import { AutoTrackingState } from './AutoTrackingState';
+import { trackerErrorHandler } from './internal/trackerErrorHandler';
+import { AutoTrackingState } from './observer/AutoTrackingState';
 
 /**
  * Stops autoTracking

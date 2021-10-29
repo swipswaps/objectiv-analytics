@@ -1,5 +1,5 @@
-import { BrowserTracker } from '../tracker/BrowserTracker';
 import { getTrackerRepository } from './getTrackerRepository';
+import { BrowserTracker } from './internal/BrowserTracker';
 
 /**
  * Retrieves a specific instance of the tracker from the TrackerRepository.

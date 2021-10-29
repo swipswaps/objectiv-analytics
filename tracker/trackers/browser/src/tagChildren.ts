@@ -1,12 +1,11 @@
 import { assert, Infer, optional, validate } from 'superstruct';
 import {
-  ChildrenTaggingQueries,
-  ChildrenTaggingQuery,
   StringifiedChildrenTaggingAttributes,
   stringifyChildrenTaggingAttribute,
-} from '../structs';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
+} from './definitions/structChildrenTaggingAttribute';
+import { ChildrenTaggingQueries, ChildrenTaggingQuery } from "./definitions/structChildrenTaggingQuery";
+import { TaggingAttribute } from './definitions/TaggingAttribute';
+import { trackerErrorHandler, TrackOnErrorCallback } from './internal/trackerErrorHandler';
 
 /**
  * Used to decorate a TaggableElement with our Children Tagging Attributes.
@@ -34,7 +33,7 @@ export type TagChildrenReturnValue = Infer<typeof TagChildrenReturnValue>;
 export const tagChildren = (
   parameters: ChildrenTaggingQueries,
   onError?: TrackOnErrorCallback
-): TagChildrenReturnValue => {
+) => {
   try {
     // Validate input
     assert(parameters, ChildrenTaggingQueries);

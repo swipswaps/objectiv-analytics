@@ -1,9 +1,9 @@
-import { parseTrackVisibilityAttribute } from '../structs';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackSectionVisible } from '../tracker/trackEventHelpers';
-import { trackerErrorHandler } from '../trackerErrorHandler';
-import { TaggedElement } from '../typeGuards';
+import { TaggedElement } from '../definitions/elements';
+import { parseTrackVisibilityAttribute } from '../definitions/structTaggingAttributes';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { BrowserTracker } from '../internal/BrowserTracker';
+import { trackerErrorHandler } from '../internal/trackerErrorHandler';
+import { trackSectionVisible } from '../trackEventHelpers';
 
 /**
  * Given a newly added Element node it will determine whether to track a visibility:visible event for it.

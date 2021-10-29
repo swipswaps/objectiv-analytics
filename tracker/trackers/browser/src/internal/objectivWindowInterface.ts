@@ -1,20 +1,15 @@
 import { TrackerRepository } from '@objectiv/tracker-core';
-import { windowExists } from './helpers';
-import { BrowserTracker } from './tracker/BrowserTracker';
-
-/**
- * The interface of our namespace which will be extending the Window interface
- */
-export interface ObjectivNamespace {
-  trackers: TrackerRepository<BrowserTracker>;
-}
+import { BrowserTracker } from './BrowserTracker';
+import { windowExists } from './windowExists';
 
 /**
  * Window extension for our namespace
  */
 declare global {
   interface Window {
-    objectiv: ObjectivNamespace;
+    objectiv: {
+      trackers: TrackerRepository<BrowserTracker>;
+    };
   }
 }
 

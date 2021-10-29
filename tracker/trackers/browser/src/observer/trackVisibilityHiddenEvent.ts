@@ -1,9 +1,9 @@
-import { parseTrackVisibilityAttribute } from '../structs';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackSectionHidden } from '../tracker/trackEventHelpers';
-import { trackerErrorHandler } from '../trackerErrorHandler';
-import { TaggedElement } from '../typeGuards';
+import { TaggedElement } from '../definitions/elements';
+import { parseTrackVisibilityAttribute } from '../definitions/structTaggingAttributes';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { BrowserTracker } from '../internal/BrowserTracker';
+import { trackerErrorHandler } from '../internal/trackerErrorHandler';
+import { trackSectionHidden } from '../trackEventHelpers';
 
 /**
  * Checks if the given Node is a tracked element and if we need to trigger a visibility: hidden event for it.

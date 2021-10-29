@@ -1,10 +1,10 @@
 import { LocationStack } from '@objectiv/tracker-core';
-import { BrowserTracker, TaggableElement } from '../';
-import { parseLocationContext } from '../structs';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { trackerErrorHandler } from '../trackerErrorHandler';
-import { isTaggableElement } from '../typeGuards';
-import { findTaggedParentElements } from './findTaggedParentElements';
+import { isTaggableElement, TaggableElement } from '../definitions/elements';
+import { parseLocationContext } from '../definitions/structLocationContext';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { BrowserTracker } from './BrowserTracker';
+import { findParentTaggedElements } from './findParentTaggedElements';
+import { trackerErrorHandler } from './trackerErrorHandler';
 
 /**
  * Generates a location stack for the given Element. If a Tracker instance is provided, also predicts its mutations.
@@ -31,7 +31,7 @@ export const getElementLocationStack = (parameters: {
     // Traverse the DOM to reconstruct Element's Location
     if (isTaggableElement(element)) {
       // Retrieve Tagged Parent Elements
-      const elementsStack = findTaggedParentElements(element).reverse();
+      const elementsStack = findParentTaggedElements(element).reverse();
 
       // Re-hydrate Location Stack
       elementsStack.forEach((element) => {

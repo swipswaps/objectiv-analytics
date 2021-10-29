@@ -1,72 +1,9 @@
-import {
-  array,
-  assert,
-  boolean,
-  coerce,
-  create,
-  defaulted,
-  define,
-  Infer,
-  literal,
-  number,
-  object,
-  optional,
-  string,
-  Struct,
-  union,
-} from 'superstruct';
-import uuid from 'uuid-random';
-import { AnyLocationContext } from './Contexts';
+import { boolean, defaulted, Infer, literal, number, object, optional, string, union } from 'superstruct';
+import { StringBoolean } from './structBoolean';
+import { jsonParse, jsonStringify } from './structJson';
+import { AnyLocationContext } from './structLocationContext';
+import { Uuid } from './structUuid';
 import { TaggingAttribute } from './TaggingAttribute';
-
-/**
- * A custom Struct describing v4 UUIDs
- */
-export const Uuid = define<string>('Uuid', (value: any) => uuid.test(value));
-
-/**
- * Generic structs to stringify and parse JSON via create + coerce
- */
-export const stringifyStruct = <T = unknown>(object: T, struct: Struct<T>): string => {
-  return create(
-    object,
-    coerce(string(), struct, (value) => JSON.stringify(value))
-  );
-};
-
-export const parseStruct = <T = unknown>(stringifiedContext: string | null, struct: Struct<T>): T => {
-  return create(
-    stringifiedContext,
-    coerce(struct, string(), (value) => JSON.parse(value))
-  );
-};
-
-/**
- * Stringifier and Parser for Location Contexts
- */
-export const stringifyLocationContext = (contextObject: AnyLocationContext) => {
-  return stringifyStruct(contextObject, AnyLocationContext);
-};
-
-export const parseLocationContext = (stringifiedContext: string | null) => {
-  return parseStruct(stringifiedContext, AnyLocationContext);
-};
-
-/**
- * Custom Structs describing stringified booleans + their Stringifier and Parser
- */
-export const StringBoolean = union([literal('true'), literal('false')]);
-
-export const stringifyBoolean = (value: boolean) => {
-  return create(JSON.stringify(value), StringBoolean);
-};
-
-export const parseBoolean = (stringifiedBoolean: string | null) => {
-  if (stringifiedBoolean === null) {
-    throw new Error('Received `null` while attempting to parse boolean');
-  }
-  return create(JSON.parse(stringifiedBoolean), boolean());
-};
 
 /**
  * Custom Structs for the trackClicks Tagging Attribute + their Stringifier and Parser
@@ -87,7 +24,7 @@ export const TrackClicksAttribute = union([
 export type TrackClicksAttribute = Infer<typeof TrackClicksAttribute>;
 
 export const stringifyTrackClicksAttribute = (trackClicksAttribute: TrackClicksAttribute) => {
-  return stringifyStruct(trackClicksAttribute, TrackClicksAttribute);
+  return jsonStringify(trackClicksAttribute, TrackClicksAttribute);
 };
 
 /**
@@ -114,7 +51,7 @@ export const TrackClicksOptions = union([
 export type TrackClicksOptions = Infer<typeof TrackClicksOptions>;
 
 export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: string | null): TrackClicksOptions => {
-  const parsedTrackClicks = parseStruct(stringifiedTrackClicksAttribute, TrackClicksAttribute);
+  const parsedTrackClicks = jsonParse(stringifiedTrackClicksAttribute, TrackClicksAttribute);
 
   // Process `true` and `false` shorthands onto their verbose options counterparts
   if (typeof parsedTrackClicks == 'boolean') {
@@ -155,11 +92,11 @@ export const stringifyTrackVisibilityAttribute = (trackVisibilityAttribute: Trac
   if (!(typeof trackVisibilityAttribute === 'object')) {
     throw new Error(`trackVisibility must be an object, received: ${JSON.stringify(trackVisibilityAttribute)}`);
   }
-  return stringifyStruct(trackVisibilityAttribute, TrackVisibilityAttribute);
+  return jsonStringify(trackVisibilityAttribute, TrackVisibilityAttribute);
 };
 
 export const parseTrackVisibilityAttribute = (stringifiedTrackVisibilityAttribute: string | null) => {
-  return parseStruct(stringifiedTrackVisibilityAttribute, TrackVisibilityAttribute);
+  return jsonParse(stringifiedTrackVisibilityAttribute, TrackVisibilityAttribute);
 };
 
 /**
@@ -174,11 +111,11 @@ export const stringifyValidateAttribute = (validateAttribute: ValidateAttribute)
   if (!(typeof validateAttribute === 'object')) {
     throw new Error(`validate Attribute must be an object, received: ${JSON.stringify(validateAttribute)}`);
   }
-  return stringifyStruct(validateAttribute, ValidateAttribute);
+  return jsonStringify(validateAttribute, ValidateAttribute);
 };
 
 export const parseValidateAttribute = (stringifiedValidateAttribute: string | null) => {
-  return parseStruct(stringifiedValidateAttribute ?? '{}', ValidateAttribute);
+  return jsonParse(stringifiedValidateAttribute ?? '{}', ValidateAttribute);
 };
 
 /**
@@ -208,52 +145,3 @@ export const StringifiedTaggingAttributes = object({
   [TaggingAttribute.validate]: optional(string()),
 });
 export type StringifiedTaggingAttributes = Infer<typeof StringifiedTaggingAttributes>;
-
-/**
- * The object that `tagChildren` calls return
- */
-export const ChildrenTaggingQuery = object({
-  queryAll: string(),
-  tagAs: optional(StringifiedTaggingAttributes),
-});
-export const ValidChildrenTaggingQuery = object({
-  queryAll: string(),
-  tagAs: StringifiedTaggingAttributes,
-});
-export type ChildrenTaggingQuery = Infer<typeof ChildrenTaggingQuery>;
-
-export const ChildrenTaggingAttributes = object({
-  [TaggingAttribute.tagChildren]: array(ChildrenTaggingQuery),
-});
-export type ChildrenTaggingAttributes = Infer<typeof ChildrenTaggingAttributes>;
-
-export const ChildrenTaggingQueries = array(ChildrenTaggingQuery);
-export type ChildrenTaggingQueries = Infer<typeof ChildrenTaggingQueries>;
-
-/**
- * The object that `tagChildren` calls return, stringified
- */
-export const StringifiedChildrenTaggingAttributes = object({
-  [TaggingAttribute.tagChildren]: string(),
-});
-export type StringifiedChildrenTaggingAttributes = Infer<typeof StringifiedChildrenTaggingAttributes>;
-
-/**
- * Children Tagging Attribute Stringifier and Parser
- */
-export const stringifyChildrenTaggingAttribute = (queries: ChildrenTaggingQueries) => {
-  if (!(typeof queries === 'object')) {
-    throw new Error(`Visibility must be an object, received: ${JSON.stringify(queries)}`);
-  }
-  queries.forEach((query) => assert(query, ValidChildrenTaggingQuery));
-  return create(JSON.stringify(queries), string());
-};
-
-export const parseChildrenTaggingAttribute = (stringifiedChildrenTaggingAttribute: string | null) => {
-  if (stringifiedChildrenTaggingAttribute === null) {
-    throw new Error('Received `null` while attempting to parse Children Tagging Attribute');
-  }
-
-  const queries = create(JSON.parse(stringifiedChildrenTaggingAttribute), ChildrenTaggingQueries);
-  return create(queries, array(ValidChildrenTaggingQuery));
-};

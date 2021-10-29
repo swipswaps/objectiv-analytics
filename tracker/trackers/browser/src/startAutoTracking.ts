@@ -1,10 +1,10 @@
-import { makeMutationCallback } from '../observer/makeMutationCallback';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { BrowserTrackerConfig } from '../tracker/BrowserTracker';
-import { trackApplicationLoaded } from '../tracker/trackEventHelpers';
-import { trackerErrorHandler } from '../trackerErrorHandler';
-import { AutoTrackingState } from './AutoTrackingState';
+import { TaggingAttribute } from './definitions/TaggingAttribute';
 import { getTracker } from './getTracker';
+import { BrowserTrackerConfig } from './internal/BrowserTracker';
+import { trackerErrorHandler } from './internal/trackerErrorHandler';
+import { AutoTrackingState } from './observer/AutoTrackingState';
+import { makeMutationCallback } from './observer/makeMutationCallback';
+import { trackApplicationLoaded } from './trackEventHelpers';
 
 /**
  * The options that `startAutoTracking` accepts

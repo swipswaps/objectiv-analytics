@@ -1,7 +1,8 @@
 import { assign, Infer, literal, object, string, union } from 'superstruct';
+import { jsonParse, jsonStringify } from './structJson';
 
 /**
- * Abstract Contexts
+ * Abstract Context struct
  */
 export const AbstractContext = object({
   id: string(),
@@ -9,7 +10,7 @@ export const AbstractContext = object({
 });
 
 /**
- * AbstractLocationContext
+ * AbstractLocationContext struct
  */
 export const AbstractLocationContext = assign(
   AbstractContext,
@@ -19,7 +20,7 @@ export const AbstractLocationContext = assign(
 );
 
 /**
- * AbstractSectionContext
+ * AbstractSectionContext struct
  */
 export const AbstractSectionContext = assign(
   AbstractLocationContext,
@@ -29,7 +30,7 @@ export const AbstractSectionContext = assign(
 );
 
 /**
- * AbstractItemContext
+ * AbstractItemContext struct
  */
 export const AbstractItemContext = assign(
   AbstractLocationContext,
@@ -39,7 +40,7 @@ export const AbstractItemContext = assign(
 );
 
 /**
- * AbstractActionContext
+ * AbstractActionContext struct
  */
 export const AbstractActionContext = assign(
   AbstractItemContext,
@@ -50,7 +51,7 @@ export const AbstractActionContext = assign(
 );
 
 /**
- * ElementContext
+ * ElementContext struct
  */
 export const SectionContext = assign(
   AbstractSectionContext,
@@ -60,7 +61,7 @@ export const SectionContext = assign(
 );
 
 /**
- * WebDocumentContext
+ * WebDocumentContext struct
  */
 export const WebDocumentContext = assign(
   AbstractSectionContext,
@@ -71,7 +72,7 @@ export const WebDocumentContext = assign(
 );
 
 /**
- * ScreenContext
+ * ScreenContext struct
  */
 export const ScreenContext = assign(
   AbstractSectionContext,
@@ -82,7 +83,7 @@ export const ScreenContext = assign(
 );
 
 /**
- * ExpandableSectionContext
+ * ExpandableSectionContext struct
  */
 export const ExpandableSectionContext = assign(
   AbstractSectionContext,
@@ -92,7 +93,7 @@ export const ExpandableSectionContext = assign(
 );
 
 /**
- * MediaPlayerContext
+ * MediaPlayerContext struct
  */
 export const MediaPlayerContext = assign(
   AbstractSectionContext,
@@ -102,7 +103,7 @@ export const MediaPlayerContext = assign(
 );
 
 /**
- * NavigationContext
+ * NavigationContext struct
  */
 export const NavigationContext = assign(
   AbstractSectionContext,
@@ -112,7 +113,7 @@ export const NavigationContext = assign(
 );
 
 /**
- * OverlayContext
+ * OverlayContext struct
  */
 export const OverlayContext = assign(
   AbstractSectionContext,
@@ -122,7 +123,7 @@ export const OverlayContext = assign(
 );
 
 /**
- * ItemContext
+ * ItemContext struct
  */
 export const ItemContext = assign(
   AbstractItemContext,
@@ -132,7 +133,7 @@ export const ItemContext = assign(
 );
 
 /**
- * InputContext
+ * InputContext struct
  */
 export const InputContext = assign(
   AbstractItemContext,
@@ -142,7 +143,7 @@ export const InputContext = assign(
 );
 
 /**
- * ActionContext
+ * ActionContext struct
  */
 export const ActionContext = assign(
   AbstractActionContext,
@@ -152,7 +153,7 @@ export const ActionContext = assign(
 );
 
 /**
- * ButtonContext
+ * ButtonContext struct
  */
 export const ButtonContext = assign(
   AbstractActionContext,
@@ -162,7 +163,7 @@ export const ButtonContext = assign(
 );
 
 /**
- * LinkContext
+ * LinkContext struct
  */
 export const LinkContext = assign(
   AbstractActionContext,
@@ -173,7 +174,7 @@ export const LinkContext = assign(
 );
 
 /**
- * Custom Struct to match any LocationContext
+ * Struct union to match any LocationContext
  */
 export const AnyLocationContext = union([
   SectionContext,
@@ -192,7 +193,7 @@ export const AnyLocationContext = union([
 export type AnyLocationContext = Infer<typeof AnyLocationContext>;
 
 /**
- * Struct to match any SectionContext
+ * Struct union to match any SectionContext
  */
 export const AnySectionContext = union([
   SectionContext,
@@ -206,13 +207,24 @@ export const AnySectionContext = union([
 export type AnySectionContext = Infer<typeof AnySectionContext>;
 
 /**
- * Struct to match any ItemContext
+ * Struct union to match any ItemContext
  */
 export const AnyItemContext = union([ItemContext, InputContext, ActionContext, ButtonContext, LinkContext]);
 export type AnyItemContext = Infer<typeof AnyItemContext>;
 
 /**
- * Struct to match any ActionContext
+ * Struct union to match any ActionContext
  */
 export const AnyActionContext = union([ActionContext, ButtonContext, LinkContext]);
 export type AnyActionContext = Infer<typeof AnyActionContext>;
+
+/**
+ * Struct Stringifier and Parser for Location Contexts
+ */
+export const stringifyLocationContext = (contextObject: AnyLocationContext) => {
+  return jsonStringify(contextObject, AnyLocationContext);
+};
+
+export const parseLocationContext = (stringifiedContext: string | null) => {
+  return jsonParse(stringifiedContext, AnyLocationContext);
+};

@@ -1,10 +1,10 @@
-import { TaggingAttribute } from '../TaggingAttribute';
-import { isCustomParentTaggedElement, isTaggedElement, TaggableElement } from '../typeGuards';
+import { isParentTaggedElement, isTaggedElement, TaggableElement } from '../definitions/elements';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
 
 /**
  * Walk the DOM upwards looking for Tagged Elements. The resulting array can be used to reconstruct a Location Stack.
  */
-export const findTaggedParentElements = (
+export const findParentTaggedElements = (
   element: TaggableElement | null,
   parentElements: TaggableElement[] = []
 ): TaggableElement[] => {
@@ -19,15 +19,15 @@ export const findTaggedParentElements = (
   let nextElement: TaggableElement | null = element.parentElement;
 
   // If this element has a Parent Tagged Element Id specified, follow that instead of the DOM parentElement
-  if (isCustomParentTaggedElement(element)) {
+  if (isParentTaggedElement(element)) {
     const parentElementId = element.getAttribute(TaggingAttribute.parentElementId);
     const parentElement = document.querySelector(`[${TaggingAttribute.elementId}='${parentElementId}']`);
     if (!isTaggedElement(parentElement)) {
-      console.error(`findTaggedParentElements: missing or invalid Parent Element '${parentElementId}'`);
+      console.error(`findParentTaggedElements: missing or invalid Parent Element '${parentElementId}'`);
       return parentElements;
     }
     nextElement = parentElement;
   }
 
-  return findTaggedParentElements(nextElement, parentElements);
+  return findParentTaggedElements(nextElement, parentElements);
 };

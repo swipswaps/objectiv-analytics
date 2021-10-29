@@ -1,10 +1,10 @@
 import { TrackerElementLocations } from '@objectiv/tracker-core';
-import { parseTrackVisibilityAttribute } from '../structs';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackSectionHidden } from '../tracker/trackEventHelpers';
-import { trackerErrorHandler } from '../trackerErrorHandler';
-import { isTaggedElement } from '../typeGuards';
+import { isTaggedElement } from '../definitions/elements';
+import { parseTrackVisibilityAttribute } from '../definitions/structTaggingAttributes';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { BrowserTracker } from '../internal/BrowserTracker';
+import { trackerErrorHandler } from '../internal/trackerErrorHandler';
+import { trackSectionHidden } from '../trackEventHelpers';
 
 /**
  * Given a removed Element node it will:

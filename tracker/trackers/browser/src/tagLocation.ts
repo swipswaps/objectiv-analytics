@@ -1,25 +1,25 @@
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
 import { boolean, create, func, Infer, is, object, optional, union, validate } from 'superstruct';
+import { stringifyBoolean } from './definitions/structBoolean';
 import {
   AnyActionContext,
   AnyLocationContext,
   AnySectionContext,
   ExpandableSectionContext,
   InputContext,
-} from '../Contexts';
+  stringifyLocationContext,
+} from './definitions/structLocationContext';
 import {
   StringifiedTaggingAttributes,
-  stringifyBoolean,
-  stringifyLocationContext,
   stringifyTrackClicksAttribute,
   stringifyTrackVisibilityAttribute,
   stringifyValidateAttribute,
   TrackClicksAttribute,
   TrackVisibilityAttribute,
   ValidateAttribute,
-} from '../structs';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
+} from './definitions/structTaggingAttributes';
+import { TaggingAttribute } from './definitions/TaggingAttribute';
+import { trackerErrorHandler, TrackOnErrorCallback } from './internal/trackerErrorHandler';
 
 /**
  * Used to decorate a Taggable Element with our Tagging Attributes.

@@ -1,11 +1,11 @@
 import { TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
-import { AutoTrackingState } from '../global/AutoTrackingState';
-import { getTracker } from '../global/getTracker';
-import { getLocationHref } from '../helpers';
-import { TaggingAttribute } from '../TaggingAttribute';
-import { trackURLChange } from '../tracker/trackEventHelpers';
-import { trackerErrorHandler } from '../trackerErrorHandler';
-import { isTaggedElement } from '../typeGuards';
+import { isTaggedElement } from '../definitions/elements';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { getTracker } from '../getTracker';
+import { getLocationHref } from '../internal/getLocationHref';
+import { trackerErrorHandler } from '../internal/trackerErrorHandler';
+import { trackURLChange } from '../trackEventHelpers';
+import { AutoTrackingState } from './AutoTrackingState';
 import { trackNewElements } from './trackNewElements';
 import { trackRemovedElements } from './trackRemovedElements';
 import { trackVisibilityHiddenEvent } from './trackVisibilityHiddenEvent';
@@ -18,14 +18,17 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * We use a Mutation Observer to monitor the DOM for subtrees being added.
  * When that happens we traverse the new Nodes and scout for Elements that have been enriched with our Tracking
  * Attributes. For those Elements we attach Event listeners which will automatically handle their tracking.
+ * New Elements are also added to TrackerElementLocations and their Location Stack is validated for uniqueness.
  *
  * Existing nodes changing.
- * The same Observer is also configured to monitor changes in our visibility attribute.
+ * The same Observer is also configured to monitor changes in our visibility and element id attributes.
  * When we detect a change in the visibility of a tagged element we trigger the corresponding visibility events.
+ * Element id changes are used to keep the TrackerElementLocations in sync with the DOM.
  *
  * Existing nodes being removed.
  * We also monitor nodes that are removed. If those nodes are Tagged Elements of which we were tracking visibility
  * we will trigger visibility: hidden events for them.
+ * We also clean them up from TrackerElementLocations.
  *
  * SPA URL changes (default enabled, configurable)
  * We can leverage the same Observer to detect also URL changes. To do so we simply keep track of the last URL we have
