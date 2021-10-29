@@ -5,23 +5,23 @@ Welcome to BuhTuh's documentation!
 
 hallo ik ben een introducte
 
-.. toctree::
-   :maxdepth: 3
-   :caption: Contents
-
-    buhtuh
-    buhtuh/series
-    sql_models
-
-
+Buhtuh
+------
 .. autosummary::
-    :recursive:
     :toctree: buhtuh
 
     buhtuh
+    buhtuh.dataframe
+    buhtuh.expression
+    buhtuh.merge
+    buhtuh.mike
+    buhtuh.partitioning
+    buhtuh.types
 
+
+Series
+------
 .. autosummary::
-    :recursive:
     :toctree: buhtuh/series
 
     buhtuh.series.series_boolean
@@ -33,10 +33,17 @@ hallo ik ben een introducte
     buhtuh.series.series
 
 
+Sql Models
+----------
 .. autosummary::
-    :recursive:
     :toctree: sql_models
 
     sql_models
+    sql_models.cli_util
+    sql_models.graph_operations
+    sql_models.model
+    sql_models.sql_generator
+    sql_models.sql_query_parser
+    sql_models.util
 
 
