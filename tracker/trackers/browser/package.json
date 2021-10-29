@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/tracker-browser",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Objectiv Browser Tracker",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -37,10 +37,10 @@
     "xhr-mock": "^2.5.1"
   },
   "dependencies": {
-    "@objectiv/plugin-web-device-context": "^0.0.0",
-    "@objectiv/plugin-web-document-context": "^0.0.0",
-    "@objectiv/schema": "^0.0.0",
-    "@objectiv/tracker-core": "^0.0.0",
+    "@objectiv/plugin-web-device-context": "^0.0.1",
+    "@objectiv/plugin-web-document-context": "^0.0.1",
+    "@objectiv/schema": "^0.0.1",
+    "@objectiv/tracker-core": "^0.0.1",
     "superstruct": "^0.15.3"
   }
 }

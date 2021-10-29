@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/schema",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Objectiv Schema TypeScript",
   "types": "src/index.d.ts",
   "files": [
