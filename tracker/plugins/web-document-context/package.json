@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/plugin-web-document-context",
-  "version": "0.0.1-beta.1",
+  "version": "0.0.0",
   "description": "Objectiv Tracker WebDocumentContext Plugin",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -37,6 +37,6 @@
     "typescript": "^4.4.4"
   },
   "peerDependencies": {
-    "@objectiv/tracker-core": "^0.0.1-beta.1"
+    "@objectiv/tracker-core": "^0.0.0"
   }
 }

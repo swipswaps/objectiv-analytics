@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/tracker-angular",
-  "version": "0.0.1-beta.1",
+  "version": "0.0.0",
   "description": "Objectiv Angular Tracker",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -11,13 +11,13 @@
     "npm-publish": "(cd dist && npm publish)"
   },
   "peerDependencies": {
-    "@objectiv/tracker-browser": "^0.0.1-beta.1"
+    "@objectiv/tracker-browser": "^0.0.0"
   },
   "devDependencies": {
     "@angular/compiler": "^12.2.11",
     "@angular/compiler-cli": "^12.2.11",
     "@angular/core": "^12.2.11",
-    "@objectiv/tracker-browser": "^0.0.1-beta.1",
+    "@objectiv/tracker-browser": "^0.0.0",
     "ng-packagr": "^12.2.5",
     "prettier": "^2.4.1",
     "rxjs": "^7.4.0",
