@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import List, Union, TYPE_CHECKING
 
 import sql_models.expression
-from sql_models.expression import Expression, ExpressionToken, quote_string, quote_identifier
+from sql_models.expression import ExpressionToken, quote_string, quote_identifier
 
 if TYPE_CHECKING:
     from buhtuh import BuhTuhSeries

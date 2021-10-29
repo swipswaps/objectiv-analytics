@@ -3,8 +3,8 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
-from buhtuh.expression import RawToken, ColumnReferenceToken, expression_to_sql, quote_string, \
-    quote_identifier, StringValueToken, Expression
+from buhtuh.expression import RawToken, ColumnReferenceToken, expression_to_sql, \
+    StringValueToken, Expression
 from tests.unit.buhtuh.util import get_fake_df
 
 
@@ -74,15 +74,3 @@ def test_combined():
            '"Finished in " || cast(("year" + cast("duration" as bigint)) as text) || " or later."'
     assert expr_str.resolve_column_references('table_name').to_sql() == \
            '"Finished in " || cast(("table_name"."year" + cast("table_name"."duration" as bigint)) as text) || " or later."'
-
-
-def test_quote_string():
-    assert quote_string("test") == "'test'"
-    assert quote_string("te'st") == "'te''st'"
-    assert quote_string("'te''st'") == "'''te''''st'''"
-
-
-def test_quote_identifier():
-    assert quote_identifier('test') == '"test"'
-    assert quote_identifier('te"st') == '"te""st"'
-    assert quote_identifier('"te""st"') == "\"\"\"te\"\"\"\"st\"\"\""

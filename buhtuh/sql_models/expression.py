@@ -2,10 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from dataclasses import dataclass, field
-from typing import List, Optional, Union, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from buhtuh import BuhTuhSeries
+from typing import List
 
 
 @dataclass(frozen=True)
@@ -34,7 +31,7 @@ class Expression:
     """
     data: List[ExpressionToken] = field(default_factory=list)
 
-    def to_sql(self, table_name: Optional[str] = None) -> str:
+    def to_sql(self) -> str:
         raise NotImplementedError('to_sql() must be implemented')
 
 

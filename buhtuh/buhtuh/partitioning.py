@@ -142,7 +142,7 @@ class BuhTuhGroupingList(BuhTuhGroupBy):
 
     def get_group_by_column_expression(self):
         grouping_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
-        fmtstr = ", ".join(["({})"] * len(grouping_expr_list))
+        fmtstr = ', '.join(["({})"] * len(grouping_expr_list))
         return Expression.construct(fmtstr, *grouping_expr_list)
 
 
@@ -153,7 +153,7 @@ class BuhTuhGroupingSet(BuhTuhGroupingList):
     """
     def get_group_by_column_expression(self):
         grouping_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
-        fmtstr = ", ".join(["({})"] * len(grouping_expr_list))
+        fmtstr = ', '.join(["({})"] * len(grouping_expr_list))
         fmtstr = f'grouping sets ({fmtstr})'
         return Expression.construct(fmtstr, *grouping_expr_list)
 
@@ -339,7 +339,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
         else:
             frame_clause = self.frame_clause
 
-        partition_fmt = ", ".join(['{}'] * len(self.index))
+        partition_fmt = ', '.join(['{}'] * len(self.index))
 
         over_fmt = f'over (partition by {partition_fmt} {{}} {frame_clause})'
         over_expr = Expression.construct(over_fmt,
