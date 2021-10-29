@@ -21,7 +21,9 @@
     "ng-packagr": "^12.2.5",
     "prettier": "^2.4.1",
     "rxjs": "^7.4.0",
-    "typescript": "4.3.5"
+    "tslib": "^2.3.1",
+    "typescript": "4.3.5",
+    "zone.js": "^0.11.4"
   },
   "ngPackage": {
     "lib": {
