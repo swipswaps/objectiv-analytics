@@ -1097,8 +1097,7 @@ class BuhTuhDataFrame:
         return sql
 
     def _get_all_column_expressions_sql(self):
-        return ', '.join([quote_identifier(index_column) for index_column in self._index.keys()] +
-                         [series.get_column_expression() for series in self._data.values()])
+        return ', '.join([series.get_column_expression() for series in self.all_series.values()])
 
     def merge(
             self,
