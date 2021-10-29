@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/plugin-web-device-context",
-  "version": "0.0.1",
+  "version": "0.0.1-beta.1",
   "description": "Objectiv Tracker Web Device Context Plugin",
   "main": "dist/index.js",
   "module": "dist/index.js",
@@ -36,6 +36,6 @@
     "typescript": "^4.4.4"
   },
   "peerDependencies": {
-    "@objectiv/tracker-core": "~0.0.1"
+    "@objectiv/tracker-core": "^0.0.1-beta.1"
   }
 }
