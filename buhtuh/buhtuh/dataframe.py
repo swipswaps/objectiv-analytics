@@ -450,6 +450,56 @@ class BuhTuhDataFrame:
     def __getattr__(self, attr):
         return self._data[attr]
 
+    def get_sample(self,
+                   table_name: str,
+                   sample_percentage: int = 50,
+                   overwrite=False,
+                   seed=200):
+        """
+        Returns a BuhTuhDataFrameSample, which is a sample of the current BuhTuhDataFrame object. For the
+        sample BuhTuh frame to be created, all data is queried once and a persistant table is created to
+        store the sample data used for the sample BuhTuh frame.
+
+        :param: table_name: the name of the underlying sql table that stores the sampled data.
+        :param: sample_percentage: the approximate size of the sample.
+        :param: overwrite: if True, the sample data is written to table_name, even if that table already
+            exists.
+        :param: seed: seed number used to generate the sample.
+        """
+        if self._group_by is not None:
+            print('error: groupby not supported ')
+        if overwrite:
+            sql = f'DROP TABLE IF EXISTS {table_name}'
+            with self.engine.connect() as conn:
+                res = conn.execute(sql)
+
+        sql = f'''
+            create temporary table tmp_table_name on commit drop as
+            ({self.view_sql()});
+            create table {table_name} as
+            (select * from tmp_table_name
+            tablesample bernoulli({sample_percentage}) repeatable ({seed}))
+        '''
+        print(sql)
+        with self.engine.connect() as conn:
+            res = conn.execute(sql)
+
+        model = CustomSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
+
+        sampled_bt = BuhTuhDataFrame.get_instance(engine=self.engine,
+                                                  base_node=model,
+                                                  index_dtypes=self.index_dtypes,
+                                                  dtypes=self.dtypes,
+                                                  group_by=None)
+
+        sampled_bt = BuhTuhDataFrameSample(sampled_bt._engine,
+                                           sampled_bt._base_node,
+                                           sampled_bt._index,
+                                           sampled_bt._data,
+                                           self)
+
+        return sampled_bt
+
     def __setitem__(self,
                     key: Union[str, List[str]],
                     value: Union['BuhTuhSeries', int, str, float, UUID]):
@@ -1269,3 +1319,45 @@ class BuhTuhDataFrame:
     def var(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
+
+
+class BuhTuhDataFrameSample(BuhTuhDataFrame):
+    """
+    A BuhTuhDataFrame based on a sample of another BuhTuhDataFrame. All operations are performed on the
+    sample data instead of the full data set. The operations can be applied at any time to the entire data
+    set to return a new BuhTuhDataFrame based on the entire data set.
+    """
+    def __init__(
+        self,
+        engine: Engine,
+        base_node: SqlModel,
+        index: Dict[str, 'BuhTuhSeries'],
+        series: Dict[str, 'BuhTuhSeries'],
+        full_bt: BuhTuhDataFrame
+    ):
+        super().__init__(engine,
+                         base_node,
+                         index,
+                         series,
+                         group_by=None,
+                         order_by=None)
+        self._full_bt = full_bt  # todo: maybe only save the last node
+
+    def get_all_data(self):
+        """
+        Returns a BuhTuhDataFrame with all operations carried out on the sampled data, but applied on the full
+        data set
+        """
+        sql = 'select {index_str}, {columns_sql_str} from {{_last_node}}'
+        model = CustomSqlModel(sql=sql)(columns_sql_str=self._get_all_column_expressions_sql(),
+                                        index_str=self._get_all_index_expressions_sql(),
+                                        _last_node=self._full_bt.get_current_node())
+        # todo: self._full_bt.get_current_node() means that the original bt can be modified after the sample
+        # is created. These changes are not reflected in the sample
+        full_bt = BuhTuhDataFrame.get_instance(engine=self.engine,
+                                               base_node=model,
+                                               index_dtypes=self.index_dtypes,
+                                               dtypes=self.dtypes,
+                                               group_by=None)
+
+        return full_bt
