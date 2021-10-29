@@ -3,8 +3,9 @@ import re
 from os import path, makedirs, remove
 from shutil import copyfile
 import json
-from typing import List
+from typing import List, Dict, Any
 from lxml import html
+from lxml.etree import ElementTree
 
 html_dir = 'build/html/'
 
@@ -24,16 +25,17 @@ patterns = [
 ]
 
 
-def toc_from_links(html_doc, xpath, node_xpath, level) -> List:
+def toc_from_links(html_doc: ElementTree, element_xpath: str, node_xpath: str, level: int) -> List[Dict[str, Any]]:
     """
     Parses Sphinx generated html fragment to construct part of the toc
 
     :param html_doc: lxml html parser
-    :param xpath: xpath query that returns s list of anchor html fragments
-    :param scope: should be Function or Classes
-    :return: dictionary with TOC items for docusaurus
+    :param element_xpath: xpath query that returns s list of anchor html fragments
+    :param node_xpath: xpath query to determine value/name of link
+    :param level: int level in menu structure
+    :return: List of Dictionary with TOC items for docusaurus
     """
-    links = html_doc.xpath(xpath)
+    links = html_doc.xpath(element_xpath)
 
     if links:
         entries = []
@@ -54,8 +56,6 @@ def toc_from_links(html_doc, xpath, node_xpath, level) -> List:
             })
 
         return entries
-
-    print('no links')
     return []
 
 
@@ -111,7 +111,8 @@ for url in urls:
     for header in headers:
         toc.append(header)
 
-    modules = toc_from_links(doc, '//p[@class="rubric" and text()="Modules"]/following-sibling::*[1]//tr//a', 'code/span', 3)
+    modules = toc_from_links(doc, '//p[@class="rubric" and text()="Modules"]/following-sibling::*[1]//tr//a',
+                             'code/span', 3)
     if modules:
         toc.append({
             'value': 'Modules',
@@ -119,7 +120,8 @@ for url in urls:
             'children': modules,
             'level': 2})
 
-    functions = toc_from_links(doc, '//p[@class="rubric" and text()="Functions"]/following-sibling::*[1]//tr//a', 'code/span', 3)
+    functions = toc_from_links(doc, '//p[@class="rubric" and text()="Functions"]/following-sibling::*[1]//tr//a',
+                               'code/span', 3)
     if functions:
         toc.append({
             'value': 'Functions',
@@ -127,14 +129,15 @@ for url in urls:
             'children': functions,
             'level': 2})
 
-    classes = toc_from_links(doc, '//p[@class="rubric" and text()="Classes"]/following-sibling::*[1]//tr//a', 'code/span', 3)
+    classes = toc_from_links(doc, '//p[@class="rubric" and text()="Classes"]/following-sibling::*[1]//tr//a',
+                             'code/span', 3)
     if classes:
         for c in classes:
 
-            xpath = f'//dl[@class="py class"]/dt[@id="{c["id"]}"]/following-sibling::dd//dl[@class="py method" or @class="py attribute"]/dt'
+            xpath = f'//dl[@class="py class"]/dt[@id="{c["id"]}"]/following-sibling::dd//dl[@class="py method" or ' \
+                    f'@class="py attribute"]/dt'
             attrs = toc_from_links(doc, xpath, 'span/span', 3)
             for attr in attrs:
-                print(f'adding attr: {attr}')
                 c['children'].append(attr)
         toc.append({
             'value': 'Classes',
