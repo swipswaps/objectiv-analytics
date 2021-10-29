@@ -4,6 +4,7 @@ import {
   boolean,
   coerce,
   create,
+  defaulted,
   define,
   Infer,
   literal,
@@ -141,7 +142,7 @@ export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: strin
 };
 
 /**
- * Custom Structs for the trackVisibility Tagging Attribute + their Stringifier and Parser
+ * Custom Structs for the `trackVisibility` Tagging Attribute + their Stringifier and Parser
  */
 export const TrackVisibilityAttributeAuto = object({ mode: literal('auto') });
 export type TrackVisibilityAttributeAuto = Infer<typeof TrackVisibilityAttributeAuto>;
@@ -162,6 +163,25 @@ export const parseTrackVisibilityAttribute = (stringifiedTrackVisibilityAttribut
 };
 
 /**
+ * Custom Struct for the `validate` Tagging Attribute + their Stringifier and Parser
+ */
+export const ValidateAttribute = object({
+  locationUniqueness: defaulted(boolean(), true),
+});
+export type ValidateAttribute = Infer<typeof ValidateAttribute>;
+
+export const stringifyValidateAttribute = (validateAttribute: ValidateAttribute) => {
+  if (!(typeof validateAttribute === 'object')) {
+    throw new Error(`validate Attribute must be an object, received: ${JSON.stringify(validateAttribute)}`);
+  }
+  return stringifyStruct(validateAttribute, ValidateAttribute);
+};
+
+export const parseValidateAttribute = (stringifiedValidateAttribute: string | null) => {
+  return parseStruct(stringifiedValidateAttribute ?? '{}', ValidateAttribute);
+};
+
+/**
  * The object that Location Taggers return
  */
 export const TaggingAttributes = object({
@@ -171,6 +191,7 @@ export const TaggingAttributes = object({
   [TaggingAttribute.trackClicks]: optional(TrackClicksAttribute),
   [TaggingAttribute.trackBlurs]: optional(boolean()),
   [TaggingAttribute.trackVisibility]: optional(TrackVisibilityAttribute),
+  [TaggingAttribute.validate]: optional(ValidateAttribute),
 });
 export type TaggingAttributes = Infer<typeof TaggingAttributes>;
 
@@ -184,6 +205,7 @@ export const StringifiedTaggingAttributes = object({
   [TaggingAttribute.trackClicks]: optional(string()),
   [TaggingAttribute.trackBlurs]: optional(StringBoolean),
   [TaggingAttribute.trackVisibility]: optional(string()),
+  [TaggingAttribute.validate]: optional(string()),
 });
 export type StringifiedTaggingAttributes = Infer<typeof StringifiedTaggingAttributes>;
 

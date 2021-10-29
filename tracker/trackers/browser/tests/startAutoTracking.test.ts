@@ -3,7 +3,7 @@ import {
   makeSectionContext,
   makeSectionHiddenEvent,
   makeSectionVisibleEvent,
-  makeURLChangeEvent
+  makeURLChangeEvent,
 } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
@@ -90,7 +90,7 @@ describe('makeMutationCallback - url changes', () => {
       value: {
         href: 'http://localhost/new-url',
       },
-      writable: true
+      writable: true,
     });
     mutationCallback([], mutationObserver);
 
@@ -105,7 +105,7 @@ describe('makeMutationCallback - url changes', () => {
       value: {
         href: 'http://localhost/',
       },
-      writable: true
+      writable: true,
     });
     AutoTrackingState.previousURL = 'http://localhost/';
 
@@ -117,7 +117,7 @@ describe('makeMutationCallback - url changes', () => {
       value: {
         href: 'http://localhost/another-url',
       },
-      writable: true
+      writable: true,
     });
     mutationCallback([], mutationObserver);
 
@@ -239,5 +239,31 @@ describe('makeMutationCallback - removed nodes', () => {
         ],
       })
     );
+  });
+});
+
+describe('makeMutationCallback - attribute changes', () => {
+  it('should remove element from TrackerElementLocations when its id changes', () => {
+    const mutationCallback = makeMutationCallback(false);
+    const mutationObserver = new MutationObserver(mutationCallback);
+
+    const trackedDiv = makeTaggedElement('div', 'div', 'div');
+
+    const oldValue = 'old-id';
+    const mockedMutationRecord: MutationRecord = {
+      attributeNamespace: null,
+      nextSibling: null,
+      previousSibling: null,
+      // @ts-ignore
+      addedNodes: [],
+      // @ts-ignore
+      removedNodes: [],
+      type: 'attributes',
+      // @ts-ignore
+      target: trackedDiv,
+      attributeName: TaggingAttribute.elementId,
+      oldValue,
+    };
+    mutationCallback([mockedMutationRecord], mutationObserver);
   });
 });

@@ -11,7 +11,7 @@ describe('trackRemovedElements', () => {
     jest.spyOn(getTracker(), 'trackEvent');
   });
 
-  it('should skip all Elements that are not Tracked Element', async () => {
+  it('should skip all Elements that are not Tagged Element', async () => {
     const div = document.createElement('div');
     const anotherDiv = document.createElement('div');
     const button = document.createElement('button');
@@ -37,7 +37,7 @@ describe('trackRemovedElements', () => {
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 
-  it('should trigger a visibility:hidden Event for Tracked Elements with visibility:auto attributes', async () => {
+  it('should trigger a visibility:hidden Event for Tagged Elements with visibility:auto attributes', async () => {
     const div = document.createElement('div');
     const sectionContext = makeSectionContext({ id: 'div' });
     const trackedDiv = makeTaggedElement('div', 'div', 'div');
@@ -56,7 +56,7 @@ describe('trackRemovedElements', () => {
     );
   });
 
-  it('should not trigger a visibility:hidden Event for Tracked Elements with visibility:manual attributes', async () => {
+  it('should not trigger a visibility:hidden Event for Tagged Elements with visibility:manual attributes', async () => {
     const div = document.createElement('div');
     const trackedDiv = makeTaggedElement('div', 'div', 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
