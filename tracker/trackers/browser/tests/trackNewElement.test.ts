@@ -3,13 +3,12 @@ import {
   LocationCollision,
   makeButtonContext,
   makeInputContext,
-  makeSectionContext,
-  makeSectionVisibleEvent,
   TrackerElementLocations,
 } from '@objectiv/tracker-core';
-import { BrowserTracker, getTracker, makeTracker, TaggingAttribute } from '../src';
+import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackNewElement } from '../src/observer/trackNewElement';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
 import { mockConsole } from './mocks/MockConsole';
 
 describe('trackNewElement', () => {
@@ -18,6 +17,12 @@ describe('trackNewElement', () => {
     makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
+  });
+
+  afterEach(() => {
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
+    jest.resetAllMocks();
   });
 
   it('should skip the Element if it is not a Tagged Element', async () => {
@@ -98,7 +103,6 @@ describe('trackNewElement', () => {
   });
 
   it('should track visibility: visible event', async () => {
-    const sectionContext = makeSectionContext({ id: 'test' });
     const trackedDiv = makeTaggedElement('div-id-1', 'test', 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"auto"}');
     jest.spyOn(trackedDiv, 'addEventListener');
@@ -109,7 +113,17 @@ describe('trackNewElement', () => {
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
-      makeSectionVisibleEvent({ location_stack: [sectionContext] })
+      expect.objectContaining({
+        _type: 'SectionVisibleEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [
+          {
+            _type: 'SectionContext',
+            id: 'test',
+          },
+        ],
+      })
     );
   });
 

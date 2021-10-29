@@ -31,6 +31,8 @@ import {
   trackVideoStart,
   trackVisibility,
 } from '../src';
+import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('trackEvent', () => {
   const testElement = document.createElement('div');
@@ -45,15 +47,95 @@ describe('trackEvent', () => {
   afterEach(() => {
     getTrackerRepository().trackersMap = new Map();
     getTrackerRepository().defaultTracker = undefined;
+    jest.resetAllMocks();
   });
 
   it('should use the global tracker instance if available', () => {
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
 
-    trackEvent({ eventFactory: makeClickEvent, element: testElement });
+    trackEvent({ event: makeClickEvent(), element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, makeClickEvent());
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'ClickEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
+  });
+
+  it('should use the given location stack instead of the element DOM', () => {
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
+
+    const mainSection = makeTaggedElement('main', 'main', 'section');
+    const div = document.createElement('div');
+    const parentSection = makeTaggedElement('parent', 'parent', 'div');
+    const section = document.createElement('section');
+    const childSection = makeTaggedElement('child', 'child', 'span');
+    const button = makeTaggedElement('button', 'button', 'button', true);
+
+    mainSection.appendChild(div);
+    div.appendChild(parentSection);
+    parentSection.appendChild(section);
+    section.appendChild(childSection);
+    childSection.appendChild(button);
+
+    trackEvent({ event: makeClickEvent(), element: button });
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'ClickEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [
+          { _type: 'SectionContext', id: 'main' },
+          { _type: 'SectionContext', id: 'parent' },
+          { _type: 'SectionContext', id: 'child' },
+          { _type: 'ButtonContext', id: 'button', text: 'button' },
+        ],
+      })
+    );
+
+    trackEvent({ event: makeClickEvent({ location_stack: [makeSectionContext({ id: 'custom' })] }), element: button });
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        _type: 'ClickEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [
+          {
+            _type: 'SectionContext',
+            id: 'custom',
+          },
+        ],
+      })
+    );
+
+    trackEvent({ event: makeClickEvent({ location_stack: [makeSectionContext({ id: 'custom' })] }) });
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(3);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        _type: 'ClickEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [
+          {
+            _type: 'SectionContext',
+            id: 'custom',
+          },
+        ],
+      })
+    );
   });
 
   it('should use the given tracker instance', () => {
@@ -63,11 +145,19 @@ describe('trackEvent', () => {
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
     expect(trackerOverride.trackEvent).not.toHaveBeenCalled();
 
-    trackEvent({ eventFactory: makeClickEvent, element: testElement, tracker: trackerOverride });
+    trackEvent({ event: makeClickEvent(), element: testElement, tracker: trackerOverride });
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
     expect(trackerOverride.trackEvent).toHaveBeenCalledTimes(1);
-    expect(trackerOverride.trackEvent).toHaveBeenNthCalledWith(1, makeClickEvent());
+    expect(trackerOverride.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'ClickEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 
   it('should track Tagged Elements with a location stack', () => {
@@ -90,7 +180,7 @@ describe('trackEvent', () => {
     untrackedSection.appendChild(midSection);
     topSection.appendChild(untrackedSection);
 
-    trackEvent({ eventFactory: makeClickEvent, element: testDivToTrack });
+    trackEvent({ event: makeClickEvent(), element: testDivToTrack });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
@@ -124,7 +214,7 @@ describe('trackEvent', () => {
     untrackedSection.appendChild(midSection);
     topSection.appendChild(untrackedSection);
 
-    trackEvent({ eventFactory: makeClickEvent, element: testElement });
+    trackEvent({ event: makeClickEvent(), element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
@@ -145,7 +235,7 @@ describe('trackEvent', () => {
 
     div.appendChild(testElement);
 
-    trackEvent({ eventFactory: makeClickEvent, element: testElement });
+    trackEvent({ event: makeClickEvent(), element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
@@ -263,7 +353,7 @@ describe('trackEvent', () => {
   it('should console.error if a Tracker instance cannot be retrieved and was not provided either', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    const parameters = { eventFactory: makeClickEvent, element: testElement };
+    const parameters = { event: makeClickEvent(), element: testElement };
     trackEvent(parameters);
 
     expect(console.error).toHaveBeenCalledTimes(2);

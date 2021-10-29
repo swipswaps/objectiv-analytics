@@ -1,4 +1,5 @@
 export * from './globals';
+export * from '@objectiv/tracker-core';
 export * from './Contexts';
 export * from './helpers';
 export * from './global/AutoTrackingState';
