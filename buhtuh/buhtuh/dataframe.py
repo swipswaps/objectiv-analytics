@@ -396,7 +396,6 @@ class BuhTuhDataFrame:
             order_by=[]
         )
 
-
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
         """

@@ -335,14 +335,12 @@ class BuhTuhSeries(ABC):
         return BuhTuhSeries._independant_subquery(self, 'all')
 
     def in_set(self, other: 'BuhTuhSeries'):
-        in_expr = BuhTuhSeries._independant_subquery(other, 'in')
-        in_expr = Expression.construct('{} {}', self, in_expr)
+        in_expr = Expression.construct('{} {}', self, BuhTuhSeries._independant_subquery(other, 'in'))
         return self.copy_override(expression=in_expr, dtype='boolean')
 
     def not_in_set(self, other: 'BuhTuhSeries'):
-        in_expr = BuhTuhSeries._independant_subquery(other, 'in')
-        in_expr = Expression.construct('{} not {}', self, in_expr)
-        return self.copy_override(expression=in_expr, dtype='boolean')
+        not_in_expr = Expression.construct('{} not {}', self, BuhTuhSeries._independant_subquery(other, 'in'))
+        return self.copy_override(expression=not_in_expr, dtype='boolean')
 
     def astype(self, dtype: Union[str, Type]) -> 'BuhTuhSeries':
         if dtype == self.dtype or dtype in self.dtype_aliases:
