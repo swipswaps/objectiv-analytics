@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from typing import List, Union, TYPE_CHECKING
 
 import sql_models.expression
-from sql_models.expression import ExpressionToken, quote_string, quote_identifier
+from sql_models.expression import ExpressionToken, quote_string, quote_identifier, escape_fmtstring
 
 if TYPE_CHECKING:
     from buhtuh import BuhTuhSeries
@@ -127,9 +127,9 @@ def expression_to_sql(expression: Expression) -> str:
             raise ValueError('ColumnReferenceTokens should be resolved first using '
                              'Expression.resolve_column_references')
         elif isinstance(data_item, RawToken):
-            result.append(data_item.raw)
+            result.append(escape_fmtstring(data_item.raw))
         elif isinstance(data_item, StringValueToken):
-            result.append(quote_string(data_item.value))
+            result.append(escape_fmtstring(quote_string(data_item.value)))
         else:
             raise Exception("This should never happen. "
                             "expression_to_sql() doesn't cover all Expression subtypes."

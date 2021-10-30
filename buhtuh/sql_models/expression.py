@@ -32,6 +32,11 @@ class Expression:
     data: List[ExpressionToken] = field(default_factory=list)
 
     def to_sql(self) -> str:
+        """
+        Return a string representation of this expression. If any {} are present, they should be escaped
+        unless they have to be replaced in the reference phase. If you don't know what that means, escape the
+        returned string using escape_fmtstring() in this file.
+        """
         raise NotImplementedError('to_sql() must be implemented')
 
 
@@ -71,3 +76,8 @@ def quote_identifier(name: str) -> str:
     """
     replaced_chars = name.replace('"', '""')
     return f'"{replaced_chars}"'
+
+
+def escape_fmtstring(value: str) -> str:
+    """ Escape value for python's format() function. i.e. `_escape_value(value).format() == value` """
+    return value.replace('{', '{{').replace('}', '}}')
