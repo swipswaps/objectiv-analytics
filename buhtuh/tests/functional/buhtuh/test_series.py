@@ -104,10 +104,13 @@ def test_series_direct_aggregation():
     print(bt.inhabitants.sum(btg).head())
 
 
-def test_series_independant_subquery_any():
+def test_series_independant_subquery_any_all():
     bt = get_bt_with_test_data(full_data_set=True)
     s = bt.inhabitants.max() // 4
-    result_bt = bt[bt.inhabitants > s.any()]
+
+    bt[bt.inhabitants > s.any()].head()
+    result_bt = bt[bt.inhabitants > s.all()]
+
     assert_equals_data(
         result_bt[['city', 'inhabitants']],
         expected_columns=['_index_skating_order', 'city', 'inhabitants'],
@@ -116,3 +119,25 @@ def test_series_independant_subquery_any():
         ]
     )
 
+
+def test_series_independant_subquery_sets():
+    bt = get_bt_with_test_data(full_data_set=True)
+    # get 3 smallest cities
+    s = bt.sort_values('inhabitants', True)[:3]
+    result_bt = bt[bt.city.in_set(s.city)]
+    assert_equals_data(
+        result_bt[['city', 'inhabitants']],
+        expected_columns=['_index_skating_order', 'city', 'inhabitants'],
+        expected_data=[
+            [4, 'Sleat', 700], [5, 'Starum', 960], [6, 'Hylpen', 870]
+        ]
+    )
+    result_bt = bt[bt.city.not_in_set(s.city)]
+    assert_equals_data(
+        result_bt[['city', 'inhabitants']],
+        expected_columns=['_index_skating_order', 'city', 'inhabitants'],
+        expected_data=[
+            [1, 'Ljouwert', 93485], [2, 'Snits', 33520], [3, 'Drylts', 3055], [7, 'Warkum', 4440],
+            [8, 'Boalsert', 10120], [9, 'Harns', 14740], [10, 'Frjentsjer', 12760], [11, 'Dokkum', 12675]
+        ]
+    )

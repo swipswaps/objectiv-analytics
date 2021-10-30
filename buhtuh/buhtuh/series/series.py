@@ -312,8 +312,8 @@ class BuhTuhSeries(ABC):
 
     @staticmethod
     def _independant_subquery(series, operation: str) -> 'BuhTuhSeries':
-        df = series.to_frame()
-        df = df.get_df_materialized_model().reset_index()
+        # This will give us a dataframe that contains our series as a materialized column in the base_node
+        df = series.to_frame().get_df_materialized_model()
         expr = Expression.construct(f'{operation} (SELECT {{}} FROM {{}})',
                                     Expression.column_reference(series.name),
                                     Expression.model_reference(df.base_node))
@@ -334,11 +334,15 @@ class BuhTuhSeries(ABC):
     def all(self):
         return BuhTuhSeries._independant_subquery(self, 'all')
 
-    def in_set(self):
-        return BuhTuhSeries._independant_subquery('in').copy_override(dtype='boolean')
+    def in_set(self, other: 'BuhTuhSeries'):
+        in_expr = BuhTuhSeries._independant_subquery(other, 'in')
+        in_expr = Expression.construct('{} {}', self, in_expr)
+        return self.copy_override(expression=in_expr, dtype='boolean')
 
-    def not_in_set(self):
-        return BuhTuhSeries._independant_subquery('not in').copy_override(dtype='boolean')
+    def not_in_set(self, other: 'BuhTuhSeries'):
+        in_expr = BuhTuhSeries._independant_subquery(other, 'in')
+        in_expr = Expression.construct('{} not {}', self, in_expr)
+        return self.copy_override(expression=in_expr, dtype='boolean')
 
     def astype(self, dtype: Union[str, Type]) -> 'BuhTuhSeries':
         if dtype == self.dtype or dtype in self.dtype_aliases:

@@ -368,7 +368,7 @@ class BuhTuhDataFrame:
             return df
         return list(df.data.values())[0]
 
-    def get_df_materialized_model(self, inplace=False) -> 'BuhTuhDataFrame':
+    def get_df_materialized_model(self, inplace=False, limit: Any = None) -> 'BuhTuhDataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -386,7 +386,7 @@ class BuhTuhDataFrame:
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
 
-        model = self.get_current_node()
+        model = self.get_current_node(limit=limit)
         return self.get_instance(
             engine=self.engine,
             base_node=model,
@@ -395,6 +395,7 @@ class BuhTuhDataFrame:
             group_by=None,
             order_by=[]
         )
+
 
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
@@ -416,8 +417,8 @@ class BuhTuhDataFrame:
             return self.copy_override(series=selected_data)
 
         if isinstance(key, slice):
-            model = self.get_current_node(limit=key)
-            return self._df_or_series(df=self.copy_override(base_node=model))
+            df = self.get_df_materialized_model(limit=key)
+            return self._df_or_series(df)
 
         if isinstance(key, BuhTuhSeriesBoolean):
             # We only support first level boolean indices for now
