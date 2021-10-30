@@ -102,3 +102,17 @@ def test_series_direct_aggregation():
 
     btg = bt.groupby('municipality')
     print(bt.inhabitants.sum(btg).head())
+
+
+def test_series_independant_subquery_any():
+    bt = get_bt_with_test_data(full_data_set=True)
+    s = bt.inhabitants.max() // 4
+    result_bt = bt[bt.inhabitants > s.any()]
+    assert_equals_data(
+        result_bt[['city', 'inhabitants']],
+        expected_columns=['_index_skating_order', 'city', 'inhabitants'],
+        expected_data=[
+            [1, 'Ljouwert', 93485], [2, 'Snits', 33520]
+        ]
+    )
+

@@ -37,7 +37,7 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['int64', 'float64'], other)
-        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
+        expression = Expression.construct(f'({{}} {comparator} {{}})', self, other)
         return self.copy_override(dtype='bool', expression=expression)
 
     def __truediv__(self, other):

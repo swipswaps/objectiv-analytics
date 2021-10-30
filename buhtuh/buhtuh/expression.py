@@ -2,10 +2,11 @@
 Copyright 2021 Objectiv B.V.
 """
 from dataclasses import dataclass, field
-from typing import List, Union, TYPE_CHECKING
+from typing import List, Union, TYPE_CHECKING, Dict
 
 import sql_models.expression
 from sql_models.expression import ExpressionToken, quote_string, quote_identifier, escape_fmtstring
+from sql_models.model import SqlModel
 
 if TYPE_CHECKING:
     from buhtuh import BuhTuhSeries
@@ -19,6 +20,14 @@ class RawToken(ExpressionToken):
 @dataclass(frozen=True)
 class ColumnReferenceToken(ExpressionToken):
     column_name: str
+
+
+@dataclass(frozen=True)
+class ModelReferenceToken(ExpressionToken):
+    model: SqlModel
+
+    def refname(self) -> str:
+        return f'reference{self.model.hash}'
 
 
 @dataclass(frozen=True)
@@ -93,9 +102,21 @@ class Expression(sql_models.expression.Expression):
         """ Construct an expression for field-name, where field-name is a column in a table or CTE. """
         return Expression([ColumnReferenceToken(field_name)])
 
+    @classmethod
+    def model_reference(cls, model: SqlModel) -> 'Expression':
+        """ Construct an expression for model, where model is a reference to a model. """
+        return Expression([ModelReferenceToken(model)])
+
     def to_sql(self) -> str:
         """ Short cut for expression_to_sql(self). """
         return expression_to_sql(self.resolve_column_references())
+
+    def get_references(self) -> Dict[str, SqlModel]:
+        rv = {}
+        for data_item in self.data:
+            if isinstance(data_item, ModelReferenceToken):
+                rv[data_item.refname()] = data_item.model
+        return rv
 
     def resolve_column_references(self, table_name: str = None):
         """ resolve the table name aliases for all columns in this expression """
@@ -126,6 +147,8 @@ def expression_to_sql(expression: Expression) -> str:
         if isinstance(data_item, ColumnReferenceToken):
             raise ValueError('ColumnReferenceTokens should be resolved first using '
                              'Expression.resolve_column_references')
+        elif isinstance(data_item, ModelReferenceToken):
+            result.append(f'{{{data_item.refname()}}}')
         elif isinstance(data_item, RawToken):
             result.append(escape_fmtstring(data_item.raw))
         elif isinstance(data_item, StringValueToken):

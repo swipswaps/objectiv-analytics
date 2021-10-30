@@ -301,8 +301,6 @@ class BuhTuhSeries(ABC):
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
             order_by = []
-        if len(self._index) == 0:
-            raise Exception('to_frame() is not supported for Series that do not have an index')
         return BuhTuhDataFrame(
             engine=self._engine,
             base_node=self._base_node,
@@ -311,6 +309,36 @@ class BuhTuhSeries(ABC):
             group_by=self._group_by,
             order_by=order_by
         )
+
+    @staticmethod
+    def _independant_subquery(series, operation: str) -> 'BuhTuhSeries':
+        df = series.to_frame()
+        df = df.get_df_materialized_model().reset_index()
+        expr = Expression.construct(f'{operation} (SELECT {{}} FROM {{}})',
+                                    Expression.column_reference(series.name),
+                                    Expression.model_reference(df.base_node))
+
+        s = series.copy_override(expression=expr, index={}, group_by=[None])
+        # Subquery/scalar values are detached and carry their own Node(s) in the Expression
+        # this interface is currently not so nice.
+        s._base_node = None
+        return s
+
+    def exists(self):
+        return BuhTuhSeries._independant_subquery(self, 'exists').copy_override(dtype='boolean')
+
+    def any(self):
+        # aka some()
+        return BuhTuhSeries._independant_subquery(self, 'any')
+
+    def all(self):
+        return BuhTuhSeries._independant_subquery(self, 'all')
+
+    def in_set(self):
+        return BuhTuhSeries._independant_subquery('in').copy_override(dtype='boolean')
+
+    def not_in_set(self):
+        return BuhTuhSeries._independant_subquery('not in').copy_override(dtype='boolean')
 
     def astype(self, dtype: Union[str, Type]) -> 'BuhTuhSeries':
         if dtype == self.dtype or dtype in self.dtype_aliases:
@@ -786,7 +814,8 @@ def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],
                     name: str = None) -> BuhTuhSeries:
     """
     Take a value and return a BuhTuhSeries representing a column with that value.
-    If value is already a BuhTuhSeries it is returned unchanged.
+    If value is already a BuhTuhSeries it is returned unchanged unless it has no base_node set, in case
+    it's a subquery. We create a copy and hook it to our base node in that case, so we can work with it.
     If value is a constant then the right BuhTuhSeries subclass is found for that type and instantiated
     with the constant value.
     :param base: Base series or DataFrame. In case a new Series object is created and returned, it will
@@ -796,6 +825,8 @@ def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],
     :return:
     """
     if isinstance(value, BuhTuhSeries):
+        if value.base_node is None:
+            return value.copy_override(base_node=base.base_node)
         return value
     name = '__tmp' if name is None else name
     dtype = value_to_dtype(value)

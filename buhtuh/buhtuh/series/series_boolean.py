@@ -30,7 +30,7 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
         self._check_supported(f"comparator '{comparator}'", ['bool'], other)
-        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
+        expression = Expression.construct(f'({{}} {comparator} {{}})', self, other)
         return self.copy_override(dtype='bool', expression=expression)
 
     def _boolean_operator(self, other, operator: str) -> 'BuhTuhSeriesBoolean':

@@ -39,6 +39,10 @@ class Expression:
         """
         raise NotImplementedError('to_sql() must be implemented')
 
+    def get_references(self):
+        # TODO properly type
+        raise NotImplementedError('get_references() must be implemented')
+
 
 def quote_string(value: str) -> str:
     """

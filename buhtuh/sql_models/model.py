@@ -106,7 +106,8 @@ class SqlModelSpec:
         spec = self
         reference_keys = set(references.keys())
         property_keys = set(properties.keys())
-        if reference_keys != spec.spec_references:
+        # Allow for more references to be present, as they could've been added dynamically.
+        if len(spec.spec_references - reference_keys) > 0:
             raise Exception(f'Provided references for model {spec.__class__.__name__} '
                             f'do not match required references: '
                             f'{sorted(reference_keys)} != {sorted(spec.spec_references)}')
@@ -251,6 +252,11 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
                 self._references[key] = value
             elif key in self.spec_properties:
                 self._properties[key] = value
+                # We accept Expression, or lists thereof, and they might contain references we need to collect
+                for list_val in value if isinstance(value, list) else [value]:
+                    if isinstance(list_val, Expression):
+                        for k, v in list_val.get_references().items():
+                            self._references[k] = v
             else:
                 raise ValueError(f'Provided parameter {key} is not a valid property nor reference for '
                                  f'class {self.__class__.__name__}. '
