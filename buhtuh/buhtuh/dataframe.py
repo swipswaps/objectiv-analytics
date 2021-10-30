@@ -6,7 +6,7 @@ from uuid import UUID
 import pandas
 from sqlalchemy.engine import Engine
 
-from buhtuh.expression import Expression
+from buhtuh.expression import Expression, quote_identifier
 from buhtuh.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModel
 from sql_models.sql_generator import to_sql
@@ -135,6 +135,10 @@ class BuhTuhDataFrame:
     @property
     def data(self) -> Dict[str, 'BuhTuhSeries']:
         return copy(self._data)
+
+    @property
+    def order_by(self) -> List[SortColumn]:
+        return copy(self._order_by)
 
     @property
     def all_series(self) -> Dict[str, 'BuhTuhSeries']:
@@ -364,7 +368,7 @@ class BuhTuhDataFrame:
             return df
         return list(df.data.values())[0]
 
-    def get_df_materialized_model(self) -> 'BuhTuhDataFrame':
+    def get_df_materialized_model(self, inplace=False) -> 'BuhTuhDataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -376,8 +380,11 @@ class BuhTuhDataFrame:
 
         :return: New DataFrame with the current DataFrame's state as base_node
         """
-        index_dtypes = {k: v.dtype for k, v in self.index.items()}
-        series_dtypes = {k: v.dtype for k, v in self.data.items()}
+        if inplace:
+            raise NotImplementedError("inplace materialization is not supported")
+
+        index_dtypes = {k: v.dtype for k, v in self._index.items()}
+        series_dtypes = {k: v.dtype for k, v in self._data.items()}
 
         model = self.get_current_node()
         return self.get_instance(
@@ -426,11 +433,10 @@ class BuhTuhDataFrame:
 
             model_builder = CustomSqlModel(
                 name='boolean_selection',
-                sql='select {index}, {columns} from {{_last_node}} where {where}'
+                sql='select {columns} from {{_last_node}} where {where}'
             )
             model = model_builder(
                 columns=self._get_all_column_expressions(),
-                index=self._get_all_index_expressions(),
                 _last_node=self.base_node,
                 where=key.expression,
             )
@@ -459,6 +465,9 @@ class BuhTuhDataFrame:
         # TODO: all types from types.TypeRegistry are supported.
         from buhtuh.series import BuhTuhSeries, const_to_series
         if isinstance(key, str):
+            if key in self.index:
+                # Cannot set an index column, and cannot have a column name both in self.index and self.data
+                raise ValueError(f'Column name "{key}" already exists as index.')
             if not isinstance(value, BuhTuhSeries):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
@@ -557,6 +566,65 @@ class BuhTuhDataFrame:
                 series = series.copy_override(name=new_name)
             new_data[new_name] = series
         df._data = new_data
+        return df
+
+    def reset_index(self, **kwargs):
+        """
+        Will call set_index with keys=[]
+        :see: set_index()
+        """
+        return self.set_index(keys=[], **kwargs)
+
+    def set_index(self, keys: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']]],
+                  append=False, drop=False, inplace=False, materialize=False):
+        """
+        Set this dataframe's index to the the index given in keys
+        :param keys: the keys of the new index. Can be a series name str, a BuhTuhSeries, or a list
+            of those.
+        :param append: whether to append to the existing index or replace
+        :param drop: drop the series that are removed from the index
+        :param inplace: attempt inplace operation, not always supported and will raise if not
+        :param materialize: materialize this df is required
+        :returns: the modified df
+        """
+
+        from buhtuh.series import BuhTuhSeries
+
+        df = self if inplace else self.copy_override()
+        if self._group_by:
+            if not materialize:
+                raise NotImplementedError("reset_index not supported on non-materialized groupbys."
+                                          "pass materialize=True, or materialize manually.")
+            df = df.get_df_materialized_model(inplace)
+
+        # build the new index, appending if necessary
+        new_index = {} if not append else copy(df._index)
+        for k in (keys if isinstance(keys, list) else [keys]):
+            idx_series: BuhTuhSeries
+            if isinstance(k, BuhTuhSeries):
+                if k.base_node != df.base_node:
+                    raise ValueError('index series should have same base_node as df')
+                idx_series = k
+            else:
+                if k not in df.all_series:
+                    raise ValueError(f'series \'{k}\' not found')
+                idx_series = df.all_series[k]
+
+            new_index[idx_series.name] = idx_series.copy_override(index={})
+
+            if not drop and idx_series.name not in df._index:
+                raise ValueError('When adding index series, drop must be True because duplicate '
+                                 'column names are not supported.')
+
+        dropped = set(df._index.keys()) - set(new_index.keys())
+        new_series = {n: s.copy_override(index=new_index) for n, s in df.all_series.items()
+                      # the new series can not appear in the new index
+                      if n not in new_index
+                      # but it should also not include series that have been dropped if drop=True
+                      and not (n in dropped and drop)}
+
+        df._index = new_index
+        df._data = new_series
         return df
 
     def __delitem__(self, key: str):
@@ -930,7 +998,10 @@ class BuhTuhDataFrame:
         """
         conn = self.engine.connect()
         sql = self.view_sql(limit=n)
-        df = pandas.read_sql_query(sql, conn, index_col=list(self.index.keys()))
+        if len(self._index):
+            df = pandas.read_sql_query(sql, conn, index_col=list(self._index.keys()))
+        else:
+            df = pandas.read_sql_query(sql, conn)
         conn.close()
         return df
 
@@ -978,7 +1049,6 @@ class BuhTuhDataFrame:
         limit_expr = Expression.construct('' if limit_str is None else f'{limit_str}')
 
         if self._group_by:
-
             group_by_expr = self.group_by.get_group_by_column_expression()
             if group_by_expr:
                 group_by_expr = Expression.construct('group by {}', group_by_expr)
@@ -1004,12 +1074,11 @@ class BuhTuhDataFrame:
         else:
             model_builder = CustomSqlModel(
                 name='view_sql',
-                sql='select {index_str}, {columns_sql_str} from {{_last_node}} {order} {limit}'
+                sql='select {columns} from {{_last_node}} {order} {limit}'
             )
 
             return model_builder(
-                columns_sql_str=self._get_all_column_expressions(),
-                index_str=self._get_all_index_expressions(),
+                columns=self._get_all_column_expressions(),
                 _last_node=self.base_node,
                 limit=limit_expr,
                 order=self.get_order_by_expression()
@@ -1025,13 +1094,8 @@ class BuhTuhDataFrame:
         sql = to_sql(model)
         return sql
 
-    def _get_all_index_expressions(self, table_name: str = None) -> List[Expression]:
-        return [Expression.column_reference(index_column).resolve_column_references(table_name)
-                for index_column in self.index.keys()]
-
-    def _get_all_column_expressions(self, table_name: str = None) -> List[Expression]:
-        return [series.get_column_expression().resolve_column_references(table_name)
-                for series in self.data.values()]
+    def _get_all_column_expressions(self):
+        return [series.get_column_expression() for series in self.all_series.values()]
 
     def merge(
             self,

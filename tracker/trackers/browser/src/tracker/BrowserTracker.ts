@@ -22,13 +22,19 @@ import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
  * It also accepts a number of options to configure automatic tracking behavior:
  */
 export type BrowserTrackerConfig = TrackerConfig & {
-  // The collector endpoint URL
+  /**
+   * The collector endpoint URL.
+   */
   endpoint?: string;
 
-  // Whether to track application loaded events automatically. Enabled by default.
+  /**
+   * Optional. Whether to track application loaded events automatically. Enabled by default.
+   */
   trackApplicationLoaded?: boolean;
 
-  // Whether to track URL change events automatically. Enabled by default.
+  /**
+   * Optional. Whether to track URL change events automatically. Enabled by default.
+   */
   trackURLChanges?: boolean;
 };
 
@@ -101,6 +107,9 @@ export const getDefaultBrowserTrackerPluginsList = (trackerConfig: BrowserTracke
  *
  */
 export class BrowserTracker extends Tracker {
+  // A copy of the original configuration
+  readonly trackerConfig: TrackerConfig;
+
   constructor(trackerConfig: BrowserTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = trackerConfig;
 
@@ -112,6 +121,11 @@ export class BrowserTracker extends Tracker {
     // `transport` and `endpoint` must not be provided together
     if (config.transport && config.endpoint) {
       throw new Error('Please provider either `transport` or `endpoint`, not both at same time');
+    }
+
+    // If node is in `development` mode and console has not been configured, automatically use the browser's console
+    if (!config.console && process.env.NODE_ENV?.startsWith('dev')) {
+      config.console = console;
     }
 
     // Automatically create a default Transport for the given `endpoint` with a sensible setup
@@ -136,5 +150,8 @@ export class BrowserTracker extends Tracker {
 
     // Initialize core Tracker
     super(config, ...contextConfigs);
+
+    // Store original config for comparison with other instances of Browser Tracker
+    this.trackerConfig = trackerConfig;
   }
 }

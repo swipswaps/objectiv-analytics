@@ -4,12 +4,11 @@ import { trackerErrorHandler } from '../trackerErrorHandler';
 import { trackRemovedElement } from './trackRemovedElement';
 
 /**
- * Given a Mutation Observer node containing removed nodes it will determine whether to track visibility:hidden events
- * Hidden Events are triggered only for automatically tracked Elements.
+ * Invokes `trackRemovedElement` for given node and all of its children if they have the `elementId` Tagging Attribute.
  */
 export const trackRemovedElements = (element: Element, tracker: BrowserTracker) => {
   try {
-    const elements = element.querySelectorAll(`[${TaggingAttribute.trackVisibility}]`);
+    const elements = element.querySelectorAll(`[${TaggingAttribute.elementId}]`);
     [element, ...Array.from(elements)].forEach((element) => trackRemovedElement(element, tracker));
   } catch (error) {
     trackerErrorHandler(error);

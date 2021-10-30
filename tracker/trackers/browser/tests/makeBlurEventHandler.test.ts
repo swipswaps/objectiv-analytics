@@ -1,14 +1,21 @@
-import { makeInputChangeEvent, makeInputContext } from '@objectiv/tracker-core';
-import { BrowserTracker, getTracker, makeTracker } from '../src/';
+import { generateUUID, makeInputChangeEvent } from '@objectiv/tracker-core';
+import { BrowserTracker, getTracker, getTrackerRepository, makeTracker } from '../src/';
 import { makeBlurEventHandler } from '../src/observer/makeBlurEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('makeBlurEventHandler', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
+  });
+
+  afterEach(() => {
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
+    jest.resetAllMocks();
   });
 
   it('should track Input Change when invoked from a valid target', () => {
@@ -19,7 +26,15 @@ describe('makeBlurEventHandler', () => {
     trackedInput.dispatchEvent(new FocusEvent('blur'));
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, makeInputChangeEvent());
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'InputChangeEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 
   it('should not track Input Change when invoked from a bubbling target', () => {
@@ -59,7 +74,9 @@ describe('makeBlurEventHandler', () => {
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
-      makeInputChangeEvent({ location_stack: [makeInputContext({ id: 'input' })] })
+      expect.objectContaining(
+        makeInputChangeEvent({ location_stack: [expect.objectContaining({ _type: 'InputContext', id: 'input' })] })
+      )
     );
   });
 });
