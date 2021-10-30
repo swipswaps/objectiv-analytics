@@ -2,7 +2,7 @@ import { TrackerConsole } from '@objectiv/tracker-core';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { BrowserTracker } from '../internal/BrowserTracker';
 import { trackerErrorHandler } from '../internal/trackerErrorHandler';
-import { processChildrenTaggingElement } from './processChildrenTaggingElement';
+import { processTagChildrenElement } from './processTagChildrenElement';
 import { trackNewElement } from './trackNewElement';
 
 /**
@@ -17,7 +17,7 @@ export const trackNewElements = (element: Element, tracker: BrowserTracker, cons
     // Process `tagChildren` attributes
     const childrenTrackingElements = element.querySelectorAll(`[${TaggingAttribute.tagChildren}]`);
     [element, ...Array.from(childrenTrackingElements)].forEach((element) => {
-      processChildrenTaggingElement(element).forEach((queriedElement) => {
+      processTagChildrenElement(element).forEach((queriedElement) => {
         trackNewElement(queriedElement, tracker, console);
       });
     });

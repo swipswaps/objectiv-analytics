@@ -1,4 +1,5 @@
-import { isParentTaggedElement, isTaggedElement, TaggableElement } from '../definitions/elements';
+import { TaggableElement } from '../definitions/elements';
+import { isParentTaggedElement, isTaggedElement } from '../definitions/guards';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 
 /**

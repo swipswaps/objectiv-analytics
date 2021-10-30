@@ -1,5 +1,5 @@
 import { TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
-import { isTaggedElement } from '../definitions/elements';
+import { isTaggedElement } from '../definitions/guards';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { getTracker } from '../getTracker';
 import { getLocationHref } from '../internal/getLocationHref';

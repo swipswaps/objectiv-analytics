@@ -1,6 +1,5 @@
 import { makeButtonContext } from '@objectiv/tracker-core';
-import { isTaggedElement, tagButton, tagElement, TaggingAttribute } from '../src';
-import { processChildrenTaggingElement } from '../src/observer/processChildrenTaggingElement';
+import { isTaggedElement, processTagChildrenElement, tagButton, tagElement, TaggingAttribute } from '../src';
 
 describe('processChildrenTrackingElement', () => {
   beforeEach(() => {
@@ -13,28 +12,28 @@ describe('processChildrenTrackingElement', () => {
   it('should exit with an empty array if the given Element has no children tagging attribute', () => {
     const div = document.createElement('div');
 
-    expect(processChildrenTaggingElement(div)).toHaveLength(0);
+    expect(processTagChildrenElement(div)).toHaveLength(0);
   });
 
   it('should exit with an empty array if the given Element has an invalid children tagging attribute', () => {
     const div = document.createElement('div');
     div.setAttribute(TaggingAttribute.tagChildren, 'null');
 
-    expect(processChildrenTaggingElement(div)).toHaveLength(0);
+    expect(processTagChildrenElement(div)).toHaveLength(0);
   });
 
   it('should exit with an empty array if the given Element has an empty list of children tracking queries', () => {
     const div = document.createElement('div');
     div.setAttribute(TaggingAttribute.tagChildren, '[]');
 
-    expect(processChildrenTaggingElement(div)).toHaveLength(0);
+    expect(processTagChildrenElement(div)).toHaveLength(0);
   });
 
   it('should skip queries without tagAs', () => {
     const div = document.createElement('div');
     div.setAttribute(TaggingAttribute.tagChildren, JSON.stringify([{ queryAll: '#some-id-2', tagAs: null }]));
 
-    expect(processChildrenTaggingElement(div)).toHaveLength(0);
+    expect(processTagChildrenElement(div)).toHaveLength(0);
   });
 
   it('should skip queries without valid or empty tagAs, query or queryAll options', () => {
@@ -51,7 +50,7 @@ describe('processChildrenTrackingElement', () => {
       ])
     );
 
-    expect(processChildrenTaggingElement(div)).toHaveLength(0);
+    expect(processTagChildrenElement(div)).toHaveLength(0);
   });
 
   it('should skip queries with failing querySelector expressions', () => {
@@ -64,7 +63,7 @@ describe('processChildrenTrackingElement', () => {
       ])
     );
 
-    expect(processChildrenTaggingElement(div)).toHaveLength(0);
+    expect(processTagChildrenElement(div)).toHaveLength(0);
   });
 
   it('should match the first query', () => {
@@ -81,7 +80,7 @@ describe('processChildrenTrackingElement', () => {
       ])
     );
 
-    const result = processChildrenTaggingElement(div);
+    const result = processTagChildrenElement(div);
 
     const expectedButtonContext = makeButtonContext({ id: 'button-id', text: 'button' });
 

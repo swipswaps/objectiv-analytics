@@ -1,12 +1,12 @@
 import {
-  isChildrenTaggingElement,
+  isTagChildrenElement,
   isParentTaggedElement,
   isTaggableElement,
   isTaggedElement,
   TaggingAttribute,
 } from '../src';
 
-describe('isTrackableElement', () => {
+describe('isTaggableElement', () => {
   it('should return false', () => {
     expect(isTaggableElement(document.createComment('some comment'))).toBe(false);
     expect(isTaggableElement(document.createTextNode('some text'))).toBe(false);
@@ -60,7 +60,7 @@ describe('isTrackableElement', () => {
   });
 });
 
-describe('isTrackedElement', () => {
+describe('isTaggedElement', () => {
   const div = document.createElement('div');
   const section = document.createElement('section');
   const button = document.createElement('button');
@@ -87,7 +87,7 @@ describe('isTrackedElement', () => {
   });
 });
 
-describe('isChildrenTrackingElement', () => {
+describe('isTagChildrenElement', () => {
   const div = document.createElement('div');
   const section = document.createElement('section');
   const button = document.createElement('button');
@@ -102,13 +102,13 @@ describe('isChildrenTrackingElement', () => {
 
   it('should return true', () => {
     div.setAttribute(TaggingAttribute.tagChildren, '1');
-    expect(isChildrenTaggingElement(div)).toBe(true);
+    expect(isTagChildrenElement(div)).toBe(true);
 
     section.setAttribute(TaggingAttribute.tagChildren, 'value');
-    expect(isChildrenTaggingElement(section)).toBe(true);
+    expect(isTagChildrenElement(section)).toBe(true);
 
     button.setAttribute(TaggingAttribute.tagChildren, 'value');
-    expect(isChildrenTaggingElement(button)).toBe(true);
+    expect(isTagChildrenElement(button)).toBe(true);
 
     // TODO cover negative cases
   });

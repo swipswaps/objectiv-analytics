@@ -3,7 +3,7 @@ import {
   StringifiedChildrenTaggingAttributes,
   stringifyChildrenTaggingAttribute,
 } from './definitions/structChildrenTaggingAttribute';
-import { ChildrenTaggingQueries, ChildrenTaggingQuery } from "./definitions/structChildrenTaggingQuery";
+import { ChildrenTaggingQueries, ChildrenTaggingQuery } from './definitions/structChildrenTaggingQuery';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
 import { trackerErrorHandler, TrackOnErrorCallback } from './internal/trackerErrorHandler';
 
@@ -30,10 +30,7 @@ import { trackerErrorHandler, TrackOnErrorCallback } from './internal/trackerErr
 export const TagChildrenReturnValue = optional(StringifiedChildrenTaggingAttributes);
 export type TagChildrenReturnValue = Infer<typeof TagChildrenReturnValue>;
 
-export const tagChildren = (
-  parameters: ChildrenTaggingQueries,
-  onError?: TrackOnErrorCallback
-) => {
+export const tagChildren = (parameters: ChildrenTaggingQueries, onError?: TrackOnErrorCallback) => {
   try {
     // Validate input
     assert(parameters, ChildrenTaggingQueries);

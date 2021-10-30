@@ -1,8 +1,9 @@
 import { getObjectKeys } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
-import { isChildrenTaggingElement, TaggedElement } from '../definitions/elements';
+import { TaggedElement } from '../definitions/elements';
+import { isTagChildrenElement } from '../definitions/guards';
 import { parseChildrenTaggingAttribute } from '../definitions/structChildrenTaggingAttribute';
-import { ChildrenTaggingQuery } from "../definitions/structChildrenTaggingQuery";
+import { ChildrenTaggingQuery } from '../definitions/structChildrenTaggingQuery';
 import { StringifiedTaggingAttributes } from '../definitions/structTaggingAttributes';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { trackerErrorHandler } from '../internal/trackerErrorHandler';
@@ -13,11 +14,11 @@ import { trackerErrorHandler } from '../internal/trackerErrorHandler';
  * - Decorate matching Elements into TaggedElements
  * - Return a list of the decorated Elements
  */
-export const processChildrenTaggingElement = (element: Element): TaggedElement[] => {
+export const processTagChildrenElement = (element: Element): TaggedElement[] => {
   const newlyTrackedElements: TaggedElement[] = [];
 
   try {
-    if (!isChildrenTaggingElement(element)) {
+    if (!isTagChildrenElement(element)) {
       return newlyTrackedElements;
     }
     const queries = parseChildrenTaggingAttribute(element.getAttribute(TaggingAttribute.tagChildren));

@@ -1,5 +1,5 @@
 import { array, assert, create, Infer, object, string } from 'superstruct';
-import { ChildrenTaggingQueries, ChildrenTaggingQuery, ValidChildrenTaggingQuery } from "./structChildrenTaggingQuery";
+import { ChildrenTaggingQueries, ChildrenTaggingQuery, ValidChildrenTaggingQuery } from './structChildrenTaggingQuery';
 import { TaggingAttribute } from './TaggingAttribute';
 
 /**
