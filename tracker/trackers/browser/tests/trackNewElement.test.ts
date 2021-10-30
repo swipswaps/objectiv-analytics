@@ -1,22 +1,31 @@
 import {
+  generateUUID,
+  LocationCollision,
   makeButtonContext,
   makeInputContext,
-  makeSectionContext,
-  makeSectionVisibleEvent,
+  TrackerElementLocations,
 } from '@objectiv/tracker-core';
-import { BrowserTracker, getTracker, makeTracker, TaggingAttribute } from '../src';
+import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackNewElement } from '../src/observer/trackNewElement';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
+import { mockConsole } from './mocks/MockConsole';
 
 describe('trackNewElement', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
   });
 
-  it('should skip the Element if it is not a Tracked Element', async () => {
+  afterEach(() => {
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
+    jest.resetAllMocks();
+  });
+
+  it('should skip the Element if it is not a Tagged Element', async () => {
     const div = document.createElement('div');
     jest.spyOn(div, 'addEventListener');
 
@@ -26,12 +35,65 @@ describe('trackNewElement', () => {
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 
+  it('should skip collision checks if the Element is not a Tagged Element', async () => {
+    const div = document.createElement('div');
+    div.setAttribute(TaggingAttribute.context, JSON.stringify(makeButtonContext({ id: 'test', text: 'test' })));
+    jest.spyOn(TrackerElementLocations, 'add');
+
+    trackNewElement(div, getTracker());
+
+    expect(TrackerElementLocations.add).not.toHaveBeenCalled();
+  });
+
+  it('should skip collision checks if the Element has the `validate` attribute disabling location check', async () => {
+    const div = makeTaggedElement('div', 'div', 'div');
+    jest.spyOn(TrackerElementLocations, 'add');
+
+    trackNewElement(div, getTracker());
+    expect(TrackerElementLocations.add).toHaveBeenCalledTimes(1);
+
+    jest.resetAllMocks();
+
+    div.setAttribute(TaggingAttribute.validate, JSON.stringify({ locationUniqueness: false }));
+    trackNewElement(div, getTracker());
+    expect(TrackerElementLocations.add).not.toHaveBeenCalled();
+  });
+
+  it('should console.error if TrackerElementLocations.add returns a LocationCollision', async () => {
+    const div = makeTaggedElement('div', 'div', 'div');
+    const mockCollision: LocationCollision = {
+      locationPath: 'fake / path',
+      existingElementId: 'fake existing element id',
+      collidingElementId: 'fake colliding element id',
+    };
+    jest.spyOn(TrackerElementLocations, 'add').mockReturnValueOnce(mockCollision);
+
+    trackNewElement(div, getTracker(), mockConsole);
+
+    expect(TrackerElementLocations.add).toHaveBeenCalledTimes(1);
+    expect(TrackerElementLocations.add).toHaveNthReturnedWith(1, mockCollision);
+    expect(mockConsole.error).toHaveBeenCalledTimes(2);
+    expect(mockConsole.error).toHaveBeenNthCalledWith(1, `Existing Element:`, null);
+    expect(mockConsole.error).toHaveBeenNthCalledWith(2, `Colliding Element:`, null);
+  });
+
+  it('should skip the Element if it is already Tracked', async () => {
+    const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
+    const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
+    trackedButton.setAttribute(TaggingAttribute.tracked, 'true');
+    jest.spyOn(trackedButton, 'addEventListener');
+
+    trackNewElement(trackedButton, getTracker());
+
+    expect(trackedButton.addEventListener).not.toHaveBeenCalled();
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
+  });
+
   it('should not attach click event listener', async () => {
     const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, 'false');
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
@@ -41,7 +103,6 @@ describe('trackNewElement', () => {
   });
 
   it('should track visibility: visible event', async () => {
-    const sectionContext = makeSectionContext({ id: 'test' });
     const trackedDiv = makeTaggedElement('div-id-1', 'test', 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"auto"}');
     jest.spyOn(trackedDiv, 'addEventListener');
@@ -52,7 +113,17 @@ describe('trackNewElement', () => {
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
-      makeSectionVisibleEvent({ location_stack: [sectionContext] })
+      expect.objectContaining({
+        _type: 'SectionVisibleEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [
+          {
+            _type: 'SectionContext',
+            id: 'test',
+          },
+        ],
+      })
     );
   });
 
@@ -61,7 +132,6 @@ describe('trackNewElement', () => {
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, 'true');
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
@@ -76,7 +146,6 @@ describe('trackNewElement', () => {
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, JSON.stringify({ waitUntilTracked: true }));
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
@@ -91,7 +160,6 @@ describe('trackNewElement', () => {
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, JSON.stringify({ waitUntilTracked: { timeoutMs: 5000 } }));
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
@@ -102,12 +170,11 @@ describe('trackNewElement', () => {
   });
 
   it('should not attach click event listener and console.error', async () => {
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     const buttonContext = makeButtonContext({ id: 'test', text: 'test' });
     const trackedButton = makeTaggedElement('button-id-1', JSON.stringify(buttonContext), 'button');
     trackedButton.setAttribute('data-testid', 'test-button');
     trackedButton.setAttribute(TaggingAttribute.trackClicks, JSON.stringify({ waitUntilTracked: false }));
-    document.body.appendChild(trackedButton);
     jest.spyOn(trackedButton, 'addEventListener');
 
     trackNewElement(trackedButton, getTracker());
@@ -132,7 +199,7 @@ describe('trackNewElement', () => {
 
   it('should console error', async () => {
     jest.resetAllMocks();
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     const inputContext = makeInputContext({ id: 'test' });
     const trackedInput = makeTaggedElement('input-id-1', JSON.stringify(inputContext), 'input');
     trackedInput.setAttribute(TaggingAttribute.trackBlurs, 'true');

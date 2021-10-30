@@ -1,8 +1,8 @@
 import { DeviceContext } from '@objectiv/schema';
 import {
+  ContextsConfig,
   makeDeviceContext,
   TrackerConsole,
-  TrackerEvent,
   TrackerPluginConfig,
   TrackerPluginInterface,
 } from '@objectiv/tracker-core';
@@ -38,8 +38,8 @@ export class WebDeviceContextPlugin implements TrackerPluginInterface {
   /**
    * Add the the WebDeviceContext to the Event's Global Contexts
    */
-  beforeTransport(event: TrackerEvent): void {
-    event.global_contexts.push(this.webDeviceContext);
+  beforeTransport(contexts: Required<ContextsConfig>): void {
+    contexts.global_contexts.push(this.webDeviceContext);
   }
 
   /**

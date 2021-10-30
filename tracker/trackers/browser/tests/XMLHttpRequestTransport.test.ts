@@ -4,6 +4,7 @@ import { XMLHttpRequestTransport } from '../src';
 import { mockConsole } from './mocks/MockConsole';
 
 beforeEach(() => {
+  jest.spyOn(console, 'error').mockImplementation(() => {});
   xhrMock.setup();
   jest.useFakeTimers();
 });
@@ -11,6 +12,7 @@ beforeEach(() => {
 afterEach(() => {
   xhrMock.teardown();
   jest.useRealTimers();
+  jest.resetAllMocks();
 });
 
 describe('XMLHttpRequestTransport', () => {
@@ -34,15 +36,9 @@ describe('XMLHttpRequestTransport', () => {
 
     xhrMock.post(MOCK_ENDPOINT, (req, res) => {
       expect(req.header('Content-Type')).toEqual('text/plain');
-      const { id, ...otherProps } = testEvent;
       expect(req.body()).toEqual(
         JSON.stringify({
-          events: [
-            {
-              ...otherProps,
-              id,
-            },
-          ],
+          events: [testEvent],
           transport_time: Date.now(),
         })
       );

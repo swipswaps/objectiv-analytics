@@ -29,22 +29,13 @@ describe('FetchAPITransport', () => {
       console: mockConsole,
     });
     await testTransport.handle(testEvent);
-    const { id, ...otherProps } = testEvent;
-    expect(fetch).toHaveBeenCalledWith(
-      MOCK_ENDPOINT,
-      expect.objectContaining({
-        body: JSON.stringify({
-          events: [
-            {
-              ...otherProps,
-              id,
-            },
-          ],
-          transport_time: Date.now(),
-        }),
-        ...defaultFetchParameters,
-      })
-    );
+    expect(fetch).toHaveBeenCalledWith(MOCK_ENDPOINT, {
+      body: JSON.stringify({
+        events: [testEvent],
+        transport_time: Date.now(),
+      }),
+      ...defaultFetchParameters,
+    });
   });
 
   it('should send using `fetch` API with the provided customized fetch function', async () => {
@@ -61,22 +52,13 @@ describe('FetchAPITransport', () => {
       fetchFunction: ({ endpoint, events }) => defaultFetchFunction({ endpoint, events, parameters: customParameters }),
     });
     await testTransport.handle(testEvent);
-    const { id, ...otherProps } = testEvent;
-    expect(fetch).toHaveBeenCalledWith(
-      MOCK_ENDPOINT,
-      expect.objectContaining({
-        body: JSON.stringify({
-          events: [
-            {
-              ...otherProps,
-              id,
-            },
-          ],
-          transport_time: Date.now(),
-        }),
-        ...customParameters,
-      })
-    );
+    expect(fetch).toHaveBeenCalledWith(MOCK_ENDPOINT, {
+      body: JSON.stringify({
+        events: [testEvent],
+        transport_time: Date.now(),
+      }),
+      ...customParameters,
+    });
   });
 
   it('should be safe to call with an empty array of Events for devs without TS', async () => {

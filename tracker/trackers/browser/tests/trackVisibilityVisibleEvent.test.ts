@@ -1,14 +1,22 @@
-import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
-import { BrowserTracker, getTracker, makeTracker, TaggingAttribute } from '../src';
+import { generateUUID } from '@objectiv/tracker-core';
+import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackVisibilityVisibleEvent } from '../src/observer/trackVisibilityVisibleEvent';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('trackVisibilityVisibleEvent', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    makeTracker({ applicationId: 'test', endpoint: 'test' });
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
+  });
+
+  afterEach(() => {
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
+    jest.resetAllMocks();
   });
 
   it('should not track elements without visibility tagging attributes', async () => {
@@ -35,7 +43,15 @@ describe('trackVisibilityVisibleEvent', () => {
     trackVisibilityVisibleEvent(trackedDiv, getTracker());
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, makeSectionVisibleEvent());
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'SectionVisibleEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 
   it('should track in mode:manual with isVisible:true', async () => {
@@ -45,7 +61,15 @@ describe('trackVisibilityVisibleEvent', () => {
     trackVisibilityVisibleEvent(trackedDiv, getTracker());
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, makeSectionVisibleEvent());
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'SectionVisibleEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 
   it('should not track in mode:manual with isVisible:false', async () => {
