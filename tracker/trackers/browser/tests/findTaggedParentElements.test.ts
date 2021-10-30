@@ -31,7 +31,7 @@ describe('findTaggedParentElements', () => {
     expect(findTaggedParentElements(link)).toHaveLength(0);
   });
 
-  it('should return with only the given Tracked Element when it has no parents', () => {
+  it('should return with only the given Tagged Element when it has no parents', () => {
     const div = document.createElement('div');
     div.setAttribute(TaggingAttribute.context, 'value');
     expect(isTaggedElement(div)).toBe(true);
@@ -41,7 +41,7 @@ describe('findTaggedParentElements', () => {
     expect(trackedParentElements).toStrictEqual([div]);
   });
 
-  it('should return a list of Tracked Elements matching the DOM tree order', () => {
+  it('should return a list of Tagged Elements matching the DOM tree order', () => {
     const div = document.createElement('div');
     div.setAttribute(TaggingAttribute.context, 'div');
 
@@ -68,7 +68,7 @@ describe('findTaggedParentElements', () => {
     expect(trackedParentElements).toStrictEqual([div, midSection, topSection]);
   });
 
-  it('should return a list of Tracked Elements ignoring the DOM tree order and following the parentElementId', () => {
+  it('should return a list of Tagged Elements ignoring the DOM tree order and following the parentElementId', () => {
     const div = document.createElement('div');
     div.setAttribute(TaggingAttribute.context, 'div');
     div.setAttribute(TaggingAttribute.parentElementId, 'top');
@@ -97,8 +97,8 @@ describe('findTaggedParentElements', () => {
     expect(trackedParentElements).toStrictEqual([div, topSection]);
   });
 
-  it('should console.error and exit early if parentElementId is not a Tracked Element', () => {
-    jest.spyOn(global.console, 'error');
+  it('should console.error and exit early if parentElementId is not a Tagged Element', () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const div = document.createElement('div');
     div.setAttribute(TaggingAttribute.context, 'div');

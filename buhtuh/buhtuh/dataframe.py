@@ -137,6 +137,10 @@ class BuhTuhDataFrame:
         return copy(self._data)
 
     @property
+    def order_by(self) -> List[SortColumn]:
+        return copy(self._order_by)
+
+    @property
     def all_series(self) -> Dict[str, 'BuhTuhSeries']:
         return {**self.index, **self.data}
 
@@ -459,6 +463,9 @@ class BuhTuhDataFrame:
         # TODO: all types from types.TypeRegistry are supported.
         from buhtuh.series import BuhTuhSeries, const_to_series
         if isinstance(key, str):
+            if key in self.index:
+                # Cannot set an index column, and cannot have a column name both in self.index and self.data
+                raise ValueError(f'Column name "{key}" already exists as index.')
             if not isinstance(value, BuhTuhSeries):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series

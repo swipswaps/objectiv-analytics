@@ -1,18 +1,24 @@
-import { makeButtonContext, makeClickEvent, TrackerQueue, TrackerQueueMemoryStore } from '@objectiv/tracker-core';
-import { BrowserTracker, getTracker, makeTracker, trackClick } from '../src/';
+import { generateUUID, makeClickEvent, TrackerQueue, TrackerQueueMemoryStore } from '@objectiv/tracker-core';
+import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, trackClick } from '../src/';
 import { makeClickEventHandler } from '../src/observer/makeClickEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('makeClickEventHandler', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     makeTracker({
-      applicationId: 'test',
+      applicationId: generateUUID(),
       endpoint: 'test',
       queue: new TrackerQueue({ store: new TrackerQueueMemoryStore(), batchDelayMs: 1 }),
     });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
+  });
+
+  afterEach(() => {
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
   });
 
   it('should track Button Click when invoked from a valid target', () => {
@@ -23,7 +29,15 @@ describe('makeClickEventHandler', () => {
     trackedButton.dispatchEvent(new MouseEvent('click'));
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, makeClickEvent());
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'ClickEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 
   it('should not track Div Click when invoked from a bubbling target', () => {
@@ -64,7 +78,11 @@ describe('makeClickEventHandler', () => {
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
-      makeClickEvent({ location_stack: [makeButtonContext({ id: 'button', text: 'button' })] })
+      expect.objectContaining(
+        makeClickEvent({
+          location_stack: [expect.objectContaining({ _type: 'ButtonContext', id: 'button', text: 'button' })],
+        })
+      )
     );
   });
 
