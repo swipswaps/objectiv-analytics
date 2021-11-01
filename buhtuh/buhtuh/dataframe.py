@@ -576,7 +576,7 @@ class BuhTuhDataFrame:
         return self.set_index(keys=[], drop=drop, **kwargs)
 
     def set_index(self, keys: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']]],
-                  append=False, drop=True, inplace=False, materialize=False):
+                  append=False, drop=True, inplace=False):
         """
         Set this dataframe's index to the the index given in keys
         :param keys: the keys of the new index. Can be a series name str, a BuhTuhSeries, or a list
@@ -585,7 +585,6 @@ class BuhTuhDataFrame:
         :param drop: delete columns to be used as the new index / delete the columns that are removed
             from the index.
         :param inplace: attempt inplace operation, not always supported and will raise if not
-        :param materialize: materialize this df is required
         :returns: the modified df in case inplace=True, else a copy with the modifications applied.
         """
 
