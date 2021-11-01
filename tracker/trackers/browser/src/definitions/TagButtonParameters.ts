@@ -1,5 +1,5 @@
-import { LocationTaggerParameters } from '@objectiv/tracker-browser';
 import { assign, object, string } from 'superstruct';
+import { LocationTaggerParameters } from './LocationTaggerParameters';
 
 /**
  * tagButton has an extra attribute, `text`, as mandatory parameter.

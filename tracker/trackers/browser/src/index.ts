@@ -1,7 +1,6 @@
 export * from '@objectiv/tracker-core';
 
 export * from './definitions/BrowserTrackerConfig';
-export * from './definitions/ChildrenTaggingAttribute';
 export * from './definitions/ChildrenTaggingQueries';
 export * from './definitions/ChildrenTaggingQuery';
 export * from './definitions/FlushQueueOptions';
@@ -9,7 +8,6 @@ export * from './definitions/GuardableElement';
 export * from './definitions/InteractiveEventTrackerParameters';
 export * from './definitions/LocationContext';
 export * from './definitions/LocationTaggerParameters';
-export * from './definitions/LocationTaggingAttributes';
 export * from './definitions/NonInteractiveEventTrackerParameters';
 export * from './definitions/ParentTaggedElement';
 export * from './definitions/StringifiedChildrenTaggingAttribute';
