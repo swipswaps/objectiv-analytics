@@ -568,12 +568,21 @@ class BuhTuhDataFrame:
         df._data = new_data
         return df
 
-    def reset_index(self, drop: bool = False, **kwargs):
+    def reset_index(self, drop: bool = False, inplace=False):
         """
-        Will call set_index with keys=[]
-        :see: set_index()
+        Drop the current index and replace it with {}
+        :param drop:  delete the series that are removed  from the index if True, else re-add to data series
+        :param inplace: perform the operation on self when inplace=True or on a copy.
         """
-        return self.set_index(keys=[], drop=drop, **kwargs)
+        df = self if inplace else self.copy_override()
+        if self._group_by:
+            # materialize, but raise if inplace is required.
+            df = df.get_df_materialized_model(inplace)
+
+        series = df._data if drop else df.all_series
+        df._data = {n: s.copy_override(index={}) for n, s in series.items()}
+        df._index = {}
+        return df
 
     def set_index(self, keys: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']]],
                   append=False, drop=True, inplace=False):
@@ -582,8 +591,7 @@ class BuhTuhDataFrame:
         :param keys: the keys of the new index. Can be a series name str, a BuhTuhSeries, or a list
             of those.
         :param append: whether to append to the existing index or replace
-        :param drop: delete columns to be used as the new index / delete the columns that are removed
-            from the index.
+        :param drop: delete columns to be used as the new index
         :param inplace: attempt inplace operation, not always supported and will raise if not
         :returns: the modified df in case inplace=True, else a copy with the modifications applied.
         """
@@ -614,12 +622,8 @@ class BuhTuhDataFrame:
                 raise ValueError('When adding existing series to the index, drop must be True'
                                  ' because duplicate column names are not supported.')
 
-        dropped = set(df._index.keys()) - set(new_index.keys())
-        new_series = {n: s.copy_override(index=new_index) for n, s in df.all_series.items()
-                      # the new series can not appear in the new index
-                      if n not in new_index
-                      # but it should also not include series that have been dropped if drop=True
-                      and not (n in dropped and drop)}
+        new_series = {n: s.copy_override(index=new_index) for n, s in df._data.items()
+                      if n not in new_index}
 
         df._index = new_index
         df._data = new_series

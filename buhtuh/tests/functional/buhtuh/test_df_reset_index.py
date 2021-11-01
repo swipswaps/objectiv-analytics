@@ -41,10 +41,11 @@ def test_set_index():
 
     # regular reset in different ways
     sbt = bt.set_index(keys=[], drop=False)
-    rbt = bt.reset_index()
+    rbt = bt.reset_index(drop=True)
     assert list(rbt.index.keys()) == []
     assert list(sbt.index.keys()) == []
-    assert '_index_skating_order' in sbt.data
+    assert '_index_skating_order' not in sbt.data
+    assert '_index_skating_order' not in rbt.data
     sbt.head()  # check valid sql /df conversion
     rbt.head()
 
@@ -85,7 +86,7 @@ def test_set_index():
     abt = bt.set_index(['city', 'municipality'], drop=True)
     rbt = abt.set_index(['city'], drop=False)
     assert list(rbt.index.keys()) == ['city']
-    assert list(rbt.data.keys()) == ['municipality', 'inhabitants']
+    assert list(rbt.data.keys()) == ['inhabitants']
     rbt.head()
 
     # try to remove a series with drop
@@ -99,7 +100,7 @@ def test_set_index():
     abt = bt.set_index(['city', 'municipality'], drop=True)
     rbt = abt.set_index(['municipality'], drop=False)
     assert list(rbt.index.keys()) == ['municipality']
-    assert list(rbt.data.keys()) == ['city', 'inhabitants']
+    assert list(rbt.data.keys()) == ['inhabitants']
     rbt.head()
 
     # try to remove a series from the other end with drop
@@ -120,7 +121,7 @@ def test_set_index():
     abt = bt.rename(columns={'city': 'x'})
     xbt = abt.set_index(col, drop=False)
     assert list(xbt.index.keys()) == ['city']
-    assert list(xbt.data.keys()) == ['_index_skating_order', 'x', 'municipality', 'inhabitants']
+    assert list(xbt.data.keys()) == ['x', 'municipality', 'inhabitants']
 
     # try to set a series as index
     abt = bt.set_index(bt.municipality.slice(3), drop=True)
