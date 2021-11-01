@@ -369,7 +369,8 @@ class BuhTuhDataFrame:
             return df
         return list(df.data.values())[0]
 
-    def get_df_materialized_model(self, inplace=False, limit: Any = None) -> 'BuhTuhDataFrame':
+    def get_df_materialized_model(self, node_name='manual_materialize',
+                                  inplace=False, limit: Any = None) -> 'BuhTuhDataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -379,6 +380,8 @@ class BuhTuhDataFrame:
         make sense for very large expressions, or for non-deterministic expressions (e.g. see
         BuhTuhSeriesUuid.sql_gen_random_uuid()).
 
+        :param node_name: The name of the node that's going to be created
+        :param inplace: Perform operation on self if inplace=True, or create a copy
         :return: New DataFrame with the current DataFrame's state as base_node
         """
         if inplace:
@@ -387,7 +390,7 @@ class BuhTuhDataFrame:
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
 
-        model = self.get_current_node(limit=limit)
+        model = self.get_current_node(name=node_name, limit=limit)
         return self.get_instance(
             engine=self.engine,
             base_node=model,
@@ -416,35 +419,30 @@ class BuhTuhDataFrame:
 
             return self.copy_override(series=selected_data)
 
-        if isinstance(key, slice):
-            df = self.get_df_materialized_model(limit=key)
-            return self._df_or_series(df)
+        if isinstance(key, (BuhTuhSeriesBoolean, slice)):
+            if isinstance(key, slice):
+                node = self.get_current_node(name='getitem_slice', limit=key)
+            else:
+                # We only support first level boolean indices for now
+                if key.base_node != self.base_node:
+                    raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
+                                     'Hint: make sure the Boolean series is derived from this DataFrame. '
+                                     'Alternative: use df.merge(series) to merge the series with the df '
+                                     'first, and then create a new Boolean series on the resulting merged '
+                                     'data.')
+                if self._group_by is not None:
+                    node = self.get_current_node(
+                        name='getitem_having_boolean',
+                        having=Expression.construct("having {}", key.expression))
+                else:
+                    node = self.get_current_node(
+                        name='getitem_where_boolean',
+                        where=Expression.construct("where {}", key.expression))
 
-        if isinstance(key, BuhTuhSeriesBoolean):
-            # We only support first level boolean indices for now
-            if key.base_node != self.base_node:
-                raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
-                                 'Hint: make sure the Boolean series is derived from this DataFrame. '
-                                 'Alternative: use df.merge(series) to merge the series with the df first,'
-                                 'and then create a new Boolean series on the resulting merged data.')
-            if self._group_by is not None:
-                # HAVING is not implemented yet
-                raise ValueError("Please materialize this the DataFrame before creating the expression. "
-                                 "Use df.get_df_materialized_model() to do so.")
-
-            model_builder = BuhTuhSqlModel(
-                name='boolean_selection',
-                sql='select {columns} from {{_last_node}} where {where}'
-            )
-            model = model_builder(
-                columns=self._get_all_column_expressions(),
-                _last_node=self.base_node,
-                where=key.expression,
-            )
             return self._df_or_series(
                 BuhTuhDataFrame.get_instance(
                     engine=self.engine,
-                    base_node=model,
+                    base_node=node,
                     index_dtypes={name: series.dtype for name, series in self.index.items()},
                     dtypes={name: series.dtype for name, series in self.data.items()},
                     group_by=None,
@@ -569,42 +567,47 @@ class BuhTuhDataFrame:
         df._data = new_data
         return df
 
-    def reset_index(self, **kwargs):
+    def reset_index(self, drop: bool = False, inplace: bool = False):
         """
-        Will call set_index with keys=[]
-        :see: set_index()
+        Drop the current index and replace it with {}
+        :param drop:  delete the series that are removed  from the index if True, else re-add to data series
+        :param inplace: perform the operation on self when inplace=True or on a copy.
         """
-        return self.set_index(keys=[], **kwargs)
+        df = self if inplace else self.copy_override()
+        if self._group_by:
+            # materialize, but raise if inplace is required.
+            df = df.get_df_materialized_model(node_name='reset_index', inplace=inplace)
+
+        series = df._data if drop else df.all_series
+        df._data = {n: s.copy_override(index={}) for n, s in series.items()}
+        df._index = {}
+        return df
 
     def set_index(self, keys: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']]],
-                  append=False, drop=False, inplace=False, materialize=False):
+                  append: bool = False, drop: bool = True, inplace: bool = False):
         """
         Set this dataframe's index to the the index given in keys
         :param keys: the keys of the new index. Can be a series name str, a BuhTuhSeries, or a list
             of those.
         :param append: whether to append to the existing index or replace
-        :param drop: drop the series that are removed from the index
+        :param drop: delete columns to be used as the new index
         :param inplace: attempt inplace operation, not always supported and will raise if not
-        :param materialize: materialize this df is required
-        :returns: the modified df
+        :returns: the modified df in case inplace=True, else a copy with the modifications applied.
         """
 
         from buhtuh.series import BuhTuhSeries
 
         df = self if inplace else self.copy_override()
         if self._group_by:
-            if not materialize:
-                raise NotImplementedError("reset_index not supported on non-materialized groupbys."
-                                          "pass materialize=True, or materialize manually.")
-            df = df.get_df_materialized_model(inplace)
+            df = df.get_df_materialized_model(node_name='groupby_setindex', inplace=inplace)
 
         # build the new index, appending if necessary
         new_index = {} if not append else copy(df._index)
         for k in (keys if isinstance(keys, list) else [keys]):
             idx_series: BuhTuhSeries
             if isinstance(k, BuhTuhSeries):
-                if k.base_node != df.base_node:
-                    raise ValueError('index series should have same base_node as df')
+                if k.base_node != df.base_node or k.group_by != df.group_by:
+                    raise ValueError('index series should have same base_node and group_by as df')
                 idx_series = k
             else:
                 if k not in df.all_series:
@@ -613,16 +616,12 @@ class BuhTuhDataFrame:
 
             new_index[idx_series.name] = idx_series.copy_override(index={})
 
-            if not drop and idx_series.name not in df._index:
-                raise ValueError('When adding index series, drop must be True because duplicate '
-                                 'column names are not supported.')
+            if not drop and idx_series.name not in df._index and idx_series.name in df._data:
+                raise ValueError('When adding existing series to the index, drop must be True'
+                                 ' because duplicate column names are not supported.')
 
-        dropped = set(df._index.keys()) - set(new_index.keys())
-        new_series = {n: s.copy_override(index=new_index) for n, s in df.all_series.items()
-                      # the new series can not appear in the new index
-                      if n not in new_index
-                      # but it should also not include series that have been dropped if drop=True
-                      and not (n in dropped and drop)}
+        new_series = {n: s.copy_override(index=new_index) for n, s in df._data.items()
+                      if n not in new_index}
 
         df._index = new_index
         df._data = new_series
@@ -784,7 +783,7 @@ class BuhTuhDataFrame:
         df = self
         if self._group_by:
             # We need to materialize this node first, we can't stack aggregations (yet)
-            df = self.get_df_materialized_model()
+            df = self.get_df_materialized_model(node_name='nested_groupby')
 
         group_by: BuhTuhGroupBy
         if isinstance(by, tuple):
@@ -1018,10 +1017,15 @@ class BuhTuhDataFrame:
         else:
             return Expression.construct('')
 
-    def get_current_node(self, limit: Union[int, slice] = None) -> SqlModel[BuhTuhSqlModel]:
+    def get_current_node(self, name: str,
+                         limit: Union[int, slice] = None,
+                         where: Expression = None,
+                         having: Expression = None) -> SqlModel[BuhTuhSqlModel]:
         """
         Translate the current state of this DataFrame into a SqlModel.
         :param limit: The limit to use
+        :param where: The where-expression to apply, if any
+        :param having: The having-expression to apply in case group_by is set, if any
         :return: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
 
@@ -1047,42 +1051,50 @@ class BuhTuhDataFrame:
                 if limit.stop is not None:
                     limit_str = f'limit {limit.stop}'
 
-        limit_expr = Expression.construct('' if limit_str is None else f'{limit_str}')
 
+        limit_expr = Expression.construct('' if limit_str is None else f'{limit_str}')
+        where = where if where else Expression.construct('')
         if self._group_by:
             group_by_expr = self.group_by.get_group_by_column_expression()
             if group_by_expr:
                 group_by_expr = Expression.construct('group by {}', group_by_expr)
             else:
                 group_by_expr = Expression.construct('')
+            having = having if having else Expression.construct('')
+
             model_builder = BuhTuhSqlModel(
+                name=name,
                 sql="""
                     select {group_by_columns}, {aggregate_columns}
                     from {{prev}}
+                    {where}
                     {group_by}
+                    {having}
                     {order_by} {limit}
                     """
             )
             return model_builder(
                 group_by_columns=self.group_by.get_index_column_expression(),
-                aggregate_columns=[s.get_column_expression()
-                                   for s in self._data.values()],
+                aggregate_columns=[s.get_column_expression() for s in self._data.values()],
+                where=where,
                 group_by=group_by_expr,
+                having=having,
                 order_by=self.get_order_by_expression(),
                 limit=limit_expr,
                 prev=self.base_node
             )
         else:
             model_builder = BuhTuhSqlModel(
-                name='view_sql',
-                sql='select {columns} from {{_last_node}} {order} {limit}'
+                name=name,
+                sql='select {columns} from {{_last_node}} {where} {order} {limit}'
             )
 
             return model_builder(
                 columns=self._get_all_column_expressions(),
                 _last_node=self.base_node,
-                limit=limit_expr,
-                order=self.get_order_by_expression()
+                where=where,
+                order=self.get_order_by_expression(),
+                limit = limit_expr
             )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
@@ -1091,7 +1103,7 @@ class BuhTuhDataFrame:
         :param limit: limit on which rows to select in the query
         :return: SQL query
         """
-        model = self.get_current_node(limit=limit)
+        model = self.get_current_node('view_sql', limit=limit)
         sql = to_sql(model)
         return sql
 

@@ -386,7 +386,7 @@ class BuhTuhSeries(ABC):
             raise Exception('Function not supported on Series without index')
         if len(self.index) > 1:
             raise NotImplementedError('Index only implemented for simple indexes.')
-        frame = self.to_frame().get_df_materialized_model()
+        frame = self.to_frame().get_df_materialized_model(node_name='series_getitem')
         series = frame[list(frame.index.values())[0] == key]
         assert isinstance(series, self.__class__)
 
@@ -394,6 +394,10 @@ class BuhTuhSeries(ABC):
         return series.head(1).astype(series.dtype).values[0]
 
     def isnull(self):
+        """
+        Detect missing values. Only null values in the BuhTuhSeries in the underlying sql table will return
+        True.
+        """
         expression_str = f'{{}} is null'
         expression = Expression.construct(
             expression_str,
@@ -402,6 +406,10 @@ class BuhTuhSeries(ABC):
         return self.copy_override(dtype='bool', expression=expression)
 
     def notnull(self):
+        """
+        Detect existing (non-missing) values. Any non-null value in the BuhTuhSeries in the underlying sql
+        table will return True.
+        """
         expression_str = f'{{}} is not null'
         expression = Expression.construct(
             expression_str,
