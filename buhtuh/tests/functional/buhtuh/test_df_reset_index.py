@@ -60,13 +60,13 @@ def test_set_index():
     assert list(sbt.data.keys()) == ['city', 'inhabitants']
     sbt.head()  # check valid sql
 
-    # set to existing raises keyerror, because the columns
+    # set to existing changes nothing
     nbt = sbt.set_index(['municipality'], drop=True)
     assert list(nbt.index.keys()) == ['municipality']
     assert list(nbt.data.keys()) == ['city', 'inhabitants']
     nbt.head()  # check valid sql
 
-    # set to existing changes nothing and does not raise
+    # appending index without drop raises
     with pytest.raises(ValueError,
                        match="When adding index series, drop must be True because duplicate"):
         sbt.set_index(['city'], append=True)
@@ -119,24 +119,16 @@ def test_reset_index_materialize():
 
     bt = bt.groupby('municipality').sum()
     assert list(bt.index.keys()) == ['municipality']
-    bt.head()  # check valid sql
 
-    # regular
-    with pytest.raises(NotImplementedError,
-                       match="reset_index not supported on non-materialized groupbys"):
-        bt.reset_index()
-    rbt = bt.reset_index(materialize=True)
+    # regular, materializes automatically
+    rbt =  bt.reset_index()
     assert list(bt.index.keys()) == ['municipality']
-    rbt.head()  # check valid sql
 
     # inplace not supported when materialization is needed, as we can not make those changes
     # to a dataframe yet.
     with pytest.raises(NotImplementedError,
-                       match="reset_index not supported on non-materialized groupbys"):
-        bt.reset_index(inplace=True)
-    with pytest.raises(NotImplementedError,
                        match="inplace materialization is not supported"):
-        bt.reset_index(materialize=True, inplace=True)
+        bt.reset_index(inplace=True)
 
     for r in [bt, rbt]:
         for s in r.index.values():

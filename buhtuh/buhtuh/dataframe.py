@@ -585,16 +585,14 @@ class BuhTuhDataFrame:
         :param drop: drop the series that are removed from the index
         :param inplace: attempt inplace operation, not always supported and will raise if not
         :param materialize: materialize this df is required
-        :returns: the modified df
+        :returns: the modified df in case inplace=True, else a copy with the modifications applied.
         """
 
         from buhtuh.series import BuhTuhSeries
 
         df = self if inplace else self.copy_override()
         if self._group_by:
-            if not materialize:
-                raise NotImplementedError("reset_index not supported on non-materialized groupbys."
-                                          "pass materialize=True, or materialize manually.")
+            # materialize, but raise if inplace is required.
             df = df.get_df_materialized_model(inplace)
 
         # build the new index, appending if necessary
