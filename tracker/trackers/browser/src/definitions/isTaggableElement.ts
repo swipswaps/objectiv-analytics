@@ -1,0 +1,9 @@
+import { GuardableElement } from './GuardableElement';
+import { TaggableElement } from './TaggableElement';
+
+/**
+ * A type guard to determine if a the given Element is an HTMLElement or SVGElement.
+ * In general we can only tag Elements supporting dataset attributes.
+ */
+export const isTaggableElement = (element: GuardableElement): element is TaggableElement =>
+  element instanceof HTMLElement || element instanceof SVGElement;

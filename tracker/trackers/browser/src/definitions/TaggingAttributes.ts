@@ -1,10 +1,12 @@
 import { boolean, defaulted, Infer, literal, number, object, optional, string, union } from 'superstruct';
-import { jsonParse, jsonStringify } from './json';
 import { AnyLocationContext } from './LocationContext';
 import { Uuid } from './uuid';
 import { TaggingAttribute } from './TaggingAttribute';
+import { stringifyJson } from '../helpers/stringifyJson';
+import { parseJson } from '../helpers/parseJson';
 
 /**
+ * FIXME
  * Custom Structs for the trackClicks Tagging Attribute + their Stringifier and Parser
  */
 export const WaitUntilTrackedOptions = object({
@@ -23,7 +25,7 @@ export const TrackClicksAttribute = union([
 export type TrackClicksAttribute = Infer<typeof TrackClicksAttribute>;
 
 export const stringifyTrackClicksAttribute = (trackClicksAttribute: TrackClicksAttribute) => {
-  return jsonStringify(trackClicksAttribute, TrackClicksAttribute);
+  return stringifyJson(trackClicksAttribute, TrackClicksAttribute);
 };
 
 /**
@@ -50,7 +52,7 @@ export const TrackClicksOptions = union([
 export type TrackClicksOptions = Infer<typeof TrackClicksOptions>;
 
 export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: string | null): TrackClicksOptions => {
-  const parsedTrackClicks = jsonParse(stringifiedTrackClicksAttribute, TrackClicksAttribute);
+  const parsedTrackClicks = parseJson(stringifiedTrackClicksAttribute, TrackClicksAttribute);
 
   // Process `true` and `false` shorthands onto their verbose options counterparts
   if (typeof parsedTrackClicks == 'boolean') {
@@ -91,11 +93,11 @@ export const stringifyTrackVisibilityAttribute = (trackVisibilityAttribute: Trac
   if (!(typeof trackVisibilityAttribute === 'object')) {
     throw new Error(`trackVisibility must be an object, received: ${JSON.stringify(trackVisibilityAttribute)}`);
   }
-  return jsonStringify(trackVisibilityAttribute, TrackVisibilityAttribute);
+  return stringifyJson(trackVisibilityAttribute, TrackVisibilityAttribute);
 };
 
 export const parseTrackVisibilityAttribute = (stringifiedTrackVisibilityAttribute: string | null) => {
-  return jsonParse(stringifiedTrackVisibilityAttribute, TrackVisibilityAttribute);
+  return parseJson(stringifiedTrackVisibilityAttribute, TrackVisibilityAttribute);
 };
 
 /**
@@ -110,11 +112,11 @@ export const stringifyValidateAttribute = (validateAttribute: ValidateAttribute)
   if (!(typeof validateAttribute === 'object')) {
     throw new Error(`validate Attribute must be an object, received: ${JSON.stringify(validateAttribute)}`);
   }
-  return jsonStringify(validateAttribute, ValidateAttribute);
+  return stringifyJson(validateAttribute, ValidateAttribute);
 };
 
 export const parseValidateAttribute = (stringifiedValidateAttribute: string | null) => {
-  return jsonParse(stringifiedValidateAttribute ?? '{}', ValidateAttribute);
+  return parseJson(stringifiedValidateAttribute ?? '{}', ValidateAttribute);
 };
 
 /**

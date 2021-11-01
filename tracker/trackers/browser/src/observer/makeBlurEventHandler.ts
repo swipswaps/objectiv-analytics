@@ -1,6 +1,6 @@
 import { BrowserTracker } from '../BrowserTracker';
-import { TaggedElement } from '../definitions/elements';
-import { isTaggedElement } from '../definitions/guards';
+import { isTaggedElement } from '../definitions/isTaggedElement';
+import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { trackInputChange } from '../trackInputChange';
 

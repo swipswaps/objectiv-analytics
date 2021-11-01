@@ -1,5 +1,5 @@
 import { Infer, optional } from 'superstruct';
-import { StringifiedChildrenTaggingAttributes } from './ChildrenTaggingAttribute';
+import { StringifiedChildrenTaggingAttributes } from './StringifiedChildrenTaggingAttribute';
 
 /**
  * The definition of the object returned by `tagChildren` and `tagChild`

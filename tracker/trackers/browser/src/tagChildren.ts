@@ -1,12 +1,10 @@
 import { assert, validate } from 'superstruct';
-import {
-  StringifiedChildrenTaggingAttributes,
-  stringifyChildrenTaggingAttribute,
-} from './definitions/ChildrenTaggingAttribute';
-import { ChildrenTaggingQueries } from './definitions/ChildrenTaggingQuery';
+import { ChildrenTaggingQueries } from './definitions/ChildrenTaggingQueries';
+import { StringifiedChildrenTaggingAttributes } from './definitions/StringifiedChildrenTaggingAttribute';
 import { TagChildrenReturnValue } from './definitions/TagChildrenReturnValue';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
 import { TrackerErrorHandlerCallback } from './definitions/TrackerErrorHandlerCallback';
+import { stringifyChildrenTaggingAttribute } from './helpers/stringifyChildrenTaggingAttribute';
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 
 /**

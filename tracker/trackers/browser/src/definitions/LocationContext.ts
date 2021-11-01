@@ -1,5 +1,4 @@
 import { assign, Infer, literal, object, string, union } from 'superstruct';
-import { jsonParse, jsonStringify } from './json';
 
 /**
  * Abstract Context struct
@@ -223,14 +222,3 @@ export type AnyActionContext = Infer<typeof AnyActionContext>;
  */
 export const AnyClickableContext = union([AnyActionContext, ExpandableSectionContext]);
 export type AnyClickableContext = Infer<typeof AnyClickableContext>;
-
-/**
- * Struct Stringifier and Parser for Location Contexts
- */
-export const stringifyLocationContext = (contextObject: AnyLocationContext) => {
-  return jsonStringify(contextObject, AnyLocationContext);
-};
-
-export const parseLocationContext = (stringifiedContext: string | null) => {
-  return jsonParse(stringifiedContext, AnyLocationContext);
-};

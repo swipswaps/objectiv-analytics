@@ -1,11 +1,6 @@
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
 import { create, is, validate } from 'superstruct';
-import {
-  AnyClickableContext,
-  AnySectionContext,
-  InputContext,
-  stringifyLocationContext,
-} from './definitions/LocationContext';
+import { AnyClickableContext, AnySectionContext, InputContext } from './definitions/LocationContext';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
 import {
   StringifiedTaggingAttributes,
@@ -16,6 +11,7 @@ import {
 import { TagLocationParameters } from './definitions/TagLocationParameters';
 import { TagLocationReturnValue } from './definitions/TagLocationReturnValue';
 import { runIfValueIsNotUndefined } from './helpers/runIfValueIsNotUndefined';
+import { stringifyLocationContext } from './helpers/stringifyLocationContext';
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 
 /**

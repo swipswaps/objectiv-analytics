@@ -1,10 +1,10 @@
 import { LocationStack } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
-import { TaggableElement } from '../definitions/elements';
-import { isTaggableElement } from '../definitions/guards';
-import { parseLocationContext } from '../definitions/LocationContext';
+import { isTaggableElement } from '../definitions/isTaggableElement';
+import { TaggableElement } from '../definitions/TaggableElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { findParentTaggedElements } from './findParentTaggedElements';
+import { parseLocationContext } from './parseLocationContext';
 import { trackerErrorHandler } from './trackerErrorHandler';
 
 /**
@@ -16,6 +16,7 @@ import { trackerErrorHandler } from './trackerErrorHandler';
  * 4. If a Tracker instance is provided, runs the Tracker's plugins `beforeTransport` lifecycle on the locationStack
  */
 export const getElementLocationStack = (parameters: {
+  // FIXME use definitions
   element: TaggableElement | EventTarget;
   tracker?: BrowserTracker;
 }) => {
