@@ -1,4 +1,4 @@
-import { TrackerErrorHandlerCallback } from "../definitions/TrackerErrorHandlerCallback";
+import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerCallback';
 
 /**
  * Generic onError callback, parameter and error handler for tag and track functions.

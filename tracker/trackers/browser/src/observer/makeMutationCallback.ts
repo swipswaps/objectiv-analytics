@@ -4,7 +4,7 @@ import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { getTracker } from '../getTracker';
 import { getLocationHref } from '../helpers/getLocationHref';
 import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
-import { trackURLChange } from '../trackEventHelpers';
+import { trackURLChange } from '../trackURLChange';
 import { AutoTrackingState } from './AutoTrackingState';
 import { trackNewElements } from './trackNewElements';
 import { trackRemovedElements } from './trackRemovedElements';

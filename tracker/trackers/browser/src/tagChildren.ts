@@ -4,9 +4,9 @@ import {
   stringifyChildrenTaggingAttribute,
 } from './definitions/ChildrenTaggingAttribute';
 import { ChildrenTaggingQueries } from './definitions/ChildrenTaggingQuery';
-import { TagChildrenReturnValue } from "./definitions/TagChildrenReturnValue";
+import { TagChildrenReturnValue } from './definitions/TagChildrenReturnValue';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
-import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
+import { TrackerErrorHandlerCallback } from './definitions/TrackerErrorHandlerCallback';
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 
 /**
@@ -29,7 +29,10 @@ import { trackerErrorHandler } from './helpers/trackerErrorHandler';
  *      }
  *    ])
  */
-export const tagChildren = (parameters: ChildrenTaggingQueries, onError?: TrackerErrorHandlerCallback): TagChildrenReturnValue => {
+export const tagChildren = (
+  parameters: ChildrenTaggingQueries,
+  onError?: TrackerErrorHandlerCallback
+): TagChildrenReturnValue => {
   try {
     // Validate input
     assert(parameters, ChildrenTaggingQueries);

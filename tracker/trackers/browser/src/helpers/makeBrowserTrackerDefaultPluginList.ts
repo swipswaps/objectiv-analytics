@@ -1,7 +1,7 @@
-import { WebDeviceContextPlugin } from "@objectiv/plugin-web-device-context";
-import { WebDocumentContextPlugin } from "@objectiv/plugin-web-document-context";
-import { makeTrackerDefaultPluginsList, } from '@objectiv/tracker-core';
-import { BrowserTrackerConfig } from "../definitions/BrowserTrackerConfig";
+import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
+import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
+import { makeTrackerDefaultPluginsList } from '@objectiv/tracker-core';
+import { BrowserTrackerConfig } from '../definitions/BrowserTrackerConfig';
 
 /**
  * The default list of Plugins of Browser Tracker

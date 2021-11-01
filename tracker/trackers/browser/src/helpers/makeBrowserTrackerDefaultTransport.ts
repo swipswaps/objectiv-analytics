@@ -1,4 +1,4 @@
-import { TrackerTransportInterface, TrackerTransportRetry, TrackerTransportSwitch, } from '@objectiv/tracker-core';
+import { TrackerTransportInterface, TrackerTransportRetry, TrackerTransportSwitch } from '@objectiv/tracker-core';
 import { BrowserTrackerConfig } from '../definitions/BrowserTrackerConfig';
 import { FetchAPITransport } from '../transport/FetchAPITransport';
 import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
@@ -17,4 +17,3 @@ export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTracker
       ],
     }),
   });
-

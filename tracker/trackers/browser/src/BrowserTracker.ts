@@ -1,8 +1,8 @@
-import { ContextsConfig, Tracker, TrackerConfig, TrackerPlugins, } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerConfig, TrackerPlugins } from '@objectiv/tracker-core';
 import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
-import { makeDefaultBrowserTrackerPluginsList } from "./helpers/makeBrowserTrackerDefaultPluginList";
-import { makeBrowserTrackerDefaultQueue } from "./helpers/makeBrowserTrackerDefaultQueue";
-import { makeBrowserTrackerDefaultTransport } from "./helpers/makeBrowserTrackerDefaultTransport";
+import { makeDefaultBrowserTrackerPluginsList } from './helpers/makeBrowserTrackerDefaultPluginList';
+import { makeBrowserTrackerDefaultQueue } from './helpers/makeBrowserTrackerDefaultQueue';
+import { makeBrowserTrackerDefaultTransport } from './helpers/makeBrowserTrackerDefaultTransport';
 
 /**
  * Browser Tracker is a Tracker Core constructor with simplified parameters and some preconfigured Plugins.

@@ -3,7 +3,7 @@ import { TaggedElement } from '../definitions/elements';
 import { isTaggedElement } from '../definitions/guards';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { TrackClicksOptions } from '../definitions/TaggingAttributes';
-import { trackClick } from '../trackEventHelpers';
+import { trackClick } from '../trackClick';
 
 /**
  * A factory to make the event handler to attach to new TaggedElements with the `trackClicks` attributes set

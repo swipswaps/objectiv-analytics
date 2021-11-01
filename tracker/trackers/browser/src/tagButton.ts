@@ -1,6 +1,6 @@
-import { makeButtonContext, } from '@objectiv/tracker-core';
+import { makeButtonContext } from '@objectiv/tracker-core';
 import { assign, create, object, string } from 'superstruct';
-import { LocationTaggerParameters } from "./definitions/LocationTaggerParameters";
+import { LocationTaggerParameters } from './definitions/LocationTaggerParameters';
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 import { tagLocation, TagLocationReturnValue } from './tagLocation';
 

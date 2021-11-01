@@ -3,7 +3,7 @@ import { TaggedElement } from '../definitions/elements';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { parseTrackVisibilityAttribute } from '../definitions/TaggingAttributes';
 import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
-import { trackSectionVisible } from '../trackEventHelpers';
+import { trackSectionVisible } from '../trackSectionVisible';
 
 /**
  * Given a newly added Element node it will determine whether to track a visibility:visible event for it.

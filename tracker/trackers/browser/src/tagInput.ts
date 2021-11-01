@@ -1,6 +1,6 @@
-import { makeInputContext, } from '@objectiv/tracker-core';
+import { makeInputContext } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
-import { LocationTaggerParameters } from "./definitions/LocationTaggerParameters";
+import { LocationTaggerParameters } from './definitions/LocationTaggerParameters';
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 import { tagLocation, TagLocationReturnValue } from './tagLocation';
 

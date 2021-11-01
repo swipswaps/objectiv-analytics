@@ -14,12 +14,14 @@ export class TrackerQueueLocalStorageStore implements TrackerQueueStoreInterface
   queueStoreName = `TrackerQueueLocalStorageStore`;
   readonly localStorageKey: string;
 
-  constructor(config: TrackerQueueStoreConfig & {
-    /**
-     * Used to bind this queue to a specific tracker instance. This allows queues to persists across sessions.
-     */
-    trackerId: string;
-  }) {
+  constructor(
+    config: TrackerQueueStoreConfig & {
+      /**
+       * Used to bind this queue to a specific tracker instance. This allows queues to persists across sessions.
+       */
+      trackerId: string;
+    }
+  ) {
     this.console = config.console;
 
     if (typeof localStorage === 'undefined') {

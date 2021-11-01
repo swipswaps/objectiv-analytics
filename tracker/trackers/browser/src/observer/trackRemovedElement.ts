@@ -4,7 +4,7 @@ import { isTaggedElement } from '../definitions/guards';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { parseTrackVisibilityAttribute } from '../definitions/TaggingAttributes';
 import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
-import { trackSectionHidden } from '../trackEventHelpers';
+import { trackSectionHidden } from '../trackSectionHidden';
 
 /**
  * Given a removed Element node it will:

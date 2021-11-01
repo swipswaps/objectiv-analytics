@@ -18,8 +18,8 @@ import {
   TrackVisibilityAttribute,
   ValidateAttribute,
 } from './definitions/TaggingAttributes';
-import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
-import { runIfValueIsNotUndefined } from "./helpers/runIfValueIsNotUndefined";
+import { TrackerErrorHandlerCallback } from './definitions/TrackerErrorHandlerCallback';
+import { runIfValueIsNotUndefined } from './helpers/runIfValueIsNotUndefined';
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 
 /**
@@ -110,4 +110,3 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
     return trackerErrorHandler(error, parameters, parameters?.onError);
   }
 };
-

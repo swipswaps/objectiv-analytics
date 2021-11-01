@@ -1,7 +1,7 @@
 import { ChildrenTaggingQuery } from './definitions/ChildrenTaggingQuery';
-import { TagChildrenReturnValue } from "./definitions/TagChildrenReturnValue";
-import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
-import { tagChildren } from "./tagChildren";
+import { TagChildrenReturnValue } from './definitions/TagChildrenReturnValue';
+import { TrackerErrorHandlerCallback } from './definitions/TrackerErrorHandlerCallback';
+import { tagChildren } from './tagChildren';
 
 /**
  * Syntactic sugar to track only one child.
@@ -19,6 +19,9 @@ import { tagChildren } from "./tagChildren";
  *    })
  *
  */
-export const tagChild = (parameters: ChildrenTaggingQuery, onError?: TrackerErrorHandlerCallback): TagChildrenReturnValue => {
+export const tagChild = (
+  parameters: ChildrenTaggingQuery,
+  onError?: TrackerErrorHandlerCallback
+): TagChildrenReturnValue => {
   return tagChildren([parameters], onError);
 };
