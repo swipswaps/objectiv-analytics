@@ -13,6 +13,9 @@ export * from './definitions/NonInteractiveEventTrackerParameters';
 export * from './definitions/TagChildrenReturnValue';
 export * from './definitions/TaggingAttribute';
 export * from './definitions/TaggingAttributes';
+export * from './definitions/TagLocationOptions';
+export * from './definitions/TagLocationParameters';
+export * from './definitions/TagLocationReturnValue';
 export * from './definitions/TrackerErrorHandlerCallback';
 export * from './definitions/uuid';
 

@@ -219,6 +219,12 @@ export const AnyActionContext = union([ActionContext, ButtonContext, LinkContext
 export type AnyActionContext = Infer<typeof AnyActionContext>;
 
 /**
+ * Struct union to match any Clickable Context, that is Action Contexts + ExpandableSectionContext
+ */
+export const AnyClickableContext = union([AnyActionContext, ExpandableSectionContext]);
+export type AnyClickableContext = Infer<typeof AnyClickableContext>;
+
+/**
  * Struct Stringifier and Parser for Location Contexts
  */
 export const stringifyLocationContext = (contextObject: AnyLocationContext) => {

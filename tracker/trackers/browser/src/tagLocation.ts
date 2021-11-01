@@ -1,10 +1,8 @@
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
-import { boolean, create, func, Infer, is, object, optional, union, validate } from 'superstruct';
+import { create, is, validate } from 'superstruct';
 import {
-  AnyActionContext,
-  AnyLocationContext,
+  AnyClickableContext,
   AnySectionContext,
-  ExpandableSectionContext,
   InputContext,
   stringifyLocationContext,
 } from './definitions/LocationContext';
@@ -14,11 +12,9 @@ import {
   stringifyTrackClicksAttribute,
   stringifyTrackVisibilityAttribute,
   stringifyValidateAttribute,
-  TrackClicksAttribute,
-  TrackVisibilityAttribute,
-  ValidateAttribute,
 } from './definitions/TaggingAttributes';
-import { TrackerErrorHandlerCallback } from './definitions/TrackerErrorHandlerCallback';
+import { TagLocationParameters } from './definitions/TagLocationParameters';
+import { TagLocationReturnValue } from './definitions/TagLocationReturnValue';
 import { runIfValueIsNotUndefined } from './helpers/runIfValueIsNotUndefined';
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 
@@ -36,38 +32,6 @@ import { trackerErrorHandler } from './helpers/trackerErrorHandler';
  *    tagLocation({ instance: makeElementContext({ id: 'section-id' }), { trackClicks: true } })
  *
  */
-export const TagLocationReturnValue = optional(StringifiedTaggingAttributes);
-export type TagLocationReturnValue = Infer<typeof TagLocationReturnValue>;
-
-export const TagLocationOptions = object({
-  trackClicks: optional(TrackClicksAttribute),
-  trackBlurs: optional(boolean()),
-  trackVisibility: optional(TrackVisibilityAttribute),
-  parent: TagLocationReturnValue,
-  validate: optional(ValidateAttribute),
-});
-export type TagLocationOptions = {
-  trackClicks?: TrackClicksAttribute;
-  trackBlurs?: boolean;
-  trackVisibility?: TrackVisibilityAttribute;
-  parent?: TagLocationReturnValue;
-  validate?: ValidateAttribute;
-};
-
-export const TagLocationParameters = object({
-  instance: AnyLocationContext,
-  options: optional(TagLocationOptions),
-  onError: optional(func()),
-});
-export type TagLocationParameters = {
-  instance: AnyLocationContext;
-  options?: TagLocationOptions;
-  onError?: TrackerErrorHandlerCallback;
-};
-
-// Custom struct to match all Action Contexts + ExpandableSectionContext
-export const AnyClickableContext = union([AnyActionContext, ExpandableSectionContext]);
-
 export const tagLocation = (parameters: TagLocationParameters): TagLocationReturnValue => {
   try {
     // Validate input

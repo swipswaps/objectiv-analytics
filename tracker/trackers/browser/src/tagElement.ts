@@ -1,8 +1,9 @@
 import { makeSectionContext } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
 import { LocationTaggerParameters } from './definitions/LocationTaggerParameters';
+import { TagLocationReturnValue } from './definitions/TagLocationReturnValue';
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
-import { tagLocation, TagLocationReturnValue } from './tagLocation';
+import { tagLocation } from './tagLocation';
 
 /**
  * tagElement is a shorthand for tagLocation. It eases the tagging of SectionContext bound Elements

@@ -1,5 +1,6 @@
 import { assign, object, pick, string } from 'superstruct';
-import { TagLocationOptions, TagLocationParameters } from '../tagLocation';
+import { TagLocationOptions } from './TagLocationOptions';
+import { TagLocationParameters } from './TagLocationParameters';
 import { TrackerErrorHandlerCallback } from './TrackerErrorHandlerCallback';
 
 /**
