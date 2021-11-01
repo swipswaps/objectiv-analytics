@@ -5,7 +5,7 @@ import json
 from typing import Optional, Dict, Union, TYPE_CHECKING, Any
 
 from buhtuh.series import BuhTuhSeries, const_to_series
-from buhtuh.expression import Expression, quote_string
+from buhtuh.expression import Expression, quote_string, quote_identifier
 from sql_models.model import SqlModel
 
 if TYPE_CHECKING:
@@ -31,13 +31,13 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
                  expression: Expression,
                  group_by: 'BuhTuhGroupBy',
                  sorted_ascending: Optional[bool] = None):
-        super().__init__(engine,
-                         base_node,
-                         index,
-                         name,
-                         expression,
-                         group_by,
-                         sorted_ascending)
+        super().__init__(engine=engine,
+                         base_node=base_node,
+                         index=index,
+                         name=name,
+                         expression=expression,
+                         group_by=group_by,
+                         sorted_ascending=sorted_ascending)
         self.json = Json(self)
 
     def __getitem__(self, key: Union[Any, slice]):
@@ -103,13 +103,13 @@ class BuhTuhSeriesJson(BuhTuhSeriesJsonb):
                  group_by: 'BuhTuhGroupBy',
                  sorted_ascending: Optional[bool] = None):
 
-        super().__init__(engine,
-                         base_node,
-                         index,
-                         name,
-                         Expression.construct(f'cast({{}} as jsonb)', expression),
-                         group_by,
-                         sorted_ascending)
+        super().__init__(engine=engine,
+                         base_node=base_node,
+                         index=index,
+                         name=name,
+                         expression=Expression.construct(f'cast({{}} as jsonb)', expression),
+                         group_by=group_by,
+                         sorted_ascending=sorted_ascending)
 
 
 class Json:
@@ -196,12 +196,13 @@ class Json:
 
     # objectiv features below:
     def get_from_context_with_type_series(self, type, key, dtype='string'):
-        expression_str = 'jsonb_path_query_first({}, \'$[*] ? (@._type == $type)\', \'{"type":{}}\') ->> {}'
-        print(Expression.string_value(type))
+        expression_str = f'''
+        jsonb_path_query_first({{}},
+        \'$[*] ? (@._type == $type)\',
+        \'{{"type":{quote_identifier(type)}}}\') ->> {{}}'''
         expression = Expression.construct(
             expression_str,
             self._series_object,
-            Expression.column_reference(type),
             Expression.string_value(key)
         )
         return self._series_object.copy_override(dtype=dtype, expression=expression)
