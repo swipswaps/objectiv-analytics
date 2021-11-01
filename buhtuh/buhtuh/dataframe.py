@@ -585,7 +585,7 @@ class BuhTuhDataFrame:
         return df
 
     def set_index(self, keys: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']]],
-                  append=False, drop=True, inplace=False):
+                  append: bool = False, drop: bool = True, inplace: bool = False):
         """
         Set this dataframe's index to the the index given in keys
         :param keys: the keys of the new index. Can be a series name str, a BuhTuhSeries, or a list
