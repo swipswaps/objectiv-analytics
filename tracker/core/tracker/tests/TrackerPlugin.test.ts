@@ -1,25 +1,24 @@
-import { TrackerEvent, TrackerPlugin, TrackerPlugins, TrackerPluginsConfiguration } from '../src';
-import { noop } from './mocks';
+import { TrackerEvent, TrackerPluginInterface, TrackerPlugins, TrackerPluginsConfiguration } from '../src';
 
 describe('Plugin', () => {
   it('should instantiate when specifying an empty list of Plugins', () => {
-    const testPlugins = new TrackerPlugins([]);
+    const testPlugins = new TrackerPlugins({ plugins: [] });
     expect(testPlugins).toBeInstanceOf(TrackerPlugins);
-    expect(testPlugins).toEqual({ list: [] });
+    expect(testPlugins).toEqual({ plugins: [] });
   });
 
   it('should instantiate when specifying a list of Plugins instances', () => {
-    const plugins: TrackerPlugin[] = [
+    const plugins: TrackerPluginInterface[] = [
       { pluginName: 'test-pluginA', isUsable: () => true },
       { pluginName: 'test-pluginB', isUsable: () => true },
     ];
-    const testPlugins = new TrackerPlugins(plugins);
+    const testPlugins = new TrackerPlugins({ plugins });
     expect(testPlugins).toBeInstanceOf(TrackerPlugins);
-    expect(testPlugins).toEqual({ list: plugins });
+    expect(testPlugins).toEqual({ plugins });
   });
 
   it('should support Plugin creation via instance, class name, factory function or just plain object', () => {
-    class TestPluginA implements TrackerPlugin {
+    class TestPluginA implements TrackerPluginInterface {
       readonly pluginName = 'pluginA';
       readonly parameter?: string;
 
@@ -32,21 +31,22 @@ describe('Plugin', () => {
       }
     }
     const TestPluginAFactory = (parameter: string) => new TestPluginA({ parameter });
-    const plugins: TrackerPluginsConfiguration = [
-      new TestPluginA(),
-      new TestPluginA({ parameter: 'parameterValue' }),
-      TestPluginA,
-      TestPluginAFactory('parameterValue'),
-      {
-        pluginName: 'pluginA',
-        parameter: 'parameterValue',
-        isUsable: () => true,
-      } as TrackerPlugin,
-    ];
+    const plugins: TrackerPluginsConfiguration = {
+      plugins: [
+        new TestPluginA(),
+        new TestPluginA({ parameter: 'parameterValue' }),
+        TestPluginAFactory('parameterValue'),
+        {
+          pluginName: 'pluginA',
+          parameter: 'parameterValue',
+          isUsable: () => true,
+        } as TrackerPluginInterface,
+      ],
+    };
     const testPlugins = new TrackerPlugins(plugins);
     expect(testPlugins).toBeInstanceOf(TrackerPlugins);
     expect(testPlugins).toEqual({
-      list: [
+      plugins: [
         {
           pluginName: 'pluginA',
           parameter: undefined,
@@ -54,10 +54,6 @@ describe('Plugin', () => {
         {
           pluginName: 'pluginA',
           parameter: 'parameterValue',
-        },
-        {
-          pluginName: 'pluginA',
-          parameter: undefined,
         },
         {
           pluginName: 'pluginA',
@@ -73,11 +69,19 @@ describe('Plugin', () => {
   });
 
   it('should execute all Plugins implementing the `beforeTransport` callback', () => {
-    const pluginA: TrackerPlugin = { pluginName: 'test-pluginA', isUsable: () => true, beforeTransport: jest.fn(noop) };
-    const pluginB: TrackerPlugin = { pluginName: 'test-pluginB', isUsable: () => true, beforeTransport: jest.fn(noop) };
-    const pluginC: TrackerPlugin = { pluginName: 'test-pluginC', isUsable: () => true };
-    const plugins: TrackerPlugin[] = [pluginA, pluginB, pluginC];
-    const testPlugins = new TrackerPlugins(plugins);
+    const pluginA: TrackerPluginInterface = {
+      pluginName: 'pluginA',
+      isUsable: () => true,
+      beforeTransport: jest.fn(),
+    };
+    const pluginB: TrackerPluginInterface = {
+      pluginName: 'pluginB',
+      isUsable: () => true,
+      beforeTransport: jest.fn(),
+    };
+    const pluginC: TrackerPluginInterface = { pluginName: 'pluginC', isUsable: () => true };
+    const plugins: TrackerPluginInterface[] = [pluginA, pluginB, pluginC];
+    const testPlugins = new TrackerPlugins({ plugins });
     expect(pluginA.beforeTransport).not.toHaveBeenCalled();
     expect(pluginB.beforeTransport).not.toHaveBeenCalled();
     const testEvent = new TrackerEvent({ _type: 'test-event' });
@@ -87,15 +91,23 @@ describe('Plugin', () => {
   });
 
   it('should execute only Plugins that are usable', () => {
-    const pluginA: TrackerPlugin = { pluginName: 'test-pluginA', isUsable: () => true, beforeTransport: jest.fn(noop) };
-    const pluginB: TrackerPlugin = {
+    const pluginA: TrackerPluginInterface = {
+      pluginName: 'pluginA',
+      isUsable: () => true,
+      beforeTransport: jest.fn(),
+    };
+    const pluginB: TrackerPluginInterface = {
       pluginName: 'test-pluginB',
       isUsable: () => false,
-      beforeTransport: jest.fn(noop),
+      beforeTransport: jest.fn(),
     };
-    const pluginC: TrackerPlugin = { pluginName: 'test-pluginC', isUsable: () => true, beforeTransport: jest.fn(noop) };
-    const plugins: TrackerPlugin[] = [pluginA, pluginB, pluginC];
-    const testPlugins = new TrackerPlugins(plugins);
+    const pluginC: TrackerPluginInterface = {
+      pluginName: 'pluginC',
+      isUsable: () => true,
+      beforeTransport: jest.fn(),
+    };
+    const plugins: TrackerPluginInterface[] = [pluginA, pluginB, pluginC];
+    const testPlugins = new TrackerPlugins({ plugins });
     expect(pluginA.beforeTransport).not.toHaveBeenCalled();
     expect(pluginB.beforeTransport).not.toHaveBeenCalled();
     expect(pluginC.beforeTransport).not.toHaveBeenCalled();

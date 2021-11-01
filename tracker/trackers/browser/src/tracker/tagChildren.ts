@@ -6,7 +6,7 @@ import {
   stringifyChildrenTaggingAttribute,
 } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
-import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
 
 /**
  * Used to decorate a TaggableElement with our Children Tagging Attributes.

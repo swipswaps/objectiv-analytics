@@ -1,10 +1,15 @@
-import { TrackerTransport } from '@objectiv/tracker-core';
+import { TrackerConsole, TrackerTransportConfig, TrackerTransportInterface } from '@objectiv/tracker-core';
 
-export class SpyTransport implements TrackerTransport {
+export class SpyTransport implements TrackerTransportInterface {
+  readonly console?: TrackerConsole;
   readonly transportName = 'SpyTransport';
 
+  constructor(config?: TrackerTransportConfig) {
+    this.console = config?.console;
+  }
+
   async handle(): Promise<any> {
-    console.log('SpyTransport.handle');
+    this.console?.log('SpyTransport.handle');
   }
 
   isUsable(): boolean {

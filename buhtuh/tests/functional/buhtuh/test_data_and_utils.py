@@ -7,7 +7,7 @@ This file does not contain any test, but having the file's name start with `test
 as a test file. This makes pytest rewrite the asserts to give clearer errors.
 """
 import os
-from typing import List, Union, Type
+from typing import List, Union, Type, Dict, Any
 
 import sqlalchemy
 from sqlalchemy.engine import ResultProxy
@@ -65,12 +65,62 @@ TEST_DATA_RAILWAYS = [
 RAILWAYS_COLUMNS = ['station_id', 'town', 'station', 'platforms']
 RAILWAYS_INDEX_AND_COLUMNS = ['_index_station_id'] + RAILWAYS_COLUMNS
 
+TEST_DATA_JSON = [
+    [0,
+     '{"a": "b"}',
+     '[{"a": "b"}, {"c": "d"}]',
+     '{"a": "b"}'
+     ],
+    [1,
+     '{"_type": "SectionContext", "id": "home"}',
+     '["a","b","c","d"]',
+     '["a","b","c","d"]'
+     ],
+    [2,
+     '{"a": "b", "c": {"a": "c"}}',
+     '[{"_type": "a", "id": "b"},{"_type": "c", "id": "d"},{"_type": "e", "id": "f"}]',
+     '{"a": "b", "c": {"a": "c"}}'
+     ],
+    [3,
+     '{"a": "b", "e": [{"a": "b"}, {"c": "d"}]}',
+     '[{"_type":"WebDocumentContext","id":"#document"},'
+     ' {"_type":"SectionContext","id":"home"},'
+     ' {"_type":"SectionContext","id":"top-10"},'
+     ' {"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]',
+     '[{"_type":"WebDocumentContext","id":"#document"},'
+     ' {"_type":"SectionContext","id":"home"},'
+     ' {"_type":"SectionContext","id":"top-10"},'
+     ' {"_type":"ItemContext","id":"5o7Wv5Q5ZE"}]'
+     ]
+]
+JSON_COLUMNS = ['row', 'dict_column', 'list_column', 'mixed_column']
+JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
 
-def _get_bt(table, dataset, columns, convert_objects) -> BuhTuhDataFrame:
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
-    import pandas as pd
-    df = pd.DataFrame.from_records(dataset, columns=columns)
-    df.set_index(columns[0], drop=False, inplace=True)
+# We cache all BuhTuhDataFrames, that way we don't have to recreate and query tables each time.
+_TABLE_DATAFRAME_CACHE: Dict[str, 'BuhTuhDataFrame'] = {}
+
+
+def _get_bt(
+        table: str,
+        dataset: List[List[Any]],
+        columns: List[str],
+        convert_objects: bool
+) -> BuhTuhDataFrame:
+    # We'll just use the table as lookup key and ignore the other paramters, if we store different things
+    # in the same table, then tests will be confused anyway
+    lookup_key = table
+    if lookup_key not in _TABLE_DATAFRAME_CACHE:
+        import pandas as pd
+        df = pd.DataFrame.from_records(dataset, columns=columns)
+        _TABLE_DATAFRAME_CACHE[lookup_key] = get_from_df(table, df, convert_objects)
+    # We don't even renew the 'engine', as creating the database connection takes a bit of time too. If
+    # we ever do into trouble because of stale connection or something, then we can change it at that point
+    # in time.
+    return _TABLE_DATAFRAME_CACHE[lookup_key].copy_override()
+
+
+def get_from_df(table, df, convert_objects=True):
+    df.set_index(df.columns[0], drop=False, inplace=True)
 
     if 'moment' in df.columns:
         df['moment'] = df['moment'].astype('datetime64')
@@ -78,16 +128,16 @@ def _get_bt(table, dataset, columns, convert_objects) -> BuhTuhDataFrame:
     if 'date' in df.columns:
         df['date'] = df['date'].astype('datetime64')
 
-    buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects, if_exists='replace')
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    buh_tuh = BuhTuhDataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects,
+                                             if_exists='replace')
     return buh_tuh
 
 
 def get_bt_with_test_data(full_data_set: bool = False) -> BuhTuhDataFrame:
     if full_data_set:
-        test_data = TEST_DATA_CITIES_FULL
-    else:
-        test_data = TEST_DATA_CITIES
-    return _get_bt('test_table', test_data, CITIES_COLUMNS, True)
+        return _get_bt('test_table_full', TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
+    return _get_bt('test_table_partial', TEST_DATA_CITIES, CITIES_COLUMNS, True)
 
 
 def get_bt_with_food_data() -> BuhTuhDataFrame:
@@ -96,6 +146,15 @@ def get_bt_with_food_data() -> BuhTuhDataFrame:
 
 def get_bt_with_railway_data() -> BuhTuhDataFrame:
     return _get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
+
+
+def get_bt_with_json_data(as_json=True) -> BuhTuhDataFrame:
+    bt = _get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)
+    if as_json:
+        bt['dict_column'] = bt.dict_column.astype('jsonb')
+        bt['list_column'] = bt.list_column.astype('jsonb')
+        bt['mixed_column'] = bt.mixed_column.astype('jsonb')
+    return bt
 
 
 def run_query(engine: sqlalchemy.engine, sql: str) -> ResultProxy:
@@ -118,6 +177,7 @@ def assert_equals_data(
     """
     Execute sql of ButTuhDataFrame/Series, with the given order_by, and make sure the result matches
     the expected columns and data.
+    :return: the values queried from the database
     """
     if len(expected_data) == 0:
         raise ValueError("Cannot check data if 0 rows are expected.")
@@ -135,6 +195,7 @@ def assert_equals_data(
     for i, df_row in enumerate(db_values):
         expected_row = expected_data[i]
         assert df_row == expected_row, f'row {i} is not equal: {expected_row} != {df_row}'
+    return db_values
 
 
 def assert_db_type(
@@ -158,4 +219,3 @@ def assert_db_type(
         assert db_type == expected_db_type
     series_type = get_series_type_from_db_dtype(db_type)
     assert series_type == expected_series_type
-

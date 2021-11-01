@@ -1,14 +1,28 @@
 import { StructError } from 'superstruct';
-import { tagChild, tagChildren, tagElement, TaggingAttribute } from '../src';
+import {
+  parseChildrenTaggingAttribute,
+  stringifyChildrenTaggingAttribute,
+  tagChild,
+  tagChildren,
+  tagElement,
+  TaggingAttribute,
+} from '../src';
 
 describe('tagChild and tagChildren', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
   afterEach(() => {
     jest.resetAllMocks();
   });
 
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
-    expect(tagChild()).toBeUndefined();
+    expect(() => stringifyChildrenTaggingAttribute('')).toThrow();
+    // @ts-ignore
+    expect(() => parseChildrenTaggingAttribute(null)).toThrow();
+    // @ts-ignore
+    expect(tagChild('')).toBeUndefined();
     // @ts-ignore
     expect(tagChildren()).toBeUndefined();
     // @ts-ignore
@@ -48,7 +62,7 @@ describe('tagChild and tagChildren', () => {
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
     // @ts-ignore
     tagChild({ queryAll: {} });
@@ -57,7 +71,7 @@ describe('tagChild and tagChildren', () => {
   });
 
   it('should return query and tagAs attributes', () => {
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
     const parameters = { queryAll: '#two', tagAs: tagElement({ id: 'element-two' }) };
 
     const attributes1 = tagChild(parameters);

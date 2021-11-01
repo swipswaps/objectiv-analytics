@@ -1,8 +1,10 @@
-import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '../src';
+import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, TrackerEvent, TrackerPlugins } from '../src';
+
+const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
 
 describe('ApplicationContextPlugin', () => {
   it('should generate a DeviceContext when constructed', () => {
-    const testWebDeviceContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id' });
+    const testWebDeviceContextPlugin = new ApplicationContextPlugin(trackerConfig);
     expect(testWebDeviceContextPlugin.applicationContext).toEqual({
       __global_context: true,
       _type: 'ApplicationContext',
@@ -11,8 +13,9 @@ describe('ApplicationContextPlugin', () => {
   });
 
   it('should add the ApplicationContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
-    const plugins = new ApplicationContextPlugin({ applicationId: 'app-id' });
-    const testTracker = new Tracker({ applicationId: 'app-id', plugins: new TrackerPlugins([plugins]) });
+    const plugins = new ApplicationContextPlugin(trackerConfig);
+    const trackerPlugins = new TrackerPlugins({ plugins: [plugins] });
+    const testTracker = new Tracker({ ...trackerConfig, plugins: trackerPlugins });
     const eventContexts: ContextsConfig = {
       global_contexts: [
         { __global_context: true, _type: 'section', id: 'X' },

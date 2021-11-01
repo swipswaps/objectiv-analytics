@@ -1,18 +1,17 @@
 import {
   ContextsConfig,
-  QueuedTransport,
-  RetryTransport,
-  RetryTransportAttempt,
   Tracker,
   TrackerEvent,
-  TrackerQueue,
-  TrackerQueueMemoryStore,
-  TransportGroup,
+  TrackerTransportGroup,
+  TrackerTransportRetry,
+  TrackerTransportRetryAttempt,
+  TrackerTransportSwitch,
   TransportSendError,
-  TransportSwitch,
 } from '../src';
-import { LogTransport, UnusableTransport } from './mocks';
 import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
+import { LogTransport } from './mocks/LogTransport';
+import { mockConsole } from './mocks/MockConsole';
+import { UnusableTransport } from './mocks/UnusableTransport';
 
 const testEventName = 'test-event';
 const testContexts: ContextsConfig = {
@@ -21,7 +20,7 @@ const testContexts: ContextsConfig = {
 };
 const testEvent = new TrackerEvent({ _type: testEventName, ...testContexts });
 
-describe('TransportSwitch', () => {
+describe('TrackerTransportSwitch', () => {
   beforeEach(() => {
     jest.useFakeTimers();
   });
@@ -41,12 +40,12 @@ describe('TransportSwitch', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TransportSwitch(transport1, transport2);
+    const transports = new TrackerTransportSwitch({ transports: [transport1, transport2], console: mockConsole });
     expect(transports.firstUsableTransport).toBe(undefined);
     expect(transports.isUsable()).toBe(false);
 
     expect(transports.handle(testEvent)).rejects.toEqual(
-      'TransportSwitch: no usable Transport found; make sure to verify usability first.'
+      'TrackerTransportSwitch: no usable Transport found; make sure to verify usability first.'
     );
 
     expect(transport1.handle).not.toHaveBeenCalled();
@@ -63,7 +62,7 @@ describe('TransportSwitch', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TransportSwitch(transport1, transport2);
+    const transports = new TrackerTransportSwitch({ transports: [transport1, transport2], console: mockConsole });
     expect(transports.firstUsableTransport).toBe(transport2);
     expect(transports.isUsable()).toBe(true);
 
@@ -76,7 +75,7 @@ describe('TransportSwitch', () => {
   });
 });
 
-describe('TransportGroup', () => {
+describe('TrackerTransportGroup', () => {
   it('should not handle any TrackerTransport', () => {
     const transport1 = new UnusableTransport();
     const transport2 = new LogTransport();
@@ -88,12 +87,12 @@ describe('TransportGroup', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TransportGroup(transport1, transport2);
+    const transports = new TrackerTransportGroup({ transports: [transport1, transport2], console: mockConsole });
     expect(transports.usableTransports).toStrictEqual([]);
     expect(transports.isUsable()).toBe(false);
 
     expect(transports.handle(testEvent)).rejects.toEqual(
-      'TransportGroup: no usable Transports found; make sure to verify usability first.'
+      'TrackerTransportGroup: no usable Transports found; make sure to verify usability first.'
     );
 
     expect(transport1.handle).not.toHaveBeenCalled();
@@ -110,7 +109,7 @@ describe('TransportGroup', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TransportGroup(transport1, transport2);
+    const transports = new TrackerTransportGroup({ transports: [transport1, transport2], console: mockConsole });
     expect(transports.usableTransports).toStrictEqual([transport1, transport2]);
     expect(transports.isUsable()).toBe(true);
 
@@ -148,9 +147,9 @@ describe('TrackerTransport complex configurations', () => {
     errorLog._isUsable = true;
     expect(errorLog.isUsable()).toBe(true);
 
-    const sendTransport = new TransportSwitch(fetch, xmlHTTPRequest, pigeon);
-    const sendAndLog = new TransportGroup(sendTransport, consoleLog);
-    const transport = new TransportSwitch(sendAndLog, errorLog);
+    const sendTransport = new TrackerTransportSwitch({ transports: [fetch, xmlHTTPRequest, pigeon] });
+    const sendAndLog = new TrackerTransportGroup({ transports: [sendTransport, consoleLog] });
+    const transport = new TrackerTransportSwitch({ transports: [sendAndLog, errorLog] });
 
     expect(sendTransport.isUsable()).toBe(false);
     expect(sendAndLog.isUsable()).toBe(false);
@@ -173,9 +172,9 @@ describe('TrackerTransport complex configurations', () => {
     consoleLog._isUsable = true;
     expect(consoleLog.isUsable()).toBe(true);
 
-    const sendTransport = new TransportSwitch(fetch, xmlHTTPRequest, pigeon);
-    const sendAndLog = new TransportGroup(sendTransport, consoleLog);
-    const transport = new TransportSwitch(sendAndLog, errorLog);
+    const sendTransport = new TrackerTransportSwitch({ transports: [fetch, xmlHTTPRequest, pigeon] });
+    const sendAndLog = new TrackerTransportGroup({ transports: [sendTransport, consoleLog] });
+    const transport = new TrackerTransportSwitch({ transports: [sendAndLog, errorLog] });
 
     expect(sendTransport.isUsable()).toBe(true);
     expect(sendAndLog.isUsable()).toBe(true);
@@ -196,9 +195,9 @@ describe('TrackerTransport complex configurations', () => {
     consoleLog._isUsable = true;
     expect(consoleLog.isUsable()).toBe(true);
 
-    const sendTransport = new TransportSwitch(fetch, xmlHTTPRequest, pigeon);
-    const sendAndLog = new TransportGroup(sendTransport, consoleLog);
-    const transport = new TransportSwitch(sendAndLog, errorLog);
+    const sendTransport = new TrackerTransportSwitch({ transports: [fetch, xmlHTTPRequest, pigeon] });
+    const sendAndLog = new TrackerTransportGroup({ transports: [sendTransport, consoleLog] });
+    const transport = new TrackerTransportSwitch({ transports: [sendAndLog, errorLog] });
 
     expect(sendTransport.isUsable()).toBe(false);
     expect(sendAndLog.isUsable()).toBe(true);
@@ -216,69 +215,10 @@ describe('TrackerTransport complex configurations', () => {
   });
 });
 
-describe('QueuedTransport', () => {
-  beforeEach(() => {
-    jest.useFakeTimers();
-    jest.spyOn(global, 'setInterval');
-  });
-
-  afterEach(() => {
-    jest.useRealTimers();
-  });
-
-  it('should do nothing if the given transport is not usable', () => {
-    const logTransport = new UnusableTransport();
-    jest.spyOn(logTransport, 'handle');
-    const trackerQueue = new TrackerQueue();
-
-    const testQueuedTransport = new QueuedTransport({
-      queue: trackerQueue,
-      transport: logTransport,
-    });
-    jest.runAllTimers();
-
-    expect(testQueuedTransport.isUsable()).toBe(false);
-    expect(trackerQueue.store.length).toBe(0);
-    expect(logTransport.handle).not.toHaveBeenCalled();
-    expect(setInterval).not.toHaveBeenCalled();
-  });
-
-  it('should queue events in the TrackerQueue and send them in batches via the LogTransport', async () => {
-    jest.spyOn(global, 'setInterval');
-    const queueStore = new TrackerQueueMemoryStore();
-    const logTransport = new LogTransport();
-    const trackerQueue = new TrackerQueue({ store: queueStore });
-
-    const testQueuedTransport = new QueuedTransport({
-      queue: trackerQueue,
-      transport: logTransport,
-    });
-
-    jest.spyOn(trackerQueue, 'processFunction');
-
-    expect(testQueuedTransport.isUsable()).toBe(true);
-
-    expect(trackerQueue.processFunction).not.toBeUndefined();
-    expect(trackerQueue.processFunction).not.toHaveBeenCalled();
-    expect(setInterval).toHaveBeenCalledTimes(1);
-
-    await testQueuedTransport.handle(testEvent);
-
-    expect(queueStore.length).toBe(1);
-    expect(trackerQueue.processFunction).not.toHaveBeenCalled();
-
-    await trackerQueue.run();
-
-    expect(trackerQueue.processingEventIds).toHaveLength(0);
-    expect(trackerQueue.processFunction).toHaveBeenCalledTimes(1);
-    expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(1, testEvent);
-  });
-});
-
-describe('RetryTransport', () => {
+describe('TrackerTransportRetry', () => {
   it('should generate exponential timeouts', () => {
-    const retryTransport = new RetryTransport({ transport: new UnusableTransport() });
-    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    const retryTransport = new TrackerTransportRetry({ transport: new UnusableTransport(), console: mockConsole });
+    const retryTransportAttempt = new TrackerTransportRetryAttempt(retryTransport, [testEvent]);
     const timeouts = Array.from(Array(10).keys()).map(
       retryTransportAttempt.calculateNextTimeoutMs.bind(retryTransport)
     );
@@ -286,25 +226,30 @@ describe('RetryTransport', () => {
   });
 
   it('should not accept 0 or negative minTimeoutMs', () => {
-    expect(() => new RetryTransport({ transport: new UnusableTransport(), minTimeoutMs: 0 })).toThrow(
+    expect(() => new TrackerTransportRetry({ transport: new UnusableTransport(), minTimeoutMs: 0 })).toThrow(
       'minTimeoutMs must be at least 1'
     );
-    expect(() => new RetryTransport({ transport: new UnusableTransport(), minTimeoutMs: -10 })).toThrow(
+    expect(() => new TrackerTransportRetry({ transport: new UnusableTransport(), minTimeoutMs: -10 })).toThrow(
       'minTimeoutMs must be at least 1'
     );
   });
 
   it('should not accept minTimeoutMs bigger than maxTimeoutMs', () => {
-    expect(() => new RetryTransport({ transport: new UnusableTransport(), minTimeoutMs: 10, maxTimeoutMs: 5 })).toThrow(
-      'minTimeoutMs cannot be bigger than maxTimeoutMs'
-    );
+    expect(
+      () =>
+        new TrackerTransportRetry({
+          transport: new UnusableTransport(),
+          minTimeoutMs: 10,
+          maxTimeoutMs: 5,
+        })
+    ).toThrow('minTimeoutMs cannot be bigger than maxTimeoutMs');
   });
 
   it('should do nothing if the given transport is not usable', () => {
     const unusableTransport = new UnusableTransport();
     jest.spyOn(unusableTransport, 'handle');
 
-    const retryTransport = new RetryTransport({ transport: unusableTransport });
+    const retryTransport = new TrackerTransportRetry({ transport: unusableTransport });
 
     expect(unusableTransport.isUsable()).toBe(false);
     expect(retryTransport.isUsable()).toBe(false);
@@ -315,7 +260,7 @@ describe('RetryTransport', () => {
     const logTransport = new LogTransport();
     jest.spyOn(logTransport, 'handle');
 
-    const retryTransport = new RetryTransport({ transport: logTransport });
+    const retryTransport = new TrackerTransportRetry({ transport: logTransport, console: mockConsole });
     // @ts-ignore
     jest.spyOn(retryTransport.attempts, 'push');
     // @ts-ignore
@@ -331,8 +276,8 @@ describe('RetryTransport', () => {
   it('should not retry', async () => {
     const logTransport = new LogTransport();
     jest.spyOn(logTransport, 'handle').mockReturnValue(Promise.resolve());
-    const retryTransport = new RetryTransport({ transport: logTransport });
-    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    const retryTransport = new TrackerTransportRetry({ transport: logTransport });
+    const retryTransportAttempt = new TrackerTransportRetryAttempt(retryTransport, [testEvent]);
     jest.spyOn(retryTransportAttempt, 'retry');
 
     await retryTransportAttempt.run();
@@ -349,13 +294,13 @@ describe('RetryTransport', () => {
       .spyOn(logTransport, 'handle')
       .mockReturnValueOnce(Promise.reject(mockedError))
       .mockReturnValueOnce(Promise.resolve());
-    const retryTransport = new RetryTransport({
+    const retryTransport = new TrackerTransportRetry({
       transport: logTransport,
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
       retryFactor: 1,
     });
-    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    const retryTransportAttempt = new TrackerTransportRetryAttempt(retryTransport, [testEvent]);
     jest.spyOn(retryTransportAttempt, 'retry');
 
     await expect(retryTransportAttempt.run()).rejects.toEqual(mockedError);
@@ -373,17 +318,17 @@ describe('RetryTransport', () => {
       .spyOn(logTransport, 'handle')
       .mockReturnValueOnce(Promise.reject(mockedError))
       .mockReturnValueOnce(Promise.resolve());
-    const retryTransport = new RetryTransport({
+    const retryTransport = new TrackerTransportRetry({
       transport: logTransport,
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
       retryFactor: 1,
+      console: mockConsole,
     });
-    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    const retryTransportAttempt = new TrackerTransportRetryAttempt(retryTransport, [testEvent]);
     jest.spyOn(retryTransportAttempt, 'retry');
 
     await retryTransportAttempt.run();
-    jest.runAllTimers();
 
     expect(retryTransportAttempt.attemptCount).toBe(2);
     expect(retryTransportAttempt.retry).toHaveBeenCalledTimes(1);
@@ -396,14 +341,14 @@ describe('RetryTransport', () => {
     const mockedError = new TransportSendError('You shall not pass!');
     const logTransport = new LogTransport();
     jest.spyOn(logTransport, 'handle').mockReturnValue(Promise.reject(mockedError));
-    const retryTransport = new RetryTransport({
+    const retryTransport = new TrackerTransportRetry({
       transport: logTransport,
       maxAttempts: 3,
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
       retryFactor: 1,
     });
-    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    const retryTransportAttempt = new TrackerTransportRetryAttempt(retryTransport, [testEvent]);
     jest.spyOn(retryTransportAttempt, 'retry');
 
     await expect(retryTransportAttempt.run()).rejects.toEqual(
@@ -427,14 +372,14 @@ describe('RetryTransport', () => {
       isUsable: () => true,
     };
     jest.spyOn(slowFailingTransport, 'handle');
-    const retryTransport = new RetryTransport({
+    const retryTransport = new TrackerTransportRetry({
       transport: slowFailingTransport,
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
       retryFactor: 1,
       maxRetryMs: 1,
     });
-    const retryTransportAttempt = new RetryTransportAttempt(retryTransport, [testEvent]);
+    const retryTransportAttempt = new TrackerTransportRetryAttempt(retryTransport, [testEvent]);
     jest.spyOn(retryTransportAttempt, 'retry');
 
     await expect(retryTransportAttempt.run()).rejects.toEqual(

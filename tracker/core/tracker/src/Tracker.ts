@@ -1,42 +1,73 @@
 import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
 import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
+import { waitForPromise } from './helpers';
+import { getLocationPath } from './TrackerElementLocations';
+import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
-import { TrackerPlugins } from './TrackerPlugin';
-import { TrackerTransport } from './TrackerTransport';
+import { TrackerPlugins } from './TrackerPlugins';
+import { TrackerQueueInterface } from './TrackerQueueInterface';
+import { TrackerTransportInterface } from './TrackerTransportInterface';
 
 /**
  * The configuration of the Tracker
  */
 export type TrackerConfig = ContextsConfig & {
   /**
-   * Application ID. Used to generate ApplicationContext (global context)
+   * Application ID. Used to generate ApplicationContext (global context).
    */
   applicationId: string;
 
   /**
-   * Optional. TrackerTransport instance. Responsible for sending or storing Events.
+   * Optional. Unique identifier for the TrackerInstance. Defaults to the same value of `applicationId`.
    */
-  transport?: TrackerTransport;
+  trackerId?: string;
+
+  /**
+   * Optional. TrackerQueue instance. Responsible for queueing and batching Events. Queuing occurs before Transport.
+   */
+  queue?: TrackerQueueInterface;
+
+  /**
+   * Optional. TrackerTransport instance. Responsible for sending or storing Events. Transport occurs after Queueing.
+   */
+  transport?: TrackerTransportInterface;
 
   /**
    * Optional. Plugins that will be executed when the Tracker initializes and before the Event is sent.
    */
   plugins?: TrackerPlugins;
+
+  /**
+   * Optional. A TrackerConsole instance for logging.
+   */
+  console?: TrackerConsole;
+
+  /**
+   * Optional. Determines if the TrackerInstance.trackEvent will process Events or not.
+   */
+  active?: boolean;
 };
 
 /**
  * The default list of Plugins of Web Tracker
  */
-export const getDefaultTrackerPluginsList = (config: TrackerConfig) => [new ApplicationContextPlugin(config)];
+export const getDefaultTrackerPluginsList = (trackerConfig: TrackerConfig) => [
+  new ApplicationContextPlugin({ applicationId: trackerConfig.applicationId, console: trackerConfig.console }),
+];
 
 /**
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
-export class Tracker implements Contexts {
+export class Tracker implements Contexts, TrackerConfig {
+  readonly console?: TrackerConsole;
   readonly applicationId: string;
-  readonly transport?: TrackerTransport;
+  readonly trackerId: string;
+  readonly queue?: TrackerQueueInterface;
+  readonly transport?: TrackerTransportInterface;
   readonly plugins: TrackerPlugins;
+
+  active: boolean;
 
   // Contexts interface
   readonly location_stack: AbstractLocationContext[];
@@ -51,9 +82,17 @@ export class Tracker implements Contexts {
    * provided they will be merged onto each other to produce a single location_stack and global_contexts.
    */
   constructor(trackerConfig: TrackerConfig, ...contextConfigs: ContextsConfig[]) {
+    this.console = trackerConfig.console;
     this.applicationId = trackerConfig.applicationId;
+    this.trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
+    this.queue = trackerConfig.queue;
     this.transport = trackerConfig.transport;
-    this.plugins = trackerConfig.plugins ?? new TrackerPlugins(getDefaultTrackerPluginsList(trackerConfig));
+    this.plugins =
+      trackerConfig.plugins ??
+      new TrackerPlugins({ console: trackerConfig.console, plugins: getDefaultTrackerPluginsList(trackerConfig) });
+
+    // By default Tracker Instances are active
+    this.active = trackerConfig.active ?? true;
 
     // Process ContextConfigs
     let new_location_stack: AbstractLocationContext[] = trackerConfig.location_stack ?? [];
@@ -65,30 +104,97 @@ export class Tracker implements Contexts {
     this.location_stack = new_location_stack;
     this.global_contexts = new_global_contexts;
 
-    console.groupCollapsed(
-      `｢objectiv:Tracker｣ Initialized ${
-        this.location_stack.length
-          ? '(' +
-            this.location_stack.map((context) => `${context._type.replace('Context', '')}:${context.id}`).join(' > ') +
-            ')'
-          : ''
-      }`
-    );
-    console.log(`Application ID: ${this.applicationId}`);
-    console.log(`Transport: ${this.transport?.transportName ?? 'none'}`);
-    console.group(`Plugins:`);
-    console.log(this.plugins.list.map((plugin) => plugin.pluginName).join(', '));
-    console.groupEnd();
-    console.group(`Location Stack:`);
-    console.log(this.location_stack);
-    console.groupEnd();
-    console.group(`Global Contexts:`);
-    console.log(this.global_contexts);
-    console.groupEnd();
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(
+        `｢objectiv:Tracker:${this.trackerId}｣ Initialized (${getLocationPath(this.location_stack)})`
+      );
+      this.console.log(`Active: ${this.active}`);
+      this.console.log(`Application ID: ${this.applicationId}`);
+      this.console.log(`Queue: ${this.queue?.queueName ?? 'none'}`);
+      this.console.log(`Transport: ${this.transport?.transportName ?? 'none'}`);
+      this.console.group(`Plugins:`);
+      this.console.log(this.plugins.plugins.map((plugin) => plugin.pluginName).join(', '));
+      this.console.groupEnd();
+      this.console.group(`Location Stack:`);
+      this.console.log(this.location_stack);
+      this.console.groupEnd();
+      this.console.group(`Global Contexts:`);
+      this.console.log(this.global_contexts);
+      this.console.groupEnd();
+      this.console.groupEnd();
+    }
 
-    // Execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
-    this.plugins.initialize(this);
+    // If active, initialize plugins and queue, if any
+    if (this.active) {
+      // Execute all plugins `initialize` callback. Plugins may use this to register automatic event listeners
+      this.plugins.initialize(this);
+
+      // If we have a Queue and a usable Transport, start Queue runner
+      if (this.queue && this.transport && this.transport.isUsable()) {
+        // Bind the handle function to its Transport instance to preserve its scope
+        const processFunction = this.transport.handle.bind(this.transport);
+
+        // Set the queue processFunction to transport.handle method: the queue will run Transport.handle for each batch
+        this.queue.setProcessFunction(processFunction);
+
+        // And start the Queue runner
+        this.queue.startRunner();
+
+        if (this.console) {
+          this.console.log(
+            `%c｢objectiv:Tracker:${this.trackerId}｣ ${this.queue.queueName} runner for ${this.transport.transportName} started`,
+            'font-weight:bold'
+          );
+        }
+      }
+    }
+  }
+
+  /**
+   * Setter for the Tracker Instance `active` state
+   */
+  setActive(newActiveState: boolean) {
+    if (newActiveState !== this.active) {
+      this.active = newActiveState;
+
+      if (this.active) {
+        this.plugins.initialize(this);
+      }
+
+      if (this.console) {
+        this.console.log(
+          `%c｢objectiv:Tracker:${this.trackerId}｣ New state: ${this.active ? 'active' : 'inactive'}`,
+          'font-weight: bold'
+        );
+      }
+    }
+  }
+
+  /**
+   * Flushes the Queue
+   */
+  flushQueue() {
+    if (this.queue) {
+      this.queue.flush();
+    }
+  }
+
+  /**
+   * Waits for Queue `isIdle` in an attempt to wait for it to finish its job.
+   * Resolves regardless if the Queue reaches an idle state or timeout is reached.
+   */
+  async waitForQueue(parameters?: { intervalMs?: number; timeoutMs?: number }): Promise<boolean> {
+    if (this.queue) {
+      // Some - hopefully - sensible defaults. 100ms for polling and double the Queue's batch delay as timeout.
+      const intervalMs = parameters?.intervalMs ?? 100;
+      const timeoutMs = parameters?.timeoutMs ?? this.queue.batchDelayMs * 2;
+
+      // Bind the isHandle function to its Queue instance to preserve its scope
+      const predicate = this.queue.isIdle.bind(this.queue);
+
+      return waitForPromise({ predicate, intervalMs, timeoutMs });
+    }
+    return true;
   }
 
   /**
@@ -98,38 +204,41 @@ export class Tracker implements Contexts {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
     const trackedEvent = new TrackerEvent(event, this);
 
+    // Do nothing if the TrackerInstance is inactive
+    if (!this.active) {
+      return trackedEvent;
+    }
+
     // Set tracking time
     trackedEvent.setTime();
 
     // Execute all plugins `beforeTransport` callback. Plugins may enrich or add Contexts to the TrackerEvent
     this.plugins.beforeTransport(trackedEvent);
 
-    // Hand over TrackerEvent to TrackerTransport, if enabled and usable. They may send it, queue it, store it, etc
+    // Hand over TrackerEvent to TrackerTransport or TrackerQueue, if enabled and usable.
     if (this.transport && this.transport.isUsable()) {
-      // istanbul ignore next
-      console.groupCollapsed(
-        `｢objectiv:Tracker｣ Tracking ${trackedEvent._type} ${
-          this.location_stack.length
-            ? '(' +
-              this.location_stack
-                .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
-                .join(' > ') +
-              ')'
-            : ''
-        }`
-      );
-      console.log(`Event ID: ${trackedEvent.id}`);
-      // istanbul ignore next
-      console.log(`Time: ${trackedEvent.time ?? 'none'}`);
-      console.group(`Location Stack:`);
-      console.log(trackedEvent.location_stack);
-      console.groupEnd();
-      console.group(`Global Contexts:`);
-      console.log(trackedEvent.global_contexts);
-      console.groupEnd();
-      console.groupEnd();
+      if (this.console) {
+        this.console.groupCollapsed(
+          `｢objectiv:Tracker:${this.trackerId}｣ ${this.queue ? 'Queuing' : 'Tracking'} ${
+            trackedEvent._type
+          } (${getLocationPath(trackedEvent.location_stack)})`
+        );
+        this.console.log(`Event ID: ${trackedEvent.id}`);
+        this.console.log(`Time: ${trackedEvent.time}`);
+        this.console.group(`Location Stack:`);
+        this.console.log(trackedEvent.location_stack);
+        this.console.groupEnd();
+        this.console.group(`Global Contexts:`);
+        this.console.log(trackedEvent.global_contexts);
+        this.console.groupEnd();
+        this.console.groupEnd();
+      }
 
-      await this.transport.handle(trackedEvent);
+      if (this.queue) {
+        await this.queue.push(trackedEvent);
+      } else {
+        await this.transport.handle(trackedEvent);
+      }
     }
 
     return trackedEvent;

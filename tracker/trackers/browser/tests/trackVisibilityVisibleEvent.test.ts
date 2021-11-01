@@ -1,59 +1,83 @@
-import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
-import { BrowserTracker, configureTracker, TaggingAttribute } from '../src';
+import { generateUUID } from '@objectiv/tracker-core';
+import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackVisibilityVisibleEvent } from '../src/observer/trackVisibilityVisibleEvent';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('trackVisibilityVisibleEvent', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
+    expect(getTracker()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(getTracker(), 'trackEvent');
+  });
+
+  afterEach(() => {
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
+    jest.resetAllMocks();
   });
 
   it('should not track elements without visibility tagging attributes', async () => {
     const trackedDiv = makeTaggedElement('div-id', null, 'div');
 
-    trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);
+    trackVisibilityVisibleEvent(trackedDiv, getTracker());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 
   it('should not track elements with invalid visibility tagging attributes', async () => {
     const trackedDiv = makeTaggedElement('div-id', null, 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, 'null');
 
-    trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);
+    trackVisibilityVisibleEvent(trackedDiv, getTracker());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 
   it('should track in mode:auto', async () => {
     const trackedDiv = makeTaggedElement('div-id', null, 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"auto"}');
 
-    trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);
+    trackVisibilityVisibleEvent(trackedDiv, getTracker());
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeSectionVisibleEvent());
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'SectionVisibleEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 
   it('should track in mode:manual with isVisible:true', async () => {
     const trackedDiv = makeTaggedElement('div-id', null, 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"manual","isVisible":true}');
 
-    trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);
+    trackVisibilityVisibleEvent(trackedDiv, getTracker());
 
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(1, makeSectionVisibleEvent());
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'SectionVisibleEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 
   it('should not track in mode:manual with isVisible:false', async () => {
     const trackedDiv = makeTaggedElement('div-id', null, 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"manual","isVisible":false}');
 
-    trackVisibilityVisibleEvent(trackedDiv, window.objectiv.tracker);
+    trackVisibilityVisibleEvent(trackedDiv, getTracker());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 });

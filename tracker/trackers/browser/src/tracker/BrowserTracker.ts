@@ -3,18 +3,17 @@ import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context'
 import {
   ContextsConfig,
   getDefaultTrackerPluginsList,
-  QueuedTransport,
-  RetryTransport,
   Tracker,
   TrackerConfig,
   TrackerPlugins,
   TrackerQueue,
-  TrackerTransport,
-  TransportGroup,
-  TransportSwitch,
+  TrackerQueueInterface,
+  TrackerTransportInterface,
+  TrackerTransportRetry,
+  TrackerTransportSwitch,
 } from '@objectiv/tracker-core';
-import { DebugTransport } from '../transport/DebugTransport';
 import { FetchAPITransport } from '../transport/FetchAPITransport';
+import { TrackerQueueLocalStorageStore } from '../transport/TrackerQueueLocalStorageStore';
 import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
 
 /**
@@ -23,40 +22,56 @@ import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
  * It also accepts a number of options to configure automatic tracking behavior:
  */
 export type BrowserTrackerConfig = TrackerConfig & {
-  // The collector endpoint URL
+  /**
+   * The collector endpoint URL.
+   */
   endpoint?: string;
 
-  // Whether to track application loaded events automatically. Enabled by default.
+  /**
+   * Optional. Whether to track application loaded events automatically. Enabled by default.
+   */
   trackApplicationLoaded?: boolean;
 
-  // Whether to track URL change events automatically. Enabled by default.
+  /**
+   * Optional. Whether to track URL change events automatically. Enabled by default.
+   */
   trackURLChanges?: boolean;
 };
 
 /**
- * A factory to create the default Transport of Browser Tracker. Requires an endpoint as its only parameter.
+ * A factory to create the default Transport of Browser Tracker.
  */
-export const makeBrowserTrackerDefaultTransport = (config: { endpoint: string }): TrackerTransport =>
-  new TransportGroup(
-    new QueuedTransport({
-      queue: new TrackerQueue(),
-      transport: new RetryTransport({
-        transport: new TransportSwitch(
-          new FetchAPITransport({ endpoint: config.endpoint }),
-          new XMLHttpRequestTransport({ endpoint: config.endpoint })
-        ),
-      }),
+export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransportInterface =>
+  new TrackerTransportRetry({
+    console: trackerConfig.console,
+    transport: new TrackerTransportSwitch({
+      console: trackerConfig.console,
+      transports: [
+        new FetchAPITransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+        new XMLHttpRequestTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+      ],
     }),
-    new DebugTransport()
-  );
+  });
+
+/**
+ * A factory to create the default Queue of Browser Tracker.
+ */
+export const makeBrowserTrackerDefaultQueue = (trackerConfig: BrowserTrackerConfig): TrackerQueueInterface =>
+  new TrackerQueue({
+    store: new TrackerQueueLocalStorageStore({
+      trackerId: trackerConfig.trackerId ?? trackerConfig.applicationId,
+      console: trackerConfig.console,
+    }),
+    console: trackerConfig.console,
+  });
 
 /**
  * The default list of Plugins of Browser Tracker
  */
-export const getDefaultBrowserTrackerPluginsList = (config: BrowserTrackerConfig) => [
-  ...getDefaultTrackerPluginsList(config),
-  WebDocumentContextPlugin,
-  WebDeviceContextPlugin,
+export const getDefaultBrowserTrackerPluginsList = (trackerConfig: BrowserTrackerConfig) => [
+  ...getDefaultTrackerPluginsList(trackerConfig),
+  new WebDocumentContextPlugin({ console: trackerConfig.console }),
+  new WebDeviceContextPlugin({ console: trackerConfig.console }),
 ];
 
 /**
@@ -64,28 +79,37 @@ export const getDefaultBrowserTrackerPluginsList = (config: BrowserTrackerConfig
  * It initializes with a Queued Fetch and XMLHttpRequest Transport Switch wrapped in a Retry Transport automatically.
  * The resulting Queue has some sensible defaults (10 events every 100ms) for sending events in batches.
  * The Retry logic is configured for 10 retries with exponential backoff starting at 1000ms.
- * The transport is also grouped with a DebugTransport for logging the handled events to console.
  *
  * This statement:
  *
- *  const tracker = new BrowserTracker({ applicationId: 'app-id', endpoint: '/endpoint' });
+ *  const tracker = new BrowserTracker({ applicationId: 'app-id', endpoint: '/endpoint', console: console });
  *
  * is equivalent to:
  *
- *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint' });
- *  const xmlHttpRequestTransport = new XMLHttpRequestTransport({ endpoint: '/endpoint' });
- *  const transportSwitch = new TransportSwitch(fetchTransport, xmlHttpRequestTransport);
- *  const retryTransport = new RetryTransport({ transport: transportSwitch});
- *  const debugTransport = new DebugTransport();
- *  const transportGroup = new TransportGroup(retryTransport, debugTransport);
- *  const trackerQueue = new TrackerQueue();
- *  const transport = new QueuedTransport({ transport: transportGroup, queue: trackerQueue });
- *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id' });
- *  const plugins = new TrackerPlugins([ applicationContextPlugin, WebDocumentContextPlugin, WebDeviceContextPlugin ]);
- *  const tracker = new Tracker({ transport, plugins });
+ *  const trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
+ *  const console = trackerConfig.console;
+ *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint', console });
+ *  const xmlHttpRequestTransport = new XMLHttpRequestTransport({ endpoint: '/endpoint', console });
+ *  const transportSwitch = new TransportSwitch({ transports: [fetchTransport, xmlHttpRequestTransport], console });
+ *  const transport = new RetryTransport({ transport: transportSwitch, console });
+ *  const queueStorage = new TrackerQueueLocalStorageStore({ trackerId, console })
+ *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
+ *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
+ *  const webDocumentContextPlugin = new WebDocumentContextPlugin({ console });
+ *  const webDeviceContextPlugin = new WebDeviceContextPlugin({ console });
+ *  const plugins = new TrackerPlugins({
+ *    plugins: [ applicationContextPlugin, webDocumentContextPlugin, webDeviceContextPlugin ],
+ *    console
+ *  });
+ *  const tracker = new Tracker({ transport, queue, plugins, console });
+ *
+ *  See also `makeBrowserTrackerDefaultTransport` and `makeBrowserTrackerDefaultQueue` for the actual implementation.
  *
  */
 export class BrowserTracker extends Tracker {
+  // A copy of the original configuration
+  readonly trackerConfig: TrackerConfig;
+
   constructor(trackerConfig: BrowserTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = trackerConfig;
 
@@ -99,11 +123,17 @@ export class BrowserTracker extends Tracker {
       throw new Error('Please provider either `transport` or `endpoint`, not both at same time');
     }
 
+    // If node is in `development` mode and console has not been configured, automatically use the browser's console
+    if (!config.console && process.env.NODE_ENV?.startsWith('dev')) {
+      config.console = console;
+    }
+
     // Automatically create a default Transport for the given `endpoint` with a sensible setup
     if (config.endpoint) {
       config = {
         ...config,
-        transport: makeBrowserTrackerDefaultTransport({ endpoint: config.endpoint }),
+        transport: makeBrowserTrackerDefaultTransport(config),
+        queue: makeBrowserTrackerDefaultQueue(config),
       };
     }
 
@@ -111,11 +141,17 @@ export class BrowserTracker extends Tracker {
     if (!config.plugins) {
       config = {
         ...config,
-        plugins: new TrackerPlugins(getDefaultBrowserTrackerPluginsList(config)),
+        plugins: new TrackerPlugins({
+          console: trackerConfig.console,
+          plugins: getDefaultBrowserTrackerPluginsList(config),
+        }),
       };
     }
 
     // Initialize core Tracker
     super(config, ...contextConfigs);
+
+    // Store original config for comparison with other instances of Browser Tracker
+    this.trackerConfig = trackerConfig;
   }
 }

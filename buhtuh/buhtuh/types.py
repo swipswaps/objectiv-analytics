@@ -1,19 +1,21 @@
-from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Hashable, cast, Union
-import datetime
-import numpy
-
 """
 Copyright 2021 Objectiv B.V.
 
 Functions for looking up the right classes to handle types and values, and for registering new custom
 types.
 
-To prevent cyclic imports, the functions in this file should not be used by pandasql.py before the file
+To prevent cyclic imports, the functions in this file should not be used by dataframe.py before the file
 is fully initialized (that is, only use within functions).
 """
 
+from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, Hashable, cast, Union
+import datetime
+from uuid import UUID
+
+import numpy
+
 if TYPE_CHECKING:
-    from buhtuh.pandasql import BuhTuhSeries
+    from buhtuh.series import BuhTuhSeries
 
 
 def get_series_type_from_dtype(dtype: Union[Type, str]) -> Type['BuhTuhSeries']:
@@ -94,12 +96,15 @@ class TypeRegistry:
             return
 
         # Import locally to prevent cyclic imports
-        from buhtuh.pandasql import BuhTuhSeriesBoolean, BuhTuhSeriesInt64, \
-            BuhTuhSeriesFloat64, BuhTuhSeriesString, BuhTuhSeriesTimestamp, \
-            BuhTuhSeriesDate, BuhTuhSeriesTime, BuhTuhSeriesTimedelta
+        from buhtuh.series import \
+            BuhTuhSeriesBoolean, BuhTuhSeriesInt64, BuhTuhSeriesFloat64, BuhTuhSeriesString,\
+            BuhTuhSeriesTimestamp, BuhTuhSeriesDate, BuhTuhSeriesTime, BuhTuhSeriesTimedelta,\
+            BuhTuhSeriesUuid, BuhTuhSeriesJsonb, BuhTuhSeriesJson
+
         standard_types: List[Type[BuhTuhSeries]] = [
             BuhTuhSeriesBoolean, BuhTuhSeriesInt64, BuhTuhSeriesFloat64, BuhTuhSeriesString,
-            BuhTuhSeriesTimestamp, BuhTuhSeriesDate, BuhTuhSeriesTime, BuhTuhSeriesTimedelta
+            BuhTuhSeriesTimestamp, BuhTuhSeriesDate, BuhTuhSeriesTime, BuhTuhSeriesTimedelta,
+            BuhTuhSeriesUuid, BuhTuhSeriesJsonb, BuhTuhSeriesJson
         ]
 
         for klass in standard_types:
@@ -122,6 +127,9 @@ class TypeRegistry:
         self._register_value_klass(datetime.datetime,  BuhTuhSeriesTimestamp)
         self._register_value_klass(datetime.timedelta, BuhTuhSeriesTimedelta)
         self._register_value_klass(numpy.timedelta64,  BuhTuhSeriesTimedelta)
+        self._register_value_klass(UUID,               BuhTuhSeriesUuid)
+        self._register_value_klass(dict,               BuhTuhSeriesJsonb)
+        self._register_value_klass(list,               BuhTuhSeriesJsonb)
 
     def _register_dtype_klass(self, klass: Type['BuhTuhSeries'], override=False):
         dtype_and_aliases: List[Union[Type, str]] = [klass.dtype] + list(klass.dtype_aliases)  # type: ignore
@@ -189,7 +197,7 @@ class TypeRegistry:
         """
         self._real_init()
         # exception for values that are BuhTuhSeries. Check: do we need this exception?
-        from buhtuh.pandasql import BuhTuhSeries
+        from buhtuh.series import BuhTuhSeries
         if isinstance(value, BuhTuhSeries):
             return value.dtype
         # iterate in reverse, the last item added that matches is used in case where multiple entries

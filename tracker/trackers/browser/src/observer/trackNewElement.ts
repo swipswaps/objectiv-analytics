@@ -1,9 +1,12 @@
+import { getLocationPath, TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
+import { parseTrackClicksAttribute, parseValidateAttribute } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
 import { BrowserTracker } from '../tracker/BrowserTracker';
-import { trackerErrorHandler } from '../tracker/trackerErrorHandler';
+import { getElementLocationStack } from '../tracker/getElementLocationStack';
+import { trackerErrorHandler } from '../trackerErrorHandler';
 import { isTaggedElement } from '../typeGuards';
-import { makeBlurEventListener } from './makeBlurEventListener';
-import { makeClickEventListener } from './makeClickEventListener';
+import { makeBlurEventHandler } from './makeBlurEventHandler';
+import { makeClickEventHandler } from './makeClickEventHandler';
 import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
 
 /**
@@ -11,21 +14,63 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * - All Elements will be checked for visibility tracking and appropriate events will be triggered for them.
  * - Elements with the Objectiv Track Click attribute are bound to EventListener for Buttons, Links.
  * - Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
+ * - All processed Elements are decorated with the `tracked` Tagging Attribute so we won't process them again.
  */
-export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
+export const trackNewElement = (element: Element, tracker: BrowserTracker, console?: TrackerConsole) => {
   try {
     if (isTaggedElement(element)) {
+      // Prevent Elements from being tracked multiple times
+      if (element.hasAttribute(TaggingAttribute.tracked)) {
+        return;
+      }
+      element.setAttribute(TaggingAttribute.tracked, 'true');
+
+      // Gather Element id and Validate attributes to determine whether we can and if we should validate the Location
+      const elementId = element.getAttribute(TaggingAttribute.elementId);
+      const validate = parseValidateAttribute(element.getAttribute(TaggingAttribute.validate));
+
+      // Add this element to TrackerState - this will also check if its Location is unique
+      if (elementId && validate.locationUniqueness) {
+        const locationStack = getElementLocationStack({ element, tracker });
+        const locationPath = getLocationPath(locationStack);
+        const locationAddResult = TrackerElementLocations.add({ elementId, locationPath });
+
+        // If location was not unique, log the issue
+        if (console && locationAddResult !== true) {
+          const { existingElementId, collidingElementId } = locationAddResult;
+          const existingElement = document.querySelector(`[${TaggingAttribute.elementId}='${existingElementId}']`);
+          const collidingElement = document.querySelector(`[${TaggingAttribute.elementId}='${collidingElementId}']`);
+          console.group(`｢objectiv:trackNewElement｣ Location collision detected: ${locationPath}`);
+          console.error(`Existing Element:`, existingElement);
+          console.error(`Colliding Element:`, collidingElement);
+          console.groupEnd();
+        }
+      }
+
       // Visibility: visible tracking
       trackVisibilityVisibleEvent(element, tracker);
 
       // Click tracking (buttons, links)
-      if (element.getAttribute(TaggingAttribute.trackClicks) === 'true') {
-        element.addEventListener('click', makeClickEventListener(element, tracker));
+      if (element.hasAttribute(TaggingAttribute.trackClicks)) {
+        // Parse and validate attribute - then convert it into options
+        const trackClicksOptions = parseTrackClicksAttribute(element.getAttribute(TaggingAttribute.trackClicks));
+
+        // If trackClicks is specifically disabled, nothing to do
+        if (!trackClicksOptions) {
+          return;
+        }
+
+        // If we don't need to wait for Queue, attach a `passive` event handler - else a `useCapture` one
+        if (!trackClicksOptions.waitForQueue) {
+          element.addEventListener('click', makeClickEventHandler(element, tracker), { passive: true });
+        } else {
+          element.addEventListener('click', makeClickEventHandler(element, tracker, trackClicksOptions), true);
+        }
       }
 
       // Blur tracking (inputs)
       if (element.getAttribute(TaggingAttribute.trackBlurs) === 'true') {
-        element.addEventListener('blur', makeBlurEventListener(element, tracker));
+        element.addEventListener('blur', makeBlurEventHandler(element, tracker), { passive: true });
       }
     }
   } catch (error) {

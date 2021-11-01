@@ -1,13 +1,28 @@
-import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
-import { BrowserTracker, configureTracker, tagButton, tagElement, TaggingAttribute } from '../src';
+import { generateUUID } from '@objectiv/tracker-core';
+import {
+  BrowserTracker,
+  getTracker,
+  getTrackerRepository,
+  makeTracker,
+  tagButton,
+  tagElement,
+  TaggingAttribute,
+} from '../src';
 import { trackNewElements } from '../src/observer/trackNewElements';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('trackNewElements', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    configureTracker({ applicationId: 'test', endpoint: 'test' });
-    expect(window.objectiv.tracker).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(window.objectiv.tracker, 'trackEvent');
+    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
+    expect(getTracker()).toBeInstanceOf(BrowserTracker);
+    jest.spyOn(getTracker(), 'trackEvent');
+  });
+
+  afterEach(() => {
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
+    jest.resetAllMocks();
   });
 
   it('should apply tagging attributes to Elements tracked via Children Tracking and track them right away', async () => {
@@ -33,32 +48,35 @@ describe('trackNewElements', () => {
     div1.appendChild(button);
     div1.appendChild(childDiv);
 
-    trackNewElements(div1, window.objectiv.tracker);
+    trackNewElements(div1, getTracker());
 
     expect(div1.addEventListener).not.toHaveBeenCalled();
     expect(childDiv.addEventListener).not.toHaveBeenCalled();
     expect(button.addEventListener).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(window.objectiv.tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
-      makeSectionVisibleEvent({
+      expect.objectContaining({
+        _type: 'SectionVisibleEvent',
+        id: matchUUID,
+        global_contexts: [],
         location_stack: [
-          expect.objectContaining({
+          {
             _type: 'SectionContext',
             id: 'child-div',
-          }),
+          },
         ],
       })
     );
   });
 
   it('should console error', async () => {
-    jest.spyOn(console, 'error');
+    jest.spyOn(console, 'error').mockImplementation(() => {});
 
     // @ts-ignore
-    trackNewElements(null, window.objectiv.tracker);
+    trackNewElements(null, getTracker());
 
-    expect(window.objectiv.tracker.trackEvent).not.toHaveBeenCalled();
+    expect(getTracker().trackEvent).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalledTimes(1);
   });
 });

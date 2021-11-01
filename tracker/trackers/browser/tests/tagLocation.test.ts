@@ -10,9 +10,17 @@ import {
 } from '@objectiv/tracker-core';
 import { StructError } from 'superstruct';
 import { tagElement, TaggingAttribute, tagLocation } from '../src';
-import { matchElementId } from './mocks/matchElementId';
+import { matchUUID } from './mocks/matchUUID';
+import { mockConsole } from './mocks/MockConsole';
 
 describe('tagLocation', () => {
+  beforeEach(() => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
     expect(tagLocation()).toBeUndefined();
@@ -51,7 +59,7 @@ describe('tagLocation', () => {
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
-    const consoleErrorMock = jest.spyOn(console, 'error');
+    const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
 
     // @ts-ignore
     tagLocation({ instance: {} });
@@ -61,7 +69,7 @@ describe('tagLocation', () => {
 
   it('should allow overriding whether to track click, blur and visibility events via options', () => {
     expect(tagElement({ id: 'test' })).toStrictEqual({
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -80,7 +88,7 @@ describe('tagLocation', () => {
         },
       })
     ).toStrictEqual({
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -96,7 +104,7 @@ describe('tagLocation', () => {
   it('should allow overriding parent auto detection via options', () => {
     const parent = tagElement({ id: 'parent' });
     expect(tagElement({ id: 'test' })).toStrictEqual({
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -106,7 +114,7 @@ describe('tagLocation', () => {
       [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
     });
     expect(tagElement({ id: 'test', options: { parent } })).toStrictEqual({
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       // @ts-ignore
       [TaggingAttribute.parentElementId]: parent[TaggingAttribute.elementId],
       [TaggingAttribute.context]: JSON.stringify({
@@ -125,7 +133,7 @@ describe('tagLocation', () => {
     });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
@@ -144,7 +152,7 @@ describe('tagLocation', () => {
     const taggingAttributes = tagLocation({ instance: makeSectionContext({ id: 'test-section' }) });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -163,7 +171,7 @@ describe('tagLocation', () => {
     });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -181,7 +189,7 @@ describe('tagLocation', () => {
     const taggingAttributes = tagLocation({ instance: makeInputContext({ id: 'test-input' }) });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
@@ -200,7 +208,7 @@ describe('tagLocation', () => {
     });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __item_context: true,
@@ -220,7 +228,7 @@ describe('tagLocation', () => {
     const taggingAttributes = tagLocation({ instance: makeMediaPlayerContext({ id: 'test-media-player' }) });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -237,7 +245,7 @@ describe('tagLocation', () => {
     const taggingAttributes = tagLocation({ instance: makeNavigationContext({ id: 'test-nav' }) });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -254,7 +262,7 @@ describe('tagLocation', () => {
     const taggingAttributes = tagLocation({ instance: makeOverlayContext({ id: 'test-overlay' }) });
 
     const expectedTaggingAttributes = {
-      [TaggingAttribute.elementId]: matchElementId,
+      [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
         __section_context: true,
@@ -268,12 +276,14 @@ describe('tagLocation', () => {
   });
 
   it('should not allow extra attributes', () => {
+    expect(mockConsole.log).not.toHaveBeenCalled();
     const customSectionContext = { ...makeSectionContext({ id: 'test-overlay' }), extraMetadata: { test: 123 } };
     const taggingAttributes = tagLocation({
       instance: customSectionContext,
-      onError: (error) => console.log(error),
+      onError: (error) => mockConsole.log(error),
     });
 
     expect(taggingAttributes).toBeUndefined();
+    expect(mockConsole.log).toHaveBeenCalled();
   });
 });

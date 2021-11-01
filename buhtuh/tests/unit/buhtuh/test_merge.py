@@ -119,33 +119,33 @@ def test__determine_result_columns():
     result = _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
     assert result == (
         [
-            ResultColumn(name='a', expression='a', dtype='int64'),
+            ResultColumn(name='a', expression_sql='"l"."a"', dtype='int64'),
         ], [
-            ResultColumn(name='b', expression='b', dtype='int64'),
-            ResultColumn(name='c_x', expression='c', dtype='int64'),
-            ResultColumn(name='c_y', expression='c', dtype='float64'),
-            ResultColumn(name='d', expression='d', dtype='float64')
+            ResultColumn(name='b', expression_sql='"l"."b"', dtype='int64'),
+            ResultColumn(name='c_x', expression_sql='"l"."c"', dtype='int64'),
+            ResultColumn(name='c_y', expression_sql='"r"."c"', dtype='float64'),
+            ResultColumn(name='d', expression_sql='"r"."d"', dtype='float64')
         ]
     )
     result = _determine_result_columns(left, right, ['c'], ['c'], ('_x', '_y'))
     assert result == (
         [
-            ResultColumn(name='a_x', expression='a', dtype='int64'),
-            ResultColumn(name='a_y', expression='a', dtype='float64'),
+            ResultColumn(name='a_x', expression_sql='"l"."a"', dtype='int64'),
+            ResultColumn(name='a_y', expression_sql='"r"."a"', dtype='float64'),
         ], [
-            ResultColumn(name='b', expression='b', dtype='int64'),
-            ResultColumn(name='c', expression='c', dtype='int64'),
-            ResultColumn(name='d', expression='d', dtype='float64')
+            ResultColumn(name='b', expression_sql='"l"."b"', dtype='int64'),
+            ResultColumn(name='c', expression_sql='"l"."c"', dtype='int64'),
+            ResultColumn(name='d', expression_sql='"r"."d"', dtype='float64')
         ]
     )
     result = _determine_result_columns(left, right, ['a', 'c'], ['a', 'c'], ('_x', '_y'))
     assert result == (
         [
-            ResultColumn(name='a', expression='a', dtype='int64'),
+            ResultColumn(name='a', expression_sql='"l"."a"', dtype='int64'),
         ], [
-            ResultColumn(name='b', expression='b', dtype='int64'),
-            ResultColumn(name='c', expression='c', dtype='int64'),
-            ResultColumn(name='d', expression='d', dtype='float64')
+            ResultColumn(name='b', expression_sql='"l"."b"', dtype='int64'),
+            ResultColumn(name='c', expression_sql='"l"."c"', dtype='int64'),
+            ResultColumn(name='d', expression_sql='"r"."d"', dtype='float64')
         ]
     )
 

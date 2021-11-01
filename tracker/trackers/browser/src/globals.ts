@@ -1,15 +1,28 @@
-/**
- * Helper function to check if window exists. Used to detect non-browser environments.
- */
-export const windowExists = () => typeof window !== 'undefined';
+import { TrackerRepository } from '@objectiv/tracker-core';
+import { windowExists } from './helpers';
+import { BrowserTracker } from './tracker/BrowserTracker';
 
 /**
- * Helper function to get the current Location href
+ * The interface of our namespace which will be extending the Window interface
  */
-export const getLocationHref = () => {
-  if (typeof location === 'undefined') {
-    return undefined;
+export interface ObjectivNamespace {
+  trackers: TrackerRepository<BrowserTracker>;
+}
+
+/**
+ * Window extension for our namespace
+ */
+declare global {
+  interface Window {
+    objectiv: ObjectivNamespace;
   }
+}
 
-  return location.href;
-};
+/**
+ * Initialize window global namespace, unless already existing
+ */
+if (windowExists()) {
+  window.objectiv = window.objectiv || {
+    trackers: new TrackerRepository(),
+  };
+}

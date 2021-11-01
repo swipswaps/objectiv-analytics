@@ -1,8 +1,11 @@
+import { BrowserTrackerConfig } from '@objectiv/tracker-browser';
 import {
   isNonEmptyArray,
   NonEmptyArray,
+  TrackerConsole,
   TrackerEvent,
-  TrackerTransport,
+  TrackerTransportConfig,
+  TrackerTransportInterface,
   TransportableEvent,
   TransportSendError,
 } from '@objectiv/tracker-core';
@@ -13,11 +16,20 @@ import {
 export const defaultXMLHttpRequestFunction = ({
   endpoint,
   events,
+  console,
 }: {
   endpoint: string;
   events: [TrackerEvent, ...TrackerEvent[]];
+  console?: TrackerConsole;
 }): Promise<unknown> => {
   return new Promise(function (resolve, reject) {
+    if (console) {
+      console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Sending`);
+      console.log(`Events:`);
+      console.log(events);
+      console.groupEnd();
+    }
+
     const xhr = new XMLHttpRequest();
     const async = true;
     xhr.open('POST', endpoint, async);
@@ -25,12 +37,36 @@ export const defaultXMLHttpRequestFunction = ({
     xhr.withCredentials = true;
     xhr.onload = () => {
       if (xhr.status === 200) {
+        if (console) {
+          console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Succeeded`);
+          console.log(`Events:`);
+          console.log(events);
+          console.groupEnd();
+        }
+
         resolve(xhr.response);
       } else {
+        if (console) {
+          console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Failed`);
+          console.log(`Events:`);
+          console.log(events);
+          console.log(`Response: ${xhr}`);
+          console.groupEnd();
+        }
+
         reject(new TransportSendError());
       }
     };
-    xhr.onerror = () => reject(new TransportSendError());
+    xhr.onerror = () => {
+      if (console) {
+        console.groupCollapsed(`｢objectiv:XMLHttpRequestTransport｣ Error`);
+        console.log(`Events:`);
+        console.log(events);
+        console.groupEnd();
+      }
+
+      reject(new TransportSendError());
+    };
     xhr.send(
       JSON.stringify({
         events,
@@ -45,36 +81,35 @@ export const defaultXMLHttpRequestFunction = ({
 /**
  * The configuration of the XMLHttpRequestTransport class
  */
-export type XMLHttpRequestTransportConfig = {
-  /**
-   * Collector's URI. Where to send the Events to.
-   */
-  endpoint: string;
-
-  /**
-   * Optional. Override the default XMLHttpRequestFunction implementation with a custom one.
-   */
-  xmlHttpRequestFunction?: typeof defaultXMLHttpRequestFunction;
-};
+export type XMLHttpRequestTransportConfig = TrackerTransportConfig &
+  Pick<BrowserTrackerConfig, 'endpoint'> & {
+    /**
+     * Optional. Override the default XMLHttpRequestFunction implementation with a custom one.
+     */
+    xmlHttpRequestFunction?: typeof defaultXMLHttpRequestFunction;
+  };
 
 /**
  * A TrackerTransport based on XMLHttpRequest. Sends event to the specified Collector endpoint.
  * Optionally supports specifying a custom `xmlHttpRequestFunction`.
  */
-export class XMLHttpRequestTransport implements TrackerTransport {
+export class XMLHttpRequestTransport implements TrackerTransportInterface {
+  readonly console?: TrackerConsole;
+  readonly endpoint?: string;
   readonly transportName = 'XMLHttpRequestTransport';
-  readonly endpoint: string;
   readonly xmlHttpRequestFunction: typeof defaultXMLHttpRequestFunction;
 
   constructor(config: XMLHttpRequestTransportConfig) {
+    this.console = config.console;
     this.endpoint = config.endpoint;
     this.xmlHttpRequestFunction = config.xmlHttpRequestFunction ?? defaultXMLHttpRequestFunction;
   }
 
   async handle(...args: NonEmptyArray<TransportableEvent>): Promise<any> {
     const events = await Promise.all(args);
-    if (isNonEmptyArray(events)) {
-      return this.xmlHttpRequestFunction({ endpoint: this.endpoint, events });
+
+    if (this.endpoint && isNonEmptyArray(events)) {
+      return this.xmlHttpRequestFunction({ endpoint: this.endpoint, console: this.console, events });
     }
   }
 

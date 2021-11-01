@@ -1,6 +1,5 @@
-import { getObjectKeys } from '@objectiv/tracker-core';
+import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
 import { boolean, create, func, Infer, is, object, optional, union, validate } from 'superstruct';
-import { v4 } from 'uuid';
 import {
   AnyActionContext,
   AnyLocationContext,
@@ -12,11 +11,15 @@ import {
   StringifiedTaggingAttributes,
   stringifyBoolean,
   stringifyLocationContext,
-  stringifyVisibilityAttribute,
-  TaggingAttributeVisibility,
+  stringifyTrackClicksAttribute,
+  stringifyTrackVisibilityAttribute,
+  stringifyValidateAttribute,
+  TrackClicksAttribute,
+  TrackVisibilityAttribute,
+  ValidateAttribute,
 } from '../structs';
 import { TaggingAttribute } from '../TaggingAttribute';
-import { trackerErrorHandler, TrackOnErrorCallback } from './trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from '../trackerErrorHandler';
 
 /**
  * Used to decorate a Taggable Element with our Tagging Attributes.
@@ -36,12 +39,19 @@ export const TagLocationReturnValue = optional(StringifiedTaggingAttributes);
 export type TagLocationReturnValue = Infer<typeof TagLocationReturnValue>;
 
 export const TagLocationOptions = object({
-  trackClicks: optional(boolean()),
+  trackClicks: optional(TrackClicksAttribute),
   trackBlurs: optional(boolean()),
-  trackVisibility: optional(TaggingAttributeVisibility),
+  trackVisibility: optional(TrackVisibilityAttribute),
   parent: TagLocationReturnValue,
+  validate: optional(ValidateAttribute),
 });
-export type TagLocationOptions = Infer<typeof TagLocationOptions>;
+export type TagLocationOptions = {
+  trackClicks?: TrackClicksAttribute;
+  trackBlurs?: boolean;
+  trackVisibility?: TrackVisibilityAttribute;
+  parent?: TagLocationReturnValue;
+  validate?: ValidateAttribute;
+};
 
 export const TagLocationParameters = object({
   instance: AnyLocationContext,
@@ -75,12 +85,13 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
 
     // Create output attributes object
     const taggingAttributes = {
-      [TaggingAttribute.elementId]: v4(),
+      [TaggingAttribute.elementId]: generateUUID(),
       [TaggingAttribute.parentElementId]: parentElementId,
       [TaggingAttribute.context]: stringifyLocationContext(instance),
-      [TaggingAttribute.trackClicks]: runIfNotUndefined(stringifyBoolean, trackClicks),
+      [TaggingAttribute.trackClicks]: runIfNotUndefined(stringifyTrackClicksAttribute, trackClicks),
       [TaggingAttribute.trackBlurs]: runIfNotUndefined(stringifyBoolean, trackBlurs),
-      [TaggingAttribute.trackVisibility]: runIfNotUndefined(stringifyVisibilityAttribute, trackVisibility),
+      [TaggingAttribute.trackVisibility]: runIfNotUndefined(stringifyTrackVisibilityAttribute, trackVisibility),
+      [TaggingAttribute.validate]: runIfNotUndefined(stringifyValidateAttribute, options?.validate),
     };
 
     // Validate

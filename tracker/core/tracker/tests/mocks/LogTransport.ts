@@ -1,10 +1,15 @@
-import { TrackerTransport } from '../../src';
+import { TrackerConsole, TrackerTransportConfig, TrackerTransportInterface } from '../../src';
 
-export class LogTransport implements TrackerTransport {
+export class LogTransport implements TrackerTransportInterface {
+  readonly console?: TrackerConsole;
   readonly transportName = 'LogTransport';
 
+  constructor(config?: TrackerTransportConfig) {
+    this.console = config?.console;
+  }
+
   async handle(): Promise<any> {
-    console.log('LogTransport.handle');
+    this.console?.log('LogTransport.handle');
   }
 
   isUsable(): boolean {

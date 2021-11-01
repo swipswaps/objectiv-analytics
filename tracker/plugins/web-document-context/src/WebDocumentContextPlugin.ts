@@ -1,9 +1,15 @@
-import { makeWebDocumentContext, TrackerEvent, TrackerPlugin } from '@objectiv/tracker-core';
+import {
+  ContextsConfig,
+  makeWebDocumentContext,
+  TrackerConsole,
+  TrackerPluginConfig,
+  TrackerPluginInterface,
+} from '@objectiv/tracker-core';
 
 /**
  * WebDocumentContextConfig allows to optionally specify a custom ID for the WebDocumentContext
  */
-export type WebDocumentContextPluginConfig = {
+export type WebDocumentContextPluginConfig = TrackerPluginConfig & {
   documentContextId?: string;
 };
 
@@ -11,7 +17,8 @@ export type WebDocumentContextPluginConfig = {
  * The WebDocumentContext Plugin gathers the current URL from the main document using the Location API.
  * It implements the `run` method. This ensures the URL is retrieved before each Event is sent.
  */
-export class WebDocumentContextPlugin implements TrackerPlugin {
+export class WebDocumentContextPlugin implements TrackerPluginInterface {
+  readonly console?: TrackerConsole;
   readonly pluginName = `WebDocumentContextPlugin`;
   readonly documentContextId: string;
 
@@ -20,22 +27,25 @@ export class WebDocumentContextPlugin implements TrackerPlugin {
    * If no ID is specified the document's `nodeName` is used.
    */
   constructor(config?: WebDocumentContextPluginConfig) {
+    this.console = config?.console;
     this.documentContextId = config?.documentContextId ?? (this.isUsable() ? document.nodeName : 'unknown');
 
-    console.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
-    console.log(`Application ID: ${this.documentContextId}`);
-    console.groupEnd();
+    if (this.console) {
+      this.console.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
+      this.console.log(`Application ID: ${this.documentContextId}`);
+      this.console.groupEnd();
+    }
   }
 
   /**
    * Generate a fresh WebDocumentContext before each TrackerEvent is handed over to the TrackerTransport.
    */
-  beforeTransport(event: TrackerEvent): void {
+  beforeTransport(contexts: Required<ContextsConfig>): void {
     const webDocumentContext = makeWebDocumentContext({
       id: this.documentContextId,
       url: document.location.href,
     });
-    event.location_stack.unshift(webDocumentContext);
+    contexts.location_stack.unshift(webDocumentContext);
   }
 
   /**
