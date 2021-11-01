@@ -568,7 +568,7 @@ class BuhTuhDataFrame:
         df._data = new_data
         return df
 
-    def reset_index(self, drop: bool = False, inplace=False):
+    def reset_index(self, drop: bool = False, inplace: bool = False):
         """
         Drop the current index and replace it with {}
         :param drop:  delete the series that are removed  from the index if True, else re-add to data series
