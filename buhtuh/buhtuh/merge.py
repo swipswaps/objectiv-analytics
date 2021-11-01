@@ -6,7 +6,8 @@ from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
 
 from buhtuh import DataFrameOrSeries, BuhTuhDataFrame, ColumnNames, BuhTuhSeries
 from buhtuh.expression import quote_identifier, Expression
-from sql_models.model import CustomSqlModel, SqlModel
+from buhtuh.sql_model import BuhTuhSqlModel
+from sql_models.model import SqlModel
 
 
 class How(Enum):
@@ -311,7 +312,7 @@ def _get_merge_sql_model(
         from {{left_node}} as l {join_type}
         join {{right_node}} as r {on_str}
         '''
-    model_builder = CustomSqlModel(name='merge_sql', sql=sql)
+    model_builder = BuhTuhSqlModel(name='merge_sql', sql=sql)
     model = model_builder(
         columns_str=columns_str,
         join_type=join_type,
