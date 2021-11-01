@@ -188,55 +188,10 @@ def remove_copyright_string(app, what, name, obj, options, lines):
     if len(lines) > 0 and lines[0] == 'Copyright 2021 Objectiv B.V.':
         del lines[0]
 
-def process_class_docstrings(app, what, name, obj, options, lines):
-    """
-    For those classes for which we use ::
-
-    :template: autosummary/class_without_autosummary.rst
-
-    the documented attributes/methods have to be listed in the class
-    docstring. However, if one of those lists is empty, we use 'None',
-    which then generates warnings in sphinx / ugly html output.
-    This "autodoc-process-docstring" event connector removes that part
-    from the processed docstring.
-
-    """
-    if what == "class":
-        print(f'found a class: {name}')
-        joined = "\n".join(lines)
-
-        templates = [
-            """.. rubric:: Attributes
-
-.. autosummary::
-   :toctree:
-
-   None
-""",
-            """.. rubric:: Methods
-
-.. autosummary::
-   :toctree:
-
-   None
-""",
-        ]
-
-        for template in templates:
-            if template in joined:
-                joined = joined.replace(template, "")
-        lines[:] = joined.split("\n")
-
-
-def get_doctree(app, doctree, docname):
-    print(f'jow: {docname}  dus')
-    pass
 
 
 def setup(app):
-    app.connect("autodoc-process-docstring", process_class_docstrings)
     app.connect("autodoc-process-docstring", remove_copyright_string)
-    app.connect("doctree-resolved", get_doctree)
     app.add_directive("autosummary", ObjectivAutosummary)
 
 
