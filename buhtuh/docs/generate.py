@@ -120,17 +120,8 @@ for url in urls:
             'children': modules,
             'level': 2})
 
-    functions = toc_from_links(doc, '//p[@class="rubric" and text()="Functions"]/following-sibling::*[1]//tr//a',
-                               'code/span', 3)
-    if functions:
-        toc.append({
-            'value': 'Functions',
-            'id': '',
-            'children': functions,
-            'level': 2})
-
     classes = toc_from_links(doc, '//p[@class="rubric" and text()="Classes"]/following-sibling::*[1]//tr//a',
-                             'code/span', 3)
+                                 'code/span', 3)
     if classes:
         for c in classes:
 
@@ -144,6 +135,16 @@ for url in urls:
             'id': '',
             'children': classes,
             'level': 2})
+
+    functions = toc_from_links(doc, '//p[@class="rubric" and text()="Functions"]/following-sibling::*[1]//tr//a',
+                                   'code/span', 3)
+    if functions:
+        toc.append({
+            'value': 'Functions',
+            'id': '',
+            'children': functions,
+            'level': 2})
+
 
     # little magic around the index:
     # make sure it comes first, and change the name to introduction
@@ -167,6 +168,9 @@ hide_title: true
 slug: {slug}
 sidebar_position: {sidebar_position}
 sidebar_label: {sidebar_label}
+
+tags:
+  - buhtuh
 ---
 
 export const toc = {json.dumps(toc, indent=4)};
