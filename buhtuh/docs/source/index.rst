@@ -10,7 +10,6 @@ Buhtuh
 .. autosummary::
     :toctree: buhtuh
 
-    buhtuh
     buhtuh.dataframe
     buhtuh.expression
     buhtuh.merge
@@ -38,7 +37,6 @@ Sql Models
 .. autosummary::
     :toctree: sql_models
 
-    sql_models
     sql_models.cli_util
     sql_models.graph_operations
     sql_models.model
