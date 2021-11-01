@@ -1,7 +1,7 @@
 import { coerce, create, string, Struct } from 'superstruct';
 
 /**
- * Struct parser for JSON Objects
+ * JSON Objects parser
  */
 export const parseJson = <T = unknown>(stringifiedContext: string | null, struct: Struct<T>): T => {
   return create(

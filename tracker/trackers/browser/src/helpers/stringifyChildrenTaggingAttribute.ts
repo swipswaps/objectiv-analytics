@@ -3,7 +3,7 @@ import { ChildrenTaggingQueries } from '../definitions/ChildrenTaggingQueries';
 import { ValidChildrenTaggingQuery } from '../definitions/ValidChildrenTaggingQuery';
 
 /**
- * ChildrenTaggingAttribute Stringifier
+ * ChildrenTaggingAttribute stringifier
  */
 export const stringifyChildrenTaggingAttribute = (queries: ChildrenTaggingQueries) => {
   if (!(typeof queries === 'object')) {

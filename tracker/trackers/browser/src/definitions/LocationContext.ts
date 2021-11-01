@@ -189,6 +189,7 @@ export const AnyLocationContext = union([
   ButtonContext,
   LinkContext,
 ]);
+
 export type AnyLocationContext = Infer<typeof AnyLocationContext>;
 
 /**
@@ -203,22 +204,26 @@ export const AnySectionContext = union([
   NavigationContext,
   OverlayContext,
 ]);
+
 export type AnySectionContext = Infer<typeof AnySectionContext>;
 
 /**
  * Struct union to match any ItemContext
  */
 export const AnyItemContext = union([ItemContext, InputContext, ActionContext, ButtonContext, LinkContext]);
+
 export type AnyItemContext = Infer<typeof AnyItemContext>;
 
 /**
  * Struct union to match any ActionContext
  */
 export const AnyActionContext = union([ActionContext, ButtonContext, LinkContext]);
+
 export type AnyActionContext = Infer<typeof AnyActionContext>;
 
 /**
  * Struct union to match any Clickable Context, that is Action Contexts + ExpandableSectionContext
  */
 export const AnyClickableContext = union([AnyActionContext, ExpandableSectionContext]);
+
 export type AnyClickableContext = Infer<typeof AnyClickableContext>;

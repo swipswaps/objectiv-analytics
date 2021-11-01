@@ -11,6 +11,7 @@ export const TagLocationParameters = object({
   options: optional(TagLocationOptions),
   onError: optional(func()),
 });
+
 export type TagLocationParameters = {
   instance: AnyLocationContext;
   options?: TagLocationOptions;

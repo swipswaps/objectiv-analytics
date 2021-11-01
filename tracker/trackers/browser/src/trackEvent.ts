@@ -1,6 +1,6 @@
 import { LocationStack, TrackerEvent, UntrackedEvent } from '@objectiv/tracker-core';
 import { BrowserTracker } from './BrowserTracker';
-import { TaggableElement } from './definitions/TaggableElement';
+import { TrackedElement } from './definitions/TrackedElement';
 import { TrackerErrorHandlerCallback } from './definitions/TrackerErrorHandlerCallback';
 import { getTracker } from './getTracker';
 import { getElementLocationStack } from './helpers/getElementLocationStack';
@@ -13,8 +13,7 @@ import { trackerErrorHandler } from './helpers/trackerErrorHandler';
  */
 export const trackEvent = (parameters: {
   event: UntrackedEvent;
-  // FIXME move this to TrackableElement
-  element?: TaggableElement | EventTarget;
+  element?: TrackedElement;
   tracker?: BrowserTracker;
   trackerId?: string;
   onError?: TrackerErrorHandlerCallback;

@@ -1,9 +1,9 @@
 import { LocationStack } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
-import { isTaggableElement } from '../definitions/isTaggableElement';
-import { TaggableElement } from '../definitions/TaggableElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { TrackedElement } from '../definitions/TrackedElement';
 import { findParentTaggedElements } from './findParentTaggedElements';
+import { isTaggableElement } from './isTaggableElement';
 import { parseLocationContext } from './parseLocationContext';
 import { trackerErrorHandler } from './trackerErrorHandler';
 
@@ -15,11 +15,7 @@ import { trackerErrorHandler } from './trackerErrorHandler';
  * 3. Merges the two Location Stacks to reconstruct the full Location
  * 4. If a Tracker instance is provided, runs the Tracker's plugins `beforeTransport` lifecycle on the locationStack
  */
-export const getElementLocationStack = (parameters: {
-  // FIXME use definitions
-  element: TaggableElement | EventTarget;
-  tracker?: BrowserTracker;
-}) => {
+export const getElementLocationStack = (parameters: { element: TrackedElement; tracker?: BrowserTracker }) => {
   const locationStack: LocationStack = [];
 
   try {

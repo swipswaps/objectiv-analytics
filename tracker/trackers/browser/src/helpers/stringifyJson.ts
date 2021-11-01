@@ -1,7 +1,7 @@
 import { coerce, create, string, Struct } from 'superstruct';
 
 /**
- * Struct stringifier for JSON Objects
+ * JSON Objects stringifier
  */
 export const stringifyJson = <T = unknown>(object: T, struct: Struct<T>): string => {
   return create(

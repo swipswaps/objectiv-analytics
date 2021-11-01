@@ -7,4 +7,5 @@ import { TaggingAttribute } from './TaggingAttribute';
 export const StringifiedChildrenTaggingAttributes = object({
   [TaggingAttribute.tagChildren]: string(),
 });
+
 export type StringifiedChildrenTaggingAttributes = Infer<typeof StringifiedChildrenTaggingAttributes>;

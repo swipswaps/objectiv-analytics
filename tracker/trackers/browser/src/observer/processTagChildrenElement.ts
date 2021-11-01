@@ -1,10 +1,10 @@
 import { getObjectKeys } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
 import { ChildrenTaggingQuery } from '../definitions/ChildrenTaggingQuery';
-import { isTagChildrenElement } from '../definitions/isTagChildrenElement';
+import { StringifiedTaggingAttributes } from '../definitions/StringifiedTaggingAttributes';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { StringifiedTaggingAttributes } from '../definitions/TaggingAttributes';
+import { isTagChildrenElement } from '../helpers/isTagChildrenElement';
 import { parseChildrenTaggingAttribute } from '../helpers/parseChildrenTaggingAttribute';
 import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 

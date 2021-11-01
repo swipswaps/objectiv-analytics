@@ -1,5 +1,5 @@
-import { GuardableElement } from './GuardableElement';
-import { TaggableElement } from './TaggableElement';
+import { GuardableElement } from '../definitions/GuardableElement';
+import { TaggableElement } from '../definitions/TaggableElement';
 
 /**
  * A type guard to determine if a the given Element is an HTMLElement or SVGElement.

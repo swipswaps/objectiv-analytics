@@ -1,8 +1,8 @@
 import { BrowserTracker } from '../BrowserTracker';
-import { isTaggedElement } from '../definitions/isTaggedElement';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { TrackClicksOptions } from '../definitions/TaggingAttributes';
+import { TrackClicksOptions } from '../definitions/TrackClicksOptions';
+import { isTaggedElement } from '../helpers/isTaggedElement';
 import { trackClick } from '../trackClick';
 
 /**

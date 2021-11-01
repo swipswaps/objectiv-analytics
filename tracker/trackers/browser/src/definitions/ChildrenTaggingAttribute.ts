@@ -8,4 +8,5 @@ import { TaggingAttribute } from './TaggingAttribute';
 export const ChildrenTaggingAttributes = object({
   [TaggingAttribute.tagChildren]: array(ChildrenTaggingQuery),
 });
+
 export type ChildrenTaggingAttributes = Infer<typeof ChildrenTaggingAttributes>;

@@ -1,7 +1,7 @@
-import { GuardableElement } from './GuardableElement';
+import { GuardableElement } from '../definitions/GuardableElement';
+import { TagChildrenElement } from '../definitions/TagChildrenElement';
+import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { isTaggableElement } from './isTaggableElement';
-import { TagChildrenElement } from './TagChildrenElement';
-import { TaggingAttribute } from './TaggingAttribute';
 
 /**
  * A type guard to determine if the given Element is a TaggableElement decorated with ChildrenTaggingAttributes.

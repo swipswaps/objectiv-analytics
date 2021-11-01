@@ -1,4 +1,5 @@
-import { FlushQueueOptions, WaitForQueueOptions } from './definitions/TaggingAttributes';
+import { FlushQueueOptions } from './definitions/FlushQueueOptions';
+import { WaitForQueueOptions } from './definitions/WaitForQueueOptions';
 import { getTracker } from './getTracker';
 import { getTrackerRepository } from './getTrackerRepository';
 
