@@ -610,9 +610,9 @@ class BuhTuhDataFrame:
 
             new_index[idx_series.name] = idx_series.copy_override(index={})
 
-            if not drop and idx_series.name not in df._index:
-                raise ValueError('When adding index series, drop must be True because duplicate '
-                                 'column names are not supported.')
+            if not drop and idx_series.name not in df._index and idx_series.name in df._data:
+                raise ValueError('When adding existing series to the index, drop must be True'
+                                 ' because duplicate column names are not supported.')
 
         dropped = set(df._index.keys()) - set(new_index.keys())
         new_series = {n: s.copy_override(index=new_index) for n, s in df.all_series.items()

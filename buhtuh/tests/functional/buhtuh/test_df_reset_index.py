@@ -52,7 +52,7 @@ def test_set_index():
 
     # regular set
     with pytest.raises(ValueError,
-                       match="When adding index series, drop must be True because duplicate"):
+                       match="When adding existing series to the index, drop must be True"):
         bt.set_index(keys=['municipality'])
 
     sbt = bt.set_index(['municipality'], drop=True)
@@ -68,7 +68,7 @@ def test_set_index():
 
     # appending index without drop raises
     with pytest.raises(ValueError,
-                       match="When adding index series, drop must be True because duplicate"):
+                       match="When adding existing series to the index, drop must be True"):
         sbt.set_index(['city'], append=True)
 
     abt = sbt.set_index(['city'], append=True, drop=True)
@@ -105,6 +105,14 @@ def test_set_index():
     assert list(sbt.index.keys()) == ['municipality']
     assert list(sbt.data.keys()) == ['city', 'inhabitants']
     sbt.head()
+
+    # use a series with a unique name, should work without drop
+    col = bt.city
+    xbt = bt.rename(columns={'city': 'x'})
+    xbt = xbt.set_index(col)
+    assert list(xbt.index.keys()) == ['city']
+    assert list(xbt.data.keys()) == ['_index_skating_order', 'x', 'municipality', 'inhabitants']
+
 
     # try to set a series as index
     sbt = bt.set_index(bt.municipality.slice(3), drop=True)
