@@ -40,7 +40,7 @@ def test_set_index():
     assert list(bt.index.keys()) == ['_index_skating_order']
 
     # regular reset in different ways
-    sbt = bt.set_index(keys=[])
+    sbt = bt.set_index(keys=[], drop=False)
     rbt = bt.reset_index()
     assert list(rbt.index.keys()) == []
     assert list(sbt.index.keys()) == []
@@ -53,7 +53,7 @@ def test_set_index():
     # regular set
     with pytest.raises(ValueError,
                        match="When adding existing series to the index, drop must be True"):
-        bt.set_index(keys=['municipality'])
+        bt.set_index(keys=['municipality'], drop=False)
 
     sbt = bt.set_index(['municipality'], drop=True)
     assert list(sbt.index.keys()) == ['municipality']
@@ -69,7 +69,7 @@ def test_set_index():
     # appending index without drop raises
     with pytest.raises(ValueError,
                        match="When adding existing series to the index, drop must be True"):
-        sbt.set_index(['city'], append=True)
+        sbt.set_index(['city'], append=True, drop=False)
 
     abt = sbt.set_index(['city'], append=True, drop=True)
     assert list(abt.index.keys()) == ['municipality', 'city']
@@ -77,7 +77,7 @@ def test_set_index():
     abt.head()  # check valid sql
 
     # try to remove a series
-    rbt = abt.set_index(['city'])
+    rbt = abt.set_index(['city'], drop=False)
     assert list(rbt.index.keys()) == ['city']
     assert list(rbt.data.keys()) == ['municipality', 'inhabitants']
     rbt.head()
@@ -89,7 +89,7 @@ def test_set_index():
     rbt.head()
 
     # try to remove a series from the other end
-    rbt = abt.set_index(['municipality'])
+    rbt = abt.set_index(['municipality'], drop=False)
     assert list(rbt.index.keys()) == ['municipality']
     assert list(rbt.data.keys()) == ['city', 'inhabitants']
     rbt.head()
@@ -109,7 +109,7 @@ def test_set_index():
     # use a series with a unique name, should work without drop
     col = bt.city
     xbt = bt.rename(columns={'city': 'x'})
-    xbt = xbt.set_index(col)
+    xbt = xbt.set_index(col, drop=False)
     assert list(xbt.index.keys()) == ['city']
     assert list(xbt.data.keys()) == ['_index_skating_order', 'x', 'municipality', 'inhabitants']
 
