@@ -5,7 +5,8 @@ import {
 } from './definitions/structChildrenTaggingAttribute';
 import { ChildrenTaggingQueries, ChildrenTaggingQuery } from './definitions/structChildrenTaggingQuery';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
-import { trackerErrorHandler, TrackOnErrorCallback } from './helpers/trackerErrorHandler';
+import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
+import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 
 /**
  * Used to decorate a TaggableElement with our Children Tagging Attributes.
@@ -30,7 +31,7 @@ import { trackerErrorHandler, TrackOnErrorCallback } from './helpers/trackerErro
 export const TagChildrenReturnValue = optional(StringifiedChildrenTaggingAttributes);
 export type TagChildrenReturnValue = Infer<typeof TagChildrenReturnValue>;
 
-export const tagChildren = (parameters: ChildrenTaggingQueries, onError?: TrackOnErrorCallback) => {
+export const tagChildren = (parameters: ChildrenTaggingQueries, onError?: TrackerErrorHandlerCallback) => {
   try {
     // Validate input
     assert(parameters, ChildrenTaggingQueries);
@@ -66,6 +67,6 @@ export const tagChildren = (parameters: ChildrenTaggingQueries, onError?: TrackO
  *    })
  *
  */
-export const tagChild = (parameters: ChildrenTaggingQuery, onError?: TrackOnErrorCallback) => {
+export const tagChild = (parameters: ChildrenTaggingQuery, onError?: TrackerErrorHandlerCallback) => {
   return tagChildren([parameters], onError);
 };

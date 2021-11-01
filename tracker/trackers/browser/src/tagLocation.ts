@@ -19,7 +19,9 @@ import {
   ValidateAttribute,
 } from './definitions/structTaggingAttributes';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
-import { trackerErrorHandler, TrackOnErrorCallback } from './helpers/trackerErrorHandler';
+import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
+import { runIfValueIsNotUndefined } from "./helpers/runIfValueIsNotUndefined";
+import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 
 /**
  * Used to decorate a Taggable Element with our Tagging Attributes.
@@ -61,7 +63,7 @@ export const TagLocationParameters = object({
 export type TagLocationParameters = {
   instance: AnyLocationContext;
   options?: TagLocationOptions;
-  onError?: TrackOnErrorCallback;
+  onError?: TrackerErrorHandlerCallback;
 };
 
 // Custom struct to match all Action Contexts + ExpandableSectionContext
@@ -88,10 +90,10 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
       [TaggingAttribute.elementId]: generateUUID(),
       [TaggingAttribute.parentElementId]: parentElementId,
       [TaggingAttribute.context]: stringifyLocationContext(instance),
-      [TaggingAttribute.trackClicks]: runIfNotUndefined(stringifyTrackClicksAttribute, trackClicks),
-      [TaggingAttribute.trackBlurs]: runIfNotUndefined(stringifyBoolean, trackBlurs),
-      [TaggingAttribute.trackVisibility]: runIfNotUndefined(stringifyTrackVisibilityAttribute, trackVisibility),
-      [TaggingAttribute.validate]: runIfNotUndefined(stringifyValidateAttribute, options?.validate),
+      [TaggingAttribute.trackClicks]: runIfValueIsNotUndefined(stringifyTrackClicksAttribute, trackClicks),
+      [TaggingAttribute.trackBlurs]: runIfValueIsNotUndefined(stringifyBoolean, trackBlurs),
+      [TaggingAttribute.trackVisibility]: runIfValueIsNotUndefined(stringifyTrackVisibilityAttribute, trackVisibility),
+      [TaggingAttribute.validate]: runIfValueIsNotUndefined(stringifyValidateAttribute, options?.validate),
     };
 
     // Validate
@@ -110,13 +112,3 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
   }
 };
 
-/**
- * Small helper to execute the given function call only if the given value is not `undefined`
- */
-export const runIfNotUndefined = (functionToRun: Function, value: unknown) => {
-  if (typeof value === 'undefined') {
-    return undefined;
-  }
-
-  return functionToRun(value);
-};

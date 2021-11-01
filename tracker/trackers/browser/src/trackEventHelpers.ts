@@ -14,7 +14,8 @@ import {
 } from '@objectiv/tracker-core';
 import { BrowserTracker } from './BrowserTracker';
 import { TaggableElement } from './definitions/elements';
-import { trackerErrorHandler, TrackOnErrorCallback } from './helpers/trackerErrorHandler';
+import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
+import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 import { trackEvent } from './trackEvent';
 
 /**
@@ -25,7 +26,7 @@ export type TrackEventHelperParameters = {
   locationStack?: LocationStack;
   globalContexts?: GlobalContexts;
   tracker?: BrowserTracker;
-  onError?: TrackOnErrorCallback;
+  onError?: TrackerErrorHandlerCallback;
 };
 
 /**

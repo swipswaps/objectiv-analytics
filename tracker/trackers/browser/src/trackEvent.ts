@@ -2,9 +2,10 @@ import { LocationStack, TrackerEvent, UntrackedEvent } from '@objectiv/tracker-c
 import ExtendableError from 'es6-error';
 import { BrowserTracker } from './BrowserTracker';
 import { TaggableElement } from './definitions/elements';
+import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
 import { getTracker } from './getTracker';
 import { getElementLocationStack } from './helpers/getElementLocationStack';
-import { trackerErrorHandler, TrackOnErrorCallback } from './helpers/trackerErrorHandler';
+import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 
 /**
  * The parameters of `trackEvent`
@@ -14,7 +15,7 @@ export type TrackEventParameters = {
   element?: TaggableElement | EventTarget;
   tracker?: BrowserTracker;
   trackerId?: string;
-  onError?: TrackOnErrorCallback;
+  onError?: TrackerErrorHandlerCallback;
 };
 
 /**

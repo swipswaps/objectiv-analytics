@@ -2,7 +2,7 @@ import { WebDeviceContextPlugin } from '@objectiv/plugin-web-device-context';
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import {
   ContextsConfig,
-  getDefaultTrackerPluginsList,
+  makeDefaultTrackerPluginsList,
   Tracker,
   TrackerConfig,
   TrackerPlugins,
@@ -68,8 +68,8 @@ export const makeBrowserTrackerDefaultQueue = (trackerConfig: BrowserTrackerConf
 /**
  * The default list of Plugins of Browser Tracker
  */
-export const getDefaultBrowserTrackerPluginsList = (trackerConfig: BrowserTrackerConfig) => [
-  ...getDefaultTrackerPluginsList(trackerConfig),
+export const makeDefaultBrowserTrackerPluginsList = (trackerConfig: BrowserTrackerConfig) => [
+  ...makeDefaultTrackerPluginsList(trackerConfig),
   new WebDocumentContextPlugin({ console: trackerConfig.console }),
   new WebDeviceContextPlugin({ console: trackerConfig.console }),
 ];
@@ -143,7 +143,7 @@ export class BrowserTracker extends Tracker {
         ...config,
         plugins: new TrackerPlugins({
           console: trackerConfig.console,
-          plugins: getDefaultBrowserTrackerPluginsList(config),
+          plugins: makeDefaultBrowserTrackerPluginsList(config),
         }),
       };
     }
