@@ -1051,7 +1051,6 @@ class BuhTuhDataFrame:
                 if limit.stop is not None:
                     limit_str = f'limit {limit.stop}'
 
-
         limit_expr = Expression.construct('' if limit_str is None else f'{limit_str}')
         where = where if where else Expression.construct('')
         if self._group_by:
@@ -1094,7 +1093,7 @@ class BuhTuhDataFrame:
                 _last_node=self.base_node,
                 where=where,
                 order=self.get_order_by_expression(),
-                limit = limit_expr
+                limit=limit_expr
             )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
