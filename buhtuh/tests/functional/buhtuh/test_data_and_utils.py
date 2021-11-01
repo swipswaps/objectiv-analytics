@@ -113,9 +113,6 @@ def _get_bt(
         import pandas as pd
         df = pd.DataFrame.from_records(dataset, columns=columns)
         _TABLE_DATAFRAME_CACHE[lookup_key] = get_from_df(table, df, convert_objects)
-        print('NOT cached')
-    else:
-        print('Cached')
     # We don't even renew the 'engine', as creating the database connection takes a bit of time too. If
     # we ever do into trouble because of stale connection or something, then we can change it at that point
     # in time.
