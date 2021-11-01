@@ -1,8 +1,8 @@
 import { getLocationPath, TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { isTaggedElement } from '../definitions/guards';
-import { parseTrackClicksAttribute, parseValidateAttribute } from '../definitions/structTaggingAttributes';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { parseTrackClicksAttribute, parseValidateAttribute } from '../definitions/TaggingAttributes';
 import { getElementLocationStack } from '../helpers/getElementLocationStack';
 import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 import { makeBlurEventHandler } from './makeBlurEventHandler';

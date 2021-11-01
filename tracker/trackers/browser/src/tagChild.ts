@@ -1,4 +1,5 @@
-import { ChildrenTaggingQuery } from './definitions/structChildrenTaggingQuery';
+import { ChildrenTaggingQuery } from './definitions/ChildrenTaggingQuery';
+import { TagChildrenReturnValue } from "./definitions/TagChildrenReturnValue";
 import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
 import { tagChildren } from "./tagChildren";
 
@@ -18,6 +19,6 @@ import { tagChildren } from "./tagChildren";
  *    })
  *
  */
-export const tagChild = (parameters: ChildrenTaggingQuery, onError?: TrackerErrorHandlerCallback) => {
+export const tagChild = (parameters: ChildrenTaggingQuery, onError?: TrackerErrorHandlerCallback): TagChildrenReturnValue => {
   return tagChildren([parameters], onError);
 };

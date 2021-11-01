@@ -11,7 +11,7 @@
     "npm-publish": "(cd dist && npm publish)"
   },
   "peerDependencies": {
-    "@objectiv/tracker-browser": "0.0.1"
+    "@objectiv/tracker-browser": "~0.0.1"
   },
   "devDependencies": {
     "@angular/compiler": "^12.2.11",

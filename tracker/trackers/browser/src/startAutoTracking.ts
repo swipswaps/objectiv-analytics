@@ -1,4 +1,4 @@
-import { BrowserTrackerConfig } from './BrowserTracker';
+import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
 import { getTracker } from './getTracker';
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
@@ -7,16 +7,11 @@ import { makeMutationCallback } from './observer/makeMutationCallback';
 import { trackApplicationLoaded } from './trackEventHelpers';
 
 /**
- * The options that `startAutoTracking` accepts
- */
-export type AutoTrackingOptions = Pick<BrowserTrackerConfig, 'trackURLChanges' | 'trackApplicationLoaded' | 'console'>;
-
-/**
  * Initializes our automatic tracking, based on Mutation Observer.
  * Also tracks application Loaded.
  * Safe to call multiple times: it will auto-track only once.
  */
-export const startAutoTracking = (options?: AutoTrackingOptions) => {
+export const startAutoTracking = (options?: Pick<BrowserTrackerConfig, 'trackURLChanges' | 'trackApplicationLoaded' | 'console'>) => {
   try {
     // Nothing to do if we are already auto-tracking
     if (AutoTrackingState.observerInstance) {

@@ -1,8 +1,7 @@
 import { boolean, defaulted, Infer, literal, number, object, optional, string, union } from 'superstruct';
-import { StringBoolean } from './structBoolean';
-import { jsonParse, jsonStringify } from './structJson';
-import { AnyLocationContext } from './structLocationContext';
-import { Uuid } from './structUuid';
+import { jsonParse, jsonStringify } from './json';
+import { AnyLocationContext } from './LocationContext';
+import { Uuid } from './uuid';
 import { TaggingAttribute } from './TaggingAttribute';
 
 /**
@@ -140,7 +139,7 @@ export const StringifiedTaggingAttributes = object({
   [TaggingAttribute.parentElementId]: optional(Uuid),
   [TaggingAttribute.context]: string(),
   [TaggingAttribute.trackClicks]: optional(string()),
-  [TaggingAttribute.trackBlurs]: optional(StringBoolean),
+  [TaggingAttribute.trackBlurs]: optional(string()),
   [TaggingAttribute.trackVisibility]: optional(string()),
   [TaggingAttribute.validate]: optional(string()),
 });

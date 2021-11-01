@@ -52,7 +52,7 @@ export type TrackerConfig = ContextsConfig & {
 /**
  * The default list of Plugins of Web Tracker
  */
-export const makeDefaultTrackerPluginsList = (trackerConfig: TrackerConfig) => [
+export const makeTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
   new ApplicationContextPlugin({ applicationId: trackerConfig.applicationId, console: trackerConfig.console }),
 ];
 
@@ -89,7 +89,7 @@ export class Tracker implements Contexts, TrackerConfig {
     this.transport = trackerConfig.transport;
     this.plugins =
       trackerConfig.plugins ??
-      new TrackerPlugins({ console: trackerConfig.console, plugins: makeDefaultTrackerPluginsList(trackerConfig) });
+      new TrackerPlugins({ console: trackerConfig.console, plugins: makeTrackerDefaultPluginsList(trackerConfig) });
 
     // By default Tracker Instances are active
     this.active = trackerConfig.active ?? true;

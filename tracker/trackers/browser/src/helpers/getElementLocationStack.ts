@@ -2,7 +2,7 @@ import { LocationStack } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { TaggableElement } from '../definitions/elements';
 import { isTaggableElement } from '../definitions/guards';
-import { parseLocationContext } from '../definitions/structLocationContext';
+import { parseLocationContext } from '../definitions/LocationContext';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { findParentTaggedElements } from './findParentTaggedElements';
 import { trackerErrorHandler } from './trackerErrorHandler';

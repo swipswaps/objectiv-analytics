@@ -1,5 +1,5 @@
 import { array, Infer, object, optional, string } from 'superstruct';
-import { StringifiedTaggingAttributes } from './structTaggingAttributes';
+import { StringifiedTaggingAttributes } from './TaggingAttributes';
 
 /**
  * The parameters of `tagChild`

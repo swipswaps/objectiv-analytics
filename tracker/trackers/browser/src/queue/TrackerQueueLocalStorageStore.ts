@@ -7,16 +7,6 @@ import {
 } from '@objectiv/tracker-core';
 
 /**
- * The TrackerQueueLocalStorageStoreConfig object.
- */
-export type TrackerQueueLocalStorageStoreConfig = TrackerQueueStoreConfig & {
-  /**
-   * Used to bind this queue to a specific tracker instance. This allows queues to persists across sessions.
-   */
-  trackerId: string;
-};
-
-/**
  * An Local Storage implementation of a TrackerQueueStore.
  */
 export class TrackerQueueLocalStorageStore implements TrackerQueueStoreInterface {
@@ -24,7 +14,12 @@ export class TrackerQueueLocalStorageStore implements TrackerQueueStoreInterface
   queueStoreName = `TrackerQueueLocalStorageStore`;
   readonly localStorageKey: string;
 
-  constructor(config: TrackerQueueLocalStorageStoreConfig) {
+  constructor(config: TrackerQueueStoreConfig & {
+    /**
+     * Used to bind this queue to a specific tracker instance. This allows queues to persists across sessions.
+     */
+    trackerId: string;
+  }) {
     this.console = config.console;
 
     if (typeof localStorage === 'undefined') {

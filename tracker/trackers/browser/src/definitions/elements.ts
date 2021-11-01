@@ -1,6 +1,6 @@
-import { ChildrenTaggingAttributes } from './structChildrenTaggingAttribute';
-import { TaggingAttributes } from './structTaggingAttributes';
+import { ChildrenTaggingAttributes } from './ChildrenTaggingAttribute';
 import { TaggingAttribute } from './TaggingAttribute';
+import { TaggingAttributes } from './TaggingAttributes';
 
 /**
  * The type of Elements the type guards can work with

@@ -1,9 +1,10 @@
-import { assert, Infer, optional, validate } from 'superstruct';
+import { assert, validate } from 'superstruct';
 import {
   StringifiedChildrenTaggingAttributes,
   stringifyChildrenTaggingAttribute,
-} from './definitions/structChildrenTaggingAttribute';
-import { ChildrenTaggingQueries, ChildrenTaggingQuery } from './definitions/structChildrenTaggingQuery';
+} from './definitions/ChildrenTaggingAttribute';
+import { ChildrenTaggingQueries } from './definitions/ChildrenTaggingQuery';
+import { TagChildrenReturnValue } from "./definitions/TagChildrenReturnValue";
 import { TaggingAttribute } from './definitions/TaggingAttribute';
 import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
@@ -28,10 +29,7 @@ import { trackerErrorHandler } from './helpers/trackerErrorHandler';
  *      }
  *    ])
  */
-export const TagChildrenReturnValue = optional(StringifiedChildrenTaggingAttributes);
-export type TagChildrenReturnValue = Infer<typeof TagChildrenReturnValue>;
-
-export const tagChildren = (parameters: ChildrenTaggingQueries, onError?: TrackerErrorHandlerCallback) => {
+export const tagChildren = (parameters: ChildrenTaggingQueries, onError?: TrackerErrorHandlerCallback): TagChildrenReturnValue => {
   try {
     // Validate input
     assert(parameters, ChildrenTaggingQueries);
@@ -49,24 +47,4 @@ export const tagChildren = (parameters: ChildrenTaggingQueries, onError?: Tracke
   } catch (error) {
     return trackerErrorHandler(error, parameters, onError);
   }
-};
-
-/**
- * Syntactic sugar to track only one child.
- *
- * Examples
- *
- *    tagChild({
- *      query: '#button1',
- *      tagAs: tagButton({ id: 'button1', text: 'Button 1' })
- *    })
- *
- *    tagChild({
- *      query: '#button2',
- *      tagAs: tagButton({ id: 'button2', text: 'Button 2' })
- *    })
- *
- */
-export const tagChild = (parameters: ChildrenTaggingQuery, onError?: TrackerErrorHandlerCallback) => {
-  return tagChildren([parameters], onError);
 };

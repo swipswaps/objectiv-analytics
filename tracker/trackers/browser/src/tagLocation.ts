@@ -1,6 +1,5 @@
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
 import { boolean, create, func, Infer, is, object, optional, union, validate } from 'superstruct';
-import { stringifyBoolean } from './definitions/structBoolean';
 import {
   AnyActionContext,
   AnyLocationContext,
@@ -8,7 +7,8 @@ import {
   ExpandableSectionContext,
   InputContext,
   stringifyLocationContext,
-} from './definitions/structLocationContext';
+} from './definitions/LocationContext';
+import { TaggingAttribute } from './definitions/TaggingAttribute';
 import {
   StringifiedTaggingAttributes,
   stringifyTrackClicksAttribute,
@@ -17,8 +17,7 @@ import {
   TrackClicksAttribute,
   TrackVisibilityAttribute,
   ValidateAttribute,
-} from './definitions/structTaggingAttributes';
-import { TaggingAttribute } from './definitions/TaggingAttribute';
+} from './definitions/TaggingAttributes';
 import { TrackerErrorHandlerCallback } from "./definitions/TrackerErrorHandlerCallback";
 import { runIfValueIsNotUndefined } from "./helpers/runIfValueIsNotUndefined";
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
@@ -91,7 +90,7 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
       [TaggingAttribute.parentElementId]: parentElementId,
       [TaggingAttribute.context]: stringifyLocationContext(instance),
       [TaggingAttribute.trackClicks]: runIfValueIsNotUndefined(stringifyTrackClicksAttribute, trackClicks),
-      [TaggingAttribute.trackBlurs]: runIfValueIsNotUndefined(stringifyBoolean, trackBlurs),
+      [TaggingAttribute.trackBlurs]: runIfValueIsNotUndefined(JSON.stringify, trackBlurs),
       [TaggingAttribute.trackVisibility]: runIfValueIsNotUndefined(stringifyTrackVisibilityAttribute, trackVisibility),
       [TaggingAttribute.validate]: runIfValueIsNotUndefined(stringifyValidateAttribute, options?.validate),
     };

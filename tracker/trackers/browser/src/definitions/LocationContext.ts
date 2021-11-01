@@ -1,5 +1,5 @@
 import { assign, Infer, literal, object, string, union } from 'superstruct';
-import { jsonParse, jsonStringify } from './structJson';
+import { jsonParse, jsonStringify } from './json';
 
 /**
  * Abstract Context struct
