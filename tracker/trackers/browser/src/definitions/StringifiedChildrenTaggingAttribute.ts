@@ -2,10 +2,10 @@ import { Infer, object, string } from 'superstruct';
 import { TaggingAttribute } from './TaggingAttribute';
 
 /**
- * The stringified version of the `ChildrenTaggingAttributes`
+ * The stringified version of the `ChildrenLocationTaggingAttributes`
  */
-export const StringifiedChildrenTaggingAttributes = object({
+export const StringifiedChildrenLocationTaggingAttributes = object({
   [TaggingAttribute.tagChildren]: string(),
 });
 
-export type StringifiedChildrenTaggingAttributes = Infer<typeof StringifiedChildrenTaggingAttributes>;
+export type StringifiedChildrenLocationTaggingAttributes = Infer<typeof StringifiedChildrenLocationTaggingAttributes>;

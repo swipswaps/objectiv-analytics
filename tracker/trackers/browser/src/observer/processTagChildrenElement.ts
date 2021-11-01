@@ -1,7 +1,7 @@
 import { getObjectKeys } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
 import { ChildrenTaggingQuery } from '../definitions/ChildrenTaggingQuery';
-import { StringifiedTaggingAttributes } from '../definitions/StringifiedTaggingAttributes';
+import { StringifiedLocationTaggingAttributes } from '../definitions/StringifiedLocationTaggingAttributes';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { isTagChildrenElement } from '../helpers/isTagChildrenElement';
@@ -25,7 +25,7 @@ export const processTagChildrenElement = (element: Element): TaggedElement[] => 
 
     queries.forEach((query: ChildrenTaggingQuery) => {
       const { queryAll, tagAs }: ChildrenTaggingQuery = create(query, ChildrenTaggingQuery);
-      const trackingAsAttributes = create(tagAs, StringifiedTaggingAttributes);
+      const trackingAsAttributes = create(tagAs, StringifiedLocationTaggingAttributes);
 
       // Strip out undefined attributes
       getObjectKeys(trackingAsAttributes).forEach((key) => {

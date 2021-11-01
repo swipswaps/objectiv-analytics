@@ -1,11 +1,11 @@
 import { Infer, object, optional, string } from 'superstruct';
-import { StringifiedTaggingAttributes } from './StringifiedTaggingAttributes';
+import { StringifiedLocationTaggingAttributes } from './StringifiedLocationTaggingAttributes';
 
 /**
  * The parameters of `tagChild`
  */
 export const ChildrenTaggingQuery = object({
   queryAll: string(),
-  tagAs: optional(StringifiedTaggingAttributes),
+  tagAs: optional(StringifiedLocationTaggingAttributes),
 });
 export type ChildrenTaggingQuery = Infer<typeof ChildrenTaggingQuery>;

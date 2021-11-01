@@ -7,10 +7,9 @@ import { Uuid } from './uuid';
 import { ValidateAttribute } from './ValidateAttribute';
 
 /**
- * FIXME get rid of this
  * The object that Location Taggers return
  */
-export const TaggingAttributes = object({
+export const LocationTaggingAttributes = object({
   [TaggingAttribute.elementId]: Uuid,
   [TaggingAttribute.parentElementId]: optional(Uuid),
   [TaggingAttribute.context]: AnyLocationContext,
@@ -20,4 +19,4 @@ export const TaggingAttributes = object({
   [TaggingAttribute.validate]: optional(ValidateAttribute),
 });
 
-export type TaggingAttributes = Infer<typeof TaggingAttributes>;
+export type LocationTaggingAttributes = Infer<typeof LocationTaggingAttributes>;

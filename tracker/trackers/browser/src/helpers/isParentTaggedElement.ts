@@ -4,7 +4,7 @@ import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { isTaggedElement } from './isTaggedElement';
 
 /**
- * A type guard to determine if the given Element is a TaggableElement decorated with TaggingAttributes.parentElementId.
+ * A type guard to determine if the given Element is a TaggableElement decorated with LocationTaggingAttributes.parentElementId.
  */
 export const isParentTaggedElement = (element: GuardableElement): element is ParentTaggedElement =>
   isTaggedElement(element) && element.hasAttribute(TaggingAttribute.parentElementId);

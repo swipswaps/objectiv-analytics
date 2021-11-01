@@ -5,8 +5,8 @@ import { TaggingAttribute } from './TaggingAttribute';
 /**
  * The set of TaggingAttribute returned by `tagChildren` and `tagChild`
  */
-export const ChildrenTaggingAttributes = object({
+export const ChildrenLocationTaggingAttributes = object({
   [TaggingAttribute.tagChildren]: array(ChildrenTaggingQuery),
 });
 
-export type ChildrenTaggingAttributes = Infer<typeof ChildrenTaggingAttributes>;
+export type ChildrenLocationTaggingAttributes = Infer<typeof ChildrenLocationTaggingAttributes>;

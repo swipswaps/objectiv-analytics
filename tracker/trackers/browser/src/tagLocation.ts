@@ -1,7 +1,7 @@
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
 import { create, is, validate } from 'superstruct';
 import { AnyClickableContext, AnySectionContext, InputContext } from './definitions/LocationContext';
-import { StringifiedTaggingAttributes } from './definitions/StringifiedTaggingAttributes';
+import { StringifiedLocationTaggingAttributes } from './definitions/StringifiedLocationTaggingAttributes';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
 import { TagLocationParameters } from './definitions/TagLocationParameters';
 import { TagLocationReturnValue } from './definitions/TagLocationReturnValue';
@@ -43,7 +43,7 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
     const parentElementId = options?.parent ? options.parent[TaggingAttribute.elementId] : undefined;
 
     // Create output attributes object
-    const taggingAttributes = {
+    const LocationTaggingAttributes = {
       [TaggingAttribute.elementId]: generateUUID(),
       [TaggingAttribute.parentElementId]: parentElementId,
       [TaggingAttribute.context]: stringifyLocationContext(instance),
@@ -54,16 +54,16 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
     };
 
     // Validate
-    validate(taggingAttributes, StringifiedTaggingAttributes);
+    validate(LocationTaggingAttributes, StringifiedLocationTaggingAttributes);
 
     // Strip out undefined attributes and return
-    getObjectKeys(taggingAttributes).forEach((key) => {
-      if (taggingAttributes[key] === undefined) {
-        delete taggingAttributes[key];
+    getObjectKeys(LocationTaggingAttributes).forEach((key) => {
+      if (LocationTaggingAttributes[key] === undefined) {
+        delete LocationTaggingAttributes[key];
       }
     });
 
-    return taggingAttributes;
+    return LocationTaggingAttributes;
   } catch (error) {
     return trackerErrorHandler(error, parameters, parameters?.onError);
   }

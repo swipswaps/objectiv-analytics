@@ -1,6 +1,6 @@
 import { assert, validate } from 'superstruct';
 import { ChildrenTaggingQueries } from './definitions/ChildrenTaggingQueries';
-import { StringifiedChildrenTaggingAttributes } from './definitions/StringifiedChildrenTaggingAttribute';
+import { StringifiedChildrenLocationTaggingAttributes } from './definitions/StringifiedChildrenTaggingAttribute';
 import { TagChildrenReturnValue } from './definitions/TagChildrenReturnValue';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
 import { TrackerErrorHandlerCallback } from './definitions/TrackerErrorHandlerCallback';
@@ -36,15 +36,15 @@ export const tagChildren = (
     assert(parameters, ChildrenTaggingQueries);
 
     // Create output attributes object
-    const taggingAttributes = {
+    const LocationTaggingAttributes = {
       [TaggingAttribute.tagChildren]: stringifyChildrenTaggingAttribute(parameters),
     };
 
     // Validate
-    validate(taggingAttributes, StringifiedChildrenTaggingAttributes);
+    validate(LocationTaggingAttributes, StringifiedChildrenLocationTaggingAttributes);
 
     // Return
-    return taggingAttributes;
+    return LocationTaggingAttributes;
   } catch (error) {
     return trackerErrorHandler(error, parameters, onError);
   }

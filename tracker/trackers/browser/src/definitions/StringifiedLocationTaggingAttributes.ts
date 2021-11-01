@@ -5,7 +5,7 @@ import { Uuid } from './uuid';
 /**
  * The object that Location Taggers return, stringified
  */
-export const StringifiedTaggingAttributes = object({
+export const StringifiedLocationTaggingAttributes = object({
   [TaggingAttribute.elementId]: Uuid,
   [TaggingAttribute.parentElementId]: optional(Uuid),
   [TaggingAttribute.context]: string(),
@@ -14,4 +14,4 @@ export const StringifiedTaggingAttributes = object({
   [TaggingAttribute.trackVisibility]: optional(string()),
   [TaggingAttribute.validate]: optional(string()),
 });
-export type StringifiedTaggingAttributes = Infer<typeof StringifiedTaggingAttributes>;
+export type StringifiedLocationTaggingAttributes = Infer<typeof StringifiedLocationTaggingAttributes>;
