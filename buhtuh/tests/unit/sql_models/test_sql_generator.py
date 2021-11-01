@@ -18,7 +18,7 @@ def test_simple():
 
 def assert_escape_compare_value(value):
     """ helper for test__escape_value. Assert that the escaped value, after formatting equals the original"""
-    escaped = SqlModelBuilder._escape_format_string(value)
+    escaped = SqlModelBuilder.escape_format_string(value)
     assert escaped.format() == value
 
 
@@ -29,9 +29,9 @@ def test__escape_value():
     assert_escape_compare_value('te{st')
     assert_escape_compare_value('te{{s}t')
     assert_escape_compare_value('te{{st')
-    full_string = '{test}' + SqlModelBuilder._escape_format_string('{test}') + '{test}'
+    full_string = '{test}' + SqlModelBuilder.escape_format_string('{test}') + '{test}'
     assert full_string.format(test='x') == 'x{test}x'
-    full_string = '{test}' + SqlModelBuilder._escape_format_string('{{test}}') + '{test}'
+    full_string = '{test}' + SqlModelBuilder.escape_format_string('{{test}}') + '{test}'
     assert full_string.format(test='x') == 'x{{test}}x'
 
 

@@ -15,7 +15,6 @@ from copy import deepcopy
 from enum import Enum
 from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, Sequence
 
-from sql_models.expression import Expression
 from sql_models.util import extract_format_fields
 
 
@@ -80,7 +79,7 @@ class SqlModelSpec:
         raise NotImplementedError()
 
     @staticmethod
-    def _escape_format_string(value: str) -> str:
+    def escape_format_string(value: str) -> str:
         """ Escape value for python's format() function. i.e. `_escape_value(value).format() == value` """
         return value.replace('{', '{{').replace('}', '}}')
 
@@ -94,7 +93,7 @@ class SqlModelSpec:
         """
         # Override for non-default behaviour
         # If we switch to jinja templates, then we won't need this function anymore.
-        return {key: SqlModelSpec._escape_format_string(str(val)) for key, val in properties.items()}
+        return {key: SqlModelSpec.escape_format_string(str(val)) for key, val in properties.items()}
 
     def assert_adheres_to_spec(self,
                                references: Dict[str, 'SqlModel'],
@@ -212,8 +211,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
                                     f'type {type(reference_value)}.')
         return self.instantiate()
 
-    def __call__(self: TB, **values: Union[int, str, Expression, Sequence[Expression],
-                                           'SqlModel', 'SqlModelBuilder']) -> 'SqlModel[TB]':
+    def __call__(self: TB, **values: Any) -> 'SqlModel[TB]':
         self.set_values(**values)
         return self.instantiate()
 
@@ -236,8 +234,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
             self._cache_created_instances[instance.hash] = instance
         return self._cache_created_instances[instance.hash]
 
-    def set_values(self: TB, **values: Union[int, str, Expression, Sequence[Expression],
-                                             'SqlModel', 'SqlModelBuilder']) -> TB:
+    def set_values(self: TB, **values: Any) -> TB:
         """
         Set values that can either be references or properties
         :param values:
@@ -252,11 +249,6 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
                 self._references[key] = value
             elif key in self.spec_properties:
                 self._properties[key] = value
-                # We accept Expression, or lists thereof, and they might contain references we need to collect
-                for list_val in value if isinstance(value, list) else [value]:
-                    if isinstance(list_val, Expression):
-                        for k, v in list_val.get_references().items():
-                            self._references[k] = v
             else:
                 raise ValueError(f'Provided parameter {key} is not a valid property nor reference for '
                                  f'class {self.__class__.__name__}. '
@@ -277,23 +269,6 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         Raises an Exception if either references or properties are missing
         """
         self.assert_adheres_to_spec(references=self.references, properties=self.properties)
-
-    @staticmethod
-    def properties_to_sql(properties: Dict[str, Any]) -> Dict[str, str]:
-        """
-        We accept Expressions and lists of expressions as properties too, and they need to escape
-        themselves if they want to. This allows them to carry references that will be completed
-        in the reference phase in _single_model_to_sql() from sql_generator.py
-        """
-        rv = {}
-        for k, v in properties.items():
-            if isinstance(v, list):
-                rv[k] = ", ".join([value.to_sql() for value in v])
-            elif isinstance(v, Expression):
-                rv[k] = v.to_sql()
-            else:
-                rv[k] = SqlModelSpec._escape_format_string(str(v))
-        return rv
 
 
 class SqlModel(Generic[T]):

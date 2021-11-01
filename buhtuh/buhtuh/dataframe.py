@@ -6,9 +6,10 @@ from uuid import UUID
 import pandas
 from sqlalchemy.engine import Engine
 
-from buhtuh.expression import Expression, quote_identifier
+from buhtuh.expression import Expression
+from buhtuh.sql_model import BuhTuhSqlModel
 from buhtuh.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from sql_models.model import SqlModel, CustomSqlModel
+from sql_models.model import SqlModel
 from sql_models.sql_generator import to_sql
 
 if TYPE_CHECKING:
@@ -185,7 +186,7 @@ class BuhTuhDataFrame:
 
     @classmethod
     def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
-        new_node = CustomSqlModel(sql='select * from {{previous}} limit 0')(previous=node)
+        new_node = BuhTuhSqlModel(sql='select * from {{previous}} limit 0')(previous=node)
         select_statement = to_sql(new_node)
         sql = f"""
             create temporary table tmp_table_name on commit drop as
@@ -206,7 +207,7 @@ class BuhTuhDataFrame:
         This will create and remove a temporary table to asses meta data.
         """
         # todo: don't create a temporary table, the real table (and its meta data) already exists
-        model = CustomSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
+        model = BuhTuhSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
         return cls._from_node(engine, model, index)
 
     @classmethod
@@ -219,7 +220,7 @@ class BuhTuhDataFrame:
         """
         # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
         # select expressions, where clauses, or limits
-        wrapped_model = CustomSqlModel(sql='SELECT * FROM {{model}}')(model=model)
+        wrapped_model = BuhTuhSqlModel(sql='SELECT * FROM {{model}}')(model=model)
         return cls._from_node(engine, wrapped_model, index)
 
     @classmethod
@@ -300,7 +301,7 @@ class BuhTuhDataFrame:
         conn.close()
 
         # Todo, this should use from_table from here on.
-        model = CustomSqlModel(sql=f'SELECT * FROM {name}').instantiate()
+        model = BuhTuhSqlModel(sql=f'SELECT * FROM {name}').instantiate()
 
         # Should this also use _df_or_series?
         return cls.get_instance(
@@ -431,7 +432,7 @@ class BuhTuhDataFrame:
                 raise ValueError("Please materialize this the DataFrame before creating the expression. "
                                  "Use df.get_df_materialized_model() to do so.")
 
-            model_builder = CustomSqlModel(
+            model_builder = BuhTuhSqlModel(
                 name='boolean_selection',
                 sql='select {columns} from {{_last_node}} where {where}'
             )
@@ -1017,7 +1018,7 @@ class BuhTuhDataFrame:
         else:
             return Expression.construct('')
 
-    def get_current_node(self, limit: Union[int, slice] = None) -> SqlModel[CustomSqlModel]:
+    def get_current_node(self, limit: Union[int, slice] = None) -> SqlModel[BuhTuhSqlModel]:
         """
         Translate the current state of this DataFrame into a SqlModel.
         :param limit: The limit to use
@@ -1054,7 +1055,7 @@ class BuhTuhDataFrame:
                 group_by_expr = Expression.construct('group by {}', group_by_expr)
             else:
                 group_by_expr = Expression.construct('')
-            model_builder = CustomSqlModel(
+            model_builder = BuhTuhSqlModel(
                 sql="""
                     select {group_by_columns}, {aggregate_columns}
                     from {{prev}}
@@ -1072,7 +1073,7 @@ class BuhTuhDataFrame:
                 prev=self.base_node
             )
         else:
-            model_builder = CustomSqlModel(
+            model_builder = BuhTuhSqlModel(
                 name='view_sql',
                 sql='select {columns} from {{_last_node}} {order} {limit}'
             )

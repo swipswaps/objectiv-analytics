@@ -4,12 +4,20 @@ Copyright 2021 Objectiv B.V.
 from dataclasses import dataclass, field
 from typing import List, Union, TYPE_CHECKING, Dict
 
-import sql_models.expression
-from sql_models.expression import ExpressionToken, quote_string, quote_identifier, escape_fmtstring
-from sql_models.model import SqlModel
+from sql_models.model import SqlModel, SqlModelSpec
 
 if TYPE_CHECKING:
     from buhtuh import BuhTuhSeries
+
+
+@dataclass(frozen=True)
+class ExpressionToken:
+    """ Abstract base class of ExpressionTokens"""
+
+    def __post_init__(self):
+        # Make sure that other code can rely on an ExpressionToken always being a subclass of this class.
+        if self.__class__ == ExpressionToken:
+            raise TypeError("Cannot instantiate ExpressionToken directly. Instantiate a subclass.")
 
 
 @dataclass(frozen=True)
@@ -37,7 +45,7 @@ class StringValueToken(ExpressionToken):
 
 
 @dataclass(frozen=True)
-class Expression(sql_models.expression.Expression):
+class Expression:
     """
     An Expression object represents a fragment of SQL as a series of sql-tokens.
 
@@ -150,11 +158,49 @@ def expression_to_sql(expression: Expression) -> str:
         elif isinstance(data_item, ModelReferenceToken):
             result.append(f'{{{data_item.refname()}}}')
         elif isinstance(data_item, RawToken):
-            result.append(escape_fmtstring(data_item.raw))
+            result.append(SqlModelSpec.escape_format_string(data_item.raw))
         elif isinstance(data_item, StringValueToken):
-            result.append(escape_fmtstring(quote_string(data_item.value)))
+            result.append(SqlModelSpec.escape_format_string(quote_string(data_item.value)))
         else:
             raise Exception("This should never happen. "
                             "expression_to_sql() doesn't cover all Expression subtypes."
                             f"type: {type(data_item)}")
     return ''.join(result)
+
+
+def quote_string(value: str) -> str:
+    """
+    Add single quotes around the value and escape any quotes in the value.
+
+    This is in accordance with the Postgres string notation format, no guarantees for other databses.
+    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+
+    Examples:
+    >>> quote_string("test")
+    "'test'"
+    >>> quote_string("te'st")
+    "'te''st'"
+    >>> quote_string("'te''st'")
+    "'''te''''st'''"
+    """
+    replaced_chars = value.replace("'", "''")
+    return f"'{replaced_chars}'"
+
+
+def quote_identifier(name: str) -> str:
+    """
+    Add quotes around an identifier (e.g. a table or column name), and escape special characters in the name.
+
+    This is in accordance with the Postgres string notation format, no guarantees for other databses.
+    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+
+    Examples:
+    >>> quote_identifier('test')
+    '"test"'
+    >>> quote_identifier('te"st')
+    '"te""st"'
+    >>> quote_identifier('"te""st"')
+    "\"\"\"te\"\"\"\"st\"\"\""
+    """
+    replaced_chars = name.replace('"', '""')
+    return f'"{replaced_chars}"'
