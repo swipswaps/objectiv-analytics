@@ -24,7 +24,7 @@ def test_reset_index_to_empty():
 
     # drop
     dbt = bt.reset_index(drop=True)
-    assert list(rbt.index.keys()) == []
+    assert list(dbt.index.keys()) == []
     assert '_index_skating_order' not in bt.data.keys()
 
     for r in [bt, rbt, ipbt, dbt]:
