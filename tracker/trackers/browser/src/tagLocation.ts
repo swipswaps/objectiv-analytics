@@ -19,7 +19,7 @@ import {
   ValidateAttribute,
 } from './definitions/structTaggingAttributes';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
-import { trackerErrorHandler, TrackOnErrorCallback } from './internal/trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from './helpers/trackerErrorHandler';
 
 /**
  * Used to decorate a Taggable Element with our Tagging Attributes.

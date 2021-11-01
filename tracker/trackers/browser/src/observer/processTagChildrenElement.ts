@@ -6,7 +6,7 @@ import { parseChildrenTaggingAttribute } from '../definitions/structChildrenTagg
 import { ChildrenTaggingQuery } from '../definitions/structChildrenTaggingQuery';
 import { StringifiedTaggingAttributes } from '../definitions/structTaggingAttributes';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { trackerErrorHandler } from '../internal/trackerErrorHandler';
+import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 
 /**
  * Check if Element is a ChildrenTaggingElement. If so:

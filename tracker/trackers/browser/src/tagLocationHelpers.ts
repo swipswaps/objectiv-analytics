@@ -9,7 +9,7 @@ import {
   makeSectionContext,
 } from '@objectiv/tracker-core';
 import { assign, create, object, pick, string } from 'superstruct';
-import { trackerErrorHandler, TrackOnErrorCallback } from './internal/trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from './helpers/trackerErrorHandler';
 import { tagLocation, TagLocationOptions, TagLocationParameters, TagLocationReturnValue } from './tagLocation';
 
 /**

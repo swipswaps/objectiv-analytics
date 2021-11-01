@@ -1,6 +1,6 @@
+import { BrowserTracker, BrowserTrackerConfig } from './BrowserTracker';
 import { getTrackerRepository } from './getTrackerRepository';
-import { BrowserTracker, BrowserTrackerConfig } from './internal/BrowserTracker';
-import { compareTrackerConfigs } from './internal/compareTrackerConfigs';
+import { compareTrackerConfigs } from './helpers/compareTrackerConfigs';
 import { makeTracker } from './makeTracker';
 
 /**

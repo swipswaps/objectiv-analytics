@@ -11,14 +11,13 @@ export * from './definitions/structTaggingAttributes';
 export * from './definitions/structUuid';
 export * from './definitions/TaggingAttribute';
 
-export * from './internal/BrowserTracker';
-export * from './internal/compareTrackerConfigs';
-export * from './internal/findParentTaggedElements';
-export * from './internal/getElementLocationStack';
-export * from './internal/getLocationHref';
-export * from './internal/objectivWindowInterface';
-export * from './internal/trackerErrorHandler';
-export * from './internal/windowExists';
+export * from './helpers/compareTrackerConfigs';
+export * from './helpers/findParentTaggedElements';
+export * from './helpers/getElementLocationStack';
+export * from './helpers/getLocationHref';
+export * from './helpers/objectivWindowInterface';
+export * from './helpers/trackerErrorHandler';
+export * from './helpers/windowExists';
 
 export * from './observer/AutoTrackingState';
 export * from './observer/makeBlurEventHandler';
@@ -37,6 +36,7 @@ export * from './transport/FetchAPITransport';
 export * from './transport/TrackerQueueLocalStorageStore';
 export * from './transport/XMLHttpRequestTransport';
 
+export * from './BrowserTracker';
 export * from './getOrMakeTracker';
 export * from './getTracker';
 export * from './getTrackerRepository';

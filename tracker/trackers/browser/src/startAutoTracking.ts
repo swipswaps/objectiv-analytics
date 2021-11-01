@@ -1,7 +1,7 @@
+import { BrowserTrackerConfig } from './BrowserTracker';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
 import { getTracker } from './getTracker';
-import { BrowserTrackerConfig } from './internal/BrowserTracker';
-import { trackerErrorHandler } from './internal/trackerErrorHandler';
+import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 import { AutoTrackingState } from './observer/AutoTrackingState';
 import { makeMutationCallback } from './observer/makeMutationCallback';
 import { trackApplicationLoaded } from './trackEventHelpers';

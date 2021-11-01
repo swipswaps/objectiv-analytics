@@ -1,5 +1,5 @@
+import { BrowserTracker, BrowserTrackerConfig } from './BrowserTracker';
 import { getTrackerRepository } from './getTrackerRepository';
-import { BrowserTracker, BrowserTrackerConfig } from './internal/BrowserTracker';
 import { startAutoTracking } from './startAutoTracking';
 
 /**

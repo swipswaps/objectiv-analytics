@@ -1,7 +1,7 @@
 import { TrackerConsole } from '@objectiv/tracker-core';
+import { BrowserTracker } from '../BrowserTracker';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { BrowserTracker } from '../internal/BrowserTracker';
-import { trackerErrorHandler } from '../internal/trackerErrorHandler';
+import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 import { processTagChildrenElement } from './processTagChildrenElement';
 import { trackNewElement } from './trackNewElement';
 

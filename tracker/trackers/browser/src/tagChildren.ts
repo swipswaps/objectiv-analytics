@@ -5,7 +5,7 @@ import {
 } from './definitions/structChildrenTaggingAttribute';
 import { ChildrenTaggingQueries, ChildrenTaggingQuery } from './definitions/structChildrenTaggingQuery';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
-import { trackerErrorHandler, TrackOnErrorCallback } from './internal/trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from './helpers/trackerErrorHandler';
 
 /**
  * Used to decorate a TaggableElement with our Children Tagging Attributes.

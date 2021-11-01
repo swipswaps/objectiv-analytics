@@ -1,4 +1,4 @@
-import { trackerErrorHandler } from './internal/trackerErrorHandler';
+import { trackerErrorHandler } from './helpers/trackerErrorHandler';
 import { AutoTrackingState } from './observer/AutoTrackingState';
 
 /**

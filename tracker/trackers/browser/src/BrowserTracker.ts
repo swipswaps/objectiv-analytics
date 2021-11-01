@@ -12,9 +12,9 @@ import {
   TrackerTransportRetry,
   TrackerTransportSwitch,
 } from '@objectiv/tracker-core';
-import { FetchAPITransport } from '../transport/FetchAPITransport';
-import { TrackerQueueLocalStorageStore } from '../transport/TrackerQueueLocalStorageStore';
-import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
+import { FetchAPITransport } from './transport/FetchAPITransport';
+import { TrackerQueueLocalStorageStore } from './transport/TrackerQueueLocalStorageStore';
+import { XMLHttpRequestTransport } from './transport/XMLHttpRequestTransport';
 
 /**
  * Browser Tracker can be configured in a easier way, as opposed to the core tracker, by specifying just an `endpoint`.

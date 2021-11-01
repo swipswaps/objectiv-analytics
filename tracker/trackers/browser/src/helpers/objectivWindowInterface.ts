@@ -1,5 +1,5 @@
 import { TrackerRepository } from '@objectiv/tracker-core';
-import { BrowserTracker } from './BrowserTracker';
+import { BrowserTracker } from '../BrowserTracker';
 import { windowExists } from './windowExists';
 
 /**

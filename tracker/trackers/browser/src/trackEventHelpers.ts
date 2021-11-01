@@ -12,9 +12,9 @@ import {
   makeVideoPauseEvent,
   makeVideoStartEvent,
 } from '@objectiv/tracker-core';
+import { BrowserTracker } from './BrowserTracker';
 import { TaggableElement } from './definitions/elements';
-import { BrowserTracker } from './internal/BrowserTracker';
-import { trackerErrorHandler, TrackOnErrorCallback } from './internal/trackerErrorHandler';
+import { trackerErrorHandler, TrackOnErrorCallback } from './helpers/trackerErrorHandler';
 import { trackEvent } from './trackEvent';
 
 /**

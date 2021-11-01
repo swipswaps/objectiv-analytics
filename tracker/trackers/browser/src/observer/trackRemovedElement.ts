@@ -1,9 +1,9 @@
 import { TrackerElementLocations } from '@objectiv/tracker-core';
+import { BrowserTracker } from '../BrowserTracker';
 import { isTaggedElement } from '../definitions/guards';
 import { parseTrackVisibilityAttribute } from '../definitions/structTaggingAttributes';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { BrowserTracker } from '../internal/BrowserTracker';
-import { trackerErrorHandler } from '../internal/trackerErrorHandler';
+import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 import { trackSectionHidden } from '../trackEventHelpers';
 
 /**

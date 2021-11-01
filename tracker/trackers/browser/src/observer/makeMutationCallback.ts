@@ -2,8 +2,8 @@ import { TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core'
 import { isTaggedElement } from '../definitions/guards';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { getTracker } from '../getTracker';
-import { getLocationHref } from '../internal/getLocationHref';
-import { trackerErrorHandler } from '../internal/trackerErrorHandler';
+import { getLocationHref } from '../helpers/getLocationHref';
+import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 import { trackURLChange } from '../trackEventHelpers';
 import { AutoTrackingState } from './AutoTrackingState';
 import { trackNewElements } from './trackNewElements';

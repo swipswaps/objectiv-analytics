@@ -1,8 +1,8 @@
+import { BrowserTracker } from '../BrowserTracker';
 import { TaggedElement } from '../definitions/elements';
 import { parseTrackVisibilityAttribute } from '../definitions/structTaggingAttributes';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { BrowserTracker } from '../internal/BrowserTracker';
-import { trackerErrorHandler } from '../internal/trackerErrorHandler';
+import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 import { trackSectionVisible } from '../trackEventHelpers';
 
 /**
