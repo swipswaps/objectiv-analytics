@@ -600,8 +600,8 @@ class BuhTuhDataFrame:
         for k in (keys if isinstance(keys, list) else [keys]):
             idx_series: BuhTuhSeries
             if isinstance(k, BuhTuhSeries):
-                if k.base_node != df.base_node:
-                    raise ValueError('index series should have same base_node as df')
+                if k.base_node != df.base_node or k.group_by != df.group_by:
+                    raise ValueError('index series should have same base_node and group_by as df')
                 idx_series = k
             else:
                 if k not in df.all_series:
