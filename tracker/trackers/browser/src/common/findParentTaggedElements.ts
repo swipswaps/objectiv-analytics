@@ -1,7 +1,7 @@
 import { TaggableElement } from '../definitions/TaggableElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { isParentTaggedElement } from './isParentTaggedElement';
-import { isTaggedElement } from './isTaggedElement';
+import { isParentTaggedElement } from './guards/isParentTaggedElement';
+import { isTaggedElement } from './guards/isTaggedElement';
 
 /**
  * Walk the DOM upwards looking for Tagged Elements. The resulting array can be used to reconstruct a Location Stack.

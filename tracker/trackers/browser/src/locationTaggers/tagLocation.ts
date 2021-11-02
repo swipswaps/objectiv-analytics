@@ -1,16 +1,16 @@
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
 import { create, is, validate } from 'superstruct';
+import { runIfValueIsNotUndefined } from '../common/runIfValueIsNotUndefined';
+import { stringifyLocationContext } from '../common/stringifier/stringifyLocationContext';
+import { stringifyTrackClicksAttribute } from '../common/stringifier/stringifyTrackClicksAttribute';
+import { stringifyTrackVisibilityAttribute } from '../common/stringifier/stringifyTrackVisibilityAttribute';
+import { stringifyValidateAttribute } from '../common/stringifier/stringifyValidateAttribute';
+import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { AnyClickableContext, AnySectionContext, InputContext } from '../definitions/LocationContext';
 import { StringifiedLocationTaggingAttributes } from '../definitions/StringifiedLocationTaggingAttributes';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { TagLocationParameters } from '../definitions/TagLocationParameters';
 import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
-import { runIfValueIsNotUndefined } from '../helpers/runIfValueIsNotUndefined';
-import { stringifyLocationContext } from '../helpers/stringifyLocationContext';
-import { stringifyTrackClicksAttribute } from '../helpers/stringifyTrackClicksAttribute';
-import { stringifyTrackVisibilityAttribute } from '../helpers/stringifyTrackVisibilityAttribute';
-import { stringifyValidateAttribute } from '../helpers/stringifyValidateAttribute';
-import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 
 /**
  * Used to decorate a Taggable Element with our Tagging Attributes.

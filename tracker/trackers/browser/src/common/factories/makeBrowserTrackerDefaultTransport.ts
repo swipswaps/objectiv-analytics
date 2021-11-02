@@ -1,7 +1,7 @@
 import { TrackerTransportInterface, TrackerTransportRetry, TrackerTransportSwitch } from '@objectiv/tracker-core';
-import { BrowserTrackerConfig } from '../definitions/BrowserTrackerConfig';
-import { FetchAPITransport } from '../transport/FetchAPITransport';
-import { XMLHttpRequestTransport } from '../transport/XMLHttpRequestTransport';
+import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
+import { FetchAPITransport } from '../../transport/FetchAPITransport';
+import { XMLHttpRequestTransport } from '../../transport/XMLHttpRequestTransport';
 
 /**
  * A factory to create the default Transport of Browser Tracker.

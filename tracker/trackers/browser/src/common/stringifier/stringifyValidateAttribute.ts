@@ -1,4 +1,4 @@
-import { ValidateAttribute } from '../definitions/ValidateAttribute';
+import { ValidateAttribute } from '../../definitions/ValidateAttribute';
 import { stringifyJson } from './stringifyJson';
 
 /**

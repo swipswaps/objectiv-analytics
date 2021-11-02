@@ -1,4 +1,4 @@
-import { trackerErrorHandler } from './helpers/trackerErrorHandler';
+import { trackerErrorHandler } from './common/trackerErrorHandler';
 import { AutoTrackingState } from './mutationObserver/AutoTrackingState';
 
 /**

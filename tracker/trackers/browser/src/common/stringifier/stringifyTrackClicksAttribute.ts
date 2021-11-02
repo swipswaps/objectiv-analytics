@@ -1,4 +1,4 @@
-import { TrackClicksAttribute } from '../definitions/TrackClicksAttribute';
+import { TrackClicksAttribute } from '../../definitions/TrackClicksAttribute';
 import { stringifyJson } from './stringifyJson';
 
 /**

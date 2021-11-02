@@ -1,5 +1,5 @@
-import { TrackClicksAttribute } from '../definitions/TrackClicksAttribute';
-import { TrackClicksOptions } from '../definitions/TrackClicksOptions';
+import { TrackClicksAttribute } from '../../definitions/TrackClicksAttribute';
+import { TrackClicksOptions } from '../../definitions/TrackClicksOptions';
 import { parseJson } from './parseJson';
 
 /**

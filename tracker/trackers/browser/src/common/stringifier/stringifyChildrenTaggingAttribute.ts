@@ -1,6 +1,6 @@
 import { assert, create, string } from 'superstruct';
-import { ChildrenTaggingQueries } from '../definitions/ChildrenTaggingQueries';
-import { ValidChildrenTaggingQuery } from '../definitions/ValidChildrenTaggingQuery';
+import { ChildrenTaggingQueries } from '../../definitions/ChildrenTaggingQueries';
+import { ValidChildrenTaggingQuery } from '../../definitions/ValidChildrenTaggingQuery';
 
 /**
  * ChildrenTaggingAttribute stringifier

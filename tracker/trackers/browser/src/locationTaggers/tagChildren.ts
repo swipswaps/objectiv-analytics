@@ -1,11 +1,11 @@
 import { assert, validate } from 'superstruct';
+import { stringifyChildrenTaggingAttribute } from '../common/stringifier/stringifyChildrenTaggingAttribute';
+import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { ChildrenTaggingQueries } from '../definitions/ChildrenTaggingQueries';
 import { StringifiedChildrenLocationTaggingAttributes } from '../definitions/StringifiedChildrenTaggingAttribute';
 import { TagChildrenReturnValue } from '../definitions/TagChildrenReturnValue';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerCallback';
-import { stringifyChildrenTaggingAttribute } from '../helpers/stringifyChildrenTaggingAttribute';
-import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 
 /**
  * Used to decorate a TaggableElement with our Children Tagging Attributes.

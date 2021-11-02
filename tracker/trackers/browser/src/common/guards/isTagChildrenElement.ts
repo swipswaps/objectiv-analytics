@@ -1,6 +1,6 @@
-import { GuardableElement } from '../definitions/GuardableElement';
-import { TagChildrenElement } from '../definitions/TagChildrenElement';
-import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { GuardableElement } from '../../definitions/GuardableElement';
+import { TagChildrenElement } from '../../definitions/TagChildrenElement';
+import { TaggingAttribute } from '../../definitions/TaggingAttribute';
 import { isTaggableElement } from './isTaggableElement';
 
 /**

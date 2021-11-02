@@ -1,4 +1,4 @@
-import { AnyLocationContext } from '../definitions/LocationContext';
+import { AnyLocationContext } from '../../definitions/LocationContext';
 import { stringifyJson } from './stringifyJson';
 
 /**

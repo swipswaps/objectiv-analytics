@@ -3,8 +3,8 @@ import { BrowserTracker } from '../BrowserTracker';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { TrackedElement } from '../definitions/TrackedElement';
 import { findParentTaggedElements } from './findParentTaggedElements';
-import { isTaggableElement } from './isTaggableElement';
-import { parseLocationContext } from './parseLocationContext';
+import { isTaggableElement } from './guards/isTaggableElement';
+import { parseLocationContext } from './parser/parseLocationContext';
 import { trackerErrorHandler } from './trackerErrorHandler';
 
 /**

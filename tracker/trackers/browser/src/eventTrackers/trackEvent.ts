@@ -1,10 +1,10 @@
 import { LocationStack, TrackerEvent, UntrackedEvent } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
+import { getElementLocationStack } from '../common/getElementLocationStack';
+import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TrackedElement } from '../definitions/TrackedElement';
 import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerCallback';
 import { getTracker } from '../getTracker';
-import { getElementLocationStack } from '../helpers/getElementLocationStack';
-import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 
 /**
  * 1. Reconstruct a LocationStack for the given Element by traversing its DOM parents

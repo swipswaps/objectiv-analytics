@@ -1,4 +1,4 @@
-import { TrackVisibilityAttribute } from '../definitions/TrackVisibilityAttribute';
+import { TrackVisibilityAttribute } from '../../definitions/TrackVisibilityAttribute';
 import { parseJson } from './parseJson';
 
 /**

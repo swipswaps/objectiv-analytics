@@ -1,4 +1,4 @@
-import { getLocationHref } from '../helpers/getLocationHref';
+import { getLocationHref } from '../common/getLocationHref';
 
 /**
  * Hold an instance of the Mutation Observer and some state for some global events, like URLs and Application Loaded.

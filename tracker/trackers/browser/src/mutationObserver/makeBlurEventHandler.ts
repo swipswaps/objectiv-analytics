@@ -1,8 +1,8 @@
 import { BrowserTracker } from '../BrowserTracker';
+import { isTaggedElement } from '../common/guards/isTaggedElement';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { trackInputChange } from '../eventTrackers/trackInputChange';
-import { isTaggedElement } from '../helpers/isTaggedElement';
 
 /**
  * A factory to make the event handler to attach to new TaggedElements with the `trackBlurs` attributes set
