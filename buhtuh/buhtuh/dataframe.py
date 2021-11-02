@@ -574,7 +574,7 @@ class BuhTuhDataFrame:
         df = self if inplace else self.copy_override()
         if self._group_by:
             # materialize, but raise if inplace is required.
-            df = df.get_df_materialized_model(inplace)
+            df = df.get_df_materialized_model(node_name='reset_index', inplace=inplace)
 
         series = df._data if drop else df.all_series
         df._data = {n: s.copy_override(index={}) for n, s in series.items()}

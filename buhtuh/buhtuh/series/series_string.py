@@ -6,6 +6,7 @@ from typing import Union
 from buhtuh.series import BuhTuhSeries, const_to_series
 from buhtuh.expression import Expression
 
+
 class StringOperation:
 
     def __init__(self, base: 'BuhTuhSeriesString'):
