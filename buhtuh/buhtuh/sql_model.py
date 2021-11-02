@@ -4,8 +4,7 @@ Copyright 2021 Objectiv B.V.
 from typing import Dict, Any, Union, Sequence, TypeVar
 
 from buhtuh.expression import Expression
-from sql_models.model import CustomSqlModel, SqlModelSpec, SqlModel, SqlModelBuilder
-
+from sql_models.model import CustomSqlModel, SqlModel, SqlModelBuilder, SqlModelSpec
 
 TB = TypeVar('TB', bound='BuhTuhSqlModel')
 
@@ -49,5 +48,5 @@ class BuhTuhSqlModel(CustomSqlModel):
             elif isinstance(v, Expression):
                 rv[k] = v.to_sql()
             else:
-                SqlModelSpec.escape_format_string(str(v))
+                rv[k] = SqlModelSpec.escape_format_string(str(v))
         return rv
