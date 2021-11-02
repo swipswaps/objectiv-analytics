@@ -38,7 +38,7 @@ export * from './definitions/LocationContext';
 export * from './definitions/LocationTaggerParameters';
 export * from './definitions/NonInteractiveEventTrackerParameters';
 export * from './definitions/ParentTaggedElement';
-export * from './definitions/StringifiedChildrenTaggingAttribute';
+export * from './definitions/StringifiedChildrenTaggingAttributes';
 export * from './definitions/StringifiedLocationTaggingAttributes';
 export * from './definitions/TagButtonParameters';
 export * from './definitions/TagChildrenElement';
