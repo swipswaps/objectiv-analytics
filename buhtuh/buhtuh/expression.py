@@ -9,6 +9,7 @@ from sql_models.model import SqlModel, SqlModelSpec
 
 if TYPE_CHECKING:
     from buhtuh import BuhTuhSeries
+    from buhtuh.sql_model import BuhTuhSqlModel
 
 
 @dataclass(frozen=True)

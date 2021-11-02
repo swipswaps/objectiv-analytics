@@ -29,7 +29,7 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['bool'], other)
+        other = self._get_supported(f"comparator '{comparator}'", ['bool'], other)
         expression = Expression.construct(f'({{}} {comparator} {{}})', self, other)
         return self.copy_override(dtype='bool', expression=expression)
 
@@ -37,12 +37,16 @@ class BuhTuhSeriesBoolean(BuhTuhSeries, ABC):
         # TODO maybe "other" should have a way to tell us it can be a bool?
         # TODO we're missing "NOT" here. https://www.postgresql.org/docs/13/functions-logical.html
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"boolean operator '{operator}'", ['bool', 'int64', 'float'], other)
+        other = self._get_supported(f"boolean operator '{operator}'", ['bool', 'int64', 'float'], other)
         if other.dtype != 'bool':
             expression = Expression.construct(f'(({{}}) {operator} cast({{}} as bool))', self, other)
         else:
             expression = Expression.construct(f'(({{}}) {operator} ({{}}))', self, other)
         return self.copy_override(dtype='bool', expression=expression)
+
+    def __invert__(self) -> 'BuhTuhSeriesBoolean':
+        expression = Expression.construct('NOT ({})', self)
+        return self.copy_override(expression=expression)
 
     def __and__(self, other) -> 'BuhTuhSeriesBoolean':
         return self._boolean_operator(other, 'AND')

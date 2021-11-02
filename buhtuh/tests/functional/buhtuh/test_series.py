@@ -140,7 +140,7 @@ def test_series_independant_subquery_sets():
     bt = get_bt_with_test_data(full_data_set=True)
     # get 3 smallest cities
     s = bt.sort_values('inhabitants', True)[:3]
-    result_bt = bt[bt.city.in_set(s.city)]
+    result_bt = bt[bt.city.isin(s.city)]
     assert_equals_data(
         result_bt[['city', 'inhabitants']],
         expected_columns=['_index_skating_order', 'city', 'inhabitants'],
@@ -148,7 +148,8 @@ def test_series_independant_subquery_sets():
             [4, 'Sleat', 700], [5, 'Starum', 960], [6, 'Hylpen', 870]
         ]
     )
-    result_bt = bt[bt.city.not_in_set(s.city)]
+
+    result_bt = bt[~bt.city.isin(s.city)]
     assert_equals_data(
         result_bt[['city', 'inhabitants']],
         expected_columns=['_index_skating_order', 'city', 'inhabitants'],
@@ -157,3 +158,43 @@ def test_series_independant_subquery_sets():
             [8, 'Boalsert', 10120], [9, 'Harns', 14740], [10, 'Frjentsjer', 12760], [11, 'Dokkum', 12675]
         ]
     )
+
+
+def test_series_independant_subquery_single():
+    bt = get_bt_with_test_data(full_data_set=True)
+    # get smallest city
+    s = bt.sort_values('inhabitants', True)[:1]
+    result_bt = bt[bt.city == s.city]
+    assert_equals_data(
+        result_bt[['city', 'inhabitants']],
+        expected_columns=['_index_skating_order', 'city', 'inhabitants'],
+        expected_data=[
+            [4, 'Sleat', 700]
+        ]
+    )
+    # and some math
+    bt = get_bt_with_test_data(full_data_set=False)
+    result_bt = bt.inhabitants + s.inhabitants
+    assert_equals_data(
+        result_bt,
+        expected_columns=['_index_skating_order', 'inhabitants'],
+        expected_data=[
+            [1, 94185], [2, 34220], [3, 3755]
+        ]
+    )
+
+
+def test_series_different_aggregations():
+    bt = get_bt_with_test_data(full_data_set=True)
+    v =  bt.groupby('municipality').skating_order.nunique() / bt.skating_order.nunique()
+    assert_equals_data(
+        v,
+        expected_columns=['municipality', 'skating_order'],
+        expected_data=[['De Friese Meren', 0.09090909090909091], ['Harlingen', 0.09090909090909091],
+                       ['Leeuwarden', 0.09090909090909091], ['Noardeast-Fryslân', 0.09090909090909091],
+                       ['Súdwest-Fryslân', 0.5454545454545454], ['Waadhoeke', 0.09090909090909091]]
+    )
+    # TODO we could try to detect this.
+    with pytest.raises(Exception, match='more than one row returned by a subquery used as an expression'):
+        v = bt.skating_order.nunique() / bt.groupby('municipality').skating_order.nunique()
+        v.head()

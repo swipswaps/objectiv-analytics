@@ -22,33 +22,33 @@ class BuhTuhSeriesAbstractNumeric(BuhTuhSeries, ABC):
 
     def __add__(self, other) -> 'BuhTuhSeries':
         other = const_to_series(base=self, value=other)
-        self._check_supported('add', ['int64', 'float64'], other)
+        other = self._get_supported('add', ['int64', 'float64'], other)
         expression = Expression.construct('({}) + ({})', self, other)
         new_dtype = 'float64' if 'float64' in (self.dtype, other.dtype) else 'int64'
         return self.copy_override(dtype=new_dtype, expression=expression)
 
     def __sub__(self, other) -> 'BuhTuhSeries':
         other = const_to_series(base=self, value=other)
-        self._check_supported('sub', ['int64', 'float64'], other)
+        other = self._get_supported('sub', ['int64', 'float64'], other)
         expression = Expression.construct('({}) - ({})', self, other)
         new_dtype = 'float64' if 'float64' in (self.dtype, other.dtype) else 'int64'
         return self.copy_override(dtype=new_dtype, expression=expression)
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['int64', 'float64'], other)
+        other = self._get_supported(f"comparator '{comparator}'", ['int64', 'float64'], other)
         expression = Expression.construct(f'({{}} {comparator} {{}})', self, other)
         return self.copy_override(dtype='bool', expression=expression)
 
     def __truediv__(self, other):
         other = const_to_series(base=self, value=other)
-        self._check_supported('division', ['int64', 'float64'], other)
+        other = self._get_supported('division', ['int64', 'float64'], other)
         expression = Expression.construct('cast({} as float) / ({})', self, other)
         return self.copy_override(dtype='float64', expression=expression)
 
     def __floordiv__(self, other):
         other = const_to_series(base=self, value=other)
-        self._check_supported('division', ['int64', 'float64'], other)
+        other = self._get_supported('division', ['int64', 'float64'], other)
         expression = Expression.construct('cast({} as bigint) / ({})', self, other)
         return self.copy_override(dtype='int64', expression=expression)
 

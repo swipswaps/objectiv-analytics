@@ -44,7 +44,7 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['timestamp', 'date', 'string'], other)
+        other = self._get_supported(f"comparator '{comparator}'", ['timestamp', 'date', 'string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
         return self.copy_override(dtype='bool', expression=expression)
 
@@ -60,7 +60,7 @@ class BuhTuhSeriesTimestamp(BuhTuhSeries):
 
     def __sub__(self, other) -> 'BuhTuhSeriesTimestamp':
         other = const_to_series(base=self, value=other)
-        self._check_supported('sub', ['timestamp', 'date', 'time'], other)
+        other = self._get_supported('sub', ['timestamp', 'date', 'time'], other)
         expression = Expression.construct('({}) - ({})', self, other)
         return self.copy_override(dtype='timedelta', expression=expression)
 
@@ -120,7 +120,7 @@ class BuhTuhSeriesTime(BuhTuhSeries):
     def _comparator_operator(self, other, comparator):
         from buhtuh.series import const_to_series
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['time', 'string'], other)
+        other = self._get_supported(f"comparator '{comparator}'", ['time', 'string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
         return self.copy_override(dtype='bool', expression=expression)
 
@@ -151,7 +151,8 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['timedelta', 'date', 'time', 'string'], other)
+        other = self._get_supported(f"comparator '{comparator}'",
+                                    ['timedelta', 'date', 'time', 'string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
         return self.copy_override(dtype='bool', expression=expression)
 
@@ -167,13 +168,13 @@ class BuhTuhSeriesTimedelta(BuhTuhSeries):
 
     def __add__(self, other) -> 'BuhTuhSeriesTimedelta':
         other = const_to_series(base=self, value=other)
-        self._check_supported('add', ['timedelta', 'timestamp', 'date', 'time'], other)
+        other = self._get_supported('add', ['timedelta', 'timestamp', 'date', 'time'], other)
         expression = Expression.construct('({}) + ({})', self, other)
         return self.copy_override(dtype='timedelta', expression=expression)
 
     def __sub__(self, other) -> 'BuhTuhSeriesTimedelta':
         other = const_to_series(base=self, value=other)
-        self._check_supported('sub', ['timedelta', 'timestamp', 'date', 'time'], other)
+        other = self._get_supported('sub', ['timedelta', 'timestamp', 'date', 'time'], other)
         expression = Expression.construct('({}) - ({})', self, other)
         return self.copy_override(dtype='timedelta', expression=expression)
 

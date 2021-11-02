@@ -25,13 +25,13 @@ class BuhTuhSeriesString(BuhTuhSeries):
 
     def __add__(self, other) -> 'BuhTuhSeries':
         other = const_to_series(base=self, value=other)
-        self._check_supported('add', ['string'], other)
+        other = self._get_supported('add', ['string'], other)
         expression = Expression.construct('({}) || ({})', self, other)
         return self.copy_override(dtype='string', expression=expression)
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['string'], other)
+        other = self._get_supported(f"comparator '{comparator}'", ['string'], other)
         expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
         return self.copy_override(dtype='bool', expression=expression)
 

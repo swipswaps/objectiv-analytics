@@ -210,6 +210,7 @@ class BuhTuhSeries(ABC):
             If value is not in supported_value_types raises an error.
         :raises TypeError: if value is not an instance of cls.supported_value_types, and not None
         """
+        # We should wrap this in a ConstValueExpression or something
         if value is None:
             return Expression.raw('NULL')
         supported_types = cast(Tuple[Type, ...], cls.supported_value_types)  # help mypy
@@ -265,16 +266,22 @@ class BuhTuhSeries(ABC):
             return expression
         return Expression.construct(f'{{}} as {quoted_column_name}', expression)
 
-    def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'BuhTuhSeries'):
+    def _get_supported(self, operation_name: str, supported_dtypes: List[str], other: 'BuhTuhSeries'):
 
-        if self.base_node != other.base_node:
-            raise ValueError(f'Cannot apply {operation_name} on two series with different base_node. '
-                             f'Hint: make sure both series belong to or are derived from the same '
-                             f'DataFrame. '
-                             f'Alternative: use merge() to create a DataFrame with both series. ')
+        if self.base_node != other.base_node or self.group_by != other.group_by:
+            if other.name != '__const__':
+                # TODO check whether a subquery would be a good option aka
+                # that we're sure it'll be a single value
+                other = self._independent_subquery(other)
+
+            # raise ValueError(f'Cannot apply {operation_name} on two series with different base_node. '
+            #                  f'Hint: make sure both series belong to or are derived from the same '
+            #                  f'DataFrame. '
+            #                  f'Alternative: use merge() to create a DataFrame with both series. ')
 
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
+        return other
 
     def head(self, n: int = 5):
         """
@@ -311,10 +318,11 @@ class BuhTuhSeries(ABC):
         )
 
     @staticmethod
-    def _independent_subquery(series, operation: str) -> 'BuhTuhSeries':
+    def _independent_subquery(series, operation: str = None) -> 'BuhTuhSeries':
         # This will give us a dataframe that contains our series as a materialized column in the base_node
         df = series.to_frame().get_df_materialized_model()
-        expr = Expression.construct(f'{operation} (SELECT {{}} FROM {{}})',
+        fmt_string = f'{operation} (SELECT {{}} FROM {{}})' if operation else f'(SELECT {{}} FROM {{}})'
+        expr = Expression.construct(fmt_string,
                                     Expression.column_reference(series.name),
                                     Expression.model_reference(df.base_node))
 
@@ -334,13 +342,9 @@ class BuhTuhSeries(ABC):
     def all(self):
         return BuhTuhSeries._independent_subquery(self, 'all')
 
-    def in_set(self, other: 'BuhTuhSeries'):
+    def isin(self, other: 'BuhTuhSeries'):
         in_expr = Expression.construct('{} {}', self, BuhTuhSeries._independent_subquery(other, 'in'))
         return self.copy_override(expression=in_expr, dtype='boolean')
-
-    def not_in_set(self, other: 'BuhTuhSeries'):
-        not_in_expr = Expression.construct('{} not {}', self, BuhTuhSeries._independent_subquery(other, 'in'))
-        return self.copy_override(expression=not_in_expr, dtype='boolean')
 
     def astype(self, dtype: Union[str, Type]) -> 'BuhTuhSeries':
         if dtype == self.dtype or dtype in self.dtype_aliases:
@@ -625,6 +629,8 @@ class BuhTuhSeries(ABC):
         else:
             partition = self._check_unwrap_groupby(partition)
 
+        # We should wrap these expressions in something that tags them as an aggregation / window
+        # We should also flag if we expect a single value
         if min_count is not None and min_count > 0:
             if isinstance(partition, BuhTuhWindow):
                 if partition.min_values != min_count:
@@ -838,7 +844,8 @@ def const_to_series(base: Union[BuhTuhSeries, BuhTuhDataFrame],
         if value.base_node is None:
             return value.copy_override(base_node=base.base_node)
         return value
-    name = '__tmp' if name is None else name
+    # We need to wrap a const expression in a ConstExpression or something like it.
+    name = '__const__' if name is None else name
     dtype = value_to_dtype(value)
     series_type = get_series_type_from_dtype(dtype)
     return series_type.from_const(base=base, value=value, name=name)

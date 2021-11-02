@@ -72,7 +72,7 @@ class BuhTuhSeriesJsonb(BuhTuhSeries):
 
     def _comparator_operator(self, other, comparator):
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['json', 'jsonb'], other)
+        other = self._get_supported(f"comparator '{comparator}'", ['json', 'jsonb'], other)
         expression = Expression.construct(
             f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
             self.expression, other.expression
