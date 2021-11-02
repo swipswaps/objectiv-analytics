@@ -1,7 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import NamedTuple, List, Dict, Set, Tuple, Optional
+from collections import deque
+from typing import NamedTuple, List, Dict, Set, Tuple, Optional, Callable, Deque
 
 from sql_models.model import SqlModel, RefPath
 
@@ -18,6 +19,11 @@ class NodeInfo(NamedTuple):
     # `list`, instead of their full types: List['NodeInfo']
     in_edges: list
     out_edges: list
+
+
+class FoundNode(NamedTuple):
+    model: SqlModel
+    reference_path: RefPath
 
 
 def get_graph_nodes_info(start_node: SqlModel) -> List[NodeInfo]:
@@ -98,6 +104,41 @@ def get_node(start_node: SqlModel, reference_path: RefPath) -> SqlModel:
     if first not in start_node.references:
         raise ValueError(f'Reference {first} does not exist in model {start_node}')
     return get_node(start_node.references[first], rest)
+
+
+def find_nodes(start_node: SqlModel, function: Callable[[SqlModel], bool]) -> List[FoundNode]:
+    """
+    Return all nodes for which function returns True, which can be found by recursively traversing the
+    references starting at start_node.
+
+    This function uses a breadth first approach, and the returned FoundNodes are in the order they were
+    found. If a node is encountered multiple times, then only the first occurrence will be in the result.
+
+    :param start_node: start node
+    :param function: Function that should return either True or False for a given SqlModel
+    :return: A list of tuples. Each tuple contains the found SqlModel and a reference path to that model
+    """
+    found_nodes = set()
+    result: List[FoundNode] = []
+    queue: Deque[Tuple[SqlModel, RefPath]] = deque()
+    queue.append((start_node, tuple()))
+    while queue:
+        node, path = queue.popleft()
+        if function(node) and node not in found_nodes:
+            found_nodes.add(node)
+            result.append(FoundNode(node, path))
+        for next_path, next_node in node.references.items():
+            next_tuple = (next_node, path + (next_path,))
+            queue.append(next_tuple)
+    return result
+
+
+def find_node(start_node: SqlModel, function: Callable[[SqlModel], bool]) -> Optional[FoundNode]:
+    """ Similar to find_nodes, but will only return the first found node, or None if none are found. """
+    result = find_nodes(start_node, function)
+    if not result:
+        return None
+    return result[0]
 
 
 def replace_node_in_graph(start_node: SqlModel,

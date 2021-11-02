@@ -5,7 +5,8 @@ from typing import List
 
 import pytest
 
-from sql_models.graph_operations import get_graph_nodes_info, get_node, get_node_info_selected_node
+from sql_models.graph_operations import get_graph_nodes_info, get_node, get_node_info_selected_node, \
+    find_nodes, find_node, FoundNode
 from sql_models.model import RefPath, SqlModel
 from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel
 
@@ -132,6 +133,44 @@ def test_get_node_info_selected_node_duplicate_paths():
     assert len(node_info2.out_edges) == 2
     assert len(node_info1.in_edges) == 0
     assert len(node_info1.in_edges) == 0
+
+
+def test_find_nodes():
+    vm1 = ValueModel.build(key='a', val=1)
+    vm2 = ValueModel.build(key='a', val=2)
+    rm = RefModel.build(ref=vm1)
+    jm = JoinModel.build(ref_left=rm, ref_right=vm2)
+    graph = JoinModel.build(ref_left=jm, ref_right=vm1)
+
+    # find none
+    assert find_node(graph, lambda node: False) is None
+    assert find_nodes(graph, lambda node: False) == []
+
+    # fine all
+    assert find_node(graph, lambda node: True) == FoundNode(model=graph, reference_path=tuple())
+    expected_result = [
+        FoundNode(model=graph, reference_path=tuple()),
+        FoundNode(model=jm, reference_path=('ref_left',)),
+        FoundNode(model=vm1, reference_path=('ref_right',)),
+        FoundNode(model=rm, reference_path=('ref_left', 'ref_left')),
+        FoundNode(model=vm2, reference_path=('ref_left', 'ref_right'))
+    ]
+    assert find_nodes(graph, lambda node: True) == expected_result
+
+    # fine one
+    assert find_node(graph, lambda node: node.generic_name == 'RefModel') == \
+           FoundNode(model=rm, reference_path=('ref_left', 'ref_left'))
+    assert find_nodes(graph, lambda node: node.generic_name == 'RefModel') == [
+        FoundNode(model=rm, reference_path=('ref_left', 'ref_left'))
+    ]
+
+    # fine some
+    assert find_node(graph, lambda node: node.generic_name == 'ValueModel') == \
+           FoundNode(model=vm1, reference_path=('ref_right',))
+    assert find_nodes(graph, lambda node: node.generic_name == 'ValueModel') == [
+        FoundNode(model=vm1, reference_path=('ref_right',)),
+        FoundNode(model=vm2, reference_path=('ref_left', 'ref_right'))
+    ]
 
 
 def _assert_graph_difference(graph: SqlModel,
