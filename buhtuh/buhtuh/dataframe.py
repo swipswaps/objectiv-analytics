@@ -1,17 +1,17 @@
 from collections import deque
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
-    TYPE_CHECKING, Callable, Deque
+    TYPE_CHECKING, Callable
 from uuid import UUID
 
 import pandas
 from sqlalchemy.engine import Engine
 
 from buhtuh.expression import Expression
-from buhtuh.sql_model import BuhTuhSqlModel
+from buhtuh.sql_model import BuhTuhSqlModel, SampleSqlModel
 from buhtuh.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from sql_models.graph_operations import replace_node_in_graph
-from sql_models.model import SqlModel, CustomSqlModel, RefPath, SqlModelSpec, Materialization
+from sql_models.graph_operations import replace_node_in_graph, find_node
+from sql_models.model import SqlModel
 from sql_models.sql_generator import to_sql
 
 if TYPE_CHECKING:
@@ -25,20 +25,6 @@ ColumnNames = Union[str, List[str]]
 class SortColumn(NamedTuple):
     expression: Expression
     asc: bool
-
-
-class CustomSampleSqlModel(SqlModel):
-    # TODO: move
-    # TODO: docs
-    def __init__(self, table_name: str, previous: SqlModel):
-        self.previous = previous
-        sql = f'SELECT * FROM {table_name}'
-        super().__init__(
-            model_spec=CustomSqlModel(sql=sql, name='sample_node'),
-            properties={},
-            references={},
-            materialization=Materialization.CTE
-        )
 
 
 class BuhTuhDataFrame:
@@ -415,6 +401,83 @@ class BuhTuhDataFrame:
             order_by=[]
         )
 
+    def get_sample(self,
+                   table_name: str,
+                   sample_percentage: int = 50,
+                   overwrite=False,
+                   seed=200) -> 'BuhTuhDataFrame':
+        """
+        Returns a BuhTuhDataFrame, whose data is a sample of the current BuhTuhDataFrame object. For the
+        sample Dataframe to be created, all data is queried once and a persistent table is created to
+        store the sample data used for the sample BuhTuh frame.
+
+        Use get_unsampled() to switch back to the unsampled data later on.
+
+        This function writes to the database.
+
+        :param: table_name: the name of the underlying sql table that stores the sampled data.
+        :param: sample_percentage: the approximate size of the sample.
+        :param: overwrite: if True, the sample data is written to table_name, even if that table already
+            exists.
+        :param: seed: seed number used to generate the sample.
+        """
+        if self._group_by is not None:
+            print('error: groupby not supported ')
+        if overwrite:
+            sql = f'DROP TABLE IF EXISTS {table_name}'
+            with self.engine.connect() as conn:
+                conn.execute(sql)
+
+        sql = f'''
+            create temporary table tmp_table_name on commit drop as
+            ({self.view_sql()});
+            create table {table_name} as
+            (select * from tmp_table_name
+            tablesample bernoulli({sample_percentage}) repeatable ({seed}))
+        '''
+        with self.engine.connect() as conn:
+            conn.execute(sql)
+
+        # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
+        # in get_unsampled() if we want to.
+        current_node = self.get_current_node(name='before_sampling')
+        new_base_node = SampleSqlModel(table_name=table_name, previous=current_node)
+
+        return BuhTuhDataFrame.get_instance(
+            engine=self.engine,
+            base_node=new_base_node,
+            index_dtypes=self.index_dtypes,
+            dtypes=self.dtypes,
+            group_by=None
+        )
+
+    def get_unsampled(self) -> 'BuhTuhDataFrame':
+        """
+        Return a copy of the current DataFrame, that undoes calling `get_sample()` earlier while maintaining
+        all other operations that have been done since.
+
+        The returned DataFrame has a modified base_node graph, in which the node that introduced the sampling
+        is removed. This does not remove the table that was written to the database by get_sample(), the
+        new DataFrame just does not query that table anymore.
+
+        Will raise an error if the current Frame doesn't contain sampled data, i.e. get_sample() has not been
+        called.
+        """
+        sampled_node_tuple = find_node(
+            start_node=self.base_node,
+            function=lambda node: isinstance(node, SampleSqlModel)
+        )
+        if sampled_node_tuple is None:
+            raise ValueError('No sampled node found. Cannot unsample data that has not been sampled.')
+
+        assert isinstance(sampled_node_tuple.model, SampleSqlModel)  # help mypy
+        updated_graph = replace_node_in_graph(
+            start_node=self.base_node,
+            reference_path=sampled_node_tuple.reference_path,
+            replacement_model=sampled_node_tuple.model.previous
+        )
+        return self.copy_override(base_node=updated_graph)
+
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'BuhTuhSeriesBoolean']) -> DataFrameOrSeries:
         """
@@ -469,75 +532,6 @@ class BuhTuhDataFrame:
 
     def __getattr__(self, attr):
         return self._data[attr]
-
-    def get_sample(self,
-                   table_name: str,
-                   sample_percentage: int = 50,
-                   overwrite=False,
-                   seed=200) -> 'BuhTuhDataFrame':
-        """
-        Returns a BuhTuhDataFrameSample, which is a sample of the current BuhTuhDataFrame object. For the
-        sample BuhTuh frame to be created, all data is queried once and a persistant table is created to
-        store the sample data used for the sample BuhTuh frame.
-
-        :param: table_name: the name of the underlying sql table that stores the sampled data.
-        :param: sample_percentage: the approximate size of the sample.
-        :param: overwrite: if True, the sample data is written to table_name, even if that table already
-            exists.
-        :param: seed: seed number used to generate the sample.
-        """
-        if self._group_by is not None:
-            print('error: groupby not supported ')
-        if overwrite:
-            sql = f'DROP TABLE IF EXISTS {table_name}'
-            with self.engine.connect() as conn:
-                res = conn.execute(sql)
-
-        sql = f'''
-            create temporary table tmp_table_name on commit drop as
-            ({self.view_sql()});
-            create table {table_name} as
-            (select * from tmp_table_name
-            tablesample bernoulli({sample_percentage}) repeatable ({seed}))
-        '''
-        with self.engine.connect() as conn:
-            res = conn.execute(sql)
-
-        model = CustomSampleSqlModel(
-            table_name=table_name,
-            previous=self.get_current_node(name='before_sampling')
-        )
-
-        sampled_bt = BuhTuhDataFrame.get_instance(engine=self.engine,
-                                                  base_node=model,
-                                                  index_dtypes=self.index_dtypes,
-                                                  dtypes=self.dtypes,
-                                                  group_by=None)
-
-        return sampled_bt
-
-    def get_unsampled(self) -> 'BuhTuhDataFrame':
-        # Search for the sample node in the graph
-        sampled_node_tuple: Optional[Tuple[CustomSampleSqlModel, RefPath]] = None
-        queue: Deque[Tuple[SqlModel, RefPath]] = deque()
-        queue.append((self.base_node, tuple()))
-        while queue and sampled_node_tuple is None:
-            node, path = queue.pop()
-            if isinstance(node, CustomSampleSqlModel):
-                sampled_node_tuple = node, path
-            for next_path, next_node in node.references.items():
-                next_tuple = (next_node, path + (next_path, ))
-                queue.append(next_tuple)
-        if sampled_node_tuple is None:
-            raise ValueError('No sampled node found. Cannot unsample data that has not been sampled.')
-
-        # Found sample node, create a new graph without the sample node and build a DataFrame based on that
-        updated_graph = replace_node_in_graph(
-            start_node=self.base_node,
-            reference_path=sampled_node_tuple[1],
-            replacement_model=sampled_node_tuple[0].previous
-        )
-        return self.copy_override(base_node=updated_graph)
 
     def __setitem__(self,
                     key: Union[str, List[str]],

@@ -4,8 +4,7 @@ Copyright 2021 Objectiv B.V.
 from typing import Dict, Any, Union, Sequence, TypeVar
 
 from buhtuh.expression import Expression
-from sql_models.model import CustomSqlModel, SqlModel, SqlModelBuilder
-
+from sql_models.model import CustomSqlModel, SqlModel, SqlModelBuilder, Materialization
 
 TB = TypeVar('TB', bound='BuhTuhSqlModel')
 
@@ -53,3 +52,25 @@ class BuhTuhSqlModel(CustomSqlModel):
                 # strings not coming from to_sql() and thus being escaped, we should replace below.
                 rv[k] = v  # SqlModelSpec.escape_format_string(str(v))
         return rv
+
+
+class SampleSqlModel(SqlModel):
+    """
+    A custom SqlModel simply does select * from a table, and that stores on additional property: previous.
+
+    The previous property is not used in the generated sql at all, but can be used to track a previous
+    SqlModel. This is useful for how we implemented sampling, as that effectively insert a sql-model in the
+    graph that has no regular reference to the previous node in the graph. By storing the previous node
+    here, we can later still reconstruct what the actual previous node was with some custom logic.
+
+    See the DataFrame.sample() implementation for more information
+    """
+    def __init__(self, table_name: str, previous: SqlModel):
+        self.previous = previous
+        sql = f'SELECT * FROM {table_name}'
+        super().__init__(
+            model_spec=CustomSqlModel(sql=sql, name='sample_node'),
+            properties={},
+            references={},
+            materialization=Materialization.CTE
+        )
