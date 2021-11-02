@@ -177,7 +177,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         return deepcopy(self._properties)
 
     @classmethod
-    def build(cls: Type[T], **values) -> 'SqlModel[TB]':
+    def build(cls: Type[TB], **values) -> 'SqlModel[TB]':
         """
         Class method that instantiates this SqlModelBuilder class, and uses it to
         recursively instantiate SqlModel[T].
@@ -185,7 +185,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         This might mutate referenced SqlModelBuilder objects, see instantiate_recursively()
         for more information.
         """
-        builder_instance: TB = cls(**values)  # type: ignore
+        builder_instance: TB = cls(**values)
         return builder_instance.instantiate_recursively()
 
     def instantiate_recursively(self: TB) -> 'SqlModel[TB]':
