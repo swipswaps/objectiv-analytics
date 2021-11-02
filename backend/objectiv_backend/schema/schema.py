@@ -368,31 +368,6 @@ class LinkContext(ActionContext):
         ActionContext.__init__(self, href=href, text=text, id=id, **kwargs)
 
 
-class DeviceContext(AbstractGlobalContext):
-    """
-        Global context containing meta info about the device that emitted the event.
-
-        Attributes:
-        user_agent (str):
-                String describing the user-agent that emitted the event
-        id (str):
-                A unique string identifier to be combined with the Context Type (`_type`)
-                for Context instance uniqueness.
-    """
-    _type = 'DeviceContext'
-
-    def __init__(self, user_agent: str, id: str, **kwargs: Optional[Any]):
-        """
-        :param user_agent: 
-            String describing the user-agent that emitted the event
-        :param id: 
-            A unique string identifier to be combined with the Context Type (`_type`)
-            for Context instance uniqueness.
-        """
-        AbstractGlobalContext.__init__(
-            self, user_agent=user_agent, id=id, **kwargs)
-
-
 class ErrorContext(AbstractGlobalContext):
     """
         Generic global context to encapsulate any errors
@@ -1438,8 +1413,6 @@ def make_context(_type: str, **kwargs) -> AbstractContext:
         return ButtonContext(**kwargs)
     if _type == "LinkContext":
         return LinkContext(**kwargs)
-    if _type == "DeviceContext":
-        return DeviceContext(**kwargs)
     if _type == "ErrorContext":
         return ErrorContext(**kwargs)
     if _type == "CookieIdContext":
