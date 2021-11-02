@@ -1,8 +1,8 @@
 import { makeLinkContext } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
-import { TagLinkParameters } from './definitions/TagLinkParameters';
-import { TagLocationReturnValue } from './definitions/TagLocationReturnValue';
-import { trackerErrorHandler } from './helpers/trackerErrorHandler';
+import { TagLinkParameters } from '../definitions/TagLinkParameters';
+import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
+import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 import { tagLocation } from './tagLocation';
 
 /**

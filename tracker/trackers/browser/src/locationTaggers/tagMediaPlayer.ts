@@ -1,8 +1,8 @@
 import { makeMediaPlayerContext } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
-import { LocationTaggerParameters } from './definitions/LocationTaggerParameters';
-import { TagLocationReturnValue } from './definitions/TagLocationReturnValue';
-import { trackerErrorHandler } from './helpers/trackerErrorHandler';
+import { LocationTaggerParameters } from '../definitions/LocationTaggerParameters';
+import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
+import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 import { tagLocation } from './tagLocation';
 
 /**

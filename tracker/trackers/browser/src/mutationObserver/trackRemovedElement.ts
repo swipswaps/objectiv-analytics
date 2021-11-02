@@ -1,10 +1,10 @@
 import { TrackerElementLocations } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { trackSectionHidden } from '../eventTrackers/trackSectionHidden';
 import { isTaggedElement } from '../helpers/isTaggedElement';
 import { parseTrackVisibilityAttribute } from '../helpers/parseTrackVisibilityAttribute';
 import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
-import { trackSectionHidden } from '../trackSectionHidden';
 
 /**
  * Given a removed Element node it will:

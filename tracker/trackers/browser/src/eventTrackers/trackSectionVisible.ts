@@ -1,5 +1,5 @@
 import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
-import { InteractiveEventTrackerParameters } from './definitions/InteractiveEventTrackerParameters';
+import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';
 
 /**

@@ -1,6 +1,6 @@
 import { makeURLChangeEvent } from '@objectiv/tracker-core';
-import { NonInteractiveEventTrackerParameters } from './definitions/NonInteractiveEventTrackerParameters';
-import { trackerErrorHandler } from './helpers/trackerErrorHandler';
+import { NonInteractiveEventTrackerParameters } from '../definitions/NonInteractiveEventTrackerParameters';
+import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
 import { trackEvent } from './trackEvent';
 
 /**

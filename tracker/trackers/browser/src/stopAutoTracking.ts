@@ -1,5 +1,5 @@
 import { trackerErrorHandler } from './helpers/trackerErrorHandler';
-import { AutoTrackingState } from './observer/AutoTrackingState';
+import { AutoTrackingState } from './mutationObserver/AutoTrackingState';
 
 /**
  * Stops autoTracking

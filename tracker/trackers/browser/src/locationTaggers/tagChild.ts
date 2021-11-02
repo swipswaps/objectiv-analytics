@@ -1,6 +1,6 @@
-import { ChildrenTaggingQuery } from './definitions/ChildrenTaggingQuery';
-import { TagChildrenReturnValue } from './definitions/TagChildrenReturnValue';
-import { TrackerErrorHandlerCallback } from './definitions/TrackerErrorHandlerCallback';
+import { ChildrenTaggingQuery } from '../definitions/ChildrenTaggingQuery';
+import { TagChildrenReturnValue } from '../definitions/TagChildrenReturnValue';
+import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerCallback';
 import { tagChildren } from './tagChildren';
 
 /**

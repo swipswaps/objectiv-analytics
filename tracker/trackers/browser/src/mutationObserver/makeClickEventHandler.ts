@@ -2,8 +2,8 @@ import { BrowserTracker } from '../BrowserTracker';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { TrackClicksOptions } from '../definitions/TrackClicksOptions';
+import { trackClick } from '../eventTrackers/trackClick';
 import { isTaggedElement } from '../helpers/isTaggedElement';
-import { trackClick } from '../trackClick';
 
 /**
  * A factory to make the event handler to attach to new TaggedElements with the `trackClicks` attributes set

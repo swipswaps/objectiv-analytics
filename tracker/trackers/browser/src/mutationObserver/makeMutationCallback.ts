@@ -1,10 +1,10 @@
 import { TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { trackURLChange } from '../eventTrackers/trackURLChange';
 import { getTracker } from '../getTracker';
 import { getLocationHref } from '../helpers/getLocationHref';
 import { isTaggedElement } from '../helpers/isTaggedElement';
 import { trackerErrorHandler } from '../helpers/trackerErrorHandler';
-import { trackURLChange } from '../trackURLChange';
 import { AutoTrackingState } from './AutoTrackingState';
 import { trackNewElements } from './trackNewElements';
 import { trackRemovedElements } from './trackRemovedElements';
