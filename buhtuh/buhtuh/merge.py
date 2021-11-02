@@ -275,11 +275,11 @@ def merge(
         new_column_list=new_index_list + new_data_list
     )
 
-    return BuhTuhDataFrame.get_instance(
+    return left.copy_override(
         engine=left.engine,
         base_node=model,
         index_dtypes={rc.name: rc.dtype for rc in new_index_list},
-        dtypes={rc.name: rc.dtype for rc in new_data_list},
+        series_dtypes={rc.name: rc.dtype for rc in new_data_list},
         group_by=None,
         order_by=[]  # merging resets any sorting
     )
