@@ -56,7 +56,8 @@ class BuhTuhSqlModel(CustomSqlModel):
 
 class SampleSqlModel(SqlModel):
     """
-    A custom SqlModel simply does select * from a table, and that stores on additional property: previous.
+    A custom SqlModel that simply does select * from a table. In addition to that, this class stores an
+    extra property: previous.
 
     The previous property is not used in the generated sql at all, but can be used to track a previous
     SqlModel. This is useful for how we implemented sampling, as that effectively insert a sql-model in the

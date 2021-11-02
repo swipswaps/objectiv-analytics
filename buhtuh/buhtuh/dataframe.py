@@ -1,4 +1,3 @@
-from collections import deque
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable
@@ -407,7 +406,7 @@ class BuhTuhDataFrame:
                    overwrite=False,
                    seed=200) -> 'BuhTuhDataFrame':
         """
-        Returns a BuhTuhDataFrame, whose data is a sample of the current BuhTuhDataFrame object. For the
+        Returns a BuhTuhDataFrame whose data is a sample of the current BuhTuhDataFrame object. For the
         sample Dataframe to be created, all data is queried once and a persistent table is created to
         store the sample data used for the sample BuhTuh frame.
 
@@ -439,7 +438,7 @@ class BuhTuhDataFrame:
             conn.execute(sql)
 
         # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
-        # in get_unsampled() if we want to.
+        # in get_unsampled() by switching this new node for the old node again.
         current_node = self.get_current_node(name='before_sampling')
         new_base_node = SampleSqlModel(table_name=table_name, previous=current_node)
 
