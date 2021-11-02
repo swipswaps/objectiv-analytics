@@ -36,15 +36,9 @@ describe('XMLHttpRequestTransport', () => {
 
     xhrMock.post(MOCK_ENDPOINT, (req, res) => {
       expect(req.header('Content-Type')).toEqual('text/plain');
-      const { id, ...otherProps } = testEvent;
       expect(req.body()).toEqual(
         JSON.stringify({
-          events: [
-            {
-              ...otherProps,
-              id,
-            },
-          ],
+          events: [testEvent],
           transport_time: Date.now(),
         })
       );

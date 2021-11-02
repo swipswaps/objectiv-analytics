@@ -1,22 +1,17 @@
+import { generateUUID } from '@objectiv/tracker-core';
 import {
-  generateUUID,
-  makeSectionContext,
-  makeSectionHiddenEvent,
-  makeSectionVisibleEvent,
-  makeURLChangeEvent
-} from '@objectiv/tracker-core';
-import {
+  AutoTrackingState,
   BrowserTracker,
-  makeTracker,
-  makeMutationCallback,
-  startAutoTracking,
-  TaggingAttribute,
   getTracker,
   getTrackerRepository,
+  makeMutationCallback,
+  makeTracker,
+  startAutoTracking,
   stopAutoTracking,
-  AutoTrackingState,
+  TaggingAttribute,
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('startAutoTracking', () => {
   beforeEach(() => {
@@ -90,7 +85,7 @@ describe('makeMutationCallback - url changes', () => {
       value: {
         href: 'http://localhost/new-url',
       },
-      writable: true
+      writable: true,
     });
     mutationCallback([], mutationObserver);
 
@@ -105,7 +100,7 @@ describe('makeMutationCallback - url changes', () => {
       value: {
         href: 'http://localhost/',
       },
-      writable: true
+      writable: true,
     });
     AutoTrackingState.previousURL = 'http://localhost/';
 
@@ -117,12 +112,20 @@ describe('makeMutationCallback - url changes', () => {
       value: {
         href: 'http://localhost/another-url',
       },
-      writable: true
+      writable: true,
     });
     mutationCallback([], mutationObserver);
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, makeURLChangeEvent());
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'URLChangeEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 });
 
@@ -136,7 +139,6 @@ describe('makeMutationCallback - new nodes', () => {
     const mutationCallback = makeMutationCallback(false);
     const mutationObserver = new MutationObserver(mutationCallback);
 
-    const sectionContext = makeSectionContext({ id: 'div' });
     const trackedDiv = makeTaggedElement('div', 'div', 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"auto"}');
 
@@ -151,25 +153,31 @@ describe('makeMutationCallback - new nodes', () => {
     mutationCallback([mockedMutationRecord], mutationObserver);
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(2);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
-      makeSectionVisibleEvent({
+      expect.objectContaining({
+        _type: 'SectionVisibleEvent',
+        id: matchUUID,
+        global_contexts: [],
         location_stack: [
-          expect.objectContaining({
-            _type: sectionContext._type,
-            id: sectionContext.id,
-          }),
+          {
+            _type: 'SectionContext',
+            id: 'div',
+          },
         ],
       })
     );
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       2,
-      makeSectionVisibleEvent({
+      expect.objectContaining({
+        _type: 'SectionVisibleEvent',
+        id: matchUUID,
+        global_contexts: [],
         location_stack: [
-          expect.objectContaining({
-            _type: sectionContext._type,
-            id: sectionContext.id,
-          }),
+          {
+            _type: 'SectionContext',
+            id: 'div',
+          },
         ],
       })
     );
@@ -215,7 +223,6 @@ describe('makeMutationCallback - removed nodes', () => {
     const mutationCallback = makeMutationCallback(false);
     const mutationObserver = new MutationObserver(mutationCallback);
 
-    const sectionContext = makeSectionContext({ id: 'div' });
     const trackedDiv = makeTaggedElement('div', 'div', 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"auto"}');
 
@@ -228,16 +235,45 @@ describe('makeMutationCallback - removed nodes', () => {
     mutationCallback([mockedMutationRecord], mutationObserver);
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
-      makeSectionHiddenEvent({
+      expect.objectContaining({
+        _type: 'SectionHiddenEvent',
+        id: matchUUID,
+        global_contexts: [],
         location_stack: [
-          expect.objectContaining({
-            _type: sectionContext._type,
-            id: sectionContext.id,
-          }),
+          {
+            _type: 'SectionContext',
+            id: 'div',
+          },
         ],
       })
     );
+  });
+});
+
+describe('makeMutationCallback - attribute changes', () => {
+  it('should remove element from TrackerElementLocations when its id changes', () => {
+    const mutationCallback = makeMutationCallback(false);
+    const mutationObserver = new MutationObserver(mutationCallback);
+
+    const trackedDiv = makeTaggedElement('div', 'div', 'div');
+
+    const oldValue = 'old-id';
+    const mockedMutationRecord: MutationRecord = {
+      attributeNamespace: null,
+      nextSibling: null,
+      previousSibling: null,
+      // @ts-ignore
+      addedNodes: [],
+      // @ts-ignore
+      removedNodes: [],
+      type: 'attributes',
+      // @ts-ignore
+      target: trackedDiv,
+      attributeName: TaggingAttribute.elementId,
+      oldValue,
+    };
+    mutationCallback([mockedMutationRecord], mutationObserver);
   });
 });

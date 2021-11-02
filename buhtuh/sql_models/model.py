@@ -79,14 +79,23 @@ class SqlModelSpec:
         raise NotImplementedError()
 
     @staticmethod
+    def escape_format_string(value: str) -> str:
+        """ Escape value for python's format() function. i.e. `_escape_value(value).format() == value` """
+        return value.replace('{', '{{').replace('}', '}}')
+
+    @staticmethod
     def properties_to_sql(properties: Dict[str, Any]) -> Dict[str, str]:
         """
         Child classes can override this function if some of the properties require conversion before being
         used in format(). Should be a constant, pure, and immutable function.
+
+        If any format string exists, and it should not be substituted in the reference resolving step,
+        it should be escaped.
         """
         # Override for non-default behaviour
         # If we switch to jinja templates, then we won't need this function anymore.
-        return {key: str(val) for key, val in properties.items()}
+        #
+        return {key: SqlModelSpec.escape_format_string(str(val)) for key, val in properties.items()}
 
     def assert_adheres_to_spec(self,
                                references: Dict[str, 'SqlModel'],
@@ -98,7 +107,8 @@ class SqlModelSpec:
         spec = self
         reference_keys = set(references.keys())
         property_keys = set(properties.keys())
-        if reference_keys != spec.spec_references:
+        # Allow for more references to be present, as they could've been added dynamically.
+        if len(spec.spec_references - reference_keys) > 0:
             raise Exception(f'Provided references for model {spec.__class__.__name__} '
                             f'do not match required references: '
                             f'{sorted(reference_keys)} != {sorted(spec.spec_references)}')
@@ -167,7 +177,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         return deepcopy(self._properties)
 
     @classmethod
-    def build(cls: Type[T], **values) -> 'SqlModel[TB]':
+    def build(cls: Type[TB], **values) -> 'SqlModel[TB]':
         """
         Class method that instantiates this SqlModelBuilder class, and uses it to
         recursively instantiate SqlModel[T].
@@ -175,7 +185,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         This might mutate referenced SqlModelBuilder objects, see instantiate_recursively()
         for more information.
         """
-        builder_instance: TB = cls(**values)  # type: ignore
+        builder_instance: TB = cls(**values)
         return builder_instance.instantiate_recursively()
 
     def instantiate_recursively(self: TB) -> 'SqlModel[TB]':

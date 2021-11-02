@@ -47,7 +47,6 @@ export class TrackerQueue implements TrackerQueueInterface {
   readonly batchDelayMs: number;
   readonly concurrency: number;
 
-  // FIXME make this an array of arrays, so we may know how many batches are in there as well
   // Hold a list of Event IDs that are currently being processed
   processingEventIds: string[] = [];
 

@@ -24,7 +24,6 @@ This is a complete list of the currently available packages.
 | @objectiv/schema                      | core    | /core/schema                  | [README](/tracker/core/schema/README.md)                  |
 | @objectiv/tracker-core                | core    | /core/tracker                 | [README](/tracker/core/tracker/README.md)                 |
 | @objectiv/utilities                   | core    | /core/utilities               | [README](/tracker/core/utilities/README.md)               |
-| @objectiv/plugin-web-device-context   | plugin  | /plugins/web-device-context   | [README](/tracker/plugins/web-device-context/README.md)   |
 | @objectiv/plugin-web-document-context | plugin  | /plugins/web-document-context | [README](/tracker/plugins/web-document-context/README.md) |
 | @objectiv/tracker-angular             | tracker | /trackers/angular             | [README](/tracker/trackers/angular/README.md)             |
 | @objectiv/tracker-browser             | tracker | /trackers/browser             | [README](/tracker/trackers/browser/README.md)             |
@@ -40,7 +39,7 @@ The monorepo is configured to allow for live development on any package without 
 ## Requirements
 
 - git
-- Node.js 10
+- Node.js 12
 - Yarn
 
 ## Workspace commands
@@ -180,3 +179,18 @@ Publishes all public packages.
 Runs the generator utility. This will generate:
 - The @objectiv/schema package TypeScript definitions from the OSF
 - The Context and Event factories in @objectiv/tracker-core package from the @objectiv/schema 
+
+## Versioning  commands
+ - [Release Workflow Documentation](https://yarnpkg.com/features/release-workflow)
+
+### `yarn version --help`
+Shows the `version` command help
+
+### `yarn version --interactive`
+Creates a release strategy for the current branch
+
+### `yarn version check`
+Verifies if there are changes in the current branch and if a release strategy has been created
+
+### `yarn version apply --all`
+Executes the release strategy and bumps versions accordingly

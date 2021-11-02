@@ -2,6 +2,7 @@ import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objec
 import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
 import { waitForPromise } from './helpers';
+import { getLocationPath } from './TrackerElementLocations';
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
@@ -51,7 +52,7 @@ export type TrackerConfig = ContextsConfig & {
 /**
  * The default list of Plugins of Web Tracker
  */
-export const getDefaultTrackerPluginsList = (trackerConfig: TrackerConfig) => [
+export const makeTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
   new ApplicationContextPlugin({ applicationId: trackerConfig.applicationId, console: trackerConfig.console }),
 ];
 
@@ -88,7 +89,7 @@ export class Tracker implements Contexts, TrackerConfig {
     this.transport = trackerConfig.transport;
     this.plugins =
       trackerConfig.plugins ??
-      new TrackerPlugins({ console: trackerConfig.console, plugins: getDefaultTrackerPluginsList(trackerConfig) });
+      new TrackerPlugins({ console: trackerConfig.console, plugins: makeTrackerDefaultPluginsList(trackerConfig) });
 
     // By default Tracker Instances are active
     this.active = trackerConfig.active ?? true;
@@ -105,9 +106,7 @@ export class Tracker implements Contexts, TrackerConfig {
 
     if (this.console) {
       this.console.groupCollapsed(
-        `｢objectiv:Tracker:${this.trackerId}｣ Initialized (${this.location_stack
-          .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
-          .join(' > ')})`
+        `｢objectiv:Tracker:${this.trackerId}｣ Initialized (${getLocationPath(this.location_stack)})`
       );
       this.console.log(`Active: ${this.active}`);
       this.console.log(`Application ID: ${this.applicationId}`);
@@ -222,9 +221,7 @@ export class Tracker implements Contexts, TrackerConfig {
         this.console.groupCollapsed(
           `｢objectiv:Tracker:${this.trackerId}｣ ${this.queue ? 'Queuing' : 'Tracking'} ${
             trackedEvent._type
-          } (${trackedEvent.location_stack
-            .map((context) => `${context._type.replace('Context', '')}:${context.id}`)
-            .join(' > ')})`
+          } (${getLocationPath(trackedEvent.location_stack)})`
         );
         this.console.log(`Event ID: ${trackedEvent.id}`);
         this.console.log(`Time: ${trackedEvent.time}`);

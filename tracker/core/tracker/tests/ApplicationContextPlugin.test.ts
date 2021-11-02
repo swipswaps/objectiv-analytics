@@ -3,9 +3,9 @@ import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, Track
 const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
 
 describe('ApplicationContextPlugin', () => {
-  it('should generate a DeviceContext when constructed', () => {
-    const testWebDeviceContextPlugin = new ApplicationContextPlugin(trackerConfig);
-    expect(testWebDeviceContextPlugin.applicationContext).toEqual({
+  it('should generate an ApplicationContext when constructed', () => {
+    const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+    expect(testApplicationContextPlugin.applicationContext).toEqual({
       __global_context: true,
       _type: 'ApplicationContext',
       id: 'app-id',

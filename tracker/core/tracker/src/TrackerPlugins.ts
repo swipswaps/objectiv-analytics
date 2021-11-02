@@ -1,6 +1,5 @@
-import { Tracker } from './Tracker';
+import { ContextsConfig } from './Context';
 import { TrackerConsole } from './TrackerConsole';
-import { TrackerEvent } from './TrackerEvent';
 import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
 
@@ -79,14 +78,14 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
   /**
    * Calls each Plugin's `initialize` callback function, if defined
    */
-  initialize(tracker: Tracker): void {
-    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(tracker));
+  initialize(contexts: Required<ContextsConfig>): void {
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(contexts));
   }
 
   /**
    * Calls each Plugin's `beforeTransport` callback function, if defined
    */
-  beforeTransport(event: TrackerEvent): void {
-    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.beforeTransport && plugin.beforeTransport(event));
+  beforeTransport(contexts: Required<ContextsConfig>): void {
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.beforeTransport && plugin.beforeTransport(contexts));
   }
 }

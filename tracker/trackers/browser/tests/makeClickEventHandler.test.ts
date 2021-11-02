@@ -1,7 +1,8 @@
 import { generateUUID, makeClickEvent, TrackerQueue, TrackerQueueMemoryStore } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, trackClick } from '../src/';
-import { makeClickEventHandler } from '../src/observer/makeClickEventHandler';
+import { makeClickEventHandler } from '../src/mutationObserver/makeClickEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+import { matchUUID } from './mocks/matchUUID';
 
 describe('makeClickEventHandler', () => {
   beforeEach(() => {
@@ -28,7 +29,15 @@ describe('makeClickEventHandler', () => {
     trackedButton.dispatchEvent(new MouseEvent('click'));
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, makeClickEvent());
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'ClickEvent',
+        id: matchUUID,
+        global_contexts: [],
+        location_stack: [],
+      })
+    );
   });
 
   it('should not track Div Click when invoked from a bubbling target', () => {

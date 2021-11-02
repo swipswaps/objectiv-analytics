@@ -12,22 +12,6 @@ export interface ApplicationContext extends AbstractGlobalContext {
 }
 
 /**
- * Global context containing meta info about the device that emitted the event.
- * Inheritance: DeviceContext -> AbstractGlobalContext -> AbstractContext
- */
-export interface DeviceContext extends AbstractGlobalContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'DeviceContext';
-
-  /**
-   * String describing the user-agent that emitted the event
-   */
-  user_agent: string;
-}
-
-/**
  * Generic global context to encapsulate any errors
  * Inheritance: ErrorContext -> AbstractGlobalContext -> AbstractContext
  */
