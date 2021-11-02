@@ -8,6 +8,7 @@ from sql_models.model import SqlModelSpec, SqlModel
 
 if TYPE_CHECKING:
     from buhtuh import BuhTuhSeries
+    from buhtuh.sql_model import BuhTuhSqlModel
 
 
 @dataclass(frozen=True)
@@ -32,7 +33,7 @@ class ColumnReferenceToken(ExpressionToken):
 
 @dataclass(frozen=True)
 class ModelReferenceToken(ExpressionToken):
-    model: SqlModel
+    model: SqlModel['BuhTuhSqlModel']
 
     def refname(self) -> str:
         return f'reference{self.model.hash}'
@@ -111,7 +112,7 @@ class Expression:
         return Expression([ColumnReferenceToken(field_name)])
 
     @classmethod
-    def model_reference(cls, model: SqlModel) -> 'Expression':
+    def model_reference(cls, model: SqlModel['BuhTuhSqlModel']) -> 'Expression':
         """ Construct an expression for model, where model is a reference to a model. """
         return Expression([ModelReferenceToken(model)])
 
@@ -126,7 +127,7 @@ class Expression:
                 result.append(data_item)
         return Expression(result)
 
-    def get_references(self) -> Dict[str, SqlModel]:
+    def get_references(self) -> Dict[str, SqlModel['BuhTuhSqlModel']]:
         rv = {}
         for data_item in self.data:
             if isinstance(data_item, ModelReferenceToken):

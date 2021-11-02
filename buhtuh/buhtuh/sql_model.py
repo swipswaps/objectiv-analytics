@@ -1,7 +1,10 @@
+"""
+Copyright 2021 Objectiv B.V.
+"""
 from typing import Dict, Any, Union, Sequence
 
 from buhtuh.expression import Expression
-from sql_models.model import CustomSqlModel, SqlModelSpec, TB, SqlModel, SqlModelBuilder
+from sql_models.model import CustomSqlModel, TB, SqlModel, SqlModelBuilder
 
 
 class BuhTuhSqlModel(CustomSqlModel):
