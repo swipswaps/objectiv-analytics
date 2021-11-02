@@ -31,35 +31,27 @@ def test_string_slice():
     bt = get_bt_with_test_data()
 
     # Now try some slices
-    for s in [slice(0, 3), slice(1, 3), slice(3, 3), slice(4, 3), slice(-4, -2), slice(-2, -2), slice(-2, 1),
-              slice(1, -2), slice(1, -8), slice(8, 1), slice(8, -4)]:
+    for s in [slice(0, 3), slice(1, 3), slice(3, 3), slice(4, 3),
+              # Some negatives
+              slice(-4, -2), slice(-2, -2), slice(-2, 1), slice(1, -2),
+              # some longer than some of the input strings
+              slice(1, -8), slice(8, 1), slice(8, -4),
+              # Some more with no beginnings or endings
+              slice(None, 3), slice(3, None), slice(None, -3), slice(-3, None)]:
         print(f'slice: {s}')
-        bts = bt['city'].str[s.start: s.stop]
-        assert isinstance(bts, BuhTuhSeries)
-        assert_equals_data(
-            bts,
-            expected_columns=['_index_skating_order', 'city'],
-            expected_data=[
-                [1, 'Ljouwert'.__getitem__(s)],
-                [2, 'Snits'.__getitem__(s)],
-                [3, 'Drylts'.__getitem__(s)]
-            ]
-        )
-
-    # Some more with no beginnings or endings
-    for s in [slice(None, 3), slice(3, None), slice(None, -3), slice(-3, None)]:
-        print(f'slice: {s}')
-        bts = bt['city'].str[s.start: s.stop]
-        assert isinstance(bts, BuhTuhSeries)
-        assert_equals_data(
-            bts,
-            expected_columns=['_index_skating_order', 'city'],
-            expected_data=[
-                [1, 'Ljouwert'.__getitem__(s)],
-                [2, 'Snits'.__getitem__(s)],
-                [3, 'Drylts'.__getitem__(s)]
-            ]
-        )
+        bts1 = bt['city'].str[s.start:s.stop]
+        bts2 = bt['city'].str.slice(s.start, s.stop)
+        for bts in [bts1, bts2]:
+            assert isinstance(bts, BuhTuhSeries)
+            assert_equals_data(
+                bts,
+                expected_columns=['_index_skating_order', 'city'],
+                expected_data=[
+                    [1, 'Ljouwert'.__getitem__(s)],
+                    [2, 'Snits'.__getitem__(s)],
+                    [3, 'Drylts'.__getitem__(s)]
+                ]
+            )
 
 
 def test_add_string_series():

@@ -71,6 +71,9 @@ class StringOperation:
 
         return self._base.copy_override(dtype='string', expression=expression)
 
+    def slice(self, start=None, stop=None) -> 'BuhTuhSeriesString':
+        return self.__getitem__(slice(start, stop))
+
 
 class BuhTuhSeriesString(BuhTuhSeries):
     dtype = 'string'
