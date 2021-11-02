@@ -104,6 +104,8 @@ for url in urls:
 
     title = path.basename(url).replace('.html', '')
 
+    tags = [module]
+
     # table of contents
     toc = []
     doc = html.parse(url)
@@ -158,6 +160,9 @@ for url in urls:
         sidebar_position = position
         position += 1
         slug = f'/{module}/{real_url.replace(".html", "")}'
+        tags.append(title.split('.')[-2])
+
+
 
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
@@ -169,8 +174,7 @@ slug: {slug}
 sidebar_position: {sidebar_position}
 sidebar_label: {sidebar_label}
 
-tags:
-  - buhtuh
+tags: {json.dumps(tags)}
 ---
 
 export const toc = {json.dumps(toc, indent=4)};
