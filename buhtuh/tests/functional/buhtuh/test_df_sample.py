@@ -2,7 +2,8 @@
 Copyright 2021 Objectiv B.V.
 """
 import pytest
-from buhtuh import BuhTuhDataFrame
+
+from sql_models.graph_operations import get_graph_nodes_info
 from tests.functional.buhtuh.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
@@ -41,7 +42,7 @@ def test_sample_operations():
 
     assert bt_sample.skating_order.nunique()[1] == 3
 
-    all_data_bt = bt_sample.get_all_data()
+    all_data_bt = bt_sample.get_unsampled()
 
     assert_equals_data(
         all_data_bt,
@@ -73,5 +74,53 @@ def test_sample_operations():
              'FrjentsjerWaadhoeke', 12770, 14134],
             [11, 11, 'Dokkum', 'Noardeast-Fryslân', 12675, 1298, 'Dokkum_but_better',
              'DokkumNoardeast-Fryslân', 12685, 13973]
+        ]
+    )
+
+
+def test_get_unsampled_multiple_nodes():
+    # 1. Start with dataframe with multiple nodes in graph
+    # 2. Create sampled dataframe
+    # 3. Add node to sampled dataframe
+    # 4. Go back to unsampled data
+    bt = get_bt_with_test_data(False)
+    bt = bt[['municipality', 'inhabitants', 'founding']]
+    bt['inhabitants_more'] = bt['inhabitants'] + 1000
+    bt = bt.get_df_materialized_model()
+    bt['inhabitants_more'] = bt['inhabitants_more'] + 1000
+
+    node_count_bt = len(get_graph_nodes_info(bt.base_node))
+    assert node_count_bt == 2
+
+    bt_sample = bt.get_sample(table_name='test_data_sample',
+                              sample_percentage=50,
+                              seed=200,
+                              overwrite=True)
+    bt_sample = bt_sample[['municipality', 'inhabitants_more', 'founding']]
+    bt_sample['inhabitants_plus_3000'] = bt_sample['inhabitants_more'] + 1000
+    del bt_sample['inhabitants_more']
+    bt_sample = bt_sample.get_df_materialized_model()
+    bt_sample = bt_sample.groupby('municipality').sum(numeric_only=True)
+    bt_sample['inhabitants_plus_3000_sum'] -= 3000
+
+    node_count_bt_sample = len(get_graph_nodes_info(bt_sample.base_node))
+    assert node_count_bt_sample == 2
+
+    bt2 = bt_sample.get_unsampled()
+
+    node_count_bt2 = len(get_graph_nodes_info(bt2.base_node))
+    assert node_count_bt2 == node_count_bt + node_count_bt_sample == 4
+
+    with pytest.raises(ValueError, match='has not been sampled'):
+        bt2.get_unsampled()
+
+    assert_equals_data(
+        bt2,
+        expected_columns=[
+            'municipality', '_index_skating_order_sum', 'founding_sum', 'inhabitants_plus_3000_sum'
+        ],
+        expected_data=[
+            ['Leeuwarden', 1, 1285, 93485],
+            ['Súdwest-Fryslân', 5, 2724, 39575]
         ]
     )

@@ -1,6 +1,7 @@
+from collections import deque
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
-    TYPE_CHECKING, Callable
+    TYPE_CHECKING, Callable, Deque
 from uuid import UUID
 
 import pandas
@@ -8,7 +9,8 @@ from sqlalchemy.engine import Engine
 
 from buhtuh.expression import Expression
 from buhtuh.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from sql_models.model import SqlModel, CustomSqlModel
+from sql_models.graph_operations import replace_node_in_graph
+from sql_models.model import SqlModel, CustomSqlModel, RefPath, SqlModelSpec, Materialization
 from sql_models.sql_generator import to_sql
 
 if TYPE_CHECKING:
@@ -22,6 +24,20 @@ ColumnNames = Union[str, List[str]]
 class SortColumn(NamedTuple):
     expression: Expression
     asc: bool
+
+
+class CustomSampleSqlModel(SqlModel):
+    # TODO: move
+    # TODO: docs
+    def __init__(self, table_name: str, previous: SqlModel):
+        self.previous = previous
+        sql = f'SELECT * FROM {table_name}'
+        super().__init__(
+            model_spec=CustomSqlModel(sql=sql, name='sample_node'),
+            properties={},
+            references={},
+            materialization=Materialization.CTE
+        )
 
 
 class BuhTuhDataFrame:
@@ -454,7 +470,7 @@ class BuhTuhDataFrame:
                    table_name: str,
                    sample_percentage: int = 50,
                    overwrite=False,
-                   seed=200):
+                   seed=200) -> 'BuhTuhDataFrame':
         """
         Returns a BuhTuhDataFrameSample, which is a sample of the current BuhTuhDataFrame object. For the
         sample BuhTuh frame to be created, all data is queried once and a persistant table is created to
@@ -480,11 +496,10 @@ class BuhTuhDataFrame:
             (select * from tmp_table_name
             tablesample bernoulli({sample_percentage}) repeatable ({seed}))
         '''
-        print(sql)
         with self.engine.connect() as conn:
             res = conn.execute(sql)
 
-        model = CustomSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
+        model = CustomSampleSqlModel(table_name=table_name, previous=self.get_current_node())
 
         sampled_bt = BuhTuhDataFrame.get_instance(engine=self.engine,
                                                   base_node=model,
@@ -492,13 +507,30 @@ class BuhTuhDataFrame:
                                                   dtypes=self.dtypes,
                                                   group_by=None)
 
-        sampled_bt = BuhTuhDataFrameSample(sampled_bt._engine,
-                                           sampled_bt._base_node,
-                                           sampled_bt._index,
-                                           sampled_bt._data,
-                                           self)
-
         return sampled_bt
+
+    def get_unsampled(self) -> 'BuhTuhDataFrame':
+        # Search for the sample node in the graph
+        sampled_node_tuple: Optional[Tuple[CustomSampleSqlModel, RefPath]] = None
+        queue: Deque[Tuple[SqlModel, RefPath]] = deque()
+        queue.append((self.base_node, tuple()))
+        while queue and sampled_node_tuple is None:
+            node, path = queue.pop()
+            if isinstance(node, CustomSampleSqlModel):
+                sampled_node_tuple = node, path
+            for next_path, next_node in node.references.items():
+                next_tuple = (next_node, path + (next_path, ))
+                queue.append(next_tuple)
+        if sampled_node_tuple is None:
+            raise ValueError('No sampled node found. Cannot unsample data that has not been sampled.')
+
+        # Found sample node, create a new graph without the sample node and build a DataFrame based on that
+        updated_graph = replace_node_in_graph(
+            start_node=self.base_node,
+            reference_path=sampled_node_tuple[1],
+            replacement_model=sampled_node_tuple[0].previous
+        )
+        return self.copy_override(base_node=updated_graph)
 
     def __setitem__(self,
                     key: Union[str, List[str]],
