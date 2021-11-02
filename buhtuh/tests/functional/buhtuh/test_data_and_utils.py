@@ -96,6 +96,30 @@ TEST_DATA_JSON = [
 JSON_COLUMNS = ['row', 'dict_column', 'list_column', 'mixed_column']
 JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
 
+
+
+
+TEST_DATA_JSON_REAL = [
+    [1,
+     '[{"id": "rod-web-demo", "_type": "ApplicationContext", "_types": ["AbstractContext", "AbstractGlobalContext", "ApplicationContext"]}, {"id": "device", "_type": "DeviceContext", "_types": ["AbstractContext", "AbstractGlobalContext", "DeviceContext"], "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0"}, {"id": "http_context", "host": "collector.objectiv.io", "_type": "HttpContext", "_types": ["AbstractContext", "AbstractGlobalContext", "HttpContext"], "origin": "https://rick.objectiv.io", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0", "remote_addr": "172.20.0.2", "remote_address": "86.86.89.85", "x_forwarded_for": "86.86.89.85"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext", "_types": ["AbstractContext", "AbstractGlobalContext", "CookieIdContext"], "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b"}]',
+     '[{"id": "#document", "url": "https://rick.objectiv.io/", "_type": "WebDocumentContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext", "WebDocumentContext"]}, {"id": "home", "_type": "SectionContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext"]}, {"id": "yep", "_type": "SectionContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext"]}, {"id": "ZVshSddRqAc", "_type": "ItemContext", "_types": ["AbstractContext", "AbstractLocationContext", "ItemContext"]}]'],
+    [2,
+     '[{"id": "rod-web-demo", "_type": "ApplicationContext", "_types": ["AbstractContext", "AbstractGlobalContext", "ApplicationContext"]}, {"id": "device", "_type": "DeviceContext", "_types": ["AbstractContext", "AbstractGlobalContext", "DeviceContext"], "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0"}, {"id": "http_context", "host": "collector.objectiv.io", "_type": "HttpContext", "_types": ["AbstractContext", "AbstractGlobalContext", "HttpContext"], "origin": "https://rick.objectiv.io", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0", "remote_addr": "172.20.0.2", "remote_address": "86.86.89.85", "x_forwarded_for": "86.86.89.85"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext", "_types": ["AbstractContext", "AbstractGlobalContext", "CookieIdContext"], "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b"}]',
+     '[{"id": "#document", "url": "https://rick.objectiv.io/", "_type": "WebDocumentContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext", "WebDocumentContext"]}, {"id": "home", "_type": "SectionContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext"]}]'],
+    [3,
+     '[{"id": "rod-web-demo", "_type": "ApplicationContext", "_types": ["AbstractContext", "AbstractGlobalContext", "ApplicationContext"]}, {"id": "device", "_type": "DeviceContext", "_types": ["AbstractContext", "AbstractGlobalContext", "DeviceContext"], "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0"}, {"id": "http_context", "host": "collector.objectiv.io", "_type": "HttpContext", "_types": ["AbstractContext", "AbstractGlobalContext", "HttpContext"], "origin": "https://rick.objectiv.io", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0", "remote_addr": "172.20.0.2", "remote_address": "86.86.89.85", "x_forwarded_for": "86.86.89.85"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext", "_types": ["AbstractContext", "AbstractGlobalContext", "CookieIdContext"], "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b"}]',
+     '[{"id": "#document", "url": "https://rick.objectiv.io/", "_type": "WebDocumentContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext", "WebDocumentContext"]}, {"id": "home", "_type": "SectionContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext"]}, {"id": "new", "_type": "SectionContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext"]}, {"id": "5o7WEv5Q5ZE", "_type": "ItemContext", "_types": ["AbstractContext", "AbstractLocationContext", "ItemContext"]}]'],
+    [4,
+     '[{"id": "rod-web-demo", "_type": "ApplicationContext", "_types": ["AbstractContext", "AbstractGlobalContext", "ApplicationContext"]}, {"id": "device", "_type": "DeviceContext", "_types": ["AbstractContext", "AbstractGlobalContext", "DeviceContext"], "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0"}, {"id": "http_context", "host": "collector.objectiv.io", "_type": "HttpContext", "_types": ["AbstractContext", "AbstractGlobalContext", "HttpContext"], "origin": "https://rick.objectiv.io", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0", "remote_addr": "172.20.0.2", "remote_address": "86.86.89.85", "x_forwarded_for": "86.86.89.85"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext", "_types": ["AbstractContext", "AbstractGlobalContext", "CookieIdContext"], "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b"}]',
+     '[{"id": "#document", "url": "https://rick.objectiv.io/", "_type": "WebDocumentContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext", "WebDocumentContext"]}, {"id": "home", "_type": "SectionContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext"]}, {"id": "for-you", "_type": "SectionContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext"]}, {"id": "cc91EfoBh8A", "_type": "ItemContext", "_types": ["AbstractContext", "AbstractLocationContext", "ItemContext"]}]'],
+    [5,
+     '[{"id": "rod-web-demo", "_type": "ApplicationContext", "_types": ["AbstractContext", "AbstractGlobalContext", "ApplicationContext"]}, {"id": "device", "_type": "DeviceContext", "_types": ["AbstractContext", "AbstractGlobalContext", "DeviceContext"], "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0"}, {"id": "http_context", "host": "collector.objectiv.io", "_type": "HttpContext", "_types": ["AbstractContext", "AbstractGlobalContext", "HttpContext"], "origin": "https://rick.objectiv.io", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0", "remote_addr": "172.20.0.2", "remote_address": "86.86.89.85", "x_forwarded_for": "86.86.89.85"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext", "_types": ["AbstractContext", "AbstractGlobalContext", "CookieIdContext"], "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b"}]',
+     '[{"id": "#document", "url": "https://rick.objectiv.io/", "_type": "WebDocumentContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext", "WebDocumentContext"]}, {"id": "home", "_type": "SectionContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext"]}, {"id": "new", "_type": "SectionContext", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext"]}, {"id": "yPYZpwSpKmA", "_type": "ItemContext", "_types": ["AbstractContext", "AbstractLocationContext", "ItemContext"]}]']
+]
+JSON_COLUMNS_REAL = ['event_id', 'global_contexts', 'location_stack']
+JSON_INDEX_AND_COLUMNS_REAL = ['_event_id'] + JSON_COLUMNS
+
+
 # We cache all BuhTuhDataFrames, that way we don't have to recreate and query tables each time.
 _TABLE_DATAFRAME_CACHE: Dict[str, 'BuhTuhDataFrame'] = {}
 
@@ -154,6 +178,13 @@ def get_bt_with_json_data(as_json=True) -> BuhTuhDataFrame:
         bt['dict_column'] = bt.dict_column.astype('jsonb')
         bt['list_column'] = bt.list_column.astype('jsonb')
         bt['mixed_column'] = bt.mixed_column.astype('jsonb')
+    return bt
+
+
+def get_bt_with_json_data_real() -> BuhTuhDataFrame:
+    bt = _get_bt('test_json_table_real', TEST_DATA_JSON_REAL, JSON_COLUMNS_REAL, True)
+    bt['global_contexts'] = bt.global_contexts.astype('jsonb')
+    bt['location_stack'] = bt.location_stack.astype('jsonb')
     return bt
 
 
