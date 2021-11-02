@@ -1,6 +1,6 @@
-import { TrackedElement } from "@objectiv/tracker-browser";
 import { GlobalContexts, LocationStack } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
+import { TrackedElement } from './TrackedElement';
 import { TrackerErrorHandlerCallback } from './TrackerErrorHandlerCallback';
 
 /**
