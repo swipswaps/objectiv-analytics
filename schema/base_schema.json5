@@ -301,18 +301,6 @@
         }
       }
     },
-    "DeviceContext": {
-      "description": "Global context containing meta info about the device that emitted the event.",
-      "parents": [
-        "AbstractGlobalContext"
-      ],
-      "properties": {
-        "user_agent": {
-          "description": "String describing the user-agent that emitted the event",
-          "type": "string"
-        }
-      }
-    },
     "ErrorContext": {
       "description": "Generic global context to encapsulate any errors",
       "parents": [

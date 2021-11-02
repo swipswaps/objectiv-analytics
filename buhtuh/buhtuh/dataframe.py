@@ -368,7 +368,7 @@ class BuhTuhDataFrame:
             return df
         return list(df.data.values())[0]
 
-    def get_df_materialized_model(self) -> 'BuhTuhDataFrame':
+    def get_df_materialized_model(self, node_name='manual_materialize', inplace=False) -> 'BuhTuhDataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -378,12 +378,17 @@ class BuhTuhDataFrame:
         make sense for very large expressions, or for non-deterministic expressions (e.g. see
         BuhTuhSeriesUuid.sql_gen_random_uuid()).
 
+        :param node_name: The name of the node that's going to be created
+        :param inplace: Perform operation on self if inplace=True, or create a copy
         :return: New DataFrame with the current DataFrame's state as base_node
         """
-        index_dtypes = {k: v.dtype for k, v in self.index.items()}
-        series_dtypes = {k: v.dtype for k, v in self.data.items()}
+        if inplace:
+            raise NotImplementedError("inplace materialization is not supported")
 
-        model = self.get_current_node()
+        index_dtypes = {k: v.dtype for k, v in self._index.items()}
+        series_dtypes = {k: v.dtype for k, v in self._data.items()}
+
+        model = self.get_current_node(node_name)
         return self.get_instance(
             engine=self.engine,
             base_node=model,
@@ -412,36 +417,30 @@ class BuhTuhDataFrame:
 
             return self.copy_override(series=selected_data)
 
-        if isinstance(key, slice):
-            model = self.get_current_node(limit=key)
-            return self._df_or_series(df=self.copy_override(base_node=model))
+        if isinstance(key, (BuhTuhSeriesBoolean, slice)):
+            if isinstance(key, slice):
+                node = self.get_current_node('getitem_slice', limit=key)
+            else:
+                # We only support first level boolean indices for now
+                if key.base_node != self.base_node:
+                    raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
+                                     'Hint: make sure the Boolean series is derived from this DataFrame. '
+                                     'Alternative: use df.merge(series) to merge the series with the df '
+                                     'first, and then create a new Boolean series on the resulting merged '
+                                     'data.')
+                if self._group_by is not None:
+                    node = self.get_current_node(
+                        'getitem_having_boolean',
+                        having=Expression.construct("having {}", key.expression))
+                else:
+                    node = self.get_current_node(
+                        'getitem_where_boolean',
+                        where=Expression.construct("where {}", key.expression))
 
-        if isinstance(key, BuhTuhSeriesBoolean):
-            # We only support first level boolean indices for now
-            if key.base_node != self.base_node:
-                raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
-                                 'Hint: make sure the Boolean series is derived from this DataFrame. '
-                                 'Alternative: use df.merge(series) to merge the series with the df first,'
-                                 'and then create a new Boolean series on the resulting merged data.')
-            if self._group_by is not None:
-                # HAVING is not implemented yet
-                raise ValueError("Please materialize this the DataFrame before creating the expression. "
-                                 "Use df.get_df_materialized_model() to do so.")
-
-            model_builder = CustomSqlModel(
-                name='boolean_selection',
-                sql='select {index_str}, {columns_sql_str} from {{_last_node}} where {where}'
-            )
-            model = model_builder(
-                columns_sql_str=self._get_all_column_expressions_sql(),
-                index_str=self._get_all_index_expressions_sql(),
-                _last_node=self.base_node,
-                where=key.expression.to_sql(),
-            )
             return self._df_or_series(
                 BuhTuhDataFrame.get_instance(
                     engine=self.engine,
-                    base_node=model,
+                    base_node=node,
                     index_dtypes={name: series.dtype for name, series in self.index.items()},
                     dtypes={name: series.dtype for name, series in self.data.items()},
                     group_by=None,
@@ -564,6 +563,66 @@ class BuhTuhDataFrame:
                 series = series.copy_override(name=new_name)
             new_data[new_name] = series
         df._data = new_data
+        return df
+
+    def reset_index(self, drop: bool = False, inplace: bool = False):
+        """
+        Drop the current index and replace it with {}
+        :param drop:  delete the series that are removed  from the index if True, else re-add to data series
+        :param inplace: perform the operation on self when inplace=True or on a copy.
+        """
+        df = self if inplace else self.copy_override()
+        if self._group_by:
+            # materialize, but raise if inplace is required.
+            df = df.get_df_materialized_model(inplace)
+
+        series = df._data if drop else df.all_series
+        df._data = {n: s.copy_override(index={}) for n, s in series.items()}
+        df._index = {}
+        return df
+
+    def set_index(self, keys: Union[str, 'BuhTuhSeries', List[Union[str, 'BuhTuhSeries']]],
+                  append: bool = False, drop: bool = True, inplace: bool = False):
+        """
+        Set this dataframe's index to the the index given in keys
+        :param keys: the keys of the new index. Can be a series name str, a BuhTuhSeries, or a list
+            of those.
+        :param append: whether to append to the existing index or replace
+        :param drop: delete columns to be used as the new index
+        :param inplace: attempt inplace operation, not always supported and will raise if not
+        :returns: the modified df in case inplace=True, else a copy with the modifications applied.
+        """
+
+        from buhtuh.series import BuhTuhSeries
+
+        df = self if inplace else self.copy_override()
+        if self._group_by:
+            df = df.get_df_materialized_model(node_name='groupby_setindex', inplace=inplace)
+
+        # build the new index, appending if necessary
+        new_index = {} if not append else copy(df._index)
+        for k in (keys if isinstance(keys, list) else [keys]):
+            idx_series: BuhTuhSeries
+            if isinstance(k, BuhTuhSeries):
+                if k.base_node != df.base_node or k.group_by != df.group_by:
+                    raise ValueError('index series should have same base_node and group_by as df')
+                idx_series = k
+            else:
+                if k not in df.all_series:
+                    raise ValueError(f'series \'{k}\' not found')
+                idx_series = df.all_series[k]
+
+            new_index[idx_series.name] = idx_series.copy_override(index={})
+
+            if not drop and idx_series.name not in df._index and idx_series.name in df._data:
+                raise ValueError('When adding existing series to the index, drop must be True'
+                                 ' because duplicate column names are not supported.')
+
+        new_series = {n: s.copy_override(index=new_index) for n, s in df._data.items()
+                      if n not in new_index}
+
+        df._index = new_index
+        df._data = new_series
         return df
 
     def __delitem__(self, key: str):
@@ -722,7 +781,7 @@ class BuhTuhDataFrame:
         df = self
         if self._group_by:
             # We need to materialize this node first, we can't stack aggregations (yet)
-            df = self.get_df_materialized_model()
+            df = self.get_df_materialized_model(node_name='nested_groupby')
 
         group_by: BuhTuhGroupBy
         if isinstance(by, tuple):
@@ -937,7 +996,10 @@ class BuhTuhDataFrame:
         """
         conn = self.engine.connect()
         sql = self.view_sql(limit=n)
-        df = pandas.read_sql_query(sql, conn, index_col=list(self.index.keys()))
+        if len(self._index):
+            df = pandas.read_sql_query(sql, conn, index_col=list(self._index.keys()))
+        else:
+            df = pandas.read_sql_query(sql, conn)
         conn.close()
         return df
 
@@ -957,10 +1019,15 @@ class BuhTuhDataFrame:
 
         return order_str
 
-    def get_current_node(self, limit: Union[int, slice] = None) -> SqlModel[CustomSqlModel]:
+    def get_current_node(self, name: str,
+                         limit: Union[int, slice] = None,
+                         where: Expression = None,
+                         having: Expression = None) -> SqlModel[CustomSqlModel]:
         """
         Translate the current state of this DataFrame into a SqlModel.
         :param limit: The limit to use
+        :param where: The where-expression to apply, if any
+        :param having: The having-expression to apply in case group_by is set, if any
         :return: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
 
@@ -988,37 +1055,45 @@ class BuhTuhDataFrame:
 
         order_by_sql = self.get_order_by_sql()
         limit_sql = '' if limit_str is None else f'{limit_str}'
+        where = where if where else Expression.construct('')
 
         if self._group_by:
             group_by_sql = self._group_by.get_group_by_columns_sql()
             group_by_sql = f'group by {group_by_sql}' if group_by_sql != '' else ''
 
+            having = having if having else Expression.construct('')
+
             model_builder = CustomSqlModel(
+                name=name,
                 sql="""
                     select {group_by_columns}, {aggregate_columns}
                     from {{prev}}
+                    {where}
                     {group_by}
+                    {having}
                     {order_by} {limit}
                     """
             )
             return model_builder(
                 group_by_columns=self.group_by.get_index_columns_sql(),
                 aggregate_columns=', '.join([s.get_column_expression() for s in self._data.values()]),
+                where=where.to_sql(),
                 group_by=group_by_sql,
+                having=having.to_sql(),
                 order_by=order_by_sql,
                 limit=limit_sql,
                 prev=self.base_node
             )
         else:
             model_builder = CustomSqlModel(
-                name='view_sql',
-                sql='select {index_str}, {columns_sql_str} from {{_last_node}} {order} {limit}'
+                name=name,
+                sql='select {columns} from {{_last_node}} {where} {order} {limit}'
             )
 
             return model_builder(
-                columns_sql_str=self._get_all_column_expressions_sql(),
-                index_str=self._get_all_index_expressions_sql(),
+                columns=self._get_all_column_expressions_sql(),
                 _last_node=self.base_node,
+                where=where.to_sql(),
                 limit=limit_sql,
                 order=order_by_sql
             )
@@ -1029,16 +1104,12 @@ class BuhTuhDataFrame:
         :param limit: limit on which rows to select in the query
         :return: SQL query
         """
-        model = self.get_current_node(limit=limit)
+        model = self.get_current_node('view_sql', limit=limit)
         sql = to_sql(model)
         return sql
 
-    def _get_all_index_expressions_sql(self) -> str:
-        from buhtuh.expression import quote_identifier
-        return ', '.join(quote_identifier(index_column) for index_column in self.index.keys())
-
     def _get_all_column_expressions_sql(self):
-        return ', '.join(series.get_column_expression() for series in self.data.values())
+        return ', '.join([series.get_column_expression() for series in self.all_series.values()])
 
     def merge(
             self,

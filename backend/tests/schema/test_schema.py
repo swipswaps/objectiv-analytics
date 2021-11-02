@@ -31,10 +31,6 @@ CLICK_EVENT_JSON = '''
                 {
                     "_type":"ApplicationContext",
                     "id":"rod-web-demo"
-                },{
-                    "_type":"DeviceContext",
-                    "id":"device",
-                    "user_agent":"mozilla"
                 }
             ],
             "time":1630049334860,
