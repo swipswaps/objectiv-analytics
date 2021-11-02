@@ -7,8 +7,9 @@ import pandas
 from sqlalchemy.engine import Engine
 
 from buhtuh.expression import Expression
+from buhtuh.sql_model import BuhTuhSqlModel
 from buhtuh.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from sql_models.model import SqlModel, CustomSqlModel
+from sql_models.model import SqlModel
 from sql_models.sql_generator import to_sql
 
 if TYPE_CHECKING:
@@ -48,7 +49,7 @@ class BuhTuhDataFrame:
     def __init__(
         self,
         engine: Engine,
-        base_node: SqlModel,
+        base_node: SqlModel[BuhTuhSqlModel],
         index: Dict[str, 'BuhTuhSeries'],
         series: Dict[str, 'BuhTuhSeries'],
         group_by: Optional['BuhTuhGroupBy'],
@@ -100,7 +101,7 @@ class BuhTuhDataFrame:
     def copy_override(
             self,
             engine: Engine = None,
-            base_node: SqlModel = None,
+            base_node: SqlModel[BuhTuhSqlModel] = None,
             index: Dict[str, 'BuhTuhSeries'] = None,
             series: Dict[str, 'BuhTuhSeries'] = None,
             group_by: List[Union['BuhTuhGroupBy', None]] = None,  # List so [None] != None
@@ -125,7 +126,7 @@ class BuhTuhDataFrame:
         return self._engine
 
     @property
-    def base_node(self) -> SqlModel:
+    def base_node(self) -> SqlModel[BuhTuhSqlModel]:
         return self._base_node
 
     @property
@@ -184,8 +185,8 @@ class BuhTuhDataFrame:
             self._order_by == other._order_by
 
     @classmethod
-    def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
-        new_node = CustomSqlModel(sql='select * from {{previous}} limit 0')(previous=node)
+    def _get_dtypes(cls, engine: Engine, node: SqlModel[BuhTuhSqlModel]) -> Dict[str, str]:
+        new_node = BuhTuhSqlModel(sql='select * from {{previous}} limit 0')(previous=node)
         select_statement = to_sql(new_node)
         sql = f"""
             create temporary table tmp_table_name on commit drop as
@@ -206,11 +207,11 @@ class BuhTuhDataFrame:
         This will create and remove a temporary table to asses meta data.
         """
         # todo: don't create a temporary table, the real table (and its meta data) already exists
-        model = CustomSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
+        model = BuhTuhSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
         return cls._from_node(engine, model, index)
 
     @classmethod
-    def from_model(cls, engine, model: SqlModel, index: List[str]) -> 'BuhTuhDataFrame':
+    def from_model(cls, engine, model: SqlModel[BuhTuhSqlModel], index: List[str]) -> 'BuhTuhDataFrame':
         """
         Instantiate a new BuhTuhDataFrame based on the result of the query defines in `model`
         :param engine: db connection
@@ -219,11 +220,11 @@ class BuhTuhDataFrame:
         """
         # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
         # select expressions, where clauses, or limits
-        wrapped_model = CustomSqlModel(sql='SELECT * FROM {{model}}')(model=model)
+        wrapped_model = BuhTuhSqlModel(sql='SELECT * FROM {{model}}')(model=model)
         return cls._from_node(engine, wrapped_model, index)
 
     @classmethod
-    def _from_node(cls, engine, model: SqlModel, index: List[str]) -> 'BuhTuhDataFrame':
+    def _from_node(cls, engine, model: SqlModel[BuhTuhSqlModel], index: List[str]) -> 'BuhTuhDataFrame':
         dtypes = cls._get_dtypes(engine, model)
 
         index_dtypes = {k: dtypes[k] for k in index}
@@ -300,7 +301,7 @@ class BuhTuhDataFrame:
         conn.close()
 
         # Todo, this should use from_table from here on.
-        model = CustomSqlModel(sql=f'SELECT * FROM {name}').instantiate()
+        model = BuhTuhSqlModel(sql=f'SELECT * FROM {name}').instantiate()
 
         # Should this also use _df_or_series?
         return cls.get_instance(
@@ -315,7 +316,7 @@ class BuhTuhDataFrame:
     def get_instance(
             cls,
             engine,
-            base_node: SqlModel,
+            base_node: SqlModel[BuhTuhSqlModel],
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             group_by: Optional['BuhTuhGroupBy'],
@@ -574,7 +575,7 @@ class BuhTuhDataFrame:
         df = self if inplace else self.copy_override()
         if self._group_by:
             # materialize, but raise if inplace is required.
-            df = df.get_df_materialized_model(inplace)
+            df = df.get_df_materialized_model(node_name='reset_index', inplace=inplace)
 
         series = df._data if drop else df.all_series
         df._data = {n: s.copy_override(index={}) for n, s in series.items()}
@@ -1016,13 +1017,12 @@ class BuhTuhDataFrame:
             order_str = f'order by {order_str}'
         else:
             order_str = ''
-
         return order_str
 
     def get_current_node(self, name: str,
                          limit: Union[int, slice] = None,
                          where: Expression = None,
-                         having: Expression = None) -> SqlModel[CustomSqlModel]:
+                         having: Expression = None) -> SqlModel[BuhTuhSqlModel]:
         """
         Translate the current state of this DataFrame into a SqlModel.
         :param limit: The limit to use
@@ -1063,7 +1063,7 @@ class BuhTuhDataFrame:
 
             having = having if having else Expression.construct('')
 
-            model_builder = CustomSqlModel(
+            model_builder = BuhTuhSqlModel(
                 name=name,
                 sql="""
                     select {group_by_columns}, {aggregate_columns}
@@ -1085,11 +1085,10 @@ class BuhTuhDataFrame:
                 prev=self.base_node
             )
         else:
-            model_builder = CustomSqlModel(
+            model_builder = BuhTuhSqlModel(
                 name=name,
                 sql='select {columns} from {{_last_node}} {where} {order} {limit}'
             )
-
             return model_builder(
                 columns=self._get_all_column_expressions_sql(),
                 _last_node=self.base_node,
