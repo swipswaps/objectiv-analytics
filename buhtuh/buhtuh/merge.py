@@ -9,9 +9,6 @@ from buhtuh.expression import quote_identifier, Expression
 from buhtuh.sql_model import BuhTuhSqlModel
 from sql_models.model import SqlModel
 
-if TYPE_CHECKING:
-    from buhtuh.expression import Expression
-
 
 class How(Enum):
     """ Enum with all valid values of 'how' parameter """

@@ -13,7 +13,7 @@ import hashlib
 from abc import abstractmethod, ABCMeta
 from copy import deepcopy
 from enum import Enum
-from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, Sequence
+from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union
 
 from sql_models.util import extract_format_fields
 
