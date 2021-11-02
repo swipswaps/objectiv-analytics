@@ -110,10 +110,9 @@ def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     if model.hash in compiler_cache:
         return compiler_cache[model.hash]
     sql = model.sql
-    # Make sure that if there are any format strings in the properties that they get escaped. Otherwise this
-    # would cause trouble the next time we call format() below for the references
-    escaped_properties = {key: _escape_value(value) for key, value in model.properties_formatted.items()}
-    sql = _format_sql(sql=sql, values=escaped_properties, model=model)
+    # If there are any format strings in the properties that need escaping, they should have been by now.
+    # Otherwise this would cause trouble the next time we call format() below for the references
+    sql = _format_sql(sql=sql, values=model.properties_formatted, model=model)
     # {{id}} (==REFERENCE_UNIQUE_FIELD) is a special placeholder that gets the unique model identifier,
     # which can be used in templates to make sure that if a model gets used multiple times,
     # the cte-names are still unique.

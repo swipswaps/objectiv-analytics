@@ -18,7 +18,7 @@ def test_simple():
 
 def assert_escape_compare_value(value):
     """ helper for test__escape_value. Assert that the escaped value, after formatting equals the original"""
-    escaped = _escape_value(value)
+    escaped = SqlModelBuilder.escape_format_string(value)
     assert escaped.format() == value
 
 
@@ -29,9 +29,9 @@ def test__escape_value():
     assert_escape_compare_value('te{st')
     assert_escape_compare_value('te{{s}t')
     assert_escape_compare_value('te{{st')
-    full_string = '{test}' + _escape_value('{test}') + '{test}'
+    full_string = '{test}' + SqlModelBuilder.escape_format_string('{test}') + '{test}'
     assert full_string.format(test='x') == 'x{test}x'
-    full_string = '{test}' + _escape_value('{{test}}') + '{test}'
+    full_string = '{test}' + SqlModelBuilder.escape_format_string('{{test}}') + '{test}'
     assert full_string.format(test='x') == 'x{{test}}x'
 
 
@@ -52,18 +52,18 @@ def test_format_injection():
     model = mb(a="'{{y}}'")
     mb = CustomSqlModel('select {a} from {{x}}')
     result = to_sql(mb(a='y', x=model))
-    expected = 'with CustomSqlModel___0eece243b7a88bc997419498b4cdb1a1 as (select \'{{y}}\' from x)\n' \
-               'select y from CustomSqlModel___0eece243b7a88bc997419498b4cdb1a1'
+    expected = 'with CustomSqlModel___8c24968aad8a455e4144664a5ed963ab as (select \'{{y}}\' from x)\n' \
+               'select y from CustomSqlModel___8c24968aad8a455e4144664a5ed963ab'
     assert result == expected
 
     result = to_sql(mb(a="'{y}'", x=model))
-    expected = 'with CustomSqlModel___0eece243b7a88bc997419498b4cdb1a1 as (select \'{{y}}\' from x)\n' \
-               "select '{y}' from CustomSqlModel___0eece243b7a88bc997419498b4cdb1a1"
+    expected = 'with CustomSqlModel___8c24968aad8a455e4144664a5ed963ab as (select \'{{y}}\' from x)\n' \
+               "select '{y}' from CustomSqlModel___8c24968aad8a455e4144664a5ed963ab"
     assert result == expected
 
     result = to_sql(mb(a="'{{y}}'", x=model))
-    expected = 'with CustomSqlModel___0eece243b7a88bc997419498b4cdb1a1 as (select \'{{y}}\' from x)\n' \
-               "select '{{y}}' from CustomSqlModel___0eece243b7a88bc997419498b4cdb1a1"
+    expected = 'with CustomSqlModel___8c24968aad8a455e4144664a5ed963ab as (select \'{{y}}\' from x)\n' \
+               "select '{{y}}' from CustomSqlModel___8c24968aad8a455e4144664a5ed963ab"
     assert result == expected
 
 
