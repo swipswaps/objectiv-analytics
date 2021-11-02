@@ -2,7 +2,8 @@
 Copyright 2021 Objectiv B.V.
 """
 from dataclasses import dataclass, field
-from typing import List, Union, TYPE_CHECKING, Dict
+
+from typing import Optional, Union, TYPE_CHECKING, List, Dict
 
 from sql_models.model import SqlModel, SqlModelSpec
 
@@ -32,7 +33,7 @@ class ColumnReferenceToken(ExpressionToken):
 
 @dataclass(frozen=True)
 class ModelReferenceToken(ExpressionToken):
-    model: SqlModel
+    model: SqlModel['BuhTuhSqlModel']
 
     def refname(self) -> str:
         return f'reference{self.model.hash}'
@@ -111,20 +112,9 @@ class Expression:
         return Expression([ColumnReferenceToken(field_name)])
 
     @classmethod
-    def model_reference(cls, model: SqlModel) -> 'Expression':
+    def model_reference(cls, model: SqlModel['BuhTuhSqlModel']) -> 'Expression':
         """ Construct an expression for model, where model is a reference to a model. """
         return Expression([ModelReferenceToken(model)])
-
-    def to_sql(self) -> str:
-        """ Short cut for expression_to_sql(self). """
-        return expression_to_sql(self.resolve_column_references())
-
-    def get_references(self) -> Dict[str, SqlModel]:
-        rv = {}
-        for data_item in self.data:
-            if isinstance(data_item, ModelReferenceToken):
-                rv[data_item.refname()] = data_item.model
-        return rv
 
     def resolve_column_references(self, table_name: str = None):
         """ resolve the table name aliases for all columns in this expression """
@@ -136,6 +126,17 @@ class Expression:
             else:
                 result.append(data_item)
         return Expression(result)
+
+    def get_references(self) -> Dict[str, SqlModel['BuhTuhSqlModel']]:
+        rv = {}
+        for data_item in self.data:
+            if isinstance(data_item, ModelReferenceToken):
+                rv[data_item.refname()] = data_item.model
+        return rv
+
+    def to_sql(self, table_name: Optional[str] = None) -> str:
+        """ Short cut for expression_to_sql(self, table_name). """
+        return expression_to_sql(self.resolve_column_references(table_name))
 
 
 def expression_to_sql(expression: Expression) -> str:

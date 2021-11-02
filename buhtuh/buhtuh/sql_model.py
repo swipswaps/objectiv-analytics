@@ -1,7 +1,13 @@
-from typing import Dict, Any, Union, Sequence
+"""
+Copyright 2021 Objectiv B.V.
+"""
+from typing import Dict, Any, Union, Sequence, TypeVar
 
 from buhtuh.expression import Expression
-from sql_models.model import CustomSqlModel, SqlModelSpec, TB, SqlModel, SqlModelBuilder
+from sql_models.model import CustomSqlModel, SqlModelSpec, SqlModel, SqlModelBuilder
+
+
+TB = TypeVar('TB', bound='BuhTuhSqlModel')
 
 
 class BuhTuhSqlModel(CustomSqlModel):
@@ -9,9 +15,7 @@ class BuhTuhSqlModel(CustomSqlModel):
     def __call__(self: TB, **values: Union[int, str, Expression, Sequence[Expression],
                                            SqlModel, SqlModelBuilder]) -> SqlModel[TB]:
         """ Only add Expression types in signature """
-
-        # mypy: error: Argument 2 for "super" not an instance of argument 1  [misc]
-        return super().__call__(**values)  # type: ignore[misc]
+        return super().__call__(**values)
 
     def set_values(self: TB, **values: Union[int, str, Expression, Sequence[Expression],
                                              SqlModel, SqlModelBuilder]) -> TB:
@@ -29,8 +33,7 @@ class BuhTuhSqlModel(CustomSqlModel):
                 for rk, rv in r.items():
                     self._references[rk] = rv
 
-        # mypy: error: Argument 2 for "super" not an instance of argument 1  [misc]
-        return super().set_values(**values)  # type: ignore[misc]
+        return super().set_values(**values)
 
     @staticmethod
     def properties_to_sql(properties: Dict[str, Any]) -> Dict[str, str]:
@@ -46,5 +49,5 @@ class BuhTuhSqlModel(CustomSqlModel):
             elif isinstance(v, Expression):
                 rv[k] = v.to_sql()
             else:
-                rv[k] = SqlModelSpec.escape_format_string(str(v))
+                SqlModelSpec.escape_format_string(str(v))
         return rv

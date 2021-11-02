@@ -49,7 +49,7 @@ class BuhTuhDataFrame:
     def __init__(
         self,
         engine: Engine,
-        base_node: SqlModel,
+        base_node: SqlModel[BuhTuhSqlModel],
         index: Dict[str, 'BuhTuhSeries'],
         series: Dict[str, 'BuhTuhSeries'],
         group_by: Optional['BuhTuhGroupBy'],
@@ -101,7 +101,7 @@ class BuhTuhDataFrame:
     def copy_override(
             self,
             engine: Engine = None,
-            base_node: SqlModel = None,
+            base_node: SqlModel[BuhTuhSqlModel] = None,
             index: Dict[str, 'BuhTuhSeries'] = None,
             series: Dict[str, 'BuhTuhSeries'] = None,
             group_by: List[Union['BuhTuhGroupBy', None]] = None,  # List so [None] != None
@@ -126,7 +126,7 @@ class BuhTuhDataFrame:
         return self._engine
 
     @property
-    def base_node(self) -> SqlModel:
+    def base_node(self) -> SqlModel[BuhTuhSqlModel]:
         return self._base_node
 
     @property
@@ -185,7 +185,7 @@ class BuhTuhDataFrame:
             self._order_by == other._order_by
 
     @classmethod
-    def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
+    def _get_dtypes(cls, engine: Engine, node: SqlModel[BuhTuhSqlModel]) -> Dict[str, str]:
         new_node = BuhTuhSqlModel(sql='select * from {{previous}} limit 0')(previous=node)
         select_statement = to_sql(new_node)
         sql = f"""
@@ -211,7 +211,7 @@ class BuhTuhDataFrame:
         return cls._from_node(engine, model, index)
 
     @classmethod
-    def from_model(cls, engine, model: SqlModel, index: List[str]) -> 'BuhTuhDataFrame':
+    def from_model(cls, engine, model: SqlModel[BuhTuhSqlModel], index: List[str]) -> 'BuhTuhDataFrame':
         """
         Instantiate a new BuhTuhDataFrame based on the result of the query defines in `model`
         :param engine: db connection
@@ -224,7 +224,7 @@ class BuhTuhDataFrame:
         return cls._from_node(engine, wrapped_model, index)
 
     @classmethod
-    def _from_node(cls, engine, model: SqlModel, index: List[str]) -> 'BuhTuhDataFrame':
+    def _from_node(cls, engine, model: SqlModel[BuhTuhSqlModel], index: List[str]) -> 'BuhTuhDataFrame':
         dtypes = cls._get_dtypes(engine, model)
 
         index_dtypes = {k: dtypes[k] for k in index}
@@ -316,7 +316,7 @@ class BuhTuhDataFrame:
     def get_instance(
             cls,
             engine,
-            base_node: SqlModel,
+            base_node: SqlModel[BuhTuhSqlModel],
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             group_by: Optional['BuhTuhGroupBy'],
@@ -1054,6 +1054,7 @@ class BuhTuhDataFrame:
         limit_expr = Expression.construct('' if limit_str is None else f'{limit_str}')
         where = where if where else Expression.construct('')
         if self._group_by:
+
             group_by_expr = self.group_by.get_group_by_column_expression()
             if group_by_expr:
                 group_by_expr = Expression.construct('group by {}', group_by_expr)
@@ -1087,7 +1088,6 @@ class BuhTuhDataFrame:
                 name=name,
                 sql='select {columns} from {{_last_node}} {where} {order} {limit}'
             )
-
             return model_builder(
                 columns=self._get_all_column_expressions(),
                 _last_node=self.base_node,

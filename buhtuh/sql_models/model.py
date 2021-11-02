@@ -13,7 +13,7 @@ import hashlib
 from abc import abstractmethod, ABCMeta
 from copy import deepcopy
 from enum import Enum
-from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, Sequence
+from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union
 
 from sql_models.util import extract_format_fields
 
@@ -88,6 +88,7 @@ class SqlModelSpec:
         """
         Child classes can override this function if some of the properties require conversion before being
         used in format(). Should be a constant, pure, and immutable function.
+
         If any format string exists, and it should not be substituted in the reference resolving step,
         it should be escaped.
         """
@@ -175,7 +176,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         return deepcopy(self._properties)
 
     @classmethod
-    def build(cls: Type[T], **values) -> 'SqlModel[TB]':
+    def build(cls: Type[TB], **values) -> 'SqlModel[TB]':
         """
         Class method that instantiates this SqlModelBuilder class, and uses it to
         recursively instantiate SqlModel[T].
@@ -183,7 +184,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         This might mutate referenced SqlModelBuilder objects, see instantiate_recursively()
         for more information.
         """
-        builder_instance: TB = cls(**values)  # type: ignore
+        builder_instance: TB = cls(**values)
         return builder_instance.instantiate_recursively()
 
     def instantiate_recursively(self: TB) -> 'SqlModel[TB]':
@@ -211,7 +212,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
                                     f'type {type(reference_value)}.')
         return self.instantiate()
 
-    def __call__(self: TB, **values: Any) -> 'SqlModel[TB]':
+    def __call__(self: TB, **values) -> 'SqlModel[TB]':
         self.set_values(**values)
         return self.instantiate()
 
@@ -234,7 +235,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
             self._cache_created_instances[instance.hash] = instance
         return self._cache_created_instances[instance.hash]
 
-    def set_values(self: TB, **values: Any) -> TB:
+    def set_values(self: TB, **values) -> TB:
         """
         Set values that can either be references or properties
         :param values:

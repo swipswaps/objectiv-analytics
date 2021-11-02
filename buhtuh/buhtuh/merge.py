@@ -9,9 +9,6 @@ from buhtuh.expression import quote_identifier, Expression
 from buhtuh.sql_model import BuhTuhSqlModel
 from sql_models.model import SqlModel
 
-if TYPE_CHECKING:
-    from buhtuh.expression import Expression
-
 
 class How(Enum):
     """ Enum with all valid values of 'how' parameter """
@@ -295,7 +292,7 @@ def _get_merge_sql_model(
         real_left_on: List[str],
         real_right_on: List[str],
         new_column_list: List[ResultColumn],
-) -> SqlModel:
+) -> SqlModel[BuhTuhSqlModel]:
     """
     Give the SqlModel to join left and right and select the new_column_list. This model also uses the
     join-type of how, matching rows on real_left_on and real_right_on.

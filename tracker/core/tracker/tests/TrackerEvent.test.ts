@@ -1,5 +1,5 @@
 import MockDate from 'mockdate';
-import { ContextsConfig, makeDeviceContext, makeOverlayContext, makeVideoLoadEvent, TrackerEvent } from '../src';
+import { ContextsConfig, makeApplicationContext, makeOverlayContext, makeVideoLoadEvent, TrackerEvent } from '../src';
 
 const mockedMs = 1434319925275;
 
@@ -89,7 +89,7 @@ describe('TrackerEvent', () => {
     const testEvent = new TrackerEvent(
       makeVideoLoadEvent({
         location_stack: [makeOverlayContext({ id: 'player' })],
-        global_contexts: [makeDeviceContext({ id: 'test-device', user_agent: 'test-user-agent' })],
+        global_contexts: [makeApplicationContext({ id: 'test-app' })],
       })
     );
     const jsonStringEvent = JSON.stringify(testEvent, null, 2);
@@ -103,9 +103,8 @@ describe('TrackerEvent', () => {
   ],
   "global_contexts": [
     {
-      "_type": "DeviceContext",
-      "id": "test-device",
-      "user_agent": "test-user-agent"
+      "_type": "ApplicationContext",
+      "id": "test-app"
     }
   ],
   "id": "${testEvent.id}"
