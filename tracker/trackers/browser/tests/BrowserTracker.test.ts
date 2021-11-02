@@ -145,10 +145,7 @@ describe('BrowserTracker', () => {
       const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testTracker.plugins?.plugins).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ pluginName: 'WebDocumentContextPlugin' }),
-          expect.objectContaining({ pluginName: 'WebDeviceContextPlugin' }),
-        ])
+        expect.arrayContaining([expect.objectContaining({ pluginName: 'WebDocumentContextPlugin' })])
       );
     });
 
@@ -176,7 +173,7 @@ describe('BrowserTracker', () => {
       clear();
     });
 
-    it('should auto-track Application, WebDocument and WebDevice Contexts as global_contexts by default', async () => {
+    it('should auto-track Application and WebDocument Contexts by default', async () => {
       const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       const testEvent = new TrackerEvent({ _type: 'test-event' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
@@ -196,17 +193,12 @@ describe('BrowserTracker', () => {
         ])
       );
 
-      expect(trackedEvent.global_contexts).toHaveLength(2);
+      expect(trackedEvent.global_contexts).toHaveLength(1);
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             _type: 'ApplicationContext',
             id: 'app-id',
-          }),
-          expect.objectContaining({
-            _type: 'DeviceContext',
-            id: 'device',
-            user_agent: USER_AGENT_MOCK_VALUE,
           }),
         ])
       );

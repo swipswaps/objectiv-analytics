@@ -26,9 +26,8 @@ import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
  *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
  *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
  *  const webDocumentContextPlugin = new WebDocumentContextPlugin({ console });
- *  const webDeviceContextPlugin = new WebDeviceContextPlugin({ console });
  *  const plugins = new TrackerPlugins({
- *    plugins: [ applicationContextPlugin, webDocumentContextPlugin, webDeviceContextPlugin ],
+ *    plugins: [ applicationContextPlugin, webDocumentContextPlugin ],
  *    console
  *  });
  *  const tracker = new Tracker({ transport, queue, plugins, console });

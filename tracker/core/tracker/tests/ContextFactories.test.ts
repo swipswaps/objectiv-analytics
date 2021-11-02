@@ -2,7 +2,6 @@ import {
   makeActionContext,
   makeButtonContext,
   makeCookieIdContext,
-  makeDeviceContext,
   makeErrorContext,
   makeExpandableSectionContext,
   makeHttpContext,
@@ -133,15 +132,6 @@ describe('Context Factories', () => {
       id: 'confirm-data',
       href: '/some/url',
       text: 'Click for Details',
-    });
-  });
-
-  it('DeviceContext', () => {
-    expect(makeDeviceContext({ id: 'test device', user_agent: 'user agent string' })).toStrictEqual({
-      __global_context: true,
-      _type: 'DeviceContext',
-      id: 'test device',
-      user_agent: 'user agent string',
     });
   });
 

@@ -3,7 +3,6 @@ import {
   ApplicationContext,
   ButtonContext,
   CookieIdContext,
-  DeviceContext,
   ErrorContext,
   ExpandableSectionContext,
   HttpContext,
@@ -76,20 +75,6 @@ export const makeCookieIdContext = (props: { id: string; cookie_id: string }): C
   _type: 'CookieIdContext',
   id: props.id,
   cookie_id: props.cookie_id,
-});
-
-/** Creates instance of DeviceContext
- * @param {Object} props - factory properties
- * @param {string} props.id - A unique string identifier to be combined with the Context Type (`_type`)
- *         for Context instance uniqueness.
- * @param {string} props.user_agent - String describing the user-agent that emitted the event
- * @returns {DeviceContext} - DeviceContext: Global context containing meta info about the device that emitted the event.
- */
-export const makeDeviceContext = (props: { id: string; user_agent: string }): DeviceContext => ({
-  __global_context: true,
-  _type: 'DeviceContext',
-  id: props.id,
-  user_agent: props.user_agent,
 });
 
 /** Creates instance of ErrorContext
