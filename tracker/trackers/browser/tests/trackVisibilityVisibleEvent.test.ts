@@ -1,6 +1,6 @@
 import { generateUUID } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
-import { trackVisibilityVisibleEvent } from '../src/observer/trackVisibilityVisibleEvent';
+import { trackVisibilityVisibleEvent } from '../src/mutationObserver/trackVisibilityVisibleEvent';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 import { matchUUID } from './mocks/matchUUID';
 

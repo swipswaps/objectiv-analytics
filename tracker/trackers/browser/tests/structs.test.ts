@@ -1,13 +1,11 @@
 import { makeSectionContext } from '@objectiv/tracker-core';
 import {
   ChildrenTaggingQueries,
-  parseBoolean,
   parseChildrenTaggingAttribute,
   parseLocationContext,
   parseTrackClicksAttribute,
   parseTrackVisibilityAttribute,
   parseValidateAttribute,
-  stringifyBoolean,
   stringifyChildrenTaggingAttribute,
   stringifyLocationContext,
   stringifyTrackVisibilityAttribute,
@@ -16,8 +14,7 @@ import {
   TaggingAttribute,
   TrackClicksAttribute,
   TrackClicksOptions,
-  TrackVisibilityAttributeAuto,
-  TrackVisibilityAttributeManual,
+  TrackVisibilityAttribute,
   ValidateAttribute,
 } from '../src';
 
@@ -44,7 +41,7 @@ describe('Custom structs', () => {
 
   describe('Visibility Tagging Attribute', () => {
     it('Should stringify and parse Visibility:auto Attributes', () => {
-      const visibilityAuto: TrackVisibilityAttributeAuto = { mode: 'auto' };
+      const visibilityAuto: TrackVisibilityAttribute = { mode: 'auto' };
       const stringifiedVisibilityAuto = stringifyTrackVisibilityAttribute(visibilityAuto);
       expect(stringifiedVisibilityAuto).toStrictEqual(JSON.stringify(visibilityAuto));
 
@@ -53,7 +50,7 @@ describe('Custom structs', () => {
     });
 
     it('Should stringify and parse Visibility:manual:visible Attributes', () => {
-      const visibilityManualVisible: TrackVisibilityAttributeManual = { mode: 'manual', isVisible: true };
+      const visibilityManualVisible: TrackVisibilityAttribute = { mode: 'manual', isVisible: true };
       const stringifiedVisibilityManualVisible = stringifyTrackVisibilityAttribute(visibilityManualVisible);
       expect(stringifiedVisibilityManualVisible).toStrictEqual(JSON.stringify(visibilityManualVisible));
 
@@ -62,7 +59,7 @@ describe('Custom structs', () => {
     });
 
     it('Should stringify and parse Visibility:manual:hidden Attributes', () => {
-      const visibilityManualHidden: TrackVisibilityAttributeManual = { mode: 'manual', isVisible: false };
+      const visibilityManualHidden: TrackVisibilityAttribute = { mode: 'manual', isVisible: false };
       const stringifiedVisibilityManualHidden = stringifyTrackVisibilityAttribute(visibilityManualHidden);
       expect(stringifiedVisibilityManualHidden).toStrictEqual(JSON.stringify(visibilityManualHidden));
 
@@ -152,69 +149,6 @@ describe('Custom structs', () => {
       expect(() => parseValidateAttribute('{"locationUniqueness":1}')).toThrow();
       // @ts-ignore
       expect(() => parseValidateAttribute('{"locationUniqueness":null}')).toThrow();
-    });
-  });
-
-  describe('Booleans', () => {
-    it('Should stringify and parse boolean', () => {
-      expect(stringifyBoolean(true)).toBe('true');
-      expect(stringifyBoolean(false)).toBe('false');
-      expect(parseBoolean('true')).toBe(true);
-      expect(parseBoolean('false')).toBe(false);
-    });
-
-    it('Should not stringify values that are not boolean', () => {
-      // @ts-ignore
-      expect(() => stringifyBoolean('True')).toThrow();
-      // @ts-ignore
-      expect(() => stringifyBoolean('False')).toThrow();
-      // @ts-ignore
-      expect(() => stringifyBoolean('string')).toThrow();
-      // @ts-ignore
-      expect(() => stringifyBoolean(null)).toThrow();
-      // @ts-ignore
-      expect(() => stringifyBoolean(undefined)).toThrow();
-      // @ts-ignore
-      expect(() => stringifyBoolean(0)).toThrow();
-      // @ts-ignore
-      expect(() => stringifyBoolean(1)).toThrow();
-      // @ts-ignore
-      expect(() => stringifyBoolean({})).toThrow();
-      // @ts-ignore
-      expect(() => stringifyBoolean([])).toThrow();
-    });
-
-    it('Should not parse values that are not boolean', () => {
-      // @ts-ignore
-      expect(() => parseBoolean('True')).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean('False')).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean('string')).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean('null')).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean('undefined')).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean('0')).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean('1')).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean('{}')).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean('[]')).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean(null)).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean(undefined)).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean(0)).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean(1)).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean({})).toThrow();
-      // @ts-ignore
-      expect(() => parseBoolean([])).toThrow();
     });
   });
 

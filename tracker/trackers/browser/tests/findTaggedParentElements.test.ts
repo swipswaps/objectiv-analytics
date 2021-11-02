@@ -1,5 +1,4 @@
-import { isCustomParentTaggedElement, isTaggedElement, TaggingAttribute } from '../src';
-import { findTaggedParentElements } from '../src/tracker/findTaggedParentElements';
+import { findParentTaggedElements, isParentTaggedElement, isTaggedElement, TaggingAttribute } from '../src';
 
 describe('findTaggedParentElements', () => {
   afterEach(() => {
@@ -7,15 +6,15 @@ describe('findTaggedParentElements', () => {
   });
 
   it('should exit immediately when an invalid Element is passed', () => {
-    expect(findTaggedParentElements(null)).toHaveLength(0);
+    expect(findParentTaggedElements(null)).toHaveLength(0);
     // @ts-ignore
-    expect(findTaggedParentElements(undefined)).toHaveLength(0);
+    expect(findParentTaggedElements(undefined)).toHaveLength(0);
     // @ts-ignore
-    expect(findTaggedParentElements(0)).toHaveLength(0);
+    expect(findParentTaggedElements(0)).toHaveLength(0);
     // @ts-ignore
-    expect(findTaggedParentElements(false)).toHaveLength(0);
+    expect(findParentTaggedElements(false)).toHaveLength(0);
     // @ts-ignore
-    expect(findTaggedParentElements(true)).toHaveLength(0);
+    expect(findParentTaggedElements(true)).toHaveLength(0);
   });
 
   it('should exit immediately when the given Element is not Tracked', () => {
@@ -26,9 +25,9 @@ describe('findTaggedParentElements', () => {
     expect(isTaggedElement(button)).toBe(false);
     expect(isTaggedElement(link)).toBe(false);
 
-    expect(findTaggedParentElements(div)).toHaveLength(0);
-    expect(findTaggedParentElements(button)).toHaveLength(0);
-    expect(findTaggedParentElements(link)).toHaveLength(0);
+    expect(findParentTaggedElements(div)).toHaveLength(0);
+    expect(findParentTaggedElements(button)).toHaveLength(0);
+    expect(findParentTaggedElements(link)).toHaveLength(0);
   });
 
   it('should return with only the given Tagged Element when it has no parents', () => {
@@ -36,7 +35,7 @@ describe('findTaggedParentElements', () => {
     div.setAttribute(TaggingAttribute.context, 'value');
     expect(isTaggedElement(div)).toBe(true);
 
-    const trackedParentElements = findTaggedParentElements(div);
+    const trackedParentElements = findParentTaggedElements(div);
     expect(trackedParentElements).toHaveLength(1);
     expect(trackedParentElements).toStrictEqual([div]);
   });
@@ -63,7 +62,7 @@ describe('findTaggedParentElements', () => {
     topSection.appendChild(untrackedSection);
     document.body.appendChild(topSection);
 
-    const trackedParentElements = findTaggedParentElements(div);
+    const trackedParentElements = findParentTaggedElements(div);
     expect(trackedParentElements).toHaveLength(3);
     expect(trackedParentElements).toStrictEqual([div, midSection, topSection]);
   });
@@ -82,7 +81,7 @@ describe('findTaggedParentElements', () => {
     topSection.setAttribute(TaggingAttribute.context, 'top');
     topSection.setAttribute(TaggingAttribute.elementId, 'top');
 
-    expect(isCustomParentTaggedElement(div)).toBe(true);
+    expect(isParentTaggedElement(div)).toBe(true);
     expect(isTaggedElement(midSection)).toBe(true);
     expect(isTaggedElement(untrackedSection)).toBe(false);
     expect(isTaggedElement(topSection)).toBe(true);
@@ -92,7 +91,7 @@ describe('findTaggedParentElements', () => {
     topSection.appendChild(untrackedSection);
     document.body.appendChild(topSection);
 
-    const trackedParentElements = findTaggedParentElements(div);
+    const trackedParentElements = findParentTaggedElements(div);
     expect(trackedParentElements).toHaveLength(2);
     expect(trackedParentElements).toStrictEqual([div, topSection]);
   });
@@ -111,7 +110,7 @@ describe('findTaggedParentElements', () => {
 
     const topSection = document.createElement('body');
 
-    expect(isCustomParentTaggedElement(div)).toBe(true);
+    expect(isParentTaggedElement(div)).toBe(true);
     expect(isTaggedElement(midSection)).toBe(true);
     expect(isTaggedElement(untrackedSection)).toBe(false);
     expect(isTaggedElement(topSection)).toBe(false);
@@ -121,10 +120,10 @@ describe('findTaggedParentElements', () => {
     topSection.appendChild(untrackedSection);
     document.body.appendChild(topSection);
 
-    const trackedParentElements = findTaggedParentElements(div);
+    const trackedParentElements = findParentTaggedElements(div);
     expect(trackedParentElements).toHaveLength(1);
     expect(trackedParentElements).toStrictEqual([div]);
     expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(`findTaggedParentElements: missing or invalid Parent Element 'top'`);
+    expect(console.error).toHaveBeenCalledWith(`findParentTaggedElements: missing or invalid Parent Element 'top'`);
   });
 });

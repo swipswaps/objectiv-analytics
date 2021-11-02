@@ -1,6 +1,6 @@
 import { generateUUID } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
-import { trackRemovedElements } from '../src/observer/trackRemovedElements';
+import { trackRemovedElements } from '../src/mutationObserver/trackRemovedElements';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 import { matchUUID } from './mocks/matchUUID';
 
