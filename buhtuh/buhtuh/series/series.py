@@ -311,7 +311,7 @@ class BuhTuhSeries(ABC):
         )
 
     @staticmethod
-    def _independant_subquery(series, operation: str) -> 'BuhTuhSeries':
+    def _independent_subquery(series, operation: str) -> 'BuhTuhSeries':
         # This will give us a dataframe that contains our series as a materialized column in the base_node
         df = series.to_frame().get_df_materialized_model()
         expr = Expression.construct(f'{operation} (SELECT {{}} FROM {{}})',
@@ -325,21 +325,21 @@ class BuhTuhSeries(ABC):
         return s
 
     def exists(self):
-        return BuhTuhSeries._independant_subquery(self, 'exists').copy_override(dtype='boolean')
+        return BuhTuhSeries._independent_subquery(self, 'exists').copy_override(dtype='boolean')
 
     def any(self):
         # aka some()
-        return BuhTuhSeries._independant_subquery(self, 'any')
+        return BuhTuhSeries._independent_subquery(self, 'any')
 
     def all(self):
-        return BuhTuhSeries._independant_subquery(self, 'all')
+        return BuhTuhSeries._independent_subquery(self, 'all')
 
     def in_set(self, other: 'BuhTuhSeries'):
-        in_expr = Expression.construct('{} {}', self, BuhTuhSeries._independant_subquery(other, 'in'))
+        in_expr = Expression.construct('{} {}', self, BuhTuhSeries._independent_subquery(other, 'in'))
         return self.copy_override(expression=in_expr, dtype='boolean')
 
     def not_in_set(self, other: 'BuhTuhSeries'):
-        not_in_expr = Expression.construct('{} not {}', self, BuhTuhSeries._independant_subquery(other, 'in'))
+        not_in_expr = Expression.construct('{} not {}', self, BuhTuhSeries._independent_subquery(other, 'in'))
         return self.copy_override(expression=not_in_expr, dtype='boolean')
 
     def astype(self, dtype: Union[str, Type]) -> 'BuhTuhSeries':
