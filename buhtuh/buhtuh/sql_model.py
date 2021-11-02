@@ -48,5 +48,5 @@ class BuhTuhSqlModel(CustomSqlModel):
             elif isinstance(v, Expression):
                 rv[k] = v.to_sql()
             else:
-                SqlModelSpec.escape_format_string(str(v))
+                rv[k] = SqlModelSpec.escape_format_string(str(v))
         return rv
