@@ -15,7 +15,6 @@ from copy import deepcopy
 from enum import Enum
 from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, Sequence
 
-from sql_models.expression import Expression
 from sql_models.util import extract_format_fields
 
 
