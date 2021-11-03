@@ -17,6 +17,15 @@ EXPECTED_DATA = [
     [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268]
 ]
 
+TEST_DATA_INJECTION = [
+    [1, '{X}', "'test'", '"test"'],
+    [2, '{{x}}', "{{test}}", "''test''\\''"]
+]
+COLUMNS_INJECTION = ['Index', 'X"x"', '{test}', '{te{}{{s}}t}']
+# The expected data is what we put in, plus the index column, which equals the first column
+EXPECTED_COLUMNS_INJECTION = [f'_index_{COLUMNS_INJECTION[0]}'] + COLUMNS_INJECTION
+EXPECTED_DATA_INJECTION = [[row[0]] + row for row in TEST_DATA_INJECTION]
+
 
 def test_from_pandas_materialized():
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
@@ -31,7 +40,20 @@ def test_from_pandas_materialized():
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
 
 
-def test_from_pandas_ephemeral():
+def test_from_pandas_materialized_injection():
+    pdf = get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    bt = DataFrame.from_pandas_store_table(
+        engine=engine,
+        df=pdf,
+        convert_objects=True,
+        table_name='test_from_pd_table_injection',
+        if_exists='replace'
+    )
+    assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
+
+
+def test_from_pandas_ephemeral_basic():
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
     engine = sqlalchemy.create_engine(DB_TEST_URL)
     bt = DataFrame.from_pandas(
@@ -40,6 +62,17 @@ def test_from_pandas_ephemeral():
         convert_objects=True
     )
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
+
+
+def test_from_pandas_ephemeral_injection():
+    pdf = get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    bt = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf,
+        convert_objects=True
+    )
+    assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
 
 
 def test_from_pandas_non_happy_path():

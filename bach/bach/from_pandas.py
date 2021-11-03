@@ -9,6 +9,7 @@ from sqlalchemy.engine import Engine
 from bach import DataFrame, get_series_type_from_dtype
 from bach.expression import quote_identifier
 from bach.sql_model import BachSqlModel
+from sql_models.model import SqlModelSpec
 
 
 def from_pandas_store_table(engine: Engine,
@@ -64,15 +65,24 @@ def from_pandas(engine: Engine, df: pandas.DataFrame, convert_objects: bool) -> 
         # start=1 is to account for the automatic index that pandas adds
         for i, series_type in enumerate(column_series_type, start=1):
             val = row[i]
+            # to_sql() gives fully escaped sql, including format escaping, so we can use it as raw sql
             val_sql = series_type.value_to_expression(val).to_sql()
+            val_sql = SqlModelSpec.escape_format_string(val_sql)
             per_column_sql.append(val_sql)
         per_row_sql.append(f"({', '.join(per_column_sql)})")
     all_values_sql = ',\n'.join(per_row_sql)
 
     column_names = list(index_dtypes.keys()) + list(dtypes.keys())
-    column_names_sql = ", ".join([quote_identifier(column_name) for column_name in column_names])
+    column_names_sql = ", ".join(
+        SqlModelSpec.escape_format_string(
+            SqlModelSpec.escape_format_string(
+                quote_identifier(column_name)
+            )
+        ) for column_name in column_names
+    )
 
     sql = f'select * from (values \n{all_values_sql}\n) as t({column_names_sql})\n'
+    # The raw sql we built could contain format strings, as we
     model = BachSqlModel(sql=sql).instantiate()
 
     return DataFrame.get_instance(

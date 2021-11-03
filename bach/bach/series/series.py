@@ -263,7 +263,8 @@ class Series(ABC):
         quoted_column_name = quote_identifier(self.name)
         if expression.to_sql() == quoted_column_name:
             return expression
-        return Expression.construct(f'{{}} as {quoted_column_name}', expression)
+
+        return Expression.construct('{} as {}', expression, Expression.raw(quoted_column_name))
 
     def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'Series'):
 
