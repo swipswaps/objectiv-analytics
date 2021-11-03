@@ -1,6 +1,6 @@
 #Generating docs
 
-Basically, generating and publishing the api docs for `buhtuh` involve a few steps:
+Basically, generating and publishing the api docs for `bach` involve a few steps:
 1. Configure environment for Sphinx: setup Python environment:
 ```bash
   virtualenv -p python3 venv
