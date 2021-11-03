@@ -14,7 +14,6 @@ Bach
     bach.dataframe
     bach.expression
     bach.merge
-    bach.mike
     bach.partitioning
     bach.sql_model
     bach.types
