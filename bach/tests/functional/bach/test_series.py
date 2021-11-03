@@ -118,3 +118,39 @@ def test_series_direct_aggregation():
 
     btg = bt.groupby('municipality')
     print(bt.inhabitants.sum(btg).head())
+
+
+def test_series_inherit_flag():
+    # TODO: change this so it checks the flag correctly
+    bts = get_bt_with_test_data(full_data_set=False).groupby('municipality')['founding']
+    bts_min = bts.min()
+    assert not bts.flag_agg_function
+    assert bts_min.flag_agg_function
+
+    bts_min_materialized = bts_min.to_frame().get_df_materialized_model()['founding']
+    assert not bts_min_materialized.flag_agg_function
+
+    assert_equals_data(
+        bts_min_materialized,
+        expected_columns=['municipality', 'founding'],
+        expected_data=[
+            ['Leeuwarden', 1285],
+            ['Súdwest-Fryslân', 1268]
+        ]
+    )
+
+    bts_min_min = bts_min_materialized.min()
+    assert_equals_data(bts_min_min, expected_columns=['index', 'founding'], expected_data=[[1, 1268]])
+
+    # bts_min_min has applied an aggregate function to a materialized view, so the aggregation flag should
+    # be True again
+    assert bts_min_min.flag_agg_function
+
+    # Check that aggregation flag correctly gets inherited if multiple series are involved in a comparison
+    # aggregation flag on left hand series
+    bts_derived = bts_min_min - 5
+    assert bts_derived.flag_agg_function
+
+    # aggregation flag on right hand series
+    bts_derived = bts_min_materialized - bts_min_min
+    assert bts_derived.flag_agg_function
