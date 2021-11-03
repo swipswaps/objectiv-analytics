@@ -70,11 +70,11 @@ class SeriesTimestamp(SeriesAbstractDateTime):
         return self.copy_override(dtype='string', expression=expression)
 
     def __add__(self, other) -> 'Series':
-        # add accepts only timedelta as lhs, and will yield same type
+        # add accepts only timedelta as rhs, and will yield same type
         return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=['timedelta'])
 
     def __sub__(self, other) -> 'Series':
-        # different lhs parameter types yield result in different return
+        # different rhs parameter types yield result in different return
         type_mapping = {
             'date': 'timedelta',
             'time': 'timestamp',
@@ -224,11 +224,10 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     def __add__(self, other) -> 'Series':
         type_mapping = {
             'date': 'date',  # PG makes this a timestamp
-            # 'time': 'timedelta', not supported by python datetime, but PG is okay with it
+            'time': 'time',  # not supported by python datetime, but PG is okay with it
             'timedelta': 'timedelta',
             'timestamp': 'timestamp'
         }
-
         return self._arithmetic_operation(other, 'add', '({}) + ({})',
                                           other_dtypes=type_mapping.keys(),
                                           dtype=type_mapping)
@@ -239,7 +238,6 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             'time': 'timedelta',
             'timedelta': 'timedelta',
         }
-
         return self._arithmetic_operation(other, 'sub', '({}) - ({})',
                                           other_dtypes=type_mapping.keys(),
                                           dtype=type_mapping)

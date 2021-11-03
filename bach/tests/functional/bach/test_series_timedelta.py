@@ -35,9 +35,10 @@ def test_timedelta_arithmetic():
     bt['plus_dt'] = bt.td + bt.dt
     bt['plus_td'] = bt.td + bt.td
     bt['plus_d'] = bt.td + bt.d
+    bt['plus_t'] = bt.td + bt.t
     #     bt['min_t'] = bt.td - bt.t  # Not supported by python datetime
-    expected.extend([td + dt,  td + td, td + d])
-    expected_types.extend(['timestamp', 'timedelta', 'date'])
+    expected.extend([td + dt,  td + td, td + d, datetime.time(1, 55, 42)])
+    expected_types.extend(['timestamp', 'timedelta', 'date', 'time'])
 
     bt['min_td'] = bt.td - bt.td
     bt['min_t'] = bt.td - bt.t  # Not supported by python datetime

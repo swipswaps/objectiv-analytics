@@ -436,7 +436,7 @@ class Series(ABC):
 
     def _arithmetic_operation(self, other, operation, fmt_str, other_dtypes=[], dtype=None):
         """
-        implement this is subclass to have boilerplate support for all arithmetic functions
+        implement this in a subclass to have boilerplate support for all arithmetic functions
         defined below, but also call this method from specific arithmetic operation implementations
         without implementing it to get nice error messages in yield.
 
