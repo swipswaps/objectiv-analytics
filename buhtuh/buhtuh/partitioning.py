@@ -1,6 +1,6 @@
 from copy import copy
 from enum import Enum
-from typing import List, Dict
+from typing import List, Dict, Optional, cast
 
 from buhtuh.series import BuhTuhSeries, BuhTuhSeriesInt64
 from buhtuh.expression import Expression
@@ -78,7 +78,11 @@ class BuhTuhGroupBy:
         return Expression.construct(fmtstr, *[g.get_column_expression()
                                               for g in self._index.values()])
 
-    def get_group_by_column_expression(self) -> Expression:
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        """
+        get the group_by expression, including all the relevant columns and the way of grouping,
+        but without the "group by" clause, as these potentially have to be nested into one group-by
+        """
         fmtstr = ', '.join(['{}'] * len(self._index))
         return Expression.construct(fmtstr, *[g.expression for g in self._index.values()])
 
@@ -102,16 +106,18 @@ class BuhTuhCube(BuhTuhGroupBy):
     """
     Very simple abstraction to support cubes
     """
-    def get_group_by_column_expression(self):
-        return Expression.construct('cube ({})', super().get_group_by_column_expression())
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        # help mypy, our parent always returns an Expression
+        return Expression.construct('cube ({})', cast(Expression, super().get_group_by_column_expression()))
 
 
 class BuhTuhRollup(BuhTuhGroupBy):
     """
     Very simple abstraction to support rollups
     """
-    def get_group_by_column_expression(self):
-        return Expression.construct('rollup ({})', super().get_group_by_column_expression())
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        # help mypy, our parent always returns an Expression
+        return Expression.construct('rollup ({})', cast(Expression, super().get_group_by_column_expression()))
 
 
 class BuhTuhGroupingList(BuhTuhGroupBy):
@@ -140,8 +146,10 @@ class BuhTuhGroupingList(BuhTuhGroupBy):
 
         super().__init__(group_by_columns=list(group_by_columns.values()))
 
-    def get_group_by_column_expression(self):
-        grouping_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        # help mypy, our parent always returns an Expression
+        grouping_expr_list = [cast(Expression, g.get_group_by_column_expression())
+                              for g in self._grouping_list]
         fmtstr = ', '.join(["({})"] * len(grouping_expr_list))
         return Expression.construct(fmtstr, *grouping_expr_list)
 
@@ -356,7 +364,7 @@ class BuhTuhWindow(BuhTuhGroupBy):
                 then {{}} {{}}
                 else NULL end""", over_expr, window_func, over_expr)
 
-    def get_group_by_column_expression(self):
+    def get_group_by_column_expression(self) -> Optional[Expression]:
         """
         On a Window, there is no default group_by clause
         """

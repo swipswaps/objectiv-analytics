@@ -306,9 +306,9 @@ def _get_merge_sql_model(
 
     if merge_conditions:
         fmt_str = 'on ' + 'and '.join(['({} = {})'] * (len(merge_conditions)//2))
-        on_expr = Expression.construct(fmt_str, *merge_conditions)
+        on_clause = Expression.construct(fmt_str, *merge_conditions)
     else:
-        on_expr = Expression.construct('')
+        on_clause = Expression.construct('')
 
     columns_fmt_str = ", ".join(f'{{}} as {quote_identifier(rc.name)}' for rc in new_column_list)
     columns_expr = Expression.construct(columns_fmt_str, *[rc.expression for rc in new_column_list])
@@ -323,7 +323,7 @@ def _get_merge_sql_model(
     model = model_builder(
         columns=columns_expr,
         join_type=join_type_expr,
-        on=on_expr,
+        on=on_clause,
         left_node=left.base_node,
         right_node=right.base_node
     )
