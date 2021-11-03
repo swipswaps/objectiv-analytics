@@ -1,5 +1,4 @@
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
-import { BrowserTracker, TaggableElement } from '../src';
 import {
   generateUUID,
   getLocationPath,
@@ -7,7 +6,7 @@ import {
   makeSectionContext,
   TrackerPlugins,
 } from '@objectiv/tracker-core';
-import { getElementLocationStack } from '../src/tracker/getElementLocationStack';
+import { BrowserTracker, getElementLocationStack, TaggableElement } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
 describe('getElementLocationStack', () => {
