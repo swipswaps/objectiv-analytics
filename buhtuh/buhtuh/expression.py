@@ -2,9 +2,9 @@
 Copyright 2021 Objectiv B.V.
 """
 from dataclasses import dataclass, field
-from typing import Optional, Union, TYPE_CHECKING, List, Dict
 
-from sql_models.model import SqlModelSpec, SqlModel
+from typing import Optional, Union, TYPE_CHECKING, List, Dict
+from sql_models.model import SqlModel, SqlModelSpec
 
 if TYPE_CHECKING:
     from buhtuh import BuhTuhSeries
@@ -139,7 +139,7 @@ class Expression:
         return expression_to_sql(self.resolve_column_references(table_name))
 
 
-def expression_to_sql(expression: Expression, table_name: Optional[str] = None) -> str:
+def expression_to_sql(expression: Expression) -> str:
     """
     Compile the expression to a SQL fragment.
         * RawTokens will be represented by the raw string they embed.
@@ -164,7 +164,8 @@ def expression_to_sql(expression: Expression, table_name: Optional[str] = None) 
             result.append(SqlModelSpec.escape_format_string(quote_string(data_item.value)))
         else:
             raise Exception("This should never happen. "
-                            "expression_to_sql() doesn't cover all Expression subtypes.")
+                            "expression_to_sql() doesn't cover all Expression subtypes."
+                            f"type: {type(data_item)}")
     return ''.join(result)
 
 

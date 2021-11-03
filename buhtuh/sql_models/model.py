@@ -236,15 +236,18 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
             self._cache_created_instances[instance.hash] = instance
         return self._cache_created_instances[instance.hash]
 
-    def set_values(self: TB, **values: Any) -> TB:
+    def set_values(self: TB, **values) -> TB:
         """
         Set values that can either be references or properties
         :param values:
         :return: self
         """
         # todo: check that values are of the correct types
+
         for key, value in values.items():
             if key in self.spec_references:
+                if not isinstance(value, (SqlModel, SqlModelBuilder)):
+                    raise ValueError(f'reference of incorrect type: {type(value)}')
                 self._references[key] = value
             elif key in self.spec_properties:
                 self._properties[key] = value

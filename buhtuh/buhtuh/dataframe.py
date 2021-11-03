@@ -510,11 +510,11 @@ class BuhTuhDataFrame:
                 if self._group_by is not None:
                     node = self.get_current_node(
                         'getitem_having_boolean',
-                        having=Expression.construct("having {}", key.expression))
+                        having_clause=Expression.construct("having {}", key.expression))
                 else:
                     node = self.get_current_node(
                         'getitem_where_boolean',
-                        where=Expression.construct("where {}", key.expression))
+                        where_clause=Expression.construct("where {}", key.expression))
 
             return self._df_or_series(
                 BuhTuhDataFrame.get_instance(
@@ -1082,30 +1082,27 @@ class BuhTuhDataFrame:
         conn.close()
         return df
 
-    def get_order_by_sql(self) -> str:
+    def get_order_by_clause(self) -> Expression:
         """
-        Get a properly formatted order by clause based on this df's order_by.
-        Will return an empty string in case ordering in not requested.
+        Get a properly formatted order by expression based on this df's order_by.
+        Will return an empty Expression in case ordering is not requested.
         """
         if self._order_by:
-            order_str = ", ".join(
-                f"{sc.expression.to_sql()} {'asc' if sc.asc else 'desc'}"
-                for sc in self._order_by
-            )
-            order_str = f'order by {order_str}'
+            exprs = [sc.expression for sc in self._order_by]
+            fmtstr = [f"{{}} {'asc' if sc.asc else 'desc'}" for sc in self._order_by]
+            return Expression.construct(f'order by {", ".join(fmtstr)}', *exprs)
         else:
-            order_str = ''
-        return order_str
+            return Expression.construct('')
 
     def get_current_node(self, name: str,
                          limit: Union[int, slice] = None,
-                         where: Expression = None,
-                         having: Expression = None) -> SqlModel[BuhTuhSqlModel]:
+                         where_clause: Expression = None,
+                         having_clause: Expression = None) -> SqlModel[BuhTuhSqlModel]:
         """
         Translate the current state of this DataFrame into a SqlModel.
         :param limit: The limit to use
-        :param where: The where-expression to apply, if any
-        :param having: The having-expression to apply in case group_by is set, if any
+        :param where_clause: The where-clause to apply, if any
+        :param having_clause: The having-clause to apply in case group_by is set, if any
         :return: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
 
@@ -1131,15 +1128,16 @@ class BuhTuhDataFrame:
                 if limit.stop is not None:
                     limit_str = f'limit {limit.stop}'
 
-        order_by_sql = self.get_order_by_sql()
-        limit_sql = '' if limit_str is None else f'{limit_str}'
-        where = where if where else Expression.construct('')
-
+        limit_clause = Expression.construct('' if limit_str is None else f'{limit_str}')
+        where_clause = where_clause if where_clause else Expression.construct('')
         if self._group_by:
-            group_by_sql = self._group_by.get_group_by_columns_sql()
-            group_by_sql = f'group by {group_by_sql}' if group_by_sql != '' else ''
 
-            having = having if having else Expression.construct('')
+            group_by_column_expr = self.group_by.get_group_by_column_expression()
+            if group_by_column_expr:
+                group_by_clause = Expression.construct('group by {}', group_by_column_expr)
+            else:
+                group_by_clause = Expression.construct('')
+            having_clause = having_clause if having_clause else Expression.construct('')
 
             model_builder = BuhTuhSqlModel(
                 name=name,
@@ -1153,13 +1151,13 @@ class BuhTuhDataFrame:
                     """
             )
             return model_builder(
-                group_by_columns=self.group_by.get_index_columns_sql(),
-                aggregate_columns=', '.join([s.get_column_expression() for s in self._data.values()]),
-                where=where.to_sql(),
-                group_by=group_by_sql,
-                having=having.to_sql(),
-                order_by=order_by_sql,
-                limit=limit_sql,
+                group_by_columns=self.group_by.get_index_column_expression(),
+                aggregate_columns=[s.get_column_expression() for s in self._data.values()],
+                where=where_clause,
+                group_by=group_by_clause,
+                having=having_clause,
+                order_by=self.get_order_by_clause(),
+                limit=limit_clause,
                 prev=self.base_node
             )
         else:
@@ -1168,11 +1166,11 @@ class BuhTuhDataFrame:
                 sql='select {columns} from {{_last_node}} {where} {order} {limit}'
             )
             return model_builder(
-                columns=self._get_all_column_expressions_sql(),
+                columns=self._get_all_column_expressions(),
                 _last_node=self.base_node,
-                where=where.to_sql(),
-                limit=limit_sql,
-                order=order_by_sql
+                where=where_clause,
+                order=self.get_order_by_clause(),
+                limit=limit_clause
             )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
@@ -1185,8 +1183,9 @@ class BuhTuhDataFrame:
         sql = to_sql(model)
         return sql
 
-    def _get_all_column_expressions_sql(self):
-        return ', '.join([series.get_column_expression() for series in self.all_series.values()])
+    def _get_all_column_expressions(self) -> List[Expression]:
+        """ Get a list of Expression for every column including indices in this df """
+        return [series.get_column_expression() for series in self.all_series.values()]
 
     def merge(
             self,

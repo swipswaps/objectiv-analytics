@@ -1,6 +1,6 @@
 from copy import copy
 from enum import Enum
-from typing import List, Dict
+from typing import List, Dict, Optional, cast
 
 from buhtuh.series import BuhTuhSeries, BuhTuhSeriesInt64
 from buhtuh.expression import Expression
@@ -73,6 +73,19 @@ class BuhTuhGroupBy:
                 for n in self._index.keys())
         )
 
+    def get_index_column_expression(self) -> Expression:
+        fmtstr = ', '.join(['{}'] * len(self._index))
+        return Expression.construct(fmtstr, *[g.get_column_expression()
+                                              for g in self._index.values()])
+
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        """
+        get the group_by expression, including all the relevant columns and the way of grouping,
+        but without the "group by" clause, as these potentially have to be nested into one group-by
+        """
+        fmtstr = ', '.join(['{}'] * len(self._index))
+        return Expression.construct(fmtstr, *[g.expression for g in self._index.values()])
+
     @property
     def index(self) -> Dict[str, BuhTuhSeries]:
         return copy(self._index)
@@ -88,27 +101,23 @@ class BuhTuhGroupBy:
                 # Will be set the moment it's passed to BuhTuhGroupBy.__init__
                 group_by=None)
 
-    def get_index_columns_sql(self):
-        return ', '.join(g.get_column_expression() for g in self._index.values())
-
-    def get_group_by_columns_sql(self):
-        return ', '.join(g.expression.to_sql() for g in self._index.values())
-
 
 class BuhTuhCube(BuhTuhGroupBy):
     """
     Very simple abstraction to support cubes
     """
-    def get_group_by_columns_sql(self):
-        return f'CUBE ({super().get_group_by_columns_sql()})'
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        # help mypy, our parent always returns an Expression
+        return Expression.construct('cube ({})', cast(Expression, super().get_group_by_column_expression()))
 
 
 class BuhTuhRollup(BuhTuhGroupBy):
     """
     Very simple abstraction to support rollups
     """
-    def get_group_by_columns_sql(self):
-        return f'ROLLUP ({super().get_group_by_columns_sql()})'
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        # help mypy, our parent always returns an Expression
+        return Expression.construct('rollup ({})', cast(Expression, super().get_group_by_column_expression()))
 
 
 class BuhTuhGroupingList(BuhTuhGroupBy):
@@ -137,11 +146,12 @@ class BuhTuhGroupingList(BuhTuhGroupBy):
 
         super().__init__(group_by_columns=list(group_by_columns.values()))
 
-    def get_group_by_columns_sql(self):
-        grouping_str_list: List[str] = []
-        for g in self._grouping_list:
-            grouping_str_list.append(f'({g.get_group_by_columns_sql()})')
-        return f'{", ".join(grouping_str_list)}'
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        # help mypy, our parent always returns an Expression
+        grouping_expr_list = [cast(Expression, g.get_group_by_column_expression())
+                              for g in self._grouping_list]
+        fmtstr = ', '.join(["({})"] * len(grouping_expr_list))
+        return Expression.construct(fmtstr, *grouping_expr_list)
 
 
 class BuhTuhGroupingSet(BuhTuhGroupingList):
@@ -149,11 +159,11 @@ class BuhTuhGroupingSet(BuhTuhGroupingList):
     Abstraction to support SQLs
     GROUP BY GROUPING SETS ((colA,colB),(ColA),(ColC))
     """
-    def get_group_by_columns_sql(self):
-        grouping_str_list: List[str] = []
-        for g in self._grouping_list:
-            grouping_str_list.append(f'({g.get_group_by_columns_sql()})')
-        return f'GROUPING SETS ({", ".join(grouping_str_list)})'
+    def get_group_by_column_expression(self):
+        grouping_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
+        fmtstr = ', '.join(["({})"] * len(grouping_expr_list))
+        fmtstr = f'grouping sets ({fmtstr})'
+        return Expression.construct(fmtstr, *grouping_expr_list)
 
 
 class BuhTuhWindow(BuhTuhGroupBy):
@@ -312,51 +322,50 @@ class BuhTuhWindow(BuhTuhGroupBy):
                             start_boundary=start_boundary, start_value=start_value,
                             end_boundary=end_boundary, end_value=end_value)
 
-    def _get_order_by_sql(self) -> str:
+    def _get_order_by_expression(self) -> Expression:
         """
         Get a properly formatted order by clause based on this df's order_by.
         Will return an empty string in case ordering in not requested.
         """
         if self._order_by:
-            order_str = ", ".join(
-                f"{sc.expression.to_sql()} {'asc' if sc.asc else 'desc'}"
-                for sc in self._order_by
-            )
-            order_str = f'order by {order_str}'
+            exprs = [sc.expression for sc in self._order_by]
+            fmtstr = [f"{{}} {'asc' if sc.asc else 'desc'}" for sc in self._order_by]
+            return Expression.construct(f'order by {", ".join(fmtstr)}', *exprs)
         else:
-            order_str = ''
-
-        return order_str
+            return Expression.construct('')
 
     def get_window_expression(self, window_func: Expression) -> Expression:
         """
         Given the window_func generate a statement like:
             {window_func} OVER (PARTITION BY .. ORDER BY ... frame_clause)
         """
-        partition = ', '.join(g.expression.to_sql() for g in self._index.values())
-
         # TODO implement NULLS FIRST / NULLS LAST, probably not here but in the sorting logic.
-        order_by = self._get_order_by_sql()
+        order_by = self._get_order_by_expression()
 
         if self.frame_clause is None:
             frame_clause = ''
         else:
             frame_clause = self.frame_clause
 
-        over = f'OVER (PARTITION BY {partition} {order_by} {frame_clause})'
+        partition_fmt = ', '.join(['{}'] * len(self.index))
+
+        over_fmt = f'over (partition by {partition_fmt} {{}} {frame_clause})'
+        over_expr = Expression.construct(over_fmt,
+                                         *[i.expression for i in self.index.values()],
+                                         order_by)
 
         if self._min_values is None or self._min_values == 0:
-            return Expression.construct(f'{{}} {over}', window_func)
+            return Expression.construct(f'{{}} {{}}', window_func, over_expr)
         else:
             # Only return a value when then minimum amount of observations (including NULLs)
             # has been reached.
             return Expression.construct(f"""
-                CASE WHEN (count(1) {over}) >= {self._min_values}
-                THEN {{}} {over}
-                ELSE NULL END""", window_func)
+                case when (count(1) {{}}) >= {self._min_values}
+                then {{}} {{}}
+                else NULL end""", over_expr, window_func, over_expr)
 
-    def get_group_by_columns_sql(self):
+    def get_group_by_column_expression(self) -> Optional[Expression]:
         """
         On a Window, there is no default group_by clause
         """
-        return ''
+        return None
