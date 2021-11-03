@@ -1,10 +1,13 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+from typing import Tuple, Dict
+
 import pandas
 from sqlalchemy.engine import Engine
 
-from bach import DataFrame
+from bach import DataFrame, get_series_type_from_dtype
+from bach.expression import quote_identifier
 from bach.sql_model import BachSqlModel
 
 
@@ -16,15 +19,15 @@ def from_pandas_store_table(engine: Engine,
     """
     See DataFrame.from_pandas_store_table() for docstring.
     """
-    df_copy, dtypes, index_dtypes = _from_pd_shared(df, convert_objects)
-
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
+    df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects)
+
     conn = engine.connect()
     df_copy.to_sql(name=table_name, con=conn, if_exists=if_exists, index=False)
     conn.close()
 
     # Todo, this should use from_table from here on.
-    model = BachSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
+    model = BachSqlModel(sql=f'select * from {quote_identifier(table_name)}').instantiate()
 
     # Should this also use _df_or_series?
     return DataFrame.get_instance(
@@ -40,21 +43,38 @@ def from_pandas(engine: Engine, df: pandas.DataFrame, convert_objects: bool) -> 
     """
     See DataFrame.from_pandas() for docstring.
     """
-    # TODO: IMPLEMENT
-    table_name = '___tmp__table'
-    if_exists = 'replace'
-
-    df_copy, dtypes, index_dtypes = _from_pd_shared(df, convert_objects)
-
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-    conn = engine.connect()
-    df_copy.to_sql(name=table_name, con=conn, if_exists=if_exists, index=False)
-    conn.close()
+    df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects)
 
-    # Todo, this should use from_table from here on.
-    model = BachSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
+    # Only support case where we have a single index column for now
+    if len(index_dtypes) != 1:
+        raise NotImplementedError("We only support dataframes with a single column index.")  # for now
 
-    # Should this also use _df_or_series?
+    column_series_type = [
+        get_series_type_from_dtype(dtype)
+        for dtype in list(index_dtypes.values()) + list(dtypes.values())
+    ]
+
+    per_row_sql = []
+    for row in df_copy.itertuples():
+        per_column_sql = []
+        # Access the columns in `row` by index rather than by name. Because if a name starts with an
+        # underscore (e.g. _index_skating_order) it will not be available as attribute.
+        # so we use `row[i]` instead of getattr(row, column_name).
+        # start=1 is to account for the automatic index that pandas adds
+        for i, series_type in enumerate(column_series_type, start=1):
+            val = row[i]
+            val_sql = series_type.value_to_expression(val).to_sql()
+            per_column_sql.append(val_sql)
+        per_row_sql.append(f"({', '.join(per_column_sql)})")
+    all_values_sql = ',\n'.join(per_row_sql)
+
+    column_names = list(index_dtypes.keys()) + list(dtypes.keys())
+    column_names_sql = ", ".join([quote_identifier(column_name) for column_name in column_names])
+
+    sql = f'select * from (values \n{all_values_sql}\n) as t({column_names_sql})\n'
+    model = BachSqlModel(sql=sql).instantiate()
+
     return DataFrame.get_instance(
         engine=engine,
         base_node=model,
@@ -64,7 +84,22 @@ def from_pandas(engine: Engine, df: pandas.DataFrame, convert_objects: bool) -> 
     )
 
 
-def _from_pd_shared(df: pandas.DataFrame, convert_objects: bool):
+def _from_pd_shared(
+        df: pandas.DataFrame,
+        convert_objects: bool
+) -> Tuple[pandas.DataFrame, Dict[str, str], Dict[str, str]]:
+    """
+    Pre-processes the given Pandas DataFrame:
+    1) Add index if missing
+    2) Convert string columns to string objects (if convert_objects)
+    3) Check that the dtypes are supported
+    4) extract index_dtypes and dtypes dictionaries
+
+    :return: Tuple:
+        * Modified copy of Pandas DataFrame
+        * index_dtypes dict
+        * dtypes dict
+    """
     if df.index.name is None:  # for now only one index allowed todo check this
         index = '_index_0'
     else:
@@ -93,4 +128,4 @@ def _from_pd_shared(df: pandas.DataFrame, convert_objects: bool):
                          f"{supported_types}. "
                          f"For 'object' columns convert_objects=True can be used to convert these columns"
                          f"to type 'string'.")
-    return df_copy, dtypes, index_dtypes
+    return df_copy, index_dtypes, dtypes

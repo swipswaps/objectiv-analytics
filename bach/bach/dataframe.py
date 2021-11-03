@@ -59,7 +59,8 @@ class DataFrame:
         """
         Instantiate a new DataFrame.
         There are utility class methods to easily create a DataFrame from existing data such as a
-        table (`from_table()`) or already instantiated sql-model (`from_model()`).
+        table (`from_table()`), an already instantiated sql-model (`from_model()`), or a pandas
+        dataframe (`from_pandas()`).
 
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain all columns/expressions that
@@ -283,7 +284,7 @@ class DataFrame:
         using a `select * from values()` query.
 
         Warning: This method is only suited for small quantities of data.
-        For anything over a few dozen kilobytes of data it is recommended to store the data in a table in
+        For anything over a dozen kilobytes of data it is recommended to store the data in a table in
         the database, e.g. by using the from_pd_store_table() function.
 
         Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
