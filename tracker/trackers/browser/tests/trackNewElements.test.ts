@@ -8,7 +8,7 @@ import {
   tagElement,
   TaggingAttribute,
 } from '../src';
-import { trackNewElements } from '../src/observer/trackNewElements';
+import { trackNewElements } from '../src/mutationObserver/trackNewElements';
 import { matchUUID } from './mocks/matchUUID';
 
 describe('trackNewElements', () => {

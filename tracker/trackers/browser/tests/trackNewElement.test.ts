@@ -6,7 +6,7 @@ import {
   TrackerElementLocations,
 } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
-import { trackNewElement } from '../src/observer/trackNewElement';
+import { trackNewElement } from '../src/mutationObserver/trackNewElement';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 import { matchUUID } from './mocks/matchUUID';
 import { mockConsole } from './mocks/MockConsole';
