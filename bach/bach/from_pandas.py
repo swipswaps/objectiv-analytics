@@ -1,13 +1,13 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 
 import pandas
 from sqlalchemy.engine import Engine
 
 from bach import DataFrame, get_series_type_from_dtype
-from bach.expression import quote_identifier
+from bach.expression import quote_identifier, Expression
 from bach.sql_model import BachSqlModel
 from sql_models.model import SqlModelSpec
 
@@ -56,34 +56,27 @@ def from_pandas(engine: Engine, df: pandas.DataFrame, convert_objects: bool) -> 
         for dtype in list(index_dtypes.values()) + list(dtypes.values())
     ]
 
-    per_row_sql = []
+    per_row_expr = []
     for row in df_copy.itertuples():
-        per_column_sql = []
+        per_column_expr = []
         # Access the columns in `row` by index rather than by name. Because if a name starts with an
         # underscore (e.g. _index_skating_order) it will not be available as attribute.
         # so we use `row[i]` instead of getattr(row, column_name).
         # start=1 is to account for the automatic index that pandas adds
         for i, series_type in enumerate(column_series_type, start=1):
             val = row[i]
-            # to_sql() gives fully escaped sql, including format escaping, so we can use it as raw sql
-            val_sql = series_type.value_to_expression(val).to_sql()
-            val_sql = SqlModelSpec.escape_format_string(val_sql)
-            per_column_sql.append(val_sql)
-        per_row_sql.append(f"({', '.join(per_column_sql)})")
-    all_values_sql = ',\n'.join(per_row_sql)
+            per_column_expr.append(series_type.value_to_expression(val))
+        row_expr = Expression.construct('({})', _combine_expression(per_column_expr))
+        per_row_expr.append(row_expr)
+    all_values_expr = _combine_expression(per_row_expr, join_str=',\n')
 
     column_names = list(index_dtypes.keys()) + list(dtypes.keys())
-    column_names_sql = ", ".join(
-        SqlModelSpec.escape_format_string(
-            SqlModelSpec.escape_format_string(
-                quote_identifier(column_name)
-            )
-        ) for column_name in column_names
+    column_names_expr = _combine_expression(
+        [Expression.raw(quote_identifier(column_name)) for column_name in column_names]
     )
 
-    sql = f'select * from (values \n{all_values_sql}\n) as t({column_names_sql})\n'
-    # The raw sql we built could contain format strings, as we
-    model = BachSqlModel(sql=sql).instantiate()
+    sql = 'select * from (values \n{all_values_expr}\n) as t({column_names_expr})\n'
+    model = BachSqlModel(sql=sql)(all_values_expr=all_values_expr, column_names_expr=column_names_expr)
 
     return DataFrame.get_instance(
         engine=engine,
@@ -92,6 +85,11 @@ def from_pandas(engine: Engine, df: pandas.DataFrame, convert_objects: bool) -> 
         dtypes=dtypes,
         group_by=None
     )
+
+
+def _combine_expression(expressions: List[Expression], join_str: str = ', ') -> Expression:
+    fmt = join_str.join(['{}'] * len(expressions))
+    return Expression.construct(fmt, *expressions)
 
 
 def _from_pd_shared(
