@@ -177,11 +177,12 @@ def quote_string(value: str) -> str:
     See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
 
     Examples:
-    >>> quote_string("test")
+
+    >>> expression.quote_string("test")
     "'test'"
-    >>> quote_string("te'st")
+    >>> expression.quote_string("te'st")
     "'te''st'"
-    >>> quote_string("'te''st'")
+    >>> expression.quote_string("'te''st'")
     "'''te''''st'''"
     """
     replaced_chars = value.replace("'", "''")
@@ -196,12 +197,13 @@ def quote_identifier(name: str) -> str:
     See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
 
     Examples:
-    >>> quote_identifier('test')
+
+    >>> expression.quote_identifier('test')
     '"test"'
-    >>> quote_identifier('te"st')
+    >>> expression.quote_identifier('te"st')
     '"te""st"'
-    >>> quote_identifier('"te""st"')
-    "\"\"\"te\"\"\"\"st\"\"\""
+    >>> expression.quote_identifier('"te""st"')
+    '\"\"\"te\"\"\"\"st\"\"\"'
     """
     replaced_chars = name.replace('"', '""')
     return f'"{replaced_chars}"'
