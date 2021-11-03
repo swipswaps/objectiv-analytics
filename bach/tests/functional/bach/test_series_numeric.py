@@ -2,7 +2,33 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_from_df
+from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_from_df, assert_equals_data
+
+
+def _test_simple_arithmetic(a, b):
+    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+    expected = []
+    bt['a'] = a
+    bt['b'] = b
+    expected.extend([a, b])
+    bt['plus'] = bt.a + bt.b
+    bt['min'] = bt.a - bt.b
+    bt['mul'] = bt.a * bt.b
+    bt['div'] = bt.a / bt.b
+    bt['floordiv1'] = bt.a // bt.b
+    bt['floordiv2'] = bt.a // 5.1
+    bt['pow'] = bt.a ** bt.b
+    bt['mod'] = bt.b % bt.a
+    expected.extend([a + b, a - b, a * b, a / b, a // b, a // 5.1, a ** b, b % a])
+    assert_equals_data(
+        bt[:1],
+        expected_columns=list(bt.all_series.keys()),
+        expected_data=[
+            [1, 93485, *expected],
+        ]
+    )
+
+
 
 
 def test_round():

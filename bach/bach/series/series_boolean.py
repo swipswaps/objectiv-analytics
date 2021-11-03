@@ -27,25 +27,30 @@ class SeriesBoolean(Series, ABC):
             raise ValueError(f'cannot convert {source_dtype} to bool')
         return Expression.construct('cast({} as bool)', expression)
 
-    def _comparator_operator(self, other, comparator):
-        other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['bool'], other)
-        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self.copy_override(dtype='bool', expression=expression)
+    def _comparator_operation(self, other, comparator, other_dtypes=['bool']) -> 'SeriesBoolean':
+        return super()._comparator_operation(other, comparator, other_dtypes)
 
     def _boolean_operator(self, other, operator: str) -> 'SeriesBoolean':
         # TODO maybe "other" should have a way to tell us it can be a bool?
-        # TODO we're missing "NOT" here. https://www.postgresql.org/docs/13/functions-logical.html
+        # This is not the nicest, rewrite to use _arithmetic_operation
         other = const_to_series(base=self, value=other)
-        self._check_supported(f"boolean operator '{operator}'", ['bool', 'int64', 'float'], other)
+        other = self._get_supported(f"boolean operator '{operator}'", ['bool', 'int64', 'float'], other)
         if other.dtype != 'bool':
             expression = Expression.construct(f'(({{}}) {operator} cast({{}} as bool))', self, other)
         else:
             expression = Expression.construct(f'(({{}}) {operator} ({{}}))', self, other)
         return self.copy_override(dtype='bool', expression=expression)
 
+    def __invert__(self) -> 'SeriesBoolean':
+        expression = Expression.construct('NOT ({})', self)
+        return self.copy_override(expression=expression)
+
     def __and__(self, other) -> 'SeriesBoolean':
         return self._boolean_operator(other, 'AND')
 
     def __or__(self, other) -> 'SeriesBoolean':
         return self._boolean_operator(other, 'OR')
+
+    def __xor__(self, other) -> 'SeriesBoolean':
+        # (A and not B) or (not A and B)
+        return ((self & (~other)) | ((~self) & other))

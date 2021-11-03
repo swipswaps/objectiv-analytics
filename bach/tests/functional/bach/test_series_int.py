@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 from bach import Series, SeriesInt64
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
     assert_db_type
+from tests.functional.bach.test_series_numeric import _test_simple_arithmetic
 
 
 def test_add_int_constant():
@@ -175,6 +176,31 @@ def test_integer_divide_constant():
             [1, 93],  # 93485 // 1000
             [2, 33],  # 33520 // 1000
             [3, 3],   #  3055 // 1000
+        ]
+    )
+
+def test_int_int_arithmetic():
+    _test_simple_arithmetic(10, 3)
+
+
+def test_int_float_arithmetic():
+    _test_simple_arithmetic(10, 2.25)
+
+
+def test_int_shifts():
+    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+    expected = [8, 3]
+    bt['a'] = 8
+    bt['b'] = 3
+    bt['lshift'] = bt.a << bt.b
+    bt['rshift'] = bt.a >> bt.b
+    expected.extend([64, 1])
+
+    assert_equals_data(
+        bt[:1],
+        expected_columns=list(bt.all_series.keys()),
+        expected_data=[
+            [1, 93485, *expected],
         ]
     )
 

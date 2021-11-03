@@ -265,8 +265,11 @@ class Series(ABC):
             return expression
         return Expression.construct(f'{{}} as {quoted_column_name}', expression)
 
-    def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'Series'):
-
+    def _get_supported(self, operation_name: str, supported_dtypes: List[str], other: 'Series'):
+        """
+        Check whether `other` is supported for this operation, and possibly do something
+        about it if possible, but using subquery / materialization
+        """
         if self.base_node != other.base_node:
             raise ValueError(f'Cannot apply {operation_name} on two series with different base_node. '
                              f'Hint: make sure both series belong to or are derived from the same '
@@ -275,6 +278,7 @@ class Series(ABC):
 
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
+        return other
 
     def head(self, n: int = 5):
         """
@@ -387,36 +391,97 @@ class Series(ABC):
         )
         return self.copy_override(dtype='bool', expression=expression)
 
-    # Below methods are not abstract, as they can be optionally be implemented by subclasses.
+    def fillna(self, constant_value):
+        """
+        Fill any NULL value with the given constant
+        :param constant_value: the value to replace the NULL values with. Should be a supported
+            type by the series, or a TypeError is raised.
+        :note: Pandas replaces np.nan values, we can only replace NULL.
+        :note: you can replace None with None, have fun, forever!
+        """
+        return self.copy_override(
+            expression=Expression.construct(
+                'COALESCE({}, {})', self, self.value_to_expression(constant_value)
+            )
+        )
+
+    def _binary_operation(self, other, operation, fmt_str, other_dtypes=[], dtype=None):
+        """
+        The standard way to perform a binary operation
+
+        :param self: The left hand side expression (lhs) in the operation
+        :param other: The right hand side expression (rhs) in the operation
+        :param operation: A user-readable representation of the operation
+        :param fmt_str: An Expression.construct format string, accepting lhs and rhs as the only parameters,
+            in that order.
+        :param other_dtypes: The acceptable dtypes for the rhs expression
+        :param dtype: The new dtype for the Series that results from this operation. Leave None for same
+            as lhs, pass a string with the new explicit dtype, or pass a dict that maps rhs.dtype to the
+            resulting dtype. If the dict does not contain the rhs.dtype, None is assumed, using the lhs
+            dtype.
+        """
+        if len(other_dtypes) == 0:
+            raise NotImplementedError(f'binary operation {operation} not supported '
+                                      f'for {self.__class__} and {other.__class__}')
+
+        other = const_to_series(base=self, value=other)
+        other = self._get_supported(operation, other_dtypes, other)
+        expression = Expression.construct(fmt_str, self, other)
+        if isinstance(dtype, dict):
+            if other.dtype not in dtype:
+                dtype = None
+            else:
+                dtype = dtype[other.dtype]
+        return self.copy_override(dtype=dtype, expression=expression)
+
+    def _arithmetic_operation(self, other, operation, fmt_str, other_dtypes=[], dtype=None):
+        """
+        implement this is subclass to have boilerplate support for all arithmetic functions
+        defined below, but also call this method from specific arithmetic operation implementations
+        without implementing it to get nice error messages in yield.
+
+        :see: _binary_operation() for parameters
+        """
+        if len(other_dtypes) == 0:
+            raise NotImplementedError(f'arithmetic operation {operation} not supported for '
+                                      f'{self.__class__} and {other.__class__}')
+        return self._binary_operation(other, operation, fmt_str, other_dtypes, dtype)
+
     def __add__(self, other) -> 'Series':
-        raise NotImplementedError()
+        return self._arithmetic_operation(other, 'add', '({}) + ({})')
 
     def __sub__(self, other) -> 'Series':
-        raise NotImplementedError()
-
-    def __mul__(self, other) -> 'Series':
-        raise NotImplementedError()
-
-    # TODO, answer: What about __matmul__?
+        return self._arithmetic_operation(other, 'sub', '({}) - ({})')
 
     def __truediv__(self, other) -> 'Series':
-        raise NotImplementedError()
+        """ This case is not generically okay. subclasses should check that"""
+        return self._arithmetic_operation(other, 'div', '({}) / ({})')
 
     def __floordiv__(self, other) -> 'Series':
-        raise NotImplementedError()
+        return self._arithmetic_operation(other, 'floordiv', 'floor(({}) / ({}))', dtype='int64')
+
+    def __mul__(self, other) -> 'Series':
+        return self._arithmetic_operation(other, 'mul', '({}) * ({})')
 
     def __mod__(self, other) -> 'Series':
-        raise NotImplementedError()
-
-    # TODO, answer: What about __divmod__?
+        # PG is picky in data types, so we solve it like this.
+        # dividend - floor(dividend / divisor) * divisor';
+        return self - self // other * other
 
     def __pow__(self, other, modulo=None) -> 'Series':
-        raise NotImplementedError()
+        if modulo is not None:
+            return (self.__pow__(other, None)).__mod__(modulo)
+        return self._arithmetic_operation(other, 'pow', 'POWER({}, {})')
 
     def __lshift__(self, other) -> 'Series':
         raise NotImplementedError()
 
     def __rshift__(self, other) -> 'Series':
+        raise NotImplementedError()
+
+    # Boolean operations
+
+    def __invert__(self) -> 'Series':
         raise NotImplementedError()
 
     def __and__(self, other) -> 'Series':
@@ -428,26 +493,34 @@ class Series(ABC):
     def __or__(self, other) -> 'Series':
         raise NotImplementedError()
 
-    def _comparator_operator(self, other, comparator) -> 'SeriesBoolean':
-        raise NotImplementedError()
+    # Comparator operations
+    def _comparator_operation(self, other, comparator, other_dtypes=[]) -> 'SeriesBoolean':
+        if len(other_dtypes) == 0:
+            raise NotImplementedError(f'comparator {comparator} not supported for '
+                                      f'{self.__class__} and {other.__class__}')
+        return self._binary_operation(
+            other=other, operation=f"comparator '{comparator}'",
+            fmt_str=f'({{}}) {comparator} ({{}})',
+            other_dtypes=other_dtypes, dtype='bool'
+        )
 
-    def __ne__(self, other) -> 'SeriesBoolean':  # type: ignore
-        return self._comparator_operator(other, "<>")
+    def __ne__(self, other) -> 'SeriesBoolean':     # type: ignore
+        return self._comparator_operation(other, "<>")
 
-    def __eq__(self, other) -> 'SeriesBoolean':  # type: ignore
-        return self._comparator_operator(other, "=")
+    def __eq__(self, other) -> 'SeriesBoolean':     # type: ignore
+        return self._comparator_operation(other, "=")
 
     def __lt__(self, other) -> 'SeriesBoolean':
-        return self._comparator_operator(other, "<")
+        return self._comparator_operation(other, "<")
 
     def __le__(self, other) -> 'SeriesBoolean':
-        return self._comparator_operator(other, "<=")
+        return self._comparator_operation(other, "<=")
 
     def __ge__(self, other) -> 'SeriesBoolean':
-        return self._comparator_operator(other, ">=")
+        return self._comparator_operation(other, ">=")
 
     def __gt__(self, other) -> 'SeriesBoolean':
-        return self._comparator_operator(other, ">")
+        return self._comparator_operation(other, ">")
 
     def apply_func(self,
                    func: Union[str, Callable, List[Union[str, Callable]]],
@@ -620,20 +693,6 @@ class Series(ABC):
         else:
             return self.copy_override(dtype=derived_dtype,
                                       expression=partition.get_window_expression(expression))
-
-    def fillna(self, constant_value):
-        """
-        Fill any NULL value with the given constant
-        :param constant_value: the value to replace the NULL values with. Should be a supported
-            type by the series, or a TypeError is raised.
-        :note: Pandas replaces np.nan values, we can only replace NULL.
-        :note: you can replace None with None, have fun, forever!
-        """
-        return self.copy_override(
-            expression=Expression.construct(
-                'COALESCE({}, {})', self, self.value_to_expression(constant_value)
-            )
-        )
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
         return self._derived_agg_func(partition, 'count', 'int64', skipna=skipna)
