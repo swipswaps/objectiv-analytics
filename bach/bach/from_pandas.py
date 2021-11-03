@@ -27,7 +27,7 @@ def from_pandas_store_table(engine: Engine,
     conn.close()
 
     # Todo, this should use from_table from here on.
-    model = BachSqlModel(sql=f'select * from {quote_identifier(table_name)}').instantiate()
+    model = BachSqlModel(sql='select * from {table_name}')(table_name=quote_identifier(table_name))
 
     # Should this also use _df_or_series?
     return DataFrame.get_instance(

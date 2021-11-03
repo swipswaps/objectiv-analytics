@@ -47,7 +47,7 @@ def test_from_pandas_materialized_injection():
         engine=engine,
         df=pdf,
         convert_objects=True,
-        table_name='test_from_pd_table_injection',
+        table_name='test_from_pd_{table}_"injection"',
         if_exists='replace'
     )
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
