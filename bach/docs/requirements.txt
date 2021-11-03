@@ -7,3 +7,10 @@ pydata_sphinx_theme
 ## needed for rendering ipython codeblocks
 ipython
 
+## needed for TOC
+lxml
+
+## NOTE, also install the Bach requirements.txt to make this work
+
+
+
