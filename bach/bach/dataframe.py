@@ -242,76 +242,59 @@ class DataFrame:
         )
 
     @classmethod
-    def from_dataframe(cls,
-                       df: pandas.DataFrame,
-                       name: str,
-                       engine: Engine,
-                       convert_objects: bool = False,
-                       if_exists: str = 'fail'):
+    def from_pandas_store_table(
+            cls,
+            engine: Engine,
+            df: pandas.DataFrame,
+            convert_objects: bool,
+            table_name: str,
+            if_exists: str = 'fail'
+    ) -> 'DataFrame':
         """
-        Instantiate a new DataFrame based on the content of a Pandas DataFrame. Supported dtypes are
-        'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
-        This will first load the data into the database using pandas' df.to_sql() method.
+        Instantiate a new DataFrame based on the content of a Pandas DataFrame. This will first write the
+        data to a database table using pandas' df.to_sql() method.
+        Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
 
-        :param df: Pandas DataFrame to instantiate as DataFrame
-        :param name: name of the sql table the Pandas DataFrame will be written to
+
         :param engine: db connection
+        :param df: Pandas DataFrame to instantiate as DataFrame
         :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
             pd.convert_dtypes() method where possible.
+        :param table_name: name of the sql table the Pandas DataFrame will be written to
         :param if_exists: {'fail', 'replace', 'append'}, default 'fail'
-            How to behave if the table already exists.
-
+            How to behave if the table already exists:
             * fail: Raise a ValueError.
             * replace: Drop the table before inserting new values.
             * append: Insert new values to the existing table.
         """
-        if df.index.name is None:  # for now only one index allowed todo check this
-            index = '_index_0'
-        else:
-            index = f'_index_{df.index.name}'
-
-        # set the index as a normal column, this makes it easier to convert the dtype
-        df_copy = df.rename_axis(index).reset_index()
-
-        if convert_objects:
-            df_copy = df_copy.convert_dtypes(convert_integer=False,
-                                             convert_boolean=False,
-                                             convert_floating=False)
-
-        # todo add support for 'timedelta64[ns]'. pd.to_sql writes timedelta as bigint to sql, so
-        # not implemented yet
-        supported_types = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool']
-        index_dtype = df_copy[index].dtype.name
-        if index_dtype not in supported_types:
-            raise ValueError(f"index is of type '{index_dtype}', should one of {supported_types}. "
-                             f"For 'object' columns convert_objects=True can be used to convert these columns"
-                             f"to type 'string'.")
-        dtypes = {str(column_name): dtype.name for column_name, dtype in df_copy.dtypes.items()
-                  if column_name in df.columns}
-        unsupported_dtypes = {str(column_name): dtype for column_name, dtype in dtypes.items()
-                              if dtype not in supported_types}
-        if unsupported_dtypes:
-            raise ValueError(f"dtypes {unsupported_dtypes} are not supported, should one of "
-                             f"{supported_types}. "
-                             f"For 'object' columns convert_objects=True can be used to convert these columns"
-                             f"to type 'string'.")
-
-        # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-        conn = engine.connect()
-        df_copy.to_sql(name=name, con=conn, if_exists=if_exists, index=False)
-        conn.close()
-
-        # Todo, this should use from_table from here on.
-        model = BachSqlModel(sql=f'SELECT * FROM {name}').instantiate()
-
-        # Should this also use _df_or_series?
-        return cls.get_instance(
+        from bach.from_pandas import from_pandas_store_table
+        return from_pandas_store_table(
             engine=engine,
-            base_node=model,
-            index_dtypes={index: index_dtype},
-            dtypes=dtypes,
-            group_by=None
+            df=df,
+            convert_objects=convert_objects,
+            table_name=table_name,
+            if_exists=if_exists
         )
+
+    @classmethod
+    def from_pandas(cls, engine: Engine, df: pandas.DataFrame, convert_objects: bool = False) -> 'DataFrame':
+        """
+        Instantiate a new DataFrame based on the content of a Pandas DataFrame. The data will be represented
+        using a `select * from values()` query.
+
+        Warning: This method is only suited for small quantities of data.
+        For anything over a few dozen kilobytes of data it is recommended to store the data in a table in
+        the database, e.g. by using the from_pd_store_table() function.
+
+        Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
+
+        :param engine: db connection
+        :param df: Pandas DataFrame to instantiate as DataFrame
+        :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
+            pd.convert_dtypes() method where possible.
+        """
+        from bach.from_pandas import from_pandas
+        return from_pandas(engine=engine, df=df, convert_objects=convert_objects)
 
     @classmethod
     def get_instance(

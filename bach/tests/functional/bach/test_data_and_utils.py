@@ -134,8 +134,13 @@ def get_pandas_df(dataset: List[List[Any]], columns: List[str]) -> pandas.DataFr
 def get_from_df(table: str, df: pandas.DataFrame, convert_objects=True) -> DataFrame:
     """ Create a database table with the data from the data-frame. """
     engine = sqlalchemy.create_engine(DB_TEST_URL)
-    buh_tuh = DataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects,
-                                       if_exists='replace')
+    buh_tuh = DataFrame.from_pandas_store_table(
+        engine=engine,
+        df=df,
+        convert_objects=convert_objects,
+        table_name=table,
+        if_exists='replace'
+    )
     return buh_tuh
 
 

@@ -18,59 +18,55 @@ EXPECTED_DATA = [
 ]
 
 
-def test_from_dataframe_materialized():
+def test_from_pandas_materialized():
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
     engine = sqlalchemy.create_engine(DB_TEST_URL)
-    bt = DataFrame.from_dataframe(
-        df=pdf,
-        name='test_from_dataframe_table',
+    bt = DataFrame.from_pandas_store_table(
         engine=engine,
+        df=pdf,
         convert_objects=True,
+        table_name='test_from_pd_table',
         if_exists='replace'
     )
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
 
 
-def test_from_dataframe_ephemeral():
+def test_from_pandas_ephemeral():
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
     engine = sqlalchemy.create_engine(DB_TEST_URL)
-    # todo: switch to new function
-    bt = DataFrame.from_dataframe(
-        df=pdf,
-        name='test_from_dataframe_table',
+    bt = DataFrame.from_pandas(
         engine=engine,
-        convert_objects=True,
-        if_exists='replace'
+        df=pdf,
+        convert_objects=True
     )
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
 
 
-
-def test_from_dataframe_non_happy_path():
+def test_from_pandas_non_happy_path():
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
     engine = sqlalchemy.create_engine(DB_TEST_URL)
     with pytest.raises(ValueError):
         # if convert_objects is false, we'll get an error, because pdf's dtype for 'city' and 'municipality'
         # is 'object
-        DataFrame.from_dataframe(
-            df=pdf,
-            name='test_from_dataframe_table_convert_objects_false',
+        DataFrame.from_pandas_store_table(
             engine=engine,
+            df=pdf,
             convert_objects=False,
+            table_name='test_from_pd_table_convert_objects_false',
             if_exists='replace'
         )
     # Create the same table twice. This will fail if if_exists='fail'
     # Might fail on either the first or second try. As we don't clean up between tests.
-    with pytest.raises(ValueError, match="Table 'test_from_dataframe_table' already exists"):
-        DataFrame.from_dataframe(
-            df=pdf,
-            name='test_from_dataframe_table',
+    with pytest.raises(ValueError, match="Table 'test_from_pd_table' already exists"):
+        DataFrame.from_pandas_store_table(
             engine=engine,
+            df=pdf,
             convert_objects=True,
+            table_name='test_from_pd_table',
         )
-        DataFrame.from_dataframe(
-            df=pdf,
-            name='test_from_dataframe_table',
+        DataFrame.from_pandas_store_table(
             engine=engine,
+            df=pdf,
             convert_objects=True,
+            table_name='test_from_pd_table',
         )
