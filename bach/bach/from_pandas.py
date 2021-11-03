@@ -9,7 +9,6 @@ from sqlalchemy.engine import Engine
 from bach import DataFrame, get_series_type_from_dtype
 from bach.expression import quote_identifier, Expression
 from bach.sql_model import BachSqlModel
-from sql_models.model import SqlModelSpec
 
 
 def from_pandas_store_table(engine: Engine,
