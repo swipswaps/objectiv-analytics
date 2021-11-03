@@ -55,7 +55,7 @@ export * from './definitions/TrackClicksOptions';
 export * from './definitions/TrackedElement';
 export * from './definitions/TrackerErrorHandlerCallback';
 export * from './definitions/TrackVisibilityAttribute';
-export * from './definitions/uuid';
+export * from './definitions/Uuid';
 export * from './definitions/ValidateAttribute';
 export * from './definitions/ValidChildrenTaggingQuery';
 export * from './definitions/WaitForQueueOptions';

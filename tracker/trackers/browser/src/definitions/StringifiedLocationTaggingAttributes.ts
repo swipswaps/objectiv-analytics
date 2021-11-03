@@ -1,6 +1,6 @@
 import { Infer, object, optional, string } from 'superstruct';
 import { TaggingAttribute } from './TaggingAttribute';
-import { Uuid } from './uuid';
+import { Uuid } from './Uuid';
 
 /**
  * The object that Location Taggers return, stringified
