@@ -1,35 +1,38 @@
-.. _buhtuh:
+.. _bach:
 
-Welcome to BuhTuh's documentation!
+Welcome to Bach's documentation!
 ==================================
 
-hallo ik ben een introducte
+hallo ik ben een introductie
 
-Buhtuh
+Bach
 ------
-.. autosummary::
-    :toctree: buhtuh
 
-    buhtuh.dataframe
-    buhtuh.expression
-    buhtuh.merge
-    buhtuh.mike
-    buhtuh.partitioning
-    buhtuh.types
+.. autosummary::
+    :toctree: bach
+
+    bach.dataframe
+    bach.expression
+    bach.merge
+    bach.mike
+    bach.partitioning
+    bach.sql_model
+    bach.types
 
 
 Series
 ------
-.. autosummary::
-    :toctree: buhtuh/series
 
-    buhtuh.series.series_boolean
-    buhtuh.series.series_datetime
-    buhtuh.series.series_json
-    buhtuh.series.series_numeric
-    buhtuh.series.series_string
-    buhtuh.series.series_uuid
-    buhtuh.series.series
+.. autosummary::
+    :toctree: bach/series
+
+    bach.series.series_boolean
+    bach.series.series_datetime
+    bach.series.series_json
+    bach.series.series_numeric
+    bach.series.series_string
+    bach.series.series_uuid
+    bach.series.series
 
 
 Sql Models

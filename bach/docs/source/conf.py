@@ -16,11 +16,9 @@ import inspect
 sys.path.insert(0, os.path.abspath('.'))
 
 paths = [
-    os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__))))
+    os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__)))),
 ]
 sys.path.extend(paths)
-
-print(f'using {paths}')
 
 
 # -- Project information -----------------------------------------------------
