@@ -7,6 +7,7 @@ from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHE
 from uuid import UUID
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
+from bach.dataframe import ColumnFunction
 from bach.expression import quote_identifier, Expression
 from bach.types import value_to_dtype
 from sql_models.model import SqlModel
@@ -449,9 +450,7 @@ class Series(ABC):
     def __gt__(self, other) -> 'SeriesBoolean':
         return self._comparator_operator(other, ">")
 
-    def apply_func(self,
-                   func: Union[str, Callable, List[Union[str, Callable]]],
-                   *args, **kwargs) -> List['Series']:
+    def apply_func(self, func: ColumnFunction, *args, **kwargs) -> List['Series']:
         """
         Apply the given func to this Series. If multiple are given, multiple new series will
         be returned.
@@ -492,7 +491,7 @@ class Series(ABC):
         return list(series.values())
 
     def aggregate(self,
-                  func: Union[str, Callable, List[Union[str, Callable]]],
+                  func: ColumnFunction,
                   group_by: 'GroupBy' = None,
                   *args, **kwargs) -> DataFrameOrSeries:
         """
@@ -501,7 +500,7 @@ class Series(ABC):
         return self.agg(func, group_by, *args, **kwargs)
 
     def agg(self,
-            func: Union[str, Callable, List[Union[str, Callable]]],
+            func: ColumnFunction,
             group_by: 'GroupBy' = None,
             *args, **kwargs) -> DataFrameOrSeries:
         """
