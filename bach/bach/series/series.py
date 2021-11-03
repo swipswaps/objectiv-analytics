@@ -333,19 +333,18 @@ class Series(ABC):
         return s
 
     def exists(self):
-        return BuhTuhSeries._independent_subquery(self, 'exists').copy_override(dtype='boolean')
+        return Series._independent_subquery(self, 'exists').copy_override(dtype='boolean')
 
     def any(self):
         # aka some()
-        return BuhTuhSeries._independent_subquery(self, 'any')
+        return Series._independent_subquery(self, 'any')
 
     def all(self):
-        return BuhTuhSeries._independent_subquery(self, 'all')
+        return Series._independent_subquery(self, 'all')
 
     def isin(self, other: 'Series'):
-        in_expr = Expression.construct('{} {}', self, BuhTuhSeries._independent_subquery(other, 'in'))
+        in_expr = Expression.construct('{} {}', self, Series._independent_subquery(other, 'in'))
         return self.copy_override(expression=in_expr, dtype='boolean')
-
 
     def astype(self, dtype: Union[str, Type]) -> 'Series':
         if dtype == self.dtype or dtype in self.dtype_aliases:
