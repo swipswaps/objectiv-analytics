@@ -18,16 +18,6 @@ if TYPE_CHECKING:
 class SeriesAbstractDateTime(Series, ABC):
     """ Class all date/time/interval handling classes derive from to share common stuff """
 
-    def _arithmetic_operation(self, other, operation, fmt_str, other_dtypes=(), dtype=None):
-        ret_val = super()._arithmetic_operation(other, operation, fmt_str, other_dtypes, dtype)
-        if ret_val.dtype == 'date':
-            # PG returns timestamp in all cases were we expect date
-            # Make sure we cast properly, and round similar to python datetime
-            return ret_val.copy_override(
-                expression=Expression.construct("cast({} + '12h'::interval as date)", ret_val))
-        else:
-            return ret_val
-
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
@@ -41,6 +31,17 @@ class SeriesAbstractDateTime(Series, ABC):
         """
         expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
         return self.copy_override(dtype='string', expression=expression)
+
+    @classmethod
+    def _cast_to_date_if_dtype_date(cls, series: 'Series') -> 'Series':
+        # PG returns timestamp in all cases were we expect date
+        # Make sure we cast properly, and round similar to python datetime
+        if series.dtype == 'date':
+            return series.copy_override(
+                expression=Expression.construct("cast({} + '12h'::interval as date)", series)
+            )
+        else:
+            return series
 
 
 class SeriesTimestamp(SeriesAbstractDateTime):
@@ -71,14 +72,10 @@ class SeriesTimestamp(SeriesAbstractDateTime):
             return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
 
     def __add__(self, other) -> 'Series':
-        # add accepts only timedelta as rhs, and will yield same type
         return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))
 
     def __sub__(self, other) -> 'Series':
-        # different rhs parameter types yield result in different return
         type_mapping = {
-            'date': 'timedelta',
-            'time': 'timestamp',
             'timedelta': 'timestamp',
             'timestamp': 'timedelta'
         }
@@ -115,25 +112,30 @@ class SeriesDate(SeriesAbstractDateTime):
 
     def __add__(self, other) -> 'Series':
         type_mapping = {
-            'time': 'timestamp',
-            'timedelta': 'date'  # python datetime return date, PG timestamp
+            'timedelta': 'date'  # PG returns timestamp, needs explicit cast to date
         }
-        return self._arithmetic_operation(other, 'add', '({}) + ({})',
-                                          other_dtypes=tuple(type_mapping.keys()),
-                                          dtype=type_mapping)
+        return self._cast_to_date_if_dtype_date(
+            self._arithmetic_operation(other, 'add', '({}) + ({})',
+                                       other_dtypes=tuple(type_mapping.keys()),
+                                       dtype=type_mapping)
+        )
 
     def __sub__(self, other) -> 'Series':
         type_mapping = {
             'date': 'timedelta',
-            'time': 'timestamp',
-            'timedelta': 'date',  # PG returns timestamp
-            'timestamp': 'timedelta'
+            'timedelta': 'date',  # PG returns timestamp, needs explicit cast to date
         }
         if other.dtype == 'date':
-            raise ValueError('date - date operations are really broken in PG. Consider using timestamps')
-        return self._arithmetic_operation(other, 'sub', '({}) - ({})',
-                                          other_dtypes=tuple(type_mapping.keys()),
-                                          dtype=type_mapping)
+            # PG does unexpected things when doing date - date. Work around that.
+            fmt_str = 'cast(cast({} as timestamp) - ({}) as interval)'
+        else:
+            fmt_str = '({}) - ({})'
+
+        return self._cast_to_date_if_dtype_date(
+            self._arithmetic_operation(other, 'sub', fmt_str,
+                                       other_dtypes=tuple(type_mapping.keys()),
+                                       dtype=type_mapping)
+        )
 
 
 class SeriesTime(SeriesAbstractDateTime):
@@ -161,24 +163,7 @@ class SeriesTime(SeriesAbstractDateTime):
                 raise ValueError(f'cannot convert {source_dtype} to time')
             return Expression.construct(f'cast ({{}} as {cls.supported_db_dtype})', expression)
 
-    def __add__(self, other) -> 'Series':
-        type_mapping = {
-            'date': 'timestamp',
-            'timedelta': 'time',
-            'timestamp': 'timestamp'
-        }
-        return self._arithmetic_operation(other, 'add', '({}) + ({})',
-                                          other_dtypes=tuple(type_mapping.keys()),
-                                          dtype=type_mapping)
-
-    def __sub__(self, other) -> 'Series':
-        type_mapping = {
-            'time': 'timestamp',
-            'timedelta': 'time'
-        }
-        return self._arithmetic_operation(other, 'sub', '({}) - ({})',
-                                          other_dtypes=tuple(type_mapping.keys()),
-                                          dtype=type_mapping)
+    # python supports no arithmetic on Time
 
 
 class SeriesTimedelta(SeriesAbstractDateTime):
@@ -212,18 +197,16 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     def __add__(self, other) -> 'Series':
         type_mapping = {
             'date': 'date',  # PG makes this a timestamp
-            'time': 'time',  # not supported by python datetime, but PG is okay with it
             'timedelta': 'timedelta',
             'timestamp': 'timestamp'
         }
-        return self._arithmetic_operation(other, 'add', '({}) + ({})',
-                                          other_dtypes=tuple(type_mapping.keys()),
-                                          dtype=type_mapping)
+        return self._cast_to_date_if_dtype_date(
+            self._arithmetic_operation(other, 'add', '({}) + ({})',
+                                       other_dtypes=tuple(type_mapping.keys()),
+                                       dtype=type_mapping))
 
     def __sub__(self, other) -> 'Series':
         type_mapping = {
-            'date': 'timedelta',
-            'time': 'timedelta',
             'timedelta': 'timedelta',
         }
         return self._arithmetic_operation(other, 'sub', '({}) - ({})',

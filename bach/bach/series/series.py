@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable
+from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping
 from uuid import UUID
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
@@ -407,7 +407,7 @@ class Series(ABC):
 
     def _binary_operation(self, other: 'Series', operation: str, fmt_str: str,
                           other_dtypes: Tuple[str, ...] = (),
-                          dtype: Union[str, Dict[str, Optional[str]]] = None) -> 'Series':
+                          dtype: Union[str, Mapping[str, Optional[str]]] = None) -> 'Series':
         """
         The standard way to perform a binary operation
 
@@ -438,7 +438,7 @@ class Series(ABC):
 
     def _arithmetic_operation(self, other: 'Series', operation: str, fmt_str: str,
                               other_dtypes: Tuple[str, ...] = (),
-                              dtype: Union[str, Dict[str, Optional[str]]] = None) -> 'Series':
+                              dtype: Union[str, Mapping[str, Optional[str]]] = None) -> 'Series':
         """
         implement this in a subclass to have boilerplate support for all arithmetic functions
         defined below, but also call this method from specific arithmetic operation implementations
@@ -449,8 +449,8 @@ class Series(ABC):
         if other_dtypes is None:
             other_dtypes = []
         if len(other_dtypes) == 0:
-            raise NotImplementedError(f'arithmetic operation {operation} not supported for '
-                                      f'{self.__class__} and {other.__class__}')
+            raise TypeError(f'arithmetic operation {operation} not supported for '
+                            f'{self.__class__} and {other.__class__}')
         return self._binary_operation(other, operation, fmt_str, other_dtypes, dtype)
 
     def __add__(self, other) -> 'Series':
@@ -503,8 +503,8 @@ class Series(ABC):
     def _comparator_operation(self, other: 'Series', comparator: str,
                               other_dtypes: Tuple[str, ...] = ()) -> 'SeriesBoolean':
         if len(other_dtypes) == 0:
-            raise NotImplementedError(f'comparator {comparator} not supported for '
-                                      f'{self.__class__} and {other.__class__}')
+            raise TypeError(f'comparator {comparator} not supported for '
+                            f'{self.__class__} and {other.__class__}')
         return cast('SeriesBoolean', self._binary_operation(
             other=other, operation=f"comparator '{comparator}'",
             fmt_str=f'({{}}) {comparator} ({{}})',

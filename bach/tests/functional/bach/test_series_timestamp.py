@@ -85,34 +85,70 @@ def test_timestamp_comparator(asstring: bool):
 
 
 def test_timestamp_arithmetic():
+    data = [
+        ['d', datetime.date(2020, 3, 11), 'date', (None, None)],
+        ['t', datetime.time(23, 11, 5), 'time', (None, None)],
+        ['td', datetime.timedelta(days=321, seconds=9877), 'timedelta', ('timestamp', 'timestamp')],
+        ['dt', datetime.datetime(2021, 5, 3, 11, 28, 36, 388000), 'timestamp', (None, 'timedelta')]
+    ]
+    types_plus_min(data, datetime.datetime(2019, 8, 16, 2, 54, 39, 166000), 'timestamp')
+
+
+def types_plus_min(data, base_value, base_type):
+    """
+    Function to test all + and - operation combinations of data vs base, to make sure
+    that all operations supported in python are supported in Bach and vice versa.
+    Values returned by the DB as well as dtypes are checked.
+
+    data is a list made up of lists, where the internal list are as follows:
+    [ name, value, value_dtype, tuple(dtype_after_plus, dtype_after_min) ]
+    - name is only for reference
+    - value is the actual value in Python
+    - value_dtype is the dtype in Bach for the value in Python
+    - the tuple(dtype_after_plus, dtype_after_min) contains the dtypes that the resulting series should have.
+    """
     bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
 
-    td = datetime.timedelta(days=321, seconds=9877)
-    dt = datetime.datetime(2021, 5, 3, 11, 28, 36, 388000)
-    t = datetime.time(23, 11, 5)
-    d = datetime.date(2020, 3, 11)
+    base_name = 'base'
+    bt[base_name] = base_value
+    expected = [base_value]
+    expected_types = [base_type]
 
-    bt['td'] = td
-    bt['dt'] = dt
-    bt['t'] = t
-    bt['d'] = d
+    for name, value, value_type, (plus_type, min_type) in data:
 
-    expected = [td, dt, t, d]
-    expected_types = ['timedelta', 'timestamp', 'time', 'date']
+        bt[name] = value
+        expected.append(value)
+        expected_types.append(value_type)
 
-    bt['plus_td'] = bt.dt + bt.td
-    expected.extend([dt + td])
-    expected_types.extend(['timestamp'])
+        try:
+            # Do the python operation. Will raise TypeError is not supported
+            expected.append(base_value + value)
+        except TypeError as e:
+            # Did we expected this operation to fail?
+            assert(plus_type is None)
 
-    bt['min_d'] = bt.dt - bt.d  # not supported by python
-    bt['min_t'] = bt.dt - bt.t  # not supported by python
-    bt['min_td'] = bt.dt - bt.td
-    bt['min_dt'] = bt.dt - bt.dt
-    expected.extend([datetime.timedelta(days=418, seconds=41316, microseconds=388000),
-                     datetime.datetime(2021, 5, 2, 12, 17, 31, 388000), dt-td, dt-dt])
-    expected_types.extend(['timedelta', 'timestamp', 'timestamp', 'timedelta'])
+            with pytest.raises(TypeError):
+                # it should also fail in Bach
+                bt[base_name] + bt[name]
+        else:
+            # python operation finished successfully, now do the Bach one.
+            bt[f'{base_name}_plus_{name}'] = bt[base_name] + bt[name]
+            assert bt[f'{base_name}_plus_{name}'].dtype == plus_type
 
-    assert [s.dtype for s in list(bt.all_series.values())[2:]] == expected_types
+        try:
+            # Do the python operation. Will raise TypeError is not supported
+            expected.append(base_value - value)
+        except TypeError as e:
+            # Did we expected this operation to fail?
+            assert(min_type is None)
+
+            with pytest.raises(TypeError):
+                # it should also fail in Bach
+                bt[base_name] - bt[name]
+        else:
+            # python operation finished successfully, now do the Bach one.
+            bt[f'{base_name}_min_{name}'] = bt[base_name] - bt[name]
+            assert bt[f'{base_name}_min_{name}'].dtype == min_type
 
     assert_equals_data(
         bt[:1],
@@ -121,3 +157,4 @@ def test_timestamp_arithmetic():
             [1, 93485, *expected],
         ]
     )
+    return bt, expected, expected_types

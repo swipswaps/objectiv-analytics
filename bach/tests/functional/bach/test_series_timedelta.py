@@ -5,44 +5,33 @@ import datetime
 
 from tests.functional.bach.test_data_and_utils import get_bt_with_food_data, assert_equals_data, \
     get_bt_with_test_data
+from tests.functional.bach.test_series_timestamp import types_plus_min
 
 
 def test_timedelta_arithmetic():
-    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
+    data = [
+        ['d', datetime.date(2020, 3, 11), 'date', ('date', None)],
+        ['t', datetime.time(23, 11, 5), 'time', (None, None)],
+        ['td', datetime.timedelta(days=321, seconds=9877), 'timedelta', ('timedelta', 'timedelta')],
+        ['dt', datetime.datetime(2021, 5, 3, 11, 28, 36, 388000), 'timestamp', ('timestamp', None)]
+    ]
+    types_plus_min(data, datetime.timedelta(days=123, seconds=5621), 'timedelta')
 
+
+def test_timedelta_arithmetic2():
+    bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
     td = datetime.timedelta(days=365, seconds=9877)
     td2 = datetime.timedelta(days=23, seconds=12)
-    dt = datetime.datetime(2021, 5, 3, 11, 28, 36, 388000)
-    t = datetime.time(23, 11, 5)
-    d = datetime.date(2020, 3, 11)
 
     bt['td'] = td
     bt['td2'] = td2
-    bt['dt'] = dt
-    bt['t'] = t
-    bt['d'] = d
-    expected = [td, td2, dt, t, d]
-    expected_types = ['timedelta', 'timedelta', 'timestamp', 'time', 'date']
+    expected = [td, td2]
+    expected_types = ['timedelta', 'timedelta']
 
-    # basis td only ops
-    bt['plus'] = bt.td + bt.td2
-    bt['min'] = bt.td - bt.td2
+    # special timedelta ops only, rest is tested elsewhere
     bt['mul'] = bt.td * 5
     bt['div'] = bt.td / 5
-    expected.extend([td + td2, td - td2, td * 5, td / 5])
-    expected_types.extend(['timedelta', 'timedelta', 'timedelta', 'timedelta'])
-
-    bt['plus_dt'] = bt.td + bt.dt
-    bt['plus_td'] = bt.td + bt.td
-    bt['plus_d'] = bt.td + bt.d
-    bt['plus_t'] = bt.td + bt.t
-    #     bt['min_t'] = bt.td - bt.t  # Not supported by python datetime
-    expected.extend([td + dt,  td + td, td + d, datetime.time(1, 55, 42)])
-    expected_types.extend(['timestamp', 'timedelta', 'date', 'time'])
-
-    bt['min_td'] = bt.td - bt.td
-    bt['min_t'] = bt.td - bt.t  # Not supported by python datetime
-    expected.extend([td - td, datetime.timedelta(days=364, seconds=12812)])
+    expected.extend([td * 5, td / 5])
     expected_types.extend(['timedelta', 'timedelta'])
 
     assert [s.dtype for s in list(bt.all_series.values())[2:]] == expected_types
@@ -54,10 +43,6 @@ def test_timedelta_arithmetic():
             [1, 93485, *expected],
         ]
     )
-
-    # bt['floordiv1'] = bt.a // bt.b
-    # bt['pow'] = bt.a ** bt.b
-    # bt['mod'] = bt.b % bt.a
 
 def test_timedelta():
     mt = get_bt_with_food_data()[['skating_order', 'moment']]
