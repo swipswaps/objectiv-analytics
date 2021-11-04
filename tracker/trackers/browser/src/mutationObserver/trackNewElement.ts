@@ -2,8 +2,8 @@ import { getLocationPath, TrackerConsole, TrackerElementLocations } from '@objec
 import { BrowserTracker } from '../BrowserTracker';
 import { getElementLocationStack } from '../common/getElementLocationStack';
 import { isTaggedElement } from '../common/guards/isTaggedElement';
-import { parseTrackClicksAttribute } from '../common/parser/parseTrackClicksAttribute';
-import { parseValidateAttribute } from '../common/parser/parseValidateAttribute';
+import { parseTrackClicksAttribute } from '../common/parsers/parseTrackClicksAttribute';
+import { parseValidateAttribute } from '../common/parsers/parseValidateAttribute';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { makeBlurEventHandler } from './makeBlurEventHandler';
