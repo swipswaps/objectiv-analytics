@@ -6,7 +6,7 @@ import { parseJson } from './parseJson';
  * `trackClicks` Tagging Attribute to TrackClicksOptions parser
  * Differently than other simplistic parsers, this one transforms the `trackClicks` attribute in a different format.
  */
-export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: string | null): TrackClicksOptions => {
+export const parseTrackClicks = (stringifiedTrackClicksAttribute: string | null): TrackClicksOptions => {
   const parsedTrackClicks = parseJson(stringifiedTrackClicksAttribute, TrackClicksAttribute);
 
   // Process `true` and `false` shorthands onto their verbose options counterparts

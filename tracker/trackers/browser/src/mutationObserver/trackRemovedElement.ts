@@ -2,7 +2,7 @@ import { GuardableElement } from '@objectiv/tracker-browser';
 import { TrackerElementLocations } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { isTaggedElement } from '../common/guards/isTaggedElement';
-import { parseTrackVisibilityAttribute } from '../common/parsers/parseTrackVisibilityAttribute';
+import { parseTrackVisibility } from '../common/parsers/parseTrackVisibility';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { trackSectionHidden } from '../eventTrackers/trackSectionHidden';
@@ -21,7 +21,7 @@ export const trackRemovedElement = (element: GuardableElement, tracker: BrowserT
     if (isTaggedElement(element)) {
       // Process visibility:hidden events in mode:auto
       if (element.hasAttribute(TaggingAttribute.trackVisibility)) {
-        const trackVisibility = parseTrackVisibilityAttribute(element.getAttribute(TaggingAttribute.trackVisibility));
+        const trackVisibility = parseTrackVisibility(element.getAttribute(TaggingAttribute.trackVisibility));
         if (trackVisibility.mode === 'auto') {
           trackSectionHidden({ element, tracker });
         }

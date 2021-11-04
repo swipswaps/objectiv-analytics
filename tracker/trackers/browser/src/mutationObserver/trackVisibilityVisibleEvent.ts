@@ -1,5 +1,5 @@
 import { BrowserTracker } from '../BrowserTracker';
-import { parseTrackVisibilityAttribute } from '../common/parsers/parseTrackVisibilityAttribute';
+import { parseTrackVisibility } from '../common/parsers/parseTrackVisibility';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
@@ -14,7 +14,7 @@ export const trackVisibilityVisibleEvent = (element: TaggedElement, tracker: Bro
     if (!element.hasAttribute(TaggingAttribute.trackVisibility)) {
       return;
     }
-    const trackVisibility = parseTrackVisibilityAttribute(element.getAttribute(TaggingAttribute.trackVisibility));
+    const trackVisibility = parseTrackVisibility(element.getAttribute(TaggingAttribute.trackVisibility));
     if (trackVisibility.mode === 'auto' || (trackVisibility.mode === 'manual' && trackVisibility.isVisible)) {
       trackSectionVisible({ element, tracker });
     }

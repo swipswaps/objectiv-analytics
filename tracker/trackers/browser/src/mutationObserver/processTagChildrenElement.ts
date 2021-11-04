@@ -1,7 +1,7 @@
 import { getObjectKeys } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
 import { isTagChildrenElement } from '../common/guards/isTagChildrenElement';
-import { parseChildrenTaggingAttribute } from '../common/parsers/parseChildrenTaggingAttribute';
+import { parseTagChildren } from '../common/parsers/parseTagChildren';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { ChildrenTaggingQuery } from '../definitions/ChildrenTaggingQuery';
 import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
@@ -21,7 +21,7 @@ export const processTagChildrenElement = (element: Element): TaggedElement[] => 
     if (!isTagChildrenElement(element)) {
       return newlyTrackedElements;
     }
-    const queries = parseChildrenTaggingAttribute(element.getAttribute(TaggingAttribute.tagChildren));
+    const queries = parseTagChildren(element.getAttribute(TaggingAttribute.tagChildren));
 
     queries.forEach((query: ChildrenTaggingQuery) => {
       const { queryAll, tagAs }: ChildrenTaggingQuery = create(query, ChildrenTaggingQuery);
