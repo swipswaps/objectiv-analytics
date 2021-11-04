@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { assert, create, string } from 'superstruct';
 import { ChildrenTaggingQueries } from '../../definitions/ChildrenTaggingQueries';
 import { ValidChildrenTaggingQuery } from '../../definitions/ValidChildrenTaggingQuery';

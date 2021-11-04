@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { assert, validate } from 'superstruct';
 import { stringifyChildrenTaggingAttribute } from '../common/stringifiers/stringifyChildrenTaggingAttribute';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';

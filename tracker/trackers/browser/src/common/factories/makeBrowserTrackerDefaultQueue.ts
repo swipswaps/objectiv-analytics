@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackerQueue, TrackerQueueInterface } from '@objectiv/tracker-core';
 import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
 import { TrackerQueueLocalStorageStore } from '../../queues/TrackerQueueLocalStorageStore';

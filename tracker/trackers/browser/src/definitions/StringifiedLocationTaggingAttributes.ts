@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { Infer, object, optional, string } from 'superstruct';
 import { TaggingAttribute } from './TaggingAttribute';
 import { Uuid } from './uuid';

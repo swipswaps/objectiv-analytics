@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { array, Infer } from 'superstruct';
 import { ChildrenTaggingQuery } from './ChildrenTaggingQuery';
 

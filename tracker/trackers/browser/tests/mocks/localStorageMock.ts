@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 export const localStorageMock = (function () {
   let store: any = {};
   return {

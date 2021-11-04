@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { Infer, literal, object, optional, union } from 'superstruct';
 import { FlushQueueOptions } from './FlushQueueOptions';
 import { WaitForQueueOptions } from './WaitForQueueOptions';

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 export * from '@objectiv/tracker-core';
 
 export * from './common/factories/makeBrowserTrackerDefaultPluginList';

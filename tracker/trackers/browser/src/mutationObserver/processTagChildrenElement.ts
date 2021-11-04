@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { getObjectKeys } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
 import { isTagChildrenElement } from '../common/guards/isTagChildrenElement';

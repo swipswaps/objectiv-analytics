@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { InjectionToken } from '@angular/core';
 import { BrowserTrackerConfig } from '@objectiv/tracker-browser';
 

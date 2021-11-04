@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { trackerErrorHandler } from './common/trackerErrorHandler';
 import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
 import { TaggingAttribute } from './definitions/TaggingAttribute';

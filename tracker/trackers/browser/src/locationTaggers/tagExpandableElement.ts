@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { makeExpandableSectionContext } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';

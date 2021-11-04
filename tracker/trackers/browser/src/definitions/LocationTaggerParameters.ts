@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { assign, object, pick, string } from 'superstruct';
 import { TagLocationOptions } from './TagLocationOptions';
 import { TagLocationParameters } from './TagLocationParameters';

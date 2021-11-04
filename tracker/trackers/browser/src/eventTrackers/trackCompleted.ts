@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { makeCompletedEvent } from '@objectiv/tracker-core';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { NonInteractiveEventTrackerParameters } from '../definitions/NonInteractiveEventTrackerParameters';

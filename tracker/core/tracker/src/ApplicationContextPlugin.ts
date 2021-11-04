@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { ApplicationContext } from '@objectiv/schema';
 import { ContextsConfig } from './Context';
 import { makeApplicationContext } from './ContextFactories';

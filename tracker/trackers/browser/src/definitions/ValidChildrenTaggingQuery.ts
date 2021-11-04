@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { Infer, object, string } from 'superstruct';
 import { StringifiedLocationTaggingAttributes } from './StringifiedLocationTaggingAttributes';
 

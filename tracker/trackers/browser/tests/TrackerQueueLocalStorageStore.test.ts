@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackerEvent } from '@objectiv/tracker-core';
 import { TrackerQueueLocalStorageStore } from '../src';
 import { localStorageMock } from './mocks/localStorageMock';
