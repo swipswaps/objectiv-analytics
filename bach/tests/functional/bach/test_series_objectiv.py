@@ -14,107 +14,11 @@ def test_get_real_data():
         bt,
         expected_columns=['_index_event_id', 'event_id', 'global_contexts', 'location_stack'],
         expected_data=[
-            [1, 1, [{'id': 'rod-web-demo', '_type': 'ApplicationContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'ApplicationContext']},
-                    {'id': 'device', '_type': 'DeviceContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'DeviceContext'],
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0'},
-                    {'id': 'http_context', 'host': 'collector.objectiv.io', '_type': 'HttpContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'HttpContext'],
-                     'origin': 'https://rick.objectiv.io', 'referer': 'https://rick.objectiv.io/',
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0',
-                     'remote_addr': '172.20.0.2', 'remote_address': '86.86.89.85', 'x_forwarded_for': '86.86.89.85'},
-                    {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'CookieIdContext'],
-                     'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [
-                 {'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext', 'WebDocumentContext']},
-                 {'id': 'home', '_type': 'SectionContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext']},
-                 {'id': 'yep', '_type': 'SectionContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext']},
-                 {'id': 'ZVshSddRqAc', '_type': 'ItemContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'ItemContext']}]],
-            [2, 2, [{'id': 'rod-web-demo', '_type': 'ApplicationContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'ApplicationContext']},
-                    {'id': 'device', '_type': 'DeviceContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'DeviceContext'],
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0'},
-                    {'id': 'http_context', 'host': 'collector.objectiv.io', '_type': 'HttpContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'HttpContext'],
-                     'origin': 'https://rick.objectiv.io', 'referer': 'https://rick.objectiv.io/',
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0',
-                     'remote_addr': '172.20.0.2', 'remote_address': '86.86.89.85', 'x_forwarded_for': '86.86.89.85'},
-                    {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'CookieIdContext'],
-                     'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [
-                 {'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext', 'WebDocumentContext']},
-                 {'id': 'home', '_type': 'SectionContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext']}]],
-            [3, 3, [{'id': 'rod-web-demo', '_type': 'ApplicationContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'ApplicationContext']},
-                    {'id': 'device', '_type': 'DeviceContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'DeviceContext'],
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0'},
-                    {'id': 'http_context', 'host': 'collector.objectiv.io', '_type': 'HttpContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'HttpContext'],
-                     'origin': 'https://rick.objectiv.io', 'referer': 'https://rick.objectiv.io/',
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0',
-                     'remote_addr': '172.20.0.2', 'remote_address': '86.86.89.85', 'x_forwarded_for': '86.86.89.85'},
-                    {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'CookieIdContext'],
-                     'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [
-                 {'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext', 'WebDocumentContext']},
-                 {'id': 'home', '_type': 'SectionContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext']},
-                 {'id': 'new', '_type': 'SectionContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext']},
-                 {'id': '5o7WEv5Q5ZE', '_type': 'ItemContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'ItemContext']}]],
-            [4, 4, [{'id': 'rod-web-demo', '_type': 'ApplicationContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'ApplicationContext']},
-                    {'id': 'device', '_type': 'DeviceContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'DeviceContext'],
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0'},
-                    {'id': 'http_context', 'host': 'collector.objectiv.io', '_type': 'HttpContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'HttpContext'],
-                     'origin': 'https://rick.objectiv.io', 'referer': 'https://rick.objectiv.io/',
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0',
-                     'remote_addr': '172.20.0.2', 'remote_address': '86.86.89.85', 'x_forwarded_for': '86.86.89.85'},
-                    {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'CookieIdContext'],
-                     'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [
-                 {'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext', 'WebDocumentContext']},
-                 {'id': 'home', '_type': 'SectionContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext']},
-                 {'id': 'for-you', '_type': 'SectionContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext']},
-                 {'id': 'cc91EfoBh8A', '_type': 'ItemContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'ItemContext']}]],
-            [5, 5, [{'id': 'rod-web-demo', '_type': 'ApplicationContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'ApplicationContext']},
-                    {'id': 'device', '_type': 'DeviceContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'DeviceContext'],
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0'},
-                    {'id': 'http_context', 'host': 'collector.objectiv.io', '_type': 'HttpContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'HttpContext'],
-                     'origin': 'https://rick.objectiv.io', 'referer': 'https://rick.objectiv.io/',
-                     'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0',
-                     'remote_addr': '172.20.0.2', 'remote_address': '86.86.89.85', 'x_forwarded_for': '86.86.89.85'},
-                    {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext',
-                     '_types': ['AbstractContext', 'AbstractGlobalContext', 'CookieIdContext'],
-                     'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [
-                 {'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext', 'WebDocumentContext']},
-                 {'id': 'home', '_type': 'SectionContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext']},
-                 {'id': 'new', '_type': 'SectionContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext']},
-                 {'id': 'yPYZpwSpKmA', '_type': 'ItemContext',
-                  '_types': ['AbstractContext', 'AbstractLocationContext', 'ItemContext']}]]
+            [1, 1, [{'id': 'rod-web-demo', '_type': 'ApplicationContext'}, {'id': 'http_context', '_type': 'HttpContext', 'referer': 'https://rick.objectiv.io/', 'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0', 'remote_address': '144.144.144.144'}, {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext', 'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [{'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'yep', '_type': 'SectionContext'}, {'id': 'cc91EfoBh8A', '_type': 'SectionContext'}]],
+            [2, 2, [{'id': 'rod-web-demo', '_type': 'ApplicationContext'}, {'id': 'http_context', '_type': 'HttpContext', 'referer': 'https://rick.objectiv.io/', 'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0', 'remote_address': '144.144.144.144'}, {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext', 'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [{'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext', '_types': ['AbstractContext', 'AbstractLocationContext', 'SectionContext', 'WebDocumentContext']}, {'id': 'navigation', '_type': 'NavigationContext', '_types': ['AbstractContext', 'AbstractLocationContext', 'NavigationContext', 'SectionContext']}]],
+            [3, 3, [{'id': 'rod-web-demo', '_type': 'ApplicationContext'}, {'id': 'http_context', '_type': 'HttpContext', 'referer': 'https://rick.objectiv.io/', 'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0', 'remote_address': '144.144.144.144'}, {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext', 'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [{'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'new', '_type': 'SectionContext'}, {'id': 'BeyEGebJ1l4', '_type': 'SectionContext'}]],
+            [4, 4, [{'id': 'rod-web-demo', '_type': 'ApplicationContext'}, {'id': 'http_context', '_type': 'HttpContext', 'referer': 'https://rick.objectiv.io/', 'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0', 'remote_address': '144.144.144.144'}, {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext', 'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [{'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'new', '_type': 'SectionContext'}, {'id': 'yBwD4iYcWC4', '_type': 'SectionContext'}]],
+            [5, 5, [{'id': 'rod-web-demo', '_type': 'ApplicationContext'}, {'id': 'http_context', '_type': 'HttpContext', 'referer': 'https://rick.objectiv.io/', 'user_agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0', 'remote_address': '144.144.144.144'}, {'id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b', '_type': 'CookieIdContext', 'cookie_id': 'f84446c6-eb76-4458-8ef4-93ade596fd5b'}], [{'id': '#document', 'url': 'https://rick.objectiv.io/', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'new', '_type': 'SectionContext'}, {'id': 'eYuUAGXN0KM', '_type': 'SectionContext'}]]
         ]
     )
 
@@ -158,11 +62,11 @@ def test_objectiv_stack_type2(monkeypatch):
         bts,
         expected_columns=['_index_event_id', 'a'],
         expected_data=[
-            [1, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0'],
-            [2, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0'],
-            [3, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0'],
-            [4, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0'],
-            [5, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0']
+            [1, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0'],
+            [2, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0'],
+            [3, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0'],
+            [4, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0'],
+            [5, 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0']
         ]
     )
 
@@ -183,7 +87,7 @@ def test_objectiv_stack_type3(monkeypatch):
         expected_columns=['_index_event_id', 'b'],
         expected_data=[
             [1, None],
-            [2, None],
+            [2, [{'id': 'navigation', '_type': 'NavigationContext', '_types': ['AbstractContext', 'AbstractLocationContext', 'NavigationContext', 'SectionContext']}]],
             [3, None],
             [4, None],
             [5, None]
@@ -206,11 +110,11 @@ def test_objectiv_stack_type4(monkeypatch):
         bts,
         expected_columns=['_index_event_id', 'b'],
         expected_data=[
-            [1, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'yep', '_type': 'SectionContext'}, {'id': 'ZVshSddRqAc', '_type': 'ItemContext'}]],
-            [2, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}]],
-            [3, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'new', '_type': 'SectionContext'}, {'id': '5o7WEv5Q5ZE', '_type': 'ItemContext'}]],
-            [4, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'for-you', '_type': 'SectionContext'}, {'id': 'cc91EfoBh8A', '_type': 'ItemContext'}]],
-            [5, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'new', '_type': 'SectionContext'}, {'id': 'yPYZpwSpKmA', '_type': 'ItemContext'}]]
+            [1, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'yep', '_type': 'SectionContext'}, {'id': 'cc91EfoBh8A', '_type': 'SectionContext'}]],
+            [2, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'navigation', '_type': 'NavigationContext'}]],
+            [3, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'new', '_type': 'SectionContext'}, {'id': 'BeyEGebJ1l4', '_type': 'SectionContext'}]],
+            [4, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'new', '_type': 'SectionContext'}, {'id': 'yBwD4iYcWC4', '_type': 'SectionContext'}]],
+            [5, [{'id': '#document', '_type': 'WebDocumentContext'}, {'id': 'home', '_type': 'SectionContext'}, {'id': 'new', '_type': 'SectionContext'}, {'id': 'eYuUAGXN0KM', '_type': 'SectionContext'}]]
         ]
     )
 
@@ -230,10 +134,10 @@ def test_objectiv_stack_type5(monkeypatch):
         bts,
         expected_columns=['_index_event_id', 'b'],
         expected_data=[
-            [1, 'Item: ZVshSddRqAc located at Web Document: #document => Section: home => Section: yep'],
-            [2, 'Section: home located at Web Document: #document'],
-            [3, 'Item: 5o7WEv5Q5ZE located at Web Document: #document => Section: home => Section: new'],
-            [4, 'Item: cc91EfoBh8A located at Web Document: #document => Section: home => Section: for-you'],
-            [5, 'Item: yPYZpwSpKmA located at Web Document: #document => Section: home => Section: new']
+            [1, 'Section: cc91EfoBh8A located at Web Document: #document => Section: home => Section: yep'],
+            [2, 'Navigation: navigation located at Web Document: #document'],
+            [3, 'Section: BeyEGebJ1l4 located at Web Document: #document => Section: home => Section: new'],
+            [4, 'Section: yBwD4iYcWC4 located at Web Document: #document => Section: home => Section: new'],
+            [5, 'Section: eYuUAGXN0KM located at Web Document: #document => Section: home => Section: new']
         ]
     )
