@@ -7,7 +7,8 @@ import pandas
 from sqlalchemy.engine import Engine
 
 from bach import DataFrame, get_series_type_from_dtype
-from bach.expression import quote_identifier, Expression
+from bach.expression import Expression
+from sql_models.util import quote_identifier
 from bach.sql_model import BachSqlModel
 
 

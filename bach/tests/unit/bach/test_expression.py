@@ -4,7 +4,8 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from bach.expression import RawToken, ColumnReferenceToken, \
-    StringValueToken, Expression, quote_string, quote_identifier
+    StringValueToken, Expression
+from sql_models.util import quote_string, quote_identifier
 from tests.unit.bach.util import get_fake_df
 
 

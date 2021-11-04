@@ -50,3 +50,22 @@ def quote_identifier(name: str) -> str:
     """
     replaced_chars = name.replace('"', '""')
     return f'"{replaced_chars}"'
+
+
+def quote_string(value: str) -> str:
+    """
+    Add single quotes around the value and escape any quotes in the value.
+
+    This is in accordance with the Postgres string notation format, no guarantees for other databses.
+    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+
+    Examples:
+    >>> quote_string("test")
+    "'test'"
+    >>> quote_string("te'st")
+    "'te''st'"
+    >>> quote_string("'te''st'")
+    "'''te''''st'''"
+    """
+    replaced_chars = value.replace("'", "''")
+    return f"'{replaced_chars}'"

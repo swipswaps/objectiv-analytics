@@ -7,7 +7,8 @@ from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHE
 from uuid import UUID
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
-from bach.expression import quote_identifier, Expression
+from bach.expression import Expression
+from sql_models.util import quote_identifier
 from bach.types import value_to_dtype
 from sql_models.model import SqlModel
 

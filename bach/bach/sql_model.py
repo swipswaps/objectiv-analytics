@@ -3,7 +3,8 @@ Copyright 2021 Objectiv B.V.
 """
 from typing import Dict, Any, Union, Sequence, TypeVar
 
-from bach.expression import Expression, quote_identifier
+from bach.expression import Expression
+from sql_models.util import quote_identifier
 from sql_models.model import CustomSqlModel, SqlModel, SqlModelBuilder, SqlModelSpec, Materialization
 
 TB = TypeVar('TB', bound='BachSqlModel')
