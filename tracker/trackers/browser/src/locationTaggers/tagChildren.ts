@@ -2,7 +2,7 @@ import { assert, validate } from 'superstruct';
 import { stringifyChildrenTaggingAttribute } from '../common/stringifiers/stringifyChildrenTaggingAttribute';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { ChildrenTaggingQueries } from '../definitions/ChildrenTaggingQueries';
-import { StringifiedChildrenTaggingAttributes } from '../definitions/StringifiedChildrenTaggingAttributes';
+import { TagChildrenAttributes } from '../definitions/TagChildrenAttributes';
 import { TagChildrenReturnValue } from '../definitions/TagChildrenReturnValue';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerCallback';
@@ -41,7 +41,7 @@ export const tagChildren = (
     };
 
     // Validate
-    validate(LocationTaggingAttributes, StringifiedChildrenTaggingAttributes);
+    validate(LocationTaggingAttributes, TagChildrenAttributes);
 
     // Return
     return LocationTaggingAttributes;

@@ -4,7 +4,7 @@ import { isTagChildrenElement } from '../common/guards/isTagChildrenElement';
 import { parseChildrenTaggingAttribute } from '../common/parsers/parseChildrenTaggingAttribute';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { ChildrenTaggingQuery } from '../definitions/ChildrenTaggingQuery';
-import { StringifiedLocationTaggingAttributes } from '../definitions/StringifiedLocationTaggingAttributes';
+import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 
@@ -25,7 +25,7 @@ export const processTagChildrenElement = (element: Element): TaggedElement[] => 
 
     queries.forEach((query: ChildrenTaggingQuery) => {
       const { queryAll, tagAs }: ChildrenTaggingQuery = create(query, ChildrenTaggingQuery);
-      const trackingAsAttributes = create(tagAs, StringifiedLocationTaggingAttributes);
+      const trackingAsAttributes = create(tagAs, TagLocationAttributes);
 
       // Strip out undefined attributes
       getObjectKeys(trackingAsAttributes).forEach((key) => {

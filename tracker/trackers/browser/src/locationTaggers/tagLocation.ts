@@ -7,7 +7,7 @@ import { stringifyTrackVisibilityAttribute } from '../common/stringifiers/string
 import { stringifyValidateAttribute } from '../common/stringifiers/stringifyValidateAttribute';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { AnyClickableContext, AnySectionContext, InputContext } from '../definitions/LocationContext';
-import { StringifiedLocationTaggingAttributes } from '../definitions/StringifiedLocationTaggingAttributes';
+import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { TagLocationParameters } from '../definitions/TagLocationParameters';
 import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
@@ -54,7 +54,7 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
     };
 
     // Validate
-    validate(LocationTaggingAttributes, StringifiedLocationTaggingAttributes);
+    validate(LocationTaggingAttributes, TagLocationAttributes);
 
     // Strip out undefined attributes and return
     getObjectKeys(LocationTaggingAttributes).forEach((key) => {
