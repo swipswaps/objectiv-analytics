@@ -1,4 +1,4 @@
-import { GuardableElement } from "@objectiv/tracker-browser";
+import { GuardableElement } from '@objectiv/tracker-browser';
 import { TrackerElementLocations } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { isTaggedElement } from '../common/guards/isTaggedElement';

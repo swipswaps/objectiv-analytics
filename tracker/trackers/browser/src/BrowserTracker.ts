@@ -22,7 +22,7 @@ import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
  *  const xmlHttpRequestTransport = new XMLHttpRequestTransport({ endpoint: '/endpoint', console });
  *  const transportSwitch = new TransportSwitch({ transports: [fetchTransport, xmlHttpRequestTransport], console });
  *  const transport = new RetryTransport({ transport: transportSwitch, console });
- *  const queueStorage = new TrackerQueueLocalStorageStore({ trackerId, console })
+ *  const queueStorage = new TrackerQueueLocalStorage({ trackerId, console })
  *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
  *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
  *  const webDocumentContextPlugin = new WebDocumentContextPlugin({ console });

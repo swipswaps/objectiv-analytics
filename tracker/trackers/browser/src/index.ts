@@ -98,7 +98,7 @@ export * from './mutationObserver/trackRemovedElements';
 export * from './mutationObserver/trackVisibilityHiddenEvent';
 export * from './mutationObserver/trackVisibilityVisibleEvent';
 
-export * from './queues/TrackerQueueLocalStorageStore';
+export * from './queues/TrackerQueueLocalStorage';
 
 export * from './transports/DebugTransport';
 export * from './transports/FetchAPITransport';

@@ -1,13 +1,13 @@
 import { TrackerQueue, TrackerQueueInterface } from '@objectiv/tracker-core';
 import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
-import { TrackerQueueLocalStorageStore } from '../../queues/TrackerQueueLocalStorageStore';
+import { TrackerQueueLocalStorage } from '../../queues/TrackerQueueLocalStorage';
 
 /**
  * A factory to create the default Queue of Browser Tracker.
  */
 export const makeBrowserTrackerDefaultQueue = (trackerConfig: BrowserTrackerConfig): TrackerQueueInterface =>
   new TrackerQueue({
-    store: new TrackerQueueLocalStorageStore({
+    store: new TrackerQueueLocalStorage({
       trackerId: trackerConfig.trackerId ?? trackerConfig.applicationId,
       console: trackerConfig.console,
     }),
