@@ -201,7 +201,7 @@ def quote_identifier(name: str) -> str:
     >>> quote_identifier('te"st')
     '"te""st"'
     >>> quote_identifier('"te""st"')
-    "\"\"\"te\"\"\"\"st\"\"\""
+    '\"\"\"te\"\"\"\"st\"\"\"'
     """
     # TODO: this method exists both here and in sql_models. Move this to sql_models?
     replaced_chars = name.replace('"', '""')

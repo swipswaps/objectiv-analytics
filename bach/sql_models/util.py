@@ -46,7 +46,7 @@ def quote_identifier(name: str) -> str:
     >>> quote_identifier('te"st')
     '"te""st"'
     >>> quote_identifier('"te""st"')
-    "\"\"\"te\"\"\"\"st\"\"\""
+    '\"\"\"te\"\"\"\"st\"\"\"'
     """
     replaced_chars = name.replace('"', '""')
     return f'"{replaced_chars}"'
