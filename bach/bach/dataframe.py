@@ -59,7 +59,8 @@ class DataFrame:
         """
         Instantiate a new DataFrame.
         There are utility class methods to easily create a DataFrame from existing data such as a
-        table (`from_table()`) or already instantiated sql-model (`from_model()`).
+        table (`from_table()`), an already instantiated sql-model (`from_model()`), or a pandas
+        dataframe (`from_pandas()`).
 
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain all columns/expressions that
@@ -242,75 +243,55 @@ class DataFrame:
         )
 
     @classmethod
-    def from_dataframe(cls,
-                       df: pandas.DataFrame,
-                       name: str,
-                       engine: Engine,
-                       convert_objects: bool = False,
-                       if_exists: str = 'fail'):
+    def from_pandas(
+            cls,
+            engine: Engine,
+            df: pandas.DataFrame,
+            convert_objects: bool,
+            name: str = 'loaded_data',
+            materialization: str = 'cte',
+            if_exists: str = 'fail'
+    ) -> 'DataFrame':
         """
-        Instantiate a new DataFrame based on the content of a Pandas DataFrame. Supported dtypes are
-        'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
-        This will first load the data into the database using pandas' df.to_sql() method.
+        Instantiate a new DataFrame based on the content of a Pandas DataFrame.
 
-        :param df: Pandas DataFrame to instantiate as DataFrame
-        :param name: name of the sql table the Pandas DataFrame will be written to
+        How the data is loaded depends on the chosen materialization:
+        1. 'table':  This will first write the data to a database table using pandas' df.to_sql() method.
+        2. 'cte': The data will be represented using a common table expression of the
+            form `select * from values()` in future queries.
+
+        The 'table' method requires database write access. The 'cte' method is side-effect free and doesn't
+        interact with the database at all. However the 'cte' method is only suitable for small quantities
+        of data. For anything over a dozen kilobytes of data it is recommended to store the data in a table
+        in the database first (e.g. by specifying 'table').
+
+        There are some small differences between how the different materializations handle NaN values. e.g.
+        'cte' does not support those for non-numeric columns, wheras 'table' converts them to 'NULL'
+
+        Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
+
         :param engine: db connection
+        :param df: Pandas DataFrame to instantiate as DataFrame
         :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
             pd.convert_dtypes() method where possible.
-        :param if_exists: {'fail', 'replace', 'append'}, default 'fail'
-            How to behave if the table already exists.
-
+        :param name:
+            * For 'table' materialization: name of the table that Pandas will write the data to.
+            * For 'cte' materialization: name of the node in the underlying sql-model graph.
+        :param materialization: {'cte', 'table'}. How to materialize the data
+        :param if_exists: {'fail', 'replace', 'append'}. Only applies to materialization='table'
+            How to behave if the table already exists:
             * fail: Raise a ValueError.
             * replace: Drop the table before inserting new values.
             * append: Insert new values to the existing table.
         """
-        if df.index.name is None:  # for now only one index allowed todo check this
-            index = '_index_0'
-        else:
-            index = f'_index_{df.index.name}'
-
-        # set the index as a normal column, this makes it easier to convert the dtype
-        df_copy = df.rename_axis(index).reset_index()
-
-        if convert_objects:
-            df_copy = df_copy.convert_dtypes(convert_integer=False,
-                                             convert_boolean=False,
-                                             convert_floating=False)
-
-        # todo add support for 'timedelta64[ns]'. pd.to_sql writes timedelta as bigint to sql, so
-        # not implemented yet
-        supported_types = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool']
-        index_dtype = df_copy[index].dtype.name
-        if index_dtype not in supported_types:
-            raise ValueError(f"index is of type '{index_dtype}', should one of {supported_types}. "
-                             f"For 'object' columns convert_objects=True can be used to convert these columns"
-                             f"to type 'string'.")
-        dtypes = {str(column_name): dtype.name for column_name, dtype in df_copy.dtypes.items()
-                  if column_name in df.columns}
-        unsupported_dtypes = {str(column_name): dtype for column_name, dtype in dtypes.items()
-                              if dtype not in supported_types}
-        if unsupported_dtypes:
-            raise ValueError(f"dtypes {unsupported_dtypes} are not supported, should one of "
-                             f"{supported_types}. "
-                             f"For 'object' columns convert_objects=True can be used to convert these columns"
-                             f"to type 'string'.")
-
-        # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-        conn = engine.connect()
-        df_copy.to_sql(name=name, con=conn, if_exists=if_exists, index=False)
-        conn.close()
-
-        # Todo, this should use from_table from here on.
-        model = BachSqlModel(sql=f'SELECT * FROM {name}').instantiate()
-
-        # Should this also use _df_or_series?
-        return cls.get_instance(
+        from bach.from_pandas import from_pandas
+        return from_pandas(
             engine=engine,
-            base_node=model,
-            index_dtypes={index: index_dtype},
-            dtypes=dtypes,
-            group_by=None
+            df=df,
+            convert_objects=convert_objects,
+            materialization=materialization,
+            name=name,
+            if_exists=if_exists
         )
 
     @classmethod
