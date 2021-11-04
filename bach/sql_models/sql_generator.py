@@ -5,6 +5,7 @@ from typing import List, NamedTuple, Dict
 
 from sql_models.model import SqlModel, REFERENCE_UNIQUE_FIELD
 from sql_models.sql_query_parser import raw_sql_to_selects
+from sql_models.util import quote_identifier
 
 
 def to_sql(model: SqlModel) -> str:
@@ -25,7 +26,7 @@ def to_sql(model: SqlModel) -> str:
 
     # case: len(result) > 1
     sql = 'with '
-    sql += ',\n'.join(f'{row.cte_name} as ({row.sql})' for row in queries[:-1])
+    sql += ',\n'.join(f'{row.quoted_cte_name} as ({row.sql})' for row in queries[:-1])
     sql += '\n' + queries[-1].sql
     return sql
 
@@ -35,8 +36,9 @@ class SemiCompiledTuple(NamedTuple):
     Object representing a single CTE select statement from a big select statement
     with common table expressions.
     """
-    # This is very similar to the CteTuple in sql_query_parser. However here cte_name is mandatory.
-    cte_name: str
+    # This is very similar to the CteTuple in sql_query_parser. However here cte_name is mandatory and
+    # quoted and escaped.
+    quoted_cte_name: str
     sql: str
 
 
@@ -51,14 +53,14 @@ def _filter_duplicate_ctes(queries: List[SemiCompiledTuple]) -> List[SemiCompile
     seen: Dict[str, str] = {}
     result = []
     for query in queries:
-        if query.cte_name not in seen:
-            seen[query.cte_name] = query.sql
+        if query.quoted_cte_name not in seen:
+            seen[query.quoted_cte_name] = query.sql
             result.append(query)
-        elif seen[query.cte_name] != query.sql:
-            raise Exception(f'Encountered the CTE {query.cte_name} multiple times, but with different '
+        elif seen[query.quoted_cte_name] != query.sql:
+            raise Exception(f'Encountered the CTE {query.quoted_cte_name} multiple times, but with different '
                             f'definitions. HINT: use "{{REFERENCE_UNIQUE_FIELD}}" in the sql definition '
                             f'to make CTE names unique between different instances of the same model.\n'
-                            f'first: {seen[query.cte_name]}\n'
+                            f'first: {seen[query.quoted_cte_name]}\n'
                             f'second: {query.sql}\n')
     return result
 
@@ -78,7 +80,9 @@ def _to_cte_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     if not model.references:
         return _single_model_to_sql(compiler_cache=compiler_cache, model=model, reference_names={})
     result = []
-    reference_names = {name: model_to_cte_name(reference) for name, reference in model.references.items()}
+    reference_names = {
+        name: model_to_quoted_cte_name(reference) for name, reference in model.references.items()
+    }
     for ref_name, reference in model.references.items():
         result.extend(_to_cte_sql(compiler_cache=compiler_cache, model=reference))
     result.extend(
@@ -88,13 +92,15 @@ def _to_cte_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     return result
 
 
-def model_to_cte_name(model):
+def model_to_quoted_cte_name(model):
+    """ Get the name for the cte that will be generated from this model, quoted and escaped. """
     # max length of an identifier name in Postgres is normally 63 characters. We'll use that as a cutoff
     # here.
     # TODO: two compilation phases:
     #  1) get all cte names
     #  2) generate actual sql. Only for CTEs with conflicting names add the hash
-    return f'{model.generic_name[0:28]}___{model.hash}'
+    name = f'{model.generic_name[0:28]}___{model.hash}'
+    return quote_identifier(name)
 
 
 def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
@@ -124,8 +130,10 @@ def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     for cte in ctes[:-1]:
         # For all CTEs the name should be set. Only for the final select (== cte[-1]) it will be None.
         assert cte.name is not None
-        result.append(SemiCompiledTuple(cte_name=cte.name, sql=cte.select_sql))
-    result.append(SemiCompiledTuple(cte_name=model_to_cte_name(model), sql=ctes[-1].select_sql))
+        result.append(SemiCompiledTuple(quoted_cte_name=quote_identifier(cte.name), sql=cte.select_sql))
+    result.append(
+        SemiCompiledTuple(quoted_cte_name=model_to_quoted_cte_name(model), sql=ctes[-1].select_sql)
+    )
 
     compiler_cache[model.hash] = result
     return result

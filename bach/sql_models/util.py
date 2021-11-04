@@ -31,3 +31,41 @@ def extract_format_fields(format_string: str, nested=1) -> Set[str]:
     dummy_values = {field_name: 'x' for field_name in fields}
     new_format_string = format_string.format(**dummy_values)
     return extract_format_fields(new_format_string, nested=nested-1)
+
+
+def quote_identifier(name: str) -> str:
+    """
+    Add quotes around an identifier (e.g. a table or column name), and escape special characters in the name.
+
+    This is in accordance with the Postgres string notation format, no guarantees for other databses.
+    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+
+    Examples:
+    >>> quote_identifier('test')
+    '"test"'
+    >>> quote_identifier('te"st')
+    '"te""st"'
+    >>> quote_identifier('"te""st"')
+    '\"\"\"te\"\"\"\"st\"\"\"'
+    """
+    replaced_chars = name.replace('"', '""')
+    return f'"{replaced_chars}"'
+
+
+def quote_string(value: str) -> str:
+    """
+    Add single quotes around the value and escape any quotes in the value.
+
+    This is in accordance with the Postgres string notation format, no guarantees for other databses.
+    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+
+    Examples:
+    >>> quote_string("test")
+    "'test'"
+    >>> quote_string("te'st")
+    "'te''st'"
+    >>> quote_string("'te''st'")
+    "'''te''''st'''"
+    """
+    replaced_chars = value.replace("'", "''")
+    return f"'{replaced_chars}'"

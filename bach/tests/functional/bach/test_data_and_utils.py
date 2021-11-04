@@ -9,6 +9,7 @@ as a test file. This makes pytest rewrite the asserts to give clearer errors.
 import os
 from typing import List, Union, Type, Dict, Any
 
+import pandas
 import sqlalchemy
 from sqlalchemy.engine import ResultProxy
 
@@ -132,7 +133,7 @@ def _get_bt(
     lookup_key = table
     if lookup_key not in _TABLE_DATAFRAME_CACHE:
         import pandas as pd
-        df = pd.DataFrame.from_records(dataset, columns=columns)
+        df = get_pandas_df(dataset, columns)
         _TABLE_DATAFRAME_CACHE[lookup_key] = get_from_df(table, df, convert_objects)
     # We don't even renew the 'engine', as creating the database connection takes a bit of time too. If
     # we ever do into trouble because of stale connection or something, then we can change it at that point
@@ -140,18 +141,28 @@ def _get_bt(
     return _TABLE_DATAFRAME_CACHE[lookup_key].copy_override()
 
 
-def get_from_df(table, df, convert_objects=True):
+def get_pandas_df(dataset: List[List[Any]], columns: List[str]) -> pandas.DataFrame:
+    """ Convert the given dataset to a Pandas DataFrame """
+    df = pandas.DataFrame.from_records(dataset, columns=columns)
     df.set_index(df.columns[0], drop=False, inplace=True)
-
     if 'moment' in df.columns:
         df['moment'] = df['moment'].astype('datetime64')
-
     if 'date' in df.columns:
         df['date'] = df['date'].astype('datetime64')
+    return df
 
+
+def get_from_df(table: str, df: pandas.DataFrame, convert_objects=True) -> DataFrame:
+    """ Create a database table with the data from the data-frame. """
     engine = sqlalchemy.create_engine(DB_TEST_URL)
-    buh_tuh = DataFrame.from_dataframe(df, table, engine, convert_objects=convert_objects,
-                                       if_exists='replace')
+    buh_tuh = DataFrame.from_pandas(
+        engine=engine,
+        df=df,
+        convert_objects=convert_objects,
+        name=table,
+        materialization='table',
+        if_exists='replace'
+    )
     return buh_tuh
 
 
