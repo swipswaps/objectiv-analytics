@@ -26,13 +26,11 @@ import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
  *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
  *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
  *  const webDocumentContextPlugin = new WebDocumentContextPlugin({ console });
- *  const plugins = new TrackerPlugins({
- *    plugins: [ applicationContextPlugin, webDocumentContextPlugin ],
- *    console
- *  });
+ *  const plugins = new TrackerPlugins({ plugins: [ applicationContextPlugin, webDocumentContextPlugin ], console });
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
- *  See also `makeBrowserTrackerDefaultTransport` and `makeBrowserTrackerDefaultQueue` for the actual implementation.
+ *  See also `makeBrowserTrackerDefaultTransport`, `makeBrowserTrackerDefaultQueue` and
+ *  `makeDefaultBrowserTrackerPluginsList` for the actual implementation.
  *
  */
 export class BrowserTracker extends Tracker {
