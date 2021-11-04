@@ -3,9 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
-from bach.expression import RawToken, ColumnReferenceToken, \
-    StringValueToken, Expression
-from sql_models.util import quote_string, quote_identifier
+from bach.expression import RawToken, ColumnReferenceToken, StringValueToken, Expression
 from tests.unit.bach.util import get_fake_df
 
 
@@ -75,15 +73,3 @@ def test_combined():
            '"Finished in " || cast(("year" + cast("duration" as bigint)) as text) || " or later."'
     assert expr_str.to_sql('table_name') == \
            '"Finished in " || cast(("table_name"."year" + cast("table_name"."duration" as bigint)) as text) || " or later."'
-
-
-def test_quote_string():
-    assert quote_string("test") == "'test'"
-    assert quote_string("te'st") == "'te''st'"
-    assert quote_string("'te''st'") == "'''te''''st'''"
-
-
-def test_quote_identifier():
-    assert quote_identifier('test') == '"test"'
-    assert quote_identifier('te"st') == '"te""st"'
-    assert quote_identifier('"te""st"') == "\"\"\"te\"\"\"\"st\"\"\""

@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from sql_models.util import extract_format_fields, quote_identifier
+from sql_models.util import extract_format_fields, quote_identifier, quote_string
 
 
 def test_extract_format_fields():
@@ -24,3 +24,9 @@ def test_quote_identifier():
     assert quote_identifier('test') == '"test"'
     assert quote_identifier('te"st') == '"te""st"'
     assert quote_identifier('"te""st"') == "\"\"\"te\"\"\"\"st\"\"\""
+
+
+def test_quote_string():
+    assert quote_string("test") == "'test'"
+    assert quote_string("te'st") == "'te''st'"
+    assert quote_string("'te''st'") == "'''te''''st'''"
