@@ -1,6 +1,6 @@
 export * from '@objectiv/tracker-core';
 
-export * from './common/factories/makeDefaultPluginList';
+export * from './common/factories/makeDefaultPluginsList';
 export * from './common/factories/makeDefaultQueue';
 export * from './common/factories/makeDefaultTransport';
 export * from './common/guards/isParentTaggedElement';

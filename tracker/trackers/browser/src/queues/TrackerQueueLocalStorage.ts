@@ -7,7 +7,7 @@ import {
 } from '@objectiv/tracker-core';
 
 /**
- * An Local Storage implementation of a TrackerQueueStore.
+ * A Local Storage implementation of a TrackerQueueStore.
  */
 export class TrackerQueueLocalStorage implements TrackerQueueStoreInterface {
   readonly console?: TrackerConsole;

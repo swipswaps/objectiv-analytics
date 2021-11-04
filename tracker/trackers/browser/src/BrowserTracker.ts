@@ -1,5 +1,5 @@
 import { ContextsConfig, Tracker, TrackerConfig, TrackerPlugins } from '@objectiv/tracker-core';
-import { makeDefaultBrowserTrackerPluginsList } from './common/factories/makeDefaultPluginList';
+import { makeDefaultPluginsList } from './common/factories/makeDefaultPluginsList';
 import { makeDefaultQueue } from './common/factories/makeDefaultQueue';
 import { makeDefaultTransport } from './common/factories/makeDefaultTransport';
 import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
@@ -70,7 +70,7 @@ export class BrowserTracker extends Tracker {
         ...config,
         plugins: new TrackerPlugins({
           console: trackerConfig.console,
-          plugins: makeDefaultBrowserTrackerPluginsList(config),
+          plugins: makeDefaultPluginsList(config),
         }),
       };
     }
