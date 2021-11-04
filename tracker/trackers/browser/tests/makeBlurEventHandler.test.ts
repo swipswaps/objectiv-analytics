@@ -1,6 +1,6 @@
 import { generateUUID, makeInputChangeEvent } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker } from '../src/';
-import { makeBlurEventHandler } from '../src/observer/makeBlurEventHandler';
+import { makeBlurEventHandler } from '../src/mutationObserver/makeBlurEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 import { matchUUID } from './mocks/matchUUID';
 

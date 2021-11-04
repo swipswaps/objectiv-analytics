@@ -1,6 +1,7 @@
 import { Directive, ElementRef, Input } from '@angular/core';
 import {
   ChildrenTaggingQueries,
+  LocationTaggerParameters,
   tagButton,
   TagButtonParameters,
   tagChildren,
@@ -11,7 +12,6 @@ import {
   tagLink,
   TagLinkParameters,
   tagLocation,
-  TagLocationHelperParameters,
   TagLocationParameters,
   TagLocationReturnValue,
   tagMediaPlayer,
@@ -29,13 +29,13 @@ import {
 export class ObjectivTrackerDirective {
   @Input() tagLocation: TagLocationParameters;
   @Input() tagButton: TagButtonParameters;
-  @Input() tagElement: TagLocationHelperParameters;
-  @Input() tagExpandableElement: TagLocationHelperParameters;
-  @Input() tagInput: TagLocationHelperParameters;
+  @Input() tagElement: LocationTaggerParameters;
+  @Input() tagExpandableElement: LocationTaggerParameters;
+  @Input() tagInput: LocationTaggerParameters;
   @Input() tagLink: TagLinkParameters;
-  @Input() tagMediaPlayer: TagLocationHelperParameters;
-  @Input() tagNavigation: TagLocationHelperParameters;
-  @Input() tagOverlay: TagLocationHelperParameters;
+  @Input() tagMediaPlayer: LocationTaggerParameters;
+  @Input() tagNavigation: LocationTaggerParameters;
+  @Input() tagOverlay: LocationTaggerParameters;
   @Input() tagChildren: ChildrenTaggingQueries;
 
   constructor(public element: ElementRef<HTMLElement>) {}
