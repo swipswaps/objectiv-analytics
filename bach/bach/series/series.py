@@ -446,8 +446,6 @@ class Series(ABC):
 
         :see: _binary_operation() for parameters
         """
-        if other_dtypes is None:
-            other_dtypes = []
         if len(other_dtypes) == 0:
             raise TypeError(f'arithmetic operation {operation} not supported for '
                             f'{self.__class__} and {other.__class__}')
