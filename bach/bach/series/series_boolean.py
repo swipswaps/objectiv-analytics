@@ -31,14 +31,15 @@ class SeriesBoolean(Series, ABC):
     def _comparator_operation(self, other, comparator, other_dtypes=tuple(['bool'])) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
 
-    def _boolean_operator(self, other, operator: str) -> 'SeriesBoolean':
+    def _boolean_operator(self, other, operator: str, other_dtypes=tuple(['bool'])) -> 'SeriesBoolean':
         fmt_str = f'({{}}) {operator} ({{}})'
         if other.dtype != 'bool':
+            # this is not currently used, as both bigint and float can not be cast to bool in PG
             fmt_str = f'({{}}) {operator} cast({{}} as bool)'
         return cast(
             'SeriesBoolean', self._binary_operation(
                 other=other, operation=f"boolean operator '{operator}'",
-                fmt_str=fmt_str, other_dtypes=('bool', 'int64', 'float'), dtype='bool'
+                fmt_str=fmt_str, other_dtypes=other_dtypes, dtype='bool'
             )
         )
 
@@ -53,5 +54,6 @@ class SeriesBoolean(Series, ABC):
         return self._boolean_operator(other, 'OR')
 
     def __xor__(self, other) -> 'SeriesBoolean':
-        # (A and not B) or (not A and B)
-        return (self & (~other)) | ((~self) & other)
+        # This only works if both type are 'bool' in PG, but if the rhs is not, it will be cast
+        # explicitly in _boolean_operator()
+        return self._boolean_operator(other, '!=')
