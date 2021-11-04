@@ -96,6 +96,7 @@ TEST_DATA_JSON = [
 JSON_COLUMNS = ['row', 'dict_column', 'list_column', 'mixed_column']
 JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
 
+# all data below is generated dummy data
 TEST_DATA_JSON_REAL = [
     [1,
      '[{"id": "rod-web-demo", "_type": "ApplicationContext", "_types": ["AbstractContext", "AbstractGlobalContext", "ApplicationContext"]}, {"id": "device", "_type": "DeviceContext", "_types": ["AbstractContext", "AbstractGlobalContext", "DeviceContext"], "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0"}, {"id": "http_context", "host": "collector.objectiv.io", "_type": "HttpContext", "_types": ["AbstractContext", "AbstractGlobalContext", "HttpContext"], "origin": "https://rick.objectiv.io", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:91.0) Gecko/20100101 Firefox/91.0", "remote_addr": "172.20.0.2", "remote_address": "86.86.89.85", "x_forwarded_for": "86.86.89.85"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext", "_types": ["AbstractContext", "AbstractGlobalContext", "CookieIdContext"], "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b"}]',

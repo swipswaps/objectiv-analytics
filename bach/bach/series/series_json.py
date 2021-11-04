@@ -25,8 +25,6 @@ class SeriesJsonb(Series):
     return_dtype = dtype
 
     class Json:
-        return_dtype = 'jsonb'
-
         def __init__(self, series_object):
             self._series_object = series_object
 

@@ -128,7 +128,7 @@ def test_objectiv_stack_type(monkeypatch):
 
     bt = get_bt_with_json_data_real()
 
-    bt['a'] = bt.global_contexts.astype('global_context')
+    bt['a'] = bt.global_contexts.astype('objectiv_global_context')
     bts = bt.a.objectiv.get_from_context_with_type_series("CookieIdContext", "cookie_id")
     assert_equals_data(
         bts,
@@ -152,7 +152,7 @@ def test_objectiv_stack_type2(monkeypatch):
 
     bt = get_bt_with_json_data_real()
 
-    bt['a'] = bt.global_contexts.astype('global_context')
+    bt['a'] = bt.global_contexts.astype('objectiv_global_context')
     bts = bt.a.global_contexts.user_agent
     assert_equals_data(
         bts,
@@ -176,7 +176,7 @@ def test_objectiv_stack_type3(monkeypatch):
 
     bt = get_bt_with_json_data_real()
 
-    bt['b'] = bt.location_stack.astype('location_stack')
+    bt['b'] = bt.location_stack.astype('objectiv_location_stack')
     bts = bt.b.location_stack.navigation_features
     assert_equals_data(
         bts,
@@ -200,7 +200,7 @@ def test_objectiv_stack_type4(monkeypatch):
 
     bt = get_bt_with_json_data_real()
 
-    bt['b'] = bt.location_stack.astype('location_stack')
+    bt['b'] = bt.location_stack.astype('objectiv_location_stack')
     bts = bt.b.location_stack.feature_stack
     assert_equals_data(
         bts,
@@ -224,7 +224,7 @@ def test_objectiv_stack_type5(monkeypatch):
 
     bt = get_bt_with_json_data_real()
 
-    bt['b'] = bt.location_stack.astype('location_stack')
+    bt['b'] = bt.location_stack.astype('objectiv_location_stack')
     bts = bt.b.location_stack.nice_name
     assert_equals_data(
         bts,

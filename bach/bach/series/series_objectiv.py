@@ -27,12 +27,10 @@ class ObjectivStack(SeriesJsonb.Json):
 
 class SeriesGlobalContexts(SeriesJsonb):
     """ Test class for custom types. """
-    dtype = 'global_context'
+    dtype = 'objectiv_global_context'
     return_dtype = dtype
 
     class GlobalContexts(ObjectivStack):
-        return_dtype = 'global_context'
-
         @property
         def cookie_id(self):
             return self.get_from_context_with_type_series("CookieIdContext", "cookie_id")
@@ -66,7 +64,7 @@ class SeriesGlobalContexts(SeriesJsonb):
 
 class SeriesLocationStack(SeriesJsonb):
     """ Test class for custom types. """
-    dtype = 'location_stack'
+    dtype = 'objectiv_location_stack'
     return_dtype = dtype
 
     class LocationStack(ObjectivStack):
@@ -84,7 +82,7 @@ class SeriesLocationStack(SeriesJsonb):
                 expression_str,
                 self._series_object
             )
-            return self._series_object.copy_override(dtype='location_stack', expression=expression)
+            return self._series_object.copy_override(dtype='objectiv_location_stack', expression=expression)
 
         @property
         def nice_name(self):
