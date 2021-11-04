@@ -1,10 +1,10 @@
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
 import { create, is, validate } from 'superstruct';
 import { runIfValueIsNotUndefined } from '../common/runIfValueIsNotUndefined';
-import { stringifyLocationContext } from '../common/stringifier/stringifyLocationContext';
-import { stringifyTrackClicksAttribute } from '../common/stringifier/stringifyTrackClicksAttribute';
-import { stringifyTrackVisibilityAttribute } from '../common/stringifier/stringifyTrackVisibilityAttribute';
-import { stringifyValidateAttribute } from '../common/stringifier/stringifyValidateAttribute';
+import { stringifyLocationContext } from '../common/stringifiers/stringifyLocationContext';
+import { stringifyTrackClicksAttribute } from '../common/stringifiers/stringifyTrackClicksAttribute';
+import { stringifyTrackVisibilityAttribute } from '../common/stringifiers/stringifyTrackVisibilityAttribute';
+import { stringifyValidateAttribute } from '../common/stringifiers/stringifyValidateAttribute';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { AnyClickableContext, AnySectionContext, InputContext } from '../definitions/LocationContext';
 import { StringifiedLocationTaggingAttributes } from '../definitions/StringifiedLocationTaggingAttributes';

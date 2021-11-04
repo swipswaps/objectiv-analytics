@@ -7,8 +7,10 @@ from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHE
 from uuid import UUID
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
+
 from bach.dataframe import ColumnFunction
-from bach.expression import quote_identifier, Expression
+from bach.expression import Expression
+from sql_models.util import quote_identifier
 from bach.types import value_to_dtype
 from sql_models.model import SqlModel
 
@@ -264,7 +266,8 @@ class Series(ABC):
         quoted_column_name = quote_identifier(self.name)
         if expression.to_sql() == quoted_column_name:
             return expression
-        return Expression.construct(f'{{}} as {quoted_column_name}', expression)
+
+        return Expression.construct('{} as {}', expression, Expression.raw(quoted_column_name))
 
     def _check_supported(self, operation_name: str, supported_dtypes: List[str], other: 'Series'):
 

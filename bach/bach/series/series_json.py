@@ -5,7 +5,8 @@ import json
 from typing import Optional, Dict, Union, TYPE_CHECKING, Any
 
 from bach.series import Series, const_to_series
-from bach.expression import Expression, quote_string, quote_identifier
+from bach.expression import Expression
+from sql_models.util import quote_string, quote_identifier
 from sql_models.model import SqlModel
 
 if TYPE_CHECKING:
