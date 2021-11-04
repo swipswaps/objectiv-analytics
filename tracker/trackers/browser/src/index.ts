@@ -1,8 +1,8 @@
 export * from '@objectiv/tracker-core';
 
-export * from './common/factories/makeBrowserTrackerDefaultPluginList';
-export * from './common/factories/makeBrowserTrackerDefaultQueue';
-export * from './common/factories/makeBrowserTrackerDefaultTransport';
+export * from './common/factories/makeDefaultPluginList';
+export * from './common/factories/makeDefaultQueue';
+export * from './common/factories/makeDefaultTransport';
 export * from './common/guards/isParentTaggedElement';
 export * from './common/guards/isTagChildrenElement';
 export * from './common/guards/isTaggableElement';

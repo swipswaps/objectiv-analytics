@@ -1,7 +1,7 @@
 import { ContextsConfig, Tracker, TrackerConfig, TrackerPlugins } from '@objectiv/tracker-core';
-import { makeDefaultBrowserTrackerPluginsList } from './common/factories/makeBrowserTrackerDefaultPluginList';
-import { makeBrowserTrackerDefaultQueue } from './common/factories/makeBrowserTrackerDefaultQueue';
-import { makeBrowserTrackerDefaultTransport } from './common/factories/makeBrowserTrackerDefaultTransport';
+import { makeDefaultBrowserTrackerPluginsList } from './common/factories/makeDefaultPluginList';
+import { makeDefaultQueue } from './common/factories/makeDefaultQueue';
+import { makeDefaultTransport } from './common/factories/makeDefaultTransport';
 import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
 
 /**
@@ -29,7 +29,7 @@ import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
  *  const plugins = new TrackerPlugins({ plugins: [ applicationContextPlugin, webDocumentContextPlugin ], console });
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
- *  See also `makeBrowserTrackerDefaultTransport`, `makeBrowserTrackerDefaultQueue` and
+ *  See also `makeDefaultTransport`, `makeDefaultQueue` and
  *  `makeBrowserTrackerDefaultPluginList` for the actual implementation.
  *
  */
@@ -59,8 +59,8 @@ export class BrowserTracker extends Tracker {
     if (config.endpoint) {
       config = {
         ...config,
-        transport: makeBrowserTrackerDefaultTransport(config),
-        queue: makeBrowserTrackerDefaultQueue(config),
+        transport: makeDefaultTransport(config),
+        queue: makeDefaultQueue(config),
       };
     }
 

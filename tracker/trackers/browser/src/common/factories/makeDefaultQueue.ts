@@ -5,7 +5,7 @@ import { TrackerQueueLocalStorage } from '../../queues/TrackerQueueLocalStorage'
 /**
  * A factory to create the default Queue of Browser Tracker.
  */
-export const makeBrowserTrackerDefaultQueue = (trackerConfig: BrowserTrackerConfig): TrackerQueueInterface =>
+export const makeDefaultQueue = (trackerConfig: BrowserTrackerConfig): TrackerQueueInterface =>
   new TrackerQueue({
     store: new TrackerQueueLocalStorage({
       trackerId: trackerConfig.trackerId ?? trackerConfig.applicationId,
