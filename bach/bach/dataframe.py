@@ -243,59 +243,56 @@ class DataFrame:
         )
 
     @classmethod
-    def from_pandas_store_table(
+    def from_pandas(
             cls,
             engine: Engine,
             df: pandas.DataFrame,
             convert_objects: bool,
-            table_name: str,
+            name: str = 'loaded_data',
+            materialization: str = 'cte',
             if_exists: str = 'fail'
     ) -> 'DataFrame':
         """
-        Instantiate a new DataFrame based on the content of a Pandas DataFrame. This will first write the
-        data to a database table using pandas' df.to_sql() method.
-        Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
+        Instantiate a new DataFrame based on the content of a Pandas DataFrame.
 
+        How the data is loaded depends on the chosen materialization:
+        1. 'table':  This will first write the data to a database table using pandas' df.to_sql() method.
+        2. 'cte': The data will be represented using a common table expression of the
+            form `select * from values()` in future queries.
+
+        The 'table' method requires database write access. The 'cte' method is side-effect free and doesn't
+        interact with the database at all. However the 'cte' method is only suitable for small quantities
+        of data. For anything over a dozen kilobytes of data it is recommended to store the data in a table
+        in the database first (e.g. by specifying 'table').
+
+        There are some small differences between how the different materializations handle NaN values. e.g.
+        'cte' does not support those for non-numeric columns, wheras 'table' converts them to 'NULL'
+
+        Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
 
         :param engine: db connection
         :param df: Pandas DataFrame to instantiate as DataFrame
         :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
             pd.convert_dtypes() method where possible.
-        :param table_name: name of the sql table the Pandas DataFrame will be written to
-        :param if_exists: {'fail', 'replace', 'append'}, default 'fail'
+        :param name:
+            * For 'table' materialization: name of the table that Pandas will write the data to.
+            * For 'cte' materialization: name of the node in the underlying sql-model graph.
+        :param materialization: {'cte', 'table'}. How to materialize the data
+        :param if_exists: {'fail', 'replace', 'append'}. Only applies to materialization='table'
             How to behave if the table already exists:
             * fail: Raise a ValueError.
             * replace: Drop the table before inserting new values.
             * append: Insert new values to the existing table.
         """
-        from bach.from_pandas import from_pandas_store_table
-        return from_pandas_store_table(
+        from bach.from_pandas import from_pandas
+        return from_pandas(
             engine=engine,
             df=df,
             convert_objects=convert_objects,
-            table_name=table_name,
+            materialization=materialization,
+            name=name,
             if_exists=if_exists
         )
-
-    @classmethod
-    def from_pandas(cls, engine: Engine, df: pandas.DataFrame, convert_objects: bool = False) -> 'DataFrame':
-        """
-        Instantiate a new DataFrame based on the content of a Pandas DataFrame. The data will be represented
-        using a `select * from values()` query.
-
-        Warning: This method is only suited for small quantities of data.
-        For anything over a dozen kilobytes of data it is recommended to store the data in a table in
-        the database, e.g. by using the from_pd_store_table() function.
-
-        Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
-
-        :param engine: db connection
-        :param df: Pandas DataFrame to instantiate as DataFrame
-        :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
-            pd.convert_dtypes() method where possible.
-        """
-        from bach.from_pandas import from_pandas
-        return from_pandas(engine=engine, df=df, convert_objects=convert_objects)
 
     @classmethod
     def get_instance(

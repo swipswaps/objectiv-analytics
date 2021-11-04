@@ -96,12 +96,15 @@ def test_positional_slicing():
             expected_data=df_to_list(bt.to_df()[slice])
         )
 
+
 def test_get_item_materialize():
     bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants']]
     bt = bt.groupby('municipality')[['inhabitants']].sum()
 
     r = bt[bt.inhabitants_sum != 700] #  'Friese Meren' be gone!
 
+    # FIXME: this test depends on a specific ordering of the result data, that order is not guaranteed by
+    # postgres tho
     assert_equals_data(
         r,
         expected_columns=['municipality', 'inhabitants_sum'],

@@ -27,27 +27,29 @@ EXPECTED_COLUMNS_INJECTION = [f'_index_{COLUMNS_INJECTION[0]}'] + COLUMNS_INJECT
 EXPECTED_DATA_INJECTION = [[row[0]] + row for row in TEST_DATA_INJECTION]
 
 
-def test_from_pandas_materialized():
+def test_from_pandas_table():
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
     engine = sqlalchemy.create_engine(DB_TEST_URL)
-    bt = DataFrame.from_pandas_store_table(
+    bt = DataFrame.from_pandas(
         engine=engine,
         df=pdf,
         convert_objects=True,
-        table_name='test_from_pd_table',
+        name='test_from_pd_table',
+        materialization='table',
         if_exists='replace'
     )
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
 
 
-def test_from_pandas_materialized_injection():
+def test_from_pandas_table_injection():
     pdf = get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
     engine = sqlalchemy.create_engine(DB_TEST_URL)
-    bt = DataFrame.from_pandas_store_table(
+    bt = DataFrame.from_pandas(
         engine=engine,
         df=pdf,
         convert_objects=True,
-        table_name='test_from_pd_{table}_"injection"',
+        name='test_from_pd_{table}_"injection"',
+        materialization='table',
         if_exists='replace'
     )
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
@@ -59,7 +61,9 @@ def test_from_pandas_ephemeral_basic():
     bt = DataFrame.from_pandas(
         engine=engine,
         df=pdf,
-        convert_objects=True
+        convert_objects=True,
+        materialization='cte',
+        name='ephemeral data'
     )
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=EXPECTED_DATA)
 
@@ -70,7 +74,9 @@ def test_from_pandas_ephemeral_injection():
     bt = DataFrame.from_pandas(
         engine=engine,
         df=pdf,
-        convert_objects=True
+        convert_objects=True,
+        materialization='cte',
+        name='ephemeral data'
     )
     assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS_INJECTION, expected_data=EXPECTED_DATA_INJECTION)
 
@@ -81,25 +87,28 @@ def test_from_pandas_non_happy_path():
     with pytest.raises(ValueError):
         # if convert_objects is false, we'll get an error, because pdf's dtype for 'city' and 'municipality'
         # is 'object
-        DataFrame.from_pandas_store_table(
+        DataFrame.from_pandas(
             engine=engine,
             df=pdf,
             convert_objects=False,
-            table_name='test_from_pd_table_convert_objects_false',
+            name='test_from_pd_table_convert_objects_false',
+            materialization='table',
             if_exists='replace'
         )
     # Create the same table twice. This will fail if if_exists='fail'
     # Might fail on either the first or second try. As we don't clean up between tests.
     with pytest.raises(ValueError, match="Table 'test_from_pd_table' already exists"):
-        DataFrame.from_pandas_store_table(
+        DataFrame.from_pandas(
             engine=engine,
             df=pdf,
             convert_objects=True,
-            table_name='test_from_pd_table',
+            name='test_from_pd_table',
+            materialization='table',
         )
-        DataFrame.from_pandas_store_table(
+        DataFrame.from_pandas(
             engine=engine,
             df=pdf,
             convert_objects=True,
-            table_name='test_from_pd_table',
+            name='test_from_pd_table',
+            materialization='table',
         )

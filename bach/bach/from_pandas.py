@@ -11,13 +11,49 @@ from bach.expression import quote_identifier, Expression
 from bach.sql_model import BachSqlModel
 
 
+def from_pandas(engine: Engine,
+                df: pandas.DataFrame,
+                convert_objects: bool,
+                name: str,
+                materialization: str,
+                if_exists: str = 'fail') -> DataFrame:
+    """
+    See DataFrame.from_pandas() for docstring.
+    """
+    if materialization == 'cte':
+        return from_pandas_ephemeral(engine=engine, df=df, convert_objects=convert_objects, name=name)
+    if materialization == 'table':
+        return from_pandas_store_table(
+            engine=engine,
+            df=df,
+            convert_objects=convert_objects,
+            table_name=name,
+            if_exists=if_exists
+        )
+    raise ValueError(f'Materialization should either be "cte" or "table", value: {materialization}')
+
+
 def from_pandas_store_table(engine: Engine,
                             df: pandas.DataFrame,
                             convert_objects: bool,
                             table_name: str,
                             if_exists: str = 'fail') -> DataFrame:
     """
-    See DataFrame.from_pandas_store_table() for docstring.
+    Instantiate a new DataFrame based on the content of a Pandas DataFrame. This will first write the
+    data to a database table using pandas' df.to_sql() method.
+    Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
+
+
+    :param engine: db connection
+    :param df: Pandas DataFrame to instantiate as DataFrame
+    :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
+        pd.convert_dtypes() method where possible.
+    :param table_name: name of the sql table the Pandas DataFrame will be written to
+    :param if_exists: {'fail', 'replace', 'append'}, default 'fail'
+        How to behave if the table already exists:
+        * fail: Raise a ValueError.
+        * replace: Drop the table before inserting new values.
+        * append: Insert new values to the existing table.
     """
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
     df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects)
@@ -27,7 +63,8 @@ def from_pandas_store_table(engine: Engine,
     conn.close()
 
     # Todo, this should use from_table from here on.
-    model = BachSqlModel(sql='select * from {table_name}')(table_name=quote_identifier(table_name))
+    model_builder = BachSqlModel(sql='select * from {table_name}', name=table_name)
+    model = model_builder(table_name=quote_identifier(table_name))
 
     # Should this also use _df_or_series?
     return DataFrame.get_instance(
@@ -39,9 +76,26 @@ def from_pandas_store_table(engine: Engine,
     )
 
 
-def from_pandas(engine: Engine, df: pandas.DataFrame, convert_objects: bool) -> DataFrame:
+def from_pandas_ephemeral(
+        engine: Engine,
+        df: pandas.DataFrame,
+        convert_objects: bool,
+        name: str
+) -> DataFrame:
     """
-    See DataFrame.from_pandas() for docstring.
+    Instantiate a new DataFrame based on the content of a Pandas DataFrame. The data will be represented
+    using a `select * from values()` query.
+
+    Warning: This method is only suited for small quantities of data.
+    For anything over a dozen kilobytes of data it is recommended to store the data in a table in
+    the database, e.g. by using the from_pd_store_table() function.
+
+    Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
+
+    :param engine: db connection
+    :param df: Pandas DataFrame to instantiate as DataFrame
+    :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
+        pd.convert_dtypes() method where possible.
     """
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
     df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects)
@@ -75,7 +129,8 @@ def from_pandas(engine: Engine, df: pandas.DataFrame, convert_objects: bool) -> 
     )
 
     sql = 'select * from (values \n{all_values_expr}\n) as t({column_names_expr})\n'
-    model = BachSqlModel(sql=sql)(all_values_expr=all_values_expr, column_names_expr=column_names_expr)
+    model_builder = BachSqlModel(sql=sql, name=name)
+    model = model_builder(all_values_expr=all_values_expr, column_names_expr=column_names_expr)
 
     return DataFrame.get_instance(
         engine=engine,
