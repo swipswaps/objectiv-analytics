@@ -168,5 +168,3 @@ def expression_to_sql(expression: Expression) -> str:
                             "expression_to_sql() doesn't cover all Expression subtypes."
                             f"type: {type(data_item)}")
     return ''.join(result)
-
-
