@@ -28,6 +28,20 @@ class SeriesAbstractDateTime(Series, ABC):
         else:
             return ret_val
 
+    def _comparator_operation(self, other, comparator,
+                              other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
+        return super()._comparator_operation(other, comparator, other_dtypes)
+
+    def format(self, format_str: str) -> SeriesString:
+        """
+        Allow standard PG formatting of this Series (to a string type)
+
+        :param format_str: Format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
+        :return: a derived Series that accepts and returns formatted timestamp strings
+        """
+        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
+        return self.copy_override(dtype='string', expression=expression)
+
 
 class SeriesTimestamp(SeriesAbstractDateTime):
     """
@@ -56,20 +70,6 @@ class SeriesTimestamp(SeriesAbstractDateTime):
                 raise ValueError(f'cannot convert {source_dtype} to timestamp')
             return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
 
-    def _comparator_operation(self, other, comparator,
-                              other_dtypes=('timestamp', 'date', 'string')) -> 'SeriesBoolean':
-        return super()._comparator_operation(other, comparator, other_dtypes)
-
-    def format(self, format_str: str) -> SeriesString:
-        """
-        Allow standard PG formatting of this Series (to a string type)
-
-        :param format_str: Format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
-        :return: a derived Series that accepts and returns formatted timestamp strings
-        """
-        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
-        return self.copy_override(dtype='string', expression=expression)
-
     def __add__(self, other) -> 'Series':
         # add accepts only timedelta as rhs, and will yield same type
         return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))
@@ -87,7 +87,7 @@ class SeriesTimestamp(SeriesAbstractDateTime):
                                           dtype=type_mapping)
 
 
-class SeriesDate(SeriesTimestamp):
+class SeriesDate(SeriesAbstractDateTime):
     """
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         date
@@ -161,9 +161,6 @@ class SeriesTime(SeriesAbstractDateTime):
                 raise ValueError(f'cannot convert {source_dtype} to time')
             return Expression.construct(f'cast ({{}} as {cls.supported_db_dtype})', expression)
 
-    def _comparator_operation(self, other, comparator, other_dtypes=('time', 'string')) -> 'SeriesBoolean':
-        return super()._comparator_operation(other, comparator, other_dtypes)
-
     def __add__(self, other) -> 'Series':
         type_mapping = {
             'date': 'timestamp',
@@ -208,18 +205,8 @@ class SeriesTimedelta(SeriesAbstractDateTime):
                 raise ValueError(f'cannot convert {source_dtype} to timedelta')
             return Expression.construct('cast({} as interval)', expression)
 
-    def format(self, format_str) -> SeriesString:
-        """
-        Allow standard PG formatting of this Series (to a string type)
-
-        :param format_str: Format as defined in https://www.postgresql.org/docs/9.1/functions-formatting.html
-        :return: a derived Series that accepts and returns formatted timestamp strings
-        """
-        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
-        return self.copy_override(dtype='string', expression=expression)
-
     def _comparator_operation(self, other, comparator,
-                              other_dtypes=('timedelta', 'date', 'time', 'string')) -> 'SeriesBoolean':
+                              other_dtypes=('timedelta', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
 
     def __add__(self, other) -> 'Series':

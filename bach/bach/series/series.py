@@ -267,8 +267,8 @@ class Series(ABC):
 
     def _get_supported(self, operation_name: str, supported_dtypes: Tuple[str, ...], other: 'Series'):
         """
-        Check whether `other` is supported for this operation, and possibly do something
-        about it if possible, but using subquery / materialization
+        Check whether `other` is supported for this operation, and if not, possibly do something
+        about it by using subquery / materialization (that's TODO)
         """
         if self.base_node != other.base_node:
             raise ValueError(f'Cannot apply {operation_name} on two series with different base_node. '
