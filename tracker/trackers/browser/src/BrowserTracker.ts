@@ -30,7 +30,7 @@ import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
  *  See also `makeBrowserTrackerDefaultTransport`, `makeBrowserTrackerDefaultQueue` and
- *  `makeDefaultBrowserTrackerPluginsList` for the actual implementation.
+ *  `makeBrowserTrackerDefaultPluginList` for the actual implementation.
  *
  */
 export class BrowserTracker extends Tracker {
