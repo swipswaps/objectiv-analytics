@@ -74,7 +74,7 @@ class StringOperation:
     def slice(self, start=None, stop=None) -> 'SeriesString':
         if isinstance(start, slice):
             return self.__getitem__(start)
-        return self.__getitem__(slice(start, stop) )
+        return self.__getitem__(slice(start, stop))
 
 
 class SeriesString(Series):
