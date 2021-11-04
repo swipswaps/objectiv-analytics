@@ -301,6 +301,14 @@ class Series(ABC):
         """
         return self.to_pandas().values
 
+    @property
+    def array(self):
+        """
+        .array property accessor akin pandas.Series.array
+        :note: This function queries the database.
+        """
+        return self.to_pandas().array
+
     def sort_values(self, ascending=True):
         """
         Returns a copy of this Series that is sorted by its values. Returns self if self is already sorted

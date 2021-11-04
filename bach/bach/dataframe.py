@@ -1078,10 +1078,18 @@ class DataFrame:
     @property
     def values(self):
         """
-        .values property accessor akin pandas.Series.values
+        .values property accessor akin pandas.Dataframe.values
         :note: This function queries the database.
         """
         return self.to_pandas().values
+
+    @property
+    def array(self):
+        """
+        .array property accessor akin pandas.Dataframe.array
+        :note: This function queries the database.
+        """
+        return self.to_pandas().array
 
     def _get_order_by_clause(self) -> Expression:
         """
