@@ -100,18 +100,16 @@ def test_positional_slicing():
 def test_get_item_materialize():
     bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants']]
     bt = bt.groupby('municipality')[['inhabitants']].sum()
-
     r = bt[bt.inhabitants_sum != 700] #  'Friese Meren' be gone!
 
-    # FIXME: this test depends on a specific ordering of the result data, that order is not guaranteed by
-    # postgres tho
     assert_equals_data(
         r,
+        order_by='inhabitants_sum',
         expected_columns=['municipality', 'inhabitants_sum'],
         expected_data=[
-            ['Noardeast-Fryslân', 12675], ['Leeuwarden', 93485],
-            ['Súdwest-Fryslân', 52965], ['Harlingen', 14740],
-            ['Waadhoeke', 12760]
+            ['Noardeast-Fryslân', 12675], ['Waadhoeke', 12760],
+            ['Harlingen', 14740], ['Súdwest-Fryslân', 52965],
+            ['Leeuwarden', 93485]
         ]
     )
 
