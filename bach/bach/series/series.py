@@ -6,6 +6,8 @@ from copy import copy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable
 from uuid import UUID
 
+import pandas
+
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 from bach.expression import quote_identifier, Expression
 from bach.types import value_to_dtype
@@ -276,12 +278,28 @@ class Series(ABC):
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
 
-    def head(self, n: int = 5):
+    def to_pandas(self, limit: Union[int, slice] = None) -> pandas.Series:
         """
-        Return the first `n` rows.
+        Get the data from this series as a pandas.Series
+        :param limit: The limit to apply, either as a max amount of rows or a slice.
         """
-        # TODO get a series directly instead of ripping it out of the df?
-        return self.to_frame().head(n)[self.name]
+        return self.to_frame().to_pandas(limit=limit)[self.name]
+
+    def head(self, n: int = 5) -> pandas.Series:
+        """
+        Get the first n rows from this Series as a pandas.Series.
+        :param n: The amount of rows to return.
+        :note: This function queries the database.
+        """
+        return self.to_pandas(limit=n)
+
+    @property
+    def values(self):
+        """
+        .values property accessor akin pandas.Series.values
+        :note: This function queries the database.
+        """
+        return self.to_pandas().values
 
     def sort_values(self, ascending=True):
         """

@@ -32,7 +32,7 @@ def test_series_sort_values():
         assert_equals_data(
             bt_series.sort_values(**kwargs),
             expected_columns=['_index_skating_order', 'city'],
-            expected_data=df_to_list(bt.to_df()['city'].sort_values(**kwargs))
+            expected_data=df_to_list(bt.to_pandas()['city'].sort_values(**kwargs))
         )
 
 

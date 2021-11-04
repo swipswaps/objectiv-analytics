@@ -66,7 +66,7 @@ def test_sort_values_parameters():
             bt.sort_values(**kwargs),
             expected_columns=['_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants',
                               'founding'],
-            expected_data=df_to_list(bt.to_df().sort_values(**kwargs))
+            expected_data=df_to_list(bt.to_pandas().sort_values(**kwargs))
         )
 
 

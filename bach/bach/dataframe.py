@@ -34,7 +34,7 @@ class DataFrame:
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
     * head()
-    * to_df()
+    * to_pandas()
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
     only when one of the above mentioned data-transfer functions is called.
@@ -1052,37 +1052,38 @@ class DataFrame:
                     for by_series, asc_item in zip(by_series_list, ascending)]
         return self.copy_override(order_by=order_by)
 
-    def to_df(self) -> pandas.DataFrame:
+    def to_pandas(self, limit: Union[int, slice] = None) -> pandas.DataFrame:
         """
         Run a SQL query representing the current state of this DataFrame against the database and return the
         resulting data as a Pandas DataFrame.
-
-        This function queries the database.
+        :param limit: The limit to apply, either as a max amount of rows or a slice.
+        :note: This function queries the database.
         """
-        conn = self.engine.connect()
-        sql = self.view_sql()
-        df = pandas.read_sql_query(sql, conn, index_col=list(self.index.keys()))
-        conn.close()
-        return df
+        with self.engine.connect() as conn:
+            sql = self.view_sql(limit=limit)
+            if len(self._index):
+                return pandas.read_sql_query(sql, conn, index_col=list(self._index.keys()))
+            else:
+                return pandas.read_sql_query(sql, conn)
 
     def head(self, n: int = 5) -> pandas.DataFrame:
         """
-        Similar to `to_df` but only returns the first `n` rows.
-
+        Similar to `to_pandas` but only returns the first `n` rows.
         This function queries the database.
-
         :param n: number of rows to query from database.
+        :note: This function queries the database.
         """
-        conn = self.engine.connect()
-        sql = self.view_sql(limit=n)
-        if len(self._index):
-            df = pandas.read_sql_query(sql, conn, index_col=list(self._index.keys()))
-        else:
-            df = pandas.read_sql_query(sql, conn)
-        conn.close()
-        return df
+        return self.to_pandas(limit=n)
 
-    def get_order_by_clause(self) -> Expression:
+    @property
+    def values(self):
+        """
+        .values property accessor akin pandas.Series.values
+        :note: This function queries the database.
+        """
+        return self.to_pandas().values
+
+    def _get_order_by_clause(self) -> Expression:
         """
         Get a properly formatted order by expression based on this df's order_by.
         Will return an empty Expression in case ordering is not requested.
@@ -1156,7 +1157,7 @@ class DataFrame:
                 where=where_clause,
                 group_by=group_by_clause,
                 having=having_clause,
-                order_by=self.get_order_by_clause(),
+                order_by=self._get_order_by_clause(),
                 limit=limit_clause,
                 prev=self.base_node
             )
@@ -1169,7 +1170,7 @@ class DataFrame:
                 columns=self._get_all_column_expressions(),
                 _last_node=self.base_node,
                 where=where_clause,
-                order=self.get_order_by_clause(),
+                order=self._get_order_by_clause(),
                 limit=limit_clause
             )
 
@@ -1180,8 +1181,7 @@ class DataFrame:
         :return: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        sql = to_sql(model)
-        return sql
+        return to_sql(model)
 
     def _get_all_column_expressions(self) -> List[Expression]:
         """ Get a list of Expression for every column including indices in this df """
