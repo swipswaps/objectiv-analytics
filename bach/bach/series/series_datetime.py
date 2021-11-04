@@ -2,6 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 import datetime
+from abc import ABC
 from typing import Union, cast, TYPE_CHECKING
 
 import numpy
@@ -14,10 +15,10 @@ if TYPE_CHECKING:
     from bach.series import SeriesBoolean
 
 
-class SeriesAbstractDateTime(Series):
+class SeriesAbstractDateTime(Series, ABC):
     """ Class all date/time/interval handling classes derive from to share common stuff """
 
-    def _arithmetic_operation(self, other, operation, fmt_str, other_dtypes=[], dtype=None):
+    def _arithmetic_operation(self, other, operation, fmt_str, other_dtypes=(), dtype=None):
         ret_val = super()._arithmetic_operation(other, operation, fmt_str, other_dtypes, dtype)
         if ret_val.dtype == 'date':
             # PG returns timestamp in all cases were we expect date
@@ -56,22 +57,22 @@ class SeriesTimestamp(SeriesAbstractDateTime):
             return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
 
     def _comparator_operation(self, other, comparator,
-                              other_dtypes=['timestamp', 'date', 'string']) -> 'SeriesBoolean':
+                              other_dtypes=('timestamp', 'date', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
 
-    def format(self, format) -> SeriesString:
+    def format(self, format_str: str) -> SeriesString:
         """
         Allow standard PG formatting of this Series (to a string type)
 
-        :param format: The format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
+        :param format_str: Format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
         :return: a derived Series that accepts and returns formatted timestamp strings
         """
-        expression = Expression.construct(f"to_char({{}}, '{format}')", self)
+        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
         return self.copy_override(dtype='string', expression=expression)
 
     def __add__(self, other) -> 'Series':
         # add accepts only timedelta as rhs, and will yield same type
-        return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=['timedelta'])
+        return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))
 
     def __sub__(self, other) -> 'Series':
         # different rhs parameter types yield result in different return
@@ -82,7 +83,7 @@ class SeriesTimestamp(SeriesAbstractDateTime):
             'timestamp': 'timedelta'
         }
         return self._arithmetic_operation(other, 'sub', '({}) - ({})',
-                                          other_dtypes=type_mapping.keys(),
+                                          other_dtypes=tuple(type_mapping.keys()),
                                           dtype=type_mapping)
 
 
@@ -118,7 +119,7 @@ class SeriesDate(SeriesTimestamp):
             'timedelta': 'date'  # python datetime return date, PG timestamp
         }
         return self._arithmetic_operation(other, 'add', '({}) + ({})',
-                                          other_dtypes=type_mapping.keys(),
+                                          other_dtypes=tuple(type_mapping.keys()),
                                           dtype=type_mapping)
 
     def __sub__(self, other) -> 'Series':
@@ -131,7 +132,7 @@ class SeriesDate(SeriesTimestamp):
         if other.dtype == 'date':
             raise ValueError('date - date operations are really broken in PG. Consider using timestamps')
         return self._arithmetic_operation(other, 'sub', '({}) - ({})',
-                                          other_dtypes=type_mapping.keys(),
+                                          other_dtypes=tuple(type_mapping.keys()),
                                           dtype=type_mapping)
 
 
@@ -160,7 +161,7 @@ class SeriesTime(SeriesAbstractDateTime):
                 raise ValueError(f'cannot convert {source_dtype} to time')
             return Expression.construct(f'cast ({{}} as {cls.supported_db_dtype})', expression)
 
-    def _comparator_operation(self, other, comparator, other_dtypes=['time', 'string']) -> 'SeriesBoolean':
+    def _comparator_operation(self, other, comparator, other_dtypes=('time', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
 
     def __add__(self, other) -> 'Series':
@@ -170,7 +171,7 @@ class SeriesTime(SeriesAbstractDateTime):
             'timestamp': 'timestamp'
         }
         return self._arithmetic_operation(other, 'add', '({}) + ({})',
-                                          other_dtypes=type_mapping.keys(),
+                                          other_dtypes=tuple(type_mapping.keys()),
                                           dtype=type_mapping)
 
     def __sub__(self, other) -> 'Series':
@@ -179,7 +180,7 @@ class SeriesTime(SeriesAbstractDateTime):
             'timedelta': 'time'
         }
         return self._arithmetic_operation(other, 'sub', '({}) - ({})',
-                                          other_dtypes=type_mapping.keys(),
+                                          other_dtypes=tuple(type_mapping.keys()),
                                           dtype=type_mapping)
 
 
@@ -207,18 +208,18 @@ class SeriesTimedelta(SeriesAbstractDateTime):
                 raise ValueError(f'cannot convert {source_dtype} to timedelta')
             return Expression.construct('cast({} as interval)', expression)
 
-    def format(self, format) -> SeriesString:
+    def format(self, format_str) -> SeriesString:
         """
         Allow standard PG formatting of this Series (to a string type)
 
-        :param format: The format as defined in https://www.postgresql.org/docs/9.1/functions-formatting.html
+        :param format_str: Format as defined in https://www.postgresql.org/docs/9.1/functions-formatting.html
         :return: a derived Series that accepts and returns formatted timestamp strings
         """
-        expression = Expression.construct(f"to_char({{}}, '{format}')", self)
+        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
         return self.copy_override(dtype='string', expression=expression)
 
     def _comparator_operation(self, other, comparator,
-                              other_dtypes=['timedelta', 'date', 'time', 'string']) -> 'SeriesBoolean':
+                              other_dtypes=('timedelta', 'date', 'time', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
 
     def __add__(self, other) -> 'Series':
@@ -229,7 +230,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             'timestamp': 'timestamp'
         }
         return self._arithmetic_operation(other, 'add', '({}) + ({})',
-                                          other_dtypes=type_mapping.keys(),
+                                          other_dtypes=tuple(type_mapping.keys()),
                                           dtype=type_mapping)
 
     def __sub__(self, other) -> 'Series':
@@ -239,14 +240,14 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             'timedelta': 'timedelta',
         }
         return self._arithmetic_operation(other, 'sub', '({}) - ({})',
-                                          other_dtypes=type_mapping.keys(),
+                                          other_dtypes=tuple(type_mapping.keys()),
                                           dtype=type_mapping)
 
     def __mul__(self, other) -> 'Series':
-        return self._arithmetic_operation(other, 'mul', '({}) * ({})', other_dtypes=['int64', 'float64'])
+        return self._arithmetic_operation(other, 'mul', '({}) * ({})', other_dtypes=('int64', 'float64'))
 
     def __truediv__(self, other) -> 'Series':
-        return self._arithmetic_operation(other, 'div', '({}) / ({})', other_dtypes=['int64', 'float64'])
+        return self._arithmetic_operation(other, 'div', '({}) / ({})', other_dtypes=('int64', 'float64'))
 
     def sum(self, partition: WrappedPartition = None,
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':

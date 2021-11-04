@@ -27,16 +27,17 @@ class SeriesString(Series):
         return Expression.construct('cast(({}) as text)', expression)
 
     def __add__(self, other) -> 'Series':
-        return self._binary_operation(other, 'concat', '({}) || ({})', other_dtypes=['string'])
+        return self._binary_operation(other, 'concat', '({}) || ({})', other_dtypes=('string',))
 
-    def _comparator_operation(self, other, comparator, other_dtypes=['string']) -> 'SeriesBoolean':
+    def _comparator_operation(self, other, comparator, other_dtypes=tuple(['string'])) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
 
     def slice(self, start: Union[int, slice], stop: int = None) -> 'SeriesString':
         """
         Get a python string slice using DB functions. Format follows standard slice format
         Note: this is called 'slice' to not destroy index selection logic
-        :param item: an int for a single character, or a slice for some nice slicing
+        :param start: an int for a single character, or a slice for some nice slicing
+        :param stop: combined with start as an int, stop makes the rv a sequence of characters.
         :return: SeriesString with the slice applied
         """
         if isinstance(start, (int, type(None))):

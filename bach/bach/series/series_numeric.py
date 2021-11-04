@@ -6,8 +6,7 @@ from typing import cast, Union, TYPE_CHECKING, Optional
 
 import numpy
 
-from bach import DataFrame
-from bach.series import Series, const_to_series
+from bach.series import Series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 
@@ -20,10 +19,10 @@ class SeriesAbstractNumeric(Series, ABC):
     Base class that defines shared logic between SeriesInt64 and SeriesFloat64
     """
     def _arithmetic_operation(self, other, operation, fmt_str,
-                              other_dtypes=['int64', 'float64'], dtype=None):
+                              other_dtypes=('int64', 'float64'), dtype=None):
         return super()._arithmetic_operation(other, operation, fmt_str, other_dtypes, dtype)
 
-    def _comparator_operation(self, other, comparator, other_dtypes=['int64', 'float64']) -> 'SeriesBoolean':
+    def _comparator_operation(self, other, comparator, other_dtypes=('int64', 'float64')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
 
     def round(self, decimals: int = 0) -> 'SeriesAbstractNumeric':
@@ -109,7 +108,7 @@ class SeriesInt64(SeriesAbstractNumeric):
             raise ValueError(f'cannot convert {source_dtype} to int64')
         return Expression.construct('cast({} as bigint)', expression)
 
-    def _arithmetic_operation(self, other, operation, fmt_str, other_dtypes=['int64', 'float64'], dtype=None):
+    def _arithmetic_operation(self, other, operation, fmt_str, other_dtypes=('int64', 'float64'), dtype=None):
         # Override this method, because we need to return a float if we interact with one.
         type_mapping = dtype if dtype else {
             'int64': 'int64',
@@ -121,10 +120,12 @@ class SeriesInt64(SeriesAbstractNumeric):
         return self._arithmetic_operation(other, 'div', 'cast({} as float) / ({})', dtype='float64')
 
     def __rshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) >> cast({} as int)', other_dtypes=['int64'])
+        return self._arithmetic_operation(other, 'lshift', '({}) >> cast({} as int)',
+                                          other_dtypes=tuple(['int64']))
 
     def __lshift__(self, other):
-        return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)', other_dtypes=['int64'])
+        return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
+                                          other_dtypes=tuple(['int64']))
 
 
 class SeriesFloat64(SeriesAbstractNumeric):

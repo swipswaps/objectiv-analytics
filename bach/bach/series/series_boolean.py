@@ -2,6 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from abc import ABC
+from typing import cast
 
 from bach.series import Series, const_to_series
 from bach.expression import Expression
@@ -27,19 +28,19 @@ class SeriesBoolean(Series, ABC):
             raise ValueError(f'cannot convert {source_dtype} to bool')
         return Expression.construct('cast({} as bool)', expression)
 
-    def _comparator_operation(self, other, comparator, other_dtypes=['bool']) -> 'SeriesBoolean':
+    def _comparator_operation(self, other, comparator, other_dtypes=tuple(['bool'])) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
 
     def _boolean_operator(self, other, operator: str) -> 'SeriesBoolean':
-        # TODO maybe "other" should have a way to tell us it can be a bool?
-        # This is not the nicest, rewrite to use _arithmetic_operation
-        other = const_to_series(base=self, value=other)
-        other = self._get_supported(f"boolean operator '{operator}'", ['bool', 'int64', 'float'], other)
+        fmt_str = f'({{}}) {operator} ({{}})'
         if other.dtype != 'bool':
-            expression = Expression.construct(f'(({{}}) {operator} cast({{}} as bool))', self, other)
-        else:
-            expression = Expression.construct(f'(({{}}) {operator} ({{}}))', self, other)
-        return self.copy_override(dtype='bool', expression=expression)
+            fmt_str = f'({{}}) {operator} cast({{}} as bool)'
+        return cast(
+            'SeriesBoolean', self._binary_operation(
+                other=other, operation=f"boolean operator '{operator}'",
+                fmt_str=fmt_str, other_dtypes=('bool', 'int64', 'float'), dtype='bool'
+            )
+        )
 
     def __invert__(self) -> 'SeriesBoolean':
         expression = Expression.construct('NOT ({})', self)
@@ -53,4 +54,4 @@ class SeriesBoolean(Series, ABC):
 
     def __xor__(self, other) -> 'SeriesBoolean':
         # (A and not B) or (not A and B)
-        return ((self & (~other)) | ((~self) & other))
+        return (self & (~other)) | ((~self) & other)

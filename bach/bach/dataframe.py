@@ -1100,6 +1100,7 @@ class DataFrame:
                          having_clause: Expression = None) -> SqlModel[BachSqlModel]:
         """
         Translate the current state of this DataFrame into a SqlModel.
+        :param name: The name of the new node
         :param limit: The limit to use
         :param where_clause: The where-clause to apply, if any
         :param having_clause: The having-clause to apply in case group_by is set, if any
@@ -1328,7 +1329,6 @@ class DataFrame:
             See apply_func() for supported arguments
         :param axis: the aggregation axis
         :param numeric_only: Whether to aggregate numeric series only, or attempt all.
-        :param group_by: The grouping to use, defaults to entire dataframe
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
         :note: Pandas has numeric_only=None to attempt all columns but ignore failing ones

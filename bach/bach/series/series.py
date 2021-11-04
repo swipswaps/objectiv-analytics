@@ -265,7 +265,7 @@ class Series(ABC):
             return expression
         return Expression.construct(f'{{}} as {quoted_column_name}', expression)
 
-    def _get_supported(self, operation_name: str, supported_dtypes: List[str], other: 'Series'):
+    def _get_supported(self, operation_name: str, supported_dtypes: Tuple[str, ...], other: 'Series'):
         """
         Check whether `other` is supported for this operation, and possibly do something
         about it if possible, but using subquery / materialization
@@ -405,7 +405,9 @@ class Series(ABC):
             )
         )
 
-    def _binary_operation(self, other, operation, fmt_str, other_dtypes=[], dtype=None):
+    def _binary_operation(self, other: 'Series', operation: str, fmt_str: str,
+                          other_dtypes: Tuple[str, ...] = (),
+                          dtype: Union[str, Dict[str, Optional[str]]] = None) -> 'Series':
         """
         The standard way to perform a binary operation
 
@@ -434,7 +436,9 @@ class Series(ABC):
                 dtype = dtype[other.dtype]
         return self.copy_override(dtype=dtype, expression=expression)
 
-    def _arithmetic_operation(self, other, operation, fmt_str, other_dtypes=[], dtype=None):
+    def _arithmetic_operation(self, other: 'Series', operation: str, fmt_str: str,
+                              other_dtypes: Tuple[str, ...] = (),
+                              dtype: Union[str, Dict[str, Optional[str]]] = None) -> 'Series':
         """
         implement this in a subclass to have boilerplate support for all arithmetic functions
         defined below, but also call this method from specific arithmetic operation implementations
@@ -442,6 +446,8 @@ class Series(ABC):
 
         :see: _binary_operation() for parameters
         """
+        if other_dtypes is None:
+            other_dtypes = []
         if len(other_dtypes) == 0:
             raise NotImplementedError(f'arithmetic operation {operation} not supported for '
                                       f'{self.__class__} and {other.__class__}')
@@ -494,15 +500,16 @@ class Series(ABC):
         raise NotImplementedError()
 
     # Comparator operations
-    def _comparator_operation(self, other, comparator, other_dtypes=[]) -> 'SeriesBoolean':
+    def _comparator_operation(self, other: 'Series', comparator: str,
+                              other_dtypes: Tuple[str, ...] = ()) -> 'SeriesBoolean':
         if len(other_dtypes) == 0:
             raise NotImplementedError(f'comparator {comparator} not supported for '
                                       f'{self.__class__} and {other.__class__}')
-        return self._binary_operation(
+        return cast('SeriesBoolean', self._binary_operation(
             other=other, operation=f"comparator '{comparator}'",
             fmt_str=f'({{}}) {comparator} ({{}})',
             other_dtypes=other_dtypes, dtype='bool'
-        )
+        ))
 
     def __ne__(self, other) -> 'SeriesBoolean':     # type: ignore
         return self._comparator_operation(other, "<>")
