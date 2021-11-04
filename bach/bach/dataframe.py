@@ -499,10 +499,14 @@ class DataFrame:
                                      'Alternative: use df.merge(series) to merge the series with the df '
                                      'first, and then create a new Boolean series on the resulting merged '
                                      'data.')
-                if self._group_by is not None:
+                if self._group_by is not None and key.group_by == self._group_by:
                     node = self.get_current_node(
                         'getitem_having_boolean',
                         having_clause=Expression.construct("having {}", key.expression))
+                elif key.expression.has_aggregate_function:
+                    raise ValueError("Cannot use a Boolean series that contains a non-materialized "
+                                     "aggregation function or a windowing function as Boolean row selector.")
+
                 else:
                     node = self.get_current_node(
                         'getitem_where_boolean',
@@ -1335,7 +1339,7 @@ class DataFrame:
          then per series object:
           * series.apply_func({'column': ['sum']}, ..)
           * series_subclass.sum(...)
-          * series.derived_agg_func(partition, 'sum', ...)
+          * series._derived_agg_func(partition, 'sum', ...)
           * series.copy_override(..., expression=Expression.construct('sum({})'))
         """
         if level is not None:

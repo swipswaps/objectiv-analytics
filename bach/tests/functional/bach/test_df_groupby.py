@@ -396,10 +396,10 @@ def test_groupby_frame_split_series_aggregation():
     r5 = btg1['founding'].sum() + btg1['inhabitants'].sum()
     assert ((r1.head().values + r4.head().values) == r5.head().values).all()
 
-    # FIXME aggregation functions can not be nested without materialization in between
-    r6 = r4.sum()  # This should raise
-    with pytest.raises(Exception):
-        r6.head() # this should not, but that's not how it currently works
+    with pytest.raises(ValueError, match='already aggregated'):
+        r6 = r4.sum()
+    r6 = r4.to_frame().get_df_materialized_model()
+    r6.head()
 
 
 def test_groupby_frame_split_recombine():

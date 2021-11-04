@@ -125,11 +125,11 @@ def test_series_inherit_flag():
     # TODO: change this so it checks the flag correctly
     bts = get_bt_with_test_data(full_data_set=False).groupby('municipality')['founding']
     bts_min = bts.min()
-    assert not bts.flag_agg_function
-    assert bts_min.flag_agg_function
+    assert not bts.expression.has_aggregate_function
+    assert bts_min.expression.has_aggregate_function
 
     bts_min_materialized = bts_min.to_frame().get_df_materialized_model()['founding']
-    assert not bts_min_materialized.flag_agg_function
+    assert not bts_min_materialized.expression.has_aggregate_function
 
     assert_equals_data(
         bts_min_materialized,
@@ -145,13 +145,13 @@ def test_series_inherit_flag():
 
     # bts_min_min has applied an aggregate function to a materialized view, so the aggregation flag should
     # be True again
-    assert bts_min_min.flag_agg_function
+    assert bts_min_min.expression.has_aggregate_function
 
     # Check that aggregation flag correctly gets inherited if multiple series are involved in a comparison
     # aggregation flag on left hand series
     bts_derived = bts_min_min - 5
-    assert bts_derived.flag_agg_function
+    assert bts_derived.expression.has_aggregate_function
 
     # aggregation flag on right hand series
     bts_derived = bts_min_materialized - bts_min_min
-    assert bts_derived.flag_agg_function
+    assert bts_derived.expression.has_aggregate_function

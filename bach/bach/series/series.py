@@ -584,8 +584,13 @@ class Series(ABC):
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
 
+        if self.expression.has_aggregate_function:
+            raise ValueError('Cannot call an aggregation function on an already aggregated column. Try '
+                             'calling get_df_materialized_model() on the DataFrame this Series belongs to '
+                             'first.')
+
         if isinstance(expression, str):
-            expression = Expression.construct(f'{expression}({{}})', self)
+            expression = Expression.construct('{}({})', Expression.agg_function_raw(expression), self)
 
         if partition is None:
             if self._group_by:

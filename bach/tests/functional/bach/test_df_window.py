@@ -277,7 +277,6 @@ def test_windowing_boolean_functions():
     with pytest.raises(ValueError, match='non-materialized aggregation'):
         x = bt[btg_min_fnd == bt.founding]
     with pytest.raises(ValueError, match='non-materialized aggregation'):
-        # TODO: make the aggregation flag propagate properly
         x = bt[bt.founding == btg_min_fnd]
 
 
