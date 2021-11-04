@@ -20,7 +20,7 @@ class StringOperation:
         :return: BuhTuhSeriesString with the slice applied
         """
         if isinstance(start, (int, type(None))):
-            item = slice(start, None)
+            item = slice(start, start + 1)
         elif isinstance(start, slice):
             item = start
         else:
@@ -31,8 +31,8 @@ class StringOperation:
         if item.start is not None and item.start < 0:
             expression = Expression.construct(f'right({{}}, {abs(item.start)})', expression)
             if item.stop is not None:
-                if item.stop < 0 and item.stop > item.start:
-                    # we needed to check stop < 0, because that would mean we're going the wrong direction
+                if item.stop <= 0 and item.stop > item.start:
+                    # we needed to check stop <= 0, because that would mean we're going the wrong direction
                     # and that's not supported
                     expression = Expression.construct(f'left({{}}, {item.stop - item.start})', expression)
                 else:
@@ -72,7 +72,9 @@ class StringOperation:
         return self._base.copy_override(dtype='string', expression=expression)
 
     def slice(self, start=None, stop=None) -> 'SeriesString':
-        return self.__getitem__(slice(start, stop))
+        if isinstance(start, slice):
+            return self.__getitem__(start)
+        return self.__getitem__(slice(start, stop) )
 
 
 class SeriesString(Series):
