@@ -1,11 +1,11 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, InitVar
 
-from typing import Optional, Union, TYPE_CHECKING, List, Dict
-
+from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Sequence
 from sql_models.model import SqlModel, SqlModelSpec
+from sql_models.util import quote_string, quote_identifier
 
 if TYPE_CHECKING:
     from bach import Series
@@ -28,6 +28,11 @@ class RawToken(ExpressionToken):
 
 
 @dataclass(frozen=True)
+class AggFunctionRawToken(RawToken):
+    raw: str
+
+
+@dataclass(frozen=True)
 class ColumnReferenceToken(ExpressionToken):
     column_name: str
 
@@ -46,10 +51,9 @@ class StringValueToken(ExpressionToken):
     value: str
 
 
-@dataclass(frozen=True)
 class Expression:
     """
-    An Expression object represents a fragment of SQL as a series of sql-tokens.
+    Immutable object representing a fragmetn of SQL as a sequence of sql-tokens.
 
     Expressions can easily be converted to a string with actual sql using the to_sql() function. Storing a
     sql-expression using this class, rather than storing it directly as a string, makes it possible to
@@ -61,7 +65,24 @@ class Expression:
     This class does not offer full-tokenization of sql. There are only a limited number of tokens for the
     needed use-cases. Most sql is simply encoded as a 'raw' token.
     """
-    data: List[ExpressionToken] = field(default_factory=list)
+
+    def __init__(self, data: List[ExpressionToken] = None):
+        if not data:
+            data = []
+        self._data: Tuple[ExpressionToken, ...] = tuple(data)
+
+    @property
+    def data(self) -> List[ExpressionToken]:
+        return list(self._data)
+
+    def __eq__(self, other):
+        return isinstance(other, Expression) and self.data == other.data
+
+    def __repr__(self):
+        return f'{self.__class__}({repr(self.data)})'
+
+    def __hash__(self):
+        return hash(self._data)
 
     @classmethod
     def construct(cls, fmt: str, *args: Union['Expression', 'Series']) -> 'Expression':
@@ -77,6 +98,7 @@ class Expression:
         :param args: 0 or more Expressions or Series. Number of args must exactly match number of `{}`
             occurrences in fmt.
         """
+
         sub_strs = fmt.split('{}')
         data = []
         if len(args) != len(sub_strs) - 1:
@@ -100,6 +122,11 @@ class Expression:
         return cls([RawToken(raw)])
 
     @classmethod
+    def agg_function_raw(cls, raw: str) -> 'Expression':
+        """ Return an expression that contains a single AggFunctionRawToken. """
+        return cls([AggFunctionRawToken(raw)])
+
+    @classmethod
     def string_value(cls, value: str) -> 'Expression':
         """
         Return an expression that contains a single StringValueToken with the value.
@@ -117,7 +144,7 @@ class Expression:
         """ Construct an expression for model, where model is a reference to a model. """
         return Expression([ModelReferenceToken(model)])
 
-    def resolve_column_references(self, table_name: str = None):
+    def resolve_column_references(self, table_name: str = None) -> 'Expression':
         """ resolve the table name aliases for all columns in this expression """
         result: List[ExpressionToken] = []
         for data_item in self.data:
@@ -127,6 +154,11 @@ class Expression:
             else:
                 result.append(data_item)
         return Expression(result)
+
+    @property
+    def has_aggregate_function(self) -> bool:
+        """ True iff there is at least one AggFunctionRawToken in this Expression. """
+        return any(isinstance(token, AggFunctionRawToken) for token in self.data)
 
     def get_references(self) -> Dict[str, SqlModel['BachSqlModel']]:
         rv = {}
@@ -168,41 +200,3 @@ def expression_to_sql(expression: Expression) -> str:
                             "expression_to_sql() doesn't cover all Expression subtypes."
                             f"type: {type(data_item)}")
     return ''.join(result)
-
-
-def quote_string(value: str) -> str:
-    """
-    Add single quotes around the value and escape any quotes in the value.
-
-    This is in accordance with the Postgres string notation format, no guarantees for other databses.
-    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
-
-    Examples:
-    >>> quote_string("test")
-    "'test'"
-    >>> quote_string("te'st")
-    "'te''st'"
-    >>> quote_string("'te''st'")
-    "'''te''''st'''"
-    """
-    replaced_chars = value.replace("'", "''")
-    return f"'{replaced_chars}'"
-
-
-def quote_identifier(name: str) -> str:
-    """
-    Add quotes around an identifier (e.g. a table or column name), and escape special characters in the name.
-
-    This is in accordance with the Postgres string notation format, no guarantees for other databses.
-    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
-
-    Examples:
-    >>> quote_identifier('test')
-    '"test"'
-    >>> quote_identifier('te"st')
-    '"te""st"'
-    >>> quote_identifier('"te""st"')
-    "\"\"\"te\"\"\"\"st\"\"\""
-    """
-    replaced_chars = name.replace('"', '""')
-    return f'"{replaced_chars}"'

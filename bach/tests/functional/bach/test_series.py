@@ -56,7 +56,8 @@ def test_fillna():
 
 def test_isnull():
     values = ['a', 'b', None]
-    pdf = pd.DataFrame(data=values,columns=['text_with_null'])
+    pdf = pd.DataFrame(data=values, columns=['text_with_null'])
+    pdf.set_index('text_with_null', drop=False, inplace=True)
     bt = get_from_df('test_isnull', pdf)
     bt['y'] = bt.text_with_null.isnull()
     bt['z'] = bt.text_with_null.notnull()
@@ -159,6 +160,41 @@ def test_series_independant_subquery_sets():
         ]
     )
 
+
+def test_series_inherit_flag():
+    # TODO: change this so it checks the flag correctly
+    bts = get_bt_with_test_data(full_data_set=False).groupby('municipality')['founding']
+    bts_min = bts.min()
+    assert not bts.expression.has_aggregate_function
+    assert bts_min.expression.has_aggregate_function
+
+    bts_min_materialized = bts_min.to_frame().get_df_materialized_model()['founding']
+    assert not bts_min_materialized.expression.has_aggregate_function
+
+    assert_equals_data(
+        bts_min_materialized,
+        expected_columns=['municipality', 'founding'],
+        expected_data=[
+            ['Leeuwarden', 1285],
+            ['Súdwest-Fryslân', 1268]
+        ]
+    )
+
+    bts_min_min = bts_min_materialized.min()
+    assert_equals_data(bts_min_min, expected_columns=['index', 'founding'], expected_data=[[1, 1268]])
+
+    # bts_min_min has applied an aggregate function to a materialized view, so the aggregation flag should
+    # be True again
+    assert bts_min_min.expression.has_aggregate_function
+
+    # Check that aggregation flag correctly gets inherited if multiple series are involved in a comparison
+    # aggregation flag on left hand series
+    bts_derived = bts_min_min - 5
+    assert bts_derived.expression.has_aggregate_function
+
+    # aggregation flag on right hand series
+    bts_derived = bts_min_materialized - bts_min_min
+    assert bts_derived.expression.has_aggregate_function
 
 def test_series_independant_subquery_single():
     bt = get_bt_with_test_data(full_data_set=True)

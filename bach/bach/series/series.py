@@ -7,7 +7,10 @@ from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHE
 from uuid import UUID
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
-from bach.expression import quote_identifier, Expression
+
+from bach.dataframe import ColumnFunction
+from bach.expression import Expression
+from sql_models.util import quote_identifier
 from bach.types import value_to_dtype
 from sql_models.model import SqlModel
 
@@ -264,7 +267,8 @@ class Series(ABC):
         quoted_column_name = quote_identifier(self.name)
         if expression.to_sql() == quoted_column_name:
             return expression
-        return Expression.construct(f'{{}} as {quoted_column_name}', expression)
+
+        return Expression.construct('{} as {}', expression, Expression.raw(quoted_column_name))
 
     def _get_supported(self, operation_name: str, supported_dtypes: List[str], other: 'Series'):
 
@@ -483,9 +487,7 @@ class Series(ABC):
     def __gt__(self, other) -> 'SeriesBoolean':
         return self._comparator_operator(other, ">")
 
-    def apply_func(self,
-                   func: Union[str, Callable, List[Union[str, Callable]]],
-                   *args, **kwargs) -> List['Series']:
+    def apply_func(self, func: ColumnFunction, *args, **kwargs) -> List['Series']:
         """
         Apply the given func to this Series. If multiple are given, multiple new series will
         be returned.
@@ -526,7 +528,7 @@ class Series(ABC):
         return list(series.values())
 
     def aggregate(self,
-                  func: Union[str, Callable, List[Union[str, Callable]]],
+                  func: ColumnFunction,
                   group_by: 'GroupBy' = None,
                   *args, **kwargs) -> DataFrameOrSeries:
         """
@@ -535,7 +537,7 @@ class Series(ABC):
         return self.agg(func, group_by, *args, **kwargs)
 
     def agg(self,
-            func: Union[str, Callable, List[Union[str, Callable]]],
+            func: ColumnFunction,
             group_by: 'GroupBy' = None,
             *args, **kwargs) -> DataFrameOrSeries:
         """
@@ -616,8 +618,13 @@ class Series(ABC):
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
 
+        if self.expression.has_aggregate_function:
+            raise ValueError('Cannot call an aggregation function on an already aggregated column. Try '
+                             'calling get_df_materialized_model() on the DataFrame this Series belongs to '
+                             'first.')
+
         if isinstance(expression, str):
-            expression = Expression.construct(f'{expression}({{}})', self)
+            expression = Expression.construct('{}({})', Expression.agg_function_raw(expression), self)
 
         if partition is None:
             if self._group_by:

@@ -1,5 +1,5 @@
 import { BrowserTracker } from '../BrowserTracker';
-import { parseTrackVisibilityAttribute } from '../common/parser/parseTrackVisibilityAttribute';
+import { parseTrackVisibilityAttribute } from '../common/parsers/parseTrackVisibilityAttribute';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';

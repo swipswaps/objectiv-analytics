@@ -396,10 +396,10 @@ def test_groupby_frame_split_series_aggregation():
     r5 = btg1['founding'].sum() + btg1['inhabitants'].sum()
     assert ((r1.head().values + r4.head().values) == r5.head().values).all()
 
-    # FIXME aggregation functions can not be nested without materialization in between
-    r6 = r4.sum()  # This should raise
-    with pytest.raises(Exception):
-        r6.head() # this should not, but that's not how it currently works
+    with pytest.raises(ValueError, match='already aggregated'):
+        r6 = r4.sum()
+    r6 = r4.to_frame().get_df_materialized_model()
+    r6.head()
 
 
 def test_groupby_frame_split_recombine():
@@ -481,5 +481,17 @@ def test_groupby_frame_split_recombine_aggregation_applied():
         )
 
 
-
+def test_materialize_on_double_aggregation():
+    # When we use a aggregation function twice, we need to materialize the node in between, because it's not
+    # possible to nest the aggregate function calls. I.e. you cannot do `avg(sum(x))`
+    # You cannot
+    bt = get_bt_with_test_data(full_data_set=True)
+    btg = bt.groupby('municipality')[['founding']]
+    btg = btg.sum()
+    with pytest.raises(ValueError, match='already aggregated'):
+        btg.mean('founding_sum')
+    # After manually materializing the frame everything is OK again.
+    btg = btg.get_df_materialized_model()
+    btg = btg.mean('founding_sum')
+    assert_equals_data(btg, expected_columns=['index', 'founding_sum_mean'], expected_data=[[1,	2413.5]])
 
