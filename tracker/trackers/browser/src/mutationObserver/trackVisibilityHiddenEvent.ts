@@ -6,7 +6,7 @@ import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { trackSectionHidden } from '../eventTrackers/trackSectionHidden';
 
 /**
- * Checks if the given Node is a tracked element and if we need to trigger a visibility: hidden event for it.
+ * Checks whether to trigger a visibility: hidden event for the given TaggedElement.
  * Hidden Events are triggered only for Elements that have their visibility manually set to not visible.
  */
 export const trackVisibilityHiddenEvent = (element: TaggedElement, tracker: BrowserTracker) => {

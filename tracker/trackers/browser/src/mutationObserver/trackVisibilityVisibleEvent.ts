@@ -6,7 +6,7 @@ import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { trackSectionVisible } from '../eventTrackers/trackSectionVisible';
 
 /**
- * Given a newly added Element node it will determine whether to track a visibility:visible event for it.
+ * Checks whether to trigger a visibility: visible event for the given TaggedElement.
  * Visible Events are triggered only for Elements that have their visibility auto-tracked or manually set to visible.
  */
 export const trackVisibilityVisibleEvent = (element: TaggedElement, tracker: BrowserTracker) => {
