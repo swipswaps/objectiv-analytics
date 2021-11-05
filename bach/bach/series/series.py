@@ -327,8 +327,6 @@ class Series(ABC):
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
             order_by = []
-        if len(self._index) == 0:
-            raise Exception('to_frame() is not supported for Series that do not have an index')
         return DataFrame(
             engine=self._engine,
             base_node=self._base_node,

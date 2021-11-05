@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from bach import DataFrame
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
     get_from_df
 
@@ -118,3 +119,20 @@ def test_series_direct_aggregation():
 
     btg = bt.groupby('municipality')
     print(bt.inhabitants.sum(btg).head())
+
+
+def test_to_frame():
+    bt = get_bt_with_test_data(full_data_set=False)
+    series = bt.inhabitants
+    frame = series.to_frame()
+    assert isinstance(frame, DataFrame)
+    assert list(frame.index.keys()) == list(bt.inhabitants.index.keys())
+    assert isinstance(series.head(), pd.Series)
+    assert isinstance(frame.head(), pd.DataFrame)
+
+    frame = series.to_frame()
+    assert isinstance(frame, DataFrame)
+    assert list(frame.index.keys()) == list(bt.inhabitants.index.keys())
+    assert isinstance(series.head(), pd.Series)
+    assert isinstance(frame.head(), pd.DataFrame)
+
