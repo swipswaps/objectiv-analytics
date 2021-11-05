@@ -1,10 +1,13 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Union
+from typing import Union, TYPE_CHECKING
 
-from bach.series import Series, const_to_series
+from bach.series import Series
 from bach.expression import Expression
+
+if TYPE_CHECKING:
+    from bach.series import SeriesBoolean
 
 
 class SeriesString(Series):
@@ -24,22 +27,17 @@ class SeriesString(Series):
         return Expression.construct('cast(({}) as text)', expression)
 
     def __add__(self, other) -> 'Series':
-        other = const_to_series(base=self, value=other)
-        self._check_supported('add', ['string'], other)
-        expression = Expression.construct('({}) || ({})', self, other)
-        return self.copy_override(dtype='string', expression=expression)
+        return self._binary_operation(other, 'concat', '({}) || ({})', other_dtypes=('string',))
 
-    def _comparator_operator(self, other, comparator):
-        other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['string'], other)
-        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self.copy_override(dtype='bool', expression=expression)
+    def _comparator_operation(self, other, comparator, other_dtypes=tuple(['string'])) -> 'SeriesBoolean':
+        return super()._comparator_operation(other, comparator, other_dtypes)
 
     def slice(self, start: Union[int, slice], stop: int = None) -> 'SeriesString':
         """
         Get a python string slice using DB functions. Format follows standard slice format
         Note: this is called 'slice' to not destroy index selection logic
-        :param item: an int for a single character, or a slice for some nice slicing
+        :param start: an int for a single character, or a slice for some nice slicing
+        :param stop: combined with start as an int, stop makes the rv a sequence of characters.
         :return: SeriesString with the slice applied
         """
         if isinstance(start, (int, type(None))):

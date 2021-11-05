@@ -154,20 +154,18 @@ class SeriesJsonb(Series):
             raise ValueError(f'cannot convert {source_dtype} to jsonb')
         return Expression.construct('cast({} as jsonb)', expression)
 
-    def _comparator_operator(self, other, comparator):
-        other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['json', 'jsonb'], other)
-        expression = Expression.construct(
-            f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
-            self.expression, other.expression
+    def _comparator_operation(self, other, comparator, other_dtypes=('json', 'jsonb')):
+        return self._binary_operation(
+            other, operation=f"comparator '{comparator}'",
+            fmt_str=f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
+            other_dtypes=other_dtypes, dtype='bool'
         )
-        return self.copy_override(dtype='bool', expression=expression)
 
     def __le__(self, other) -> 'SeriesBoolean':
-        return self._comparator_operator(other, "<@")
+        return self._comparator_operation(other, "<@")
 
     def __ge__(self, other) -> 'SeriesBoolean':
-        return self._comparator_operator(other, "@>")
+        return self._comparator_operation(other, "@>")
 
 
 class SeriesJson(SeriesJsonb):

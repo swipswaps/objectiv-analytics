@@ -60,6 +60,7 @@ class SeriesGlobalContexts(SeriesJsonb):
                          sorted_ascending=sorted_ascending)
         self.objectiv = ObjectivStack(self)
         self.global_contexts = self.GlobalContexts(self)
+        self.gc = self.global_contexts
 
 
 class SeriesLocationStack(SeriesJsonb):
@@ -133,3 +134,4 @@ class SeriesLocationStack(SeriesJsonb):
                          sorted_ascending=sorted_ascending)
         self.objectiv = ObjectivStack(self)
         self.location_stack = self.LocationStack(self)
+        self.ls = self.location_stack

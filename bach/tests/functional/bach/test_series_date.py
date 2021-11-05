@@ -1,11 +1,14 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import datetime
+
 import pytest
 
 from bach import SeriesDate
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_food_data, \
     assert_db_type
+from tests.functional.bach.test_series_timestamp import types_plus_min
 
 
 @pytest.mark.parametrize("asstring", [True, False])
@@ -96,3 +99,14 @@ def test_date_format():
             [4, '2022', 'Tuesday  ']
         ]
     )
+
+
+def test_date_arithmetic():
+    data = [
+        ['d', datetime.date(2020, 3, 11), 'date', (None, 'timedelta')],
+        ['t', datetime.time(23, 11, 5), 'time', (None, None)],
+        ['td', datetime.timedelta(days=321, seconds=9877), 'timedelta', ('date', 'date')],
+        ['dt', datetime.datetime(2021, 5, 3, 11, 28, 36, 388000), 'timestamp', (None, None)]
+    ]
+    types_plus_min(data, datetime.date(2021, 7, 23), 'date')
+
