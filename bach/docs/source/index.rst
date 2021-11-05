@@ -3,7 +3,11 @@
 Welcome to Bach's documentation!
 ==================================
 
-hallo ik ben een introductie
+Bach is Objectiv's data modeling library. With Bach, you can compose models with familiar Pandas-like dataframe operations in your notebook. It uses an SQL abstraction layer that enables models to run on the full dataset, and you can output models to SQL with a single command. It includes a set of operations that enable effective feature creation for datasets that embrace the open taxonomy of analytics.
+
+We've set up a [sandboxed notebook](notebook) for you to play with Bach to see what it can do.
+
+
 
 Bach
 ------
