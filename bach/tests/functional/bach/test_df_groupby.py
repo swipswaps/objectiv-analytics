@@ -99,7 +99,7 @@ def test_group_by_all():
 
 def test_group_by_expression():
     bt = get_bt_with_test_data(full_data_set=True)
-    btg = bt.groupby(bt['city'].slice(None, 1))
+    btg = bt.groupby(bt['city'].str[:1])
     result_bt = btg.nunique()
 
     assert_equals_data(
