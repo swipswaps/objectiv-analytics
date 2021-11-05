@@ -63,6 +63,13 @@ class Series(ABC):
         from_const(), get_class_instance().
         It is very common to clone a Series with little changes. Use copy_override() for that.
 
+        The data of this Series is always held in the database and operations on the data are performed
+        by the database, not in local memory. Data will only be transferred to local memory when an
+        explicit call is made to one of the functions that transfers data:
+        * head()
+        * to_pandas()
+        * The property accessors .values and .array
+
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain the columns/expressions that
             expression relies on.

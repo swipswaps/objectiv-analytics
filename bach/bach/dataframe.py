@@ -35,6 +35,7 @@ class DataFrame:
     explicit call is made to one of the functions that transfers data:
     * head()
     * to_pandas()
+    * The property accessors .values and .array
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
     only when one of the above mentioned data-transfer functions is called.
