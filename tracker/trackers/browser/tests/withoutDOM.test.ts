@@ -13,7 +13,7 @@ import {
   trackAborted,
   trackApplicationLoaded,
   trackCompleted,
-  TrackerQueueLocalStorageStore,
+  TrackerQueueLocalStorage,
   trackEvent,
   trackURLChange,
 } from '../src';
@@ -116,9 +116,9 @@ describe('Without DOM', () => {
     expect(console.error).toHaveBeenCalledTimes(1);
   });
 
-  it('should throw if TrackerQueueLocalStorageStore gets constructed', async () => {
-    expect(() => new TrackerQueueLocalStorageStore({ trackerId: 'app-id' })).toThrow(
-      'TrackerQueueLocalStorageStore: failed to initialize: window.localStorage is not available.'
+  it('should throw if TrackerQueueLocalStorage gets constructed', async () => {
+    expect(() => new TrackerQueueLocalStorage({ trackerId: 'app-id' })).toThrow(
+      'TrackerQueueLocalStorage: failed to initialize: window.localStorage is not available.'
     );
   });
 });

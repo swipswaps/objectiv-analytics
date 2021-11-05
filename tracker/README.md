@@ -194,3 +194,9 @@ Verifies if there are changes in the current branch and if a release strategy ha
 
 ### `yarn version apply --all`
 Executes the release strategy and bumps versions accordingly
+
+## Troubleshooting
+
+#### `Error: Cannot find module '[...]/angular/node_modules/rollup/dist/rollup.js'`
+This error can occur when switching between Node.JS versions.   
+Delete `tracker/node_modules` and rerun `yarn install` to create a fresh copy. Everything should work fine after that.

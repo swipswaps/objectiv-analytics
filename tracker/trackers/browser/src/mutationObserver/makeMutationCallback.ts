@@ -16,7 +16,7 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  *
  * New DOM nodes added.
  * We use a Mutation Observer to monitor the DOM for subtrees being added.
- * When that happens we traverse the new Nodes and scout for Elements that have been enriched with our Tracking
+ * When that happens we traverse the new Nodes and scout for Elements that have been enriched with our Tagging
  * Attributes. For those Elements we attach Event listeners which will automatically handle their tracking.
  * New Elements are also added to TrackerElementLocations and their Location Stack is validated for uniqueness.
  *
@@ -33,9 +33,6 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * SPA URL changes (default enabled, configurable)
  * We can leverage the same Observer to detect also URL changes. To do so we simply keep track of the last URL we have
  * detected previously and if it's different we automatically trigger a URL change event.
- *
- * Application Loaded Event (default enabled, configurable)
- * Triggered once
  */
 export const makeMutationCallback = (trackURLChangeEvents: boolean, console?: TrackerConsole): MutationCallback => {
   return (mutationsList) => {

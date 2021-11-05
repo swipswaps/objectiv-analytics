@@ -5,7 +5,7 @@ import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
 /**
  * The default list of Plugins of Browser Tracker
  */
-export const makeDefaultBrowserTrackerPluginsList = (trackerConfig: BrowserTrackerConfig) => [
+export const makeDefaultPluginsList = (trackerConfig: BrowserTrackerConfig) => [
   ...makeTrackerDefaultPluginsList(trackerConfig),
   new WebDocumentContextPlugin({ console: trackerConfig.console }),
 ];
