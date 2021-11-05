@@ -2,6 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from abc import ABC
+from typing import cast
 
 from bach.series import Series, const_to_series
 from bach.expression import Expression
@@ -27,25 +28,32 @@ class SeriesBoolean(Series, ABC):
             raise ValueError(f'cannot convert {source_dtype} to bool')
         return Expression.construct('cast({} as bool)', expression)
 
-    def _comparator_operator(self, other, comparator):
-        other = const_to_series(base=self, value=other)
-        self._check_supported(f"comparator '{comparator}'", ['bool'], other)
-        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self.copy_override(dtype='bool', expression=expression)
+    def _comparator_operation(self, other, comparator, other_dtypes=tuple(['bool'])) -> 'SeriesBoolean':
+        return super()._comparator_operation(other, comparator, other_dtypes)
 
-    def _boolean_operator(self, other, operator: str) -> 'SeriesBoolean':
-        # TODO maybe "other" should have a way to tell us it can be a bool?
-        # TODO we're missing "NOT" here. https://www.postgresql.org/docs/13/functions-logical.html
-        other = const_to_series(base=self, value=other)
-        self._check_supported(f"boolean operator '{operator}'", ['bool', 'int64', 'float'], other)
+    def _boolean_operator(self, other, operator: str, other_dtypes=tuple(['bool'])) -> 'SeriesBoolean':
+        fmt_str = f'({{}}) {operator} ({{}})'
         if other.dtype != 'bool':
-            expression = Expression.construct(f'(({{}}) {operator} cast({{}} as bool))', self, other)
-        else:
-            expression = Expression.construct(f'(({{}}) {operator} ({{}}))', self, other)
-        return self.copy_override(dtype='bool', expression=expression)
+            # this is not currently used, as both bigint and float can not be cast to bool in PG
+            fmt_str = f'({{}}) {operator} cast({{}} as bool)'
+        return cast(
+            'SeriesBoolean', self._binary_operation(
+                other=other, operation=f"boolean operator '{operator}'",
+                fmt_str=fmt_str, other_dtypes=other_dtypes, dtype='bool'
+            )
+        )
+
+    def __invert__(self) -> 'SeriesBoolean':
+        expression = Expression.construct('NOT ({})', self)
+        return self.copy_override(expression=expression)
 
     def __and__(self, other) -> 'SeriesBoolean':
         return self._boolean_operator(other, 'AND')
 
     def __or__(self, other) -> 'SeriesBoolean':
         return self._boolean_operator(other, 'OR')
+
+    def __xor__(self, other) -> 'SeriesBoolean':
+        # This only works if both type are 'bool' in PG, but if the rhs is not, it will be cast
+        # explicitly in _boolean_operator()
+        return self._boolean_operator(other, '!=')
