@@ -3,16 +3,18 @@ Copyright 2021 Objectiv B.V.
 """
 from typing import Optional, Dict, TYPE_CHECKING, List
 
-from bach.series import Series, SeriesJsonb, SeriesString
+from bach.series import Series, SeriesJsonb, SeriesString, SeriesBoolean
 from bach.expression import Expression, quote_string, quote_identifier
 from sql_models.model import SqlModel
 
 
 from bach import DataFrame
-
-
 from sql_models.sql_generator import to_sql
 
+
+# sankey imports
+import pandas as pd
+import plotly.graph_objects as go
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy
@@ -200,7 +202,6 @@ class FeatureFrame:
     @staticmethod
     def check_supported(bt, location_stack_column, event_column):
         if not isinstance(bt[event_column], SeriesString):
-            print(event_column)
             raise TypeError('only string supported for event column')
         if isinstance(bt[location_stack_column], SeriesLocationStack):
             location_stack_series = bt[location_stack_column]
@@ -209,7 +210,7 @@ class FeatureFrame:
         else:
             raise TypeError('only jsonb type supported for location column')
 
-        return bt[event_column], location_stack_series
+        return bt[event_column], location_stack_series.ls.feature_stack
 
     @classmethod
     def hash_features(cls, bt, location_stack_column, event_column):
@@ -217,7 +218,7 @@ class FeatureFrame:
         expression_str = "md5(concat({} #>> {}, {}))"
         expression = Expression.construct(
             expression_str,
-            location_stack_series.ls.feature_stack,
+            location_stack_series,
             Expression.string_value('{}'),
             event_series
         )
@@ -235,18 +236,108 @@ class FeatureFrame:
 
         self._original_bt['feature_hash'] = feature_hash
 
-        print(self._bt[created_features].head())
 
         return self._original_bt.merge(self._bt[created_features], left_on='feature_hash', right_index=True)
 
-    def __getitem__(self, *args):
-        return self._bt.__getitem__(*args)
 
-    def __getattr__(self, *args):
-        return self._bt.__getattr__(*args)
+    # todo maybe move these functions to locationstackseries, as you have to select the column now anyway
+    def stack_flows_from_feature_df(self,
+                                    stack_column: str = None,
+                                    count_method: str = 'sum'):
+        """
+        Function that calculates the links between contexts on the
+        stack. It returns a DataFrame with the links 'from' and 'to'
+        contexts. Optionally, the method that determines the 'strength'
+        of the links can be deteermined with 'to_count' and 'count_method'
 
-    def __setitem__(self, *args):
-        return self._bt.__setitem__(*args)
+        Parameters
+        ----------
+        df : DataFrame
+            The DataFrame that contains a stack.
+
+        feature_column : str
+            The column that contains the stack for which the links
+            will be calculated.
+
+        to_count : str
+            This columns on which the count_method will be applied.
+
+        count_method : str
+            The function for aggregating the data.
+        """
+
+
+        df = self._bt.to_pandas()
+        if stack_column is None:
+            stack_column = self.location_stack_column
+        contexts = df[stack_column].map(lambda x: [[a, y] for a, y in enumerate(x)]).explode()
+        contexts.dropna(inplace=True)
+        sankey_prep = df.join(pd.DataFrame(contexts.to_list(),
+                                    index=contexts.index,
+                                    columns=['context_index', 'context'])
+                       ).reset_index()
+
+        sankey_prep = sankey_prep[['feature_hash','context_index','context','event_count']].sort_values('context_index', ascending=False)
+        sankey_prep['source'] = sankey_prep.context.map(repr).astype('str')
+        sankey_prep['target'] = sankey_prep.groupby(['feature_hash'])['source'].shift(1, fill_value='end_of_stack')
+        sankey_prep_agg = sankey_prep.groupby(['source','target'])['event_count'].agg(count_method).reset_index().rename(columns={'event_count':'value'})
+        categories = set(sankey_prep_agg['source']).union(set(sankey_prep_agg['target']))
+        sankey_prep_agg['source'] = pd.Categorical(sankey_prep_agg['source'], categories=categories)
+        sankey_prep_agg['target'] = pd.Categorical(sankey_prep_agg['target'], categories=categories)
+
+        return sankey_prep_agg
+
+    def display_sankey(self,
+                       stack_column: str = None,
+                       text_in_title=None,
+                       node_color='blue'):
+        """
+        Display the Sankey chart using some standards to be
+        reused in the Sankey app.
+
+        Parameters
+        ----------
+        df : DataFrame
+            The to graph. This needs to be in the format as specified
+            by the stack_flows_from_feature_df function.
+
+        text_in_title : str
+            A text to display in the title of the graph.
+
+        node_color : str
+            Optionally the color of the nodes can be adjusted.
+        """
+
+        if text_in_title is not None:
+            text_in_title = str(text_in_title)
+
+        if stack_column is None:
+            stack_column = self.location_stack_column
+        df = self.stack_flows_from_feature_df(stack_column)
+        node = dict(
+            pad=15,
+            thickness=20,
+            line=dict(color="black", width=0.5),
+            label=df.source.cat.categories,
+            color=node_color
+        )
+        link = pd.concat([df[['source', 'target']].apply(lambda x: x.cat.codes), df['value']], axis=1).to_dict('list')
+        fig = go.Figure(go.Sankey(arrangement="fixed", link=link, node=node), {'clickmode': 'event+select'})
+        fig.update_layout(title_text=text_in_title, font_size=10)
+        return fig
+
+    def __getitem__(self, *args, **kwargs):
+        bt = self._bt.__getitem__(*args, **kwargs)
+        if isinstance(*args, (SeriesBoolean, slice)):
+            return FeatureFrame(self._original_bt,
+                                bt,
+                                self.location_stack_column,
+                                self.event_column)
+        else:
+            return bt
+
+    def __setitem__(self, *args, **kwargs):
+        return self._bt.__setitem__(*args, **kwargs)
 
     def view_sql(self, *args, **kwargs):
         return self._bt.view_sql(*args, **kwargs)
@@ -272,3 +363,7 @@ class FeatureFrame:
 
     def nunique(self, *args, **kwargs):
         return self._bt.nunique(*args, **kwargs)
+
+
+
+
