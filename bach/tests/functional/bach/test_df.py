@@ -67,7 +67,6 @@ def test_combined_operations1():
     bt['x'] = bt['municipality'] + ' some string'
     bt['y'] = bt['skating_order'] + bt['skating_order']
     result_bt = bt.groupby('x')[['y']].count()
-    print(result_bt.view_sql())
     assert_equals_data(
         result_bt,
         order_by='x',

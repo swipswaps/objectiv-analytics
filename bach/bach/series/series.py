@@ -6,6 +6,8 @@ from copy import copy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping
 from uuid import UUID
 
+import pandas
+
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 
 from bach.dataframe import ColumnFunction
@@ -63,6 +65,13 @@ class Series(ABC):
         To create a new Series object from scratch there are class helper methods
         from_const(), get_class_instance().
         It is very common to clone a Series with little changes. Use copy_override() for that.
+
+        The data of this Series is always held in the database and operations on the data are performed
+        by the database, not in local memory. Data will only be transferred to local memory when an
+        explicit call is made to one of the functions that transfers data:
+        * head()
+        * to_pandas()
+        * The property accessors .values and .array
 
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain the columns/expressions that
@@ -270,8 +279,11 @@ class Series(ABC):
 
         return Expression.construct('{} as {}', expression, Expression.raw(quoted_column_name))
 
-    def _get_supported(self, operation_name: str, supported_dtypes: List[str], other: 'Series'):
-
+    def _get_supported(self, operation_name: str, supported_dtypes: Tuple[str, ...], other: 'Series'):
+        """
+        Check whether `other` is supported for this operation, and if not, possibly do something
+        about it by using subquery / materialization (that's TODO)
+        """
         if self.base_node != other.base_node or self.group_by != other.group_by:
             if other.name != '__const__':
                 # TODO check whether a subquery would be a good option aka
@@ -287,12 +299,36 @@ class Series(ABC):
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
         return other
 
-    def head(self, n: int = 5):
+    def to_pandas(self, limit: Union[int, slice] = None) -> pandas.Series:
         """
-        Return the first `n` rows.
+        Get the data from this series as a pandas.Series
+        :param limit: The limit to apply, either as a max amount of rows or a slice.
         """
-        # TODO get a series directly instead of ripping it out of the df?
-        return self.to_frame().head(n)[self.name]
+        return self.to_frame().to_pandas(limit=limit)[self.name]
+
+    def head(self, n: int = 5) -> pandas.Series:
+        """
+        Get the first n rows from this Series as a pandas.Series.
+        :param n: The amount of rows to return.
+        :note: This function queries the database.
+        """
+        return self.to_pandas(limit=n)
+
+    @property
+    def values(self):
+        """
+        .values property accessor akin pandas.Series.values
+        :note: This function queries the database.
+        """
+        return self.to_pandas().values
+
+    @property
+    def array(self):
+        """
+        .array property accessor akin pandas.Series.array
+        :note: This function queries the database.
+        """
+        return self.to_pandas().array
 
     def sort_values(self, ascending=True):
         """
