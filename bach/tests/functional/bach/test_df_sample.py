@@ -40,7 +40,7 @@ def test_sample_operations():
     bt_sample['big_city'] = bt_sample.inhabitants + 10
     bt_sample['b'] = bt_sample.inhabitants + bt_sample.founding
 
-    assert bt_sample.skating_order.nunique()[1] == 3
+    assert bt_sample.skating_order.nunique().value == 3
 
     all_data_bt = bt_sample.get_unsampled()
 

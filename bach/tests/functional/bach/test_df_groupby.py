@@ -361,12 +361,6 @@ def test_grouping_set_basics1():
 
     result_bt = bts1[['inhabitants']].sum()
 
-    # order of index is dynamic since it's a set. Make sure it's in the right order.
-    # index_keys = list(result_bt.index.keys())
-    # index_0 = index_keys.index(expected_columns[0])
-    # index_1 = index_keys.index(expected_columns[1])
-    # expected_data = [[r[index_0], r[index_1], r[2]] for r in expected_data]
-
     assert_equals_data(
         result_bt,
         order_by=['municipality', 'city'],

@@ -274,10 +274,10 @@ def test_windowing_boolean_functions():
     # Windowing function are not allowed as boolean row selectors.
     bt = get_bt_with_test_data(full_data_set=True)
     btg_min_fnd = bt.groupby('municipality')['founding'].min()
-    with pytest.raises(ValueError, match='non-materialized aggregation'):
-        x = bt[btg_min_fnd == bt.founding]
-    with pytest.raises(ValueError, match='non-materialized aggregation'):
-        x = bt[bt.founding == btg_min_fnd]
+    with pytest.raises(ValueError, match='rhs has a different base_node or group_by, but contains more than one value.'):
+        x = bt[btg_min_fnd == bt.founding].head()
+    with pytest.raises(ValueError, match='rhs has a different base_node or group_by, but contains more than one value.'):
+        x = bt[bt.founding == btg_min_fnd].head()
 
 
 def test_rolling_defaults_vs_pandas():

@@ -18,6 +18,8 @@ class SeriesAbstractNumeric(Series, ABC):
     """
     Base class that defines shared logic between SeriesInt64 and SeriesFloat64
     """
+    dtype_to_pandas = None  # Let pandas choose.
+
     def _arithmetic_operation(self, other, operation, fmt_str,
                               other_dtypes=('int64', 'float64'), dtype=None):
         return super()._arithmetic_operation(other, operation, fmt_str, other_dtypes, dtype)
@@ -126,6 +128,12 @@ class SeriesInt64(SeriesAbstractNumeric):
     def __lshift__(self, other):
         return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
                                           other_dtypes=tuple(['int64']))
+
+    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
+        # sum() has the tendency to return float on bigint arguments. Cast it back.
+        series = super().sum(partition, skipna, min_count)
+        return series.copy_override(
+            expression=Expression.construct('cast({} as bigint)', series.expression))
 
 
 class SeriesFloat64(SeriesAbstractNumeric):

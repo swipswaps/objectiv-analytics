@@ -6,7 +6,7 @@ from uuid import UUID
 import pandas
 from sqlalchemy.engine import Engine
 
-from bach.expression import Expression
+from bach.expression import Expression, SingleValueExpression
 from bach.sql_model import BachSqlModel, SampleSqlModel
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import replace_node_in_graph, find_node
@@ -314,13 +314,15 @@ class DataFrame:
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
-            order_by: List[SortColumn] = None
+            order_by: List[SortColumn] = None,
+            single_value: bool = False
     ) -> 'DataFrame':
         """
         Get an instance with the right series instantiated based on the dtypes array. This assumes that
         base_node has a column for all names in index_dtypes and dtypes.
+        If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
-
+        expression_class = SingleValueExpression if single_value else Expression
         index: Dict[str, Series] = {}
         for key, value in index_dtypes.items():
             index_type = get_series_type_from_dtype(value)
@@ -329,7 +331,7 @@ class DataFrame:
                 base_node=base_node,
                 index={},  # Empty index for index series
                 name=key,
-                expression=Expression.column_reference(key),
+                expression=expression_class.column_reference(key),
                 group_by=group_by
             )
         series: Dict[str, Series] = {}
@@ -340,7 +342,7 @@ class DataFrame:
                 base_node=base_node,
                 index=index,
                 name=key,
-                expression=Expression.column_reference(key),
+                expression=expression_class.column_reference(key),
                 group_by=group_by
             )
         return DataFrame(
@@ -493,36 +495,45 @@ class DataFrame:
         if isinstance(key, (SeriesBoolean, slice)):
             if isinstance(key, slice):
                 node = self.get_current_node(name='getitem_slice', limit=key)
+                single_value = (
+                        # This is our best guess, there can always be zero results, but at least we tried.
+                        (key.start is None and slice.stop is not None)
+                        or (key.start is not None and key.stop is not None and abs(key.start - key.stop) == 1)
+                )
             else:
+                single_value = False  # there is no way for us to know. User has to slice the result first
+
                 # We only support first level boolean indices for now
-                if key.base_node != self.base_node:
-                    raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
-                                     'Hint: make sure the Boolean series is derived from this DataFrame. '
+                if key.base_node != self.base_node or key.group_by != self._group_by:
+                    raise ValueError('Cannot apply Boolean series with a different base_node or group by '
+                                     'to DataFrame.'
+                                     'Hint: make sure the Boolean series is derived from this DataFrame and '
+                                     'that is has the same group by. '
                                      'Alternative: use df.merge(series) to merge the series with the df '
                                      'first, and then create a new Boolean series on the resulting merged '
                                      'data.')
-                if self._group_by is not None and key.group_by == self._group_by:
+                if self._group_by is not None:
                     node = self.get_current_node(
                         name='getitem_having_boolean',
                         having_clause=Expression.construct("having {}", key.expression))
                 elif key.expression.has_aggregate_function:
                     raise ValueError("Cannot use a Boolean series that contains a non-materialized "
                                      "aggregation function or a windowing function as Boolean row selector.")
-
                 else:
                     node = self.get_current_node(
                         name='getitem_where_boolean',
                         where_clause=Expression.construct("where {}", key.expression))
 
-            return self._df_or_series(
-                DataFrame.get_instance(
-                    engine=self.engine,
-                    base_node=node,
-                    index_dtypes={name: series.dtype for name, series in self.index.items()},
-                    dtypes={name: series.dtype for name, series in self.data.items()},
-                    group_by=None,
-                    order_by=[]  # filtering rows resets any sorting
-                )
+            # I'm not entirely sure about this. Should we return a Series if there is just one series?
+            # TODO, find out.
+            return DataFrame.get_instance(
+                engine=self.engine,
+                base_node=node,
+                index_dtypes={name: series.dtype for name, series in self.index.items()},
+                dtypes={name: series.dtype for name, series in self.data.items()},
+                group_by=None,
+                order_by=[],  # filtering rows resets any sorting
+                single_value=single_value
             )
         raise NotImplementedError(f"Only str, (set|list)[str], slice or SeriesBoolean are supported, "
                                   f"but got {type(key)}")
@@ -1054,10 +1065,12 @@ class DataFrame:
         """
         with self.engine.connect() as conn:
             sql = self.view_sql(limit=limit)
+            dtype = {name: series.dtype_to_pandas for name, series in self.all_series.items()
+                     if series.dtype_to_pandas is not None}
+            pandas_df = pandas.read_sql_query(sql, conn).astype(dtype)
             if len(self._index):
-                return pandas.read_sql_query(sql, conn, index_col=list(self._index.keys()))
-            else:
-                return pandas.read_sql_query(sql, conn)
+                return pandas_df.set_index(list(self._index.keys()))
+            return pandas_df
 
     def head(self, n: int = 5) -> pandas.DataFrame:
         """

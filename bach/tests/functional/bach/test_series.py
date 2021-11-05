@@ -5,21 +5,59 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bach import DataFrame
+from bach import DataFrame, SeriesString
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
     get_from_df
 
 
+def test_get_series_single():
+    bt = get_bt_with_test_data(full_data_set=True)
+
+
+
+
 def test_series__getitem__():
+    bt = get_bt_with_test_data(full_data_set=True)
+    series = bt['city']
+    assert isinstance(series, SeriesString)
+
+    single_value_ref = series[1]
+    assert isinstance(single_value_ref, SeriesString)
+    value = single_value_ref.value
+    assert isinstance(value, str)
+    assert value == 'Ljouwert'
+
+    single_value_ref = series[5]
+    assert isinstance(single_value_ref, SeriesString)
+    value = single_value_ref.value
+    assert isinstance(value, str)
+    assert value == 'Starum'
+
+    l1 = bt.groupby('municipality').min()
+    # selection on data of non-materialized groupby
+    assert l1.inhabitants_min['Leeuwarden'].value == 93485
+
+    non_existing_value_ref = l1.inhabitants_min['DoesNotExist']
+    with pytest.raises(IndexError):
+        non_existing_value_ref.value
+
+    # selection on index of non-materialized groupby
+    l2 = l1.groupby('_index_skating_order_min').city_min.nunique()
+    assert l2[9].value == 1
+    non_existing_value_ref = l2[5]
+    with pytest.raises(IndexError):
+        non_existing_value_ref.value
+
+
+def test_series_value():
     bt = get_bt_with_test_data(full_data_set=False)
     assert bt.city[1] == 'Ljouwert'
-    assert bt.count().city_count[1] == 3
+    assert bt.count().city_count.value == 3
 
     # make sure getitem works when multiple nodes are in play.
     l1 = bt.groupby('municipality').count()
     l2 = l1.groupby().city_count.sum()
-    assert l2[1] == 3
-
+    assert l2.value == 3
 
 
 def test_series_sort_values():
@@ -207,9 +245,11 @@ def test_series_inherit_flag():
     bts_derived = bts_min_min - 5
     assert bts_derived.expression.has_aggregate_function
 
-    # aggregation flag on right hand series
+    # aggregation flag on right hand series, but it gets resolved when creating a single value subquery to
+    # actually make this query executable.
     bts_derived = bts_min_materialized - bts_min_min
-    assert bts_derived.expression.has_aggregate_function
+    assert not bts_derived.expression.has_aggregate_function
+
 
 def test_series_independant_subquery_single():
     bt = get_bt_with_test_data(full_data_set=True)
@@ -237,7 +277,7 @@ def test_series_independant_subquery_single():
 
 def test_series_different_aggregations():
     bt = get_bt_with_test_data(full_data_set=True)
-    v =  bt.groupby('municipality').skating_order.nunique() / bt.skating_order.nunique()
+    v = bt.groupby('municipality').skating_order.nunique() / bt.skating_order.nunique()
     assert_equals_data(
         v,
         expected_columns=['municipality', 'skating_order'],
@@ -245,7 +285,7 @@ def test_series_different_aggregations():
                        ['Leeuwarden', 0.09090909090909091], ['Noardeast-Fryslân', 0.09090909090909091],
                        ['Súdwest-Fryslân', 0.5454545454545454], ['Waadhoeke', 0.09090909090909091]]
     )
-    # TODO we could try to detect this.
-    with pytest.raises(Exception, match='more than one row returned by a subquery used as an expression'):
+
+    with pytest.raises(Exception, match='different base_node or group_by, but contains more than one value.'):
         v = bt.skating_order.nunique() / bt.groupby('municipality').skating_order.nunique()
         v.head()

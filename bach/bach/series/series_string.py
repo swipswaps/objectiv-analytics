@@ -101,7 +101,7 @@ class SeriesString(Series):
         return StringOperation(self)
 
     def __add__(self, other) -> 'Series':
-        return self._binary_operation(other, 'concat', '({}) || ({})', other_dtypes=('string',))
+        return self._binary_operation(other, 'concat', '{} || {}', other_dtypes=('string',))
 
     def _comparator_operation(self, other, comparator, other_dtypes=tuple(['string'])) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)

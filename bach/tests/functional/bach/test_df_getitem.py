@@ -48,18 +48,6 @@ def test_get_item_single():
     # todo: pandas supports _a lot_ of way to select columns and/or rows
 
 
-def test_get_series_single():
-    bt = get_bt_with_test_data()
-
-    series = bt['city']
-    assert isinstance(series, SeriesString)
-
-    value = series[1]
-
-    assert isinstance(value, str)
-    assert value == 'Ljouwert'
-
-
 def test_get_item_multiple():
     bt = get_bt_with_test_data()
     selection = bt[['city', 'founding']]

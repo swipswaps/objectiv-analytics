@@ -11,7 +11,8 @@ import pandas
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 
 from bach.dataframe import ColumnFunction
-from bach.expression import Expression
+from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
+    IndependentSubqueryExpression, SingleValueExpression
 from sql_models.util import quote_identifier
 from bach.types import value_to_dtype
 from sql_models.model import SqlModel
@@ -71,7 +72,7 @@ class Series(ABC):
         explicit call is made to one of the functions that transfers data:
         * head()
         * to_pandas()
-        * The property accessors .values and .array
+        * The property accessors .values, .array and .value
 
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain the columns/expressions that
@@ -115,6 +116,14 @@ class Series(ABC):
         Subclasses can override this value to indicate what strings they consider aliases for their dtype.
         """
         return tuple()
+
+    @property
+    def dtype_to_pandas(self) -> Optional[str]:
+        """
+        The dtype of this Series in a pandas.Series. Defaults to Series.dtype.
+        Override to cast specifically, and set to None to let pandas choose.
+        """
+        return self.dtype
 
     @property
     @classmethod
@@ -242,7 +251,7 @@ class Series(ABC):
         result = cls.get_class_instance(
             base=base,
             name=name,
-            expression=cls.value_to_expression(value),
+            expression=ConstValueExpression(cls.value_to_expression(value)),
             group_by=None,
         )
         return result
@@ -282,18 +291,17 @@ class Series(ABC):
     def _get_supported(self, operation_name: str, supported_dtypes: Tuple[str, ...], other: 'Series'):
         """
         Check whether `other` is supported for this operation, and if not, possibly do something
-        about it by using subquery / materialization (that's TODO)
+        about it by using subquery / materialization
         """
-        if self.base_node != other.base_node or self.group_by != other.group_by:
-            if other.name != '__const__':
-                # TODO check whether a subquery would be a good option aka
-                # that we're sure it'll be a single value
-                other = self._independent_subquery(other)
-
-            # raise ValueError(f'Cannot apply {operation_name} on two series with different base_node. '
-            #                  f'Hint: make sure both series belong to or are derived from the same '
-            #                  f'DataFrame. '
-            #                  f'Alternative: use merge() to create a DataFrame with both series. ')
+        if not (other.expression.is_constant or other.expression.is_independent_subquery):
+            # we should maybe create a subquery
+            if self.base_node != other.base_node or self.group_by != other.group_by:
+                if other.expression.is_single_value:
+                    other = self._independent_subquery(other)
+                else:
+                    # TODO improve error
+                    raise ValueError("rhs has a different base_node or group_by, but contains more than one "
+                                     "value. This is not supported.")
 
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
@@ -321,6 +329,17 @@ class Series(ABC):
         :note: This function queries the database.
         """
         return self.to_pandas().values
+
+    @property
+    def value(self):
+        """
+        Retrieve the actual single value of this series. If it's not sure that there is only one value,
+        a ValueError is raised. In that case use Series.values[0] to retrieve the value.
+        """
+        if not self.expression.is_single_value:
+            raise ValueError('value accessor only supported for single value expressions. '
+                             'Use .values instead')
+        return self.values[0]
 
     @property
     def array(self):
@@ -358,22 +377,25 @@ class Series(ABC):
         )
 
     @staticmethod
-    def _independent_subquery(series, operation: str = None) -> 'Series':
+    def _independent_subquery(series, operation: str = None, dtype: str = None) -> 'Series':
+
         # This will give us a dataframe that contains our series as a materialized column in the base_node
         df = series.to_frame().get_df_materialized_model()
         fmt_string = f'{operation} (SELECT {{}} FROM {{}})' if operation else f'(SELECT {{}} FROM {{}})'
-        expr = Expression.construct(fmt_string,
-                                    Expression.column_reference(series.name),
-                                    Expression.model_reference(df.base_node))
+        expr = IndependentSubqueryExpression.construct(fmt_string,
+                                                       Expression.column_reference(series.name),
+                                                       Expression.model_reference(df.base_node))
+
+        if series.expression.is_single_value:
+            # The expression is lost when materializing
+            expr = SingleValueExpression(expr)
 
         s = series.copy_override(expression=expr, index={}, group_by=[None])
-        # Subquery/scalar values are detached and carry their own Node(s) in the Expression
-        # this interface is currently not so nice.
-        s._base_node = None
         return s
 
     def exists(self):
-        return Series._independent_subquery(self, 'exists').copy_override(dtype='boolean')
+        s = Series._independent_subquery(self, 'exists', dtype='bool')
+        return s.copy_override(expression=SingleValueExpression(s.expression))
 
     def any(self):
         # aka some()
@@ -421,21 +443,25 @@ class Series(ABC):
         )
 
     def __getitem__(self, key: Union[Any, slice]):
+        """
+        Get a single value from the series. This is not returning the value,
+        use the .value accessor for that instead.
+        """
         if isinstance(key, slice):
             raise NotImplementedError("index slices currently not supported")
 
-        # any other value we treat as a literal index lookup
-        # multiindex not supported atm
         if len(self.index) == 0:
-            raise Exception('Function not supported on Series without index')
+            raise Exception('Not supported on Series without index. '
+                            'Use .values[index] instead.')
         if len(self.index) > 1:
-            raise NotImplementedError('Index only implemented for simple indexes.')
-        frame = self.to_frame().get_df_materialized_model(node_name='series_getitem')
-        series = frame[list(frame.index.values())[0] == key]
-        assert isinstance(series, self.__class__)
+            raise NotImplementedError('Index only implemented for simple indexes. '
+                                      'Use .values[index] instead')
 
-        # this is massively ugly
-        return series.head(1).astype(series.dtype).values[0]
+        frame = self.to_frame()
+        # Apply Boolean selection on index == key, help mypy a bit
+        frame = cast(DataFrame, frame[list(frame.index.values())[0] == key])
+        # limit to 1 row, will make all series SingleValueExpression, and get that series.
+        return frame[:1][self.name]
 
     def isnull(self):
         """
@@ -443,7 +469,7 @@ class Series(ABC):
         True.
         """
         expression_str = f'{{}} is null'
-        expression = Expression.construct(
+        expression = NonAtomicExpression.construct(
             expression_str,
             self
         )
@@ -455,7 +481,7 @@ class Series(ABC):
         table will return True.
         """
         expression_str = f'{{}} is not null'
-        expression = Expression.construct(
+        expression = NonAtomicExpression.construct(
             expression_str,
             self
         )
@@ -498,7 +524,7 @@ class Series(ABC):
 
         other = const_to_series(base=self, value=other)
         other = self._get_supported(operation, other_dtypes, other)
-        expression = Expression.construct(fmt_str, self, other)
+        expression = NonAtomicExpression.construct(fmt_str, self, other)
         if isinstance(dtype, dict):
             if other.dtype not in dtype:
                 dtype = None
@@ -522,20 +548,20 @@ class Series(ABC):
         return self._binary_operation(other, operation, fmt_str, other_dtypes, dtype)
 
     def __add__(self, other) -> 'Series':
-        return self._arithmetic_operation(other, 'add', '({}) + ({})')
+        return self._arithmetic_operation(other, 'add', '{} + {}')
 
     def __sub__(self, other) -> 'Series':
-        return self._arithmetic_operation(other, 'sub', '({}) - ({})')
+        return self._arithmetic_operation(other, 'sub', '{} - {}')
 
     def __truediv__(self, other) -> 'Series':
         """ This case is not generically okay. subclasses should check that"""
-        return self._arithmetic_operation(other, 'div', '({}) / ({})')
+        return self._arithmetic_operation(other, 'div', '{} / {}')
 
     def __floordiv__(self, other) -> 'Series':
-        return self._arithmetic_operation(other, 'floordiv', 'floor(({}) / ({}))', dtype='int64')
+        return self._arithmetic_operation(other, 'floordiv', 'floor({} / {})', dtype='int64')
 
     def __mul__(self, other) -> 'Series':
-        return self._arithmetic_operation(other, 'mul', '({}) * ({})')
+        return self._arithmetic_operation(other, 'mul', '{} * {}')
 
     def __mod__(self, other) -> 'Series':
         # PG is picky in data types, so we solve it like this.
@@ -575,7 +601,7 @@ class Series(ABC):
                             f'{self.__class__} and {other.__class__}')
         return cast('SeriesBoolean', self._binary_operation(
             other=other, operation=f"comparator '{comparator}'",
-            fmt_str=f'({{}}) {comparator} ({{}})',
+            fmt_str=f'{{}} {comparator} {{}}',
             other_dtypes=other_dtypes, dtype='bool'
         ))
 
@@ -764,6 +790,11 @@ class Series(ABC):
         if not isinstance(partition, Window):
             if self._group_by and self._group_by != partition:
                 raise ValueError('passed partition does not match series partition. I\'m confused')
+
+            if partition.index == {}:
+                # we're creating an aggregation on everything, this will yield one value
+                expression = SingleValueExpression(expression)
+
             return self.copy_override(dtype=derived_dtype,
                                       index=partition.index,
                                       group_by=[partition],
@@ -942,10 +973,7 @@ def const_to_series(base: Union[Series, DataFrame],
     :return:
     """
     if isinstance(value, Series):
-        if value.base_node is None:
-            return value.copy_override(base_node=base.base_node)
         return value
-    # We need to wrap a const expression in a ConstExpression or something like it.
     name = '__const__' if name is None else name
     dtype = value_to_dtype(value)
     series_type = get_series_type_from_dtype(dtype)

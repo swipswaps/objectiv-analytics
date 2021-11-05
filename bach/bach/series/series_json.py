@@ -19,6 +19,8 @@ class SeriesJsonb(Series):
     this a proper class, not just a string subclass
     """
     dtype = 'jsonb'
+    dtype_to_pandas = None
+
     # todo can only assign a type to one series type, and object is quite generic
     dtype_aliases = tuple()  # type: ignore
     supported_db_dtype = 'jsonb'
@@ -123,23 +125,6 @@ class SeriesJsonb(Series):
                          group_by=group_by,
                          sorted_ascending=sorted_ascending)
         self.json = self.Json(self)
-
-    def __getitem__(self, key: Union[Any, slice]):
-        # this method is overridden because there is not pandas dtype for json(b)
-        if isinstance(key, slice):
-            raise NotImplementedError("index slices currently not supported")
-
-        # any other value we treat as a literal index lookup
-        # multiindex not supported atm
-        if not self.index:
-            raise Exception('Function not supported on Series without index')
-        if len(self.index) != 1:
-            raise NotImplementedError('Index only implemented for simple indexes.')
-        series = self.to_frame()[list(self.index.values())[0] == key]
-        assert isinstance(series, self.__class__)
-
-        # this is massively ugly
-        return series.head(1).values[0]
 
     @classmethod
     def supported_value_to_expression(cls, value: Union[dict, list]) -> Expression:
