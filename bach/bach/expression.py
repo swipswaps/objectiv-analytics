@@ -172,6 +172,10 @@ class Expression:
         return expression_to_sql(self.resolve_column_references(table_name))
 
 
+class ConfinedExpression(Expression):
+    """ An expression that does not need ( ) around it when used in """
+
+
 def expression_to_sql(expression: Expression) -> str:
     """
     Compile the expression to a SQL fragment.

@@ -62,9 +62,9 @@ class SeriesUuid(Series):
             group_by=None
         )
 
-    def _comparator_operator(self, other, comparator):
+    def _comparator_operation(self, other, comparator, other_dtypes=('uuid', 'string')):
         other = const_to_series(base=self, value=other)
-        other = self._get_supported(f"comparator '{comparator}'", ['uuid', 'string'], other)
+        other = self._get_supported(f"comparator '{comparator}'", other_dtypes, other)
         if other.dtype == 'uuid':
             expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
         else:

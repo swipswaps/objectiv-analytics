@@ -23,6 +23,89 @@ class SeriesJsonb(Series):
     dtype_aliases = tuple()  # type: ignore
     supported_db_dtype = 'jsonb'
     supported_value_types = (dict, list)
+    return_dtype = dtype
+
+    class Json:
+        def __init__(self, series_object):
+            self._series_object = series_object
+
+        def __getitem__(self, key: Union[str, int, slice]):
+            if isinstance(key, int):
+                return self._series_object.copy_override(
+                    dtype=self._series_object.return_dtype,
+                    expression=Expression.construct(f'{{}}->{key}', self._series_object)
+                )
+            elif isinstance(key, str):
+                return self.get_value(key)
+            elif isinstance(key, slice):
+                expression_references = 0
+                if key.step:
+                    raise NotImplementedError('slice steps not supported')
+                if key.stop is not None:
+                    negative_stop = ''
+                    if isinstance(key.stop, int):
+                        if key.stop < 0:
+                            negative_stop = f'jsonb_array_length({{}})'
+                            expression_references += 1
+                        stop = f'{negative_stop} {key.stop} - 1'
+                    elif isinstance(key.stop, (dict, str)):
+                        stop = self._find_in_json_list(key.stop)
+                        expression_references += 1
+                    else:
+                        raise TypeError('cant')
+                if key.start is not None:
+                    if isinstance(key.start, int):
+                        negative_start = ''
+                        if key.start < 0:
+                            negative_start = f'jsonb_array_length({{}})'
+                            expression_references += 1
+                        start = f'{negative_start} {key.start}'
+                    elif isinstance(key.start, (dict, str)):
+                        start = self._find_in_json_list(key.start)
+                        expression_references += 1
+                    else:
+                        raise TypeError('cant')
+                    if key.stop is not None:
+                        where = f'between {start} and {stop}'
+                    else:
+                        where = f'>= {start}'
+                else:
+                    where = f'<= {stop}'
+                combined_expression = f"""(select jsonb_agg(x.value)
+                from jsonb_array_elements({{}}) with ordinality x
+                where ordinality - 1 {where})"""
+                expression_references += 1
+                return self._series_object.copy_override(
+                    dtype=self._series_object.return_dtype,
+                    expression=Expression.construct(
+                        combined_expression,
+                        *([self._series_object] * expression_references)
+                    ))
+            raise TypeError(f'key should be int or slice, actual type: {type(key)}')
+
+        def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
+            if isinstance(key, (dict, str)):
+                key = json.dumps(key)
+                quoted_key = quote_string(key)
+                expression_str = f"""(select min(case when ({quoted_key}::jsonb) <@ value
+                then ordinality end) -1 from jsonb_array_elements({{}}) with ordinality)"""
+                return expression_str
+            else:
+                raise TypeError(f'key should be int or slice, actual type: {type(key)}')
+
+        def get_value(self, key: str, as_str=False):
+            '''
+            as_str: if True, it returns a string, else json
+            '''
+            return_as_string_operator = ''
+            return_dtype = self._series_object.return_dtype
+            if as_str:
+                return_as_string_operator = '>'
+                return_dtype = 'string'
+            expression = Expression.construct(f"{{}}->{return_as_string_operator}{{}}",
+                                              self._series_object,
+                                              Expression.string_value(key))
+            return self._series_object.copy_override(dtype=return_dtype, expression=expression)
 
     def __init__(self,
                  engine,
@@ -39,7 +122,7 @@ class SeriesJsonb(Series):
                          expression=expression,
                          group_by=group_by,
                          sorted_ascending=sorted_ascending)
-        self.json = Json(self)
+        self.json = self.Json(self)
 
     def __getitem__(self, key: Union[Any, slice]):
         # this method is overridden because there is not pandas dtype for json(b)
@@ -71,20 +154,18 @@ class SeriesJsonb(Series):
             raise ValueError(f'cannot convert {source_dtype} to jsonb')
         return Expression.construct('cast({} as jsonb)', expression)
 
-    def _comparator_operator(self, other, comparator):
-        other = const_to_series(base=self, value=other)
-        other = self._get_supported(f"comparator '{comparator}'", ['json', 'jsonb'], other)
-        expression = Expression.construct(
-            f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
-            self.expression, other.expression
+    def _comparator_operation(self, other, comparator, other_dtypes=('json', 'jsonb')):
+        return self._binary_operation(
+            other, operation=f"comparator '{comparator}'",
+            fmt_str=f'cast({{}} as jsonb) {comparator} cast({{}} as jsonb)',
+            other_dtypes=other_dtypes, dtype='bool'
         )
-        return self.copy_override(dtype='bool', expression=expression)
 
     def __le__(self, other) -> 'SeriesBoolean':
-        return self._comparator_operator(other, "<@")
+        return self._comparator_operation(other, "<@")
 
     def __ge__(self, other) -> 'SeriesBoolean':
-        return self._comparator_operator(other, "@>")
+        return self._comparator_operation(other, "@>")
 
 
 class SeriesJson(SeriesJsonb):
@@ -94,6 +175,7 @@ class SeriesJson(SeriesJsonb):
     dtype = 'json'
     dtype_aliases = tuple()  # type: ignore
     supported_db_dtype = 'json'
+    return_dtype = 'jsonb'
 
     def __init__(self,
                  engine,
@@ -111,159 +193,3 @@ class SeriesJson(SeriesJsonb):
                          expression=Expression.construct(f'cast({{}} as jsonb)', expression),
                          group_by=group_by,
                          sorted_ascending=sorted_ascending)
-
-
-class Json:
-    def __init__(self, series_object):
-        self._series_object = series_object
-
-    def __getitem__(self, key: Union[str, int, slice]):
-        if isinstance(key, int):
-            return self._series_object.copy_override(
-                dtype='jsonb',
-                expression=Expression.construct(f'{{}}->{key}', self._series_object)
-            )
-        elif isinstance(key, str):
-            return self.get_value(key)
-        elif isinstance(key, slice):
-            expression_references = 0
-            if key.step:
-                raise NotImplementedError('slice steps not supported')
-            if key.stop is not None:
-                negative_stop = ''
-                if isinstance(key.stop, int):
-                    if key.stop < 0:
-                        negative_stop = f'jsonb_array_length({{}})'
-                        expression_references += 1
-                    stop = f'{negative_stop} {key.stop} - 1'
-                elif isinstance(key.stop, (dict, str)):
-                    stop = self._find_in_json_list(key.stop)
-                    expression_references += 1
-                else:
-                    raise TypeError('cant')
-            if key.start is not None:
-                if isinstance(key.start, int):
-                    negative_start = ''
-                    if key.start < 0:
-                        negative_start = f'jsonb_array_length({{}})'
-                        expression_references += 1
-                    start = f'{negative_start} {key.start}'
-                elif isinstance(key.start, (dict, str)):
-                    start = self._find_in_json_list(key.start)
-                    expression_references += 1
-                else:
-                    raise TypeError('cant')
-                if key.stop is not None:
-                    where = f'between {start} and {stop}'
-                else:
-                    where = f'>= {start}'
-            else:
-                where = f'<= {stop}'
-            combined_expression = f"""(select jsonb_agg(x.value)
-            from jsonb_array_elements({{}}) with ordinality x
-            where ordinality - 1 {where})"""
-            expression_references += 1
-            return self._series_object.copy_override(
-                dtype='jsonb',
-                expression=Expression.construct(
-                    combined_expression,
-                    *([self._series_object] * expression_references)
-                ))
-        raise TypeError(f'key should be int or slice, actual type: {type(key)}')
-
-    def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
-        if isinstance(key, (dict, str)):
-            key = json.dumps(key)
-            quoted_key = quote_string(key)
-            expression_str = f"""(select min(case when ({quoted_key}::jsonb) <@ value
-            then ordinality end) -1 from jsonb_array_elements({{}}) with ordinality)"""
-            return expression_str
-        else:
-            raise TypeError(f'key should be int or slice, actual type: {type(key)}')
-
-    def get_value(self, key: str, as_str=False):
-        '''
-        as_str: if True, it returns a string, else json
-        '''
-        return_as_string_operator = ''
-        return_dtype = 'jsonb'
-        if as_str:
-            return_as_string_operator = '>'
-            return_dtype = 'string'
-        expression = Expression.construct(f"{{}}->{return_as_string_operator}{{}}",
-                                          self._series_object,
-                                          Expression.string_value(key))
-        return self._series_object.copy_override(dtype=return_dtype, expression=expression)
-
-    # objectiv features below:
-    def get_from_context_with_type_series(self, type, key, dtype='string'):
-        expression_str = f'''
-        jsonb_path_query_first({{}},
-        \'$[*] ? (@._type == $type)\',
-        \'{{"type":{quote_identifier(type)}}}\') ->> {{}}'''
-        expression = Expression.construct(
-            expression_str,
-            self._series_object,
-            Expression.string_value(key)
-        )
-        return self._series_object.copy_override(dtype=dtype, expression=expression)
-
-    @property
-    def feature_stack(self):
-        keys = ['_type', 'id']
-        jsonb_build_object_str = [f"{quote_string(key)}, value -> {quote_string(key)}" for key in keys]
-        expression_str = f'''(select jsonb_agg(jsonb_build_object({", ".join(jsonb_build_object_str)}))
-        from jsonb_array_elements({{}}))'''
-        expression = Expression.construct(
-            expression_str,
-            self._series_object
-        )
-        return self._series_object.copy_override(dtype='jsonb', expression=expression)
-
-    @property
-    def navigation_features(self):
-        return self[{'_type': 'NavigationContext'}: None]
-
-    @property
-    def cookie_id(self):
-        return self.get_from_context_with_type_series("CookieIdContext", "cookie_id")
-
-    @property
-    def user_agent(self):
-        return self.get_from_context_with_type_series("HttpContext", "user_agent")
-
-    @property
-    def application(self):
-        return self.get_from_context_with_type_series("ApplicationContext", "id")
-
-    @property
-    def nice_name(self):
-        expression = Expression.construct(
-            f"""(
-            select array_to_string(
-                array_agg(
-                    replace(
-                        regexp_replace(value ->> '_type', '([a-z])([A-Z])', '\\1 \\2', 'g'),
-                    ' Context', '') || ': ' || (value ->> 'id')
-                ),
-            ' => ')
-            from jsonb_array_elements({{}}) with ordinality
-            where ordinality = jsonb_array_length({{}})) || case
-                when jsonb_array_length({{}}) > 1
-                    then ' located at ' || (select array_to_string(
-                array_agg(
-                    replace(
-                        regexp_replace(value ->> '_type', '([a-z])([A-Z])', '\\1 \\2', 'g'),
-                    ' Context', '') || ': ' || (value ->> 'id')
-                ),
-            ' => ')
-            from jsonb_array_elements({{}}) with ordinality
-            where ordinality < jsonb_array_length({{}})
-            ) else '' end""",
-            self._series_object,
-            self._series_object,
-            self._series_object,
-            self._series_object,
-            self._series_object
-        )
-        return self._series_object.copy_override(dtype='string', expression=expression)

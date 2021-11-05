@@ -2,20 +2,49 @@
 Copyright 2021 Objectiv B.V.
 """
 import datetime
+from abc import ABC
 from typing import Union, cast, TYPE_CHECKING
 
 import numpy
 
-from bach import DataFrame
-from bach.series import Series, SeriesString, const_to_series
+from bach.series import Series, SeriesString
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 
 if TYPE_CHECKING:
-    from bach.partitioning import GroupBy
+    from bach.series import SeriesBoolean
 
 
-class SeriesTimestamp(Series):
+class SeriesAbstractDateTime(Series, ABC):
+    """ Class all date/time/interval handling classes derive from to share common stuff """
+
+    def _comparator_operation(self, other, comparator,
+                              other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
+        return super()._comparator_operation(other, comparator, other_dtypes)
+
+    def format(self, format_str: str) -> SeriesString:
+        """
+        Allow standard PG formatting of this Series (to a string type)
+
+        :param format_str: Format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
+        :return: a derived Series that accepts and returns formatted timestamp strings
+        """
+        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
+        return self.copy_override(dtype='string', expression=expression)
+
+    @classmethod
+    def _cast_to_date_if_dtype_date(cls, series: 'Series') -> 'Series':
+        # PG returns timestamp in all cases were we expect date
+        # Make sure we cast properly, and round similar to python datetime
+        if series.dtype == 'date':
+            return series.copy_override(
+                expression=Expression.construct("cast({} + '12h'::interval as date)", series)
+            )
+        else:
+            return series
+
+
+class SeriesTimestamp(SeriesAbstractDateTime):
     """
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         timestamp without time zone
@@ -42,30 +71,20 @@ class SeriesTimestamp(Series):
                 raise ValueError(f'cannot convert {source_dtype} to timestamp')
             return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
 
-    def _comparator_operator(self, other, comparator):
-        other = const_to_series(base=self, value=other)
-        other = self._get_supported(f"comparator '{comparator}'", ['timestamp', 'date', 'string'], other)
-        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self.copy_override(dtype='bool', expression=expression)
+    def __add__(self, other) -> 'Series':
+        return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))
 
-    def format(self, format) -> SeriesString:
-        """
-        Allow standard PG formatting of this Series (to a string type)
-
-        :param format: The format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
-        :return: a derived Series that accepts and returns formatted timestamp strings
-        """
-        expression = Expression.construct(f"to_char({{}}, '{format}')", self)
-        return self.copy_override(dtype='string', expression=expression)
-
-    def __sub__(self, other) -> 'SeriesTimestamp':
-        other = const_to_series(base=self, value=other)
-        other = self._get_supported('sub', ['timestamp', 'date', 'time'], other)
-        expression = Expression.construct('({}) - ({})', self, other)
-        return self.copy_override(dtype='timedelta', expression=expression)
+    def __sub__(self, other) -> 'Series':
+        type_mapping = {
+            'timedelta': 'timestamp',
+            'timestamp': 'timedelta'
+        }
+        return self._arithmetic_operation(other, 'sub', '({}) - ({})',
+                                          other_dtypes=tuple(type_mapping.keys()),
+                                          dtype=type_mapping)
 
 
-class SeriesDate(SeriesTimestamp):
+class SeriesDate(SeriesAbstractDateTime):
     """
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         date
@@ -91,8 +110,35 @@ class SeriesDate(SeriesTimestamp):
                 raise ValueError(f'cannot convert {source_dtype} to date')
             return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
 
+    def __add__(self, other) -> 'Series':
+        type_mapping = {
+            'timedelta': 'date'  # PG returns timestamp, needs explicit cast to date
+        }
+        return self._cast_to_date_if_dtype_date(
+            self._arithmetic_operation(other, 'add', '({}) + ({})',
+                                       other_dtypes=tuple(type_mapping.keys()),
+                                       dtype=type_mapping)
+        )
 
-class SeriesTime(Series):
+    def __sub__(self, other) -> 'Series':
+        type_mapping = {
+            'date': 'timedelta',
+            'timedelta': 'date',  # PG returns timestamp, needs explicit cast to date
+        }
+        if other.dtype == 'date':
+            # PG does unexpected things when doing date - date. Work around that.
+            fmt_str = 'cast(cast({} as timestamp) - ({}) as interval)'
+        else:
+            fmt_str = '({}) - ({})'
+
+        return self._cast_to_date_if_dtype_date(
+            self._arithmetic_operation(other, 'sub', fmt_str,
+                                       other_dtypes=tuple(type_mapping.keys()),
+                                       dtype=type_mapping)
+        )
+
+
+class SeriesTime(SeriesAbstractDateTime):
     """
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         time without time zone
@@ -117,15 +163,10 @@ class SeriesTime(Series):
                 raise ValueError(f'cannot convert {source_dtype} to time')
             return Expression.construct(f'cast ({{}} as {cls.supported_db_dtype})', expression)
 
-    def _comparator_operator(self, other, comparator):
-        from bach.series import const_to_series
-        other = const_to_series(base=self, value=other)
-        other = self._get_supported(f"comparator '{comparator}'", ['time', 'string'], other)
-        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self.copy_override(dtype='bool', expression=expression)
+    # python supports no arithmetic on Time
 
 
-class SeriesTimedelta(Series):
+class SeriesTimedelta(SeriesAbstractDateTime):
     dtype = 'timedelta'
     dtype_aliases = ('interval',)
     supported_db_dtype = 'interval'
@@ -149,34 +190,34 @@ class SeriesTimedelta(Series):
                 raise ValueError(f'cannot convert {source_dtype} to timedelta')
             return Expression.construct('cast({} as interval)', expression)
 
-    def _comparator_operator(self, other, comparator):
-        other = const_to_series(base=self, value=other)
-        other = self._get_supported(f"comparator '{comparator}'",
-                                    ['timedelta', 'date', 'time', 'string'], other)
-        expression = Expression.construct(f'({{}}) {comparator} ({{}})', self, other)
-        return self.copy_override(dtype='bool', expression=expression)
+    def _comparator_operation(self, other, comparator,
+                              other_dtypes=('timedelta', 'string')) -> 'SeriesBoolean':
+        return super()._comparator_operation(other, comparator, other_dtypes)
 
-    def format(self, format) -> SeriesString:
-        """
-        Allow standard PG formatting of this Series (to a string type)
+    def __add__(self, other) -> 'Series':
+        type_mapping = {
+            'date': 'date',  # PG makes this a timestamp
+            'timedelta': 'timedelta',
+            'timestamp': 'timestamp'
+        }
+        return self._cast_to_date_if_dtype_date(
+            self._arithmetic_operation(other, 'add', '({}) + ({})',
+                                       other_dtypes=tuple(type_mapping.keys()),
+                                       dtype=type_mapping))
 
-        :param format: The format as defined in https://www.postgresql.org/docs/9.1/functions-formatting.html
-        :return: a derived Series that accepts and returns formatted timestamp strings
-        """
-        expression = Expression.construct(f"to_char({{}}, '{format}')", self)
-        return self.copy_override(dtype='string', expression=expression)
+    def __sub__(self, other) -> 'Series':
+        type_mapping = {
+            'timedelta': 'timedelta',
+        }
+        return self._arithmetic_operation(other, 'sub', '({}) - ({})',
+                                          other_dtypes=tuple(type_mapping.keys()),
+                                          dtype=type_mapping)
 
-    def __add__(self, other) -> 'SeriesTimedelta':
-        other = const_to_series(base=self, value=other)
-        other = self._get_supported('add', ['timedelta', 'timestamp', 'date', 'time'], other)
-        expression = Expression.construct('({}) + ({})', self, other)
-        return self.copy_override(dtype='timedelta', expression=expression)
+    def __mul__(self, other) -> 'Series':
+        return self._arithmetic_operation(other, 'mul', '({}) * ({})', other_dtypes=('int64', 'float64'))
 
-    def __sub__(self, other) -> 'SeriesTimedelta':
-        other = const_to_series(base=self, value=other)
-        other = self._get_supported('sub', ['timedelta', 'timestamp', 'date', 'time'], other)
-        expression = Expression.construct('({}) - ({})', self, other)
-        return self.copy_override(dtype='timedelta', expression=expression)
+    def __truediv__(self, other) -> 'Series':
+        return self._arithmetic_operation(other, 'div', '({}) / ({})', other_dtypes=('int64', 'float64'))
 
     def sum(self, partition: WrappedPartition = None,
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':
