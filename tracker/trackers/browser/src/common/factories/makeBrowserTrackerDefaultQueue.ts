@@ -1,6 +1,6 @@
 import { TrackerQueue, TrackerQueueInterface } from '@objectiv/tracker-core';
 import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
-import { TrackerQueueLocalStorageStore } from '../../queue/TrackerQueueLocalStorageStore';
+import { TrackerQueueLocalStorageStore } from '../../queues/TrackerQueueLocalStorageStore';
 
 /**
  * A factory to create the default Queue of Browser Tracker.

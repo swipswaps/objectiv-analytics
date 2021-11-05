@@ -52,18 +52,18 @@ def test_format_injection():
     model = mb(a="'{{y}}'")
     mb = CustomSqlModel('select {a} from {{x}}')
     result = to_sql(mb(a='y', x=model))
-    expected = 'with CustomSqlModel___8c24968aad8a455e4144664a5ed963ab as (select \'{{y}}\' from x)\n' \
-               'select y from CustomSqlModel___8c24968aad8a455e4144664a5ed963ab'
+    expected = 'with "CustomSqlModel___8c24968aad8a455e4144664a5ed963ab" as (select \'{{y}}\' from x)\n' \
+               'select y from "CustomSqlModel___8c24968aad8a455e4144664a5ed963ab"'
     assert result == expected
 
     result = to_sql(mb(a="'{y}'", x=model))
-    expected = 'with CustomSqlModel___8c24968aad8a455e4144664a5ed963ab as (select \'{{y}}\' from x)\n' \
-               "select '{y}' from CustomSqlModel___8c24968aad8a455e4144664a5ed963ab"
+    expected = 'with "CustomSqlModel___8c24968aad8a455e4144664a5ed963ab" as (select \'{{y}}\' from x)\n' \
+               "select '{y}' from \"CustomSqlModel___8c24968aad8a455e4144664a5ed963ab\""
     assert result == expected
 
     result = to_sql(mb(a="'{{y}}'", x=model))
-    expected = 'with CustomSqlModel___8c24968aad8a455e4144664a5ed963ab as (select \'{{y}}\' from x)\n' \
-               "select '{{y}}' from CustomSqlModel___8c24968aad8a455e4144664a5ed963ab"
+    expected = 'with "CustomSqlModel___8c24968aad8a455e4144664a5ed963ab" as (select \'{{y}}\' from x)\n' \
+               "select '{{y}}' from \"CustomSqlModel___8c24968aad8a455e4144664a5ed963ab\""
     assert result == expected
 
 
@@ -74,6 +74,11 @@ class SourceTable(SqlModelBuilder):
     @property
     def sql(self):
         return 'select 1 as val'
+
+    @property
+    def generic_name(self):
+        # Test that a name with special characters works too
+        return 'Source "Table"'
 
 
 class Double(SqlModelBuilder):
@@ -136,17 +141,17 @@ def test_model_thrice_simple():
     )
     result = to_sql(model)
     expected = '''
-        with SourceTable___563606f14b78ab0a5ba36b3055e3d518 as (
+        with "Source ""Table""___5fa7192e703d9d520c7dc71289cbf7ee" as (
             select 1 as val
-        ), Double___95e1a5df04751be6eaa1eb40aa14d043 as (
+        ), "Double___c6d1d15c607b2705c4a83c7ec274874c" as (
             select (val * 2) as val
-            from SourceTable___563606f14b78ab0a5ba36b3055e3d518
-        ), Double___00ce2e48b4d54f24ca6d77cca5261107 as (
+            from "Source ""Table""___5fa7192e703d9d520c7dc71289cbf7ee"
+        ), "Double___dac39db2e5780d925dca8d9a8c32fdf6" as (
             select (val * 2) as val
-            from Double___95e1a5df04751be6eaa1eb40aa14d043
+            from "Double___c6d1d15c607b2705c4a83c7ec274874c"
         )
         select (val * 2) as val
-        from Double___00ce2e48b4d54f24ca6d77cca5261107
+        from "Double___dac39db2e5780d925dca8d9a8c32fdf6"
     '''
     assert_roughly_equal_sql(result, expected)
 
@@ -170,7 +175,7 @@ def test_model_duplicate_no_id():
     # instances, and thus the 'multiplier_cte' has different sql.
     update_model = model.set((), multiplier=3)
     with pytest.raises(Exception,
-                       match='CTE multiplier_cte multiple times, but with different definitions'):
+                       match='CTE "multiplier_cte" multiple times, but with different definitions'):
         to_sql(update_model)
 
 

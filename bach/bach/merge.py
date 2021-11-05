@@ -5,7 +5,8 @@ from enum import Enum
 from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, TYPE_CHECKING
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
-from bach.expression import quote_identifier, Expression
+from bach.expression import Expression
+from sql_models.util import quote_identifier
 from bach.sql_model import BachSqlModel
 from sql_models.model import SqlModel
 

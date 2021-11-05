@@ -3,7 +3,7 @@ import { TrackClicksOptions } from '../../definitions/TrackClicksOptions';
 import { parseJson } from './parseJson';
 
 /**
- * `trackClicks` Tagging Attribute parser to TrackOptions
+ * `trackClicks` Tagging Attribute to TrackClicksOptions parser
  * Differently than other simplistic parsers, this one transforms the `trackClicks` attribute in a different format.
  */
 export const parseTrackClicksAttribute = (stringifiedTrackClicksAttribute: string | null): TrackClicksOptions => {

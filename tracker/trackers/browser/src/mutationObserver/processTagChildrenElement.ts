@@ -1,7 +1,7 @@
 import { getObjectKeys } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
 import { isTagChildrenElement } from '../common/guards/isTagChildrenElement';
-import { parseChildrenTaggingAttribute } from '../common/parser/parseChildrenTaggingAttribute';
+import { parseChildrenTaggingAttribute } from '../common/parsers/parseChildrenTaggingAttribute';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { ChildrenTaggingQuery } from '../definitions/ChildrenTaggingQuery';
 import { StringifiedLocationTaggingAttributes } from '../definitions/StringifiedLocationTaggingAttributes';

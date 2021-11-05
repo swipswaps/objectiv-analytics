@@ -56,7 +56,8 @@ def test_fillna():
 
 def test_isnull():
     values = ['a', 'b', None]
-    pdf = pd.DataFrame(data=values,columns=['text_with_null'])
+    pdf = pd.DataFrame(data=values, columns=['text_with_null'])
+    pdf.set_index('text_with_null', drop=False, inplace=True)
     bt = get_from_df('test_isnull', pdf)
     bt['y'] = bt.text_with_null.isnull()
     bt['z'] = bt.text_with_null.notnull()

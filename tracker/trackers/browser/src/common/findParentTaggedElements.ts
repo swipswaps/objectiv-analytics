@@ -1,4 +1,5 @@
 import { TaggableElement } from '../definitions/TaggableElement';
+import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { isParentTaggedElement } from './guards/isParentTaggedElement';
 import { isTaggedElement } from './guards/isTaggedElement';
@@ -8,8 +9,8 @@ import { isTaggedElement } from './guards/isTaggedElement';
  */
 export const findParentTaggedElements = (
   element: TaggableElement | null,
-  parentElements: TaggableElement[] = []
-): TaggableElement[] => {
+  parentElements: TaggedElement[] = []
+): TaggedElement[] => {
   if (!element) {
     return parentElements;
   }
@@ -20,7 +21,7 @@ export const findParentTaggedElements = (
 
   let nextElement: TaggableElement | null = element.parentElement;
 
-  // If this element has a Parent Tagged Element Id specified, follow that instead of the DOM parentElement
+  // If this element has a Parent Tagged Element Id specyarn tscified, follow that instead of the DOM parentElement
   if (isParentTaggedElement(element)) {
     const parentElementId = element.getAttribute(TaggingAttribute.parentElementId);
     const parentElement = document.querySelector(`[${TaggingAttribute.elementId}='${parentElementId}']`);
