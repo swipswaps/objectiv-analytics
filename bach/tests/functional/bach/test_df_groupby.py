@@ -78,15 +78,12 @@ def test_group_by_all():
 
     assert_equals_data(
         result_bt,
-        expected_columns=['index', '_index_skating_order_nunique', 'skating_order_nunique', 'city_nunique', 'municipality_nunique', 'inhabitants_nunique', 'founding_nunique'],
+        expected_columns=['_index_skating_order_nunique', 'skating_order_nunique', 'city_nunique', 'municipality_nunique', 'inhabitants_nunique', 'founding_nunique'],
         order_by='skating_order_nunique',
         expected_data=[
-            [1, 11, 11, 11, 6, 11, 11],
+            [11, 11, 11, 6, 11, 11],
         ]
     )
-    assert result_bt.index_dtypes == {
-        'index': 'int64'
-    }
     assert result_bt.dtypes == {
         '_index_skating_order_nunique': 'int64',
         'city_nunique': 'int64',
@@ -212,9 +209,9 @@ def test_dataframe_agg():
     for result_bt in [result_bt_str, result_bt_func]:
         assert_equals_data(
             result_bt,
-            expected_columns=['index', 'municipality_nunique', 'inhabitants_nunique'],
+            expected_columns=['municipality_nunique', 'inhabitants_nunique'],
             expected_data=[
-                [1, 6, 11]
+                [6, 11]
             ]
         )
         assert result_bt.dtypes == {
@@ -235,9 +232,9 @@ def test_dataframe_agg_numeric_only():
 
         assert_equals_data(
             result_bt,
-            expected_columns=['index', 'inhabitants_sum'],
+            expected_columns=['inhabitants_sum'],
             expected_data=[
-                [1, 187325]
+                [187325]
             ]
         )
         assert result_bt.dtypes == {
@@ -348,7 +345,7 @@ def test_grouping_list_basics():
         ]
     )
 
-def test_grouping_set_basics():
+def test_grouping_set_basics1():
     # This is not the greatest test, but at least it tests the interface.
     bt = get_bt_with_test_data(full_data_set=False)
     bts1 = bt.groupby((('municipality'), ('city')))
@@ -379,6 +376,33 @@ def test_grouping_set_basics():
             [None, 'Drylts', 3055], [None, 'Ljouwert', 93485], [None, 'Snits', 33520]
         ]
     )
+
+    # test empty group in set
+    bts1 = bt.groupby((('municipality'), ([])))
+    bts2 = bt.groupby((('municipality'), []))
+    bts3 = bt.groupby(('municipality', ([])))
+
+    assert(bts1 == bts2)
+    assert(bts1 == bts3)
+
+    assert(isinstance(bts1.group_by, GroupingSet))
+    assert(bts1.group_by.get_group_by_column_expression().to_sql()
+           == 'grouping sets (("municipality"), ())')
+
+
+    result_bt = bts1[['inhabitants']].sum()
+
+    assert_equals_data(
+        result_bt,
+        order_by=['municipality'],
+        expected_columns=['municipality', 'inhabitants_sum'],
+        expected_data=[
+            ['Leeuwarden', 93485],
+            ['Súdwest-Fryslân', 36575],
+            [None, 130060]
+        ]
+    )
+
 
 
 def test_groupby_frame_split_series_aggregation():
@@ -493,5 +517,5 @@ def test_materialize_on_double_aggregation():
     # After manually materializing the frame everything is OK again.
     btg = btg.get_df_materialized_model()
     btg = btg.mean('founding_sum')
-    assert_equals_data(btg, expected_columns=['index', 'founding_sum_mean'], expected_data=[[1,	2413.5]])
+    assert_equals_data(btg, expected_columns=['founding_sum_mean'], expected_data=[[2413.5]])
 

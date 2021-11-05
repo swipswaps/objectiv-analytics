@@ -660,8 +660,7 @@ class Series(ABC):
         """
         if group_by is None:
             from bach.partitioning import GroupBy
-            group_by = GroupBy([GroupBy.get_dummy_index_series(
-                engine=self._engine, base_node=self._base_node)])
+            group_by = GroupBy([])
 
         series = self.apply_func(func, group_by, *args, **kwargs)
         if len(series) == 1:
@@ -741,8 +740,7 @@ class Series(ABC):
                 partition = self._group_by
             else:
                 # create an aggregation over the entire input
-                partition = GroupBy([GroupBy.get_dummy_index_series(
-                    engine=self._engine, base_node=self._base_node)])
+                partition = GroupBy([])
         else:
             partition = self._check_unwrap_groupby(partition)
 

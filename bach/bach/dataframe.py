@@ -808,11 +808,6 @@ class DataFrame:
         else:
             raise ValueError(f'Value of "by" should be either None, a string, or a Series.')
 
-        if len(group_by_columns) == 0:
-            from bach.partitioning import GroupBy
-            return [GroupBy.get_dummy_index_series(
-                engine=self._engine, base_node=self._base_node)]
-
         return group_by_columns
 
     @classmethod
@@ -1142,15 +1137,19 @@ class DataFrame:
 
             group_by_column_expr = self.group_by.get_group_by_column_expression()
             if group_by_column_expr:
+                columns = self.group_by.get_index_column_expressions()
                 group_by_clause = Expression.construct('group by {}', group_by_column_expr)
             else:
+                columns = []
                 group_by_clause = Expression.construct('')
             having_clause = having_clause if having_clause else Expression.construct('')
+
+            columns += [s.get_column_expression() for s in self._data.values()]
 
             model_builder = BachSqlModel(
                 name=name,
                 sql="""
-                    select {group_by_columns}, {aggregate_columns}
+                    select {columns}
                     from {{prev}}
                     {where}
                     {group_by}
@@ -1159,8 +1158,7 @@ class DataFrame:
                     """
             )
             return model_builder(
-                group_by_columns=self.group_by.get_index_column_expression(),
-                aggregate_columns=[s.get_column_expression() for s in self._data.values()],
+                columns=columns,
                 where=where_clause,
                 group_by=group_by_clause,
                 having=having_clause,

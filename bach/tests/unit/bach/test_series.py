@@ -58,10 +58,7 @@ def test_equals():
 
     # different group_by
     sright = float_type(engine=None, base_node=None, index={}, name='test', expression='test',
-                        group_by=GroupBy(
-                            group_by_columns=[
-                                GroupBy.get_dummy_index_series(engine=None, base_node=None)
-                            ]))
+                        group_by=GroupBy(group_by_columns=[]))
     assert not sleft.equals(sright)
 
     # different sorting

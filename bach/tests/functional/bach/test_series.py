@@ -92,14 +92,12 @@ def test_type_agnostic_aggregation_functions():
 
     assert_equals_data(
         result_bt,
-        expected_columns=['index'] + list(result_series_dtypes.keys()),
+        expected_columns=list(result_series_dtypes.keys()),
         expected_data=[
-            [1, 11, 'Waadhoeke', 'De Friese Meren', 6, 'Súdwest-Fryslân', 'Súdwest-Fryslân']
+            [11, 'Waadhoeke', 'De Friese Meren', 6, 'Súdwest-Fryslân', 'Súdwest-Fryslân']
         ]
     )
-    assert result_bt.index_dtypes == {
-        'index': 'int64'
-    }
+
     assert result_bt.dtypes == result_series_dtypes
 
 
@@ -198,7 +196,7 @@ def test_series_inherit_flag():
     )
 
     bts_min_min = bts_min_materialized.min()
-    assert_equals_data(bts_min_min, expected_columns=['index', 'founding'], expected_data=[[1, 1268]])
+    assert_equals_data(bts_min_min, expected_columns=['founding'], expected_data=[[1268]])
 
     # bts_min_min has applied an aggregate function to a materialized view, so the aggregation flag should
     # be True again
