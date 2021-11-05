@@ -93,7 +93,7 @@ def test_positional_slicing():
             bt[slice],
             expected_columns=['_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants',
                               'founding'],
-            expected_data=df_to_list(bt.to_df()[slice])
+            expected_data=df_to_list(bt.to_pandas()[slice])
         )
 
 
