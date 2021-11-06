@@ -513,3 +513,12 @@ def test_materialize_on_double_aggregation():
     btg = btg.mean('founding_sum')
     assert_equals_data(btg, expected_columns=['founding_sum_mean'], expected_data=[[2413.5]])
 
+
+def test_unmaterializable_groupby_boolean_functions():
+    # Windowing function are not allowed as boolean row selectors.
+    bt = get_bt_with_test_data(full_data_set=True)
+    btg_min_fnd = bt.groupby('municipality')['founding'].min()
+    with pytest.raises(ValueError, match='rhs has a different base_node or group_by, but contains more than one value.'):
+        x = bt[btg_min_fnd == bt.founding].head()
+    with pytest.raises(ValueError, match='rhs has a different base_node or group_by, but contains more than one value.'):
+        x = bt[bt.founding == btg_min_fnd].head()
