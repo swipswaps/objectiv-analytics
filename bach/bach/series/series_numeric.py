@@ -7,7 +7,7 @@ from typing import cast, Union, TYPE_CHECKING, Optional
 import numpy
 
 from bach.series import Series
-from bach.expression import Expression
+from bach.expression import Expression, AggregateFunctionExpression
 from bach.series.series import WrappedPartition
 
 if TYPE_CHECKING:
@@ -53,7 +53,7 @@ class SeriesAbstractNumeric(Series, ABC):
         # horrible solution, but best we have until we support custom defined aggregates
         return self._derived_agg_func(
             partition,
-            Expression.construct(f'exp(sum(ln({{}})))', self),
+            AggregateFunctionExpression.construct(f'exp(sum(ln({{}})))', self),
             skipna=skipna
         )
 
@@ -64,9 +64,9 @@ class SeriesAbstractNumeric(Series, ABC):
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(
             partition,
-            Expression.construct(f'{{}}/sqrt({{}})',
-                                 self.std(partition, skipna=skipna, ddof=ddof),
-                                 self.count(partition, skipna=skipna)),
+            AggregateFunctionExpression.construct(f'{{}}/sqrt({{}})',
+                                                  self.std(partition, skipna=skipna, ddof=ddof),
+                                                  self.count(partition, skipna=skipna)),
             skipna=skipna
         )
 

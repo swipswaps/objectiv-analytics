@@ -354,17 +354,6 @@ class DataFrame:
             order_by=order_by
         )
 
-    def _df_or_series(self, df: 'DataFrame') -> DataFrameOrSeries:
-        """
-        Figure out whether there is just one series in our data, and return that series instead of the
-        whole frame.
-        :param df: the df
-        :return: DataFrame, Series
-        """
-        if len(df.data) > 1:
-            return df
-        return list(df.data.values())[0]
-
     def get_df_materialized_model(self, node_name='manual_materialize',
                                   inplace=False, limit: Any = None) -> 'DataFrame':
         """
@@ -493,6 +482,7 @@ class DataFrame:
             return self.copy_override(series=selected_data)
 
         if isinstance(key, (SeriesBoolean, slice)):
+            df = self
             if isinstance(key, slice):
                 node = self.get_current_node(name='getitem_slice', limit=key)
                 single_value = (
@@ -504,7 +494,7 @@ class DataFrame:
                 single_value = False  # there is no way for us to know. User has to slice the result first
 
                 # We only support first level boolean indices for now
-                if key.base_node != self.base_node or key.group_by != self._group_by:
+                if key.base_node != df.base_node or key.group_by != df._group_by:
                     raise ValueError('Cannot apply Boolean series with a different base_node or group by '
                                      'to DataFrame.'
                                      'Hint: make sure the Boolean series is derived from this DataFrame and '
@@ -512,7 +502,12 @@ class DataFrame:
                                      'Alternative: use df.merge(series) to merge the series with the df '
                                      'first, and then create a new Boolean series on the resulting merged '
                                      'data.')
-                if self._group_by is not None:
+
+                if key.expression.has_window_function:
+                    # Cannot apply a boolean selector containing a window function. We need to materialize
+                    df = df.get_df_materialized_model('getitem_window_function_boolean')
+
+                if df._group_by is not None and key.expression.has_aggregate_function:
                     node = self.get_current_node(
                         name='getitem_having_boolean',
                         having_clause=Expression.construct("having {}", key.expression))
@@ -520,17 +515,15 @@ class DataFrame:
                     raise ValueError("Cannot use a Boolean series that contains a non-materialized "
                                      "aggregation function or a windowing function as Boolean row selector.")
                 else:
-                    node = self.get_current_node(
+                    node = df.get_current_node(
                         name='getitem_where_boolean',
                         where_clause=Expression.construct("where {}", key.expression))
 
-            # I'm not entirely sure about this. Should we return a Series if there is just one series?
-            # TODO, find out.
             return DataFrame.get_instance(
-                engine=self.engine,
+                engine=df.engine,
                 base_node=node,
-                index_dtypes={name: series.dtype for name, series in self.index.items()},
-                dtypes={name: series.dtype for name, series in self.data.items()},
+                index_dtypes={name: series.dtype for name, series in df.index.items()},
+                dtypes={name: series.dtype for name, series in df.data.items()},
                 group_by=None,
                 order_by=[],  # filtering rows resets any sorting
                 single_value=single_value

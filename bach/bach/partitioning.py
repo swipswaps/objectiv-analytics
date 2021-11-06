@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Dict, Optional, cast
 
 from bach.series import Series, SeriesInt64
-from bach.expression import Expression
+from bach.expression import Expression, WindowFunctionExpression
 from bach.dataframe import SortColumn
 
 
@@ -58,6 +58,11 @@ class GroupBy:
         for col in group_by_columns:
             if not isinstance(col, Series):
                 raise ValueError(f'Unsupported argument type: {type(col)}')
+            if col.expression.is_constant and not isinstance(col, SeriesInt64):
+                # Dictated by PG
+                raise ValueError('Non-integer constant group by series not supported')
+            if col.expression.has_window_function:
+                raise ValueError('Window functions can not be used to group, please materialize first.')
             self._index[col.name] = col.copy_override(index={}, group_by=[self])
 
     def __eq__(self, other):
@@ -352,11 +357,11 @@ class Window(GroupBy):
                                          order_by)
 
         if self._min_values is None or self._min_values == 0:
-            return Expression.construct(f'{{}} {{}}', window_func, over_expr)
+            return WindowFunctionExpression.construct(f'{{}} {{}}', window_func, over_expr)
         else:
             # Only return a value when then minimum amount of observations (including NULLs)
             # has been reached.
-            return Expression.construct(f"""
+            return WindowFunctionExpression.construct(f"""
                 case when (count(1) {{}}) >= {self._min_values}
                 then {{}} {{}}
                 else NULL end""", over_expr, window_func, over_expr)

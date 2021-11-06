@@ -12,7 +12,7 @@ from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_
 
 from bach.dataframe import ColumnFunction
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
-    IndependentSubqueryExpression, SingleValueExpression
+    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from sql_models.util import quote_identifier
 from bach.types import value_to_dtype
 from sql_models.model import SqlModel
@@ -120,10 +120,10 @@ class Series(ABC):
     @property
     def dtype_to_pandas(self) -> Optional[str]:
         """
-        The dtype of this Series in a pandas.Series. Defaults to Series.dtype.
+        The dtype of this Series in a pandas.Series. Defaults to None
         Override to cast specifically, and set to None to let pandas choose.
         """
-        return self.dtype
+        return None
 
     @property
     @classmethod
@@ -487,19 +487,17 @@ class Series(ABC):
         )
         return self.copy_override(dtype='bool', expression=expression)
 
-    def fillna(self, constant_value):
+    def fillna(self, other):
         """
-        Fill any NULL value with the given constant
-        :param constant_value: the value to replace the NULL values with. Should be a supported
-            type by the series, or a TypeError is raised.
+        Fill any NULL value with the given constant or other compatible Series
+        :param other: the value to replace the NULL values with. Should be a supported
+            type by the series, or a TypeError is raised. Can also be another Series
         :note: Pandas replaces np.nan values, we can only replace NULL.
         :note: you can replace None with None, have fun, forever!
         """
-        return self.copy_override(
-            expression=Expression.construct(
-                'COALESCE({}, {})', self, self.value_to_expression(constant_value)
-            )
-        )
+        return self._binary_operation(
+            other=other, operation='fillna', fmt_str='COALESCE({}, {})',
+            other_dtypes=tuple([self.dtype]))
 
     def _binary_operation(self, other: 'Series', operation: str, fmt_str: str,
                           other_dtypes: Tuple[str, ...] = (),
@@ -753,13 +751,18 @@ class Series(ABC):
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
 
+        if self.expression.has_window_function:
+            raise ValueError(f'Cannot call an aggregation function on already windowed column '
+                             f'`{self.name}` Try calling get_df_materialized_model() on the DataFrame'
+                             f' this Series belongs to first.')
+
         if self.expression.has_aggregate_function:
-            raise ValueError('Cannot call an aggregation function on an already aggregated column. Try '
-                             'calling get_df_materialized_model() on the DataFrame this Series belongs to '
-                             'first.')
+            raise ValueError(f'Cannot call an aggregation function on already aggregated column '
+                             f'`{self.name}` Try calling get_df_materialized_model() on the DataFrame'
+                             f' this Series belongs to first.')
 
         if isinstance(expression, str):
-            expression = Expression.construct('{}({})', Expression.agg_function_raw(expression), self)
+            expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
 
         if partition is None:
             if self._group_by:
@@ -771,7 +774,6 @@ class Series(ABC):
             partition = self._check_unwrap_groupby(partition)
 
         # We should wrap these expressions in something that tags them as an aggregation / window
-        # We should also flag if we expect a single value
         if min_count is not None and min_count > 0:
             if isinstance(partition, Window):
                 if partition.min_values != min_count:
@@ -790,6 +792,11 @@ class Series(ABC):
         if not isinstance(partition, Window):
             if self._group_by and self._group_by != partition:
                 raise ValueError('passed partition does not match series partition. I\'m confused')
+
+            # if the passed expression was not a str, make sure it's tagged correctly
+            # we can't check the outer expression, because min_values logic above could have already wrapped
+            # it.
+            assert expression.has_aggregate_function
 
             if partition.index == {}:
                 # we're creating an aggregation on everything, this will yield one value
@@ -812,7 +819,8 @@ class Series(ABC):
     def median(self, partition: WrappedPartition = None, skipna: bool = True):
         return self._derived_agg_func(
             partition=partition,
-            expression=Expression.construct(f'percentile_disc(0.5) WITHIN GROUP (ORDER BY {{}})', self),
+            expression=AggregateFunctionExpression.construct(
+                f'percentile_disc(0.5) WITHIN GROUP (ORDER BY {{}})', self),
             skipna=skipna
         )
 
@@ -822,7 +830,7 @@ class Series(ABC):
     def mode(self, partition: WrappedPartition = None, skipna: bool = True):
         return self._derived_agg_func(
             partition=partition,
-            expression=Expression.construct(f'mode() within group (order by {{}})', self),
+            expression=AggregateFunctionExpression.construct(f'mode() within group (order by {{}})', self),
             skipna=skipna
         )
 
@@ -830,10 +838,10 @@ class Series(ABC):
         from bach.partitioning import Window
         if partition is not None:
             partition = self._check_unwrap_groupby(partition, notin=Window)
-        return self._derived_agg_func(partition=partition,
-                                      dtype='int64',
-                                      expression=Expression.construct('count(distinct {})', self),
-                                      skipna=skipna)
+        return self._derived_agg_func(
+            partition=partition, dtype='int64',
+            expression=AggregateFunctionExpression.construct('count(distinct {})', self),
+            skipna=skipna)
 
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs

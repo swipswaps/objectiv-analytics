@@ -76,6 +76,7 @@ def test_series_sort_values():
 
 
 def test_fillna():
+    # TODO test fillna with series instead of constants.
     values = [1, np.nan, 3, np.nan, 7]
     pdf = pd.DataFrame(data=values)
     bt = get_from_df('test_fillna', pdf)

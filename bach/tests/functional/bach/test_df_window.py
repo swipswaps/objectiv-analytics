@@ -352,3 +352,47 @@ def test_expanding_variations():
         for min_periods in [1,5,11]:
             _test_full_df_vs_selection(series, min_periods=min_periods)
             _test_series_vs_full_df(series, min_periods=min_periods)
+
+
+def test_window_functions_not_in_where_having_groupby():
+
+    bt = get_bt_with_test_data(full_data_set=True)
+
+    # window functions are not allowed in where if constructed externally
+    bt = get_bt_with_test_data(full_data_set=True)
+    btg_min_fnd = bt.founding.min(bt.sort_values('inhabitants').window())
+    with pytest.raises(ValueError,
+                       match='Cannot use a Boolean series that contains a non-materialized '
+                             'aggregation function or a windowing function'):
+        x = bt[btg_min_fnd == 4].head()
+
+    # seperate windowed series groupby should not be okay
+    with pytest.raises(ValueError,
+                       match='Window functions can not be used to group, please materialize first'):
+        x = bt.groupby(bt.inhabitants.window_lag(bt.sort_values('inhabitants').window()))
+
+    # window functions are not allowed in where even if part of df
+    # adds 'lag' to df for following three tests
+    bt['lag'] = bt.inhabitants.window_lag(bt.sort_values('inhabitants').window())
+    with pytest.raises(ValueError,
+                       match='Cannot use a Boolean series that contains a non-materialized '
+                             'aggregation function or a windowing function'):
+        x = bt[bt.lag == 4].head()
+
+    # named groupby should not be okay
+    with pytest.raises(ValueError,
+                       match='Window functions can not be used to group, please materialize first'):
+        x = bt.groupby('lag')
+
+    # column groupby should not be okay
+    with pytest.raises(ValueError,
+                       match='Window functions can not be used to group, please materialize first'):
+        x = bt.groupby(bt.lag)
+
+    # window functions not allowed in having (chosen over where when groupby is set)
+    bt = get_bt_with_test_data(full_data_set=True)
+    bt = bt.window().min()
+    with pytest.raises(ValueError,
+                       match='Cannot use a Boolean series that contains a non-materialized aggregation '
+                             'function or a windowing function as Boolean row selector'):
+        x = bt[bt.founding_min == 4]

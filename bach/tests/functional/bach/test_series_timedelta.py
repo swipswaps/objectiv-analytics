@@ -76,3 +76,12 @@ def test_timedelta():
             [datetime.timedelta(days=365, seconds=9877)]
         ]
     )
+
+
+def test_to_pandas():
+    bt = get_bt_with_test_data()
+    bt['td'] = datetime.timedelta(days=321, seconds=9877)
+    bt[['td']].to_pandas()
+    # TODO, this is not great, but at least it does not error when imported into pandas,
+    # and it looks good over there
+    assert bt[['td']].values[0] == [27744277000000000]
