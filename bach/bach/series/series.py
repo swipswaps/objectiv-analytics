@@ -378,7 +378,12 @@ class Series(ABC):
 
     @staticmethod
     def _independent_subquery(series, operation: str = None, dtype: str = None) -> 'Series':
+        """
+        Get a series representing an independent subquery, created by materializing the series given
+        and crafting a subquery expression from it, possibly adding the given operation.
 
+        :note: This will maintain Expression.is_single_value status
+        """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
         df = series.to_frame().get_df_materialized_model()
         fmt_string = f'{operation} (SELECT {{}} FROM {{}})' if operation else f'(SELECT {{}} FROM {{}})'
@@ -390,7 +395,7 @@ class Series(ABC):
             # The expression is lost when materializing
             expr = SingleValueExpression(expr)
 
-        s = series.copy_override(expression=expr, index={}, group_by=[None])
+        s = series.copy_override(expression=expr, dtype=dtype, index={}, group_by=[None])
         return s
 
     def exists(self):
