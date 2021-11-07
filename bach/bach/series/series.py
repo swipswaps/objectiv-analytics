@@ -778,7 +778,6 @@ class Series(ABC):
         else:
             partition = self._check_unwrap_groupby(partition)
 
-        # We should wrap these expressions in something that tags them as an aggregation / window
         if min_count is not None and min_count > 0:
             if isinstance(partition, Window):
                 if partition.min_values != min_count:
