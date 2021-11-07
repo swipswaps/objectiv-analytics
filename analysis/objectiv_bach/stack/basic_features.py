@@ -11,8 +11,7 @@ class BasicFeatures(SqlModelBuilder):
         return '''
 SELECT 
   data.*, 
-  bm.feature, 
-  bm.feature_pretty_name
+  bm.feature
 FROM {{sessionized_data}} as data
 JOIN {{feature_table}} bm USING (feature_hash)
 '''
