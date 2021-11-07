@@ -84,7 +84,7 @@ class SeriesString(Series):
     dtype = 'string'
     dtype_aliases = ('text', str)
     supported_db_dtype = 'text'
-    supported_value_types = (str, )
+    supported_value_types = (str, type(None))  # NoneType ends up as a string for now
 
     @classmethod
     def supported_value_to_expression(cls, value: str) -> Expression:

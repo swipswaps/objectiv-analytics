@@ -811,6 +811,8 @@ class Series(ABC):
                                       expression=partition.get_window_expression(expression))
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
+        # count is not constant because it depends on the number of rows in the selection.
+        # See the comment in Expression.AggregationFunctionExpression
         return self._derived_agg_func(partition, 'count', 'int64', skipna=skipna)
 
     def max(self, partition: WrappedPartition = None, skipna: bool = True):

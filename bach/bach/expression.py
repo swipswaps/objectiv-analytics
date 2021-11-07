@@ -182,10 +182,10 @@ class Expression:
     @property
     def is_constant(self):
         """
-        Does this expression represent a constant value, or an expressions constructed of only constants?
+        Does this expression represent a constant value, or an expressions constructed of only constants
 
-        Any Expression made up out of Tokens and Expressions, where all Expressions are constant,
-        are considered constant. Leaves consisting only of Tokens are considered not constant, so
+        Any Expression made up out of Tokens and Expressions, where all Expressions are constant
+        is considered constant. Leaves consisting only of Tokens are considered not constant, so
         at least one ConstValueExpressions need to be present for a branch to become constant.
         """
         if isinstance(self, ConstValueExpression):
@@ -281,8 +281,8 @@ class AggregateFunctionExpression(Expression):
     @property
     def is_constant(self):
         # We don't consider an aggregate function constant even if all its subexpressions are,
-        # because it can depend on the number of rows present in the group:
-        #   e.g. COUNT(5) is not constant within varying group sizes.
+        # because it requires materialization of the aggregation to actually be a constant value again.
+        # Maybe we will revisit this some day. If that day comes, make sure to look at Series.count() as well.
         return False
 
 

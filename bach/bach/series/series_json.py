@@ -19,8 +19,6 @@ class SeriesJsonb(Series):
     this a proper class, not just a string subclass
     """
     dtype = 'jsonb'
-    dtype_to_pandas = None
-
     # todo can only assign a type to one series type, and object is quite generic
     dtype_aliases = tuple()  # type: ignore
     supported_db_dtype = 'jsonb'

@@ -18,8 +18,6 @@ class SeriesAbstractNumeric(Series, ABC):
     """
     Base class that defines shared logic between SeriesInt64 and SeriesFloat64
     """
-    dtype_to_pandas = None  # Let pandas choose.
-
     def _arithmetic_operation(self, other, operation, fmt_str,
                               other_dtypes=('int64', 'float64'), dtype=None):
         return super()._arithmetic_operation(other, operation, fmt_str, other_dtypes, dtype)
@@ -49,13 +47,7 @@ class SeriesAbstractNumeric(Series, ABC):
         return self.product(partition, skipna)
 
     def product(self, partition: WrappedPartition = None, skipna: bool = True):
-        # https://stackoverflow.com/questions/13156055/product-aggregate-in-postgresql
-        # horrible solution, but best we have until we support custom defined aggregates
-        return self._derived_agg_func(
-            partition,
-            AggregateFunctionExpression.construct(f'exp(sum(ln({{}})))', self),
-            skipna=skipna
-        )
+        raise NotImplementedError("prod currently not implemented")
 
     def skew(self, partition: WrappedPartition = None, skipna: bool = True):
         raise NotImplementedError("skew currently not implemented")

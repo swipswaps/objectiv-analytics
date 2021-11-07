@@ -1141,6 +1141,11 @@ class DataFrame:
         where_clause = where_clause if where_clause else Expression.construct('')
         if self._group_by:
 
+            not_aggregated = [s.name for s in self._data.values() if not s.expression.has_aggregate_function]
+            if len(not_aggregated) > 0:
+                raise ValueError(f'Series {not_aggregated} need(s) to have an aggregation function set. '
+                                 f'Setup aggregation through agg() or on all individual series first.')
+
             group_by_column_expr = self.group_by.get_group_by_column_expression()
             if group_by_column_expr:
                 columns = self.group_by.get_index_column_expressions()
@@ -1323,19 +1328,14 @@ class DataFrame:
             silently. This is currently not implemented.
         :note: axis defaults to 1, because 0 is currently unsupported
         """
-        from bach.partitioning import GroupBy
+        df = self
+        if df.group_by is None:
+            df = df.groupby()
 
-        group_by = self._group_by
-        if group_by is None:
-            group_by = GroupBy(self._partition_by_series([]))
-
-        new_series = self._apply_func_to_series(func, axis, numeric_only,
-                                                True,  # exclude_non_applied, must be positional arg.
-                                                group_by, *args, **kwargs)
-        return self.copy_override(index=group_by.index,
-                                  series={s.name: s for s in new_series},
-                                  group_by=[group_by],
-                                  order_by=[])
+        new_series = df._apply_func_to_series(func, axis, numeric_only,
+                                              True,  # exclude_non_applied, must be positional arg.
+                                              df.group_by, *args, **kwargs)
+        return df.copy_override(series={s.name: s for s in new_series})
 
     def _aggregate_func(self, func: str, axis, level, numeric_only, *args, **kwargs) -> 'DataFrame':
         """

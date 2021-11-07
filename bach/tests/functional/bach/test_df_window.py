@@ -16,7 +16,7 @@ def test_windowing_frame_clause():
         w2 = w.set_frame_clause(**kwargs)
         assert(w2.frame_clause == expected)
         # Run a query to check whether the SQL is valid if we generated what we expected.
-        bt.inhabitants.window_last_value(w2).head()
+        bt.inhabitants.window_last_value(w2).to_pandas()
 
     # Again, check the default but through set_frame_clause in this case
     frame_clause_equals("RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW")
@@ -169,7 +169,7 @@ def test_windowing_windows():
     p3 = bt.window(['municipality', bt['inhabitants'] < 10000])
 
     for w in [p0,p1,p2,p3]:
-        bt.inhabitants.window_first_value(w).head()
+        bt.inhabitants.window_first_value(w).to_pandas()
 
     with pytest.raises(ValueError):
         # Specific indow functions should fail on being passed a groupby
@@ -354,7 +354,7 @@ def test_window_functions_not_in_where_having_groupby():
     with pytest.raises(ValueError,
                        match='Cannot use a Boolean series that contains a non-materialized '
                              'aggregation function or a windowing function'):
-        x = bt[btg_min_fnd == 4].head()
+        x = bt[btg_min_fnd == 4]
 
     # seperate windowed series groupby should not be okay
     with pytest.raises(ValueError,
@@ -367,7 +367,7 @@ def test_window_functions_not_in_where_having_groupby():
     with pytest.raises(ValueError,
                        match='Cannot use a Boolean series that contains a non-materialized '
                              'aggregation function or a windowing function'):
-        x = bt[bt.lag == 4].head()
+        x = bt[bt.lag == 4]
 
     # named groupby should not be okay
     with pytest.raises(ValueError,
