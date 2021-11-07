@@ -352,7 +352,7 @@ class DataFrame:
             return df
         return list(df.data.values())[0]
 
-    def get_df_materialized_model(self, node_name='manual_materialize', inplace=False) -> 'DataFrame':
+    def materialize(self, node_name='manual_materialize', inplace=False) -> 'DataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -635,7 +635,7 @@ class DataFrame:
         df = self if inplace else self.copy_override()
         if self._group_by:
             # materialize, but raise if inplace is required.
-            df = df.get_df_materialized_model(node_name='reset_index', inplace=inplace)
+            df = df.materialize(node_name='reset_index', inplace=inplace)
 
         series = df._data if drop else df.all_series
         df._data = {n: s.copy_override(index={}) for n, s in series.items()}
@@ -658,7 +658,7 @@ class DataFrame:
 
         df = self if inplace else self.copy_override()
         if self._group_by:
-            df = df.get_df_materialized_model(node_name='groupby_setindex', inplace=inplace)
+            df = df.materialize(node_name='groupby_setindex', inplace=inplace)
 
         # build the new index, appending if necessary
         new_index = {} if not append else copy(df._index)
@@ -842,7 +842,7 @@ class DataFrame:
         df = self
         if self._group_by:
             # We need to materialize this node first, we can't stack aggregations (yet)
-            df = self.get_df_materialized_model(node_name='nested_groupby')
+            df = self.materialize(node_name='nested_groupby')
 
         group_by: GroupBy
         if isinstance(by, tuple):
@@ -1009,7 +1009,7 @@ class DataFrame:
 
         The sorting will remain in the returned DataFrame as long as no operations are performed on that
         frame that materially change the selected data. Operations that materially change the selected data
-        are for example groupby(), merge(), get_df_materialized_model(), and filtering out rows. Adding or
+        are for example groupby(), merge(), materialize(), and filtering out rows. Adding or
         removing a column does not materially change the selected data.
 
         :param by: column label or list of labels to sort by.

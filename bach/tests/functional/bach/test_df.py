@@ -120,7 +120,7 @@ def test_boolean_indexing_same_node():
     )
 
 
-def test_get_df_materialized_model():
+def test_materialize():
     bt = get_bt_with_test_data()[['city', 'founding']]
     bt['city'] = bt['city'] + ' '
     bt['uuid'] = SeriesUuid.sql_gen_random_uuid(bt)
@@ -136,7 +136,7 @@ def test_get_df_materialized_model():
 
     assert_equals_data(bt, expected_columns=expected_columns, expected_data=expected_data)
 
-    bt_materialized = bt.get_df_materialized_model(node_name='node')
+    bt_materialized = bt.materialize(node_name='node')
     # The materialized DataFrame should result in the exact same data
     assert_equals_data(bt_materialized, expected_columns=expected_columns, expected_data=expected_data)
 
@@ -156,7 +156,7 @@ def test_get_df_materialized_model():
     assert previous_node_mat == bt.get_current_node('node')
 
 
-def test_get_df_materialized_model_non_deterministic_expressions():
+def test_materialize_non_deterministic_expressions():
     bt = get_bt_with_test_data()[['city']]
     bt['uuid1'] = SeriesUuid.sql_gen_random_uuid(bt)
     # now bt['uuid1'] has not been evaluated, so copying the column should copy the unevaluated expression
@@ -169,7 +169,7 @@ def test_get_df_materialized_model_non_deterministic_expressions():
             [3, 'Drylts', ANY, ANY, False],
         ]
     assert_equals_data(bt, expected_columns=expected_columns, expected_data=expected_data)
-    bt = bt.get_df_materialized_model(node_name='node')
+    bt = bt.materialize(node_name='node')
     # Now bt['uuid1'] has been evaluated, so copying the column should copy the value not just the expression
     bt['uuid3'] = bt['uuid1']
     # Now a comparison should give True

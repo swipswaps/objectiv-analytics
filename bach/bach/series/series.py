@@ -393,7 +393,7 @@ class Series(ABC):
             raise Exception('Function not supported on Series without index')
         if len(self.index) > 1:
             raise NotImplementedError('Index only implemented for simple indexes.')
-        frame = self.to_frame().get_df_materialized_model(node_name='series_getitem')
+        frame = self.to_frame().materialize(node_name='series_getitem')
         series = frame[list(frame.index.values())[0] == key]
         assert isinstance(series, self.__class__)
 
