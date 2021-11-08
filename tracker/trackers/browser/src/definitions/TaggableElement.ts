@@ -3,6 +3,6 @@
  */
 
 /**
- * A Trackable Element is an HTMLElement or an SVGElement
+ * A Taggable Element is an HTMLElement or an SVGElement
  */
 export type TaggableElement = HTMLElement | SVGElement;

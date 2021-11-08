@@ -6,13 +6,13 @@ import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
 import { create, is, validate } from 'superstruct';
 import { runIfValueIsNotUndefined } from '../common/runIfValueIsNotUndefined';
 import { stringifyLocationContext } from '../common/stringifiers/stringifyLocationContext';
-import { stringifyTrackClicksAttribute } from '../common/stringifiers/stringifyTrackClicksAttribute';
-import { stringifyTrackVisibilityAttribute } from '../common/stringifiers/stringifyTrackVisibilityAttribute';
-import { stringifyValidateAttribute } from '../common/stringifiers/stringifyValidateAttribute';
+import { stringifyTrackClicks } from '../common/stringifiers/stringifyTrackClicks';
+import { stringifyTrackVisibility } from '../common/stringifiers/stringifyTrackVisibility';
+import { stringifyValidate } from '../common/stringifiers/stringifyValidate';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { AnyClickableContext, AnySectionContext, InputContext } from '../definitions/LocationContext';
-import { StringifiedLocationTaggingAttributes } from '../definitions/StringifiedLocationTaggingAttributes';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
 import { TagLocationParameters } from '../definitions/TagLocationParameters';
 import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
 
@@ -51,14 +51,14 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
       [TaggingAttribute.elementId]: generateUUID(),
       [TaggingAttribute.parentElementId]: parentElementId,
       [TaggingAttribute.context]: stringifyLocationContext(instance),
-      [TaggingAttribute.trackClicks]: runIfValueIsNotUndefined(stringifyTrackClicksAttribute, trackClicks),
+      [TaggingAttribute.trackClicks]: runIfValueIsNotUndefined(stringifyTrackClicks, trackClicks),
       [TaggingAttribute.trackBlurs]: runIfValueIsNotUndefined(JSON.stringify, trackBlurs),
-      [TaggingAttribute.trackVisibility]: runIfValueIsNotUndefined(stringifyTrackVisibilityAttribute, trackVisibility),
-      [TaggingAttribute.validate]: runIfValueIsNotUndefined(stringifyValidateAttribute, options?.validate),
+      [TaggingAttribute.trackVisibility]: runIfValueIsNotUndefined(stringifyTrackVisibility, trackVisibility),
+      [TaggingAttribute.validate]: runIfValueIsNotUndefined(stringifyValidate, options?.validate),
     };
 
     // Validate
-    validate(LocationTaggingAttributes, StringifiedLocationTaggingAttributes);
+    validate(LocationTaggingAttributes, TagLocationAttributes);
 
     // Strip out undefined attributes and return
     getObjectKeys(LocationTaggingAttributes).forEach((key) => {

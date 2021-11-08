@@ -3,11 +3,11 @@
  */
 
 import { TrackerEvent } from '@objectiv/tracker-core';
-import { TrackerQueueLocalStorageStore } from '../src';
+import { TrackerQueueLocalStorage } from '../src';
 import { localStorageMock } from './mocks/localStorageMock';
 import { mockConsole } from './mocks/MockConsole';
 
-describe('TrackerQueueLocalStorageStore', () => {
+describe('TrackerQueueLocalStorage', () => {
   const TrackerEvent1 = new TrackerEvent({ id: 'a', _type: 'a' });
   const TrackerEvent2 = new TrackerEvent({ id: 'b', _type: 'b' });
   const TrackerEvent3 = new TrackerEvent({ id: 'c', _type: 'c' });
@@ -18,7 +18,7 @@ describe('TrackerQueueLocalStorageStore', () => {
     });
 
     it('should read all Events', async () => {
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id', console: mockConsole });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'app-id', console: mockConsole });
       await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
       expect(trackerQueueStore.length).toBe(3);
 
@@ -28,7 +28,7 @@ describe('TrackerQueueLocalStorageStore', () => {
     });
 
     it('should read two Events', async () => {
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id', console: mockConsole });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'app-id', console: mockConsole });
       await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
       expect(trackerQueueStore.length).toBe(3);
 
@@ -38,7 +38,7 @@ describe('TrackerQueueLocalStorageStore', () => {
     });
 
     it('should allow filtering when reading Events', async () => {
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id' });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'app-id' });
       await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
       expect(trackerQueueStore.length).toBe(3);
 
@@ -48,7 +48,7 @@ describe('TrackerQueueLocalStorageStore', () => {
     });
 
     it('should delete Events', async () => {
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id' });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'app-id' });
       await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
       expect(trackerQueueStore.length).toBe(3);
 
@@ -64,7 +64,7 @@ describe('TrackerQueueLocalStorageStore', () => {
     });
 
     it('should delete all Events', async () => {
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id' });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'app-id' });
       await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
       expect(trackerQueueStore.length).toBe(3);
 
@@ -77,7 +77,7 @@ describe('TrackerQueueLocalStorageStore', () => {
 
   describe('Persistence', () => {
     it('should write three events in the store', async () => {
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id' });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'app-id' });
       await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
       expect(trackerQueueStore.length).toBe(3);
       const events = await trackerQueueStore.read();
@@ -85,7 +85,7 @@ describe('TrackerQueueLocalStorageStore', () => {
     });
 
     it('should be able to access the events written in the previous test', async () => {
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id' });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'app-id' });
       expect(trackerQueueStore.length).toBe(3);
       const events = await trackerQueueStore.read();
       expect(events.map((event) => event.id)).toStrictEqual(['a', 'b', 'c']);
@@ -104,7 +104,7 @@ describe('TrackerQueueLocalStorageStore', () => {
       const localStorageKey = `objectiv-events-queue-${trackerId}`;
       localStorage.setItem(localStorageKey, corruptedValue);
       expect(localStorage.getItem(localStorageKey)).toBe(corruptedValue);
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'broken' });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'broken' });
       expect(trackerQueueStore.length).toBe(0);
       const events = await trackerQueueStore.read();
       expect(events).toStrictEqual([]);
@@ -116,7 +116,7 @@ describe('TrackerQueueLocalStorageStore', () => {
       const localStorageKey = `objectiv-events-queue-${trackerId}`;
       localStorage.setItem(localStorageKey, corruptedValue);
       expect(localStorage.getItem(localStorageKey)).toBe(corruptedValue);
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'broken', console: mockConsole });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'broken', console: mockConsole });
       expect(trackerQueueStore.length).toBe(0);
       const events = await trackerQueueStore.read();
       expect(events).toStrictEqual([]);
@@ -124,12 +124,12 @@ describe('TrackerQueueLocalStorageStore', () => {
       expect(mockConsole.error).toHaveBeenCalledTimes(2);
       expect(mockConsole.error).toHaveBeenNthCalledWith(
         1,
-        '%c｢objectiv:TrackerQueueLocalStorageStore｣ Failed to parse Events from localStorage: SyntaxError: Unexpected token o in JSON at position 1',
+        '%c｢objectiv:TrackerQueueLocalStorage｣ Failed to parse Events from localStorage: SyntaxError: Unexpected token o in JSON at position 1',
         'font-weight: bold'
       );
       expect(mockConsole.error).toHaveBeenNthCalledWith(
         2,
-        '%c｢objectiv:TrackerQueueLocalStorageStore｣ Failed to parse Events from localStorage: SyntaxError: Unexpected token o in JSON at position 1',
+        '%c｢objectiv:TrackerQueueLocalStorage｣ Failed to parse Events from localStorage: SyntaxError: Unexpected token o in JSON at position 1',
         'font-weight: bold'
       );
     });
@@ -139,7 +139,7 @@ describe('TrackerQueueLocalStorageStore', () => {
         throw Error('nope');
       });
       Object.defineProperty(window, 'localStorage', { value: localStorageMock });
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id' });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'app-id' });
       expect(trackerQueueStore.length).toBe(0);
       await trackerQueueStore.write(TrackerEvent1);
     });
@@ -149,13 +149,13 @@ describe('TrackerQueueLocalStorageStore', () => {
         throw Error('nope');
       });
       Object.defineProperty(window, 'localStorage', { value: localStorageMock });
-      const trackerQueueStore = new TrackerQueueLocalStorageStore({ trackerId: 'app-id', console: mockConsole });
+      const trackerQueueStore = new TrackerQueueLocalStorage({ trackerId: 'app-id', console: mockConsole });
       expect(trackerQueueStore.length).toBe(0);
       await trackerQueueStore.write(TrackerEvent1);
       expect(mockConsole.error).toHaveBeenCalledTimes(1);
       expect(mockConsole.error).toHaveBeenNthCalledWith(
         1,
-        '%c｢objectiv:TrackerQueueLocalStorageStore｣ Failed to write Events to localStorage: Error: nope',
+        '%c｢objectiv:TrackerQueueLocalStorage｣ Failed to write Events to localStorage: Error: nope',
         'font-weight: bold'
       );
     });

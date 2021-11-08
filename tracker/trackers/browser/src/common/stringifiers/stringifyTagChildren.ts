@@ -9,7 +9,7 @@ import { ValidChildrenTaggingQuery } from '../../definitions/ValidChildrenTaggin
 /**
  * ChildrenTaggingAttribute stringifier
  */
-export const stringifyChildrenTaggingAttribute = (queries: ChildrenTaggingQueries) => {
+export const stringifyTagChildren = (queries: ChildrenTaggingQueries) => {
   if (!(typeof queries === 'object')) {
     throw new Error(`Visibility must be an object, received: ${JSON.stringify(queries)}`);
   }

@@ -9,7 +9,7 @@ import { ValidChildrenTaggingQuery } from '../../definitions/ValidChildrenTaggin
 /**
  * ChildrenTaggingAttribute parser
  */
-export const parseChildrenTaggingAttribute = (stringifiedChildrenTaggingAttribute: string | null) => {
+export const parseTagChildren = (stringifiedChildrenTaggingAttribute: string | null) => {
   if (stringifiedChildrenTaggingAttribute === null) {
     throw new Error('Received `null` while attempting to parse Children Tagging Attribute');
   }

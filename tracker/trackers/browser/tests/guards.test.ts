@@ -3,8 +3,8 @@
  */
 
 import {
-  isTagChildrenElement,
   isParentTaggedElement,
+  isTagChildrenElement,
   isTaggableElement,
   isTaggedElement,
   TaggingAttribute,

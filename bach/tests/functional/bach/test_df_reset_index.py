@@ -124,7 +124,7 @@ def test_set_index():
     assert list(xbt.data.keys()) == ['x', 'municipality', 'inhabitants']
 
     # try to set a series as index
-    abt = bt.set_index(bt.municipality.slice(3), drop=True)
+    abt = bt.set_index(bt.municipality.str[:3], drop=True)
     assert list(abt.index.keys()) == ['municipality']
     assert list(abt.data.keys()) == ['city', 'inhabitants']
     abt.head()

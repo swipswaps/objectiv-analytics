@@ -9,6 +9,7 @@ import { trackApplicationLoaded } from './eventTrackers/trackApplicationLoaded';
 import { getTracker } from './getTracker';
 import { AutoTrackingState } from './mutationObserver/AutoTrackingState';
 import { makeMutationCallback } from './mutationObserver/makeMutationCallback';
+import { trackNewElements } from './mutationObserver/trackNewElements';
 
 /**
  * Initializes our automatic tracking, based on Mutation Observer.
@@ -29,6 +30,9 @@ export const startAutoTracking = (
 
     // Create Mutation Observer
     AutoTrackingState.observerInstance = new MutationObserver(mutationCallback);
+
+    // Track existing DOM, in case our observer gets booted in an already populated DOM (SSR)
+    trackNewElements(document.documentElement, getTracker());
 
     // Start observing DOM
     AutoTrackingState.observerInstance.observe(document, {

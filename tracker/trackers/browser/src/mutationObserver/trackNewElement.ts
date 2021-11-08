@@ -6,8 +6,8 @@ import { getLocationPath, TrackerConsole, TrackerElementLocations } from '@objec
 import { BrowserTracker } from '../BrowserTracker';
 import { getElementLocationStack } from '../common/getElementLocationStack';
 import { isTaggedElement } from '../common/guards/isTaggedElement';
-import { parseTrackClicksAttribute } from '../common/parsers/parseTrackClicksAttribute';
-import { parseValidateAttribute } from '../common/parsers/parseValidateAttribute';
+import { parseTrackClicks } from '../common/parsers/parseTrackClicks';
+import { parseValidate } from '../common/parsers/parseValidate';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { makeBlurEventHandler } from './makeBlurEventHandler';
@@ -32,7 +32,7 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker, conso
 
       // Gather Element id and Validate attributes to determine whether we can and if we should validate the Location
       const elementId = element.getAttribute(TaggingAttribute.elementId);
-      const validate = parseValidateAttribute(element.getAttribute(TaggingAttribute.validate));
+      const validate = parseValidate(element.getAttribute(TaggingAttribute.validate));
 
       // Add this element to TrackerState - this will also check if its Location is unique
       if (elementId && validate.locationUniqueness) {
@@ -58,7 +58,7 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker, conso
       // Click tracking (buttons, links)
       if (element.hasAttribute(TaggingAttribute.trackClicks)) {
         // Parse and validate attribute - then convert it into options
-        const trackClicksOptions = parseTrackClicksAttribute(element.getAttribute(TaggingAttribute.trackClicks));
+        const trackClicksOptions = parseTrackClicks(element.getAttribute(TaggingAttribute.trackClicks));
 
         // If trackClicks is specifically disabled, nothing to do
         if (!trackClicksOptions) {

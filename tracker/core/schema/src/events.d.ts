@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { AbstractNonInteractiveEvent, AbstractVideoEvent, AbstractInteractiveEvent } from './abstracts';
+import { AbstractInteractiveEvent, AbstractNonInteractiveEvent, AbstractVideoEvent } from './abstracts';
 
 /**
  * Non interactive events, are events that are not (directly) triggered by an interaction. For example:

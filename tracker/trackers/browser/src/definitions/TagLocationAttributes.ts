@@ -4,12 +4,12 @@
 
 import { Infer, object, optional, string } from 'superstruct';
 import { TaggingAttribute } from './TaggingAttribute';
-import { Uuid } from './uuid';
+import { Uuid } from './Uuid';
 
 /**
  * The object that Location Taggers return, stringified
  */
-export const StringifiedLocationTaggingAttributes = object({
+export const TagLocationAttributes = object({
   [TaggingAttribute.elementId]: Uuid,
   [TaggingAttribute.parentElementId]: optional(Uuid),
   [TaggingAttribute.context]: string(),
@@ -18,4 +18,4 @@ export const StringifiedLocationTaggingAttributes = object({
   [TaggingAttribute.trackVisibility]: optional(string()),
   [TaggingAttribute.validate]: optional(string()),
 });
-export type StringifiedLocationTaggingAttributes = Infer<typeof StringifiedLocationTaggingAttributes>;
+export type TagLocationAttributes = Infer<typeof TagLocationAttributes>;

@@ -55,7 +55,6 @@ def test_json_compare():
 def test_json_getitem():
     bt = get_bt_with_json_data()
     bts = bt.mixed_column.json[0]
-    print(bts.view_sql())
     assert_equals_data(
         bts,
         expected_columns=['_index_row', 'mixed_column'],
@@ -67,7 +66,6 @@ def test_json_getitem():
         ]
     )
     bts = bt.mixed_column.json[-2]
-    print(bts.view_sql())
     assert_equals_data(
         bts,
         expected_columns=['_index_row', 'mixed_column'],

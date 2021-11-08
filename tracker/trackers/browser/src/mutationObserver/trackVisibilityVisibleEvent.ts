@@ -3,14 +3,14 @@
  */
 
 import { BrowserTracker } from '../BrowserTracker';
-import { parseTrackVisibilityAttribute } from '../common/parsers/parseTrackVisibilityAttribute';
+import { parseTrackVisibility } from '../common/parsers/parseTrackVisibility';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { trackSectionVisible } from '../eventTrackers/trackSectionVisible';
 
 /**
- * Given a newly added Element node it will determine whether to track a visibility:visible event for it.
+ * Checks whether to trigger a visibility: visible event for the given TaggedElement.
  * Visible Events are triggered only for Elements that have their visibility auto-tracked or manually set to visible.
  */
 export const trackVisibilityVisibleEvent = (element: TaggedElement, tracker: BrowserTracker) => {
@@ -18,7 +18,7 @@ export const trackVisibilityVisibleEvent = (element: TaggedElement, tracker: Bro
     if (!element.hasAttribute(TaggingAttribute.trackVisibility)) {
       return;
     }
-    const trackVisibility = parseTrackVisibilityAttribute(element.getAttribute(TaggingAttribute.trackVisibility));
+    const trackVisibility = parseTrackVisibility(element.getAttribute(TaggingAttribute.trackVisibility));
     if (trackVisibility.mode === 'auto' || (trackVisibility.mode === 'manual' && trackVisibility.isVisible)) {
       trackSectionVisible({ element, tracker });
     }

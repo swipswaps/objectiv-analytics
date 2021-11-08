@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { AbstractSectionContext, AbstractItemContext, AbstractActionContext } from './abstracts';
+import { AbstractActionContext, AbstractItemContext, AbstractSectionContext } from './abstracts';
 
 /**
  * SectionContexts are special LocationContexts representing a logical area of the UI or the system.

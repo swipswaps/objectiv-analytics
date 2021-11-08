@@ -2,16 +2,17 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+import { GuardableElement } from '@objectiv/tracker-browser';
 import { TrackerElementLocations } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { isTaggedElement } from '../common/guards/isTaggedElement';
-import { parseTrackVisibilityAttribute } from '../common/parsers/parseTrackVisibilityAttribute';
+import { parseTrackVisibility } from '../common/parsers/parseTrackVisibility';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { trackSectionHidden } from '../eventTrackers/trackSectionHidden';
 
 /**
- * Given a removed Element node it will:
+ * Given a removed GuardableElement node it will:
  *
  *   1. Determine whether to track a visibility:hidden event for it.
  *      Hidden Events are triggered only for automatically tracked Elements.
@@ -19,12 +20,12 @@ import { trackSectionHidden } from '../eventTrackers/trackSectionHidden';
  *   2. Remove the Element from the TrackerElementLocations state.
  *      This is both a clean-up and a way to allow it to be re-rendered as-is, as it happens with some UI libraries.
  */
-export const trackRemovedElement = (element: Element, tracker: BrowserTracker) => {
+export const trackRemovedElement = (element: GuardableElement, tracker: BrowserTracker) => {
   try {
     if (isTaggedElement(element)) {
       // Process visibility:hidden events in mode:auto
       if (element.hasAttribute(TaggingAttribute.trackVisibility)) {
-        const trackVisibility = parseTrackVisibilityAttribute(element.getAttribute(TaggingAttribute.trackVisibility));
+        const trackVisibility = parseTrackVisibility(element.getAttribute(TaggingAttribute.trackVisibility));
         if (trackVisibility.mode === 'auto') {
           trackSectionHidden({ element, tracker });
         }

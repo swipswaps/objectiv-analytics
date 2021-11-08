@@ -22,7 +22,7 @@ def test_sort_values_basic():
 
 def test_sort_values_expression():
     bt = get_bt_with_test_data()[['city', 'inhabitants']]
-    bt['city'] = bt['city'].slice(2, None)
+    bt['city'] = bt['city'].str[2:]
     bt = bt.sort_values('city')
     assert_equals_data(
         bt,
@@ -38,7 +38,7 @@ def test_sort_values_expression():
 def test_sort_values_non_existing_column():
     # Sort by an expression that is not in the DataFrame anymore
     bt = get_bt_with_test_data()[['city', 'inhabitants']]
-    bt['city'] = bt['city'].slice(2, None)
+    bt['city'] = bt['city'].str[2:]
     bt['City_Copy'] = bt['city']
     bt = bt.sort_values('City_Copy')
     bt = bt[['inhabitants']]
@@ -66,7 +66,7 @@ def test_sort_values_parameters():
             bt.sort_values(**kwargs),
             expected_columns=['_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants',
                               'founding'],
-            expected_data=df_to_list(bt.to_df().sort_values(**kwargs))
+            expected_data=df_to_list(bt.to_pandas().sort_values(**kwargs))
         )
 
 

@@ -5,15 +5,15 @@
 import { makeSectionContext } from '@objectiv/tracker-core';
 import {
   ChildrenTaggingQueries,
-  parseChildrenTaggingAttribute,
   parseLocationContext,
-  parseTrackClicksAttribute,
-  parseTrackVisibilityAttribute,
-  parseValidateAttribute,
-  stringifyChildrenTaggingAttribute,
+  parseTagChildren,
+  parseTrackClicks,
+  parseTrackVisibility,
+  parseValidate,
   stringifyLocationContext,
-  stringifyTrackVisibilityAttribute,
-  stringifyValidateAttribute,
+  stringifyTagChildren,
+  stringifyTrackVisibility,
+  stringifyValidate,
   tagElement,
   TaggingAttribute,
   TrackClicksAttribute,
@@ -46,122 +46,122 @@ describe('Custom structs', () => {
   describe('Visibility Tagging Attribute', () => {
     it('Should stringify and parse Visibility:auto Attributes', () => {
       const visibilityAuto: TrackVisibilityAttribute = { mode: 'auto' };
-      const stringifiedVisibilityAuto = stringifyTrackVisibilityAttribute(visibilityAuto);
+      const stringifiedVisibilityAuto = stringifyTrackVisibility(visibilityAuto);
       expect(stringifiedVisibilityAuto).toStrictEqual(JSON.stringify(visibilityAuto));
 
-      const parsedVisibilityAuto = parseTrackVisibilityAttribute(stringifiedVisibilityAuto);
+      const parsedVisibilityAuto = parseTrackVisibility(stringifiedVisibilityAuto);
       expect(parsedVisibilityAuto).toStrictEqual(visibilityAuto);
     });
 
     it('Should stringify and parse Visibility:manual:visible Attributes', () => {
       const visibilityManualVisible: TrackVisibilityAttribute = { mode: 'manual', isVisible: true };
-      const stringifiedVisibilityManualVisible = stringifyTrackVisibilityAttribute(visibilityManualVisible);
+      const stringifiedVisibilityManualVisible = stringifyTrackVisibility(visibilityManualVisible);
       expect(stringifiedVisibilityManualVisible).toStrictEqual(JSON.stringify(visibilityManualVisible));
 
-      const parsedVisibilityManualVisible = parseTrackVisibilityAttribute(stringifiedVisibilityManualVisible);
+      const parsedVisibilityManualVisible = parseTrackVisibility(stringifiedVisibilityManualVisible);
       expect(parsedVisibilityManualVisible).toStrictEqual(visibilityManualVisible);
     });
 
     it('Should stringify and parse Visibility:manual:hidden Attributes', () => {
       const visibilityManualHidden: TrackVisibilityAttribute = { mode: 'manual', isVisible: false };
-      const stringifiedVisibilityManualHidden = stringifyTrackVisibilityAttribute(visibilityManualHidden);
+      const stringifiedVisibilityManualHidden = stringifyTrackVisibility(visibilityManualHidden);
       expect(stringifiedVisibilityManualHidden).toStrictEqual(JSON.stringify(visibilityManualHidden));
 
-      const parsedVisibilityManualHidden = parseTrackVisibilityAttribute(stringifiedVisibilityManualHidden);
+      const parsedVisibilityManualHidden = parseTrackVisibility(stringifiedVisibilityManualHidden);
       expect(parsedVisibilityManualHidden).toStrictEqual(visibilityManualHidden);
     });
 
     it('Should not stringify objects that are not Visibility Attributes objects or invalid ones', () => {
       // @ts-ignore
-      expect(() => stringifyTrackVisibilityAttribute('string')).toThrow();
+      expect(() => stringifyTrackVisibility('string')).toThrow();
       // @ts-ignore
-      expect(() => stringifyTrackVisibilityAttribute(true)).toThrow();
+      expect(() => stringifyTrackVisibility(true)).toThrow();
       // @ts-ignore
-      expect(() => stringifyTrackVisibilityAttribute({ mode: 'nope' })).toThrow();
+      expect(() => stringifyTrackVisibility({ mode: 'nope' })).toThrow();
       // @ts-ignore
-      expect(() => stringifyTrackVisibilityAttribute({ mode: 'auto', isVisible: true })).toThrow();
+      expect(() => stringifyTrackVisibility({ mode: 'auto', isVisible: true })).toThrow();
       // @ts-ignore
-      expect(() => stringifyTrackVisibilityAttribute({ mode: 'auto', isVisible: 0 })).toThrow();
+      expect(() => stringifyTrackVisibility({ mode: 'auto', isVisible: 0 })).toThrow();
       // @ts-ignore
-      expect(() => stringifyTrackVisibilityAttribute({ mode: 'manual' })).toThrow();
+      expect(() => stringifyTrackVisibility({ mode: 'manual' })).toThrow();
     });
 
     it('Should not parse strings that are not Visibility Attributes or malformed', () => {
       // @ts-ignore
-      expect(() => parseTrackVisibilityAttribute('{"mode":auto}')).toThrow();
+      expect(() => parseTrackVisibility('{"mode":auto}')).toThrow();
       // @ts-ignore
-      expect(() => parseTrackVisibilityAttribute('{"mode":"auto","isVisible":true}')).toThrow();
+      expect(() => parseTrackVisibility('{"mode":"auto","isVisible":true}')).toThrow();
       // @ts-ignore
-      expect(() => parseTrackVisibilityAttribute('{"mode":"auto","isVisible":false}')).toThrow();
+      expect(() => parseTrackVisibility('{"mode":"auto","isVisible":false}')).toThrow();
       // @ts-ignore
-      expect(() => parseTrackVisibilityAttribute('{"mode":"manual"}')).toThrow();
+      expect(() => parseTrackVisibility('{"mode":"manual"}')).toThrow();
       // @ts-ignore
-      expect(() => parseTrackVisibilityAttribute('{"mode":"manual","isVisible":0}')).toThrow();
+      expect(() => parseTrackVisibility('{"mode":"manual","isVisible":0}')).toThrow();
       // @ts-ignore
-      expect(() => parseTrackVisibilityAttribute('{"mode":"manual","isVisible":1}')).toThrow();
+      expect(() => parseTrackVisibility('{"mode":"manual","isVisible":1}')).toThrow();
       // @ts-ignore
-      expect(() => parseTrackVisibilityAttribute('{"mode":"manual","isVisible":null}')).toThrow();
+      expect(() => parseTrackVisibility('{"mode":"manual","isVisible":null}')).toThrow();
       // @ts-ignore
-      expect(() => parseTrackVisibilityAttribute('{"mode":"manual","isVisible":"true"}')).toThrow();
+      expect(() => parseTrackVisibility('{"mode":"manual","isVisible":"true"}')).toThrow();
     });
   });
 
   describe('Validate Attribute', () => {
     it('Should parse to { locationUniqueness: true } by default', () => {
-      const parsedValidateEmptyObject = parseValidateAttribute('{}');
+      const parsedValidateEmptyObject = parseValidate('{}');
       expect(parsedValidateEmptyObject).toStrictEqual({ locationUniqueness: true });
 
-      const parsedValidateNull = parseValidateAttribute(null);
+      const parsedValidateNull = parseValidate(null);
       expect(parsedValidateNull).toStrictEqual({ locationUniqueness: true });
     });
 
     it('Should stringify locationUniqueness as expected', () => {
       const validateLocationFalse: ValidateAttribute = { locationUniqueness: false };
-      const stringifiedValidateLocationFalse = stringifyValidateAttribute(validateLocationFalse);
+      const stringifiedValidateLocationFalse = stringifyValidate(validateLocationFalse);
       expect(stringifiedValidateLocationFalse).toStrictEqual(JSON.stringify(validateLocationFalse));
 
       const validateLocationTrue: ValidateAttribute = { locationUniqueness: true };
-      const stringifiedValidateLocationTrue = stringifyValidateAttribute(validateLocationTrue);
+      const stringifiedValidateLocationTrue = stringifyValidate(validateLocationTrue);
       expect(stringifiedValidateLocationTrue).toStrictEqual(JSON.stringify(validateLocationTrue));
     });
 
     it('Should not stringify objects that are not Validate Attributes objects or invalid ones', () => {
       // @ts-ignore
-      expect(() => stringifyValidateAttribute('string')).toThrow();
+      expect(() => stringifyValidate('string')).toThrow();
       // @ts-ignore
-      expect(() => stringifyValidateAttribute(true)).toThrow();
+      expect(() => stringifyValidate(true)).toThrow();
       // @ts-ignore
-      expect(() => stringifyValidateAttribute({})).toThrow();
+      expect(() => stringifyValidate({})).toThrow();
       // @ts-ignore
-      expect(() => stringifyValidateAttribute({ locationUniqueness: 'what' })).toThrow();
+      expect(() => stringifyValidate({ locationUniqueness: 'what' })).toThrow();
       // @ts-ignore
-      expect(() => stringifyValidateAttribute({ locationUniqueness: undefined })).toThrow();
+      expect(() => stringifyValidate({ locationUniqueness: undefined })).toThrow();
       // @ts-ignore
-      expect(() => stringifyValidateAttribute({ locationUniqueness: null })).toThrow();
+      expect(() => stringifyValidate({ locationUniqueness: null })).toThrow();
     });
 
     it('Should not parse strings that are not Visibility Attributes or malformed', () => {
       // @ts-ignore
-      expect(() => parseValidateAttribute('')).toThrow();
+      expect(() => parseValidate('')).toThrow();
       // @ts-ignore
-      expect(() => parseValidateAttribute('{"whatIsThis":true}')).toThrow();
+      expect(() => parseValidate('{"whatIsThis":true}')).toThrow();
       // @ts-ignore
-      expect(() => parseValidateAttribute('{"locationUniqueness":"wrong"}')).toThrow();
+      expect(() => parseValidate('{"locationUniqueness":"wrong"}')).toThrow();
       // @ts-ignore
-      expect(() => parseValidateAttribute('{"locationUniqueness":"false"}')).toThrow();
+      expect(() => parseValidate('{"locationUniqueness":"false"}')).toThrow();
       // @ts-ignore
-      expect(() => parseValidateAttribute('{"locationUniqueness":1}')).toThrow();
+      expect(() => parseValidate('{"locationUniqueness":1}')).toThrow();
       // @ts-ignore
-      expect(() => parseValidateAttribute('{"locationUniqueness":null}')).toThrow();
+      expect(() => parseValidate('{"locationUniqueness":null}')).toThrow();
     });
   });
 
   describe('Children Tagging Attribute', () => {
     it('Should stringify and parse empty Children Attributes', () => {
-      const stringifiedEmptyChildren = stringifyChildrenTaggingAttribute([]);
+      const stringifiedEmptyChildren = stringifyTagChildren([]);
       expect(stringifiedEmptyChildren).toStrictEqual('[]');
 
-      const parsedEmptyChildren = parseChildrenTaggingAttribute(stringifiedEmptyChildren);
+      const parsedEmptyChildren = parseTagChildren(stringifiedEmptyChildren);
       expect(parsedEmptyChildren).toStrictEqual([]);
     });
 
@@ -173,7 +173,7 @@ describe('Custom structs', () => {
           tagAs: elementTaggingAttributes,
         },
       ];
-      const stringifiedChildren = stringifyChildrenTaggingAttribute(children);
+      const stringifiedChildren = stringifyTagChildren(children);
       expect(stringifiedChildren).toStrictEqual(
         JSON.stringify([
           {
@@ -183,7 +183,7 @@ describe('Custom structs', () => {
         ])
       );
 
-      const parsedChildren = parseChildrenTaggingAttribute(stringifiedChildren);
+      const parsedChildren = parseTagChildren(stringifiedChildren);
       expect(parsedChildren).toStrictEqual(
         children?.map((childQuery) => ({
           ...childQuery,
@@ -321,7 +321,7 @@ describe('Custom structs', () => {
         const trackClicks: TrackClicksAttribute = testCase.attribute;
         const stringifiedTrackClicks = JSON.stringify(trackClicks);
 
-        const trackClickOptions = parseTrackClicksAttribute(stringifiedTrackClicks);
+        const trackClickOptions = parseTrackClicks(stringifiedTrackClicks);
 
         expect(trackClickOptions).toStrictEqual(testCase.options);
       });
