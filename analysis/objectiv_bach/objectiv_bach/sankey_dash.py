@@ -2,6 +2,7 @@ from textwrap import dedent as d
 from dash import dcc, html, callback_context
 from dash.dependencies import Input, Output, State
 
+
 def get_app(Dash, feature_frame):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 

@@ -1,11 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import pytest
-
-from bach.types import TypeRegistry
-from bach.series.series_objectiv import SeriesGlobalContexts, SeriesLocationStack
-from tests.functional.bach.test_data_and_utils import  get_bt_with_json_data_real, assert_equals_data
+from tests.functional.objectiv_bach.test_data_and_utils import get_bt_with_json_data_real, assert_equals_data
 
 
 def test_get_real_data():
@@ -22,14 +18,8 @@ def test_get_real_data():
         ]
     )
 
-def test_objectiv_stack_type(monkeypatch):
-    # make sure monkeypatch the type-registry, as it should be restored after this test finishes.
-    monkeypatch.setattr('bach.types._registry', TypeRegistry())
 
-    from bach.types import _registry
-    _registry.register_dtype_series(SeriesGlobalContexts, [], override_registered_types=True)
-    _registry.register_dtype_series(SeriesLocationStack, [], override_registered_types=True)
-
+def test_objectiv_stack_type():
     bt = get_bt_with_json_data_real()
 
     bt['a'] = bt.global_contexts.astype('objectiv_global_context')
@@ -46,14 +36,8 @@ def test_objectiv_stack_type(monkeypatch):
         ]
     )
 
-def test_objectiv_stack_type2(monkeypatch):
-    # make sure monkeypatch the type-registry, as it should be restored after this test finishes.
-    monkeypatch.setattr('bach.types._registry', TypeRegistry())
 
-    from bach.types import _registry
-    _registry.register_dtype_series(SeriesGlobalContexts, [], override_registered_types=True)
-    _registry.register_dtype_series(SeriesLocationStack, [], override_registered_types=True)
-
+def test_objectiv_stack_type2():
     bt = get_bt_with_json_data_real()
 
     bt['a'] = bt.global_contexts.astype('objectiv_global_context')
@@ -70,14 +54,8 @@ def test_objectiv_stack_type2(monkeypatch):
         ]
     )
 
+
 def test_objectiv_stack_type3(monkeypatch):
-    # make sure monkeypatch the type-registry, as it should be restored after this test finishes.
-    monkeypatch.setattr('bach.types._registry', TypeRegistry())
-
-    from bach.types import _registry
-    _registry.register_dtype_series(SeriesGlobalContexts, [], override_registered_types=True)
-    _registry.register_dtype_series(SeriesLocationStack, [], override_registered_types=True)
-
     bt = get_bt_with_json_data_real()
 
     bt['b'] = bt.location_stack.astype('objectiv_location_stack')
@@ -94,14 +72,8 @@ def test_objectiv_stack_type3(monkeypatch):
         ]
     )
 
+
 def test_objectiv_stack_type4(monkeypatch):
-    # make sure monkeypatch the type-registry, as it should be restored after this test finishes.
-    monkeypatch.setattr('bach.types._registry', TypeRegistry())
-
-    from bach.types import _registry
-    _registry.register_dtype_series(SeriesGlobalContexts, [], override_registered_types=True)
-    _registry.register_dtype_series(SeriesLocationStack, [], override_registered_types=True)
-
     bt = get_bt_with_json_data_real()
 
     bt['b'] = bt.location_stack.astype('objectiv_location_stack')
@@ -118,14 +90,8 @@ def test_objectiv_stack_type4(monkeypatch):
         ]
     )
 
+
 def test_objectiv_stack_type5(monkeypatch):
-    # make sure monkeypatch the type-registry, as it should be restored after this test finishes.
-    monkeypatch.setattr('bach.types._registry', TypeRegistry())
-
-    from bach.types import _registry
-    _registry.register_dtype_series(SeriesGlobalContexts, [], override_registered_types=True)
-    _registry.register_dtype_series(SeriesLocationStack, [], override_registered_types=True)
-
     bt = get_bt_with_json_data_real()
 
     bt['b'] = bt.location_stack.astype('objectiv_location_stack')

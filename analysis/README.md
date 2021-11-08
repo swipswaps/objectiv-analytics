@@ -12,6 +12,7 @@ export PYTHONPATH=.
 # be fixed with: sudo apt-get install libpq-dev
 
 pip install -e ../bach/
+pip install -e objectiv_bach
 pip install jupyter plotly matplotlib # needed for the website_analytics.ipynb notebook
 ```
 
