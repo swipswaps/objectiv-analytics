@@ -1,5 +1,6 @@
 # Objectiv JavaScript Tracker
-[PLACEHOLDER: Objectiv Tracker introductory text]
+
+Objectiv tracker monorepo.
 
 ---
 # Overview
