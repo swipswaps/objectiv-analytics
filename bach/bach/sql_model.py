@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 from typing import Dict, Any, Union, Sequence, TypeVar
 
 from bach.expression import Expression
+from sql_models.util import quote_identifier
 from sql_models.model import CustomSqlModel, SqlModel, SqlModelBuilder, SqlModelSpec, Materialization
 
 TB = TypeVar('TB', bound='BachSqlModel')
@@ -66,10 +67,10 @@ class SampleSqlModel(SqlModel):
     """
     def __init__(self, table_name: str, previous: SqlModel):
         self.previous = previous
-        sql = f'SELECT * FROM {table_name}'
+        sql = 'SELECT * FROM {table_name}'
         super().__init__(
             model_spec=CustomSqlModel(sql=sql, name='sample_node'),
-            properties={},
+            properties={'table_name': quote_identifier(table_name)},
             references={},
             materialization=Materialization.CTE
         )

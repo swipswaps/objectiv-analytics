@@ -34,7 +34,8 @@ class DataFrame:
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
     * head()
-    * to_df()
+    * to_pandas()
+    * The property accessors .values and .array
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
     only when one of the above mentioned data-transfer functions is called.
@@ -59,7 +60,8 @@ class DataFrame:
         """
         Instantiate a new DataFrame.
         There are utility class methods to easily create a DataFrame from existing data such as a
-        table (`from_table()`) or already instantiated sql-model (`from_model()`).
+        table (`from_table()`), an already instantiated sql-model (`from_model()`), or a pandas
+        dataframe (`from_pandas()`).
 
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain all columns/expressions that
@@ -242,75 +244,55 @@ class DataFrame:
         )
 
     @classmethod
-    def from_dataframe(cls,
-                       df: pandas.DataFrame,
-                       name: str,
-                       engine: Engine,
-                       convert_objects: bool = False,
-                       if_exists: str = 'fail'):
+    def from_pandas(
+            cls,
+            engine: Engine,
+            df: pandas.DataFrame,
+            convert_objects: bool,
+            name: str = 'loaded_data',
+            materialization: str = 'cte',
+            if_exists: str = 'fail'
+    ) -> 'DataFrame':
         """
-        Instantiate a new DataFrame based on the content of a Pandas DataFrame. Supported dtypes are
-        'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
-        This will first load the data into the database using pandas' df.to_sql() method.
+        Instantiate a new DataFrame based on the content of a Pandas DataFrame.
 
-        :param df: Pandas DataFrame to instantiate as DataFrame
-        :param name: name of the sql table the Pandas DataFrame will be written to
+        How the data is loaded depends on the chosen materialization:
+        1. 'table':  This will first write the data to a database table using pandas' df.to_sql() method.
+        2. 'cte': The data will be represented using a common table expression of the
+            form `select * from values()` in future queries.
+
+        The 'table' method requires database write access. The 'cte' method is side-effect free and doesn't
+        interact with the database at all. However the 'cte' method is only suitable for small quantities
+        of data. For anything over a dozen kilobytes of data it is recommended to store the data in a table
+        in the database first (e.g. by specifying 'table').
+
+        There are some small differences between how the different materializations handle NaN values. e.g.
+        'cte' does not support those for non-numeric columns, wheras 'table' converts them to 'NULL'
+
+        Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
+
         :param engine: db connection
+        :param df: Pandas DataFrame to instantiate as DataFrame
         :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
             pd.convert_dtypes() method where possible.
-        :param if_exists: {'fail', 'replace', 'append'}, default 'fail'
-            How to behave if the table already exists.
-
+        :param name:
+            * For 'table' materialization: name of the table that Pandas will write the data to.
+            * For 'cte' materialization: name of the node in the underlying sql-model graph.
+        :param materialization: {'cte', 'table'}. How to materialize the data
+        :param if_exists: {'fail', 'replace', 'append'}. Only applies to materialization='table'
+            How to behave if the table already exists:
             * fail: Raise a ValueError.
             * replace: Drop the table before inserting new values.
             * append: Insert new values to the existing table.
         """
-        if df.index.name is None:  # for now only one index allowed todo check this
-            index = '_index_0'
-        else:
-            index = f'_index_{df.index.name}'
-
-        # set the index as a normal column, this makes it easier to convert the dtype
-        df_copy = df.rename_axis(index).reset_index()
-
-        if convert_objects:
-            df_copy = df_copy.convert_dtypes(convert_integer=False,
-                                             convert_boolean=False,
-                                             convert_floating=False)
-
-        # todo add support for 'timedelta64[ns]'. pd.to_sql writes timedelta as bigint to sql, so
-        # not implemented yet
-        supported_types = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool']
-        index_dtype = df_copy[index].dtype.name
-        if index_dtype not in supported_types:
-            raise ValueError(f"index is of type '{index_dtype}', should one of {supported_types}. "
-                             f"For 'object' columns convert_objects=True can be used to convert these columns"
-                             f"to type 'string'.")
-        dtypes = {str(column_name): dtype.name for column_name, dtype in df_copy.dtypes.items()
-                  if column_name in df.columns}
-        unsupported_dtypes = {str(column_name): dtype for column_name, dtype in dtypes.items()
-                              if dtype not in supported_types}
-        if unsupported_dtypes:
-            raise ValueError(f"dtypes {unsupported_dtypes} are not supported, should one of "
-                             f"{supported_types}. "
-                             f"For 'object' columns convert_objects=True can be used to convert these columns"
-                             f"to type 'string'.")
-
-        # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-        conn = engine.connect()
-        df_copy.to_sql(name=name, con=conn, if_exists=if_exists, index=False)
-        conn.close()
-
-        # Todo, this should use from_table from here on.
-        model = BachSqlModel(sql=f'SELECT * FROM {name}').instantiate()
-
-        # Should this also use _df_or_series?
-        return cls.get_instance(
+        from bach.from_pandas import from_pandas
+        return from_pandas(
             engine=engine,
-            base_node=model,
-            index_dtypes={index: index_dtype},
-            dtypes=dtypes,
-            group_by=None
+            df=df,
+            convert_objects=convert_objects,
+            materialization=materialization,
+            name=name,
+            if_exists=if_exists
         )
 
     @classmethod
@@ -1052,37 +1034,46 @@ class DataFrame:
                     for by_series, asc_item in zip(by_series_list, ascending)]
         return self.copy_override(order_by=order_by)
 
-    def to_df(self) -> pandas.DataFrame:
+    def to_pandas(self, limit: Union[int, slice] = None) -> pandas.DataFrame:
         """
         Run a SQL query representing the current state of this DataFrame against the database and return the
         resulting data as a Pandas DataFrame.
-
-        This function queries the database.
+        :param limit: The limit to apply, either as a max amount of rows or a slice.
+        :note: This function queries the database.
         """
-        conn = self.engine.connect()
-        sql = self.view_sql()
-        df = pandas.read_sql_query(sql, conn, index_col=list(self.index.keys()))
-        conn.close()
-        return df
+        with self.engine.connect() as conn:
+            sql = self.view_sql(limit=limit)
+            if len(self._index):
+                return pandas.read_sql_query(sql, conn, index_col=list(self._index.keys()))
+            else:
+                return pandas.read_sql_query(sql, conn)
 
     def head(self, n: int = 5) -> pandas.DataFrame:
         """
-        Similar to `to_df` but only returns the first `n` rows.
-
+        Similar to `to_pandas` but only returns the first `n` rows.
         This function queries the database.
-
         :param n: number of rows to query from database.
+        :note: This function queries the database.
         """
-        conn = self.engine.connect()
-        sql = self.view_sql(limit=n)
-        if len(self._index):
-            df = pandas.read_sql_query(sql, conn, index_col=list(self._index.keys()))
-        else:
-            df = pandas.read_sql_query(sql, conn)
-        conn.close()
-        return df
+        return self.to_pandas(limit=n)
 
-    def get_order_by_clause(self) -> Expression:
+    @property
+    def values(self):
+        """
+        .values property accessor akin pandas.Dataframe.values
+        :note: This function queries the database.
+        """
+        return self.to_pandas().values
+
+    @property
+    def array(self):
+        """
+        .array property accessor akin pandas.Dataframe.array
+        :note: This function queries the database.
+        """
+        return self.to_pandas().array
+
+    def _get_order_by_clause(self) -> Expression:
         """
         Get a properly formatted order by expression based on this df's order_by.
         Will return an empty Expression in case ordering is not requested.
@@ -1100,6 +1091,7 @@ class DataFrame:
                          having_clause: Expression = None) -> SqlModel[BachSqlModel]:
         """
         Translate the current state of this DataFrame into a SqlModel.
+        :param name: The name of the new node
         :param limit: The limit to use
         :param where_clause: The where-clause to apply, if any
         :param having_clause: The having-clause to apply in case group_by is set, if any
@@ -1156,7 +1148,7 @@ class DataFrame:
                 where=where_clause,
                 group_by=group_by_clause,
                 having=having_clause,
-                order_by=self.get_order_by_clause(),
+                order_by=self._get_order_by_clause(),
                 limit=limit_clause,
                 prev=self.base_node
             )
@@ -1169,7 +1161,7 @@ class DataFrame:
                 columns=self._get_all_column_expressions(),
                 _last_node=self.base_node,
                 where=where_clause,
-                order=self.get_order_by_clause(),
+                order=self._get_order_by_clause(),
                 limit=limit_clause
             )
 
@@ -1180,8 +1172,7 @@ class DataFrame:
         :return: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        sql = to_sql(model)
-        return sql
+        return to_sql(model)
 
     def _get_all_column_expressions(self) -> List[Expression]:
         """ Get a list of Expression for every column including indices in this df """
@@ -1328,7 +1319,6 @@ class DataFrame:
             See apply_func() for supported arguments
         :param axis: the aggregation axis
         :param numeric_only: Whether to aggregate numeric series only, or attempt all.
-        :param group_by: The grouping to use, defaults to entire dataframe
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
         :note: Pandas has numeric_only=None to attempt all columns but ignore failing ones

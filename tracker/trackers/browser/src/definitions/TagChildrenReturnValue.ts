@@ -1,9 +1,9 @@
 import { Infer, optional } from 'superstruct';
-import { StringifiedChildrenTaggingAttributes } from './StringifiedChildrenTaggingAttributes';
+import { TagChildrenAttributes } from './TagChildrenAttributes';
 
 /**
  * The definition of the object returned by `tagChildren` and `tagChild`
  */
-export const TagChildrenReturnValue = optional(StringifiedChildrenTaggingAttributes);
+export const TagChildrenReturnValue = optional(TagChildrenAttributes);
 
 export type TagChildrenReturnValue = Infer<typeof TagChildrenReturnValue>;
