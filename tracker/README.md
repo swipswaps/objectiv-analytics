@@ -3,7 +3,7 @@
 Objectiv tracker monorepo.
 
 ---
-# Overview
+## Overview
 The Objectiv JavaScript Tracker is composed of three workspaces. 
 
 - **Core** modules are generic Types, Interfaces and Classes used by Plugins and Trackers.  
@@ -209,3 +209,10 @@ Executes the release strategy and bumps versions accordingly
 #### `Error: Cannot find module '[...]/angular/node_modules/rollup/dist/rollup.js'`
 This error can occur when switching between Node.JS versions.   
 Delete `tracker/node_modules` and rerun `yarn install` to create a fresh copy. Everything should work fine after that.
+
+## Copyright and license
+Licensed and distributed under the Apache 2.0 License (An OSI Approved License).
+
+Copyright (c) 2021 Objectiv B.V.
+
+All rights reserved.

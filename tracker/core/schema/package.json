@@ -38,6 +38,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
+    "depcheck": "^1.4.2",
     "prettier": "^2.4.1",
     "shx": "^0.3.3",
     "typescript": "^4.4.4"
