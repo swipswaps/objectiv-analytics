@@ -2438,6 +2438,7 @@ __metadata:
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^1.4.7
+    shx: ^0.3.3
     ts-jest: ^27.0.7
     typescript: ^4.4.4
   peerDependencies:
@@ -2451,6 +2452,7 @@ __metadata:
   dependencies:
     depcheck: ^1.4.2
     prettier: ^2.4.1
+    shx: ^0.3.3
     typescript: ^4.4.4
   languageName: unknown
   linkType: soft
@@ -2466,6 +2468,7 @@ __metadata:
     ng-packagr: ^12.2.5
     prettier: ^2.4.1
     rxjs: ^7.4.0
+    shx: ^0.3.3
     tslib: ^2.3.1
     typescript: 4.3.5
     zone.js: ^0.11.4
@@ -2494,6 +2497,7 @@ __metadata:
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^1.4.7
+    shx: ^0.3.3
     superstruct: ^0.15.3
     ts-jest: ^27.0.7
     typescript: ^4.4.4
@@ -2522,6 +2526,7 @@ __metadata:
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^1.4.7
+    shx: ^0.3.3
     ts-jest: ^27.0.7
     typescript: ^4.4.4
     uuid-random: ^1.3.2
@@ -4938,6 +4943,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"glob@npm:^7.0.0":
+  version: 7.2.0
+  resolution: "glob@npm:7.2.0"
+  dependencies:
+    fs.realpath: ^1.0.0
+    inflight: ^1.0.4
+    inherits: 2
+    minimatch: ^3.0.4
+    once: ^1.3.0
+    path-is-absolute: ^1.0.0
+  checksum: 78a8ea942331f08ed2e055cb5b9e40fe6f46f579d7fd3d694f3412fe5db23223d29b7fee1575440202e9a7ff9a72ab106a39fee39934c7bedafe5e5f8ae20134
+  languageName: node
+  linkType: hard
+
 "glob@npm:^7.1.1, glob@npm:^7.1.2, glob@npm:^7.1.3, glob@npm:^7.1.4, glob@npm:^7.1.6":
   version: 7.1.7
   resolution: "glob@npm:7.1.7"
@@ -5263,6 +5282,13 @@ __metadata:
   dependencies:
     tslib: ^2.0.0
   checksum: e8f297a928da1ae26b3d9eaad57f738487e0c4c2f78f8f0f868b239e190940b782cc8dd78b9ba59a64a4fa585d4dae204e7c179ca5f9a09c0acf80189d090f50
+  languageName: node
+  linkType: hard
+
+"interpret@npm:^1.0.0":
+  version: 1.4.0
+  resolution: "interpret@npm:1.4.0"
+  checksum: 2e5f51268b5941e4a17e4ef0575bc91ed0ab5f8515e3cf77486f7c14d13f3010df9c0959f37063dcc96e78d12dc6b0bb1b9e111cdfe69771f4656d2993d36155
   languageName: node
   linkType: hard
 
@@ -6610,7 +6636,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"minimist@npm:^1.2.0, minimist@npm:^1.2.5":
+"minimist@npm:^1.2.0, minimist@npm:^1.2.3, minimist@npm:^1.2.5":
   version: 1.2.5
   resolution: "minimist@npm:1.2.5"
   checksum: 86706ce5b36c16bfc35c5fe3dbb01d5acdc9a22f2b6cc810b6680656a1d2c0e44a0159c9a3ba51fb072bb5c203e49e10b51dcd0eec39c481f4c42086719bae52
@@ -8003,6 +8029,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rechoir@npm:^0.6.2":
+  version: 0.6.2
+  resolution: "rechoir@npm:0.6.2"
+  dependencies:
+    resolve: ^1.1.6
+  checksum: fe76bf9c21875ac16e235defedd7cbd34f333c02a92546142b7911a0f7c7059d2e16f441fe6fb9ae203f459c05a31b2bcf26202896d89e390eda7514d5d2702b
+  languageName: node
+  linkType: hard
+
 "reflect-metadata@npm:^0.1.2":
   version: 0.1.13
   resolution: "reflect-metadata@npm:0.1.13"
@@ -8160,7 +8195,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@^1.14.2, resolve@^1.17.0, resolve@^1.18.1, resolve@^1.19.0, resolve@^1.20.0":
+"resolve@^1.1.6, resolve@^1.14.2, resolve@^1.17.0, resolve@^1.18.1, resolve@^1.19.0, resolve@^1.20.0":
   version: 1.20.0
   resolution: "resolve@npm:1.20.0"
   dependencies:
@@ -8170,7 +8205,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.18.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.20.0#~builtin<compat/resolve>":
+"resolve@patch:resolve@^1.1.6#~builtin<compat/resolve>, resolve@patch:resolve@^1.14.2#~builtin<compat/resolve>, resolve@patch:resolve@^1.17.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.18.1#~builtin<compat/resolve>, resolve@patch:resolve@^1.19.0#~builtin<compat/resolve>, resolve@patch:resolve@^1.20.0#~builtin<compat/resolve>":
   version: 1.20.0
   resolution: "resolve@patch:resolve@npm%3A1.20.0#~builtin<compat/resolve>::version=1.20.0&hash=00b1ff"
   dependencies:
@@ -8501,6 +8536,31 @@ __metadata:
   version: 3.0.0
   resolution: "shebang-regex@npm:3.0.0"
   checksum: 1a2bcae50de99034fcd92ad4212d8e01eedf52c7ec7830eedcf886622804fe36884278f2be8be0ea5fde3fd1c23911643a4e0f726c8685b61871c8908af01222
+  languageName: node
+  linkType: hard
+
+"shelljs@npm:^0.8.4":
+  version: 0.8.4
+  resolution: "shelljs@npm:0.8.4"
+  dependencies:
+    glob: ^7.0.0
+    interpret: ^1.0.0
+    rechoir: ^0.6.2
+  bin:
+    shjs: bin/shjs
+  checksum: 27f83206ef6a4f5b74a493726c3e6b4c3e07a9c2aac94c5e692d800a61353c18a8234967bd8523b1346abe718beb563843687fb57f466529ba06db3cae6f0bb3
+  languageName: node
+  linkType: hard
+
+"shx@npm:^0.3.3":
+  version: 0.3.3
+  resolution: "shx@npm:0.3.3"
+  dependencies:
+    minimist: ^1.2.3
+    shelljs: ^0.8.4
+  bin:
+    shx: lib/cli.js
+  checksum: 2e408a79c680cef4d719a56563217031ef20d5c2c18fdfe28933e22d833adabd995ad6fa6be087a141832cb17010facfc0288e90a6743c0276b478759fd393e0
   languageName: node
   linkType: hard
 
