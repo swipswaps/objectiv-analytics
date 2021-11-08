@@ -35,7 +35,7 @@ Future plans for Objectiv can be found on our [Github Roadmap](https://github.co
 If you want to contribute to Objectiv or use it as a base for custom development, take a look at [CONTRIBUTING.md](CONTRIBUTING.MD). It contains detailed development instructions and a link to information about our contribution process and where you can fit in.
 
 ## License
-This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [License](../LICENSE.md) for details.
+This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](../LICENSE.md) for details.
 
 Unless otherwise noted, all files © 2021 Objectiv B.V.
 
