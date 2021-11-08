@@ -26,7 +26,7 @@ If you need help using or installing Bach, join our [Slack channel](https://join
 If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing.md).
 
 ## Security Disclosure
-Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](/tree/SECURITY.MD) for details.
+Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](../tree/SECURITY.MD) for details.
 
 ## Roadmap
 Future plans for Objectiv can be found on our [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2)
