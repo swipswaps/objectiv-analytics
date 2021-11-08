@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from bach.series import Series, SeriesJsonb, SeriesString, SeriesBoolean
+from bach.series import SeriesJsonb, SeriesString
 from bach.expression import Expression, quote_string, quote_identifier
 from bach.sql_model import BachSqlModel
 from bach import DataFrame

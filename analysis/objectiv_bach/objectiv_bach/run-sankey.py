@@ -2,9 +2,7 @@ from sankey_dash import get_app
 from dash import Dash
 import sqlalchemy
 from bach import DataFrame
-from objectiv_bach.series.series_objectiv import FeatureFrame
-
-from objectiv_bach import basic_feature_model
+from objectiv_bach import FeatureFrame, basic_feature_model
 
 engine = sqlalchemy.create_engine('postgresql://objectiv:@localhost:5432/objectiv')
 
