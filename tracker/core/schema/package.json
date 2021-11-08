@@ -1,9 +1,10 @@
 {
   "name": "@objectiv/schema",
   "version": "0.0.1",
-  "description": "Objectiv Schema TypeScript",
+  "description": "TypeScript implementation of the Objectiv open taxonomy for analytics",
   "license": "Apache 2.0",
   "homepage": "https://objectiv.io",
+  "keywords": ["objectiv", "taxonomy", "schema", "tracking", "analytics", "events"],
   "repository": {
     "type": "git",
     "url": "https://github.com/objectiv/objectiv-analytics.git",
@@ -12,7 +13,7 @@
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
   "contributors": [{
     "name": "Surai Di Rosa",
-    "email": "surai@objectiv.io",
+    "email": "surai.dirosa@gmail.com",
     "url": "https://github.com/sdirosa"
   }],
   "types": "src/index.d.ts",

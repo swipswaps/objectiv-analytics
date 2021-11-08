@@ -13,7 +13,7 @@
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
   "contributors": [{
     "name": "Surai Di Rosa",
-    "email": "surai@objectiv.io",
+    "email": "surai.dirosa@gmail.com",
     "url": "https://github.com/sdirosa"
   }],
   "main": "dist/index.js",
