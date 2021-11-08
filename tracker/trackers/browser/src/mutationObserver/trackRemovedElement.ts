@@ -1,9 +1,9 @@
-import { GuardableElement } from '@objectiv/tracker-browser';
 import { TrackerElementLocations } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { isTaggedElement } from '../common/guards/isTaggedElement';
 import { parseTrackVisibility } from '../common/parsers/parseTrackVisibility';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
+import { GuardableElement } from '../definitions/GuardableElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { trackSectionHidden } from '../eventTrackers/trackSectionHidden';
 

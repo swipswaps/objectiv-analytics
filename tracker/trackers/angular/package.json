@@ -1,14 +1,39 @@
 {
   "name": "@objectiv/tracker-angular",
   "version": "0.0.1",
-  "description": "Objectiv Angular Tracker",
+  "description": "Objectiv Angular framework analytics tracker for the open taxonomy for analytics",
+  "license": "Apache-2.0",
+  "homepage": "https://objectiv.io",
+  "keywords": [
+    "objectiv",
+    "tracking",
+    "web",
+    "angular",
+    "analytics",
+    "events",
+    "taxonomy"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/objectiv/objectiv-analytics.git",
+    "directory": "tracker/trackers/angular"
+  },
+  "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
+  "contributors": [
+    {
+      "name": "Surai Di Rosa",
+      "email": "surai.dirosa@gmail.com",
+      "url": "https://github.com/sdirosa"
+    }
+  ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "scripts": {
-    "build": "ng-packagr -p package.json && node postbuild.js",
+    "build": "ng-packagr -p package.json",
     "prettify": "prettier --write .",
     "tsc": "tsc --noEmit",
-    "npm-publish": "(cd dist && npm publish)"
+    "npm-publish": "(cd dist && npm publish)",
+    "npm-publish:verdaccio": "(cd dist && cp ../../../verdaccio/.npmrc .npmrc && npm publish && rm -f .npmrc)"
   },
   "peerDependencies": {
     "@objectiv/tracker-browser": "^0.0.1"
