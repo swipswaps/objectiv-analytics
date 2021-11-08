@@ -9,7 +9,7 @@ from lxml.etree import ElementTree
 
 html_dir = 'build/html/'
 
-docusaurus_dir = '../../../objectiv.io'
+docusaurus_dir = '../../../objectiv.io/docs'
 docs = 'docs'
 static = 'static'
 
@@ -97,13 +97,18 @@ for url in urls:
         print(f'creating {static_target_dir}')
         makedirs(static_target_dir)
 
-    target_file = f'{static_target}/{real_url}'
+    title = path.basename(url).replace('.html', '')
+
+    if title == 'index':
+        target_file = f'{static_target}/introduction.html'
+    else:
+        target_file = f'{static_target}/{real_url}'
+        
     if path.exists(target_file):
         remove(target_file)
     print(f'copy "{url}" -> {target_file}')
     copyfile(url, target_file)
 
-    title = path.basename(url).replace('.html', '')
 
     tags = [module]
 
@@ -156,12 +161,14 @@ for url in urls:
         sidebar_position = 1
         slug = f'/{module}'
         toc = []
+        url = 'introduction.html'
     else:
         sidebar_label = title
         sidebar_position = position
         position += 1
         slug = f'/{module}/{real_url.replace(".html", "")}'
         tags.append(title.split('.')[-2])
+        url = real_url
 
 
 
@@ -185,7 +192,7 @@ import SphinxPages from '@site/src/components/sphinx-page'
 import useBaseUrl from '@docusaurus/useBaseUrl'
 
 
-<SphinxPages url={{useBaseUrl('{module}/{real_url}')}} />
+<SphinxPages url={{useBaseUrl('{module}/{url}')}} />
 """
     # set target path to generated .mdx file
     # target_path = url.replace(html_dir, '').replace('.html', '.mdx')
