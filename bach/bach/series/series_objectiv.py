@@ -186,7 +186,7 @@ class FeatureFrame:
             feature_bt['feature_hash']
         )
         feature_bt['event_number'] = location_stack_series.copy_override(dtype='int64', expression=expression)
-        feature_bt = feature_bt.get_df_materialized_model('features')
+        feature_bt = feature_bt.materialize('features')
 
         feature_bt = feature_bt[feature_bt.event_number == 1][[location_stack_column,
                                                                event_column,
