@@ -481,49 +481,53 @@ class DataFrame:
 
             return self.copy_override(series=selected_data)
 
-        if isinstance(key, (SeriesBoolean, slice)):
-            df = self
+        if isinstance(key, (SeriesBoolean, slice, int)):
+            if isinstance(key, int):
+                raise NotImplementedError("index key lookups not supported, use slices instead.")
             if isinstance(key, slice):
                 node = self.get_current_node(name='getitem_slice', limit=key)
                 single_value = (
-                        # This is our best guess, there can always be zero results, but at least we tried.
-                        (key.start is None and slice.stop is not None)
-                        or (key.start is not None and key.stop is not None and abs(key.start - key.stop) == 1)
+                    # This is our best guess, there can always be zero results, but at least we tried.
+                    # Negative slices are not supported, Exceptions was raised in get_current_node()
+                    (key.stop is not None and key.start is None and key.stop == 1)
+                    or
+                    (key.start is not None and key.stop is not None and (key.stop - key.start) == 1)
                 )
             else:
                 single_value = False  # there is no way for us to know. User has to slice the result first
 
-                # We only support first level boolean indices for now
-                if key.base_node != df.base_node or key.group_by != df._group_by:
+                if key.expression.has_window_function:
+                    raise ValueError('Cannot apply a Boolean series containing a window function to '
+                                     'DataFrame. '
+                                     'Hint: materialize() that DataFrame before creating the Boolean series')
+
+                if key.base_node != self.base_node or key.group_by != self._group_by:
                     raise ValueError('Cannot apply Boolean series with a different base_node or group by '
-                                     'to DataFrame.'
+                                     'to DataFrame. '
                                      'Hint: make sure the Boolean series is derived from this DataFrame and '
                                      'that is has the same group by. '
                                      'Alternative: use df.merge(series) to merge the series with the df '
                                      'first, and then create a new Boolean series on the resulting merged '
                                      'data.')
 
-                if key.expression.has_window_function:
-                    # Cannot apply a boolean selector containing a window function. We need to materialize
-                    df = df.get_df_materialized_model('getitem_window_function_boolean')
-
-                if df._group_by is not None and key.expression.has_aggregate_function:
+                if self._group_by is not None and key.expression.has_aggregate_function:
                     node = self.get_current_node(
                         name='getitem_having_boolean',
                         having_clause=Expression.construct("having {}", key.expression))
                 elif key.expression.has_aggregate_function:
+                    # This is very weird, does this ever happen?
                     raise ValueError("Cannot use a Boolean series that contains a non-materialized "
                                      "aggregation function or a windowing function as Boolean row selector.")
                 else:
-                    node = df.get_current_node(
+                    node = self.get_current_node(
                         name='getitem_where_boolean',
                         where_clause=Expression.construct("where {}", key.expression))
 
             return DataFrame.get_instance(
-                engine=df.engine,
+                engine=self.engine,
                 base_node=node,
-                index_dtypes={name: series.dtype for name, series in df.index.items()},
-                dtypes={name: series.dtype for name, series in df.data.items()},
+                index_dtypes={name: series.dtype for name, series in self.index.items()},
+                dtypes={name: series.dtype for name, series in self.data.items()},
                 group_by=None,
                 order_by=[],  # filtering rows resets any sorting
                 single_value=single_value

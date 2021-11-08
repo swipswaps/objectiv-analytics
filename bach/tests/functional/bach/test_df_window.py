@@ -345,15 +345,11 @@ def test_expanding_variations():
 
 
 def test_window_functions_not_in_where_having_groupby():
-
-    bt = get_bt_with_test_data(full_data_set=True)
-
     # window functions are not allowed in where if constructed externally
     bt = get_bt_with_test_data(full_data_set=True)
     btg_min_fnd = bt.founding.min(bt.sort_values('inhabitants').window())
     with pytest.raises(ValueError,
-                       match='Cannot use a Boolean series that contains a non-materialized '
-                             'aggregation function or a windowing function'):
+                       match='Cannot apply a Boolean series containing a window function to DataFrame.'):
         x = bt[btg_min_fnd == 4]
 
     # seperate windowed series groupby should not be okay
@@ -365,8 +361,7 @@ def test_window_functions_not_in_where_having_groupby():
     # adds 'lag' to df for following three tests
     bt['lag'] = bt.inhabitants.window_lag(bt.sort_values('inhabitants').window())
     with pytest.raises(ValueError,
-                       match='Cannot use a Boolean series that contains a non-materialized '
-                             'aggregation function or a windowing function'):
+                       match='Cannot apply a Boolean series containing a window function to DataFrame.'):
         x = bt[bt.lag == 4]
 
     # named groupby should not be okay
@@ -383,6 +378,5 @@ def test_window_functions_not_in_where_having_groupby():
     bt = get_bt_with_test_data(full_data_set=True)
     bt = bt.window().min()
     with pytest.raises(ValueError,
-                       match='Cannot use a Boolean series that contains a non-materialized aggregation '
-                             'function or a windowing function as Boolean row selector'):
+                       match='Cannot apply a Boolean series containing a window function to DataFrame.'):
         x = bt[bt.founding_min == 4]

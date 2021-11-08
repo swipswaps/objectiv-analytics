@@ -71,17 +71,29 @@ def test_positional_slicing():
             return key
     return_slice = ReturnSlice()
 
+    with pytest.raises(NotImplementedError, match="index key lookups not supported, use slices instead."):
+        bt[3]
+
+    # negative slices are not supported, so we will not test those.
     slice_list = [return_slice[:4],
                   return_slice[4:],
                   return_slice[4:7],
-                  return_slice[:]
+                  return_slice[:],
+                  return_slice[4:5],
+                  return_slice[:1]
                   ]
-    for slice in slice_list:
+    for s in slice_list:
+        bt_slice = bt[s]
+
+        # if the slice length == 1, all Series need to have a single value expression
+        assert (len('slice_me_now'.__getitem__(s)) == 1) == all(s.expression.is_single_value
+                                                                for s in bt_slice.all_series.values())
+
         assert_equals_data(
-            bt[slice],
+            bt[s],
             expected_columns=['_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants',
                               'founding'],
-            expected_data=df_to_list(bt.to_pandas()[slice])
+            expected_data=df_to_list(bt.to_pandas()[s])
         )
 
 
