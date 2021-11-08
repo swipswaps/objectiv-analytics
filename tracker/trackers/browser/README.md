@@ -1,22 +1,19 @@
 # Objectiv Browser Tracker 
-[PLACEHOLDER: Objectiv Browser Tracker introductory text]
+
+Objectiv tracker for web applications & websites that embraces the open taxonomy for analytics. Supports core tracking methods and default auto-tracking (ApplicationLoaded, URLChange) out of the box.
 
 ---
-# Installing
+# Package Installation
 To install the most recent stable version:
 
-### yarn
 ```sh
 yarn add @objectiv/tracker-browser
 ```
 
-### npm
+## or
 ```sh
 npm install @objectiv/tracker-browser
 ```
 
 # Usage
-
-```javascript
-// TODO
-```
+For a detailed usage guide, see the documentation: [https://objectiv.io/docs](https://objectiv.io/docs)

@@ -1,23 +1,19 @@
 # Objectiv JavaScript Tracker Core 
-[PLACEHOLDER: Objectiv JavaScript Tracker Core introductory text]
+Interface for creation, configuration, and management of Objectiv trackers. Provides factories for producing 
+Contexts & Events based on the open taxonomy schema, a basic batched Queue and Transport implementation, as well 
+as interfaces for other implementations. It’s also extensible through plugins.
 
 ---
-# Installing
-To install the most recent stable version:
+# Package installation
 
-### yarn
 ```sh
 yarn add @objectiv/tracker-core
 ```
 
-### npm
+## or
 ```sh
 npm install @objectiv/tracker-core
 ```
 
 # Usage
-
-```javascript
-import { Tracker } from '@objectiv/tracker-core';
-const tracker = new Tracker();
-```
+For a detailed usage guide, see the documentation: [https://objectiv.io/docs](https://objectiv.io/docs)

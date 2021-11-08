@@ -53,26 +53,35 @@ def test_timedelta():
 
     assert_equals_data(
         gb,
-        expected_columns=['index', 'moment_min', 'moment_max', 'delta'],
+        expected_columns=['moment_min', 'moment_max', 'delta'],
         expected_data=[
-            [1, datetime.datetime(2021, 5, 3, 11, 28, 36, 388000), datetime.datetime(2022, 5, 3, 14, 13, 13, 388000), datetime.timedelta(days=365, seconds=9877)]
+            [datetime.datetime(2021, 5, 3, 11, 28, 36, 388000), datetime.datetime(2022, 5, 3, 14, 13, 13, 388000), datetime.timedelta(days=365, seconds=9877)]
         ]
     )
 
     r2 = gb[['delta']].groupby().mean()
     assert_equals_data(
         r2,
-        expected_columns=['index', 'delta_mean'],
+        expected_columns=['delta_mean'],
         expected_data=[
-            [1, datetime.timedelta(days=365, seconds=9877)]
+            [datetime.timedelta(days=365, seconds=9877)]
         ]
     )
 
     r3 = r2['delta_mean'] + datetime.timedelta()
     assert_equals_data(
         r3,
-        expected_columns=['index', 'delta_mean'],
+        expected_columns=['delta_mean'],
         expected_data=[
-            [1, datetime.timedelta(days=365, seconds=9877)]
+            [datetime.timedelta(days=365, seconds=9877)]
         ]
     )
+
+
+def test_to_pandas():
+    bt = get_bt_with_test_data()
+    bt['td'] = datetime.timedelta(days=321, seconds=9877)
+    bt[['td']].to_pandas()
+    # TODO, this is not great, but at least it does not error when imported into pandas,
+    # and it looks good over there
+    assert bt[['td']].values[0] == [27744277000000000]

@@ -2,7 +2,6 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { BrowserTrackerConfig } from '@objectiv/tracker-browser';
 import {
   isNonEmptyArray,
   NonEmptyArray,
@@ -13,6 +12,7 @@ import {
   TransportableEvent,
   TransportSendError,
 } from '@objectiv/tracker-core';
+import { BrowserTrackerConfig } from '../definitions/BrowserTrackerConfig';
 
 /**
  * The default set of parameters for the fetch API call.

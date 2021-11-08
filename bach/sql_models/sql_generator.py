@@ -148,8 +148,3 @@ def _format_sql(sql: str, values: Dict[str, str], model: SqlModel):
                         f'Format values: {values}. \n'
                         f'Sql: {sql}') from exc
     return sql
-
-
-def _escape_value(value: str) -> str:
-    """ Escape value for python's format() function. i.e. `_escape_value(value).format() == value` """
-    return value.replace('{', '{{').replace('}', '}}')

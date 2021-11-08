@@ -94,7 +94,6 @@ class SqlModelSpec:
         """
         # Override for non-default behaviour
         # If we switch to jinja templates, then we won't need this function anymore.
-        #
         return {key: SqlModelSpec.escape_format_string(str(val)) for key, val in properties.items()}
 
     def assert_adheres_to_spec(self,

@@ -7,7 +7,6 @@ types.
 To prevent cyclic imports, the functions in this file should not be used by dataframe.py before the file
 is fully initialized (that is, only use within functions).
 """
-
 from typing import Type, Tuple, Any, TypeVar, List, TYPE_CHECKING, Dict, cast, Union
 import datetime
 from uuid import UUID
@@ -121,6 +120,7 @@ class TypeRegistry:
         self._register_value_klass(float, SeriesFloat64)
         self._register_value_klass(numpy.float64, SeriesFloat64)
         self._register_value_klass(bool, SeriesBoolean)
+        self._register_value_klass(type(None), SeriesString)  # NoneType ends up as a string for now
         self._register_value_klass(str, SeriesString)
         self._register_value_klass(datetime.date, SeriesDate)
         self._register_value_klass(datetime.time, SeriesTime)

@@ -7,4 +7,4 @@ build: clean
 
 publish: build
 	cd verdaccio && make  run
-	yarn publish
+	yarn publish:verdaccio

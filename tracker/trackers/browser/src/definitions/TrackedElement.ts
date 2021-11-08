@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { TaggableElement } from '@objectiv/tracker-browser';
+import { TaggableElement } from './TaggableElement';
 
 /**
  * A TrackedElement is either a TaggedElement or an EventTarget
