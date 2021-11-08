@@ -1,4 +1,3 @@
-import { BrowserTrackerConfig } from '@objectiv/tracker-browser';
 import {
   isNonEmptyArray,
   NonEmptyArray,
@@ -9,6 +8,7 @@ import {
   TransportableEvent,
   TransportSendError,
 } from '@objectiv/tracker-core';
+import { BrowserTrackerConfig } from '../definitions/BrowserTrackerConfig';
 
 /**
  * The default XMLHttpRequest function implementation.

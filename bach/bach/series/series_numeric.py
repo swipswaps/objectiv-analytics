@@ -7,7 +7,7 @@ from typing import cast, Union, TYPE_CHECKING, Optional
 import numpy
 
 from bach.series import Series
-from bach.expression import Expression
+from bach.expression import Expression, AggregateFunctionExpression
 from bach.series.series import WrappedPartition
 
 if TYPE_CHECKING:
@@ -47,13 +47,7 @@ class SeriesAbstractNumeric(Series, ABC):
         return self.product(partition, skipna)
 
     def product(self, partition: WrappedPartition = None, skipna: bool = True):
-        # https://stackoverflow.com/questions/13156055/product-aggregate-in-postgresql
-        # horrible solution, but best we have until we support custom defined aggregates
-        return self._derived_agg_func(
-            partition,
-            Expression.construct(f'exp(sum(ln({{}})))', self),
-            skipna=skipna
-        )
+        raise NotImplementedError("prod currently not implemented")
 
     def skew(self, partition: WrappedPartition = None, skipna: bool = True):
         raise NotImplementedError("skew currently not implemented")
@@ -62,9 +56,9 @@ class SeriesAbstractNumeric(Series, ABC):
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(
             partition,
-            Expression.construct(f'{{}}/sqrt({{}})',
-                                 self.std(partition, skipna=skipna, ddof=ddof),
-                                 self.count(partition, skipna=skipna)),
+            AggregateFunctionExpression.construct(f'{{}}/sqrt({{}})',
+                                                  self.std(partition, skipna=skipna, ddof=ddof),
+                                                  self.count(partition, skipna=skipna)),
             skipna=skipna
         )
 
@@ -126,6 +120,12 @@ class SeriesInt64(SeriesAbstractNumeric):
     def __lshift__(self, other):
         return self._arithmetic_operation(other, 'lshift', '({}) << cast({} as int)',
                                           other_dtypes=tuple(['int64']))
+
+    def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
+        # sum() has the tendency to return float on bigint arguments. Cast it back.
+        series = super().sum(partition, skipna, min_count)
+        return series.copy_override(
+            expression=Expression.construct('cast({} as bigint)', series.expression))
 
 
 class SeriesFloat64(SeriesAbstractNumeric):

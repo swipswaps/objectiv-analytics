@@ -187,7 +187,6 @@ def test_merge_basic_on_indexes():
 
     with pytest.raises(ValueError, match="No columns to perform merge on"):
         result = btr.merge(mtr, left_index=True, right_index=True)
-        result.head()
 
 
 def test_merge_suffixes():
@@ -454,10 +453,10 @@ def test_merge_non_materialized():
     mt2 = bt.groupby('municipality')[['inhabitants']].mean()
 
     # check that merge properly materializes if required
-    r1 = mt1.get_df_materialized_model().merge(mt2.get_df_materialized_model(), on='municipality')
+    r1 = mt1.materialize().merge(mt2.materialize(), on='municipality')
     r2 = mt1.merge(mt2, on='municipality')
-    r3 = mt1.get_df_materialized_model().merge(mt2, on='municipality')
-    r4 = mt1.merge(mt2.get_df_materialized_model(), on='municipality')
+    r3 = mt1.materialize().merge(mt2, on='municipality')
+    r4 = mt1.merge(mt2.materialize(), on='municipality')
 
     for r in [r1, r2, r3, r4]:
         assert_equals_data(

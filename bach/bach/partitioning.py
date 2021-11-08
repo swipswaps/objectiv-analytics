@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Dict, Optional, cast
 
 from bach.series import Series, SeriesInt64
-from bach.expression import Expression
+from bach.expression import Expression, WindowedAggregateFunctionExpression
 from bach.dataframe import SortColumn
 
 
@@ -58,11 +58,13 @@ class GroupBy:
         for col in group_by_columns:
             if not isinstance(col, Series):
                 raise ValueError(f'Unsupported argument type: {type(col)}')
+            if col.expression.is_constant and not isinstance(col, SeriesInt64):
+                # Dictated by PG
+                raise ValueError('Non-integer constant group by series not supported')
+            if col.expression.has_aggregate_function:
+                raise ValueError('Window or aggregate functions can not be used to group, '
+                                 'please materialize first.')
             self._index[col.name] = col.copy_override(index={}, group_by=[self])
-
-        if len(group_by_columns) == 0:
-            raise ValueError('Pass a dummy column for DataFrame-wide aggregations; use '
-                             'GroupBy.get_dummy_index_series() to create one')
 
     def __eq__(self, other):
         if not isinstance(other, GroupBy):
@@ -73,10 +75,8 @@ class GroupBy:
                 for n in self._index.keys())
         )
 
-    def get_index_column_expression(self) -> Expression:
-        fmtstr = ', '.join(['{}'] * len(self._index))
-        return Expression.construct(fmtstr, *[g.get_column_expression()
-                                              for g in self._index.values()])
+    def get_index_column_expressions(self) -> List[Expression]:
+        return [g.get_column_expression() for g in self._index.values()]
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
         """
@@ -84,40 +84,40 @@ class GroupBy:
         but without the "group by" clause, as these potentially have to be nested into one group-by
         """
         fmtstr = ', '.join(['{}'] * len(self._index))
-        return Expression.construct(fmtstr, *[g.expression for g in self._index.values()])
+        return Expression.construct(f'({fmtstr})', *[g.expression for g in self._index.values()])
 
     @property
     def index(self) -> Dict[str, Series]:
         return copy(self._index)
-
-    @classmethod
-    def get_dummy_index_series(cls, engine, base_node, name='index'):
-        return SeriesInt64(
-                engine=engine,
-                base_node=base_node,
-                index={},
-                name=name,
-                expression=Expression.construct('1'),
-                # Will be set the moment it's passed to GroupBy.__init__
-                group_by=None)
 
 
 class Cube(GroupBy):
     """
     Very simple abstraction to support cubes
     """
+    def __init__(self, group_by_columns: List[Series]):
+        if len(group_by_columns) == 0:
+            raise ValueError('Can not create a cube without group by columns')
+        super().__init__(group_by_columns)
+
     def get_group_by_column_expression(self) -> Optional[Expression]:
         # help mypy, our parent always returns an Expression
-        return Expression.construct('cube ({})', cast(Expression, super().get_group_by_column_expression()))
+        return Expression.construct('cube {}', cast(Expression, super().get_group_by_column_expression()))
 
 
 class Rollup(GroupBy):
     """
     Very simple abstraction to support rollups
     """
+
+    def __init__(self, group_by_columns: List[Series]):
+        if len(group_by_columns) == 0:
+            raise ValueError('Can not create a rollup without group by columns')
+        super().__init__(group_by_columns)
+
     def get_group_by_column_expression(self) -> Optional[Expression]:
         # help mypy, our parent always returns an Expression
-        return Expression.construct('rollup ({})', cast(Expression, super().get_group_by_column_expression()))
+        return Expression.construct('rollup {}', cast(Expression, super().get_group_by_column_expression()))
 
 
 class GroupingList(GroupBy):
@@ -150,7 +150,7 @@ class GroupingList(GroupBy):
         # help mypy, our parent always returns an Expression
         grouping_expr_list = [cast(Expression, g.get_group_by_column_expression())
                               for g in self._grouping_list]
-        fmtstr = ', '.join(["({})"] * len(grouping_expr_list))
+        fmtstr = ', '.join(["{}"] * len(grouping_expr_list))
         return Expression.construct(fmtstr, *grouping_expr_list)
 
 
@@ -161,7 +161,7 @@ class GroupingSet(GroupingList):
     """
     def get_group_by_column_expression(self):
         grouping_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
-        fmtstr = ', '.join(["({})"] * len(grouping_expr_list))
+        fmtstr = ', '.join(["{}"] * len(grouping_expr_list))
         fmtstr = f'grouping sets ({fmtstr})'
         return Expression.construct(fmtstr, *grouping_expr_list)
 
@@ -347,19 +347,22 @@ class Window(GroupBy):
         else:
             frame_clause = self.frame_clause
 
-        partition_fmt = ', '.join(['{}'] * len(self.index))
+        if len(self._index) == 0:
+            partition_fmt = ''
+        else:
+            partition_fmt = 'partition by ' + ', '.join(['{}'] * len(self.index))
 
-        over_fmt = f'over (partition by {partition_fmt} {{}} {frame_clause})'
+        over_fmt = f'over ({partition_fmt} {{}} {frame_clause})'
         over_expr = Expression.construct(over_fmt,
                                          *[i.expression for i in self.index.values()],
                                          order_by)
 
         if self._min_values is None or self._min_values == 0:
-            return Expression.construct(f'{{}} {{}}', window_func, over_expr)
+            return WindowedAggregateFunctionExpression.construct(f'{{}} {{}}', window_func, over_expr)
         else:
             # Only return a value when then minimum amount of observations (including NULLs)
             # has been reached.
-            return Expression.construct(f"""
+            return WindowedAggregateFunctionExpression.construct(f"""
                 case when (count(1) {{}}) >= {self._min_values}
                 then {{}} {{}}
                 else NULL end""", over_expr, window_func, over_expr)
