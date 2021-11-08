@@ -1,26 +1,26 @@
-# Objectiv Bach: Pandas-like DataFrames backed by SQL
+# Objectiv Backend
 
-Bach is Objectiv's data modeling library. With Bach, you can compose models with familiar Pandas-like dataframe operations in your notebook. It uses an SQL abstraction layer that enables models to run on the full dataset. It includes a set of operations that enable effective feature creation for datasets that embrace the [open taxonomy of analytics](/schema/README.md).
+Running the backend will enable you to receive and process tracking data in your environment. It consists of three images:
+
+* `objectiv_collector` - Endpoint that the Objectiv-tracker can send events to (http://localhost:5000).
+* `objectiv_postgres` - Database to store data.
+* `objectiv_notebook` - Jupyter notebook that can be used to query the data (http://localhost:8888).
 
 Bach uses sql_models under the hood, which makes it possible to easily build graphs of sql-models and generate sql for the resulting composite sql-models. See sql_models/README.md for more information.
 
-## Running Bach
-To run Bach, use the following command: TODO:MAKE THIS TRUE
+## Running the Backend Dockerized
+The below commands assume that you have `docker-compose` [installed](https://docs.docker.com/compose/install/).
 ```bash
-pip install bach
+docker-compose pull  # pull pre-built images from gcr
+docker-compose up    # spin up Objective pipeline
 ```
+SECURITY WARNING: The above docker-compose commands start a postgres container that allows connections
+without verifying passwords. Do not use this in production or on a shared system!
 
-For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs).
-
-
-## See Also
-* [Pandas](https://github.com/pandas-dev/pandas): the inspiration for the API.
-   Pandas has excellent [documentation](https://pandas.pydata.org/docs/) for its API.
-* SQL-models: Sub-project that is used for generating the underlying sql-queries. Can be found in the
-              `sql_models` package
+For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs/the-project/tracking/collector.md).
 
 ## Support & Troubleshooting
-If you need help using or installing Bach, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
+If you need help using or installing Objectiv, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
 
 ## Bug Reports & Feature Requests
 If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing.md).
