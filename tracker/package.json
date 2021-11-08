@@ -10,7 +10,7 @@
     "trackers/browser"
   ],
   "scripts": {
-    "clean": "yarn exec make clean && yarn test --clearCache && yarn cache clean",
+    "clear": "yarn exec make clean && yarn test --clearCache && yarn cache clean",
     "build-core": "yarn workspaces foreach -p --include @objectiv-analytics/tracker-core --verbose run build",
     "build-plugins": "yarn workspaces foreach -p --include '@objectiv-analytics/plugin**' --verbose run build",
     "build-trackers": "yarn workspace @objectiv-analytics/tracker-browser build && yarn workspace @objectiv-analytics/tracker-angular build",
