@@ -34,11 +34,12 @@
     "prettify:generated": "yarn prettier --write ./src",
     "tsc": "tsc --noEmit",
     "check:dependencies": "npx depcheck",
-    "npm-publish": "rm -f .npmrc && npm publish",
-    "npm-publish:verdaccio": "cp ../../verdaccio/.npmrc .npmrc && npm publish && rm -f .npmrc"
+    "npm-publish": "shx rm -f .npmrc && npm publish",
+    "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
     "prettier": "^2.4.1",
+    "shx": "^0.3.3",
     "typescript": "^4.4.4"
   }
 }

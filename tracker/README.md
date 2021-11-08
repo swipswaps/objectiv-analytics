@@ -134,8 +134,9 @@ Stopping verdaccio will also remove any published packages (as the storage isn't
 
 The following commands will be executed for all packages automatically when issued from the monorepo root; the `/tracker` directory. 
 
-### `yarn clean`
-Deletes all `dist` folders of `core`, `plugins` and `trackers`
+### `yarn clear`
+Deletes all `dist` and `coverage` folders of `core`, `plugins` and `trackers`.
+Removes also leftover `.npmrc` from failed publishing to Verdaccio.
 
 ### `yarn list`
 Prints a list of all the packages configured in the monorepo.
