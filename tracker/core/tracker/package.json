@@ -2,6 +2,7 @@
   "name": "@objectiv-analytics/tracker-core",
   "version": "0.0.1",
   "description": "Core functionality for Objectiv JavaScript trackers",
+  "private": false,
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [

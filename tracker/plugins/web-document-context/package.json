@@ -2,6 +2,7 @@
   "name": "@objectiv-analytics/plugin-web-document-context",
   "version": "0.0.1",
   "description": "Plugin for Objectiv trackers to automatically attach WebDocumentContexts",
+  "private": false,
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [
