@@ -228,10 +228,14 @@ def assert_equals_data(
     if order_by:
         bt = bt.sort_values(order_by)
 
-    sql = bt.view_sql()
-    db_rows = run_query(bt.engine, sql)
-    column_names = list(db_rows.keys())
-    db_values = [list(row) for row in db_rows]
+    pdf = bt.to_pandas()
+    column_names = list(pdf.index.names) + list(pdf.columns)
+    pdf.reset_index()
+    db_values = []
+    for index_row, value_row in zip(pdf.index.values.tolist(), pdf.values.tolist()):
+        if not isinstance(index_row, list):
+            index_row = [index_row]
+        db_values.append(index_row + value_row)
     print(db_values)
 
     assert len(db_values) == len(expected_data)

@@ -1064,6 +1064,7 @@ class DataFrame:
             sql = self.view_sql(limit=limit)
             dtype = {name: series.dtype_to_pandas for name, series in self.all_series.items()
                      if series.dtype_to_pandas is not None}
+            sql = sql.replace('%', '%%')
             pandas_df = pandas.read_sql_query(sql, conn).astype(dtype)
             if len(self._index):
                 return pandas_df.set_index(list(self._index.keys()))
