@@ -1,37 +1,6 @@
-# Bach: Pandas-like DataFrames backed by SQL
+# Developing Bach
 
-## What is it?
-Bach offers an interface that is compatible with a subset of the Pandas API, but under the hood directly
-interacts with a SQL backend.
+Here you'll find instructions for development on Bach, Objectiv's modeling library. If you want to contribute to Bach (Thank you!), please take a look at the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing) in our Docs. It contains information about our contribution process and where you can fit in.
 
-Bach under the hood uses sql_models, which makes it possible to easily build graphs of sql-models and
-generate sql for the resulting composite sql-models. See sql_models/README.md for more information on that.
-
-### Why?
-* The database does the heavy lifting
-  * Your dataset doesn't need to fit into memory
-  * You can use the same code on small test datasets and the real production dataset
-* Use the well known Pandas syntax when wanted
-* Use SQL when wanted
-
-## Getting Started
-TODO: make this true
-
-```bash
-pip install bach
-```
-TODO: more information for a first time user of the library. Examples, Links to API documentation etc.
-
-
-## See Also
-* [Pandas](https://github.com/pandas-dev/pandas): the inspiration for the API.
-   Pandas has excellent [documentation](https://pandas.pydata.org/docs/) for its API.
-* SQL-models: Sub-project that is used for generating the underlying sql-queries. Can be found in the
-              `sql_models` package
-
-## License
-TODO
-
-## Contributing
-TODO
-
+## TODO
+Development instructions for Bach
