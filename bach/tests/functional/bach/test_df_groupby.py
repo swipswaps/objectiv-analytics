@@ -536,7 +536,7 @@ def test_groupby_frame_split_series_aggregation():
     with pytest.raises(ValueError, match='already aggregated'):
         founding_sum.sum()
 
-    r6 = founding_sum.to_frame().get_df_materialized_model()
+    r6 = founding_sum.to_frame().materialize()
     assert r6.base_node != bt.base_node
     r6.to_pandas()  # still valid sql?
 
@@ -639,7 +639,7 @@ def test_materialize_on_double_aggregation():
         btg_sum.founding_sum.mean()
 
     # After manually materializing the frame everything is OK again.
-    btg_materialized = btg_sum.get_df_materialized_model()
+    btg_materialized = btg_sum.materialize()
     assert btg_materialized.base_node != btg_sum.base_node
 
     btg_materialized_mean = btg_materialized.founding_sum.mean()

@@ -385,7 +385,7 @@ class Series(ABC):
         :note: This will maintain Expression.is_single_value status
         """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
-        df = series.to_frame().get_df_materialized_model()
+        df = series.to_frame().materialize()
         fmt_string = f'{operation} (SELECT {{}} FROM {{}})' if operation else f'(SELECT {{}} FROM {{}})'
         expr = IndependentSubqueryExpression.construct(fmt_string,
                                                        Expression.column_reference(series.name),
@@ -758,12 +758,12 @@ class Series(ABC):
 
         if self.expression.has_windowed_aggregate_function:
             raise ValueError(f'Cannot call an aggregation function on already windowed column '
-                             f'`{self.name}` Try calling get_df_materialized_model() on the DataFrame'
+                             f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
 
         if self.expression.has_aggregate_function:
             raise ValueError(f'Cannot call an aggregation function on already aggregated column '
-                             f'`{self.name}` Try calling get_df_materialized_model() on the DataFrame'
+                             f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
 
         if isinstance(expression, str):
