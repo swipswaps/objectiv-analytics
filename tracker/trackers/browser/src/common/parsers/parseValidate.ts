@@ -4,6 +4,6 @@ import { parseJson } from './parseJson';
 /**
  * `validate` Tagging Attribute parser
  */
-export const parseValidateAttribute = (stringifiedValidateAttribute: string | null) => {
+export const parseValidate = (stringifiedValidateAttribute: string | null) => {
   return parseJson(stringifiedValidateAttribute ?? '{}', ValidateAttribute);
 };

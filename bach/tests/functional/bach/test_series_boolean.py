@@ -1,3 +1,5 @@
+import numpy
+
 from bach import SeriesBoolean
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
@@ -13,6 +15,15 @@ def test_from_const():
             [1, 'Ljouwert', True, False],
         ]
     )
+
+
+def test_to_pandas():
+    bt = get_bt_with_test_data()
+    bt['t'] = True
+    bt['f'] = False
+    bt[['t', 'f']].to_pandas()
+    numpy.testing.assert_array_equal(bt[['t', 'f']].values[0] , [True, False])
+
     
 def test_operations():
     bt = get_bt_with_test_data()[['city']]

@@ -1,5 +1,6 @@
 # Objectiv JavaScript Tracker
-[PLACEHOLDER: Objectiv Tracker introductory text]
+
+Objectiv tracker monorepo.
 
 ---
 # Overview
@@ -119,10 +120,10 @@ yarn install
 yarn build
 
 ## publish it
-yarn publish
+yarn publish:verdaccio
 ```
 
-Now surf to http://localhost:4873 and you should see the packages you've just published. 
+Now surf to http://localhost:4873, and you should see the packages you've just published. 
 
 To stop verdaccio, simply run:
 ```bash
@@ -169,11 +170,18 @@ Builds all packages.
 Build output will be produced in a `/dist` folder under each package.
 
 ### `yarn publish`
-Publishes all public packages.
+Publishes all public packages to NPM.
 > **Note**:  
 > To publish a single package the command name is `npm-publish` to avoid conflicting with the default command 
 > 
 > Example: `yarn workspace @objectiv/tracker-core npm-publish`
+
+### `yarn publish:verdaccio`
+Publishes all public packages to a Local Verdaccio instance.
+> **Note**:  
+> To publish a single package the command name is `npm-publish:verdaccio` to avoid conflicting with the default command
+>
+> Example: `yarn workspace @objectiv/tracker-core npm-publish:verdaccio`
 
 ### `yarn utils:generate`
 Runs the generator utility. This will generate:
@@ -194,3 +202,9 @@ Verifies if there are changes in the current branch and if a release strategy ha
 
 ### `yarn version apply --all`
 Executes the release strategy and bumps versions accordingly
+
+## Troubleshooting
+
+#### `Error: Cannot find module '[...]/angular/node_modules/rollup/dist/rollup.js'`
+This error can occur when switching between Node.JS versions.   
+Delete `tracker/node_modules` and rerun `yarn install` to create a fresh copy. Everything should work fine after that.

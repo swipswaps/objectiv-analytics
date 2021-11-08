@@ -1,7 +1,7 @@
 import { Infer, number, object, optional, union } from 'superstruct';
 
 /**
- * FlushQueue Options for TrackClicks TaggingAttribute
+ * WaitForQueueOptions Options for TrackClicks TaggingAttribute
  */
 export const WaitForQueueOptions = union([
   object({

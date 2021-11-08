@@ -6,7 +6,7 @@ import { XMLHttpRequestTransport } from '../../transports/XMLHttpRequestTranspor
 /**
  * A factory to create the default Transport of Browser Tracker.
  */
-export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransportInterface =>
+export const makeDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransportInterface =>
   new TrackerTransportRetry({
     console: trackerConfig.console,
     transport: new TrackerTransportSwitch({

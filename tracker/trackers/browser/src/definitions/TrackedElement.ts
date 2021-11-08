@@ -1,4 +1,4 @@
-import { TaggableElement } from '@objectiv/tracker-browser';
+import { TaggableElement } from './TaggableElement';
 
 /**
  * A TrackedElement is either a TaggedElement or an EventTarget
