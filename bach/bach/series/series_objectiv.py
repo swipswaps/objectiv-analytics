@@ -1,19 +1,10 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Optional, Dict, TYPE_CHECKING, List
-
 from bach.series import Series, SeriesJsonb, SeriesString, SeriesBoolean
 from bach.expression import Expression, quote_string, quote_identifier
 from bach.sql_model import BachSqlModel
-
 from bach import DataFrame
-
-import pandas as pd
-import plotly.graph_objects as go  # type: ignore
-
-if TYPE_CHECKING:
-    from bach.partitioning import GroupBy
 
 
 class ObjectivStack(SeriesJsonb.Json):
@@ -53,6 +44,10 @@ class SeriesGlobalContexts(SeriesJsonb):
 
     @property
     def objectiv(self):
+        return ObjectivStack(self)
+
+    @property
+    def obj(self):
         return ObjectivStack(self)
 
     @property
@@ -131,6 +126,10 @@ class SeriesLocationStack(SeriesJsonb):
         return ObjectivStack(self)
 
     @property
+    def obj(self):
+        return ObjectivStack(self)
+
+    @property
     def location_stack(self):
         return self.LocationStack(self)
 
@@ -154,10 +153,10 @@ class FeatureFrame(DataFrame):
             series,
             group_by,
             order_by,
-            original_bt,
+            original_df,
             location_stack_column,
             event_column):
-        self._original_bt = original_bt
+        self._original_df = original_df
         self.location_stack_column = location_stack_column
         self.event_column = event_column
         super().__init__(engine=engine,
@@ -168,79 +167,69 @@ class FeatureFrame(DataFrame):
                          order_by=order_by)
 
     @classmethod
-    def from_data_frame(cls, bt, location_stack_column, event_column, temp_table_name='tmp_feature_data'):
-        event_series, location_stack_series = cls.check_supported(bt, location_stack_column, event_column)
+    def from_data_frame(cls, df, location_stack_column, event_column, temp_table_name='tmp_feature_data'):
+        event_series, location_stack_series = cls.check_supported(df, location_stack_column, event_column)
 
-        feature_bt = location_stack_series.to_frame()
-        feature_bt[event_column] = event_series
-        feature_bt['feature_hash'] = cls.hash_features(feature_bt, location_stack_column, event_column)
+        feature_df = location_stack_series.to_frame()
+        feature_df[event_column] = event_series
+        feature_df['feature_hash'] = cls.hash_features(feature_df, location_stack_column, event_column)
 
-        expression_str = "count({}) over (partition by {})"
-        expression = Expression.construct(
-            expression_str,
-            feature_bt['feature_hash'],
-            feature_bt['feature_hash']
-        )
-        feature_bt['event_count'] = location_stack_series.copy_override(dtype='int64', expression=expression)
+        window = feature_df.window(feature_df['feature_hash'])
+        feature_df['event_count'] = feature_df['feature_hash'].count(window)
+        feature_df['event_number'] = feature_df['feature_hash'].window_row_number(window)
 
-        expression_str = "row_number() over (partition by {})"
-        expression = Expression.construct(
-            expression_str,
-            feature_bt['feature_hash']
-        )
-        feature_bt['event_number'] = location_stack_series.copy_override(dtype='int64', expression=expression)
-        feature_bt = feature_bt.materialize('features')
+        feature_df = feature_df.materialize('features')
 
-        feature_bt = feature_bt[feature_bt.event_number == 1][[location_stack_column,
+        feature_df = feature_df[feature_df.event_number == 1][[location_stack_column,
                                                                event_column,
                                                                'feature_hash',
                                                                'event_count']]
 
         sql = f'''
             create temporary table {temp_table_name} AS
-            ({feature_bt.view_sql()})
+            ({feature_df.view_sql()})
         '''
-        with feature_bt.engine.connect() as conn:
+        with feature_df.engine.connect() as conn:
             conn.execute(sql)
 
-        feature_bt = feature_bt.set_index('feature_hash')
+        feature_df = feature_df.set_index('feature_hash')
 
         new_base_node = BachSqlModel(sql=f'select * from {temp_table_name}').instantiate()
-        new_index = {key: value.dtype for key, value in feature_bt.index.items()}
-        new_data = {key: value.dtype for key, value in feature_bt._data.items()}
+        new_index = {key: value.dtype for key, value in feature_df.index.items()}
+        new_data = {key: value.dtype for key, value in feature_df._data.items()}
 
-        feature_bt_new = DataFrame.get_instance(feature_bt.engine,
+        feature_df_new = DataFrame.get_instance(feature_df.engine,
                                                 base_node=new_base_node,
                                                 index_dtypes=new_index,
                                                 dtypes=new_data,
                                                 group_by=None)
 
-        return FeatureFrame(engine=feature_bt_new.engine,
-                            base_node=feature_bt_new.base_node,
-                            index=feature_bt_new.index,
-                            series=feature_bt_new._data,
+        return FeatureFrame(engine=feature_df_new.engine,
+                            base_node=feature_df_new.base_node,
+                            index=feature_df_new.index,
+                            series=feature_df_new._data,
                             group_by=None,
                             order_by=None,
-                            original_bt=bt,
+                            original_df=df,
                             location_stack_column=location_stack_column,
                             event_column=event_column)
 
     @staticmethod
-    def check_supported(bt, location_stack_column, event_column):
-        if not isinstance(bt[event_column], SeriesString):
+    def check_supported(df, location_stack_column, event_column):
+        if not isinstance(df[event_column], SeriesString):
             raise TypeError('only string supported for event column')
-        if isinstance(bt[location_stack_column], SeriesLocationStack):
-            location_stack_series = bt[location_stack_column]
-        elif isinstance(bt[location_stack_column], SeriesJsonb):
-            location_stack_series = bt[location_stack_column].astype('objectiv_location_stack')
+        if isinstance(df[location_stack_column], SeriesLocationStack):
+            location_stack_series = df[location_stack_column]
+        elif isinstance(df[location_stack_column], SeriesJsonb):
+            location_stack_series = df[location_stack_column].astype('objectiv_location_stack')
         else:
             raise TypeError('only jsonb type supported for location column')
 
-        return bt[event_column], location_stack_series.ls.feature_stack
+        return df[event_column], location_stack_series.ls.feature_stack
 
     @classmethod
-    def hash_features(cls, bt, location_stack_column, event_column):
-        event_series, location_stack_series = cls.check_supported(bt, location_stack_column, event_column)
+    def hash_features(cls, df, location_stack_column, event_column):
+        event_series, location_stack_series = cls.check_supported(df, location_stack_column, event_column)
         expression_str = "md5(concat({} #>> {}, {}))"
         expression = Expression.construct(
             expression_str,
@@ -255,13 +244,13 @@ class FeatureFrame(DataFrame):
                                                                       self.event_column,
                                                                       'event_count']]
 
-        feature_hash = self.hash_features(self._original_bt,
+        feature_hash = self.hash_features(self._original_df,
                                           self.location_stack_column,
                                           self.event_column)
 
-        self._original_bt['feature_hash'] = feature_hash
+        self._original_df['feature_hash'] = feature_hash
 
-        return self._original_bt.merge(self[created_features], left_on='feature_hash', right_index=True)
+        return self._original_df.merge(self[created_features], left_on='feature_hash', right_index=True)
 
     def stack_flows_from_feature_df(self,
                                     stack_column: str = None,
@@ -287,7 +276,7 @@ class FeatureFrame(DataFrame):
         count_method : str
             The function for aggregating the data.
         """
-
+        import pandas as pd
         df = self.to_pandas()
         if stack_column is None:
             stack_column = self.location_stack_column
@@ -331,6 +320,8 @@ class FeatureFrame(DataFrame):
         node_color : str
             Optionally the color of the nodes can be adjusted.
         """
+        import pandas as pd
+        import plotly.graph_objects as go  # type: ignore
         if text_in_title is not None:
             text_in_title = str(text_in_title)
 
@@ -363,6 +354,8 @@ class FeatureFrame(DataFrame):
                       single_value=None,
                       **kwargs
                       ):
+        print('afadgfs')
+        print(kwargs)
         return super().copy_override(engine=engine,
                                      base_node=base_node,
                                      index=index,
@@ -372,7 +365,7 @@ class FeatureFrame(DataFrame):
                                      index_dtypes=index_dtypes,
                                      series_dtypes=series_dtypes,
                                      single_value=single_value,
-                                     original_bt=self._original_bt,
+                                     original_df=self._original_df,
                                      location_stack_column=self.location_stack_column,
                                      event_column=self.event_column,
                                      **kwargs)
