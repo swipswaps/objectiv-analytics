@@ -55,7 +55,7 @@ def test_objectiv_stack_type2():
     )
 
 
-def test_objectiv_stack_type3(monkeypatch):
+def test_objectiv_stack_type3():
     bt = get_bt_with_json_data_real()
 
     bt['b'] = bt.location_stack.astype('objectiv_location_stack')
@@ -73,7 +73,7 @@ def test_objectiv_stack_type3(monkeypatch):
     )
 
 
-def test_objectiv_stack_type4(monkeypatch):
+def test_objectiv_stack_type4():
     bt = get_bt_with_json_data_real()
 
     bt['b'] = bt.location_stack.astype('objectiv_location_stack')
@@ -91,7 +91,7 @@ def test_objectiv_stack_type4(monkeypatch):
     )
 
 
-def test_objectiv_stack_type5(monkeypatch):
+def test_objectiv_stack_type5():
     bt = get_bt_with_json_data_real()
 
     bt['b'] = bt.location_stack.astype('objectiv_location_stack')
