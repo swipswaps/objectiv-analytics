@@ -40,7 +40,7 @@ def test_sample_operations():
     bt_sample['big_city'] = bt_sample.inhabitants + 10
     bt_sample['b'] = bt_sample.inhabitants + bt_sample.founding
 
-    assert bt_sample.skating_order.nunique()[1] == 3
+    assert bt_sample.skating_order.nunique().value == 3
 
     all_data_bt = bt_sample.get_unsampled()
 
@@ -86,7 +86,7 @@ def test_get_unsampled_multiple_nodes():
     bt = get_bt_with_test_data(False)
     bt = bt[['municipality', 'inhabitants', 'founding']]
     bt['inhabitants_more'] = bt['inhabitants'] + 1000
-    bt = bt.get_df_materialized_model()
+    bt = bt.materialize()
     bt['inhabitants_more'] = bt['inhabitants_more'] + 1000
 
     node_count_bt = len(get_graph_nodes_info(bt.base_node))
@@ -99,7 +99,7 @@ def test_get_unsampled_multiple_nodes():
     bt_sample = bt_sample[['municipality', 'inhabitants_more', 'founding']]
     bt_sample['inhabitants_plus_3000'] = bt_sample['inhabitants_more'] + 1000
     del bt_sample['inhabitants_more']
-    bt_sample = bt_sample.get_df_materialized_model()
+    bt_sample = bt_sample.materialize()
     bt_sample = bt_sample.groupby('municipality').sum(numeric_only=True)
     bt_sample['inhabitants_plus_3000_sum'] -= 3000
 

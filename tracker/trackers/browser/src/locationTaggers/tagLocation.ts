@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
 import { create, is, validate } from 'superstruct';
 import { runIfValueIsNotUndefined } from '../common/runIfValueIsNotUndefined';
@@ -7,8 +11,8 @@ import { stringifyTrackVisibility } from '../common/stringifiers/stringifyTrackV
 import { stringifyValidate } from '../common/stringifiers/stringifyValidate';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { AnyClickableContext, AnySectionContext, InputContext } from '../definitions/LocationContext';
-import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
 import { TagLocationParameters } from '../definitions/TagLocationParameters';
 import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
 

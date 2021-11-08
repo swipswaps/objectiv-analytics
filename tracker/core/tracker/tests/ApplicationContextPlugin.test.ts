@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, TrackerEvent, TrackerPlugins } from '../src';
 
 const trackerConfig: TrackerConfig = { applicationId: 'app-id' };

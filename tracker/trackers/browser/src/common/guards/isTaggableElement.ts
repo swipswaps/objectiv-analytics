@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { GuardableElement } from '../../definitions/GuardableElement';
 import { TaggableElement } from '../../definitions/TaggableElement';
 

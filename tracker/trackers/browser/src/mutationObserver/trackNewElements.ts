@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackerConsole } from '@objectiv/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';

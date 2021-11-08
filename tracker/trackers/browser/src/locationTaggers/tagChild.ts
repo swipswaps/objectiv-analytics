@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { ChildrenTaggingQuery } from '../definitions/ChildrenTaggingQuery';
 import { TagChildrenReturnValue } from '../definitions/TagChildrenReturnValue';
 import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerCallback';

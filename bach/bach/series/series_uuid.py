@@ -52,7 +52,7 @@ class SeriesUuid(Series):
         unevaluated expression, not the result of the expression. So at evaluation time the expression will
         be evaluated twice for each row, for the 'x' column and the 'y' column, giving different results both
         times. One way to work around this is to materialize the dataframe in its current state (using
-        get_df_materialized_model()), before adding any columns that reference a column that's created with
+        materialize()), before adding any columns that reference a column that's created with
         this function.
         """
         return cls.get_class_instance(

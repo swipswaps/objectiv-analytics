@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { trackerErrorHandler } from './common/trackerErrorHandler';
 import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
@@ -5,7 +9,7 @@ import { trackApplicationLoaded } from './eventTrackers/trackApplicationLoaded';
 import { getTracker } from './getTracker';
 import { AutoTrackingState } from './mutationObserver/AutoTrackingState';
 import { makeMutationCallback } from './mutationObserver/makeMutationCallback';
-import { trackNewElements } from "./mutationObserver/trackNewElements";
+import { trackNewElements } from './mutationObserver/trackNewElements';
 
 /**
  * Initializes our automatic tracking, based on Mutation Observer.

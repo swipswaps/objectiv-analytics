@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
 import {
   generateUUID,

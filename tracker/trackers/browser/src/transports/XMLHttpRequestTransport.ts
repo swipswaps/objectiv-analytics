@@ -1,4 +1,7 @@
-import { BrowserTrackerConfig } from '@objectiv/tracker-browser';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import {
   isNonEmptyArray,
   NonEmptyArray,
@@ -9,6 +12,7 @@ import {
   TransportableEvent,
   TransportSendError,
 } from '@objectiv/tracker-core';
+import { BrowserTrackerConfig } from '../definitions/BrowserTrackerConfig';
 
 /**
  * The default XMLHttpRequest function implementation.

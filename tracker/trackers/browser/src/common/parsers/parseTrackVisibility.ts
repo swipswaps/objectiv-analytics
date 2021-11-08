@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackVisibilityAttribute } from '../../definitions/TrackVisibilityAttribute';
 import { parseJson } from './parseJson';
 

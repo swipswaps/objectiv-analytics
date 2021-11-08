@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackerConsole, TrackerTransportConfig, TrackerTransportInterface } from '../../src';
 
 export class UnusableTransport implements TrackerTransportInterface {
