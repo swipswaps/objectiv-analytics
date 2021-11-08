@@ -1,7 +1,21 @@
 {
   "name": "@objectiv/plugin-web-document-context",
   "version": "0.0.1",
-  "description": "Objectiv Tracker WebDocumentContext Plugin",
+  "description": "Plugin for Objectiv trackers to automatically attach WebDocumentContexts",
+  "license": "Apache 2.0",
+  "homepage": "https://objectiv.io",
+  "keywords": ["objectiv", "tracking", "web", "analytics", "events", "taxonomy"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/objectiv/objectiv-analytics.git",
+    "directory": "tracker/plugins/web-document-context"
+  },
+  "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
+  "contributors": [{
+    "name": "Surai Di Rosa",
+    "email": "surai@objectiv.io",
+    "url": "https://github.com/sdirosa"
+  }],
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "module": "dist/index.js",

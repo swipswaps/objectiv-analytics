@@ -1,7 +1,21 @@
 {
   "name": "@objectiv/tracker-browser",
   "version": "0.0.1",
-  "description": "Objectiv Browser Tracker",
+  "description": "Web application analytics tracker for the Objectiv open taxonomy for analytics",
+  "license": "Apache 2.0",
+  "homepage": "https://objectiv.io",
+  "keywords": ["objectiv", "tracking", "web", "analytics", "events", "taxonomy"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/objectiv/objectiv-analytics.git",
+    "directory": "tracker/trackers/browser"
+  },
+  "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
+  "contributors": [{
+    "name": "Surai Di Rosa",
+    "email": "surai@objectiv.io",
+    "url": "https://github.com/sdirosa"
+  }],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",

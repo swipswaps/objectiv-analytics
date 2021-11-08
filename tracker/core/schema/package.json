@@ -2,6 +2,19 @@
   "name": "@objectiv/schema",
   "version": "0.0.1",
   "description": "Objectiv Schema TypeScript",
+  "license": "Apache 2.0",
+  "homepage": "https://objectiv.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/objectiv/objectiv-analytics.git",
+    "directory": "tracker/core/schema"
+  },
+  "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
+  "contributors": [{
+    "name": "Surai Di Rosa",
+    "email": "surai@objectiv.io",
+    "url": "https://github.com/sdirosa"
+  }],
   "types": "src/index.d.ts",
   "files": [
     "src"
