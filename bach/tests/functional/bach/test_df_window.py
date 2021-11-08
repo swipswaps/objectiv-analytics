@@ -353,8 +353,7 @@ def test_window_functions_not_in_where_having_groupby():
         x = bt[btg_min_fnd == 4]
 
     # seperate windowed series groupby should not be okay
-    with pytest.raises(ValueError,
-                       match='Window functions can not be used to group, please materialize first'):
+    with pytest.raises(ValueError, match='Window or aggregate functions can not be used to group.'):
         x = bt.groupby(bt.inhabitants.window_lag(bt.sort_values('inhabitants').window()))
 
     # window functions are not allowed in where even if part of df
@@ -365,13 +364,11 @@ def test_window_functions_not_in_where_having_groupby():
         x = bt[bt.lag == 4]
 
     # named groupby should not be okay
-    with pytest.raises(ValueError,
-                       match='Window functions can not be used to group, please materialize first'):
+    with pytest.raises(ValueError, match='Window or aggregate functions can not be used to group.'):
         x = bt.groupby('lag')
 
     # column groupby should not be okay
-    with pytest.raises(ValueError,
-                       match='Window functions can not be used to group, please materialize first'):
+    with pytest.raises(ValueError, match='Window or aggregate functions can not be used to group.'):
         x = bt.groupby(bt.lag)
 
     # window functions not allowed in having (chosen over where when groupby is set)

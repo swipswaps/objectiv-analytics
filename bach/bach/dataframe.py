@@ -496,7 +496,7 @@ class DataFrame:
             else:
                 single_value = False  # there is no way for us to know. User has to slice the result first
 
-                if key.expression.has_window_function:
+                if key.expression.has_windowed_aggregate_function:
                     raise ValueError('Cannot apply a Boolean series containing a window function to '
                                      'DataFrame. '
                                      'Hint: materialize() that DataFrame before creating the Boolean series')

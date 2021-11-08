@@ -756,7 +756,7 @@ class Series(ABC):
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
 
-        if self.expression.has_window_function:
+        if self.expression.has_windowed_aggregate_function:
             raise ValueError(f'Cannot call an aggregation function on already windowed column '
                              f'`{self.name}` Try calling get_df_materialized_model() on the DataFrame'
                              f' this Series belongs to first.')
@@ -800,7 +800,8 @@ class Series(ABC):
             # if the passed expression was not a str, make sure it's tagged correctly
             # we can't check the outer expression, because min_values logic above could have already wrapped
             # it.
-            assert expression.has_aggregate_function
+            if not expression.has_aggregate_function:
+                raise ValueError('Passed expression should contain an aggregation function')
 
             if partition.index == {}:
                 # we're creating an aggregation on everything, this will yield one value

@@ -207,12 +207,12 @@ class Expression:
         )
 
     @property
-    def has_window_function(self) -> bool:
+    def has_windowed_aggregate_function(self) -> bool:
         """
-        True iff we are a WindowFunctionExpression, or there is at least one in this Expression.
+        True iff we are a WindowedAggregateFunctionExpression, or there is at least one in this Expression.
         """
-        return isinstance(self, WindowFunctionExpression) or any(
-            d.has_window_function for d in self.data if isinstance(d, Expression)
+        return isinstance(self, WindowedAggregateFunctionExpression) or any(
+            d.has_windowed_aggregate_function for d in self.data if isinstance(d, Expression)
         )
 
     def resolve_column_references(self, table_name: str = None) -> 'Expression':
@@ -286,5 +286,9 @@ class AggregateFunctionExpression(Expression):
         return False
 
 
-class WindowFunctionExpression(AggregateFunctionExpression):
+class WindowedAggregateFunctionExpression(AggregateFunctionExpression):
+    """
+    A WindowedAggregateFunctionExpression contains an aggregation- or window function, and a window clause:
+    e.g. agg_func() OVER (...). The agg_func
+    """
     pass
