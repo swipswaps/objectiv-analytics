@@ -94,20 +94,20 @@ class DataFrame:
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
                                  f'key: {key}, series.name: {value.name}')
-            if value.index != self._index:
+            if not dict_name_series_equals(value.index, self._index):
                 raise ValueError(f'Indices in `series` should match dataframe. '
                                  f'df: {value.index}, series.index: {self._index}')
-            if value.group_by and group_by and value.group_by != group_by:
+            if value.group_by != self.group_by:
                 raise ValueError(f'Group_by in `series` should match dataframe. '
                                  f'df: {value.group_by}, series.index: {group_by}')
             self._data[key] = value
+
         for value in index.values():
             if value.index != {}:
                 raise ValueError('Index series can not have non-empty index property')
 
-        if group_by is not None:
-            if group_by.index != index:
-                raise ValueError('Index should match group_by index')
+        if group_by is not None and not dict_name_series_equals(group_by.index, index):
+            raise ValueError('Index should match group_by index')
 
         if set(index.keys()) & set(series.keys()):
             raise ValueError(f"The names of the index series and data series should not intersect. "
@@ -122,7 +122,7 @@ class DataFrame:
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
             order_by: List[SortColumn] = None) -> 'DataFrame':
         """
-        Create a copy of self, with the given arguments overriden
+        Create a copy of self, with the given arguments overridden
 
         Big fat warning: group_by can legally be None, but if you want to set that,
         set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
@@ -186,14 +186,9 @@ class DataFrame:
         # We cannot just compare the data and index properties, because the Series objects have
         # overridden the __eq__ function in a way that makes normal comparisons not useful. We have to use
         # equals() instead
-        if list(self.index.keys()) != list(other.index.keys()):
-            return False
-        if list(self.data.keys()) != list(other.data.keys()):
-            return False
-        for key in self.all_series.keys():
-            if not self.all_series[key].equals(other.all_series[key]):
-                return False
         return \
+            dict_name_series_equals(self.index, other.index) and \
+            dict_name_series_equals(self.data, other.data) and \
             self.engine == other.engine and \
             self.base_node == other.base_node and \
             self._group_by == other._group_by and \
@@ -279,7 +274,7 @@ class DataFrame:
         in the database first (e.g. by specifying 'table').
 
         There are some small differences between how the different materializations handle NaN values. e.g.
-        'cte' does not support those for non-numeric columns, wheras 'table' converts them to 'NULL'
+        'cte' does not support those for non-numeric columns, whereas 'table' converts them to 'NULL'
 
         Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
 
@@ -407,7 +402,9 @@ class DataFrame:
         :param: seed: seed number used to generate the sample.
         """
         if self._group_by is not None:
-            print('error: groupby not supported ')
+            raise NotImplementedError('Dataframes that have an active grouping can currently not be sampled. '
+                                      'Call df.materialize() first.')
+
         if overwrite:
             sql = f'DROP TABLE IF EXISTS {table_name}'
             with self.engine.connect() as conn:
@@ -448,20 +445,27 @@ class DataFrame:
         Will raise an error if the current Frame doesn't contain sampled data, i.e. get_sample() has not been
         called.
         """
+        df = self
+        if df._group_by:
+            df = self.materialize(node_name='get_unsampled')
+
         sampled_node_tuple = find_node(
-            start_node=self.base_node,
+            start_node=df.base_node,
             function=lambda node: isinstance(node, SampleSqlModel)
         )
         if sampled_node_tuple is None:
-            raise ValueError('No sampled node found. Cannot unsample data that has not been sampled.')
+            raise ValueError('No sampled node found. Cannot un-sample data that has not been sampled.')
 
         assert isinstance(sampled_node_tuple.model, SampleSqlModel)  # help mypy
         updated_graph = replace_node_in_graph(
-            start_node=self.base_node,
+            start_node=df.base_node,
             reference_path=sampled_node_tuple.reference_path,
             replacement_model=sampled_node_tuple.model.previous
         )
-        return self.copy_override(base_node=updated_graph)
+
+        index = {s.name: s.copy_override(base_node=updated_graph) for s in df._index.values()}
+        series = {s.name: s.copy_override(base_node=updated_graph, index=index) for s in df._data.values()}
+        return df.copy_override(base_node=updated_graph, index=index, series=series)
 
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'SeriesBoolean']) -> DataFrameOrSeries:
@@ -1439,3 +1443,15 @@ class DataFrame:
     def var(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
+
+
+def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
+    """
+    Compare two dicts in the format that we use to track series and indices.
+    A normal == does not work on these dicts, because Series.equals() is overridden to create SeriesBoolean,
+    so we need to call Series.equals instead.
+    """
+    return (a is None and b is None) or (
+            len(a) == len(b) and list(a.keys()) == list(b.keys())
+            and all(ai.equals(bi) for (ai, bi) in zip(a.values(), b.values()))
+    )
