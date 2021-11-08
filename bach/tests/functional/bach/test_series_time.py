@@ -15,3 +15,10 @@ def test_time_arithmetic():
         ['dt', datetime.datetime(2021, 5, 3, 11, 28, 36, 388000), 'timestamp', (None, None)]
     ]
     types_plus_min(data, datetime.time(13, 11, 5), 'time')
+
+
+def test_to_pandas():
+    bt = get_bt_with_test_data()
+    bt['t'] = datetime.time(23, 11, 5)
+    bt[['t']].to_pandas()
+    assert bt[['t']].values[0] == [datetime.time(23, 11, 5)]

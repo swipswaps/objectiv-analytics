@@ -221,8 +221,13 @@ def assert_equals_data(
     if len(expected_data) == 0:
         raise ValueError("Cannot check data if 0 rows are expected.")
 
+    if isinstance(bt, Series):
+        # Otherwise sorting does not work as expected
+        bt = bt.to_frame()
+
     if order_by:
         bt = bt.sort_values(order_by)
+
     sql = bt.view_sql()
     db_rows = run_query(bt.engine, sql)
     column_names = list(db_rows.keys())
