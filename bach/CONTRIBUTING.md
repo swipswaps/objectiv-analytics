@@ -1,8 +1,11 @@
 # Bach: Pandas-like DataFrames backed by SQL
 
-Bach is Objectiv's data modeling library. With Bach, you can compose models with familiar Pandas-like dataframe operations in your notebook. It uses an SQL abstraction layer that enables models to run on the full dataset. It includes a set of operations that enable effective feature creation for datasets that embrace the [open taxonomy of analytics](/schema/README.md).
+## What is it?
+Bach offers an interface that is compatible with a subset of the Pandas API, but under the hood directly
+interacts with a SQL backend.
 
-Bach uses sql_models under the hood, which makes it possible to easily build graphs of sql-models and generate sql for the resulting composite sql-models. See sql_models/README.md for more information.
+Bach under the hood uses sql_models, which makes it possible to easily build graphs of sql-models and
+generate sql for the resulting composite sql-models. See sql_models/README.md for more information on that.
 
 ### Why?
 * The database does the heavy lifting
