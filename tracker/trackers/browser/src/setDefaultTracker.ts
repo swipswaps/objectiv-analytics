@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { FlushQueueOptions } from './definitions/FlushQueueOptions';
 import { WaitForQueueOptions } from './definitions/WaitForQueueOptions';
 import { getTracker } from './getTracker';

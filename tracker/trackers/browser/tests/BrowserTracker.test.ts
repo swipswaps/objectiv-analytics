@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackerEvent, TrackerPlugins, TrackerQueue, TrackerTransportRetry } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { generateUUID } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackVisibilityHiddenEvent } from '../src/mutationObserver/trackVisibilityHiddenEvent';

@@ -1,4 +1,5 @@
-/**
+/*
+ * Copyright 2021 Objectiv B.V.
  * @jest-environment node
  */
 import { WebDocumentContextPlugin } from '../src';

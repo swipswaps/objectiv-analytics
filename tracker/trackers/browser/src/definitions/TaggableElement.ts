@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 /**
  * A Taggable Element is an HTMLElement or an SVGElement
  */

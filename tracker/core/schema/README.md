@@ -17,4 +17,5 @@ npm install @objectiv/schema --dev
 ```
 
 # Usage
+
 For a detailed usage guide, see the documentation: [https://objectiv.io/docs](https://objectiv.io/docs)

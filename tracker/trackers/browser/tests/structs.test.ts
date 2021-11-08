@@ -1,13 +1,17 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { makeSectionContext } from '@objectiv/tracker-core';
 import {
   ChildrenTaggingQueries,
-  parseTagChildren,
   parseLocationContext,
+  parseTagChildren,
   parseTrackClicks,
   parseTrackVisibility,
   parseValidate,
-  stringifyTagChildren,
   stringifyLocationContext,
+  stringifyTagChildren,
   stringifyTrackVisibility,
   stringifyValidate,
   tagElement,

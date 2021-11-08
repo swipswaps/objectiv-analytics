@@ -1,4 +1,8 @@
-import { NgModule, ModuleWithProviders } from '@angular/core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { ModuleWithProviders, NgModule } from '@angular/core';
 import { BrowserTrackerConfig } from '@objectiv/tracker-browser';
 import { ObjectivTrackerDirective } from './objectiv-tracker.directive';
 import { OBJECTIV_TRACKER_INITIALIZER_PROVIDER } from './objectiv-tracker.initializer';

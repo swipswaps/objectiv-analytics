@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 // noinspection UnnecessaryLocalVariableJS
 
 /**
@@ -15,6 +19,12 @@
 
 const fs = require('fs');
 const JSON5 = require('json5');
+
+const COPYRIGHT = `/*
+ * Copyright ${new Date().getFullYear()} Objectiv B.V.
+ */
+ \n
+`;
 
 const DISCRIMINATING_PROPERTY_PREFIX = '_';
 
@@ -618,7 +628,8 @@ Object.keys(object_factories).forEach((factory_type) => {
   const import_statement = `import { \n\t${imports.join(',\n\t')}\n} from '@objectiv/schema';\n`;
 
   const filename = `${core_tracker_package_dir}${factory_type}.ts`;
-  fs.writeFileSync(filename, [...[import_statement], ...Object.values(factories)].join('\n'));
+  fs.writeFileSync(filename, COPYRIGHT);
+  fs.appendFileSync(filename, [...[import_statement], ...Object.values(factories)].join('\n'));
   console.log(`Written ${Object.values(factories).length} factories to ${filename}`);
 });
 
@@ -646,7 +657,8 @@ Object.keys(object_declarations).forEach((definition_type) => {
     imports.length > 0 ? `import {${[...new Set(imports)].join(',')}} from './abstracts';` : null;
 
   // write imports and declarations to file
-  fs.writeFileSync(
+  fs.writeFileSync(filename, COPYRIGHT);
+  fs.appendFileSync(
     filename,
     [...[import_statement], ...Object.values(object_declarations[definition_type])].join('\n\n')
   );
@@ -657,7 +669,8 @@ Object.keys(object_declarations).forEach((definition_type) => {
 // this includes all generated types, as well as those in static.d.ts
 const export_file_list = [...Object.keys(object_declarations), ['static']];
 const index_filename = `${core_schema_package_dir}index.d.ts`;
-fs.writeFileSync(
+fs.writeFileSync(index_filename, COPYRIGHT);
+fs.appendFileSync(
   index_filename,
   export_file_list
     .map((element) => {

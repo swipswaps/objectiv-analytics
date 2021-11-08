@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { isNonEmptyArray, NonEmptyArray } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent } from './TrackerEvent';
