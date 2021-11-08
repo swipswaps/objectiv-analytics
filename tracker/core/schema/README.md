@@ -7,13 +7,13 @@ TypeScript implementation of the open taxonomy for analytics for Objectiv tracke
 # Package installation
 
 ```sh
-yarn add @objectiv/schema --dev
+yarn add @objectiv-analytics/schema --dev
 ```
 
 ## or
 
 ```sh
-npm install @objectiv/schema --dev
+npm install @objectiv-analytics/schema --dev
 ```
 
 # Usage

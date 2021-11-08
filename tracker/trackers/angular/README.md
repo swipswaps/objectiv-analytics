@@ -6,12 +6,12 @@ Objectiv tracker for Angular that embraces the open taxonomy for analytics. Supp
 # Package Installation
 
 ```sh
-yarn add @objectiv/tracker-browser @objectiv/tracker-angular
+yarn add @objectiv-analytics/tracker-browser @objectiv-analytics/tracker-angular
 ```
 
 ## or
 ```sh
-npm install @objectiv/tracker-browser @objectiv/tracker-angular
+npm install @objectiv-analytics/tracker-browser @objectiv-analytics/tracker-angular
 ```
 
 # Usage

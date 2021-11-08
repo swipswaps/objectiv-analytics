@@ -1,5 +1,5 @@
 {
-  "name": "@objectiv/plugin-web-document-context",
+  "name": "@objectiv-analytics/plugin-web-document-context",
   "version": "0.0.1",
   "description": "Plugin for Objectiv trackers to automatically attach WebDocumentContexts",
   "license": "Apache-2.0",
@@ -60,6 +60,6 @@
     "typescript": "^4.4.4"
   },
   "peerDependencies": {
-    "@objectiv/tracker-core": "^0.0.1"
+    "@objectiv-analytics/tracker-core": "^0.0.1"
   }
 }

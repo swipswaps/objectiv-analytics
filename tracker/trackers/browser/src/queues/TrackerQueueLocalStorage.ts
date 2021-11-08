@@ -8,7 +8,7 @@ import {
   TrackerEvent,
   TrackerQueueStoreConfig,
   TrackerQueueStoreInterface,
-} from '@objectiv/tracker-core';
+} from '@objectiv-analytics/tracker-core';
 
 /**
  * A Local Storage implementation of a TrackerQueueStore.

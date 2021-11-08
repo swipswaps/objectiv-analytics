@@ -1,5 +1,5 @@
 {
-  "name": "@objectiv/tracker-core",
+  "name": "@objectiv-analytics/tracker-core",
   "version": "0.0.1",
   "description": "Core functionality for Objectiv JavaScript trackers",
   "license": "Apache-2.0",
@@ -43,7 +43,7 @@
     "npm-publish:verdaccio": "cp ../../verdaccio/.npmrc .npmrc && npm publish && rm -f .npmrc"
   },
   "devDependencies": {
-    "@objectiv/schema": "^0.0.1",
+    "@objectiv-analytics/schema": "^0.0.1",
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.6",
     "@types/jest": "^27.0.2",

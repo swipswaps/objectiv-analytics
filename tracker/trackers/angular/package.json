@@ -1,5 +1,5 @@
 {
-  "name": "@objectiv/tracker-angular",
+  "name": "@objectiv-analytics/tracker-angular",
   "version": "0.0.1",
   "description": "Objectiv Angular framework analytics tracker for the open taxonomy for analytics",
   "license": "Apache-2.0",
@@ -36,13 +36,13 @@
     "npm-publish:verdaccio": "(cd dist && cp ../../../verdaccio/.npmrc .npmrc && npm publish && rm -f .npmrc)"
   },
   "peerDependencies": {
-    "@objectiv/tracker-browser": "^0.0.1"
+    "@objectiv-analytics/tracker-browser": "^0.0.1"
   },
   "devDependencies": {
     "@angular/compiler": "^12.2.11",
     "@angular/compiler-cli": "^12.2.11",
     "@angular/core": "^12.2.11",
-    "@objectiv/tracker-browser": "^0.0.1",
+    "@objectiv-analytics/tracker-browser": "^0.0.1",
     "ng-packagr": "^12.2.5",
     "prettier": "^2.4.1",
     "rxjs": "^7.4.0",
@@ -54,7 +54,7 @@
     "lib": {
       "entryFile": "src/index.ts",
       "umdModuleIds": {
-        "@objectiv/tracker-browser": "objectivTrackerBrowser"
+        "@objectiv-analytics/tracker-browser": "objectivTrackerBrowser"
       }
     }
   }
