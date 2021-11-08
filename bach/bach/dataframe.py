@@ -94,10 +94,10 @@ class DataFrame:
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
                                  f'key: {key}, series.name: {value.name}')
-            if not dict_name_series_equals(value.index, self._index):
+            if not dict_name_series_equals(value.index, index):
                 raise ValueError(f'Indices in `series` should match dataframe. '
-                                 f'df: {value.index}, series.index: {self._index}')
-            if value.group_by != self.group_by:
+                                 f'df: {value.index}, series.index: {index}')
+            if value.group_by != group_by:
                 raise ValueError(f'Group_by in `series` should match dataframe. '
                                  f'df: {value.group_by}, series.index: {group_by}')
             self._data[key] = value
