@@ -236,12 +236,12 @@ def test_series_inherit_flag():
     assert not bts_derived.expression.has_aggregate_function
 
 
-def test_series_independant_subquery_any_all():
+def test_series_independant_subquery_any_value_all_values():
     bt = get_bt_with_test_data(full_data_set=True)
     s = bt.inhabitants.max() // 4
 
-    bt[bt.inhabitants > s.any()].head()
-    result_bt = bt[bt.inhabitants > s.all()]
+    bt[bt.inhabitants > s.any_value()].head()
+    result_bt = bt[bt.inhabitants > s.all_values()]
 
     assert_equals_data(
         result_bt[['city', 'inhabitants']],

@@ -402,11 +402,11 @@ class Series(ABC):
         s = Series._independent_subquery(self, 'exists', dtype='bool')
         return s.copy_override(expression=SingleValueExpression(s.expression))
 
-    def any(self):
+    def any_value(self):
         # aka some()
         return Series._independent_subquery(self, 'any')
 
-    def all(self):
+    def all_values(self):
         return Series._independent_subquery(self, 'all')
 
     def isin(self, other: 'Series'):
