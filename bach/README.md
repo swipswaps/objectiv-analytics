@@ -26,7 +26,7 @@ If you need help using or installing Bach, join our [Slack channel](https://join
 If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing.md).
 
 ## Security Disclosure
-Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](../tree/SECURITY.MD) for details.
+Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](../SECURITY.MD) for details.
 
 ## Roadmap
 Future plans for Objectiv can be found on our [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2)
@@ -35,7 +35,7 @@ Future plans for Objectiv can be found on our [Github Roadmap](https://github.co
 If you want to contribute to Objectiv or use it as a base for custom development, take a look at [CONTRIBUTING.md](CONTRIBUTING.MD). It contains detailed development instructions and a link to information about our contribution process and where you can fit in.
 
 ## License
-This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to License(../LICENSE.md) for details.
+This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [License](../LICENSE.md) for details.
 
 Unless otherwise noted, all files © 2021 Objectiv B.V.
 
