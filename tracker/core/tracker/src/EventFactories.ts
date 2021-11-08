@@ -4,8 +4,6 @@
 
 import {
   AbortedEvent,
-  AbstractGlobalContext,
-  AbstractLocationContext,
   ApplicationLoadedEvent,
   ClickEvent,
   CompletedEvent,
@@ -21,6 +19,8 @@ import {
   VideoPauseEvent,
   VideoStartEvent,
   VideoStopEvent,
+  AbstractLocationContext,
+  AbstractGlobalContext,
 } from '@objectiv/schema';
 
 /** Creates instance of AbortedEvent
