@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from sql_models.model import SqlModelBuilder, CustomSqlModel
-from sql_models.sql_generator import to_sql, _escape_value
+from sql_models.sql_generator import to_sql
 from tests.unit.sql_models.test_graph_operations import get_simple_test_graph
 from tests.unit.sql_models.util import assert_roughly_equal_sql
 

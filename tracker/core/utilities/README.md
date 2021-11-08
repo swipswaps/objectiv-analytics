@@ -1,6 +1,6 @@
 # Objectiv Core Utilities
 
-[PLACEHOLDER: Objectiv Core Utilities introductory text]
+Internal Core Tracker utilities.
 
 ---
 

@@ -187,7 +187,6 @@ def test_merge_basic_on_indexes():
 
     with pytest.raises(ValueError, match="No columns to perform merge on"):
         result = btr.merge(mtr, left_index=True, right_index=True)
-        result.head()
 
 
 def test_merge_suffixes():

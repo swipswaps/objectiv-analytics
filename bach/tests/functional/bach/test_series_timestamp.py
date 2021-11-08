@@ -23,6 +23,16 @@ def test_timestamp_data():
     )
 
 
+def test_to_pandas():
+    bt = get_bt_with_test_data()
+    bt['dt'] = datetime.datetime(2021, 5, 3, 11, 28, 36, 388000)
+    bt[['dt']].to_pandas()
+    from numpy import array
+    # TODO, this is not great, but at least it does not error when imported into pandas,
+    # and it looks good over there
+    assert bt[['dt']].values[0] == [array(['2021-05-03T11:28:36.388000000'], dtype='datetime64[ns]')]
+
+
 @pytest.mark.parametrize("asstring", [True, False])
 def test_timestamp_comparator(asstring: bool):
     mt = get_bt_with_food_data()[['moment']]

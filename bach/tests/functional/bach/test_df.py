@@ -156,6 +156,41 @@ def test_materialize():
     assert previous_node_mat == bt.get_current_node('node')
 
 
+def test_materialize_with_non_aggregation_series():
+    # A dataframe with a groupby set, but without all columns setup for aggregation should raise
+    bt = get_bt_with_test_data()[['municipality', 'founding', 'inhabitants']]
+    btg = bt.groupby('municipality')
+    assert btg.group_by is not None
+    with pytest.raises(ValueError, match="Series \\['_index_skating_order', 'inhabitants', 'founding'\\] "
+                                         "need\\(s\\) to have an aggregation function set."):
+        btg.materialize()
+
+    assert btg.base_node == bt.base_node
+
+    # Add one that's aggregated, should still fail
+    btg['founding'] = btg.founding.sum()
+    with pytest.raises(ValueError, match="Series \\['_index_skating_order', 'inhabitants'\\] "
+                                         "need\\(s\\) to have an aggregation function set"):
+        btg.materialize()
+    assert btg.base_node == bt.base_node
+
+    # Selecting the aggregated series in the df should work
+    btg_founding_only = btg[['founding']]
+    btg_founding_only_materialized = btg_founding_only.materialize()
+    assert btg_founding_only_materialized.base_node != bt.base_node
+
+    # As should getting the series only and converting it back to a frame
+    btg_founding_only = btg['founding'].to_frame()
+    btg_founding_only_materialized = btg_founding_only.materialize()
+    assert btg_founding_only_materialized.base_node != bt.base_node
+
+    # Fix the last one,
+    btg['inhabitants'] = btg.inhabitants.sum()
+    btg['_index_skating_order'] = btg._index_skating_order.sum()
+    bt_materialized = btg.materialize()
+    assert bt_materialized.base_node != btg.base_node
+
+
 def test_materialize_non_deterministic_expressions():
     bt = get_bt_with_test_data()[['city']]
     bt['uuid1'] = SeriesUuid.sql_gen_random_uuid(bt)

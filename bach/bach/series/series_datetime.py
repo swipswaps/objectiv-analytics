@@ -223,7 +223,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':
         result = self._derived_agg_func(
             partition=partition,
-            expression=Expression.construct('sum({})', self.expression),
+            expression='sum',
             skipna=skipna,
             min_count=min_count
         )
@@ -232,7 +232,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'SeriesTimedelta':
         result = self._derived_agg_func(
             partition=partition,
-            expression=Expression.construct('avg({})', self.expression),
+            expression='avg',
             skipna=skipna
         )
         return cast('SeriesTimedelta', result)
