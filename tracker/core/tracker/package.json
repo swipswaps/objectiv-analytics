@@ -2,7 +2,6 @@
   "name": "@objectiv-analytics/tracker-core",
   "version": "0.0.1",
   "description": "Core functionality for Objectiv JavaScript trackers",
-  "private": false,
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [
@@ -48,6 +47,7 @@
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.6",
     "@types/jest": "^27.0.2",
+    "depcheck": "^1.4.2",
     "jest": "^27.3.1",
     "jest-standard-reporter": "^2.0.0",
     "mockdate": "^3.0.5",

@@ -2,7 +2,6 @@
   "name": "@objectiv-analytics/plugin-web-document-context",
   "version": "0.0.1",
   "description": "Plugin for Objectiv trackers to automatically attach WebDocumentContexts",
-  "private": false,
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [
@@ -47,6 +46,7 @@
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.6",
     "@types/jest": "^27.0.2",
+    "depcheck": "^1.4.2",
     "jest": "^27.3.1",
     "jest-extended": "^1.1.0",
     "jest-standard-reporter": "^2.0.0",
