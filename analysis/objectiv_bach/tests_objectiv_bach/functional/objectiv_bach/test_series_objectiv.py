@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from tests.functional.objectiv_bach.test_data_and_utils import get_bt_with_json_data_real, assert_equals_data
+from tests.functional.bach.test_data_and_utils import get_bt_with_json_data_real, assert_equals_data
 
 
 def test_get_real_data():
