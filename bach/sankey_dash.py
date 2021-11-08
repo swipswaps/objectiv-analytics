@@ -1,26 +1,15 @@
-import json 
 from textwrap import dedent as d
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc, html, callback_context
 from dash.dependencies import Input, Output, State
-from dash import callback_context
-import plotly.graph_objects as go
-import pandas as pd
 
-def get_app(Dash, feature_frame, start_event_dropdown_option='all', start_stack_dropdown_option='location_stack'):
-
-
+def get_app(Dash, feature_frame):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-    
+
     event_dropdown_options = [{'label': i, 'value': i} for i in set(feature_frame[feature_frame.event_column].values)]
     event_dropdown_options.append({'label': 'all', 'value': 'all'})
 
-    features = [key for key, value in feature_frame._bt.dtypes.items() if value == 'objectiv_location_stack']
-
+    features = [key for key, value in feature_frame.dtypes.items() if value == 'objectiv_location_stack']
     stack_dropdown_options = [{'label': i, 'value': i} for i in features]
-
-    # stack_dropdown_options.append({'label': 'location_stack', 'value': 'location_stack'})
-
 
     app = Dash(__name__, external_stylesheets=external_stylesheets)
 
@@ -30,9 +19,6 @@ def get_app(Dash, feature_frame, start_event_dropdown_option='all', start_stack_
             'overflowX': 'scroll'
         }
     }
-
-
-
 
     def serve_layout():
         return html.Div([
@@ -53,7 +39,6 @@ def get_app(Dash, feature_frame, start_event_dropdown_option='all', start_stack_
             dcc.Markdown(d("**Console**")),
             html.Pre(id='console', style=styles['pre'])
         ])
-
 
     app.layout = serve_layout
 
@@ -105,6 +90,7 @@ def get_app(Dash, feature_frame, start_event_dropdown_option='all', start_stack_
         else:
             return filtered_feature_frame[filtered_feature_frame[filtered_feature_frame.event_column]==event_value].display_sankey('_sankey_feature')
 
+
     @app.callback(
         Output('feature-rules', 'children'),
         [Input('node-clicks', 'data'),
@@ -116,6 +102,7 @@ def get_app(Dash, feature_frame, start_event_dropdown_option='all', start_stack_
             feature_rules.append(f'.json[{start_at_value}:{end_at_value}]')
 
         return '\\\n'.join(feature_rules)
+
 
     @app.callback(
         [Output('stack', 'options'),
@@ -177,10 +164,6 @@ def get_app(Dash, feature_frame, start_event_dropdown_option='all', start_stack_
             console_text = f'feature {feature_name_value} created'
 
         return stack_dropdown_options, console_text
-
-
-
-
 
 
     @app.callback(
