@@ -2361,11 +2361,9 @@ __metadata:
   resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
   dependencies:
     "@objectiv/plugin-web-document-context": ^0.0.1
-    "@objectiv/schema": ^0.0.1
     "@objectiv/tracker-core": ^0.0.1
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.0.6
-    "@rollup/plugin-strip": ^2.1.0
     "@types/jest": ^27.0.2
     jest: ^27.3.1
     jest-fetch-mock: ^3.0.3
@@ -2379,7 +2377,6 @@ __metadata:
     rollup-plugin-ts: ^1.4.7
     superstruct: ^0.15.3
     ts-jest: ^27.0.7
-    tslib: ^2.3.1
     typescript: ^4.4.4
     xhr-mock: ^2.5.1
   peerDependencies:
@@ -2494,19 +2491,6 @@ __metadata:
   peerDependencies:
     rollup: ^2.42.0
   checksum: da304025ca898f3ad70e3a24d788634298f2ca6e139517adff43f27ea9cf821af3ee3530ca6f8abaf7e697294b59803837cd8f0ec22e3b1d34d3411c39e9a32c
-  languageName: node
-  linkType: hard
-
-"@rollup/plugin-strip@npm:^2.1.0":
-  version: 2.1.0
-  resolution: "@rollup/plugin-strip@npm:2.1.0"
-  dependencies:
-    "@rollup/pluginutils": ^3.1.0
-    estree-walker: ^2.0.1
-    magic-string: ^0.25.7
-  peerDependencies:
-    rollup: ^1.20.0 || ^2.0.0
-  checksum: 0a4b9c45eecd285186dbed1025ebfdd823748648df768bdd28e8b8495002cd54ba1e9642a2c6187915b5227b252f458181d8e21c42452f1798dda276700278f4
   languageName: node
   linkType: hard
 

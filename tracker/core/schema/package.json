@@ -34,7 +34,8 @@
     "prettify:generated": "yarn prettier --write ./src",
     "tsc": "tsc --noEmit",
     "check:dependencies": "npx depcheck",
-    "npm-publish": "npm publish"
+    "npm-publish": "rm -f .npmrc && npm publish",
+    "npm-publish:verdaccio": "cp ../../verdaccio/.npmrc .npmrc && npm publish && rm -f .npmrc"
   },
   "devDependencies": {
     "prettier": "^2.4.1",

@@ -39,7 +39,8 @@
     "test:ci": "jest --silent --ci --runInBand",
     "test:coverage": "jest --silent --coverage --runInBand",
     "check:dependencies": "npx depcheck",
-    "npm-publish": "npm publish"
+    "npm-publish": "rm -f .npmrc && npm publish",
+    "npm-publish:verdaccio": "cp ../../verdaccio/.npmrc .npmrc && npm publish && rm -f .npmrc"
   },
   "devDependencies": {
     "@objectiv/schema": "^0.0.1",

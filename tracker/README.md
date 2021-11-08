@@ -119,10 +119,10 @@ yarn install
 yarn build
 
 ## publish it
-yarn publish
+yarn publish:verdaccio
 ```
 
-Now surf to http://localhost:4873 and you should see the packages you've just published. 
+Now surf to http://localhost:4873, and you should see the packages you've just published. 
 
 To stop verdaccio, simply run:
 ```bash
@@ -169,11 +169,18 @@ Builds all packages.
 Build output will be produced in a `/dist` folder under each package.
 
 ### `yarn publish`
-Publishes all public packages.
+Publishes all public packages to NPM.
 > **Note**:  
 > To publish a single package the command name is `npm-publish` to avoid conflicting with the default command 
 > 
 > Example: `yarn workspace @objectiv/tracker-core npm-publish`
+
+### `yarn publish:verdaccio`
+Publishes all public packages to a Local Verdaccio instance.
+> **Note**:  
+> To publish a single package the command name is `npm-publish:verdaccio` to avoid conflicting with the default command
+>
+> Example: `yarn workspace @objectiv/tracker-core npm-publish:verdaccio`
 
 ### `yarn utils:generate`
 Runs the generator utility. This will generate:
