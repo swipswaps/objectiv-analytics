@@ -1,4 +1,4 @@
-# Objectiv Backend
+# The Open Taxonomy for Analytics
 
 The Open Taxonomy for Analytics is Objectiv’s proposal for a common way to collect, structure and validate data. It defines classes for each common event type and the contexts in which they can happen. It describes their properties, requirements and their relationships with other classes. 
 
