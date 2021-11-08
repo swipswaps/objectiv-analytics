@@ -105,24 +105,61 @@ class DataFrame:
             self,
             engine: Engine = None,
             base_node: SqlModel[BachSqlModel] = None,
+            index_dtypes: Dict[str, str] = None,
+            series_dtypes: Dict[str, str] = None,
             index: Dict[str, 'Series'] = None,
             series: Dict[str, 'Series'] = None,
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
-            order_by: List[SortColumn] = None) -> 'DataFrame':
+            order_by: List[SortColumn] = None,
+            **kwargs
+    ) -> 'DataFrame':
         """
         Create a copy of self, with the given arguments overriden
 
         Big fat warning: group_by can legally be None, but if you want to set that,
         set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
         """
-        return DataFrame(
-            engine=engine if engine is not None else self.engine,
-            base_node=base_node if base_node is not None else self._base_node,
-            index=index if index is not None else self._index,
-            series=series if series is not None else self._data,
-            group_by=self._group_by if group_by is None else group_by[0],
-            order_by=order_by if order_by is not None else self._order_by
-        )
+
+        if index_dtypes and index:
+            raise ValueError("Can not set both index and index_dtypes")
+
+        if series_dtypes and series:
+            raise ValueError("Can not set both series and series_dtypes")
+
+        args = {
+            'engine': engine if engine is not None else self.engine,
+            'base_node':  base_node if base_node is not None else self._base_node,
+            'index':  index if index is not None else self._index,
+            'series': series if series is not None else self._data,
+            'group_by': self._group_by if group_by is None else group_by[0],
+            'order_by': order_by if order_by is not None else self._order_by
+        }
+
+        if index_dtypes:
+            new_index: Dict[str, Series] = {}
+            for key, value in index_dtypes.items():
+                index_type = get_series_type_from_dtype(value)
+                new_index[key] = index_type(
+                    engine=args['engine'], base_node=args['base_node'],
+                    index={},  # Empty index for index series
+                    name=key, expression=Expression.column_reference(key),
+                    group_by=args['group_by']
+                )
+            args['index'] = new_index
+
+        if series_dtypes:
+            new_series: Dict[str, Series] = {}
+            for key, value in series_dtypes.items():
+                series_type = get_series_type_from_dtype(value)
+                new_series[key] = series_type(
+                    engine=args['engine'], base_node=args['base_node'],
+                    index=args['index'],
+                    name=key, expression=Expression.column_reference(key),
+                    group_by=args['group_by']
+                )
+                args['series'] = new_series
+
+        return self.__class__(**args, **kwargs)
 
     @property
     def engine(self):
@@ -332,7 +369,7 @@ class DataFrame:
                 expression=Expression.column_reference(key),
                 group_by=group_by
             )
-        return DataFrame(
+        return cls(
             engine=engine,
             base_node=base_node,
             index=index,
@@ -371,15 +408,13 @@ class DataFrame:
 
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
-
-        model = self.get_current_node(node_name)
-        return self.get_instance(
-            engine=self.engine,
-            base_node=model,
+        node = self.get_current_node(node_name)
+        return self.copy_override(
+            base_node=node,
             index_dtypes=index_dtypes,
-            dtypes=series_dtypes,
-            group_by=None,
-            order_by=[]
+            series_dtypes=series_dtypes,
+            group_by=[None],
+            order_by=[]  # filtering rows resets any sorting
         )
 
     def get_sample(self,
@@ -499,12 +534,11 @@ class DataFrame:
                         where_clause=Expression.construct("where {}", key.expression))
 
             return self._df_or_series(
-                DataFrame.get_instance(
-                    engine=self.engine,
+                self.copy_override(
                     base_node=node,
                     index_dtypes={name: series.dtype for name, series in self.index.items()},
-                    dtypes={name: series.dtype for name, series in self.data.items()},
-                    group_by=None,
+                    series_dtypes={name: series.dtype for name, series in self.data.items()},
+                    group_by=[None],
                     order_by=[]  # filtering rows resets any sorting
                 )
             )
@@ -809,12 +843,13 @@ class DataFrame:
         # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
         new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index)
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
-        return cls(engine=df.engine,
-                   base_node=df.base_node,
-                   index=group_by.index,
-                   series=new_series,
-                   group_by=group_by,
-                   order_by=[])
+        return df.copy_override(
+            engine=df.engine,
+            base_node=df.base_node,
+            index=group_by.index,
+            series=new_series,
+            group_by=[group_by],
+            order_by=[])
 
     def groupby(
             self,
