@@ -116,12 +116,12 @@ class DataFrame:
             self,
             engine: Engine = None,
             base_node: SqlModel[BachSqlModel] = None,
-            index_dtypes: Dict[str, str] = None,
-            series_dtypes: Dict[str, str] = None,
             index: Dict[str, 'Series'] = None,
             series: Dict[str, 'Series'] = None,
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
             order_by: List[SortColumn] = None,
+            index_dtypes: Dict[str, str] = None,
+            series_dtypes: Dict[str, str] = None,
             single_value: bool = False,
             **kwargs
     ) -> 'DataFrame':
@@ -130,6 +130,12 @@ class DataFrame:
 
         Big fat warning: group_by can legally be None, but if you want to set that,
         set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
+
+        There are three special parameters: index_dtypes, series_dtypes and single_value. These are used to
+        create new index and data series iff index and/or series are not given. `single_value` determines
+        whether the Expressions for those newly created series should be SingleValueExpressions or not.
+        All other arguments are passed through to `__init__`, filled with current instance values if None is
+        given in the parameters.
         """
 
         if index_dtypes and index:
@@ -562,10 +568,10 @@ class DataFrame:
 
             return self.copy_override(
                 base_node=node,
-                index_dtypes={name: series.dtype for name, series in self.index.items()},
-                series_dtypes={name: series.dtype for name, series in self.data.items()},
                 group_by=[None],
                 order_by=[],  # filtering rows resets any sorting
+                index_dtypes={name: series.dtype for name, series in self.index.items()},
+                series_dtypes={name: series.dtype for name, series in self.data.items()},
                 single_value=single_value
             )
         raise NotImplementedError(f"Only str, (set|list)[str], slice or SeriesBoolean are supported, "
