@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { makeButtonContext, makeInputContext, makeSectionContext } from '@objectiv/tracker-core';
 import { stringifyLocationContext, TaggedElement, TaggingAttribute } from '../../src';
 

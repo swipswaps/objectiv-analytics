@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { func, object, optional } from 'superstruct';
 import { AnyLocationContext } from './LocationContext';
 import { TagLocationOptions } from './TagLocationOptions';

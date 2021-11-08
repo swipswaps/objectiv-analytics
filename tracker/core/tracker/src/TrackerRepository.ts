@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { Tracker } from './Tracker';
 import { TrackerRepositoryInterface } from './TrackerRepositoryInterface';
 

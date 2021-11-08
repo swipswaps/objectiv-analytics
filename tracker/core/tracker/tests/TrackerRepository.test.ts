@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { Tracker, TrackerRepository } from '../src';
 import { mockConsole } from './mocks/MockConsole';
 

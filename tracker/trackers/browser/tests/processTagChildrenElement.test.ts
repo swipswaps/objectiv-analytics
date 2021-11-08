@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { makeButtonContext } from '@objectiv/tracker-core';
 import { isTaggedElement, processTagChildrenElement, tagButton, tagElement, TaggingAttribute } from '../src';
 

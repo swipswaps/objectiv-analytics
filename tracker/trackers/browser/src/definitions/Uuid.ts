@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { define } from 'superstruct';
 import uuid from 'uuid-random';
 

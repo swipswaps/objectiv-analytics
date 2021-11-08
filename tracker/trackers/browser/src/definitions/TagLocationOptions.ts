@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { boolean, object, optional } from 'superstruct';
 import { TagLocationReturnValue } from './TagLocationReturnValue';
 import { TrackClicksAttribute } from './TrackClicksAttribute';

@@ -1,5 +1,9 @@
-import { TagLocationAttributes } from './TagLocationAttributes';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TaggableElement } from './TaggableElement';
+import { TagLocationAttributes } from './TagLocationAttributes';
 
 /**
  * A TaggedElement is a TaggableElement already decorated with our LocationTaggingAttributes

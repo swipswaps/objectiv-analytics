@@ -1,12 +1,16 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { getObjectKeys } from '@objectiv/tracker-core';
 import { create } from 'superstruct';
 import { isTagChildrenElement } from '../common/guards/isTagChildrenElement';
 import { parseTagChildren } from '../common/parsers/parseTagChildren';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { ChildrenTaggingQuery } from '../definitions/ChildrenTaggingQuery';
-import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
+import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
 
 /**
  * Check if Element is a ChildrenTaggingElement. If so:

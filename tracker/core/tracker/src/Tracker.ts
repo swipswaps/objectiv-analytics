@@ -1,9 +1,13 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
 import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
 import { waitForPromise } from './helpers';
-import { getLocationPath } from './TrackerElementLocations';
 import { TrackerConsole } from './TrackerConsole';
+import { getLocationPath } from './TrackerElementLocations';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
 import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerQueueInterface } from './TrackerQueueInterface';
