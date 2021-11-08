@@ -2304,9 +2304,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@objectiv/plugin-web-document-context@^0.0.1, @objectiv/plugin-web-document-context@workspace:plugins/web-document-context":
+"@objectiv-analytics/plugin-web-document-context@^0.0.1, @objectiv-analytics/plugin-web-document-context@workspace:plugins/web-document-context":
   version: 0.0.0-use.local
-  resolution: "@objectiv/plugin-web-document-context@workspace:plugins/web-document-context"
+  resolution: "@objectiv-analytics/plugin-web-document-context@workspace:plugins/web-document-context"
   dependencies:
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.0.6
@@ -2324,27 +2324,27 @@ __metadata:
     ts-jest: ^27.0.7
     typescript: ^4.4.4
   peerDependencies:
-    "@objectiv/tracker-core": ^0.0.1
+    "@objectiv-analytics/tracker-core": ^0.0.1
   languageName: unknown
   linkType: soft
 
-"@objectiv/schema@^0.0.1, @objectiv/schema@workspace:core/schema":
+"@objectiv-analytics/schema@^0.0.1, @objectiv-analytics/schema@workspace:core/schema":
   version: 0.0.0-use.local
-  resolution: "@objectiv/schema@workspace:core/schema"
+  resolution: "@objectiv-analytics/schema@workspace:core/schema"
   dependencies:
     prettier: ^2.4.1
     typescript: ^4.4.4
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-angular@workspace:trackers/angular":
+"@objectiv-analytics/tracker-angular@workspace:trackers/angular":
   version: 0.0.0-use.local
-  resolution: "@objectiv/tracker-angular@workspace:trackers/angular"
+  resolution: "@objectiv-analytics/tracker-angular@workspace:trackers/angular"
   dependencies:
     "@angular/compiler": ^12.2.11
     "@angular/compiler-cli": ^12.2.11
     "@angular/core": ^12.2.11
-    "@objectiv/tracker-browser": ^0.0.1
+    "@objectiv-analytics/tracker-browser": ^0.0.1
     ng-packagr: ^12.2.5
     prettier: ^2.4.1
     rxjs: ^7.4.0
@@ -2352,16 +2352,16 @@ __metadata:
     typescript: 4.3.5
     zone.js: ^0.11.4
   peerDependencies:
-    "@objectiv/tracker-browser": ^0.0.1
+    "@objectiv-analytics/tracker-browser": ^0.0.1
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-browser@^0.0.1, @objectiv/tracker-browser@workspace:trackers/browser":
+"@objectiv-analytics/tracker-browser@^0.0.1, @objectiv-analytics/tracker-browser@workspace:trackers/browser":
   version: 0.0.0-use.local
-  resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
+  resolution: "@objectiv-analytics/tracker-browser@workspace:trackers/browser"
   dependencies:
-    "@objectiv/plugin-web-document-context": ^0.0.1
-    "@objectiv/tracker-core": ^0.0.1
+    "@objectiv-analytics/plugin-web-document-context": ^0.0.1
+    "@objectiv-analytics/tracker-core": ^0.0.1
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.0.6
     "@types/jest": ^27.0.2
@@ -2384,11 +2384,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-core@^0.0.1, @objectiv/tracker-core@workspace:core/tracker":
+"@objectiv-analytics/tracker-core@^0.0.1, @objectiv-analytics/tracker-core@workspace:core/tracker":
   version: 0.0.0-use.local
-  resolution: "@objectiv/tracker-core@workspace:core/tracker"
+  resolution: "@objectiv-analytics/tracker-core@workspace:core/tracker"
   dependencies:
-    "@objectiv/schema": ^0.0.1
+    "@objectiv-analytics/schema": ^0.0.1
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.0.6
     "@types/jest": ^27.0.2
@@ -2408,9 +2408,9 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/utilities@workspace:core/utilities":
+"@objectiv-analytics/utilities@workspace:core/utilities":
   version: 0.0.0-use.local
-  resolution: "@objectiv/utilities@workspace:core/utilities"
+  resolution: "@objectiv-analytics/utilities@workspace:core/utilities"
   dependencies:
     json5: ^2.2.0
     prettier: ^2.4.1

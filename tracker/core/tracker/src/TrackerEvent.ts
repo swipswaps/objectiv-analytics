@@ -8,7 +8,7 @@ import {
   AbstractLocationContext,
   Contexts,
   DiscriminatingPropertyPrefix,
-} from '@objectiv/schema';
+} from '@objectiv-analytics/schema';
 import { ContextsConfig } from './Context';
 import { generateUUID, getObjectKeys } from './helpers';
 

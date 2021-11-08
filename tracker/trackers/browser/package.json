@@ -1,5 +1,5 @@
 {
-  "name": "@objectiv/tracker-browser",
+  "name": "@objectiv-analytics/tracker-browser",
   "version": "0.0.1",
   "description": "Objectiv Web application analytics tracker for the open taxonomy for analytics",
   "license": "Apache-2.0",
@@ -61,8 +61,8 @@
     "xhr-mock": "^2.5.1"
   },
   "dependencies": {
-    "@objectiv/plugin-web-document-context": "^0.0.1",
-    "@objectiv/tracker-core": "^0.0.1",
+    "@objectiv-analytics/plugin-web-document-context": "^0.0.1",
+    "@objectiv-analytics/tracker-core": "^0.0.1",
     "superstruct": "^0.15.3"
   },
   "peerDependencies": {

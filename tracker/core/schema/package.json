@@ -1,5 +1,5 @@
 {
-  "name": "@objectiv/schema",
+  "name": "@objectiv-analytics/schema",
   "version": "0.0.1",
   "description": "Objectiv TypeScript implementation of the open taxonomy for analytics",
   "license": "Apache-2.0",
