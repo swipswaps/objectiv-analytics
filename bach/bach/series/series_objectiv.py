@@ -189,7 +189,7 @@ class FeatureFrame(DataFrame):
             feature_bt['feature_hash']
         )
         feature_bt['event_number'] = location_stack_series.copy_override(dtype='int64', expression=expression)
-        feature_bt = feature_bt.get_df_materialized_model('features')
+        feature_bt = feature_bt.materialize('features')
 
         feature_bt = feature_bt[feature_bt.event_number == 1][[location_stack_column,
                                                                event_column,
@@ -351,22 +351,28 @@ class FeatureFrame(DataFrame):
 
         return fig
 
-    def copy_override(self, engine=None,
+    def copy_override(self,
+                      engine=None,
                       base_node=None,
-                      index_dtypes=None,
-                      series_dtypes=None,
                       index=None,
                       series=None,
                       group_by=None,
-                      order_by=None):
-        return super().copy_override(engine,
-                                     base_node,
-                                     index_dtypes,
-                                     series_dtypes,
-                                     index,
-                                     series,
-                                     group_by,
-                                     order_by,
+                      order_by=None,
+                      index_dtypes=None,
+                      series_dtypes=None,
+                      single_value=None,
+                      **kwargs
+                      ):
+        return super().copy_override(engine=engine,
+                                     base_node=base_node,
+                                     index=index,
+                                     series=series,
+                                     group_by=group_by,
+                                     order_by=order_by,
+                                     index_dtypes=index_dtypes,
+                                     series_dtypes=series_dtypes,
+                                     single_value=single_value,
                                      original_bt=self._original_bt,
                                      location_stack_column=self.location_stack_column,
-                                     event_column=self.event_column)
+                                     event_column=self.event_column,
+                                     **kwargs)

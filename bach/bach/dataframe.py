@@ -117,12 +117,13 @@ class DataFrame:
             self,
             engine: Engine = None,
             base_node: SqlModel[BachSqlModel] = None,
-            index_dtypes: Dict[str, str] = None,
-            series_dtypes: Dict[str, str] = None,
             index: Dict[str, 'Series'] = None,
             series: Dict[str, 'Series'] = None,
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
             order_by: List[SortColumn] = None,
+            index_dtypes: Dict[str, str] = None,
+            series_dtypes: Dict[str, str] = None,
+            single_value: bool = False,
             **kwargs
     ) -> 'DataFrame':
         """
@@ -130,6 +131,12 @@ class DataFrame:
 
         Big fat warning: group_by can legally be None, but if you want to set that,
         set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
+
+        There are three special parameters: index_dtypes, series_dtypes and single_value. These are used to
+        create new index and data series iff index and/or series are not given. `single_value` determines
+        whether the Expressions for those newly created series should be SingleValueExpressions or not.
+        All other arguments are passed through to `__init__`, filled with current instance values if None is
+        given in the parameters.
         """
 
         if index_dtypes and index:
@@ -147,6 +154,8 @@ class DataFrame:
             'order_by': order_by if order_by is not None else self._order_by
         }
 
+        expression_class = SingleValueExpression if single_value else Expression
+
         if index_dtypes:
             new_index: Dict[str, Series] = {}
             for key, value in index_dtypes.items():
@@ -154,7 +163,7 @@ class DataFrame:
                 new_index[key] = index_type(
                     engine=args['engine'], base_node=args['base_node'],
                     index={},  # Empty index for index series
-                    name=key, expression=Expression.column_reference(key),
+                    name=key, expression=expression_class.column_reference(key),
                     group_by=args['group_by']
                 )
             args['index'] = new_index
@@ -166,7 +175,7 @@ class DataFrame:
                 new_series[key] = series_type(
                     engine=args['engine'], base_node=args['base_node'],
                     index=args['index'],
-                    name=key, expression=Expression.column_reference(key),
+                    name=key, expression=expression_class.column_reference(key),
                     group_by=args['group_by']
                 )
                 args['series'] = new_series
@@ -353,14 +362,12 @@ class DataFrame:
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
             order_by: List[SortColumn] = None,
-            single_value: bool = False
     ) -> 'DataFrame':
         """
         Get an instance with the right series instantiated based on the dtypes array. This assumes that
         base_node has a column for all names in index_dtypes and dtypes.
         If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
-        expression_class = SingleValueExpression if single_value else Expression
         index: Dict[str, Series] = {}
         for key, value in index_dtypes.items():
             index_type = get_series_type_from_dtype(value)
@@ -369,7 +376,7 @@ class DataFrame:
                 base_node=base_node,
                 index={},  # Empty index for index series
                 name=key,
-                expression=expression_class.column_reference(key),
+                expression=Expression.column_reference(key),
                 group_by=group_by
             )
         series: Dict[str, Series] = {}
@@ -380,7 +387,7 @@ class DataFrame:
                 base_node=base_node,
                 index=index,
                 name=key,
-                expression=expression_class.column_reference(key),
+                expression=Expression.column_reference(key),
                 group_by=group_by
             )
         return cls(
@@ -413,10 +420,9 @@ class DataFrame:
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
 
-        model = self.get_current_node(name=node_name, limit=limit)
-        return self.get_instance(
-            engine=self.engine,
-            base_node=model,
+        node = self.get_current_node(name=node_name, limit=limit)
+        return self.copy_override(
+            base_node=node,
             index_dtypes=index_dtypes,
             series_dtypes=series_dtypes,
             group_by=[None],
@@ -561,25 +567,13 @@ class DataFrame:
                         name='getitem_where_boolean',
                         where_clause=Expression.construct("where {}", key.expression))
 
-<<<<<<< HEAD
-            return self._df_or_series(
-                self.copy_override(
-                    base_node=node,
-                    index_dtypes={name: series.dtype for name, series in self.index.items()},
-                    series_dtypes={name: series.dtype for name, series in self.data.items()},
-                    group_by=[None],
-                    order_by=[]  # filtering rows resets any sorting
-                )
-=======
-            return DataFrame.get_instance(
-                engine=self.engine,
+            return self.copy_override(
                 base_node=node,
-                index_dtypes={name: series.dtype for name, series in self.index.items()},
-                dtypes={name: series.dtype for name, series in self.data.items()},
-                group_by=None,
+                group_by=[None],
                 order_by=[],  # filtering rows resets any sorting
+                index_dtypes={name: series.dtype for name, series in self.index.items()},
+                series_dtypes={name: series.dtype for name, series in self.data.items()},
                 single_value=single_value
->>>>>>> 4d4e4a4be3250a92ba19ca5936f881bc401a4cd4
             )
         raise NotImplementedError(f"Only str, (set|list)[str], slice or SeriesBoolean are supported, "
                                   f"but got {type(key)}")
