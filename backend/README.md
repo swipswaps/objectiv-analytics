@@ -6,8 +6,6 @@ Running the backend will enable you to receive and process tracking data in your
 * `objectiv_postgres` - Database to store data.
 * `objectiv_notebook` - Jupyter notebook that can be used to query the data (http://localhost:8888).
 
-Bach uses sql_models under the hood, which makes it possible to easily build graphs of sql-models and generate sql for the resulting composite sql-models. See sql_models/README.md for more information.
-
 ## Running the Backend Dockerized
 The below commands assume that you have `docker-compose` [installed](https://docs.docker.com/compose/install/).
 ```bash
