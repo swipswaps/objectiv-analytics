@@ -1,6 +1,10 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import {
-  isTagChildrenElement,
   isParentTaggedElement,
+  isTagChildrenElement,
   isTaggableElement,
   isTaggedElement,
   TaggingAttribute,

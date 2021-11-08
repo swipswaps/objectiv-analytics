@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { findParentTaggedElements, isParentTaggedElement, isTaggedElement, TaggingAttribute } from '../src';
 
 describe('findTaggedParentElements', () => {

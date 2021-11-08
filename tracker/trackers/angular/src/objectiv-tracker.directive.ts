@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { Directive, ElementRef, Input } from '@angular/core';
 import {
   ChildrenTaggingQueries,

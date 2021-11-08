@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 export * from './ApplicationContextPlugin';
 export * from './Context';
 export * from './ContextFactories';

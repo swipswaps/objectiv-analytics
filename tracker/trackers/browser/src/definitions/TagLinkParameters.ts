@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { assign, object, string } from 'superstruct';
 import { LocationTaggerParameters } from './LocationTaggerParameters';
 

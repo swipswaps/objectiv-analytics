@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackClicksAttribute } from '../../definitions/TrackClicksAttribute';
 import { stringifyJson } from './stringifyJson';
 

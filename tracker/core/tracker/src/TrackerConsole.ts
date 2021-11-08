@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 /**
  * TrackerConsole is a simplified implementation of Console.
  */
