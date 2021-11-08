@@ -17,6 +17,7 @@ Bach
 
     bach.dataframe
     bach.expression
+    bach.from_pandas
     bach.merge
     bach.partitioning
     bach.sql_model
@@ -33,6 +34,7 @@ Series
     bach.series.series_datetime
     bach.series.series_json
     bach.series.series_numeric
+    bach.series.series_objectiv
     bach.series.series_string
     bach.series.series_uuid
     bach.series.series
