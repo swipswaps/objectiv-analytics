@@ -2,20 +2,28 @@
   "name": "@objectiv/tracker-core",
   "version": "0.0.1",
   "description": "Core functionality for Objectiv JavaScript trackers",
-  "license": "Apache 2.0",
+  "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
-  "keywords": ["objectiv", "tracking", "analytics", "events", "taxonomy"],
+  "keywords": [
+    "objectiv",
+    "tracking",
+    "analytics",
+    "events",
+    "taxonomy"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/objectiv/objectiv-analytics.git",
     "directory": "tracker/core/tracker"
   },
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
-  "contributors": [{
-    "name": "Surai Di Rosa",
-    "email": "surai.dirosa@gmail.com",
-    "url": "https://github.com/sdirosa"
-  }],
+  "contributors": [
+    {
+      "name": "Surai Di Rosa",
+      "email": "surai.dirosa@gmail.com",
+      "url": "https://github.com/sdirosa"
+    }
+  ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -30,6 +38,7 @@
     "test": "jest --silent --runInBand",
     "test:ci": "jest --silent --ci --runInBand",
     "test:coverage": "jest --silent --coverage --runInBand",
+    "check:dependencies": "npx depcheck",
     "npm-publish": "npm publish"
   },
   "devDependencies": {

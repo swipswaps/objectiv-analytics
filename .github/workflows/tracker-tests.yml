@@ -21,6 +21,10 @@ jobs:
         run: |
           cd tracker
           yarn install
+      - name: Check dependencies
+        run: |
+          cd tracker
+          yarn check:dependencies
       - name: Run tests for all packages
         run: |
           cd tracker

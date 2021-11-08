@@ -2313,7 +2313,6 @@ __metadata:
     "@types/jest": ^27.0.2
     jest: ^27.3.1
     jest-extended: ^1.1.0
-    jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
     prettier: ^2.4.1
     rollup: ^2.58.3
@@ -2323,7 +2322,6 @@ __metadata:
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^1.4.7
     ts-jest: ^27.0.7
-    tslib: ^2.3.1
     typescript: ^4.4.4
   peerDependencies:
     "@objectiv/tracker-core": ^0.0.1
@@ -2370,6 +2368,7 @@ __metadata:
     "@rollup/plugin-strip": ^2.1.0
     "@types/jest": ^27.0.2
     jest: ^27.3.1
+    jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
     jest-useragent-mock: ^0.1.1
     prettier: ^2.4.1
@@ -2383,6 +2382,8 @@ __metadata:
     tslib: ^2.3.1
     typescript: ^4.4.4
     xhr-mock: ^2.5.1
+  peerDependencies:
+    uuid-random: ^1.3.2
   languageName: unknown
   linkType: soft
 

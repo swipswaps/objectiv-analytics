@@ -1,6 +1,8 @@
 {
   "name": "root",
+  "description": "Object Tracker monorepo root package",
   "private": true,
+  "license": "Apache-2.0",
   "workspaces": [
     "core/**",
     "plugins/**",
@@ -20,6 +22,7 @@
     "test": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --exclude @objectiv/tracker-angular --verbose run test",
     "test:ci": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --exclude @objectiv/tracker-angular --verbose run test:ci",
     "test:coverage": "yarn workspaces foreach --exclude root --exclude @objectiv/schema --exclude @objectiv/utilities --exclude @objectiv/tracker-angular --verbose run test:coverage",
+    "check:dependencies": "yarn workspaces foreach --exclude root --exclude @objectiv/tracker-angular --verbose run check:dependencies",
     "publish": "yarn workspaces foreach --exclude root --exclude @objectiv/utilities --verbose run npm-publish",
     "utils:generate": "yarn workspace @objectiv/utilities generate && yarn prettify:generated && yarn tsc"
   }
