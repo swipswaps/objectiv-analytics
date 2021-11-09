@@ -1,6 +1,7 @@
+Go to [Objectiv Docs](https://objectiv.io/docs/) for detailed installation & usage instructions
+
 ![Objectiv Logo](https://objectiv.io/docs/img/logo-objectiv-large.svg "Objectiv Logo")
 
-## Welcome to the official Objectiv documentation
 Objectiv is a data collection & modeling library that puts the data scientist first. It is built around 
 [the open taxonomy of analytics](https://objectiv.io/docs/taxonomy), which is our proposal for a common way to collect, 
 structure and validate data. With Objectiv, you create a 
@@ -50,3 +51,25 @@ To immediately jump into instrumenting your application, there are detailed How-
 platforms and frameworks.
 
 [Follow the step-by-step Tracking How-to Guides](https://objectiv.io/docs//tracking/how-to-guides)
+
+- - -
+
+## Support & Troubleshooting
+If you need help using or installing Objectiv, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
+
+## Bug Reports & Feature Requests
+If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing.md).
+
+## Security Disclosure
+Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](../SECURITY.md) for details.
+
+## Roadmap
+Future plans for Objectiv can be found on our [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2).
+
+## Custom Development & Contributing Code
+If you want to contribute to Objectiv or use it as a base for custom development, take a look at [CONTRIBUTING.md](CONTRIBUTING.md). It contains detailed development instructions and a link to information about our contribution process and where you can fit in.
+
+## License
+This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](../LICENSE.md) for details.
+
+Unless otherwise noted, all files © 2021 Objectiv B.V.
