@@ -16,8 +16,8 @@ For detailed installation & usage instructions, visit [Objectiv Docs](https://ww
 ## See Also
 * [Pandas](https://github.com/pandas-dev/pandas): the inspiration for the API.
    Pandas has excellent [documentation](https://pandas.pydata.org/docs/) for its API.
-* SQL-models: Sub-project that is used for generating the underlying sql-queries. Can be found in the
-              `sql_models` package
+* [SQL-models]((./sql_models/)): Sub-project that is used for generating the underlying sql-queries. Can be 
+  found in the [`sql_models`](./sql_models/) package
 
 ## Support & Troubleshooting
 If you need help using or installing Bach, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
