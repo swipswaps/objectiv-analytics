@@ -6,7 +6,8 @@ from dash.dependencies import Input, Output, State
 def get_app(Dash, feature_frame):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-    event_dropdown_options = [{'label': i, 'value': i} for i in set(feature_frame[feature_frame.event_column].values)]
+    event_dropdown_options = [{'label': i, 'value': i} for i in
+                              set(feature_frame[feature_frame.event_column].values)]
     event_dropdown_options.append({'label': 'all', 'value': 'all'})
 
     features = [key for key, value in feature_frame.dtypes.items() if value == 'objectiv_location_stack']
@@ -43,7 +44,6 @@ def get_app(Dash, feature_frame):
 
     app.layout = serve_layout
 
-
     @app.callback(
         Output('top-graph', 'figure'),
         [Input('node-clicks', 'data'),
@@ -58,24 +58,24 @@ def get_app(Dash, feature_frame):
         Parameters
         ----------
         node_clicks_data : List[dict]
-            A collection of the clicked nodes. These are used for feature 
+            A collection of the clicked nodes. These are used for feature
             creation as specified by apply_stored_rules.
 
         event_value : str
             The stack for which the Sankey is drawn.
 
         stack_value : str
-            The column that contains the stack that is used for the 
+            The column that contains the stack that is used for the
             filter on valid stacks.
 
         start_at_value : int
-            Optionally a starting position of the feature can be 
+            Optionally a starting position of the feature can be
             specified. This rule will always be applied after all
             the rules in nodes have been applied.
             The function for aggregating the data.
 
         end_at_value : int
-            See start_at_value. This will be applied together 
+            See start_at_value. This will be applied together
             with start_at_value.
         """
 
@@ -84,13 +84,15 @@ def get_app(Dash, feature_frame):
             for x in node_clicks_data:
                 feature_frame['_sankey_feature'] = feature_frame[stack_value].json[x:]
         if start_at_value is not None or end_at_value is not None:
-            feature_frame['_sankey_feature'] = feature_frame['_sankey_feature'].json[start_at_value:end_at_value]
+            feature_frame['_sankey_feature'] = feature_frame['_sankey_feature'].json[
+                                               start_at_value:end_at_value]
         filtered_feature_frame = feature_frame[feature_frame['_sankey_feature'].notnull()]
         if event_value == 'all':
             return filtered_feature_frame.display_sankey('_sankey_feature')
         else:
-            return filtered_feature_frame[filtered_feature_frame[filtered_feature_frame.event_column]==event_value].display_sankey('_sankey_feature')
-
+            return filtered_feature_frame[
+                filtered_feature_frame[filtered_feature_frame.event_column] == event_value].display_sankey(
+                '_sankey_feature')
 
     @app.callback(
         Output('feature-rules', 'children'),
@@ -103,7 +105,6 @@ def get_app(Dash, feature_frame):
             feature_rules.append(f'.json[{start_at_value}:{end_at_value}]')
 
         return '\\\n'.join(feature_rules)
-
 
     @app.callback(
         [Output('stack', 'options'),
@@ -158,14 +159,14 @@ def get_app(Dash, feature_frame):
                 for x in node_clicks_data:
                     feature_frame[feature_name_value] = feature_frame[stack_value].json[x:]
             if start_at_value is not None or end_at_value is not None:
-                feature_frame[feature_name_value] = feature_frame[feature_name_value].json[start_at_value:end_at_value]
+                feature_frame[feature_name_value] = feature_frame[feature_name_value].json[
+                                                    start_at_value:end_at_value]
 
-            if not feature_name_value in [x['label'] for x in stack_dropdown_options]:
+            if feature_name_value not in [x['label'] for x in stack_dropdown_options]:
                 stack_dropdown_options.append({'label': feature_name_value, 'value': feature_name_value})
             console_text = f'feature {feature_name_value} created'
 
         return stack_dropdown_options, console_text
-
 
     @app.callback(
         Output('node-clicks', 'data'),
@@ -197,7 +198,6 @@ def get_app(Dash, feature_frame):
         prop_id_triggered = callback_context.triggered[0]['prop_id']
 
         if prop_id_triggered == 'top-graph.clickData':  # store only if valid node
-
 
             import ast
             dict_clicked = ast.literal_eval(top_graph_click_data['points'][0]['label'])
