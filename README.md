@@ -1,4 +1,4 @@
-![Objectiv Logo](logo-objectiv-large.svg "Objectiv Logo")
+![Objectiv Logo](https://objectiv.io/docs/img/logo-objectiv-large.svg "Objectiv Logo")
 
 ## Welcome to the official Objectiv documentation
 Objectiv is a data collection & modeling library that puts the data scientist first. It is built around 
