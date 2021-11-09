@@ -243,6 +243,61 @@ def test_unique_subquery():
     )
 
 
+def test_value_counts_basic():
+    bt = get_bt_with_test_data(full_data_set=True)
+    vc = bt.municipality.value_counts()
+    vcn = bt.municipality.value_counts(normalize=True)
+    assert not vc.expression.is_single_value
+    assert not vcn.expression.is_single_value
+
+    muni_single = bt.municipality[:1]
+    vc_single = muni_single.value_counts()
+    assert vc_single.expression.is_single_value == muni_single.expression.is_single_value == True
+
+    with pytest.raises(ValueError, match='GroupBy of assigned value does not match DataFrame'):
+        # the uq series has a different groupby
+        bt['vc'] = vc
+
+    # same groupby, should work
+    btg = bt.groupby('municipality')
+    btg['vc'] = vc
+
+    result_bt = vc.to_frame()
+    result_bt['frequency'] = vcn
+    assert_equals_data(
+        result_bt,
+        order_by=['value_counts', 'municipality'],
+        expected_columns=['municipality', 'value_counts', 'frequency'],
+        expected_data=[
+            ['De Friese Meren', 1, 0.09090909090909091], ['Harlingen', 1, 0.09090909090909091],
+            ['Leeuwarden', 1, 0.09090909090909091], ['Noardeast-Fryslân', 1, 0.09090909090909091],
+            ['Waadhoeke', 1, 0.09090909090909091], ['Súdwest-Fryslân', 6, 0.5454545454545454]
+        ]
+    )
+
+
+def test_value_counts_bins():
+    bt = get_bt_with_test_data(full_data_set=True)
+    vc = bt.inhabitants.value_counts(bins=3, ascending=True)
+    vcn = bt.inhabitants.value_counts(bins=3, normalize=True, ascending=True)
+    assert not vc.expression.is_single_value
+
+    # This currently does not work properly, see note in Window.get_window_expression()
+    # inh_single = bt.inhabitants[:1]
+    # vc_single = inh_single.value_counts(bins=3)
+    # assert vc_single.expression.is_single_value == inh_single.expression.is_single_value == True
+
+    result_bt = vc.to_frame()
+    result_bt['frequency'] = vcn
+    assert_equals_data(
+        result_bt,
+        expected_columns=['inhabitants', 'value_counts', 'frequency'],
+        expected_data=[
+            [3, 3, 0.2727272727272727], [2, 4, 0.36363636363636365], [1, 4, 0.36363636363636365]
+        ]
+    )
+
+
 def test_dataframe_agg_skipna_parameter():
     # test full parameter traversal
     bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]

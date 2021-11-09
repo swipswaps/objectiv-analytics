@@ -807,7 +807,7 @@ class Series(ABC):
             if not expression.has_aggregate_function:
                 raise ValueError('Passed expression should contain an aggregation function')
 
-            if partition.index == {}:
+            if partition.index == {} or expression.is_single_value:
                 # we're creating an aggregation on everything, this will yield one value
                 expression = SingleValueExpression(expression)
 
@@ -855,7 +855,11 @@ class Series(ABC):
             skipna=skipna)
 
     def unique(self, partition: WrappedPartition = None, skipna: bool = True):
-        """ Get the unique values in this series, currently by grouping the series involved. """
+        """
+        Get the unique values in this series, currently by grouping the series involved.
+        :note: this returns a Series with a different name; _unique gets appended
+        :note: this retruns a Series with a different grouping, namely on this series.
+        """
         from bach.partitioning import GroupBy
         if partition:
             raise ValueError('Can not use group_by in combination with unique(). Materialize() first.')
@@ -865,6 +869,41 @@ class Series(ABC):
             expression=AggregateFunctionExpression(self.expression),
             skipna=skipna
         )
+
+    def value_counts(self, partition: WrappedPartition = None,
+                     normalize: bool = False, sort: bool = True,
+                     ascending: bool = False, bins: int = None,
+                     skipna: bool = True):
+        """
+        Get the unique values in this series and how often they occur, or get binned frequency
+        :param normalize: default False, if True then the object returned will contain the relative
+                frequencies of the unique values.
+        :param sort: default True: sort by frequencies.
+        :param ascending: default False, Sort in ascending order.
+        :param bins: Rather than count values, group them into half-open bins.
+        :param skipna: Skip na values, automatically done by bins mode
+        :note: this returns a Series with a different name: value_counts or frequency
+        :note: this returns a Series grouped by either the value or the bin
+        :note: binning works based on n-tiles, all values types that can be sorted, can be binned
+        """
+        from bach.partitioning import GroupBy, Window
+        if partition:
+            raise ValueError('Can not use group_by in combination with value_counts(). Materialize() first.')
+        if bins:
+            value_counts = self.window_ntile(
+                Window([], order_by=[SortColumn(self.expression, ascending)]), num_buckets=bins)
+            value_counts = value_counts.to_frame().materialize(node_name='count_values_bin')[self.name]
+        else:
+            value_counts = self
+
+        value_counts = value_counts.copy_override(name='value_counts').count(partition=GroupBy([self]),
+                                                                             skipna=skipna)
+        if sort:
+            value_counts = value_counts.sort_values(ascending)
+        if normalize:
+            value_counts = value_counts / self.count(partition=GroupBy([]), skipna=skipna)
+            value_counts = value_counts.copy_override(name='frequency')
+        return value_counts
 
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
