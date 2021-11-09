@@ -74,7 +74,7 @@ class SeriesLocationStack(SeriesJsonb):
 
         @property
         def feature_stack(self):
-            keys = ['_type', 'id', 'url']
+            keys = ['_type', 'id']
             jsonb_build_object_str = [f"{quote_string(key)}" for key in keys]
             expression_str = f'''(
                 select jsonb_agg((
@@ -167,7 +167,24 @@ class FeatureFrame(DataFrame):
                          order_by=order_by)
 
     @classmethod
-    def from_data_frame(cls, df, location_stack_column, event_column, temp_table_name='tmp_feature_data'):
+    def from_data_frame(cls,
+                        df: DataFrame,
+                        location_stack_column: str,
+                        event_column: str,
+                        overwrite: bool = False,
+                        temp_table_name: str = 'objectiv_tmp_feature_data'):
+        """
+        Instantiates a Feature Frame from an original Bach Data Frame. The Bach Data Frame should contain
+        a location stack column and an event column. The database will be queried to create a table with
+        all unique features.
+
+        :param df: The original Bach DataFrame
+        :param location_stack_column: The name of the column that contains the location stack.
+        :param event_column: The name of the column that contains the event type.
+        :param overwrite: If True, the temporary table to store the feature data will be overwritten if it
+            exists
+        :param temp_table_name: The name of the temporary table that will be used to store the feature data.
+        """
         event_series, location_stack_series = cls.check_supported(df, location_stack_column, event_column)
 
         feature_df = location_stack_series.to_frame()
@@ -184,8 +201,11 @@ class FeatureFrame(DataFrame):
                                                                event_column,
                                                                'feature_hash',
                                                                'event_count']]
-
+        drop_table = ''
+        if overwrite:
+            drop_table = f'drop table if exists {temp_table_name};'
         sql = f'''
+            {drop_table}
             create temporary table {temp_table_name} AS
             ({feature_df.view_sql()})
         '''
@@ -240,6 +260,10 @@ class FeatureFrame(DataFrame):
         return location_stack_series.copy_override(dtype='string', expression=expression)
 
     def write_to_full_frame(self):
+        """
+        Returns the original data frame on which this feature frame is based, but with all created
+        features added to it.
+        """
         created_features = [x for x in self.data_columns if x not in [self.location_stack_column,
                                                                       self.event_column,
                                                                       'event_count']]
@@ -256,25 +280,11 @@ class FeatureFrame(DataFrame):
                                     stack_column: str = None,
                                     count_method: str = 'sum'):
         """
-        Function that calculates the links between contexts on the
-        stack. It returns a DataFrame with the links 'from' and 'to'
-        contexts. Optionally, the method that determines the 'strength'
-        of the links can be deteermined with 'to_count' and 'count_method'
+        Function that calculates the links between contexts on the stack. It returns a DataFrame with the
+        links 'from' and 'to' contexts. This function queries the database.
 
-        Parameters
-        ----------
-        df : DataFrame
-            The DataFrame that contains a stack.
-
-        feature_column : str
-            The column that contains the stack for which the links
-            will be calculated.
-
-        to_count : str
-            This columns on which the count_method will be applied.
-
-        count_method : str
-            The function for aggregating the data.
+        :param stack_column: The column that contains the stack for which the links will be calculated.
+        :param count_method: The function for aggregating the data.
         """
         import pandas as pd
         df = self.to_pandas()
@@ -305,20 +315,12 @@ class FeatureFrame(DataFrame):
                        text_in_title: str = None,
                        node_color='blue'):
         """
-        Display the Sankey chart using some standards to be
-        reused in the Sankey app.
+        Display the Sankey chart of a location stack. This function queries the database.
 
-        Parameters
-        ----------
-        df : DataFrame
-            The to graph. This needs to be in the format as specified
-            by the stack_flows_from_feature_df function.
-
-        text_in_title : str
-            A text to display in the title of the graph.
-
-        node_color : str
-            Optionally the color of the nodes can be adjusted.
+        :param: stack_column. The column for which to display the chart. If None the location stack with
+            which the Feature Frame is initialized is selected.
+        :param text_in_title: A text to display in the title of the graph.
+        :param node_color: Optionally the color of the nodes can be adjusted.
         """
         import pandas as pd
         import plotly.graph_objects as go  # type: ignore
