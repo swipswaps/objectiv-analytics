@@ -1,14 +1,13 @@
-# Objectiv Bach Extensions
+# Objectiv-specific Extensions for Bach
 
-With these extensions, you can extend the available operations of Bach, Objectiv's data modeling library. For more information about Bach, check out the Bach [README](/bach/README.md) or the [Modeling section of Objectiv's Docs](https://objectiv.io/docs/modeling).
+This stack extends [Bach's](/bach/README.md) generic operations with operations that are specific to Objectiv. For more information about Bach, check out the Bach [README](/bach/README.md) or the [Modeling section of Objectiv's Docs](https://objectiv.io/docs/modeling).
 
-## Running Bach
-To run Bach, use the following command:
+## Usage
+
+Run the following command in your notebook:
 ```bash
-pip install bach
+pip install objectiv_bach
 ```
-
-For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs).
 
 ## Support & Troubleshooting
 If you need help using or installing Bach, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
