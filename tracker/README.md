@@ -12,7 +12,6 @@ For installation instructions for your preferred platform, please choose a track
 | ----------------------------------------------- | ------- | ----------------------------- | --------------------------------------------------------- |
 | @objectiv-analytics/tracker-angular             | tracker | /trackers/angular             | [README](/tracker/trackers/angular/README.md)             |
 | @objectiv-analytics/tracker-browser             | tracker | /trackers/browser             | [README](/tracker/trackers/browser/README.md)             |
-| @objectiv-analytics/plugin-web-document-context | plugin  | /plugins/web-document-context | [README](/tracker/plugins/web-document-context/README.md) |
 
 For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs/tracking).
 
