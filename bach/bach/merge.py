@@ -245,12 +245,12 @@ def merge(
         raise ValueError(f"how must be one of ('left', 'right', 'outer', 'inner', 'cross'), value: {how}")
 
     if left.group_by:
-        left = left.get_df_materialized_model(node_name='merge_left')
+        left = left.materialize(node_name='merge_left')
 
     if right.group_by:
         if isinstance(right, Series):
             right = right.to_frame()
-        right = right.get_df_materialized_model(node_name='merge_right')
+        right = right.materialize(node_name='merge_right')
 
     real_how = How(how)
     real_left_on, real_right_on = _determine_left_on_right_on(
@@ -276,11 +276,11 @@ def merge(
         new_column_list=new_index_list + new_data_list
     )
 
-    return DataFrame.get_instance(
+    return left.copy_override(
         engine=left.engine,
         base_node=model,
         index_dtypes={rc.name: rc.dtype for rc in new_index_list},
-        dtypes={rc.name: rc.dtype for rc in new_data_list},
+        series_dtypes={rc.name: rc.dtype for rc in new_data_list},
         group_by=None,
         order_by=[]  # merging resets any sorting
     )

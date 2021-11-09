@@ -1,4 +1,8 @@
-import { makeButtonContext } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { makeButtonContext } from '@objectiv-analytics/tracker-core';
 import { create } from 'superstruct';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TagButtonParameters } from '../definitions/TagButtonParameters';

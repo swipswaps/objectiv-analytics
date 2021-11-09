@@ -1,26 +1,52 @@
 {
-  "name": "@objectiv/tracker-angular",
+  "name": "@objectiv-analytics/tracker-angular",
   "version": "0.0.1",
-  "description": "Objectiv Angular Tracker",
+  "description": "Objectiv Angular framework analytics tracker for the open taxonomy for analytics",
+  "license": "Apache-2.0",
+  "homepage": "https://objectiv.io",
+  "keywords": [
+    "objectiv",
+    "tracking",
+    "web",
+    "angular",
+    "analytics",
+    "events",
+    "taxonomy"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/objectiv/objectiv-analytics.git",
+    "directory": "tracker/trackers/angular"
+  },
+  "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
+  "contributors": [
+    {
+      "name": "Surai Di Rosa",
+      "email": "surai.dirosa@gmail.com",
+      "url": "https://github.com/sdirosa"
+    }
+  ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "scripts": {
-    "build": "ng-packagr -p package.json && node postbuild.js",
+    "build": "ng-packagr -p package.json",
     "prettify": "prettier --write .",
     "tsc": "tsc --noEmit",
-    "npm-publish": "(cd dist && npm publish)"
+    "npm-publish": "(cd dist && && shx rm -f .npmrc && npm publish)",
+    "npm-publish:verdaccio": "(cd dist && shx cp ../../../verdaccio/.npmrc .npmrc && npm publish && rm -f .npmrc)"
   },
   "peerDependencies": {
-    "@objectiv/tracker-browser": "^0.0.1"
+    "@objectiv-analytics/tracker-browser": "^0.0.1"
   },
   "devDependencies": {
     "@angular/compiler": "^12.2.11",
     "@angular/compiler-cli": "^12.2.11",
     "@angular/core": "^12.2.11",
-    "@objectiv/tracker-browser": "^0.0.1",
+    "@objectiv-analytics/tracker-browser": "^0.0.1",
     "ng-packagr": "^12.2.5",
     "prettier": "^2.4.1",
     "rxjs": "^7.4.0",
+    "shx": "^0.3.3",
     "tslib": "^2.3.1",
     "typescript": "4.3.5",
     "zone.js": "^0.11.4"
@@ -29,7 +55,7 @@
     "lib": {
       "entryFile": "src/index.ts",
       "umdModuleIds": {
-        "@objectiv/tracker-browser": "objectivTrackerBrowser"
+        "@objectiv-analytics/tracker-browser": "objectivTrackerBrowser"
       }
     }
   }

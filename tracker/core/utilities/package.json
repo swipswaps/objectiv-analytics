@@ -1,16 +1,19 @@
 {
-  "name": "@objectiv/utilities",
+  "name": "@objectiv-analytics/utilities",
   "version": "0.0.1",
   "private": true,
+  "license": "Apache-2.0",
   "description": "Objectiv Core Utilities",
   "files": [
     "src/generator.js"
   ],
   "scripts": {
     "prettify": "prettier --write .",
-    "generate": "(cd src && node generator.js)"
+    "generate": "(cd src && node generator.js)",
+    "check:dependencies": "npx depcheck"
   },
   "devDependencies": {
+    "depcheck": "^1.4.2",
     "json5": "^2.2.0",
     "prettier": "^2.4.1"
   }

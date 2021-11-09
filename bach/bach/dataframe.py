@@ -6,7 +6,7 @@ from uuid import UUID
 import pandas
 from sqlalchemy.engine import Engine
 
-from bach.expression import Expression
+from bach.expression import Expression, SingleValueExpression
 from bach.sql_model import BachSqlModel, SampleSqlModel
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import replace_node_in_graph, find_node
@@ -18,7 +18,18 @@ if TYPE_CHECKING:
     from bach.series import Series, SeriesBoolean, SeriesAbstractNumeric
 
 DataFrameOrSeries = Union['DataFrame', 'Series']
+""" ColumnNames: a single column name, or a list of column names """
 ColumnNames = Union[str, List[str]]
+"""
+ColumnFunction: Identifier for a function that can be applied to a column, possibly in the context of a
+    window or aggregation.
+    Accepted combinations are:
+    - function
+    - string function name
+    - list of functions and/or function names, e.g. [BuhTuhSeriesInt64.sum, 'mean']
+    - dict of axis labels -> functions, function names or list of such.
+"""
+ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 
 
 class SortColumn(NamedTuple):
@@ -48,14 +59,15 @@ class DataFrame:
     The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
     DataFrames see https://pandas.pydata.org/docs/reference/frame.html
     """
+
     def __init__(
-        self,
-        engine: Engine,
-        base_node: SqlModel[BachSqlModel],
-        index: Dict[str, 'Series'],
-        series: Dict[str, 'Series'],
-        group_by: Optional['GroupBy'],
-        order_by: List[SortColumn] = None
+            self,
+            engine: Engine,
+            base_node: SqlModel[BachSqlModel],
+            index: Dict[str, 'Series'],
+            series: Dict[str, 'Series'],
+            group_by: Optional['GroupBy'],
+            order_by: List[SortColumn] = None
     ):
         """
         Instantiate a new DataFrame.
@@ -82,20 +94,20 @@ class DataFrame:
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
                                  f'key: {key}, series.name: {value.name}')
-            if value.index != self._index:
+            if not dict_name_series_equals(value.index, index):
                 raise ValueError(f'Indices in `series` should match dataframe. '
-                                 f'df: {value.index}, series.index: {self._index}')
-            if value.group_by and group_by and value.group_by != group_by:
+                                 f'df: {value.index}, series.index: {index}')
+            if value.group_by != group_by:
                 raise ValueError(f'Group_by in `series` should match dataframe. '
                                  f'df: {value.group_by}, series.index: {group_by}')
             self._data[key] = value
+
         for value in index.values():
             if value.index != {}:
                 raise ValueError('Index series can not have non-empty index property')
 
-        if group_by is not None:
-            if group_by.index != index:
-                raise ValueError('Index should match group_by index')
+        if group_by is not None and not dict_name_series_equals(group_by.index, index):
+            raise ValueError('Index should match group_by index')
 
         if set(index.keys()) & set(series.keys()):
             raise ValueError(f"The names of the index series and data series should not intersect. "
@@ -108,21 +120,67 @@ class DataFrame:
             index: Dict[str, 'Series'] = None,
             series: Dict[str, 'Series'] = None,
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
-            order_by: List[SortColumn] = None) -> 'DataFrame':
+            order_by: List[SortColumn] = None,
+            index_dtypes: Dict[str, str] = None,
+            series_dtypes: Dict[str, str] = None,
+            single_value: bool = False,
+            **kwargs
+    ) -> 'DataFrame':
         """
-        Create a copy of self, with the given arguments overriden
+        Create a copy of self, with the given arguments overridden
 
         Big fat warning: group_by can legally be None, but if you want to set that,
         set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
+
+        There are three special parameters: index_dtypes, series_dtypes and single_value. These are used to
+        create new index and data series iff index and/or series are not given. `single_value` determines
+        whether the Expressions for those newly created series should be SingleValueExpressions or not.
+        All other arguments are passed through to `__init__`, filled with current instance values if None is
+        given in the parameters.
         """
-        return DataFrame(
-            engine=engine if engine is not None else self.engine,
-            base_node=base_node if base_node is not None else self._base_node,
-            index=index if index is not None else self._index,
-            series=series if series is not None else self._data,
-            group_by=self._group_by if group_by is None else group_by[0],
-            order_by=order_by if order_by is not None else self._order_by
-        )
+
+        if index_dtypes and index:
+            raise ValueError("Can not set both index and index_dtypes")
+
+        if series_dtypes and series:
+            raise ValueError("Can not set both series and series_dtypes")
+
+        args = {
+            'engine': engine if engine is not None else self.engine,
+            'base_node':  base_node if base_node is not None else self._base_node,
+            'index':  index if index is not None else self._index,
+            'series': series if series is not None else self._data,
+            'group_by': self._group_by if group_by is None else group_by[0],
+            'order_by': order_by if order_by is not None else self._order_by
+        }
+
+        expression_class = SingleValueExpression if single_value else Expression
+
+        if index_dtypes:
+            new_index: Dict[str, Series] = {}
+            for key, value in index_dtypes.items():
+                index_type = get_series_type_from_dtype(value)
+                new_index[key] = index_type(
+                    engine=args['engine'], base_node=args['base_node'],
+                    index={},  # Empty index for index series
+                    name=key, expression=expression_class.column_reference(key),
+                    group_by=args['group_by']
+                )
+            args['index'] = new_index
+
+        if series_dtypes:
+            new_series: Dict[str, Series] = {}
+            for key, value in series_dtypes.items():
+                series_type = get_series_type_from_dtype(value)
+                new_series[key] = series_type(
+                    engine=args['engine'], base_node=args['base_node'],
+                    index=args['index'],
+                    name=key, expression=expression_class.column_reference(key),
+                    group_by=args['group_by']
+                )
+                args['series'] = new_series
+
+        return self.__class__(**args, **kwargs)
 
     @property
     def engine(self):
@@ -174,14 +232,9 @@ class DataFrame:
         # We cannot just compare the data and index properties, because the Series objects have
         # overridden the __eq__ function in a way that makes normal comparisons not useful. We have to use
         # equals() instead
-        if list(self.index.keys()) != list(other.index.keys()):
-            return False
-        if list(self.data.keys()) != list(other.data.keys()):
-            return False
-        for key in self.all_series.keys():
-            if not self.all_series[key].equals(other.all_series[key]):
-                return False
         return \
+            dict_name_series_equals(self.index, other.index) and \
+            dict_name_series_equals(self.data, other.data) and \
             self.engine == other.engine and \
             self.base_node == other.base_node and \
             self._group_by == other._group_by and \
@@ -267,7 +320,7 @@ class DataFrame:
         in the database first (e.g. by specifying 'table').
 
         There are some small differences between how the different materializations handle NaN values. e.g.
-        'cte' does not support those for non-numeric columns, wheras 'table' converts them to 'NULL'
+        'cte' does not support those for non-numeric columns, whereas 'table' converts them to 'NULL'
 
         Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
 
@@ -303,13 +356,13 @@ class DataFrame:
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
-            order_by: List[SortColumn] = None
+            order_by: List[SortColumn] = None,
     ) -> 'DataFrame':
         """
         Get an instance with the right series instantiated based on the dtypes array. This assumes that
         base_node has a column for all names in index_dtypes and dtypes.
+        If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
-
         index: Dict[str, Series] = {}
         for key, value in index_dtypes.items():
             index_type = get_series_type_from_dtype(value)
@@ -332,7 +385,7 @@ class DataFrame:
                 expression=Expression.column_reference(key),
                 group_by=group_by
             )
-        return DataFrame(
+        return cls(
             engine=engine,
             base_node=base_node,
             index=index,
@@ -341,18 +394,7 @@ class DataFrame:
             order_by=order_by
         )
 
-    def _df_or_series(self, df: 'DataFrame') -> DataFrameOrSeries:
-        """
-        Figure out whether there is just one series in our data, and return that series instead of the
-        whole frame.
-        :param df: the df
-        :return: DataFrame, Series
-        """
-        if len(df.data) > 1:
-            return df
-        return list(df.data.values())[0]
-
-    def get_df_materialized_model(self, node_name='manual_materialize', inplace=False) -> 'DataFrame':
+    def materialize(self, node_name='manual_materialize', inplace=False, limit: Any = None) -> 'DataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -364,6 +406,7 @@ class DataFrame:
 
         :param node_name: The name of the node that's going to be created
         :param inplace: Perform operation on self if inplace=True, or create a copy
+        :param limit: The limit (slice, int) to apply.
         :return: New DataFrame with the current DataFrame's state as base_node
         """
         if inplace:
@@ -372,14 +415,13 @@ class DataFrame:
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
 
-        model = self.get_current_node(node_name)
-        return self.get_instance(
-            engine=self.engine,
-            base_node=model,
+        node = self.get_current_node(name=node_name, limit=limit)
+        return self.copy_override(
+            base_node=node,
             index_dtypes=index_dtypes,
-            dtypes=series_dtypes,
-            group_by=None,
-            order_by=[]
+            series_dtypes=series_dtypes,
+            group_by=[None],
+            order_by=[]  # filtering rows resets any sorting
         )
 
     def get_sample(self,
@@ -403,7 +445,9 @@ class DataFrame:
         :param: seed: seed number used to generate the sample.
         """
         if self._group_by is not None:
-            print('error: groupby not supported ')
+            raise NotImplementedError('Dataframes that have an active grouping can currently not be sampled. '
+                                      'Call df.materialize() first.')
+
         if overwrite:
             sql = f'DROP TABLE IF EXISTS {table_name}'
             with self.engine.connect() as conn:
@@ -444,20 +488,27 @@ class DataFrame:
         Will raise an error if the current Frame doesn't contain sampled data, i.e. get_sample() has not been
         called.
         """
+        df = self
+        if df._group_by:
+            df = df.materialize(node_name='get_unsampled')
+
         sampled_node_tuple = find_node(
-            start_node=self.base_node,
+            start_node=df.base_node,
             function=lambda node: isinstance(node, SampleSqlModel)
         )
         if sampled_node_tuple is None:
-            raise ValueError('No sampled node found. Cannot unsample data that has not been sampled.')
+            raise ValueError('No sampled node found. Cannot un-sample data that has not been sampled.')
 
         assert isinstance(sampled_node_tuple.model, SampleSqlModel)  # help mypy
         updated_graph = replace_node_in_graph(
-            start_node=self.base_node,
+            start_node=df.base_node,
             reference_path=sampled_node_tuple.reference_path,
             replacement_model=sampled_node_tuple.model.previous
         )
-        return self.copy_override(base_node=updated_graph)
+
+        index = {s.name: s.copy_override(base_node=updated_graph) for s in df._index.values()}
+        series = {s.name: s.copy_override(base_node=updated_graph, index=index) for s in df._data.values()}
+        return df.copy_override(base_node=updated_graph, index=index, series=series)
 
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'SeriesBoolean']) -> DataFrameOrSeries:
@@ -478,35 +529,55 @@ class DataFrame:
 
             return self.copy_override(series=selected_data)
 
-        if isinstance(key, (SeriesBoolean, slice)):
+        if isinstance(key, (SeriesBoolean, slice, int)):
+            if isinstance(key, int):
+                raise NotImplementedError("index key lookups not supported, use slices instead.")
             if isinstance(key, slice):
-                node = self.get_current_node('getitem_slice', limit=key)
+                node = self.get_current_node(name='getitem_slice', limit=key)
+                single_value = (
+                    # This is our best guess, there can always be zero results, but at least we tried.
+                    # Negative slices are not supported, Exceptions was raised in get_current_node()
+                    (key.stop is not None and key.start is None and key.stop == 1)
+                    or
+                    (key.start is not None and key.stop is not None and (key.stop - key.start) == 1)
+                )
             else:
-                # We only support first level boolean indices for now
-                if key.base_node != self.base_node:
-                    raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame.'
-                                     'Hint: make sure the Boolean series is derived from this DataFrame. '
+                single_value = False  # there is no way for us to know. User has to slice the result first
+
+                if key.expression.has_windowed_aggregate_function:
+                    raise ValueError('Cannot apply a Boolean series containing a window function to '
+                                     'DataFrame. '
+                                     'Hint: materialize() that DataFrame before creating the Boolean series')
+
+                if key.base_node != self.base_node or key.group_by != self._group_by:
+                    raise ValueError('Cannot apply Boolean series with a different base_node or group by '
+                                     'to DataFrame. '
+                                     'Hint: make sure the Boolean series is derived from this DataFrame and '
+                                     'that is has the same group by. '
                                      'Alternative: use df.merge(series) to merge the series with the df '
                                      'first, and then create a new Boolean series on the resulting merged '
                                      'data.')
-                if self._group_by is not None:
+
+                if self._group_by is not None and key.expression.has_aggregate_function:
                     node = self.get_current_node(
-                        'getitem_having_boolean',
+                        name='getitem_having_boolean',
                         having_clause=Expression.construct("having {}", key.expression))
+                elif key.expression.has_aggregate_function:
+                    # This is very weird, does this ever happen?
+                    raise ValueError("Cannot use a Boolean series that contains a non-materialized "
+                                     "aggregation function or a windowing function as Boolean row selector.")
                 else:
                     node = self.get_current_node(
-                        'getitem_where_boolean',
+                        name='getitem_where_boolean',
                         where_clause=Expression.construct("where {}", key.expression))
 
-            return self._df_or_series(
-                DataFrame.get_instance(
-                    engine=self.engine,
-                    base_node=node,
-                    index_dtypes={name: series.dtype for name, series in self.index.items()},
-                    dtypes={name: series.dtype for name, series in self.data.items()},
-                    group_by=None,
-                    order_by=[]  # filtering rows resets any sorting
-                )
+            return self.copy_override(
+                base_node=node,
+                group_by=[None],
+                order_by=[],  # filtering rows resets any sorting
+                index_dtypes={name: series.dtype for name, series in self.index.items()},
+                series_dtypes={name: series.dtype for name, series in self.data.items()},
+                single_value=single_value
             )
         raise NotImplementedError(f"Only str, (set|list)[str], slice or SeriesBoolean are supported, "
                                   f"but got {type(key)}")
@@ -529,23 +600,28 @@ class DataFrame:
             if not isinstance(value, Series):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
-                return
             else:
-                # two cases:
-                # 1) these share the same base_node and index
-                # 2) these share the same index, but not the same base_node
-                if value.index != self.index:
-                    raise ValueError(f'Index of assigned value does not match index of DataFrame. '
-                                     f'Value: {value.index}, df: {self.index}')
-                if value.base_node == self.base_node:
-                    if self._group_by != value.group_by:
-                        raise ValueError(f'GroupBy of assigned value does not match DataFrame. '
-                                         f'Value: {value.group_by}, df: {self._group_by}')
+                if value.base_node == self.base_node and self._group_by == value.group_by:
                     self._data[key] = value.copy_override(name=key)
-                    return
+                elif value.expression.is_constant:
+                    self._data[key] = value.copy_override(name=key, index=self._index,
+                                                          group_by=[self._group_by])
+                elif value.expression.is_independent_subquery:
+                    self._data[key] = value.copy_override(name=key, index=self._index,
+                                                          group_by=[self._group_by])
+                elif value.expression.is_single_value:
+                    self._data[key] = Series.as_independent_subquery(value).copy_override(
+                        name=key, index=self._index, group_by=[self._group_by])
                 else:
-                    # this is the complex case. Maybe don't support this at all?TODO
-                    raise NotImplementedError('TODO')
+                    if value.group_by != self._group_by:
+                        raise ValueError(f'GroupBy of assigned value does not match DataFrame and the '
+                                         f'given series was not single value or an independent subquery. '
+                                         f'GroupBy Value: {value.group_by}, df: {self._group_by}')
+                    elif value.base_node != self.base_node:
+                        raise ValueError('Base node of assigned value does not match DataFrame and the '
+                                         'given series was not single value or an independent subquery.')
+                    else:
+                        raise NotImplementedError('Incompatible series can not be added to the dataframe.')
 
         elif isinstance(key, list):
             if len(key) == 0:
@@ -635,7 +711,7 @@ class DataFrame:
         df = self if inplace else self.copy_override()
         if self._group_by:
             # materialize, but raise if inplace is required.
-            df = df.get_df_materialized_model(node_name='reset_index', inplace=inplace)
+            df = df.materialize(node_name='reset_index', inplace=inplace)
 
         series = df._data if drop else df.all_series
         df._data = {n: s.copy_override(index={}) for n, s in series.items()}
@@ -658,7 +734,7 @@ class DataFrame:
 
         df = self if inplace else self.copy_override()
         if self._group_by:
-            df = df.get_df_materialized_model(node_name='groupby_setindex', inplace=inplace)
+            df = df.materialize(node_name='groupby_setindex', inplace=inplace)
 
         # build the new index, appending if necessary
         new_index = {} if not append else copy(df._index)
@@ -792,11 +868,6 @@ class DataFrame:
         else:
             raise ValueError(f'Value of "by" should be either None, a string, or a Series.')
 
-        if len(group_by_columns) == 0:
-            from bach.partitioning import GroupBy
-            return [GroupBy.get_dummy_index_series(
-                engine=self._engine, base_node=self._base_node)]
-
         return group_by_columns
 
     @classmethod
@@ -809,21 +880,22 @@ class DataFrame:
         # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
         new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index)
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
-        return cls(engine=df.engine,
-                   base_node=df.base_node,
-                   index=group_by.index,
-                   series=new_series,
-                   group_by=group_by,
-                   order_by=[])
+        return df.copy_override(
+            engine=df.engine,
+            base_node=df.base_node,
+            index=group_by.index,
+            series=new_series,
+            group_by=[group_by],
+            order_by=[])
 
     def groupby(
             self,
             by: Union[GroupBySingleType,  # single series group_by
                       # for GroupingSets
                       Tuple[Union[GroupBySingleType, Tuple[GroupBySingleType, ...]], ...],
-                      List[Union[GroupBySingleType,                             # multi series
-                                 List[GroupBySingleType],                       # for grouping lists
-                                 Tuple[GroupBySingleType, ...]]],                    # for grouping lists
+                      List[Union[GroupBySingleType,  # multi series
+                                 List[GroupBySingleType],  # for grouping lists
+                                 Tuple[GroupBySingleType, ...]]],  # for grouping lists
                       None] = None) -> 'DataFrame':
         """
         Group by any of the series currently in this dataframe, both from index
@@ -842,7 +914,7 @@ class DataFrame:
         df = self
         if self._group_by:
             # We need to materialize this node first, we can't stack aggregations (yet)
-            df = self.get_df_materialized_model(node_name='nested_groupby')
+            df = self.materialize(node_name='nested_groupby')
 
         group_by: GroupBy
         if isinstance(by, tuple):
@@ -1009,7 +1081,7 @@ class DataFrame:
 
         The sorting will remain in the returned DataFrame as long as no operations are performed on that
         frame that materially change the selected data. Operations that materially change the selected data
-        are for example groupby(), merge(), get_df_materialized_model(), and filtering out rows. Adding or
+        are for example groupby(), merge(), materialize(), and filtering out rows. Adding or
         removing a column does not materially change the selected data.
 
         :param by: column label or list of labels to sort by.
@@ -1043,10 +1115,12 @@ class DataFrame:
         """
         with self.engine.connect() as conn:
             sql = self.view_sql(limit=limit)
+            dtype = {name: series.dtype_to_pandas for name, series in self.all_series.items()
+                     if series.dtype_to_pandas is not None}
+            pandas_df = pandas.read_sql_query(sql, conn).astype(dtype)
             if len(self._index):
-                return pandas.read_sql_query(sql, conn, index_col=list(self._index.keys()))
-            else:
-                return pandas.read_sql_query(sql, conn)
+                return pandas_df.set_index(list(self._index.keys()))
+            return pandas_df
 
     def head(self, n: int = 5) -> pandas.DataFrame:
         """
@@ -1124,17 +1198,26 @@ class DataFrame:
         where_clause = where_clause if where_clause else Expression.construct('')
         if self._group_by:
 
+            not_aggregated = [s.name for s in self._data.values() if not s.expression.has_aggregate_function]
+            if len(not_aggregated) > 0:
+                raise ValueError(f'Series {not_aggregated} need(s) to have an aggregation function set. '
+                                 f'Setup aggregation through agg() or on all individual series first.')
+
             group_by_column_expr = self.group_by.get_group_by_column_expression()
             if group_by_column_expr:
+                columns = self.group_by.get_index_column_expressions()
                 group_by_clause = Expression.construct('group by {}', group_by_column_expr)
             else:
+                columns = []
                 group_by_clause = Expression.construct('')
             having_clause = having_clause if having_clause else Expression.construct('')
+
+            columns += [s.get_column_expression() for s in self._data.values()]
 
             model_builder = BachSqlModel(
                 name=name,
                 sql="""
-                    select {group_by_columns}, {aggregate_columns}
+                    select {columns}
                     from {{prev}}
                     {where}
                     {group_by}
@@ -1143,8 +1226,7 @@ class DataFrame:
                     """
             )
             return model_builder(
-                group_by_columns=self.group_by.get_index_column_expression(),
-                aggregate_columns=[s.get_column_expression() for s in self._data.values()],
+                columns=columns,
                 where=where_clause,
                 group_by=group_by_clause,
                 having=having_clause,
@@ -1214,8 +1296,7 @@ class DataFrame:
         )
 
     def _apply_func_to_series(self,
-                              func: Union[str, Callable, List[Union[str, Callable]],
-                                          Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
+                              func: Union[ColumnFunction, Dict[str, ColumnFunction]],
                               axis: int = 1,
                               numeric_only: bool = False,
                               exclude_non_applied: bool = False,
@@ -1247,28 +1328,20 @@ class DataFrame:
             raise NotImplementedError("numeric_only=None to attempt all columns but ignore "
                                       "failing ones silently is currently not implemented.")
 
-        apply_dict: Dict[str, List[Union[str, Callable]]] = {}
+        apply_dict: Dict[str, ColumnFunction] = {}
         if isinstance(func, dict):
             # make sure the keys are series we know
             for k, v in func.items():
                 if k not in self._data:
                     raise KeyError(f'{k} not found in group by series')
-                if isinstance(v, str) or callable(v):
-                    apply_dict[k] = [v]
-                elif isinstance(v, list):
-                    apply_dict[k] = v
-                else:
+                if not isinstance(v, (str, list)) and not callable(v):
                     raise TypeError(f'Unsupported value type {type(v)} in func dict for key {k}')
+                apply_dict[k] = v
         elif isinstance(func, (str, list)) or callable(func):
-            apply_dict = {}
             # check whether we need to exclude non-numeric
             for name, series in self.data.items():
-                if numeric_only and not isinstance(series, SeriesAbstractNumeric):
-                    continue
-                if isinstance(func, list):
+                if not numeric_only or isinstance(series, SeriesAbstractNumeric):
                     apply_dict[name] = func
-                else:
-                    apply_dict[name] = [func]
         else:
             raise TypeError(f'Unsupported type for func: {type(func)}')
 
@@ -1285,20 +1358,8 @@ class DataFrame:
 
         return list(new_series.values())
 
-    def apply_func(self, func: Union[str, Callable, List[Union[str, Callable]],
-                                     Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
-                   axis: int = 1,
-                   numeric_only: bool = False,
-                   exclude_non_applied: bool = False,
-                   *args, **kwargs) -> 'DataFrame':
-        """ see apply_to_series() """
-        series = self._apply_func_to_series(func, axis, numeric_only,
-                                            exclude_non_applied, *args, **kwargs)
-        return self.copy_override(series={s.name: s for s in series})
-
     def aggregate(self,
-                  func: Union[str, Callable, List[Union[str, Callable]],
-                              Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
+                  func: Union[ColumnFunction, Dict[str, ColumnFunction]],
                   axis: int = 1,
                   numeric_only: bool = False,
                   *args, **kwargs) -> 'DataFrame':
@@ -1308,8 +1369,7 @@ class DataFrame:
         return self.agg(func, axis, numeric_only, *args, **kwargs)
 
     def agg(self,
-            func: Union[str, Callable, List[Union[str, Callable]],
-                        Dict[str, Union[str, Callable, List[Union[str, Callable]]]]],
+            func: Union[ColumnFunction, Dict[str, ColumnFunction]],
             axis: int = 1,
             numeric_only: bool = False,
             *args,
@@ -1325,21 +1385,34 @@ class DataFrame:
             silently. This is currently not implemented.
         :note: axis defaults to 1, because 0 is currently unsupported
         """
-        from bach.partitioning import GroupBy
+        df = self
+        if df.group_by is None:
+            df = df.groupby()
 
-        group_by = self._group_by
-        if group_by is None:
-            group_by = GroupBy(self._partition_by_series([]))
+        new_series = df._apply_func_to_series(func, axis, numeric_only,
+                                              True,  # exclude_non_applied, must be positional arg.
+                                              df.group_by, *args, **kwargs)
+        return df.copy_override(series={s.name: s for s in new_series})
 
-        new_series = self._apply_func_to_series(func, axis, numeric_only,
-                                                True,  # exclude_non_applied, must be positional arg.
-                                                group_by, *args, **kwargs)
-        return self.copy_override(index=group_by.index,
-                                  series={s.name: s for s in new_series},
-                                  group_by=[group_by],
-                                  order_by=[])
+    def _aggregate_func(self, func: str, axis, level, numeric_only, *args, **kwargs) -> 'DataFrame':
+        """
+        Return a copy of this dataframe with the aggregate function applied (but not materialized).
+        :param func: sql fragment that will be applied as 'func(column_name)', e.g. 'sum'
+        """
 
-    def _aggregate_func(self, func, axis, level, numeric_only, *args, **kwargs):
+        """
+        Internals documentation
+        Typical execution trace, in this case for calling sum on a DataFrame:
+         * df.sum()
+         * df._aggregate_func('sum', ...)
+         * df.agg('sum', ...)
+         * df._apply_func_to_series('sum', ...)
+         then per series object:
+          * series.apply_func({'column': ['sum']}, ..)
+          * series_subclass.sum(...)
+          * series._derived_agg_func(partition, 'sum', ...)
+          * series.copy_override(..., expression=Expression.construct('sum({})'))
+        """
         if level is not None:
             raise NotImplementedError("index levels are currently not implemented")
         return self.agg(func, axis, numeric_only, *args, **kwargs)
@@ -1413,3 +1486,15 @@ class DataFrame:
     def var(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
+
+
+def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
+    """
+    Compare two dicts in the format that we use to track series and indices.
+    A normal == does not work on these dicts, because Series.equals() is overridden to create SeriesBoolean,
+    so we need to call Series.equals instead.
+    """
+    return (a is None and b is None) or (
+            len(a) == len(b) and list(a.keys()) == list(b.keys())
+            and all(ai.equals(bi) for (ai, bi) in zip(a.values(), b.values()))
+    )

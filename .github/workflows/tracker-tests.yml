@@ -25,6 +25,10 @@ jobs:
         run: |
           cd tracker
           yarn test:ci
+      - name: Check dependencies
+        run: |
+          cd tracker
+          yarn check:dependencies
       - name: test if TS schema is up to date
         run: |
           cd tracker

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import {
   AbortedEvent,
   ApplicationLoadedEvent,
@@ -17,7 +21,7 @@ import {
   VideoStopEvent,
   AbstractLocationContext,
   AbstractGlobalContext,
-} from '@objectiv/schema';
+} from '@objectiv-analytics/schema';
 
 /** Creates instance of AbortedEvent
  * @param {Object} props - factory properties

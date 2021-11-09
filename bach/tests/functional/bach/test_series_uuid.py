@@ -130,3 +130,11 @@ def test_uuid_compare():
             [3, 'Drylts', True, False, True, True, False],
         ]
     )
+
+def test_to_pandas():
+    bt = get_bt_with_test_data()
+    bt['a'] = uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')
+    bt['c'] = SeriesUuid.sql_gen_random_uuid(bt)
+    bt[['a', 'c']].to_pandas()
+    assert bt[['a']].values[0] == [uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')]
+    assert type(bt[['a']].values[0][0]) == type(uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264'))

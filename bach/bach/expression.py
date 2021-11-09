@@ -1,9 +1,9 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from dataclasses import dataclass, field
-
-from typing import Optional, Union, TYPE_CHECKING, List, Dict
+from abc import abstractmethod
+from dataclasses import dataclass
+from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple
 from sql_models.model import SqlModel, SqlModelSpec
 from sql_models.util import quote_string, quote_identifier
 
@@ -21,15 +21,30 @@ class ExpressionToken:
         if self.__class__ == ExpressionToken:
             raise TypeError("Cannot instantiate ExpressionToken directly. Instantiate a subclass.")
 
+    def to_sql(self):
+        # Not abstract so we can stay a dataclass.
+        raise NotImplementedError()
+
 
 @dataclass(frozen=True)
 class RawToken(ExpressionToken):
     raw: str
 
+    def to_sql(self) -> str:
+        return SqlModelSpec.escape_format_string(self.raw)
+
 
 @dataclass(frozen=True)
 class ColumnReferenceToken(ExpressionToken):
     column_name: str
+
+    def to_sql(self):
+        raise ValueError('ColumnReferenceTokens should be resolved first using '
+                         'Expression.resolve_column_references')
+
+    def resolve(self, table_name: Optional[str]) -> RawToken:
+        t = f'{quote_identifier(table_name)}.' if table_name else ''
+        return RawToken(f'{t}{quote_identifier(self.column_name)}')
 
 
 @dataclass(frozen=True)
@@ -39,17 +54,22 @@ class ModelReferenceToken(ExpressionToken):
     def refname(self) -> str:
         return f'reference{self.model.hash}'
 
+    def to_sql(self) -> str:
+        return f'{{{self.refname()}}}'
+
 
 @dataclass(frozen=True)
 class StringValueToken(ExpressionToken):
     """ Wraps a string value. The value in this object is unescaped and unquoted. """
     value: str
 
+    def to_sql(self) -> str:
+        return SqlModelSpec.escape_format_string(quote_string(self.value))
 
-@dataclass(frozen=True)
+
 class Expression:
     """
-    An Expression object represents a fragment of SQL as a series of sql-tokens.
+    Immutable object representing a fragment of SQL as a sequence of sql-tokens or Expressions.
 
     Expressions can easily be converted to a string with actual sql using the to_sql() function. Storing a
     sql-expression using this class, rather than storing it directly as a string, makes it possible to
@@ -60,8 +80,30 @@ class Expression:
 
     This class does not offer full-tokenization of sql. There are only a limited number of tokens for the
     needed use-cases. Most sql is simply encoded as a 'raw' token.
+
+    For special type Expressions, this class is subclassed to assign special properties to a subexpression.
     """
-    data: List[ExpressionToken] = field(default_factory=list)
+
+    def __init__(self, data: Union['Expression', List[Union[ExpressionToken, 'Expression']]] = None):
+        if not data:
+            data = []
+        if isinstance(data, Expression):
+            # if we only got a base Expression, we absorb it.
+            data = data.data if type(data) is Expression else [data]
+        self._data: Tuple[Union[ExpressionToken, 'Expression'], ...] = tuple(data)
+
+    @property
+    def data(self) -> List[Union[ExpressionToken, 'Expression']]:
+        return list(self._data)
+
+    def __eq__(self, other):
+        return isinstance(other, Expression) and self.data == other.data
+
+    def __repr__(self):
+        return f'{self.__class__}({repr(self.data)})'
+
+    def __hash__(self):
+        return hash(self._data)
 
     @classmethod
     def construct(cls, fmt: str, *args: Union['Expression', 'Series']) -> 'Expression':
@@ -77,8 +119,9 @@ class Expression:
         :param args: 0 or more Expressions or Series. Number of args must exactly match number of `{}`
             occurrences in fmt.
         """
+
         sub_strs = fmt.split('{}')
-        data = []
+        data: List[Union[ExpressionToken, Expression]] = []
         if len(args) != len(sub_strs) - 1:
             raise ValueError(f'For each {{}} in the fmt there should be an Expression provided. '
                              f'Found {{}}: {len(sub_strs) - 1}, provided expressions: {len(args)}')
@@ -89,7 +132,11 @@ class Expression:
                     arg_expr = arg.expression
                 else:
                     arg_expr = arg
-                data.extend(arg_expr.data)
+
+                if isinstance(arg_expr, NonAtomicExpression):
+                    data.extend([RawToken('('), arg_expr, RawToken(')')])
+                else:
+                    data.append(arg_expr)
             if sub_str != '':
                 data.append(RawToken(raw=sub_str))
         return cls(data=data)
@@ -105,66 +152,143 @@ class Expression:
         Return an expression that contains a single StringValueToken with the value.
         :param value: unquoted, unescaped string value.
         """
-        return Expression([StringValueToken(value)])
+        return cls([StringValueToken(value)])
 
     @classmethod
     def column_reference(cls, field_name: str) -> 'Expression':
         """ Construct an expression for field-name, where field-name is a column in a table or CTE. """
-        return Expression([ColumnReferenceToken(field_name)])
+        return cls([ColumnReferenceToken(field_name)])
 
     @classmethod
     def model_reference(cls, model: SqlModel['BachSqlModel']) -> 'Expression':
         """ Construct an expression for model, where model is a reference to a model. """
-        return Expression([ModelReferenceToken(model)])
+        return cls([ModelReferenceToken(model)])
 
-    def resolve_column_references(self, table_name: str = None):
+    @property
+    def is_single_value(self):
+        """
+        Will this expression return just one value (at most)
+
+        Any Expression made up out of Tokens and Expressions, where all Expressions are single values,
+        are expected to also yield a single value. Leaves consisting only of Tokens are considered
+        not single valued, so at least one SingleValueExpression need to be present for a branch to
+        become single valued.
+        """
+        if isinstance(self, SingleValueExpression):
+            return True
+        all_single_value = [d.is_single_value for d in self._data if isinstance(d, Expression)]
+        return len(all_single_value) and all(all_single_value)
+
+    @property
+    def is_constant(self):
+        """
+        Does this expression represent a constant value, or an expressions constructed of only constants
+
+        Any Expression made up out of Tokens and Expressions, where all Expressions are constant
+        is considered constant. Leaves consisting only of Tokens are considered not constant, so
+        at least one ConstValueExpressions need to be present for a branch to become constant.
+        """
+        if isinstance(self, ConstValueExpression):
+            return True
+        all_constant = [d.is_constant for d in self._data if isinstance(d, Expression)]
+        return len(all_constant) and all(all_constant)
+
+    @property
+    def is_independent_subquery(self):
+        return isinstance(self, IndependentSubqueryExpression)
+
+    @property
+    def has_aggregate_function(self) -> bool:
+        """
+        True iff we are a AggregateFunctionExpression, or there is at least one in this Expression.
+        """
+        return isinstance(self, AggregateFunctionExpression) or any(
+            d.has_aggregate_function for d in self.data if isinstance(d, Expression)
+        )
+
+    @property
+    def has_windowed_aggregate_function(self) -> bool:
+        """
+        True iff we are a WindowedAggregateFunctionExpression, or there is at least one in this Expression.
+        """
+        return isinstance(self, WindowedAggregateFunctionExpression) or any(
+            d.has_windowed_aggregate_function for d in self.data if isinstance(d, Expression)
+        )
+
+    def resolve_column_references(self, table_name: str = None) -> 'Expression':
         """ resolve the table name aliases for all columns in this expression """
-        result: List[ExpressionToken] = []
+        result: List[Union[ExpressionToken, Expression]] = []
         for data_item in self.data:
-            if isinstance(data_item, ColumnReferenceToken):
-                t = f'{quote_identifier(table_name)}.' if table_name else ''
-                result.append(RawToken(f'{t}{quote_identifier(data_item.column_name)}'))
+            if isinstance(data_item, Expression):
+                result.append(data_item.resolve_column_references(table_name))
+            elif isinstance(data_item, ColumnReferenceToken):
+                result.append(data_item.resolve(table_name))
             else:
                 result.append(data_item)
-        return Expression(result)
+        return self.__class__(result)
 
     def get_references(self) -> Dict[str, SqlModel['BachSqlModel']]:
         rv = {}
         for data_item in self.data:
-            if isinstance(data_item, ModelReferenceToken):
+            if isinstance(data_item, Expression):
+                rv.update(data_item.get_references())
+            elif isinstance(data_item, ModelReferenceToken):
                 rv[data_item.refname()] = data_item.model
         return rv
 
     def to_sql(self, table_name: Optional[str] = None) -> str:
-        """ Short cut for expression_to_sql(self, table_name). """
-        return expression_to_sql(self.resolve_column_references(table_name))
+        """
+        Compile the expression to a SQL fragment by calling to_sql() on every token or expression in data
+        :param table_name: Optional table name, if set all column-references will be compiled as
+            '"{table_name}"."{column_name}"' instead of just '"{column_name}"'.
+        :return SQL representation of the expression.
+        """
+        return ''.join([d.to_sql() for d in self.resolve_column_references(table_name).data])
 
 
-def expression_to_sql(expression: Expression) -> str:
+class NonAtomicExpression(Expression):
     """
-    Compile the expression to a SQL fragment.
-        * RawTokens will be represented by the raw string they embed.
-        * StringValueTokens will be quoted and escaped
-        * ColumnReferenceTokens will be quoted and escaped, and if table_name is provided preceded by the
-            table name.
-    :param expression: Expression
-    :param table_name: Optional table name, if set all column-references will be compiled as
-        '"{table_name}"."{column_name}"' instead of just '"{column_name}"'.
-    :return SQL representation of the expression.
+    An expression that needs '( .. )' around it when used together with other Expressions
+    in Expression.construct(). This subclass is required, because not all Expressions need to be wrapped
+    in parenthesis, e.g. `expression` `<` `ANY (subquery)` should probably have `expression` wrapped if it's
+    a complex expression, but not the `ANY ...` part, since that would not be valid SQL.
     """
-    result: List[str] = []
-    for data_item in expression.data:
-        if isinstance(data_item, ColumnReferenceToken):
-            raise ValueError('ColumnReferenceTokens should be resolved first using '
-                             'Expression.resolve_column_references')
-        elif isinstance(data_item, ModelReferenceToken):
-            result.append(f'{{{data_item.refname()}}}')
-        elif isinstance(data_item, RawToken):
-            result.append(SqlModelSpec.escape_format_string(data_item.raw))
-        elif isinstance(data_item, StringValueToken):
-            result.append(SqlModelSpec.escape_format_string(quote_string(data_item.value)))
-        else:
-            raise Exception("This should never happen. "
-                            "expression_to_sql() doesn't cover all Expression subtypes."
-                            f"type: {type(data_item)}")
-    return ''.join(result)
+    pass
+
+
+class IndependentSubqueryExpression(Expression):
+    pass
+
+
+class SingleValueExpression(Expression):
+    """
+    An Expression that is expected to return just one value.
+    If wrapped around IndependentSubqueryExpression, this will still have is_independent_subquery == True
+    """
+    @property
+    def is_independent_subquery(self):
+        # If this Expression is wrapped around a IndependentSubqueryExpression, most likely, there will be
+        # just one in here, but let's make sure.
+        all_isq = [d.is_independent_subquery for d in self._data if isinstance(d, Expression)]
+        return len(all_isq) and all(all_isq)
+
+
+class ConstValueExpression(SingleValueExpression):
+    pass
+
+
+class AggregateFunctionExpression(Expression):
+    @property
+    def is_constant(self):
+        # We don't consider an aggregate function constant even if all its subexpressions are,
+        # because it requires materialization of the aggregation to actually be a constant value again.
+        # Maybe we will revisit this some day. If that day comes, make sure to look at Series.count() as well.
+        return False
+
+
+class WindowedAggregateFunctionExpression(AggregateFunctionExpression):
+    """
+    A WindowedAggregateFunctionExpression contains an aggregation- or window function, and a window clause:
+    e.g. agg_func() OVER (...). The agg_func
+    """
+    pass

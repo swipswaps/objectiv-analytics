@@ -1,21 +1,28 @@
 # Objectiv Schema TypeScript
 
-[PLACEHOLDER: Objectiv Schema TypeScript introductory text]
+TypeScript implementation of the open taxonomy for analytics for Objectiv trackers.
 
 ---
 
-# Installing
-
-To install the most recent version:
-
-### yarn
+## Package installation
 
 ```sh
-yarn add @objectiv/schema --dev
+yarn add @objectiv-analytics/schema --dev
 ```
 
-### npm
+### or
 
 ```sh
-npm install @objectiv/schema --dev
+npm install @objectiv-analytics/schema --dev
 ```
+
+## Usage
+
+For a detailed usage guide, see the documentation: [https://objectiv.io/docs](https://objectiv.io/docs)
+
+## Copyright and license
+Licensed and distributed under the Apache 2.0 License (An OSI Approved License).
+
+Copyright (c) 2021 Objectiv B.V.
+
+All rights reserved.

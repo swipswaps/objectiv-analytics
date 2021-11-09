@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import {
   ActionContext,
   ApplicationContext,
@@ -16,7 +20,7 @@ import {
   SectionContext,
   SessionContext,
   WebDocumentContext,
-} from '@objectiv/schema';
+} from '@objectiv-analytics/schema';
 
 /** Creates instance of ActionContext
  * @param {Object} props - factory properties

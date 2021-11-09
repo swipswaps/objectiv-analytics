@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 /**
  * Executes `functionToRun(value)` only if the given `value` is not `undefined`
  */

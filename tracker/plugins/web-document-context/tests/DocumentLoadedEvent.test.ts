@@ -1,4 +1,8 @@
-import { makeWebDocumentContext, Tracker } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { makeWebDocumentContext, Tracker } from '@objectiv-analytics/tracker-core';
 import { trackDocumentLoadedEvent } from '../src/';
 import { SpyTransport } from './mocks/SpyTransport';
 

@@ -1,7 +1,9 @@
-/**
+/*
+ * Copyright 2021 Objectiv B.V.
  * @jest-environment node
  */
-import { generateUUID, makeClickEvent } from '@objectiv/tracker-core';
+
+import { generateUUID, makeClickEvent } from '@objectiv-analytics/tracker-core';
 import {
   BrowserTracker,
   DebugTransport,

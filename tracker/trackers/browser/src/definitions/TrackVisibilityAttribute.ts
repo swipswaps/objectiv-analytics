@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { boolean, Infer, literal, object, union } from 'superstruct';
 
 /**

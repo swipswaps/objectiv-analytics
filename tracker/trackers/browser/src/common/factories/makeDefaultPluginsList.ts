@@ -1,5 +1,9 @@
-import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
-import { makeTrackerDefaultPluginsList } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { WebDocumentContextPlugin } from '@objectiv-analytics/plugin-web-document-context';
+import { makeTrackerDefaultPluginsList } from '@objectiv-analytics/tracker-core';
 import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
 
 /**

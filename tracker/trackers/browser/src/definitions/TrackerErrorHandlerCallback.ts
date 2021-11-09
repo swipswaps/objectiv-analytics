@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 /**
  * Generic onError callback definition used by `trackerErrorHandler`.
  */

@@ -1,10 +1,14 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import {
   NonEmptyArray,
   TrackerConsole,
   TrackerTransportConfig,
   TrackerTransportInterface,
   TransportableEvent,
-} from '@objectiv/tracker-core';
+} from '@objectiv-analytics/tracker-core';
 
 /**
  * A TrackerTransport that simply logs TrackerEvents to the console as debug messages.

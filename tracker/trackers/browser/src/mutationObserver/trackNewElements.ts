@@ -1,4 +1,8 @@
-import { TrackerConsole } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { TrackerConsole } from '@objectiv-analytics/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';

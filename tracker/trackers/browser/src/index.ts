@@ -1,4 +1,8 @@
-export * from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+export * from '@objectiv-analytics/tracker-core';
 
 export * from './common/factories/makeDefaultPluginsList';
 export * from './common/factories/makeDefaultQueue';

@@ -7,7 +7,7 @@ import pytest
 
 from bach import SeriesDate
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt_with_food_data, \
-    assert_db_type
+    assert_db_type, get_bt_with_test_data
 from tests.functional.bach.test_series_timestamp import types_plus_min
 
 
@@ -110,3 +110,9 @@ def test_date_arithmetic():
     ]
     types_plus_min(data, datetime.date(2021, 7, 23), 'date')
 
+
+def test_to_pandas():
+    bt = get_bt_with_test_data()
+    bt['d'] = datetime.date(2020, 3, 11)
+    bt[['d']].to_pandas()
+    assert bt[['d']].values[0] == [datetime.date(2020, 3, 11)]

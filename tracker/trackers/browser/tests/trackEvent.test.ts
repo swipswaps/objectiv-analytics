@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import {
   generateUUID,
   makeAbortedEvent,
@@ -11,7 +15,7 @@ import {
   makeURLChangeEvent,
   makeVideoPauseEvent,
   makeVideoStartEvent,
-} from '@objectiv/tracker-core';
+} from '@objectiv-analytics/tracker-core';
 import {
   BrowserTracker,
   getTracker,

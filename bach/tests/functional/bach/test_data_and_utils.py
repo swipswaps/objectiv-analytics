@@ -16,7 +16,7 @@ from sqlalchemy.engine import ResultProxy
 from bach import DataFrame, Series
 from bach.types import get_series_type_from_db_dtype
 
-DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
+DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv@localhost:5432/objectiv')
 
 # Three data tables for testing are defined here that can be used in tests
 # 1. cities: 3 rows (or 11 for the full dataset) of data on cities
@@ -221,8 +221,13 @@ def assert_equals_data(
     if len(expected_data) == 0:
         raise ValueError("Cannot check data if 0 rows are expected.")
 
+    if isinstance(bt, Series):
+        # Otherwise sorting does not work as expected
+        bt = bt.to_frame()
+
     if order_by:
         bt = bt.sort_values(order_by)
+
     sql = bt.view_sql()
     db_rows = run_query(bt.engine, sql)
     column_names = list(db_rows.keys())
