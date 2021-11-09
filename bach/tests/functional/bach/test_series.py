@@ -203,8 +203,17 @@ def test_type_agnostic_aggregation_functions():
 
 def test_unique():
     bt = get_bt_with_test_data(full_data_set=True)
-
     uq = bt.municipality.unique()
+    assert not uq.expression.is_single_value
+
+    muni_single = bt.municipality[:1]
+    uq_single = muni_single.unique()
+    assert uq_single.expression.is_single_value == muni_single.expression.is_single_value == True
+
+    with pytest.raises(ValueError, match='GroupBy of assigned value does not match DataFrame'):
+        # the uq series has a different groupby
+        bt['uq'] = uq
+
     assert_equals_data(
         uq,
         expected_columns=['municipality', 'municipality_unique'],
