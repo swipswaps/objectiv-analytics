@@ -1,4 +1,8 @@
-import { makeSectionHiddenEvent, makeSectionVisibleEvent } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { makeSectionHiddenEvent, makeSectionVisibleEvent } from '@objectiv-analytics/tracker-core';
 import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';
 

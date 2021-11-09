@@ -1,4 +1,8 @@
-import { makeDocumentLoadedEvent, Tracker } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { makeDocumentLoadedEvent, Tracker } from '@objectiv-analytics/tracker-core';
 
 /**
  * DocumentLoadedEvent is triggered by DOMContentLoaded. The actual URL can be retrieved from the WebDocumentContext

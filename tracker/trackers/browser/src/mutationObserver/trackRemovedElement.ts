@@ -1,4 +1,8 @@
-import { TrackerElementLocations } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { TrackerElementLocations } from '@objectiv-analytics/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { isTaggedElement } from '../common/guards/isTaggedElement';
 import { parseTrackVisibility } from '../common/parsers/parseTrackVisibility';

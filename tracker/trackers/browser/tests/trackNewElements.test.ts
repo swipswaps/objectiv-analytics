@@ -1,4 +1,8 @@
-import { generateUUID } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { generateUUID } from '@objectiv-analytics/tracker-core';
 import {
   BrowserTracker,
   getTracker,

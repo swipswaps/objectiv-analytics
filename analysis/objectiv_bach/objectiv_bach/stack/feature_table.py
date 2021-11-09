@@ -10,7 +10,6 @@ class FeatureTable(SqlModelBuilder):
     def sql(self):
         return '''
 SELECT DISTINCT feature_hash,
-                stack_selection as feature,
-                'Pretty' || stack_selection as feature_pretty_name
+                stack_selection as feature
 FROM {{hashed_features}}
 '''

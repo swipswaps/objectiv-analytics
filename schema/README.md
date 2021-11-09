@@ -1,41 +1,38 @@
-#Schema updates
+# The Open Taxonomy for Analytics
 
-Schema (and extensions) are kept in /schema. The format used, is loosely based on JSON-schema, and used a JSON5 encoding to allow for multiline strings.
+The Open Taxonomy for Analytics is Objectiv’s proposal for a common way to collect, structure and validate data. It defines classes for each common event type and the contexts in which they can happen. It describes their properties, requirements and their relationships with other classes. 
 
-The two main schema are:
-- the base schema (base_schema.json5). This schema contains definitions of all events, contexts and their hierarchy, that are contained in the base setup. They are used (and validated) across the whole pipeline.
-- the event list schema (event_list.json5). This schema contains the definition of the structure of messages between the tracker and the collector. In short, it describes a structure to send a list of events (as defined in the aforementioned base schema).
+The current version of the taxonomy is built for product analytics. We have plans to support other fields as well. Check out our [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2) for details. 
 
-##Validation
-Validation takes place on a few levels:
-1. in code (currently there is support for JS/TS and Python)
-2. at runtime at reception of events by the collector.
+Objectiv uses the Open Taxonomy to:
+* Enable realtime validation of instrumentation and provide debugging feedback.
+* Structure and validate data collection at the first step of the pipeline.
+* Enable effective feature creation when building models.
+* Enable models and datasets to be reused with minimal effort.
 
-In code this works by code that is generated from the schema. Of course it is very important to keep code and schema in sync. As a safeguard there is a Github Action in place that checkes this.
+The Open Taxonomy for Analytics is captured in a schema that is loosely based on JSON-schema and uses JSON5 encoding to allow for multiline strings. 
 
-##Generation
-So how does this work?
-1. Make any changes to the base schema and/or add extensions
-2. Make sure to regenerate both TS and Python definitions
-3. Run tests
-4. If all is OK, create a PR (in the case of changes to the base schema)
+## Using the Open Taxonomy
+Objectiv is built around the Open Taxonomy and the Tracker, Collector and Bach use it out of the box.
 
-###Tracker: Typescript
-For TypeScript, there is a generator.js script in tracker/core/utility/dist/. Using it is quite simple:
-```bash
-cd tracker && yarn utils:generate
-```
+For detailed installation & usage instructions of Objectiv, visit [Objectiv Docs](https://www.objectiv.io/docs).
 
-###Collector: Python
-As for Python the approach is pretty similar:
-1. Make sure to properly set up the VirtualEnv, as described in backend/README.md
-2. Run the following command:
-```bash
-cd backend
-make base_schema
-python3 objectiv_backend/schema/generate_classes.py
-autopep8 -i schema.py
-mv schema.py objectiv_backend/schema
-make tests
-```
+## Support & Troubleshooting
+If you need help with the Open Taxonomy, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
 
+## Bug Reports & Feature Requests
+If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing.md).
+
+## Security Disclosure
+Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](../SECURITY.md) for details.
+
+## Roadmap
+Future plans for Objectiv can be found on our [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2).
+
+## Custom Development & Contributing Code
+If you want to contribute to the Open Taxonomy or use it as a base for custom development, take a look at [CONTRIBUTING.md](CONTRIBUTING.md). It contains detailed development instructions and a link to information about our contribution process and where you can fit in.
+
+## License
+This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](../LICENSE.md) for details.
+
+Unless otherwise noted, all files © 2021 Objectiv B.V.

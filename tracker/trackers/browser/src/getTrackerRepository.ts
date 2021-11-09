@@ -1,4 +1,8 @@
-import { TrackerRepository } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { TrackerRepository } from '@objectiv-analytics/tracker-core';
 import { BrowserTracker } from './BrowserTracker';
 import { windowExists } from './common/windowExists';
 

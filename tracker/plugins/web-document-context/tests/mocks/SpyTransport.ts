@@ -1,4 +1,8 @@
-import { TrackerConsole, TrackerTransportConfig, TrackerTransportInterface } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { TrackerConsole, TrackerTransportConfig, TrackerTransportInterface } from '@objectiv-analytics/tracker-core';
 
 export class SpyTransport implements TrackerTransportInterface {
   readonly console?: TrackerConsole;

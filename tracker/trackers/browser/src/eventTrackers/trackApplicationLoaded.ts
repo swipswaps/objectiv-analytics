@@ -1,4 +1,8 @@
-import { makeApplicationLoadedEvent } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { makeApplicationLoadedEvent } from '@objectiv-analytics/tracker-core';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { NonInteractiveEventTrackerParameters } from '../definitions/NonInteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';

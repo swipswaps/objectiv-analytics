@@ -1,4 +1,8 @@
-import { makeAbortedEvent } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { makeAbortedEvent } from '@objectiv-analytics/tracker-core';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { NonInteractiveEventTrackerParameters } from '../definitions/NonInteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';

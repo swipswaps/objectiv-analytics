@@ -59,14 +59,15 @@ class DataFrame:
     The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
     DataFrames see https://pandas.pydata.org/docs/reference/frame.html
     """
+
     def __init__(
-        self,
-        engine: Engine,
-        base_node: SqlModel[BachSqlModel],
-        index: Dict[str, 'Series'],
-        series: Dict[str, 'Series'],
-        group_by: Optional['GroupBy'],
-        order_by: List[SortColumn] = None
+            self,
+            engine: Engine,
+            base_node: SqlModel[BachSqlModel],
+            index: Dict[str, 'Series'],
+            series: Dict[str, 'Series'],
+            group_by: Optional['GroupBy'],
+            order_by: List[SortColumn] = None
     ):
         """
         Instantiate a new DataFrame.
@@ -93,20 +94,20 @@ class DataFrame:
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
                                  f'key: {key}, series.name: {value.name}')
-            if value.index != self._index:
+            if not dict_name_series_equals(value.index, index):
                 raise ValueError(f'Indices in `series` should match dataframe. '
-                                 f'df: {value.index}, series.index: {self._index}')
-            if value.group_by and group_by and value.group_by != group_by:
+                                 f'df: {value.index}, series.index: {index}')
+            if value.group_by != group_by:
                 raise ValueError(f'Group_by in `series` should match dataframe. '
                                  f'df: {value.group_by}, series.index: {group_by}')
             self._data[key] = value
+
         for value in index.values():
             if value.index != {}:
                 raise ValueError('Index series can not have non-empty index property')
 
-        if group_by is not None:
-            if group_by.index != index:
-                raise ValueError('Index should match group_by index')
+        if group_by is not None and not dict_name_series_equals(group_by.index, index):
+            raise ValueError('Index should match group_by index')
 
         if set(index.keys()) & set(series.keys()):
             raise ValueError(f"The names of the index series and data series should not intersect. "
@@ -119,21 +120,67 @@ class DataFrame:
             index: Dict[str, 'Series'] = None,
             series: Dict[str, 'Series'] = None,
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
-            order_by: List[SortColumn] = None) -> 'DataFrame':
+            order_by: List[SortColumn] = None,
+            index_dtypes: Dict[str, str] = None,
+            series_dtypes: Dict[str, str] = None,
+            single_value: bool = False,
+            **kwargs
+    ) -> 'DataFrame':
         """
-        Create a copy of self, with the given arguments overriden
+        Create a copy of self, with the given arguments overridden
 
         Big fat warning: group_by can legally be None, but if you want to set that,
         set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
+
+        There are three special parameters: index_dtypes, series_dtypes and single_value. These are used to
+        create new index and data series iff index and/or series are not given. `single_value` determines
+        whether the Expressions for those newly created series should be SingleValueExpressions or not.
+        All other arguments are passed through to `__init__`, filled with current instance values if None is
+        given in the parameters.
         """
-        return DataFrame(
-            engine=engine if engine is not None else self.engine,
-            base_node=base_node if base_node is not None else self._base_node,
-            index=index if index is not None else self._index,
-            series=series if series is not None else self._data,
-            group_by=self._group_by if group_by is None else group_by[0],
-            order_by=order_by if order_by is not None else self._order_by
-        )
+
+        if index_dtypes and index:
+            raise ValueError("Can not set both index and index_dtypes")
+
+        if series_dtypes and series:
+            raise ValueError("Can not set both series and series_dtypes")
+
+        args = {
+            'engine': engine if engine is not None else self.engine,
+            'base_node':  base_node if base_node is not None else self._base_node,
+            'index':  index if index is not None else self._index,
+            'series': series if series is not None else self._data,
+            'group_by': self._group_by if group_by is None else group_by[0],
+            'order_by': order_by if order_by is not None else self._order_by
+        }
+
+        expression_class = SingleValueExpression if single_value else Expression
+
+        if index_dtypes:
+            new_index: Dict[str, Series] = {}
+            for key, value in index_dtypes.items():
+                index_type = get_series_type_from_dtype(value)
+                new_index[key] = index_type(
+                    engine=args['engine'], base_node=args['base_node'],
+                    index={},  # Empty index for index series
+                    name=key, expression=expression_class.column_reference(key),
+                    group_by=args['group_by']
+                )
+            args['index'] = new_index
+
+        if series_dtypes:
+            new_series: Dict[str, Series] = {}
+            for key, value in series_dtypes.items():
+                series_type = get_series_type_from_dtype(value)
+                new_series[key] = series_type(
+                    engine=args['engine'], base_node=args['base_node'],
+                    index=args['index'],
+                    name=key, expression=expression_class.column_reference(key),
+                    group_by=args['group_by']
+                )
+                args['series'] = new_series
+
+        return self.__class__(**args, **kwargs)
 
     @property
     def engine(self):
@@ -185,14 +232,9 @@ class DataFrame:
         # We cannot just compare the data and index properties, because the Series objects have
         # overridden the __eq__ function in a way that makes normal comparisons not useful. We have to use
         # equals() instead
-        if list(self.index.keys()) != list(other.index.keys()):
-            return False
-        if list(self.data.keys()) != list(other.data.keys()):
-            return False
-        for key in self.all_series.keys():
-            if not self.all_series[key].equals(other.all_series[key]):
-                return False
         return \
+            dict_name_series_equals(self.index, other.index) and \
+            dict_name_series_equals(self.data, other.data) and \
             self.engine == other.engine and \
             self.base_node == other.base_node and \
             self._group_by == other._group_by and \
@@ -278,7 +320,7 @@ class DataFrame:
         in the database first (e.g. by specifying 'table').
 
         There are some small differences between how the different materializations handle NaN values. e.g.
-        'cte' does not support those for non-numeric columns, wheras 'table' converts them to 'NULL'
+        'cte' does not support those for non-numeric columns, whereas 'table' converts them to 'NULL'
 
         Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
 
@@ -315,14 +357,12 @@ class DataFrame:
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
             order_by: List[SortColumn] = None,
-            single_value: bool = False
     ) -> 'DataFrame':
         """
         Get an instance with the right series instantiated based on the dtypes array. This assumes that
         base_node has a column for all names in index_dtypes and dtypes.
         If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
-        expression_class = SingleValueExpression if single_value else Expression
         index: Dict[str, Series] = {}
         for key, value in index_dtypes.items():
             index_type = get_series_type_from_dtype(value)
@@ -331,7 +371,7 @@ class DataFrame:
                 base_node=base_node,
                 index={},  # Empty index for index series
                 name=key,
-                expression=expression_class.column_reference(key),
+                expression=Expression.column_reference(key),
                 group_by=group_by
             )
         series: Dict[str, Series] = {}
@@ -342,10 +382,10 @@ class DataFrame:
                 base_node=base_node,
                 index=index,
                 name=key,
-                expression=expression_class.column_reference(key),
+                expression=Expression.column_reference(key),
                 group_by=group_by
             )
-        return DataFrame(
+        return cls(
             engine=engine,
             base_node=base_node,
             index=index,
@@ -354,8 +394,7 @@ class DataFrame:
             order_by=order_by
         )
 
-    def get_df_materialized_model(self, node_name='manual_materialize',
-                                  inplace=False, limit: Any = None) -> 'DataFrame':
+    def materialize(self, node_name='manual_materialize', inplace=False, limit: Any = None) -> 'DataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -367,6 +406,7 @@ class DataFrame:
 
         :param node_name: The name of the node that's going to be created
         :param inplace: Perform operation on self if inplace=True, or create a copy
+        :param limit: The limit (slice, int) to apply.
         :return: New DataFrame with the current DataFrame's state as base_node
         """
         if inplace:
@@ -375,14 +415,13 @@ class DataFrame:
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
 
-        model = self.get_current_node(name=node_name, limit=limit)
-        return self.get_instance(
-            engine=self.engine,
-            base_node=model,
+        node = self.get_current_node(name=node_name, limit=limit)
+        return self.copy_override(
+            base_node=node,
             index_dtypes=index_dtypes,
-            dtypes=series_dtypes,
-            group_by=None,
-            order_by=[]
+            series_dtypes=series_dtypes,
+            group_by=[None],
+            order_by=[]  # filtering rows resets any sorting
         )
 
     def get_sample(self,
@@ -406,7 +445,9 @@ class DataFrame:
         :param: seed: seed number used to generate the sample.
         """
         if self._group_by is not None:
-            print('error: groupby not supported ')
+            raise NotImplementedError('Dataframes that have an active grouping can currently not be sampled. '
+                                      'Call df.materialize() first.')
+
         if overwrite:
             sql = f'DROP TABLE IF EXISTS {table_name}'
             with self.engine.connect() as conn:
@@ -447,20 +488,27 @@ class DataFrame:
         Will raise an error if the current Frame doesn't contain sampled data, i.e. get_sample() has not been
         called.
         """
+        df = self
+        if df._group_by:
+            df = df.materialize(node_name='get_unsampled')
+
         sampled_node_tuple = find_node(
-            start_node=self.base_node,
+            start_node=df.base_node,
             function=lambda node: isinstance(node, SampleSqlModel)
         )
         if sampled_node_tuple is None:
-            raise ValueError('No sampled node found. Cannot unsample data that has not been sampled.')
+            raise ValueError('No sampled node found. Cannot un-sample data that has not been sampled.')
 
         assert isinstance(sampled_node_tuple.model, SampleSqlModel)  # help mypy
         updated_graph = replace_node_in_graph(
-            start_node=self.base_node,
+            start_node=df.base_node,
             reference_path=sampled_node_tuple.reference_path,
             replacement_model=sampled_node_tuple.model.previous
         )
-        return self.copy_override(base_node=updated_graph)
+
+        index = {s.name: s.copy_override(base_node=updated_graph) for s in df._index.values()}
+        series = {s.name: s.copy_override(base_node=updated_graph, index=index) for s in df._data.values()}
+        return df.copy_override(base_node=updated_graph, index=index, series=series)
 
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'SeriesBoolean']) -> DataFrameOrSeries:
@@ -523,13 +571,12 @@ class DataFrame:
                         name='getitem_where_boolean',
                         where_clause=Expression.construct("where {}", key.expression))
 
-            return DataFrame.get_instance(
-                engine=self.engine,
+            return self.copy_override(
                 base_node=node,
-                index_dtypes={name: series.dtype for name, series in self.index.items()},
-                dtypes={name: series.dtype for name, series in self.data.items()},
-                group_by=None,
+                group_by=[None],
                 order_by=[],  # filtering rows resets any sorting
+                index_dtypes={name: series.dtype for name, series in self.index.items()},
+                series_dtypes={name: series.dtype for name, series in self.data.items()},
                 single_value=single_value
             )
         raise NotImplementedError(f"Only str, (set|list)[str], slice or SeriesBoolean are supported, "
@@ -553,23 +600,28 @@ class DataFrame:
             if not isinstance(value, Series):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
-                return
             else:
-                # two cases:
-                # 1) these share the same base_node and index
-                # 2) these share the same index, but not the same base_node
-                if value.index != self.index:
-                    raise ValueError(f'Index of assigned value does not match index of DataFrame. '
-                                     f'Value: {value.index}, df: {self.index}')
-                if value.base_node == self.base_node:
-                    if self._group_by != value.group_by:
-                        raise ValueError(f'GroupBy of assigned value does not match DataFrame. '
-                                         f'Value: {value.group_by}, df: {self._group_by}')
+                if value.base_node == self.base_node and self._group_by == value.group_by:
                     self._data[key] = value.copy_override(name=key)
-                    return
+                elif value.expression.is_constant:
+                    self._data[key] = value.copy_override(name=key, index=self._index,
+                                                          group_by=[self._group_by])
+                elif value.expression.is_independent_subquery:
+                    self._data[key] = value.copy_override(name=key, index=self._index,
+                                                          group_by=[self._group_by])
+                elif value.expression.is_single_value:
+                    self._data[key] = Series.as_independent_subquery(value).copy_override(
+                        name=key, index=self._index, group_by=[self._group_by])
                 else:
-                    # this is the complex case. Maybe don't support this at all?TODO
-                    raise NotImplementedError('TODO')
+                    if value.group_by != self._group_by:
+                        raise ValueError(f'GroupBy of assigned value does not match DataFrame and the '
+                                         f'given series was not single value or an independent subquery. '
+                                         f'GroupBy Value: {value.group_by}, df: {self._group_by}')
+                    elif value.base_node != self.base_node:
+                        raise ValueError('Base node of assigned value does not match DataFrame and the '
+                                         'given series was not single value or an independent subquery.')
+                    else:
+                        raise NotImplementedError('Incompatible series can not be added to the dataframe.')
 
         elif isinstance(key, list):
             if len(key) == 0:
@@ -659,7 +711,7 @@ class DataFrame:
         df = self if inplace else self.copy_override()
         if self._group_by:
             # materialize, but raise if inplace is required.
-            df = df.get_df_materialized_model(node_name='reset_index', inplace=inplace)
+            df = df.materialize(node_name='reset_index', inplace=inplace)
 
         series = df._data if drop else df.all_series
         df._data = {n: s.copy_override(index={}) for n, s in series.items()}
@@ -682,7 +734,7 @@ class DataFrame:
 
         df = self if inplace else self.copy_override()
         if self._group_by:
-            df = df.get_df_materialized_model(node_name='groupby_setindex', inplace=inplace)
+            df = df.materialize(node_name='groupby_setindex', inplace=inplace)
 
         # build the new index, appending if necessary
         new_index = {} if not append else copy(df._index)
@@ -828,21 +880,22 @@ class DataFrame:
         # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
         new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index)
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
-        return cls(engine=df.engine,
-                   base_node=df.base_node,
-                   index=group_by.index,
-                   series=new_series,
-                   group_by=group_by,
-                   order_by=[])
+        return df.copy_override(
+            engine=df.engine,
+            base_node=df.base_node,
+            index=group_by.index,
+            series=new_series,
+            group_by=[group_by],
+            order_by=[])
 
     def groupby(
             self,
             by: Union[GroupBySingleType,  # single series group_by
                       # for GroupingSets
                       Tuple[Union[GroupBySingleType, Tuple[GroupBySingleType, ...]], ...],
-                      List[Union[GroupBySingleType,                             # multi series
-                                 List[GroupBySingleType],                       # for grouping lists
-                                 Tuple[GroupBySingleType, ...]]],                    # for grouping lists
+                      List[Union[GroupBySingleType,  # multi series
+                                 List[GroupBySingleType],  # for grouping lists
+                                 Tuple[GroupBySingleType, ...]]],  # for grouping lists
                       None] = None) -> 'DataFrame':
         """
         Group by any of the series currently in this dataframe, both from index
@@ -861,7 +914,7 @@ class DataFrame:
         df = self
         if self._group_by:
             # We need to materialize this node first, we can't stack aggregations (yet)
-            df = self.get_df_materialized_model(node_name='nested_groupby')
+            df = self.materialize(node_name='nested_groupby')
 
         group_by: GroupBy
         if isinstance(by, tuple):
@@ -1028,7 +1081,7 @@ class DataFrame:
 
         The sorting will remain in the returned DataFrame as long as no operations are performed on that
         frame that materially change the selected data. Operations that materially change the selected data
-        are for example groupby(), merge(), get_df_materialized_model(), and filtering out rows. Adding or
+        are for example groupby(), merge(), materialize(), and filtering out rows. Adding or
         removing a column does not materially change the selected data.
 
         :param by: column label or list of labels to sort by.
@@ -1434,3 +1487,15 @@ class DataFrame:
     def var(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
+
+
+def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
+    """
+    Compare two dicts in the format that we use to track series and indices.
+    A normal == does not work on these dicts, because Series.equals() is overridden to create SeriesBoolean,
+    so we need to call Series.equals instead.
+    """
+    return (a is None and b is None) or (
+            len(a) == len(b) and list(a.keys()) == list(b.keys())
+            and all(ai.equals(bi) for (ai, bi) in zip(a.values(), b.values()))
+    )

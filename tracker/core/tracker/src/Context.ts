@@ -1,4 +1,8 @@
-import { AbstractGlobalContext, AbstractLocationContext } from '@objectiv/schema';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { AbstractGlobalContext, AbstractLocationContext } from '@objectiv-analytics/schema';
 
 /**
  * An array of Location Contexts

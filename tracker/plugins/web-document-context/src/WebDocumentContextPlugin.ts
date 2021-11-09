@@ -1,10 +1,14 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import {
   ContextsConfig,
   makeWebDocumentContext,
   TrackerConsole,
   TrackerPluginConfig,
   TrackerPluginInterface,
-} from '@objectiv/tracker-core';
+} from '@objectiv-analytics/tracker-core';
 
 /**
  * WebDocumentContextConfig allows to optionally specify a custom ID for the WebDocumentContext

@@ -16,7 +16,7 @@ from sqlalchemy.engine import ResultProxy
 from bach import DataFrame, Series
 from bach.types import get_series_type_from_db_dtype
 
-DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
+DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv@localhost:5432/objectiv')
 
 # Three data tables for testing are defined here that can be used in tests
 # 1. cities: 3 rows (or 11 for the full dataset) of data on cities
@@ -233,7 +233,9 @@ def assert_equals_data(
     pdf.reset_index()
     db_values = []
     for index_row, value_row in zip(pdf.index.values.tolist(), pdf.values.tolist()):
-        if not isinstance(index_row, list):
+        if isinstance(index_row, tuple):
+            index_row = list(index_row)
+        elif not isinstance(index_row, list):
             index_row = [index_row]
         db_values.append(index_row + value_row)
     print(db_values)

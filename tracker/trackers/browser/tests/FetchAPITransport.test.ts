@@ -1,4 +1,8 @@
-import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { TrackerEvent, TransportSendError } from '@objectiv-analytics/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
 import { mockConsole } from './mocks/MockConsole';

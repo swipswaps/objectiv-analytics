@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 /**
  * All the attributes that are added to a DOM Element to make it trackable
  */

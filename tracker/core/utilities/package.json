@@ -1,5 +1,5 @@
 {
-  "name": "@objectiv/utilities",
+  "name": "@objectiv-analytics/utilities",
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
@@ -13,6 +13,7 @@
     "check:dependencies": "npx depcheck"
   },
   "devDependencies": {
+    "depcheck": "^1.4.2",
     "json5": "^2.2.0",
     "prettier": "^2.4.1"
   }

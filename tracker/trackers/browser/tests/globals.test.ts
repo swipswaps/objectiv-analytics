@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { BrowserTracker, getOrMakeTracker, getTracker, makeTracker, setDefaultTracker } from '../src/';
 
 describe('globals', () => {

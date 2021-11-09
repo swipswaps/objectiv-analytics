@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore } from '../src';
 import { mockConsole } from './mocks/MockConsole';
 

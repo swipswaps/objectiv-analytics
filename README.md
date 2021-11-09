@@ -1,30 +1,37 @@
-# Objectiv Analytics
-Objectiv Analytics enables you to track and collect events from your product and analyse the collected data
-with powerful models. The collected data follows a standardized taxonomy, which enable many advanced
-analysis out of the box. If needed, both the data taxonomy and the data models can be easily extended.
+Go to [Objectiv Docs](https://objectiv.io/docs/) for detailed installation & usage instructions
 
-Objectiv is fully open source, and easy to host yourself; so no need to share your customers's sensitive
-data with anyone.
+![Objectiv Logo](https://objectiv.io/docs/img/logo-objectiv-large.svg "Objectiv Logo")
 
-More information about what Objectiv Analytics is, and how it compares to other analytics solution can be
-found on https://objectiv.io
+Objectiv is a data collection & modeling library that puts the data scientist first. It is built around 
+[the open taxonomy of analytics](https://objectiv.io/docs/taxonomy), which is our proposal for a common way to collect, 
+structure and validate data. With Objectiv, you create a 
+[contextual layer for your application](https://objectiv.io/docs/tracking/core-concepts/tagging) by mapping it to the taxonomy, 
+with the goal of collecting better data and more effective modeling.
 
-We also created a demo app that shows how easy it is to integrate the Objectiv Analytics tracker into an
-app, and that gives an idea about what the resulting data insights look like.
-See the [objectiv-demo repository](https://github.com/objectiv/objectiv-demo).
+#### Key features
 
+* [Event & context classes are predefined](https://objectiv.io/docs/taxonomy), designed to ensure the collected data 
+  covers a wide range of common analytics use cases. 
+* Instrumentation gets validated against the taxonomy to provide 
+  [live feedback in your IDE and console while you’re developing](https://objectiv.io/docs/tracking/core-concepts/validation).
+* Tracked events can carry multiple contexts, including the 
+  [exact location in the UI](https://objectiv.io/docs/tracking/core-concepts/locations) from where they were triggered.
+* Collected data is well-structured, self-descriptive and gets validated at the first step of the pipeline.
+* [Familiar Pandas-like dataframe operations can be used](https://objectiv.io/docs/modeling) on the full data set, straight from a notebook. 
+* Models can be built by taking parts of other models. Models can be reused for other projects by changing a 
+  single line of code.
 
-## Using Objectiv
-Starting to use Objectiv Analytics is not hard:
-1. Integrate the Objectiv-tracker into your app.
-2. Run an Objectiv Pipeline backend to receive and process the data.
+- - -
 
 ## Quick Start
-### Quick Start: Run Objectiv Pipeline Dockerized
-This is a great way to run Objectiv locally and to see what it is about. With some additional work this
-setup can also be used for low-traffic sites and apps. See also
-[Running the Objectiv Pipeline in Production](#running-the-objectiv-pipeline-in-production)
 
+### Play with Objectiv
+We’ve set up a [sandboxed notebook with real data from objectiv.io](https://notebook.objectiv.io/lab?path=product_analytics.ipynb) for you to 
+play with. Give it a try and see what Objectiv can do.
+
+### Running all Objectiv components Dockerized
+This is a great way to run Objectiv locally and to see what it is about. With some additional work this
+setup can also be used for low-traffic sites and apps.
 
 The below commands assume that you have `docker-compose` [installed](https://docs.docker.com/compose/install/).
 ```bash
@@ -36,133 +43,31 @@ This will spin up three images:
 * `objectiv_postgres` - Database to store data.
 * `objectiv_notebook` - Jupyter notebook that can be used to query the data (http://localhost:8888).
 
-SECURITY WARNING: The above docker-compose commands start a postgres container that allows connections
+SECURITY WARNING: The above `docker-compose` commands start a postgres container that allows connections
 without verifying passwords. Do not use this in production or on a shared system!
 
-### Quick Start: Integrate the Objectiv-Tracker in your app
-TODO
+### Instrumenting Objectiv
+To immediately jump into instrumenting your application, check out our detailed [How-to Guides](https://objectiv.io/docs/tracking/how-to-guides) for multiple 
+platforms and frameworks.
 
+- - -
 
+## Support & Troubleshooting
+If you need help using or installing Objectiv, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
 
-## Objectiv Architecture
-The following diagram shows in the Objectiv architecture in a nutshell. There are four main components:
-1. The Objectiv tracker. You'll need to integrate this into your project.
-   This is similar to e.g. a Google Analytics tracker.
-   The code for this can be found in the `tracker` directory. 
-   See [tracker/README.md](tracker/README.md) for more information
-2. The Objectiv collector. A python app, which can be found in the `backend` directory.
-   See [backend/README.md](backend/README.md) for more information
-3. The database is used to store raw data, as well as processed data. We use SQL-supporting database,
-   because SQL is a very powerful query standard, and databases nowadays can process huge amounts of data.
-   Currently we only support Postgres. In the future we'll also support popular hosted big-data solutions.
-4. The Objectiv models. TODO
+## Bug Reports & Feature Requests
+If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://www.objectiv.io/docs/the-project/contribute).
 
+## Security Disclosure
+Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](SECURITY.md) for details.
 
-```
-    |=[Your App]==============|
-    |                         |
-    |  [1. Objectiv Tracker]  |
-    |      ||                 |
-    |======||=================|
-           ||
-           ||
-    |======||=======[Objectiv Pipeline]====================================|
-    |      \/                                                              |
-    |  |===============================|                                   |
-    |  |      [2. Objectiv Collector]  |                                   |
-    |  |===============================|                                   |
-    |      ||                                                              |
-    |  |===||=================================|                            |
-    |  |   \/     [3. Database]               |                            |
-    |  |  ____________      _______________   |     ____________           |
-    |  |  |raw events|      |analysis data| ======> | Insights |           |
-    |  |  ------------      ---------------   |     ------------           |
-    |  |===||================/\==||===========|                            |
-    |      ||                ||  ||                                        |
-    |      \/                ||  \/                                        |
-    |  |===============================|                                   |
-    |  |      [4. Objectiv Models]     |                                   |
-    |  |===============================|                                   |
-    |======================================================================|
-```
-For more information on the Objectiv architecture see TODO.
+## Roadmap
+Future plans for Objectiv can be found on our [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2).
 
+## Contributing to Objectiv
+Thank you for considering to contribute to Objectiv! Please take a look at the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing) in our Docs. It contains information about our contribution process and where you can fit in.
 
-## Building Container Images
-Requirements:
-* make
-* docker
-```bash
-make all
-```
+## License
+This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](LICENSE.md) for details.
 
-By default all images will be tagged with `latest`.
-
-## Running Contain Images Locally
-By default the docker-compose file will try to get images from our container registry. By setting 
-`OBJECTIV_CONTAINER_URL` we can tell it to use local images.
-
-```console
-OBJECTIV_CONTAINER_URL=objectiv
-docker-compose up
-```
-
-## Running the Objectiv Pipeline in Production
-TODO
-This is quite straightforward. See TODO.
-
-
-
-## Tips 'n tricks
-Some useful tricks are here
-
-### What about PG configuration and permissions?
-As this is a demo environment, permissions are pretty simple; the credentials are set in 
-`docker/pg_env` and imported into the containers that need them.
-
-### Connecting to Notebook
-By default, you need a token to connect to the Jupyter Notebook. You can find it in
-the logs like so:
-```bash
-docker logs objectiv_notebook 2>&1|grep http.*token\=
-```
-
-### start part of the stack
-It's also possible to only start parts of the stack. For example, to only run the collector; run:
-
-```bash
-docker-compose up objectiv_collector
-```
-
-This will start the collector, and any dependencies it has (eg. postgres).
-
-### Query the DB
-To connect to the running DB, simply execute:
-```bash
-docker exec -ti objectiv_postgres psql -U objectiv
-```
-
-or by using a local client:
-```bash
-psql -U objectiv -h 127.0.0.1
-```
-
-### DB initialisation / persistence
-At the first start-up, postgres will be initialised. This means a db will be created. As 
-this is persisted on disk (in a docker volume), on subsequent startups, the persisted db 
-will be loaded. In case of DB changes, this may cause problems. use 
-
-```bash
-docker volume list
-``` 
-to check if there are any existing volumes on disk, and remove them before starting up 
-the stack with db changes, to make sure the DB is properly initialised. The volume used by
-PG is called pgdata. To remove it, lookup the name from the list and run:
-```bash
-docker volume rm <volumename>
-```
-
-This project is licensed under the terms of the MIT license.
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)
+Unless otherwise noted, all files © 2021 Objectiv B.V.

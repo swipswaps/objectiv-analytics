@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { Directive, ElementRef, Input } from '@angular/core';
 import {
   ChildrenTaggingQueries,
@@ -17,7 +21,7 @@ import {
   tagMediaPlayer,
   tagNavigation,
   tagOverlay,
-} from '@objectiv/tracker-browser';
+} from '@objectiv-analytics/tracker-browser';
 
 /**
  * Allows calling Browser Tracker Location Taggers and Children Taggers directly from templates

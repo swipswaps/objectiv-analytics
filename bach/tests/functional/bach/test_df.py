@@ -120,7 +120,7 @@ def test_boolean_indexing_same_node():
     )
 
 
-def test_get_df_materialized_model():
+def test_materialize():
     bt = get_bt_with_test_data()[['city', 'founding']]
     bt['city'] = bt['city'] + ' '
     bt['uuid'] = SeriesUuid.sql_gen_random_uuid(bt)
@@ -136,7 +136,7 @@ def test_get_df_materialized_model():
 
     assert_equals_data(bt, expected_columns=expected_columns, expected_data=expected_data)
 
-    bt_materialized = bt.get_df_materialized_model(node_name='node')
+    bt_materialized = bt.materialize(node_name='node')
     # The materialized DataFrame should result in the exact same data
     assert_equals_data(bt_materialized, expected_columns=expected_columns, expected_data=expected_data)
 
@@ -156,14 +156,14 @@ def test_get_df_materialized_model():
     assert previous_node_mat == bt.get_current_node('node')
 
 
-def test_get_df_materialized_model_with_non_aggregation_series():
+def test_materialize_with_non_aggregation_series():
     # A dataframe with a groupby set, but without all columns setup for aggregation should raise
     bt = get_bt_with_test_data()[['municipality', 'founding', 'inhabitants']]
     btg = bt.groupby('municipality')
     assert btg.group_by is not None
     with pytest.raises(ValueError, match="Series \\['_index_skating_order', 'inhabitants', 'founding'\\] "
                                          "need\\(s\\) to have an aggregation function set."):
-        btg.get_df_materialized_model()
+        btg.materialize()
 
     assert btg.base_node == bt.base_node
 
@@ -171,27 +171,27 @@ def test_get_df_materialized_model_with_non_aggregation_series():
     btg['founding'] = btg.founding.sum()
     with pytest.raises(ValueError, match="Series \\['_index_skating_order', 'inhabitants'\\] "
                                          "need\\(s\\) to have an aggregation function set"):
-        btg.get_df_materialized_model()
+        btg.materialize()
     assert btg.base_node == bt.base_node
 
     # Selecting the aggregated series in the df should work
     btg_founding_only = btg[['founding']]
-    btg_founding_only_materialized = btg_founding_only.get_df_materialized_model()
+    btg_founding_only_materialized = btg_founding_only.materialize()
     assert btg_founding_only_materialized.base_node != bt.base_node
 
     # As should getting the series only and converting it back to a frame
     btg_founding_only = btg['founding'].to_frame()
-    btg_founding_only_materialized = btg_founding_only.get_df_materialized_model()
+    btg_founding_only_materialized = btg_founding_only.materialize()
     assert btg_founding_only_materialized.base_node != bt.base_node
 
     # Fix the last one,
     btg['inhabitants'] = btg.inhabitants.sum()
     btg['_index_skating_order'] = btg._index_skating_order.sum()
-    bt_materialized = btg.get_df_materialized_model()
+    bt_materialized = btg.materialize()
     assert bt_materialized.base_node != btg.base_node
 
 
-def test_get_df_materialized_model_non_deterministic_expressions():
+def test_materialize_non_deterministic_expressions():
     bt = get_bt_with_test_data()[['city']]
     bt['uuid1'] = SeriesUuid.sql_gen_random_uuid(bt)
     # now bt['uuid1'] has not been evaluated, so copying the column should copy the unevaluated expression
@@ -204,7 +204,7 @@ def test_get_df_materialized_model_non_deterministic_expressions():
             [3, 'Drylts', ANY, ANY, False],
         ]
     assert_equals_data(bt, expected_columns=expected_columns, expected_data=expected_data)
-    bt = bt.get_df_materialized_model(node_name='node')
+    bt = bt.materialize(node_name='node')
     # Now bt['uuid1'] has been evaluated, so copying the column should copy the value not just the expression
     bt['uuid3'] = bt['uuid1']
     # Now a comparison should give True

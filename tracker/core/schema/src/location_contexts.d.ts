@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { AbstractSectionContext, AbstractItemContext, AbstractActionContext } from './abstracts';
 
 /**

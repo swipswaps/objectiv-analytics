@@ -1,4 +1,8 @@
-import { getLocationPath, TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { getLocationPath, TrackerConsole, TrackerElementLocations } from '@objectiv-analytics/tracker-core';
 import { BrowserTracker } from '../BrowserTracker';
 import { getElementLocationStack } from '../common/getElementLocationStack';
 import { isTaggedElement } from '../common/guards/isTaggedElement';

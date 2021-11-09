@@ -21,7 +21,7 @@ def test_column_names():
     ]
     assert_equals_data(bt, expected_columns=expected_columns, expected_data=expected_data)
     # Make sure that after materializing the columns are unchanged.
-    bt = bt.get_df_materialized_model()
+    bt = bt.materialize()
     assert_equals_data(bt, expected_columns=expected_columns, expected_data=expected_data)
 
 

@@ -10,7 +10,7 @@ import pandas
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 
-from bach.dataframe import ColumnFunction
+from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from sql_models.util import quote_identifier
@@ -297,7 +297,7 @@ class Series(ABC):
             # we should maybe create a subquery
             if self.base_node != other.base_node or self.group_by != other.group_by:
                 if other.expression.is_single_value:
-                    other = self._independent_subquery(other)
+                    other = self.as_independent_subquery(other)
                 else:
                     # TODO improve error
                     raise ValueError("rhs has a different base_node or group_by, but contains more than one "
@@ -377,7 +377,7 @@ class Series(ABC):
         )
 
     @staticmethod
-    def _independent_subquery(series, operation: str = None, dtype: str = None) -> 'Series':
+    def as_independent_subquery(series, operation: str = None, dtype: str = None) -> 'Series':
         """
         Get a series representing an independent subquery, created by materializing the series given
         and crafting a subquery expression from it, possibly adding the given operation.
@@ -385,7 +385,7 @@ class Series(ABC):
         :note: This will maintain Expression.is_single_value status
         """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
-        df = series.to_frame().get_df_materialized_model()
+        df = series.to_frame().materialize()
         fmt_string = f'{operation} (SELECT {{}} FROM {{}})' if operation else f'(SELECT {{}} FROM {{}})'
         expr = IndependentSubqueryExpression.construct(fmt_string,
                                                        Expression.column_reference(series.name),
@@ -399,18 +399,18 @@ class Series(ABC):
         return s
 
     def exists(self):
-        s = Series._independent_subquery(self, 'exists', dtype='bool')
+        s = Series.as_independent_subquery(self, 'exists', dtype='bool')
         return s.copy_override(expression=SingleValueExpression(s.expression))
 
     def any_value(self):
         # aka some()
-        return Series._independent_subquery(self, 'any')
+        return Series.as_independent_subquery(self, 'any')
 
     def all_values(self):
-        return Series._independent_subquery(self, 'all')
+        return Series.as_independent_subquery(self, 'all')
 
     def isin(self, other: 'Series'):
-        in_expr = Expression.construct('{} {}', self, Series._independent_subquery(other, 'in'))
+        in_expr = Expression.construct('{} {}', self, Series.as_independent_subquery(other, 'in'))
         return self.copy_override(expression=in_expr, dtype='boolean')
 
     def astype(self, dtype: Union[str, Type]) -> 'Series':
@@ -431,13 +431,8 @@ class Series(ABC):
         """
         if not isinstance(other, self.__class__) or not isinstance(self, other.__class__):
             return False
-
-        if list(self.index.keys()) != list(other.index.keys()):
-            return False
-        for key in self.index.keys():
-            if not self.index[key].equals(other.index[key]):
-                return False
         return (
+                dict_name_series_equals(self.index, other.index) and
                 self.engine == other.engine and
                 self.base_node == other.base_node and
                 self.name == other.name and
@@ -758,12 +753,12 @@ class Series(ABC):
 
         if self.expression.has_windowed_aggregate_function:
             raise ValueError(f'Cannot call an aggregation function on already windowed column '
-                             f'`{self.name}` Try calling get_df_materialized_model() on the DataFrame'
+                             f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
 
         if self.expression.has_aggregate_function:
             raise ValueError(f'Cannot call an aggregation function on already aggregated column '
-                             f'`{self.name}` Try calling get_df_materialized_model() on the DataFrame'
+                             f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
 
         if isinstance(expression, str):

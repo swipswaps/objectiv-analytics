@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackerConsole } from '../../src';
 
 export const mockConsole: TrackerConsole = {

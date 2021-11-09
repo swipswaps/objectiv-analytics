@@ -1,4 +1,8 @@
-import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv-analytics/tracker-core';
 import { WebDocumentContextPlugin } from '../src';
 import { mockConsole } from './mocks/MockConsole';
 

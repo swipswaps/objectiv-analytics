@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { StructError } from 'superstruct';
 import { parseTagChildren, stringifyTagChildren, tagChild, tagChildren, tagElement, TaggingAttribute } from '../src';
 

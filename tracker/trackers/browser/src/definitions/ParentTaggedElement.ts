@@ -1,6 +1,10 @@
-import { TagLocationAttributes } from './TagLocationAttributes';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TaggableElement } from './TaggableElement';
 import { TaggingAttribute } from './TaggingAttribute';
+import { TagLocationAttributes } from './TagLocationAttributes';
 
 /**
  * A ParentTaggedElement is a TaggedElement with the TaggingAttribute.parentElementId

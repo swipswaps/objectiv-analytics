@@ -1,4 +1,8 @@
-import { ApplicationContext } from '@objectiv/schema';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { ApplicationContext } from '@objectiv-analytics/schema';
 import { ContextsConfig } from './Context';
 import { makeApplicationContext } from './ContextFactories';
 import { TrackerConfig } from './Tracker';

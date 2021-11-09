@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import ExtendableError from 'es6-error';
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './TrackerConsole';

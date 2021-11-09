@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TagChildrenAttributes } from './TagChildrenAttributes';
 import { TaggableElement } from './TaggableElement';
 
