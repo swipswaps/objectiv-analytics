@@ -5,7 +5,7 @@ Bach is Objectiv's data modeling library. With Bach, you can compose models with
 Bach uses [`sql_models`](./sql_models/) under the hood, which makes it possible to easily build graphs of SQL models and generate SQL for the resulting composite `sql-models`. See [sql_models/README.md](./sql_models/README.md) for more information.
 
 ## Running Bach
-To run Bach, use the following command: TODO:MAKE THIS TRUE
+To run Bach, use the following command:
 ```bash
 pip install bach
 ```
@@ -38,6 +38,3 @@ If you want to contribute to Objectiv or use it as a base for custom development
 This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](../LICENSE.md) for details.
 
 Unless otherwise noted, all files © 2021 Objectiv B.V.
-
-## Badges
-TODO: ADD BADGES
