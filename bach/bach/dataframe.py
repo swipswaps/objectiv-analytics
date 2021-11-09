@@ -383,9 +383,10 @@ class DataFrame:
 
     def get_sample(self,
                    table_name: str,
-                   sample_percentage: int = 50,
-                   overwrite=False,
-                   seed=200) -> 'DataFrame':
+                   filter: 'SeriesBoolean' = None,
+                   sample_percentage: int = None,
+                   overwrite: bool = False,
+                   seed: int = 200) -> 'DataFrame':
         """
         Returns a DataFrame whose data is a sample of the current DataFrame object. For the
         sample Dataframe to be created, all data is queried once and a persistent table is created to
@@ -396,40 +397,50 @@ class DataFrame:
         This function writes to the database.
 
         :param: table_name: the name of the underlying sql table that stores the sampled data.
-        :param: sample_percentage: the approximate size of the sample.
+        :param: filter: a filter to apply to the dataframe before creating the sample. Will set the default
+            sample_percentage to None, and thus skip the bernoulli sample creation
+        :param: sample_percentage: the approximate size of the sample, between 0-100. Default 50 if left None
         :param: overwrite: if True, the sample data is written to table_name, even if that table already
             exists.
         :param: seed: seed number used to generate the sample.
         """
-        if self._group_by is not None:
+        if filter:
+            df = self[filter]
+        elif sample_percentage is None:
+            df = self
+            sample_percentage = 50
+
+        if df._group_by is not None:
             raise NotImplementedError('Dataframes that have an active grouping can currently not be sampled. '
                                       'Call df.materialize() first.')
 
-        if overwrite:
-            sql = f'DROP TABLE IF EXISTS {table_name}'
-            with self.engine.connect() as conn:
-                conn.execute(sql)
+        with df.engine.connect() as conn:
+            if overwrite:
+                conn.execute(f'DROP TABLE IF EXISTS {table_name}')
 
-        sql = f'''
-            create temporary table tmp_table_name on commit drop as
-            ({self.view_sql()});
-            create table {table_name} as
-            (select * from tmp_table_name
-            tablesample bernoulli({sample_percentage}) repeatable ({seed}))
-        '''
-        with self.engine.connect() as conn:
+            if sample_percentage:
+                sql = f'''
+                    create temporary table tmp_table_name on commit drop as
+                    ({df.view_sql()});
+                    create table {table_name} as
+                    (select * from tmp_table_name
+                    tablesample bernoulli({sample_percentage}) repeatable ({seed}))
+                '''
+            else:
+                sql = f'create table {table_name} as ({df.view_sql()})'
+
             conn.execute(sql)
 
         # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
         # in get_unsampled() by switching this new node for the old node again.
-        current_node = self.get_current_node(name='before_sampling')
+        current_node = df.get_current_node(name='before_sampling')
         new_base_node = SampleSqlModel(table_name=table_name, previous=current_node)
 
         return DataFrame.get_instance(
-            engine=self.engine,
+            engine=df.engine,
             base_node=new_base_node,
-            index_dtypes=self.index_dtypes,
-            dtypes=self.dtypes,
+            index_dtypes=df.index_dtypes,
+            dtypes=df.dtypes,
             group_by=None
         )
 
