@@ -3,7 +3,7 @@ from dash import dcc, html, callback_context
 from dash.dependencies import Input, Output, State
 
 
-def get_app(Dash, feature_frame):
+def get_app(Dash, feature_frame, url_base_pathname='/'):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
     event_dropdown_options = [{'label': i, 'value': i} for i in
@@ -13,7 +13,7 @@ def get_app(Dash, feature_frame):
     features = [key for key, value in feature_frame.dtypes.items() if value == 'objectiv_location_stack']
     stack_dropdown_options = [{'label': i, 'value': i} for i in features]
 
-    app = Dash(__name__, external_stylesheets=external_stylesheets)
+    app = Dash(__name__, external_stylesheets=external_stylesheets, url_base_pathname=url_base_pathname)
 
     styles = {
         'pre': {
