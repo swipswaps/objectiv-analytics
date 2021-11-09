@@ -47,10 +47,8 @@ SECURITY WARNING: The above `docker-compose` commands start a postgres container
 without verifying passwords. Do not use this in production or on a shared system!
 
 ### Instrumenting Objectiv
-To immediately jump into instrumenting your application, there are detailed How-to Guides for multiple 
+To immediately jump into instrumenting your application, check out our detailed [How-to Guides](https://objectiv.io/docs//tracking/how-to-guides) for multiple 
 platforms and frameworks.
-
-[Follow the step-by-step Tracking How-to Guides](https://objectiv.io/docs//tracking/how-to-guides)
 
 - - -
 
