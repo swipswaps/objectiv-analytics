@@ -4,7 +4,7 @@ This stack extends [Bach's](/bach/README.md) generic operations with operations 
 
 ## Usage
 
-For examples on how to use the extensions, check out the notebooks in [analysis/notebooks](../analysis/notebooks)
+For examples on how to use the extensions, check out the notebooks in [analysis/notebooks](../notebooks)
 
 
 ## Support & Troubleshooting
