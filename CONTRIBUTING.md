@@ -162,7 +162,7 @@ PG is called pgdata. To remove it, lookup the name from the list and run:
 docker volume rm <volumename>
 ```
 
-This project is licensed under the terms of the MIT license.
+This project is licensed under the terms of the Apahce 2.0 license.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: Apache 2.0]](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](CODE_OF_CONDUCT.md)
