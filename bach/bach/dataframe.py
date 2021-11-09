@@ -404,10 +404,15 @@ class DataFrame:
             exists.
         :param: seed: seed number used to generate the sample.
         """
+        original_node = self.get_current_node(name='before_sampling')
+        df = self
         if filter:
-            df = self[filter]
+            from bach.series import SeriesBoolean
+            if not isinstance(filter, SeriesBoolean):
+                raise TypeError('Filter parameter needs to be a SeriesBoolean instance.')
+            # Boolean argument implies return type of self[filter], help mypy a bit
+            df = cast('DataFrame', self[filter])
         elif sample_percentage is None:
-            df = self
             sample_percentage = 50
 
         if df._group_by is not None:
@@ -428,13 +433,11 @@ class DataFrame:
                 '''
             else:
                 sql = f'create table {table_name} as ({df.view_sql()})'
-
             conn.execute(sql)
 
         # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
         # in get_unsampled() by switching this new node for the old node again.
-        current_node = df.get_current_node(name='before_sampling')
-        new_base_node = SampleSqlModel(table_name=table_name, previous=current_node)
+        new_base_node = SampleSqlModel(table_name=table_name, previous=original_node)
 
         return DataFrame.get_instance(
             engine=df.engine,
