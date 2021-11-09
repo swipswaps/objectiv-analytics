@@ -16,7 +16,7 @@ static = 'static'
 module = 'modeling'
 
 docs_target = f'{docusaurus_dir}/{docs}/{module}'
-static_target = f'{docusaurus_dir}/{static}/{module}'
+static_target = f'{docusaurus_dir}/{static}/_{module}'
 
 # whitelist of pages to consider
 patterns = [
@@ -48,13 +48,15 @@ def toc_from_links(html_doc: ElementTree, element_xpath: str, node_xpath: str, l
                 simple_name = node.text
             else:
                 simple_name = f.get('title')
-
-            entries.append({
-                'value': simple_name,
-                'id': f.get('title') or f.get('id'),
-                'children': [],
-                'level': level
-            })
+            if simple_name is not None:
+                entries.append({
+                    'value': simple_name,
+                    'id': f.get('title') or f.get('id'),
+                    'children': [],
+                    'level': level
+                })
+            else:
+                print(f'ignoring: {simple_name}')
 
         return entries
     return []
@@ -99,10 +101,10 @@ for url in urls:
 
     title = path.basename(url).replace('.html', '')
 
-    if title == 'index':
-        target_file = f'{static_target}/introduction.html'
-    else:
-        target_file = f'{static_target}/{real_url}'
+    #if title == 'index':
+    #    target_file = f'{static_target}/introduction.html'
+    #else:
+    target_file = f'{static_target}/{real_url}'
         
     if path.exists(target_file):
         remove(target_file)
@@ -124,7 +126,7 @@ for url in urls:
     if modules:
         toc.append({
             'value': 'Modules',
-            'id': '',
+            'id': 'modules',
             'children': modules,
             'level': 2})
 
@@ -140,7 +142,7 @@ for url in urls:
                 c['children'].append(attr)
         toc.append({
             'value': 'Classes',
-            'id': '',
+            'id': 'classes',
             'children': classes,
             'level': 2})
 
@@ -149,7 +151,7 @@ for url in urls:
     if functions:
         toc.append({
             'value': 'Functions',
-            'id': '',
+            'id': 'functions',
             'children': functions,
             'level': 2})
 
@@ -161,7 +163,7 @@ for url in urls:
         sidebar_position = 1
         slug = f'/{module}'
         toc = []
-        url = 'introduction.html'
+        url = real_url
     else:
         sidebar_label = title
         sidebar_position = position
