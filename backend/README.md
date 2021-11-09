@@ -1,87 +1,38 @@
+# Objectiv Backend
 
-# Development
-## Setup
-```bash
-virtualenv venv
-source venv/bin/activate
-export PYTHONPATH=${PYTHONPATH}:.
-export FLASK_APP=objectiv_backend.app
-# the following command fails if the postgres lib development headers are not present
-# if so, then on ubuntu that can be fixed with: sudo apt-get install libpq-dev
-pip install --require-hashes -r requirements.txt
-pip install -r requirements-dev.txt
-```
+Running the backend will enable you to receive and process tracking data in your environment. It consists of three images:
 
-## Start DB
+* `objectiv_collector` - Endpoint that the Objectiv-tracker can send events to (http://localhost:5000).
+* `objectiv_postgres` - Database to store data.
+* `objectiv_notebook` - Jupyter notebook that can be used to query the data (http://localhost:8888).
+
+## Running the Backend Dockerized
+The below commands assume that you have `docker-compose` [installed](https://docs.docker.com/compose/install/).
 ```bash
-cd ..; docker-compose up --detach postgres
-cd backend; python objectiv_backend/tools/db_init/db_init.py
+docker-compose pull  # pull pre-built images from gcr
+docker-compose up    # spin up Objective pipeline
 ```
-SECURITY WARNING: The above docker-compose command starts a postgres container that allows connections
+SECURITY WARNING: The above docker-compose commands start a postgres container that allows connections
 without verifying passwords. Do not use this in production or on a shared system!
 
-## Make sure we have the base schema in place:
-```bash
-make base_schema
-```
-## Run Collector
-After setting up the python env, simply run:
-```bash
-flask run
-```
-Start worker that will process events that flask will add to the queue:
-```bash
-python objectiv_backend/workers/worker.py all --loop
-```
- 
-## Run validation on file with events:
-### Alternative 1: Python Validator
-```bash
-python objectiv_backend/schema/validate_events.py <path to json file with events>
-```
+For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs/the-project/tracking/collector.md).
 
-### Alternative 1: Use JSON Schema validator
-```bash
-# First generate a JSON schema from our event-schema
-python objectiv_backend/schema/generate_json_schema.py > test_schema.json
-# Validate a json5 file using the generate JSON schema.
-python -m jsonschema -i <path to json file with events> test_schema.json
-```
+## Support & Troubleshooting
+If you need help using or installing Objectiv, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
 
-## Run Tests and Checks
-```bash
-pytest tests
-mypy objectiv_backend
-```
+## Bug Reports & Feature Requests
+If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing.md).
 
-# Build
-## Build Container Image
-Only requires docker, no python.
-```
-make docker-image
-```
+## Security Disclosure
+Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](../SECURITY.md) for details.
 
-## Build Python Package
-Requires additional python packages installed: `build` and `virtualenv`
-```bash
-pip install -r build-requirements.txt
-```
+## Roadmap
+Future plans for Objectiv can be found on our [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2).
 
-Build python package:
-```bash
-make clean
-make python-package
-```
+## Custom Development & Contributing Code
+If you want to contribute to Objectiv or use it as a base for custom development, take a look at [CONTRIBUTING.md](CONTRIBUTING.md). It contains detailed development instructions and a link to information about our contribution process and where you can fit in.
 
+## License
+This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](../LICENSE.md) for details.
 
-# Allowed schema extensions
-TODO: update this, and move it to some docs specifically about the taxonomy
-* Events:
-    * adding new events
-    * adding parents to an existing event
-    * adding contexts to the requiresContext field of an existing event
-* Contexts:
-    * adding new contexts
-    * adding parents to an existing context
-    * adding properties to an existing context
-    * adding sub-properties to an existing context (e.g. a "minimum" field for an integer)
+Unless otherwise noted, all files © 2021 Objectiv B.V.
