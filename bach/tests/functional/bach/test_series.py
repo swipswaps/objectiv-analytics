@@ -43,6 +43,35 @@ def test_series__getitem__():
         non_existing_value_ref.value
 
 
+def test_positional_slicing():
+    bt = get_bt_with_test_data(full_data_set=True)['inhabitants']
+
+    class ReturnSlice:
+        def __getitem__(self, key):
+            return key
+    return_slice = ReturnSlice()
+
+    # negative slices are not supported, so we will not test those.
+    slice_list = [return_slice[:4],
+                  return_slice[4:],
+                  return_slice[4:7],
+                  return_slice[:],
+                  return_slice[4:5],
+                  return_slice[:1]
+                  ]
+    for s in slice_list:
+        bt_slice = bt[s]
+
+        # if the slice length == 1, all Series need to have a single value expression
+        assert (len('slice_me_now'.__getitem__(s)) == 1) == bt_slice.expression.is_single_value
+
+        assert_equals_data(
+            bt[s],
+            expected_columns=['_index_skating_order', 'inhabitants'],
+            expected_data=df_to_list(bt.to_pandas()[s])
+        )
+
+
 def test_series_value():
     bt = get_bt_with_test_data(full_data_set=False)
     assert bt.city[1] == 'Ljouwert'
@@ -170,6 +199,37 @@ def test_type_agnostic_aggregation_functions():
     )
 
     assert result_bt.dtypes == result_series_dtypes
+
+
+def test_unique():
+    bt = get_bt_with_test_data(full_data_set=True)
+
+    uq = bt.municipality.unique()
+    assert_equals_data(
+        uq,
+        expected_columns=['municipality', 'municipality_unique'],
+        expected_data=[
+            ['Noardeast-Fryslân', 'Noardeast-Fryslân'], ['Leeuwarden', 'Leeuwarden'],
+            ['Súdwest-Fryslân', 'Súdwest-Fryslân'], ['Harlingen', 'Harlingen'], ['Waadhoeke', 'Waadhoeke'],
+            ['De Friese Meren', 'De Friese Meren']
+        ]
+    )
+
+
+def test_unique_subquery():
+    bt = get_bt_with_test_data(full_data_set=True)
+
+    uq = bt.municipality.unique()[:2]
+    bt = bt[bt.municipality.isin(uq)]
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order', 'skating_order', 'city',
+                          'municipality', 'inhabitants', 'founding'],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285],
+            [11, 11, 'Dokkum', 'Noardeast-Fryslân', 12675, 1298]
+        ]
+    )
 
 
 def test_dataframe_agg_skipna_parameter():

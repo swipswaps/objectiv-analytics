@@ -147,8 +147,8 @@ class DataFrame:
 
         args = {
             'engine': engine if engine is not None else self.engine,
-            'base_node':  base_node if base_node is not None else self._base_node,
-            'index':  index if index is not None else self._index,
+            'base_node': base_node if base_node is not None else self._base_node,
+            'index': index if index is not None else self._index,
             'series': series if series is not None else self._data,
             'group_by': self._group_by if group_by is None else group_by[0],
             'order_by': order_by if order_by is not None else self._order_by
