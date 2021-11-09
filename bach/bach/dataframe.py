@@ -447,7 +447,7 @@ class DataFrame:
         """
         df = self
         if df._group_by:
-            df = self.materialize(node_name='get_unsampled')
+            df = df.materialize(node_name='get_unsampled')
 
         sampled_node_tuple = find_node(
             start_node=df.base_node,
