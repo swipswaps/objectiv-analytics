@@ -456,6 +456,8 @@ class Series(ABC):
         """
         frame = self.to_frame()
         if isinstance(key, slice):
+            if self.expression.is_single_value:
+                raise ValueError('Slicing on single value expressions is not supported.')
             return frame[key][self.name]
 
         if len(self.index) == 0:
