@@ -7,7 +7,7 @@ Bach uses [`sql_models`](./sql_models/) under the hood, which makes it possible 
 ## Running Bach
 To run Bach, use the following command:
 ```bash
-pip install bach
+pip install -e bach
 ```
 
 For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs).
