@@ -9,6 +9,9 @@ Run the following command in your notebook:
 pip install objectiv_bach
 ```
 
+For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs/modeling).
+
+
 ## Support & Troubleshooting
 If you need help using or installing Bach, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
 
