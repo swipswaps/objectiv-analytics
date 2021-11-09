@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bach import DataFrame, SeriesString
+from bach import DataFrame, SeriesString, SeriesInt64
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
     get_from_df
 
@@ -61,6 +61,8 @@ def test_positional_slicing():
                   ]
     for s in slice_list:
         bt_slice = bt[s]
+
+        assert isinstance(bt_slice, SeriesInt64)
 
         # if the slice length == 1, all Series need to have a single value expression
         assert (len('slice_me_now'.__getitem__(s)) == 1) == bt_slice.expression.is_single_value
