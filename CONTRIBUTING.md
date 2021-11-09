@@ -1,4 +1,8 @@
-# Objectiv Analytics
+# Objectiv Analytics - Development
+
+Here you'll find instructions for development on the Objectiv. If you want to contribute (Thank you!), please take a look at the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing) in our Docs. It contains information about our contribution process and where you can fit in.
+
+## Overview
 Objectiv Analytics enables you to track and collect events from your product and analyse the collected data
 with powerful models. The collected data follows a standardized taxonomy, which enable many advanced
 analysis out of the box. If needed, both the data taxonomy and the data models can be easily extended.
