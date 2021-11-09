@@ -1,2 +1,0 @@
-objectiv_bach
-tests_objectiv_bach
