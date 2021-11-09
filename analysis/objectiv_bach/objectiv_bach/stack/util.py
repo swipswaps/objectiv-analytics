@@ -9,7 +9,7 @@ from objectiv_bach.stack.sessionized_data import SessionizedData
 from sql_models.model import SqlModel
 
 
-def duplo_basic_features(session_gap_seconds=1800) -> SqlModel:
+def basic_feature_model(session_gap_seconds=1800) -> SqlModel:
     """ Give a linked BasicFeatures model"""
     hashed_features = HashedFeatures(extracted_contexts=ExtractedContexts())
     return BasicFeatures.build(

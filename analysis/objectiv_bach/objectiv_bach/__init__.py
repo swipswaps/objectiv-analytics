@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 __version__ = '0.0.1'
 
 from objectiv_bach.series import *
-from objectiv_bach.util import duplo_basic_features as basic_feature_model
+from objectiv_bach.stack.util import basic_feature_model
 from bach.types import _registry
 
 # automatically register our own types

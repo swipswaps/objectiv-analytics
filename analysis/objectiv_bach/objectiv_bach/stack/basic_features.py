@@ -1,10 +1,10 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from bach.sql_model import BachSqlModel
+from sql_models.model import SqlModelBuilder
 
 
-class BasicFeatures(BachSqlModel):
+class BasicFeatures(SqlModelBuilder):
 
     @property
     def sql(self):
