@@ -63,10 +63,6 @@ jobs:
         run: |
           cd analysis/objectiv_bach
           pycodestyle objectiv_bach
-      - name: Unit tests
-        run: |
-          cd analysis/objectiv_bach
-          pytest tests_objectiv_bach/unit/
       - name: Functional tests
         run: |
           cd analysis/objectiv_bach
