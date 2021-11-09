@@ -4,12 +4,7 @@ This stack extends [Bach's](/bach/README.md) generic operations with operations 
 
 ## Usage
 
-Run the following command in your notebook:
-```bash
-pip install objectiv_bach
-```
-
-For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs/modeling).
+For examples on how to use the extensions, check out the notebooks in [analysis/notebooks](../analysis/notebooks)
 
 
 ## Support & Troubleshooting
