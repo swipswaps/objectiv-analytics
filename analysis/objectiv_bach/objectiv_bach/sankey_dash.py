@@ -25,20 +25,29 @@ def get_app(Dash, feature_frame):
     def serve_layout():
         return html.Div([
             dcc.Store(id='node-clicks', data=[]),
+            dcc.Markdown(d("**Filter event types:**")),
             dcc.Dropdown(id='event', options=event_dropdown_options, value='all'),
+            dcc.Markdown(d("**Location stack column to visualize:**")),
             dcc.Dropdown(id='stack', options=stack_dropdown_options, value='location_stack'),
-            html.Label('Slice:'),
-            dcc.Input(id='start-at', type='number', min=0, step=1),
-            dcc.Input(id='end-at', type='number', step=1),
+            dcc.Markdown(d("""**Slice:**  
+            Slice through objects of the stack similar to regular python slicing""")),
+            '[', dcc.Input(id='start-at', type='number', min=0, step=1, placeholder='start'),
+            ':', dcc.Input(id='end-at', type='number', step=1, placeholder='stop'), ']',
             html.Br(),
+            dcc.Markdown(d("**Add feature to the Feature Frame:**")),
             dcc.Input(id='feature-name', type='text', placeholder='Feature name'),
-            html.Button('Create feature', id='create-feature', n_clicks=0),
+            html.Button('Add to Feature Frame', id='create-feature', n_clicks=0),
             html.Br(),
+            dcc.Markdown(d("""**Reset the clicked nodes:**  
+            This will return the graph to the original state of the selected location stack  
+            Note that the slice is not reset: slice values can separately be removed or adjusted.""")),
             html.Button('Reset feature rules', id='reset-feature-rules', n_clicks=0),
             dcc.Graph(id='top-graph'),
-            dcc.Markdown(d("**Feature rules**")),
+            dcc.Markdown(d("""**Feature rules**  
+            These are the rules that are applied to the location stack with the current visualization""")),
             html.Pre(id='feature-rules', style=styles['pre']),
-            dcc.Markdown(d("**Console**")),
+            dcc.Markdown(d("""**Console**  
+            Displays when features are created""")),
             html.Pre(id='console', style=styles['pre'])
         ])
 
