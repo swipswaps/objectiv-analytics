@@ -202,7 +202,7 @@ class FeatureFrame(DataFrame):
                                                                'feature_hash',
                                                                'event_count']]
         drop_table = ''
-        if overwrite == True:
+        if overwrite:
             drop_table = f'drop table if exists {temp_table_name};'
         sql = f'''
             {drop_table}
