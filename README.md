@@ -2,21 +2,21 @@
 
 ## Welcome to the official Objectiv documentation
 Objectiv is a data collection & modeling library that puts the data scientist first. It is built around 
-[the open taxonomy of analytics](taxonomy/overview.md), which is our proposal for a common way to collect, 
+[the open taxonomy of analytics](https://objectiv.io/docs/taxonomy), which is our proposal for a common way to collect, 
 structure and validate data. With Objectiv, you create a 
-[contextual layer for your application](tracking/core-concepts/tagging.md) by mapping it to the taxonomy, 
+[contextual layer for your application](https://objectiv.io/docs/tracking/core-concepts/tagging) by mapping it to the taxonomy, 
 with the goal of collecting better data and more effective modeling.
 
 #### Key features
 
-* [Event & context classes are predefined](taxonomy/overview.md), designed to ensure the collected data 
+* [Event & context classes are predefined](https://objectiv.io/docs/taxonomy/overview.md), designed to ensure the collected data 
   covers a wide range of common analytics use cases. 
 * Instrumentation gets validated against the taxonomy to provide 
-  [live feedback in your IDE and console while you’re developing](tracking/core-concepts/validation.md).
+  [live feedback in your IDE and console while you’re developing](https://objectiv.io/docs/tracking/core-concepts/validation).
 * Tracked events can carry multiple contexts, including the 
-  [exact location in the UI](taxonomy/abstract-contexts/overview.md) from where they were triggered.
+  [exact location in the UI](https://objectiv.io/docs/tracking/core-concepts/locations) from where they were triggered.
 * Collected data is well-structured, self-descriptive and gets validated at the first step of the pipeline.
-* Familiar Pandas-like dataframe operations can be used on the full data set, straight from a notebook. 
+* [Familiar Pandas-like dataframe operations can be used](https://objectiv.io/docs/modeling/introduction.md) on the full data set, straight from a notebook. 
 * Models can be built by taking parts of other models. Models can be reused for other projects by changing a 
   single line of code.
 
