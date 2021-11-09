@@ -9,8 +9,8 @@ class BasicFeatures(SqlModelBuilder):
     @property
     def sql(self):
         return '''
-SELECT 
-  data.*, 
+SELECT
+  data.*,
   bm.feature
 FROM {{sessionized_data}} as data
 JOIN {{feature_table}} bm USING (feature_hash)

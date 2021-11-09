@@ -21,7 +21,7 @@ import {
   tagMediaPlayer,
   tagNavigation,
   tagOverlay,
-} from '@objectiv/tracker-browser';
+} from '@objectiv-analytics/tracker-browser';
 
 /**
  * Allows calling Browser Tracker Location Taggers and Children Taggers directly from templates

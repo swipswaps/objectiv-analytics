@@ -20,7 +20,7 @@ import {
   SectionContext,
   SessionContext,
   WebDocumentContext,
-} from '@objectiv/schema';
+} from '@objectiv-analytics/schema';
 
 /** Creates instance of ActionContext
  * @param {Object} props - factory properties

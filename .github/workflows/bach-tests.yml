@@ -1,4 +1,4 @@
-name: "Bach tests: pytest mypy pycodestyle"
+name: "Bach Core tests: pytest mypy pycodestyle"
 
 on:
   push:
