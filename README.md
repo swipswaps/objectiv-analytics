@@ -9,14 +9,14 @@ with the goal of collecting better data and more effective modeling.
 
 #### Key features
 
-* [Event & context classes are predefined](https://objectiv.io/docs/taxonomy/overview.md), designed to ensure the collected data 
+* [Event & context classes are predefined](https://objectiv.io/docs/taxonomy), designed to ensure the collected data 
   covers a wide range of common analytics use cases. 
 * Instrumentation gets validated against the taxonomy to provide 
   [live feedback in your IDE and console while you’re developing](https://objectiv.io/docs/tracking/core-concepts/validation).
 * Tracked events can carry multiple contexts, including the 
   [exact location in the UI](https://objectiv.io/docs/tracking/core-concepts/locations) from where they were triggered.
 * Collected data is well-structured, self-descriptive and gets validated at the first step of the pipeline.
-* [Familiar Pandas-like dataframe operations can be used](https://objectiv.io/docs/modeling/introduction.md) on the full data set, straight from a notebook. 
+* [Familiar Pandas-like dataframe operations can be used](https://objectiv.io/docs/modeling) on the full data set, straight from a notebook. 
 * Models can be built by taking parts of other models. Models can be reused for other projects by changing a 
   single line of code.
 
@@ -49,4 +49,4 @@ without verifying passwords. Do not use this in production or on a shared system
 To immediately jump into instrumenting your application, there are detailed How-to Guides for multiple 
 platforms and frameworks.
 
-[Follow the step-by-step Tracking How-to Guides](/tracking/how-to-guides/overview.md)
+[Follow the step-by-step Tracking How-to Guides](https://objectiv.io/docs//tracking/how-to-guides/overview.md)
