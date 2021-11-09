@@ -140,8 +140,8 @@ class SeriesLocationStack(SeriesJsonb):
 
 class FeatureFrame(DataFrame):
     """
-    class that is based on Bach DataFrame. It shares basic functionality with Bach DataFrame, but it is
-    solely focussed on feature creation. It allows you to create features on a small dataset and write them
+    Class that is based on Bach DataFrame. It shares functionality with Bach DataFrame, but it is
+    focussed on feature creation. It allows you to create features on a small dataset and write them
     to the entire dataset when done.
     """
 
@@ -354,8 +354,6 @@ class FeatureFrame(DataFrame):
                       single_value=None,
                       **kwargs
                       ):
-        print('afadgfs')
-        print(kwargs)
         return super().copy_override(engine=engine,
                                      base_node=base_node,
                                      index=index,
