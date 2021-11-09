@@ -1,9 +1,10 @@
-name: "Bach Core tests: pytest mypy pycodestyle"
+name: "Objectiv Bach tests: pytest mypy pycodestyle"
 
 on:
   push:
     paths:
       - 'bach/**'
+      - 'analysis/objectiv_bach/**'
       # Also run if we update this file, or any other workflow
       - '.github/**'
 
@@ -47,25 +48,22 @@ jobs:
         with:
           # This path is specific to Ubuntu
           path: ~/.cache/pip
-          key: pip-${{ matrix.python-version }}-${{ hashFiles('bach/requirements.txt', 'bach/requirements-dev.txt') }}
+          key: pip-${{ matrix.python-version }}-${{ hashFiles('analysis/objectiv_bach/requirements.txt', 'analysis/objectiv_bach/requirements-dev.txt') }}
       - name: Install dependencies
         run: |
-          cd bach
           python -m pip install --upgrade pip
+          pip install -e bach/
+          cd analysis/objectiv_bach
           pip install -r requirements-dev.txt -r requirements.txt
       - name: Typecheck with mypy
         run: |
-          cd bach
-          mypy bach sql_models
+          cd analysis/objectiv_bach
+          mypy objectiv_bach
       - name: Stylecheck with pycodestyle
         run: |
-          cd bach
-          pycodestyle bach sql_models
-      - name: Unit tests
-        run: |
-          cd bach
-          pytest tests/unit/
+          cd analysis/objectiv_bach
+          pycodestyle objectiv_bach
       - name: Functional tests
         run: |
-          cd bach
-          pytest tests/functional/
+          cd analysis/objectiv_bach
+          pytest tests_objectiv_bach/functional/
