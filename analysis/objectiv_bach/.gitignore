@@ -1,6 +1,7 @@
 build/
 dist/
 bach.egg-info/
+objectiv_bach.egg-info/
 venv
 *.pyc
 __pycache__
