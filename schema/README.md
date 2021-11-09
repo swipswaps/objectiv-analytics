@@ -2,13 +2,15 @@
 
 The Open Taxonomy for Analytics is Objectiv’s proposal for a common way to collect, structure and validate data. It defines classes for each common event type and the contexts in which they can happen. It describes their properties, requirements and their relationships with other classes. 
 
-The Open Taxonomy for Analytics is captured in a schema that is loosely based on JSON-schema and uses JSON5 encoding to allow for multiline strings. The current version of the taxonomy is built for product analytics. We have plans to support other fields as well. Check out our [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2) for details.
+The current version of the taxonomy is built for product analytics. We have plans to support other fields as well. Check out our [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2) for details. 
 
 Objectiv uses the Open Taxonomy to:
 * Enable realtime validation of instrumentation and provide debugging feedback.
 * Structure and validate data collection at the first step of the pipeline.
 * Enable effective feature creation when building models.
 * Enable models and datasets to be reused with minimal effort.
+
+The Open Taxonomy for Analytics is captured in a schema that is loosely based on JSON-schema and uses JSON5 encoding to allow for multiline strings. 
 
 ## Using the Open Taxonomy
 Objectiv is built around the Open Taxonomy and the Tracker, Collector and Bach use it out of the box.
