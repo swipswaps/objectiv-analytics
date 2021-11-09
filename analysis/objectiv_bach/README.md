@@ -1,6 +1,6 @@
 # Objectiv Bach Extensions
 
-With these extensions, you can extend the available operations of Bach, Objectiv's data modeling library. For more information about Bach, check out the Bach [README](/bach/README.md) or the [Modeling section of Objectiv Docs](https://objectiv.io/docs/modeling).
+With these extensions, you can extend the available operations of Bach, Objectiv's data modeling library. For more information about Bach, check out the Bach [README](/bach/README.md) or the [Modeling section of Objectiv's Docs](https://objectiv.io/docs/modeling).
 
 ## Running Bach
 To run Bach, use the following command:
