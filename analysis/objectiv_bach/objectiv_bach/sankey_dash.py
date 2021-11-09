@@ -3,7 +3,7 @@ from dash import dcc, html, callback_context
 from dash.dependencies import Input, Output, State
 
 
-def get_app(Dash, feature_frame):
+def get_app(Dash, feature_frame, url_base_pathname='/'):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
     event_dropdown_options = [{'label': i, 'value': i} for i in
@@ -13,7 +13,7 @@ def get_app(Dash, feature_frame):
     features = [key for key, value in feature_frame.dtypes.items() if value == 'objectiv_location_stack']
     stack_dropdown_options = [{'label': i, 'value': i} for i in features]
 
-    app = Dash(__name__, external_stylesheets=external_stylesheets)
+    app = Dash(__name__, external_stylesheets=external_stylesheets, url_base_pathname=url_base_pathname)
 
     styles = {
         'pre': {
@@ -25,20 +25,33 @@ def get_app(Dash, feature_frame):
     def serve_layout():
         return html.Div([
             dcc.Store(id='node-clicks', data=[]),
+            dcc.Markdown(d("**Filter event types:**")),
             dcc.Dropdown(id='event', options=event_dropdown_options, value='all'),
+            dcc.Markdown(d("**Location stack column to visualize:**")),
             dcc.Dropdown(id='stack', options=stack_dropdown_options, value='location_stack'),
-            html.Label('Slice:'),
-            dcc.Input(id='start-at', type='number', min=0, step=1),
-            dcc.Input(id='end-at', type='number', step=1),
+            dcc.Markdown(d(
+                "**Slice:**  \n"
+                "Slice through objects of the stack similar to regular python slicing")),
+            '[', dcc.Input(id='start-at', type='number', min=0, step=1, placeholder='start'),
+            ':', dcc.Input(id='end-at', type='number', step=1, placeholder='stop'), ']',
             html.Br(),
+            dcc.Markdown(d("**Add feature to the Feature Frame:**")),
             dcc.Input(id='feature-name', type='text', placeholder='Feature name'),
-            html.Button('Create feature', id='create-feature', n_clicks=0),
+            html.Button('Add to Feature Frame', id='create-feature', n_clicks=0),
             html.Br(),
+            dcc.Markdown(d(
+                "**Reset the clicked nodes:**  \n"
+                "This will return the graph to the original state of the selected location stack  \n"
+                "Note that the slice is not reset: slice values can separately be removed or adjusted.")),
             html.Button('Reset feature rules', id='reset-feature-rules', n_clicks=0),
             dcc.Graph(id='top-graph'),
-            dcc.Markdown(d("**Feature rules**")),
+            dcc.Markdown(d(
+                "**Feature rules**  \n"
+                "These are the rules that are applied to the location stack with the current visualization")),
             html.Pre(id='feature-rules', style=styles['pre']),
-            dcc.Markdown(d("**Console**")),
+            dcc.Markdown(d(
+                "**Console**  \n"
+                "Displays when features are created")),
             html.Pre(id='console', style=styles['pre'])
         ])
 

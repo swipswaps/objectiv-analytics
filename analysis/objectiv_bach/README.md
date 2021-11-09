@@ -1,23 +1,12 @@
-# Objectiv Bach: Pandas-like DataFrames backed by SQL
+# Objectiv-specific Extensions for Bach
 
-Bach is Objectiv's data modeling library. With Bach, you can compose models with familiar Pandas-like dataframe operations in your notebook. It uses an SQL abstraction layer that enables models to run on the full dataset. It includes a set of operations that enable effective feature creation for datasets that embrace the [open taxonomy of analytics](/schema/README.md).
+This stack extends [Bach's](/bach/README.md) generic operations with operations that are specific to Objectiv. For more information about Bach, check out the Bach [README](/bach/README.md) or the [Modeling section of Objectiv's Docs](https://objectiv.io/docs/modeling).
 
-Bach uses [`sql_models`](./sql_models/) under the hood, which makes it possible to easily build graphs of SQL models and generate SQL for the resulting composite `sql-models`. See [sql_models/README.md](./sql_models/README.md) for more information.
+## Usage
 
-## Running Bach
-To run Bach, use the following command:
-```bash
-pip install bach
-```
+Instructions on using the extensions can be found in the [README.md](/analysis/README.md) of the analysis parent folder
+For examples on how to use the extensions, check out the notebooks in [analysis/notebooks](../notebooks)
 
-For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs).
-
-
-## See Also
-* [Pandas](https://github.com/pandas-dev/pandas): the inspiration for the API.
-   Pandas has excellent [documentation](https://pandas.pydata.org/docs/) for its API.
-* [SQL-models]((./sql_models/)): Sub-project that is used for generating the underlying sql-queries. Can be 
-  found in the [`sql_models`](./sql_models/) package
 
 ## Support & Troubleshooting
 If you need help using or installing Bach, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
