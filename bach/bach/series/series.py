@@ -10,7 +10,7 @@ import pandas
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 
-from bach.dataframe import ColumnFunction
+from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from sql_models.util import quote_identifier
@@ -431,13 +431,8 @@ class Series(ABC):
         """
         if not isinstance(other, self.__class__) or not isinstance(self, other.__class__):
             return False
-
-        if list(self.index.keys()) != list(other.index.keys()):
-            return False
-        for key in self.index.keys():
-            if not self.index[key].equals(other.index[key]):
-                return False
         return (
+                dict_name_series_equals(self.index, other.index) and
                 self.engine == other.engine and
                 self.base_node == other.base_node and
                 self.name == other.name and
