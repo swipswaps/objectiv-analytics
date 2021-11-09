@@ -49,4 +49,4 @@ without verifying passwords. Do not use this in production or on a shared system
 To immediately jump into instrumenting your application, there are detailed How-to Guides for multiple 
 platforms and frameworks.
 
-[Follow the step-by-step Tracking How-to Guides](https://objectiv.io/docs//tracking/how-to-guides/overview.md)
+[Follow the step-by-step Tracking How-to Guides](https://objectiv.io/docs//tracking/how-to-guides)
