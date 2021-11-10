@@ -10,6 +10,7 @@ export PYTHONPATH=.
 # This will fail if the postgres lib development headers are not present if so, then on Ubuntu that can
 # be fixed with: sudo apt-get install libpq-dev
 
+# install bach and objectiv_bach in edit mode, so local changes are immediately useable
 pip install -e ../bach/
 pip install -e objectiv_bach
 # needed for the product_analytics.ipynb notebook
