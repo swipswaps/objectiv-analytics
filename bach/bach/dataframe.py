@@ -432,7 +432,7 @@ class DataFrame:
                     tablesample bernoulli({sample_percentage}) repeatable ({seed}))
                 '''
             else:
-                sql = f'create table {table_name} as ({df.view_sql()})'
+                sql = f'create temporary table {table_name} as ({df.view_sql()})'
             conn.execute(sql)
 
         # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
