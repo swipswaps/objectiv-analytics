@@ -12,6 +12,7 @@ from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import replace_node_in_graph, find_node
 from sql_models.model import SqlModel
 from sql_models.sql_generator import to_sql
+from sql_models.util import quote_identifier
 
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
@@ -406,7 +407,7 @@ class DataFrame:
         """
         original_node = self.get_current_node(name='before_sampling')
         df = self
-        if filter:
+        if filter is not None:
             from bach.series import SeriesBoolean
             if not isinstance(filter, SeriesBoolean):
                 raise TypeError('Filter parameter needs to be a SeriesBoolean instance.')
@@ -427,12 +428,12 @@ class DataFrame:
                 sql = f'''
                     create temporary table tmp_table_name on commit drop as
                     ({df.view_sql()});
-                    create table {table_name} as
+                    create temporary table {quote_identifier(table_name)} as
                     (select * from tmp_table_name
                     tablesample bernoulli({sample_percentage}) repeatable ({seed}))
                 '''
             else:
-                sql = f'create temporary table {table_name} as ({df.view_sql()})'
+                sql = f'create temporary table {quote_identifier(table_name)} as ({df.view_sql()})'
             conn.execute(sql)
 
         # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
