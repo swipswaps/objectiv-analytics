@@ -453,6 +453,9 @@ class Series(ABC):
         """
         Get a single value from the series. This is not returning the value,
         use the .value accessor for that instead.
+
+        :note: When slicing, the caller is responsible for the order of the sliced Series as data returned
+            can be ordered non-deterministically.
         """
         frame = self.to_frame()
         if isinstance(key, slice):
