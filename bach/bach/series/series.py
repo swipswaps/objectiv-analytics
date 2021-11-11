@@ -27,21 +27,58 @@ WrappedWindow = Union['Window', 'DataFrame']
 
 class Series(ABC):
     """
-    Mostly immutable* class representing a column/expression in a query.
+    A typed representation of a single column of data.
 
-    A series is defined by an expression and a name, and it exists within the scope of the base_node.
-    Its index can be a simple (list of) Series in case of an already materialised base_node.
-    If group_by has been set, the index represents the future index of this Series and it has been
-    removed from the dataframe that was responsible for its aggregation.
-    The series is now part of the aggregation as defined by the GroupBy and base_node and
-    can only be evaluated as such.
+    It can be used as a separate object to just deal with a single list of values. There are many standard
+    operations on Series available to do operations like add or subtract, to create aggregations like
+    nunique() or count(), or to create new sub-Series, like unique().
 
-    * Mostly immutable: The attributes of this class are either immutable, or this class is guaranteed not
-        to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
-        and is shared with other Series and DataFrames that can change it's state.
+    Database access
+    ---------
+    The data of this Series is always held in the database and operations on the data are performed
+    by the database, not in local memory. Data will only be transferred to local memory when an
+    explicit call is made to one of the functions that transfers data:
+    * Series.head()
+    * Series.to_pandas()
+    * Any of the property accessors .values, .array and .value
 
+    Boolean Series
+    ---------
+    A special subclass: SeriesBoolean, can be used to filter DataFrames, and these Series are easily created
+    using comparison operations like equals (==), less-than (<), not(~) on two series:
+    boolean_series = a == b
+
+    More complex boolean operations like `a.isin(b)` are also supported, as well as multi-compares:
+    `a > b.any_value()` being True when there is a value in `b` where `a > b == True`
+
+    Types
+    ---------
+    Series have a specific type that determines what kind of operations are available. All numeric series
+    support artithmetic operations and aggregations for example. It may or may not be possible to perform
+    operations on different types. A comparison or arithmetic operation between a Int64 and Float Series
+    is okay, while a comparison operation is not.
+
+    The type of a Series can generally be changed by called series.astype('new_type').
+
+
+    Usage
+    ---------
+    It should generally not be required to construct Series instances manually. DataFrame will create them
+    for you when required.
     """
 
+    # A series is defined by an expression and a name, and it exists within the scope of the base_node.
+    # Its index can be a simple (list of) Series in case of an already materialised base_node.
+    # If group_by has been set, the index represents the future index of this Series and it has been
+    # removed from the dataframe that was responsible for its aggregation.
+    # The series is now part of the aggregation as defined by the GroupBy and base_node and
+    # can only be evaluated as such.
+    #
+    # * Mostly immutable: The attributes of this class are either immutable, or this class is guaranteed not
+    #     to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
+    #     and is shared with other Series and DataFrames that can change it's state.
+
+    # TODO hide the constructor, it's internal
     def __init__(self,
                  engine,
                  base_node: SqlModel,
@@ -66,13 +103,6 @@ class Series(ABC):
         To create a new Series object from scratch there are class helper methods
         from_const(), get_class_instance().
         It is very common to clone a Series with little changes. Use copy_override() for that.
-
-        The data of this Series is always held in the database and operations on the data are performed
-        by the database, not in local memory. Data will only be transferred to local memory when an
-        explicit call is made to one of the functions that transfers data:
-        * head()
-        * to_pandas()
-        * The property accessors .values, .array and .value
 
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain the columns/expressions that
@@ -956,7 +986,7 @@ class Series(ABC):
 
     def window_nth_value(self, window: WrappedWindow, n: int):
         """
-        Returns value evaluated at the row that is the n'th row of the window frame
+        Returns value evaluated at the row that is the n'th row of the window frame.
         (counting from 1); returns NULL if there is no such row.
         """
         window = self._check_window(window)
