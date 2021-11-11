@@ -60,7 +60,7 @@ def test_positional_slicing():
                   return_slice[:1]
                   ]
     for s in slice_list:
-        bt_slice = bt[s]
+        bt_slice = bt.sort_values()[s]
 
         assert isinstance(bt_slice, SeriesInt64)
 
@@ -230,15 +230,15 @@ def test_unique():
 def test_unique_subquery():
     bt = get_bt_with_test_data(full_data_set=True)
 
-    uq = bt.municipality.unique()[:2]
+    uq = bt.municipality.unique().sort_values()[:2]
     bt = bt[bt.municipality.isin(uq)]
     assert_equals_data(
         bt,
         expected_columns=['_index_skating_order', 'skating_order', 'city',
                           'municipality', 'inhabitants', 'founding'],
         expected_data=[
-            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285],
-            [11, 11, 'Dokkum', 'Noardeast-Fryslân', 12675, 1298]
+            [4, 4, 'Sleat', 'De Friese Meren', 700, 1426],
+            [9, 9, 'Harns', 'Harlingen', 14740, 1234]
         ]
     )
 
