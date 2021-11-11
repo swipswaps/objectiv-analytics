@@ -286,7 +286,6 @@ class DataFrame:
         index_dtypes = {k: dtypes[k] for k in index}
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
 
-        # Should this also use _df_or_series?
         return cls.get_instance(
             engine=engine,
             base_node=model,
