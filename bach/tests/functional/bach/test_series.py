@@ -4,7 +4,6 @@ Copyright 2021 Objectiv B.V.
 import numpy as np
 import pandas as pd
 import pytest
-from psycopg2._range import NumericRange
 
 from bach import DataFrame, SeriesString, SeriesInt64
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
@@ -287,18 +286,14 @@ def test_value_counts_bins():
     # inh_single = bt.inhabitants[:1]
     # vc_single = inh_single.value_counts(bins=3)
     # assert vc_single.expression.is_single_value == inh_single.expression.is_single_value == True
-    pd_inh = bt.to_pandas().inhabitants
-    pd_vc = bt.to_pandas().inhabitants.value_counts(bins=11)
 
     result_bt = vc.to_frame()
     result_bt['frequency'] = vcn
     assert_equals_data(
         result_bt,
-        expected_columns=['bin', 'value_counts', 'frequency'],
+        expected_columns=['inhabitants', 'value_counts', 'frequency'],
         expected_data=[
-            [NumericRange(93485, 93486, '[)'), 1, 0.09090909090909091],
-            [NumericRange(33520, 33521, '[)'), 1, 0.09090909090909091],
-            [NumericRange(700, 14741, '[)'), 9, 0.8181818181818182]
+            [3, 3, 0.2727272727272727], [2, 4, 0.36363636363636365], [1, 4, 0.36363636363636365]
         ]
     )
 
