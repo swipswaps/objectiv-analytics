@@ -21,13 +21,13 @@ if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
     from bach.series import SeriesBoolean
 
-#TODO exclude from docs
-WrappedPartition = Union['GroupBy', 'DataFrame']
-#TODO exclude from docs
-WrappedWindow = Union['Window', 'DataFrame']
+
+WrappedPartition = Union['GroupBy', 'DataFrame']  #: :meta hide-value:
+WrappedWindow = Union['Window', 'DataFrame']  #: :meta hide-value:
 
 
 class Series(ABC):
+    # TODO hide the constructor signature, it's internal
     """
     A typed representation of a single column of data.
 
@@ -36,12 +36,15 @@ class Series(ABC):
     nunique() or count(), or to create new sub-Series, like unique().
 
     Usage
-    ---------
+    -----
+    Almost every operation on a Series will return a Series with the operation set-up, allowing for complex
+    combinations of operations.
+
     It should generally not be required to construct Series instances manually. DataFrame will create them
     for you when required.
 
     Slicing and index access
-    ---------
+    ------------------------
     Series support a few standard operations to get specific values:
     series[:3] will return the first 3 values of the Series. Sort order of the series is important, so use
     sort_values() before slicing. Any slice with positive parameters is supported.
@@ -50,7 +53,7 @@ class Series(ABC):
     matches 'key'.
 
     Database access
-    ---------
+    ---------------
     The data of this Series is always held in the database and operations on the data are performed
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
@@ -62,7 +65,7 @@ class Series(ABC):
     generate them, as this will create more flexible code.
 
     Boolean Operations
-    ---------
+    ------------------
     A special subclass: SeriesBoolean, can be used to filter DataFrames, and these Series are easily created
     using comparison operations like equals (==), less-than (<), not(~) on two series:
     boolean_series = a == b
@@ -73,14 +76,14 @@ class Series(ABC):
     See SeriesBoolean for more info on the operation and syntax.
 
     Aggregations
-    ---------
+    ------------
     All Series support type-agnostic aggregations: count(), min(), max(), median(), mode() and nunique()
 
     When a Series has aggregation setup (inherited from the Dataframe it's part of, or passed as an argument
     to the aggregation function), it will use that aggregation instead of an aggregation over the full Series.
 
     Window Functions
-    ---------
+    ----------------
     All aggregation can also be used with a window[Dataframe.Window]. A window defines the subset of data on
     which the aggregation takes place. Unlike an aggregation, a window function returns a value for every row
     in the data set.
@@ -88,7 +91,7 @@ class Series(ABC):
     previous row (using Series.window_lag()). All of these functions are in the Series.window_* namespace.
 
     Types
-    ---------
+    -----
     Series have a specific type that determines what kind of operations are available. All numeric series
     support arithmetic operations and aggregations for example. It may or may not be possible to perform
     operations on different types. A comparison or arithmetic operation between a Int64 and Float Series
@@ -98,17 +101,16 @@ class Series(ABC):
     """
 
     # A series is defined by an expression and a name, and it exists within the scope of the base_node.
-    # Its index can be a simple (list of) Series in case of an already materialised base_node.
-    # If group_by has been set, the index represents the future index of this Series and it has been
-    # removed from the dataframe that was responsible for its aggregation.
-    # The series is now part of the aggregation as defined by the GroupBy and base_node and
+    # Its index can be a simple (dict of) Series in case of an already materialised base_node.
+    # If group_by has been set, the index represents the future index of this Series. The series is now part
+    # of the aggregation as defined by the GroupBy and base_node and
     # can only be evaluated as such.
     #
-    # * Mostly immutable: The attributes of this class are either immutable, or this class is guaranteed not
-    #     to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
-    #     and is shared with other Series and DataFrames that can change it's state.
+    # * Mostly immutable *
+    # The attributes of this class are either immutable, or this class is guaranteed not
+    # to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
+    # and is shared with other Series and DataFrames that can change it's state.
 
-    # TODO hide the constructor, it's internal
     def __init__(self,
                  engine,
                  base_node: SqlModel,
@@ -144,6 +146,7 @@ class Series(ABC):
         :param expression: Expression that this Series represents
         :param group_by: The requested aggregation for this series.
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
+        :meta private:
         """
         self._engine = engine
         self._base_node = base_node
@@ -168,7 +171,6 @@ class Series(ABC):
 
     @property
     @classmethod
-    # TODO Hide from docs
     def dtype_aliases(cls) -> Tuple[Union[Type, str], ...]:
         """
         One or more aliases for the dtype.
@@ -177,15 +179,16 @@ class Series(ABC):
         certain type: `x.astype('boolean')` is the same as `x.astype('bool')`.
 
         Subclasses can override this value to indicate what strings they consider aliases for their dtype.
+        :meta private:
         """
         return tuple()
 
     @property
-    # TODO Hide from docs
     def dtype_to_pandas(self) -> Optional[str]:
         """
         The dtype of this Series in a pandas.Series. Defaults to None
         Override to cast specifically, and set to None to let pandas choose.
+        :meta private:
         """
         return None
 
@@ -442,7 +445,7 @@ class Series(ABC):
             return self
         return self.copy_override(sorted_ascending=ascending)
 
-    #TODO hide from docs
+    # TODO hide from docs
     def view_sql(self):
         return self.to_frame().view_sql()
 
@@ -584,7 +587,7 @@ class Series(ABC):
         :note:  Only NULL values in the Series in the underlying sql table will return True. np.nan is not
                 checked for.
         See Also
-        ---------
+        --------
         Series.notnull  Evaluate for every row in this series whether the value is not missing or NULL.
         """
         expression_str = f'{{}} is null'
@@ -601,7 +604,7 @@ class Series(ABC):
         :note:  Only NULL values in the Series in the underlying sql table will return True. np.nan is not
                 checked for.
         See Also
-        ---------
+        --------
         Series.isnull  Evaluate for every row in this series whether the value is missing or NULL.
         """
         expression_str = f'{{}} is not null'
@@ -750,14 +753,15 @@ class Series(ABC):
 
     def apply_func(self, func: ColumnFunction, *args, **kwargs) -> List['Series']:
         """
-        Apply the given func to this Series. If multiple are given, multiple new series will
-        be returned.
+        Apply the given functions to this Series.
+        If multiple are given, a list of multiple new series will be returned.
+
         :param func: the function to look for on all series, either as a str, or callable,
-            or a list of such
+        or a list of such
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
-        :returns: List of Series with the func applied
         :note: you should probably not use this method directly.
+        :meta private:
         """
         if isinstance(func, str) or callable(func):
             func = [func]
@@ -1039,7 +1043,7 @@ class Series(ABC):
         Both offset and default are evaluated with respect to the current row.
         :param offset: The amount of rows to look back, default 1
         :param default: The value to return if no value is available, can be a constant value or Series.
-            Defaults to None
+        Defaults to None
         """
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
@@ -1057,7 +1061,7 @@ class Series(ABC):
         Both offset and default are evaluated with respect to the current row.
         :param offset: The amount of rows to look forward, default 1
         :param default: The value to return if no value is available, can be a constant value or Series.
-            Defaults to None
+        Defaults to None
         """
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
@@ -1098,7 +1102,7 @@ class Series(ABC):
         )
 
 
-#TODO remove from docs.
+# TODO remove from docs.
 def const_to_series(base: Union[Series, DataFrame],
                     value: Union[Series, int, float, str, UUID],
                     name: str = None) -> Series:

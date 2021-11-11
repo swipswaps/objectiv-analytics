@@ -16,8 +16,13 @@ if TYPE_CHECKING:
 
 
 class SeriesAbstractDateTime(Series, ABC):
-    """ Class all date/time/interval handling classes derive from to share common stuff """
+    """
+    Base class that defines operations on date/time related types: Date, Time, DateTime/Timestamp
 
+    Date/Time formatting
+    --------------------
+    All Series types support formatting through series.format()[SeriesAbstractDateTime.format]
+    """
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
@@ -27,7 +32,7 @@ class SeriesAbstractDateTime(Series, ABC):
         Allow standard PG formatting of this Series (to a string type)
 
         :param format_str: Format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
-        :return: a derived Series that accepts and returns formatted timestamp strings
+        :return: a derived SeriesString that accepts returns formatted timestamp strings
         """
         expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
         return self.copy_override(dtype='string', expression=expression)
@@ -221,6 +226,9 @@ class SeriesTimedelta(SeriesAbstractDateTime):
 
     def sum(self, partition: WrappedPartition = None,
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':
+        """
+        :meta private:
+        """
         result = self._derived_agg_func(
             partition=partition,
             expression='sum',
@@ -230,6 +238,9 @@ class SeriesTimedelta(SeriesAbstractDateTime):
         return cast('SeriesTimedelta', result)
 
     def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'SeriesTimedelta':
+        """
+        :meta private:
+        """
         result = self._derived_agg_func(
             partition=partition,
             expression='avg',
