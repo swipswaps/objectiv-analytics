@@ -889,19 +889,44 @@ class Series(ABC):
         from bach.partitioning import GroupBy, Window
         if partition:
             raise ValueError('Can not use group_by in combination with value_counts(). Materialize() first.')
-        if bins:
-            value_counts = self.window_ntile(
-                Window([], order_by=[SortColumn(self.expression, ascending)]), num_buckets=bins)
-            value_counts = value_counts.to_frame().materialize(node_name='count_values_bin')[self.name]
-        else:
-            value_counts = self
 
-        value_counts = value_counts.copy_override(name='value_counts').count(partition=GroupBy([self]),
-                                                                             skipna=skipna)
+        if bins or normalize:
+            totals = self.agg(['count', 'min', 'max'], GroupBy([]), skipna=skipna)
+
+        if bins:
+            from bach import SeriesAbstractNumeric
+            if not isinstance(self, SeriesAbstractNumeric):
+                raise ValueError("Only numeric series supported in value_counts()")
+
+            bins_frame = self.to_frame()
+            bins_frame['bin'] = self.copy_override(
+                name='bin',
+                expression=Expression.construct(f'width_bucket({{}}, {{}}, {{}}, {bins})',
+                                                self,
+                                                Series.as_independent_subquery(totals[self.name + '_min']),
+                                                Series.as_independent_subquery(totals[self.name + '_max'])
+                                                )
+            )
+            def range(series, partition):
+                return series._derived_agg_func(
+                    partition=partition,
+                    expression=AggregateFunctionExpression.construct("int8range(min({}), max({}), '[]')",
+                                                                     series, series),
+                    dtype='string'
+                )
+
+            bins_frame = bins_frame.groupby(['bin']).agg(['count', range]).materialize(node_name='bins_frame')
+            value_counts = bins_frame[self.name+'_count'].copy_override(
+                name='value_counts',
+                index={'bin': bins_frame[self.name+'_range'].copy_override(name='bin', index={})}
+            )
+        else:
+            value_counts = self.copy_override(name='value_counts')\
+                .count(partition=GroupBy([self]), skipna=skipna)
         if sort:
             value_counts = value_counts.sort_values(ascending)
         if normalize:
-            value_counts = value_counts / self.count(partition=GroupBy([]), skipna=skipna)
+            value_counts = value_counts / totals[self.name + '_count']
             value_counts = value_counts.copy_override(name='frequency')
         return value_counts
 
