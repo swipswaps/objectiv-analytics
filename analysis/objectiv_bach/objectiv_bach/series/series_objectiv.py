@@ -5,6 +5,7 @@ from bach.series import SeriesJsonb, SeriesString
 from bach.expression import Expression, quote_string, quote_identifier
 from bach.sql_model import BachSqlModel
 from bach import DataFrame
+from bach.types import register_dtype
 
 
 class ObjectivStack(SeriesJsonb.Json):
@@ -21,6 +22,7 @@ class ObjectivStack(SeriesJsonb.Json):
         return self._series_object.copy_override(dtype=dtype, expression=expression)
 
 
+@register_dtype(value_types=[], override_registered_types=True)
 class SeriesGlobalContexts(SeriesJsonb):
     """
     Objectiv Global Contexts series. This series type contains functionality specific to the Objectiv Global
@@ -59,6 +61,7 @@ class SeriesGlobalContexts(SeriesJsonb):
         return self.GlobalContexts(self)
 
 
+@register_dtype([], override_registered_types=True)
 class SeriesLocationStack(SeriesJsonb):
     """
     Objectiv Location Stack series. This series type contains functionality specific to the Objectiv Location
