@@ -62,19 +62,15 @@ def test_format_injection_merge():
 def test_percentage_injection():
     # We use(d) format() in multiple places, this test is to prevent regressions in correct escaping
     bt = get_bt_with_test_data()[['city']]
-    bt['city'] = bt['city'] + ' %test %'
-    import pandas
-    pdf_expected = pandas.DataFrame({'_index_skating_order': [1, 2, 3], 'city': ['Ljouwert %test %', 'Snits %test %', 'Drylts %test %']})
-    pdf_expected = pdf_expected.set_index('_index_skating_order')
-    pdf = bt.to_pandas()
-    assert pdf_expected.equals(pdf)
+    bt['city'] = bt['city'] + ' %test %  ?'
+    print(bt.engine)
     assert_equals_data(
         bt,
         expected_columns=['_index_skating_order', 'city'],
         expected_data=[
-            [1, 'Ljouwert %test %'],
-            [2, 'Snits %test %'],
-            [3, 'Drylts %test %']
+            [1, 'Ljouwert %test %  ?'],
+            [2, 'Snits %test %  ?'],
+            [3, 'Drylts %test %  ?']
         ],
         use_to_pandas=True  # Make sure to use the most important code path
     )
