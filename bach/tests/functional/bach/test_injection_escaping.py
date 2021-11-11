@@ -20,7 +20,8 @@ def test_format_injection_simple():
             [1, 'Ljouwert {{test}}'],
             [2, 'Snits {{test}}'],
             [3, 'Drylts {{test}}']
-        ]
+        ],
+        use_to_pandas=True  # Make sure to use the most important code path
     )
 
 
@@ -34,7 +35,8 @@ def test_format_injection_more():
             [1, 'Ljouwert {test} {{test2}} {{{test3}}} {{}{}'],
             [2, 'Snits {test} {{test2}} {{{test3}}} {{}{}'],
             [3, 'Drylts {test} {{test2}} {{{test3}}} {{}{}']
-        ]
+        ],
+        use_to_pandas=True  # Make sure to use the most important code path
     )
 
 
@@ -52,7 +54,8 @@ def test_format_injection_merge():
             [1, 'Ljouwert {{test}}', 'Ljouwert {test} {{test2}} {{{test3}}} {{}{}'],
             [2, 'Snits {{test}}', 'Snits {test} {{test2}} {{{test3}}} {{}{}'],
             [3, 'Drylts {{test}}', 'Drylts {test} {{test2}} {{{test3}}} {{}{}']
-        ]
+        ],
+        use_to_pandas=True  # Make sure to use the most important code path
     )
 
 
@@ -72,5 +75,6 @@ def test_percentage_injection():
             [1, 'Ljouwert %test %'],
             [2, 'Snits %test %'],
             [3, 'Drylts %test %']
-        ]
+        ],
+        use_to_pandas=True  # Make sure to use the most important code path
     )

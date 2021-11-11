@@ -197,6 +197,8 @@ def get_bt_with_json_data_real() -> DataFrame:
 
 
 def run_query(engine: sqlalchemy.engine, sql: str) -> ResultProxy:
+    # escape sql, as conn.execute will think that '%' indicates a parameter
+    sql = sql.replace('%', '%%')
     with engine.connect() as conn:
         res = conn.execute(sql)
         return res
@@ -211,11 +213,15 @@ def assert_equals_data(
         bt: Union[DataFrame, Series],
         expected_columns: List[str],
         expected_data: List[list],
-        order_by: Union[str, List[str]] = None
-):
+        order_by: Union[str, List[str]] = None,
+        use_to_pandas: bool = False,
+) -> List[List[Any]]:
     """
-    Execute sql of ButTuhDataFrame/Series, with the given order_by, and make sure the result matches
-    the expected columns and data.
+    Execute the sql of ButTuhDataFrame/Series's view_sql(), with the given order_by, and make sure the
+    result matches the expected columns and data.
+
+    Note: By default this does not call `to_pandas()`, which we nowadays consider our 'normal' path,
+    but directly executes the result from `view_sql()`. To test `to_pandas()` set use_to_pandas=True.
     :return: the values queried from the database
     """
     if len(expected_data) == 0:
@@ -228,7 +234,31 @@ def assert_equals_data(
     if order_by:
         bt = bt.sort_values(order_by)
 
-    pdf = bt.to_pandas()
+    if not use_to_pandas:
+        column_names, db_values = _get_view_sql_data(bt)
+    else:
+        column_names, db_values = _get_to_pandas_data(bt)
+
+    assert len(db_values) == len(expected_data)
+    assert column_names == expected_columns
+    for i, df_row in enumerate(db_values):
+        expected_row = expected_data[i]
+        assert df_row == expected_row, f'row {i} is not equal: {expected_row} != {df_row}'
+    return db_values
+
+
+def _get_view_sql_data(df: DataFrame):
+    sql = df.view_sql()
+    db_rows = run_query(df.engine, sql)
+    column_names = list(db_rows.keys())
+    db_values = [list(row) for row in db_rows]
+    print(db_values)
+    return column_names, db_values
+
+
+def _get_to_pandas_data(df: DataFrame):
+    pdf = df.to_pandas()
+    # Convert pdf to the same format as _get_view_sql_data gives
     column_names = list(pdf.index.names) + list(pdf.columns)
     pdf.reset_index()
     db_values = []
@@ -239,13 +269,7 @@ def assert_equals_data(
             index_row = [index_row]
         db_values.append(index_row + value_row)
     print(db_values)
-
-    assert len(db_values) == len(expected_data)
-    assert column_names == expected_columns
-    for i, df_row in enumerate(db_values):
-        expected_row = expected_data[i]
-        assert df_row == expected_row, f'row {i} is not equal: {expected_row} != {df_row}'
-    return db_values
+    return column_names, db_values
 
 
 def assert_db_type(
