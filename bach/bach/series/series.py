@@ -21,7 +21,9 @@ if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
     from bach.series import SeriesBoolean
 
+#TODO exclude from docs
 WrappedPartition = Union['GroupBy', 'DataFrame']
+#TODO exclude from docs
 WrappedWindow = Union['Window', 'DataFrame']
 
 
@@ -33,6 +35,20 @@ class Series(ABC):
     operations on Series available to do operations like add or subtract, to create aggregations like
     nunique() or count(), or to create new sub-Series, like unique().
 
+    Usage
+    ---------
+    It should generally not be required to construct Series instances manually. DataFrame will create them
+    for you when required.
+
+    Slicing and index access
+    ---------
+    Series support a few standard operations to get specific values:
+    series[:3] will return the first 3 values of the Series. Sort order of the series is important, so use
+    sort_values() before slicing. Any slice with positive parameters is supported.
+
+    Index lookups like series['key'] are also possible, and yield the value of the series where the index
+    matches 'key'.
+
     Database access
     ---------
     The data of this Series is always held in the database and operations on the data are performed
@@ -42,7 +58,10 @@ class Series(ABC):
     * Series.to_pandas()
     * Any of the property accessors .values, .array and .value
 
-    Boolean Series
+    If you really need the actual values, use the above, but in general it's better to use the Series that
+    generate them, as this will create more flexible code.
+
+    Boolean Operations
     ---------
     A special subclass: SeriesBoolean, can be used to filter DataFrames, and these Series are easily created
     using comparison operations like equals (==), less-than (<), not(~) on two series:
@@ -51,20 +70,31 @@ class Series(ABC):
     More complex boolean operations like `a.isin(b)` are also supported, as well as multi-compares:
     `a > b.any_value()` being True when there is a value in `b` where `a > b == True`
 
+    See SeriesBoolean for more info on the operation and syntax.
+
+    Aggregations
+    ---------
+    All Series support type-agnostic aggregations: count(), min(), max(), median(), mode() and nunique()
+
+    When a Series has aggregation setup (inherited from the Dataframe it's part of, or passed as an argument
+    to the aggregation function), it will use that aggregation instead of an aggregation over the full Series.
+
+    Window Functions
+    ---------
+    All aggregation can also be used with a window[Dataframe.Window]. A window defines the subset of data on
+    which the aggregation takes place. Unlike an aggregation, a window function returns a value for every row
+    in the data set.
+    Next to aggregations, window functions can also be used to create special values, like the one from the
+    previous row (using Series.window_lag()). All of these functions are in the Series.window_* namespace.
+
     Types
     ---------
     Series have a specific type that determines what kind of operations are available. All numeric series
-    support artithmetic operations and aggregations for example. It may or may not be possible to perform
+    support arithmetic operations and aggregations for example. It may or may not be possible to perform
     operations on different types. A comparison or arithmetic operation between a Int64 and Float Series
     is okay, while a comparison operation is not.
 
     The type of a Series can generally be changed by called series.astype('new_type').
-
-
-    Usage
-    ---------
-    It should generally not be required to construct Series instances manually. DataFrame will create them
-    for you when required.
     """
 
     # A series is defined by an expression and a name, and it exists within the scope of the base_node.
@@ -128,7 +158,9 @@ class Series(ABC):
     @abstractmethod
     def dtype(cls) -> str:
         """
-        The dtype of this Series. The dtype is used to uniquely identify data of the type that is
+        The dtype of this Series.
+
+        The dtype is used to uniquely identify data of the type that is
         represented by this Series subclass. The dtype should be unique among all Series
         subclasses.
         """
@@ -136,6 +168,7 @@ class Series(ABC):
 
     @property
     @classmethod
+    # TODO Hide from docs
     def dtype_aliases(cls) -> Tuple[Union[Type, str], ...]:
         """
         One or more aliases for the dtype.
@@ -148,6 +181,7 @@ class Series(ABC):
         return tuple()
 
     @property
+    # TODO Hide from docs
     def dtype_to_pandas(self) -> Optional[str]:
         """
         The dtype of this Series in a pandas.Series. Defaults to None
@@ -157,6 +191,7 @@ class Series(ABC):
 
     @property
     @classmethod
+    # TODO Hide from docs
     def supported_db_dtype(cls) -> Optional[str]:
         """
         Database level data type, that can be expressed using this Series type.
@@ -170,6 +205,7 @@ class Series(ABC):
 
     @property
     @classmethod
+    # TODO Hide from docs
     def supported_value_types(cls) -> Tuple[Type, ...]:
         """
         List of python types that can be converted to database values using
@@ -182,6 +218,7 @@ class Series(ABC):
 
     @classmethod
     @abstractmethod
+    # TODO Hide from docs
     def supported_value_to_expression(cls, value: Any) -> Expression:
         """
         Give the expression for the given value. Consider calling the wrapper value_to_expression() instead.
@@ -200,6 +237,7 @@ class Series(ABC):
 
     @classmethod
     @abstractmethod
+    # TODO Hide from docs
     def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         """
         Give the sql expression to convert the given expression, of the given source dtype to the dtype of
@@ -209,10 +247,12 @@ class Series(ABC):
         raise NotImplementedError()
 
     @property
+    # TODO Hide from docs
     def engine(self):
         return self._engine
 
     @property
+    # TODO Hide from docs
     def base_node(self) -> SqlModel:
         return self._base_node
 
@@ -229,10 +269,12 @@ class Series(ABC):
         return copy(self._group_by)
 
     @property
+    # TODO Hide from docs
     def expression(self) -> Expression:
         return self._expression
 
     @classmethod
+    # TODO Hide from docs
     def get_class_instance(
             cls,
             base: DataFrameOrSeries,
@@ -253,6 +295,7 @@ class Series(ABC):
         )
 
     @classmethod
+    # TODO Hide from docs
     def value_to_expression(cls, value: Optional[Any]) -> Expression:
         """
         Give the expression for the given value.
@@ -277,6 +320,11 @@ class Series(ABC):
                    name: str) -> 'Series':
         """
         Create an instance of this class, that represents a column with the given value.
+        The returned Series will be similar to the Series given as base. In case a DataFrame is given,
+        it can be used immediately with that frame.
+        :param base:    The DataFrame or Series that the internal parameters are taken from
+        :param value:   The value that this constant Series will have
+        :param name:    The name that it will be known by (only for representation)
         """
         result = cls.get_class_instance(
             base=base,
@@ -286,6 +334,7 @@ class Series(ABC):
         )
         return result
 
+    # TODO hide in docs
     def copy_override(self,
                       dtype=None,
                       engine=None,
@@ -310,6 +359,7 @@ class Series(ABC):
             sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending
         )
 
+    # TODO hide in docs
     def get_column_expression(self, table_alias: str = None) -> Expression:
         expression = self.expression.resolve_column_references(table_alias)
         quoted_column_name = quote_identifier(self.name)
@@ -318,6 +368,7 @@ class Series(ABC):
 
         return Expression.construct('{} as {}', expression, Expression.raw(quoted_column_name))
 
+    # TODO hide in docs
     def _get_supported(self, operation_name: str, supported_dtypes: Tuple[str, ...], other: 'Series'):
         """
         Check whether `other` is supported for this operation, and if not, possibly do something
@@ -365,6 +416,8 @@ class Series(ABC):
         """
         Retrieve the actual single value of this series. If it's not sure that there is only one value,
         a ValueError is raised. In that case use Series.values[0] to retrieve the value.
+
+        :note: This function queries the database.
         """
         if not self.expression.is_single_value:
             raise ValueError('value accessor only supported for single value expressions. '
@@ -381,18 +434,24 @@ class Series(ABC):
 
     def sort_values(self, ascending=True):
         """
-        Returns a copy of this Series that is sorted by its values. Returns self if self is already sorted
-        in that way.
+        Sort this Series by its values.
+        Returns a new instance and does not actually modify the instance it is called on.
         :param ascending: Whether to sort ascending (True) or descending (False)
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
             return self
         return self.copy_override(sorted_ascending=ascending)
 
+    #TODO hide from docs
     def view_sql(self):
         return self.to_frame().view_sql()
 
     def to_frame(self) -> DataFrame:
+        """
+        Create a DataFrame with the index and data from this Series.
+
+        The DataFrame returned has the grouping and sorting also set like this Series had.
+        """
         if self._sorted_ascending is not None:
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
@@ -407,6 +466,7 @@ class Series(ABC):
         )
 
     @staticmethod
+    # TODO hide from docs
     def as_independent_subquery(series, operation: str = None, dtype: str = None) -> 'Series':
         """
         Get a series representing an independent subquery, created by materializing the series given
@@ -429,21 +489,44 @@ class Series(ABC):
         return s
 
     def exists(self):
+        """
+        Boolean operation that returns True if there are one or more values in this Series
+        """
         s = Series.as_independent_subquery(self, 'exists', dtype='bool')
         return s.copy_override(expression=SingleValueExpression(s.expression))
 
     def any_value(self):
-        # aka some()
+        """
+        For every row in this Series, do multiple evaluations where _any_ sub-evaluation should be True
+
+        Example: a > b.any() evaluates to True is a > b for any value of b.
+        """
         return Series.as_independent_subquery(self, 'any')
 
     def all_values(self):
+        """
+        For every row in this Series, do multiple evaluations where _all_ sub-evaluations should be True
+
+        Example: a > b.all() evaluates to True is a > b for all values of b.
+        """
         return Series.as_independent_subquery(self, 'all')
 
     def isin(self, other: 'Series'):
+        """
+        Evaluate for every row in this series whether the value is contained in other
+
+        Example: a.isin(b) evaluates to True for a specific row if a > b for all values of b.
+        """
         in_expr = Expression.construct('{} {}', self, Series.as_independent_subquery(other, 'in'))
         return self.copy_override(expression=in_expr, dtype='boolean')
 
     def astype(self, dtype: Union[str, Type]) -> 'Series':
+        """
+        Convert this Series to another type.
+
+        A Series will be returned with the correct type set, if the conversion is available. An appropriate
+        Exception will be raised if impossible to convert.
+        """
         if dtype == self.dtype or dtype in self.dtype_aliases:
             return self
         series_type = get_series_type_from_dtype(dtype)
@@ -452,6 +535,7 @@ class Series(ABC):
         new_dtype = cast(str, series_type.dtype)
         return self.copy_override(dtype=new_dtype, expression=expression)
 
+    # TODO hide from docs
     def equals(self, other: Any, recursion: str = None) -> bool:
         """
         Checks whether other is the same as self. This implements the check that would normally be
@@ -495,8 +579,13 @@ class Series(ABC):
 
     def isnull(self):
         """
-        Detect missing values. Only null values in the Series in the underlying sql table will return
-        True.
+        Evaluate for every row in this series whether the value is missing or NULL.
+
+        :note:  Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+                checked for.
+        See Also
+        ---------
+        Series.notnull  Evaluate for every row in this series whether the value is not missing or NULL.
         """
         expression_str = f'{{}} is null'
         expression = NonAtomicExpression.construct(
@@ -507,8 +596,13 @@ class Series(ABC):
 
     def notnull(self):
         """
-        Detect existing (non-missing) values. Any non-null value in the Series in the underlying sql
-        table will return True.
+        Evaluate for every row in this series whether the value is not missing or NULL.
+
+        :note:  Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+                checked for.
+        See Also
+        ---------
+        Series.isnull  Evaluate for every row in this series whether the value is missing or NULL.
         """
         expression_str = f'{{}} is not null'
         expression = NonAtomicExpression.construct(
@@ -520,7 +614,10 @@ class Series(ABC):
     def fillna(self, other):
         """
         Fill any NULL value with the given constant or other compatible Series
-        :param other: the value to replace the NULL values with. Should be a supported
+
+        In case a Series is given, the value from the same row is used to fill.
+
+        :param other: The value to replace the NULL values with. Should be a supported
             type by the series, or a TypeError is raised. Can also be another Series
         :note: Pandas replaces np.nan values, we can only replace NULL.
         :note: you can replace None with None, have fun, forever!
@@ -887,7 +984,7 @@ class Series(ABC):
 
     def window_row_number(self, window: WrappedWindow):
         """
-        Returns the number of the current row within its partition, counting from 1.
+        Returns the number of the current row within its window, counting from 1.
         """
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('row_number()'), 'int64')
@@ -936,12 +1033,13 @@ class Series(ABC):
 
     def window_lag(self, window: WrappedWindow, offset: int = 1, default: Any = None):
         """
-        Returns value evaluated at the row that is offset rows before the current row
-        within the partition; if there is no such row, instead returns default
-        (which must be of the same type as value).
+        Returns value evaluated at the row that is offset rows before the current row within the window
 
+        If there is no such row, instead returns default (which must be of the same type as value).
         Both offset and default are evaluated with respect to the current row.
-        If omitted, offset defaults to 1 and default to None
+        :param offset: The amount of rows to look back, default 1
+        :param default: The value to return if no value is available, can be a constant value or Series.
+            Defaults to None
         """
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
@@ -953,10 +1051,13 @@ class Series(ABC):
 
     def window_lead(self, window: WrappedWindow, offset: int = 1, default: Any = None):
         """
-        Returns value evaluated at the row that is offset rows after the current row within the partition;
-        if there is no such row, instead returns default (which must be of the same type as value).
+        Returns value evaluated at the row that is offset rows after the current row within the window.
+
+        If there is no such row, instead returns default (which must be of the same type as value).
         Both offset and default are evaluated with respect to the current row.
-        If omitted, offset defaults to 1 and default to None.
+        :param offset: The amount of rows to look forward, default 1
+        :param default: The value to return if no value is available, can be a constant value or Series.
+            Defaults to None
         """
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
@@ -997,6 +1098,7 @@ class Series(ABC):
         )
 
 
+#TODO remove from docs.
 def const_to_series(base: Union[Series, DataFrame],
                     value: Union[Series, int, float, str, UUID],
                     name: str = None) -> Series:
