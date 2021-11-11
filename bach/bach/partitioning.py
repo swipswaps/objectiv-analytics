@@ -290,8 +290,6 @@ class Window(GroupBy):
             self._frame_clause = f'{mode.name} BETWEEN {start_boundary.frame_clause(start_value)}'\
                                 f' AND {end_boundary.frame_clause(end_value)}'
 
-        if not isinstance(order_by, list) or not all(isinstance(ob, SortColumn) for ob in order_by):
-            raise ValueError("order_by must be a list of SortColumns")
         self._order_by = order_by
 
     @property
@@ -340,8 +338,6 @@ class Window(GroupBy):
         """
         Given the window_func generate a statement like:
             {window_func} OVER (PARTITION BY .. ORDER BY ... frame_clause)
-        :note: Currently, there is no single value expression detection here, so this might break
-            anything depending on that.
         """
         # TODO implement NULLS FIRST / NULLS LAST, probably not here but in the sorting logic.
         order_by = self._get_order_by_expression()
