@@ -92,6 +92,7 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
 
+
     @property
     @classmethod
     @abstractmethod
@@ -542,9 +543,10 @@ class Series(ABC):
 
         :note:  Only NULL values in the Series in the underlying sql table will return True. np.nan is not
                 checked for.
+
         See Also
         --------
-        Series.notnull  Evaluate for every row in this series whether the value is not missing or NULL.
+        notnull
         """
         expression_str = f'{{}} is null'
         expression = NonAtomicExpression.construct(
@@ -559,9 +561,10 @@ class Series(ABC):
 
         :note:  Only NULL values in the Series in the underlying sql table will return True. np.nan is not
                 checked for.
+
         See Also
         --------
-        Series.isnull  Evaluate for every row in this series whether the value is missing or NULL.
+        isnull
         """
         expression_str = f'{{}} is not null'
         expression = NonAtomicExpression.construct(
@@ -713,9 +716,10 @@ class Series(ABC):
         If multiple are given, a list of multiple new series will be returned.
 
         :param func: the function to look for on all series, either as a str, or callable,
-        or a list of such
+                    or a list of such
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
+
         :note: you should probably not use this method directly.
         :meta private:
         """
@@ -968,7 +972,7 @@ class Series(ABC):
     def window_percent_rank(self, window: WrappedWindow):
         """
         Returns the relative rank of the current row, that is
-            (rank - 1) / (total partition rows - 1).
+        (rank - 1) / (total partition rows - 1).
         The value thus ranges from 0 to 1 inclusive.
         """
         window = self._check_window(window)
@@ -977,7 +981,7 @@ class Series(ABC):
     def window_cume_dist(self, window: WrappedWindow):
         """
         Returns the cumulative distribution, that is
-            (number of partition rows preceding or peers with current row) / (total partition rows).
+        (number of partition rows preceding or peers with current row) / (total partition rows).
         The value thus ranges from 1/N to 1.
         """
         window = self._check_window(window)
