@@ -491,7 +491,7 @@ class DataFrame:
                    filter: 'SeriesBoolean' = None,
                    sample_percentage: int = None,
                    overwrite: bool = False,
-                   seed: int = 200) -> 'DataFrame':
+                   seed: int = None) -> 'DataFrame':
         """
         Returns a DataFrame whose data is a sample of the current DataFrame object.
 
@@ -502,27 +502,28 @@ class DataFrame:
         all operations that have been done on the sample, applied to that DataFrame.
 
         :param table_name: the name of the underlying sql table that stores the sampled data.
-        :param filter: a filter to apply to the dataframe before creating the sample. Will set the default
-            sample_percentage to None, and thus skip the bernoulli sample creation
-        :param sample_percentage: the approximate size of the sample, between 0-100. Default 50 if left None
+        :param filter: a filter to apply to the dataframe before creating the sample. If a filter is applied,
+            sample_percentage is ignored and thus the bernoulli sample creation is skipped.
+        :param sample_percentage: the approximate size of the sample, between 0-100.
         :param overwrite: if True, the sample data is written to table_name, even if that table already
             exists.
-        :param seed: seed number used to generate the sample.
+        :param seed: optional seed number used to generate the sample.
         """
         # todo if_exists and overwrite are two different syntax for the same thing. should we align?
+        if sample_percentage is None and filter is None:
+            raise ValueError('Either sample_percentage or filter must be set')
+
         original_node = self.get_current_node(name='before_sampling')
         df = self
         if filter is not None:
+            sample_percentage = None
             from bach.series import SeriesBoolean
             if not isinstance(filter, SeriesBoolean):
                 raise TypeError('Filter parameter needs to be a SeriesBoolean instance.')
             # Boolean argument implies return type of self[filter], help mypy a bit
             df = cast('DataFrame', self[filter])
-        elif sample_percentage is None:
-            sample_percentage = 50
 
         if df._group_by is not None:
-
             raise NotImplementedError('Dataframes that have an active grouping can currently not be sampled. '
                                       'Call df.materialize() first.')
 
@@ -531,12 +532,14 @@ class DataFrame:
                 conn.execute(f'DROP TABLE IF EXISTS {table_name}')
 
             if sample_percentage:
+                repeatable = f'repeatable ({seed})' if seed else ''
+
                 sql = f'''
                     create temporary table tmp_table_name on commit drop as
                     ({df.view_sql()});
                     create temporary table {quote_identifier(table_name)} as
                     (select * from tmp_table_name
-                    tablesample bernoulli({sample_percentage}) repeatable ({seed}))
+                    tablesample bernoulli({sample_percentage}) {repeatable})
                 '''
             else:
                 sql = f'create temporary table {quote_identifier(table_name)} as ({df.view_sql()})'
