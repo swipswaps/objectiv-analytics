@@ -67,29 +67,12 @@ situations:
 * In a Bach DataFrame column names must be unique, in pandas this is not the case
 
 
-DataFrame
----------
+.. toctree::
+    :maxdepth: 2
 
-.. autosummary::
-    :toctree: bach
+    dataframe
+..    series
 
-    bach.dataframe
-
-
-
-Series
-------
-
-.. autosummary::
-    :toctree: bach/series
-
-    bach.series.series_boolean
-    bach.series.series_datetime
-    bach.series.series_json
-    bach.series.series_numeric
-    bach.series.series_string
-    bach.series.series_uuid
-    bach.series.series
 
 
 
