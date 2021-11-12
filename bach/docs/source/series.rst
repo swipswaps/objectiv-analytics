@@ -191,13 +191,15 @@ Computations / descriptive stats
     Series.window_first_value
     Series.window_lag
     Series.window_nth_value
-    Series.window_ntile
+    Series.window_lead
     Series.window_last_value
 
     Series.window_row_number
     Series.window_rank
     Series.window_dense_rank
     Series.window_percent_rank
+
+    Series.window_ntile
     Series.window_cume_dist
 
 
