@@ -883,7 +883,7 @@ class DataFrame:
              columns: List[str] = None,
              level: int = None,
              inplace: bool = False,
-             errors: str = 'raise') -> 'DataFrame':
+             errors: str = 'raise') -> Optional['DataFrame']:
         """
         Drop columns from the DataFrame
 
@@ -918,8 +918,7 @@ class DataFrame:
             if errors == "raise":
                 raise e
 
-        if not inplace:
-            return df
+        return None if inplace else df
 
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'DataFrame':
         """
