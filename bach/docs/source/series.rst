@@ -1,4 +1,4 @@
-.. _api/series
+.. _bach/series:
 
 ======
 Series
@@ -56,13 +56,8 @@ See :py:class:`series_boolean.SeriesBoolean` for more info on the operation and 
 
 Aggregations
 ------------
-All Series support type-agnostic aggregations:
-    * :py:meth:`series.Series.count()`
-    * :py:meth:`series.Series.nunique()`
-    * :py:meth:`series.Series.min()`
-    * :py:meth:`series.Series.max()`
-    * :py:meth:`series.Series.median()`
-    * :py:meth:`series.Series.mode()`
+All Series support type-agnostic aggregations, and more specific aggregatations are available via Series
+sub-classes. E.g. Numeric Series support artihmetic aggregation functions.
 
 When a Series has aggregation setup (inherited from the Dataframe it's part of, or passed as an argument
 to the aggregation function), it will use that aggregation instead of an aggregation over the full Series.
@@ -88,14 +83,14 @@ The type of a Series can generally be changed by calling :py:meth:`series.Series
 Constructor
 ~~~~~~~~~~~
 .. autosummary::
-    :toctree: api/
+    :toctree: bach/series
 
     Series
 
 Value accessors
 ~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: api/
+    :toctree: bach/series
 
     Series.head
     Series.to_pandas
@@ -108,7 +103,7 @@ Attributes and underlying data
 **Axes**
 
 .. autosummary::
-    :toctree: api/
+    :toctree: bach/series
 
     Series.index
     Series.group_by
@@ -117,7 +112,7 @@ Attributes and underlying data
 **Types**
 
 .. autosummary::
-    :toctree: api/
+    :toctree: bach/series
 
     Series.dtype
     Series.astype
@@ -125,7 +120,7 @@ Attributes and underlying data
 **Sql Model**
 
 .. autosummary::
-    :toctree: api/
+    :toctree: bach/series
 
     Series.engine
     Series.base_node
@@ -135,27 +130,25 @@ Attributes and underlying data
 Conversion, reshaping, sorting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: api/
+    :toctree: bach/series
 
     Series.sort_values
 
 Function application, GroupBy & window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: api/
+    :toctree: bach/series
 
     Series.agg
     Series.aggregate
     Series.apply_func
-
-.. _api.dataframe.stats:
 
 Computations / descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **All types**
 
 .. autosummary::
-    :toctree: api/
+    :toctree: bach/series
 
     Series.count
     Series.min
@@ -167,7 +160,7 @@ Computations / descriptive stats
 **Numeric**
 
 .. autosummary::
-    :toctree: bach/series/series_numeric/SeriesAbstractNumeric
+    :toctree: bach/series
 
     SeriesAbstractNumeric.mean
     SeriesAbstractNumeric.sem

@@ -72,9 +72,10 @@ intersphinx_mapping = {
 
 autodoc_default_options = {
     'members': True,
+    'private-members': False,
     'inherited-members': False,
     'undoc-members': False,
-    'recursive': False,
+    'recursive': True,
     'autodoc_member_order': 'groupwise'
     }
 autodoc_typehints = 'none'

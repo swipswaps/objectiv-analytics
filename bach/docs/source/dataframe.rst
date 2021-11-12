@@ -1,4 +1,4 @@
-.. _api/dataframe
+.. _bach:
 
 =========
 DataFrame
@@ -73,7 +73,7 @@ DataFrames see https://pandas.pydata.org/docs/reference/frame.html
 Constructor
 ~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame
 
@@ -81,7 +81,7 @@ Constructor
 Methods todo
 ~~~~~~~~~~~~
 .. autosummary::
-    :toctree: api/
+    :toctree: bach
 
     DataFrame.copy_override
     DataFrame.from_table
@@ -109,12 +109,12 @@ Attributes and underlying data
 **Axes**
 
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame.index
 
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame.dtypes
    DataFrame.values
@@ -132,21 +132,21 @@ Attributes and underlying data
 Conversion
 ~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame.astype
 
 Indexing, iteration
 ~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame.head
 
 Function application, GroupBy & window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame.agg
    DataFrame.aggregate
@@ -158,7 +158,7 @@ Function application, GroupBy & window
 Computations / descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame.count
    DataFrame.kurt
@@ -181,7 +181,7 @@ Computations / descriptive stats
 Reindexing / selection / label manipulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame.drop
    DataFrame.head
@@ -190,14 +190,14 @@ Reindexing / selection / label manipulation
 Reshaping, sorting, transposing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame.sort_values
 
 Combining / comparing / joining / merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+   :toctree: bach
 
    DataFrame.merge
 
