@@ -20,6 +20,7 @@ paths = [
 ]
 sys.path.extend(paths)
 
+print(paths)
 
 # -- Project information -----------------------------------------------------
 
@@ -44,19 +45,20 @@ add_module_names = True
 
 
 doctest_global_setup = '''
-from bach import *
+from bach import dataframe
+from bach.dataframe import Dataframe
 '''
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.autosummary',
-    'sphinx.ext.intersphinx',
-    'sphinx.ext.linkcode',
-    'sphinx.ext.doctest',
-  'numpydoc',
+    'sphinx.ext.autodoc',           # generate summaries based on docstrings
+    'sphinx.ext.autosummary',       # auto generate autodoc directives
+    'sphinx.ext.intersphinx',       # generate links to external sphinx projects
+    'sphinx.ext.linkcode',          # generate [source] links to GH
+    'sphinx.ext.doctest',           # run examples /tests
+    'numpydoc',                     # use numpy style docs
     #'sphinx.ext.viewcode',
     #'IPython.sphinxext.ipython_directive',
     #'IPython.sphinxext.ipython_console_highlighting',
@@ -78,12 +80,13 @@ intersphinx_mapping = {
 
 autodoc_default_options = {
     'members': True,
-    # 'private-members': False,
     'inherited-members': True,
-    'undoc-members': True,
-    'inherited-members': True,
-    'recursive': True
+    'undoc-members': False,
+    'recursive': True,
+    'autodoc_member_order': 'groupwise'
     }
+autodoc_typehints = 'none'
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -112,7 +115,7 @@ html_theme = "pydata_sphinx_theme"
 # given in html_static_path.
 # html_style = 'statsmodels.css'
 
-html_sidebars = {'**': 'sidebar-nav-bs.html'}
+# html_sidebars = {'**': 'sidebar-nav-bs.html'}
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
@@ -169,12 +172,7 @@ def linkcode_resolve(domain, info):
     filename = info['module'].replace('.', '/')
     return f"https://github.com/objectiv/objectiv-analytics/blob/main/bach/{filename}.py{linespec}"
 
-suppress_warnings = [
-    # We "overwrite" autosummary with our PandasAutosummary, but
-    # still want the regular autosummary setup to run. So we just
-    # suppress this warning.
-    "app.add_directive"
-]
+
 
 from sphinx.ext.autosummary import Autosummary  # isort:skip
 
@@ -193,6 +191,5 @@ def remove_copyright_string(app, what, name, obj, options, lines):
 
 def setup(app):
     app.connect("autodoc-process-docstring", remove_copyright_string)
-    app.add_directive("autosummary", ObjectivAutosummary)
 
 
