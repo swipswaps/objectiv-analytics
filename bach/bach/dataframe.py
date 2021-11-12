@@ -79,8 +79,9 @@ class DataFrame:
     Examples
     --------
     .. code-block:: python
-        df['a'] = df.column_name + 5
-        df['b'] = ''
+
+    df['a'] = df.column_name + 5
+    df['b'] = ''
 
     If a Series of DataFrames do not share the same base node, it is possible to combine the data using
     :py:meth:`~bach.dataframe.DataFrame.merge()`.
@@ -375,7 +376,7 @@ class DataFrame:
         How the data is loaded depends on the chosen materialization:
         1. 'table':  This will first write the data to a database table using pandas' df.to_sql() method.
         2. 'cte': The data will be represented using a common table expression of the
-            form `select * from values()` in future queries.
+        form `select * from values()` in future queries.
 
         The 'table' method requires database write access. The 'cte' method is side-effect free and doesn't
         interact with the database at all. However the 'cte' method is only suitable for small quantities
@@ -809,6 +810,7 @@ class DataFrame:
                   append: bool = False, drop: bool = True, inplace: bool = False):
         """
         Set this dataframe's index to the the index given in keys
+
         :param keys: the keys of the new index. Can be a series name str, a Series, or a list
             of those.
         :param append: whether to append to the existing index or replace
@@ -905,6 +907,7 @@ class DataFrame:
         Only data columns can be cast, index columns cannot be cast.
 
         This does not modify the current DataFrame, instead it returns a new DataFrame.
+
         :param dtype: either
             * A single str, in which case all data columns are cast to this dtype
             * A dictionary mapping column labels to dtype.
@@ -987,13 +990,16 @@ class DataFrame:
         """
         Group by any of the series currently in this dataframe, both from index
         as well as data.
+
         :param by: The series to group by. Supported are: a str containing a series name,
-            a series, or a list of those.
-            If `by` is a list of (lists or tuples) , we'll create a grouping list
-            If `by` is a tuple of tuples, we'll create a grouping set,
-            else a normal group by will be created.
+               a series, or a list of those.
+               If `by` is a list of (lists or tuples) , we'll create a grouping list
+               If `by` is a tuple of tuples, we'll create a grouping set,
+               else a normal group by will be created.
+
         :note: if the dataframe is already grouped, we'll create a grouping list from the initial
             grouping combined with this one.
+
         :return: an object to perform aggregations on
         """
         from bach.partitioning import GroupBy, GroupingList, GroupingSet
