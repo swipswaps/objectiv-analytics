@@ -12,6 +12,7 @@ from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import replace_node_in_graph, find_node
 from sql_models.model import SqlModel
 from sql_models.sql_generator import to_sql
+from sql_models.util import quote_identifier
 
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
@@ -48,19 +49,19 @@ class DataFrame:
     your Bach DataFrame to a pandas DataFrame.
 
     Usage
-    ---------
+    -----
     It should generally not be required to construct Series instances manually. A DataFrame can be constructed
     using the any of the bach classmethods like from_table, from_model, or from_pandas. The returned DataFrame
     can be thought of as a dict-like container for Bach Series objects.
 
     Getting & Setting columns
-    ---------
+    -------------------------
     Getting data works similar to pandas DataFrame. Single columns can be retrieved with df['column_name']
     as well as df.column_name. This will return a single Bach Series. Multiple columns can be retrieved by
-    passing a list of column names like: df[['column_name','other_column_name']]. This returns a Bach
+    passing a list of column names like: `df[['column_name','other_column_name']]`. This returns a Bach
     DataFrame.
 
-    A selection of rows can be selected with python slicing. I.e. df[2:5] returns row 2 to 5. Only positive
+    A selection of rows can be selected with python slicing. I.e. `df[2:5]` returns row 2 to 5. Only positive
     integers are currently accepted in slices.
 
     SeriesBoolean can also be used to filter DataFrames, and these Series are easily created using comparison
@@ -68,38 +69,34 @@ class DataFrame:
     boolean_series = a == b. Boolean indexing can be done like df[df.column == 5]. Only rows are returned for
     which the condition is true.
 
-    See also
-    ---------
-    Series.isin
-    Series.isnull
-    Series.notnull
-
-    Values, series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
+    Moving Series around
+    --------------------
+    Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
     DataFrame is possible if they share the same base node. This means that they originate from the same data
     source. In most cases this means that the series that is to be set to the DataFrame is a result of
     operations on the DataFrame that is started with.
+
     Examples
     --------
-    df['a'] = df.column_name + 5
-    df['b'] = ''
+    .. code-block:: python
+        df['a'] = df.column_name + 5
+        df['b'] = ''
 
     If a Series of DataFrames do not share the same base node, it is possible to combine the data using
-    merge().
+    :py:meth:`~bach.dataframe.DataFrame.merge()`.
 
-    See also
-    ---------
-    Series.isin
-    DataFrame.merge
 
     Database access
-    ---------
+    ---------------
     The data of this DataFrame is always held in the database and operations on the data are performed
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
-    * head()
-    * to_pandas()
-    * get_sample()
-    * The property accessors .values and .array
+    * :py:meth:`~bach.dataframe.DataFrame.head()`
+    * :py:meth:`~bach.dataframe.DataFrame.to_pandas()`
+    * :py:meth:`~bach.dataframe.DataFrame.get_sample()`
+    * The property accessors :py:attr:`~bach.series.series.Series.value` (Series only)
+   , :py:attr:`~bach.dataframe.DataFrame.values`, and :py:attr:`~bach.dataframe.DataFrame.array`
+
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
     only when one of the above mentioned data-transfer functions is called.
@@ -491,9 +488,10 @@ class DataFrame:
 
     def get_sample(self,
                    table_name: str,
-                   sample_percentage: int = 50,
-                   overwrite=False,
-                   seed=200) -> 'DataFrame':
+                   filter: 'SeriesBoolean' = None,
+                   sample_percentage: int = None,
+                   overwrite: bool = False,
+                   seed: int = 200) -> 'DataFrame':
         """
         Returns a DataFrame whose data is a sample of the current DataFrame object.
 
@@ -504,41 +502,55 @@ class DataFrame:
         all operations that have been done on the sample, applied to that DataFrame.
 
         :param table_name: the name of the underlying sql table that stores the sampled data.
-        :param sample_percentage: the approximate size of the sample.
+        :param filter: a filter to apply to the dataframe before creating the sample. Will set the default
+            sample_percentage to None, and thus skip the bernoulli sample creation
+        :param sample_percentage: the approximate size of the sample, between 0-100. Default 50 if left None
         :param overwrite: if True, the sample data is written to table_name, even if that table already
             exists.
         :param seed: seed number used to generate the sample.
         """
         # todo if_exists and overwrite are two different syntax for the same thing. should we align?
-        if self._group_by is not None:
+        original_node = self.get_current_node(name='before_sampling')
+        df = self
+        if filter is not None:
+            from bach.series import SeriesBoolean
+            if not isinstance(filter, SeriesBoolean):
+                raise TypeError('Filter parameter needs to be a SeriesBoolean instance.')
+            # Boolean argument implies return type of self[filter], help mypy a bit
+            df = cast('DataFrame', self[filter])
+        elif sample_percentage is None:
+            sample_percentage = 50
+
+        if df._group_by is not None:
+
             raise NotImplementedError('Dataframes that have an active grouping can currently not be sampled. '
                                       'Call df.materialize() first.')
 
-        if overwrite:
-            sql = f'DROP TABLE IF EXISTS {table_name}'
-            with self.engine.connect() as conn:
-                conn.execute(sql)
+        with df.engine.connect() as conn:
+            if overwrite:
+                conn.execute(f'DROP TABLE IF EXISTS {table_name}')
 
-        sql = f'''
-            create temporary table tmp_table_name on commit drop as
-            ({self.view_sql()});
-            create table {table_name} as
-            (select * from tmp_table_name
-            tablesample bernoulli({sample_percentage}) repeatable ({seed}))
-        '''
-        with self.engine.connect() as conn:
+            if sample_percentage:
+                sql = f'''
+                    create temporary table tmp_table_name on commit drop as
+                    ({df.view_sql()});
+                    create temporary table {quote_identifier(table_name)} as
+                    (select * from tmp_table_name
+                    tablesample bernoulli({sample_percentage}) repeatable ({seed}))
+                '''
+            else:
+                sql = f'create temporary table {quote_identifier(table_name)} as ({df.view_sql()})'
             conn.execute(sql)
 
         # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
         # in get_unsampled() by switching this new node for the old node again.
-        current_node = self.get_current_node(name='before_sampling')
-        new_base_node = SampleSqlModel(table_name=table_name, previous=current_node)
+        new_base_node = SampleSqlModel(table_name=table_name, previous=original_node)
 
         return DataFrame.get_instance(
-            engine=self.engine,
+            engine=df.engine,
             base_node=new_base_node,
-            index_dtypes=self.index_dtypes,
-            dtypes=self.dtypes,
+            index_dtypes=df.index_dtypes,
+            dtypes=df.dtypes,
             group_by=None
         )
 

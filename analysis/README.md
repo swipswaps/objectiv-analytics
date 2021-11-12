@@ -13,7 +13,8 @@ export PYTHONPATH=.
 
 pip install -e ../bach/
 pip install -e objectiv_bach
-pip install jupyter plotly matplotlib jupyter-dash seaborn  # needed for the product_analytics.ipynb notebook
+# needed for the product_analytics.ipynb notebook
+pip install jupyter plotly matplotlib jupyter-dash seaborn  
 ```
 
 

@@ -67,13 +67,11 @@ situations:
 * In a Bach DataFrame column names must be unique, in pandas this is not the case
 
 
-DataFrame
----------
+.. toctree::
+    :maxdepth: 2
 
-.. autosummary::
-    :toctree: bach
-
-    bach.dataframe
+    dataframe
+..    series
 
 
 

@@ -1,6 +1,6 @@
 !source/index.rst
 !source/conf.py
 
-source/
+source/api/
 build/
 
