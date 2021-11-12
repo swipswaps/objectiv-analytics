@@ -177,6 +177,13 @@ def remove_copyright_string(app, what, name, obj, options, lines):
     if len(lines) > 0 and lines[0] == 'Copyright 2021 Objectiv B.V.':
         del lines[0]
 
+def repair_classmethod_docstring(app, what, name, obj, options, lines):
+    # If a property is annotated as a classmethod, there is confusion. Resolve that here
+    if isinstance(obj, property) and isinstance(obj.fget, classmethod):
+        lines.clear()
+        obj_lines = obj.fget.__func__.__doc__
+        if obj_lines:
+            lines.extend(obj_lines.split("\n"))
 
 def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
     """
