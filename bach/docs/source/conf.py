@@ -17,10 +17,10 @@ sys.path.insert(0, os.path.abspath('.'))
 
 paths = [
     os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__)))),
+    os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__)))) + '/series',
 ]
-sys.path.extend(paths)
-
 print(paths)
+sys.path.extend(paths)
 
 # -- Project information -----------------------------------------------------
 
@@ -47,7 +47,7 @@ from bach.dataframe import Dataframe
 extensions = [
     'sphinx.ext.autodoc',           # generate summaries based on docstrings
     'sphinx.ext.autosummary',       # auto generate autodoc directives
-    'sphinx.ext.intersphinx',       # generate links to external sphinx projects
+    # 'sphinx.ext.intersphinx',       # generate links to external sphinx projects
     'sphinx.ext.linkcode',          # generate [source] links to GH
     'sphinx.ext.doctest',           # run examples /tests
     'numpydoc',                     # use numpy style docs
@@ -70,24 +70,16 @@ intersphinx_mapping = {
     "pyarrow": ("https://arrow.apache.org/docs/", None),
 }
 
-autodoc_default_options = {
-    'members': True,
-    'private-members': False,
-    'inherited-members': False,
-    'undoc-members': False,
-    'recursive': True,
-    'autodoc_member_order': 'groupwise'
-    }
 autodoc_typehints = 'none'
 
 # numpydoc
 numpydoc_attributes_as_param_list = False
+numpydoc_show_class_members = True
 
 # autosummary
 autosummary_generate = True
-add_function_parentheses = True
-add_module_names = True
 
+autosummary_imported_members = True
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 

@@ -1,9 +1,7 @@
-.. _bach/series:
-
 ======
 Series
 ======
-.. currentmodule:: bach.series
+.. currentmodule:: bach
 
 A typed representation of a single column of data.
 
@@ -18,7 +16,7 @@ Almost every operation on a Series will return a Series with the operation set-u
 combinations of operations.
 
 It should generally not be required to construct Series instances manually.
-:py:class:`bach.dataframe.DataFrame` will create them for you when required.
+:py:class:`bach.DataFrame` will create them for you when required.
 
 Slicing and index access
 ------------------------
@@ -35,8 +33,8 @@ The data of this Series is always held in the database and operations on the dat
 by the database, not in local memory. Data will only be transferred to local memory when an
 explicit call is made to one of the functions that transfers data:
 
-     * :py:meth:`bach.dataframe.DataFrame.to_pandas()`
-     * :py:meth:`bach.dataframe.DataFrame.head()`
+     * :py:meth:`bach.DataFrame.to_pandas()`
+     * :py:meth:`bach.DataFrame.head()`
      * The property accessors :py:attr:`series.Series.value` (Series only),
        :py:attr:`series.Series.values`, and :py:attr:`series.Series.array`
 
@@ -83,14 +81,14 @@ The type of a Series can generally be changed by calling :py:meth:`series.Series
 Constructor
 ~~~~~~~~~~~
 .. autosummary::
-    :toctree: bach/series
+    :toctree:
 
     Series
 
 Value accessors
 ~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: bach/series
+    :toctree:
 
     Series.head
     Series.to_pandas
@@ -103,7 +101,7 @@ Attributes and underlying data
 **Axes**
 
 .. autosummary::
-    :toctree: bach/series
+    :toctree:
 
     Series.index
     Series.group_by
@@ -112,7 +110,7 @@ Attributes and underlying data
 **Types**
 
 .. autosummary::
-    :toctree: bach/series
+    :toctree:
 
     Series.dtype
     Series.astype
@@ -120,7 +118,7 @@ Attributes and underlying data
 **Sql Model**
 
 .. autosummary::
-    :toctree: bach/series
+    :toctree:
 
     Series.engine
     Series.base_node
@@ -130,14 +128,14 @@ Attributes and underlying data
 Conversion, reshaping, sorting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: bach/series
+    :toctree:
 
     Series.sort_values
 
 Function application, GroupBy & window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: bach/series
+    :toctree:
 
     Series.agg
     Series.aggregate
@@ -148,7 +146,7 @@ Computations / descriptive stats
 **All types**
 
 .. autosummary::
-    :toctree: bach/series
+    :toctree:
 
     Series.count
     Series.min
@@ -160,7 +158,7 @@ Computations / descriptive stats
 **Numeric**
 
 .. autosummary::
-    :toctree: bach/series
+    :toctree:
 
     SeriesAbstractNumeric.mean
     SeriesAbstractNumeric.sem
