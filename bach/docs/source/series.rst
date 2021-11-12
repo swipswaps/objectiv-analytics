@@ -81,7 +81,7 @@ The type of a Series can generally be changed by calling :py:meth:`series.Series
 Constructor & Frame operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series
     Series.from_const
@@ -90,7 +90,7 @@ Constructor & Frame operations
 Value accessors
 ~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series.head
     Series.to_pandas
@@ -103,7 +103,7 @@ Attributes and underlying data
 **Axes**
 
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series.name
     Series.index
@@ -113,7 +113,7 @@ Attributes and underlying data
 **Types**
 
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series.dtype
     Series.astype
@@ -121,7 +121,7 @@ Attributes and underlying data
 **Sql Model**
 
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series.engine
     Series.base_node
@@ -130,7 +130,7 @@ Attributes and underlying data
 Comparison and set operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series.all_values
     Series.any_value
@@ -143,7 +143,7 @@ Comparison and set operations
 Conversion, reshaping, sorting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series.sort_values
     Series.fillna
@@ -152,7 +152,7 @@ Conversion, reshaping, sorting
 Function application, GroupBy & Window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series.agg
     Series.aggregate
@@ -163,7 +163,7 @@ Computations / descriptive stats
 **All types**
 
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series.count
     Series.min
@@ -175,7 +175,7 @@ Computations / descriptive stats
 **Numeric**
 
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     SeriesAbstractNumeric.mean
     SeriesAbstractNumeric.sem
@@ -186,7 +186,7 @@ Computations / descriptive stats
 **Window**
 
 .. autosummary::
-    :toctree:
+    :toctree: series
 
     Series.window_first_value
     Series.window_lag
