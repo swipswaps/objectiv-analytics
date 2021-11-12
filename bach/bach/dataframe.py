@@ -48,14 +48,14 @@ class DataFrame:
     do other operations that are not suitable for in memory processing. At any time it is possible to write
     your Bach DataFrame to a pandas DataFrame.
 
-    Usage
-    -----
+    .. rubric:: Usage
+
     It should generally not be required to construct Series instances manually. A DataFrame can be constructed
     using the any of the bach classmethods like from_table, from_model, or from_pandas. The returned DataFrame
     can be thought of as a dict-like container for Bach Series objects.
 
-    Getting & Setting columns
-    -------------------------
+    .. rubric:: Getting & Setting columns
+
     Getting data works similar to pandas DataFrame. Single columns can be retrieved with df['column_name']
     as well as df.column_name. This will return a single Bach Series. Multiple columns can be retrieved by
     passing a list of column names like: `df[['column_name','other_column_name']]`. This returns a Bach
@@ -69,16 +69,17 @@ class DataFrame:
     boolean_series = a == b. Boolean indexing can be done like df[df.column == 5]. Only rows are returned for
     which the condition is true.
 
-    Moving Series around
-    --------------------
+    .. rubric:: Moving Series around
+
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
     DataFrame is possible if they share the same base node. This means that they originate from the same data
     source. In most cases this means that the series that is to be set to the DataFrame is a result of
     operations on the DataFrame that is started with.
 
-    Examples
-    --------
+    .. rubric:: Examples
+
     .. code-block:: python
+
         df['a'] = df.column_name + 5
         df['b'] = ''
 
@@ -86,8 +87,8 @@ class DataFrame:
     :py:meth:`~bach.dataframe.DataFrame.merge()`.
 
 
-    Database access
-    ---------------
+    .. rubric:: Database access
+
     The data of this DataFrame is always held in the database and operations on the data are performed
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
@@ -95,7 +96,7 @@ class DataFrame:
     * :py:meth:`~bach.dataframe.DataFrame.to_pandas()`
     * :py:meth:`~bach.dataframe.DataFrame.get_sample()`
     * The property accessors :py:attr:`~bach.series.series.Series.value` (Series only)
-   , :py:attr:`~bach.dataframe.DataFrame.values`, and :py:attr:`~bach.dataframe.DataFrame.array`
+    , :py:attr:`~bach.dataframe.DataFrame.values`, and :py:attr:`~bach.dataframe.DataFrame.array`
 
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
@@ -358,7 +359,7 @@ class DataFrame:
         How the data is loaded depends on the chosen materialization:
         1. 'table':  This will first write the data to a database table using pandas' df.to_sql() method.
         2. 'cte': The data will be represented using a common table expression of the
-            form `select * from values()` in future queries.
+        form `select * from values()` in future queries.
 
         The 'table' method requires database write access. The 'cte' method is side-effect free and doesn't
         interact with the database at all. However the 'cte' method is only suitable for small quantities
@@ -712,6 +713,7 @@ class DataFrame:
 
         The interface is similar to Panda's DataFrame.rename(). However we don't support renaming indexes, so
             recommended usage is `rename(columns=...)`
+
         :param: mapper: please use columns
         :param: index: not supported
         :param: columns: dict str:str to rename columns, or a function that takes column
@@ -782,6 +784,7 @@ class DataFrame:
                   append: bool = False, drop: bool = True, inplace: bool = False):
         """
         Set this dataframe's index to the the index given in keys
+
         :param keys: the keys of the new index. Can be a series name str, a Series, or a list
             of those.
         :param append: whether to append to the existing index or replace
@@ -878,6 +881,7 @@ class DataFrame:
         Only data columns can be cast, index columns cannot be cast.
 
         This does not modify the current DataFrame, instead it returns a new DataFrame.
+
         :param dtype: either
             * A single str, in which case all data columns are cast to this dtype
             * A dictionary mapping column labels to dtype.
@@ -960,13 +964,16 @@ class DataFrame:
         """
         Group by any of the series currently in this dataframe, both from index
         as well as data.
+
         :param by: The series to group by. Supported are: a str containing a series name,
-            a series, or a list of those.
-            If `by` is a list of (lists or tuples) , we'll create a grouping list
-            If `by` is a tuple of tuples, we'll create a grouping set,
-            else a normal group by will be created.
+               a series, or a list of those.
+               If `by` is a list of (lists or tuples) , we'll create a grouping list
+               If `by` is a tuple of tuples, we'll create a grouping set,
+               else a normal group by will be created.
+
         :note: if the dataframe is already grouped, we'll create a grouping list from the initial
             grouping combined with this one.
+
         :return: an object to perform aggregations on
         """
         from bach.partitioning import GroupBy, GroupingList, GroupingSet

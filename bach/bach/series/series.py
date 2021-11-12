@@ -92,6 +92,7 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
 
+
     @property
     @classmethod
     @abstractmethod
@@ -713,9 +714,10 @@ class Series(ABC):
         If multiple are given, a list of multiple new series will be returned.
 
         :param func: the function to look for on all series, either as a str, or callable,
-        or a list of such
+                    or a list of such
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
+
         :note: you should probably not use this method directly.
         :meta private:
         """
