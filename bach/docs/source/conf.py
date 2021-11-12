@@ -15,9 +15,9 @@ import sys
 import inspect
 sys.path.insert(0, os.path.abspath('.'))
 
+base_path = os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__))))
 paths = [
-    os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__)))),
-    os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__)))) + '/series',
+    base_path
 ]
 print(paths)
 sys.path.extend(paths)
@@ -159,9 +159,8 @@ def linkcode_resolve(domain, info):
     else:
         linespec = ""
 
-    filename = info['module'].replace('.', '/') + '/' + os.path.basename(fn)
-
-    return f"https://github.com/objectiv/objectiv-analytics/blob/main/bach/{filename}{linespec}"
+    filename = fn[len(base_path):]
+    return f"https://github.com/objectiv/objectiv-analytics/blob/main/bach{filename}{linespec}"
 
 
 from sphinx.ext.autosummary import Autosummary  # isort:skip
