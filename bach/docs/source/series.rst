@@ -18,7 +18,7 @@ Almost every operation on a Series will return a Series with the operation set-u
 combinations of operations.
 
 It should generally not be required to construct Series instances manually.
-:py:class:`~bach.dataframe.DataFrame` will create them for you when required.
+:py:class:`bach.dataframe.DataFrame` will create them for you when required.
 
 Slicing and index access
 ------------------------
@@ -34,15 +34,17 @@ Database access
 The data of this Series is always held in the database and operations on the data are performed
 by the database, not in local memory. Data will only be transferred to local memory when an
 explicit call is made to one of the functions that transfers data:
-     * :py:meth:`~bach.dataframe.DataFrame.to_pandas()`
-     * :py:meth:`~bach.dataframe.DataFrame.head()`
+
+     * :py:meth:`bach.dataframe.DataFrame.to_pandas()`
+     * :py:meth:`bach.dataframe.DataFrame.head()`
      * The property accessors :py:attr:`series.Series.value` (Series only),
        :py:attr:`series.Series.values`, and :py:attr:`series.Series.array`
 
 If you really need the actual values, use the above, but in general it's better to use the Series that
 generate them, as this will create more flexible code.
 
-.. rubric:: Boolean Operations
+Boolean Operations
+------------------
 A special subclass, :py:class:`series_boolean.SeriesBoolean`, can be used to filter
 DataFrames, and these Series are easily created using comparison operations like equals (==),
 less-than (<), not(~) on two series: `boolean_series = a == b`
@@ -67,7 +69,7 @@ to the aggregation function), it will use that aggregation instead of an aggrega
 
 Window Functions
 ----------------
-All aggregation can also be used with a :py:class:`~bach.partitioning.Window`. A window defines the
+All aggregation can also be used with a :py:class:`bach.partitioning.Window`. A window defines the
 subset of data on which the aggregation takes place. Unlike an aggregation, a window function returns a
 value for every row in the data set.
 Next to aggregations, window functions can also be used to create special values, like the one from the
@@ -86,103 +88,89 @@ The type of a Series can generally be changed by calling :py:meth:`series.Series
 Constructor
 ~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+    :toctree: api/
 
-   Series
+    Series
 
-
-Methods todo
-~~~~~~~~~~~~
+Value accessors
+~~~~~~~~~~~~~~~
 .. autosummary::
     :toctree: api/
 
+    Series.head
     Series.to_pandas
     Series.array
-    Series.view_sql
+    Series.values
+    Series.value
 
 Attributes and underlying data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Axes**
 
 .. autosummary::
-   :toctree: api/
+    :toctree: api/
 
-   Series.index
+    Series.index
+    Series.group_by
+    Series.sorted_ascending
+
+**Types**
 
 .. autosummary::
-   :toctree: api/
+    :toctree: api/
 
-    Series.dtypes
-    Series.values
+    Series.dtype
+    Series.astype
+
+**Sql Model**
+
+.. autosummary::
+    :toctree: api/
 
     Series.engine
     Series.base_node
-    Series.data
-    Series.order_by
-    Series.all_series
-    Series.index_columns
-    Series.index_dtypes
-    Series.dtypes
-    Series.group_by
+    Series.view_sql
 
-Conversion
-~~~~~~~~~~
+
+Conversion, reshaping, sorting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+    :toctree: api/
 
-   Series.astype
-
-Indexing, iteration
-~~~~~~~~~~~~~~~~~~~
-.. autosummary::
-   :toctree: api/
-
-   Series.head
+    Series.sort_values
 
 Function application, GroupBy & window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+    :toctree: api/
 
-   Series.agg
-   Series.aggregate
+    Series.agg
+    Series.aggregate
+    Series.apply_func
 
 .. _api.dataframe.stats:
 
 Computations / descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**All types**
+
 .. autosummary::
-   :toctree: api/
+    :toctree: api/
 
-   Series.count
-   Series.kurt
-   Series.kurtosis
-   Series.mad
-   Series.max
-   Series.mean
-   Series.median
-   Series.min
-   Series.mode
-   Series.prod
-   Series.product
-   Series.sem
-   Series.skew
-   Series.sum
-   Series.std
-   Series.var
-   Series.nunique
+    Series.count
+    Series.min
+    Series.max
+    Series.median
+    Series.mode
+    Series.nunique
 
+**Numeric**
 
-Reshaping, sorting, transposing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: api/
+    :toctree: bach/series/series_numeric/SeriesAbstractNumeric
 
-   Series.sort_values
-
-
-
-
-
-
-
+    SeriesAbstractNumeric.mean
+    SeriesAbstractNumeric.sem
+    SeriesAbstractNumeric.sum
+    SeriesAbstractNumeric.std
+    SeriesAbstractNumeric.var
