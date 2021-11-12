@@ -24,16 +24,9 @@ print(paths)
 
 # -- Project information -----------------------------------------------------
 
-project = 'bach'
+project = 'Bach'
 copyright = '2021, Objectiv'
-author = 'Objectiv BV'
-
-
-autosummary_generate = True
-add_function_parentheses = True
-add_module_names = True
-
-# -- General configuration ---------------------------------------------------
+author = 'Objectiv B.V.'
 
 
 #ipython_execlines = [
@@ -45,7 +38,6 @@ add_module_names = True
 
 
 doctest_global_setup = '''
-from bach import dataframe
 from bach.dataframe import Dataframe
 '''
 
@@ -80,12 +72,20 @@ intersphinx_mapping = {
 
 autodoc_default_options = {
     'members': True,
-    'inherited-members': True,
+    'inherited-members': False,
     'undoc-members': False,
-    'recursive': True,
+    'recursive': False,
     'autodoc_member_order': 'groupwise'
     }
 autodoc_typehints = 'none'
+
+# numpydoc
+numpydoc_attributes_as_param_list = False
+
+# autosummary
+autosummary_generate = True
+add_function_parentheses = True
+add_module_names = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -123,10 +123,7 @@ html_theme_options = {
     "external_links": [],
     "github_url": "https://github.com/objectiv-analytics/bach/",
     "twitter_url": "https://twitter.com/objectiv",
-    "google_analytics_id": "",
-    "navbar_start": [],
-    "navbar_center": [],
-    "navbar_end": []
+    "google_analytics_id": ""
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
@@ -169,9 +166,9 @@ def linkcode_resolve(domain, info):
     else:
         linespec = ""
 
-    filename = info['module'].replace('.', '/')
-    return f"https://github.com/objectiv/objectiv-analytics/blob/main/bach/{filename}.py{linespec}"
+    filename = info['module'].replace('.', '/') + '/' + os.path.basename(fn)
 
+    return f"https://github.com/objectiv/objectiv-analytics/blob/main/bach/{filename}{linespec}"
 
 
 from sphinx.ext.autosummary import Autosummary  # isort:skip
@@ -188,8 +185,5 @@ def remove_copyright_string(app, what, name, obj, options, lines):
         del lines[0]
 
 
-
 def setup(app):
     app.connect("autodoc-process-docstring", remove_copyright_string)
-
-
