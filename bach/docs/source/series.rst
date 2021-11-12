@@ -78,12 +78,14 @@ is okay, while a comparison operation is not.
 
 The type of a Series can generally be changed by calling :py:meth:`series.Series.astype()`.
 
-Constructor
-~~~~~~~~~~~
+Constructor & Frame operations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
     :toctree:
 
     Series
+    Series.from_const
+    Series.to_frame
 
 Value accessors
 ~~~~~~~~~~~~~~~
@@ -103,6 +105,7 @@ Attributes and underlying data
 .. autosummary::
     :toctree:
 
+    Series.name
     Series.index
     Series.group_by
     Series.sorted_ascending
@@ -124,6 +127,18 @@ Attributes and underlying data
     Series.base_node
     Series.view_sql
 
+Comparison and set operations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. autosummary::
+    :toctree:
+
+    bach.Series.all_values
+    bach.Series.any_value
+    bach.Series.exists
+    bach.Series.isin
+    bach.Series.isnull
+    bach.Series.notnull
+
 
 Conversion, reshaping, sorting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -131,8 +146,10 @@ Conversion, reshaping, sorting
     :toctree:
 
     Series.sort_values
+    Series.fillna
 
-Function application, GroupBy & window
+
+Function application, GroupBy & Window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
     :toctree:
@@ -165,3 +182,25 @@ Computations / descriptive stats
     SeriesAbstractNumeric.sum
     SeriesAbstractNumeric.std
     SeriesAbstractNumeric.var
+
+**Window**
+
+.. autosummary::
+    :toctree:
+
+    Series.window_first_value
+    Series.window_lag
+    Series.window_nth_value
+    Series.window_ntile
+    Series.window_last_value
+
+    Series.window_row_number
+    Series.window_rank
+    Series.window_dense_rank
+    Series.window_percent_rank
+    Series.window_cume_dist
+
+
+
+
+

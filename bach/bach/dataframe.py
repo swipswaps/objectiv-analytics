@@ -48,14 +48,14 @@ class DataFrame:
     do other operations that are not suitable for in memory processing. At any time it is possible to write
     your Bach DataFrame to a pandas DataFrame.
 
-    .. rubric:: Usage
-
+    Usage
+    -----
     It should generally not be required to construct Series instances manually. A DataFrame can be constructed
     using the any of the bach classmethods like from_table, from_model, or from_pandas. The returned DataFrame
     can be thought of as a dict-like container for Bach Series objects.
 
-    .. rubric:: Getting & Setting columns
-
+    Getting & Setting columns
+    -------------------------
     Getting data works similar to pandas DataFrame. Single columns can be retrieved with df['column_name']
     as well as df.column_name. This will return a single Bach Series. Multiple columns can be retrieved by
     passing a list of column names like: `df[['column_name','other_column_name']]`. This returns a Bach
@@ -69,26 +69,26 @@ class DataFrame:
     boolean_series = a == b. Boolean indexing can be done like df[df.column == 5]. Only rows are returned for
     which the condition is true.
 
-    .. rubric:: Moving Series around
-
+    Moving Series around
+    --------------------
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
     DataFrame is possible if they share the same base node. This means that they originate from the same data
     source. In most cases this means that the series that is to be set to the DataFrame is a result of
     operations on the DataFrame that is started with.
 
-    .. rubric:: Examples
-
+    Examples
+    --------
     .. code-block:: python
 
-        df['a'] = df.column_name + 5
-        df['b'] = ''
+    df['a'] = df.column_name + 5
+    df['b'] = ''
 
     If a Series of DataFrames do not share the same base node, it is possible to combine the data using
     :py:meth:`~bach.dataframe.DataFrame.merge()`.
 
 
-    .. rubric:: Database access
-
+    Database access
+    ---------------
     The data of this DataFrame is always held in the database and operations on the data are performed
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
@@ -96,7 +96,7 @@ class DataFrame:
     * :py:meth:`~bach.dataframe.DataFrame.to_pandas()`
     * :py:meth:`~bach.dataframe.DataFrame.get_sample()`
     * The property accessors :py:attr:`~bach.series.series.Series.value` (Series only)
-    , :py:attr:`~bach.dataframe.DataFrame.values`, and :py:attr:`~bach.dataframe.DataFrame.array`
+   , :py:attr:`~bach.dataframe.DataFrame.values`, and :py:attr:`~bach.dataframe.DataFrame.array`
 
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
@@ -305,22 +305,35 @@ class DataFrame:
         return {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
 
     @classmethod
-    def from_table(cls, engine, table_name: str, index: List[str]) -> 'DataFrame':
+    def from_table(cls, engine: Engine, table_name: str, index: List[str]) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the content of an existing table in the database.
-        This will create and remove a temporary table to asses meta data.
+
+        This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
+        In order to create this temporary table the source data is queried.
+
+        :param engine: an sqlalchemy engine for the database.
+        :param table_name: the table name that contains the data to instantiate as DataFrame.
+        :param index: list of column names that make up the index. At least one column needs to be
+            selected for the index.
         """
+        # todo: why is an index mandatory if you can reset it later?
         # todo: don't create a temporary table, the real table (and its meta data) already exists
         model = BachSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
         return cls._from_node(engine, model, index)
 
     @classmethod
-    def from_model(cls, engine, model: SqlModel[BachSqlModel], index: List[str]) -> 'DataFrame':
+    def from_model(cls, engine: Engine, model: SqlModel, index: List[str]) -> 'DataFrame':
         """
-        Instantiate a new DataFrame based on the result of the query defines in `model`
-        :param engine: db connection
-        :param model: sql model.
-        :param index: list of column names that make up the index.
+        Instantiate a new DataFrame based on the result of the query defined in `model`
+
+        This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
+        In order to create this temporary table the query in `model` executed.
+
+        :param engine: an sqlalchemy engine for the database.
+        :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
+        :param index: list of column names that make up the index. At least one column needs to be
+            selected for the index.
         """
         # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
         # select expressions, where clauses, or limits
@@ -356,6 +369,10 @@ class DataFrame:
         """
         Instantiate a new DataFrame based on the content of a Pandas DataFrame.
 
+        The index of the Pandas DataFrame is set to the index of the DataFrame. Only single level index is
+        supported. Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'. The 'object'
+        dtype is supported if the column contains string values and convert_objects is set to True.
+
         How the data is loaded depends on the chosen materialization:
         1. 'table':  This will first write the data to a database table using pandas' df.to_sql() method.
         2. 'cte': The data will be represented using a common table expression of the
@@ -369,15 +386,13 @@ class DataFrame:
         There are some small differences between how the different materializations handle NaN values. e.g.
         'cte' does not support those for non-numeric columns, whereas 'table' converts them to 'NULL'
 
-        Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'
-
-        :param engine: db connection
-        :param df: Pandas DataFrame to instantiate as DataFrame
+        :param engine: an sqlalchemy engine for the database.
+        :param df: Pandas DataFrame to instantiate as DataFrame.
         :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
             pd.convert_dtypes() method where possible.
         :param name:
             * For 'table' materialization: name of the table that Pandas will write the data to.
-            * For 'cte' materialization: name of the node in the underlying sql-model graph.
+            * For 'cte' materialization: name of the node in the underlying SqlModel graph.
         :param materialization: {'cte', 'table'}. How to materialize the data
         :param if_exists: {'fail', 'replace', 'append'}. Only applies to materialization='table'
             How to behave if the table already exists:
@@ -385,6 +400,7 @@ class DataFrame:
             * replace: Drop the table before inserting new values.
             * append: Insert new values to the existing table.
         """
+        # todo materialzation is 'cte' by default, add warning for large dataframe?
         from bach.from_pandas import from_pandas
         return from_pandas(
             engine=engine,
@@ -476,34 +492,37 @@ class DataFrame:
                    filter: 'SeriesBoolean' = None,
                    sample_percentage: int = None,
                    overwrite: bool = False,
-                   seed: int = 200) -> 'DataFrame':
+                   seed: int = None) -> 'DataFrame':
         """
-        Returns a DataFrame whose data is a sample of the current DataFrame object. For the
-        sample Dataframe to be created, all data is queried once and a persistent table is created to
-        store the sample data used for the sample frame.
+        Returns a DataFrame whose data is a sample of the current DataFrame object.
 
-        Use get_unsampled() to switch back to the unsampled data later on.
+        For the sample Dataframe to be created, all data is queried once and a persistent table is created to
+        store the sample data used for the sampled DataFrame.
 
-        This function writes to the database.
+        Use get_unsampled() to switch back to the unsampled data later on. This returns a new DataFrame with
+        all operations that have been done on the sample, applied to that DataFrame.
 
-        :param: table_name: the name of the underlying sql table that stores the sampled data.
-        :param: filter: a filter to apply to the dataframe before creating the sample. Will set the default
-            sample_percentage to None, and thus skip the bernoulli sample creation
-        :param: sample_percentage: the approximate size of the sample, between 0-100. Default 50 if left None
-        :param: overwrite: if True, the sample data is written to table_name, even if that table already
+        :param table_name: the name of the underlying sql table that stores the sampled data.
+        :param filter: a filter to apply to the dataframe before creating the sample. If a filter is applied,
+            sample_percentage is ignored and thus the bernoulli sample creation is skipped.
+        :param sample_percentage: the approximate size of the sample, between 0-100.
+        :param overwrite: if True, the sample data is written to table_name, even if that table already
             exists.
-        :param: seed: seed number used to generate the sample.
+        :param seed: optional seed number used to generate the sample.
         """
+        # todo if_exists and overwrite are two different syntax for the same thing. should we align?
+        if sample_percentage is None and filter is None:
+            raise ValueError('Either sample_percentage or filter must be set')
+
         original_node = self.get_current_node(name='before_sampling')
         df = self
         if filter is not None:
+            sample_percentage = None
             from bach.series import SeriesBoolean
             if not isinstance(filter, SeriesBoolean):
                 raise TypeError('Filter parameter needs to be a SeriesBoolean instance.')
             # Boolean argument implies return type of self[filter], help mypy a bit
             df = cast('DataFrame', self[filter])
-        elif sample_percentage is None:
-            sample_percentage = 50
 
         if df._group_by is not None:
             raise NotImplementedError('Dataframes that have an active grouping can currently not be sampled. '
@@ -514,12 +533,14 @@ class DataFrame:
                 conn.execute(f'DROP TABLE IF EXISTS {table_name}')
 
             if sample_percentage:
+                repeatable = f'repeatable ({seed})' if seed else ''
+
                 sql = f'''
                     create temporary table tmp_table_name on commit drop as
                     ({df.view_sql()});
                     create temporary table {quote_identifier(table_name)} as
                     (select * from tmp_table_name
-                    tablesample bernoulli({sample_percentage}) repeatable ({seed}))
+                    tablesample bernoulli({sample_percentage}) {repeatable})
                 '''
             else:
                 sql = f'create temporary table {quote_identifier(table_name)} as ({df.view_sql()})'
@@ -539,20 +560,21 @@ class DataFrame:
 
     def get_unsampled(self) -> 'DataFrame':
         """
-        Return a copy of the current DataFrame, that undoes calling `get_sample()` earlier while maintaining
-        all other operations that have been done since.
+        Return a copy of the current sampled DataFrame, that undoes calling `get_sample()` earlier.
 
-        The returned DataFrame has a modified base_node graph, in which the node that introduced the sampling
-        is removed. This does not remove the table that was written to the database by get_sample(), the
+        All other operations that have been done on the sample DataFrame will be applied on the DataFrame
+        that is returned. This does not remove the table that was written to the database by get_sample(), the
         new DataFrame just does not query that table anymore.
 
-        Will raise an error if the current Frame doesn't contain sampled data, i.e. get_sample() has not been
-        called.
+        Will raise an error if the current DataFrame is not sample data of another DataFrame, i.e.
+        get_sample() has not been called.
         """
         df = self
         if df._group_by:
             df = df.materialize(node_name='get_unsampled')
 
+        # The returned DataFrame has a modified base_node graph, in which the node that introduced the
+        # sampling is removed.
         sampled_node_tuple = find_node(
             start_node=df.base_node,
             function=lambda node: isinstance(node, SampleSqlModel)
@@ -574,9 +596,7 @@ class DataFrame:
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'SeriesBoolean']) -> DataFrameOrSeries:
         """
-        TODO: Comments
-        :param key:
-        :return:
+        For usage see general introduction DataFrame class.
         """
         from bach.series import SeriesBoolean
 
@@ -644,13 +664,17 @@ class DataFrame:
                                   f"but got {type(key)}")
 
     def __getattr__(self, attr):
+        """
+        After regular attribute access, try looking up the name. This allows simpler access to columns for
+        interactive use.
+        """
         return self._data[attr]
 
     def __setitem__(self,
                     key: Union[str, List[str]],
                     value: Union['Series', int, str, float, UUID]):
         """
-        TODO: Comments
+        For usage see general introduction DataFrame class.
         """
         # TODO: all types from types.TypeRegistry are supported.
         from bach.series import Series, const_to_series
@@ -714,19 +738,21 @@ class DataFrame:
         The interface is similar to Panda's DataFrame.rename(). However we don't support renaming indexes, so
             recommended usage is `rename(columns=...)`
 
-        :param: mapper: please use columns
-        :param: index: not supported
-        :param: columns: dict str:str to rename columns, or a function that takes column
-            names as an argument and returns the new one. The new column names must not clash with other
-            column names in either self.data or self.index, after renaming is complete.
-        :param: axis: axis = 1 is supported, rest is not.
-        :param: inplace: update this df or make a copy first
-        :param: level: not supported
-        :param: errors: Either 'ignore' or 'raise'. When set to 'ignore' KeyErrors about non-existing
+        :param mapper: dict to apply to that axis' values. Use mapper and axis to specify the axis to target
+            with mapper. Currently mapper is only supported with axis=1, which is similar to using columns.
+        :param index: not supported.
+        :param columns: dict str:str to rename columns, or a function that takes column names as an argument
+            and returns the new one. The new column names must not clash with other column names in either
+            self.data or self.index, after renaming is complete.
+        :param axis: axis = 1 is supported, rest is not.
+        :param inplace: update the current DataFrame or return a new DataFrame.
+        :param level: not supported
+        :param errors: Either 'ignore' or 'raise'. When set to 'ignore' KeyErrors about non-existing
             column names in `columns` or `mapper` are ignored. Errors thrown in the mapper function or about
             invalid target column names are not suppressed.
         :note: copy parameter is not supported since it makes very little sense for db backed series
         """
+        # todo should we support arguments of unsupported functionality?
         if level is not None or \
                 index is not None or \
                 (mapper is not None and axis == 0):
