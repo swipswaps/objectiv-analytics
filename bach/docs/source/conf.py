@@ -56,6 +56,7 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.linkcode',
     'sphinx.ext.doctest',
+  'numpydoc',
     #'sphinx.ext.viewcode',
     #'IPython.sphinxext.ipython_directive',
     #'IPython.sphinxext.ipython_console_highlighting',
@@ -77,6 +78,7 @@ intersphinx_mapping = {
 
 autodoc_default_options = {
     'members': True,
+    # 'private-members': False,
     'inherited-members': True,
     'undoc-members': True,
     'inherited-members': True,

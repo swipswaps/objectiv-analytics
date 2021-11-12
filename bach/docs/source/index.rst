@@ -75,6 +75,21 @@ situations:
 
 
 
+Series
+------
+
+.. autosummary::
+    :toctree: bach/series
+
+    bach.series.series_boolean
+    bach.series.series_datetime
+    bach.series.series_json
+    bach.series.series_numeric
+    bach.series.series_string
+    bach.series.series_uuid
+    bach.series.series
+
+
 
 Examples
 --------

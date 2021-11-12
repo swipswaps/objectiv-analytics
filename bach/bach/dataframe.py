@@ -49,19 +49,19 @@ class DataFrame:
     your Bach DataFrame to a pandas DataFrame.
 
     Usage
-    ---------
+    -----
     It should generally not be required to construct Series instances manually. A DataFrame can be constructed
     using the any of the bach classmethods like from_table, from_model, or from_pandas. The returned DataFrame
     can be thought of as a dict-like container for Bach Series objects.
 
     Getting & Setting columns
-    ---------
+    -------------------------
     Getting data works similar to pandas DataFrame. Single columns can be retrieved with df['column_name']
     as well as df.column_name. This will return a single Bach Series. Multiple columns can be retrieved by
-    passing a list of column names like: df[['column_name','other_column_name']]. This returns a Bach
+    passing a list of column names like: `df[['column_name','other_column_name']]`. This returns a Bach
     DataFrame.
 
-    A selection of rows can be selected with python slicing. I.e. df[2:5] returns row 2 to 5. Only positive
+    A selection of rows can be selected with python slicing. I.e. `df[2:5]` returns row 2 to 5. Only positive
     integers are currently accepted in slices.
 
     SeriesBoolean can also be used to filter DataFrames, and these Series are easily created using comparison
@@ -69,38 +69,34 @@ class DataFrame:
     boolean_series = a == b. Boolean indexing can be done like df[df.column == 5]. Only rows are returned for
     which the condition is true.
 
-    See also
-    ---------
-    Series.isin
-    Series.isnull
-    Series.notnull
-
-    Values, series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
+    Moving Series around
+    --------------------
+    Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
     DataFrame is possible if they share the same base node. This means that they originate from the same data
     source. In most cases this means that the series that is to be set to the DataFrame is a result of
     operations on the DataFrame that is started with.
+
     Examples
     --------
-    df['a'] = df.column_name + 5
-    df['b'] = ''
+    .. code-block:: python
+        df['a'] = df.column_name + 5
+        df['b'] = ''
 
     If a Series of DataFrames do not share the same base node, it is possible to combine the data using
-    merge().
+    :py:meth:`~bach.dataframe.DataFrame.merge()`.
 
-    See also
-    ---------
-    Series.isin
-    DataFrame.merge
 
     Database access
-    ---------
+    ---------------
     The data of this DataFrame is always held in the database and operations on the data are performed
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
-    * head()
-    * to_pandas()
-    * get_sample()
-    * The property accessors .values and .array
+    * :py:meth:`~bach.dataframe.DataFrame.head()`
+    * :py:meth:`~bach.dataframe.DataFrame.to_pandas()`
+    * :py:meth:`~bach.dataframe.DataFrame.get_sample()`
+    * The property accessors :py:attr:`~bach.series.series.Series.value` (Series only)
+   , :py:attr:`~bach.dataframe.DataFrame.values`, and :py:attr:`~bach.dataframe.DataFrame.array`
+
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
     only when one of the above mentioned data-transfer functions is called.

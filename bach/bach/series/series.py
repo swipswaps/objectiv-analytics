@@ -33,71 +33,73 @@ class Series(ABC):
 
     It can be used as a separate object to just deal with a single list of values. There are many standard
     operations on Series available to do operations like add or subtract, to create aggregations like
-    nunique() or count(), or to create new sub-Series, like unique().
+    :py:meth:`~bach.dataframe.DataFrame.nunique()` or :py:meth:`~bach.dataframe.DataFrame.count()`,
+    or to create new sub-Series, like :py:meth:`~bach.dataframe.DataFrame.unique()`.
 
-    Usage
-    -----
+    .. rubric:: Usage
     Almost every operation on a Series will return a Series with the operation set-up, allowing for complex
     combinations of operations.
 
-    It should generally not be required to construct Series instances manually. DataFrame will create them
-    for you when required.
+    It should generally not be required to construct Series instances manually.
+    :py:class:`~bach.dataframe.DataFrame` will create them for you when required.
 
-    Slicing and index access
-    ------------------------
+    .. rubric:: Slicing and index access
     Series support a few standard operations to get specific values:
     series[:3] will return the first 3 values of the Series. Sort order of the series is important, so use
-    sort_values() before slicing. Any slice with positive parameters is supported.
+    `~bach.dataframe.DataFrame.sort_values()` before slicing. Any slice with positive parameters is supported.
 
     Index lookups like series['key'] are also possible, and yield the value of the series where the index
     matches 'key'.
 
-    Database access
-    ---------------
+    .. rubric:: Database access
     The data of this Series is always held in the database and operations on the data are performed
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
-    * Series.head()
-    * Series.to_pandas()
-    * Any of the property accessors .values, .array and .value
+         * :py:meth:`~bach.dataframe.DataFrame.to_pandas()`
+         * :py:meth:`~bach.dataframe.DataFrame.head()`
+         * The property accessors :py:attr:`~bach.series.series.Series.value` (Series only),
+           :py:attr:`~bach.dataframe.DataFrame.values`, and :py:attr:`~bach.dataframe.DataFrame.array`
 
     If you really need the actual values, use the above, but in general it's better to use the Series that
     generate them, as this will create more flexible code.
 
-    Boolean Operations
-    ------------------
-    A special subclass: SeriesBoolean, can be used to filter DataFrames, and these Series are easily created
-    using comparison operations like equals (==), less-than (<), not(~) on two series:
-    boolean_series = a == b
+    .. rubric:: Boolean Operations
+    A special subclass, :py:class:`~bach.series.series_boolean.SeriesBoolean`, can be used to filter
+    DataFrames, and these Series are easily created using comparison operations like equals (==),
+    less-than (<), not(~) on two series: `boolean_series = a == b`
 
     More complex boolean operations like `a.isin(b)` are also supported, as well as multi-compares:
     `a > b.any_value()` being True when there is a value in `b` where `a > b == True`
 
-    See SeriesBoolean for more info on the operation and syntax.
+    See :py:class:`~bach.series.series_boolean.SeriesBoolean` for more info on the operation and syntax.
 
-    Aggregations
-    ------------
-    All Series support type-agnostic aggregations: count(), min(), max(), median(), mode() and nunique()
+    .. rubric:: Aggregations
+    All Series support type-agnostic aggregations:
+        * :py:meth:`~bach.dataframe.DataFrame.count()`
+        * :py:meth:`~bach.dataframe.DataFrame.nunique()`
+        * :py:meth:`~bach.dataframe.DataFrame.min()`
+        * :py:meth:`~bach.dataframe.DataFrame.max()`
+        * :py:meth:`~bach.dataframe.DataFrame.median()`
+        * :py:meth:`~bach.dataframe.DataFrame.mode()`
 
     When a Series has aggregation setup (inherited from the Dataframe it's part of, or passed as an argument
     to the aggregation function), it will use that aggregation instead of an aggregation over the full Series.
 
-    Window Functions
-    ----------------
-    All aggregation can also be used with a window[Dataframe.Window]. A window defines the subset of data on
-    which the aggregation takes place. Unlike an aggregation, a window function returns a value for every row
-    in the data set.
+    .. rubric:: Window Functions
+    All aggregation can also be used with a :py:class:`~bach.partitioning.Window`. A window defines the
+    subset of data on which the aggregation takes place. Unlike an aggregation, a window function returns a
+    value for every row in the data set.
     Next to aggregations, window functions can also be used to create special values, like the one from the
-    previous row (using Series.window_lag()). All of these functions are in the Series.window_* namespace.
+    previous row (using :py:meth:`~bach.series.series.Series.window_lag()`). All of these functions are in the
+    Series.window_* namespace.
 
-    Types
-    -----
+    .. rubric:: Types
     Series have a specific type that determines what kind of operations are available. All numeric series
     support arithmetic operations and aggregations for example. It may or may not be possible to perform
     operations on different types. A comparison or arithmetic operation between a Int64 and Float Series
     is okay, while a comparison operation is not.
 
-    The type of a Series can generally be changed by called series.astype('new_type').
+    The type of a Series can generally be changed by calling :py:meth:`~bach.series.series.Series.astype()`.
     """
 
     # A series is defined by an expression and a name, and it exists within the scope of the base_node.
@@ -209,7 +211,7 @@ class Series(ABC):
     @property
     @classmethod
     # TODO Hide from docs
-    def supported_value_types(cls) -> Tuple[Type, ...]:
+    def supported_value_types(cls) -> Tuple[Type, ...]: #: :meta hide-value:
         """
         List of python types that can be converted to database values using
         the `supported_value_to_expression()` method.
@@ -222,7 +224,7 @@ class Series(ABC):
     @classmethod
     @abstractmethod
     # TODO Hide from docs
-    def supported_value_to_expression(cls, value: Any) -> Expression:
+    def supported_value_to_expression(cls, value: Any) -> Expression: #: :meta hide-value:
         """
         Give the expression for the given value. Consider calling the wrapper value_to_expression() instead.
 
@@ -241,7 +243,7 @@ class Series(ABC):
     @classmethod
     @abstractmethod
     # TODO Hide from docs
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression: #: :meta hide-value:
         """
         Give the sql expression to convert the given expression, of the given source dtype to the dtype of
         this Series.
@@ -251,12 +253,17 @@ class Series(ABC):
 
     @property
     # TODO Hide from docs
-    def engine(self):
+    def engine(self): #: :meta hide-value:
         return self._engine
 
     @property
     # TODO Hide from docs
-    def base_node(self) -> SqlModel:
+    #::meta hide-value:
+    def base_node(self) -> SqlModel:     #::meta hide-value:
+
+        """
+        ::meta private:
+        """
         return self._base_node
 
     @property
