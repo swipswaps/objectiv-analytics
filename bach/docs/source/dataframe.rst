@@ -72,7 +72,7 @@ DataFrames see https://pandas.pydata.org/docs/reference/frame.html
 Constructor
 ~~~~~~~~~~~
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame
 
@@ -80,7 +80,7 @@ Constructor
 Methods todo
 ~~~~~~~~~~~~
 .. autosummary::
-    :toctree:
+    :toctree: dataframe
 
     DataFrame.copy_override
     DataFrame.from_table
@@ -108,12 +108,12 @@ Attributes and underlying data
 **Axes**
 
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame.index
 
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame.dtypes
    DataFrame.values
@@ -131,21 +131,21 @@ Attributes and underlying data
 Conversion
 ~~~~~~~~~~
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame.astype
 
 Indexing, iteration
 ~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame.head
 
 Function application, GroupBy & window
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame.agg
    DataFrame.aggregate
@@ -157,7 +157,7 @@ Function application, GroupBy & window
 Computations / descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame.count
    DataFrame.kurt
@@ -180,7 +180,7 @@ Computations / descriptive stats
 Reindexing / selection / label manipulation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame.drop
    DataFrame.head
@@ -189,14 +189,14 @@ Reindexing / selection / label manipulation
 Reshaping, sorting, transposing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame.sort_values
 
 Combining / comparing / joining / merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree:
+   :toctree: dataframe
 
    DataFrame.merge
 

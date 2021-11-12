@@ -1,3 +1,6 @@
+.. currentmodule:: bach
+
+=============
 Data Modeling
 =============
 
@@ -22,12 +25,18 @@ can be analysed with Bach.
 
 The two main data classes of Bach are the DataFrame and Series:
 
-* A :py:class:`~bach.DataFrame` represents data in a tabular form, with all rows having the same
+* A :py:class:`DataFrame` represents data in a tabular form, with all rows having the same
   columns, and each column having a specific data type and a distinct name.
-* A :py:class:`~bach.series.Series` object represents a single column in a DataFrame, with
+* A :py:class:`Series` object represents a single column in a DataFrame, with
   different subclasses per data type that allow for type specific operations.
 
 .. [*] Currently we only support Postgres, but we plan on supporting more databases
+
+.. toctree::
+    :maxdepth: 2
+
+    dataframe
+    series
 
 Delayed database operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -35,10 +44,11 @@ Regular operations on DataFrames and Series do not trigger any operations on the
 transfer any data from the database to Bach. All operations are combined and compiled to a single SQL query,
 which is executed only when one of a few specific data-transfer functions is called on either a DataFrame or
 a Series object:
-* :py:meth:`~bach.DataFrame.to_pandas()`
-* :py:meth:`~bach.DataFrame.head()`
-* The property accessors :py:attr:`~bach.series.Series.value` (Series only)
-, :py:attr:`~bach.DataFrame.values`, and :py:attr:`~bach.DataFrame.array`
+
+* :py:meth:`DataFrame.to_pandas()`
+* :py:meth:`DataFrame.head()`
+* The property accessors :py:attr:`DataFrame.values`, :py:attr:`DataFrame.array` and
+  :py:attr:`Series.value` (Series only),
 
 Typical usage would be to do all heavy lifting inside the database, and only query the aggregated/summarized
 output.
@@ -57,39 +67,24 @@ database. This also results in a few differences in how DataFrames form both lib
 situations:
 
 * The order of rows in a Bach DataFrame can be non-deterministic. If there is not a deterministic
-  :py:meth:`~bach.DataFrame.sort_values()` call, then the order of the rows that the data-transfer
+  :py:meth:`DataFrame.sort_values()` call, then the order of the rows that the data-transfer
   functions return can be unpredictable.
 * Bach DataFrames can distinguish between `NULL`/`None` and Not-a-Number (`NaN`). Pandas generally doesn't
   and mainly uses NaN. When outputting data from a Bach DataFrame to a pandas DataFrame, most of this
   distinction is lost again.
 * In a Bach DataFrame column names must be unique, in pandas this is not the case
 
-
-.. toctree::
-    :maxdepth: 2
-
-    dataframe
-    series
-
-
-
-
-
-
-
 Examples
 --------
-
 Here we'll give some very basic examples of the usage of Bach: creating a DataFrame, basic operations,
 aggregate operations, and getting the resulting data.
 
 In the examples we'll assume that the database has a table called 'example', with a few specific
-columns. The SQL to create that table can be found below in :ref:`my-reference-label`.
+columns. The SQL to create that table can be found below in :ref:`appendix_example_data`.
 
 
 Create a DataFrame from a database table
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 .. code-block:: python
 
     from bach import from_table
@@ -107,7 +102,6 @@ existing pandas DataFrame (using `from_pandas`).
 
 Basic operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 .. code-block:: python
 
     # Adding a new column
@@ -138,7 +132,6 @@ should be avoided until the data is needed as it will query the database and tra
 
 Aggregate operations
 ~~~~~~~~~~~~~~~~~~~~
-
 .. code-block:: python
 
     # Group on century, select the 'inhabitants' column, and calculate the maximum value within the group
@@ -194,7 +187,7 @@ encompasses all operations done so far.
 
 
 
-.. _my-reference-label:
+.. _appendix_example_data:
 
 Appendix: Example Data
 ----------------------

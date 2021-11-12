@@ -22,12 +22,11 @@ if TYPE_CHECKING:
     from bach.series import SeriesBoolean
 
 
-WrappedPartition = Union['GroupBy', 'DataFrame']  #: :meta hide-value:
-WrappedWindow = Union['Window', 'DataFrame']  #: :meta hide-value:
+WrappedPartition = Union['GroupBy', 'DataFrame']
+WrappedWindow = Union['Window', 'DataFrame']
 
 
 class Series(ABC):
-    # TODO hide the constructor signature, it's internal
     """
     A typed representation of a single column of data.
 
@@ -46,7 +45,6 @@ class Series(ABC):
     # The attributes of this class are either immutable, or this class is guaranteed not
     # to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
     # and is shared with other Series and DataFrames that can change it's state.
-
     def __init__(self,
                  engine,
                  base_node: SqlModel,
@@ -82,7 +80,6 @@ class Series(ABC):
         :param expression: Expression that this Series represents
         :param group_by: The requested aggregation for this series.
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
-        :meta private:
         """
         self._engine = engine
         self._base_node = base_node
@@ -91,7 +88,6 @@ class Series(ABC):
         self._expression = expression
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
-
 
     @property
     @classmethod
@@ -116,7 +112,6 @@ class Series(ABC):
         certain type: `x.astype('boolean')` is the same as `x.astype('bool')`.
 
         Subclasses can override this value to indicate what strings they consider aliases for their dtype.
-        :meta private:
         """
         return tuple()
 
@@ -125,13 +120,11 @@ class Series(ABC):
         """
         The dtype of this Series in a pandas.Series. Defaults to None
         Override to cast specifically, and set to None to let pandas choose.
-        :meta private:
         """
         return None
 
     @property
     @classmethod
-    # TODO Hide from docs
     def supported_db_dtype(cls) -> Optional[str]:
         """
         Database level data type, that can be expressed using this Series type.
@@ -145,8 +138,7 @@ class Series(ABC):
 
     @property
     @classmethod
-    # TODO Hide from docs
-    def supported_value_types(cls) -> Tuple[Type, ...]: #: :meta hide-value:
+    def supported_value_types(cls) -> Tuple[Type, ...]:
         """
         List of python types that can be converted to database values using
         the `supported_value_to_expression()` method.
@@ -158,8 +150,7 @@ class Series(ABC):
 
     @classmethod
     @abstractmethod
-    # TODO Hide from docs
-    def supported_value_to_expression(cls, value: Any) -> Expression: #: :meta hide-value:
+    def supported_value_to_expression(cls, value: Any) -> Expression:
         """
         Give the expression for the given value. Consider calling the wrapper value_to_expression() instead.
 
@@ -177,8 +168,7 @@ class Series(ABC):
 
     @classmethod
     @abstractmethod
-    # TODO Hide from docs
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression: #: :meta hide-value:
+    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         """
         Give the sql expression to convert the given expression, of the given source dtype to the dtype of
         this Series.
@@ -229,12 +219,10 @@ class Series(ABC):
         return self._sorted_ascending
 
     @property
-    # TODO Hide from docs
     def expression(self) -> Expression:
         return self._expression
 
     @classmethod
-    # TODO Hide from docs
     def get_class_instance(
             cls,
             base: DataFrameOrSeries,
@@ -255,7 +243,6 @@ class Series(ABC):
         )
 
     @classmethod
-    # TODO Hide from docs
     def value_to_expression(cls, value: Optional[Any]) -> Expression:
         """
         Give the expression for the given value.
@@ -294,7 +281,6 @@ class Series(ABC):
         )
         return result
 
-    # TODO hide in docs
     def copy_override(self,
                       dtype=None,
                       engine=None,
@@ -319,7 +305,6 @@ class Series(ABC):
             sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending
         )
 
-    # TODO hide in docs
     def get_column_expression(self, table_alias: str = None) -> Expression:
         expression = self.expression.resolve_column_references(table_alias)
         quoted_column_name = quote_identifier(self.name)
@@ -328,7 +313,6 @@ class Series(ABC):
 
         return Expression.construct('{} as {}', expression, Expression.raw(quoted_column_name))
 
-    # TODO hide in docs
     def _get_supported(self, operation_name: str, supported_dtypes: Tuple[str, ...], other: 'Series'):
         """
         Check whether `other` is supported for this operation, and if not, possibly do something
@@ -402,7 +386,6 @@ class Series(ABC):
             return self
         return self.copy_override(sorted_ascending=ascending)
 
-    # TODO hide from docs
     def view_sql(self):
         return self.to_frame().view_sql()
 
@@ -426,7 +409,6 @@ class Series(ABC):
         )
 
     @staticmethod
-    # TODO hide from docs
     def as_independent_subquery(series, operation: str = None, dtype: str = None) -> 'Series':
         """
         Get a series representing an independent subquery, created by materializing the series given
@@ -495,7 +477,6 @@ class Series(ABC):
         new_dtype = cast(str, series_type.dtype)
         return self.copy_override(dtype=new_dtype, expression=expression)
 
-    # TODO hide from docs
     def equals(self, other: Any, recursion: str = None) -> bool:
         """
         Checks whether other is the same as self. This implements the check that would normally be
@@ -667,7 +648,6 @@ class Series(ABC):
         raise NotImplementedError()
 
     # Boolean operations
-
     def __invert__(self) -> 'Series':
         raise NotImplementedError()
 
@@ -721,7 +701,6 @@ class Series(ABC):
         :param kwargs: Keyword arguments to pass through to the aggregation function
 
         :note: you should probably not use this method directly.
-        :meta private:
         """
         if isinstance(func, str) or callable(func):
             func = [func]
@@ -757,7 +736,7 @@ class Series(ABC):
                   group_by: 'GroupBy' = None,
                   *args, **kwargs) -> DataFrameOrSeries:
         """
-        use agg(..)
+        Alias for :py:meth:`agg()`.
         """
         return self.agg(func, group_by, *args, **kwargs)
 
@@ -766,12 +745,14 @@ class Series(ABC):
             group_by: 'GroupBy' = None,
             *args, **kwargs) -> DataFrameOrSeries:
         """
+        Apply one or more aggregation functions to this Series.
+
         :param func: the aggregation function to look for on all series.
             See GroupBy.agg() for supported arguments
         :param group_by: the group_by to use, or aggregation over full base_node if None
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
-        :returns: Aggregated Series, or DataFrame if multiple series are returned
+        :return: Aggregated Series, or DataFrame if multiple series are returned
         """
         if group_by is None:
             from bach.partitioning import GroupBy

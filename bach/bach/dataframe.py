@@ -48,14 +48,14 @@ class DataFrame:
     do other operations that are not suitable for in memory processing. At any time it is possible to write
     your Bach DataFrame to a pandas DataFrame.
 
-    Usage
-    -----
+    **Usage**
+
     It should generally not be required to construct Series instances manually. A DataFrame can be constructed
     using the any of the bach classmethods like from_table, from_model, or from_pandas. The returned DataFrame
     can be thought of as a dict-like container for Bach Series objects.
 
-    Getting & Setting columns
-    -------------------------
+    **Getting & Setting columns**
+
     Getting data works similar to pandas DataFrame. Single columns can be retrieved with df['column_name']
     as well as df.column_name. This will return a single Bach Series. Multiple columns can be retrieved by
     passing a list of column names like: `df[['column_name','other_column_name']]`. This returns a Bach
@@ -69,34 +69,34 @@ class DataFrame:
     boolean_series = a == b. Boolean indexing can be done like df[df.column == 5]. Only rows are returned for
     which the condition is true.
 
-    Moving Series around
-    --------------------
+    **Moving Series around**
+
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
     DataFrame is possible if they share the same base node. This means that they originate from the same data
     source. In most cases this means that the series that is to be set to the DataFrame is a result of
     operations on the DataFrame that is started with.
 
-    Examples
-    --------
+    **Examples**
+
     .. code-block:: python
 
-    df['a'] = df.column_name + 5
-    df['b'] = ''
+        df['a'] = df.column_name + 5
+        df['b'] = ''
 
     If a Series of DataFrames do not share the same base node, it is possible to combine the data using
-    :py:meth:`~bach.dataframe.DataFrame.merge()`.
+    :py:meth:`merge()`.
 
 
-    Database access
-    ---------------
+    **Database access**
+
     The data of this DataFrame is always held in the database and operations on the data are performed
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
-    * :py:meth:`~bach.dataframe.DataFrame.head()`
-    * :py:meth:`~bach.dataframe.DataFrame.to_pandas()`
-    * :py:meth:`~bach.dataframe.DataFrame.get_sample()`
-    * The property accessors :py:attr:`~bach.series.series.Series.value` (Series only)
-   , :py:attr:`~bach.dataframe.DataFrame.values`, and :py:attr:`~bach.dataframe.DataFrame.array`
+
+    * :py:meth:`head()`
+    * :py:meth:`to_pandas()`
+    * :py:meth:`get_sample()`
+    * The property accessors :py:attr:`Series.value` (Series only), :py:attr:`values`, and :py:attr:`array`
 
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
@@ -316,6 +316,7 @@ class DataFrame:
         :param table_name: the table name that contains the data to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
+        :returns: A DataFrame based on a sql table.
         """
         # todo: why is an index mandatory if you can reset it later?
         # todo: don't create a temporary table, the real table (and its meta data) already exists
@@ -334,6 +335,7 @@ class DataFrame:
         :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
+        :returns: A DataFrame based on an SqlModel
         """
         # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
         # select expressions, where clauses, or limits
@@ -399,6 +401,7 @@ class DataFrame:
             * fail: Raise a ValueError.
             * replace: Drop the table before inserting new values.
             * append: Insert new values to the existing table.
+        :returns: A DataFrame based on a pandas DataFrame
         """
         # todo materialzation is 'cte' by default, add warning for large dataframe?
         from bach.from_pandas import from_pandas
@@ -470,7 +473,7 @@ class DataFrame:
         :param node_name: The name of the node that's going to be created
         :param inplace: Perform operation on self if inplace=True, or create a copy
         :param limit: The limit (slice, int) to apply.
-        :return: New DataFrame with the current DataFrame's state as base_node
+        :returns: New DataFrame with the current DataFrame's state as base_node
         """
         if inplace:
             raise NotImplementedError("inplace materialization is not supported")
@@ -509,6 +512,7 @@ class DataFrame:
         :param overwrite: if True, the sample data is written to table_name, even if that table already
             exists.
         :param seed: optional seed number used to generate the sample.
+        :returns: a sampled DataFrame of the current DataFrame.
         """
         # todo if_exists and overwrite are two different syntax for the same thing. should we align?
         if sample_percentage is None and filter is None:
@@ -568,6 +572,7 @@ class DataFrame:
 
         Will raise an error if the current DataFrame is not sample data of another DataFrame, i.e.
         get_sample() has not been called.
+        :returns: an unsampled copy of the current sampled DataFrame.
         """
         df = self
         if df._group_by:
@@ -750,9 +755,11 @@ class DataFrame:
         :param errors: Either 'ignore' or 'raise'. When set to 'ignore' KeyErrors about non-existing
             column names in `columns` or `mapper` are ignored. Errors thrown in the mapper function or about
             invalid target column names are not suppressed.
+        :returns: DataFrame with the renamed axis labels or None if inplace=True.
         :note: copy parameter is not supported since it makes very little sense for db backed series
         """
         # todo should we support arguments of unsupported functionality?
+        # todo note is not visible in docstring do we want that?
         if level is not None or \
                 index is not None or \
                 (mapper is not None and axis == 0):
@@ -788,13 +795,20 @@ class DataFrame:
                 series = series.copy_override(name=new_name)
             new_data[new_name] = series
         df._data = new_data
-        return df
+        if not inplace:
+            return df
 
     def reset_index(self, drop: bool = False, inplace: bool = False):
         """
-        Drop the current index and replace it with {}
-        :param drop:  delete the series that are removed  from the index if True, else re-add to data series
-        :param inplace: perform the operation on self when inplace=True or on a copy.
+        Drops the current index.
+
+        With reset_index, all indexes are removed from the DataFrame, so that the DataFrame does not have any
+        index Series. A new index can be set with DataFrame.set_index.
+
+        :param drop: if True, the dropped index is added to the data columns of the DataFrame. If False it
+            is removed.
+        :param inplace: update the current DataFrame or return a new DataFrame.
+        :returns: DataFrame with the index dropped or None if inplace=True.
         """
         df = self if inplace else self.copy_override()
         if self._group_by:
@@ -804,21 +818,22 @@ class DataFrame:
         series = df._data if drop else df.all_series
         df._data = {n: s.copy_override(index={}) for n, s in series.items()}
         df._index = {}
-        return df
+        if not inplace:
+            return df
 
     def set_index(self, keys: Union[str, 'Series', List[Union[str, 'Series']]],
                   append: bool = False, drop: bool = True, inplace: bool = False):
         """
         Set this dataframe's index to the the index given in keys
 
-        :param keys: the keys of the new index. Can be a series name str, a Series, or a list
-            of those.
-        :param append: whether to append to the existing index or replace
-        :param drop: delete columns to be used as the new index
-        :param inplace: attempt inplace operation, not always supported and will raise if not
-        :returns: the modified df in case inplace=True, else a copy with the modifications applied.
+        :param keys: the keys of the new index. Can be a column name str, a Series, or a list of those. If
+            Series are passed, they should have the same base node as the DataFrame they are set on.
+        :param append: whether to append to the existing index or replace.
+        :param drop: delete columns to be used as the new index.
+        :param inplace: update the current DataFrame or return a new DataFrame. This is not always supported
+            and will raise if it is not.
+        :returns: a DataFrame with the new index or None if inplace=True.
         """
-
         from bach.series import Series
 
         df = self if inplace else self.copy_override()
@@ -849,10 +864,13 @@ class DataFrame:
 
         df._index = new_index
         df._data = new_series
-        return df
+        if not inplace:
+            return df
 
     def __delitem__(self, key: str):
-        """ TODO: comments """
+        """
+        Deletes columns from the DataFrame.
+        """
         if isinstance(key, str):
             del (self._data[key])
             return
@@ -867,14 +885,16 @@ class DataFrame:
              inplace: bool = False,
              errors: str = 'raise') -> 'DataFrame':
         """
-        Drop labels/columns from the dataframe
+        Drop columns from the DataFrame
 
-        :param: labels: not supported
-        :param: index: not supported
-        :param: columns: the list of columns to drop
-        :param: level: not supported
-        :param: inplace: whether to update this df of make a copy first
-        :param: errors: 'raise' or 'ignore' missing key errors
+        :param labels: not supported
+        :param index: not supported
+        :param columns: the list of columns to drop.
+        :param level: not supported
+        :param inplace: update the current DataFrame or return a new DataFrame.
+        :param errors: 'raise' or 'ignore' missing key errors.
+        :returns: DataFrame without the removed columns or None if inplace=True.
+
         """
         if labels or index is not None:
             # TODO we could do this using a boolean __series__
@@ -884,7 +904,7 @@ class DataFrame:
             raise NotImplementedError('dropping index levels not supported.')
 
         if columns is None:
-            raise ValueError("columns needs to be an (empty) list of strings.")
+            raise ValueError("columns needs to be a list of strings.")
 
         if inplace:
             df = self
@@ -898,11 +918,12 @@ class DataFrame:
             if errors == "raise":
                 raise e
 
-        return df
+        if not inplace:
+            return df
 
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'DataFrame':
         """
-        Cast all or some of the data columns to a certain type.
+        Cast all or some of the data columns to a certain dtype.
 
         Only data columns can be cast, index columns cannot be cast.
 
@@ -911,7 +932,7 @@ class DataFrame:
         :param dtype: either
             * A single str, in which case all data columns are cast to this dtype
             * A dictionary mapping column labels to dtype.
-        :return: New DataFrame with the specified column(s) cast to the specified type
+        :returns: New DataFrame with the specified column(s) cast to the specified dtype
         """
         # Check and/or convert parameters
         if not isinstance(dtype, dict):
@@ -933,6 +954,7 @@ class DataFrame:
 
     # Some typing help required here.
     GroupBySingleType = Union[str, 'Series']
+    # TODO exclude from docs
 
     def _partition_by_series(self,
                              by: Union[GroupBySingleType,
@@ -988,19 +1010,17 @@ class DataFrame:
                                  Tuple[GroupBySingleType, ...]]],  # for grouping lists
                       None] = None) -> 'DataFrame':
         """
-        Group by any of the series currently in this dataframe, both from index
-        as well as data.
+        Group by any of the series currently in this DataDrame, both from index as well as data.
 
         :param by: The series to group by. Supported are: a str containing a series name,
-               a series, or a list of those.
-               If `by` is a list of (lists or tuples) , we'll create a grouping list
-               If `by` is a tuple of tuples, we'll create a grouping set,
-               else a normal group by will be created.
-
+                a series, or a list of those.
+                If `by` is a list of (lists or tuples), we'll create a grouping list
+                If `by` is a tuple of tuples, we'll create a grouping set,
+                else a normal group by will be created.
+        :returns: a new DataFrame object with the group_by attribute set. This indicates this DataFrame can be
+            used to perform aggregations on.
         :note: if the dataframe is already grouped, we'll create a grouping list from the initial
             grouping combined with this one.
-
-        :return: an object to perform aggregations on
         """
         from bach.partitioning import GroupBy, GroupingList, GroupingSet
 
@@ -1180,7 +1200,7 @@ class DataFrame:
         :param by: column label or list of labels to sort by.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             by must also be a list and len(ascending) == len(by)
-        :return: a new DataFrame with the specified ordering
+        :returns: a new DataFrame with the specified ordering
         """
         if isinstance(by, str):
             by = [by]
@@ -1262,7 +1282,7 @@ class DataFrame:
         :param limit: The limit to use
         :param where_clause: The where-clause to apply, if any
         :param having_clause: The having-clause to apply in case group_by is set, if any
-        :return: SQL query as a SqlModel that represents the current state of this DataFrame.
+        :returns: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
 
         if isinstance(limit, int):
@@ -1344,7 +1364,7 @@ class DataFrame:
         """
         Translate the current state of this DataFrame into a SQL query.
         :param limit: limit on which rows to select in the query
-        :return: SQL query
+        :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
         return to_sql(model)
