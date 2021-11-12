@@ -48,14 +48,14 @@ class DataFrame:
     do other operations that are not suitable for in memory processing. At any time it is possible to write
     your Bach DataFrame to a pandas DataFrame.
 
-    Usage
-    -----
+    **Usage**
+
     It should generally not be required to construct Series instances manually. A DataFrame can be constructed
     using the any of the bach classmethods like from_table, from_model, or from_pandas. The returned DataFrame
     can be thought of as a dict-like container for Bach Series objects.
 
-    Getting & Setting columns
-    -------------------------
+    **Getting & Setting columns**
+
     Getting data works similar to pandas DataFrame. Single columns can be retrieved with df['column_name']
     as well as df.column_name. This will return a single Bach Series. Multiple columns can be retrieved by
     passing a list of column names like: `df[['column_name','other_column_name']]`. This returns a Bach
@@ -69,34 +69,34 @@ class DataFrame:
     boolean_series = a == b. Boolean indexing can be done like df[df.column == 5]. Only rows are returned for
     which the condition is true.
 
-    Moving Series around
-    --------------------
+    **Moving Series around**
+
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
     DataFrame is possible if they share the same base node. This means that they originate from the same data
     source. In most cases this means that the series that is to be set to the DataFrame is a result of
     operations on the DataFrame that is started with.
 
-    Examples
-    --------
+    **Examples**
+
     .. code-block:: python
 
-    df['a'] = df.column_name + 5
-    df['b'] = ''
+        df['a'] = df.column_name + 5
+        df['b'] = ''
 
     If a Series of DataFrames do not share the same base node, it is possible to combine the data using
-    :py:meth:`~bach.dataframe.DataFrame.merge()`.
+    :py:meth:`merge()`.
 
 
-    Database access
-    ---------------
+    **Database access**
+
     The data of this DataFrame is always held in the database and operations on the data are performed
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
-    * :py:meth:`~bach.dataframe.DataFrame.head()`
-    * :py:meth:`~bach.dataframe.DataFrame.to_pandas()`
-    * :py:meth:`~bach.dataframe.DataFrame.get_sample()`
-    * The property accessors :py:attr:`~bach.series.series.Series.value` (Series only)
-   , :py:attr:`~bach.dataframe.DataFrame.values`, and :py:attr:`~bach.dataframe.DataFrame.array`
+
+    * :py:meth:`head()`
+    * :py:meth:`to_pandas()`
+    * :py:meth:`get_sample()`
+    * The property accessors :py:attr:`Series.value` (Series only), :py:attr:`values`, and :py:attr:`array`
 
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed

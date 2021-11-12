@@ -74,7 +74,7 @@ autodoc_typehints = 'none'
 
 # numpydoc
 numpydoc_attributes_as_param_list = False
-numpydoc_show_class_members = True
+numpydoc_show_class_members = False
 
 # autosummary
 autosummary_generate = True
@@ -122,7 +122,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+# html_static_path = ['_static']
 
 
 # resolve URL to GitHub
@@ -178,5 +178,38 @@ def remove_copyright_string(app, what, name, obj, options, lines):
         del lines[0]
 
 
+def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
+    """
+    Skip some private API methods & attributes that can't easily be renamed to _func or _attr
+    """
+    import bach
+    _SKIP = {
+        bach.DataFrame.GroupBySingleType,
+        bach.DataFrame.get_current_node,
+
+        bach.Series.copy_override,
+        bach.Series.dtype_to_expression,
+        bach.Series.value_to_expression,
+        bach.Series.supported_value_to_expression,
+        bach.Series.as_independent_subquery,
+        bach.Series.get_class_instance,
+        bach.Series.get_column_expression,
+        bach.Series.dtype_aliases,
+        bach.Series.dtype_to_pandas,
+        bach.Series.engine,
+        bach.Series.equals,
+        bach.Series.supported_db_dtype,
+        bach.Series.supported_value_types,
+        bach.Series.expression
+    }
+
+    try:
+        if obj in _SKIP:
+            return True
+        return None
+    except TypeError:
+        return None
+
 def setup(app):
     app.connect("autodoc-process-docstring", remove_copyright_string)
+    app.connect("autodoc-skip-member", autodoc_skip_member_bach_internal)

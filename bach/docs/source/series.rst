@@ -7,8 +7,8 @@ A typed representation of a single column of data.
 
 It can be used as a separate object to just deal with a single list of values. There are many standard
 operations on Series available to do operations like add or subtract, to create aggregations like
-:py:meth:`series.Series.nunique()` or :py:meth:`series.Series.count()`, or to create new sub-Series,
-like :py:meth:`series.Series.unique()`.
+:py:meth:`Series.nunique()` or :py:meth:`Series.count()`, or to create new sub-Series,
+like :py:meth:`Series.unique()`.
 
 Usage
 -----
@@ -22,7 +22,7 @@ Slicing and index access
 ------------------------
 Series support a few standard operations to get specific values:
 series[:3] will return the first 3 values of the Series. Sort order of the series is important, so use
-`series.Series.sort_values()` before slicing. Any slice with positive parameters is supported.
+`Series.sort_values()` before slicing. Any slice with positive parameters is supported.
 
 Index lookups like series['key'] are also possible, and yield the value of the series where the index
 matches 'key'.
@@ -35,22 +35,22 @@ explicit call is made to one of the functions that transfers data:
 
      * :py:meth:`bach.DataFrame.to_pandas()`
      * :py:meth:`bach.DataFrame.head()`
-     * The property accessors :py:attr:`series.Series.value` (Series only),
-       :py:attr:`series.Series.values`, and :py:attr:`series.Series.array`
+     * The property accessors :py:attr:`Series.value` (Series only),
+       :py:attr:`Series.values`, and :py:attr:`Series.array`
 
 If you really need the actual values, use the above, but in general it's better to use the Series that
 generate them, as this will create more flexible code.
 
 Boolean Operations
 ------------------
-A special subclass, :py:class:`series_boolean.SeriesBoolean`, can be used to filter
+A special subclass, :py:class:`SeriesBoolean`, can be used to filter
 DataFrames, and these Series are easily created using comparison operations like equals (==),
 less-than (<), not(~) on two series: `boolean_series = a == b`
 
 More complex boolean operations like `a.isin(b)` are also supported, as well as multi-compares:
 `a > b.any_value()` being True when there is a value in `b` where `a > b == True`
 
-See :py:class:`series_boolean.SeriesBoolean` for more info on the operation and syntax.
+See :py:class:`SeriesBoolean` for more info on the operation and syntax.
 
 Aggregations
 ------------
@@ -62,11 +62,11 @@ to the aggregation function), it will use that aggregation instead of an aggrega
 
 Window Functions
 ----------------
-All aggregation can also be used with a :py:class:`bach.partitioning.Window`. A window defines the
+All aggregation can also be used with a :py:class:`partitioning.Window`. A window defines the
 subset of data on which the aggregation takes place. Unlike an aggregation, a window function returns a
 value for every row in the data set.
 Next to aggregations, window functions can also be used to create special values, like the one from the
-previous row (using :py:meth:`series.Series.window_lag()`). All of these functions are in the
+previous row (using :py:meth:`Series.window_lag()`). All of these functions are in the
 Series.window_* namespace.
 
 Types
@@ -132,12 +132,12 @@ Comparison and set operations
 .. autosummary::
     :toctree:
 
-    bach.Series.all_values
-    bach.Series.any_value
-    bach.Series.exists
-    bach.Series.isin
-    bach.Series.isnull
-    bach.Series.notnull
+    Series.all_values
+    Series.any_value
+    Series.exists
+    Series.isin
+    Series.isnull
+    Series.notnull
 
 
 Conversion, reshaping, sorting
