@@ -736,7 +736,7 @@ class DataFrame:
                axis: int = 0,
                inplace: bool = False,
                level: int = None,
-               errors: str = 'ignore'):
+               errors: str = 'ignore') -> Optional['DataFrame']:
         """
         Rename columns.
 
@@ -795,10 +795,9 @@ class DataFrame:
                 series = series.copy_override(name=new_name)
             new_data[new_name] = series
         df._data = new_data
-        if not inplace:
-            return df
+        return None if inplace else df
 
-    def reset_index(self, drop: bool = False, inplace: bool = False):
+    def reset_index(self, drop: bool = False, inplace: bool = False) -> Optional['DataFrame']:
         """
         Drops the current index.
 
@@ -818,11 +817,10 @@ class DataFrame:
         series = df._data if drop else df.all_series
         df._data = {n: s.copy_override(index={}) for n, s in series.items()}
         df._index = {}
-        if not inplace:
-            return df
+        return None if inplace else df
 
     def set_index(self, keys: Union[str, 'Series', List[Union[str, 'Series']]],
-                  append: bool = False, drop: bool = True, inplace: bool = False):
+                  append: bool = False, drop: bool = True, inplace: bool = False) -> Optional['DataFrame']:
         """
         Set this dataframe's index to the the index given in keys
 
@@ -864,8 +862,7 @@ class DataFrame:
 
         df._index = new_index
         df._data = new_series
-        if not inplace:
-            return df
+        return None if inplace else df
 
     def __delitem__(self, key: str):
         """
@@ -883,7 +880,7 @@ class DataFrame:
              columns: List[str] = None,
              level: int = None,
              inplace: bool = False,
-             errors: str = 'raise') -> 'DataFrame':
+             errors: str = 'raise') -> Optional['DataFrame']:
         """
         Drop columns from the DataFrame
 
@@ -918,8 +915,7 @@ class DataFrame:
             if errors == "raise":
                 raise e
 
-        if not inplace:
-            return df
+        return None if inplace else df
 
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'DataFrame':
         """
@@ -953,12 +949,12 @@ class DataFrame:
         return self.copy_override(series=new_data)
 
     # Some typing help required here.
-    GroupBySingleType = Union[str, 'Series']
+    _GroupBySingleType = Union[str, 'Series']
     # TODO exclude from docs
 
     def _partition_by_series(self,
-                             by: Union[GroupBySingleType,
-                                       Union[List[GroupBySingleType], Tuple[GroupBySingleType, ...]],
+                             by: Union[_GroupBySingleType,
+                                       Union[List[_GroupBySingleType], Tuple[_GroupBySingleType, ...]],
                                        None]) -> List['Series']:
         """
         Helper method to check and compile a partitioning list
@@ -1002,12 +998,12 @@ class DataFrame:
 
     def groupby(
             self,
-            by: Union[GroupBySingleType,  # single series group_by
+            by: Union[_GroupBySingleType,  # single series group_by
                       # for GroupingSets
-                      Tuple[Union[GroupBySingleType, Tuple[GroupBySingleType, ...]], ...],
-                      List[Union[GroupBySingleType,  # multi series
-                                 List[GroupBySingleType],  # for grouping lists
-                                 Tuple[GroupBySingleType, ...]]],  # for grouping lists
+                      Tuple[Union[_GroupBySingleType, Tuple[_GroupBySingleType, ...]], ...],
+                      List[Union[_GroupBySingleType,  # multi series
+                                 List[_GroupBySingleType],  # for grouping lists
+                                 Tuple[_GroupBySingleType, ...]]],  # for grouping lists
                       None] = None) -> 'DataFrame':
         """
         Group by any of the series currently in this DataDrame, both from index as well as data.
@@ -1041,7 +1037,7 @@ class DataFrame:
                 [GroupBy(group_by_columns=df._partition_by_series(b)) for b in by])
         else:
             by_mypy = cast(Union[str, 'Series',
-                                 List[DataFrame.GroupBySingleType], None], by)
+                                 List[DataFrame._GroupBySingleType], None], by)
             group_by = GroupBy(group_by_columns=df._partition_by_series(by_mypy))
 
         return DataFrame._groupby_to_frame(df, group_by)
