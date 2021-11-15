@@ -34,11 +34,6 @@ The two main data classes of Bach are the DataFrame and Series:
 
 .. [*] Currently we only support Postgres, but we plan on supporting more databases
 
-.. toctree::
-    :maxdepth: 2
-
-    dataframe
-    series
 
 Delayed database operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -187,6 +182,14 @@ The above example demonstrates filtering out rows and sorting a DataFrame. Witho
 order of the returned rows is non-deterministic. `view_sql()` can be used to show the compiled SQL query that
 encompasses all operations done so far.
 
+
+Appendix: Class Overview
+------------------------
+.. toctree::
+    :maxdepth: 3
+
+    dataframe
+    series
 
 
 .. _appendix_example_data:

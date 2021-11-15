@@ -82,7 +82,7 @@ class StringOperation:
 
 class SeriesString(Series):
     """
-    Base class that defines operations on string types.
+    A Series that represents the string type and its specific operations
 
     **Operations**
 

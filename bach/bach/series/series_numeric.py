@@ -16,8 +16,7 @@ if TYPE_CHECKING:
 
 class SeriesAbstractNumeric(Series, ABC):
     """
-    Base class that defines operations on numeric types, currently :py:class:`SeriesFloat64`
-    and :py:class:`SeriesInt64`
+    A Series that represents the base numeric types and its specific operations
 
     ** Operations **
 

@@ -13,16 +13,6 @@
 import os
 import sys
 import inspect
-sys.path.insert(0, os.path.abspath('.'))
-
-paths = [
-    os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__)))),
-    os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__)))) + '/series',
-]
-print(paths)
-sys.path.extend(paths)
-
-# -- Project information -----------------------------------------------------
 
 project = 'Bach'
 copyright = '2021, Objectiv'
@@ -56,29 +46,34 @@ extensions = [
     #'IPython.sphinxext.ipython_console_highlighting',
     'sphinx_markdown_builder'
 ]
+#
+# intersphinx_mapping = {
+#     "dateutil": ("https://dateutil.readthedocs.io/en/latest/", None),
+#     "matplotlib": ("https://matplotlib.org/stable/", None),
+#     "numpy": ("https://numpy.org/doc/stable/", None),
+#     "pandas-gbq": ("https://pandas-gbq.readthedocs.io/en/latest/", None),
+#     "pandas": ("https://pandas.pydata.org/docs/", None),
+#     "py": ("https://pylib.readthedocs.io/en/latest/", None),
+#     "python": ("https://docs.python.org/3/", None),
+#     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+#     "statsmodels": ("https://www.statsmodels.org/devel/", None),
+#     "pyarrow": ("https://arrow.apache.org/docs/", None),
+# }
 
-intersphinx_mapping = {
-    "dateutil": ("https://dateutil.readthedocs.io/en/latest/", None),
-    "matplotlib": ("https://matplotlib.org/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas-gbq": ("https://pandas-gbq.readthedocs.io/en/latest/", None),
-    "pandas": ("https://pandas.pydata.org/docs/", None),
-    "py": ("https://pylib.readthedocs.io/en/latest/", None),
-    "python": ("https://docs.python.org/3/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
-    "statsmodels": ("https://www.statsmodels.org/devel/", None),
-    "pyarrow": ("https://arrow.apache.org/docs/", None),
-}
+# autosummary / autodoc
+autosummary_generate = True
+autosummary_imported_members = True
+autodoc_typehints = 'description'
+autodoc_typehints_description_target = 'documented'
+autoclass_content='class'
+# TOTALLY breaks toctree generation autodoc_class_signature = 'separated'
 
-autodoc_typehints = 'none'
 
 # numpydoc
 numpydoc_attributes_as_param_list = False
 numpydoc_show_class_members = False
 
-# autosummary
-autosummary_generate = True
-autosummary_imported_members = True
+
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']

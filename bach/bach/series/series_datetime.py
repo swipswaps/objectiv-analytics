@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 class SeriesAbstractDateTime(Series, ABC):
     """
-    Base class that defines operations on date/time related types: Date, Time, DateTime/Timestamp
+    A Series that represents the generic date/time type and its specific operations
 
     **Date/Time formatting**
 
@@ -51,6 +51,9 @@ class SeriesAbstractDateTime(Series, ABC):
 
 class SeriesTimestamp(SeriesAbstractDateTime):
     """
+    A Series that represents the timestamp/datetime type and its specific operations
+
+
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         timestamp without time zone
     """
@@ -91,6 +94,8 @@ class SeriesTimestamp(SeriesAbstractDateTime):
 
 class SeriesDate(SeriesAbstractDateTime):
     """
+    A Series that represents the date type and its specific operations
+
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         date
     """
@@ -145,6 +150,8 @@ class SeriesDate(SeriesAbstractDateTime):
 
 class SeriesTime(SeriesAbstractDateTime):
     """
+    A Series that represents the date time and its specific operations
+
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         time without time zone
     """
@@ -172,6 +179,10 @@ class SeriesTime(SeriesAbstractDateTime):
 
 
 class SeriesTimedelta(SeriesAbstractDateTime):
+    """
+    A Series that represents the timedelta type and its specific operations
+    """
+
     dtype = 'timedelta'
     dtype_aliases = ('interval',)
     supported_db_dtype = 'interval'
