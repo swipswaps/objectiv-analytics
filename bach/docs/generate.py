@@ -1,11 +1,12 @@
 import glob
 import re
-from os import path, makedirs, remove
+from os import path, makedirs
 from shutil import copyfile
 import json
 from typing import List, Dict, Any
-from lxml import html
+from lxml import html, etree
 from lxml.etree import ElementTree
+
 
 html_dir = 'build/html/'
 
@@ -13,69 +14,65 @@ docusaurus_dir = '../../../objectiv.io/docs'
 docs = 'docs'
 static = 'static'
 
-module = 'modeling'
+module = 'modeling/api-reference'
 
 docs_target = f'{docusaurus_dir}/{docs}/{module}'
 static_target = f'{docusaurus_dir}/{static}/_{module}'
 
 # whitelist of pages to consider
 patterns = [
-    '^index.html$',
-    'bach/.*?',
-    'sql_models/.*?'
+    '^index.html$'
 ]
 
+modules = []
+# list of special cases, where we have a subdir, with an introduction at toplevel
+# eg /dataframe.html and /dataframe/
+for fn in glob.glob(f'{html_dir}/*'):
+    if path.isdir(fn) and path.isfile(f'{fn}.html'):
+        modules.append(path.basename(fn))
 
-def toc_from_links(html_doc: ElementTree, element_xpath: str, node_xpath: str, level: int) -> List[Dict[str, Any]]:
+# add modules to whitelist
+patterns.extend([f'{m}.*' for m in modules])
+
+
+def a_to_toc(a: html.Element, level: int) -> Dict:
     """
-    Parses Sphinx generated html fragment to construct part of the toc
-
-    :param html_doc: lxml html parser
-    :param element_xpath: xpath query that returns s list of anchor html fragments
-    :param node_xpath: xpath query to determine value/name of link
-    :param level: int level in menu structure
-    :return: List of Dictionary with TOC items for docusaurus
+    provided an anchor HTML element, return a docusaurus toc item
+    :param a: html.Element
+    :param level: level of indentation in the toc, should be either 2 or 3
+    :return: Dictionary with toc_item
     """
-    links = html_doc.xpath(element_xpath)
+    return {
+        'value': a.text.strip(),
+        'id': a.get('href')[1:],
+        'children': [],
+        'level': level
+    }
 
-    if links:
-        entries = []
-        for f in links:
-            # get simple function name from span in table
-            nodes = f.xpath(node_xpath)
-            if len(nodes) > 0:
-                node = nodes[0]
-                simple_name = node.text
-            else:
-                simple_name = f.get('title')
-            if simple_name is not None:
-                entries.append({
-                    'value': simple_name,
-                    'id': f.get('title') or f.get('id'),
-                    'children': [],
-                    'level': level
-                })
-            else:
-                print(f'ignoring: {simple_name}')
-
-        return entries
-    return []
-
-
-# make sure we can find docusaurus
-if not path.isdir(docusaurus_dir):
-    print(f'Could not find docusaurus here {docusaurus_dir}')
-    exit(1)
-
-
-position = 2
+# build lookup table based on left navbar in sphinx doc
+# to preserve the ordering of elements, based on the "index" pages
+# for the modules
+sidebar_position_lookup_table = {}
+for m in modules:
+    counter = 2
+    doc = html.parse(f'{html_dir}/{m}.html')
+    nav = doc.xpath('//nav[@id="bd-docs-nav"]/div/ul')
+    for nav_block in nav:
+        items = nav_block.findall('li/a')
+        for item in items:
+            href = item.get('href')
+            sidebar_position_lookup_table[href] = counter
+            counter += 1
 
 # sort urls alphabetically, remove .html
-urls = sorted(glob.glob(f"{html_dir}/**/*.html", recursive=True), key=lambda k: k.replace('.html', ''))
+urls = glob.glob(f"{html_dir}/**/*.html", recursive=True)
 for url in urls:
     # this is the url to the original html fragment
     # it's an absolute url, docusaurus will take care of the rest
     real_url = url.replace(html_dir, "")
+    page = path.basename(url).replace('.html', '')
+
+    print(f'{url} -> {real_url}')
 
     match = False
     for pattern in patterns:
@@ -86,7 +83,13 @@ for url in urls:
         continue
 
     # dir where .mdx will be stored
-    docs_target_dir = f'{docs_target}/{path.dirname(real_url)}'
+    if page in modules:
+        docs_target_dir = f'{docs_target}/{page}/{path.dirname(real_url)}'
+        mdx_path = f'{docs_target}/{page}/{real_url.replace(".html", ".mdx")}'
+    else:
+        docs_target_dir = f'{docs_target}/{path.dirname(real_url)}'
+        mdx_path = f'{docs_target}/{real_url.replace(".html", ".mdx")}'
+
     static_target_dir = f'{static_target}/{path.dirname(real_url)}'
 
     # create dir if needed
@@ -99,80 +102,65 @@ for url in urls:
         print(f'creating {static_target_dir}')
         makedirs(static_target_dir)
 
-    title = path.basename(url).replace('.html', '')
-
-    #if title == 'index':
-    #    target_file = f'{static_target}/introduction.html'
-    #else:
-    target_file = f'{static_target}/{real_url}'
-        
-    if path.exists(target_file):
-        remove(target_file)
-    print(f'copy "{url}" -> {target_file}')
-    copyfile(url, target_file)
-
-
-    tags = [module]
-
-    # table of contents
-    toc = []
     doc = html.parse(url)
-    headers = toc_from_links(doc, '//main//section', '*[self::h1 or self::h2 or self::h3]', 2)
-    for header in headers:
-        toc.append(header)
 
-    modules = toc_from_links(doc, '//p[@class="rubric" and text()="Modules"]/following-sibling::*[1]//tr//a',
-                             'code/span', 3)
-    if modules:
-        toc.append({
-            'value': 'Modules',
-            'id': 'modules',
-            'children': modules,
-            'level': 2})
+    # here we get the body
+    # we look for <main role="main"....>
+    body_element = doc.xpath('//main[@role="main"]/div')[0]
 
-    classes = toc_from_links(doc, '//p[@class="rubric" and text()="Classes"]/following-sibling::*[1]//tr//a',
-                                 'code/span', 3)
-    if classes:
-        for c in classes:
+    if page in modules:
+        # these pages are moved 1 dir down on disk
+        # so we need to fix anchorsthat point to external documents
+        def fix_links(link):
+            # if the link starts with any of the modules,
+            # go one dir up (as the file is moved one dir down)
+            if max([link.startswith(m) for m in modules]) > 0:
+                return f'../{link}'
+            return link
+        body_element.rewrite_links(fix_links)
 
-            xpath = f'//dl[@class="py class"]/dt[@id="{c["id"]}"]/following-sibling::dd//dl[@class="py method" or ' \
-                    f'@class="py attribute"]/dt'
-            attrs = toc_from_links(doc, xpath, 'span/span', 3)
-            for attr in attrs:
-                c['children'].append(attr)
-        toc.append({
-            'value': 'Classes',
-            'id': 'classes',
-            'children': classes,
-            'level': 2})
+    body = etree.tostring(body_element).decode('utf-8')
 
-    functions = toc_from_links(doc, '//p[@class="rubric" and text()="Functions"]/following-sibling::*[1]//tr//a',
-                                   'code/span', 3)
-    if functions:
-        toc.append({
-            'value': 'Functions',
-            'id': 'functions',
-            'children': functions,
-            'level': 2})
+    # get title from <title> text </title>
+    title = doc.xpath('//title/text()')[0]
 
+    toc = []
+    # get toc from:
+    # <nav id="bd-toc-nav">
+    # contains an unordered list (<ul> of toc items)
+    toc_containers = doc.xpath('//nav[@id="bd-toc-nav"]/ul')
 
-    # little magic around the index:
-    # make sure it comes first, and change the name to introduction
-    if title == 'index':
-        sidebar_label = 'Introduction'
+    if len(toc_containers) > 0:
+        toc_container = toc_containers[0]
+
+        for l1_item in toc_container:
+            children = []
+            for l2_item in l1_item:
+                if l2_item.tag == 'a':
+                    # this is a toplevel menu item
+                    toc_item = a_to_toc(l2_item, 2)
+                elif l2_item.tag == 'ul':
+                    for l3_item in l2_item.findall('li/a'):
+                        children.append(a_to_toc(l3_item, 3))
+                        # print(f'got subitem: {l3_item.text} for {toc_item["id"]}')
+            toc_item['children'] = children
+            toc.append(toc_item)
+
+    if page in modules + ['index']:
+        # special case where we map the index to Introduction
+        # and put it at the top of the list
+        if page == 'index':
+            slug = f'/{module}/introduction'
+        else:
+            slug = f'/{module}/{page}/introduction'
         sidebar_position = 1
-        slug = f'/{module}'
-        toc = []
-        url = real_url
+        sidebar_label = 'Introduction'
     else:
-        sidebar_label = title
-        sidebar_position = position
-        position += 1
         slug = f'/{module}/{real_url.replace(".html", "")}'
-        tags.append(title.split('.')[-2])
-        url = real_url
 
-
+        # get position from lookup table, no checking, if we cannot find the URL we die!
+        sidebar_position = sidebar_position_lookup_table[real_url]
+        sidebar_label = path.basename(url).replace('.html', '')
 
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
@@ -184,7 +172,6 @@ slug: {slug}
 sidebar_position: {sidebar_position}
 sidebar_label: {sidebar_label}
 
-tags: {json.dumps(tags)}
 ---
 
 export const toc = {json.dumps(toc, indent=4)};
@@ -194,13 +181,14 @@ import SphinxPages from '@site/src/components/sphinx-page'
 import useBaseUrl from '@docusaurus/useBaseUrl'
 
 
-<SphinxPages url={{useBaseUrl('{module}/{url}')}} />
+<SphinxPages url={{useBaseUrl('{module}/{real_url}')}} />
 """
-    # set target path to generated .mdx file
-    # target_path = url.replace(html_dir, '').replace('.html', '.mdx')
-    target_path = f'{docs_target}/{real_url.replace(".html", ".mdx")}'
 
-    print(f'writing to {target_path}')
-
-    with open(target_path, 'w') as target_handle:
+    print(f'writing to {mdx_path}')
+    with open(mdx_path, 'w') as target_handle:
         target_handle.write(mdx)
+
+    # now write html body
+    html_path = f'{static_target}/{real_url}'
+    with open(html_path, 'w') as target_handle:
+        target_handle.write(body)
