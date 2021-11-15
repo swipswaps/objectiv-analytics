@@ -185,12 +185,9 @@ def repair_classmethod_docstring(app, what, name, obj, options, lines):
             lines.extend(obj_lines.split("\n"))
 
 def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
-    """
-    Skip some private API methods & attributes that can't easily be renamed to _func or _attr
-    """
+    # Skip some private API methods & attributes that can't easily be renamed to _func or _attr
     import bach
     _SKIP = {
-        bach.DataFrame.GroupBySingleType,
         bach.DataFrame.get_current_node,
 
         bach.Series.copy_override,
@@ -218,4 +215,5 @@ def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
 
 def setup(app):
     app.connect("autodoc-process-docstring", remove_copyright_string)
+    app.connect("autodoc-process-docstring", repair_classmethod_docstring)
     app.connect("autodoc-skip-member", autodoc_skip_member_bach_internal)
