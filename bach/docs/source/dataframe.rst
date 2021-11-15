@@ -69,139 +69,111 @@ only when one of the above mentioned data-transfer functions is called.
 The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
 DataFrames see https://pandas.pydata.org/docs/reference/frame.html
 
-Constructor
-~~~~~~~~~~~
-.. autosummary::
-   :toctree: dataframe
-
-   DataFrame
-
-
-Methods todo
-~~~~~~~~~~~~
+Constructor & frame operations
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
     :toctree: dataframe
 
-    DataFrame.copy_override
+    DataFrame
     DataFrame.from_table
     DataFrame.from_model
     DataFrame.from_pandas
-    DataFrame.get_instance
-    DataFrame.materialize
-    DataFrame.get_sample
-    DataFrame.get_unsampled
-    DataFrame.rename
-    DataFrame.reset_index
-    DataFrame.set_index
-    DataFrame.drop
-    DataFrame.window
-    DataFrame.cube
-    DataFrame.rollup
-    DataFrame.expanding
+
+
+Value accessors
+~~~~~~~~~~~~~~~
+.. autosummary::
+    :toctree: dataframe
+
+    DataFrame.head
     DataFrame.to_pandas
+    DataFrame.values
     DataFrame.array
-    DataFrame.get_current_node
-    DataFrame.view_sql
 
 Attributes and underlying data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Axes**
 
 .. autosummary::
-   :toctree: dataframe
+    :toctree: dataframe
 
-   DataFrame.index
-
-.. autosummary::
-   :toctree: dataframe
-
-   DataFrame.dtypes
-   DataFrame.values
-
-    DataFrame.engine
-    DataFrame.base_node
+    DataFrame.index
     DataFrame.data
-    DataFrame.order_by
     DataFrame.all_series
     DataFrame.index_columns
-    DataFrame.index_dtypes
-    DataFrame.dtypes
+    DataFrame.data_columns
     DataFrame.group_by
+    DataFrame.order_by
 
-Conversion
-~~~~~~~~~~
+**Types**
+
 .. autosummary::
-   :toctree: dataframe
+    :toctree: dataframe
 
-   DataFrame.astype
+    DataFrame.dtypes
+    DataFrame.index_dtypes
+    DataFrame.astype
 
-Indexing, iteration
-~~~~~~~~~~~~~~~~~~~
+**Sql Model**
+
 .. autosummary::
-   :toctree: dataframe
+    :toctree: dataframe
 
-   DataFrame.head
+    DataFrame.materialize
+    DataFrame.get_sample
+    DataFrame.get_unsampled
+    DataFrame.view_sql
 
-Function application, GroupBy & window
+
+Reshaping, indexing, sorting & merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-   :toctree: dataframe
+    :toctree: dataframe
 
-   DataFrame.agg
-   DataFrame.aggregate
-   DataFrame.groupby
-   DataFrame.rolling
+    DataFrame.sort_values
+    DataFrame.rename
+    DataFrame.drop
+    DataFrame.reset_index
+    DataFrame.set_index
+    DataFrame.merge
 
-.. _api.dataframe.stats:
+Aggregation & windowing
+~~~~~~~~~~~~~~~~~~~~~~~
+.. autosummary::
+    :toctree: dataframe
 
-Computations / descriptive stats
+    DataFrame.agg
+    DataFrame.aggregate
+    DataFrame.groupby
+    DataFrame.rollup
+    DataFrame.cube
+    DataFrame.window
+    DataFrame.rolling
+    DataFrame.expanding
+
+.. _dataframe.stats:
+
+Computations & descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**All types**
+
 .. autosummary::
-   :toctree: dataframe
+    :toctree: dataframe
 
-   DataFrame.count
-   DataFrame.kurt
-   DataFrame.kurtosis
-   DataFrame.mad
-   DataFrame.max
-   DataFrame.mean
-   DataFrame.median
-   DataFrame.min
-   DataFrame.mode
-   DataFrame.prod
-   DataFrame.product
-   DataFrame.sem
-   DataFrame.skew
-   DataFrame.sum
-   DataFrame.std
-   DataFrame.var
-   DataFrame.nunique
+    DataFrame.count
+    DataFrame.min
+    DataFrame.max
+    DataFrame.median
+    DataFrame.mode
+    DataFrame.nunique
 
-Reindexing / selection / label manipulation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Numeric**
+
 .. autosummary::
-   :toctree: dataframe
+    :toctree: dataframe
 
-   DataFrame.drop
-   DataFrame.head
-   DataFrame.reset_index
-
-Reshaping, sorting, transposing
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autosummary::
-   :toctree: dataframe
-
-   DataFrame.sort_values
-
-Combining / comparing / joining / merging
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.. autosummary::
-   :toctree: dataframe
-
-   DataFrame.merge
-
-
-
-
-
-
+    DataFrame.mean
+    DataFrame.sem
+    DataFrame.sum
+    DataFrame.std
+    DataFrame.var
