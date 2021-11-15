@@ -51,23 +51,24 @@ class DataFrame:
     **Usage**
 
     It should generally not be required to construct Series instances manually. A DataFrame can be constructed
-    using the any of the bach classmethods like from_table, from_model, or from_pandas. The returned DataFrame
-    can be thought of as a dict-like container for Bach Series objects.
+    using the any of the bach classmethods like :py:meth:`from_table()`, :py:meth:`from_model()`, or
+    :py:meth:`from_pandas()`. The returned DataFrame can be thought of as a dict-like container for Bach
+    Series objects.
 
     **Getting & Setting columns**
 
-    Getting data works similar to pandas DataFrame. Single columns can be retrieved with df['column_name']
-    as well as df.column_name. This will return a single Bach Series. Multiple columns can be retrieved by
-    passing a list of column names like: `df[['column_name','other_column_name']]`. This returns a Bach
+    Getting data works similar to pandas DataFrame. Single columns can be retrieved with ``df['column_name']``
+    as well as ``df.column_name``. This will return a single Bach Series. Multiple columns can be retrieved by
+    passing a list of column names like: ``df[['column_name','other_column_name']]``. This returns a Bach
     DataFrame.
 
-    A selection of rows can be selected with python slicing. I.e. `df[2:5]` returns row 2 to 5. Only positive
-    integers are currently accepted in slices.
+    A selection of rows can be selected with python slicing. I.e. ``df[2:5]`` returns row 2 to 5. Only
+    positive integers are currently accepted in slices.
 
     SeriesBoolean can also be used to filter DataFrames, and these Series are easily created using comparison
-    operations like equals (==), less-than (<), not(~) on two series, or series with values:
-    boolean_series = a == b. Boolean indexing can be done like df[df.column == 5]. Only rows are returned for
-    which the condition is true.
+    operations like equals (``==``), less-than (``<``), not(``~``) on two series, or series with values:
+    ``boolean_series = a == b``. Boolean indexing can be done like ``df[df.column == 5]``. Only rows are
+    returned for which the condition is true.
 
     **Moving Series around**
 
@@ -120,8 +121,8 @@ class DataFrame:
         """
         Instantiate a new DataFrame.
         There are utility class methods to easily create a DataFrame from existing data such as a
-        table (`from_table()`), an already instantiated sql-model (`from_model()`), or a pandas
-        dataframe (`from_pandas()`).
+        table (:py:meth:`from_table()`), an already instantiated sql-model (:py:meth:`from_model()`), or a
+        pandas dataframe (:py:meth:`from_pandas()`).
 
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain all columns/expressions that
@@ -343,13 +344,13 @@ class DataFrame:
         Instantiate a new DataFrame based on the content of an existing table in the database.
 
         This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
-        In order to create this temporary table the source data is queried.
 
         :param engine: an sqlalchemy engine for the database.
         :param table_name: the table name that contains the data to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
         :returns: A DataFrame based on a sql table.
+        :note: In order to create this temporary table the source data is queried.
         """
         # todo: why is an index mandatory if you can reset it later?
         # todo: don't create a temporary table, the real table (and its meta data) already exists
@@ -359,10 +360,10 @@ class DataFrame:
     @classmethod
     def from_model(cls, engine: Engine, model: SqlModel, index: List[str]) -> 'DataFrame':
         """
-        Instantiate a new DataFrame based on the result of the query defined in `model`
+        Instantiate a new DataFrame based on the result of the query defined in ``model``
 
         This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
-        In order to create this temporary table the query in `model` executed.
+        In order to create this temporary table the query in ``model`` executed.
 
         :param engine: an sqlalchemy engine for the database.
         :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
@@ -409,33 +410,35 @@ class DataFrame:
         dtype is supported if the column contains string values and convert_objects is set to True.
 
         How the data is loaded depends on the chosen materialization:
-        1. 'table':  This will first write the data to a database table using pandas' df.to_sql() method.
-        2. 'cte': The data will be represented using a common table expression of the
-        form `select * from values()` in future queries.
+
+        1. 'table': This will first write the data to a database table using pandas :py:meth:`pandas.DataFrame.to_sql()` method.
+        2. 'cte': The data will be represented using a common table expression of the form ``select * from values()`` in future queries.
 
         The 'table' method requires database write access. The 'cte' method is side-effect free and doesn't
         interact with the database at all. However the 'cte' method is only suitable for small quantities
         of data. For anything over a dozen kilobytes of data it is recommended to store the data in a table
         in the database first (e.g. by specifying 'table').
 
-        There are some small differences between how the different materializations handle NaN values. e.g.
-        'cte' does not support those for non-numeric columns, whereas 'table' converts them to 'NULL'
+        There are some small differences between how the different materializations handle ``NaN`` values. e.g.
+        'cte' does not support those for non-numeric columns, whereas 'table' converts them to ``NULL``
 
         :param engine: an sqlalchemy engine for the database.
         :param df: Pandas DataFrame to instantiate as DataFrame.
         :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
-            pd.convert_dtypes() method where possible.
+            :py:meth:`pandas.DataFrame.convert_dtypes()` method where possible.
         :param name:
             * For 'table' materialization: name of the table that Pandas will write the data to.
             * For 'cte' materialization: name of the node in the underlying SqlModel graph.
-        :param materialization: {'cte', 'table'}. How to materialize the data
-        :param if_exists: {'fail', 'replace', 'append'}. Only applies to materialization='table'
+        :param materialization: {'cte', 'table'}. How to materialize the data.
+        :param if_exists: {'fail', 'replace', 'append'}. Only applies to `materialization='table'`
             How to behave if the table already exists:
+
             * fail: Raise a ValueError.
             * replace: Drop the table before inserting new values.
             * append: Insert new values to the existing table.
         :returns: A DataFrame based on a pandas DataFrame
         """
+        # todo link to pandas does not link
         # todo materialzation is 'cte' by default, add warning for large dataframe?
         from bach.from_pandas import from_pandas
         return from_pandas(
@@ -502,10 +505,10 @@ class DataFrame:
         the size of the generated SQL query. But this can be useful if the current DataFrame contains
         expressions that you want to evaluate before further expressions are build on top of them. This might
         make sense for very large expressions, or for non-deterministic expressions (e.g. see
-        SeriesUuid.sql_gen_random_uuid()).
+        :py:meth:`SeriesUuid.sql_gen_random_uuid()`).
 
         :param node_name: The name of the node that's going to be created
-        :param inplace: Perform operation on self if inplace=True, or create a copy
+        :param inplace: Perform operation on self if inplace=True, or create a copy. Not supported yet.
         :param limit: The limit (slice, int) to apply.
         :returns: New DataFrame with the current DataFrame's state as base_node
         """
@@ -536,7 +539,7 @@ class DataFrame:
         For the sample Dataframe to be created, all data is queried once and a persistent table is created to
         store the sample data used for the sampled DataFrame.
 
-        Use get_unsampled() to switch back to the unsampled data later on. This returns a new DataFrame with
+        Use :py:meth:`get_unsampled()` to switch back to the unsampled data later on. This returns a new DataFrame with
         all operations that have been done on the sample, applied to that DataFrame.
 
         :param table_name: the name of the underlying sql table that stores the sampled data.
@@ -547,6 +550,7 @@ class DataFrame:
             exists.
         :param seed: optional seed number used to generate the sample.
         :returns: a sampled DataFrame of the current DataFrame.
+        :note: all data in the DataFrame to be sampled is queried to create the sample.
         """
         # todo if_exists and overwrite are two different syntax for the same thing. should we align?
         if sample_percentage is None and filter is None:
@@ -598,14 +602,15 @@ class DataFrame:
 
     def get_unsampled(self) -> 'DataFrame':
         """
-        Return a copy of the current sampled DataFrame, that undoes calling `get_sample()` earlier.
+        Return a copy of the current sampled DataFrame, that undoes calling :py:meth:`get_sample()` earlier.
 
         All other operations that have been done on the sample DataFrame will be applied on the DataFrame
-        that is returned. This does not remove the table that was written to the database by get_sample(), the
-        new DataFrame just does not query that table anymore.
+        that is returned. This does not remove the table that was written to the database by
+        :py:meth:`get_sample()`, the new DataFrame just does not query that table anymore.
 
         Will raise an error if the current DataFrame is not sample data of another DataFrame, i.e.
-        get_sample() has not been called.
+        :py:meth:`get_sample()` has not been called.
+
         :returns: an unsampled copy of the current sampled DataFrame.
         """
         df = self
@@ -775,7 +780,7 @@ class DataFrame:
         Rename columns.
 
         The interface is similar to Panda's DataFrame.rename(). However we don't support renaming indexes, so
-            recommended usage is `rename(columns=...)`
+        recommended usage is `rename(columns=...)`
 
         :param mapper: dict to apply to that axis' values. Use mapper and axis to specify the axis to target
             with mapper. Currently mapper is only supported with axis=1, which is similar to using columns.
@@ -959,8 +964,9 @@ class DataFrame:
 
         This does not modify the current DataFrame, instead it returns a new DataFrame.
 
-        :param dtype: either
-            * A single str, in which case all data columns are cast to this dtype
+        :param dtype: either:
+
+            * A single str, in which case all data columns are cast to this dtype.
             * A dictionary mapping column labels to dtype.
         :returns: New DataFrame with the specified column(s) cast to the specified dtype
         """
@@ -1042,16 +1048,20 @@ class DataFrame:
         """
         Group by any of the series currently in this DataDrame, both from index as well as data.
 
-        :param by: The series to group by. Supported are: a str containing a series name,
-                a series, or a list of those.
-                If `by` is a list of (lists or tuples), we'll create a grouping list
-                If `by` is a tuple of tuples, we'll create a grouping set,
-                else a normal group by will be created.
+        :param by: The series to group by. Supported are:
+
+            * a string containing a columnn name.
+            * a series.
+            * a list of strings or series. A normal group by will be created.
+            * a list of (strings, series, lists). In this case a grouping list is created.
+            * a tuple of (strings, series, lists). In this case a grouping set is created.
         :returns: a new DataFrame object with the group_by attribute set. This indicates this DataFrame can be
             used to perform aggregations on.
         :note: if the dataframe is already grouped, we'll create a grouping list from the initial
             grouping combined with this one.
         """
+        # todo the grouping set / list relevant?
+        # todo format bullet points: text does not start on same line as parameter
         from bach.partitioning import GroupBy, GroupingList, GroupingSet
 
         df = self
@@ -1081,9 +1091,11 @@ class DataFrame:
                **frame_args) -> 'DataFrame':
         """
         Create a window on the current dataframe and its sorting.
-        TODO Better argument typing, needs fancy import logic
-        :see: Window __init__ for frame args
+
+        see also
+        Window __init__ for frame args
         """
+        # TODO Better argument typing, needs fancy import logic
         from bach.partitioning import Window
         index = self._partition_by_series(by)
         group_by = Window(group_by_columns=index,
@@ -1253,7 +1265,9 @@ class DataFrame:
         """
         Run a SQL query representing the current state of this DataFrame against the database and return the
         resulting data as a Pandas DataFrame.
-        :param limit: The limit to apply, either as a max amount of rows or a slice.
+
+        :param limit: The limit to apply, either as a max amount of rows or a slice of the data.
+        :returns: a pandas DataFrame.
         :note: This function queries the database.
         """
         with self.engine.connect() as conn:
@@ -1267,9 +1281,10 @@ class DataFrame:
 
     def head(self, n: int = 5) -> pandas.DataFrame:
         """
-        Similar to `to_pandas` but only returns the first `n` rows.
-        This function queries the database.
+        Similar to :py:meth:`to_pandas()` but only returns the first `n` rows.
+
         :param n: number of rows to query from database.
+        :returns: a pandas DataFrame.
         :note: This function queries the database.
         """
         return self.to_pandas(limit=n)
@@ -1394,6 +1409,7 @@ class DataFrame:
     def view_sql(self, limit: Union[int, slice] = None) -> str:
         """
         Translate the current state of this DataFrame into a SQL query.
+
         :param limit: limit on which rows to select in the query
         :returns: SQL query
         """
