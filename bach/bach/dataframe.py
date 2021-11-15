@@ -289,7 +289,7 @@ class DataFrame:
         return list(self.data.keys())
 
     @property
-    def index_dtypes(self) -> List[str]:
+    def index_dtypes(self) -> Dict[str, str]:
         """
         Get the index Series' dtypes in a listList
         """
