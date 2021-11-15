@@ -1,12 +1,23 @@
 import glob
 import re
 from os import path, makedirs
-from shutil import copyfile
 import json
-from typing import List, Dict, Any
+from typing import Dict
 from lxml import html, etree
-from lxml.etree import ElementTree
 
+"""
+Copyright Objectiv B.V. 2021
+
+Used to import Sphinx generated python docs into docusaurus. This script does the following:
+- find all html pages in build/html
+- extract the "body" from the page
+- fix links in the "modules"
+- extract toc from the html
+- preserve order of left navbar, by extracting/saving that (using sidebar_order)
+- write the static html to docusaurus/static/_{module}
+- generate .mdx files, and write those to {docs}/{module}
+
+"""
 
 html_dir = 'build/html/'
 
@@ -48,6 +59,7 @@ def a_to_toc(a: html.Element, level: int) -> Dict:
         'children': [],
         'level': level
     }
+
 
 # build lookup table based on left navbar in sphinx doc
 # to preserve the ordering of elements, based on the "index" pages
@@ -106,16 +118,27 @@ for url in urls:
 
     # here we get the body
     # we look for <main role="main"....>
-    body_element = doc.xpath('//main[@role="main"]/div')[0]
+    body_element: html.Element = doc.xpath('//main[@role="main"]/div')[0]
 
     if page in modules:
         # these pages are moved 1 dir down on disk
-        # so we need to fix anchorsthat point to external documents
+        # so we need to fix anchors that point to external documents
         def fix_links(link):
             # if the link starts with any of the modules,
             # go one dir up (as the file is moved one dir down)
+            # eg: dataframe/bach.Dataframe.index -> ../dataframe/bach.Dataframe.index
             if max([link.startswith(m) for m in modules]) > 0:
                 return f'../{link}'
+            return link
+        body_element.rewrite_links(fix_links)
+    elif page == 'index':
+        # because the moved files, we also need to fix the anchors in the index:
+        # from dataframe.html#Usage -> dataframe/introduction.html#Usage
+        # but keep away from  dataframe/bach.DataFrame.some_method.html
+        def fix_links(link):
+            for m in modules:
+                if link.startswith(f'{m}.html'):
+                    return link.replace(m, f'{m}/introduction')
             return link
         body_element.rewrite_links(fix_links)
 
@@ -126,13 +149,13 @@ for url in urls:
 
     toc = []
     # get toc from:
-    # <nav id="bd-toc-nav">
+    # <nav id="bd-toc-nav">/ul
     # contains an unordered list (<ul> of toc items)
     toc_containers = doc.xpath('//nav[@id="bd-toc-nav"]/ul')
 
     if len(toc_containers) > 0:
         toc_container = toc_containers[0]
-
+        toc_item = None
         for l1_item in toc_container:
             children = []
             for l2_item in l1_item:
@@ -142,9 +165,9 @@ for url in urls:
                 elif l2_item.tag == 'ul':
                     for l3_item in l2_item.findall('li/a'):
                         children.append(a_to_toc(l3_item, 3))
-                        # print(f'got subitem: {l3_item.text} for {toc_item["id"]}')
-            toc_item['children'] = children
-            toc.append(toc_item)
+            if toc_item:
+                toc_item['children'] = children
+                toc.append(toc_item)
 
     if page in modules + ['index']:
         # special case where we map the index to Introduction
