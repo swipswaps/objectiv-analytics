@@ -13,19 +13,19 @@ class SeriesBoolean(Series, ABC):
     A Series that represents the Boolean type and its specific operations
 
     Boolean Series can be used to create complex truth expressions like:
-    ~(a & b ^ c), or in more human readable form not(a and b xor c).
+    `~(a & b ^ c)`, or in more human readable form `not(a and b xor c)`.
 
-    Type Conversions
-    ---------
+    .. code-block:: python
+
+        ~a     not a (invert a)
+        a & b  a and b
+        a | b  a or b
+        a ^ b  a xor b
+
+    **Type Conversions**
+
     Boolean Series can be created from int and string values. Not all conversions errors will be caught on
     conversion time. Some will lead to database errors later.
-
-    Operations
-    ---------
-    ~:  Invert the current value
-    &:  And
-    |:  Or
-    ^:  Xor
     """
     dtype = 'bool'
     dtype_aliases = ('boolean', '?', bool)
