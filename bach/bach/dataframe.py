@@ -240,38 +240,63 @@ class DataFrame:
 
     @property
     def index(self) -> Dict[str, 'Series']:
+        """
+        Get the index dictionary {name: Series}
+        """
         return copy(self._index)
 
     @property
     def data(self) -> Dict[str, 'Series']:
+        """
+        Get the data dictionary {name: Series}
+        """
         return copy(self._data)
 
     @property
     def order_by(self) -> List[SortColumn]:
+        """
+        Get the current sort order, if any.
+        """
         return copy(self._order_by)
 
     @property
     def all_series(self) -> Dict[str, 'Series']:
+        """
+        Get all index and data Series in a dictionary {name: Series}
+        """
         return {**self.index, **self.data}
 
     @property
     def index_columns(self) -> List[str]:
+        """
+        Get all the index column names in a List
+        """
         return list(self.index.keys())
 
     @property
     def data_columns(self) -> List[str]:
+        """
+        Get all the data Series in a List
+        """
         return list(self.data.keys())
 
     @property
-    def index_dtypes(self):
+    def index_dtypes(self) -> List[str]:
+        """
+        Get the index Series' dtypes in a listList
+        """
         return {column: data.dtype for column, data in self.index.items()}
 
     @property
-    def dtypes(self):
+    def dtypes(self) -> Dict[str, str]:
+        """
+        Get the data dtypes in a List
+        """
         return {column: data.dtype for column, data in self.data.items()}
 
     @property
     def group_by(self):
+        """ Get this DataFrame's grouping, if any. """
         return copy(self._group_by)
 
     def __eq__(self, other: Any) -> bool:
