@@ -175,6 +175,8 @@ class DataFrame:
             **kwargs
     ) -> 'DataFrame':
         """
+        INTERNAL
+
         Create a copy of self, with the given arguments overridden
 
         Big fat warning: group_by can legally be None, but if you want to set that,
@@ -232,10 +234,16 @@ class DataFrame:
 
     @property
     def engine(self):
+        """
+        INTERNAL: Get the current engine
+        """
         return self._engine
 
     @property
     def base_node(self) -> SqlModel[BachSqlModel]:
+        """
+        INTERNAL: Get the current base node
+        """
         return self._base_node
 
     @property
@@ -450,8 +458,9 @@ class DataFrame:
             order_by: List[SortColumn] = None,
     ) -> 'DataFrame':
         """
-        Get an instance with the right series instantiated based on the dtypes array. This assumes that
-        base_node has a column for all names in index_dtypes and dtypes.
+        INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
+
+        This assumes that base_node has a column for all names in index_dtypes and dtypes.
         If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
         index: Dict[str, Series] = {}
@@ -1298,7 +1307,8 @@ class DataFrame:
                          where_clause: Expression = None,
                          having_clause: Expression = None) -> SqlModel[BachSqlModel]:
         """
-        Translate the current state of this DataFrame into a SqlModel.
+        INTERNAL: Translate the current state of this DataFrame into a SqlModel.
+
         :param name: The name of the new node
         :param limit: The limit to use
         :param where_clause: The where-clause to apply, if any
