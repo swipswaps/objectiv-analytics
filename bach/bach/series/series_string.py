@@ -11,19 +11,7 @@ if TYPE_CHECKING:
 
 
 class StringOperation:
-    """
-    Base class that defines operations on string types.
 
-    Operations
-    ---------
-    Strings can be concatenated using the '+' operator, and the 'str' accessor can be used to get access
-    to slices.
-
-    Example:
-        c = a + b  # concat the strings.
-        a.str[3]   # get one char
-        a.str[3:5] # get a slice from char 3-5
-    """
     def __init__(self, base: 'SeriesString'):
         self._base = base
 
@@ -93,6 +81,23 @@ class StringOperation:
 
 
 class SeriesString(Series):
+    """
+    Base class that defines operations on string types.
+
+    **Operations**
+
+    Strings can be concatenated using the '+' operator, and the 'str' accessor can be used to get access
+    to slices.
+
+    Example:
+
+    .. code-block:: python
+
+        c = a + b  # concat the strings.
+        a.str[3]   # get one char
+        a.str[3:5] # get a slice from char 3-5
+    """
+
     dtype = 'string'
     dtype_aliases = ('text', str)
     supported_db_dtype = 'text'

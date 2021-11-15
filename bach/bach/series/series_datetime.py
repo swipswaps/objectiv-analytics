@@ -19,9 +19,9 @@ class SeriesAbstractDateTime(Series, ABC):
     """
     Base class that defines operations on date/time related types: Date, Time, DateTime/Timestamp
 
-    Date/Time formatting
-    --------------------
-    All Series types support formatting through series.format()[SeriesAbstractDateTime.format]
+    **Date/Time formatting**
+
+    All Series types support formatting through :py:meth:`format`
     """
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
