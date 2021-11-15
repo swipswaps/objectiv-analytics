@@ -32,8 +32,7 @@ class Series(ABC):
 
     It can be used as a separate object to just deal with a single list of values. There are many standard
     operations on Series available to do operations like add or subtract, to create aggregations like
-    :py:meth:`~bach.dataframe.DataFrame.nunique()` or :py:meth:`~bach.dataframe.DataFrame.count()`,
-    or to create new sub-Series, like :py:meth:`~bach.dataframe.DataFrame.unique()`.
+    :py:meth:`nunique()` or :py:meth:`count()`, or to create new sub-Series, like :py:meth:`unique()`.
     """
     # A series is defined by an expression and a name, and it exists within the scope of the base_node.
     # Its index can be a simple (dict of) Series in case of an already materialised base_node.
@@ -106,7 +105,7 @@ class Series(ABC):
     @classmethod
     def dtype_aliases(cls) -> Tuple[Union[Type, str], ...]:
         """
-        One or more aliases for the dtype.
+        INTERNAL: One or more aliases for the dtype.
         For example a BooleanSeries might have dtype 'bool', and as an alias the string 'boolean' and
         the builtin `bool`. An alias can be used in a similar way as the real dtype, e.g. to cast data to a
         certain type: `x.astype('boolean')` is the same as `x.astype('bool')`.
@@ -118,7 +117,7 @@ class Series(ABC):
     @property
     def dtype_to_pandas(self) -> Optional[str]:
         """
-        The dtype of this Series in a pandas.Series. Defaults to None
+        INTERNAL: The dtype of this Series in a pandas.Series. Defaults to None
         Override to cast specifically, and set to None to let pandas choose.
         """
         return None
@@ -127,7 +126,7 @@ class Series(ABC):
     @classmethod
     def supported_db_dtype(cls) -> Optional[str]:
         """
-        Database level data type, that can be expressed using this Series type.
+        INTERNAL: Database level data type, that can be expressed using this Series type.
         Example: 'double precision' for a float in Postgres
 
         Subclasses should override this value if they intend to be the default class to handle such types.
@@ -140,7 +139,7 @@ class Series(ABC):
     @classmethod
     def supported_value_types(cls) -> Tuple[Type, ...]:
         """
-        List of python types that can be converted to database values using
+        INTERNAL: List of python types that can be converted to database values using
         the `supported_value_to_expression()` method.
 
         Subclasses can override this value to indicate what types are supported
@@ -152,7 +151,9 @@ class Series(ABC):
     @abstractmethod
     def supported_value_to_expression(cls, value: Any) -> Expression:
         """
-        Give the expression for the given value. Consider calling the wrapper value_to_expression() instead.
+        INTERNAL: Give the expression for the given value.
+
+        Consider calling the wrapper value_to_expression() instead.
 
         Implementations of this function are responsible for correctly quoting and escaping special
         characters in the given value. Either by using ExpressionTokens that allow unsafe values (e.g.
@@ -170,8 +171,8 @@ class Series(ABC):
     @abstractmethod
     def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         """
-        Give the sql expression to convert the given expression, of the given source dtype to the dtype of
-        this Series.
+        INTERNAL: Give the sql expression to convert the given expression, of the given source dtype to the
+        dtype of this Series.
         :return: sql expression
         """
         raise NotImplementedError()
@@ -179,7 +180,7 @@ class Series(ABC):
     @property
     def engine(self):
         """
-        Get this Series' engine
+        INTERNAL: Get the engine
         """
         return self._engine
 
@@ -220,6 +221,7 @@ class Series(ABC):
 
     @property
     def expression(self) -> Expression:
+        """ INTERNAL: Get the expression"""
         return self._expression
 
     @classmethod
@@ -231,7 +233,7 @@ class Series(ABC):
             group_by: Optional['GroupBy'],
             sorted_ascending: Optional[bool] = None
     ):
-        """ Create an instance of this class. """
+        """ INTERNAL: Create an instance of this class. """
         return cls(
             engine=base.engine,
             base_node=base.base_node,
@@ -245,7 +247,8 @@ class Series(ABC):
     @classmethod
     def value_to_expression(cls, value: Optional[Any]) -> Expression:
         """
-        Give the expression for the given value.
+        INTERNAL: Give the expression for the given value.
+
         Wrapper around cls.supported_value_to_expression() that handles two generic cases:
             If value is None a simple 'NULL' expresison is returned.
             If value is not in supported_value_types raises an error.
@@ -291,6 +294,8 @@ class Series(ABC):
                       group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
                       sorted_ascending=None):
         """
+        INTERNAL: Copy this instance into a new one, with the given overrides
+
         Big fat warning: group_by can legally be None, but if you want to set that,
         set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
         """
@@ -306,6 +311,7 @@ class Series(ABC):
         )
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
+        """ INTERNAL: Get the column expression for this Series """
         expression = self.expression.resolve_column_references(table_alias)
         quoted_column_name = quote_identifier(self.name)
         if expression.to_sql() == quoted_column_name:
@@ -411,8 +417,8 @@ class Series(ABC):
     @staticmethod
     def as_independent_subquery(series, operation: str = None, dtype: str = None) -> 'Series':
         """
-        Get a series representing an independent subquery, created by materializing the series given
-        and crafting a subquery expression from it, possibly adding the given operation.
+        INTERNAL: Get a series representing an independent subquery, created by materializing the series
+        given and crafting a subquery expression from it, possibly adding the given operation.
 
         :note: This will maintain Expression.is_single_value status
         """
@@ -479,7 +485,7 @@ class Series(ABC):
 
     def equals(self, other: Any, recursion: str = None) -> bool:
         """
-        Checks whether other is the same as self. This implements the check that would normally be
+        INTERNAL: Checks whether other is the same as self. This implements the check that would normally be
         implemented in __eq__, but we already use that method for other purposes.
         This strictly checks that other is the same type as self. If other is a subclass this will return
         False.

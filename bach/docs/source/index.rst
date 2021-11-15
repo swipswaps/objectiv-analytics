@@ -1,3 +1,5 @@
+.. _bach:
+
 .. currentmodule:: bach
 
 =============
@@ -101,7 +103,7 @@ It is also possible to create a DataFrame from an arbitrary sql query (using `fr
 existing pandas DataFrame (using `from_pandas`).
 
 Basic operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~
 .. code-block:: python
 
     # Adding a new column
