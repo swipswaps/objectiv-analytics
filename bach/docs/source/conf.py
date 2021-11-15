@@ -188,25 +188,25 @@ def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
     # Skip some private API methods & attributes that can't easily be renamed to _func or _attr
     import bach
     _SKIP = {
-        bach.DataFrame.get_current_node,
-
-        bach.Series.copy_override,
-        bach.Series.dtype_to_expression,
-        bach.Series.value_to_expression,
-        bach.Series.supported_value_to_expression,
         bach.Series.as_independent_subquery,
-        bach.Series.get_class_instance,
-        bach.Series.get_column_expression,
+        bach.Series.copy_override,
         bach.Series.dtype_aliases,
+        bach.Series.dtype_to_expression,
         bach.Series.dtype_to_pandas,
         bach.Series.engine,
         bach.Series.equals,
+        bach.Series.expression,
+        bach.Series.get_class_instance,
+        bach.Series.get_column_expression,
         bach.Series.supported_db_dtype,
+        bach.Series.supported_value_to_expression,
         bach.Series.supported_value_types,
-        bach.Series.expression
+        bach.Series.value_to_expression,
     }
 
     try:
+        if obj.__doc__ and obj.__doc__.strip().startswith('INTERNAL'):
+            return True
         if obj in _SKIP:
             return True
         return None

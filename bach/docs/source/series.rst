@@ -78,7 +78,7 @@ is okay, while a comparison operation is not.
 
 The type of a Series can generally be changed by calling :py:meth:`series.Series.astype()`.
 
-Constructor & Frame operations
+Constructor & frame operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
     :toctree: series
@@ -139,7 +139,6 @@ Comparison and set operations
     Series.isnull
     Series.notnull
 
-
 Conversion, reshaping, sorting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
@@ -148,9 +147,8 @@ Conversion, reshaping, sorting
     Series.sort_values
     Series.fillna
 
-
-Function application, GroupBy & Window
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Function application, aggregation & windowing
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
     :toctree: series
 
@@ -158,7 +156,7 @@ Function application, GroupBy & Window
     Series.aggregate
     Series.apply_func
 
-Computations / descriptive stats
+Computations & descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **All types**
 
@@ -201,8 +199,3 @@ Computations / descriptive stats
 
     Series.window_ntile
     Series.window_cume_dist
-
-
-
-
-

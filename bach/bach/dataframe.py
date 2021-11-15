@@ -175,6 +175,8 @@ class DataFrame:
             **kwargs
     ) -> 'DataFrame':
         """
+        INTERNAL
+
         Create a copy of self, with the given arguments overridden
 
         Big fat warning: group_by can legally be None, but if you want to set that,
@@ -232,46 +234,77 @@ class DataFrame:
 
     @property
     def engine(self):
+        """
+        INTERNAL: Get the current engine
+        """
         return self._engine
 
     @property
     def base_node(self) -> SqlModel[BachSqlModel]:
+        """
+        INTERNAL: Get the current base node
+        """
         return self._base_node
 
     @property
     def index(self) -> Dict[str, 'Series']:
+        """
+        Get the index dictionary {name: Series}
+        """
         return copy(self._index)
 
     @property
     def data(self) -> Dict[str, 'Series']:
+        """
+        Get the data dictionary {name: Series}
+        """
         return copy(self._data)
 
     @property
     def order_by(self) -> List[SortColumn]:
+        """
+        Get the current sort order, if any.
+        """
         return copy(self._order_by)
 
     @property
     def all_series(self) -> Dict[str, 'Series']:
+        """
+        Get all index and data Series in a dictionary {name: Series}
+        """
         return {**self.index, **self.data}
 
     @property
     def index_columns(self) -> List[str]:
+        """
+        Get all the index column names in a List
+        """
         return list(self.index.keys())
 
     @property
     def data_columns(self) -> List[str]:
+        """
+        Get all the data Series in a List
+        """
         return list(self.data.keys())
 
     @property
-    def index_dtypes(self):
+    def index_dtypes(self) -> Dict[str, str]:
+        """
+        Get the index Series' dtypes in a listList
+        """
         return {column: data.dtype for column, data in self.index.items()}
 
     @property
-    def dtypes(self):
+    def dtypes(self) -> Dict[str, str]:
+        """
+        Get the data dtypes in a List
+        """
         return {column: data.dtype for column, data in self.data.items()}
 
     @property
     def group_by(self):
+        """ Get this DataFrame's grouping, if any. """
         return copy(self._group_by)
 
     def __eq__(self, other: Any) -> bool:
@@ -425,8 +458,9 @@ class DataFrame:
             order_by: List[SortColumn] = None,
     ) -> 'DataFrame':
         """
-        Get an instance with the right series instantiated based on the dtypes array. This assumes that
-        base_node has a column for all names in index_dtypes and dtypes.
+        INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
+
+        This assumes that base_node has a column for all names in index_dtypes and dtypes.
         If single_value is True, SingleValueExpression is used as the class for the series expressions
         """
         index: Dict[str, Series] = {}
@@ -1273,7 +1307,8 @@ class DataFrame:
                          where_clause: Expression = None,
                          having_clause: Expression = None) -> SqlModel[BachSqlModel]:
         """
-        Translate the current state of this DataFrame into a SqlModel.
+        INTERNAL: Translate the current state of this DataFrame into a SqlModel.
+
         :param name: The name of the new node
         :param limit: The limit to use
         :param where_clause: The where-clause to apply, if any
