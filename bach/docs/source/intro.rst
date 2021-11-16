@@ -227,8 +227,8 @@ API Reference
 .. toctree::
     :maxdepth: 3
 
-    dataframe
-    series
+    Dataframe
+    Series
 
 
 
