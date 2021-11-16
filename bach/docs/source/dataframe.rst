@@ -98,7 +98,6 @@ Value accessors
     DataFrame.head
     DataFrame.to_pandas
     DataFrame.values
-    DataFrame.array
 
 Attributes and underlying data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
