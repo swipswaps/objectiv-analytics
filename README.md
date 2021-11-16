@@ -16,7 +16,7 @@ Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
 ## Getting Started
 
-* [Play with Objectiv](https://notebook.objectiv.io/lab?path=product_analytics.ipynb) in our Live Demo notebook.
+* [Play with Objectiv](https://notebook.objectiv.io/lab?path=product_analytics.ipynb) in our Live Demo Notebook.
 * [Follow the Quickstart Guide](https://www.objectiv.io/docs/) to run Objectiv locally.
 
 ## Useful Resources
