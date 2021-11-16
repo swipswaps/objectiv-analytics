@@ -65,10 +65,6 @@ autosummary_generate = True
 autosummary_imported_members = True
 autodoc_typehints = 'description'
 autodoc_typehints_description_target = 'documented'
-# autodoc_inherit_docstrings = False
-# autodoc_default_options = {
-#     'undoc-members': False,
-# }
 
 autoclass_content='class'
 # TOTALLY breaks toctree generation autodoc_class_signature = 'separated'
@@ -188,10 +184,9 @@ def repair_classmethod_docstring(app, what, name, obj, options, lines):
 
 
 def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
-    # Skip some private API methods & properties
-    # by checking whether the docstring starts with "INTERNAL"
-    # Skip all attributes all together, if they're part of the public interface, they should be properties
+    # Skip some private API methods & attributes & properties
 
+    # Skip all attributes all together, if they're part of the public interface, they should be properties
     if what == 'attribute':
         return True
 
@@ -203,14 +198,18 @@ def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
     # Traverse parent class hierarchy to get the topmost implementation with a non-empty docstring
     # This will disregard the type of the member, but that's actually okay, as long as
     klass = getattr(inspect_obj, '__self__', None)
-    while klass and hasattr(klass, '__base__') and not inspect_obj.__doc__:
+    while not inspect_obj.__doc__ and klass and hasattr(klass, '__base__'):
         klass = klass.__base__
+        # Is our method in this base class?
         if inspect_obj.__name__ in getattr(klass, '__dict__', {}):
+            # Get the method
             inspect_obj = klass.__dict__[inspect_obj.__name__]
+            # Do clean up the object if it's a property accessor or classmethod.
+            if isinstance(obj, property):
+                inspect_obj = obj.fget
             if isinstance(inspect_obj, classmethod):
                 inspect_obj = inspect_obj.__func__
-            if isinstance(obj, property) and isinstance(obj.fget, classmethod):
-                inspect_obj = obj.fget.__func__
+
 
     # We get no options from autosummary whatsoever, so to implement this here:
     # if not autodoc_default_options.get('undoc-members', False) and not inspect_obj.__doc__:
