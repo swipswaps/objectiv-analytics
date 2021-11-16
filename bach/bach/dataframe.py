@@ -30,7 +30,7 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     Accepted combinations are:
 #     - function
 #     - string function name
-#     - list of functions and/or function names, e.g. [BuhTuhSeriesInt64.sum, 'mean']
+#     - list of functions and/or function names, e.g. [SeriesInt64.sum, 'mean']
 #     - dict of axis labels -> functions, function names or list of such.
 
 
@@ -50,9 +50,9 @@ class DataFrame:
 
     **Usage**
 
-    It should generally not be required to construct Series instances manually. A DataFrame can be constructed
-    using the any of the bach classmethods like :py:meth:`from_table()`, :py:meth:`from_model()`, or
-    :py:meth:`from_pandas()`. The returned DataFrame can be thought of as a dict-like container for Bach
+    It should generally not be required to construct DataFrame instances manually. A DataFrame can be
+    constructed using the any of the bach classmethods like :py:meth:`from_table`, :py:meth:`from_model`, or
+    :py:meth:`from_pandas`. The returned DataFrame can be thought of as a dict-like container for Bach
     Series objects.
 
     **Getting & Setting columns**
@@ -66,7 +66,7 @@ class DataFrame:
     positive integers are currently accepted in slices.
 
     SeriesBoolean can also be used to filter DataFrames, and these Series are easily created using comparison
-    operations like equals (``==``), less-than (``<``), not(``~``) on two series, or series with values:
+    operations like equals (`==`), less-than (`<`), not(`~`) on two series, or series with values:
     ``boolean_series = a == b``. Boolean indexing can be done like ``df[df.column == 5]``. Only rows are
     returned for which the condition is true.
 
@@ -85,7 +85,7 @@ class DataFrame:
         df['b'] = ''
 
     If a Series of DataFrames do not share the same base node, it is possible to combine the data using
-    :py:meth:`merge()`.
+    :py:meth:`merge`.
 
 
     **Database access**
@@ -94,10 +94,10 @@ class DataFrame:
     by the database, not in local memory. Data will only be transferred to local memory when an
     explicit call is made to one of the functions that transfers data:
 
-    * :py:meth:`head()`
-    * :py:meth:`to_pandas()`
-    * :py:meth:`get_sample()`
-    * The property accessors :py:attr:`Series.value` (Series only), :py:attr:`values`, and :py:attr:`array`
+    * :py:meth:`head`
+    * :py:meth:`to_pandas`
+    * :py:meth:`get_sample`
+    * The property accessors :py:attr:`Series.value` (Series only), :py:attr:`values`
 
     Other functions will not transfer data, nor will they trigger any operations to run on the database.
     Operations on the DataFrame are combined and translated to a single SQL query, which is executed
@@ -121,8 +121,8 @@ class DataFrame:
         """
         Instantiate a new DataFrame.
         There are utility class methods to easily create a DataFrame from existing data such as a
-        table (:py:meth:`from_table()`), an already instantiated sql-model (:py:meth:`from_model()`), or a
-        pandas dataframe (:py:meth:`from_pandas()`).
+        table (:py:meth:`from_table`), an already instantiated sql-model (:py:meth:`from_model`), or a
+        pandas dataframe (:py:meth:`from_pandas`).
 
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain all columns/expressions that
@@ -250,14 +250,14 @@ class DataFrame:
     @property
     def index(self) -> Dict[str, 'Series']:
         """
-        Get the index dictionary {name: Series}
+        Get the index dictionary `{name: Series}`
         """
         return copy(self._index)
 
     @property
     def data(self) -> Dict[str, 'Series']:
         """
-        Get the data dictionary {name: Series}
+        Get the data dictionary `{name: Series}`
         """
         return copy(self._data)
 
@@ -271,41 +271,45 @@ class DataFrame:
     @property
     def all_series(self) -> Dict[str, 'Series']:
         """
-        Get all index and data Series in a dictionary {name: Series}
+        Get all index and data Series in a dictionary `{name: Series}`
         """
         return {**self.index, **self.data}
 
     @property
     def index_columns(self) -> List[str]:
         """
-        Get all the index column names in a List
+        Get all the index columns' names in a List
         """
         return list(self.index.keys())
 
     @property
     def data_columns(self) -> List[str]:
         """
-        Get all the data Series in a List
+        Get all the data Series' names in a List
         """
         return list(self.data.keys())
 
     @property
     def index_dtypes(self) -> Dict[str, str]:
         """
-        Get the index Series' dtypes in a listList
+        Get the index Series' dtypes in a dictionary `{name: dtype}`
         """
         return {column: data.dtype for column, data in self.index.items()}
 
     @property
     def dtypes(self) -> Dict[str, str]:
         """
-        Get the data dtypes in a List
+        Get the data Series' dtypes in a dictionary `{name: dtype}`
         """
         return {column: data.dtype for column, data in self.data.items()}
 
     @property
     def group_by(self):
-        """ Get this DataFrame's grouping, if any. """
+        """
+        Get this DataFrame's grouping, if any.
+
+        If `group_by` is not None, the DataFrame can be used to perform aggregations on.
+        """
         return copy(self._group_by)
 
     def __eq__(self, other: Any) -> bool:
@@ -360,10 +364,10 @@ class DataFrame:
     @classmethod
     def from_model(cls, engine: Engine, model: SqlModel, index: List[str]) -> 'DataFrame':
         """
-        Instantiate a new DataFrame based on the result of the query defined in ``model``
+        Instantiate a new DataFrame based on the result of the query defined in `model`.
 
         This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
-        In order to create this temporary table the query in ``model`` executed.
+        In order to create this temporary table the query in `model` executed.
 
         :param engine: an sqlalchemy engine for the database.
         :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
@@ -411,21 +415,21 @@ class DataFrame:
 
         How the data is loaded depends on the chosen materialization:
 
-        1. 'table': This will first write the data to a database table using pandas :py:meth:`pandas.DataFrame.to_sql()` method.
-        2. 'cte': The data will be represented using a common table expression of the form ``select * from values()`` in future queries.
+        1. 'table': This will first write the data to a database table using pandas :py:meth:`pandas.DataFrame.to_sql` method.
+        2. 'cte': The data will be represented using a common table expression of the form ``select * from values`` in future queries.
 
         The 'table' method requires database write access. The 'cte' method is side-effect free and doesn't
         interact with the database at all. However the 'cte' method is only suitable for small quantities
         of data. For anything over a dozen kilobytes of data it is recommended to store the data in a table
         in the database first (e.g. by specifying 'table').
 
-        There are some small differences between how the different materializations handle ``NaN`` values. e.g.
-        'cte' does not support those for non-numeric columns, whereas 'table' converts them to ``NULL``
+        There are some small differences between how the different materializations handle NaN values. e.g.
+        'cte' does not support those for non-numeric columns, whereas 'table' converts them to 'NULL'.
 
         :param engine: an sqlalchemy engine for the database.
         :param df: Pandas DataFrame to instantiate as DataFrame.
         :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
-            :py:meth:`pandas.DataFrame.convert_dtypes()` method where possible.
+            :py:meth:`pandas.DataFrame.convert_dtypes` method where possible.
         :param name:
             * For 'table' materialization: name of the table that Pandas will write the data to.
             * For 'cte' materialization: name of the node in the underlying SqlModel graph.
@@ -505,10 +509,10 @@ class DataFrame:
         the size of the generated SQL query. But this can be useful if the current DataFrame contains
         expressions that you want to evaluate before further expressions are build on top of them. This might
         make sense for very large expressions, or for non-deterministic expressions (e.g. see
-        :py:meth:`SeriesUuid.sql_gen_random_uuid()`).
+        :py:meth:`SeriesUuid.sql_gen_random_uuid`).
 
         :param node_name: The name of the node that's going to be created
-        :param inplace: Perform operation on self if inplace=True, or create a copy. Not supported yet.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy. Not supported yet.
         :param limit: The limit (slice, int) to apply.
         :returns: New DataFrame with the current DataFrame's state as base_node
         """
@@ -539,13 +543,14 @@ class DataFrame:
         For the sample Dataframe to be created, all data is queried once and a persistent table is created to
         store the sample data used for the sampled DataFrame.
 
-        Use :py:meth:`get_unsampled()` to switch back to the unsampled data later on. This returns a new DataFrame with
+        Use :py:meth:`get_unsampled` to switch back to the unsampled data later on. This returns a new DataFrame with
         all operations that have been done on the sample, applied to that DataFrame.
 
         :param table_name: the name of the underlying sql table that stores the sampled data.
         :param filter: a filter to apply to the dataframe before creating the sample. If a filter is applied,
             sample_percentage is ignored and thus the bernoulli sample creation is skipped.
-        :param sample_percentage: the approximate size of the sample, between 0-100.
+        :param sample_percentage: the approximate size of the sample as a proportion of all rows.
+            Between 0-100.
         :param overwrite: if True, the sample data is written to table_name, even if that table already
             exists.
         :param seed: optional seed number used to generate the sample.
@@ -602,14 +607,14 @@ class DataFrame:
 
     def get_unsampled(self) -> 'DataFrame':
         """
-        Return a copy of the current sampled DataFrame, that undoes calling :py:meth:`get_sample()` earlier.
+        Return a copy of the current sampled DataFrame, that undoes calling :py:meth:`get_sample` earlier.
 
         All other operations that have been done on the sample DataFrame will be applied on the DataFrame
         that is returned. This does not remove the table that was written to the database by
-        :py:meth:`get_sample()`, the new DataFrame just does not query that table anymore.
+        :py:meth:`get_sample`, the new DataFrame just does not query that table anymore.
 
         Will raise an error if the current DataFrame is not sample data of another DataFrame, i.e.
-        :py:meth:`get_sample()` has not been called.
+        :py:meth:`get_sample` has not been called.
 
         :returns: an unsampled copy of the current sampled DataFrame.
         """
@@ -779,22 +784,23 @@ class DataFrame:
         """
         Rename columns.
 
-        The interface is similar to Panda's DataFrame.rename(). However we don't support renaming indexes, so
-        recommended usage is `rename(columns=...)`
+        The interface is similar to Panda's :py:meth:`pandas.DataFrame.rename`. However we don't support
+        renaming indexes, so recommended usage is ``rename(columns=...)``.
 
         :param mapper: dict to apply to that axis' values. Use mapper and axis to specify the axis to target
-            with mapper. Currently mapper is only supported with axis=1, which is similar to using columns.
+            with mapper. Currently mapper is only supported with ``axis=1``, which is similar to using
+            columns.
         :param index: not supported.
         :param columns: dict str:str to rename columns, or a function that takes column names as an argument
             and returns the new one. The new column names must not clash with other column names in either
-            self.data or self.index, after renaming is complete.
-        :param axis: axis = 1 is supported, rest is not.
+            `self.`:py:attr:`data` or `self.`:py:attr:`index`, after renaming is complete.
+        :param axis: ``axis=1`` is supported, rest is not.
         :param inplace: update the current DataFrame or return a new DataFrame.
         :param level: not supported
         :param errors: Either 'ignore' or 'raise'. When set to 'ignore' KeyErrors about non-existing
-            column names in `columns` or `mapper` are ignored. Errors thrown in the mapper function or about
-            invalid target column names are not suppressed.
-        :returns: DataFrame with the renamed axis labels or None if inplace=True.
+            column names in `columns` or `mapper` are ignored. Errors thrown in the mapper function or
+            about invalid target column names are not suppressed.
+        :returns: DataFrame with the renamed axis labels or None if ``inplace=True``.
         :note: copy parameter is not supported since it makes very little sense for db backed series
         """
         # todo should we support arguments of unsupported functionality?
@@ -841,12 +847,12 @@ class DataFrame:
         Drops the current index.
 
         With reset_index, all indexes are removed from the DataFrame, so that the DataFrame does not have any
-        index Series. A new index can be set with DataFrame.set_index.
+        index Series. A new index can be set with :py:meth:`set_index`.
 
         :param drop: if True, the dropped index is added to the data columns of the DataFrame. If False it
             is removed.
         :param inplace: update the current DataFrame or return a new DataFrame.
-        :returns: DataFrame with the index dropped or None if inplace=True.
+        :returns: DataFrame with the index dropped or None if ``inplace=True``.
         """
         df = self if inplace else self.copy_override()
         if self._group_by:
@@ -869,7 +875,7 @@ class DataFrame:
         :param drop: delete columns to be used as the new index.
         :param inplace: update the current DataFrame or return a new DataFrame. This is not always supported
             and will raise if it is not.
-        :returns: a DataFrame with the new index or None if inplace=True.
+        :returns: a DataFrame with the new index or None if ``inplace=True``.
         """
         from bach.series import Series
 
@@ -929,7 +935,7 @@ class DataFrame:
         :param level: not supported
         :param inplace: update the current DataFrame or return a new DataFrame.
         :param errors: 'raise' or 'ignore' missing key errors.
-        :returns: DataFrame without the removed columns or None if inplace=True.
+        :returns: DataFrame without the removed columns or None if ``inplace=True``.
 
         """
         if labels or index is not None:
@@ -1055,8 +1061,7 @@ class DataFrame:
             * a list of strings or series. A normal group by will be created.
             * a list of (strings, series, lists). In this case a grouping list is created.
             * a tuple of (strings, series, lists). In this case a grouping set is created.
-        :returns: a new DataFrame object with the group_by attribute set. This indicates this DataFrame can be
-            used to perform aggregations on.
+        :returns: a new DataFrame object with the :py:attr:`group_by` attribute set.
         :note: if the dataframe is already grouped, we'll create a grouping list from the initial
             grouping combined with this one.
         """
@@ -1092,8 +1097,7 @@ class DataFrame:
         """
         Create a window on the current dataframe and its sorting.
 
-        see also
-        Window __init__ for frame args
+        see :py:class:`bach.partitioning.Window` for parameters.
         """
         # TODO Better argument typing, needs fancy import logic
         from bach.partitioning import Window
@@ -1104,12 +1108,14 @@ class DataFrame:
         return DataFrame._groupby_to_frame(self, group_by)
 
     def cube(self,
-             by: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
+             by: Union[str, 'Series', List[Union[str, 'Series']], None],
              ) -> 'DataFrame':
         """
-        Create a cube on any of the series currently in this dataframe, both from index
-        as well as data.
-        :see: Cube for more info
+        Group by and cube over the column(s) `by`.
+
+        :param by: the series to group by and cube. Can be a column or index name str, a Series or a list
+            of any of those. If Series are passed, they should have the same base node as the DataFrame.
+        :returns: a new DataFrame object with the :py:attr:`group_by` attribute set.
         """
         from bach.partitioning import Cube
         index = self._partition_by_series(by)
@@ -1117,13 +1123,16 @@ class DataFrame:
         return DataFrame._groupby_to_frame(self, group_by)
 
     def rollup(self,
-               by: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
+               by: Union[str, 'Series', List[Union[str, 'Series']], None],
                ) -> 'DataFrame':
         """
-        Create a rollup on any of the series currently in this dataframe, both from index
-        as well as data.
-        :see: Rollup for more info
+        Group by and roll up over the column(s) `by`.
+        
+        :param by: the series to group by and roll up. Can be a column or index name str, a Series or a list
+            of any of those. If Series are passed, they should have the same base node as the DataFrame.
+        :returns: a new DataFrame object with the :py:attr:`group_by` attribute set.
         """
+        # todo update tests?
         from bach.partitioning import Rollup
         index = self._partition_by_series(by)
         group_by = Rollup(group_by_columns=index)
@@ -1135,18 +1144,19 @@ class DataFrame:
                 on: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
                 closed: str = 'right') -> 'DataFrame':
         """
-        A rolling window of size 'window', by default right aligned
+        A rolling window of size 'window', by default right aligned.
 
-        :param: window: the window size
-        :param: min_periods: the min amount of rows included in the window before an actual value is
-                returned
-        :param: center: center the result, or align the result on the right
-        :param: on: the partition to use, see window()
-        :param: closed:  Make the interval closed on the ‘right’, ‘left’, ‘both’ or ‘neither’
-                endpoints. Defaults to ‘right’, and the rest is currently unsupported.
-        :note:  win_type,axis and method parameters as supported by pandas, are currently not implemented.
-        :note:  the `on` parameter behaves differently from pandas, where it can be use to select to series
-                to iterate over.
+        :param window: the window size.
+        :param min_periods: the min amount of rows included in the window before an actual value is returned.
+        :param center: center the result, or align the result on the right.
+        :param on: the partition to use, see :py:meth:`window`.
+        :param closed: make the interval closed on the ‘right’, ‘left’, ‘both’ or ‘neither’ endpoints.
+            Defaults to ‘right’, and the rest is currently unsupported.
+        :returns: a new DataFrame object with the :py:attr:`group_by` attribute set with a
+            :py:class:`bach.partitioning.Window`.
+        :note: `win_type`, `axis` and `method` parameters as supported by pandas, are currently not implemented.
+        :note: the `on` parameter behaves differently from pandas, where it can be use to select to series
+            to iterate over.
         """
         from bach.partitioning import WindowFrameBoundary, WindowFrameMode, \
             Window
@@ -1183,7 +1193,6 @@ class DataFrame:
                           start_boundary=start_boundary, start_value=start_value,
                           end_boundary=end_boundary, end_value=end_value,
                           min_values=min_periods)
-
         return DataFrame._groupby_to_frame(self, group_by)
 
     def expanding(self,
@@ -1192,13 +1201,13 @@ class DataFrame:
                   on: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
                   ) -> 'DataFrame':
         """
-        Create an expanding window starting with the first row in the group, with at least min_period
-        observations. The result will be right-aligned in the window
+        Create an expanding window starting with the first row in the group, with at least `min_period`
+        observations. The result will be right-aligned in the window.
 
-        :param: min_periods:    The minimum amount of observations in the window before a value is reported
-        :param: center:         Whether to center the result, currently not supported
-        :param: on:             The partition that will be applied. Note: this is different from pandas, where
-                                The partition is determined earlier in the process.
+        :param min_periods: the minimum amount of observations in the window before a value is reported.
+        :param center: whether to center the result, currently not supported.
+        :param on: the partition that will be applied.
+        :note: 'partition' is different from pandas, where the partition is determined earlier in the process.
         """
         # TODO We could move the partitioning to GroupBy
         from bach.partitioning import WindowFrameBoundary, WindowFrameMode, \
@@ -1236,13 +1245,13 @@ class DataFrame:
 
         The sorting will remain in the returned DataFrame as long as no operations are performed on that
         frame that materially change the selected data. Operations that materially change the selected data
-        are for example groupby(), merge(), materialize(), and filtering out rows. Adding or
+        are for example :py:meth:`groupby`, :py:meth:`merge`, :py:meth:`materialize`, and filtering out rows. Adding or
         removing a column does not materially change the selected data.
 
         :param by: column label or list of labels to sort by.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
-            by must also be a list and len(ascending) == len(by)
-        :returns: a new DataFrame with the specified ordering
+            `by` must also be a list and ``len(ascending) == len(by)``.
+        :returns: a new DataFrame with the specified ordering.
         """
         if isinstance(by, str):
             by = [by]
@@ -1266,7 +1275,7 @@ class DataFrame:
         Run a SQL query representing the current state of this DataFrame against the database and return the
         resulting data as a Pandas DataFrame.
 
-        :param limit: The limit to apply, either as a max amount of rows or a slice of the data.
+        :param limit: the limit to apply, either as a max amount of rows or a slice of the data.
         :returns: a pandas DataFrame.
         :note: This function queries the database.
         """
@@ -1281,7 +1290,7 @@ class DataFrame:
 
     def head(self, n: int = 5) -> pandas.DataFrame:
         """
-        Similar to :py:meth:`to_pandas()` but only returns the first `n` rows.
+        Similar to :py:meth:`to_pandas` but only returns the first `n` rows.
 
         :param n: number of rows to query from database.
         :returns: a pandas DataFrame.
@@ -1292,18 +1301,13 @@ class DataFrame:
     @property
     def values(self):
         """
-        .values property accessor akin pandas.Dataframe.values
-        :note: This function queries the database.
-        """
-        return self.to_pandas().values
+        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
 
-    @property
-    def array(self):
-        """
-        .array property accessor akin pandas.Dataframe.array
+        :returns: Returns the values of the DataFrame as numpy.ndarray.
         :note: This function queries the database.
         """
-        return self.to_pandas().array
+        # todo function is not recommended by pandas, change?
+        return self.to_pandas().values
 
     def _get_order_by_clause(self) -> Expression:
         """
@@ -1410,7 +1414,7 @@ class DataFrame:
         """
         Translate the current state of this DataFrame into a SQL query.
 
-        :param limit: limit on which rows to select in the query
+        :param limit: the limit to apply, either as a max amount of rows or a slice of the data.
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
@@ -1436,9 +1440,9 @@ class DataFrame:
         combined columns of both dataframes, and the rows that result from joining on the specified columns.
         The columns that are joined on can consist (partially or fully) out of index columns.
 
-        See bach.merge.merge() for more information.
+        See :py:meth:`bach.merge.merge` for more information.
         The interface of this function is similar to pandas' merge, but the following parameters are not
-        supported: sort, copy, indicator, and validate.
+        supported: `sort`, `copy`, `indicator`, and `validate`.
         Additionally when merging two frames that have conflicting columns names, and joining on indices,
         then the resulting columns/column names can differ slightly from Pandas.
         """
@@ -1524,7 +1528,7 @@ class DataFrame:
                   numeric_only: bool = False,
                   *args, **kwargs) -> 'DataFrame':
         """
-        use agg(..)
+        Alias for :py:meth:`agg`
         """
         return self.agg(func, axis, numeric_only, *args, **kwargs)
 
@@ -1535,16 +1539,25 @@ class DataFrame:
             *args,
             **kwargs) -> 'DataFrame':
         """
-        :param func: the aggregations to apply on all series.
-            See apply_func() for supported arguments
-        :param axis: the aggregation axis
-        :param numeric_only: Whether to aggregate numeric series only, or attempt all.
+        Aggregate using one or more operations over the specified axis.
+
+        :param func: the aggregations to apply on all series. Accepted combinations are:
+
+            * function, e.g. `SeriesInt64.sum`
+            * function name
+            * list of functions and/or function names, e.g. [`SeriesInt64.sum`, 'mean']
+            * dict of axis labels -> functions, function names or list of such.
+        :param axis: the aggregation axis. If ``axis=1`` the index is aggregated as well. Only ``axis=1``
+            supported at the moment.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
-        :note: Pandas has numeric_only=None to attempt all columns but ignore failing ones
+        :note: Pandas has ``numeric_only=None`` to attempt all columns but ignore failing ones
             silently. This is currently not implemented.
         :note: axis defaults to 1, because 0 is currently unsupported
         """
+        # todo do we want standard aggregation of index (pandas doesn't have this)?
+        # todo numeric_only is a kwarg of the called func (like pandas)? ie now it breaks for nunique
         df = self
         if df.group_by is None:
             df = df.groupby()
@@ -1578,72 +1591,172 @@ class DataFrame:
         return self.agg(func, axis, numeric_only, *args, **kwargs)
 
     # AGGREGATES
-    def count(self, axis=None, level=None, numeric_only=False, **kwargs):
+    def count(self, axis=1, level=None, numeric_only=False, **kwargs):
+        """
+        Count all non-NULL values in each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param level: not supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         return self._aggregate_func('count', axis, level, numeric_only, **kwargs)
 
-    def kurt(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
-        return self._aggregate_func('kurt', axis, level, numeric_only,
-                                    skipna=skipna, **kwargs)
+    # def kurt(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+    #     return self._aggregate_func('kurt', axis, level, numeric_only,
+    #                                 skipna=skipna, **kwargs)
+    #
+    # def kurtosis(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+    #     return self._aggregate_func('kurtosis', axis, level, numeric_only,
+    #                                 skipna=skipna, **kwargs)
+    #
+    # def mad(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+    #     return self._aggregate_func('mad', axis, level, numeric_only,
+    #                                 skipna=skipna, **kwargs)
 
-    def kurtosis(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
-        return self._aggregate_func('kurtosis', axis, level, numeric_only,
-                                    skipna=skipna, **kwargs)
+    def max(self, axis=1, skipna=True, level=None, numeric_only=False, **kwargs):
+        """
+        Returns the maximum of all values in each column.
 
-    def mad(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
-        return self._aggregate_func('mad', axis, level, numeric_only,
-                                    skipna=skipna, **kwargs)
-
-    def max(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         return self._aggregate_func('max', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
-    def min(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+    def min(self, axis=1, skipna=True, level=None, numeric_only=False, **kwargs):
+        """
+        Returns the minimum of all values in each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         return self._aggregate_func('min', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
-    def mean(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+    def mean(self, axis=1, skipna=True, level=None, numeric_only=False, **kwargs):
+        """
+        Returns the mean of all values in each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         return self._aggregate_func('mean', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
-    def median(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+    def median(self, axis=1, skipna=True, level=None, numeric_only=False, **kwargs):
+        """
+        Returns the median of all values in each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         return self._aggregate_func('median', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
-    def mode(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+    def mode(self, axis=1, skipna=True, level=None, numeric_only=False, **kwargs):
+        """
+        Returns the mode of all values in each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         # slight deviation from pd.mode(axis=0, numeric_only=False, dropna=True)
         return self._aggregate_func('mode', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
-    def nunique(self, axis=None, skipna=True, **kwargs):
+    def nunique(self, axis=1, skipna=True, **kwargs):
+        """
+        Returns the number of unique values in each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         # deviation from horrible pd.nunique(axis=0, dropna=True)
         return self._aggregate_func('nunique', axis=axis,
                                     level=None, numeric_only=False, skipna=skipna, **kwargs)
 
-    def skew(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
-        return self._aggregate_func('skew', axis, level, numeric_only,
-                                    skipna=skipna, **kwargs)
+    # def skew(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
+    #     return self._aggregate_func('skew', axis, level, numeric_only,
+    #                                 skipna=skipna, **kwargs)
+    #
+    # def prod(self, axis=None, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
+    #     return self._aggregate_func('prod', axis, level, numeric_only,
+    #                                 skipna=skipna, min_count=min_count, **kwargs)
+    #
+    # def product(self, axis=None, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
+    #     return self._aggregate_func('product', axis, level, numeric_only,
+    #                                 skipna=skipna, min_count=min_count, **kwargs)
 
-    def prod(self, axis=None, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
-        return self._aggregate_func('prod', axis, level, numeric_only,
-                                    skipna=skipna, min_count=min_count, **kwargs)
+    def sem(self, axis=1, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
+        """
+        Returns the unbiased standard error of the mean of each column.
 
-    def product(self, axis=None, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
-        return self._aggregate_func('product', axis, level, numeric_only,
-                                    skipna=skipna, min_count=min_count, **kwargs)
-
-    def sem(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param ddof: Delta Degrees of Freedom. Only 1 is supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         return self._aggregate_func('sem', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
-    def std(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
+    def std(self, axis=1, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
+        """
+        Returns the sample standard deviation of each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param ddof: Delta Degrees of Freedom. Only 1 is supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         return self._aggregate_func('std', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
-    def sum(self, axis=None, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
+    def sum(self, axis=1, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
+        """
+        Returns the sum of all values in each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :param min_count: This minimum amount of values (not NULL) to be present before returning a result.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         return self._aggregate_func('sum', axis, level, numeric_only,
                                     skipna=skipna, min_count=min_count, **kwargs)
 
-    def var(self, axis=None, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
+    def var(self, axis=1, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
+        """
+        Returns the unbiased variance of each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param ddof: Delta Degrees of Freedom. Only 1 is supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
