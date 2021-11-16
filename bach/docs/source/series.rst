@@ -1,6 +1,7 @@
 ======
 Series
 ======
+
 .. currentmodule:: bach
 
 A typed representation of a single column of data.
@@ -19,7 +20,7 @@ It should generally not be required to construct Series instances manually.
 :py:class:`bach.DataFrame` will create them for you when required.
 
 Slicing and index access
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 Series support a few standard operations to get specific values:
 series[:3] will return the first 3 values of the Series. Sort order of the series is important, so use
 `Series.sort_values()` before slicing. Any slice with positive parameters is supported.
@@ -28,7 +29,7 @@ Index lookups like series['key'] are also possible, and yield the value of the s
 matches 'key'.
 
 Database access
----------------
+~~~~~~~~~~~~~~~
 The data of this Series is always held in the database and operations on the data are performed
 by the database, not in local memory. Data will only be transferred to local memory when an
 explicit call is made to one of the functions that transfers data:
@@ -42,7 +43,7 @@ If you really need the actual values, use the above, but in general it's better 
 generate them, as this will create more flexible code.
 
 Boolean Operations
-------------------
+~~~~~~~~~~~~~~~~~~
 A special subclass, :py:class:`SeriesBoolean`, can be used to filter
 DataFrames, and these Series are easily created using comparison operations like equals (==),
 less-than (<), not(~) on two series: `boolean_series = a == b`
@@ -53,7 +54,7 @@ More complex boolean operations like `a.isin(b)` are also supported, as well as 
 See :py:class:`SeriesBoolean` for more info on the operation and syntax.
 
 Aggregations
-------------
+~~~~~~~~~~~~
 All Series support type-agnostic aggregations, and more specific aggregatations are available via Series
 sub-classes. E.g. Numeric Series support artihmetic aggregation functions.
 
@@ -61,7 +62,7 @@ When a Series has aggregation setup (inherited from the Dataframe it's part of, 
 to the aggregation function), it will use that aggregation instead of an aggregation over the full Series.
 
 Window Functions
-----------------
+~~~~~~~~~~~~~~~~
 All aggregation can also be used with a :py:class:`partitioning.Window`. A window defines the
 subset of data on which the aggregation takes place. Unlike an aggregation, a window function returns a
 value for every row in the data set.
@@ -70,20 +71,33 @@ previous row (using :py:meth:`Series.window_lag()`). All of these functions are 
 Series.window_* namespace.
 
 Types
------
+~~~~~
 Series have a specific type that determines what kind of operations are available. All numeric series
 support arithmetic operations and aggregations for example. It may or may not be possible to perform
 operations on different types. A comparison or arithmetic operation between a Int64 and Float Series
 is okay, while a comparison operation is not.
 
-The type of a Series can generally be changed by calling :py:meth:`series.Series.astype()`.
+The type of a Series can generally be changed by calling :py:meth:`Series.astype`.
 
-Constructor & frame operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+bach.Series reference
+---------------------
 .. autosummary::
+    :template: autosummary/class_short.rst
     :toctree: series
 
     Series
+    SeriesBoolean
+    SeriesAbstractNumeric
+    SeriesString
+
+bach.Series reference by function
+---------------------------------
+
+Creation / re-framing
+~~~~~~~~~~~~~~~~~~~~~
+.. autosummary::
+    :toctree: series
+
     Series.from_const
     Series.to_frame
 
@@ -100,8 +114,9 @@ Value accessors
 
 Attributes and underlying data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Axes**
 
+Axes
+++++
 .. autosummary::
     :toctree: series
 
@@ -110,16 +125,16 @@ Attributes and underlying data
     Series.group_by
     Series.sorted_ascending
 
-**Types**
-
+Types
++++++
 .. autosummary::
     :toctree: series
 
     Series.dtype
     Series.astype
 
-**Sql Model**
-
+Sql Model
++++++++++
 .. autosummary::
     :toctree: series
 
@@ -158,7 +173,9 @@ Function application, aggregation & windowing
 
 Computations & descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**All types**
+
+All types
++++++++++
 
 .. autosummary::
     :toctree: series
@@ -170,8 +187,8 @@ Computations & descriptive stats
     Series.mode
     Series.nunique
 
-**Numeric**
-
+Numeric
++++++++
 .. autosummary::
     :toctree: series
 
@@ -181,8 +198,8 @@ Computations & descriptive stats
     SeriesAbstractNumeric.std
     SeriesAbstractNumeric.var
 
-**Window**
-
+Window
+++++++
 .. autosummary::
     :toctree: series
 

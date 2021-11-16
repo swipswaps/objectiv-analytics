@@ -16,17 +16,20 @@ if TYPE_CHECKING:
 
 class SeriesAbstractNumeric(Series, ABC):
     """
-    Base class that defines operations on numeric types, currently SeriesFloat and SeriesInt64
+    A Series that represents the base numeric types and its specific operations
 
-    Operations
-    ---------
+    ** Operations **
+
     All common arithmetic operations are supported, as well as the most common aggregation operations:
-    - add, subtract
-    - multiply, divide, floordiv
+
+    - add (+), subtract (-)
+    - multiply (*), divide (/), floordiv (//)
+    - lshift (<<) and rshift(>>) for Integer types
 
     And the aggregations/statistical functions:
-    - sum, mean
-    - sem, std, var
+
+    - :py:meth:`sum`, :py:meth:`mean`
+    - :py:meth:`sem`, :py:meth:`std`, :py:meth:`var`
 
     Integer types also support lshift (<<) and rshift(>>)
     """

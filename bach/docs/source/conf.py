@@ -13,28 +13,19 @@
 import os
 import sys
 import inspect
-sys.path.insert(0, os.path.abspath('.'))
-
-base_path = os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__))))
-paths = [
-    base_path
-]
-print(paths)
-sys.path.extend(paths)
-
-# -- Project information -----------------------------------------------------
 
 project = 'Bach'
 copyright = '2021, Objectiv'
 author = 'Objectiv B.V.'
 
+sys.path.extend([os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__))))])
 
-#ipython_execlines = [
+# ipython_execlines = [
 #    'sys.path.insert(0, os.path.abspath("../../bach"))',
 #    'import bach',
 #    'import quote_string from expression',
 #    'import sys'
-#]
+# ]
 
 
 doctest_global_setup = '''
@@ -45,40 +36,43 @@ from bach.dataframe import Dataframe
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',           # generate summaries based on docstrings
-    'sphinx.ext.autosummary',       # auto generate autodoc directives
+    'sphinx.ext.autodoc',  # generate summaries based on docstrings
+    'sphinx.ext.autosummary',  # auto generate autodoc directives
     # 'sphinx.ext.intersphinx',       # generate links to external sphinx projects
-    'sphinx.ext.linkcode',          # generate [source] links to GH
-    'sphinx.ext.doctest',           # run examples /tests
-    'numpydoc',                     # use numpy style docs
-    #'sphinx.ext.viewcode',
-    #'IPython.sphinxext.ipython_directive',
-    #'IPython.sphinxext.ipython_console_highlighting',
+    'sphinx.ext.linkcode',  # generate [source] links to GH
+    'sphinx.ext.doctest',  # run examples /tests
+    'numpydoc',  # use numpy style docs
+    # 'sphinx.ext.viewcode',
+    # 'IPython.sphinxext.ipython_directive',
+    # 'IPython.sphinxext.ipython_console_highlighting',
     'sphinx_markdown_builder'
 ]
+#
+# intersphinx_mapping = {
+#     "dateutil": ("https://dateutil.readthedocs.io/en/latest/", None),
+#     "matplotlib": ("https://matplotlib.org/stable/", None),
+#     "numpy": ("https://numpy.org/doc/stable/", None),
+#     "pandas-gbq": ("https://pandas-gbq.readthedocs.io/en/latest/", None),
+#     "pandas": ("https://pandas.pydata.org/docs/", None),
+#     "py": ("https://pylib.readthedocs.io/en/latest/", None),
+#     "python": ("https://docs.python.org/3/", None),
+#     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+#     "statsmodels": ("https://www.statsmodels.org/devel/", None),
+#     "pyarrow": ("https://arrow.apache.org/docs/", None),
+# }
 
-intersphinx_mapping = {
-    "dateutil": ("https://dateutil.readthedocs.io/en/latest/", None),
-    "matplotlib": ("https://matplotlib.org/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas-gbq": ("https://pandas-gbq.readthedocs.io/en/latest/", None),
-    "pandas": ("https://pandas.pydata.org/docs/", None),
-    "py": ("https://pylib.readthedocs.io/en/latest/", None),
-    "python": ("https://docs.python.org/3/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
-    "statsmodels": ("https://www.statsmodels.org/devel/", None),
-    "pyarrow": ("https://arrow.apache.org/docs/", None),
-}
+# autosummary / autodoc
+autosummary_generate = True
+autosummary_imported_members = True
+autodoc_typehints = 'description'
+autodoc_typehints_description_target = 'documented'
+autoclass_content = 'class'
+# TOTALLY breaks toctree generation autodoc_class_signature = 'separated'
 
-autodoc_typehints = 'none'
 
 # numpydoc
 numpydoc_attributes_as_param_list = False
 numpydoc_show_class_members = False
-
-# autosummary
-autosummary_generate = True
-autosummary_imported_members = True
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -87,7 +81,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -119,6 +112,7 @@ html_theme_options = {
     "google_analytics_id": ""
 }
 
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
@@ -130,14 +124,14 @@ html_theme_options = {
 def linkcode_resolve(domain, info):
     if domain != 'py':
         return None
-    
+
     modname = info["module"]
     fullname = info["fullname"]
 
     submod = sys.modules.get(modname)
     if submod is None:
         return None
-    
+
     obj = submod
     for part in fullname.split("."):
         try:
@@ -159,8 +153,9 @@ def linkcode_resolve(domain, info):
     else:
         linespec = ""
 
-    filename = fn[len(base_path):]
-    return f"https://github.com/objectiv/objectiv-analytics/blob/main/bach{filename}{linespec}"
+    filename = info['module'].replace('.', '/') + '/' + os.path.basename(fn)
+
+    return f"https://github.com/objectiv/objectiv-analytics/blob/main/bach/{filename}{linespec}"
 
 
 from sphinx.ext.autosummary import Autosummary  # isort:skip

@@ -18,7 +18,7 @@ using the any of the bach classmethods like from_table, from_model, or from_pand
 can be thought of as a dict-like container for Bach Series objects.
 
 Getting & Setting columns
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 Getting data works similar to pandas DataFrame. Single columns can be retrieved with df['column_name']
 as well as df.column_name. This will return a single Bach Series. Multiple columns can be retrieved by
 passing a list of column names like: `df[['column_name','other_column_name']]`. This returns a Bach
@@ -33,14 +33,14 @@ boolean_series = a == b. Boolean indexing can be done like df[df.column == 5]. O
 which the condition is true.
 
 Moving Series around
---------------------
+~~~~~~~~~~~~~~~~~~~~
 Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
 DataFrame is possible if they share the same base node. This means that they originate from the same data
 source. In most cases this means that the series that is to be set to the DataFrame is a result of
 operations on the DataFrame that is started with.
 
 Examples
---------
+~~~~~~~~
 .. code-block:: python
 
     df['a'] = df.column_name + 5
@@ -51,7 +51,7 @@ If a Series of DataFrames do not share the same base node, it is possible to com
 
 
 Database access
----------------
+~~~~~~~~~~~~~~~
 The data of this DataFrame is always held in the database and operations on the data are performed
 by the database, not in local memory. Data will only be transferred to local memory when an
 explicit call is made to one of the functions that transfers data:
@@ -60,7 +60,7 @@ explicit call is made to one of the functions that transfers data:
  * :py:meth:`DataFrame.to_pandas()`
  * :py:meth:`DataFrame.get_sample()`
  * The property accessors :py:attr:`DataFrame.values`, :py:attr:`DataFrame.array` and
-   :py:attr:`~bach.series.series.Series.value` (Series only),
+   :py:attr:`bach.Series.value` (Series only),
 
 Other functions will not transfer data, nor will they trigger any operations to run on the database.
 Operations on the DataFrame are combined and translated to a single SQL query, which is executed
@@ -69,12 +69,22 @@ only when one of the above mentioned data-transfer functions is called.
 The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
 DataFrames see https://pandas.pydata.org/docs/reference/frame.html
 
-Constructor & frame operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+bach.DataFrame reference
+------------------------
 .. autosummary::
+    :template: autosummary/class_short.rst
     :toctree: dataframe
 
     DataFrame
+
+bach.DataFrame reference by function
+------------------------------------
+
+Creation
+~~~~~~~~
+.. autosummary::
+    :toctree: dataframe
+
     DataFrame.from_table
     DataFrame.from_model
     DataFrame.from_pandas
@@ -92,8 +102,9 @@ Value accessors
 
 Attributes and underlying data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**Axes**
 
+Axes
+++++
 .. autosummary::
     :toctree: dataframe
 
@@ -105,8 +116,8 @@ Attributes and underlying data
     DataFrame.group_by
     DataFrame.order_by
 
-**Types**
-
+Types
++++++
 .. autosummary::
     :toctree: dataframe
 
@@ -114,8 +125,8 @@ Attributes and underlying data
     DataFrame.index_dtypes
     DataFrame.astype
 
-**Sql Model**
-
+Sql Model
++++++++++
 .. autosummary::
     :toctree: dataframe
 
@@ -155,8 +166,9 @@ Aggregation & windowing
 
 Computations & descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-**All types**
 
+All types
++++++++++
 .. autosummary::
     :toctree: dataframe
 
@@ -167,8 +179,8 @@ Computations & descriptive stats
     DataFrame.mode
     DataFrame.nunique
 
-**Numeric**
-
+Numeric
++++++++
 .. autosummary::
     :toctree: dataframe
 

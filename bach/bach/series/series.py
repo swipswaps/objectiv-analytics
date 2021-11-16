@@ -28,7 +28,7 @@ WrappedWindow = Union['Window', 'DataFrame']
 
 class Series(ABC):
     """
-    A typed representation of a single column of data.
+    A Series that represents the generic type and its specific operations
 
     It can be used as a separate object to just deal with a single list of values. There are many standard
     operations on Series available to do operations like add or subtract, to create aggregations like
