@@ -4,6 +4,8 @@ Series
 
 .. currentmodule:: bach
 
+Introduction
+------------
 A typed representation of a single column of data.
 
 It can be used as a separate object to just deal with a single list of values. There are many standard
