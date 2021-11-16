@@ -11,7 +11,7 @@ from bach.expression import Expression
 
 class SeriesUuid(Series):
     """
-    Series representing UUID values.
+    A Series that represents the UUID type and its specific operations
     """
     dtype = 'uuid'
     dtype_aliases = ()

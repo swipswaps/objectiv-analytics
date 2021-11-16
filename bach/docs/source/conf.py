@@ -13,16 +13,6 @@
 import os
 import sys
 import inspect
-sys.path.insert(0, os.path.abspath('.'))
-
-paths = [
-    os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__)))),
-    os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__)))) + '/series',
-]
-print(paths)
-sys.path.extend(paths)
-
-# -- Project information -----------------------------------------------------
 
 project = 'Bach'
 copyright = '2021, Objectiv'
@@ -56,30 +46,35 @@ extensions = [
     #'IPython.sphinxext.ipython_console_highlighting',
     'sphinx_markdown_builder'
 ]
+#
+# intersphinx_mapping = {
+#     "dateutil": ("https://dateutil.readthedocs.io/en/latest/", None),
+#     "matplotlib": ("https://matplotlib.org/stable/", None),
+#     "numpy": ("https://numpy.org/doc/stable/", None),
+#     "pandas-gbq": ("https://pandas-gbq.readthedocs.io/en/latest/", None),
+#     "pandas": ("https://pandas.pydata.org/docs/", None),
+#     "py": ("https://pylib.readthedocs.io/en/latest/", None),
+#     "python": ("https://docs.python.org/3/", None),
+#     "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
+#     "statsmodels": ("https://www.statsmodels.org/devel/", None),
+#     "pyarrow": ("https://arrow.apache.org/docs/", None),
+# }
 
-intersphinx_mapping = {
-    "dateutil": ("https://dateutil.readthedocs.io/en/latest/", None),
-    "matplotlib": ("https://matplotlib.org/stable/", None),
-    "numpy": ("https://numpy.org/doc/stable/", None),
-    "pandas-gbq": ("https://pandas-gbq.readthedocs.io/en/latest/", None),
-    "pandas": ("https://pandas.pydata.org/docs/", None),
-    "py": ("https://pylib.readthedocs.io/en/latest/", None),
-    "python": ("https://docs.python.org/3/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/reference/", None),
-    "statsmodels": ("https://www.statsmodels.org/devel/", None),
-    "pyarrow": ("https://arrow.apache.org/docs/", None),
-}
+# autosummary / autodoc
+autosummary_generate = True
+autosummary_imported_members = True
+autodoc_typehints = 'description'
+autodoc_typehints_description_target = 'documented'
+autoclass_content='class'
+# TOTALLY breaks toctree generation autodoc_class_signature = 'separated'
 
-autodoc_typehints = 'none'
 
 # numpydoc
 numpydoc_attributes_as_param_list = False
 numpydoc_show_class_members = False
 
-# autosummary
-autosummary_generate = True
 
-autosummary_imported_members = True
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
 
@@ -177,6 +172,7 @@ def remove_copyright_string(app, what, name, obj, options, lines):
     if len(lines) > 0 and lines[0] == 'Copyright 2021 Objectiv B.V.':
         del lines[0]
 
+
 def repair_classmethod_docstring(app, what, name, obj, options, lines):
     # If a property is annotated as a classmethod, there is confusion. Resolve that here
     if isinstance(obj, property) and isinstance(obj.fget, classmethod):
@@ -185,18 +181,20 @@ def repair_classmethod_docstring(app, what, name, obj, options, lines):
         if obj_lines:
             lines.extend(obj_lines.split("\n"))
 
+
 def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
     # Skip some private API methods & attributes that can't easily be renamed to _func or _attr
     # by checking whether the docstring starts with "INTERNAL"
-    if obj.__doc__:
-        # This method is called before repair_classmethod_docstring(), so we have to do the same dance
-        if (isinstance(obj, property)
-                and isinstance(obj.fget, classmethod)
-                and obj.fget.__func__.__doc__.strip().startswith('INTERNAL')):
-            return True
-        elif obj.__doc__.strip().startswith('INTERNAL'):
-            return True
+    # This method is called before repair_classmethod_docstring(), so we have to do the same dance
+    inspect_obj = obj
+    if isinstance(obj, property) and isinstance(obj.fget, classmethod):
+        inspect_obj = obj.fget.__func__
+
+    if inspect_obj.__doc__ and inspect_obj.__doc__.strip().startswith('INTERNAL'):
+        return True
+
     return None
+
 
 def setup(app):
     app.connect("autodoc-process-docstring", remove_copyright_string)

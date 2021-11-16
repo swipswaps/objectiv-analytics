@@ -16,7 +16,7 @@ if TYPE_CHECKING:
 
 class SeriesJsonb(Series):
     """
-    this a proper class, not just a string subclass
+    A Series that represents the jsonb (JSON-Better) type and its specific operations
     """
     dtype = 'jsonb'
     # todo can only assign a type to one series type, and object is quite generic
@@ -153,7 +153,7 @@ class SeriesJsonb(Series):
 
 class SeriesJson(SeriesJsonb):
     """
-    this a proper class, not just a string subclass
+    A Series that represents the json type and its specific operations
     """
     dtype = 'json'
     dtype_aliases = tuple()  # type: ignore
