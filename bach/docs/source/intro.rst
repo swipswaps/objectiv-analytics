@@ -229,6 +229,7 @@ API Reference
 
     Dataframe
     Series
+    Objectiv
 
 
 
