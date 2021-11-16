@@ -415,8 +415,10 @@ class DataFrame:
 
         How the data is loaded depends on the chosen materialization:
 
-        1. 'table': This will first write the data to a database table using pandas :py:meth:`pandas.DataFrame.to_sql` method.
-        2. 'cte': The data will be represented using a common table expression of the form ``select * from values`` in future queries.
+        1. 'table': This will first write the data to a database table using pandas
+           :py:meth:`pandas.DataFrame.to_sql` method.
+        2. 'cte': The data will be represented using a common table expression of the form
+           ``select * from values`` in future queries.
 
         The 'table' method requires database write access. The 'cte' method is side-effect free and doesn't
         interact with the database at all. However the 'cte' method is only suitable for small quantities
@@ -543,8 +545,8 @@ class DataFrame:
         For the sample Dataframe to be created, all data is queried once and a persistent table is created to
         store the sample data used for the sampled DataFrame.
 
-        Use :py:meth:`get_unsampled` to switch back to the unsampled data later on. This returns a new DataFrame with
-        all operations that have been done on the sample, applied to that DataFrame.
+        Use :py:meth:`get_unsampled` to switch back to the unsampled data later on. This returns a new
+        DataFrame with all operations that have been done on the sample, applied to that DataFrame.
 
         :param table_name: the name of the underlying sql table that stores the sampled data.
         :param filter: a filter to apply to the dataframe before creating the sample. If a filter is applied,
@@ -1127,7 +1129,7 @@ class DataFrame:
                ) -> 'DataFrame':
         """
         Group by and roll up over the column(s) `by`.
-        
+
         :param by: the series to group by and roll up. Can be a column or index name str, a Series or a list
             of any of those. If Series are passed, they should have the same base node as the DataFrame.
         :returns: a new DataFrame object with the :py:attr:`group_by` attribute set.
@@ -1154,7 +1156,8 @@ class DataFrame:
             Defaults to ‘right’, and the rest is currently unsupported.
         :returns: a new DataFrame object with the :py:attr:`group_by` attribute set with a
             :py:class:`bach.partitioning.Window`.
-        :note: `win_type`, `axis` and `method` parameters as supported by pandas, are currently not implemented.
+        :note: `win_type`, `axis` and `method` parameters as supported by pandas, are currently not
+            implemented.
         :note: the `on` parameter behaves differently from pandas, where it can be use to select to series
             to iterate over.
         """
@@ -1245,8 +1248,8 @@ class DataFrame:
 
         The sorting will remain in the returned DataFrame as long as no operations are performed on that
         frame that materially change the selected data. Operations that materially change the selected data
-        are for example :py:meth:`groupby`, :py:meth:`merge`, :py:meth:`materialize`, and filtering out rows. Adding or
-        removing a column does not materially change the selected data.
+        are for example :py:meth:`groupby`, :py:meth:`merge`, :py:meth:`materialize`, and filtering out rows.
+        Adding or removing a column does not materially change the selected data.
 
         :param by: column label or list of labels to sort by.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the

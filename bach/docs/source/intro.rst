@@ -2,9 +2,9 @@
 
 .. currentmodule:: bach
 
-=============
-Data Modeling
-=============
+============
+Introduction
+============
 
 Bach is Objectiv's data modeling library. With Bach, you can compose models with familiar Pandas-like
 dataframe operations in your notebook. It uses a SQL abstraction layer that enables models to run on the
@@ -17,9 +17,8 @@ install anything. Beware this is python compiled to javascript, running in the b
 is not the same as running Bach in a normal python notebook. Especially the initial loading can be slow.
 
 
-
-Introduction to Bach
---------------------
+What is Bach?
+-------------
 Bach is a library for analysing data that is stored in a SQL database [*]_, using an interface that's
 mostly compatible with `pandas <https://pandas.pydata.org/docs/reference/index.html>`_. All data storage and
 processing is handled by the database. As a result, local memory does not limit the size of the data that
@@ -35,8 +34,14 @@ The two main data classes of Bach are the DataFrame and Series:
 .. [*] Currently we only support Postgres, but we plan on supporting more databases
 
 
+=============
+Core Concepts
+=============
+Bach aims to make life for the DS as simple and powerful as possible by using a very familiar interface. We
+use two main concepts to achieve that.
+
 Delayed database operations
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---------------------------
 Regular operations on DataFrames and Series do not trigger any operations on the database nor do they
 transfer any data from the database to Bach. All operations are combined and compiled to a single SQL query,
 which is executed only when one of a few specific data-transfer functions is called on either a DataFrame or
@@ -44,14 +49,14 @@ a Series object:
 
 * :py:meth:`DataFrame.to_pandas()`
 * :py:meth:`DataFrame.head()`
-* The property accessors :py:attr:`DataFrame.values`, :py:attr:`DataFrame.array` and
+* The property accessors :py:attr:`DataFrame.values`, :py:attr:`Series.array` and
   :py:attr:`Series.value` (Series only),
 
 Typical usage would be to do all heavy lifting inside the database, and only query the aggregated/summarized
 output.
 
 Compatibility with pandas
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 We are striving for a pandas compatible api, such that everyone that already knows pandas can get started
 with Bach in mere minutes.
 
@@ -71,17 +76,21 @@ situations:
   distinction is lost again.
 * In a Bach DataFrame column names must be unique, in pandas this is not the case
 
+========
 Examples
---------
+========
 Here we'll give some very basic examples of the usage of Bach: creating a DataFrame, basic operations,
 aggregate operations, and getting the resulting data.
 
 In the examples we'll assume that the database has a table called 'example', with a few specific
 columns. The SQL to create that table can be found below in :ref:`appendix_example_data`.
 
+We also have `live example notebook <https://notebook.objectiv.io/lab?path=product_analytics.ipynb>`_ that you
+can use to get a feel for Bach.
+
 
 Create a DataFrame from a database table
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+----------------------------------------
 .. code-block:: python
 
     from bach import from_table
@@ -98,7 +107,7 @@ It is also possible to create a DataFrame from an arbitrary sql query (using `fr
 existing pandas DataFrame (using `from_pandas`).
 
 Basic operations
-~~~~~~~~~~~~~~~~
+----------------
 .. code-block:: python
 
     # Adding a new column
@@ -128,7 +137,7 @@ should be avoided until the data is needed as it will query the database and tra
 
 
 Aggregate operations
-~~~~~~~~~~~~~~~~~~~~
+--------------------
 .. code-block:: python
 
     # Group on century, select the 'inhabitants' column, and calculate the maximum value within the group
@@ -153,7 +162,7 @@ state of the DataFrame and its Series.
 
 
 Filtering, sorting, and output
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------------
 .. code-block:: python
 
     # Only keep the rows for which inhabitants == inhabitants_max,
@@ -182,16 +191,6 @@ The above example demonstrates filtering out rows and sorting a DataFrame. Witho
 order of the returned rows is non-deterministic. `view_sql()` can be used to show the compiled SQL query that
 encompasses all operations done so far.
 
-
-Appendix: Class Overview
-------------------------
-.. toctree::
-    :maxdepth: 3
-
-    dataframe
-    series
-
-
 .. _appendix_example_data:
 
 Appendix: Example Data
@@ -218,3 +217,18 @@ Appendix: Example Data
     (9,  9,  'Harns',      'Harlingen',         14740, 1234),
     (10, 10, 'Frjentsjer', 'Waadhoeke',         12760, 1374),
     (11, 11, 'Dokkum',     'Noardeast-Fryslân', 12675, 1298);
+
+
+
+=============
+API Reference
+=============
+
+.. toctree::
+    :maxdepth: 3
+
+    dataframe
+    series
+
+
+
