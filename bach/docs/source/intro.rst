@@ -44,7 +44,7 @@ a Series object:
 
 * :py:meth:`DataFrame.to_pandas()`
 * :py:meth:`DataFrame.head()`
-* The property accessors :py:attr:`DataFrame.values`, :py:attr:`DataFrame.array` and
+* The property accessors :py:attr:`DataFrame.values`, :py:attr:`Series.array` and
   :py:attr:`Series.value` (Series only),
 
 Typical usage would be to do all heavy lifting inside the database, and only query the aggregated/summarized
