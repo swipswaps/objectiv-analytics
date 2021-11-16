@@ -4,24 +4,27 @@
 
 .. autoclass:: {{ objname }}
 
-    {% for item in methods if item not in inherited_members and item != '__init__' %}
-    {% if loop.first %}
+    {% if methods %}
     .. rubric:: {{ _('Methods') }}
 
     .. autosummary::
         :toctree:
-
-    {% endif %}
+    {% for item in methods %}
+    {%- if item not in inherited_members and item != '__init__' %}
         ~{{ name }}.{{ item }}
+    {%- endif %}
     {%- endfor %}
+    {% endif %}
 
-    {% for item in attributes if item not in inherited_members %}
-    {% if loop.first %}
+    {% if attributes %}
     .. rubric:: {{ _('Attributes') }}
 
     .. autosummary::
         :toctree:
 
-    {% endif %}
+    {% for item in attributes %}
+    {%- if item not in inherited_members %}
         ~{{ name }}.{{ item }}
+    {%- endif %}
     {%- endfor %}
+    {% endif %}

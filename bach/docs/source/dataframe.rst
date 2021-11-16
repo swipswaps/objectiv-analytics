@@ -4,8 +4,6 @@ DataFrame
 
 .. currentmodule:: bach
 
-Introduction
-------------
 A mutable DataFrame representing tabular data in a database and enabling operations on that data.
 
 A Bach DataFrame object can be used to process large amounts of data on a database, while using an api
