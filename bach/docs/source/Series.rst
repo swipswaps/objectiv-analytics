@@ -91,6 +91,8 @@ bach.Series reference
     SeriesBoolean
     SeriesAbstractNumeric
     SeriesString
+    SeriesJsonb
+    SeriesJson
 
 bach.Series reference by function
 ---------------------------------
