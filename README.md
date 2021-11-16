@@ -1,5 +1,3 @@
-Go to [Objectiv Docs](https://objectiv.io/docs/) for detailed installation & usage instructions
-
 ![Objectiv Logo](https://objectiv.io/docs/img/logo-objectiv-large.svg "Objectiv Logo")
 
 Objectiv is a data collection & modeling library that puts the data scientist first. It is built around 
@@ -8,55 +6,24 @@ structure and validate data. With Objectiv, you create a
 [contextual layer for your application](https://objectiv.io/docs/tracking/core-concepts/tagging) by mapping it to the taxonomy, 
 with the goal of collecting better data and more effective modeling.
 
+![Objectiv Pipeline](https://staging.objectiv.io/docs/img/objectiv-pipeline.svg "Objectiv Pipeline")
+
 Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
 - - -
 
-## Play with Objectiv
-We’ve set up a [Live Demo Notebook](https://notebook.objectiv.io/lab?path=product_analytics.ipynb)  with real data from [objectiv.io](https://www.objectiv.io) for you to 
-play with. Give it a try and see what Objectiv can do.
+## Getting Started
 
-## Running Objectiv locally - Quickstart 
-In order to run Objectiv for local development, we'll help you set up the following components:
+* [Play with Objectiv](https://notebook.objectiv.io/lab?path=product_analytics.ipynb) in our Live Demo notebook.
+* [Follow the Quickstart Guide](https://www.objectiv.io/docs/) to run Objectiv locally.
 
-* The **Objectiv Tracker** to track user behavior from your website or web application. 
-* The **Objectiv Collector** and a **PostgreSQL data store** to collect, validate & store event data from the tracker.
-* A **Notebook** with the **Objectiv Bach** modeling library to explore and model your data.  
+## Useful Resources
 
-![Objectiv Pipeline](https://objectiv.io/docs/img/objectiv-pipeline.svg "Objectiv Pipeline")
-
-
-To get the latest stable build, run the following commands:
-```bash
-git clone git@github.com:objectiv/objectiv-analytics.git
-cd objectiv-analytics
-docker-compose pull  # pull pre-built images from gcr
-```
-
-Now, let's get started.
-
-### 1. Spin up the Collector & PostgreSQL
-Run the following command:
-```bash
-docker-compose up objectiv_collector
-```
-This will spin up the Collector backend and a PostgresQL data store, creating an endpoint for the tracker to send data to.
+* [Objectiv Docs](https://www.objectiv.io/docs) - Objectiv's official documentation.
+* [Objectiv on Slack](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) - Get help & join the discussion on where to take Objectiv next.
+* [Contribution Guide](CONTRIBUTING.md) - Report bugs, request features and contribution information.
+* [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2) - Learn about Objectiv's future plans.
 
 
-**Security Warning:** The above `docker-compose` command starts a postgres container that allows connections
-without verifying passwords. Do not use this in production or on a shared system!
+This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](LICENSE.md) for details. Unless otherwise noted, all files © 2021 Objectiv B.V.
 
-### 2. Instrument the Tracker
-The Tracker is available for multiple platforms. Follow one of the [step-by-step Tracking How-to Guides](https://www.objectiv.io/docs/how-to-guides) for your preferred platform to continue. 
-
-### 3. Spin up a Notebook with Objectiv Bach
-Run the following command: 
-```bash
-docker-compose up objectiv_notebook
-```
-This will spin up a notebook with the Objectiv Bach modeling library that enables you to analyze the data that you've collected. Check out the [Objectiv Docs modeling section](https://www.objectiv.io/docs/tracking//modeling) for detailed instructions on using Objectiv Bach.
-
----
-
-## Running Objectiv in production
-A detailed How-to guide is coming soon. 
