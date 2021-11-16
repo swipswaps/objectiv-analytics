@@ -59,7 +59,7 @@ explicit call is made to one of the functions that transfers data:
  * :py:meth:`DataFrame.head()`
  * :py:meth:`DataFrame.to_pandas()`
  * :py:meth:`DataFrame.get_sample()`
- * The property accessors :py:attr:`DataFrame.values`, :py:attr:`DataFrame.array` and
+ * The property accessors :py:attr:`DataFrame.values`, :py:attr:`bach.Series.array` and
    :py:attr:`bach.Series.value` (Series only),
 
 Other functions will not transfer data, nor will they trigger any operations to run on the database.
