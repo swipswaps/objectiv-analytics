@@ -6,7 +6,7 @@ structure and validate data. With Objectiv, you create a
 [contextual layer for your application](https://objectiv.io/docs/tracking/core-concepts/tagging) by mapping it to the taxonomy, 
 with the goal of collecting better data and more effective modeling.
 
-![Objectiv Pipeline](https://staging.objectiv.io/docs/img/objectiv-pipeline.svg "Objectiv Pipeline")
+![Objectiv Pipeline](https://www.objectiv.io/docs/img/objectiv-pipeline.svg "Objectiv Pipeline")
 
 Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
