@@ -5,6 +5,7 @@ from uuid import UUID
 
 import pandas
 from sqlalchemy.engine import Engine
+from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression
 from bach.sql_model import BachSqlModel, SampleSqlModel
@@ -254,6 +255,7 @@ class DataFrame:
             order by ordinal_position;
         """
         with engine.connect() as conn:
+            sql = _escape_parameter_characters(conn, sql)
             res = conn.execute(sql)
         return {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
 
@@ -465,7 +467,9 @@ class DataFrame:
 
         with df.engine.connect() as conn:
             if overwrite:
-                conn.execute(f'DROP TABLE IF EXISTS {table_name}')
+                sql = f'DROP TABLE IF EXISTS {quote_identifier(table_name)}'
+                sql = _escape_parameter_characters(conn, sql)
+                conn.execute(sql)
 
             if sample_percentage:
                 sql = f'''
@@ -477,6 +481,7 @@ class DataFrame:
                 '''
             else:
                 sql = f'create temporary table {quote_identifier(table_name)} as ({df.view_sql()})'
+            sql = _escape_parameter_characters(conn, sql)
             conn.execute(sql)
 
         # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
@@ -1132,7 +1137,11 @@ class DataFrame:
             sql = self.view_sql(limit=limit)
             dtype = {name: series.dtype_to_pandas for name, series in self.all_series.items()
                      if series.dtype_to_pandas is not None}
+
+            # read_sql_query expects a parameterized query, so we need to escape the parameter characters
+            sql = _escape_parameter_characters(conn, sql)
             pandas_df = pandas.read_sql_query(sql, conn).astype(dtype)
+
             if len(self._index):
                 return pandas_df.set_index(list(self._index.keys()))
             return pandas_df
@@ -1513,3 +1522,14 @@ def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
             len(a) == len(b) and list(a.keys()) == list(b.keys())
             and all(ai.equals(bi) for (ai, bi) in zip(a.values(), b.values()))
     )
+
+
+def _escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
+    """
+    Return a modified copy of the given sql with the query-parameter special characters escaped.
+    e.g. if the connection uses '%' to mark a parameter, then all occurrences of '%' will be replaced by '%%'
+    """
+    # for now we'll just assume Postgres and assume the pyformat parameter style is used.
+    # When we support more databases we'll need to do something smarter, see
+    # https://www.python.org/dev/peps/pep-0249/#paramstyle
+    return raw_sql.replace('%', '%%')
