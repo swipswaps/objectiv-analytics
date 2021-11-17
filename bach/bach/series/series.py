@@ -349,7 +349,9 @@ class Series(ABC):
         """
         Get the first n rows from this Series as a pandas.Series.
         :param n: The amount of rows to return.
-        :note: This function queries the database.
+
+        .. note::
+            This function queries the database.
         """
         return self.to_pandas(limit=n)
 
@@ -357,7 +359,9 @@ class Series(ABC):
     def values(self):
         """
         .values property accessor akin pandas.Series.values
-        :note: This function queries the database.
+
+        .. note::
+            This function queries the database.
         """
         return self.to_pandas().values
 
@@ -367,7 +371,8 @@ class Series(ABC):
         Retrieve the actual single value of this series. If it's not sure that there is only one value,
         a ValueError is raised. In that case use Series.values[0] to retrieve the value.
 
-        :note: This function queries the database.
+        .. note::
+            This function queries the database.
         """
         if not self.expression.is_single_value:
             raise ValueError('value accessor only supported for single value expressions. '
@@ -378,7 +383,9 @@ class Series(ABC):
     def array(self):
         """
         .array property accessor akin pandas.Series.array
-        :note: This function queries the database.
+
+        .. note::
+            This function queries the database.
         """
         return self.to_pandas().array
 
@@ -420,7 +427,8 @@ class Series(ABC):
         INTERNAL: Get a series representing an independent subquery, created by materializing the series
         given and crafting a subquery expression from it, possibly adding the given operation.
 
-        :note: This will maintain Expression.is_single_value status
+        .. note::
+            This will maintain Expression.is_single_value status
         """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
         df = series.to_frame().materialize()
@@ -528,8 +536,9 @@ class Series(ABC):
         """
         Evaluate for every row in this series whether the value is missing or NULL.
 
-        :note:  Only NULL values in the Series in the underlying sql table will return True. np.nan is not
-                checked for.
+        .. note::
+            Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+            checked for.
 
         See Also
         --------
@@ -546,8 +555,9 @@ class Series(ABC):
         """
         Evaluate for every row in this series whether the value is not missing or NULL.
 
-        :note:  Only NULL values in the Series in the underlying sql table will return True. np.nan is not
-                checked for.
+        .. note::
+          Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+          checked for.
 
         See Also
         --------
@@ -568,8 +578,12 @@ class Series(ABC):
 
         :param other: The value to replace the NULL values with. Should be a supported
             type by the series, or a TypeError is raised. Can also be another Series
-        :note: Pandas replaces np.nan values, we can only replace NULL.
-        :note: you can replace None with None, have fun, forever!
+
+        .. note::
+            Pandas replaces np.nan values, we can only replace NULL.
+
+        .. note::
+            You can replace None with None, have fun, forever!
         """
         return self._binary_operation(
             other=other, operation='fillna', fmt_str='COALESCE({}, {})',
@@ -706,7 +720,8 @@ class Series(ABC):
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
 
-        :note: you should probably not use this method directly.
+        .. warning::
+            You should probably not use this method directly.
         """
         if isinstance(func, str) or callable(func):
             func = [func]

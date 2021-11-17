@@ -21,12 +21,15 @@ class SeriesJsonb(Series):
     This is the standard and recommended type to use for handling json like data.
 
     **Getting data**
+
     It is possible to get a selection of data from the json in the json type column. For selecting data from
     json, arrays and objects are supported. The data can be selected using `.json[]` on the json column
 
     Selecting data from an array is based on position. It works similar to slicing through python lists.
 
-    :note: Slicing is only possible if *all* values in the column are lists or None.
+    .. note::
+
+        Slicing is only possible if *all* values in the column are lists or None.
 
     Selecting from objects is possible by key.
 
