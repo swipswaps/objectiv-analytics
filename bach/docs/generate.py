@@ -44,9 +44,16 @@ index_page = 'intro'
 # but no submenus for the headers
 skip_categories = ['Introduction', 'Core Concepts', 'Examples']
 
+# replacement label to avoid duplicates
+introduction = 'Overview'
+
 # whitelist of pages to consider
+# subdirs / modules will be auto-added below
 patterns = [
-    '^intro.html$'
+    '^intro.html$',
+    '^core_concepts.html$',
+    '^examples.html$',
+    '^reference.html$'
 ]
 
 # list of special cases, where we have a subdir, with an introduction at toplevel
@@ -109,6 +116,11 @@ structure of main navigation as in index.html
 
 
 def parse_ul_menu(ul: html.Element) -> List:
+    """
+    Build tree of menu structure, by recursively traversing all UL/LIs
+    :param ul: html.Element - part of an html doc
+    :return: List of lists, representing the tree
+    """
     menu_items = []
     for element in ul:
         item = {
@@ -132,50 +144,74 @@ def parse_ul_menu(ul: html.Element) -> List:
 
 
 def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str]]:
+    """
+    Transform menu tree into something docusaurus can interpret as a sidebar
+    :param menu_items: List of lists
+    :param level: int - internal var, keeping track of how deep we are in the tree
+    :return: List[Dict] - can be directly json-dumped into a sidebar
+    """
     sb = []
     for menu_item in menu_items:
         items = []
-        href = menu_item['href']
+        href = menu_item['href'].replace('.html', '')
+        label = menu_item['text']
+
+        # if this is a deeper nested item, and a method name, let's remove the classname
+        # for better readability.
+        parts = label.split('.')
+        if level > 0 and len(parts) > 1:
+            label = parts[-1]
+
         if '#' in href:
             if menu_item['href'].startswith('intro'):
                 # intro is the "index" page, so correct path
                 href = menu_item['href'].replace('intro', '')
 
             if level > 0 or len(menu_item['children']) == 0 or menu_item['text'] in skip_categories:
-                href = href.replace('.html', '')
-
+                # To avoid duplicates (because Docusaurus doesn't support categories with links),
+                # we only add the link, if:
+                # - we're not at top level
+                # - there are no children (so no category with the same name)
+                # - the item is not in the skip_categories list
                 items = [{
                     'type': 'link',
-                    'label': menu_item['text'],
-                    'href': f"/modeling/{href}"
+                    'label': label,
+                    'href': f"/{module}/{href}"
                 }]
         else:
-            href = href.replace('.html', '')
-            label = menu_item['text']
-
-            # if this is a deeper nested item, and a method name, let's remove the classname
-            # for better readability.
-            parts = label.split('.')
-            if level > 1 and len(parts) > 1:
-                label = parts[-1]
-
             items = [{
                 'type': 'doc',
                 'label': label,
-                'id': f'modeling/{href}'
+                'id': f'{module}/{href}'
             }]
-        if len(menu_item['children']) > 0 and menu_item['text'] not in skip_categories:
+        if len(menu_item['children']) > 0 and menu_item['text'] not in skip_categories and menu_item['href']:
+            # this is a case where we have a duplicate (both children and an href)
             menu_item_children = []
-            if level > 0:
+            if level > -1:
                 print(f'moving parent {menu_item["text"]} into children')
-                # get parent, and put in here
-                menu_item_children = [i for i in items]
+                # get parent, and put in here, but only below top level
+                menu_item_children = items.copy()
+                if len(menu_item_children) > 1:
+                    print(f'There should not be more than 1 child in this list! {menu_item_children}')
+                    exit(1)
+                # change label of parent to introduction
+                if len(menu_item_children) > 0:
+                    menu_item_children[0]['label'] = introduction
+                # reset original list
                 items = []
             menu_item_children += menu_list_to_sidebar(menu_item['children'], level=level + 1)
 
+            # get rid of any pre-existing introduction heading
+            # logically there wouldn't be more than 1, so we quit
+            # after we find one and get rid of it (otherwise the loop breaks)
+            for i in range(1, len(menu_item_children)):
+                if menu_item_children[i]['label'] == introduction:
+                    del menu_item_children[i]
+                    break
+
             items.append({
                 'type': 'category',
-                'label': menu_item['text'],
+                'label': label,
                 'items': menu_item_children
             })
         if len(items) > 0:
@@ -190,11 +226,7 @@ menu_list = doc.xpath('//div[@class="toctree-wrapper compound"]/ul')
 menu = parse_ul_menu(menu_list)
 
 sidebar = menu_list_to_sidebar(menu)
-sidebars = [{
-    'type': 'link',
-    'href': '/modeling/',
-    'label': 'Introduction'
-}]
+
 sidebar_js = f"""
 module.exports = {json.dumps(sidebar, indent=4)}
 """
@@ -308,7 +340,9 @@ import useBaseUrl from '@docusaurus/useBaseUrl'
     with open(mdx_path, 'w') as target_handle:
         target_handle.write(mdx)
 
-    # now write html body
+    # now write html body to static content directory
+    # we load the actual content through the SphinxPages React component, because Docusaurus doesn't
+    # like the plain HTML we have, as it tries to interpret it as either MD, or as JSX/TS
     html_path = f'{static_target}/{real_url}'
     with open(html_path, 'w') as target_handle:
         target_handle.write(body)
