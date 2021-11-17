@@ -16,7 +16,7 @@ from sqlalchemy.engine import ResultProxy
 from bach import DataFrame, Series
 from bach.types import get_series_type_from_db_dtype
 
-DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:0bj3ctiv@localhost:5432/objectiv')
+DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
 
 # Three data tables for testing are defined here that can be used in tests
 # 1. cities: 3 rows (or 11 for the full dataset) of data on cities
