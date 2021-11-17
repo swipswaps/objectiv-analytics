@@ -71,16 +71,16 @@ only when one of the above mentioned data-transfer functions is called.
 The API of this DataFrame is partially compatible with Pandas DataFrames. For more on Pandas
 DataFrames see https://pandas.pydata.org/docs/reference/frame.html
 
-bach.DataFrame reference
-------------------------
+Reference
+---------
 .. autosummary::
     :template: autosummary/class_short.rst
     :toctree: dataframe
 
     DataFrame
 
-bach.DataFrame reference by function
-------------------------------------
+Reference by function
+---------------------
 
 Creation
 ~~~~~~~~
