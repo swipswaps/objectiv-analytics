@@ -9,6 +9,10 @@ Basically, generating and publishing the api docs for `bach` involve a few steps
   pip install -r requirements.txt
   # install bach dependencies
   pip install -r ../requirements.txt
+  # install bach in edit mode
+  pip install -e ../../bach
+  # install objectiv_bach in edit mode
+  pip install -e ../../analysis/objectiv_bach 
 ```
 
 2. Generate HTML fragments:
