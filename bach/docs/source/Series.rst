@@ -81,8 +81,8 @@ is okay, while a comparison operation is not.
 
 The type of a Series can generally be changed by calling :py:meth:`Series.astype`.
 
-bach.Series reference
----------------------
+Reference
+---------
 .. autosummary::
     :template: autosummary/class_short.rst
     :toctree: series
@@ -94,8 +94,8 @@ bach.Series reference
     SeriesJsonb
     SeriesJson
 
-bach.Series reference by function
----------------------------------
+Reference by function
+---------------------
 
 Creation / re-framing
 ~~~~~~~~~~~~~~~~~~~~~
