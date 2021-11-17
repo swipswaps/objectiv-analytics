@@ -354,7 +354,9 @@ class DataFrame:
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
         :returns: A DataFrame based on a sql table.
-        :note: In order to create this temporary table the source data is queried.
+
+        .. note::
+            In order to create this temporary table the source data is queried.
         """
         # todo: why is an index mandatory if you can reset it later?
         # todo: don't create a temporary table, the real table (and its meta data) already exists
@@ -443,6 +445,9 @@ class DataFrame:
             * replace: Drop the table before inserting new values.
             * append: Insert new values to the existing table.
         :returns: A DataFrame based on a pandas DataFrame
+
+        .. warning::
+            This method is only suited for small quantities of data.
         """
         # todo link to pandas does not link
         # todo materialzation is 'cte' by default, add warning for large dataframe?
@@ -557,7 +562,9 @@ class DataFrame:
             exists.
         :param seed: optional seed number used to generate the sample.
         :returns: a sampled DataFrame of the current DataFrame.
-        :note: all data in the DataFrame to be sampled is queried to create the sample.
+
+        .. note::
+            All data in the DataFrame to be sampled is queried to create the sample.
         """
         # todo if_exists and overwrite are two different syntax for the same thing. should we align?
         if sample_percentage is None and filter is None:
@@ -803,7 +810,9 @@ class DataFrame:
             column names in `columns` or `mapper` are ignored. Errors thrown in the mapper function or
             about invalid target column names are not suppressed.
         :returns: DataFrame with the renamed axis labels or None if ``inplace=True``.
-        :note: copy parameter is not supported since it makes very little sense for db backed series
+
+        .. note::
+            The copy parameter is not supported since it makes very little sense for db backed series.
         """
         # todo should we support arguments of unsupported functionality?
         # todo note is not visible in docstring do we want that?
@@ -1064,7 +1073,9 @@ class DataFrame:
             * a list of (strings, series, lists). In this case a grouping list is created.
             * a tuple of (strings, series, lists). In this case a grouping set is created.
         :returns: a new DataFrame object with the :py:attr:`group_by` attribute set.
-        :note: if the dataframe is already grouped, we'll create a grouping list from the initial
+
+        .. note::
+            If the dataframe is already grouped, we'll create a grouping list from the initial
             grouping combined with this one.
         """
         # todo the grouping set / list relevant?
@@ -1156,9 +1167,13 @@ class DataFrame:
             Defaults to ‘right’, and the rest is currently unsupported.
         :returns: a new DataFrame object with the :py:attr:`group_by` attribute set with a
             :py:class:`bach.partitioning.Window`.
-        :note: `win_type`, `axis` and `method` parameters as supported by pandas, are currently not
+
+        .. note::
+            The `win_type`, `axis` and `method` parameters as supported by pandas, are currently not
             implemented.
-        :note: the `on` parameter behaves differently from pandas, where it can be use to select to series
+
+        .. note::
+            The `on` parameter behaves differently from pandas, where it can be use to select to series
             to iterate over.
         """
         from bach.partitioning import WindowFrameBoundary, WindowFrameMode, \
@@ -1210,7 +1225,9 @@ class DataFrame:
         :param min_periods: the minimum amount of observations in the window before a value is reported.
         :param center: whether to center the result, currently not supported.
         :param on: the partition that will be applied.
-        :note: 'partition' is different from pandas, where the partition is determined earlier in the process.
+
+        .. note::
+            'partition' is different from pandas, where the partition is determined earlier in the process.
         """
         # TODO We could move the partitioning to GroupBy
         from bach.partitioning import WindowFrameBoundary, WindowFrameMode, \
@@ -1280,7 +1297,9 @@ class DataFrame:
 
         :param limit: the limit to apply, either as a max amount of rows or a slice of the data.
         :returns: a pandas DataFrame.
-        :note: This function queries the database.
+
+        .. note::
+            This function queries the database.
         """
         with self.engine.connect() as conn:
             sql = self.view_sql(limit=limit)
@@ -1297,7 +1316,9 @@ class DataFrame:
 
         :param n: number of rows to query from database.
         :returns: a pandas DataFrame.
-        :note: This function queries the database.
+
+        .. note::
+            This function queries the database.
         """
         return self.to_pandas(limit=n)
 
@@ -1307,7 +1328,9 @@ class DataFrame:
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
 
         :returns: Returns the values of the DataFrame as numpy.ndarray.
-        :note: This function queries the database.
+
+        .. note::
+            This function queries the database.
         """
         # todo function is not recommended by pandas, change?
         return self.to_pandas().values
@@ -1483,9 +1506,13 @@ class DataFrame:
         :param exclude_non_applied: Exclude series where applying was not attempted / failed
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
-        :note: Pandas has numeric_only=None to attempt all columns but ignore failing ones
+
+        .. note::
+            Pandas has numeric_only=None to attempt all columns but ignore failing ones
             silently. This is currently not implemented.
-        :note: axis defaults to 1, because 0 is currently unsupported
+
+        .. note::
+            The `axis` parameter defaults to 1, because 0 is currently unsupported.
         """
         from bach.series import SeriesAbstractNumeric
         if axis == 0:
@@ -1555,9 +1582,13 @@ class DataFrame:
         :param numeric_only: whether to aggregate numeric series only, or attempt all.
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
-        :note: Pandas has ``numeric_only=None`` to attempt all columns but ignore failing ones
+
+        .. note::
+            Pandas has ``numeric_only=None`` to attempt all columns but ignore failing ones
             silently. This is currently not implemented.
-        :note: axis defaults to 1, because 0 is currently unsupported
+
+        .. note::
+            The `axis` parameter defaults to 1, because 0 is currently unsupported
         """
         # todo do we want standard aggregation of index (pandas doesn't have this)?
         # todo numeric_only is a kwarg of the called func (like pandas)? ie now it breaks for nunique
