@@ -8,7 +8,15 @@ from bach import DataFrame
 
 
 class ObjectivStack(SeriesJsonb.Json):
-    def get_from_context_with_type_series(self, type, key, dtype='string'):
+    def get_from_context_with_type_series(self, type: str, key: str, dtype='string'):
+        """
+        Returns the value of `key` from the first context in an Objectiv stack where `_type` matches `type`.
+
+        :param type: the _type to search for in the contexts of the stack.
+        :param key: the value of the key to return of the context with matching type.
+        :param dtype: the dtype of the series to return.
+        :returns: a series of type `dtype`
+        """
         expression_str = f'''
         jsonb_path_query_first({{}},
         \'$[*] ? (@._type == $type)\',
@@ -32,30 +40,74 @@ class SeriesGlobalContexts(SeriesJsonb):
     class GlobalContexts(ObjectivStack):
         @property
         def cookie_id(self):
+            """
+            Returns cookie id from the global contexts.
+            """
             return self.get_from_context_with_type_series("CookieIdContext", "cookie_id")
 
         @property
         def user_agent(self):
+            """
+            Returns user agent string from the global contexts.
+            """
             return self.get_from_context_with_type_series("HttpContext", "user_agent")
 
         @property
         def application(self):
+            """
+            Returns application id from the global contexts.
+            """
             return self.get_from_context_with_type_series("ApplicationContext", "id")
 
     @property
     def objectiv(self):
+        """
+        Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
+        accessor. Same as :py:attr:`obj`
+
+        .. autoclass:: objectiv_bach.series.ObjectivStack
+            :members:
+            :noindex:
+
+        """
         return ObjectivStack(self)
 
     @property
     def obj(self):
+        """
+        Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
+        accessor. Same as :py:attr:`objectiv`
+
+        .. autoclass:: objectiv_bach.series.ObjectivStack
+            :members:
+            :noindex:
+
+        """
         return ObjectivStack(self)
 
     @property
     def global_contexts(self):
+        """
+        Accessor for Objectiv global context data. All methods of :py:attr:`json` and :py:attr:`objectiv` can
+        also be accessed with this accessor. Same as :py:attr:`gc`
+
+        .. autoclass:: objectiv_bach.series.SeriesGlobalContexts.GlobalContexts
+            :members:
+
+        """
         return self.GlobalContexts(self)
 
     @property
     def gc(self):
+        """
+        Accessor for Objectiv global context data. All methods of :py:attr:`json` and :py:attr:`objectiv` can
+        also be accessed with this accessor. Same as :py:attr:`global_contexts`
+
+        .. autoclass:: objectiv_bach.series.SeriesGlobalContexts.GlobalContexts
+            :members:
+            :noindex:
+
+        """
         return self.GlobalContexts(self)
 
 
@@ -70,10 +122,17 @@ class SeriesLocationStack(SeriesJsonb):
     class LocationStack(ObjectivStack):
         @property
         def navigation_features(self):
+            """
+            Returns the navigation stack from the location stack.
+            """
             return self[{'_type': 'NavigationContext'}: None]
 
         @property
         def feature_stack(self):
+            """
+            Returns the feature stack from the location stack. The context objects only contain the `_type`
+            and a `id` key.
+            """
             keys = ['_type', 'id']
             jsonb_build_object_str = [f"{quote_string(key)}" for key in keys]
             expression_str = f'''(
@@ -91,6 +150,10 @@ class SeriesLocationStack(SeriesJsonb):
 
         @property
         def nice_name(self):
+            """
+            Returns a nice name for the location stack. This is a human readable name for the data in the
+            feature stack.
+            """
             expression = Expression.construct(
                 f"""(
                 select array_to_string(
@@ -123,18 +186,53 @@ class SeriesLocationStack(SeriesJsonb):
 
     @property
     def objectiv(self):
+        """
+        Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
+        accessor. Same as :py:attr:`obj`
+
+        .. autoclass:: objectiv_bach.series.SeriesLocationStack.LocationStack
+            :members:
+            :noindex:
+
+        """
         return ObjectivStack(self)
 
     @property
     def obj(self):
+        """
+        Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
+        accessor. Same as :py:attr:`objectiv`
+
+        .. autoclass:: objectiv_bach.series.ObjectivStack
+            :members:
+            :noindex:
+
+        """
         return ObjectivStack(self)
 
     @property
     def location_stack(self):
+        """
+        Accessor for Objectiv location stack data. All methods of :py:attr:`json` and :py:attr:`objectiv`
+        can also be accessed with this accessor. Same as :py:attr:`ls`
+
+        .. autoclass:: objectiv_bach.series.SeriesLocationStack.LocationStack
+            :members:
+
+        """
         return self.LocationStack(self)
 
     @property
     def ls(self):
+        """
+        Accessor for Objectiv location stack data. All methods of :py:attr:`json` and :py:attr:`objectiv` can
+        also be accessed with this accessor. Same as :py:attr:`location_stack`
+
+        .. autoclass:: objectiv_bach.series.SeriesLocationStack.LocationStack
+            :members:
+            :noindex:
+
+        """
         return self.LocationStack(self)
 
 

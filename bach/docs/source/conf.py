@@ -29,7 +29,7 @@ sys.path.extend([os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__
 
 
 doctest_global_setup = '''
-from bach.dataframe import Dataframe
+from bach.dataframe import DataFrame
 '''
 
 # Add any Sphinx extension module names here, as strings. They can be
@@ -66,7 +66,9 @@ autosummary_generate = True
 autosummary_imported_members = True
 autodoc_typehints = 'description'
 autodoc_typehints_description_target = 'documented'
-autoclass_content = 'class'
+
+autoclass_content='class'
+
 # TOTALLY breaks toctree generation autodoc_class_signature = 'separated'
 
 
@@ -182,13 +184,38 @@ def repair_classmethod_docstring(app, what, name, obj, options, lines):
 
 
 def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
-    # Skip some private API methods & attributes that can't easily be renamed to _func or _attr
-    # by checking whether the docstring starts with "INTERNAL"
-    # This method is called before repair_classmethod_docstring(), so we have to do the same dance
+    # Skip some private API methods & attributes & properties
+
+    # Skip all attributes all together, if they're part of the public interface, they should be properties
+    if what == 'attribute':
+        return True
+
     inspect_obj = obj
+    # If a property is annotated as a classmethod, there is confusion. Resolve that here
     if isinstance(obj, property) and isinstance(obj.fget, classmethod):
         inspect_obj = obj.fget.__func__
 
+    # Traverse parent class hierarchy to get the topmost implementation with a non-empty docstring
+    # This will disregard the type of the member, but that's actually okay, as long as
+    klass = getattr(inspect_obj, '__self__', None)
+    while not inspect_obj.__doc__ and klass and hasattr(klass, '__base__'):
+        klass = klass.__base__
+        # Is our method in this base class?
+        if inspect_obj.__name__ in getattr(klass, '__dict__', {}):
+            # Get the method
+            inspect_obj = klass.__dict__[inspect_obj.__name__]
+            # Do clean up the object if it's a property accessor or classmethod.
+            if isinstance(obj, property):
+                inspect_obj = obj.fget
+            if isinstance(inspect_obj, classmethod):
+                inspect_obj = inspect_obj.__func__
+
+
+    # We get no options from autosummary whatsoever, so to implement this here:
+    # if not autodoc_default_options.get('undoc-members', False) and not inspect_obj.__doc__:
+    #     return True
+
+    # We skip all methods with a docstring starting with INTERNAL
     if inspect_obj.__doc__ and inspect_obj.__doc__.strip().startswith('INTERNAL'):
         return True
 

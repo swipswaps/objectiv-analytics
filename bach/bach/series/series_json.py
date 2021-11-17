@@ -99,6 +99,54 @@ class SeriesJsonb(Series):
             self._series_object = series_object
 
         def __getitem__(self, key: Union[str, int, slice]):
+            """
+            Slice this jsonb database object in pythonic ways:
+
+            :param key: A very mixed key to slice on, please see below.
+
+            >>> # slice and show with .head()
+            >>> df.jsonb_column.json[:2].head()
+            _index_0
+            0                                            [a, b]
+            1                                            [d, e]
+            2    [{'h': 'i', 'j': 'k'}, {'l': ['m', 'n', 'o']}]
+            Name: jsonb_column, dtype: object
+            >>> # selecting one position returns the single entry:
+            >>> df.jsonb_column.json[1].head()
+            _index_0
+            0                         b
+            1                         e
+            2    {'l': ['m', 'n', 'o']}
+            Name: jsonb_column, dtype: object
+            >>> # selecting from objects is done by entering a key:
+            >>> df.jsonb_column.json[1].json['l'].head()
+            _index_0
+            0         None
+            1         None
+            2    [m, n, o]
+            Name: jsonb_column, dtype: object
+
+            Or select based on the objects *in* an array.
+            With this method, a dict is passed in the `.json[]` selector. The value of the first match with
+            the dict to the objects in a json array is returned for the `.json[]` selector. A match is when
+            all key/value pairs of the dict are found in an object. This can be used for selecting a subset
+            of a json array with objects.
+
+            >>> # selecting from arrays by searching objects in the array.
+            >>> df.jsonb_column.json[:{"j":"k"}].head()
+            _index_0
+            0                      None
+            1                      None
+            2    [{'h': 'i', 'j': 'k'}]
+            Name: jsonb_column, dtype: object
+            >>> # or:
+            >>> df.jsonb_column.json[{"l":["m","n","o"]}:].head()
+            _index_0
+            0                                    None
+            1                                    None
+            2    [{'l': ['m', 'n', 'o']}, {'p': 'q'}]
+            Name: jsonb_column, dtype: object
+            """
             if isinstance(key, int):
                 return self._series_object.copy_override(
                     dtype=self._series_object.return_dtype,
@@ -182,7 +230,15 @@ class SeriesJsonb(Series):
 
     @property
     def json(self):
-        """ Get access to json operations."""
+        """
+        Get access to json operations via the class that's return through this accessor.
+        Use as `my_series.json.get_value()` or `my_series.json[:2]`
+
+        .. autoclass:: bach.SeriesJsonb.Json
+            :members:
+            :special-members: __getitem__
+
+        """
         return self.Json(self)
 
     @classmethod
