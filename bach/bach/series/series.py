@@ -385,13 +385,20 @@ class Series(ABC):
         :note: This will maintain Expression.is_single_value status
         """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
-        df = series.to_frame().materialize()
-        fmt_string = f'{operation} (SELECT {{}} FROM {{}})' if operation else f'(SELECT {{}} FROM {{}})'
-        expr = IndependentSubqueryExpression.construct(fmt_string,
-                                                       Expression.column_reference(series.name),
-                                                       Expression.model_reference(df.base_node))
+        if series.expression.is_independent_subquery:
+            expr = series.expression
+        else:
+            df = series.to_frame()
+            if df.group_by:
+                df = series.to_frame().materialize('independent_subquery_w_groupby')
+            expr = IndependentSubqueryExpression.construct('(SELECT {} FROM {})',
+                                                           df[series.name].get_column_expression(),
+                                                           Expression.model_reference(df.base_node))
 
-        if series.expression.is_single_value:
+        if operation:
+            expr = IndependentSubqueryExpression.construct(f'{operation} {{}}', expr)
+
+        if series.expression.is_single_value and not expr.is_single_value:
             # The expression is lost when materializing
             expr = SingleValueExpression(expr)
 
@@ -446,9 +453,15 @@ class Series(ABC):
         """
         Get a single value from the series. This is not returning the value,
         use the .value accessor for that instead.
+
+        :note: When slicing, the caller is responsible for the order of the sliced Series as data returned
+            can be ordered non-deterministically.
         """
+        frame = self.to_frame()
         if isinstance(key, slice):
-            raise NotImplementedError("index slices currently not supported")
+            if self.expression.is_single_value:
+                raise ValueError('Slicing on single value expressions is not supported.')
+            return frame[key][self.name]
 
         if len(self.index) == 0:
             raise Exception('Not supported on Series without index. '
@@ -457,7 +470,6 @@ class Series(ABC):
             raise NotImplementedError('Index only implemented for simple indexes. '
                                       'Use .values[index] instead')
 
-        frame = self.to_frame()
         # Apply Boolean selection on index == key, help mypy a bit
         frame = cast(DataFrame, frame[list(frame.index.values())[0] == key])
         # limit to 1 row, will make all series SingleValueExpression, and get that series.
@@ -844,6 +856,18 @@ class Series(ABC):
             partition=partition, dtype='int64',
             expression=AggregateFunctionExpression.construct('count(distinct {})', self),
             skipna=skipna)
+
+    def unique(self, partition: WrappedPartition = None, skipna: bool = True):
+        """ Get the unique values in this series, currently by grouping the series involved. """
+        from bach.partitioning import GroupBy
+        if partition:
+            raise ValueError('Can not use group_by in combination with unique(). Materialize() first.')
+        series = self.copy_override(name=f'{self.name}_unique')
+        return series._derived_agg_func(
+            partition=GroupBy([self]),
+            expression=AggregateFunctionExpression(self.expression),
+            skipna=skipna
+        )
 
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
