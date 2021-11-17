@@ -2,7 +2,7 @@ import glob
 import re
 from os import path, makedirs
 import json
-from typing import Dict, List, Callable
+from typing import Dict, List
 from lxml import html, etree
 
 """
@@ -19,36 +19,42 @@ Used to import Sphinx generated python docs into docusaurus. This script does th
 
 """
 
+# html build dir / output of sphinx
 html_dir = 'build/html/'
 
+# root of docusaurus install
 docusaurus_dir = '../../../objectiv.io/docs'
+# where are the docs at
 docs = 'docs'
+# where to put static content
 static = 'static'
 
+# base dir of these docs (relative to docusaurus_dir/docs/
 module = 'modeling'
 
 docs_target = f'{docusaurus_dir}/{docs}/{module}'
+# full path to base for the static files. note the `_` here. This is needed
+# so docusaurus doesn't break this in a full build
 static_target = f'{docusaurus_dir}/{static}/_{module}'
 
+# the actual index page, as `index.html` should contain the index, that is main navigation/ toctree
 index_page = 'intro'
+
+# these categories only get a toplevel entry in the sidebar
+# but no submenus for the headers
+skip_categories = ['Introduction', 'Core Concepts', 'Examples']
 
 # whitelist of pages to consider
 patterns = [
     '^intro.html$'
 ]
 
-modules = []
 # list of special cases, where we have a subdir, with an introduction at toplevel
 # eg /dataframe.html and /dataframe/
 for fn in glob.glob(f'{html_dir}/*'):
-    dir = fn.replace('.html', '').lower()
-    if path.isfile(fn) and path.isdir(dir):
-        modules.append(path.basename(dir))
-        patterns.extend([f'{path.basename(dir)}.*', f'{path.basename(fn).replace(".html", "")}.*'])
-
-
-# add modules to whitelist
-patterns.extend([f'{m}.*' for m in modules])
+    dn = fn.replace('.html', '').lower()
+    if path.isfile(fn) and path.isdir(dn):
+        patterns.extend([f'{path.basename(dn)}.*', f'{path.basename(fn).replace(".html", "")}.*'])
 
 
 def a_to_toc(a: html.Element, level: int) -> Dict:
@@ -67,7 +73,7 @@ def a_to_toc(a: html.Element, level: int) -> Dict:
 
 
 """
-structure:
+structure of main navigation as in index.html
 <div id=bd-docs-nav>
     <div>
         <ul>
@@ -103,7 +109,7 @@ structure:
 
 
 def parse_ul_menu(ul: html.Element) -> List:
-    menu = []
+    menu_items = []
     for element in ul:
         item = {
             'children': []
@@ -121,16 +127,13 @@ def parse_ul_menu(ul: html.Element) -> List:
                     print(f'unknown tag in sub_element: {sub_element.tag}')
         else:
             print(f'unknown tag in element: {element.tag}')
-        menu.append(item)
-    return menu
+        menu_items.append(item)
+    return menu_items
 
 
-def menu_list_to_sidebar(menu_list: list, level: int = 0) -> dict:
-
-    skip_categories = ['Introduction', 'Core Concepts', 'Examples']
-
+def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str]]:
     sb = []
-    for menu_item in menu_list:
+    for menu_item in menu_items:
         items = []
         href = menu_item['href']
         if '#' in href:
@@ -139,34 +142,41 @@ def menu_list_to_sidebar(menu_list: list, level: int = 0) -> dict:
                 href = menu_item['href'].replace('intro', '')
 
             if level > 0 or len(menu_item['children']) == 0 or menu_item['text'] in skip_categories:
+                href = href.replace('.html', '')
+
                 items = [{
                     'type': 'link',
                     'label': menu_item['text'],
-                    'href': f"/modeling/{href.replace('.html', '')}",
+                    'href': f"/modeling/{href}"
                 }]
         else:
             href = href.replace('.html', '')
-            if href.lower() in modules:
-                href = f'{href.lower()}/{href}'
+            label = menu_item['text']
+
+            # if this is a deeper nested item, and a method name, let's remove the classname
+            # for better readability.
+            parts = label.split('.')
+            if level > 1 and len(parts) > 1:
+                label = parts[-1]
+
             items = [{
                 'type': 'doc',
-                'label': menu_item['text'],
+                'label': label,
                 'id': f'modeling/{href}'
             }]
         if len(menu_item['children']) > 0 and menu_item['text'] not in skip_categories:
-            children = []
+            menu_item_children = []
             if level > 0:
                 print(f'moving parent {menu_item["text"]} into children')
                 # get parent, and put in here
-
-                children = [i for i in items]
+                menu_item_children = [i for i in items]
                 items = []
-            children += menu_list_to_sidebar(menu_item['children'], level=level + 1)
+            menu_item_children += menu_list_to_sidebar(menu_item['children'], level=level + 1)
 
             items.append({
                 'type': 'category',
                 'label': menu_item['text'],
-                'items': children
+                'items': menu_item_children
             })
         if len(items) > 0:
             sb += items
@@ -188,8 +198,6 @@ sidebars = [{
 sidebar_js = f"""
 module.exports = {json.dumps(sidebar, indent=4)}
 """
-
-
 
 # now write html body
 html_path = f'{docs_target}/sidebar.js'
@@ -215,12 +223,8 @@ for url in urls:
         continue
 
     # dir where .mdx will be stored
-    if page.lower() in modules:
-        docs_target_dir = f'{docs_target}/{page.lower()}/{path.dirname(real_url)}'
-        mdx_path = f'{docs_target}/{page.lower()}/{real_url.replace(".html", ".mdx")}'
-    else:
-        docs_target_dir = f'{docs_target}/{path.dirname(real_url)}'
-        mdx_path = f'{docs_target}/{real_url.replace(".html", ".mdx")}'
+    docs_target_dir = f'{docs_target}/{path.dirname(real_url)}'
+    mdx_path = f'{docs_target}/{real_url.replace(".html", ".mdx")}'
 
     static_target_dir = f'{static_target}/{path.dirname(real_url)}'
 
@@ -240,28 +244,6 @@ for url in urls:
     # we look for <main role="main"....>
     body_element: html.Element = doc.xpath('//main[@role="main"]/div')[0]
 
-    if page.lower() in modules:
-        # these pages are moved 1 dir down on disk
-        # so we need to fix anchors that point to external documents
-        def fix_links(link):
-            # if the link starts with any of the modules,
-            # go one dir up (as the file is moved one dir down)
-            # eg: dataframe/bach.Dataframe.index -> ../dataframe/bach.Dataframe.index
-            if max([link.startswith(m) for m in modules]) > 0:
-                return f'../{link}'
-            return link
-        body_element.rewrite_links(fix_links)
-    elif page == index_page:
-        # because the moved files, we also need to fix the anchors in the index:
-        # from dataframe.html#Usage -> dataframe/introduction.html#Usage
-        # but keep away from  dataframe/bach.DataFrame.some_method.html
-        def fix_links(link):
-            for m in modules:
-                if link.startswith(f'{m}.html'):
-                    return link.replace(m, f'{m}/introduction')
-            return link
-        body_element.rewrite_links(fix_links)
-
     body = etree.tostring(body_element).decode('utf-8')
 
     # get title from <title> text </title>
@@ -271,6 +253,7 @@ for url in urls:
     # get toc from:
     # <nav id="bd-toc-nav">/ul
     # contains an unordered list (<ul> of toc items)
+    # this is typically only 2 layers deep, so no need for recursion here
     toc_containers = doc.xpath('//nav[@id="bd-toc-nav"]/ul')
 
     if len(toc_containers) > 0:
@@ -289,31 +272,25 @@ for url in urls:
                 toc_item['children'] = children
                 toc.append(toc_item)
 
-    if page.lower() in modules + [index_page]:
+    if page == index_page:
         # special case where we map the index to Introduction
-        # and put it at the top of the list
-        if page == index_page:
-            slug = f'/{module}/'
-            sidebar_label = 'Introduction'
+        slug = f'/{module}'
+        sidebar_label = 'Introduction'
 
-        else:
-            sidebar_label = page
-            slug = f'/{module}/{page.lower()}/{page}'
-        sidebar_position = 1
     else:
         slug = f'/{module}/{real_url.replace(".html", "")}'
-
-        # get position from lookup table, no checking, if we cannot find the URL we die!
-        sidebar_label = path.basename(url).replace('.html', '')
+        # don't override sidebar_label by default, so we can set it from the sidebar.js
+        sidebar_label = None
 
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
     mdx = \
         f"""---
 id: {real_url.replace('.html', '').split('/')[-1]}
+title: {title}
 hide_title: true
 slug: {slug}
-sidebar_label: {sidebar_label}
+{f"sidebar_label: {sidebar_label}" if sidebar_label else ''}
 
 ---
 
