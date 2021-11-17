@@ -124,6 +124,8 @@ html_theme_options = {
 # resolve URL to GitHub
 # part of this code is inspired by https://github.com/pandas-dev/pandas/blob/master/doc/source/conf.py
 def linkcode_resolve(domain, info):
+
+    # only handle python files
     if domain != 'py':
         return None
 
@@ -140,33 +142,34 @@ def linkcode_resolve(domain, info):
             obj = getattr(obj, part)
         except AttributeError:
             return None
+
+    # get filename that contains the code
     try:
         fn = inspect.getsourcefile(inspect.unwrap(obj))
     except TypeError:
         return None
 
+    # try to determine on what line number the code occurs
     try:
         source, lineno = inspect.getsourcelines(obj)
     except OSError:
         lineno = None
 
+    # create linespec so GH can highlight the correct lines
     if lineno:
         linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
     else:
         linespec = ""
 
-    filename = info['module'].replace('.', '/') + '/' + os.path.basename(fn)
+    # get root of repository
+    # we take this file as base: bach/docs/source/conf.py
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-    return f"https://github.com/objectiv/objectiv-analytics/blob/main/bach/{filename}{linespec}"
+    # fn contains the full, absolute local path, so we strip the path to the root of the repo from that
+    # to determine the path to the file, relative to the repo's root
+    filename = fn[len(root):]
 
-
-from sphinx.ext.autosummary import Autosummary  # isort:skip
-
-
-class ObjectivAutosummary(Autosummary):
-    def get_items(self, names):
-        items = Autosummary.get_items(self, names)
-        return items
+    return f"https://github.com/objectiv/objectiv-analytics/blob/main{filename}{linespec}"
 
 
 def remove_copyright_string(app, what, name, obj, options, lines):
