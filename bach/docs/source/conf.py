@@ -169,7 +169,9 @@ def linkcode_resolve(domain, info):
     # to determine the path to the file, relative to the repo's root
     filename = fn[len(root):]
 
-    return f"https://github.com/objectiv/objectiv-analytics/blob/main{filename}{linespec}"
+    # NOTE: leaving {linespec} out of the URL for now
+
+    return f"https://github.com/objectiv/objectiv-analytics/blob/main{filename}"
 
 
 def remove_copyright_string(app, what, name, obj, options, lines):
