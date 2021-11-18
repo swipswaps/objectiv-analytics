@@ -18,16 +18,6 @@ project = 'Bach'
 copyright = '2021, Objectiv'
 author = 'Objectiv B.V.'
 
-sys.path.extend([os.path.dirname(os.path.dirname(os.path.join(os.path.dirname(__file__))))])
-
-# ipython_execlines = [
-#    'sys.path.insert(0, os.path.abspath("../../bach"))',
-#    'import bach',
-#    'import quote_string from expression',
-#    'import sys'
-# ]
-
-
 doctest_global_setup = '''
 from bach.dataframe import DataFrame
 '''
@@ -42,9 +32,6 @@ extensions = [
     'sphinx.ext.linkcode',  # generate [source] links to GH
     'sphinx.ext.doctest',  # run examples /tests
     'numpydoc',  # use numpy style docs
-    # 'sphinx.ext.viewcode',
-    # 'IPython.sphinxext.ipython_directive',
-    # 'IPython.sphinxext.ipython_console_highlighting',
     'sphinx_markdown_builder'
 ]
 #
@@ -67,7 +54,7 @@ autosummary_imported_members = True
 autodoc_typehints = 'description'
 autodoc_typehints_description_target = 'documented'
 
-autoclass_content='class'
+autoclass_content = 'class'
 
 # TOTALLY breaks toctree generation autodoc_class_signature = 'separated'
 
@@ -214,7 +201,6 @@ def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
                 inspect_obj = obj.fget
             if isinstance(inspect_obj, classmethod):
                 inspect_obj = inspect_obj.__func__
-
 
     # We get no options from autosummary whatsoever, so to implement this here:
     # if not autodoc_default_options.get('undoc-members', False) and not inspect_obj.__doc__:
