@@ -750,7 +750,7 @@ class DataFrame:
                 self._data[key] = series
             else:
                 if value.base_node == self.base_node and self._group_by == value.group_by:
-                    self._data[key] = value.copy_override(name=key)
+                    self._data[key] = value.copy_override(name=key, index=self._index)
                 elif value.expression.is_constant:
                     self._data[key] = value.copy_override(name=key, index=self._index,
                                                           group_by=[self._group_by])
@@ -1055,8 +1055,7 @@ class DataFrame:
             base_node=df.base_node,
             index=group_by.index,
             series=new_series,
-            group_by=[group_by],
-            order_by=[])
+            group_by=[group_by])
 
     def groupby(
             self,
@@ -1109,17 +1108,18 @@ class DataFrame:
 
         return DataFrame._groupby_to_frame(df, group_by)
 
-    def window(self,
-               by: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
-               **frame_args) -> 'DataFrame':
+    def window(self, **frame_args) -> 'DataFrame':
         """
-        Create a window on the current dataframe and its sorting.
+        Create a window on the current dataframe grouping and its sorting.
+
+        .. warning::
+            This is an expert method. Use :py:meth:`rolling` or :py:meth:`expanding` if possible.
 
         see :py:class:`bach.partitioning.Window` for parameters.
         """
         # TODO Better argument typing, needs fancy import logic
         from bach.partitioning import Window
-        index = self._partition_by_series(by)
+        index = list(self._group_by.index.values()) if self._group_by else []
         group_by = Window(group_by_columns=index,
                           order_by=self._order_by,
                           **frame_args)
@@ -1144,7 +1144,7 @@ class DataFrame:
                by: Union[str, 'Series', List[Union[str, 'Series']], None],
                ) -> 'DataFrame':
         """
-        Group by and roll up over the column(s) `by`.
+        Group by and roll up over the column(s) `by`, replacing any current grouping.
 
         :param by: the series to group by and roll up. Can be a column or index name str, a Series or a list
             of any of those. If Series are passed, they should have the same base node as the DataFrame.
@@ -1159,15 +1159,15 @@ class DataFrame:
     def rolling(self, window: int,
                 min_periods: int = None,
                 center: bool = False,
-                on: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
                 closed: str = 'right') -> 'DataFrame':
         """
         A rolling window of size 'window', by default right aligned.
 
+        To use grouping as well, first call :py:meth:`group_by` on this frame and call rolling on the result.
+
         :param window: the window size.
         :param min_periods: the min amount of rows included in the window before an actual value is returned.
         :param center: center the result, or align the result on the right.
-        :param on: the partition to use, see :py:meth:`window`.
         :param closed: make the interval closed on the ‘right’, ‘left’, ‘both’ or ‘neither’ endpoints.
             Defaults to ‘right’, and the rest is currently unsupported.
         :returns: a new DataFrame object with the :py:attr:`group_by` attribute set with a
@@ -1176,10 +1176,6 @@ class DataFrame:
         .. note::
             The `win_type`, `axis` and `method` parameters as supported by pandas, are currently not
             implemented.
-
-        .. note::
-            The `on` parameter behaves differently from pandas, where it can be use to select to series
-            to iterate over.
         """
         from bach.partitioning import WindowFrameBoundary, WindowFrameMode, \
             Window
@@ -1209,7 +1205,7 @@ class DataFrame:
         else:
             end_boundary = WindowFrameBoundary.FOLLOWING
 
-        index = self._partition_by_series(on)
+        index = list(self._group_by.index.values()) if self._group_by else []
         group_by = Window(group_by_columns=index,
                           order_by=self._order_by,
                           mode=mode,
@@ -1221,18 +1217,15 @@ class DataFrame:
     def expanding(self,
                   min_periods: int = 1,
                   center: bool = False,
-                  on: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
                   ) -> 'DataFrame':
         """
         Create an expanding window starting with the first row in the group, with at least `min_period`
         observations. The result will be right-aligned in the window.
 
+        To use grouping as well, first call :py:meth:`group_by` on this frame and call rolling on the result.
+
         :param min_periods: the minimum amount of observations in the window before a value is reported.
         :param center: whether to center the result, currently not supported.
-        :param on: the partition that will be applied.
-
-        .. note::
-            'partition' is different from pandas, where the partition is determined earlier in the process.
         """
         # TODO We could move the partitioning to GroupBy
         from bach.partitioning import WindowFrameBoundary, WindowFrameMode, \
@@ -1248,7 +1241,7 @@ class DataFrame:
         end_boundary = WindowFrameBoundary.CURRENT_ROW
         end_value = None
 
-        index = self._partition_by_series(on)
+        index = list(self._group_by.index.values()) if self._group_by else []
         group_by = Window(group_by_columns=index,
                           order_by=self._order_by,
                           mode=mode,
@@ -1608,7 +1601,19 @@ class DataFrame:
         new_series = df._apply_func_to_series(func, axis, numeric_only,
                                               True,  # exclude_non_applied, must be positional arg.
                                               df.group_by, *args, **kwargs)
-        return df.copy_override(series={s.name: s for s in new_series})
+
+        # If the new series have a different group_by or index, we need to copy that
+        if len(new_series):
+            new_index = new_series[0].index
+            new_group_by = new_series[0].group_by
+
+        if not all(dict_name_series_equals(s.index, new_index)
+                   and s.group_by == new_group_by
+                   for s in new_series):
+            raise ValueError("series do not agree on new index / group_by")
+
+        return df.copy_override(index=new_index, group_by=[new_group_by],
+                                series={s.name: s for s in new_series})
 
     def _aggregate_func(self, func: str, axis, level, numeric_only, *args, **kwargs) -> 'DataFrame':
         """
