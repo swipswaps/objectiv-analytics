@@ -163,9 +163,9 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
             label = parts[-1]
 
         if '#' in href:
-            if menu_item['href'].startswith('intro'):
-                # intro is the "index" page, so correct path
-                href = menu_item['href'].replace('intro', '')
+            if menu_item['href'].startswith(index_page):
+                # this is the "index" page, so correct path
+                href = menu_item['href'].replace(index_page, '')
 
             if level > 0 or len(menu_item['children']) == 0 or menu_item['text'] in skip_categories:
                 # To avoid duplicates (because Docusaurus doesn't support categories with links),
