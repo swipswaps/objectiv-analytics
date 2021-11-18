@@ -45,7 +45,7 @@ index_page = 'intro'
 skip_categories = ['Introduction', 'Core Concepts', 'Examples']
 
 # replacement label to avoid duplicates
-introduction = 'Overview'
+category_index = 'Overview'
 
 # whitelist of pages to consider
 # subdirs / modules will be auto-added below
@@ -163,7 +163,7 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
             label = parts[-1]
 
         if '#' in href:
-            if menu_item['href'].startswith(index_page):
+            if menu_item['href'].startswith(f'{index_page}#'):
                 # this is the "index" page, so correct path
                 href = menu_item['href'].replace(index_page, '')
 
@@ -196,7 +196,7 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                     exit(1)
                 # change label of parent to introduction
                 if len(menu_item_children) > 0:
-                    menu_item_children[0]['label'] = introduction
+                    menu_item_children[0]['label'] = category_index
                 # reset original list
                 items = []
             menu_item_children += menu_list_to_sidebar(menu_item['children'], level=level + 1)
@@ -205,7 +205,7 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
             # logically there wouldn't be more than 1, so we quit
             # after we find one and get rid of it (otherwise the loop breaks)
             for i in range(1, len(menu_item_children)):
-                if menu_item_children[i]['label'] == introduction:
+                if menu_item_children[i]['label'] == category_index:
                     del menu_item_children[i]
                     break
 
