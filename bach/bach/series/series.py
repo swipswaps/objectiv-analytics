@@ -803,7 +803,7 @@ class Series(ABC):
                          order_by=[])
 
     def _check_unwrap_groupby(self,
-                              wrapped: Optional[WrappedPartition],
+                              wrapped: Union['DataFrame', 'GroupBy'],
                               isin=None, notin=()) -> 'GroupBy':
         """
         Unwrap the GroupBy from the Aggregator if one is given, else use the GroupBy directly
@@ -815,24 +815,13 @@ class Series(ABC):
         Exceptions will be raised when check don't pass
         :returns: The potentially unwrapped GroupBy
         """
-        from bach.partitioning import GroupBy, Cube, Rollup, Window
-        isin = (GroupBy, Cube, Rollup, Window) if isin is None else isin
+        from bach.partitioning import GroupBy
+        isin = GroupBy if isin is None else isin
 
-        if wrapped is None:
-            if self._group_by:
-                group_by = self._group_by
-            else:
-                # create an aggregation over the entire input
-                group_by = GroupBy([])
+        if wrapped is not None and isinstance(wrapped, DataFrame):
+            group_by = wrapped.group_by
         else:
-            if isinstance(wrapped, DataFrame):
-                unwrapped = wrapped.group_by
-            else:
-                unwrapped = wrapped
-
-            if self._group_by and self._group_by != unwrapped:
-                raise ValueError("Series group_by not the same as given partition; I'm confused.")
-            group_by = unwrapped
+            group_by = wrapped
 
         if not isinstance(group_by, isin):
             raise ValueError(f'group_by {type(group_by)} not in {isin}')
@@ -862,7 +851,7 @@ class Series(ABC):
         :returns: The correctly typed derived Series, with either the current index in case of
             a Window function, or the GroupBy otherwise.
         """
-        from bach.partitioning import Window
+        from bach.partitioning import GroupBy, Window
 
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
@@ -880,7 +869,14 @@ class Series(ABC):
         if isinstance(expression, str):
             expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
 
-        partition = self._check_unwrap_groupby(partition)
+        if partition is None:
+            if self._group_by:
+                partition = self._group_by
+            else:
+                # create an aggregation over the entire input
+                partition = GroupBy([])
+        else:
+            partition = self._check_unwrap_groupby(partition)
 
         if min_count is not None and min_count > 0:
             if isinstance(partition, Window):
@@ -916,10 +912,7 @@ class Series(ABC):
                                       group_by=[partition],
                                       expression=expression)
         else:
-            # The window expression already contains the full partition and sorting, no need
-            # to keep that with this series, the expression can be used without any of those.
             return self.copy_override(dtype=derived_dtype,
-                                      group_by=[None],
                                       expression=partition.get_window_expression(expression))
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
@@ -950,7 +943,8 @@ class Series(ABC):
 
     def nunique(self, partition: WrappedPartition = None, skipna: bool = True):
         from bach.partitioning import Window
-        partition = self._check_unwrap_groupby(partition, notin=Window)
+        if partition is not None:
+            partition = self._check_unwrap_groupby(partition, notin=Window)
         return self._derived_agg_func(
             partition=partition, dtype='int64',
             expression=AggregateFunctionExpression.construct('count(distinct {})', self),
@@ -971,21 +965,21 @@ class Series(ABC):
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
     # TODO make group_by optional, but for that we need to use current series sorting
-    def _check_window(self, window: WrappedWindow = None) -> 'Window':
+    def _check_window(self, window: WrappedWindow) -> 'Window':
         """
-        Validate that the given partition or the stored group_by is a true Window or raise an exception
+        Validate that the given partition is a true Window or raise an exception
         """
         from bach.partitioning import Window
         return cast(Window, self._check_unwrap_groupby(window, isin=Window))
 
-    def window_row_number(self, window: WrappedWindow = None):
+    def window_row_number(self, window: WrappedWindow):
         """
         Returns the number of the current row within its window, counting from 1.
         """
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('row_number()'), 'int64')
 
-    def window_rank(self, window: WrappedWindow = None):
+    def window_rank(self, window: WrappedWindow):
         """
         Returns the rank of the current row, with gaps; that is, the row_number of the first row
         in its peer group.
@@ -993,7 +987,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('rank()'), 'int64')
 
-    def window_dense_rank(self, window: WrappedWindow = None):
+    def window_dense_rank(self, window: WrappedWindow):
         """
         Returns the rank of the current row, without gaps; this function effectively counts peer
         groups.
@@ -1001,7 +995,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('dense_rank()'), 'int64')
 
-    def window_percent_rank(self, window: WrappedWindow = None):
+    def window_percent_rank(self, window: WrappedWindow):
         """
         Returns the relative rank of the current row, that is
         (rank - 1) / (total partition rows - 1).
@@ -1010,7 +1004,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('percent_rank()'), "double precision")
 
-    def window_cume_dist(self, window: WrappedWindow = None):
+    def window_cume_dist(self, window: WrappedWindow):
         """
         Returns the cumulative distribution, that is
         (number of partition rows preceding or peers with current row) / (total partition rows).
@@ -1019,7 +1013,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('cume_dist()'), "double precision")
 
-    def window_ntile(self, num_buckets: int = 1, window: WrappedWindow = None):
+    def window_ntile(self, window: WrappedWindow, num_buckets: int = 1):
         """
         Returns an integer ranging from 1 to the argument value,
         dividing the partition as equally as possible.
@@ -1027,7 +1021,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
 
-    def window_lag(self, offset: int = 1, default: Any = None, window: WrappedWindow = None):
+    def window_lag(self, window: WrappedWindow, offset: int = 1, default: Any = None):
         """
         Returns value evaluated at the row that is offset rows before the current row within the window
 
@@ -1045,7 +1039,7 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_lead(self, offset: int = 1, default: Any = None, window: WrappedWindow = None):
+    def window_lead(self, window: WrappedWindow, offset: int = 1, default: Any = None):
         """
         Returns value evaluated at the row that is offset rows after the current row within the window.
 
@@ -1063,7 +1057,7 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_first_value(self, window: WrappedWindow = None):
+    def window_first_value(self, window: WrappedWindow):
         """
         Returns value evaluated at the row that is the first row of the window frame.
         """
@@ -1074,14 +1068,14 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_last_value(self, window: WrappedWindow = None):
+    def window_last_value(self, window: WrappedWindow):
         """
         Returns value evaluated at the row that is the last row of the window frame.
         """
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('last_value({})', self), self.dtype)
 
-    def window_nth_value(self, n: int, window: WrappedWindow = None):
+    def window_nth_value(self, window: WrappedWindow, n: int):
         """
         Returns value evaluated at the row that is the n'th row of the window frame.
         (counting from 1); returns NULL if there is no such row.
@@ -1094,12 +1088,12 @@ class Series(ABC):
         )
 
 
+# TODO remove from docs.
 def const_to_series(base: Union[Series, DataFrame],
                     value: Union[Series, int, float, str, UUID],
                     name: str = None) -> Series:
     """
-    INTERNAL: Take a value and return a Series representing a column with that value.
-
+    Take a value and return a Series representing a column with that value.
     If value is already a Series it is returned unchanged unless it has no base_node set, in case
     it's a subquery. We create a copy and hook it to our base node in that case, so we can work with it.
     If value is a constant then the right BuhTuh subclass is found for that type and instantiated

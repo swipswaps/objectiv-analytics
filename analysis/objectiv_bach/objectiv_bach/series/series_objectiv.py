@@ -292,9 +292,9 @@ class FeatureFrame(DataFrame):
         feature_df[event_column] = event_series
         feature_df['feature_hash'] = cls.hash_features(feature_df, location_stack_column, event_column)
 
-        window = feature_df.groupby(feature_df['feature_hash']).window()
-        feature_df['event_count'] = window[event_column].count()
-        feature_df['event_number'] = window[event_column].window_row_number()
+        window = feature_df.window(feature_df['feature_hash'])
+        feature_df['event_count'] = feature_df['feature_hash'].count(window)
+        feature_df['event_number'] = feature_df['feature_hash'].window_row_number(window)
 
         feature_df = feature_df.materialize('features')
 

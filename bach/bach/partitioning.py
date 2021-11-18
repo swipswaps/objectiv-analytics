@@ -61,13 +61,9 @@ class GroupBy:
             if col.expression.is_constant and not isinstance(col, SeriesInt64):
                 # Dictated by PG
                 raise ValueError('Non-integer constant group by series not supported')
-            if col.expression.has_windowed_aggregate_function:
-                raise ValueError('Window functions can not be used to group, '
-                                 'please materialize first.')
             if col.expression.has_aggregate_function:
-                raise ValueError('Aggregate functions can not be used to group, '
+                raise ValueError('Window or aggregate functions can not be used to group, '
                                  'please materialize first.')
-
             self._index[col.name] = col.copy_override(index={}, group_by=[self])
 
     def __eq__(self, other):
