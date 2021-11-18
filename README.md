@@ -8,7 +8,7 @@ with the goal of collecting better data and more effective modeling.
 
 ![Objectiv Pipeline](https://www.objectiv.io/docs/img/objectiv-pipeline.svg "Objectiv Pipeline")
 
-With [Objectiv Bach](https://www.objectiv.io/docs/modeling/) (our data modeling library), you can use familiar Pandas-like DataFrame operations on your full SQL dataset. It is designed for effective feature creation for datasets that embrace [the open taxonomy of analytics](https://objectiv.io/docs/taxonomy).
+With [Objectiv Bach](https://www.objectiv.io/docs/modeling/) (our data modeling library), you can use familiar Pandas-like DataFrame operations on your full SQL dataset. It includes extensions for effective feature creation for datasets that embrace [the open taxonomy of analytics](https://objectiv.io/docs/taxonomy).
 
 Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
