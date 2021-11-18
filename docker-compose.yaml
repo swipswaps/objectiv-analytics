@@ -16,6 +16,21 @@ x-db_env_variables: &db_env_variables
 
 version: "3.4"
 services:
+  objectiv_website:
+    container_name: objectiv_website
+    image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/website:${OBJECTIV_CONTAINER_TAG-latest}
+    depends_on:
+      - objectiv_collector
+    ports:
+      - "127.0.0.1:80:80"
+    networks:
+      - obj
+    healthcheck:
+      test: [ "CMD", "printf",  "\"GET / HTTP/1.1\n\n\" > /dev/tcp/127.0.0.1/80" ]
+      interval: 30s
+      timeout: 2s
+      retries: 3
+
   objectiv_collector:
     container_name: objectiv_collector
     depends_on:
@@ -25,7 +40,7 @@ services:
     working_dir: /services
     entrypoint: bash -c "objectiv-db-init; ./entry_point.sh"
     ports:
-      - 127.0.0.1:5000:5000
+      - "127.0.0.1:5000:5000"
     networks:
       - obj
     volumes:
@@ -41,13 +56,11 @@ services:
 
   objectiv_postgres:
     container_name: objectiv_postgres
-    image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/postgres:${OBJECTIV_CONTAINER_TAG-latest}
+    image: postgres:latest
     ports:
-      - 127.0.0.1:5432:5432
+      - "127.0.0.1:5432:5432"
     networks:
       - obj
-    volumes:
-      - pgdata:/var/lib/postgresql/data/
     environment:
       <<: *db_env_variables
       # WARNING: Disabling authentication here
@@ -63,11 +76,14 @@ services:
     # default image: eu.gcr.io/objectiv-production/notebook:latest
     image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/notebook:${OBJECTIV_CONTAINER_TAG-latest}
     ports:
-      - 127.0.0.1:8888:8888
+      - "8888:8888"
     networks:
       - obj
-    volumes:
-      - ./ds/notebooks_volume:/home/jovyan/notebooks_volume
+    depends_on:
+      # we make it depend on the other instances
+      # so we have the best chance of the db being up in time
+      - objectiv_postgres
+      - objectiv_collector
     environment:
       <<: *db_env_variables
     healthcheck:
@@ -76,10 +92,6 @@ services:
       timeout: 2s
       retries: 3
 
-
-# persist PG data in a docker volume
-volumes:
-  pgdata:
 
 # use bridged networking, so we can access services provided from the host
 networks:
