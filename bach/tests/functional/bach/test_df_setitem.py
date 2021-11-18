@@ -273,13 +273,13 @@ def test_set_series_single_value():
     assert bt.constmoremax.expression.is_single_value
 
     bt['moremax2'] = bt.inhabitants.max() + 6
-    # Not the same reference, because + 5 gets added to the subquery instead of the column expression
-    assert bt.maxi.expression.get_references() != bt.moremax2.expression.get_references()
+    # a different reference, because + 6 gets added to the subquery here.
+    assert bt.moremax2.expression.get_references() != bt.maxi.expression.get_references()
     assert bt.moremax2.expression.is_single_value
 
     bt['moremax3'] = bt.maxi + 7
     # The same reference, because + 7 gets added to the column expression
-    assert bt.maxi.expression.get_references() == bt.moremax3.expression.get_references()
+    assert bt.moremax3.expression.get_references() == bt.maxi.expression.get_references()
     assert bt.moremax3.expression.is_single_value
 
     # lots of subqueries added, but we were not materialized

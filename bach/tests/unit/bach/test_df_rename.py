@@ -49,8 +49,7 @@ def test_rename_inplace():
     bt = get_fake_df_test_data()
     expr = bt.founding.expression
     nbt = bt.rename(columns={'founding': 'fnd'}, inplace=True)
-    assert 'founding' not in nbt.data.keys()
-    assert 'fnd' in nbt.data.keys()
+    assert nbt is None
     assert 'founding' not in bt.data.keys()
     assert 'fnd' in bt.data.keys()
     assert bt.fnd.expression == expr

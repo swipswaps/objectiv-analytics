@@ -1,7 +1,7 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback_context
 from dash.dependencies import Input, Output, State
-from typing import List
+import ast
 
 
 def get_app(Dash, feature_frame, url_base_pathname='/'):
@@ -65,22 +65,34 @@ def get_app(Dash, feature_frame, url_base_pathname='/'):
          Input('stack', 'value'),
          Input('start-at', 'value'),
          Input('end-at', 'value')])
-    def draw_top_graph(node_clicks_data: List[dict],
-                       event_value: str,
-                       stack_value: str,
-                       start_at_value: int,
-                       end_at_value: int):
+    def draw_top_graph(node_clicks_data, event_value, stack_value, start_at_value, end_at_value):
         """
         Displays the upper Sankey diagram based on inputs from the app.
 
-        :param node_clicks_data: A collection of the clicked nodes. These are used for feature creation as
-            specified by apply_stored_rules.
-        :param event_value: The stack for which the Sankey is drawn.
-        :param stack_value: The column that contains the stack that is used for the filter on valid stacks.
-        :param start_at_value: Optionally a starting position of the feature can be specified. This rule will
-            always be applied after all the rules in nodes have been applied.
-        :param end_at_value: See start_at_value. This will be applied together with start_at_value.
+        Parameters
+        ----------
+        node_clicks_data : List[dict]
+            A collection of the clicked nodes. These are used for feature
+            creation as specified by apply_stored_rules.
+
+        event_value : str
+            The stack for which the Sankey is drawn.
+
+        stack_value : str
+            The column that contains the stack that is used for the
+            filter on valid stacks.
+
+        start_at_value : int
+            Optionally a starting position of the feature can be
+            specified. This rule will always be applied after all
+            the rules in nodes have been applied.
+            The function for aggregating the data.
+
+        end_at_value : int
+            See start_at_value. This will be applied together
+            with start_at_value.
         """
+
         feature_frame['_sankey_feature'] = feature_frame[stack_value]
         if len(node_clicks_data) > 0:
             for x in node_clicks_data:
@@ -118,24 +130,40 @@ def get_app(Dash, feature_frame, url_base_pathname='/'):
          State('end-at', 'value'),
          State('feature-name', 'value')])
     def create_feature(
-            create_feature_n_clicks: int,
-            node_clicks_data: List[dict],
-            stack_value: str,
-            start_at_value: int,
-            end_at_value: int,
-            feature_name_value: str):
+            create_feature_n_clicks,
+            node_clicks_data,
+            stack_value,
+            start_at_value,
+            end_at_value,
+            feature_name_value):
         """
-        Creates a feature based clicks in the top graph, slice and name.
+        Creates a feature based clicks in the top graph, slice and
+        name.
 
-        :param create_feature_n_clicks: Current number of clicks on the Create Feature button. Required for
-            'create-feature.n_clicks'
-        :param node_clicks_data: Each element in the list contains the name of the node that will be used to
-            create a feature. Each clicked node will be the start of a feature.
-        :param stack_value: The column that contains the stack that is used for the filter on valid stacks.
-        :param start_at_value: Optionally a starting position of the feature can be specified. This rule will
-            always be applied after all the rules in nodes have been applied.
-        :param end_at_value: See start_at_value. This will be applied together with start_at_value.
-        :param feature_name_value: The name of the feature that will be used once a feature is created.
+        Parameters
+        ----------
+        create_feature_n_clicks : int
+            Current number of clicks on the Create Feature button.
+
+        node_clicks_data : List[dict]
+            Each element in the list contains the name of the node
+            that will be used to create a feature. Each clicked node
+            will be the start of a feature.
+
+        feature_name_value : str
+            The name of the feature that will be used once a feature is
+            created.
+
+        start_at_value : int
+            Optionally a starting position of the feature can be
+            specified. This rule will always be applied after all
+            the rules in nodes have been applied.
+            The function for aggregating the data.
+
+        end_at_value : int
+            See start_at_value. This will be applied together
+            with start_at_value.
+
         """
         console_text = ''
         prop_id_triggered = callback_context.triggered[0]['prop_id']
@@ -147,6 +175,7 @@ def get_app(Dash, feature_frame, url_base_pathname='/'):
             if start_at_value is not None or end_at_value is not None:
                 feature_frame[feature_name_value] = feature_frame[feature_name_value].json[
                                                     start_at_value:end_at_value]
+
             if feature_name_value not in [x['label'] for x in stack_dropdown_options]:
                 stack_dropdown_options.append({'label': feature_name_value, 'value': feature_name_value})
             console_text = f'feature {feature_name_value} created'
@@ -159,25 +188,37 @@ def get_app(Dash, feature_frame, url_base_pathname='/'):
          Input('reset-feature-rules', 'n_clicks')],
         State('node-clicks', 'data'))
     def set_node_clicks_data(
-            top_graph_click_data: dict, # todo are dict types correct? (like really dict?)
-            reset_feature_rules_n_clicks: int,
-            node_clicks_data: List[dict]):
+            top_graph_click_data,
+            reset_feature_rules_n_clicks,
+            node_clicks_data):
         """
         Stores or resets all nodes clicked in the top graph.
 
-        :param top_graph_click_data: The click data in the graph. If this is a Node it will add the data to
-            'stored-node-data'
-        :param reset_feature_rules_n_clicks: Current number of clicks on the Reset Feature Rules button.
-            Required for 'reset-feature-rules.n_clicks'
-        :param node_clicks_data: Each element in the list contains the name of the node that will be used to
-            create a feature. Each clicked node will be the start of a feature.
+        Parameters
+        ----------
+        top_graph_click_data : dict
+            The click data in the upper graph. If this is a Node it will
+            add the data to 'stored-node-data'
+
+        reset_feature_rules_n_clicks : int
+            Current number of clicks on the Reset Feature Rules button.
+
+        node_clicks_data : List[dict]
+            Each element in the list contains the name of the node
+            that will be used to create a feature. Each clicked node
+            will be the start of a feature.
         """
+
         prop_id_triggered = callback_context.triggered[0]['prop_id']
-        print(f'{prop_id_triggered=}')
         if prop_id_triggered == 'top-graph.clickData':  # store only if valid node
-            import ast
-            dict_clicked = ast.literal_eval(top_graph_click_data['points'][0]['label'])
-            node_clicks_data.append(dict_clicked)
+            try:
+                if not top_graph_click_data['points'][0]['group']:
+                    node_label = top_graph_click_data['points'][0]['label']
+                    if node_label != 'end_of_stack':
+                        dict_clicked = ast.literal_eval(node_label)
+                        node_clicks_data.append(dict_clicked)
+            except KeyError:
+                pass
         if prop_id_triggered == 'reset-feature-rules.n_clicks':
             node_clicks_data = []
 

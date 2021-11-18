@@ -49,7 +49,7 @@ def test_drop_items():
         nbt.founding
 
     nbt = bt.drop(columns=['founding'], inplace=True)
-    assert 'founding' not in nbt.data.keys()
+    assert nbt is None
     assert 'founding' not in bt.data.keys()
 
     bt.drop(columns=['inhabitants', 'city'], inplace=True)
