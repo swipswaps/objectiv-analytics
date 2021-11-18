@@ -16,8 +16,13 @@ if TYPE_CHECKING:
 
 
 class SeriesAbstractDateTime(Series, ABC):
-    """ Class all date/time/interval handling classes derive from to share common stuff """
+    """
+    A Series that represents the generic date/time type and its specific operations
 
+    **Date/Time formatting**
+
+    All Series types support formatting through :py:meth:`format`
+    """
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
@@ -27,7 +32,7 @@ class SeriesAbstractDateTime(Series, ABC):
         Allow standard PG formatting of this Series (to a string type)
 
         :param format_str: Format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
-        :return: a derived Series that accepts and returns formatted timestamp strings
+        :return: a derived SeriesString that accepts returns formatted timestamp strings
         """
         expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
         return self.copy_override(dtype='string', expression=expression)
@@ -46,6 +51,9 @@ class SeriesAbstractDateTime(Series, ABC):
 
 class SeriesTimestamp(SeriesAbstractDateTime):
     """
+    A Series that represents the timestamp/datetime type and its specific operations
+
+
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         timestamp without time zone
     """
@@ -86,6 +94,8 @@ class SeriesTimestamp(SeriesAbstractDateTime):
 
 class SeriesDate(SeriesAbstractDateTime):
     """
+    A Series that represents the date type and its specific operations
+
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         date
     """
@@ -140,6 +150,8 @@ class SeriesDate(SeriesAbstractDateTime):
 
 class SeriesTime(SeriesAbstractDateTime):
     """
+    A Series that represents the date time and its specific operations
+
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         time without time zone
     """
@@ -167,6 +179,10 @@ class SeriesTime(SeriesAbstractDateTime):
 
 
 class SeriesTimedelta(SeriesAbstractDateTime):
+    """
+    A Series that represents the timedelta type and its specific operations
+    """
+
     dtype = 'timedelta'
     dtype_aliases = ('interval',)
     supported_db_dtype = 'interval'
@@ -221,6 +237,9 @@ class SeriesTimedelta(SeriesAbstractDateTime):
 
     def sum(self, partition: WrappedPartition = None,
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':
+        """
+        :meta private:
+        """
         result = self._derived_agg_func(
             partition=partition,
             expression='sum',
@@ -230,6 +249,9 @@ class SeriesTimedelta(SeriesAbstractDateTime):
         return cast('SeriesTimedelta', result)
 
     def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'SeriesTimedelta':
+        """
+        :meta private:
+        """
         result = self._derived_agg_func(
             partition=partition,
             expression='avg',
