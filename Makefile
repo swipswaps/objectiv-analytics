@@ -34,10 +34,8 @@ push-image-%:
 build-backend:
 	cd backend && make docker-image
 
-build-ds-notebook:
-	cd ds && \
-	docker build \
-	-t objectiv/notebook:$(TAG) -f docker/notebook/Dockerfile .
+build-notebook:
+	docker build -t objectiv/notebook -f analysis/docker/Dockerfile .
 
 publish-tracker:
 	cd tracker && make publish

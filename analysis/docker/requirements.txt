@@ -1,0 +1,7 @@
+jupyterlab
+jupyter_dash
+psycopg2
+plotly
+matplotlib
+numpy
+seaborn

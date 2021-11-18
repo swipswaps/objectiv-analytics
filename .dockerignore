@@ -8,3 +8,4 @@ rod/build/
 node_modules/
 .idea
 .git
+venv/
