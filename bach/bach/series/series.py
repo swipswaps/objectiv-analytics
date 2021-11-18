@@ -1037,7 +1037,6 @@ class Series(ABC):
         :param default: The value to return if no value is available, can be a constant value or Series.
         Defaults to None
         """
-        # TODO Lag, lead etc. could check whether the window is setup correctly to include that value
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
         return self._derived_agg_func(
