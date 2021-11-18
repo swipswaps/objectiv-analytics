@@ -25,7 +25,7 @@ _SQL = \
                 true
             ) as is_start_of_session,
             moment as moment
-        from {{hashed_features}}
+        from {{extracted_contexts}}
     ),
     session_id_and_start_{{id}} as (
         select
@@ -46,7 +46,7 @@ _SQL = \
                 as session_hit_number,
             d.cookie_id as user_id,
             d.*
-    from {{hashed_features}} as d
+    from {{extracted_contexts}} as d
     inner join session_id_and_start_{{id}} as s on s.cookie_id = d.cookie_id and s.moment <= d.moment
     where not exists (
         select *
