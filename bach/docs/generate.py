@@ -156,8 +156,8 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
         href = menu_item['href'].replace('.html', '')
         label = menu_item['text']
 
-        # if this is a deeper nested item, and a method name, let's remove the classname
-        # for better readability.
+        # if this is a deeper nested item, and a fully qualified name, let's remove the class/module name
+        # for a more compact tree
         parts = label.split('.')
         if level > 0 and len(parts) > 1:
             label = parts[-1]
