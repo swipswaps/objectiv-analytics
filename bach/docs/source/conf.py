@@ -18,15 +18,6 @@ project = 'Bach'
 copyright = '2021, Objectiv'
 author = 'Objectiv B.V.'
 
-
-#ipython_execlines = [
-#    'sys.path.insert(0, os.path.abspath("../../bach"))',
-#    'import bach',
-#    'import quote_string from expression',
-#    'import sys'
-#]
-
-
 doctest_global_setup = '''
 from bach.dataframe import DataFrame
 '''
@@ -35,15 +26,12 @@ from bach.dataframe import DataFrame
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    'sphinx.ext.autodoc',           # generate summaries based on docstrings
-    'sphinx.ext.autosummary',       # auto generate autodoc directives
+    'sphinx.ext.autodoc',  # generate summaries based on docstrings
+    'sphinx.ext.autosummary',  # auto generate autodoc directives
     # 'sphinx.ext.intersphinx',       # generate links to external sphinx projects
-    'sphinx.ext.linkcode',          # generate [source] links to GH
-    'sphinx.ext.doctest',           # run examples /tests
-    'numpydoc',                     # use numpy style docs
-    #'sphinx.ext.viewcode',
-    #'IPython.sphinxext.ipython_directive',
-    #'IPython.sphinxext.ipython_console_highlighting',
+    'sphinx.ext.linkcode',  # generate [source] links to GH
+    'sphinx.ext.doctest',  # run examples /tests
+    'numpydoc',  # use numpy style docs
     'sphinx_markdown_builder'
 ]
 #
@@ -66,15 +54,14 @@ autosummary_imported_members = True
 autodoc_typehints = 'description'
 autodoc_typehints_description_target = 'documented'
 
-autoclass_content='class'
+autoclass_content = 'class'
+
 # TOTALLY breaks toctree generation autodoc_class_signature = 'separated'
 
 
 # numpydoc
 numpydoc_attributes_as_param_list = False
 numpydoc_show_class_members = False
-
-
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -83,7 +70,6 @@ templates_path = ['_templates']
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = []
-
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -115,6 +101,7 @@ html_theme_options = {
     "google_analytics_id": ""
 }
 
+
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
@@ -124,49 +111,54 @@ html_theme_options = {
 # resolve URL to GitHub
 # part of this code is inspired by https://github.com/pandas-dev/pandas/blob/master/doc/source/conf.py
 def linkcode_resolve(domain, info):
+
+    # only handle python files
     if domain != 'py':
         return None
-    
+
     modname = info["module"]
     fullname = info["fullname"]
 
     submod = sys.modules.get(modname)
     if submod is None:
         return None
-    
+
     obj = submod
     for part in fullname.split("."):
         try:
             obj = getattr(obj, part)
         except AttributeError:
             return None
+
+    # get filename that contains the code
     try:
         fn = inspect.getsourcefile(inspect.unwrap(obj))
     except TypeError:
         return None
 
+    # try to determine on what line number the code occurs
     try:
         source, lineno = inspect.getsourcelines(obj)
     except OSError:
         lineno = None
 
+    # create linespec so GH can highlight the correct lines
     if lineno:
         linespec = f"#L{lineno}-L{lineno + len(source) - 1}"
     else:
         linespec = ""
 
-    filename = info['module'].replace('.', '/') + '/' + os.path.basename(fn)
+    # get root of repository
+    # we take this file as base: bach/docs/source/conf.py
+    root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-    return f"https://github.com/objectiv/objectiv-analytics/blob/main/bach/{filename}{linespec}"
+    # fn contains the full, absolute local path, so we strip the path to the root of the repo from that
+    # to determine the path to the file, relative to the repo's root
+    filename = fn[len(root):]
 
+    # NOTE: leaving {linespec} out of the URL for now
 
-from sphinx.ext.autosummary import Autosummary  # isort:skip
-
-
-class ObjectivAutosummary(Autosummary):
-    def get_items(self, names):
-        items = Autosummary.get_items(self, names)
-        return items
+    return f"https://github.com/objectiv/objectiv-analytics/blob/main{filename}"
 
 
 def remove_copyright_string(app, what, name, obj, options, lines):
@@ -209,7 +201,6 @@ def autodoc_skip_member_bach_internal(app, what, name, obj, skip, options):
                 inspect_obj = obj.fget
             if isinstance(inspect_obj, classmethod):
                 inspect_obj = inspect_obj.__func__
-
 
     # We get no options from autosummary whatsoever, so to implement this here:
     # if not autodoc_default_options.get('undoc-members', False) and not inspect_obj.__doc__:

@@ -3,6 +3,7 @@ sphinx_markdown_builder
 
 ## theme we load/adapt
 pydata_sphinx_theme
+numpydoc
 
 ## needed for rendering ipython codeblocks
 ipython
