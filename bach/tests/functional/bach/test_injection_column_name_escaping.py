@@ -10,13 +10,14 @@ def test_column_names():
     bt['with_capitals'] = 1
     bt['With A Space Too'] = 1
     bt['""with"_quotes""'] = 1
+    bt['with%percentage'] = 1
     bt['Aa_!#!$*(aA®Řﬦ‎	⛔'] = 1
     expected_columns = ['_index_skating_order', 'city', 'With_Capitals', 'with_capitals',
-                        'With A Space Too', '""with"_quotes""', 'Aa_!#!$*(aA®Řﬦ‎	⛔']
+                        'With A Space Too', '""with"_quotes""', 'with%percentage', 'Aa_!#!$*(aA®Řﬦ‎	⛔']
     expected_data = [
-        [1, 'Ljouwert', 1, 1, 1, 1, 1],
-        [2, 'Snits',  1, 1, 1, 1, 1],
-        [3, 'Drylts',  1, 1, 1, 1, 1]
+        [1, 'Ljouwert', 1, 1, 1, 1, 1, 1],
+        [2, 'Snits',  1, 1, 1, 1, 1, 1],
+        [3, 'Drylts',  1, 1, 1, 1, 1, 1]
     ]
     assert_equals_data(bt, expected_columns=expected_columns, expected_data=expected_data)
     # Make sure that after materializing the columns are unchanged.

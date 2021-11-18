@@ -16,7 +16,22 @@ if TYPE_CHECKING:
 
 class SeriesAbstractNumeric(Series, ABC):
     """
-    Base class that defines shared logic between SeriesInt64 and SeriesFloat64
+    A Series that represents the base numeric types and its specific operations
+
+    ** Operations **
+
+    All common arithmetic operations are supported, as well as the most common aggregation operations:
+
+    - add (+), subtract (-)
+    - multiply (*), divide (/), floordiv (//)
+    - lshift (<<) and rshift(>>) for Integer types
+
+    And the aggregations/statistical functions:
+
+    - :py:meth:`sum`, :py:meth:`mean`
+    - :py:meth:`sem`, :py:meth:`std`, :py:meth:`var`
+
+    Integer types also support lshift (<<) and rshift(>>)
     """
     def _arithmetic_operation(self, other, operation, fmt_str,
                               other_dtypes=('int64', 'float64'), dtype=None):
@@ -26,6 +41,10 @@ class SeriesAbstractNumeric(Series, ABC):
         return super()._comparator_operation(other, comparator, other_dtypes)
 
     def round(self, decimals: int = 0) -> 'SeriesAbstractNumeric':
+        """
+        Round the value of this series to the given amount of decimals.
+        :param decimals: The amount of decimals to round to
+        """
         return self.copy_override(
             expression=Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
@@ -53,6 +72,15 @@ class SeriesAbstractNumeric(Series, ABC):
         raise NotImplementedError("skew currently not implemented")
 
     def sem(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
+        """
+        Get the unbiased standard error of the mean.
+        Normalized by N-1 by default.
+
+        :param partition: The partition or window to apply
+        :param skipna: Exclude NA/NULL values
+        :param ddof: Delta degrees of freedom. he divisor used in calculations is N - ddof,
+            where N represents the number of elements
+        """
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(
             partition,
@@ -63,19 +91,48 @@ class SeriesAbstractNumeric(Series, ABC):
         )
 
     def std(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
-        # sample standard deviation of the input values
+        """
+        Get the sample standard deviation of the input values
+        Normalized by N-1 by default.
+
+        :param partition: The partition or window to apply
+        :param skipna: Exclude NA/NULL values
+        :param ddof: Delta degrees of freedom. he divisor used in calculations is N - ddof,
+            where N represents the number of elements
+        """
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(partition, 'stddev_samp', skipna=skipna)
 
     def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
+        """
+        Get the sum of the input values.
+
+        :param partition: The partition or window to apply
+        :param skipna: Exclude NA/NULL values
+        :param min_count: This minimum amount of values (not NULL) to be present before returning a result.
+        """
         return self._derived_agg_func(partition, 'sum', skipna=skipna, min_count=min_count)
 
     def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'SeriesFloat64':
+        """
+        Get the mean/average of the input values.
+
+        :param partition: The partition or window to apply
+        :param skipna: Exclude NA/NULL values
+        """
         return cast('SeriesFloat64',  # for the mypies
                     self._derived_agg_func(partition, 'avg', 'double precision', skipna=skipna))
 
     def var(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
-        # sample variance of the input values (square of the sample standard deviation)
+        """
+        Get the sample variance of the input values (square of the sample standard deviation)
+        Normalized by N-1 by default.
+
+        :param partition: The partition or window to apply
+        :param skipna: Exclude NA/NULL values
+        :param ddof: Delta degrees of freedom. he divisor used in calculations is N - ddof,
+            where N represents the number of elements
+        """
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(partition, 'var_samp', skipna=skipna)
 

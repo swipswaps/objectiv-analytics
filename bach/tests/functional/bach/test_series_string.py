@@ -9,7 +9,7 @@ def test_from_const():
     a = 'a string'
     b = 'a string\'"\'\' "" \\ with quotes'
     c = None
-    d = '\'\'!@&*(HJD☢'
+    d = '\'\'!@&*(HJD☢%'
 
     bt = get_bt_with_test_data()[['city']]
     bt['a'] = a

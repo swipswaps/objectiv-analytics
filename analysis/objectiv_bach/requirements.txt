@@ -3,5 +3,5 @@ psycopg2-binary
 sqlalchemy
 pandas
 numpy
-bach
+-e ../../bach
 dash
