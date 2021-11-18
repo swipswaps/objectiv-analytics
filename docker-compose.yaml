@@ -77,6 +77,8 @@ services:
     image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/notebook:${OBJECTIV_CONTAINER_TAG-latest}
     ports:
       - "8888:8888"
+      - "8053:8053"
+
     networks:
       - obj
     depends_on:
