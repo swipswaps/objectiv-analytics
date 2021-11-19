@@ -229,7 +229,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             return Expression.construct('cast({} as interval)', expression)
 
     def _comparator_operation(self, other, comparator,
-                              other_dtypes=('timedelta', 'string')) -> 'SeriesBoolean':
+                              other_dtypes=('timedelta', 'string')) -> SeriesBoolean:
         return super()._comparator_operation(other, comparator, other_dtypes)
 
     def __add__(self, other) -> 'Series':
