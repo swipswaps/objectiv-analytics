@@ -3,39 +3,63 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 from abc import ABC
-from typing import Union, cast, TYPE_CHECKING
+from typing import Union, cast
 
 import numpy
 
-from bach.series import Series, SeriesString
+from bach.series import Series, SeriesString, SeriesBoolean
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 
-if TYPE_CHECKING:
-    from bach.series import SeriesBoolean
+
+class DateOperation:
+    def __init__(self, series: 'SeriesAbstractDateTime'):
+        self._series = series
+
+    def sql_format(self, format_str: str) -> SeriesString:
+        """
+        Allow formatting of this Series (to a string type).
+
+        :param format_str: The format to apply to the date/time column.
+            Currently, this uses Postgres' data format string syntax:
+            https://www.postgresql.org/docs/14/functions-formatting.html
+
+        .. code-block:: python
+
+            df['year'] = df.some_date_series.dt.format('YYYY')  # return year
+            df['date'] = df.some_date_series.dt.format('YYYYMMDD')  # return date
+
+        :returns: a SeriesString containing the formatted date.
+        """
+        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self._series)
+        return self._series.copy_override(dtype='string', expression=expression)
 
 
 class SeriesAbstractDateTime(Series, ABC):
     """
-    A Series that represents the generic date/time type and its specific operations
+    A Series that represents the generic date/time type and its specific operations. Selected arithmetic
+    operations are accepted using the usual operators.
 
-    **Date/Time formatting**
+    **Date/Time Operations**
 
-    All Series types support formatting through :py:meth:`format`
+    On any of the subtypes, you can access date operations through the `dt` accessor.
     """
+    @property
+    def dt(self) -> DateOperation:
+        """
+        Get access to date operations.
+
+        .. autoclass:: bach.series.series_datetime.StringOperation
+            :members:
+
+        """
+        return DateOperation(self)
+
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
 
-    def format(self, format_str: str) -> SeriesString:
-        """
-        Allow standard PG formatting of this Series (to a string type)
 
-        :param format_str: Format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
-        :return: a derived SeriesString that accepts returns formatted timestamp strings
-        """
-        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
-        return self.copy_override(dtype='string', expression=expression)
 
     @classmethod
     def _cast_to_date_if_dtype_date(cls, series: 'Series') -> 'Series':
