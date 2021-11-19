@@ -88,6 +88,7 @@ Reference
     Series
     SeriesBoolean
     SeriesAbstractNumeric
+    SeriesAbstractDateTime
     SeriesString
     SeriesJsonb
     SeriesJson

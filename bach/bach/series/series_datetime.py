@@ -12,7 +12,7 @@ from bach.expression import Expression
 from bach.series.series import WrappedPartition
 
 
-class DateOperation:
+class DateTimeOperation:
     def __init__(self, series: 'SeriesAbstractDateTime'):
         self._series = series
 
@@ -26,8 +26,8 @@ class DateOperation:
 
         .. code-block:: python
 
-            df['year'] = df.some_date_series.dt.format('YYYY')  # return year
-            df['date'] = df.some_date_series.dt.format('YYYYMMDD')  # return date
+            df['year'] = df.some_date_series.dt.sql_format('YYYY')  # return year
+            df['date'] = df.some_date_series.dt.sql_format('YYYYMMDD')  # return date
 
         :returns: a SeriesString containing the formatted date.
         """
@@ -45,21 +45,19 @@ class SeriesAbstractDateTime(Series, ABC):
     On any of the subtypes, you can access date operations through the `dt` accessor.
     """
     @property
-    def dt(self) -> DateOperation:
+    def dt(self) -> DateTimeOperation:
         """
         Get access to date operations.
 
-        .. autoclass:: bach.series.series_datetime.StringOperation
+        .. autoclass:: bach.series.series_datetime.DateTimeOperation
             :members:
 
         """
-        return DateOperation(self)
+        return DateTimeOperation(self)
 
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
-
-
 
     @classmethod
     def _cast_to_date_if_dtype_date(cls, series: 'Series') -> 'Series':
