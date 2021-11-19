@@ -8,10 +8,11 @@ RUN mkdir -p $APP && \
     apt -q update && \
     apt -qy upgrade && \
     apt -qy install postgresql-client && \
+    apt clean && \
     python3 -m venv /services/venv && \
     . /services/venv/bin/activate && \
     python -m pip install --upgrade pip && \
-    adduser notebook
+    useradd --user-group --system --create-home --no-log-init notebook
 
 COPY analysis/docker/*.sql  /services
 COPY analysis/docker/requirements.txt /services
