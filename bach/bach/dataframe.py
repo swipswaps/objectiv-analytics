@@ -110,6 +110,26 @@ class DataFrame:
     # todo note on ordering for slices?
     # todo 'meaning that they originate from the same data source' ok, by approximation
     # todo _get_dtypes also queries the database
+
+    # A DataFrame holds the state of a set of operations on it's base node
+    #
+    # The main component in this is the dists of Series that it keeps: `index` and `data`
+    # The `data` Series represent all data columns, possibly waiting for aggregation.
+    # The `index` Series are used as an index in key lookups, but serve no other purpose but for nice
+    # visualisation when conversion to pandas Dataframes.
+    #
+    # When a Series is used as an index, it should be free from any pending aggregation (and thus `group_by`
+    # should be None, and its `Series.index` should be `{}`.
+    #
+    # `DataFrame.group_by` should always match the `Series.group_by` for all Series in the `data` dict.
+    # Series in the `index`, should have `Series.index` == `{}`.
+    #
+    # The rule here: If a series needs a `group_by` to be evaluated, then and only then it should carry that
+    # `group_by`. This implies that index Series coming from a GroupBy, do not carry that group_by. Only
+    # the data columns do.
+    #
+    # Order is also tracked in `order_by`. It can either be None or a list of SortColumns. Ordering is mostly
+    # kept throughout operations, but for example materialization resets the sort order.
     def __init__(
             self,
             engine: Engine,
@@ -155,6 +175,8 @@ class DataFrame:
         for value in index.values():
             if value.index != {}:
                 raise ValueError('Index series can not have non-empty index property')
+            if value.group_by:
+                raise ValueError('Index series can not have a group_by')
 
         if group_by is not None and not dict_name_series_equals(group_by.index, index):
             raise ValueError('Index should match group_by index')
@@ -524,6 +546,10 @@ class DataFrame:
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy. Not supported yet.
         :param limit: The limit (slice, int) to apply.
         :returns: New DataFrame with the current DataFrame's state as base_node
+
+        .. note::
+            Calling materialize() resets the order of the dataframe. Call :py:meth:`sort_values()` again on
+            the result if order is important.
         """
         if inplace:
             raise NotImplementedError("inplace materialization is not supported")
@@ -537,7 +563,9 @@ class DataFrame:
             index_dtypes=index_dtypes,
             series_dtypes=series_dtypes,
             group_by=[None],
-            order_by=[]  # filtering rows resets any sorting
+            # materializing resets any sorting as we don't have a way to translate the sorting expressions
+            # to new columns reliably. This needs attention # TODO
+            order_by=[]
         )
 
     def get_sample(self,
@@ -688,29 +716,39 @@ class DataFrame:
             else:
                 single_value = False  # there is no way for us to know. User has to slice the result first
 
+                if key.base_node != self.base_node:
+                    raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame. '
+                                     'Hint: make sure the Boolean series is derived from this DataFrame and '
+                                     'that is has the same group by or use df.merge(series) to merge the '
+                                     'series with the df first, and then create a new Boolean series on the '
+                                     'resulting merged data.')
+
+                # window functions do not have group_by set, but they can't be used without materialization
                 if key.expression.has_windowed_aggregate_function:
                     raise ValueError('Cannot apply a Boolean series containing a window function to '
-                                     'DataFrame. '
-                                     'Hint: materialize() that DataFrame before creating the Boolean series')
+                                     'DataFrame. Hint: materialize() the DataFrame before creating the '
+                                     'Boolean series')
 
-                if key.base_node != self.base_node or key.group_by != self._group_by:
-                    raise ValueError('Cannot apply Boolean series with a different base_node or group by '
-                                     'to DataFrame. '
-                                     'Hint: make sure the Boolean series is derived from this DataFrame and '
-                                     'that is has the same group by. '
-                                     'Alternative: use df.merge(series) to merge the series with the df '
-                                     'first, and then create a new Boolean series on the resulting merged '
-                                     'data.')
+                # If the key has no group_by but the df has, this is a filter before aggregation. This is
+                # supported. It can change the aggregated results though, but that makes sense.
+                # A common case here is a filter on the columns in the group_by e.g. the index of this df.
+                # We don't support using aggregated series to filter on a non-aggregated df though:
+                if key.group_by and not self._group_by:
+                    raise ValueError('Can not apply aggregated BooleanSeries to a non-grouped df.'
+                                     'Please merge() the selector df with this df first.')
 
-                if self._group_by is not None and key.expression.has_aggregate_function:
+                # If a group_by is set on both, they have to match.
+                if key.group_by and key.group_by != self._group_by:
+                    raise ValueError('Can not apply aggregated BooleanSeries with non matching group_by.'
+                                     'Please merge() the selector df with thisdf first.')
+
+                if key.group_by is not None and key.expression.has_aggregate_function:
+                    # Create a having-condition if the key is aggregated
                     node = self.get_current_node(
                         name='getitem_having_boolean',
                         having_clause=Expression.construct("having {}", key.expression))
-                elif key.expression.has_aggregate_function:
-                    # This is very weird, does this ever happen?
-                    raise ValueError("Cannot use a Boolean series that contains a non-materialized "
-                                     "aggregation function or a windowing function as Boolean row selector.")
                 else:
+                    # A normal where-condition will do
                     node = self.get_current_node(
                         name='getitem_where_boolean',
                         where_clause=Expression.construct("where {}", key.expression))
@@ -718,7 +756,6 @@ class DataFrame:
             return self.copy_override(
                 base_node=node,
                 group_by=[None],
-                order_by=[],  # filtering rows resets any sorting
                 index_dtypes={name: series.dtype for name, series in self.index.items()},
                 series_dtypes={name: series.dtype for name, series in self.data.items()},
                 single_value=single_value
@@ -1388,7 +1425,8 @@ class DataFrame:
         where_clause = where_clause if where_clause else Expression.construct('')
         if self._group_by:
 
-            not_aggregated = [s.name for s in self._data.values() if not s.expression.has_aggregate_function]
+            not_aggregated = [s.name for s in self._data.values()
+                              if not s.expression.has_aggregate_function]
             if len(not_aggregated) > 0:
                 raise ValueError(f'Series {not_aggregated} need(s) to have an aggregation function set. '
                                  f'Setup aggregation through agg() or on all individual series first.')

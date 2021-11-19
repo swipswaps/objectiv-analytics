@@ -68,7 +68,9 @@ class GroupBy:
                 raise ValueError('Aggregate functions can not be used to group, '
                                  'please materialize first.')
 
-            self._index[col.name] = col.copy_override(index={}, group_by=[self])
+            # index columns have no index themselves, and can also be evaluated without group_by as
+            # they will not be aggregated by this group_by
+            self._index[col.name] = col.copy_override(index={}, group_by=[None])
 
     def __eq__(self, other):
         if not isinstance(other, GroupBy):
