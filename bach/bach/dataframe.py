@@ -1177,8 +1177,7 @@ class DataFrame:
             The `win_type`, `axis` and `method` parameters as supported by pandas, are currently not
             implemented.
         """
-        from bach.partitioning import WindowFrameBoundary, WindowFrameMode, \
-            Window
+        from bach.partitioning import WindowFrameBoundary, WindowFrameMode, Window
 
         if min_periods is None:
             min_periods = window

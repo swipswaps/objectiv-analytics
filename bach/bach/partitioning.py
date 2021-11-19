@@ -3,7 +3,7 @@ from enum import Enum
 from typing import List, Dict, Optional, cast
 
 from bach.series import Series, SeriesInt64
-from bach.expression import Expression, WindowedAggregateFunctionExpression
+from bach.expression import Expression, WindowFunctionExpression
 from bach.dataframe import SortColumn
 
 
@@ -362,11 +362,11 @@ class Window(GroupBy):
                                          order_by)
 
         if self._min_values is None or self._min_values == 0:
-            return WindowedAggregateFunctionExpression.construct(f'{{}} {{}}', window_func, over_expr)
+            return WindowFunctionExpression.construct(f'{{}} {{}}', window_func, over_expr)
         else:
             # Only return a value when then minimum amount of observations (including NULLs)
             # has been reached.
-            return WindowedAggregateFunctionExpression.construct(f"""
+            return WindowFunctionExpression.construct(f"""
                 case when (count(1) {{}}) >= {self._min_values}
                 then {{}} {{}}
                 else NULL end""", over_expr, window_func, over_expr)
