@@ -113,20 +113,21 @@ class DataFrame:
 
     # A DataFrame holds the state of a set of operations on it's base node
     #
-    # The main component in this are the dicts of Series that it keeps: `index` and `data`
+    # The main components in this are the dicts of Series that it keeps: `index` and `data`
     # The `data` Series represent all data columns, possibly waiting for aggregation.
     # The `index` Series are used as an index in key lookups, but serve no other purpose but for nice
     # visualisation when converting to pandas Dataframes.
     #
-    # When a Series is used as an index, it should be free from any pending aggregation (and thus `group_by`
-    # should be None, and its `Series.index` should be `{}`.
+    # When a Series is used as an index, it should be free from any pending aggregation (and thus
+    # `Series.group_by` should be None, and its `Series.index` should be `{}`.
     #
     # `DataFrame.group_by` should always match the `Series.group_by` for all Series in the `data` dict.
-    # Series in the `index`, should have `Series.index` == `{}`.
+    #  (and `Series.index` should match `Series.group_by.index`, but that's checked in `Series.__init__`)
     #
+    # To illustrate (copied verbatim from Series docs):
     # The rule here: If a series needs a `group_by` to be evaluated, then and only then it should carry that
-    # `group_by`. This implies that index Series coming from a GroupBy, do not carry that `group_by`. Only
-    # the data columns do.
+    # `group_by`. This implies that index Series coming from `GroupBy.index`, do not carry that `group_by`.
+    # Only the data Series that actually need the aggregation to happen do.
     #
     # Order is also tracked in `order_by`. It can either be None or a list of SortColumns. Ordering is mostly
     # kept throughout operations, but for example materialization resets the sort order.

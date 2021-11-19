@@ -42,6 +42,10 @@ class Series(ABC):
     # If no group_by is set, the expression can be used as is, as is the case for normal column expressions
     # as well as correctly setup window expressions.
     #
+    # The rule here: If a series needs a `group_by` to be evaluated, then and only then it should carry that
+    # `group_by`. This implies that index Series coming from `GroupBy.index`, do not carry that `group_by`.
+    # Only the data Series that actually need the aggregation to happen do.
+    #
     # When a Series is used as an index, it should be free from any pending aggregation (and thus group_by
     # should be None, and its index should be {}.
     #
