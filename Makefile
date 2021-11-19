@@ -25,9 +25,9 @@ push-images: push-image-backend push-image-notebook
 push-image-%:
 	$(eval MODULE = $(subst push-image-,,$@))
 	$(eval URL=$(CONTAINER_REPO)/$(MODULE))
-	docker tag objectiv/$(MODULE):$(TAG) $(URL):latest
-	docker push $(URL)
-	gcloud container images add-tag --quiet $(URL):latest $(URL):$(REVISION)
+	docker tag objectiv/$(MODULE):$(TAG) $(URL):test
+	docker push $(URL):test
+	gcloud container images add-tag --quiet $(URL):test $(URL):$(REVISION)
 
 
 ## build backend images
