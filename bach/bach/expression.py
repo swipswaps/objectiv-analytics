@@ -270,7 +270,7 @@ class SingleValueExpression(Expression):
         # If this Expression is wrapped around a IndependentSubqueryExpression, most likely, there will be
         # just one in here, but let's make sure.
         all_isq = [d.is_independent_subquery for d in self._data if isinstance(d, Expression)]
-        return len(all_isq) and all(all_isq)
+        return len(all_isq) > 0 and all(all_isq)
 
 
 class ConstValueExpression(SingleValueExpression):
