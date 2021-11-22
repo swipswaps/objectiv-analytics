@@ -31,7 +31,8 @@ class DateTimeOperation:
 
         :returns: a SeriesString containing the formatted date.
         """
-        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self._series)
+        expression = Expression.construct('to_char({}, {})',
+                                          self._series, Expression.string_value(format_str))
         return self._series.copy_override(dtype='string', expression=expression)
 
 
