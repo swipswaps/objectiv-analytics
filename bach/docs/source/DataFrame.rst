@@ -88,7 +88,7 @@ Creation
     DataFrame.from_table
     DataFrame.from_model
     DataFrame.from_pandas
-
+    DataFrame.copy
 
 Value accessors
 ~~~~~~~~~~~~~~~

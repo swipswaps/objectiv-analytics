@@ -102,6 +102,7 @@ Creation / re-framing
 
     Series.from_const
     Series.to_frame
+    Series.copy
 
 Value accessors
 ~~~~~~~~~~~~~~~
