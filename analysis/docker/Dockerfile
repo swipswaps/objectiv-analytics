@@ -14,20 +14,19 @@ RUN mkdir -p $APP && \
     python -m pip install --upgrade pip && \
     useradd --user-group --system --create-home --no-log-init notebook
 
-COPY analysis/docker/*.sql  /services
-COPY analysis/docker/requirements.txt /services
-COPY analysis/objectiv_bach/*.whl /services
-COPY bach/*.whl /services
+COPY docker/*.sql  /services/
+COPY docker/*.whl /services/
+COPY docker/requirements.txt /services
 
 RUN . /services/venv/bin/activate && \
     cd /services && \
     pip install -r requirements.txt && \
     pip install /services/*.whl
 
-COPY analysis/docker/entrypoint.sh /
+COPY docker/entrypoint.sh /
 RUN chmod +x /entrypoint.sh
 
-COPY analysis/notebooks/*.ipynb $APP
+COPY notebooks/*.ipynb $APP
 
 
 USER notebook

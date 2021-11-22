@@ -15,4 +15,6 @@ done
 export DSN="postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOSTNAME}/${POSTGRES_DB}"
 
 # start notebook
+# disable TOKEN
+export JUPYTER_TOKEN=objectiv
 jupyter lab --notebook-dir /services/notebooks --no-browser --ip 0.0.0.0
