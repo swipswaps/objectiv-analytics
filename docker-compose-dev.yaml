@@ -21,7 +21,7 @@ services:
     depends_on:
       - objectiv_postgres
     # default image: eu.gcr.io/objectiv-production/backend:latest
-    image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/backend:${OBJECTIV_CONTAINER_TAG-latest}
+    image: ${OBJECTIV_CONTAINER_URL-objectiv/backend:${OBJECTIV_CONTAINER_TAG-latest}
     working_dir: /services
     entrypoint: bash -c "objectiv-db-init; ./entry_point.sh"
     ports:
