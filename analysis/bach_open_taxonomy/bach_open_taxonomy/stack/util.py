@@ -1,9 +1,9 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from objectiv_bach.stack.basic_features import BasicFeatures
-from objectiv_bach.stack.extracted_contexts import ExtractedContexts
-from objectiv_bach.stack.sessionized_data import SessionizedData
+from bach_open_taxonomy.stack.basic_features import BasicFeatures
+from bach_open_taxonomy.stack.extracted_contexts import ExtractedContexts
+from bach_open_taxonomy.stack.sessionized_data import SessionizedData
 from sql_models.model import SqlModel
 
 

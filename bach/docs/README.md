@@ -12,7 +12,7 @@ Basically, generating and publishing the api docs for `bach` involve a few steps
   # install bach in edit mode
   pip install -e ../../bach
   # install objectiv_bach in edit mode
-  pip install -e ../../analysis/objectiv_bach 
+  pip install -e ../../analysis/bach_open_taxonomy
 ```
 
 2. Generate HTML fragments:
