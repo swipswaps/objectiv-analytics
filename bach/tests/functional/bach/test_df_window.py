@@ -388,7 +388,7 @@ def test_rolling_defaults_vs_pandas():
                             xnan = x is None or np.isnan(x)
                             ynan = y is None or np.isnan(y)
                             if xnan != ynan or (not xnan and x != y):
-                                # this look ridiculous. but actually gives a nice error
+                                # this looks ridiculous. but actually gives a nice error
                                 assert(x == y)
 
                     except Exception as e:
