@@ -58,25 +58,6 @@ services:
       timeout: 2s
       retries: 5
 
-  objectiv_notebook:
-    container_name: objectiv_notebook
-    # default image: eu.gcr.io/objectiv-production/notebook:latest
-    image: ${OBJECTIV_CONTAINER_URL-eu.gcr.io/objectiv-production}/notebook:${OBJECTIV_CONTAINER_TAG-latest}
-    ports:
-      - 127.0.0.1:8888:8888
-    networks:
-      - obj
-    volumes:
-      - ./ds/notebooks_volume:/home/jovyan/notebooks_volume
-    environment:
-      <<: *db_env_variables
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8888" ]
-      interval: 30s
-      timeout: 2s
-      retries: 3
-
-
 # persist PG data in a docker volume
 volumes:
   pgdata:
