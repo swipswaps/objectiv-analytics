@@ -1,6 +1,6 @@
 build/
 dist/
-bach.egg-info/
+*.egg-info/
 venv
 *.pyc
 __pycache__
