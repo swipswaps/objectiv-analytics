@@ -281,9 +281,10 @@ for url in urls:
     body = etree.tostring(body_element).decode('utf-8')
 
     # try to determine description
-    description_elements = doc.xpath('//main[@role="main"]/div//p/text()')
+    description_elements = body_element.xpath('//main[@role="main"]/div/section//p')
+
     if len(description_elements) > 0:
-        description_element = description_elements[0]
+        description_element = description_elements[0].text
         description = description_element[:500].replace('\n', ' ')
     else:
         # if we cannot find one, use title
