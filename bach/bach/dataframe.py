@@ -510,6 +510,21 @@ class DataFrame:
             order_by=order_by
         )
 
+    def copy(self):
+        """
+        Return a copy of this DataFrame.
+
+        As this dataframe only represents data in the backing SQL store, and does not contain any data,
+        this is a metadata copy only, no actual data is duplicated and changes to the underlying data
+        will represented in both copy and original.
+        Changes to data, index, sorting, grouping etc. on the copy will not affect the original.
+
+        If you want to create a snapshot of the data, have a look at :py:meth:`get_sample()`
+
+        :returns: a copy of the dataframe
+        """
+        return self.copy_override()
+
     def materialize(self, node_name='manual_materialize', inplace=False, limit: Any = None) -> 'DataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
