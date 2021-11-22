@@ -376,12 +376,9 @@ def test_rolling_defaults_vs_pandas():
     for center in [False, True]:
         for window in range(1, 11):
             for min_periods in range(0, window):
-                for bdf_values, pdf_values in [
-                    (get_rolling_values(bdf) , get_rolling_values(pdf)),
-                    (
-                            get_rolling_values(bdf, ['municipality']),
-                            get_rolling_values(pdf, ['municipality']),
-                    )]:
+                for group_by in ([], ['municipality']):
+                    bdf_values = get_rolling_values(bdf, group_by)
+                    pdf_values = get_rolling_values(pdf, group_by)
                     try:
                         # Because the returned values have nan / None mixture,
                         # it's really hard to compare them easily.
