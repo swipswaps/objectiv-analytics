@@ -806,17 +806,20 @@ class Series(ABC):
                               wrapped: Optional[WrappedPartition],
                               isin=None, notin=()) -> 'GroupBy':
         """
-        Unwrap the GroupBy from the Aggregator if one is given, else use the GroupBy directly
-        and perform some checks:
-        - Make sure that the GroupBy instance is of a type in the set `isin`, defaulting
+        1. If `wrapped` is a GroupBy, or if it contains one, use that.
+        2. If it's None, check whether this Series has a group_by set and use that.
+        3. If that still yields nothing, create a GroupBy([]) and use that.
+
+        After that, perform some checks:
+        - Make sure that the used GroupBy instance is of a type in the set `isin`, defaulting
           to make sure it's a GroupBy if `isin` is None
         - Make sure that it's instance type is not in `notin`
 
         Exceptions will be raised when check don't pass
         :returns: The potentially unwrapped GroupBy
         """
-        from bach.partitioning import GroupBy, Cube, Rollup, Window
-        isin = (GroupBy, Cube, Rollup, Window) if isin is None else isin
+        from bach.partitioning import GroupBy
+        isin = (GroupBy) if isin is None else isin
 
         if wrapped is None:
             if self._group_by:
