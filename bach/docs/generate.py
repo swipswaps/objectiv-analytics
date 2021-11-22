@@ -272,16 +272,22 @@ for url in urls:
 
     doc = html.parse(url)
 
+    # get title from <title> text </title>
+    title = doc.xpath('//title/text()')[0]
+
     # here we get the body
     # we look for <main role="main"....>
     body_element: html.Element = doc.xpath('//main[@role="main"]/div')[0]
-    description_element = doc.xpath('//main[@role="main"]/div//p/text()')[0]
-
     body = etree.tostring(body_element).decode('utf-8')
-    description = description_element[:500].replace('\n', ' ')
 
-    # get title from <title> text </title>
-    title = doc.xpath('//title/text()')[0]
+    # try to determine description
+    description_elements = doc.xpath('//main[@role="main"]/div//p/text()')
+    if len(description_elements) > 0:
+        description_element = description_elements[0]
+        description = description_element[:500].replace('\n', ' ')
+    else:
+        # if we cannot find one, use title
+        description = title
 
     toc = []
     # get toc from:
