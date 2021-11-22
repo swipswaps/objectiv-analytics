@@ -352,7 +352,7 @@ def test_rolling_defaults_vs_pandas():
     bdf = get_bt_with_test_data(full_data_set=True)
     pdf = bdf.to_pandas()
 
-    def get_rolling_values(df, group_by = []):
+    def get_rolling_values(df, window, min_periods, center, group_by):
         r = df[['skating_order', 'municipality']]
         # the first sort_order is for the window order
         t = df.sort_values('skating_order')
@@ -377,8 +377,10 @@ def test_rolling_defaults_vs_pandas():
         for window in range(1, 11):
             for min_periods in range(0, window):
                 for group_by in ([], ['municipality']):
-                    bdf_values = get_rolling_values(bdf, group_by)
-                    pdf_values = get_rolling_values(pdf, group_by)
+                    bdf_values = get_rolling_values(
+                        bdf, group_by=group_by, window=window, min_periods=min_periods, center=center)
+                    pdf_values = get_rolling_values(
+                        pdf, group_by=group_by, window=window, min_periods=min_periods, center=center)
                     try:
                         # Because the returned values have nan / None mixture,
                         # it's really hard to compare them easily.
