@@ -275,8 +275,10 @@ for url in urls:
     # here we get the body
     # we look for <main role="main"....>
     body_element: html.Element = doc.xpath('//main[@role="main"]/div')[0]
+    description_element = doc.xpath('//main[@role="main"]/div//p/text()')[0]
 
     body = etree.tostring(body_element).decode('utf-8')
+    description = description_element[:500].replace('\n', ' ')
 
     # get title from <title> text </title>
     title = doc.xpath('//title/text()')[0]
@@ -325,6 +327,10 @@ slug: {slug}
 {f"sidebar_label: {sidebar_label}" if sidebar_label else ''}
 
 ---
+<head>
+    <meta name="description" content="{description}" />
+    <meta property="og:description" content="{description}" />
+</head>
 
 export const toc = {json.dumps(toc, indent=4)};
 
