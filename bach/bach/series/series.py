@@ -36,9 +36,18 @@ class Series(ABC):
     """
     # A series is defined by an expression and a name, and it exists within the scope of the base_node.
     # Its index can be a simple (dict of) Series in case of an already materialised base_node.
-    # If group_by has been set, the index represents the future index of this Series. The series is now part
-    # of the aggregation as defined by the GroupBy and base_node and
-    # can only be evaluated as such.
+    #
+    # If group_by has been set, Series.index represents the future index of this Series. The series is now
+    # part of the aggregation as defined by the GroupBy and base_node and can only be evaluated as such.
+    # If no group_by is set, the expression can be used as is, as is the case for normal column expressions
+    # as well as correctly setup window expressions.
+    #
+    # The rule here: If a series needs a `group_by` to be evaluated, then and only then it should carry that
+    # `group_by`. This implies that index Series coming from `GroupBy.index`, do not carry that `group_by`.
+    # Only the data Series that actually need the aggregation to happen do.
+    #
+    # When a Series is used as an index, it should be free from any pending aggregation (and thus group_by
+    # should be None, and its index should be {}.
     #
     # * Mostly immutable *
     # The attributes of this class are either immutable, or this class is guaranteed not
@@ -80,6 +89,14 @@ class Series(ABC):
         :param group_by: The requested aggregation for this series.
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
         """
+        if index == {} and group_by and group_by.index != {}:
+            # not a completely watertight check, because a group_by on {} is valid.
+            raise ValueError(f'Index Series should be free of pending aggregation.')
+        if group_by and not dict_name_series_equals(group_by.index, index):
+            raise ValueError(f'Series and aggregation index do not match: {group_by.index} != {index}')
+        if not group_by and expression.has_aggregate_function:
+            raise ValueError('Expression has an aggregation function set, but there is no group_by')
+
         self._engine = engine
         self._base_node = base_node
         self._index = copy(index)
