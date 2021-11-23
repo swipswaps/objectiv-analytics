@@ -36,9 +36,18 @@ class Series(ABC):
     """
     # A series is defined by an expression and a name, and it exists within the scope of the base_node.
     # Its index can be a simple (dict of) Series in case of an already materialised base_node.
-    # If group_by has been set, the index represents the future index of this Series. The series is now part
-    # of the aggregation as defined by the GroupBy and base_node and
-    # can only be evaluated as such.
+    #
+    # If group_by has been set, Series.index represents the future index of this Series. The series is now
+    # part of the aggregation as defined by the GroupBy and base_node and can only be evaluated as such.
+    # If no group_by is set, the expression can be used as is, as is the case for normal column expressions
+    # as well as correctly setup window expressions.
+    #
+    # The rule here: If a series needs a `group_by` to be evaluated, then and only then it should carry that
+    # `group_by`. This implies that index Series coming from `GroupBy.index`, do not carry that `group_by`.
+    # Only the data Series that actually need the aggregation to happen do.
+    #
+    # When a Series is used as an index, it should be free from any pending aggregation (and thus group_by
+    # should be None, and its index should be {}.
     #
     # * Mostly immutable *
     # The attributes of this class are either immutable, or this class is guaranteed not
@@ -80,6 +89,14 @@ class Series(ABC):
         :param group_by: The requested aggregation for this series.
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
         """
+        if index == {} and group_by and group_by.index != {}:
+            # not a completely watertight check, because a group_by on {} is valid.
+            raise ValueError(f'Index Series should be free of pending aggregation.')
+        if group_by and not dict_name_series_equals(group_by.index, index):
+            raise ValueError(f'Series and aggregation index do not match: {group_by.index} != {index}')
+        if not group_by and expression.has_aggregate_function:
+            raise ValueError('Expression has an aggregation function set, but there is no group_by')
+
         self._engine = engine
         self._base_node = base_node
         self._index = copy(index)
@@ -818,12 +835,15 @@ class Series(ABC):
                          order_by=[])
 
     def _check_unwrap_groupby(self,
-                              wrapped: Union['DataFrame', 'GroupBy'],
+                              wrapped: Optional[WrappedPartition],
                               isin=None, notin=()) -> 'GroupBy':
         """
-        Unwrap the GroupBy from the Aggregator if one is given, else use the GroupBy directly
-        and perform some checks:
-        - Make sure that the GroupBy instance is of a type in the set `isin`, defaulting
+        1. If `wrapped` is a GroupBy, or if it contains one, use that.
+        2. If it's None, check whether this Series has a group_by set and use that.
+        3. If that still yields nothing, create a GroupBy([]) and use that.
+
+        After that, perform some checks:
+        - Make sure that the used GroupBy instance is of a type in the set `isin`, defaulting
           to make sure it's a GroupBy if `isin` is None
         - Make sure that it's instance type is not in `notin`
 
@@ -831,12 +851,23 @@ class Series(ABC):
         :returns: The potentially unwrapped GroupBy
         """
         from bach.partitioning import GroupBy
-        isin = GroupBy if isin is None else isin
+        isin = (GroupBy) if isin is None else isin
 
-        if wrapped is not None and isinstance(wrapped, DataFrame):
-            group_by = wrapped.group_by
+        if wrapped is None:
+            if self._group_by:
+                group_by = self._group_by
+            else:
+                # create an aggregation over the entire input
+                group_by = GroupBy([])
         else:
-            group_by = wrapped
+            if isinstance(wrapped, DataFrame):
+                unwrapped = wrapped.group_by
+            else:
+                unwrapped = wrapped
+
+            if self._group_by and self._group_by != unwrapped:
+                raise ValueError("Series group_by not the same as given partition; I'm confused.")
+            group_by = unwrapped
 
         if not isinstance(group_by, isin):
             raise ValueError(f'group_by {type(group_by)} not in {isin}')
@@ -866,7 +897,7 @@ class Series(ABC):
         :returns: The correctly typed derived Series, with either the current index in case of
             a Window function, or the GroupBy otherwise.
         """
-        from bach.partitioning import GroupBy, Window
+        from bach.partitioning import Window
 
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
@@ -884,14 +915,7 @@ class Series(ABC):
         if isinstance(expression, str):
             expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
 
-        if partition is None:
-            if self._group_by:
-                partition = self._group_by
-            else:
-                # create an aggregation over the entire input
-                partition = GroupBy([])
-        else:
-            partition = self._check_unwrap_groupby(partition)
+        partition = self._check_unwrap_groupby(partition)
 
         if min_count is not None and min_count > 0:
             if isinstance(partition, Window):
@@ -927,7 +951,10 @@ class Series(ABC):
                                       group_by=[partition],
                                       expression=expression)
         else:
+            # The window expression already contains the full partition and sorting, no need
+            # to keep that with this series, the expression can be used without any of those.
             return self.copy_override(dtype=derived_dtype,
+                                      group_by=[None],
                                       expression=partition.get_window_expression(expression))
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
@@ -958,8 +985,7 @@ class Series(ABC):
 
     def nunique(self, partition: WrappedPartition = None, skipna: bool = True):
         from bach.partitioning import Window
-        if partition is not None:
-            partition = self._check_unwrap_groupby(partition, notin=Window)
+        partition = self._check_unwrap_groupby(partition, notin=Window)
         return self._derived_agg_func(
             partition=partition, dtype='int64',
             expression=AggregateFunctionExpression.construct('count(distinct {})', self),
@@ -980,21 +1006,21 @@ class Series(ABC):
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
     # TODO make group_by optional, but for that we need to use current series sorting
-    def _check_window(self, window: WrappedWindow) -> 'Window':
+    def _check_window(self, window: WrappedWindow = None) -> 'Window':
         """
-        Validate that the given partition is a true Window or raise an exception
+        Validate that the given partition or the stored group_by is a true Window or raise an exception
         """
         from bach.partitioning import Window
         return cast(Window, self._check_unwrap_groupby(window, isin=Window))
 
-    def window_row_number(self, window: WrappedWindow):
+    def window_row_number(self, window: WrappedWindow = None):
         """
         Returns the number of the current row within its window, counting from 1.
         """
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('row_number()'), 'int64')
 
-    def window_rank(self, window: WrappedWindow):
+    def window_rank(self, window: WrappedWindow = None):
         """
         Returns the rank of the current row, with gaps; that is, the row_number of the first row
         in its peer group.
@@ -1002,7 +1028,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('rank()'), 'int64')
 
-    def window_dense_rank(self, window: WrappedWindow):
+    def window_dense_rank(self, window: WrappedWindow = None):
         """
         Returns the rank of the current row, without gaps; this function effectively counts peer
         groups.
@@ -1010,7 +1036,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('dense_rank()'), 'int64')
 
-    def window_percent_rank(self, window: WrappedWindow):
+    def window_percent_rank(self, window: WrappedWindow = None):
         """
         Returns the relative rank of the current row, that is
         (rank - 1) / (total partition rows - 1).
@@ -1019,7 +1045,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('percent_rank()'), "double precision")
 
-    def window_cume_dist(self, window: WrappedWindow):
+    def window_cume_dist(self, window: WrappedWindow = None):
         """
         Returns the cumulative distribution, that is
         (number of partition rows preceding or peers with current row) / (total partition rows).
@@ -1028,7 +1054,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('cume_dist()'), "double precision")
 
-    def window_ntile(self, window: WrappedWindow, num_buckets: int = 1):
+    def window_ntile(self, num_buckets: int = 1, window: WrappedWindow = None):
         """
         Returns an integer ranging from 1 to the argument value,
         dividing the partition as equally as possible.
@@ -1036,7 +1062,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
 
-    def window_lag(self, window: WrappedWindow, offset: int = 1, default: Any = None):
+    def window_lag(self, offset: int = 1, default: Any = None, window: WrappedWindow = None):
         """
         Returns value evaluated at the row that is offset rows before the current row within the window
 
@@ -1046,6 +1072,7 @@ class Series(ABC):
         :param default: The value to return if no value is available, can be a constant value or Series.
         Defaults to None
         """
+        # TODO Lag, lead etc. could check whether the window is setup correctly to include that value
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
         return self._derived_agg_func(
@@ -1054,7 +1081,7 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_lead(self, window: WrappedWindow, offset: int = 1, default: Any = None):
+    def window_lead(self, offset: int = 1, default: Any = None, window: WrappedWindow = None):
         """
         Returns value evaluated at the row that is offset rows after the current row within the window.
 
@@ -1072,7 +1099,7 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_first_value(self, window: WrappedWindow):
+    def window_first_value(self, window: WrappedWindow = None):
         """
         Returns value evaluated at the row that is the first row of the window frame.
         """
@@ -1083,14 +1110,14 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_last_value(self, window: WrappedWindow):
+    def window_last_value(self, window: WrappedWindow = None):
         """
         Returns value evaluated at the row that is the last row of the window frame.
         """
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('last_value({})', self), self.dtype)
 
-    def window_nth_value(self, window: WrappedWindow, n: int):
+    def window_nth_value(self, n: int, window: WrappedWindow = None):
         """
         Returns value evaluated at the row that is the n'th row of the window frame.
         (counting from 1); returns NULL if there is no such row.
@@ -1103,12 +1130,12 @@ class Series(ABC):
         )
 
 
-# TODO remove from docs.
 def const_to_series(base: Union[Series, DataFrame],
                     value: Union[Series, int, float, str, UUID],
                     name: str = None) -> Series:
     """
-    Take a value and return a Series representing a column with that value.
+    INTERNAL: Take a value and return a Series representing a column with that value.
+
     If value is already a Series it is returned unchanged unless it has no base_node set, in case
     it's a subquery. We create a copy and hook it to our base node in that case, so we can work with it.
     If value is a constant then the right BuhTuh subclass is found for that type and instantiated

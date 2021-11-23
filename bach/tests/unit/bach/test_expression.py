@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from bach.expression import RawToken, ColumnReferenceToken, StringValueToken, Expression, \
-    ConstValueExpression, AggregateFunctionExpression, WindowedAggregateFunctionExpression, SingleValueExpression, \
+    ConstValueExpression, AggregateFunctionExpression, WindowFunctionExpression, SingleValueExpression, \
     NonAtomicExpression
 from tests.unit.bach.util import get_fake_df
 
@@ -139,9 +139,9 @@ def test_is_constant():
     assert not AggregateFunctionExpression.construct('agg({}, {}, {})', const1, const2, const3).is_constant
 
     # Window functions are never constant
-    assert not WindowedAggregateFunctionExpression.construct('agg({})', const1).is_constant
-    assert not WindowedAggregateFunctionExpression.construct('agg({})', notconst1).is_constant
-    assert not WindowedAggregateFunctionExpression.construct('agg({}, {}, {})', const1, const2, const3).is_constant
+    assert not WindowFunctionExpression.construct('agg({})', const1).is_constant
+    assert not WindowFunctionExpression.construct('agg({})', notconst1).is_constant
+    assert not WindowFunctionExpression.construct('agg({}, {}, {})', const1, const2, const3).is_constant
 
 
 def test_is_constant():
