@@ -2,6 +2,8 @@ import glob
 import re
 from os import path, makedirs, remove
 from shutil import copyfile
+from pathlib import Path
+
 
 html_dir = 'build/html/'
 
@@ -69,6 +71,11 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
         sidebar_position = 99
         slug = f'/{module}/{real_url.replace(".html", "")}'
 
+    # load real_url file contents
+    html_content = Path(url).read_text()
+
+    # TODO process html_content (or pre-process before feeding it to this script) so it's compatible with Docusaurus
+
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
     mdx = \
@@ -80,12 +87,8 @@ sidebar_position: {sidebar_position}
 sidebar_label: {sidebar_label}
 ---
 
+{html_content}
 
-import SphinxPages from '@site/src/components/sphinx-page'
-import useBaseUrl from '@docusaurus/useBaseUrl'
-
-
-<SphinxPages url={{useBaseUrl('{module}/{real_url}')}} />
 """
     # set target path to generated .mdx file
     # target_path = url.replace(html_dir, '').replace('.html', '.mdx')
