@@ -74,10 +74,19 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
     # load real_url file contents
     html_content = Path(url).read_text()
 
-    # TODO process html_content (or pre-process before feeding it to this script) so it's compatible with Docusaurus
-    # TODO we could use something like minidom or BeautifulSoup here in python
-    # TODO or we could run an external script and use something like parse5 & cheerio in Node.JS
-    # TODO or we could use regex, since all we need to do is find/replace for the most part
+    # TODO process html_content
+    """ 
+    We need to process html_content so it's compatible with Docusaurus, basically what currently is done by SphinxPage.
+    
+    We have several options:
+    
+    1. run an external Node.JS script and use something like parse5 & cheerio (or even overkill jsdom)
+    2. do the processing here in python with something like minidom or BeautifulSoup 
+    3. or just use regex, since all we need to do is find/replace for the most part
+    
+    Either one probably works for the simple stuff we need to do
+    
+    """
 
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
