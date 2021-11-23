@@ -75,6 +75,9 @@ for url in glob.glob(f"{html_dir}/**/*.html", recursive=True):
     html_content = Path(url).read_text()
 
     # TODO process html_content (or pre-process before feeding it to this script) so it's compatible with Docusaurus
+    # TODO we could use something like minidom or BeautifulSoup here in python
+    # TODO or we could run an external script and use something like parse5 & cheerio in Node.JS
+    # TODO or we could use regex, since all we need to do is find/replace for the most part
 
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)
