@@ -1431,8 +1431,10 @@ class DataFrame:
             not_aggregated = [s.name for s in self._data.values()
                               if not s.expression.has_aggregate_function]
             if len(not_aggregated) > 0:
-                raise ValueError(f'Series {not_aggregated} need(s) to have an aggregation function set. '
-                                 f'Setup aggregation through agg() or on all individual series first.')
+                raise ValueError(f'The df has groupby set, but contains Series that have no aggregation '
+                                 f'function yet. Please make sure to first: remove these from the frame, '
+                                 f'setup aggregation through agg(), or on all individual series.'
+                                 f'Unaggregated series: {not_aggregated}')
 
             group_by_column_expr = self.group_by.get_group_by_column_expression()
             if group_by_column_expr:

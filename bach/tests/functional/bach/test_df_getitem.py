@@ -158,6 +158,11 @@ def test_get_item_mixed_groupby():
     grouped_other = bt.groupby(bt.municipality.str[:3])
     grouped_other_sum = grouped_other.inhabitants.sum()
 
+    # This does not work because it has to materialize to filter, but no aggregations functions have been
+    # applied yet, so we can't.
+    with pytest.raises(ValueError, match="groupby set, but contains Series that have no aggregation func"):
+        grouped[bt.founding < 1300]
+
     # check that it's illegal to mix different groupings in filters
     with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries with non matching group_by"):
         grouped[grouped_other_sum > 50000]
