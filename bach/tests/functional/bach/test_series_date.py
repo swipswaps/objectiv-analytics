@@ -85,10 +85,10 @@ def test_date_format():
     assert mt['moment'].dtype == 'timestamp'
     assert mt['date'].dtype == 'date'
 
-    assert mt['moment'].format('YYYY').dtype == 'string'
+    assert mt['moment'].dt.sql_format('YYYY').dtype == 'string'
 
-    mt['fyyyy'] = mt['moment'].format('YYYY')
-    mt['fday'] = mt['date'].format('Day')
+    mt['fyyyy'] = mt['moment'].dt.sql_format('YYYY')
+    mt['fday'] = mt['date'].dt.sql_format('Day')
 
     assert_equals_data(
         mt[['fyyyy', 'fday']],

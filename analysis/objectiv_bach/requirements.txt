@@ -1,7 +1,0 @@
-# objectiv_bach:
-psycopg2-binary
-sqlalchemy
-pandas
-numpy
--e ../../bach
-dash

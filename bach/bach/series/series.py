@@ -284,6 +284,21 @@ class Series(ABC):
         )
         return result
 
+    def copy(self):
+        """
+        Return a copy of this Series.
+
+        As this series only represents data in the backing SQL store, and does not contain any data,
+        this is a metadata copy only, no actual data is duplicated and changes to the underlying data
+        will represented in both copy and original.
+        Changes to index, sorting, grouping etc. on the copy will not affect the original.
+
+        If you want to create a snapshot of the data, have a look at :py:meth:`bach.DataFrame.get_sample()`
+
+        :returns: a copy of the series
+        """
+        return self.copy_override()
+
     def copy_override(self,
                       dtype=None,
                       engine=None,

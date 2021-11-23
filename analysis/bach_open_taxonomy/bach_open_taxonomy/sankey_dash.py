@@ -1,6 +1,7 @@
 from textwrap import dedent as d
 from dash import dcc, html, callback_context
 from dash.dependencies import Input, Output, State
+import ast
 
 
 def get_app(Dash, feature_frame, url_base_pathname='/'):
@@ -209,14 +210,15 @@ def get_app(Dash, feature_frame, url_base_pathname='/'):
         """
 
         prop_id_triggered = callback_context.triggered[0]['prop_id']
-
         if prop_id_triggered == 'top-graph.clickData':  # store only if valid node
-
-            import ast
-            dict_clicked = ast.literal_eval(top_graph_click_data['points'][0]['label'])
-
-            node_clicks_data.append(dict_clicked)
-
+            try:
+                if not top_graph_click_data['points'][0]['group']:
+                    node_label = top_graph_click_data['points'][0]['label']
+                    if node_label != 'end_of_stack':
+                        dict_clicked = ast.literal_eval(node_label)
+                        node_clicks_data.append(dict_clicked)
+            except KeyError:
+                pass
         if prop_id_triggered == 'reset-feature-rules.n_clicks':
             node_clicks_data = []
 

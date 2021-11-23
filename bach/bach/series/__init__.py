@@ -9,4 +9,4 @@ from bach.series.series_uuid import SeriesUuid
 from bach.series.series_json import SeriesJson, SeriesJsonb
 from bach.series.series_string import SeriesString
 from bach.series.series_datetime import \
-    SeriesDate, SeriesTime, SeriesTimestamp, SeriesTimedelta
+    SeriesAbstractDateTime, SeriesDate, SeriesTime, SeriesTimestamp, SeriesTimedelta

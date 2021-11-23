@@ -1,4 +1,4 @@
-
+.. currentmodule:: bach
 
 ========
 Examples
