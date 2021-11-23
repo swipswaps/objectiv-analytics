@@ -731,8 +731,10 @@ class DataFrame:
                                      'Boolean series')
 
                 # If the key has no group_by but the df has, this is a filter before aggregation. This is
-                # supported. It can change the aggregated results though, but that makes sense.
-                # A common case here is a filter on the columns in the group_by e.g. the index of this df.
+                # supported but it can change the aggregated results.
+                # (A common case is a filter on the columns in the group_by e.g. the index of this df.)
+                # We might come back to this when we keep conditions (where/having) as state.
+
                 # We don't support using aggregated series to filter on a non-aggregated df though:
                 if key.group_by and not self._group_by:
                     raise ValueError('Can not apply aggregated BooleanSeries to a non-grouped df.'
