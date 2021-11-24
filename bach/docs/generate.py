@@ -286,10 +286,12 @@ for url in urls:
     if len(description_elements) > 0:
         description_element = description_elements[0].text
         words = description_element.replace('\n', ' ').split(' ')
-        description = ''
+
+        description_words = []
         # let's put whole words in the description, with a max length of 500 chars
         for word in words:
-            description += f' {word}'
+            description_words.append(word)
+            description = ' '.join(description_words)
             if len(description) > 500:
                 break
     else:
