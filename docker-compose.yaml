@@ -74,8 +74,8 @@ services:
     # default image: eu.gcr.io/objectiv-production/notebook:latest
     image: ${OBJECTIV_CONTAINER_URL-objectiv}/notebook:${OBJECTIV_CONTAINER_TAG-latest}
     ports:
-      - "8888:8888"
-      - "8053:8053"
+      - "127.0.0.1:8888:8888"
+      - "127.0.0.1:8053:8053"
 
     networks:
       - obj
