@@ -17,7 +17,10 @@ def get_app(Dash, feature_frame, url_base_pathname='/', dash_options=None):
     # allow us to pass in extra options to (jupyter)-dash, like for example server_url
     if not dash_options:
         dash_options = {}
-    app = Dash(__name__, external_stylesheets=external_stylesheets, url_base_pathname=url_base_pathname, **dash_options)
+    app = Dash(__name__,
+               external_stylesheets=external_stylesheets,
+               url_base_pathname=url_base_pathname,
+               **dash_options)
 
     styles = {
         'pre': {
