@@ -272,14 +272,29 @@ for url in urls:
 
     doc = html.parse(url)
 
+    # get title from <title> text </title>
+    title = doc.xpath('//title/text()')[0]
+
     # here we get the body
     # we look for <main role="main"....>
     body_element: html.Element = doc.xpath('//main[@role="main"]/div')[0]
-
     body = etree.tostring(body_element).decode('utf-8')
 
-    # get title from <title> text </title>
-    title = doc.xpath('//title/text()')[0]
+    # try to determine description
+    description_elements = body_element.xpath('//main[@role="main"]/div/section//p')
+
+    if len(description_elements) > 0:
+        description_element = description_elements[0].text
+        words = description_element.replace('\n', ' ').split(' ')
+        description = ''
+        # let's put whole words in the description, with a max length of 500 chars
+        for word in words:
+            description += f' {word}'
+            if len(description) > 500:
+                break
+    else:
+        # if we cannot find one, use title
+        description = title
 
     toc = []
     # get toc from:
@@ -325,6 +340,10 @@ slug: {slug}
 {f"sidebar_label: {sidebar_label}" if sidebar_label else ''}
 
 ---
+<head>
+    <meta name="description" content="{description}" />
+    <meta property="og:description" content="{description}" />
+</head>
 
 export const toc = {json.dumps(toc, indent=4)};
 
