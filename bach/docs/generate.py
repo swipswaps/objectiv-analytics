@@ -315,7 +315,7 @@ for url in urls:
         # don't override sidebar_label by default, so we can set it from the sidebar.js
         sidebar_label = None
 
-    # load real_url file contents
+    # load `url` file contents
     html_content = Path(url).read_text()
 
     # TODO process html_content
