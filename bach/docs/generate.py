@@ -285,7 +285,13 @@ for url in urls:
 
     if len(description_elements) > 0:
         description_element = description_elements[0].text
-        description = description_element[:500].replace('\n', ' ')
+        words = description_element.replace('\n', ' ').split(' ')
+        description = ''
+        # let's put whole words in the description, with a max length of 500 chars
+        for word in words:
+            description += f' {word}'
+            if len(description) > 500:
+                break
     else:
         # if we cannot find one, use title
         description = title
