@@ -1,10 +1,11 @@
 docker-compose.yaml  
 metabase-experiment
-tracker-experiment
+tracker/
+
 backend/jsons/
 backend/venv/
-rod/node_modules/
-rod/build/
 node_modules/
 .idea
 .git
+**/venv/
+

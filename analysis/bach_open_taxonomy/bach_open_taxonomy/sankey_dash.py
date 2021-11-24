@@ -4,7 +4,7 @@ from dash.dependencies import Input, Output, State
 import ast
 
 
-def get_app(Dash, feature_frame, url_base_pathname='/'):
+def get_app(Dash, feature_frame, url_base_pathname='/', dash_options=None):
     external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
     event_dropdown_options = [{'label': i, 'value': i} for i in
@@ -14,7 +14,13 @@ def get_app(Dash, feature_frame, url_base_pathname='/'):
     features = [key for key, value in feature_frame.dtypes.items() if value == 'objectiv_location_stack']
     stack_dropdown_options = [{'label': i, 'value': i} for i in features]
 
-    app = Dash(__name__, external_stylesheets=external_stylesheets, url_base_pathname=url_base_pathname)
+    # allow us to pass in extra options to (jupyter)-dash, like for example server_url
+    if not dash_options:
+        dash_options = {}
+    app = Dash(__name__,
+               external_stylesheets=external_stylesheets,
+               url_base_pathname=url_base_pathname,
+               **dash_options)
 
     styles = {
         'pre': {

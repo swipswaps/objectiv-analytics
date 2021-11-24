@@ -25,19 +25,21 @@ push-images: push-image-backend push-image-notebook
 push-image-%:
 	$(eval MODULE = $(subst push-image-,,$@))
 	$(eval URL=$(CONTAINER_REPO)/$(MODULE))
-	docker tag objectiv/$(MODULE):$(TAG) $(URL):latest
-	docker push $(URL)
-	gcloud container images add-tag --quiet $(URL):latest $(URL):$(REVISION)
+	docker tag objectiv/$(MODULE):$(TAG) $(URL):test
+	docker push $(URL):test
+	gcloud container images add-tag --quiet $(URL):test $(URL):$(REVISION)
 
 
 ## build backend images
 build-backend:
 	cd backend && make docker-image
 
-build-ds-notebook:
-	cd ds && \
-	docker build \
-	-t objectiv/notebook:$(TAG) -f docker/notebook/Dockerfile .
+build-notebook:
+	# first, build required packages and put them in the docker scope
+	# for this to work, we need to be in a VENV with bach installed
+	pip wheel --no-deps -w analysis/docker/ ./bach
+	pip wheel --no-deps -w analysis/docker/ ./analysis/bach_open_taxonomy
+	docker build -t objectiv/notebook -f analysis/docker/Dockerfile analysis
 
 publish-tracker:
 	cd tracker && make publish
