@@ -3,34 +3,62 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 from abc import ABC
-from typing import Union, cast, TYPE_CHECKING
+from typing import Union, cast
 
 import numpy
 
-from bach.series import Series, SeriesString
+from bach.series import Series, SeriesString, SeriesBoolean
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 
-if TYPE_CHECKING:
-    from bach.series import SeriesBoolean
+
+class DateTimeOperation:
+    def __init__(self, series: 'SeriesAbstractDateTime'):
+        self._series = series
+
+    def sql_format(self, format_str: str) -> SeriesString:
+        """
+        Allow formatting of this Series (to a string type).
+
+        :param format_str: The format to apply to the date/time column.
+            Currently, this uses Postgres' data format string syntax:
+            https://www.postgresql.org/docs/14/functions-formatting.html
+
+        .. code-block:: python
+
+            df['year'] = df.some_date_series.dt.sql_format('YYYY')  # return year
+            df['date'] = df.some_date_series.dt.sql_format('YYYYMMDD')  # return date
+
+        :returns: a SeriesString containing the formatted date.
+        """
+        expression = Expression.construct('to_char({}, {})',
+                                          self._series, Expression.string_value(format_str))
+        return self._series.copy_override(dtype='string', expression=expression)
 
 
 class SeriesAbstractDateTime(Series, ABC):
-    """ Class all date/time/interval handling classes derive from to share common stuff """
+    """
+    A Series that represents the generic date/time type and its specific operations. Selected arithmetic
+    operations are accepted using the usual operators.
+
+    **Date/Time Operations**
+
+    On any of the subtypes, you can access date operations through the `dt` accessor.
+    """
+    @property
+    def dt(self) -> DateTimeOperation:
+        """
+        Get access to date operations.
+
+        .. autoclass:: bach.series.series_datetime.DateTimeOperation
+            :members:
+
+        """
+        return DateTimeOperation(self)
 
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timestamp', 'date', 'time', 'string')) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)
-
-    def format(self, format_str: str) -> SeriesString:
-        """
-        Allow standard PG formatting of this Series (to a string type)
-
-        :param format_str: Format as defined in https://www.postgresql.org/docs/14/functions-formatting.html
-        :return: a derived Series that accepts and returns formatted timestamp strings
-        """
-        expression = Expression.construct(f"to_char({{}}, '{format_str}')", self)
-        return self.copy_override(dtype='string', expression=expression)
 
     @classmethod
     def _cast_to_date_if_dtype_date(cls, series: 'Series') -> 'Series':
@@ -46,6 +74,9 @@ class SeriesAbstractDateTime(Series, ABC):
 
 class SeriesTimestamp(SeriesAbstractDateTime):
     """
+    A Series that represents the timestamp/datetime type and its specific operations
+
+
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         timestamp without time zone
     """
@@ -86,6 +117,8 @@ class SeriesTimestamp(SeriesAbstractDateTime):
 
 class SeriesDate(SeriesAbstractDateTime):
     """
+    A Series that represents the date type and its specific operations
+
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         date
     """
@@ -140,6 +173,8 @@ class SeriesDate(SeriesAbstractDateTime):
 
 class SeriesTime(SeriesAbstractDateTime):
     """
+    A Series that represents the date time and its specific operations
+
     Types in PG that we want to support: https://www.postgresql.org/docs/9.1/datatype-datetime.html
         time without time zone
     """
@@ -167,6 +202,10 @@ class SeriesTime(SeriesAbstractDateTime):
 
 
 class SeriesTimedelta(SeriesAbstractDateTime):
+    """
+    A Series that represents the timedelta type and its specific operations
+    """
+
     dtype = 'timedelta'
     dtype_aliases = ('interval',)
     supported_db_dtype = 'interval'
@@ -191,7 +230,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             return Expression.construct('cast({} as interval)', expression)
 
     def _comparator_operation(self, other, comparator,
-                              other_dtypes=('timedelta', 'string')) -> 'SeriesBoolean':
+                              other_dtypes=('timedelta', 'string')) -> SeriesBoolean:
         return super()._comparator_operation(other, comparator, other_dtypes)
 
     def __add__(self, other) -> 'Series':
@@ -221,6 +260,9 @@ class SeriesTimedelta(SeriesAbstractDateTime):
 
     def sum(self, partition: WrappedPartition = None,
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':
+        """
+        :meta private:
+        """
         result = self._derived_agg_func(
             partition=partition,
             expression='sum',
@@ -230,6 +272,9 @@ class SeriesTimedelta(SeriesAbstractDateTime):
         return cast('SeriesTimedelta', result)
 
     def mean(self, partition: WrappedPartition = None, skipna: bool = True) -> 'SeriesTimedelta':
+        """
+        :meta private:
+        """
         result = self._derived_agg_func(
             partition=partition,
             expression='avg',

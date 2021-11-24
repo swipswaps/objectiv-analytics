@@ -113,15 +113,62 @@ def test_get_item_materialize():
         ]
     )
 
+def test_get_item_mixed_groupby():
+    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants', 'founding']]
 
-def test_get_item_slice():
-    bt = get_bt_with_test_data(full_data_set=True)[['municipality']]
-    r = bt[2:5]
+    grouped = bt.groupby('municipality')
+    grouped_sum = grouped.inhabitants.sum()
+    grouped_all_sum = grouped.sum()
 
+    with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries to a non-grouped df."):
+        bt[grouped_sum > 50000]
+
+    # Okay to apply same grouping filter
     assert_equals_data(
-        r,
-        expected_columns=['_index_skating_order', 'municipality'],
+        grouped_all_sum[grouped_sum > 50000],
+        order_by='inhabitants_sum',
+        expected_columns=['municipality', '_index_skating_order_sum', 'inhabitants_sum', 'founding_sum'],
         expected_data=[
-            [3, 'Súdwest-Fryslân'], [4, 'De Friese Meren'], [5, 'Súdwest-Fryslân']
+            ['Súdwest-Fryslân', 31, 52965, 7864],
+            ['Leeuwarden', 1, 93485, 1285]
         ]
     )
+
+    # Apply a filter on a column of the pre-aggregation df
+    assert_equals_data(
+        grouped_all_sum[bt.founding < 1300],
+        order_by='inhabitants_sum',
+        expected_columns=['municipality', '_index_skating_order_sum', 'inhabitants_sum', 'founding_sum'],
+        expected_data=[
+            ['Súdwest-Fryslân', 14, 4885, 3554], ['Noardeast-Fryslân', 11, 12675, 1298],
+            ['Harlingen', 9, 14740, 1234], ['Leeuwarden', 1, 93485, 1285]
+        ]
+    )
+
+    # Apply a filter on non-aggregated index column of the df
+    assert_equals_data(
+        grouped_all_sum[grouped_all_sum.index['municipality'] == 'Harlingen'],
+        order_by='inhabitants_sum',
+        expected_columns=['municipality', '_index_skating_order_sum', 'inhabitants_sum', 'founding_sum'],
+        expected_data=[
+            ['Harlingen', 9, 14740, 1234]
+        ]
+    )
+
+    grouped_other = bt.groupby(bt.municipality.str[:3])
+    grouped_other_sum = grouped_other.inhabitants.sum()
+
+    # This does not work because it has to materialize to filter, but no aggregations functions have been
+    # applied yet, so we can't.
+    with pytest.raises(ValueError, match="groupby set, but contains Series that have no aggregation func"):
+        grouped[bt.founding < 1300]
+
+    # check that it's illegal to mix different groupings in filters
+    with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries with non matching group_by"):
+        grouped[grouped_other_sum > 50000]
+    # check the other way around for good measure
+    with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries with non matching group_by"):
+        grouped_other[grouped_sum > 50000]
+    # or the combination of both, behold!
+    with pytest.raises(ValueError, match="rhs has a different base_node or group_by"):
+        grouped_other[grouped_sum > grouped_other_sum]

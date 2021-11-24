@@ -209,9 +209,9 @@ class Expression:
     @property
     def has_windowed_aggregate_function(self) -> bool:
         """
-        True iff we are a WindowedAggregateFunctionExpression, or there is at least one in this Expression.
+        True iff we are a WindowFunctionExpression, or there is at least one in this Expression.
         """
-        return isinstance(self, WindowedAggregateFunctionExpression) or any(
+        return isinstance(self, WindowFunctionExpression) or any(
             d.has_windowed_aggregate_function for d in self.data if isinstance(d, Expression)
         )
 
@@ -266,11 +266,11 @@ class SingleValueExpression(Expression):
     If wrapped around IndependentSubqueryExpression, this will still have is_independent_subquery == True
     """
     @property
-    def is_independent_subquery(self):
+    def is_independent_subquery(self) -> bool:
         # If this Expression is wrapped around a IndependentSubqueryExpression, most likely, there will be
         # just one in here, but let's make sure.
         all_isq = [d.is_independent_subquery for d in self._data if isinstance(d, Expression)]
-        return len(all_isq) and all(all_isq)
+        return len(all_isq) > 0 and all(all_isq)
 
 
 class ConstValueExpression(SingleValueExpression):
@@ -279,16 +279,29 @@ class ConstValueExpression(SingleValueExpression):
 
 class AggregateFunctionExpression(Expression):
     @property
-    def is_constant(self):
+    def is_constant(self) -> bool:
         # We don't consider an aggregate function constant even if all its subexpressions are,
         # because it requires materialization of the aggregation to actually be a constant value again.
         # Maybe we will revisit this some day. If that day comes, make sure to look at Series.count() as well.
         return False
 
 
-class WindowedAggregateFunctionExpression(AggregateFunctionExpression):
+class WindowFunctionExpression(Expression):
     """
-    A WindowedAggregateFunctionExpression contains an aggregation- or window function, and a window clause:
-    e.g. agg_func() OVER (...). The agg_func
+    A WindowFunctionExpression contains an aggregation- or window function, and a window clause:
+    e.g. agg_func() OVER (...). The agg_func. It's not a subclass of AggregateFunctionExpression because
+    a window expression makes sense without the main query having a GROUP BY clause, as the partitioning
+    is contained within the expression.
+
     """
-    pass
+    @property
+    def is_constant(self) -> bool:
+        # We don't consider an window expression constant even if all its subexpressions are,
+        # because it requires materialization to actually be a constant value again.
+        # Maybe we will revisit this some day. If that day comes, make sure to look at Series.count() as well.
+        return False
+
+    @property
+    def has_aggregate_function(self) -> bool:
+        # If a window expression contains an aggregate function, it's not an aggregate expression
+        return False

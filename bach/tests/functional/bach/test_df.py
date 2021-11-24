@@ -49,7 +49,7 @@ def test_drop_items():
         nbt.founding
 
     nbt = bt.drop(columns=['founding'], inplace=True)
-    assert 'founding' not in nbt.data.keys()
+    assert nbt is None
     assert 'founding' not in bt.data.keys()
 
     bt.drop(columns=['inhabitants', 'city'], inplace=True)
@@ -161,16 +161,16 @@ def test_materialize_with_non_aggregation_series():
     bt = get_bt_with_test_data()[['municipality', 'founding', 'inhabitants']]
     btg = bt.groupby('municipality')
     assert btg.group_by is not None
-    with pytest.raises(ValueError, match="Series \\['_index_skating_order', 'inhabitants', 'founding'\\] "
-                                         "need\\(s\\) to have an aggregation function set."):
+    with pytest.raises(ValueError, match="groupby set, but contains Series that have no aggregation func.*"
+                                         "\\['_index_skating_order', 'inhabitants', 'founding'\\]"):
         btg.materialize()
 
     assert btg.base_node == bt.base_node
 
     # Add one that's aggregated, should still fail
     btg['founding'] = btg.founding.sum()
-    with pytest.raises(ValueError, match="Series \\['_index_skating_order', 'inhabitants'\\] "
-                                         "need\\(s\\) to have an aggregation function set"):
+    with pytest.raises(ValueError, match="groupby set, but contains Series that have no aggregation func.*"
+                                         "\\['_index_skating_order', 'inhabitants'\\]"):
         btg.materialize()
     assert btg.base_node == bt.base_node
 

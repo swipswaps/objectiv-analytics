@@ -1,23 +1,11 @@
-
-
-Welcome to BuhTuh's documentation!
-==================================
+========
+Modeling
+========
 
 .. toctree::
-   :maxdepth: 4
-   :caption: Contents:
-   
-   api
+    :maxdepth: 5
 
-
-
-
-
-.. autosummary:: 
-	:recursive:
-	:members:
-	:inherited-members:
-	:toctree: api
-
-    sql_models
-    buhtuh
+    intro
+    core_concepts
+    examples
+    reference

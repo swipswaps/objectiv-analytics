@@ -21,27 +21,38 @@ if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
     from bach.series import SeriesBoolean
 
+
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
 
 
 class Series(ABC):
     """
-    Mostly immutable* class representing a column/expression in a query.
+    A Series that represents the generic type and its specific operations
 
-    A series is defined by an expression and a name, and it exists within the scope of the base_node.
-    Its index can be a simple (list of) Series in case of an already materialised base_node.
-    If group_by has been set, the index represents the future index of this Series and it has been
-    removed from the dataframe that was responsible for its aggregation.
-    The series is now part of the aggregation as defined by the GroupBy and base_node and
-    can only be evaluated as such.
-
-    * Mostly immutable: The attributes of this class are either immutable, or this class is guaranteed not
-        to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
-        and is shared with other Series and DataFrames that can change it's state.
-
+    It can be used as a separate object to just deal with a single list of values. There are many standard
+    operations on Series available to do operations like add or subtract, to create aggregations like
+    :py:meth:`nunique()` or :py:meth:`count()`, or to create new sub-Series, like :py:meth:`unique()`.
     """
-
+    # A series is defined by an expression and a name, and it exists within the scope of the base_node.
+    # Its index can be a simple (dict of) Series in case of an already materialised base_node.
+    #
+    # If group_by has been set, Series.index represents the future index of this Series. The series is now
+    # part of the aggregation as defined by the GroupBy and base_node and can only be evaluated as such.
+    # If no group_by is set, the expression can be used as is, as is the case for normal column expressions
+    # as well as correctly setup window expressions.
+    #
+    # The rule here: If a series needs a `group_by` to be evaluated, then and only then it should carry that
+    # `group_by`. This implies that index Series coming from `GroupBy.index`, do not carry that `group_by`.
+    # Only the data Series that actually need the aggregation to happen do.
+    #
+    # When a Series is used as an index, it should be free from any pending aggregation (and thus group_by
+    # should be None, and its index should be {}.
+    #
+    # * Mostly immutable *
+    # The attributes of this class are either immutable, or this class is guaranteed not
+    # to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
+    # and is shared with other Series and DataFrames that can change it's state.
     def __init__(self,
                  engine,
                  base_node: SqlModel,
@@ -67,13 +78,6 @@ class Series(ABC):
         from_const(), get_class_instance().
         It is very common to clone a Series with little changes. Use copy_override() for that.
 
-        The data of this Series is always held in the database and operations on the data are performed
-        by the database, not in local memory. Data will only be transferred to local memory when an
-        explicit call is made to one of the functions that transfers data:
-        * head()
-        * to_pandas()
-        * The property accessors .values, .array and .value
-
         :param engine: db connection
         :param base_node: sql-model of a select statement that must contain the columns/expressions that
             expression relies on.
@@ -85,6 +89,14 @@ class Series(ABC):
         :param group_by: The requested aggregation for this series.
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
         """
+        if index == {} and group_by and group_by.index != {}:
+            # not a completely watertight check, because a group_by on {} is valid.
+            raise ValueError(f'Index Series should be free of pending aggregation.')
+        if group_by and not dict_name_series_equals(group_by.index, index):
+            raise ValueError(f'Series and aggregation index do not match: {group_by.index} != {index}')
+        if not group_by and expression.has_aggregate_function:
+            raise ValueError('Expression has an aggregation function set, but there is no group_by')
+
         self._engine = engine
         self._base_node = base_node
         self._index = copy(index)
@@ -98,7 +110,9 @@ class Series(ABC):
     @abstractmethod
     def dtype(cls) -> str:
         """
-        The dtype of this Series. The dtype is used to uniquely identify data of the type that is
+        The dtype of this Series.
+
+        The dtype is used to uniquely identify data of the type that is
         represented by this Series subclass. The dtype should be unique among all Series
         subclasses.
         """
@@ -108,7 +122,7 @@ class Series(ABC):
     @classmethod
     def dtype_aliases(cls) -> Tuple[Union[Type, str], ...]:
         """
-        One or more aliases for the dtype.
+        INTERNAL: One or more aliases for the dtype.
         For example a BooleanSeries might have dtype 'bool', and as an alias the string 'boolean' and
         the builtin `bool`. An alias can be used in a similar way as the real dtype, e.g. to cast data to a
         certain type: `x.astype('boolean')` is the same as `x.astype('bool')`.
@@ -120,7 +134,7 @@ class Series(ABC):
     @property
     def dtype_to_pandas(self) -> Optional[str]:
         """
-        The dtype of this Series in a pandas.Series. Defaults to None
+        INTERNAL: The dtype of this Series in a pandas.Series. Defaults to None
         Override to cast specifically, and set to None to let pandas choose.
         """
         return None
@@ -129,7 +143,7 @@ class Series(ABC):
     @classmethod
     def supported_db_dtype(cls) -> Optional[str]:
         """
-        Database level data type, that can be expressed using this Series type.
+        INTERNAL: Database level data type, that can be expressed using this Series type.
         Example: 'double precision' for a float in Postgres
 
         Subclasses should override this value if they intend to be the default class to handle such types.
@@ -142,7 +156,7 @@ class Series(ABC):
     @classmethod
     def supported_value_types(cls) -> Tuple[Type, ...]:
         """
-        List of python types that can be converted to database values using
+        INTERNAL: List of python types that can be converted to database values using
         the `supported_value_to_expression()` method.
 
         Subclasses can override this value to indicate what types are supported
@@ -154,7 +168,9 @@ class Series(ABC):
     @abstractmethod
     def supported_value_to_expression(cls, value: Any) -> Expression:
         """
-        Give the expression for the given value. Consider calling the wrapper value_to_expression() instead.
+        INTERNAL: Give the expression for the given value.
+
+        Consider calling the wrapper value_to_expression() instead.
 
         Implementations of this function are responsible for correctly quoting and escaping special
         characters in the given value. Either by using ExpressionTokens that allow unsafe values (e.g.
@@ -172,34 +188,57 @@ class Series(ABC):
     @abstractmethod
     def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
         """
-        Give the sql expression to convert the given expression, of the given source dtype to the dtype of
-        this Series.
+        INTERNAL: Give the sql expression to convert the given expression, of the given source dtype to the
+        dtype of this Series.
         :return: sql expression
         """
         raise NotImplementedError()
 
     @property
     def engine(self):
+        """
+        INTERNAL: Get the engine
+        """
         return self._engine
 
     @property
     def base_node(self) -> SqlModel:
+        """
+        Get this Series' base_node
+        """
         return self._base_node
 
     @property
     def index(self) -> Dict[str, 'Series']:
+        """
+        Get this Series' index dictionary {name: Series}
+        """
         return copy(self._index)
 
     @property
     def name(self) -> str:
+        """
+        Get this Series' name
+        """
         return self._name
 
     @property
     def group_by(self) -> Optional['GroupBy']:
+        """
+        Get this Series' group_by, if any.
+        """
         return copy(self._group_by)
 
     @property
+    def sorted_ascending(self) -> Optional[bool]:
+        """
+        Get this Series' sorting, if any
+        """
+        return self._sorted_ascending
+
+    @property
     def expression(self) -> Expression:
+        """ INTERNAL: Get the expression"""
         return self._expression
 
     @classmethod
@@ -211,7 +250,7 @@ class Series(ABC):
             group_by: Optional['GroupBy'],
             sorted_ascending: Optional[bool] = None
     ):
-        """ Create an instance of this class. """
+        """ INTERNAL: Create an instance of this class. """
         return cls(
             engine=base.engine,
             base_node=base.base_node,
@@ -225,7 +264,8 @@ class Series(ABC):
     @classmethod
     def value_to_expression(cls, value: Optional[Any]) -> Expression:
         """
-        Give the expression for the given value.
+        INTERNAL: Give the expression for the given value.
+
         Wrapper around cls.supported_value_to_expression() that handles two generic cases:
             If value is None a simple 'NULL' expresison is returned.
             If value is not in supported_value_types raises an error.
@@ -247,6 +287,11 @@ class Series(ABC):
                    name: str) -> 'Series':
         """
         Create an instance of this class, that represents a column with the given value.
+        The returned Series will be similar to the Series given as base. In case a DataFrame is given,
+        it can be used immediately with that frame.
+        :param base:    The DataFrame or Series that the internal parameters are taken from
+        :param value:   The value that this constant Series will have
+        :param name:    The name that it will be known by (only for representation)
         """
         result = cls.get_class_instance(
             base=base,
@@ -255,6 +300,21 @@ class Series(ABC):
             group_by=None,
         )
         return result
+
+    def copy(self):
+        """
+        Return a copy of this Series.
+
+        As this series only represents data in the backing SQL store, and does not contain any data,
+        this is a metadata copy only, no actual data is duplicated and changes to the underlying data
+        will represented in both copy and original.
+        Changes to index, sorting, grouping etc. on the copy will not affect the original.
+
+        If you want to create a snapshot of the data, have a look at :py:meth:`bach.DataFrame.get_sample()`
+
+        :returns: a copy of the series
+        """
+        return self.copy_override()
 
     def copy_override(self,
                       dtype=None,
@@ -266,6 +326,8 @@ class Series(ABC):
                       group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
                       sorted_ascending=None):
         """
+        INTERNAL: Copy this instance into a new one, with the given overrides
+
         Big fat warning: group_by can legally be None, but if you want to set that,
         set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
         """
@@ -281,6 +343,7 @@ class Series(ABC):
         )
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
+        """ INTERNAL: Get the column expression for this Series """
         expression = self.expression.resolve_column_references(table_alias)
         quoted_column_name = quote_identifier(self.name)
         if expression.to_sql() == quoted_column_name:
@@ -318,7 +381,9 @@ class Series(ABC):
         """
         Get the first n rows from this Series as a pandas.Series.
         :param n: The amount of rows to return.
-        :note: This function queries the database.
+
+        .. note::
+            This function queries the database.
         """
         return self.to_pandas(limit=n)
 
@@ -326,7 +391,9 @@ class Series(ABC):
     def values(self):
         """
         .values property accessor akin pandas.Series.values
-        :note: This function queries the database.
+
+        .. note::
+            This function queries the database.
         """
         return self.to_pandas().values
 
@@ -335,6 +402,9 @@ class Series(ABC):
         """
         Retrieve the actual single value of this series. If it's not sure that there is only one value,
         a ValueError is raised. In that case use Series.values[0] to retrieve the value.
+
+        .. note::
+            This function queries the database.
         """
         if not self.expression.is_single_value:
             raise ValueError('value accessor only supported for single value expressions. '
@@ -345,14 +415,16 @@ class Series(ABC):
     def array(self):
         """
         .array property accessor akin pandas.Series.array
-        :note: This function queries the database.
+
+        .. note::
+            This function queries the database.
         """
         return self.to_pandas().array
 
     def sort_values(self, ascending=True):
         """
-        Returns a copy of this Series that is sorted by its values. Returns self if self is already sorted
-        in that way.
+        Sort this Series by its values.
+        Returns a new instance and does not actually modify the instance it is called on.
         :param ascending: Whether to sort ascending (True) or descending (False)
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
@@ -363,6 +435,11 @@ class Series(ABC):
         return self.to_frame().view_sql()
 
     def to_frame(self) -> DataFrame:
+        """
+        Create a DataFrame with the index and data from this Series.
+
+        The DataFrame returned has the grouping and sorting also set like this Series had.
+        """
         if self._sorted_ascending is not None:
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
@@ -379,19 +456,27 @@ class Series(ABC):
     @staticmethod
     def as_independent_subquery(series, operation: str = None, dtype: str = None) -> 'Series':
         """
-        Get a series representing an independent subquery, created by materializing the series given
-        and crafting a subquery expression from it, possibly adding the given operation.
+        INTERNAL: Get a series representing an independent subquery, created by materializing the series
+        given and crafting a subquery expression from it, possibly adding the given operation.
 
-        :note: This will maintain Expression.is_single_value status
+        .. note::
+            This will maintain Expression.is_single_value status
         """
         # This will give us a dataframe that contains our series as a materialized column in the base_node
-        df = series.to_frame().materialize()
-        fmt_string = f'{operation} (SELECT {{}} FROM {{}})' if operation else f'(SELECT {{}} FROM {{}})'
-        expr = IndependentSubqueryExpression.construct(fmt_string,
-                                                       Expression.column_reference(series.name),
-                                                       Expression.model_reference(df.base_node))
+        if series.expression.is_independent_subquery:
+            expr = series.expression
+        else:
+            df = series.to_frame()
+            if df.group_by:
+                df = series.to_frame().materialize('independent_subquery_w_groupby')
+            expr = IndependentSubqueryExpression.construct('(SELECT {} FROM {})',
+                                                           df[series.name].get_column_expression(),
+                                                           Expression.model_reference(df.base_node))
 
-        if series.expression.is_single_value:
+        if operation:
+            expr = IndependentSubqueryExpression.construct(f'{operation} {{}}', expr)
+
+        if series.expression.is_single_value and not expr.is_single_value:
             # The expression is lost when materializing
             expr = SingleValueExpression(expr)
 
@@ -399,21 +484,44 @@ class Series(ABC):
         return s
 
     def exists(self):
+        """
+        Boolean operation that returns True if there are one or more values in this Series
+        """
         s = Series.as_independent_subquery(self, 'exists', dtype='bool')
         return s.copy_override(expression=SingleValueExpression(s.expression))
 
     def any_value(self):
-        # aka some()
+        """
+        For every row in this Series, do multiple evaluations where _any_ sub-evaluation should be True
+
+        Example: a > b.any() evaluates to True is a > b for any value of b.
+        """
         return Series.as_independent_subquery(self, 'any')
 
     def all_values(self):
+        """
+        For every row in this Series, do multiple evaluations where _all_ sub-evaluations should be True
+
+        Example: a > b.all() evaluates to True is a > b for all values of b.
+        """
         return Series.as_independent_subquery(self, 'all')
 
     def isin(self, other: 'Series'):
+        """
+        Evaluate for every row in this series whether the value is contained in other
+
+        Example: a.isin(b) evaluates to True for a specific row if a > b for all values of b.
+        """
         in_expr = Expression.construct('{} {}', self, Series.as_independent_subquery(other, 'in'))
         return self.copy_override(expression=in_expr, dtype='boolean')
 
     def astype(self, dtype: Union[str, Type]) -> 'Series':
+        """
+        Convert this Series to another type.
+
+        A Series will be returned with the correct type set, if the conversion is available. An appropriate
+        Exception will be raised if impossible to convert.
+        """
         if dtype == self.dtype or dtype in self.dtype_aliases:
             return self
         series_type = get_series_type_from_dtype(dtype)
@@ -424,7 +532,7 @@ class Series(ABC):
 
     def equals(self, other: Any, recursion: str = None) -> bool:
         """
-        Checks whether other is the same as self. This implements the check that would normally be
+        INTERNAL: Checks whether other is the same as self. This implements the check that would normally be
         implemented in __eq__, but we already use that method for other purposes.
         This strictly checks that other is the same type as self. If other is a subclass this will return
         False.
@@ -446,9 +554,15 @@ class Series(ABC):
         """
         Get a single value from the series. This is not returning the value,
         use the .value accessor for that instead.
+
+        :note: When slicing, the caller is responsible for the order of the sliced Series as data returned
+            can be ordered non-deterministically.
         """
+        frame = self.to_frame()
         if isinstance(key, slice):
-            raise NotImplementedError("index slices currently not supported")
+            if self.expression.is_single_value:
+                raise ValueError('Slicing on single value expressions is not supported.')
+            return frame[key][self.name]
 
         if len(self.index) == 0:
             raise Exception('Not supported on Series without index. '
@@ -457,7 +571,6 @@ class Series(ABC):
             raise NotImplementedError('Index only implemented for simple indexes. '
                                       'Use .values[index] instead')
 
-        frame = self.to_frame()
         # Apply Boolean selection on index == key, help mypy a bit
         frame = cast(DataFrame, frame[list(frame.index.values())[0] == key])
         # limit to 1 row, will make all series SingleValueExpression, and get that series.
@@ -465,8 +578,15 @@ class Series(ABC):
 
     def isnull(self):
         """
-        Detect missing values. Only null values in the Series in the underlying sql table will return
-        True.
+        Evaluate for every row in this series whether the value is missing or NULL.
+
+        .. note::
+            Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+            checked for.
+
+        See Also
+        --------
+        notnull
         """
         expression_str = f'{{}} is null'
         expression = NonAtomicExpression.construct(
@@ -477,8 +597,15 @@ class Series(ABC):
 
     def notnull(self):
         """
-        Detect existing (non-missing) values. Any non-null value in the Series in the underlying sql
-        table will return True.
+        Evaluate for every row in this series whether the value is not missing or NULL.
+
+        .. note::
+          Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+          checked for.
+
+        See Also
+        --------
+        isnull
         """
         expression_str = f'{{}} is not null'
         expression = NonAtomicExpression.construct(
@@ -490,10 +617,17 @@ class Series(ABC):
     def fillna(self, other):
         """
         Fill any NULL value with the given constant or other compatible Series
-        :param other: the value to replace the NULL values with. Should be a supported
+
+        In case a Series is given, the value from the same row is used to fill.
+
+        :param other: The value to replace the NULL values with. Should be a supported
             type by the series, or a TypeError is raised. Can also be another Series
-        :note: Pandas replaces np.nan values, we can only replace NULL.
-        :note: you can replace None with None, have fun, forever!
+
+        .. note::
+            Pandas replaces np.nan values, we can only replace NULL.
+
+        .. note::
+            You can replace None with None, have fun, forever!
         """
         return self._binary_operation(
             other=other, operation='fillna', fmt_str='COALESCE({}, {})',
@@ -578,7 +712,6 @@ class Series(ABC):
         raise NotImplementedError()
 
     # Boolean operations
-
     def __invert__(self) -> 'Series':
         raise NotImplementedError()
 
@@ -623,14 +756,16 @@ class Series(ABC):
 
     def apply_func(self, func: ColumnFunction, *args, **kwargs) -> List['Series']:
         """
-        Apply the given func to this Series. If multiple are given, multiple new series will
-        be returned.
+        Apply the given functions to this Series.
+        If multiple are given, a list of multiple new series will be returned.
+
         :param func: the function to look for on all series, either as a str, or callable,
-            or a list of such
+                    or a list of such
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
-        :returns: List of Series with the func applied
-        :note: you should probably not use this method directly.
+
+        .. warning::
+            You should probably not use this method directly.
         """
         if isinstance(func, str) or callable(func):
             func = [func]
@@ -666,7 +801,7 @@ class Series(ABC):
                   group_by: 'GroupBy' = None,
                   *args, **kwargs) -> DataFrameOrSeries:
         """
-        use agg(..)
+        Alias for :py:meth:`agg()`.
         """
         return self.agg(func, group_by, *args, **kwargs)
 
@@ -675,12 +810,14 @@ class Series(ABC):
             group_by: 'GroupBy' = None,
             *args, **kwargs) -> DataFrameOrSeries:
         """
+        Apply one or more aggregation functions to this Series.
+
         :param func: the aggregation function to look for on all series.
             See GroupBy.agg() for supported arguments
         :param group_by: the group_by to use, or aggregation over full base_node if None
         :param args: Positional arguments to pass through to the aggregation function
         :param kwargs: Keyword arguments to pass through to the aggregation function
-        :returns: Aggregated Series, or DataFrame if multiple series are returned
+        :return: Aggregated Series, or DataFrame if multiple series are returned
         """
         if group_by is None:
             from bach.partitioning import GroupBy
@@ -698,12 +835,15 @@ class Series(ABC):
                          order_by=[])
 
     def _check_unwrap_groupby(self,
-                              wrapped: Union['DataFrame', 'GroupBy'],
+                              wrapped: Optional[WrappedPartition],
                               isin=None, notin=()) -> 'GroupBy':
         """
-        Unwrap the GroupBy from the Aggregator if one is given, else use the GroupBy directly
-        and perform some checks:
-        - Make sure that the GroupBy instance is of a type in the set `isin`, defaulting
+        1. If `wrapped` is a GroupBy, or if it contains one, use that.
+        2. If it's None, check whether this Series has a group_by set and use that.
+        3. If that still yields nothing, create a GroupBy([]) and use that.
+
+        After that, perform some checks:
+        - Make sure that the used GroupBy instance is of a type in the set `isin`, defaulting
           to make sure it's a GroupBy if `isin` is None
         - Make sure that it's instance type is not in `notin`
 
@@ -711,12 +851,23 @@ class Series(ABC):
         :returns: The potentially unwrapped GroupBy
         """
         from bach.partitioning import GroupBy
-        isin = GroupBy if isin is None else isin
+        isin = (GroupBy) if isin is None else isin
 
-        if wrapped is not None and isinstance(wrapped, DataFrame):
-            group_by = wrapped.group_by
+        if wrapped is None:
+            if self._group_by:
+                group_by = self._group_by
+            else:
+                # create an aggregation over the entire input
+                group_by = GroupBy([])
         else:
-            group_by = wrapped
+            if isinstance(wrapped, DataFrame):
+                unwrapped = wrapped.group_by
+            else:
+                unwrapped = wrapped
+
+            if self._group_by and self._group_by != unwrapped:
+                raise ValueError("Series group_by not the same as given partition; I'm confused.")
+            group_by = unwrapped
 
         if not isinstance(group_by, isin):
             raise ValueError(f'group_by {type(group_by)} not in {isin}')
@@ -746,7 +897,7 @@ class Series(ABC):
         :returns: The correctly typed derived Series, with either the current index in case of
             a Window function, or the GroupBy otherwise.
         """
-        from bach.partitioning import GroupBy, Window
+        from bach.partitioning import Window
 
         if not skipna:
             raise NotImplementedError('Not skipping n/a is not supported')
@@ -764,14 +915,7 @@ class Series(ABC):
         if isinstance(expression, str):
             expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
 
-        if partition is None:
-            if self._group_by:
-                partition = self._group_by
-            else:
-                # create an aggregation over the entire input
-                partition = GroupBy([])
-        else:
-            partition = self._check_unwrap_groupby(partition)
+        partition = self._check_unwrap_groupby(partition)
 
         if min_count is not None and min_count > 0:
             if isinstance(partition, Window):
@@ -807,7 +951,10 @@ class Series(ABC):
                                       group_by=[partition],
                                       expression=expression)
         else:
+            # The window expression already contains the full partition and sorting, no need
+            # to keep that with this series, the expression can be used without any of those.
             return self.copy_override(dtype=derived_dtype,
+                                      group_by=[None],
                                       expression=partition.get_window_expression(expression))
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
@@ -838,31 +985,42 @@ class Series(ABC):
 
     def nunique(self, partition: WrappedPartition = None, skipna: bool = True):
         from bach.partitioning import Window
-        if partition is not None:
-            partition = self._check_unwrap_groupby(partition, notin=Window)
+        partition = self._check_unwrap_groupby(partition, notin=Window)
         return self._derived_agg_func(
             partition=partition, dtype='int64',
             expression=AggregateFunctionExpression.construct('count(distinct {})', self),
             skipna=skipna)
 
+    def unique(self, partition: WrappedPartition = None, skipna: bool = True):
+        """ Get the unique values in this series, currently by grouping the series involved. """
+        from bach.partitioning import GroupBy
+        if partition:
+            raise ValueError('Can not use group_by in combination with unique(). Materialize() first.')
+        series = self.copy_override(name=f'{self.name}_unique')
+        return series._derived_agg_func(
+            partition=GroupBy([self]),
+            expression=AggregateFunctionExpression(self.expression),
+            skipna=skipna
+        )
+
     # Window functions applicable for all types of data, but only with a window
     # TODO more specific docs
     # TODO make group_by optional, but for that we need to use current series sorting
-    def _check_window(self, window: WrappedWindow) -> 'Window':
+    def _check_window(self, window: WrappedWindow = None) -> 'Window':
         """
-        Validate that the given partition is a true Window or raise an exception
+        Validate that the given partition or the stored group_by is a true Window or raise an exception
         """
         from bach.partitioning import Window
         return cast(Window, self._check_unwrap_groupby(window, isin=Window))
 
-    def window_row_number(self, window: WrappedWindow):
+    def window_row_number(self, window: WrappedWindow = None):
         """
-        Returns the number of the current row within its partition, counting from 1.
+        Returns the number of the current row within its window, counting from 1.
         """
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('row_number()'), 'int64')
 
-    def window_rank(self, window: WrappedWindow):
+    def window_rank(self, window: WrappedWindow = None):
         """
         Returns the rank of the current row, with gaps; that is, the row_number of the first row
         in its peer group.
@@ -870,7 +1028,7 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('rank()'), 'int64')
 
-    def window_dense_rank(self, window: WrappedWindow):
+    def window_dense_rank(self, window: WrappedWindow = None):
         """
         Returns the rank of the current row, without gaps; this function effectively counts peer
         groups.
@@ -878,25 +1036,25 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('dense_rank()'), 'int64')
 
-    def window_percent_rank(self, window: WrappedWindow):
+    def window_percent_rank(self, window: WrappedWindow = None):
         """
         Returns the relative rank of the current row, that is
-            (rank - 1) / (total partition rows - 1).
+        (rank - 1) / (total partition rows - 1).
         The value thus ranges from 0 to 1 inclusive.
         """
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('percent_rank()'), "double precision")
 
-    def window_cume_dist(self, window: WrappedWindow):
+    def window_cume_dist(self, window: WrappedWindow = None):
         """
         Returns the cumulative distribution, that is
-            (number of partition rows preceding or peers with current row) / (total partition rows).
+        (number of partition rows preceding or peers with current row) / (total partition rows).
         The value thus ranges from 1/N to 1.
         """
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('cume_dist()'), "double precision")
 
-    def window_ntile(self, window: WrappedWindow, num_buckets: int = 1):
+    def window_ntile(self, num_buckets: int = 1, window: WrappedWindow = None):
         """
         Returns an integer ranging from 1 to the argument value,
         dividing the partition as equally as possible.
@@ -904,15 +1062,17 @@ class Series(ABC):
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct(f'ntile({num_buckets})'), "int64")
 
-    def window_lag(self, window: WrappedWindow, offset: int = 1, default: Any = None):
+    def window_lag(self, offset: int = 1, default: Any = None, window: WrappedWindow = None):
         """
-        Returns value evaluated at the row that is offset rows before the current row
-        within the partition; if there is no such row, instead returns default
-        (which must be of the same type as value).
+        Returns value evaluated at the row that is offset rows before the current row within the window
 
+        If there is no such row, instead returns default (which must be of the same type as value).
         Both offset and default are evaluated with respect to the current row.
-        If omitted, offset defaults to 1 and default to None
+        :param offset: The amount of rows to look back, default 1
+        :param default: The value to return if no value is available, can be a constant value or Series.
+        Defaults to None
         """
+        # TODO Lag, lead etc. could check whether the window is setup correctly to include that value
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
         return self._derived_agg_func(
@@ -921,12 +1081,15 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_lead(self, window: WrappedWindow, offset: int = 1, default: Any = None):
+    def window_lead(self, offset: int = 1, default: Any = None, window: WrappedWindow = None):
         """
-        Returns value evaluated at the row that is offset rows after the current row within the partition;
-        if there is no such row, instead returns default (which must be of the same type as value).
+        Returns value evaluated at the row that is offset rows after the current row within the window.
+
+        If there is no such row, instead returns default (which must be of the same type as value).
         Both offset and default are evaluated with respect to the current row.
-        If omitted, offset defaults to 1 and default to None.
+        :param offset: The amount of rows to look forward, default 1
+        :param default: The value to return if no value is available, can be a constant value or Series.
+        Defaults to None
         """
         window = self._check_window(window)
         default_expr = self.value_to_expression(default)
@@ -936,7 +1099,7 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_first_value(self, window: WrappedWindow):
+    def window_first_value(self, window: WrappedWindow = None):
         """
         Returns value evaluated at the row that is the first row of the window frame.
         """
@@ -947,16 +1110,16 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_last_value(self, window: WrappedWindow):
+    def window_last_value(self, window: WrappedWindow = None):
         """
         Returns value evaluated at the row that is the last row of the window frame.
         """
         window = self._check_window(window)
         return self._derived_agg_func(window, Expression.construct('last_value({})', self), self.dtype)
 
-    def window_nth_value(self, window: WrappedWindow, n: int):
+    def window_nth_value(self, n: int, window: WrappedWindow = None):
         """
-        Returns value evaluated at the row that is the n'th row of the window frame
+        Returns value evaluated at the row that is the n'th row of the window frame.
         (counting from 1); returns NULL if there is no such row.
         """
         window = self._check_window(window)
@@ -971,7 +1134,8 @@ def const_to_series(base: Union[Series, DataFrame],
                     value: Union[Series, int, float, str, UUID],
                     name: str = None) -> Series:
     """
-    Take a value and return a Series representing a column with that value.
+    INTERNAL: Take a value and return a Series representing a column with that value.
+
     If value is already a Series it is returned unchanged unless it has no base_node set, in case
     it's a subquery. We create a copy and hook it to our base node in that case, so we can work with it.
     If value is a constant then the right BuhTuh subclass is found for that type and instantiated
