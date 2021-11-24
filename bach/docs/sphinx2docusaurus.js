@@ -1,5 +1,4 @@
 const { JSDOM } = require("jsdom");
-const prettier = require("prettier");
 
 // map from sphinx css selector to style and/or class in Docusaurus (classic theme)
 const styleMap = {
@@ -291,8 +290,15 @@ finalHTML = finalHTML.replace(/{(.*)}/g, "{`{$1}`}")
 finalHTML = finalHTML.replace(/<col style="width: 10%">/g, `<col style={{width: '10%'}} />`)
 finalHTML = finalHTML.replace(/<col style="width: 90%">/g, `<col style={{width: '90%'}} />`)
 
-// Remove newlines before and after <a> tags, they bother React. Replace them with just a space
-finalHTML = finalHTML.replace(/\n<a /g, ` <a `)
-finalHTML = finalHTML.replace(/a>\n/g, `a> `)
+// Remove newlines before and after tags, they bother React. Replace them with just a space
+finalHTML = finalHTML.replace(/\n</g, ` <`)
+finalHTML = finalHTML.replace(/>\n/g, `> `)
+
+// Replace pesky slanted apostrophes with actual ones. This allows us to run spell-checkers on the pages
+finalHTML = finalHTML.replace(/’/g, `'`)
+finalHTML = finalHTML.replace(/‘/g, `'`)
+
+// Get rid of spans with missing styles which interfere with inline code highlighting
+finalHTML = finalHTML.replace(/<span class="pre">(.*?)<\/span>/g, `$1`)
 
 process.stdout.write(finalHTML);
