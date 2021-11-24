@@ -1,5 +1,6 @@
 import glob
 import re
+import sys
 from os import path, makedirs
 import json
 from typing import Dict, List
@@ -331,6 +332,9 @@ for url in urls:
     Either one probably works for the simple stuff we need to do
     
     """
+    from subprocess import check_output
+    output = check_output(['node', './sphinx2docusaurus.js', html_content])
+    html_content = output.decode(sys.stdout.encoding).strip()
 
     # template for the mdx file
     # please leave the whitespace as is (it's part of the markdown)

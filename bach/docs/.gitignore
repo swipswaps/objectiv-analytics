@@ -4,3 +4,4 @@
 source/**/*.rst
 build/
 
+node_modules

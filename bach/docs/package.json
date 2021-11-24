@@ -1,0 +1,11 @@
+{
+  "name": "sphinx2docusaurus",
+  "version": "0.0.1",
+  "description": "Converts sphinx HTML to Docusaurus compatible JSX",
+  "main": "sphinx2docusaurus.js",
+  "private": true,
+  "license": "Apache-2.0",
+  "dependencies": {
+    "jsdom": "^18.1.1"
+  }
+}
