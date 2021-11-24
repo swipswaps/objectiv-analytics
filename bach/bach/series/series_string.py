@@ -75,12 +75,39 @@ class StringOperation:
         return self._base.copy_override(dtype='string', expression=expression)
 
     def slice(self, start=None, stop=None) -> 'SeriesString':
+        """
+        slice a string like you would in Python, either by calling this method, or by slicing directly
+        on the `str` accessor.
+
+        .. code-block:: python
+
+            a.str[3]            # get one char
+            a.str[3:5]          # get a slice from char 3-5
+            a.str.slice(3, 5)   # idem
+        """
         if isinstance(start, slice):
             return self.__getitem__(start)
         return self.__getitem__(slice(start, stop))
 
 
 class SeriesString(Series):
+    """
+    A Series that represents the string type and its specific operations
+
+    **Operations**
+
+    Strings can be concatenated using the '+' operator, and the 'str' accessor can be used to get access
+    to slices.
+
+    Example:
+
+    .. code-block:: python
+
+        c = a + b  # concat the strings.
+        a.str[3]   # get one char
+        a.str[3:5] # get a slice from char 3-5
+    """
+
     dtype = 'string'
     dtype_aliases = ('text', str)
     supported_db_dtype = 'text'
@@ -98,6 +125,13 @@ class SeriesString(Series):
 
     @property
     def str(self) -> StringOperation:
+        """
+        Get access to string operations.
+
+        .. autoclass:: bach.series.series_string.StringOperation
+            :members:
+
+        """
         return StringOperation(self)
 
     def __add__(self, other) -> 'Series':

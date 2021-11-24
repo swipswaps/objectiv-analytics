@@ -16,7 +16,76 @@ if TYPE_CHECKING:
 
 class SeriesJsonb(Series):
     """
-    this a proper class, not just a string subclass
+    A Series that represents the postgres jsonb type and its specific operations.
+
+    This is the standard and recommended type to use for handling json like data.
+
+    **Getting data**
+
+    It is possible to get a selection of data from the json in the json type column. For selecting data from
+    json, arrays and objects are supported. The data can be selected using `.json[]` on the json column
+
+    Selecting data from an array is based on position. It works similar to slicing through python lists.
+
+    .. note::
+
+        Slicing is only possible if *all* values in the column are lists or None.
+
+    Selecting from objects is possible by key.
+
+    Examples:
+
+    >>> # load some json strings and convert them to jsonb type
+    >>> pdf = pd.DataFrame(['["a","b","c"]',
+    >>>                     '["d","e","f","g"]',
+    >>>                     '[{"h":"i","j":"k"},{"l":["m","n","o"]},{"p":"q"}]'], columns=['jsonb_column'])
+    >>> df = DataFrame.from_pandas(engine, pdf, convert_objects=True)
+    >>> df['jsonb_column'] = df.jsonb_column.astype('jsonb')
+    >>>
+    >>> # slice and show with .head()
+    >>> df.jsonb_column.json[:2].head()
+    _index_0
+    0                                            [a, b]
+    1                                            [d, e]
+    2    [{'h': 'i', 'j': 'k'}, {'l': ['m', 'n', 'o']}]
+    Name: jsonb_column, dtype: object
+    >>>
+    >>> # selecting one position returns the single entry:
+    >>> df.jsonb_column.json[1].head()
+    _index_0
+    0                         b
+    1                         e
+    2    {'l': ['m', 'n', 'o']}
+    Name: jsonb_column, dtype: object
+    >>>
+    >>> # selecting from objects is done by entering a key:
+    >>> df.jsonb_column.json[1].json['l'].head()
+    _index_0
+    0         None
+    1         None
+    2    [m, n, o]
+    Name: jsonb_column, dtype: object
+
+    A last case is selecting based on the objects *in* an array.
+    With this method, a dict is passed in the `.json[]` selector. The value of the first match with the dict
+    to the objects in a json array is returned for the `.json[]` selector. A match is when all key/value pairs
+    of the dict are found in an object. This can be used for selecting a subset of a json array with objects.
+
+    >>> # selecting from arrays by searching objects in the array.
+    >>> df.jsonb_column.json[:{"j":"k"}].head()
+    _index_0
+    0                      None
+    1                      None
+    2    [{'h': 'i', 'j': 'k'}]
+    Name: jsonb_column, dtype: object
+    >>>
+    >>> # or:
+    >>> df.jsonb_column.json[{"l":["m","n","o"]}:].head()
+    _index_0
+    0                                    None
+    1                                    None
+    2    [{'l': ['m', 'n', 'o']}, {'p': 'q'}]
+    Name: jsonb_column, dtype: object
     """
     dtype = 'jsonb'
     # todo can only assign a type to one series type, and object is quite generic
@@ -26,10 +95,61 @@ class SeriesJsonb(Series):
     return_dtype = dtype
 
     class Json:
+        """
+        class with accessor methods to json(b) type data columns.
+        """
         def __init__(self, series_object):
             self._series_object = series_object
 
         def __getitem__(self, key: Union[str, int, slice]):
+            """
+            Slice this jsonb database object in pythonic ways:
+
+            :param key: A very mixed key to slice on, please see below.
+
+            >>> # slice and show with .head()
+            >>> df.jsonb_column.json[:2].head()
+            _index_0
+            0                                            [a, b]
+            1                                            [d, e]
+            2    [{'h': 'i', 'j': 'k'}, {'l': ['m', 'n', 'o']}]
+            Name: jsonb_column, dtype: object
+            >>> # selecting one position returns the single entry:
+            >>> df.jsonb_column.json[1].head()
+            _index_0
+            0                         b
+            1                         e
+            2    {'l': ['m', 'n', 'o']}
+            Name: jsonb_column, dtype: object
+            >>> # selecting from objects is done by entering a key:
+            >>> df.jsonb_column.json[1].json['l'].head()
+            _index_0
+            0         None
+            1         None
+            2    [m, n, o]
+            Name: jsonb_column, dtype: object
+
+            Or select based on the objects *in* an array.
+            With this method, a dict is passed in the `.json[]` selector. The value of the first match with
+            the dict to the objects in a json array is returned for the `.json[]` selector. A match is when
+            all key/value pairs of the dict are found in an object. This can be used for selecting a subset
+            of a json array with objects.
+
+            >>> # selecting from arrays by searching objects in the array.
+            >>> df.jsonb_column.json[:{"j":"k"}].head()
+            _index_0
+            0                      None
+            1                      None
+            2    [{'h': 'i', 'j': 'k'}]
+            Name: jsonb_column, dtype: object
+            >>> # or:
+            >>> df.jsonb_column.json[{"l":["m","n","o"]}:].head()
+            _index_0
+            0                                    None
+            1                                    None
+            2    [{'l': ['m', 'n', 'o']}, {'p': 'q'}]
+            Name: jsonb_column, dtype: object
+            """
             if isinstance(key, int):
                 return self._series_object.copy_override(
                     dtype=self._series_object.return_dtype,
@@ -93,9 +213,13 @@ class SeriesJsonb(Series):
             else:
                 raise TypeError(f'key should be int or slice, actual type: {type(key)}')
 
-        def get_value(self, key: str, as_str=False):
+        def get_value(self, key: str, as_str: bool = False):
             '''
-            as_str: if True, it returns a string, else json
+            Select values from objects by key. Same as using `.json[key]` on the json column.
+
+            :param key: the key to return the values for.
+            :param as_str: if True, it returns a string Series, jsonb otherwise.
+            :returns: series with the selected object value.
             '''
             return_as_string_operator = ''
             return_dtype = self._series_object.return_dtype
@@ -107,22 +231,18 @@ class SeriesJsonb(Series):
                                               Expression.string_value(key))
             return self._series_object.copy_override(dtype=return_dtype, expression=expression)
 
-    def __init__(self,
-                 engine,
-                 base_node: SqlModel,
-                 index: Dict[str, 'Series'],
-                 name: str,
-                 expression: Expression,
-                 group_by: 'GroupBy',
-                 sorted_ascending: Optional[bool] = None):
-        super().__init__(engine=engine,
-                         base_node=base_node,
-                         index=index,
-                         name=name,
-                         expression=expression,
-                         group_by=group_by,
-                         sorted_ascending=sorted_ascending)
-        self.json = self.Json(self)
+    @property
+    def json(self):
+        """
+        Get access to json operations via the class that's return through this accessor.
+        Use as `my_series.json.get_value()` or `my_series.json[:2]`
+
+        .. autoclass:: bach.SeriesJsonb.Json
+            :members:
+            :special-members: __getitem__
+
+        """
+        return self.Json(self)
 
     @classmethod
     def supported_value_to_expression(cls, value: Union[dict, list]) -> Expression:
@@ -153,7 +273,12 @@ class SeriesJsonb(Series):
 
 class SeriesJson(SeriesJsonb):
     """
-    this a proper class, not just a string subclass
+    A Series that represents the json type.
+
+    When `json` data is encountered in a sql table, this dtype is used. In the underlying sql, the data is
+    cast to the jsonb type. As a result all methods of the :py:class:`SeriesJsonb` can also be used with this
+    `json` type series.
+
     """
     dtype = 'json'
     dtype_aliases = tuple()  # type: ignore
