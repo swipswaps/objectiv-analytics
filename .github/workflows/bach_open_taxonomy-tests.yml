@@ -1,4 +1,4 @@
-name: "Objectiv Bach tests: pytest mypy pycodestyle"
+name: "Objectiv Bach Open Taxonomy tests: pytest mypy pycodestyle"
 
 on:
   push:

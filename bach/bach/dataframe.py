@@ -110,6 +110,27 @@ class DataFrame:
     # todo note on ordering for slices?
     # todo 'meaning that they originate from the same data source' ok, by approximation
     # todo _get_dtypes also queries the database
+
+    # A DataFrame holds the state of a set of operations on it's base node
+    #
+    # The main components in this are the dicts of Series that it keeps: `index` and `data`
+    # The `data` Series represent all data columns, possibly waiting for aggregation.
+    # The `index` Series are used as an index in key lookups, but serve no other purpose but for nice
+    # visualisation when converting to pandas Dataframes.
+    #
+    # When a Series is used as an index, it should be free from any pending aggregation (and thus
+    # `Series.group_by` should be None, and its `Series.index` should be `{}`.
+    #
+    # `DataFrame.group_by` should always match the `Series.group_by` for all Series in the `data` dict.
+    #  (and `Series.index` should match `Series.group_by.index`, but that's checked in `Series.__init__`)
+    #
+    # To illustrate (copied verbatim from Series docs):
+    # The rule here: If a series needs a `group_by` to be evaluated, then and only then it should carry that
+    # `group_by`. This implies that index Series coming from `GroupBy.index`, do not carry that `group_by`.
+    # Only the data Series that actually need the aggregation to happen do.
+    #
+    # Order is also tracked in `order_by`. It can either be None or a list of SortColumns. Ordering is mostly
+    # kept throughout operations, but for example materialization resets the sort order.
     def __init__(
             self,
             engine: Engine,
@@ -155,6 +176,8 @@ class DataFrame:
         for value in index.values():
             if value.index != {}:
                 raise ValueError('Index series can not have non-empty index property')
+            if value.group_by:
+                raise ValueError('Index series can not have a group_by')
 
         if group_by is not None and not dict_name_series_equals(group_by.index, index):
             raise ValueError('Index should match group_by index')
@@ -539,6 +562,10 @@ class DataFrame:
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy. Not supported yet.
         :param limit: The limit (slice, int) to apply.
         :returns: New DataFrame with the current DataFrame's state as base_node
+
+        .. note::
+            Calling materialize() resets the order of the dataframe. Call :py:meth:`sort_values()` again on
+            the result if order is important.
         """
         if inplace:
             raise NotImplementedError("inplace materialization is not supported")
@@ -552,7 +579,9 @@ class DataFrame:
             index_dtypes=index_dtypes,
             series_dtypes=series_dtypes,
             group_by=[None],
-            order_by=[]  # filtering rows resets any sorting
+            # materializing resets any sorting as we don't have a way to translate the sorting expressions
+            # to new columns reliably. This needs attention # TODO
+            order_by=[]
         )
 
     def get_sample(self,
@@ -703,29 +732,41 @@ class DataFrame:
             else:
                 single_value = False  # there is no way for us to know. User has to slice the result first
 
+                if key.base_node != self.base_node:
+                    raise ValueError('Cannot apply Boolean series with a different base_node to DataFrame. '
+                                     'Hint: make sure the Boolean series is derived from this DataFrame and '
+                                     'that is has the same group by or use df.merge(series) to merge the '
+                                     'series with the df first, and then create a new Boolean series on the '
+                                     'resulting merged data.')
+
+                # window functions do not have group_by set, but they can't be used without materialization
                 if key.expression.has_windowed_aggregate_function:
                     raise ValueError('Cannot apply a Boolean series containing a window function to '
-                                     'DataFrame. '
-                                     'Hint: materialize() that DataFrame before creating the Boolean series')
+                                     'DataFrame. Hint: materialize() the DataFrame before creating the '
+                                     'Boolean series')
 
-                if key.base_node != self.base_node or key.group_by != self._group_by:
-                    raise ValueError('Cannot apply Boolean series with a different base_node or group by '
-                                     'to DataFrame. '
-                                     'Hint: make sure the Boolean series is derived from this DataFrame and '
-                                     'that is has the same group by. '
-                                     'Alternative: use df.merge(series) to merge the series with the df '
-                                     'first, and then create a new Boolean series on the resulting merged '
-                                     'data.')
+                # If the key has no group_by but the df has, this is a filter before aggregation. This is
+                # supported but it can change the aggregated results.
+                # (A common case is a filter on the columns in the group_by e.g. the index of this df.)
+                # We might come back to this when we keep conditions (where/having) as state.
 
-                if self._group_by is not None and key.expression.has_aggregate_function:
+                # We don't support using aggregated series to filter on a non-aggregated df though:
+                if key.group_by and not self._group_by:
+                    raise ValueError('Can not apply aggregated BooleanSeries to a non-grouped df.'
+                                     'Please merge() the selector df with this df first.')
+
+                # If a group_by is set on both, they have to match.
+                if key.group_by and key.group_by != self._group_by:
+                    raise ValueError('Can not apply aggregated BooleanSeries with non matching group_by.'
+                                     'Please merge() the selector df with thisdf first.')
+
+                if key.group_by is not None and key.expression.has_aggregate_function:
+                    # Create a having-condition if the key is aggregated
                     node = self.get_current_node(
                         name='getitem_having_boolean',
                         having_clause=Expression.construct("having {}", key.expression))
-                elif key.expression.has_aggregate_function:
-                    # This is very weird, does this ever happen?
-                    raise ValueError("Cannot use a Boolean series that contains a non-materialized "
-                                     "aggregation function or a windowing function as Boolean row selector.")
                 else:
+                    # A normal where-condition will do
                     node = self.get_current_node(
                         name='getitem_where_boolean',
                         where_clause=Expression.construct("where {}", key.expression))
@@ -733,7 +774,6 @@ class DataFrame:
             return self.copy_override(
                 base_node=node,
                 group_by=[None],
-                order_by=[],  # filtering rows resets any sorting
                 index_dtypes={name: series.dtype for name, series in self.index.items()},
                 series_dtypes={name: series.dtype for name, series in self.data.items()},
                 single_value=single_value
@@ -765,7 +805,7 @@ class DataFrame:
                 self._data[key] = series
             else:
                 if value.base_node == self.base_node and self._group_by == value.group_by:
-                    self._data[key] = value.copy_override(name=key)
+                    self._data[key] = value.copy_override(name=key, index=self._index)
                 elif value.expression.is_constant:
                     self._data[key] = value.copy_override(name=key, index=self._index,
                                                           group_by=[self._group_by])
@@ -1070,8 +1110,7 @@ class DataFrame:
             base_node=df.base_node,
             index=group_by.index,
             series=new_series,
-            group_by=[group_by],
-            order_by=[])
+            group_by=[group_by])
 
     def groupby(
             self,
@@ -1124,17 +1163,18 @@ class DataFrame:
 
         return DataFrame._groupby_to_frame(df, group_by)
 
-    def window(self,
-               by: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
-               **frame_args) -> 'DataFrame':
+    def window(self, **frame_args) -> 'DataFrame':
         """
-        Create a window on the current dataframe and its sorting.
+        Create a window on the current dataframe grouping and its sorting.
+
+        .. warning::
+            This is an expert method. Use :py:meth:`rolling` or :py:meth:`expanding` if possible.
 
         see :py:class:`bach.partitioning.Window` for parameters.
         """
         # TODO Better argument typing, needs fancy import logic
         from bach.partitioning import Window
-        index = self._partition_by_series(by)
+        index = list(self._group_by.index.values()) if self._group_by else []
         group_by = Window(group_by_columns=index,
                           order_by=self._order_by,
                           **frame_args)
@@ -1159,7 +1199,7 @@ class DataFrame:
                by: Union[str, 'Series', List[Union[str, 'Series']], None],
                ) -> 'DataFrame':
         """
-        Group by and roll up over the column(s) `by`.
+        Group by and roll up over the column(s) `by`, replacing any current grouping.
 
         :param by: the series to group by and roll up. Can be a column or index name str, a Series or a list
             of any of those. If Series are passed, they should have the same base node as the DataFrame.
@@ -1174,15 +1214,15 @@ class DataFrame:
     def rolling(self, window: int,
                 min_periods: int = None,
                 center: bool = False,
-                on: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
                 closed: str = 'right') -> 'DataFrame':
         """
         A rolling window of size 'window', by default right aligned.
 
+        To use grouping as well, first call :py:meth:`group_by` on this frame and call rolling on the result.
+
         :param window: the window size.
         :param min_periods: the min amount of rows included in the window before an actual value is returned.
         :param center: center the result, or align the result on the right.
-        :param on: the partition to use, see :py:meth:`window`.
         :param closed: make the interval closed on the ‘right’, ‘left’, ‘both’ or ‘neither’ endpoints.
             Defaults to ‘right’, and the rest is currently unsupported.
         :returns: a new DataFrame object with the :py:attr:`group_by` attribute set with a
@@ -1191,13 +1231,8 @@ class DataFrame:
         .. note::
             The `win_type`, `axis` and `method` parameters as supported by pandas, are currently not
             implemented.
-
-        .. note::
-            The `on` parameter behaves differently from pandas, where it can be use to select to series
-            to iterate over.
         """
-        from bach.partitioning import WindowFrameBoundary, WindowFrameMode, \
-            Window
+        from bach.partitioning import WindowFrameBoundary, WindowFrameMode, Window
 
         if min_periods is None:
             min_periods = window
@@ -1224,7 +1259,7 @@ class DataFrame:
         else:
             end_boundary = WindowFrameBoundary.FOLLOWING
 
-        index = self._partition_by_series(on)
+        index = list(self._group_by.index.values()) if self._group_by else []
         group_by = Window(group_by_columns=index,
                           order_by=self._order_by,
                           mode=mode,
@@ -1236,18 +1271,15 @@ class DataFrame:
     def expanding(self,
                   min_periods: int = 1,
                   center: bool = False,
-                  on: Union[str, 'Series', List[Union[str, 'Series']], None] = None,
                   ) -> 'DataFrame':
         """
         Create an expanding window starting with the first row in the group, with at least `min_period`
         observations. The result will be right-aligned in the window.
 
+        To use grouping as well, first call :py:meth:`group_by` on this frame and call rolling on the result.
+
         :param min_periods: the minimum amount of observations in the window before a value is reported.
         :param center: whether to center the result, currently not supported.
-        :param on: the partition that will be applied.
-
-        .. note::
-            'partition' is different from pandas, where the partition is determined earlier in the process.
         """
         # TODO We could move the partitioning to GroupBy
         from bach.partitioning import WindowFrameBoundary, WindowFrameMode, \
@@ -1263,7 +1295,7 @@ class DataFrame:
         end_boundary = WindowFrameBoundary.CURRENT_ROW
         end_value = None
 
-        index = self._partition_by_series(on)
+        index = list(self._group_by.index.values()) if self._group_by else []
         group_by = Window(group_by_columns=index,
                           order_by=self._order_by,
                           mode=mode,
@@ -1411,10 +1443,13 @@ class DataFrame:
         where_clause = where_clause if where_clause else Expression.construct('')
         if self._group_by:
 
-            not_aggregated = [s.name for s in self._data.values() if not s.expression.has_aggregate_function]
+            not_aggregated = [s.name for s in self._data.values()
+                              if not s.expression.has_aggregate_function]
             if len(not_aggregated) > 0:
-                raise ValueError(f'Series {not_aggregated} need(s) to have an aggregation function set. '
-                                 f'Setup aggregation through agg() or on all individual series first.')
+                raise ValueError(f'The df has groupby set, but contains Series that have no aggregation '
+                                 f'function yet. Please make sure to first: remove these from the frame, '
+                                 f'setup aggregation through agg(), or on all individual series.'
+                                 f'Unaggregated series: {not_aggregated}')
 
             group_by_column_expr = self.group_by.get_group_by_column_expression()
             if group_by_column_expr:
@@ -1623,7 +1658,19 @@ class DataFrame:
         new_series = df._apply_func_to_series(func, axis, numeric_only,
                                               True,  # exclude_non_applied, must be positional arg.
                                               df.group_by, *args, **kwargs)
-        return df.copy_override(series={s.name: s for s in new_series})
+
+        # If the new series have a different group_by or index, we need to copy that
+        if len(new_series):
+            new_index = new_series[0].index
+            new_group_by = new_series[0].group_by
+
+        if not all(dict_name_series_equals(s.index, new_index)
+                   and s.group_by == new_group_by
+                   for s in new_series):
+            raise ValueError("series do not agree on new index / group_by")
+
+        return df.copy_override(index=new_index, group_by=[new_group_by],
+                                series={s.name: s for s in new_series})
 
     def _aggregate_func(self, func: str, axis, level, numeric_only, *args, **kwargs) -> 'DataFrame':
         """
