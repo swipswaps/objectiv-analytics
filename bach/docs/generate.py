@@ -354,6 +354,7 @@ export const toc = {json.dumps(toc, indent=4)};
     with open(mdx_path, 'w') as target_handle:
         target_handle.write(mdx)
 
+    # TODO fix this comment
     # now write html body to static content directory
     # we load the actual content through the SphinxPages React component, because Docusaurus doesn't
     # like the plain HTML we have, as it tries to interpret it as either MD, or as JSX/TS
