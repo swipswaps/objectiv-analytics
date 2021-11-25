@@ -113,7 +113,7 @@ Object.values(tempDiv.getElementsByTagName('div')).forEach( (element) => {
     }
 });
 
-// TODO fix this
+// TODO Full original logic for reference - below simplified one
 // // get base from window.location, should be something like https://objectiv.io, or http://localhost:3000
 // const currentSite = window.location.toString().match(/^(http[s]?:\/\/[a-z0-9.:]+\/).*?$/);
 //
@@ -144,6 +144,20 @@ Object.values(tempDiv.getElementsByTagName('div')).forEach( (element) => {
 //         a.target = '_blank';
 //     }
 // });
+
+Object.values(tempDiv.getElementsByTagName('a')).forEach( a => {
+    // a link is internal if it's a relative URL
+    const isInternal = !a.href.startsWith('http');
+    // only remove the .html if local links, leave external links alone
+    if (isInternal){
+        a.href = a.href.replace(/\.html/g, '');
+
+        // fix content of (internal) permalinks, change from ¶ to #
+        if ( a.className === 'headerlink' && a.text === '¶' ){
+            a.text = '#';
+        }
+    }
+})
 
 // fix #anchors
 // we do this, by finding sections with a header
@@ -260,30 +274,44 @@ Object.values(tempDiv.querySelectorAll("div.highlight")).forEach( (codeBlockCont
     codeBlockContainer.className = old + " codeBlockContent_node_modules-@docusaurus-theme-classic-lib-next-theme-CodeBlock-styles-module python";
 });
 
-// TODO fixme
-// // tag dynamically created playground link, if present
-// const playgroundLinkElement = tempDiv.querySelector('a[href^="https://notebook.objectiv.io/"]');
-// if (playgroundLinkElement) {
-//     const playgroundLinkTag = tagLink({
-//         id: 'notebook-product-analytics',
-//         href: 'https://notebook.objectiv.io/',
-//         text: 'sandboxed notebook',
-//         options: {
-//             trackClicks: {
-//                 waitUntilTracked: true
-//             }
-//         }
-//     })
-//
-//     // Apply attributes manually (Idea to make this in a new API for WP or other old school websites?)
-//     for (let [key, value] of Object.entries(playgroundLinkTag)) {
-//         playgroundLinkElement.setAttribute(key, value);
-//     }
-// }
+// tag dynamically created playground link, if present
+const playgroundLinkElement = tempDiv.querySelector('a[href^="https://notebook.objectiv.io/"]');
+if (playgroundLinkElement) {
+
+    // TODO Original logic for reference - we don't have a node.js tracker - yet
+    //     const playgroundLinkTag = tagLink({
+    //         id: 'notebook-product-analytics',
+    //         href: 'https://notebook.objectiv.io/',
+    //         text: 'sandboxed notebook',
+    //         options: {
+    //             trackClicks: {
+    //                 waitUntilTracked: true
+    //             }
+    //         }
+    //     })
+
+    const playgroundLinkTag = {
+        'data-objectiv-element-id': 'playgroundLink',
+        'data-objectiv-context': JSON.stringify({
+            _type: 'LinkContext',
+            id: 'notebook-product-analytics',
+            text: 'sandboxed notebook',
+            href: 'https://notebook.objectiv.io/'
+        }),
+        'data-objectiv-track-clicks': JSON.stringify({
+            waitUntilTracked: true
+        }),
+    }
+
+    // Apply attributes manually (Idea to make this in a new API for WP or other old school websites?)
+    for (let [key, value] of Object.entries(playgroundLinkTag)) {
+        playgroundLinkElement.setAttribute(key, value);
+    }
+}
 
 let finalHTML = tempDiv.querySelector('section').innerHTML;
 
-// Change curly bracket blocks to string literals
+// Change cite curly bracket blocks to string literals - FIXME: this breaks code blocks and doesn't really work well
 finalHTML = finalHTML.replace(/{(.*)}/g, "{`{$1}`}")
 
 // Crappy replacements for some things that never change (we can improve this and convert css strings to React styles)
