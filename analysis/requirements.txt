@@ -4,7 +4,7 @@
 
 # requirements for the product_analytics.ipynb notebook
 jupyter
-plotly
-matplotlib
 jupyter-dash
+matplotlib
+plotly
 seaborn
