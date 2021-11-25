@@ -45,6 +45,8 @@ def get_app(Dash, feature_frame, url_base_pathname='/', dash_options=None):
             dcc.Markdown(d("**Add feature to the Feature Frame:**")),
             dcc.Input(id='feature-name', type='text', placeholder='Feature name'),
             html.Button('Add to Feature Frame', id='create-feature', n_clicks=0),
+            dcc.Input(id='search-id', type='text', placeholder='Search id'),
+            html.Button('Search', id='search', n_clicks=0),
             html.Br(),
             dcc.Markdown(d(
                 "**Reset the clicked nodes:**  \n"
@@ -70,8 +72,11 @@ def get_app(Dash, feature_frame, url_base_pathname='/', dash_options=None):
          Input('event', 'value'),
          Input('stack', 'value'),
          Input('start-at', 'value'),
-         Input('end-at', 'value')])
-    def draw_top_graph(node_clicks_data, event_value, stack_value, start_at_value, end_at_value):
+         Input('end-at', 'value'),
+         Input('search', 'n_clicks')],
+        State('search-id', 'value'))
+    def draw_top_graph(node_clicks_data, event_value, stack_value, start_at_value, end_at_value,
+                       search_n_clicks, search_id_value):
         """
         Displays the upper Sankey diagram based on inputs from the app.
 
@@ -97,16 +102,26 @@ def get_app(Dash, feature_frame, url_base_pathname='/', dash_options=None):
         end_at_value : int
             See start_at_value. This will be applied together
             with start_at_value.
-        """
 
-        feature_frame['_sankey_feature'] = feature_frame[stack_value]
+        search_n_clicks : int
+            Current number of clicks on the Search button.
+
+        search_id_value : str
+            The name of the id that is filtered on in the location stack.
+        """
+        prop_id_triggered = callback_context.triggered[0]['prop_id']
+        if prop_id_triggered == 'search.n_clicks':
+            a = feature_frame[feature_frame.location_stack.ls[:{'id':search_id_value}].notnull()]
+        else:
+            a = feature_frame
+        a['_sankey_feature'] = a[stack_value]
         if len(node_clicks_data) > 0:
             for x in node_clicks_data:
-                feature_frame['_sankey_feature'] = feature_frame[stack_value].json[x:]
+                a['_sankey_feature'] = a[stack_value].json[x:]
         if start_at_value is not None or end_at_value is not None:
-            feature_frame['_sankey_feature'] = feature_frame['_sankey_feature'].json[
+            a['_sankey_feature'] = a['_sankey_feature'].json[
                                                start_at_value:end_at_value]
-        filtered_feature_frame = feature_frame[feature_frame['_sankey_feature'].notnull()]
+        filtered_feature_frame = a[a['_sankey_feature'].notnull()]
         if event_value == 'all':
             return filtered_feature_frame.display_sankey('_sankey_feature')
         else:
