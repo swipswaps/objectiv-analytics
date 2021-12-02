@@ -184,8 +184,8 @@ def model_to_name(model: SqlModel):
     """
     # max length of an identifier name in Postgres is normally 63 characters. We'll use that as a cutoff
     # here.
-    if model.specific_name is not None:
-        return model.specific_name[0:63]
+    if model.materialization_name is not None:
+        return model.materialization_name[0:63]
     name = f'{model.generic_name[0:28]}___{model.hash}'
     return name
 
