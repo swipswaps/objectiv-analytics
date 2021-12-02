@@ -5,8 +5,8 @@ from bach.series import SeriesJsonb, SeriesString
 from bach.expression import Expression, quote_string, quote_identifier
 from bach.sql_model import BachSqlModel
 from bach import DataFrame
-from bach.types import register_dtype
-
+from bach.types import register_dtype, get_dtype_from_db_dtype
+from bach_open_taxonomy.stack.util import sessionized_data_model
 
 class ObjectivStack(SeriesJsonb.Json):
     def get_from_context_with_type_series(self, type: str, key: str, dtype='string'):
@@ -237,6 +237,74 @@ class SeriesLocationStack(SeriesJsonb):
 
         """
         return self.LocationStack(self)
+
+class ObjectivFrame(DataFrame):
+    # TODO what if you use the constructor to create a objectiv frame? nothing to prevent you from this.
+    # TODO get_sample returns a normal DataFrame
+    # TODO maybe better to write an extension method that returns a normal DataFrame instead of a subclassed.
+
+    @classmethod
+    def from_table(cls, engine):
+
+
+        table_name = 'data'  # migt make this a parameter later
+
+        sql = f"""
+            select column_name, data_type
+            from information_schema.columns
+            where table_name = '{table_name}'
+            order by ordinal_position
+        """
+        with engine.connect() as conn:
+            res = conn.execute(sql)
+        dtypes = {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
+
+        if dtypes != {'event_id': 'uuid', 'day': 'date', 'moment': 'timestamp', 'cookie_id': 'uuid', 'value': 'json'}:
+            raise KeyError(f'Expected columns not in table {table_name}')
+
+        index_dtype = {'event_id': dtypes.pop('event_id')}
+        # remove key that don't end up in final data.
+        dtypes.pop('value')
+
+        model = sessionized_data_model()
+
+        dtypes.update({'session_id': 'int64',
+                       'session_hit_number':'int64',
+                       'global_contexts':'jsonb',
+                       'location_stack':'jsonb',
+                       'event_type':'string',
+                       'stack_event_types':'jsonb'})
+
+        df = DataFrame.get_instance(engine=engine,
+                                          base_node=model,
+                                          index_dtypes=index_dtype,
+                                          dtypes=dtypes,
+                                          group_by=None
+                                          )
+
+        df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
+        df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
+
+        return cls(engine=df.engine,
+                         base_node=df.base_node,
+                         index=df.index,
+                         series=df._data,
+                         group_by=None)
+
+
+
+    @staticmethod
+    def from_model():
+        raise NotImplementedError('Use ObjectivFrame.from_table(engine) to instantiate')
+
+    @staticmethod
+    def from_pandas():
+        raise NotImplementedError('Use ObjectivFrame.from_table(engine) to instantiate')
+
+    @staticmethod
+    def get_instance():
+        raise NotImplementedError('Use ObjectivFrame.from_table(engine) to instantiate')
+
 
 
 class FeatureFrame(DataFrame):
