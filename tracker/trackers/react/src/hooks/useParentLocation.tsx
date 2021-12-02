@@ -4,6 +4,9 @@
 
 import { useLocationStack } from './useLocationStack';
 
+/**
+ * A utility hook to retrieve the parent LocationStackEntry. Returns `null` if there is no parent.
+ */
 export const useParentLocation = () => {
   const locationStack = useLocationStack();
 

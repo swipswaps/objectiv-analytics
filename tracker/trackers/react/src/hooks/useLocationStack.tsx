@@ -5,6 +5,9 @@
 import { useContext } from 'react';
 import { LocationStackContext } from '../common/LocationStackProvider';
 
+/**
+ * A utility hook to easily retrieve the LocationStack from the LocationStackContext.
+ */
 export const useLocationStack = () => {
   const locationStackContext = useContext(LocationStackContext);
 

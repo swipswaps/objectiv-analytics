@@ -6,6 +6,9 @@ import { makeLinkContext } from '@objectiv/tracker-core';
 import { LinkContextWrapperProps } from '../types';
 import { LocationContextWrapper } from './LocationContextWrapper';
 
+/**
+ * Wraps its children in a LinkContext.
+ */
 export const LinkContextWrapper = ({ children, id, text, href }: LinkContextWrapperProps) => (
   <LocationContextWrapper locationContext={makeLinkContext({ id, text, href })}>{children}</LocationContextWrapper>
 );

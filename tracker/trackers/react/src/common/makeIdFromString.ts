@@ -2,6 +2,10 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+/**
+ * Converts the given text to a standardized format to be used as identifier for Location Contexts.
+ * This may be used, among others, to infer a valid identifier from the title / label of a Button.
+ */
 export const makeIdFromString = (sourceString: string): string => {
   const id = sourceString
     // Convert to lowercase

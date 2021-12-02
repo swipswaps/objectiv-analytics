@@ -5,6 +5,9 @@
 import { useContext } from 'react';
 import { TrackerContext } from '../common/TrackerProvider';
 
+/**
+ * A utility hook to easily retrieve the Tracker instance from the TrackerContext.
+ */
 export const useTracker = () => {
   const trackerContext = useContext(TrackerContext);
 

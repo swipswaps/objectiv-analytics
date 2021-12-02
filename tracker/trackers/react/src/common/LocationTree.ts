@@ -6,10 +6,30 @@ import { AbstractLocationContext } from '@objectiv/schema';
 import { getLocationPath } from '@objectiv/tracker-core';
 import { LocationNode, LocationStackEntry, RootLocationNode } from '../types';
 
+/**
+ * Internal state to hold the complete known LocationTree.
+ * Each node, exception made for the root one, carries a unique identifier and a Location Context.
+ * All nodes may have children LocationNodes.
+ */
 const locationTree: RootLocationNode = { id: null, locationContext: null, children: [] };
+
+/**
+ * Internal state to keep track of which identifiers are already known for a certain issue. This is used to prevent
+ * notifying the developer of the same issues multiple times.
+ *
+ * NOTE: Currently we support only `collision` issues. As more checks are implemented this Map may change.
+ */
 const errorCache = new Map<string, 'collision'>();
 
+/**
+ * LocationTree is a global object providing a few utility methods to interact with the `locationTree` global state.
+ * LocationContextWrapper makes sure to add new LocationNodes to the tree whenever a Location Wrapper is used.
+ */
 export const LocationTree = {
+
+  /**
+   * Logs a readable version of the `locationTree` state to the console
+   */
   log: (locationNode: LocationNode | RootLocationNode = locationTree, depth = 0) => {
     if (!locationNode) {
       return;
@@ -24,6 +44,10 @@ export const LocationTree = {
     locationNode.children.forEach((locationChildNode) => LocationTree.log(locationChildNode, depth));
   },
 
+  /**
+   * Finds a node by its id recursively. Returns `null` if a node cannot be found with the given identifier.
+   * A starting node, other than the whole `locationTree` state, can be specified.
+   */
   find: (
     id: string | null,
     locationNode: LocationNode | RootLocationNode = locationTree
@@ -40,6 +64,12 @@ export const LocationTree = {
     return result;
   },
 
+  /**
+   * Checks the validity of the `locationTree` state.
+   * Currently we perform only Uniqueness Check: if identical branches are detected they will be logged to the console.
+   *
+   * Note: This method is invoked automatically when calling `LocationTree.add`.
+   */
   validate: (
     locationNode: LocationNode | RootLocationNode = locationTree,
     locationStack: AbstractLocationContext[] = [],
@@ -67,6 +97,12 @@ export const LocationTree = {
     children.map((childLocationNode) => LocationTree.validate(childLocationNode, [...locationStack], locationPaths));
   },
 
+  /**
+   * Wraps the given LocationStackEntry in a LocationNode and adds it to the `locationTree` state, then invokes
+   * `LocationTree.validate` to report any issues.
+   *
+   * Note: This method is invoked automatically by LocationContextWrapper.
+   */
   add: (locationStackEntry: LocationStackEntry, parentLocationId: string | null) => {
     const parentLocationNode = LocationTree.find(parentLocationId);
     if (!parentLocationNode) {

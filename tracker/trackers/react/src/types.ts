@@ -6,68 +6,172 @@ import { AbstractLocationContext } from '@objectiv/schema';
 import { Tracker } from '@objectiv/tracker-core';
 import { ReactNode, useEffect } from 'react';
 
+/**
+ * The entry in a LocationStackContext.locationStack
+ */
 export type LocationStackEntry = {
+  /**
+   * A unique identifier, generated at rendering time, used internally to identify a Location Context uniquely
+   */
   id: string;
+
+  /**
+   * A LocationContext instance
+   */
   locationContext: AbstractLocationContext;
 };
 
+/**
+ * LocationTree state root node.
+ */
 export type RootLocationNode = {
+  /**
+   * The root node of the LocationTree is just a placeholder to contain children. Thus it has no identifier.
+   */
   id: null;
+
+  /**
+   * The root node of the LocationTree is just a placeholder to contain children. Thus it has no locationContext.
+   */
   locationContext: null;
+
+  /**
+   * An array of LocationNode objects, which may contain more children themselves.
+   */
   children: LocationNode[];
 };
 
+/**
+ * LocationTree nodes have the same shape of LocationStackEntries but they can have children LocationNodes themselves.
+ */
 export type LocationNode = LocationStackEntry & {
+  /**
+   * An array of LocationNode objects, which may contain more children themselves.
+   */
   children: LocationNode[];
 };
 
+/**
+ * LocationStackContext state has only one attribute holding an array of LocationStackEntries.
+ */
 export type LocationStackContextState = {
+  /**
+   * An array of LocationStackEntry objects.
+   */
   locationStack: LocationStackEntry[];
 };
 
+/**
+ * The props of LocationStackProvider.
+ */
 export type LocationStackProviderProps = LocationStackContextState & {
+  /**
+   * LocationStackProvider children can also be a function (render props).
+   */
   children: ReactNode | ((parameters: LocationStackContextState) => void);
 };
 
+/**
+ * TrackerContextState state has only one attribute holding an instance of the Tracker.
+ */
 export type TrackerContextState = {
+  /**
+   * A Core Tracker instance.
+   */
   tracker: Tracker;
 };
 
+/**
+ * The props of TrackerProvider.
+ */
 export type TrackerProviderProps = TrackerContextState & {
+  /**
+   * TrackerProvider children can also be a function (render props).
+   */
   children: ReactNode | ((parameters: TrackerContextState & LocationStackContextState) => void);
 };
 
+/**
+ * The props of LocationContextWrapper.
+ */
 export type LocationContextWrapperProps = Pick<LocationStackProviderProps, 'children'> & {
+  /**
+   * A LocationContext instance.
+   */
   locationContext: AbstractLocationContext;
 };
 
+/**
+ * The props of SectionContextWrapper.
+ */
 export type SectionContextWrapperProps = Pick<LocationContextWrapperProps, 'children'> & {
+  /**
+   * All SectionContexts must have an identifier. This should be something readable representing the section in the UI.
+   * Sibling Components cannot have the same identifier.
+   */
   id: string;
 };
 
+/**
+ * The props of ActionContextWrapper.
+ */
 export type ActionContextWrapperProps = SectionContextWrapperProps & {
+  /**
+   * A description of what the action is about.
+   */
   text: string;
 };
 
 export type ButtonContextWrapperProps = SectionContextWrapperProps & {
+  /**
+   * The label / title of the Button or a description of what it is about.
+   */
   text: string;
 };
 
+/**
+ * The props of LinkContextWrapper.
+ */
 export type LinkContextWrapperProps = SectionContextWrapperProps & {
+  /**
+   * The text / label / title of the Link or a description of what it is about.
+   */
   text: string;
+
+  /**
+   * Where is the link leading to. Eg: the href attribute of a <a> tag or the `to` prop of a Link component.
+   */
   href: string;
 };
 
+/**
+ * The props of ExpandableSectionWrapper. No extra attributes, same as SectionContextWrapper.
+ */
 export type ExpandableSectionContextWrapperProps = SectionContextWrapperProps;
 
+/**
+ * The props of MediaPlayerContextWrapper. No extra attributes, same as SectionContextWrapper.
+ */
 export type MediaPlayerContextWrapperProps = SectionContextWrapperProps;
 
+/**
+ * The props of NavigationContextWrapper. No extra attributes, same as SectionContextWrapper.
+ */
 export type NavigationContextWrapperProps = SectionContextWrapperProps;
 
+/**
+ * The props of OverlayContextWrapper. No extra attributes, same as SectionContextWrapper.
+ */
 export type OverlayContextWrapperProps = SectionContextWrapperProps;
 
+/**
+ * The props of ItemContextWrapper. No extra attributes, same as SectionContextWrapper.
+ */
 export type ItemContextWrapperProps = SectionContextWrapperProps;
 
+/**
+ * The props of InputContextWrapper. No extra attributes, same as SectionContextWrapper.
+ */
 export type InputContextWrapperProps = SectionContextWrapperProps;
 
 /**

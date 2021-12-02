@@ -4,6 +4,14 @@
 
 import { isValidElement, ReactNode } from 'react';
 
+/**
+ * Recursively traverses the given ReactNode's children in an attempt to retrieve their texts.
+ * The resulting text may be may be used, among others, to infer a valid text and identifier for a Button.
+ *
+ * String Nodes are returned as is, Number nodes are converted to strings and Array children are recursively processed.
+ *
+ * @see makeIdFromString
+ */
 export const makeTextFromChildren = (children: ReactNode): string => {
   // Return strings as they are
   if (typeof children === 'string') {
