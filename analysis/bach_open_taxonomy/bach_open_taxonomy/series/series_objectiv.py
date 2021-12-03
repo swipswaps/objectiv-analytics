@@ -346,6 +346,7 @@ class ObjectivFrame(DataFrame):
     # def apply_feature_frame_sample_changes(self, feature_frame):
     #     # todo some assertions that this works
     #     # todo this way would be nice if we can apply changes directly on top of self (instead of merge)
+    #     #  merge is super slow
     #
     #     created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
     #                                                                   'event_type',
@@ -360,10 +361,6 @@ class ObjectivFrame(DataFrame):
         df = feature_frame[['location_stack', 'event_type'] + created_features]
         df['feature_hash'] = df._hash_features()
         self['feature_hash'] = self._hash_features()
-        # print(f'{df.head()=}')
-        # print(f'{self.head()=}')
-        # print(f"{feature_frame[created_features + ['feature_hash']].head()=}")
-
 
         return self.merge(df[created_features + ['feature_hash']].reset_index(drop=True), on='feature_hash')
 
