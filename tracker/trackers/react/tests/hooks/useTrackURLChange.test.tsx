@@ -60,20 +60,4 @@ describe('useTrackURLChange', () => {
     expect(tracker.trackEvent).toHaveBeenCalledWith(expect.objectContaining({ _type: 'URLChangeEvent' }));
     expect(renderSpy).toHaveBeenCalledTimes(2);
   });
-
-
-
-
-
-  // it('should allow overriding the tracker with a custom one', () => {
-  //   const spyTransport2 = {
-  //     transportName: 'spyTransport2',
-  //     handle: jest.fn(),
-  //     isUsable: () => true,
-  //   };
-  //   const anotherTracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport2 });
-  //   renderHook(() => useTrackURLChange(anotherTracker));
-  //
-  //   // TODO JSDOM doesn't support mocking location out of the box
-  // });
 });
