@@ -1,7 +1,11 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect, useState } from 'react';
-import { ReactTracker, TrackerProvider, useTrackOnChange } from '../src';
+import { ReactTracker, TrackerProvider, useTrackOnChange } from '../../src';
 
 describe('useTrackOnChange', () => {
   beforeEach(() => {

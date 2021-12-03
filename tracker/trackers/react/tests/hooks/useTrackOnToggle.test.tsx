@@ -1,8 +1,12 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { makeSectionHiddenEvent, makeSectionVisibleEvent } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect, useState } from 'react';
-import { ReactTracker, TrackerProvider, useTrackOnToggle } from '../src';
+import { ReactTracker, TrackerProvider, useTrackOnToggle } from '../../src';
 
 describe('useTrackOnToggle', () => {
   beforeEach(() => {

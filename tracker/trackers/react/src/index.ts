@@ -8,6 +8,18 @@ export * from './common/makeIdFromString';
 export * from './common/makeTextFromChildren';
 export * from './common/TrackerProvider';
 
+export * from './eventTrackers/trackAborted';
+export * from './eventTrackers/trackApplicationLoaded';
+export * from './eventTrackers/trackClick';
+export * from './eventTrackers/trackCompleted';
+export * from './eventTrackers/trackInputChange';
+export * from './eventTrackers/trackSectionHidden';
+export * from './eventTrackers/trackSectionVisible';
+export * from './eventTrackers/trackURLChange';
+export * from './eventTrackers/trackVideoPause';
+export * from './eventTrackers/trackVideoStart';
+export * from './eventTrackers/trackVisibility';
+
 export * from './hooks/useLocationStack';
 export * from './hooks/useMakeLocationStackEntry';
 export * from './hooks/useOnChange';

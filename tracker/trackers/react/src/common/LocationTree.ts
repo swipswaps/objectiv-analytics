@@ -26,7 +26,6 @@ const errorCache = new Map<string, 'collision'>();
  * LocationContextWrapper makes sure to add new LocationNodes to the tree whenever a Location Wrapper is used.
  */
 export const LocationTree = {
-
   /**
    * Logs a readable version of the `locationTree` state to the console
    */

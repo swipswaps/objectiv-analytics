@@ -7,7 +7,7 @@ import { ExpandableSectionContextWrapperProps } from '../types';
 import { LocationContextWrapper } from './LocationContextWrapper';
 
 /**
- * Wraps its children in a ExpandableSectionContext.
+ * Wraps its children in an ExpandableSectionContext.
  */
 export const ExpandableSectionContextWrapper = ({ children, id }: ExpandableSectionContextWrapperProps) => (
   <LocationContextWrapper locationContext={makeExpandableSectionContext({ id })}>{children}</LocationContextWrapper>

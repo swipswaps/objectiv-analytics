@@ -3,8 +3,9 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import { Tracker } from '@objectiv/tracker-core';
+import { GlobalContexts, LocationStack, Tracker, UntrackedEvent } from '@objectiv/tracker-core';
 import { ReactNode, useEffect } from 'react';
+import { ReactTracker } from './ReactTracker';
 
 /**
  * The entry in a LocationStackContext.locationStack
@@ -76,7 +77,7 @@ export type LocationStackProviderProps = LocationStackContextState & {
  */
 export type TrackerContextState = {
   /**
-   * A Core Tracker instance.
+   * A Tracker instance.
    */
   tracker: Tracker;
 };
@@ -188,3 +189,48 @@ export type OnToggleEffectCallback = (previousState: boolean, state: boolean) =>
  * A useEffect Destructor
  */
 export type EffectDestructor = () => ReturnType<typeof useEffect>;
+
+/**
+ * The parameters of `trackEvent`
+ */
+export type TrackEventParameters = {
+  /**
+   * A freshly factored Event that has not been handed over to a Tracker yet
+   */
+  event: UntrackedEvent;
+
+  /**
+   * A Tracker instance.
+   */
+  tracker: ReactTracker;
+};
+
+/**
+ * The parameters of Event Tracker shorthand functions
+ */
+export type EventTrackerParameters = {
+  /**
+   * A Tracker instance.
+   */
+  tracker: ReactTracker;
+
+  /**
+   * Optional. Additional Location Contexts to merge in the Event's LocationStack
+   */
+  locationStack?: LocationStack;
+
+  /**
+   * Optional. Additional Location Contexts to merge in the Event's GlobalContexts
+   */
+  globalContexts?: GlobalContexts;
+};
+
+/**
+ * The parameters of `trackVisibility`
+ */
+export type TrackVisibilityParameters = EventTrackerParameters & {
+  /**
+   * Determines whether a SectionVisibleEvent or a SectionHidden event is tracked
+   */
+  isVisible: boolean;
+};

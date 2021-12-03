@@ -1,8 +1,12 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { makeSectionHiddenEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect } from 'react';
-import { ReactTracker, TrackerProvider, useTrackOnUnmount } from '../src';
+import { ReactTracker, TrackerProvider, useTrackOnUnmount } from '../../src';
 
 describe('useTrackOnUnmount', () => {
   beforeEach(() => {

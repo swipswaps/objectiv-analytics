@@ -1,5 +1,9 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { renderHook } from '@testing-library/react-hooks';
-import { useOnChange } from '../src/';
+import { useOnChange } from '../../src/';
 
 describe('useOnChange', () => {
   const initialState = { property: 1, attribute: 'a' };
