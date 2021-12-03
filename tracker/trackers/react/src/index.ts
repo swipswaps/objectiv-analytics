@@ -6,6 +6,7 @@ export * from './common/LocationStackProvider';
 export * from './common/LocationTree';
 export * from './common/makeIdFromString';
 export * from './common/makeTextFromChildren';
+export * from './common/ObjectivProvider';
 export * from './common/TrackerProvider';
 
 export * from './eventTrackers/trackAborted';
@@ -26,6 +27,8 @@ export * from './hooks/useOnChange';
 export * from './hooks/useOnMount';
 export * from './hooks/useOnToggle';
 export * from './hooks/useOnUnmount';
+export * from './hooks/useParentLocation';
+export * from './hooks/useTrackApplicationLoaded';
 export * from './hooks/useTracker';
 export * from './hooks/useTrackOnChange';
 export * from './hooks/useTrackOnMount';

@@ -2,9 +2,8 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { createContext, useContext } from 'react';
-import { LocationStackEntry, TrackerContextState, TrackerProviderProps } from '../types';
-import { LocationStackContext, LocationStackProvider } from './LocationStackProvider';
+import { createContext } from 'react';
+import { TrackerContextState, TrackerProviderProps } from '../types';
 
 /**
  * A Context to retrieve a Tracker instance.
@@ -13,20 +12,16 @@ import { LocationStackContext, LocationStackProvider } from './LocationStackProv
 export const TrackerContext = createContext<null | TrackerContextState>(null);
 
 /**
- * TrackerProvider wraps its children with TrackerContext.Provider and LocationStackProvider. It's meant to be used as
+ * TrackerProvider wraps its children with TrackerContext.Provider. It's meant to be used as
  * high as possible in the Component tree. Children gain access to both the Tracker and their LocationStack.
  *
- * All LocationWrappers and `useTrackOn*` hooks require to be wrapped in TrackerProvider to function.
+ * All LocationWrappers and `useTrack*` hooks require to be wrapped in TrackerProvider to function.
+ *
+ * @see LocationStackProvider
+ * @see ObjectivProvider
  */
-export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => {
-  const locationStackContext = useContext(LocationStackContext);
-  const locationStack: LocationStackEntry[] = locationStackContext?.locationStack ?? [];
-
-  return (
-    <TrackerContext.Provider value={{ tracker }}>
-      <LocationStackProvider locationStack={locationStack}>
-        {typeof children === 'function' ? children({ tracker, locationStack }) : children}
-      </LocationStackProvider>
-    </TrackerContext.Provider>
-  );
-};
+export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => (
+  <TrackerContext.Provider value={{ tracker }}>
+    {children}
+  </TrackerContext.Provider>
+);
