@@ -2,8 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 import { makeSectionHiddenEvent, makeSectionVisibleEvent } from "@objectiv/tracker-core";
-import { TrackVisibilityParameters } from "@objectiv/tracker-react";
-
+import { TrackVisibilityParameters } from "../types";
 
 /**
  * Factors either a SectionVisibleEvent or a SectionHiddenEvent, depending on the given `isVisible` parameter, and

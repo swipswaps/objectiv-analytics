@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 import { makeClickEvent } from "@objectiv/tracker-core";
-import { EventTrackerParameters } from "@objectiv/tracker-react";
+import { EventTrackerParameters } from "../types";
 
 /**
  * Factors a ClickEvent and hands it over to the given `tracker` via its `trackEvent` method.

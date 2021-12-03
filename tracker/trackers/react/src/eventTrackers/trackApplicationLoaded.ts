@@ -3,7 +3,7 @@
  */
 
 import { makeApplicationLoadedEvent } from "@objectiv/tracker-core";
-import { EventTrackerParameters } from "@objectiv/tracker-react";
+import { EventTrackerParameters } from "../types";
 
 /**
  * Factors an ApplicationLoadedEvent and hands it over to the given `tracker` via its `trackEvent` method.
