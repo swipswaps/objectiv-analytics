@@ -34,6 +34,7 @@ export * from './hooks/useTrackOnChange';
 export * from './hooks/useTrackOnMount';
 export * from './hooks/useTrackOnToggle';
 export * from './hooks/useTrackOnUnmount';
+export * from './hooks/useTrackURLChange';
 
 export * from './locationWrappers/ActionContextWrapper';
 export * from './locationWrappers/ButtonContextWrapper';
