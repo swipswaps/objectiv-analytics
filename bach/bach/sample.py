@@ -38,10 +38,6 @@ def get_sample(df: DataFrame,
         # Boolean argument implies return type of self[filter], help mypy a bit
         df = cast('DataFrame', df[filter])
 
-    if df._group_by is not None:
-        raise NotImplementedError('Dataframes that have an active grouping can currently not be sampled. '
-                                  'Call df.materialize() first.')
-
     with df.engine.connect() as conn:
         if overwrite:
             sql = f'DROP TABLE IF EXISTS {quote_identifier(table_name)}'
