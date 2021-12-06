@@ -3,7 +3,7 @@
  */
 
 import { makeURLChangeEvent } from '@objectiv/tracker-core';
-import { ReactTracker, trackURLChangeEvent } from '../../src';
+import { ReactTracker, trackURLChangeEvent } from '../src';
 
 describe('trackURLChange', () => {
   it('should track a URLChangeEvent', () => {

@@ -3,7 +3,7 @@
  */
 
 import { renderHook } from '@testing-library/react-hooks';
-import { useOnUnmount } from '../../src';
+import { useOnUnmount } from '../src';
 
 describe('useOnUnmount', () => {
   const mockEffectCallback = jest.fn();

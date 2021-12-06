@@ -3,7 +3,7 @@
  */
 
 import { makeClickEvent } from '@objectiv/tracker-core';
-import { ReactTracker, trackClickEvent } from '../../src';
+import { ReactTracker, trackClickEvent } from '../src';
 
 describe('trackClick', () => {
   it('should track a ClickEvent', () => {

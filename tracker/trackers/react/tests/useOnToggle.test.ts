@@ -1,5 +1,9 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { renderHook } from '@testing-library/react-hooks';
-import { useOnToggle } from '../../src';
+import { useOnToggle } from '../src';
 
 describe('useOnToggle', () => {
   const initialState = false;

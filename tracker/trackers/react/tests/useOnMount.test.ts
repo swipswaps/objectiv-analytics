@@ -3,7 +3,7 @@
  */
 
 import { renderHook } from '@testing-library/react-hooks';
-import { useOnMount } from '../../src';
+import { useOnMount } from '../src';
 
 describe('useOnMount', () => {
   const mockEffectCallback = jest.fn();

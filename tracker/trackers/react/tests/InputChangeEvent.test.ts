@@ -3,7 +3,7 @@
  */
 
 import { makeInputChangeEvent } from '@objectiv/tracker-core';
-import { ReactTracker, trackInputChangeEvent } from '../../src';
+import { ReactTracker, trackInputChangeEvent } from '../src';
 
 describe('trackInputChange', () => {
   it('should track an InputChangeEvent', () => {

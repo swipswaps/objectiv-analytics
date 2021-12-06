@@ -3,7 +3,7 @@
  */
 
 import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
-import { ReactTracker, trackSectionVisibleEvent } from '../../src';
+import { ReactTracker, trackSectionVisibleEvent } from '../src';
 
 describe('trackSectionVisible', () => {
   it('should track a SectionVisibleEvent', () => {

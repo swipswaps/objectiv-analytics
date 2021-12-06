@@ -10,7 +10,7 @@ import {
   trackApplicationLoadedEvent,
   TrackerProvider,
   useApplicationLoadedEventTracker,
-} from '../../src';
+} from '../src';
 
 describe('trackApplicationLoaded', () => {
   beforeEach(() => {

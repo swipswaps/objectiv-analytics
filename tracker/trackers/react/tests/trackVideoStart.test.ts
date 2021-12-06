@@ -3,7 +3,7 @@
  */
 
 import { makeVideoStartEvent } from '@objectiv/tracker-core';
-import { ReactTracker, trackVideoStartEvent } from '../../src';
+import { ReactTracker, trackVideoStartEvent } from '../src';
 
 describe('trackVideoStart', () => {
   it('should track a VideoStartEvent', () => {

@@ -3,7 +3,7 @@
  */
 
 import { makeCompletedEvent } from '@objectiv/tracker-core';
-import { ReactTracker, trackCompletedEvent } from '../../src';
+import { ReactTracker, trackCompletedEvent } from '../src';
 
 describe('trackCompleted', () => {
   it('should track a CompletedEvent', () => {

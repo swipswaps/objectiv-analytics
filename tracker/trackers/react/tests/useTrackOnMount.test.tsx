@@ -6,7 +6,7 @@ import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect } from 'react';
-import { ReactTracker, TrackerProvider, useTrackOnMount } from '../../src';
+import { ReactTracker, TrackerProvider, useTrackOnMount } from '../src';
 
 describe('useTrackOnMount', () => {
   beforeEach(() => {

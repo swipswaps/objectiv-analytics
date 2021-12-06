@@ -3,7 +3,7 @@
  */
 
 import { makeAbortedEvent } from '@objectiv/tracker-core';
-import { ReactTracker, trackAbortedEvent } from '../../src';
+import { ReactTracker, trackAbortedEvent } from '../src';
 
 describe('trackAborted', () => {
   it('should track an AbortedEvent', () => {

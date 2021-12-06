@@ -1,7 +1,11 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect } from 'react';
-import { ReactTracker, useTrackApplicationLoadedEvent } from '../../src';
+import { ReactTracker, useTrackApplicationLoadedEvent } from '../src';
 
 describe('useTrackApplicationLoaded', () => {
   const renderSpy = jest.fn();

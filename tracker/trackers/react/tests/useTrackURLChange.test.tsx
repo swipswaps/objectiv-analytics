@@ -1,6 +1,10 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { render } from '@testing-library/react';
 import { useEffect } from 'react';
-import { ReactTracker, useTrackURLChangeEvent } from '../../src';
+import { ReactTracker, useTrackURLChangeEvent } from '../src';
 
 describe('useTrackURLChange', () => {
   beforeEach(() => {

@@ -3,7 +3,7 @@
  */
 
 import { makeVideoPauseEvent } from '@objectiv/tracker-core';
-import { ReactTracker, trackVideoPauseEvent } from '../../src';
+import { ReactTracker, trackVideoPauseEvent } from '../src';
 
 describe('trackVideoPause', () => {
   it('should track a VideoPauseEvent', () => {
