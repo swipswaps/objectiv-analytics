@@ -66,9 +66,7 @@ describe('trackApplicationLoaded', () => {
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
         <ActionContextWrapper {...actionContextProps}>
-          {({ tracker, locationStack }) => (
-            <span onClick={() => trackClickEvent({ tracker, locationStack })}>Trigger Event</span>
-          )}
+          {(trackingContext) => <span onClick={() => trackClickEvent(trackingContext)}>Trigger Event</span>}
         </ActionContextWrapper>
       </ObjectivProvider>
     );
@@ -96,6 +94,5 @@ describe('trackApplicationLoaded', () => {
         ],
       })
     );
-    // TODO check location stack
   });
 });

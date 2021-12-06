@@ -2,23 +2,24 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { LocationStackProvider } from '../common/LocationStackProvider';
-import { useMakeLocationStackEntry } from '../hooks/useMakeLocationStackEntry';
+import { LocationProvider } from '../common/LocationProvider';
+import { useMakeLocationEntry } from '../hooks/useMakeLocationEntry';
 import { useTracker } from '../hooks/useTracker';
 import { LocationContextWrapperProps } from '../types';
 
 /**
- * Wraps its children in the given LocationContext by factoring a new LocationStackEntry for the LocationStackProvider.
+ * Wraps its children in the given LocationContext by factoring a new LocationEntry for the LocationProvider.
+ * When used via render-props provides its children with LocationProviderContextState and TrackerState.
  */
 export const LocationContextWrapper = ({ children, locationContext }: LocationContextWrapperProps) => {
   const tracker = useTracker();
-  const locationStackEntry = useMakeLocationStackEntry(locationContext);
+  const locationEntry = useMakeLocationEntry(locationContext);
 
   return (
-    <LocationStackProvider locationStackEntries={[locationStackEntry]}>
-      {(locationStackContextState) =>
-        typeof children === 'function' ? children({ tracker, ...locationStackContextState }) : children
+    <LocationProvider locationEntries={[locationEntry]}>
+      {(locationProviderContextState) =>
+        typeof children === 'function' ? children({ tracker, ...locationProviderContextState }) : children
       }
-    </LocationStackProvider>
+    </LocationProvider>
   );
 };

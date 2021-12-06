@@ -6,15 +6,15 @@ import { useContext } from 'react';
 import { LocationProviderContext } from '../common/LocationProvider';
 
 /**
- * A utility hook to easily retrieve the LocationStack from the LocationProviderContext.
+ * A utility hook to easily retrieve the list of LocationEntry from the LocationProviderContext.
  */
-export const useLocationStack = () => {
+export const useLocationEntries = () => {
   const locationProviderContext = useContext(LocationProviderContext);
 
   if (!locationProviderContext) {
     throw new Error(`Couldn't get LocationStack. Is the Component in a LocationProvider or ObjectivProvider?`);
   }
 
-  // Return a clone of the actual Location Stack to safeguard against mutations
-  return [...locationProviderContext.locationStack];
+  // Return a clone of the actual Location Entries to safeguard against mutations
+  return [...locationProviderContext.locationEntries];
 };

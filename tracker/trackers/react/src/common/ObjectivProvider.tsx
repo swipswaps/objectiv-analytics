@@ -5,19 +5,19 @@
 import { useContext } from 'react';
 import { trackApplicationLoadedEvent } from '../eventTrackers/trackApplicationLoadedEvent';
 import { trackURLChangeEvent } from '../eventTrackers/trackURLChangeEvent';
-import { LocationStackEntry, TrackerProviderProps } from '../types';
-import { LocationStackContext, LocationStackProvider } from './LocationStackProvider';
+import { LocationEntry, TrackerProviderProps } from '../types';
+import { LocationProviderContext, LocationProvider } from './LocationProvider';
 import { TrackerProvider } from './TrackerProvider';
 
 /**
- * ObjectivProvider wraps its children with TrackerProvider and LocationStackProvider. It's meant to be used as
+ * ObjectivProvider wraps its children with TrackerProvider and LocationProvider. It's meant to be used as
  * high as possible in the Component tree. Children gain access to both the Tracker and their LocationStack.
  *
  * TrackerProvider can track ApplicationLoadedEvent and URLChangeEvent automatically.
  */
 export const ObjectivProvider = ({ children, tracker }: TrackerProviderProps) => {
-  const locationStackContext = useContext(LocationStackContext);
-  const locationStackEntries: LocationStackEntry[] = locationStackContext?.locationStackEntries ?? [];
+  const locationProviderContext = useContext(LocationProviderContext);
+  const locationEntries: LocationEntry[] = locationProviderContext?.locationEntries ?? [];
 
   // TODO make configurable
   trackApplicationLoadedEvent({ tracker });
@@ -25,11 +25,11 @@ export const ObjectivProvider = ({ children, tracker }: TrackerProviderProps) =>
 
   return (
     <TrackerProvider tracker={tracker}>
-      <LocationStackProvider locationStackEntries={locationStackEntries}>
-        {(locationStackContextState) =>
-          typeof children === 'function' ? children({ tracker, ...locationStackContextState }) : children
+      <LocationProvider locationEntries={locationEntries}>
+        {(locationProviderContextState) =>
+          typeof children === 'function' ? children({ tracker, ...locationProviderContextState }) : children
         }
-      </LocationStackProvider>
+      </LocationProvider>
     </TrackerProvider>
   );
 };

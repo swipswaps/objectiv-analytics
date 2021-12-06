@@ -4,7 +4,7 @@
 
 import { AbstractLocationContext } from '@objectiv/schema';
 import { getLocationPath } from '@objectiv/tracker-core';
-import { LocationNode, LocationStackEntry, RootLocationNode } from '../types';
+import { LocationNode, LocationEntry, RootLocationNode } from '../types';
 
 /**
  * Internal state to hold the complete known LocationTree.
@@ -97,18 +97,18 @@ export const LocationTree = {
   },
 
   /**
-   * Wraps the given LocationStackEntry in a LocationNode and adds it to the `locationTree` state, then invokes
+   * Wraps the given LocationEntry in a LocationNode and adds it to the `locationTree` state, then invokes
    * `LocationTree.validate` to report any issues.
    *
    * Note: This method is invoked automatically by LocationContextWrapper.
    */
-  add: (locationStackEntry: LocationStackEntry, parentLocationId: string | null) => {
+  add: (locationEntry: LocationEntry, parentLocationId: string | null) => {
     const parentLocationNode = LocationTree.find(parentLocationId);
     if (!parentLocationNode) {
       throw new Error('Parent not found');
     }
 
-    parentLocationNode.children.push({ ...locationStackEntry, children: [] });
+    parentLocationNode.children.push({ ...locationEntry, children: [] });
 
     LocationTree.validate();
   },

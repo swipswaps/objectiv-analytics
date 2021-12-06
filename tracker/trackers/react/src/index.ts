@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-export * from './common/LocationStackProvider';
+export * from './common/LocationProvider';
 export * from './common/LocationTree';
 export * from './common/makeIdFromString';
 export * from './common/makeTextFromChildren';
@@ -26,14 +26,14 @@ export * from './hooks/useApplicationLoadedEventTracker';
 export * from './hooks/useClickEventTracker';
 export * from './hooks/useCompletedEventTracker';
 export * from './hooks/useInputChangeEventTracker';
+export * from './hooks/useLocationEntries';
 export * from './hooks/useLocationStack';
-export * from './hooks/useLocationStackEntries';
-export * from './hooks/useMakeLocationStackEntry';
+export * from './hooks/useMakeLocationEntry';
 export * from './hooks/useOnChange';
 export * from './hooks/useOnMount';
 export * from './hooks/useOnToggle';
 export * from './hooks/useOnUnmount';
-export * from './hooks/useParentLocation';
+export * from './hooks/useParentLocationEntry';
 export * from './hooks/useSectionHiddenEventTracker';
 export * from './hooks/useSectionVisibleEventTracker';
 export * from './hooks/useTrackApplicationLoadedEvent';

@@ -4,7 +4,7 @@
 
 import { makeClickEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { LocationStackProvider, ReactTracker, trackClickEvent, TrackerProvider, useClickEventTracker } from '../src';
+import { LocationProvider, ReactTracker, trackClickEvent, TrackerProvider, useClickEventTracker } from '../src';
 
 describe('ClickEvent', () => {
   beforeEach(() => {
@@ -38,9 +38,9 @@ describe('ClickEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <LocationStackProvider locationStackEntries={[]}>
+        <LocationProvider locationEntries={[]}>
           <Component />
-        </LocationStackProvider>
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -64,9 +64,9 @@ describe('ClickEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <LocationStackProvider locationStackEntries={[]}>
+        <LocationProvider locationEntries={[]}>
           <Component />
-        </LocationStackProvider>
+        </LocationProvider>
       </TrackerProvider>
     );
 
