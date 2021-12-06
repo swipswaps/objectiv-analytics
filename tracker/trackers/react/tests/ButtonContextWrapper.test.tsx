@@ -3,9 +3,9 @@
  */
 
 import { fireEvent, getByText, render } from '@testing-library/react';
-import { ActionContextWrapper, ObjectivProvider, ReactTracker, trackClickEvent, useClickEventTracker } from '../src';
+import { ButtonContextWrapper, ObjectivProvider, ReactTracker, trackClickEvent, useClickEventTracker } from '../src';
 
-describe('ActionContextWrapper', () => {
+describe('ButtonContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -14,21 +14,21 @@ describe('ActionContextWrapper', () => {
     jest.resetAllMocks();
   });
 
-  it('should wrap the given children in a ActionContext (trigger via Component)', () => {
+  it('should wrap the given children in a ButtonContext (trigger via Component)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const actionContextProps = { id: 'test-action', text: 'text' };
-    const ClickableSpan = () => {
+    const buttonContextProps = { id: 'test-button', text: 'text' };
+    const TrackedButton = () => {
       const trackClickEvent = useClickEventTracker();
-      return <span onClick={trackClickEvent}>Trigger Event</span>;
+      return <button onClick={trackClickEvent}>Trigger Event</button>;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <ActionContextWrapper {...actionContextProps}>
-          <ClickableSpan />
-        </ActionContextWrapper>
+        <ButtonContextWrapper {...buttonContextProps}>
+          <TrackedButton />
+        </ButtonContextWrapper>
       </ObjectivProvider>
     );
 
@@ -43,25 +43,25 @@ describe('ActionContextWrapper', () => {
         _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'ActionContext',
-            ...actionContextProps,
+            _type: 'ButtonContext',
+            ...buttonContextProps,
           }),
         ],
       })
     );
   });
 
-  it('should wrap the given children in a ActionContext (trigger via render-props)', () => {
+  it('should wrap the given children in a ButtonContext (trigger via render-props)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const actionContextProps = { id: 'test-action', text: 'text' };
+    const buttonContextProps = { id: 'test-button', text: 'text' };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <ActionContextWrapper {...actionContextProps}>
-          {(trackingContext) => <span onClick={() => trackClickEvent(trackingContext)}>Trigger Event</span>}
-        </ActionContextWrapper>
+        <ButtonContextWrapper {...buttonContextProps}>
+          {(trackingContext) => <button onClick={() => trackClickEvent(trackingContext)}>Trigger Event</button>}
+        </ButtonContextWrapper>
       </ObjectivProvider>
     );
 
@@ -76,8 +76,8 @@ describe('ActionContextWrapper', () => {
         _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'ActionContext',
-            ...actionContextProps,
+            _type: 'ButtonContext',
+            ...buttonContextProps,
           }),
         ],
       })

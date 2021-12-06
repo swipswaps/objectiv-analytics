@@ -4,7 +4,7 @@
 
 import { makeSectionHiddenEvent, makeSectionVisibleEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackerProvider, trackVisibility } from '../src';
+import { LocationProvider, ReactTracker, TrackerProvider, trackVisibility } from '../src';
 import { useVisibilityTracker } from '../src/hooks/useVisibilityTracker';
 
 describe('Visibility', () => {
@@ -39,7 +39,9 @@ describe('Visibility', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -63,7 +65,9 @@ describe('Visibility', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -95,7 +99,9 @@ describe('Visibility', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -119,7 +125,9 @@ describe('Visibility', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 

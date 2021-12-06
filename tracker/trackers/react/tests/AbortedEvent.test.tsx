@@ -4,7 +4,7 @@
 
 import { makeAbortedEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackAbortedEvent, TrackerProvider, useAbortedEventTracker } from '../src';
+import { LocationProvider, ReactTracker, trackAbortedEvent, TrackerProvider, useAbortedEventTracker } from '../src';
 
 describe('AbortedEvent', () => {
   beforeEach(() => {
@@ -38,7 +38,9 @@ describe('AbortedEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -62,7 +64,9 @@ describe('AbortedEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 

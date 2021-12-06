@@ -4,7 +4,13 @@
 
 import { makeVideoStartEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackerProvider, trackVideoStartEvent, useVideoStartEventTracker } from '../src';
+import {
+  LocationProvider,
+  ReactTracker,
+  TrackerProvider,
+  trackVideoStartEvent,
+  useVideoStartEventTracker,
+} from '../src';
 
 describe('trackVideoStart', () => {
   beforeEach(() => {
@@ -38,7 +44,9 @@ describe('trackVideoStart', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -62,7 +70,9 @@ describe('trackVideoStart', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 

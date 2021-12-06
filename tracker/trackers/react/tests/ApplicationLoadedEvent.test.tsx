@@ -4,13 +4,7 @@
 
 import { makeApplicationLoadedEvent, makeURLChangeEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import {
-  ObjectivProvider,
-  ReactTracker,
-  trackApplicationLoadedEvent,
-  TrackerProvider,
-  useApplicationLoadedEventTracker,
-} from '../src';
+import { ObjectivProvider, ReactTracker, trackApplicationLoadedEvent, useApplicationLoadedEventTracker } from '../src';
 
 describe('trackApplicationLoaded', () => {
   beforeEach(() => {
@@ -54,14 +48,14 @@ describe('trackApplicationLoaded', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
+      <ObjectivProvider tracker={tracker}>
         <Component />
-      </TrackerProvider>
+      </ObjectivProvider>
     );
 
-    expect(spyTransport.handle).toHaveBeenCalledTimes(1);
+    expect(spyTransport.handle).toHaveBeenCalledTimes(3);
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
-      1,
+      3,
       expect.objectContaining({ _type: 'ApplicationLoadedEvent' })
     );
   });
@@ -81,12 +75,12 @@ describe('trackApplicationLoaded', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
+      <ObjectivProvider tracker={tracker}>
         <Component />
-      </TrackerProvider>
+      </ObjectivProvider>
     );
 
-    expect(tracker.trackEvent).not.toHaveBeenCalled();
+    expect(tracker.trackEvent).toHaveBeenCalledTimes(2);
     expect(customTracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(customTracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeApplicationLoadedEvent()));
   });

@@ -4,18 +4,16 @@
 
 import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackerProvider, trackSectionVisibleEvent, useSectionVisibleEventTracker } from '../src';
+import {
+  LocationProvider,
+  ReactTracker,
+  TrackerProvider,
+  trackSectionVisibleEvent,
+  useSectionVisibleEventTracker,
+} from '../src';
 
 describe('SectionVisibleEvent', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
-  it('should track a SectionVisibleEvent (programmatic)', () => {
+  it('should track a SectionVisibleEvent', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
@@ -38,7 +36,9 @@ describe('SectionVisibleEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -62,7 +62,9 @@ describe('SectionVisibleEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 

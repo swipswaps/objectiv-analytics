@@ -1,6 +1,10 @@
-import { Tracker, TrackerEventConfig } from '@objectiv/tracker-core';
+import { TrackerEventConfig } from '@objectiv/tracker-core';
+import { ReactTracker } from '../ReactTracker';
 import { useOnToggle } from './useOnToggle';
 import { useTracker } from './useTracker';
+
+//FIXME switch to props
+//FIXME add useLocationStack
 
 /**
  * A variant of the trackOnChange side effect that monitors a boolean `state` and runs the given `trueEvent` or
@@ -10,7 +14,7 @@ export const useTrackOnToggle = (
   state: boolean,
   trueEvent: TrackerEventConfig,
   falseEvent: TrackerEventConfig,
-  tracker: Tracker = useTracker()
+  tracker: ReactTracker = useTracker()
 ) =>
   useOnToggle(
     state,

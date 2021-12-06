@@ -10,5 +10,7 @@ import { LocationContextWrapper } from './LocationContextWrapper';
  * Wraps its children in an ExpandableSectionContext.
  */
 export const ExpandableSectionContextWrapper = ({ children, id }: ExpandableSectionContextWrapperProps) => (
-  <LocationContextWrapper locationContext={makeExpandableSectionContext({ id })}>{children}</LocationContextWrapper>
+  <LocationContextWrapper locationContext={makeExpandableSectionContext({ id })}>
+    {(trackingContext) => (typeof children === 'function' ? children(trackingContext) : children)}
+  </LocationContextWrapper>
 );

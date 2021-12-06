@@ -4,7 +4,13 @@
 
 import { makeVideoPauseEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackerProvider, trackVideoPauseEvent, useVideoPauseEventTracker } from '../src';
+import {
+  LocationProvider,
+  ReactTracker,
+  TrackerProvider,
+  trackVideoPauseEvent,
+  useVideoPauseEventTracker,
+} from '../src';
 
 describe('trackVideoPause', () => {
   beforeEach(() => {
@@ -38,7 +44,9 @@ describe('trackVideoPause', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -62,7 +70,9 @@ describe('trackVideoPause', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 

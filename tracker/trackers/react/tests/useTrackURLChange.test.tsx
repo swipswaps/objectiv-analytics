@@ -3,8 +3,8 @@
  */
 
 import { render } from '@testing-library/react';
-import { useEffect } from 'react';
-import { ReactTracker, useTrackURLChangeEvent } from '../src';
+import { FC, useEffect } from 'react';
+import { LocationProvider, ReactTracker, TrackerProvider, useTrackURLChangeEvent } from '../src';
 
 describe('useTrackURLChange', () => {
   beforeEach(() => {
@@ -29,30 +29,42 @@ describe('useTrackURLChange', () => {
     return null;
   };
 
+  const TrackingContext: FC = ({ children }) => (
+    <TrackerProvider tracker={tracker}>
+      <LocationProvider locationEntries={[]}>{children}</LocationProvider>
+    </TrackerProvider>
+  );
+
+  const Application = () => (
+    <TrackingContext>
+      <TrackURLChanges />
+    </TrackingContext>
+  );
+
   it('should not execute on mount', () => {
-    render(<TrackURLChanges />);
+    render(<Application />);
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(0);
     expect(renderSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should not execute on re-render if URL did not change', () => {
-    const { rerender } = render(<TrackURLChanges />);
+    const { rerender } = render(<Application />);
 
-    rerender(<TrackURLChanges />);
-    rerender(<TrackURLChanges />);
-    rerender(<TrackURLChanges />);
+    rerender(<Application />);
+    rerender(<Application />);
+    rerender(<Application />);
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(0);
     expect(renderSpy).toHaveBeenCalledTimes(4);
   });
 
   it('should execute on re-render if the URL changed', () => {
-    const { rerender } = render(<TrackURLChanges />);
+    const { rerender } = render(<Application />);
 
     location.href = 'https://test2';
 
-    rerender(<TrackURLChanges />);
+    rerender(<Application />);
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(tracker.trackEvent).toHaveBeenCalledWith(expect.objectContaining({ _type: 'URLChangeEvent' }));

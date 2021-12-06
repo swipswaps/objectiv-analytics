@@ -4,7 +4,7 @@
 
 import { makeCompletedEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackCompletedEvent, TrackerProvider, useCompletedEventTracker } from '../src';
+import { LocationProvider, ReactTracker, trackCompletedEvent, TrackerProvider, useCompletedEventTracker } from '../src';
 
 describe('CompletedEvent', () => {
   beforeEach(() => {
@@ -38,7 +38,9 @@ describe('CompletedEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -62,7 +64,9 @@ describe('CompletedEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 

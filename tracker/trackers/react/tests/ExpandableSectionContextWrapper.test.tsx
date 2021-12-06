@@ -3,9 +3,15 @@
  */
 
 import { fireEvent, getByText, render } from '@testing-library/react';
-import { ActionContextWrapper, ObjectivProvider, ReactTracker, trackClickEvent, useClickEventTracker } from '../src';
+import {
+  ExpandableSectionContextWrapper,
+  ObjectivProvider,
+  ReactTracker,
+  trackClickEvent,
+  useClickEventTracker,
+} from '../src';
 
-describe('ActionContextWrapper', () => {
+describe('ExpandableSectionContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -14,21 +20,21 @@ describe('ActionContextWrapper', () => {
     jest.resetAllMocks();
   });
 
-  it('should wrap the given children in a ActionContext (trigger via Component)', () => {
+  it('should wrap the given children in a ExpandableSectionContext (trigger via Component)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const actionContextProps = { id: 'test-action', text: 'text' };
-    const ClickableSpan = () => {
+    const expandableSectionContextProps = { id: 'test-expandable-section' };
+    const ClickableDiv = () => {
       const trackClickEvent = useClickEventTracker();
       return <span onClick={trackClickEvent}>Trigger Event</span>;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <ActionContextWrapper {...actionContextProps}>
-          <ClickableSpan />
-        </ActionContextWrapper>
+        <ExpandableSectionContextWrapper {...expandableSectionContextProps}>
+          <ClickableDiv />
+        </ExpandableSectionContextWrapper>
       </ObjectivProvider>
     );
 
@@ -43,25 +49,25 @@ describe('ActionContextWrapper', () => {
         _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'ActionContext',
-            ...actionContextProps,
+            _type: 'ExpandableSectionContext',
+            ...expandableSectionContextProps,
           }),
         ],
       })
     );
   });
 
-  it('should wrap the given children in a ActionContext (trigger via render-props)', () => {
+  it('should wrap the given children in a ExpandableSectionContext (trigger via render-props)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const actionContextProps = { id: 'test-action', text: 'text' };
+    const expandableSectionContextProps = { id: 'test-expandable-section' };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <ActionContextWrapper {...actionContextProps}>
-          {(trackingContext) => <span onClick={() => trackClickEvent(trackingContext)}>Trigger Event</span>}
-        </ActionContextWrapper>
+        <ExpandableSectionContextWrapper {...expandableSectionContextProps}>
+          {(trackingContext) => <div onClick={() => trackClickEvent(trackingContext)}>Trigger Event</div>}
+        </ExpandableSectionContextWrapper>
       </ObjectivProvider>
     );
 
@@ -76,8 +82,8 @@ describe('ActionContextWrapper', () => {
         _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'ActionContext',
-            ...actionContextProps,
+            _type: 'ExpandableSectionContext',
+            ...expandableSectionContextProps,
           }),
         ],
       })

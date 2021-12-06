@@ -10,5 +10,7 @@ import { LocationContextWrapper } from './LocationContextWrapper';
  * Wraps its children in a SectionContext.
  */
 export const SectionContextWrapper = ({ children, id }: SectionContextWrapperProps) => (
-  <LocationContextWrapper locationContext={makeSectionContext({ id })}>{children}</LocationContextWrapper>
+  <LocationContextWrapper locationContext={makeSectionContext({ id })}>
+    {(trackingContext) => (typeof children === 'function' ? children(trackingContext) : children)}
+  </LocationContextWrapper>
 );

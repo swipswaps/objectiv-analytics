@@ -10,5 +10,7 @@ import { LocationContextWrapper } from './LocationContextWrapper';
  * Wraps its children in a ButtonContext.
  */
 export const ButtonContextWrapper = ({ children, id, text }: ButtonContextWrapperProps) => (
-  <LocationContextWrapper locationContext={makeButtonContext({ id, text })}>{children}</LocationContextWrapper>
+  <LocationContextWrapper locationContext={makeButtonContext({ id, text })}>
+    {(trackingContext) => (typeof children === 'function' ? children(trackingContext) : children)}
+  </LocationContextWrapper>
 );

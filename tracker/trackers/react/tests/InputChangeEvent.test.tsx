@@ -4,7 +4,13 @@
 
 import { makeInputChangeEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackerProvider, trackInputChangeEvent, useInputChangeEventTracker } from '../src';
+import {
+  LocationProvider,
+  ReactTracker,
+  TrackerProvider,
+  trackInputChangeEvent,
+  useInputChangeEventTracker,
+} from '../src';
 
 describe('InputChangeEvent', () => {
   beforeEach(() => {
@@ -38,7 +44,9 @@ describe('InputChangeEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -62,7 +70,9 @@ describe('InputChangeEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 

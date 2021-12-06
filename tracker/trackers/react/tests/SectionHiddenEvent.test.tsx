@@ -4,17 +4,15 @@
 
 import { makeSectionHiddenEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackerProvider, trackSectionHiddenEvent, useSectionHiddenEventTracker } from '../src';
+import {
+  LocationProvider,
+  ReactTracker,
+  TrackerProvider,
+  trackSectionHiddenEvent,
+  useSectionHiddenEventTracker,
+} from '../src';
 
 describe('SectionHiddenEvent', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-  });
-
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   it('should track a SectionHiddenEvent (programmatic)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
@@ -25,7 +23,7 @@ describe('SectionHiddenEvent', () => {
     expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()));
   });
 
-  it('should track a SectionHiddenEvent (hook relying on ObjectivProvider)', () => {
+  it('should track an SectionHiddenEvent (hook relying on ObjectivProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
@@ -38,7 +36,9 @@ describe('SectionHiddenEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -46,7 +46,7 @@ describe('SectionHiddenEvent', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'SectionHiddenEvent' }));
   });
 
-  it('should track a SectionHiddenEvent (hook with custom tracker)', () => {
+  it('should track an SectionHiddenEvent (hook with custom tracker)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
@@ -62,7 +62,9 @@ describe('SectionHiddenEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 

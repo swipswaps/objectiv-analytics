@@ -4,8 +4,8 @@
 
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
-import { useEffect } from 'react';
-import { ReactTracker, useTrackApplicationLoadedEvent } from '../src';
+import { FC, useEffect } from 'react';
+import { LocationProvider, ReactTracker, TrackerProvider, useTrackApplicationLoadedEvent } from '../src';
 
 describe('useTrackApplicationLoaded', () => {
   const renderSpy = jest.fn();
@@ -20,13 +20,25 @@ describe('useTrackApplicationLoaded', () => {
     jest.resetAllMocks();
   });
 
-  const Application = () => {
+  const TrackApplicationLoaded = () => {
     useTrackApplicationLoadedEvent(tracker);
 
     useEffect(renderSpy);
 
     return <>Test application</>;
   };
+
+  const TrackingContext: FC = ({ children }) => (
+    <TrackerProvider tracker={tracker}>
+      <LocationProvider locationEntries={[]}>{children}</LocationProvider>
+    </TrackerProvider>
+  );
+
+  const Application = () => (
+    <TrackingContext>
+      <TrackApplicationLoaded />
+    </TrackingContext>
+  );
 
   it('should execute once on mount', () => {
     render(<Application />);
@@ -59,7 +71,7 @@ describe('useTrackApplicationLoaded', () => {
     const tracker2 = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker2, 'trackEvent');
 
-    renderHook(() => useTrackApplicationLoadedEvent(tracker2));
+    renderHook(() => useTrackApplicationLoadedEvent(tracker2), { wrapper: TrackingContext });
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(tracker2.trackEvent).toHaveBeenCalledTimes(1);

@@ -4,7 +4,7 @@
 
 import { makeURLChangeEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackerProvider, trackURLChangeEvent, useURLChangeEventTracker } from '../src';
+import { LocationProvider, ReactTracker, TrackerProvider, trackURLChangeEvent, useURLChangeEventTracker } from '../src';
 
 describe('URLChangeEvent', () => {
   beforeEach(() => {
@@ -38,7 +38,9 @@ describe('URLChangeEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 
@@ -62,7 +64,9 @@ describe('URLChangeEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationProvider locationEntries={[]}>
+          <Component />
+        </LocationProvider>
       </TrackerProvider>
     );
 

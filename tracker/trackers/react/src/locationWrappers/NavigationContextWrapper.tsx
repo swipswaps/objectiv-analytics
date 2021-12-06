@@ -10,5 +10,7 @@ import { LocationContextWrapper } from './LocationContextWrapper';
  * Wraps its children in a NavigationContext.
  */
 export const NavigationContextWrapper = ({ children, id }: NavigationContextWrapperProps) => (
-  <LocationContextWrapper locationContext={makeNavigationContext({ id })}>{children}</LocationContextWrapper>
+  <LocationContextWrapper locationContext={makeNavigationContext({ id })}>
+    {(trackingContext) => (typeof children === 'function' ? children(trackingContext) : children)}
+  </LocationContextWrapper>
 );
