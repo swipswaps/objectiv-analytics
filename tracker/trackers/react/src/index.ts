@@ -19,7 +19,7 @@ export * from './eventTrackers/trackSectionVisibleEvent';
 export * from './eventTrackers/trackURLChangeEvent';
 export * from './eventTrackers/trackVideoPauseEvent';
 export * from './eventTrackers/trackVideoStartEvent';
-export * from './eventTrackers/trackVisibilityEvent';
+export * from './eventTrackers/trackVisibility';
 
 export * from './hooks/useAbortedEventTracker';
 export * from './hooks/useApplicationLoadedEventTracker';

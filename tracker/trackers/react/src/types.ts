@@ -226,7 +226,7 @@ export type EventTrackerParameters = {
 };
 
 /**
- * The parameters of `trackVisibilityEvent`
+ * The parameters of `trackVisibility`
  */
 export type TrackVisibilityParameters = EventTrackerParameters & {
   /**

@@ -47,10 +47,10 @@ describe('trackApplicationLoaded', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const Component = () => {
-      const trackApplicationLoaded = useApplicationLoadedEventTracker();
-      trackApplicationLoaded();
+      const trackApplicationLoadedEvent = useApplicationLoadedEventTracker();
+      trackApplicationLoadedEvent();
 
-      return <>Component triggering Application Loaded</>;
+      return <>Component triggering ApplicationLoadedEvent</>;
     };
 
     render(
@@ -74,10 +74,10 @@ describe('trackApplicationLoaded', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackApplicationLoaded = useApplicationLoadedEventTracker(customTracker);
-      trackApplicationLoaded();
+      const trackApplicationLoadedEvent = useApplicationLoadedEventTracker(customTracker);
+      trackApplicationLoadedEvent();
 
-      return <>Component triggering Application Loaded</>;
+      return <>Component triggering ApplicationLoadedEvent</>;
     };
 
     render(
