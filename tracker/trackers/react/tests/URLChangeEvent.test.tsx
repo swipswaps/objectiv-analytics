@@ -7,6 +7,14 @@ import { render } from '@testing-library/react';
 import { ReactTracker, TrackerProvider, trackURLChangeEvent, useURLChangeEventTracker } from '../src';
 
 describe('URLChangeEvent', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should track a URLChangeEvent (programmatic)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');

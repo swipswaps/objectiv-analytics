@@ -27,6 +27,7 @@ export * from './hooks/useClickEventTracker';
 export * from './hooks/useCompletedEventTracker';
 export * from './hooks/useInputChangeEventTracker';
 export * from './hooks/useLocationStack';
+export * from './hooks/useLocationStackEntries';
 export * from './hooks/useMakeLocationStackEntry';
 export * from './hooks/useOnChange';
 export * from './hooks/useOnMount';

@@ -7,6 +7,14 @@ import { render } from '@testing-library/react';
 import { ReactTracker, TrackerProvider, trackSectionVisibleEvent, useSectionVisibleEventTracker } from '../src';
 
 describe('SectionVisibleEvent', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should track a SectionVisibleEvent (programmatic)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');

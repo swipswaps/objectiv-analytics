@@ -7,6 +7,14 @@ import { render } from '@testing-library/react';
 import { ReactTracker, TrackerProvider, trackSectionHiddenEvent, useSectionHiddenEventTracker } from '../src';
 
 describe('SectionHiddenEvent', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should track a SectionHiddenEvent (programmatic)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');

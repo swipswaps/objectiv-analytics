@@ -7,6 +7,14 @@ import { render } from '@testing-library/react';
 import { ReactTracker, TrackerProvider, trackVideoPauseEvent, useVideoPauseEventTracker } from '../src';
 
 describe('trackVideoPause', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should track a VideoPauseEvent (programmatic)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');

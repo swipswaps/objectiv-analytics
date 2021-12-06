@@ -21,5 +21,7 @@ export const TrackerContext = createContext<null | TrackerContextState>(null);
  * @see ObjectivProvider
  */
 export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => (
-  <TrackerContext.Provider value={{ tracker }}>{children}</TrackerContext.Provider>
+  <TrackerContext.Provider value={{ tracker }}>
+    {typeof children === 'function' ? children({ tracker }) : children}
+  </TrackerContext.Provider>
 );

@@ -7,6 +7,14 @@ import { render } from '@testing-library/react';
 import { ReactTracker, TrackerProvider, trackVideoStartEvent, useVideoStartEventTracker } from '../src';
 
 describe('trackVideoStart', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should track a VideoStartEvent', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');

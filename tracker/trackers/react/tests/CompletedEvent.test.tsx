@@ -7,6 +7,14 @@ import { render } from '@testing-library/react';
 import { ReactTracker, trackCompletedEvent, TrackerProvider, useCompletedEventTracker } from '../src';
 
 describe('CompletedEvent', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should track a CompletedEvent (programmatic)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');

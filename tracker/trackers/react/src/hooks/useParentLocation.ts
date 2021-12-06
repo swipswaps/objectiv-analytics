@@ -2,13 +2,13 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { useLocationStack } from './useLocationStack';
+import { useLocationStackEntries } from './useLocationStackEntries';
 
 /**
  * A utility hook to retrieve the parent LocationStackEntry. Returns `null` if there is no parent.
  */
 export const useParentLocation = () => {
-  const locationStack = useLocationStack();
+  const locationStack = useLocationStackEntries();
 
   if (!locationStack.length) {
     return null;

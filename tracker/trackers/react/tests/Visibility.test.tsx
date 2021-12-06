@@ -8,6 +8,14 @@ import { ReactTracker, TrackerProvider, trackVisibility } from '../src';
 import { useVisibilityTracker } from '../src/hooks/useVisibilityTracker';
 
 describe('Visibility', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should track a SectionHiddenEvent (programmatic)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');

@@ -17,7 +17,7 @@ import { TrackerProvider } from './TrackerProvider';
  */
 export const ObjectivProvider = ({ children, tracker }: TrackerProviderProps) => {
   const locationStackContext = useContext(LocationStackContext);
-  const locationStack: LocationStackEntry[] = locationStackContext?.locationStack ?? [];
+  const locationStackEntries: LocationStackEntry[] = locationStackContext?.locationStackEntries ?? [];
 
   // TODO make configurable
   trackApplicationLoadedEvent({ tracker });
@@ -25,8 +25,10 @@ export const ObjectivProvider = ({ children, tracker }: TrackerProviderProps) =>
 
   return (
     <TrackerProvider tracker={tracker}>
-      <LocationStackProvider locationStack={locationStack}>
-        {typeof children === 'function' ? children({ tracker, locationStack }) : children}
+      <LocationStackProvider locationStackEntries={locationStackEntries}>
+        {(locationStackContextState) =>
+          typeof children === 'function' ? children({ tracker, ...locationStackContextState }) : children
+        }
       </LocationStackProvider>
     </TrackerProvider>
   );

@@ -4,9 +4,17 @@
 
 import { makeClickEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackClickEvent, TrackerProvider, useClickEventTracker } from '../src';
+import { LocationStackProvider, ReactTracker, trackClickEvent, TrackerProvider, useClickEventTracker } from '../src';
 
 describe('ClickEvent', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should track a ClickEvent (programmatic)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
@@ -30,7 +38,9 @@ describe('ClickEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationStackProvider locationStackEntries={[]}>
+          <Component />
+        </LocationStackProvider>
       </TrackerProvider>
     );
 
@@ -54,7 +64,9 @@ describe('ClickEvent', () => {
 
     render(
       <TrackerProvider tracker={tracker}>
-        <Component />
+        <LocationStackProvider locationStackEntries={[]}>
+          <Component />
+        </LocationStackProvider>
       </TrackerProvider>
     );
 

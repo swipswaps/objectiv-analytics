@@ -10,5 +10,7 @@ import { LocationContextWrapper } from './LocationContextWrapper';
  * Wraps its children in an ActionContext.
  */
 export const ActionContextWrapper = ({ children, id, text }: ActionContextWrapperProps) => (
-  <LocationContextWrapper locationContext={makeActionContext({ id, text })}>{children}</LocationContextWrapper>
+  <LocationContextWrapper locationContext={makeActionContext({ id, text })}>
+    {(locationStackContextState) => (typeof children === 'function' ? children(locationStackContextState) : children)}
+  </LocationContextWrapper>
 );

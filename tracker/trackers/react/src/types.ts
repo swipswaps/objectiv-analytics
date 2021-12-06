@@ -57,15 +57,20 @@ export type LocationNode = LocationStackEntry & {
  */
 export type LocationStackContextState = {
   /**
-   * An array of LocationStackEntry objects.
+   * An array of LocationStackEntry objects. Each entry represents a LocationContext uniquely in the application.
    */
-  locationStack: LocationStackEntry[];
+  locationStackEntries: LocationStackEntry[];
+
+  /**
+   * An array of AbstractLocationContext objects. LocationContexts may be reused multiple times in different Locations.
+   */
+  locationStack: AbstractLocationContext[];
 };
 
 /**
  * The props of LocationStackProvider.
  */
-export type LocationStackProviderProps = LocationStackContextState & {
+export type LocationStackProviderProps = Pick<LocationStackContextState, 'locationStackEntries'> & {
   /**
    * LocationStackProvider children can also be a function (render props).
    */
@@ -89,17 +94,22 @@ export type TrackerProviderProps = TrackerContextState & {
   /**
    * TrackerProvider children can also be a function (render props).
    */
-  children: ReactNode | ((parameters: TrackerContextState & LocationStackContextState) => void);
+  children: ReactNode | ((parameters: TrackerContextState) => void);
 };
 
 /**
  * The props of LocationContextWrapper.
  */
-export type LocationContextWrapperProps = Pick<LocationStackProviderProps, 'children'> & {
+export type LocationContextWrapperProps = {
   /**
    * A LocationContext instance.
    */
   locationContext: AbstractLocationContext;
+
+  /**
+   * LocationContextWrapper children can also be a function (render props).
+   */
+  children: ReactNode | ((parameters: TrackerContextState & LocationStackContextState) => void);
 };
 
 /**

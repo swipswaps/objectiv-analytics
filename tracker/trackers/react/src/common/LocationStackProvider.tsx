@@ -15,10 +15,14 @@ export const LocationStackContext = createContext<null | LocationStackContextSta
  * LocationStackProvider inherits the LocationStack from its parent LocationStackProvider and adds its own Location
  * Contexts to it, effectively extending the stack with one or more LocationStackEntries.
  */
-export const LocationStackProvider = ({ children, locationStack }: LocationStackProviderProps) => {
+export const LocationStackProvider = ({ children, locationStackEntries }: LocationStackProviderProps) => {
   const locationStackContext = useContext(LocationStackContext);
-  const existingLocationStack = locationStackContext?.locationStack ?? [];
-  const newLocationStackContextState = { locationStack: [...existingLocationStack, ...locationStack] };
+  const existingLocationStackEntries = locationStackContext?.locationStackEntries ?? [];
+  const newLocationStackEntries = [...existingLocationStackEntries, ...locationStackEntries];
+  const newLocationStackContextState: LocationStackContextState = {
+    locationStackEntries: newLocationStackEntries,
+    locationStack: newLocationStackEntries.map((locationStackEntry) => locationStackEntry.locationContext),
+  };
 
   return (
     <LocationStackContext.Provider value={newLocationStackContextState}>
