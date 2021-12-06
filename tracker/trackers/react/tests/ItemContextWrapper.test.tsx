@@ -3,15 +3,9 @@
  */
 
 import { fireEvent, getByTestId, render } from '@testing-library/react';
-import {
-  InputContextWrapper,
-  ObjectivProvider,
-  ReactTracker,
-  trackInputChangeEvent,
-  useInputChangeEventTracker,
-} from '../src';
+import { ItemContextWrapper, ObjectivProvider, ReactTracker, trackClickEvent, useClickEventTracker } from '../src';
 
-describe('InputContextWrapper', () => {
+describe('ItemContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -20,70 +14,72 @@ describe('InputContextWrapper', () => {
     jest.resetAllMocks();
   });
 
-  it('should wrap the given children in a InputContext (trigger via Component)', () => {
+  it('should wrap the given children in a ItemContext (trigger via Component)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const inputContextProps = { id: 'test-input' };
-    const TrackedTextInput = () => {
-      const trackInputChangeEvent = useInputChangeEventTracker();
-      return <input data-testid="input" type="text" onBlur={trackInputChangeEvent} />;
+    const itemContextProps = { id: 'test-item' };
+    const TrackedIcon = () => {
+      const trackClickEvent = useClickEventTracker();
+      return <img onClick={trackClickEvent} data-testid={'img'} alt={'test'} />;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <InputContextWrapper {...inputContextProps}>
-          <TrackedTextInput />
-        </InputContextWrapper>
+        <ItemContextWrapper {...itemContextProps}>
+          <TrackedIcon />
+        </ItemContextWrapper>
       </ObjectivProvider>
     );
 
     jest.resetAllMocks();
 
-    fireEvent.blur(getByTestId(container, 'input'));
+    fireEvent.click(getByTestId(container, 'img'));
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'InputChangeEvent',
+        _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'InputContext',
-            ...inputContextProps,
+            _type: 'ItemContext',
+            ...itemContextProps,
           }),
         ],
       })
     );
   });
 
-  it('should wrap the given children in a InputContext (trigger via render-props)', () => {
+  it('should wrap the given children in a ItemContext (trigger via render-props)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const inputContextProps = { id: 'test-input' };
+    const itemContextProps = { id: 'test-item' };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <InputContextWrapper {...inputContextProps}>
-          {(trackingContext) => <input data-testid="input" onBlur={() => trackInputChangeEvent(trackingContext)} />}
-        </InputContextWrapper>
+        <ItemContextWrapper {...itemContextProps}>
+          {(trackingContext) => (
+            <img onClick={() => trackClickEvent(trackingContext)} data-testid={'img'} alt={'test'} />
+          )}
+        </ItemContextWrapper>
       </ObjectivProvider>
     );
 
     jest.resetAllMocks();
 
-    fireEvent.blur(getByTestId(container, 'input'));
+    fireEvent.click(getByTestId(container, 'img'));
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'InputChangeEvent',
+        _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'InputContext',
-            ...inputContextProps,
+            _type: 'ItemContext',
+            ...itemContextProps,
           }),
         ],
       })

@@ -2,16 +2,16 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { fireEvent, getByTestId, render } from '@testing-library/react';
+import { fireEvent, getByText, render } from '@testing-library/react';
 import {
-  InputContextWrapper,
+  NavigationContextWrapper,
   ObjectivProvider,
   ReactTracker,
-  trackInputChangeEvent,
-  useInputChangeEventTracker,
+  trackClickEvent,
+  useClickEventTracker,
 } from '../src';
 
-describe('InputContextWrapper', () => {
+describe('NavigationContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -20,70 +20,70 @@ describe('InputContextWrapper', () => {
     jest.resetAllMocks();
   });
 
-  it('should wrap the given children in a InputContext (trigger via Component)', () => {
+  it('should wrap the given children in a NavigationContext (trigger via Component)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const inputContextProps = { id: 'test-input' };
-    const TrackedTextInput = () => {
-      const trackInputChangeEvent = useInputChangeEventTracker();
-      return <input data-testid="input" type="text" onBlur={trackInputChangeEvent} />;
+    const navigationContextProps = { id: 'test-navigation' };
+    const TrackedButton = () => {
+      const trackClickEvent = useClickEventTracker();
+      return <nav onClick={trackClickEvent}>Trigger Event</nav>;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <InputContextWrapper {...inputContextProps}>
-          <TrackedTextInput />
-        </InputContextWrapper>
+        <NavigationContextWrapper {...navigationContextProps}>
+          <TrackedButton />
+        </NavigationContextWrapper>
       </ObjectivProvider>
     );
 
     jest.resetAllMocks();
 
-    fireEvent.blur(getByTestId(container, 'input'));
+    fireEvent.click(getByText(container, /trigger event/i));
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'InputChangeEvent',
+        _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'InputContext',
-            ...inputContextProps,
+            _type: 'NavigationContext',
+            ...navigationContextProps,
           }),
         ],
       })
     );
   });
 
-  it('should wrap the given children in a InputContext (trigger via render-props)', () => {
+  it('should wrap the given children in a NavigationContext (trigger via render-props)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const inputContextProps = { id: 'test-input' };
+    const navigationContextProps = { id: 'test-navigation' };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <InputContextWrapper {...inputContextProps}>
-          {(trackingContext) => <input data-testid="input" onBlur={() => trackInputChangeEvent(trackingContext)} />}
-        </InputContextWrapper>
+        <NavigationContextWrapper {...navigationContextProps}>
+          {(trackingContext) => <nav onClick={() => trackClickEvent(trackingContext)}>Trigger Event</nav>}
+        </NavigationContextWrapper>
       </ObjectivProvider>
     );
 
     jest.resetAllMocks();
 
-    fireEvent.blur(getByTestId(container, 'input'));
+    fireEvent.click(getByText(container, /trigger event/i));
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'InputChangeEvent',
+        _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'InputContext',
-            ...inputContextProps,
+            _type: 'NavigationContext',
+            ...navigationContextProps,
           }),
         ],
       })

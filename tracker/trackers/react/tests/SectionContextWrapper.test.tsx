@@ -2,16 +2,10 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { fireEvent, getByTestId, render } from '@testing-library/react';
-import {
-  InputContextWrapper,
-  ObjectivProvider,
-  ReactTracker,
-  trackInputChangeEvent,
-  useInputChangeEventTracker,
-} from '../src';
+import { fireEvent, getByText, render } from '@testing-library/react';
+import { SectionContextWrapper, ObjectivProvider, ReactTracker, trackClickEvent, useClickEventTracker } from '../src';
 
-describe('InputContextWrapper', () => {
+describe('SectionContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
@@ -20,70 +14,70 @@ describe('InputContextWrapper', () => {
     jest.resetAllMocks();
   });
 
-  it('should wrap the given children in a InputContext (trigger via Component)', () => {
+  it('should wrap the given children in a SectionContext (trigger via Component)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const inputContextProps = { id: 'test-input' };
-    const TrackedTextInput = () => {
-      const trackInputChangeEvent = useInputChangeEventTracker();
-      return <input data-testid="input" type="text" onBlur={trackInputChangeEvent} />;
+    const sectionContextProps = { id: 'test-section' };
+    const TrackedButton = () => {
+      const trackClickEvent = useClickEventTracker();
+      return <div onClick={trackClickEvent}>Trigger Event</div>;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <InputContextWrapper {...inputContextProps}>
-          <TrackedTextInput />
-        </InputContextWrapper>
+        <SectionContextWrapper {...sectionContextProps}>
+          <TrackedButton />
+        </SectionContextWrapper>
       </ObjectivProvider>
     );
 
     jest.resetAllMocks();
 
-    fireEvent.blur(getByTestId(container, 'input'));
+    fireEvent.click(getByText(container, /trigger event/i));
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'InputChangeEvent',
+        _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'InputContext',
-            ...inputContextProps,
+            _type: 'SectionContext',
+            ...sectionContextProps,
           }),
         ],
       })
     );
   });
 
-  it('should wrap the given children in a InputContext (trigger via render-props)', () => {
+  it('should wrap the given children in a SectionContext (trigger via render-props)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const inputContextProps = { id: 'test-input' };
+    const sectionContextProps = { id: 'test-section' };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <InputContextWrapper {...inputContextProps}>
-          {(trackingContext) => <input data-testid="input" onBlur={() => trackInputChangeEvent(trackingContext)} />}
-        </InputContextWrapper>
+        <SectionContextWrapper {...sectionContextProps}>
+          {(trackingContext) => <div onClick={() => trackClickEvent(trackingContext)}>Trigger Event</div>}
+        </SectionContextWrapper>
       </ObjectivProvider>
     );
 
     jest.resetAllMocks();
 
-    fireEvent.blur(getByTestId(container, 'input'));
+    fireEvent.click(getByText(container, /trigger event/i));
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'InputChangeEvent',
+        _type: 'ClickEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'InputContext',
-            ...inputContextProps,
+            _type: 'SectionContext',
+            ...sectionContextProps,
           }),
         ],
       })
