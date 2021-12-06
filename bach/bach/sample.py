@@ -25,7 +25,11 @@ def get_sample(df: DataFrame,
     if sample_percentage is None and filter is None:
         raise ValueError('Either sample_percentage or filter must be set')
 
-    original_node = df.get_current_node(name='before_sampling')
+    if not df.is_materialized:
+        raise ValueError("Cannot call get_sample on a non-materialized dataframe. "
+                         "Call materialize() first.")
+
+    original_node = df.base_node
     if filter is not None:
         sample_percentage = None
         from bach.series import SeriesBoolean

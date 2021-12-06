@@ -328,13 +328,33 @@ class DataFrame:
         return {column: data.dtype for column, data in self.data.items()}
 
     @property
-    def group_by(self):
+    def group_by(self) -> Optional['GroupBy']:
         """
         Get this DataFrame's grouping, if any.
 
         If `group_by` is not None, the DataFrame can be used to perform aggregations on.
         """
         return copy(self._group_by)
+
+    @property
+    def is_materialized(self) -> bool:
+        """
+        Return true if this DataFrame is in a materialized state, i.e. all information about the
+        DataFrame's values is encoded in self.base_node.
+
+        A DataFrame that's freshly constructed with :py:meth:`from_table`,
+        :py:meth:`from_model`, or :py:meth:`from_pandas` will be in a materialized state. Operations on such
+        a DataFrame will change it to be not materialized. Calling :py:meth:`materialize` on a
+        non-materialized DataFrame will return a new DataFrame that is materialized.
+
+        :returns: True if this DataFrame is in a materialized state, False otherwise
+        """
+        if self.group_by or self.order_by:
+            return False
+        for name, series in self.all_series.items():
+            if series.expression != Expression.column_reference(name):
+                return False
+        return True
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, DataFrame):
@@ -1380,7 +1400,7 @@ class DataFrame:
 
         limit_clause = Expression.construct('' if limit_str is None else f'{limit_str}')
         where_clause = where_clause if where_clause else Expression.construct('')
-        if self._group_by:
+        if self.group_by:
 
             not_aggregated = [s.name for s in self._data.values()
                               if not s.expression.has_aggregate_function]
