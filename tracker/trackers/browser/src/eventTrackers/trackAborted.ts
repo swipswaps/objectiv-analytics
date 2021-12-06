@@ -8,7 +8,7 @@ import { NonInteractiveEventTrackerParameters } from '../definitions/NonInteract
 import { trackEvent } from './trackEvent';
 
 /**
- * trackAborted is a shorthand for trackEvent. It eases triggering Aborted events programmatically
+ * trackAbortedEvent is a shorthand for trackEvent. It eases triggering Aborted events programmatically
  */
 export const trackAborted = (parameters: NonInteractiveEventTrackerParameters = {}) => {
   try {

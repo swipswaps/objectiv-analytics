@@ -6,7 +6,7 @@ import { TrackVisibilityAttribute } from '../../definitions/TrackVisibilityAttri
 import { parseJson } from './parseJson';
 
 /**
- * `trackVisibility` Tagging Attribute parser
+ * `trackVisibilityEvent` Tagging Attribute parser
  */
 export const parseTrackVisibility = (stringifiedTrackVisibilityAttribute: string | null) => {
   return parseJson(stringifiedTrackVisibilityAttribute, TrackVisibilityAttribute);

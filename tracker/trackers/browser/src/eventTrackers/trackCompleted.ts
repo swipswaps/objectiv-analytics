@@ -8,7 +8,7 @@ import { NonInteractiveEventTrackerParameters } from '../definitions/NonInteract
 import { trackEvent } from './trackEvent';
 
 /**
- * trackCompleted is a shorthand for trackEvent. It eases triggering Completed events programmatically
+ * trackCompletedEvent is a shorthand for trackEvent. It eases triggering Completed events programmatically
  */
 export const trackCompleted = (parameters: NonInteractiveEventTrackerParameters = {}) => {
   try {

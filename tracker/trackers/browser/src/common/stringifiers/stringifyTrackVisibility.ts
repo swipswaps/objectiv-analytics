@@ -6,7 +6,7 @@ import { TrackVisibilityAttribute } from '../../definitions/TrackVisibilityAttri
 import { stringifyJson } from './stringifyJson';
 
 /**
- * `trackVisibility` Tagging Attribute stringifier
+ * `trackVisibilityEvent` Tagging Attribute stringifier
  */
 export const stringifyTrackVisibility = (trackVisibilityAttribute: TrackVisibilityAttribute) => {
   if (!(typeof trackVisibilityAttribute === 'object')) {

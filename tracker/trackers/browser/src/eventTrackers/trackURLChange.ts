@@ -8,7 +8,7 @@ import { NonInteractiveEventTrackerParameters } from '../definitions/NonInteract
 import { trackEvent } from './trackEvent';
 
 /**
- * trackURLChange is a shorthand for trackEvent. It eases triggering URLChange events programmatically
+ * trackURLChangeEvent is a shorthand for trackEvent. It eases triggering URLChange events programmatically
  */
 export const trackURLChange = (parameters: NonInteractiveEventTrackerParameters = {}) => {
   try {

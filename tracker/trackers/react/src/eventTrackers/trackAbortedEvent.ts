@@ -8,5 +8,5 @@ import { EventTrackerParameters } from '../types';
 /**
  * Factors an AbortedEvent and hands it over to the given `tracker` via its `trackEvent` method.
  */
-export const trackAborted = ({ tracker, locationStack, globalContexts }: EventTrackerParameters) =>
+export const trackAbortedEvent = ({ tracker, locationStack, globalContexts }: EventTrackerParameters) =>
   tracker.trackEvent(makeAbortedEvent({ location_stack: locationStack, global_contexts: globalContexts }));

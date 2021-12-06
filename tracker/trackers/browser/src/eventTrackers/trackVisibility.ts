@@ -7,7 +7,7 @@ import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEve
 import { trackEvent } from './trackEvent';
 
 /**
- * trackVisibility is a shorthand for trackEvent. It eases triggering visibility events programmatically
+ * trackVisibilityEvent is a shorthand for trackEvent. It eases triggering visibility events programmatically
  */
 export const trackVisibility = ({
   element,

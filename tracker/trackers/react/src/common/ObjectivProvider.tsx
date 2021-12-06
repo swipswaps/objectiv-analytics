@@ -3,8 +3,8 @@
  */
 
 import { useContext } from 'react';
-import { trackApplicationLoaded } from '../eventTrackers/trackApplicationLoaded';
-import { trackURLChange } from '../eventTrackers/trackURLChange';
+import { trackApplicationLoadedEvent } from '../eventTrackers/trackApplicationLoadedEvent';
+import { trackURLChangeEvent } from '../eventTrackers/trackURLChangeEvent';
 import { LocationStackEntry, TrackerProviderProps } from '../types';
 import { LocationStackContext, LocationStackProvider } from './LocationStackProvider';
 import { TrackerProvider } from './TrackerProvider';
@@ -20,8 +20,8 @@ export const ObjectivProvider = ({ children, tracker }: TrackerProviderProps) =>
   const locationStack: LocationStackEntry[] = locationStackContext?.locationStack ?? [];
 
   // TODO make configurable
-  trackApplicationLoaded({ tracker });
-  trackURLChange({ tracker });
+  trackApplicationLoadedEvent({ tracker });
+  trackURLChangeEvent({ tracker });
 
   return (
     <TrackerProvider tracker={tracker}>

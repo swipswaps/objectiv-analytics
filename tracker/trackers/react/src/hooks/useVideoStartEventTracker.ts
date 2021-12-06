@@ -1,0 +1,12 @@
+import { trackVideoStartEvent } from '../eventTrackers/trackVideoStartEvent';
+import { ReactTracker } from '../ReactTracker';
+import { useTracker } from './useTracker';
+
+/**
+ * Returns a VideoStartEvent Tracker ready to be triggered.
+ * Binds the tracker to the parent Tracker Instance returned by `useTracker`. A custom instance can be provided.
+ */
+export const useVideoStartEventTracker =
+  (tracker: ReactTracker = useTracker()) =>
+  () =>
+    trackVideoStartEvent({ tracker });

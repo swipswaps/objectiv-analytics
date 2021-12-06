@@ -8,5 +8,5 @@ import { useTrackOnMount } from './useTrackOnMount';
  * This hook is automatically called by the ObjectivProvider. If used manually, make sure to place it high up in the
  * Application. Eg: right after initialization and before routing.
  */
-export const useTrackApplicationLoaded = (tracker: ReactTracker = useTracker()) =>
+export const useTrackApplicationLoadedEvent = (tracker: ReactTracker = useTracker()) =>
   useTrackOnMount(makeApplicationLoadedEvent(), tracker);

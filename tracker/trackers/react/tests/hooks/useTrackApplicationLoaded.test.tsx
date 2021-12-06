@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect } from 'react';
-import { ReactTracker, useTrackApplicationLoaded } from '../../src';
+import { ReactTracker, useTrackApplicationLoadedEvent } from '../../src';
 
 describe('useTrackApplicationLoaded', () => {
   const renderSpy = jest.fn();
@@ -17,7 +17,7 @@ describe('useTrackApplicationLoaded', () => {
   });
 
   const Application = () => {
-    useTrackApplicationLoaded(tracker);
+    useTrackApplicationLoadedEvent(tracker);
 
     useEffect(renderSpy);
 
@@ -55,7 +55,7 @@ describe('useTrackApplicationLoaded', () => {
     const tracker2 = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker2, 'trackEvent');
 
-    renderHook(() => useTrackApplicationLoaded(tracker2));
+    renderHook(() => useTrackApplicationLoadedEvent(tracker2));
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(tracker2.trackEvent).toHaveBeenCalledTimes(1);

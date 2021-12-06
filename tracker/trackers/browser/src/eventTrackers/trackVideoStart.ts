@@ -7,7 +7,7 @@ import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEve
 import { trackEvent } from './trackEvent';
 
 /**
- * trackVideoStart is a shorthand for trackEvent. It eases triggering VideoStart events programmatically
+ * trackVideoStartEvent is a shorthand for trackEvent. It eases triggering VideoStart events programmatically
  */
 export const trackVideoStart = ({
   element,

@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 import { useEffect } from 'react';
-import { ReactTracker, useTrackURLChange } from '../../src';
+import { ReactTracker, useTrackURLChangeEvent } from '../../src';
 
 describe('useTrackURLChange', () => {
   beforeEach(() => {
@@ -8,7 +8,7 @@ describe('useTrackURLChange', () => {
     // @ts-ignore
     window.location = new URL('https://test');
     jest.resetAllMocks();
-    jest.spyOn(tracker, 'trackEvent')
+    jest.spyOn(tracker, 'trackEvent');
   });
 
   afterEach(() => {
@@ -20,24 +20,20 @@ describe('useTrackURLChange', () => {
   const tracker = new ReactTracker({ applicationId: 'app-id' });
 
   const TrackURLChanges = () => {
-    useTrackURLChange(tracker);
+    useTrackURLChangeEvent(tracker);
     useEffect(renderSpy);
     return null;
   };
 
   it('should not execute on mount', () => {
-    render(
-      <TrackURLChanges />
-    );
+    render(<TrackURLChanges />);
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(0);
     expect(renderSpy).toHaveBeenCalledTimes(1);
   });
 
   it('should not execute on re-render if URL did not change', () => {
-    const { rerender } = render(
-      <TrackURLChanges />
-    );
+    const { rerender } = render(<TrackURLChanges />);
 
     rerender(<TrackURLChanges />);
     rerender(<TrackURLChanges />);
@@ -48,9 +44,7 @@ describe('useTrackURLChange', () => {
   });
 
   it('should execute on re-render if the URL changed', () => {
-    const { rerender } = render(
-      <TrackURLChanges />
-    );
+    const { rerender } = render(<TrackURLChanges />);
 
     location.href = 'https://test2';
 

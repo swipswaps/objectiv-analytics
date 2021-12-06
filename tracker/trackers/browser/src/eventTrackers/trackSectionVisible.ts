@@ -7,7 +7,7 @@ import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEve
 import { trackEvent } from './trackEvent';
 
 /**
- * trackSectionVisible is a shorthand for trackEvent. It eases triggering SectionVisible events programmatically
+ * trackSectionVisibleEvent is a shorthand for trackEvent. It eases triggering SectionVisible events programmatically
  */
 export const trackSectionVisible = ({
   element,

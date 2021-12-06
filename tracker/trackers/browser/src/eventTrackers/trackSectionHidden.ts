@@ -7,7 +7,7 @@ import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEve
 import { trackEvent } from './trackEvent';
 
 /**
- * trackSectionHidden is a shorthand for trackEvent. It eases triggering SectionHidden events programmatically
+ * trackSectionHiddenEvent is a shorthand for trackEvent. It eases triggering SectionHidden events programmatically
  */
 export const trackSectionHidden = ({
   element,

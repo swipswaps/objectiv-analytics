@@ -5,7 +5,7 @@
 import { boolean, Infer, literal, object, union } from 'superstruct';
 
 /**
- * The definition of the `trackVisibility` Tagging Attribute
+ * The definition of the `trackVisibilityEvent` Tagging Attribute
  */
 export const TrackVisibilityAttribute = union([
   object({ mode: literal('auto') }),
