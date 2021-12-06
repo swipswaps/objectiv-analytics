@@ -5,7 +5,8 @@
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { FC, useEffect } from 'react';
-import { LocationProvider, ReactTracker, TrackerProvider, useTrackApplicationLoadedEvent } from '../src';
+import { ReactTracker, useTrackApplicationLoadedEvent } from '../src';
+import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
 
 describe('useTrackApplicationLoaded', () => {
   const renderSpy = jest.fn();
@@ -29,9 +30,7 @@ describe('useTrackApplicationLoaded', () => {
   };
 
   const TrackingContext: FC = ({ children }) => (
-    <TrackerProvider tracker={tracker}>
-      <LocationProvider locationEntries={[]}>{children}</LocationProvider>
-    </TrackerProvider>
+    <TrackingContextProvider tracker={tracker}>{children}</TrackingContextProvider>
   );
 
   const Application = () => (

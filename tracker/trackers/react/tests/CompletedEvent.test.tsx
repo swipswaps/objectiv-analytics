@@ -4,7 +4,8 @@
 
 import { makeCompletedEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { LocationProvider, ReactTracker, trackCompletedEvent, TrackerProvider, useCompletedEventTracker } from '../src';
+import { ReactTracker, trackCompletedEvent, useCompletedEventTracker } from '../src';
+import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
 
 describe('CompletedEvent', () => {
   beforeEach(() => {
@@ -37,11 +38,9 @@ describe('CompletedEvent', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
@@ -63,11 +62,9 @@ describe('CompletedEvent', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();

@@ -4,13 +4,8 @@
 
 import { makeSectionHiddenEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import {
-  LocationProvider,
-  ReactTracker,
-  TrackerProvider,
-  trackSectionHiddenEvent,
-  useSectionHiddenEventTracker,
-} from '../src';
+import { ReactTracker, trackSectionHiddenEvent, useSectionHiddenEventTracker } from '../src';
+import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
 
 describe('SectionHiddenEvent', () => {
   it('should track a SectionHiddenEvent (programmatic)', () => {
@@ -35,11 +30,9 @@ describe('SectionHiddenEvent', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
@@ -61,11 +54,9 @@ describe('SectionHiddenEvent', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();

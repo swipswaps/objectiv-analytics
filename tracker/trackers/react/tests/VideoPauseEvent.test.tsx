@@ -4,13 +4,8 @@
 
 import { makeVideoPauseEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import {
-  LocationProvider,
-  ReactTracker,
-  TrackerProvider,
-  trackVideoPauseEvent,
-  useVideoPauseEventTracker,
-} from '../src';
+import { ReactTracker, trackVideoPauseEvent, useVideoPauseEventTracker } from '../src';
+import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
 
 describe('trackVideoPause', () => {
   beforeEach(() => {
@@ -43,11 +38,9 @@ describe('trackVideoPause', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
@@ -69,11 +62,9 @@ describe('trackVideoPause', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();

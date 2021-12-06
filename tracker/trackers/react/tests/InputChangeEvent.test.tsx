@@ -4,13 +4,8 @@
 
 import { makeInputChangeEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import {
-  LocationProvider,
-  ReactTracker,
-  TrackerProvider,
-  trackInputChangeEvent,
-  useInputChangeEventTracker,
-} from '../src';
+import { ReactTracker, trackInputChangeEvent, useInputChangeEventTracker } from '../src';
+import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
 
 describe('InputChangeEvent', () => {
   beforeEach(() => {
@@ -43,11 +38,9 @@ describe('InputChangeEvent', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
@@ -69,11 +62,9 @@ describe('InputChangeEvent', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();

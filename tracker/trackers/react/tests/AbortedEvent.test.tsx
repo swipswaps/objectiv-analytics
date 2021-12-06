@@ -4,7 +4,8 @@
 
 import { makeAbortedEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { LocationProvider, ReactTracker, trackAbortedEvent, TrackerProvider, useAbortedEventTracker } from '../src';
+import { ReactTracker, trackAbortedEvent, useAbortedEventTracker } from '../src';
+import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
 
 describe('AbortedEvent', () => {
   beforeEach(() => {
@@ -37,11 +38,9 @@ describe('AbortedEvent', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
@@ -63,11 +62,9 @@ describe('AbortedEvent', () => {
     };
 
     render(
-      <TrackerProvider tracker={tracker}>
-        <LocationProvider locationEntries={[]}>
-          <Component />
-        </LocationProvider>
-      </TrackerProvider>
+      <TrackingContextProvider tracker={tracker}>
+        <Component />
+      </TrackingContextProvider>
     );
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();

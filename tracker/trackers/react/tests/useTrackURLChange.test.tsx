@@ -4,7 +4,8 @@
 
 import { render } from '@testing-library/react';
 import { FC, useEffect } from 'react';
-import { LocationProvider, ReactTracker, TrackerProvider, useTrackURLChangeEvent } from '../src';
+import { ReactTracker, useTrackURLChangeEvent } from '../src';
+import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
 
 describe('useTrackURLChange', () => {
   beforeEach(() => {
@@ -30,9 +31,7 @@ describe('useTrackURLChange', () => {
   };
 
   const TrackingContext: FC = ({ children }) => (
-    <TrackerProvider tracker={tracker}>
-      <LocationProvider locationEntries={[]}>{children}</LocationProvider>
-    </TrackerProvider>
+    <TrackingContextProvider tracker={tracker}>{children}</TrackingContextProvider>
   );
 
   const Application = () => (
