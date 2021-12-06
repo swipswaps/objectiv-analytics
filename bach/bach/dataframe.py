@@ -619,6 +619,9 @@ class DataFrame:
         Use :py:meth:`get_unsampled` to switch back to the unsampled data later on. This returns a new
         DataFrame with all operations that have been done on the sample, applied to that DataFrame.
 
+        This function requires the DataFrame to be in a materialized state (see :py:attr:`is_materialized`),
+        otherwise an exception is raised.
+
         :param table_name: the name of the underlying sql table that stores the sampled data.
         :param filter: a filter to apply to the dataframe before creating the sample. If a filter is applied,
             sample_percentage is ignored and thus the bernoulli sample creation is skipped.
