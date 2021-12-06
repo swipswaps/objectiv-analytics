@@ -3,7 +3,6 @@ import { ReactTracker } from '../ReactTracker';
 import { useOnUnmount } from './useOnUnmount';
 import { useTracker } from './useTracker';
 
-//FIXME switch to props
 //FIXME add useLocationStack
 
 /**

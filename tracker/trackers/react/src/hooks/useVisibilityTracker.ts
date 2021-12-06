@@ -4,8 +4,6 @@ import { ReactTracker } from '../ReactTracker';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 
-//FIXME switch to props
-
 /**
  * Returns a SectionVisibleEvent / SectionHiddenEvent Tracker ready to be triggered.
  * The `isVisible` parameter determines which Visibility Event is triggered.

@@ -4,8 +4,6 @@ import { ReactTracker } from '../ReactTracker';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 
-//FIXME switch to props
-
 /**
  * Returns a ClickEvent Tracker ready to be triggered.
  * Binds the Tracker to the parent Tracker Instance returned by `useTracker`. A custom instance can be provided.

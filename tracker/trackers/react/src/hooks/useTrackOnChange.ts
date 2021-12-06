@@ -3,7 +3,6 @@ import { ReactTracker } from '../ReactTracker';
 import { useOnChange } from './useOnChange';
 import { useTracker } from './useTracker';
 
-//FIXME switch to props
 //FIXME add useLocationStack
 
 /**

@@ -4,8 +4,6 @@ import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 import { useTrackOnMount } from './useTrackOnMount';
 
-//FIXME switch to props
-
 /**
  * Triggers an ApplicationLoadedEvent when the using component mounts for the first time.
  * This hook is automatically called by the ObjectivProvider. If used manually, make sure to place it high up in the
