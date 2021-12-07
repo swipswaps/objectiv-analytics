@@ -4,11 +4,19 @@
 
 import { makeSectionContext } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
-import { LocationContextWrapper, ObjectivProvider, ReactTracker, trackClickEvent, useClickEventTracker } from '../src';
+import {
+  LocationContextWrapper,
+  LocationTree,
+  ObjectivProvider,
+  ReactTracker,
+  trackClickEvent,
+  useClickEventTracker,
+} from '../src';
 
 describe('LocationContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    LocationTree.clear();
   });
 
   afterEach(() => {

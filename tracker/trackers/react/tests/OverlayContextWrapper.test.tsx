@@ -3,11 +3,19 @@
  */
 
 import { fireEvent, getByText, render } from '@testing-library/react';
-import { OverlayContextWrapper, ObjectivProvider, ReactTracker, trackClickEvent, useClickEventTracker } from '../src';
+import {
+  OverlayContextWrapper,
+  ObjectivProvider,
+  ReactTracker,
+  trackClickEvent,
+  useClickEventTracker,
+  LocationTree,
+} from '../src';
 
 describe('OverlayContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    LocationTree.clear();
   });
 
   afterEach(() => {

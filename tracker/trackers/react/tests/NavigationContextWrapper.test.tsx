@@ -4,6 +4,7 @@
 
 import { fireEvent, getByText, render } from '@testing-library/react';
 import {
+  LocationTree,
   NavigationContextWrapper,
   ObjectivProvider,
   ReactTracker,
@@ -14,6 +15,7 @@ import {
 describe('NavigationContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    LocationTree.clear();
   });
 
   afterEach(() => {

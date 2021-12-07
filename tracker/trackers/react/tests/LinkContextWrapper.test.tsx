@@ -3,11 +3,19 @@
  */
 
 import { fireEvent, getByText, render } from '@testing-library/react';
-import { LinkContextWrapper, ObjectivProvider, ReactTracker, trackClickEvent, useClickEventTracker } from '../src';
+import {
+  LinkContextWrapper,
+  LocationTree,
+  ObjectivProvider,
+  ReactTracker,
+  trackClickEvent,
+  useClickEventTracker,
+} from '../src';
 
 describe('LinkContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    LocationTree.clear();
   });
 
   afterEach(() => {

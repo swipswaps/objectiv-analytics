@@ -12,7 +12,9 @@ export const useLocationStack = () => {
   const locationProviderContext = useContext(LocationProviderContext);
 
   if (!locationProviderContext) {
-    throw new Error(`Couldn't get LocationStack. Is the Component in a LocationProvider or ObjectivProvider?`);
+    throw new Error(
+      `Couldn't get a Tracker. Is the Component in a ObjectivProvider, TrackingContextProvider or LocationProvider?`
+    );
   }
 
   // Return a clone of the actual Location Stack to safeguard against mutations

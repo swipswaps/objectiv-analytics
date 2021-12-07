@@ -5,6 +5,7 @@
 import { fireEvent, getByTestId, render } from '@testing-library/react';
 import {
   InputContextWrapper,
+  LocationTree,
   ObjectivProvider,
   ReactTracker,
   trackInputChangeEvent,
@@ -14,6 +15,7 @@ import {
 describe('InputContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    LocationTree.clear();
   });
 
   afterEach(() => {

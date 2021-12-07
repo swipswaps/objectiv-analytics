@@ -5,6 +5,7 @@
 import { fireEvent, getByText, render } from '@testing-library/react';
 import {
   ExpandableSectionContextWrapper,
+  LocationTree,
   ObjectivProvider,
   ReactTracker,
   trackClickEvent,
@@ -14,6 +15,7 @@ import {
 describe('ExpandableSectionContextWrapper', () => {
   beforeEach(() => {
     jest.resetAllMocks();
+    LocationTree.clear();
   });
 
   afterEach(() => {

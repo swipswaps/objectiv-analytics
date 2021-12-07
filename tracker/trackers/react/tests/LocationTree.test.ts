@@ -37,6 +37,10 @@ describe('LocationTree', () => {
     expect(() => LocationTree.add(locationEntry, 'non-existing-parent-id')).toThrow('Parent not found');
   });
 
+  it('should console.error collisions once', () => {
+    // TODO
+  });
+
   it('should log the Location tree', () => {
     const locationRootEntry: LocationEntry = {
       id: generateUUID(),
