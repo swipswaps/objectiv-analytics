@@ -54,7 +54,10 @@ describe('LocationTree', () => {
     LocationTree.add(locationEntry4, locationRootEntry.id);
 
     expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenNthCalledWith(1, '｢objectiv｣ Location collision detected: Section:root / Section:oops');
+    expect(console.error).toHaveBeenNthCalledWith(
+      1,
+      '｢objectiv｣ Location collision detected: Section:root / Section:oops'
+    );
   });
 
   it('should log the Location tree', () => {
