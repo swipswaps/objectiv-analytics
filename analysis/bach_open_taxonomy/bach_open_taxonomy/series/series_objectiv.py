@@ -241,16 +241,39 @@ class SeriesLocationStack(SeriesJsonb):
         """
         return self.LocationStack(self)
 
+class ModelsHub:
+    def __init__(self, df):
+        self._df = df
+
+    # def unique_users(self, time_aggregation=None):
+    #     return self._df.groupby(time_aggregation).cookie_id.nunique()
+
+    def unique_users(self):
+        """
+        Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
+        ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
+        """
+        return self._df.groupby(self._df.moment.dt.sql_format(self._df.time_aggregation)).cookie_id.nunique()
+
 
 class ObjectivFrame(DataFrame):
-    # TODO what if you use the constructor to create a objectiv frame? nothing to prevent you from this.
     # TODO get_sample returns a normal DataFrame
     # TODO it is possible to change event_type and location_stack, but they are assumed to contain expected
     #  data in this ObjectivFrame
+    def __init__(self, **kwargs):
+        try:
+            self.time_aggregation = kwargs.pop('time_aggregation')
+        except KeyError:
+            pass
+        super().__init__(**kwargs)
+
+    @property
+    def models_hub(self):
+        return ModelsHub(self)
 
     @classmethod
-    def from_table(cls, engine):
-        table_name = 'data'  # migt make this a parameter later
+    def from_table(cls, engine, time_aggregation):
+        table_name = 'data'  # might make this a parameter later
 
         sql = f"""
             select column_name, data_type
@@ -286,10 +309,14 @@ class ObjectivFrame(DataFrame):
                               group_by=None
                               )
 
+        df.time_aggregation = time_aggregation
+
         df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
         df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
 
         return df
+
+
 
     @staticmethod
     def from_model():
@@ -444,3 +471,7 @@ class ObjectivFrame(DataFrame):
         fig.update_layout(title_text=text_in_title, font_size=10)
 
         return fig
+
+    def copy_override(self, **kwargs):
+        return super().copy_override(time_aggregation=self.time_aggregation,
+                                     **kwargs)
