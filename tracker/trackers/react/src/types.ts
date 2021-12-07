@@ -103,6 +103,17 @@ export type TrackerProviderProps = TrackerContextState & {
 export type TrackingContext = TrackerContextState & LocationProviderContextState;
 
 /**
+ * the props of TrackingContextProvider.
+ */
+export type TrackingContextProviderProps = TrackerContextState &
+  Partial<LocationProviderContextState> & {
+    /**
+     * TrackingContextProvider children can also be a function (render props).
+     */
+    children: ReactNode | ((parameters: TrackingContext) => void);
+  };
+
+/**
  * The props of LocationContextWrapper.
  */
 export type LocationContextWrapperProps = {
