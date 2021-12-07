@@ -2,9 +2,9 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeAbortedEvent } from '@objectiv/tracker-core';
+import { generateUUID, makeAbortedEvent, makeSectionContext } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackAbortedEvent, useAbortedEventTracker } from '../src';
+import { LocationEntry, ReactTracker, trackAbortedEvent, useAbortedEventTracker } from '../src';
 import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
 
 describe('AbortedEvent', () => {
@@ -70,5 +70,38 @@ describe('AbortedEvent', () => {
     expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(customTracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(customTracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeAbortedEvent()));
+  });
+
+  it('should track an AbortedEvent (hook with custom location)', () => {
+    const tracker = new ReactTracker({ applicationId: 'app-id' });
+    jest.spyOn(tracker, 'trackEvent');
+
+    const customTracker = new ReactTracker({ applicationId: 'app-id-2' });
+    jest.spyOn(customTracker, 'trackEvent');
+
+    const Component = () => {
+      const trackAbortedEvent = useAbortedEventTracker(customTracker, [makeSectionContext({ id: 'override' })]);
+      trackAbortedEvent();
+
+      return <>Component triggering AbortedEvent</>;
+    };
+
+    const locationEntry1: LocationEntry = { id: generateUUID(), locationContext: makeSectionContext({ id: 'root' }) };
+    const locationEntry2: LocationEntry = { id: generateUUID(), locationContext: makeSectionContext({ id: 'child' }) };
+
+    render(
+      <TrackingContextProvider tracker={tracker} locationEntries={[locationEntry1, locationEntry2]}>
+        <Component />
+      </TrackingContextProvider>
+    );
+
+    expect(tracker.trackEvent).not.toHaveBeenCalled();
+    expect(customTracker.trackEvent).toHaveBeenCalledTimes(1);
+    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(
+        makeAbortedEvent({ location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })] })
+      )
+    );
   });
 });

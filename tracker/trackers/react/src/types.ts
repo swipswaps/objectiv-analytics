@@ -106,7 +106,7 @@ export type TrackingContext = TrackerContextState & LocationProviderContextState
  * the props of TrackingContextProvider.
  */
 export type TrackingContextProviderProps = TrackerContextState &
-  Partial<LocationProviderContextState> & {
+  Partial<Pick<LocationProviderContextState, 'locationEntries'>> & {
     /**
      * TrackingContextProvider children can also be a function (render props).
      */
