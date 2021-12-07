@@ -27,6 +27,14 @@ const errorCache = new Map<string, 'collision'>();
  */
 export const LocationTree = {
   /**
+   * completely resets LocationTree state. Mainly useful while testing.
+   */
+  clear: () => {
+    locationTree.children = [];
+    errorCache.clear();
+  },
+
+  /**
    * Logs a readable version of the `locationTree` state to the console
    */
   log: (locationNode: LocationNode | RootLocationNode = locationTree, depth = 0) => {
