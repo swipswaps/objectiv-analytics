@@ -7,24 +7,24 @@ import { LocationEntry, LocationTree } from '../src';
 
 describe('LocationTree', () => {
   beforeEach(() => {
+    jest.resetAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
     LocationTree.clear();
   });
 
   afterEach(() => {
+    jest.resetAllMocks();
     LocationTree.clear();
   });
 
   it('should not log anything (empty LocationTree)', () => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-
     LocationTree.log();
 
     expect(console.log).not.toHaveBeenCalled();
   });
 
   it('should not log anything (falsy input)', () => {
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-
     // @ts-ignore
     LocationTree.log(0);
 
@@ -38,7 +38,23 @@ describe('LocationTree', () => {
   });
 
   it('should console.error collisions once', () => {
-    // TODO
+    const locationRootEntry: LocationEntry = {
+      id: generateUUID(),
+      locationContext: makeSectionContext({ id: 'root' }),
+    };
+    const locationEntry1: LocationEntry = { id: generateUUID(), locationContext: makeSectionContext({ id: '1' }) };
+    const locationEntry2: LocationEntry = { id: generateUUID(), locationContext: makeSectionContext({ id: 'oops' }) };
+    const locationEntry3: LocationEntry = { id: generateUUID(), locationContext: makeSectionContext({ id: 'oops' }) };
+    const locationEntry4: LocationEntry = { id: generateUUID(), locationContext: makeSectionContext({ id: 'oops' }) };
+
+    LocationTree.add(locationRootEntry, null);
+    LocationTree.add(locationEntry1, locationRootEntry.id);
+    LocationTree.add(locationEntry2, locationRootEntry.id);
+    LocationTree.add(locationEntry3, locationRootEntry.id);
+    LocationTree.add(locationEntry4, locationRootEntry.id);
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenNthCalledWith(1, '｢objectiv｣ Location collision detected: Section:root / Section:oops');
   });
 
   it('should log the Location tree', () => {
