@@ -106,36 +106,56 @@ def get_node(start_node: SqlModel, reference_path: RefPath) -> SqlModel:
     return get_node(start_node.references[first], rest)
 
 
-def find_nodes(start_node: SqlModel, function: Callable[[SqlModel], bool]) -> List[FoundNode]:
+def find_nodes(
+        start_node: SqlModel,
+        function: Callable[[SqlModel], bool],
+        first_instance: bool = True
+) -> List[FoundNode]:
     """
     Return all nodes for which function returns True, which can be found by recursively traversing the
     references starting at start_node.
 
     This function uses a breadth first approach, and the returned FoundNodes are in the order they were
-    found. If a node is encountered multiple times, then only the first occurrence will be in the result.
+    found. If a node is encountered multiple times, then only the first or last occurrence will be in the
+    result depending on the value of use_last_found_instance.
 
     :param start_node: start node
     :param function: Function that should return either True or False for a given SqlModel
-    :return: A list of tuples. Each tuple contains the found SqlModel and a reference path to that model
+    :param first_instance: If set to true, if a node is encountered multiple times in the breadth first
+        search then the first occurrence will be included in the result. If set to False then the last
+        occurrence will be in the result.
+    :return: A list of tuples. Each tuple contains the found SqlModel and a reference path to that model.
+        The returned nodes are in the order in which they were encountered. As a result the reference_path
+        of the returned tuples monotonically increases when iterating the list.
     """
-    found_nodes = set()
-    result: List[FoundNode] = []
+    result_nodes: Dict[SqlModel, FoundNode] = {}
     queue: Deque[Tuple[SqlModel, RefPath]] = deque()
     queue.append((start_node, tuple()))
     while queue:
         node, path = queue.popleft()
-        if function(node) and node not in found_nodes:
-            found_nodes.add(node)
-            result.append(FoundNode(node, path))
+        if function(node):
+            if node not in result_nodes:
+                result_nodes[node] = FoundNode(node, path)
+            elif node in result_nodes and not first_instance:
+                # we rely on the fact that python 3.7+ will keep the insertion order. So we'll have to
+                # remove and reinsert the item to get it in the right position in the returned result.
+                del result_nodes[node]
+                result_nodes[node] = FoundNode(node, path)
         for next_path, next_node in node.references.items():
             next_tuple = (next_node, path + (next_path,))
             queue.append(next_tuple)
-    return result
+    return list(result_nodes.values())
 
 
-def find_node(start_node: SqlModel, function: Callable[[SqlModel], bool]) -> Optional[FoundNode]:
-    """ Similar to find_nodes, but will only return the first found node, or None if none are found. """
-    result = find_nodes(start_node, function)
+def find_node(
+        start_node: SqlModel,
+        function: Callable[[SqlModel], bool],
+        first_instance: bool = True
+) -> Optional[FoundNode]:
+    """
+    Similar to find_nodes, but will only return the first node in the result, or None if none are found.
+    """
+    result = find_nodes(start_node, function, first_instance)
     if not result:
         return None
     return result[0]

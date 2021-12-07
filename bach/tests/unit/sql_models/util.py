@@ -12,13 +12,15 @@ def assert_roughly_equal_sql(sql_a: str, sql_b: str):
     whitespace_remove_trans = str.maketrans(dict.fromkeys(string.whitespace))
     a_stripped = sql_a.translate(whitespace_remove_trans)
     b_stripped = sql_b.translate(whitespace_remove_trans)
-    assert a_stripped == b_stripped
+    if a_stripped != b_stripped:
+        print(f'\n\n{a_stripped}\n\n != \n\n{b_stripped}\n\n')
+        raise AssertionError(f'\n\n{a_stripped}\n\n != \n\n{b_stripped}\n\n')
 
 
 class ValueModel(SqlModelBuilder):
     @property
     def sql(self) -> str:
-        return 'select {key} as key, {val} as value'
+        return "select '{key}' as key, {val} as value"
 
 
 class RefModel(SqlModelBuilder):
@@ -37,7 +39,7 @@ class JoinModel(SqlModelBuilder):
     @property
     def sql(self) -> str:
         return '''
-            select key, left.value + right.value
-            from {{ref_left}} as left
-            inner join {{ref_right}} as right on left.key=right.key
+            select l.key, l.value + r.value as value
+            from {{ref_left}} as l
+            inner join {{ref_right}} as r on l.key=r.key
         '''
