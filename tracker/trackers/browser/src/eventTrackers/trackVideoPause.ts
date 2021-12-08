@@ -7,7 +7,7 @@ import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEve
 import { trackEvent } from './trackEvent';
 
 /**
- * trackVideoPauseEvent is a shorthand for trackEvent. It eases triggering VideoPause events programmatically
+ * trackVideoPause is a shorthand for trackEvent. It eases triggering VideoPause events programmatically
  */
 export const trackVideoPause = ({
   element,

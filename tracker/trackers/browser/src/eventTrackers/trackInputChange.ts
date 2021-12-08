@@ -7,7 +7,7 @@ import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEve
 import { trackEvent } from './trackEvent';
 
 /**
- * trackInputChangeEvent is a shorthand for trackEvent. It eases triggering InputChange events programmatically
+ * trackInputChange is a shorthand for trackEvent. It eases triggering InputChange events programmatically
  */
 export const trackInputChange = ({
   element,

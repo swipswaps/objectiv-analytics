@@ -7,7 +7,7 @@ import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEve
 import { trackEvent } from './trackEvent';
 
 /**
- * trackClickEvent is a shorthand for trackEvent. It eases triggering Click events programmatically
+ * trackClick is a shorthand for trackEvent. It eases triggering Click events programmatically
  */
 export const trackClick = ({
   element,
