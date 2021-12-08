@@ -2,9 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeInputContext } from '@objectiv/tracker-core';
-import { InputContextWrapperProps } from '../types';
+import { makeInputContext } from '../common/factories/makeInputContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
+import { SectionContextWrapperProps } from './SectionContextWrapper';
+
+/**
+ * The props of InputContextWrapper. No extra attributes, same as SectionContextWrapper.
+ */
+export type InputContextWrapperProps = SectionContextWrapperProps;
 
 /**
  * Wraps its children in a InputContext.

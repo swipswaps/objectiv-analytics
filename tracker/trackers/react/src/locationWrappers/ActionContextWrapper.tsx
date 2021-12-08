@@ -2,9 +2,19 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeActionContext } from '@objectiv/tracker-core';
-import { ActionContextWrapperProps } from '../types';
+import { makeActionContext } from '../common/factories/makeActionContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
+import { SectionContextWrapperProps } from './SectionContextWrapper';
+
+/**
+ * The props of ActionContextWrapper.
+ */
+export type ActionContextWrapperProps = SectionContextWrapperProps & {
+  /**
+   * A description of what the action is about.
+   */
+  text: string;
+};
 
 /**
  * Wraps its children in an ActionContext.

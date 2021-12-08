@@ -1,6 +1,6 @@
-import { LocationStack } from '@objectiv/tracker-core';
 import { trackSectionHiddenEvent } from '../eventTrackers/trackSectionHiddenEvent';
 import { ReactTracker } from '../ReactTracker';
+import { LocationStack } from '../types';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 

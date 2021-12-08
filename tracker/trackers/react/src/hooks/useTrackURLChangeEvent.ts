@@ -1,5 +1,6 @@
-import { LocationStack, makeURLChangeEvent } from '@objectiv/tracker-core';
+import { makeURLChangeEvent } from '@objectiv/tracker-core';
 import { ReactTracker } from '../ReactTracker';
+import { LocationStack } from '../types';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 import { useTrackOnChange } from './useTrackOnChange';

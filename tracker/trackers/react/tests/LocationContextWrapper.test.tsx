@@ -2,11 +2,11 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeSectionContext } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
 import {
   LocationContextWrapper,
   LocationTree,
+  makeSectionContext,
   ObjectivProvider,
   ReactTracker,
   trackClickEvent,

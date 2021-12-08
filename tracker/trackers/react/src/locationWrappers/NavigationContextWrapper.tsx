@@ -2,9 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeNavigationContext } from '@objectiv/tracker-core';
-import { NavigationContextWrapperProps } from '../types';
+import { makeNavigationContext } from '../common/factories/makeNavigationContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
+import { SectionContextWrapperProps } from './SectionContextWrapper';
+
+/**
+ * The props of NavigationContextWrapper. No extra attributes, same as SectionContextWrapper.
+ */
+export type NavigationContextWrapperProps = SectionContextWrapperProps;
 
 /**
  * Wraps its children in a NavigationContext.

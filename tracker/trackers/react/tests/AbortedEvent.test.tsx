@@ -2,10 +2,10 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeAbortedEvent, makeSectionContext } from '@objectiv/tracker-core';
+import { makeAbortedEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import {
-  makeLocationEntry,
+  makeSectionContext,
   ReactTracker,
   trackAbortedEvent,
   TrackingContextProvider,
@@ -91,11 +91,11 @@ describe('AbortedEvent', () => {
       return <>Component triggering AbortedEvent</>;
     };
 
-    const locationEntry1 = makeLocationEntry(makeSectionContext({ id: 'root' }));
-    const locationEntry2 = makeLocationEntry(makeSectionContext({ id: 'child' }));
+    const location1 = makeSectionContext({ id: 'root' });
+    const location2 = makeSectionContext({ id: 'child' });
 
     render(
-      <TrackingContextProvider tracker={tracker} locationEntries={[locationEntry1, locationEntry2]}>
+      <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
         <Component />
       </TrackingContextProvider>
     );

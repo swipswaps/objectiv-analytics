@@ -2,12 +2,11 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeSectionContext } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { LocationProvider, makeLocationEntry, ReactTracker, TrackingContextProvider } from '../src';
+import { LocationProvider, makeSectionContext, ReactTracker, TrackingContextProvider } from '../src';
 import { useTrackingContext } from '../src/hooks/useTrackingContext';
 
-describe('ObjectivProvider', () => {
+describe('TrackingContextProvider', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -20,7 +19,6 @@ describe('ObjectivProvider', () => {
   const tracker = new ReactTracker({ applicationId: 'app-id' });
 
   const expectedState = {
-    locationEntries: [],
     locationStack: [],
     tracker: {
       active: true,
@@ -75,7 +73,7 @@ describe('ObjectivProvider', () => {
   });
 
   it('should inherit location from parents', () => {
-    const locationEntry = makeLocationEntry(makeSectionContext({ id: 'root' }));
+    const rootSection = makeSectionContext({ id: 'root' });
 
     const Component = () => {
       const trackingContext = useTrackingContext();
@@ -86,7 +84,7 @@ describe('ObjectivProvider', () => {
     };
 
     render(
-      <LocationProvider locationEntries={[locationEntry]}>
+      <LocationProvider locationStack={[rootSection]}>
         <TrackingContextProvider tracker={tracker}>
           <Component />
         </TrackingContextProvider>
@@ -95,15 +93,14 @@ describe('ObjectivProvider', () => {
 
     expect(console.log).toHaveBeenCalledTimes(1);
     expect(console.log).toHaveBeenNthCalledWith(1, {
-      locationEntries: [locationEntry],
-      locationStack: [locationEntry.locationContext],
+      locationStack: [rootSection],
       tracker: expectedState.tracker,
     });
   });
 
   it('should support extending the location', () => {
-    const locationEntry1 = makeLocationEntry(makeSectionContext({ id: 'root' }));
-    const locationEntry2 = makeLocationEntry(makeSectionContext({ id: 'child' }));
+    const rootSection = makeSectionContext({ id: 'root' });
+    const childSection = makeSectionContext({ id: 'child' });
 
     const Component = () => {
       const trackingContext = useTrackingContext();
@@ -114,8 +111,8 @@ describe('ObjectivProvider', () => {
     };
 
     render(
-      <LocationProvider locationEntries={[locationEntry1]}>
-        <TrackingContextProvider tracker={tracker} locationEntries={[locationEntry2]}>
+      <LocationProvider locationStack={[rootSection]}>
+        <TrackingContextProvider tracker={tracker} locationStack={[childSection]}>
           <Component />
         </TrackingContextProvider>
       </LocationProvider>
@@ -123,8 +120,7 @@ describe('ObjectivProvider', () => {
 
     expect(console.log).toHaveBeenCalledTimes(1);
     expect(console.log).toHaveBeenNthCalledWith(1, {
-      locationEntries: [locationEntry1, locationEntry2],
-      locationStack: [locationEntry1.locationContext, locationEntry2.locationContext],
+      locationStack: [rootSection, childSection],
       tracker: expectedState.tracker,
     });
   });

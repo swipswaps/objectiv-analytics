@@ -2,25 +2,34 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+import { ReactNode } from 'react';
 import { trackApplicationLoadedEvent } from '../../eventTrackers/trackApplicationLoadedEvent';
 import { trackURLChangeEvent } from '../../eventTrackers/trackURLChangeEvent';
-import { TrackerProviderProps } from '../../types';
+import { TrackerProviderContext } from './TrackerProviderContext';
+import { TrackingContext } from './TrackingContext';
 import { TrackingContextProvider } from './TrackingContextProvider';
 
 /**
- * ObjectivProvider wraps its children with TrackingContextProvider. It's meant to be used as high as possible in
- * the Component tree. Children gain access to both the Tracker and their LocationStack.
- *
- * TrackerProvider can track ApplicationLoadedEvent and URLChangeEvent automatically.
+ * The props of ObjectivProvider.
  */
-export const ObjectivProvider = ({ children, tracker }: TrackerProviderProps) => {
+export type ObjectivProviderProps = TrackerProviderContext & {
+  /**
+   * ObjectivProvider children can also be a function (render props).
+   */
+  children: ReactNode | ((parameters: TrackingContext) => void);
+};
+
+/**
+ * ObjectivProvider extends TrackingContextProvider automating tracking of ApplicationLoadedEvent and URLChangeEvent.
+ */
+export const ObjectivProvider = ({ children, tracker }: ObjectivProviderProps) => {
   // TODO make configurable
   trackApplicationLoadedEvent({ tracker });
   trackURLChangeEvent({ tracker });
 
   return (
     <TrackingContextProvider tracker={tracker}>
-      {(trackingState) => (typeof children === 'function' ? children(trackingState) : children)}
+      {(trackingContext) => (typeof children === 'function' ? children(trackingContext) : children)}
     </TrackingContextProvider>
   );
 };

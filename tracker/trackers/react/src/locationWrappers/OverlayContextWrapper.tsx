@@ -2,9 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeOverlayContext } from '@objectiv/tracker-core';
-import { OverlayContextWrapperProps } from '../types';
+import { makeOverlayContext } from '../common/factories/makeOverlayContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
+import { SectionContextWrapperProps } from './SectionContextWrapper';
+
+/**
+ * The props of OverlayContextWrapper. No extra attributes, same as SectionContextWrapper.
+ */
+export type OverlayContextWrapperProps = SectionContextWrapperProps;
 
 /**
  * Wraps its children in an OverlayContext.

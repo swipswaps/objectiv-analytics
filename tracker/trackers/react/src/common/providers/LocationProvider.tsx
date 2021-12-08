@@ -2,27 +2,28 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { createContext, useContext } from 'react';
-import { LocationProviderContextState, LocationProviderProps } from '../../types';
+import { ReactNode, useContext } from 'react';
+import { LocationProviderContext } from './LocationProviderContext';
 
 /**
- * A Context to retrieve LocationEntries and LocationStack.
- * Components may access Context state either via `useContext(LocationProviderContext)` or `useLocationEntries()`
- * or `useLocationStack()`.
+ * The props of LocationProvider.
  */
-export const LocationProviderContext = createContext<null | LocationProviderContextState>(null);
+export type LocationProviderProps = LocationProviderContext & {
+  /**
+   * LocationProvider children can also be a function (render props).
+   */
+  children: ReactNode | ((parameters: LocationProviderContext) => void);
+};
 
 /**
  * LocationProvider inherits the LocationStack from its parent LocationProvider and adds its own Location
  * Contexts to it, effectively extending the stack with one or more LocationEntries.
  */
-export const LocationProvider = ({ children, locationEntries }: LocationProviderProps) => {
+export const LocationProvider = ({ children, locationStack }: LocationProviderProps) => {
   const locationProviderContext = useContext(LocationProviderContext);
-  const existingLocationEntries = locationProviderContext?.locationEntries ?? [];
-  const newLocationEntries = [...existingLocationEntries, ...locationEntries];
-  const newLocationProviderContextState: LocationProviderContextState = {
-    locationEntries: newLocationEntries,
-    locationStack: newLocationEntries.map((locationEntry) => locationEntry.locationContext),
+  const existingLocationStack = locationProviderContext?.locationStack ?? [];
+  const newLocationProviderContextState: LocationProviderContext = {
+    locationStack: [...existingLocationStack, ...locationStack],
   };
 
   return (

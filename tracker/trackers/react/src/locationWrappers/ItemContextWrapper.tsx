@@ -2,9 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeItemContext } from '@objectiv/tracker-core';
-import { ItemContextWrapperProps } from '../types';
+import { makeItemContext } from '../common/factories/makeItemContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
+import { SectionContextWrapperProps } from './SectionContextWrapper';
+
+/**
+ * The props of ItemContextWrapper. No extra attributes, same as SectionContextWrapper.
+ */
+export type ItemContextWrapperProps = SectionContextWrapperProps;
 
 /**
  * Wraps its children in an ItemContext.

@@ -2,9 +2,16 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeButtonContext } from '@objectiv/tracker-core';
-import { ButtonContextWrapperProps } from '../types';
+import { makeButtonContext } from '../common/factories/makeButtonContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
+import { SectionContextWrapperProps } from './SectionContextWrapper';
+
+export type ButtonContextWrapperProps = SectionContextWrapperProps & {
+  /**
+   * The label / title of the Button or a description of what it is about.
+   */
+  text: string;
+};
 
 /**
  * Wraps its children in a ButtonContext.

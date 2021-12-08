@@ -19,7 +19,6 @@ describe('ObjectivProvider', () => {
   const tracker = new ReactTracker({ applicationId: 'app-id' });
 
   const expectedState = {
-    locationEntries: [],
     locationStack: [],
     tracker: {
       active: true,

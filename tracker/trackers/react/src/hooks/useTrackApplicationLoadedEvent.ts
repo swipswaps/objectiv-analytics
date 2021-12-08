@@ -1,5 +1,6 @@
-import { LocationStack, makeApplicationLoadedEvent } from '@objectiv/tracker-core';
+import { makeApplicationLoadedEvent } from '@objectiv/tracker-core';
 import { ReactTracker } from '../ReactTracker';
+import { LocationStack } from '../types';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 import { useTrackOnMount } from './useTrackOnMount';

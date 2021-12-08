@@ -2,8 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { generateUUID, makeSectionContext } from '@objectiv/tracker-core';
-import { LocationEntry, LocationTree, makeLocationEntry } from '../src';
+import { LocationTree, makeSectionContext } from '../src';
 
 describe('LocationTree', () => {
   beforeEach(() => {
@@ -31,29 +30,26 @@ describe('LocationTree', () => {
     expect(console.log).not.toHaveBeenCalled();
   });
 
-  it('should throw if the given parentLocationId does not exist', () => {
-    // We create two Location entries, but we do not add them to the LocationTree, thus parent retrieval will fail
-    const locationEntry = makeLocationEntry(makeSectionContext({ id: 'root' }));
-    const parentLocation = makeLocationEntry(makeSectionContext({ id: 'parent' }));
+  it('should throw if the given parentLocation does not exist', () => {
+    // We create two Locations, but we do not add them to the LocationTree, thus parent retrieval will fail
+    const location = makeSectionContext({ id: 'root' });
+    const parentLocation = makeSectionContext({ id: 'parent' });
 
-    expect(() => LocationTree.add(locationEntry, parentLocation)).toThrow('Parent LocationEntry Node not found');
+    expect(() => LocationTree.add(location, parentLocation)).toThrow('Parent LocationNode not found.');
   });
 
   it('should console.error collisions once', () => {
-    const locationRootEntry: LocationEntry = {
-      id: generateUUID(),
-      locationContext: makeSectionContext({ id: 'root' }),
-    };
-    const locationEntry1 = makeLocationEntry(makeSectionContext({ id: '1' }));
-    const locationEntry2 = makeLocationEntry(makeSectionContext({ id: 'oops' }));
-    const locationEntry3 = makeLocationEntry(makeSectionContext({ id: 'oops' }));
-    const locationEntry4 = makeLocationEntry(makeSectionContext({ id: 'oops' }));
+    const rootSection = makeSectionContext({ id: 'root' });
+    const section1 = makeSectionContext({ id: '1' });
+    const section2 = makeSectionContext({ id: 'oops' });
+    const section3 = makeSectionContext({ id: 'oops' });
+    const section4 = makeSectionContext({ id: 'oops' });
 
-    LocationTree.add(locationRootEntry);
-    LocationTree.add(locationEntry1, locationRootEntry);
-    LocationTree.add(locationEntry2, locationRootEntry);
-    LocationTree.add(locationEntry3, locationRootEntry);
-    LocationTree.add(locationEntry4, locationRootEntry);
+    LocationTree.add(rootSection);
+    LocationTree.add(section1, rootSection);
+    LocationTree.add(section2, rootSection);
+    LocationTree.add(section3, rootSection);
+    LocationTree.add(section4, rootSection);
 
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenNthCalledWith(
@@ -63,24 +59,21 @@ describe('LocationTree', () => {
   });
 
   it('should log the Location tree', () => {
-    const locationRootEntry: LocationEntry = {
-      id: generateUUID(),
-      locationContext: makeSectionContext({ id: 'root' }),
-    };
-    const locationEntry1 = makeLocationEntry(makeSectionContext({ id: '1' }));
-    const locationEntry2 = makeLocationEntry(makeSectionContext({ id: '2' }));
-    const locationEntry2a = makeLocationEntry(makeSectionContext({ id: '2a' }));
-    const locationEntry2b = makeLocationEntry(makeSectionContext({ id: '2b' }));
-    const locationEntry3 = makeLocationEntry(makeSectionContext({ id: '3' }));
-    const locationEntry3a = makeLocationEntry(makeSectionContext({ id: '3a' }));
+    const rootSection = makeSectionContext({ id: 'root' });
+    const section1 = makeSectionContext({ id: '1' });
+    const section2 = makeSectionContext({ id: '2' });
+    const section2a = makeSectionContext({ id: '2a' });
+    const section2b = makeSectionContext({ id: '2b' });
+    const section3 = makeSectionContext({ id: '3' });
+    const section3a = makeSectionContext({ id: '3a' });
 
-    LocationTree.add(locationRootEntry);
-    LocationTree.add(locationEntry1, locationRootEntry);
-    LocationTree.add(locationEntry2, locationRootEntry);
-    LocationTree.add(locationEntry2a, locationEntry2);
-    LocationTree.add(locationEntry2b, locationEntry2);
-    LocationTree.add(locationEntry3, locationRootEntry);
-    LocationTree.add(locationEntry3a, locationEntry3);
+    LocationTree.add(rootSection);
+    LocationTree.add(section1, rootSection);
+    LocationTree.add(section2, rootSection);
+    LocationTree.add(section2a, section2);
+    LocationTree.add(section2b, section2);
+    LocationTree.add(section3, rootSection);
+    LocationTree.add(section3a, section3);
 
     jest.spyOn(console, 'log').mockImplementation(() => {});
 

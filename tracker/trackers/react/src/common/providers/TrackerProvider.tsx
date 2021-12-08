@@ -2,14 +2,18 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { createContext } from 'react';
-import { TrackerContextState, TrackerProviderProps } from '../../types';
+import { ReactNode } from 'react';
+import { TrackerProviderContext } from './TrackerProviderContext';
 
 /**
- * A Context to retrieve a Tracker instance.
- * Components may retrieve their Tracker either via `useContext(TrackerContext)` or `useTracker()`.
+ * The props of TrackerProvider.
  */
-export const TrackerContext = createContext<null | TrackerContextState>(null);
+export type TrackerProviderProps = TrackerProviderContext & {
+  /**
+   * TrackerProvider children can also be a function (render props).
+   */
+  children: ReactNode | ((parameters: TrackerProviderContext) => void);
+};
 
 /**
  * TrackerProvider wraps its children with TrackerContext.Provider. It's meant to be used as
@@ -21,7 +25,7 @@ export const TrackerContext = createContext<null | TrackerContextState>(null);
  * @see ObjectivProvider
  */
 export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => (
-  <TrackerContext.Provider value={{ tracker }}>
+  <TrackerProviderContext.Provider value={{ tracker }}>
     {typeof children === 'function' ? children({ tracker }) : children}
-  </TrackerContext.Provider>
+  </TrackerProviderContext.Provider>
 );
