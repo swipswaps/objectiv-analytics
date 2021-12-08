@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { generateUUID } from '@objectiv/tracker-core';
+import { generateUUID, makeSectionContext } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
   getTracker,
@@ -64,12 +64,7 @@ describe('trackNewElements', () => {
         _type: 'SectionVisibleEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [
-          {
-            _type: 'SectionContext',
-            id: 'child-div',
-          },
-        ],
+        location_stack: [makeSectionContext({ id: 'child-div' })],
       })
     );
   });

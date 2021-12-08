@@ -2,8 +2,8 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext, Contexts, } from '@objectiv/schema';
-import { cleanObjectFromInternalProperties } from "./cleanObjectFromInternalProperties";
+import { AbstractEvent, AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
+import { cleanObjectFromInternalProperties } from './cleanObjectFromInternalProperties';
 import { ContextsConfig } from './Context';
 import { generateUUID } from './helpers';
 
@@ -84,7 +84,7 @@ export class TrackerEvent implements UntrackedEvent, Contexts {
     return {
       ...cleanObjectFromInternalProperties(this),
       location_stack: this.location_stack.map(cleanObjectFromInternalProperties),
-      global_contexts: this.global_contexts.map(cleanObjectFromInternalProperties)
+      global_contexts: this.global_contexts.map(cleanObjectFromInternalProperties),
     };
   }
 }

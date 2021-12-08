@@ -7,6 +7,7 @@ import {
   LocationCollision,
   makeButtonContext,
   makeInputContext,
+  makeSectionContext,
   TrackerElementLocations,
 } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
@@ -121,12 +122,7 @@ describe('trackNewElement', () => {
         _type: 'SectionVisibleEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [
-          {
-            _type: 'SectionContext',
-            id: 'test',
-          },
-        ],
+        location_stack: [makeSectionContext({ id: 'test' })],
       })
     );
   });

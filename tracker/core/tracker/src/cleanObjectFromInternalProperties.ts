@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { DiscriminatingPropertyPrefix, } from '@objectiv/schema';
+import { DiscriminatingPropertyPrefix } from '@objectiv/schema';
 import { getObjectKeys } from './helpers';
 
 /**
