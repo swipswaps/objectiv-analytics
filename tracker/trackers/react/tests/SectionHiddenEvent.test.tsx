@@ -4,7 +4,13 @@
 
 import { makeSectionHiddenEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackingContextProvider, trackSectionHiddenEvent, useSectionHiddenEventTracker } from '../src';
+import {
+  makeSectionContext,
+  ReactTracker,
+  TrackingContextProvider,
+  trackSectionHiddenEvent,
+  useSectionHiddenEventTracker,
+} from '../src';
 
 describe('SectionHiddenEvent', () => {
   it('should track a SectionHiddenEvent (programmatic)', () => {
@@ -38,7 +44,7 @@ describe('SectionHiddenEvent', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'SectionHiddenEvent' }));
   });
 
-  it('should track an SectionHiddenEvent (hook with custom tracker)', () => {
+  it('should track an SectionHiddenEvent (hook with custom tracker and location)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
@@ -46,20 +52,33 @@ describe('SectionHiddenEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackSectionHiddenEvent = useSectionHiddenEventTracker({ tracker: customTracker });
+      const trackSectionHiddenEvent = useSectionHiddenEventTracker({
+        tracker: customTracker,
+        locationStack: [makeSectionContext({ id: 'override' })],
+      });
       trackSectionHiddenEvent();
 
       return <>Component triggering SectionHiddenEvent</>;
     };
 
+    const location1 = makeSectionContext({ id: 'root' });
+    const location2 = makeSectionContext({ id: 'child' });
+
     render(
-      <TrackingContextProvider tracker={tracker}>
+      <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
         <Component />
       </TrackingContextProvider>
     );
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(customTracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()));
+    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(
+        makeSectionHiddenEvent({
+          location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
+        })
+      )
+    );
   });
 });

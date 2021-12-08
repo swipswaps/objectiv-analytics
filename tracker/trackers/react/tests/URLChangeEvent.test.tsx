@@ -4,7 +4,13 @@
 
 import { makeURLChangeEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackingContextProvider, trackURLChangeEvent, useURLChangeEventTracker } from '../src';
+import {
+  makeSectionContext,
+  ReactTracker,
+  TrackingContextProvider,
+  trackURLChangeEvent,
+  useURLChangeEventTracker,
+} from '../src';
 
 describe('URLChangeEvent', () => {
   beforeEach(() => {
@@ -46,7 +52,7 @@ describe('URLChangeEvent', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'URLChangeEvent' }));
   });
 
-  it('should track a URLChangeEvent (hook with custom tracker)', () => {
+  it('should track a URLChangeEvent (hook with custom tracker and location)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
@@ -54,20 +60,33 @@ describe('URLChangeEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackURLChangeEvent = useURLChangeEventTracker({ tracker: customTracker });
+      const trackURLChangeEvent = useURLChangeEventTracker({
+        tracker: customTracker,
+        locationStack: [makeSectionContext({ id: 'override' })],
+      });
       trackURLChangeEvent();
 
       return <>Component triggering URLChangeEvent</>;
     };
 
+    const location1 = makeSectionContext({ id: 'root' });
+    const location2 = makeSectionContext({ id: 'child' });
+
     render(
-      <TrackingContextProvider tracker={tracker}>
+      <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
         <Component />
       </TrackingContextProvider>
     );
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(customTracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeURLChangeEvent()));
+    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(
+        makeURLChangeEvent({
+          location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
+        })
+      )
+    );
   });
 });

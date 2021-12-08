@@ -4,7 +4,13 @@
 
 import { makeVideoPauseEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, TrackingContextProvider, trackVideoPauseEvent, useVideoPauseEventTracker } from '../src';
+import {
+  makeSectionContext,
+  ReactTracker,
+  TrackingContextProvider,
+  trackVideoPauseEvent,
+  useVideoPauseEventTracker,
+} from '../src';
 
 describe('trackVideoPause', () => {
   beforeEach(() => {
@@ -46,7 +52,7 @@ describe('trackVideoPause', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'VideoPauseEvent' }));
   });
 
-  it('should track a VideoPauseEvent (hook with custom tracker)', () => {
+  it('should track a VideoPauseEvent (hook with custom tracker and location)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
@@ -54,20 +60,33 @@ describe('trackVideoPause', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackVideoPauseEvent = useVideoPauseEventTracker({ tracker: customTracker });
+      const trackVideoPauseEvent = useVideoPauseEventTracker({
+        tracker: customTracker,
+        locationStack: [makeSectionContext({ id: 'override' })],
+      });
       trackVideoPauseEvent();
 
       return <>Component triggering VideoPauseEvent</>;
     };
 
+    const location1 = makeSectionContext({ id: 'root' });
+    const location2 = makeSectionContext({ id: 'child' });
+
     render(
-      <TrackingContextProvider tracker={tracker}>
+      <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
         <Component />
       </TrackingContextProvider>
     );
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(customTracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVideoPauseEvent()));
+    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(
+        makeVideoPauseEvent({
+          location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
+        })
+      )
+    );
   });
 });

@@ -4,7 +4,13 @@
 
 import { makeCompletedEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackCompletedEvent, TrackingContextProvider, useCompletedEventTracker } from '../src';
+import {
+  makeSectionContext,
+  ReactTracker,
+  trackCompletedEvent,
+  TrackingContextProvider,
+  useCompletedEventTracker,
+} from '../src';
 
 describe('CompletedEvent', () => {
   beforeEach(() => {
@@ -54,20 +60,33 @@ describe('CompletedEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackCompletedEvent = useCompletedEventTracker({ tracker: customTracker });
+      const trackCompletedEvent = useCompletedEventTracker({
+        tracker: customTracker,
+        locationStack: [makeSectionContext({ id: 'override' })],
+      });
       trackCompletedEvent();
 
       return <>Component triggering CompletedEvent</>;
     };
 
+    const location1 = makeSectionContext({ id: 'root' });
+    const location2 = makeSectionContext({ id: 'child' });
+
     render(
-      <TrackingContextProvider tracker={tracker}>
+      <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
         <Component />
       </TrackingContextProvider>
     );
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(customTracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeCompletedEvent()));
+    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(
+        makeCompletedEvent({
+          location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
+        })
+      )
+    );
   });
 });
