@@ -54,7 +54,7 @@ describe('trackVideoPause', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackVideoPauseEvent = useVideoPauseEventTracker(customTracker);
+      const trackVideoPauseEvent = useVideoPauseEventTracker({ tracker: customTracker });
       trackVideoPauseEvent();
 
       return <>Component triggering VideoPauseEvent</>;

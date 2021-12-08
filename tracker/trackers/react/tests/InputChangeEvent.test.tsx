@@ -54,7 +54,7 @@ describe('InputChangeEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackInputChangeEvent = useInputChangeEventTracker(customTracker);
+      const trackInputChangeEvent = useInputChangeEventTracker({ tracker: customTracker });
       trackInputChangeEvent();
 
       return <>Component triggering InputChangeEvent</>;

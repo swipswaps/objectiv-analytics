@@ -54,7 +54,7 @@ describe('trackVideoStart', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackVideoStartEvent = useVideoStartEventTracker(customTracker);
+      const trackVideoStartEvent = useVideoStartEventTracker({ tracker: customTracker });
       trackVideoStartEvent();
 
       return <>Component triggering VideoStartEvent</>;

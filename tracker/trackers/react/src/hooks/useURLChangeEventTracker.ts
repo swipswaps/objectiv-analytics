@@ -1,6 +1,5 @@
 import { trackURLChangeEvent } from '../eventTrackers/trackURLChangeEvent';
-import { ReactTracker } from '../ReactTracker';
-import { LocationStack } from '../types';
+import { EventTrackerHookParameters } from '../types';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 
@@ -9,7 +8,8 @@ import { useTracker } from './useTracker';
  * Binds the tracker to the parent Tracker Instance returned by `useTracker`. A custom instance can be provided.
  * Retrieves LocationStack from parent LocationStackProviders. A custom LocationStack can be provided.
  */
-export const useURLChangeEventTracker =
-  (tracker: ReactTracker = useTracker(), locationStack: LocationStack = useLocationStack()) =>
-  () =>
-    trackURLChangeEvent({ tracker, locationStack });
+export const useURLChangeEventTracker = (parameters: EventTrackerHookParameters = {}) => {
+  const { tracker = useTracker(), locationStack = useLocationStack(), globalContexts } = parameters;
+
+  return () => trackURLChangeEvent({ tracker, locationStack, globalContexts });
+};

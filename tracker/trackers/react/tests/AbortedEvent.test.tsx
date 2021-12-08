@@ -60,7 +60,7 @@ describe('AbortedEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackAbortedEvent = useAbortedEventTracker(customTracker);
+      const trackAbortedEvent = useAbortedEventTracker({ tracker: customTracker });
       trackAbortedEvent();
 
       return <>Component triggering AbortedEvent</>;
@@ -85,7 +85,10 @@ describe('AbortedEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackAbortedEvent = useAbortedEventTracker(customTracker, [makeSectionContext({ id: 'override' })]);
+      const trackAbortedEvent = useAbortedEventTracker({
+        tracker: customTracker,
+        locationStack: [makeSectionContext({ id: 'override' })],
+      });
       trackAbortedEvent();
 
       return <>Component triggering AbortedEvent</>;

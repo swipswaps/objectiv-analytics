@@ -54,7 +54,7 @@ describe('CompletedEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackCompletedEvent = useCompletedEventTracker(customTracker);
+      const trackCompletedEvent = useCompletedEventTracker({ tracker: customTracker });
       trackCompletedEvent();
 
       return <>Component triggering CompletedEvent</>;

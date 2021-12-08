@@ -46,7 +46,7 @@ describe('SectionVisibleEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackSectionVisibleEvent = useSectionVisibleEventTracker(customTracker);
+      const trackSectionVisibleEvent = useSectionVisibleEventTracker({ tracker: customTracker });
       trackSectionVisibleEvent();
 
       return <>Component triggering SectionVisibleEvent</>;

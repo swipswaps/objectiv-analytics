@@ -1,6 +1,5 @@
 import { trackApplicationLoadedEvent } from '../eventTrackers/trackApplicationLoadedEvent';
-import { ReactTracker } from '../ReactTracker';
-import { LocationStack } from '../types';
+import { EventTrackerHookParameters } from '../types';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 
@@ -13,7 +12,8 @@ import { useTracker } from './useTracker';
  * @see useTrackApplicationLoaded
  *
  */
-export const useApplicationLoadedEventTracker =
-  (tracker: ReactTracker = useTracker(), locationStack: LocationStack = useLocationStack()) =>
-  () =>
-    trackApplicationLoadedEvent({ tracker, locationStack });
+export const useApplicationLoadedEventTracker = (parameters: EventTrackerHookParameters = {}) => {
+  const { tracker = useTracker(), locationStack = useLocationStack(), globalContexts } = parameters;
+
+  return () => trackApplicationLoadedEvent({ tracker, locationStack, globalContexts });
+};

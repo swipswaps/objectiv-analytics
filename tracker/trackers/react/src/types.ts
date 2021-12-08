@@ -58,11 +58,8 @@ export type EventTrackerParameters = {
 };
 
 /**
- * The parameters of `trackVisibility`
+ * The base parameters of all EventTracker hooks.
+ * Same as EventTrackerParameters but everything is optional.
+ * Hooks will be automatically invoked to retrieve a Tracker instance and LocationStack.
  */
-export type TrackVisibilityParameters = EventTrackerParameters & {
-  /**
-   * Determines whether a SectionVisibleEvent or a SectionHidden event is tracked
-   */
-  isVisible: boolean;
-};
+export type EventTrackerHookParameters = Partial<EventTrackerParameters>;

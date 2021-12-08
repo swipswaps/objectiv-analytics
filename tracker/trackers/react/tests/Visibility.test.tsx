@@ -31,7 +31,7 @@ describe('Visibility', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const Component = () => {
-      const trackVisibility = useVisibilityTracker(false);
+      const trackVisibility = useVisibilityTracker({ isVisible: false });
       trackVisibility();
 
       return <>Component triggering SectionHiddenEvent via Visibility Event Tracker</>;
@@ -55,7 +55,7 @@ describe('Visibility', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackVisibility = useVisibilityTracker(false, customTracker);
+      const trackVisibility = useVisibilityTracker({ isVisible: false, tracker: customTracker });
       trackVisibility();
 
       return <>Component triggering SectionHiddenEvent</>;
@@ -87,7 +87,7 @@ describe('Visibility', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const Component = () => {
-      const trackVisibility = useVisibilityTracker(true);
+      const trackVisibility = useVisibilityTracker({ isVisible: true });
       trackVisibility();
 
       return <>Component triggering SectionVisibleEvent via Visibility Event Tracker</>;
@@ -111,7 +111,7 @@ describe('Visibility', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackVisibility = useVisibilityTracker(true, customTracker);
+      const trackVisibility = useVisibilityTracker({ isVisible: true, tracker: customTracker });
       trackVisibility();
 
       return <>Component triggering SectionVisibleEvent via Visibility Event Tracker</>;

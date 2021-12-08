@@ -54,7 +54,7 @@ describe('URLChangeEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackURLChangeEvent = useURLChangeEventTracker(customTracker);
+      const trackURLChangeEvent = useURLChangeEventTracker({ tracker: customTracker });
       trackURLChangeEvent();
 
       return <>Component triggering URLChangeEvent</>;

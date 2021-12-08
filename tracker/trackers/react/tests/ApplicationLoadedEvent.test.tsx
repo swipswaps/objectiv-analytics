@@ -68,7 +68,7 @@ describe('trackApplicationLoaded', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackApplicationLoadedEvent = useApplicationLoadedEventTracker(customTracker);
+      const trackApplicationLoadedEvent = useApplicationLoadedEventTracker({ tracker: customTracker });
       trackApplicationLoadedEvent();
 
       return <>Component triggering ApplicationLoadedEvent</>;

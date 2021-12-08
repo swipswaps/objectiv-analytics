@@ -54,7 +54,7 @@ describe('ClickEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackClickEvent = useClickEventTracker(customTracker);
+      const trackClickEvent = useClickEventTracker({ tracker: customTracker });
       trackClickEvent();
 
       return <>Component triggering ClickEvent</>;

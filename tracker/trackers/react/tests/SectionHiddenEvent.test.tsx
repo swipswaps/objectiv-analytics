@@ -46,7 +46,7 @@ describe('SectionHiddenEvent', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackSectionHiddenEvent = useSectionHiddenEventTracker(customTracker);
+      const trackSectionHiddenEvent = useSectionHiddenEventTracker({ tracker: customTracker });
       trackSectionHiddenEvent();
 
       return <>Component triggering SectionHiddenEvent</>;

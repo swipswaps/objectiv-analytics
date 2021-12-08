@@ -1,6 +1,5 @@
 import { trackClickEvent } from '../eventTrackers/trackClickEvent';
-import { ReactTracker } from '../ReactTracker';
-import { LocationStack } from '../types';
+import { EventTrackerHookParameters } from '../types';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 
@@ -9,7 +8,8 @@ import { useTracker } from './useTracker';
  * Binds the Tracker to the parent Tracker Instance returned by `useTracker`. A custom instance can be provided.
  * Retrieves LocationStack from parent LocationStackProviders. A custom LocationStack can be provided
  */
-export const useClickEventTracker =
-  (tracker: ReactTracker = useTracker(), locationStack: LocationStack = useLocationStack()) =>
-  () =>
-    trackClickEvent({ tracker, locationStack });
+export const useClickEventTracker = (parameters: EventTrackerHookParameters = {}) => {
+  const { tracker = useTracker(), locationStack = useLocationStack(), globalContexts } = parameters;
+
+  return () => trackClickEvent({ tracker, locationStack, globalContexts });
+};

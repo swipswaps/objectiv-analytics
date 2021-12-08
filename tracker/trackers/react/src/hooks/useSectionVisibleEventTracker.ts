@@ -1,6 +1,5 @@
 import { trackSectionVisibleEvent } from '../eventTrackers/trackSectionVisibleEvent';
-import { ReactTracker } from '../ReactTracker';
-import { LocationStack } from '../types';
+import { EventTrackerHookParameters } from '../types';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 
@@ -9,7 +8,8 @@ import { useTracker } from './useTracker';
  * Binds the tracker to the parent Tracker Instance returned by `useTracker`. A custom instance can be provided.
  * Retrieves LocationStack from parent LocationStackProviders. A custom LocationStack can be provided.
  */
-export const useSectionVisibleEventTracker =
-  (tracker: ReactTracker = useTracker(), locationStack: LocationStack = useLocationStack()) =>
-  () =>
-    trackSectionVisibleEvent({ tracker, locationStack });
+export const useSectionVisibleEventTracker = (parameters: EventTrackerHookParameters = {}) => {
+  const { tracker = useTracker(), locationStack = useLocationStack(), globalContexts } = parameters;
+
+  return () => trackSectionVisibleEvent({ tracker, locationStack, globalContexts });
+};
