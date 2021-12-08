@@ -52,32 +52,7 @@ describe('AbortedEvent', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'AbortedEvent' }));
   });
 
-  it('should track an AbortedEvent (hook with custom tracker)', () => {
-    const tracker = new ReactTracker({ applicationId: 'app-id' });
-    jest.spyOn(tracker, 'trackEvent');
-
-    const customTracker = new ReactTracker({ applicationId: 'app-id-2' });
-    jest.spyOn(customTracker, 'trackEvent');
-
-    const Component = () => {
-      const trackAbortedEvent = useAbortedEventTracker({ tracker: customTracker });
-      trackAbortedEvent();
-
-      return <>Component triggering AbortedEvent</>;
-    };
-
-    render(
-      <TrackingContextProvider tracker={tracker}>
-        <Component />
-      </TrackingContextProvider>
-    );
-
-    expect(tracker.trackEvent).not.toHaveBeenCalled();
-    expect(customTracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeAbortedEvent()));
-  });
-
-  it('should track an AbortedEvent (hook with custom location)', () => {
+  it('should track an AbortedEvent (hook with custom tracker and location)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 

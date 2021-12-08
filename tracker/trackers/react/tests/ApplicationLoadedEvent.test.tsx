@@ -4,7 +4,14 @@
 
 import { makeApplicationLoadedEvent, makeURLChangeEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ObjectivProvider, ReactTracker, trackApplicationLoadedEvent, useApplicationLoadedEventTracker } from '../src';
+import {
+  makeSectionContext,
+  ObjectivProvider,
+  ReactTracker,
+  trackApplicationLoadedEvent,
+  TrackingContextProvider,
+  useApplicationLoadedEventTracker,
+} from '../src';
 
 describe('trackApplicationLoaded', () => {
   beforeEach(() => {
@@ -48,19 +55,19 @@ describe('trackApplicationLoaded', () => {
     };
 
     render(
-      <ObjectivProvider tracker={tracker}>
+      <TrackingContextProvider tracker={tracker}>
         <Component />
-      </ObjectivProvider>
+      </TrackingContextProvider>
     );
 
-    expect(spyTransport.handle).toHaveBeenCalledTimes(3);
+    expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
-      3,
+      1,
       expect.objectContaining({ _type: 'ApplicationLoadedEvent' })
     );
   });
 
-  it('should track an ApplicationLoadedEvent (hook with custom tracker)', () => {
+  it('should track an ApplicationLoadedEvent (hook with custom tracker and location)', () => {
     const tracker = new ReactTracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
@@ -68,20 +75,33 @@ describe('trackApplicationLoaded', () => {
     jest.spyOn(customTracker, 'trackEvent');
 
     const Component = () => {
-      const trackApplicationLoadedEvent = useApplicationLoadedEventTracker({ tracker: customTracker });
+      const trackApplicationLoadedEvent = useApplicationLoadedEventTracker({
+        tracker: customTracker,
+        locationStack: [makeSectionContext({ id: 'override' })],
+      });
       trackApplicationLoadedEvent();
 
       return <>Component triggering ApplicationLoadedEvent</>;
     };
 
+    const location1 = makeSectionContext({ id: 'root' });
+    const location2 = makeSectionContext({ id: 'child' });
+
     render(
-      <ObjectivProvider tracker={tracker}>
+      <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
         <Component />
-      </ObjectivProvider>
+      </TrackingContextProvider>
     );
 
-    expect(tracker.trackEvent).toHaveBeenCalledTimes(2);
+    expect(tracker.trackEvent).not.toHaveBeenCalled();
     expect(customTracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeApplicationLoadedEvent()));
+    expect(customTracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(
+        makeApplicationLoadedEvent({
+          location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
+        })
+      )
+    );
   });
 });
