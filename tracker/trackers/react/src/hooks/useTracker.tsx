@@ -12,9 +12,10 @@ export const useTracker = () => {
   const trackerProviderContext = useContext(TrackerProviderContext);
 
   if (!trackerProviderContext) {
-    throw new Error(
-      `Couldn't get a Tracker. Is the Component in a ObjectivProvider, TrackingContextProvider or TrackerProvider?`
-    );
+    throw new Error(`
+      Couldn't get a Tracker. 
+      Is the Component in a ObjectivProvider, TrackingContextProvider or TrackerProvider?
+    `);
   }
 
   // Return a frozen version of the actual Tracker safeguard against mutations

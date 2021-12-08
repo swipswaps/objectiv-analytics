@@ -3,7 +3,14 @@
  */
 
 import { render } from '@testing-library/react';
-import { LocationProvider, makeSectionContext, ReactTracker, TrackingContextProvider } from '../src';
+import {
+  LocationProvider,
+  makeSectionContext,
+  ReactTracker,
+  TrackingContextProvider,
+  useLocationStack,
+  useTracker,
+} from '../src';
 import { useTrackingContext } from '../src/hooks/useTrackingContext';
 
 describe('TrackingContextProvider', () => {
@@ -123,5 +130,29 @@ describe('TrackingContextProvider', () => {
       locationStack: [rootSection, childSection],
       tracker: expectedState.tracker,
     });
+  });
+
+  it('should throw when LocationProvider is not higher up in the component tree', () => {
+    const Component = () => {
+      useLocationStack();
+      return null;
+    };
+
+    expect(() => render(<Component />)).toThrow(`
+      Couldn't get a LocationStack. 
+      Is the Component in a ObjectivProvider, TrackingContextProvider or LocationProvider?
+    `);
+  });
+
+  it('should throw when TrackerProvider is not higher up in the component tree', () => {
+    const Component = () => {
+      useTracker();
+      return null;
+    };
+
+    expect(() => render(<Component />)).toThrow(`
+      Couldn't get a Tracker. 
+      Is the Component in a ObjectivProvider, TrackingContextProvider or TrackerProvider?
+    `);
   });
 });
