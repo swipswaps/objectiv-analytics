@@ -7,7 +7,7 @@ import { renderHook } from '@testing-library/react-hooks';
 import { FC, useEffect } from 'react';
 import { makeSectionContext, ReactTracker, TrackingContextProvider, useTrackApplicationLoadedEvent } from '../src';
 
-describe('useTrackApplicationLoaded', () => {
+describe('useTrackApplicationLoadedEvent', () => {
   const renderSpy = jest.fn();
   const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
   const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });

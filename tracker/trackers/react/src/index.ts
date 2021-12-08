@@ -58,7 +58,6 @@ export * from './hooks/useTrackOnChange';
 export * from './hooks/useTrackOnMount';
 export * from './hooks/useTrackOnToggle';
 export * from './hooks/useTrackOnUnmount';
-export * from './hooks/useTrackURLChangeEvent';
 export * from './hooks/useURLChangeEventTracker';
 export * from './hooks/useVideoPauseEventTracker';
 export * from './hooks/useVideoStartEventTracker';
