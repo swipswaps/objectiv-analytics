@@ -4,8 +4,7 @@
 
 import { makeSectionHiddenEvent, makeSectionVisibleEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackVisibility } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, TrackingContextProvider, trackVisibility } from '../src';
 import { useVisibilityTracker } from '../src/hooks/useVisibilityTracker';
 
 describe('Visibility', () => {

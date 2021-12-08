@@ -5,8 +5,7 @@
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { FC, useEffect } from 'react';
-import { ReactTracker, useTrackApplicationLoadedEvent } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, TrackingContextProvider, useTrackApplicationLoadedEvent } from '../src';
 
 describe('useTrackApplicationLoaded', () => {
   const renderSpy = jest.fn();

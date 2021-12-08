@@ -4,8 +4,7 @@
 
 import { makeURLChangeEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackURLChangeEvent, useURLChangeEventTracker } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, TrackingContextProvider, trackURLChangeEvent, useURLChangeEventTracker } from '../src';
 
 describe('URLChangeEvent', () => {
   beforeEach(() => {

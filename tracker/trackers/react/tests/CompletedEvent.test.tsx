@@ -4,8 +4,7 @@
 
 import { makeCompletedEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackCompletedEvent, useCompletedEventTracker } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, trackCompletedEvent, TrackingContextProvider, useCompletedEventTracker } from '../src';
 
 describe('CompletedEvent', () => {
   beforeEach(() => {

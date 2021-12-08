@@ -4,8 +4,7 @@
 
 import { makeVideoPauseEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackVideoPauseEvent, useVideoPauseEventTracker } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, TrackingContextProvider, trackVideoPauseEvent, useVideoPauseEventTracker } from '../src';
 
 describe('trackVideoPause', () => {
   beforeEach(() => {

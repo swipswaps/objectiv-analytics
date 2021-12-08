@@ -4,8 +4,7 @@
 
 import { render } from '@testing-library/react';
 import { FC, useEffect } from 'react';
-import { ReactTracker, useTrackURLChangeEvent } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, TrackingContextProvider, useTrackURLChangeEvent } from '../src';
 
 describe('useTrackURLChange', () => {
   beforeEach(() => {

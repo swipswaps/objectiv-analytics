@@ -4,8 +4,7 @@
 
 import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackSectionVisibleEvent, useSectionVisibleEventTracker } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, TrackingContextProvider, trackSectionVisibleEvent, useSectionVisibleEventTracker } from '../src';
 
 describe('SectionVisibleEvent', () => {
   it('should track a SectionVisibleEvent', () => {

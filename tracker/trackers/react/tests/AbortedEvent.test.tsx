@@ -4,9 +4,13 @@
 
 import { makeAbortedEvent, makeSectionContext } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackAbortedEvent, useAbortedEventTracker } from '../src';
-import { makeLocationEntry } from '../src/common/makeLocationEntry';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import {
+  makeLocationEntry,
+  ReactTracker,
+  trackAbortedEvent,
+  TrackingContextProvider,
+  useAbortedEventTracker,
+} from '../src';
 
 describe('AbortedEvent', () => {
   beforeEach(() => {

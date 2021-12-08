@@ -3,7 +3,7 @@
  */
 
 import { createContext } from 'react';
-import { TrackerContextState, TrackerProviderProps } from '../types';
+import { TrackerContextState, TrackerProviderProps } from '../../types';
 
 /**
  * A Context to retrieve a Tracker instance.

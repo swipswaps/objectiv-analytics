@@ -4,8 +4,7 @@
 
 import { makeSectionHiddenEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackSectionHiddenEvent, useSectionHiddenEventTracker } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, TrackingContextProvider, trackSectionHiddenEvent, useSectionHiddenEventTracker } from '../src';
 
 describe('SectionHiddenEvent', () => {
   it('should track a SectionHiddenEvent (programmatic)', () => {

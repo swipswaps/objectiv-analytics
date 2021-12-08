@@ -8,6 +8,17 @@ import { ReactNode, useEffect } from 'react';
 import { ReactTracker } from './ReactTracker';
 
 /**
+ * The entry in a LocationProviderContext.locationStack
+ */
+export type LocationContext<T extends AbstractLocationContext> = T & {
+  /**
+   * A unique identifier, generated at rendering time, used internally to identify a Location Context uniquely
+   */
+  __location_id: string;
+};
+
+/**
+ * @deprecated
  * The entry in a LocationProviderContext.locationEntries
  */
 export type LocationEntry = {

@@ -4,7 +4,7 @@
 
 import { AbstractLocationContext } from '@objectiv/schema';
 import { generateUUID } from '@objectiv/tracker-core';
-import { LocationEntry } from '../types';
+import { LocationEntry } from '../../types';
 
 /**
  * A utility to factor a new LocationEntry from a LocationContext.

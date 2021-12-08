@@ -4,8 +4,7 @@
 
 import { makeClickEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackClickEvent, useClickEventTracker } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, trackClickEvent, TrackingContextProvider, useClickEventTracker } from '../src';
 
 describe('ClickEvent', () => {
   beforeEach(() => {

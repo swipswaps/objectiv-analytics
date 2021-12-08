@@ -4,8 +4,7 @@
 
 import { makeVideoStartEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ReactTracker, trackVideoStartEvent, useVideoStartEventTracker } from '../src';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { ReactTracker, TrackingContextProvider, trackVideoStartEvent, useVideoStartEventTracker } from '../src';
 
 describe('trackVideoStart', () => {
   beforeEach(() => {

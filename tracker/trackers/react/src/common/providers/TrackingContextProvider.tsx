@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { TrackingContextProviderProps } from '../types';
+import { TrackingContextProviderProps } from '../../types';
 import { LocationProvider } from './LocationProvider';
 import { TrackerProvider } from './TrackerProvider';
 

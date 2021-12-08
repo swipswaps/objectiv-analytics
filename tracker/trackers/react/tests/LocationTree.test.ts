@@ -3,8 +3,7 @@
  */
 
 import { generateUUID, makeSectionContext } from '@objectiv/tracker-core';
-import { LocationEntry, LocationTree } from '../src';
-import { makeLocationEntry } from '../src/common/makeLocationEntry';
+import { LocationEntry, LocationTree, makeLocationEntry } from '../src';
 
 describe('LocationTree', () => {
   beforeEach(() => {

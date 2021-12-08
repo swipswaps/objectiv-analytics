@@ -2,9 +2,9 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { trackApplicationLoadedEvent } from '../eventTrackers/trackApplicationLoadedEvent';
-import { trackURLChangeEvent } from '../eventTrackers/trackURLChangeEvent';
-import { TrackerProviderProps } from '../types';
+import { trackApplicationLoadedEvent } from '../../eventTrackers/trackApplicationLoadedEvent';
+import { trackURLChangeEvent } from '../../eventTrackers/trackURLChangeEvent';
+import { TrackerProviderProps } from '../../types';
 import { TrackingContextProvider } from './TrackingContextProvider';
 
 /**

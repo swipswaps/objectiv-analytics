@@ -3,7 +3,7 @@
  */
 
 import { createContext, useContext } from 'react';
-import { LocationProviderContextState, LocationProviderProps } from '../types';
+import { LocationProviderContextState, LocationProviderProps } from '../../types';
 
 /**
  * A Context to retrieve LocationEntries and LocationStack.

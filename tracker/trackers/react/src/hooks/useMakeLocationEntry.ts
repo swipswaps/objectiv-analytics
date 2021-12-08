@@ -4,7 +4,7 @@
 
 import { AbstractLocationContext } from '@objectiv/schema';
 import { LocationTree } from '../common/LocationTree';
-import { makeLocationEntry } from '../common/makeLocationEntry';
+import { makeLocationEntry } from '../common/factories/makeLocationEntry';
 import { useParentLocationEntry } from './useParentLocationEntry';
 
 /**

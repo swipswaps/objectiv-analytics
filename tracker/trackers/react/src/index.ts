@@ -2,12 +2,28 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-export * from './common/LocationProvider';
+export * from './common/factories/makeActionContext';
+export * from './common/factories/makeButtonContext';
+export * from './common/factories/makeExpandableSectionContext';
+export * from './common/factories/makeIdFromString';
+export * from './common/factories/makeInputContext';
+export * from './common/factories/makeItemContext';
+export * from './common/factories/makeLinkContext';
+export * from './common/factories/makeLocationContext';
+export * from './common/factories/makeLocationEntry';
+export * from './common/factories/makeMediaPlayerContext';
+export * from './common/factories/makeNavigationContext';
+export * from './common/factories/makeOverlayContext';
+export * from './common/factories/makeSectionContext';
+export * from './common/factories/makeTextFromChildren';
+export * from './common/factories/recursiveGetTextFromChildren';
+
+export * from './common/providers/LocationProvider';
+export * from './common/providers/ObjectivProvider';
+export * from './common/providers/TrackerProvider';
+export * from './common/providers/TrackingContextProvider';
+
 export * from './common/LocationTree';
-export * from './common/makeIdFromString';
-export * from './common/makeTextFromChildren';
-export * from './common/ObjectivProvider';
-export * from './common/TrackerProvider';
 
 export * from './eventTrackers/trackAbortedEvent';
 export * from './eventTrackers/trackApplicationLoadedEvent';

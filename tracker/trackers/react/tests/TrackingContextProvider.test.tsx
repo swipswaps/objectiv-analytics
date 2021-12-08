@@ -4,9 +4,7 @@
 
 import { makeSectionContext } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { LocationProvider, ReactTracker } from '../src';
-import { makeLocationEntry } from '../src/common/makeLocationEntry';
-import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
+import { LocationProvider, makeLocationEntry, ReactTracker, TrackingContextProvider } from '../src';
 import { useTrackingContext } from '../src/hooks/useTrackingContext';
 
 describe('ObjectivProvider', () => {

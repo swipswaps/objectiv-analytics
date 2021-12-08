@@ -3,8 +3,8 @@
  */
 
 import { useContext } from 'react';
-import { LocationProviderContext } from '../common/LocationProvider';
-import { TrackerContext } from '../common/TrackerProvider';
+import { LocationProviderContext } from '../common/providers/LocationProvider';
+import { TrackerContext } from '../common/providers/TrackerProvider';
 import { TrackingContext } from '../types';
 
 /**
