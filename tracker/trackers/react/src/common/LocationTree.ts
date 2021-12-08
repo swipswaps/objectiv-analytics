@@ -110,10 +110,10 @@ export const LocationTree = {
    *
    * Note: This method is invoked automatically by LocationContextWrapper.
    */
-  add: (locationEntry: LocationEntry, parentLocationId: string | null) => {
-    const parentLocationNode = LocationTree.find(parentLocationId);
+  add: (locationEntry: LocationEntry, parentLocationEntry?: LocationEntry) => {
+    const parentLocationNode = LocationTree.find(parentLocationEntry?.id ?? null);
     if (!parentLocationNode) {
-      throw new Error('Parent not found');
+      throw new Error('Parent LocationEntry Node not found.');
     }
 
     parentLocationNode.children.push({ ...locationEntry, children: [] });

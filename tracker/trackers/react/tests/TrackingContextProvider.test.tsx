@@ -2,9 +2,10 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { generateUUID, makeSectionContext } from '@objectiv/tracker-core';
+import { makeSectionContext } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { LocationEntry, LocationProvider, ReactTracker } from '../src';
+import { LocationProvider, ReactTracker } from '../src';
+import { makeLocationEntry } from '../src/common/makeLocationEntry';
 import { TrackingContextProvider } from '../src/common/TrackingContextProvider';
 import { useTrackingContext } from '../src/hooks/useTrackingContext';
 
@@ -76,7 +77,7 @@ describe('ObjectivProvider', () => {
   });
 
   it('should inherit location from parents', () => {
-    const locationEntry: LocationEntry = { id: generateUUID(), locationContext: makeSectionContext({ id: 'root' }) };
+    const locationEntry = makeLocationEntry(makeSectionContext({ id: 'root' }));
 
     const Component = () => {
       const trackingContext = useTrackingContext();
@@ -103,8 +104,8 @@ describe('ObjectivProvider', () => {
   });
 
   it('should support extending the location', () => {
-    const locationEntry1: LocationEntry = { id: generateUUID(), locationContext: makeSectionContext({ id: 'root' }) };
-    const locationEntry2: LocationEntry = { id: generateUUID(), locationContext: makeSectionContext({ id: 'child' }) };
+    const locationEntry1 = makeLocationEntry(makeSectionContext({ id: 'root' }));
+    const locationEntry2 = makeLocationEntry(makeSectionContext({ id: 'child' }));
 
     const Component = () => {
       const trackingContext = useTrackingContext();

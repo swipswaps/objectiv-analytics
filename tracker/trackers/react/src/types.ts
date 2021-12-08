@@ -3,7 +3,7 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import { GlobalContexts, LocationStack, Tracker, UntrackedEvent } from '@objectiv/tracker-core';
+import { GlobalContexts, LocationStack, UntrackedEvent } from '@objectiv/tracker-core';
 import { ReactNode, useEffect } from 'react';
 import { ReactTracker } from './ReactTracker';
 
@@ -84,7 +84,7 @@ export type TrackerContextState = {
   /**
    * A Tracker instance.
    */
-  tracker: Tracker;
+  tracker: ReactTracker;
 };
 
 /**
