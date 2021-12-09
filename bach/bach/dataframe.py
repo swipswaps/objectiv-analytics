@@ -584,30 +584,36 @@ class DataFrame:
         TODO: a known problem is that DataFrames with 'json' columns cannot be fully materialized.
 
         :param node_name: The name of the node that's going to be created
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy. Not supported yet.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param limit: The limit (slice, int) to apply.
-        :returns: New DataFrame with the current DataFrame's state as base_node
+        :returns: DataFrame with the current DataFrame's state as base_node
 
         .. note::
             Calling materialize() resets the order of the dataframe. Call :py:meth:`sort_values()` again on
             the result if order is important.
         """
-        if inplace:
-            raise NotImplementedError("inplace materialization is not supported")
-
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
-
         node = self.get_current_node(name=node_name, limit=limit)
-        return self.copy_override(
+
+        df = self.get_instance(
+            engine=self.engine,
             base_node=node,
             index_dtypes=index_dtypes,
-            series_dtypes=series_dtypes,
-            group_by=[None],
-            # materializing resets any sorting as we don't have a way to translate the sorting expressions
-            # to new columns reliably. This needs attention # TODO
+            dtypes=series_dtypes,
+            group_by=None,
             order_by=[]
         )
+
+        if not inplace:
+            return df
+        self._engine = df.engine
+        self._base_node = df.base_node
+        self._index = df.index
+        self._data = df.data
+        self._group_by = df.group_by
+        self._order_by = df._order_by
+        return self
 
     def get_sample(self,
                    table_name: str,
