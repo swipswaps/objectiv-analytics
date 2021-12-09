@@ -3,7 +3,7 @@
  */
 
 import { TrackerEventConfig } from '@objectiv/tracker-core';
-import { TrackEventParameters } from '@objectiv/tracker-react';
+import { TrackEventParameters } from '../types';
 import { useTracker } from './consumers/useTracker';
 import { useOnChange } from './useOnChange';
 
