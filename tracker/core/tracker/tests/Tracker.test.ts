@@ -352,7 +352,7 @@ describe('Tracker', () => {
       jest.spyOn(testTracker, 'waitForQueue').mockResolvedValue(true);
       expect(testTracker.flushQueue).not.toHaveBeenCalled();
       expect(testTracker.waitForQueue).not.toHaveBeenCalled();
-      await testTracker.trackEvent(testEvent, { waitForQueue: {intervalMs: 100}, flushQueue: true });
+      await testTracker.trackEvent(testEvent, { waitForQueue: { intervalMs: 100 }, flushQueue: true });
       expect(testTracker.waitForQueue).toHaveBeenCalledTimes(1);
       expect(testTracker.flushQueue).toHaveBeenCalledTimes(1);
     });

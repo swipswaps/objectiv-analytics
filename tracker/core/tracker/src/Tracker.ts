@@ -64,17 +64,17 @@ export const makeTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
  * The parameters object of Tracker.waitForQueue(parameters?: WaitForQueueParameters).
  */
 export type WaitForQueueParameters = {
-  intervalMs?: number,
-  timeoutMs?: number,
-}
+  intervalMs?: number;
+  timeoutMs?: number;
+};
 
 /**
  * The `options` parameter of Tracker.trackEvent(event: TrackerEventConfig, options?: TrackEventOptions).
  */
 export type TrackEventOptions = {
-  waitForQueue?: true | WaitForQueueParameters,
+  waitForQueue?: true | WaitForQueueParameters;
   flushQueue?: true | 'onTimeout';
-}
+};
 
 /**
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
@@ -258,7 +258,7 @@ export class Tracker implements Contexts, TrackerConfig {
     }
 
     // Check whether we need to wait for the Tracker to wait for its Queue and/or whether we should flush it afterwards
-    if(options) {
+    if (options) {
       const { waitForQueue, flushQueue } = options;
 
       let isQueueEmpty = true;
