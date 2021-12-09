@@ -1,7 +1,11 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { TrackerEventConfig } from '@objectiv/tracker-core';
 import { ReactTracker } from '../ReactTracker';
+import { useTracker } from './consumers/useTracker';
 import { useOnUnmount } from './useOnUnmount';
-import { useTracker } from './useTracker';
 
 //FIXME add useLocationStack
 

@@ -3,7 +3,7 @@
  */
 
 import { useContext } from 'react';
-import { LocationProviderContext } from '../common/providers/LocationProviderContext';
+import { LocationProviderContext } from '../../common/providers/LocationProviderContext';
 
 /**
  * A utility hook to easily retrieve the LocationStack from the LocationProviderContext.

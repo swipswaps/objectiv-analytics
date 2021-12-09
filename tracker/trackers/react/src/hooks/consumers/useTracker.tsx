@@ -3,7 +3,7 @@
  */
 
 import { useContext } from 'react';
-import { TrackerProviderContext } from '../common/providers/TrackerProviderContext';
+import { TrackerProviderContext } from '../../common/providers/TrackerProviderContext';
 
 /**
  * A utility hook to easily retrieve the Tracker instance from the TrackerProviderContext.

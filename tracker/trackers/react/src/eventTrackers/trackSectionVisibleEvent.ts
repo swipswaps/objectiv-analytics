@@ -1,6 +1,7 @@
 /*
  * Copyright 2021 Objectiv B.V.
  */
+
 import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
 import { EventTrackerParameters } from '../types';
 

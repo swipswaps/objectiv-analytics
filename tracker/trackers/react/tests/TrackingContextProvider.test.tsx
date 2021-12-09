@@ -10,8 +10,8 @@ import {
   TrackingContextProvider,
   useLocationStack,
   useTracker,
+  useTrackingContext,
 } from '../src';
-import { useTrackingContext } from '../src/hooks/useTrackingContext';
 
 describe('TrackingContextProvider', () => {
   beforeEach(() => {

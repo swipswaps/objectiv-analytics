@@ -4,8 +4,7 @@
 
 import { makeApplicationLoadedEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { ObjectivProvider, ReactTracker } from '../src';
-import { useTrackingContext } from '../src/hooks/useTrackingContext';
+import { ObjectivProvider, ReactTracker, useTrackingContext } from '../src';
 
 describe('ObjectivProvider', () => {
   beforeEach(() => {

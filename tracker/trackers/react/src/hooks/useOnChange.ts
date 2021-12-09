@@ -1,3 +1,7 @@
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
 import { useEffect, useRef } from 'react';
 import isEqual from 'fast-deep-equal/es6';
 import { OnChangeEffectCallback } from '../types';

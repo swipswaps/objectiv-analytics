@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { TrackingContext } from '../common/providers/TrackingContext';
+import { TrackingContext } from '../../common/providers/TrackingContext';
 import { useLocationStack } from './useLocationStack';
 import { useTracker } from './useTracker';
 

@@ -1,7 +1,11 @@
-import { trackVisibility } from '../eventTrackers/trackVisibility';
-import { EventTrackerHookParameters } from '../types';
-import { useLocationStack } from './useLocationStack';
-import { useTracker } from './useTracker';
+/*
+ * Copyright 2021 Objectiv B.V.
+ */
+
+import { trackVisibility } from '../../eventTrackers/trackVisibility';
+import { EventTrackerHookParameters } from '../../types';
+import { useLocationStack } from '../consumers/useLocationStack';
+import { useTracker } from '../consumers/useTracker';
 
 /**
  * The parameters of `useTrackVisibility`
@@ -16,8 +20,6 @@ export type TrackVisibilityHookParameters = EventTrackerHookParameters & {
 /**
  * Returns a SectionVisibleEvent / SectionHiddenEvent Tracker ready to be triggered.
  * The `isVisible` parameter determines which Visibility Event is triggered.
- * Binds the tracker to the parent Tracker Instance returned by `useTracker`. A custom instance can be provided.
- * Retrieves LocationStack from parent LocationStackProviders. A custom LocationStack can be provided.
  */
 export const useVisibilityTracker = (parameters: TrackVisibilityHookParameters) => {
   const { isVisible, tracker = useTracker(), locationStack = useLocationStack(), globalContexts } = parameters;

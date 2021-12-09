@@ -7,8 +7,8 @@ import { ReactNode } from 'react';
 import { LocationTree } from '../common/LocationTree';
 import { LocationProvider } from '../common/providers/LocationProvider';
 import { TrackingContext } from '../common/providers/TrackingContext';
-import { useParentLocationContext } from '../hooks/useParentLocationContext';
-import { useTracker } from '../hooks/useTracker';
+import { useParentLocationContext } from '../hooks/consumers/useParentLocationContext';
+import { useTracker } from '../hooks/consumers/useTracker';
 import { LocationContext } from '../types';
 
 /**

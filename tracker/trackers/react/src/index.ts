@@ -39,27 +39,31 @@ export * from './eventTrackers/trackVideoPauseEvent';
 export * from './eventTrackers/trackVideoStartEvent';
 export * from './eventTrackers/trackVisibility';
 
-export * from './hooks/useAbortedEventTracker';
-export * from './hooks/useApplicationLoadedEventTracker';
-export * from './hooks/useClickEventTracker';
-export * from './hooks/useCompletedEventTracker';
-export * from './hooks/useInputChangeEventTracker';
-export * from './hooks/useLocationStack';
+export * from './hooks/consumers/useLocationStack';
+export * from './hooks/consumers/useParentLocationContext';
+export * from './hooks/consumers/useTracker';
+export * from './hooks/consumers/useTrackingContext';
+
+export * from './hooks/eventTrackers/useAbortedEventTracker';
+export * from './hooks/eventTrackers/useApplicationLoadedEventTracker';
+export * from './hooks/eventTrackers/useClickEventTracker';
+export * from './hooks/eventTrackers/useCompletedEventTracker';
+export * from './hooks/eventTrackers/useInputChangeEventTracker';
+export * from './hooks/eventTrackers/useSectionHiddenEventTracker';
+export * from './hooks/eventTrackers/useSectionVisibleEventTracker';
+export * from './hooks/eventTrackers/useURLChangeEventTracker';
+export * from './hooks/eventTrackers/useVideoPauseEventTracker';
+export * from './hooks/eventTrackers/useVideoStartEventTracker';
+export * from './hooks/eventTrackers/useVisibilityTracker';
+
 export * from './hooks/useOnChange';
 export * from './hooks/useOnMount';
 export * from './hooks/useOnToggle';
 export * from './hooks/useOnUnmount';
-export * from './hooks/useParentLocationContext';
-export * from './hooks/useSectionHiddenEventTracker';
-export * from './hooks/useSectionVisibleEventTracker';
-export * from './hooks/useTracker';
 export * from './hooks/useTrackOnChange';
 export * from './hooks/useTrackOnMount';
 export * from './hooks/useTrackOnToggle';
 export * from './hooks/useTrackOnUnmount';
-export * from './hooks/useURLChangeEventTracker';
-export * from './hooks/useVideoPauseEventTracker';
-export * from './hooks/useVideoStartEventTracker';
 
 export * from './locationWrappers/ActionContextWrapper';
 export * from './locationWrappers/ButtonContextWrapper';
