@@ -3,7 +3,7 @@
  */
 
 import { TrackerEventConfig } from '@objectiv/tracker-core';
-import { TrackConditionalHookParameters } from '@objectiv/tracker-react';
+import { TrackConditionalHookParameters } from '../types';
 import { useTracker } from './consumers/useTracker';
 import { useOnMount } from './useOnMount';
 
