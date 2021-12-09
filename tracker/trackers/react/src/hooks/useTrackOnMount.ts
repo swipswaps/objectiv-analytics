@@ -3,16 +3,27 @@
  */
 
 import { TrackerEventConfig } from '@objectiv/tracker-core';
-import { ReactTracker } from '../ReactTracker';
+import { TrackConditionalHookParameters } from '@objectiv/tracker-react';
 import { useTracker } from './consumers/useTracker';
 import { useOnMount } from './useOnMount';
 
-//FIXME add useLocationStack
+/**
+ * The parameters of useTrackOnMount
+ */
+export type TrackOnMountHookParameters = TrackConditionalHookParameters & {
+  /**
+   * The Event to track
+   */
+  event: TrackerEventConfig;
+};
 
 /**
  * A side effect that triggers the given TrackerEvent on mount.
  */
-export const useTrackOnMount = (event: TrackerEventConfig, tracker: ReactTracker = useTracker()) =>
-  useOnMount(() => {
+export const useTrackOnMount = (parameters: TrackOnMountHookParameters) => {
+  const { event, tracker = useTracker() } = parameters;
+
+  return useOnMount(() => {
     tracker.trackEvent(event);
   });
+};

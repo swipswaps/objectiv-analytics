@@ -63,3 +63,10 @@ export type EventTrackerParameters = {
  * Hooks will be automatically invoked to retrieve a Tracker instance and LocationStack.
  */
 export type EventTrackerHookParameters = Partial<EventTrackerParameters>;
+
+/**
+ * The base parameters of all useTrack* conditional hooks
+ */
+export type TrackConditionalHookParameters = {
+  tracker?: ReactTracker;
+};

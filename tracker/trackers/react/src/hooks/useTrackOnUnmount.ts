@@ -3,16 +3,27 @@
  */
 
 import { TrackerEventConfig } from '@objectiv/tracker-core';
-import { ReactTracker } from '../ReactTracker';
+import { TrackConditionalHookParameters } from '@objectiv/tracker-react';
 import { useTracker } from './consumers/useTracker';
 import { useOnUnmount } from './useOnUnmount';
 
-//FIXME add useLocationStack
+/**
+ * The parameters of useTrackOnUnmount
+ */
+export type TrackOnUnmountHookParameters = TrackConditionalHookParameters & {
+  /**
+   * The Event to track
+   */
+  event: TrackerEventConfig;
+};
 
 /**
  * A side effect that triggers the given TrackerEvent on unmount.
  */
-export const useTrackOnUnmount = (event: TrackerEventConfig, tracker: ReactTracker = useTracker()) =>
-  useOnUnmount(() => {
+export const useTrackOnUnmount = (parameters: TrackOnUnmountHookParameters) => {
+  const { event, tracker = useTracker() } = parameters;
+
+  return useOnUnmount(() => {
     tracker.trackEvent(event);
   });
+};

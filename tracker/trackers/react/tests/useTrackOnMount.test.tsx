@@ -30,7 +30,7 @@ describe('useTrackOnMount', () => {
   };
 
   const Application = () => {
-    useTrackOnMount(makeSectionVisibleEvent());
+    useTrackOnMount({ event: makeSectionVisibleEvent() });
 
     useEffect(renderSpy);
 
@@ -67,7 +67,7 @@ describe('useTrackOnMount', () => {
   it('should allow overriding the tracker with a custom one', () => {
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport2 });
-    renderHook(() => useTrackOnMount(makeSectionVisibleEvent(), anotherTracker));
+    renderHook(() => useTrackOnMount({ event: makeSectionVisibleEvent(), tracker: anotherTracker }));
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);

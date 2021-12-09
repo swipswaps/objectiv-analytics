@@ -42,7 +42,7 @@ describe('useTrackOnChange', () => {
 
   const Application = () => {
     const [menuOpen, setMenuOpen] = useState(false);
-    useTrackOnChange(menuOpen, menuToggleEvent);
+    useTrackOnChange({ state: menuOpen, event: menuToggleEvent });
 
     useEffect(renderSpy);
 
@@ -95,7 +95,9 @@ describe('useTrackOnChange', () => {
   it('should allow overriding the tracker with a custom one', () => {
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport2 });
-    const { rerender } = renderHook((state) => useTrackOnChange(state, menuToggleEvent, anotherTracker));
+    const { rerender } = renderHook((state) =>
+      useTrackOnChange({ state, event: menuToggleEvent, tracker: anotherTracker })
+    );
 
     rerender({ state: true });
 

@@ -39,7 +39,7 @@ describe('useTrackOnToggle', () => {
 
   const Application = () => {
     const [menuOpen, setMenuOpen] = useState(false);
-    useTrackOnToggle(menuOpen, makeSectionVisibleEvent(), makeSectionHiddenEvent());
+    useTrackOnToggle({ state: menuOpen, trueEvent: makeSectionVisibleEvent(), falseEvent: makeSectionHiddenEvent() });
 
     useEffect(renderSpy);
 
@@ -95,7 +95,13 @@ describe('useTrackOnToggle', () => {
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport2 });
     const { rerender } = renderHook(
-      (state) => useTrackOnToggle(state, makeSectionVisibleEvent(), makeSectionHiddenEvent(), anotherTracker),
+      (state) =>
+        useTrackOnToggle({
+          state,
+          trueEvent: makeSectionVisibleEvent(),
+          falseEvent: makeSectionHiddenEvent(),
+          tracker: anotherTracker,
+        }),
       { initialProps: false }
     );
 

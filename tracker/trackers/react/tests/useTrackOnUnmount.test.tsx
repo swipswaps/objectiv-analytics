@@ -30,7 +30,7 @@ describe('useTrackOnUnmount', () => {
   };
 
   const Application = () => {
-    useTrackOnUnmount(makeSectionHiddenEvent());
+    useTrackOnUnmount({ event: makeSectionHiddenEvent() });
 
     useEffect(renderSpy);
 
@@ -69,7 +69,9 @@ describe('useTrackOnUnmount', () => {
       isUsable: () => true,
     };
     const anotherTracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport2 });
-    const { unmount } = renderHook(() => useTrackOnUnmount(makeSectionHiddenEvent(), anotherTracker));
+    const { unmount } = renderHook(() =>
+      useTrackOnUnmount({ event: makeSectionHiddenEvent(), tracker: anotherTracker })
+    );
 
     unmount();
 
