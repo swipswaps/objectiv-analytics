@@ -28,7 +28,7 @@ describe('InputChangeEvent', () => {
     trackInputChangeEvent({ tracker });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeInputChangeEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeInputChangeEvent()), undefined);
   });
 
   it('should track an InputChangeEvent (hook relying on ObjectivProvider)', () => {
@@ -86,7 +86,8 @@ describe('InputChangeEvent', () => {
         makeInputChangeEvent({
           location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
         })
-      )
+      ),
+      undefined
     );
   });
 });

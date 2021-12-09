@@ -28,7 +28,7 @@ describe('trackVideoPause', () => {
     trackVideoPauseEvent({ tracker });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVideoPauseEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVideoPauseEvent()), undefined);
   });
 
   it('should track a VideoPauseEvent (hook relying on ObjectivProvider)', () => {
@@ -86,7 +86,8 @@ describe('trackVideoPause', () => {
         makeVideoPauseEvent({
           location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
         })
-      )
+      ),
+      undefined
     );
   });
 });

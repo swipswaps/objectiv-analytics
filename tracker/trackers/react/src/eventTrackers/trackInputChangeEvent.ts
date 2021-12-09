@@ -8,5 +8,5 @@ import { EventTrackerParameters } from '../types';
 /**
  * Factors an InputChangeEvent and hands it over to the given `tracker` via its `trackEvent` method.
  */
-export const trackInputChangeEvent = ({ tracker, locationStack, globalContexts }: EventTrackerParameters) =>
-  tracker.trackEvent(makeInputChangeEvent({ location_stack: locationStack, global_contexts: globalContexts }));
+export const trackInputChangeEvent = ({ tracker, locationStack, globalContexts, options }: EventTrackerParameters) =>
+  tracker.trackEvent(makeInputChangeEvent({ location_stack: locationStack, global_contexts: globalContexts }), options);

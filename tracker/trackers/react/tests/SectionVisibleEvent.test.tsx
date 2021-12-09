@@ -20,7 +20,11 @@ describe('SectionVisibleEvent', () => {
     trackSectionVisibleEvent({ tracker });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionVisibleEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeSectionVisibleEvent()),
+      undefined
+    );
   });
 
   it('should track a SectionVisibleEvent (hook relying on ObjectivProvider)', () => {
@@ -78,7 +82,8 @@ describe('SectionVisibleEvent', () => {
         makeSectionVisibleEvent({
           location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
         })
-      )
+      ),
+      undefined
     );
   });
 });

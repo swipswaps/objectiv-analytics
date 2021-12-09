@@ -3,7 +3,7 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import { GlobalContexts } from '@objectiv/tracker-core';
+import { GlobalContexts, TrackEventOptions } from '@objectiv/tracker-core';
 import { useEffect } from 'react';
 import { ReactTracker } from './ReactTracker';
 
@@ -38,14 +38,24 @@ export type OnToggleEffectCallback = (previousState: boolean, state: boolean) =>
 export type EffectDestructor = () => ReturnType<typeof useEffect>;
 
 /**
- * The parameters of Event Tracker shorthand functions
+ * Common parameters that all Tracker.trackEvent functions and hook should support
  */
-export type EventTrackerParameters = {
+export type TrackEventParameters = {
   /**
    * A Tracker instance.
    */
   tracker: ReactTracker;
 
+  /**
+   * Optional. Tracker.trackEvent options. Allows configuring whether to wait and/or flush the Tracker Queue.
+   */
+  options?: TrackEventOptions;
+};
+
+/**
+ * The parameters of Event Tracker shorthand functions
+ */
+export type EventTrackerParameters = TrackEventParameters & {
   /**
    * Optional. Additional Location Contexts to merge in the Event's LocationStack
    */
@@ -63,10 +73,3 @@ export type EventTrackerParameters = {
  * Hooks will be automatically invoked to retrieve a Tracker instance and LocationStack.
  */
 export type EventTrackerHookParameters = Partial<EventTrackerParameters>;
-
-/**
- * The base parameters of all useTrack* conditional hooks
- */
-export type TrackConditionalHookParameters = {
-  tracker?: ReactTracker;
-};

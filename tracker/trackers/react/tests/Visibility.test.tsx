@@ -28,7 +28,7 @@ describe('Visibility', () => {
     trackVisibility({ tracker, isVisible: false });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()), undefined);
   });
 
   it('should track a SectionHiddenEvent (hook relying on ObjectivProvider)', () => {
@@ -87,7 +87,8 @@ describe('Visibility', () => {
         makeSectionHiddenEvent({
           location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
         })
-      )
+      ),
+      undefined
     );
   });
 
@@ -98,7 +99,11 @@ describe('Visibility', () => {
     trackVisibility({ tracker, isVisible: true });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionVisibleEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeSectionVisibleEvent()),
+      undefined
+    );
   });
 
   it('should track a SectionVisibleEvent (hook relying on ObjectivProvider)', () => {
@@ -157,7 +162,8 @@ describe('Visibility', () => {
         makeSectionVisibleEvent({
           location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
         })
-      )
+      ),
+      undefined
     );
   });
 });

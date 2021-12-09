@@ -8,5 +8,13 @@ import { EventTrackerParameters } from '../types';
 /**
  * Factors an ApplicationLoadedEvent and hands it over to the given `tracker` via its `trackEvent` method.
  */
-export const trackApplicationLoadedEvent = ({ tracker, locationStack, globalContexts }: EventTrackerParameters) =>
-  tracker.trackEvent(makeApplicationLoadedEvent({ location_stack: locationStack, global_contexts: globalContexts }));
+export const trackApplicationLoadedEvent = ({
+  tracker,
+  locationStack,
+  globalContexts,
+  options,
+}: EventTrackerParameters) =>
+  tracker.trackEvent(
+    makeApplicationLoadedEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    options
+  );

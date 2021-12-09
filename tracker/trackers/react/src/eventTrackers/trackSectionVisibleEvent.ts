@@ -8,5 +8,8 @@ import { EventTrackerParameters } from '../types';
 /**
  * Factors an SectionVisibleEvent and hands it over to the given `tracker` via its `trackEvent` method.
  */
-export const trackSectionVisibleEvent = ({ tracker, locationStack, globalContexts }: EventTrackerParameters) =>
-  tracker.trackEvent(makeSectionVisibleEvent({ location_stack: locationStack, global_contexts: globalContexts }));
+export const trackSectionVisibleEvent = ({ tracker, locationStack, globalContexts, options }: EventTrackerParameters) =>
+  tracker.trackEvent(
+    makeSectionVisibleEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    options
+  );

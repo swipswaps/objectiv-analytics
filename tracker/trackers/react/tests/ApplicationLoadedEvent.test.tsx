@@ -31,7 +31,11 @@ describe('trackApplicationLoaded', () => {
     rerender(<ObjectivProvider tracker={tracker}>app</ObjectivProvider>);
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeApplicationLoadedEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeApplicationLoadedEvent()),
+      undefined
+    );
   });
 
   it('should track an ApplicationLoadedEvent (programmatic)', () => {
@@ -41,7 +45,11 @@ describe('trackApplicationLoaded', () => {
     trackApplicationLoadedEvent({ tracker });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeApplicationLoadedEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeApplicationLoadedEvent()),
+      undefined
+    );
   });
 
   it('should track an ApplicationLoadedEvent (hook relying on ObjectivProvider)', () => {
@@ -102,7 +110,8 @@ describe('trackApplicationLoaded', () => {
         makeApplicationLoadedEvent({
           location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
         })
-      )
+      ),
+      undefined
     );
   });
 });

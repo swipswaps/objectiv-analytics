@@ -28,7 +28,7 @@ describe('AbortedEvent', () => {
     trackAbortedEvent({ tracker });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeAbortedEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeAbortedEvent()), undefined);
   });
 
   it('should track an AbortedEvent (hook relying on ObjectivProvider)', () => {
@@ -84,7 +84,8 @@ describe('AbortedEvent', () => {
       1,
       expect.objectContaining(
         makeAbortedEvent({ location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })] })
-      )
+      ),
+      undefined
     );
   });
 });

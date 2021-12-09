@@ -28,7 +28,7 @@ describe('URLChangeEvent', () => {
     trackURLChangeEvent({ tracker });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeURLChangeEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeURLChangeEvent()), undefined);
   });
 
   it('should track a URLChangeEvent (hook relying on ObjectivProvider)', () => {
@@ -86,7 +86,8 @@ describe('URLChangeEvent', () => {
         makeURLChangeEvent({
           location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
         })
-      )
+      ),
+      undefined
     );
   });
 });

@@ -3,14 +3,14 @@
  */
 
 import { TrackerEventConfig } from '@objectiv/tracker-core';
-import { TrackConditionalHookParameters } from '../types';
+import { TrackEventParameters } from '../types';
 import { useTracker } from './consumers/useTracker';
 import { useOnToggle } from './useOnToggle';
 
 /**
  * The parameters of useTrackOnToggle
  */
-export type TrackOnToggleHookParameters = TrackConditionalHookParameters & {
+export type TrackOnToggleHookParameters = Partial<TrackEventParameters> & {
   /**
    * A boolean variable this hook is going to be monitoring for determining when and which event to trigger
    */
@@ -32,11 +32,11 @@ export type TrackOnToggleHookParameters = TrackConditionalHookParameters & {
  * `falseEvent` depending on the state value.
  **/
 export const useTrackOnToggle = (parameters: TrackOnToggleHookParameters) => {
-  const { state, trueEvent, falseEvent, tracker = useTracker() } = parameters;
+  const { state, trueEvent, falseEvent, tracker = useTracker(), options } = parameters;
 
   return useOnToggle(
     state,
-    () => tracker.trackEvent(trueEvent),
-    () => tracker.trackEvent(falseEvent)
+    () => tracker.trackEvent(trueEvent, options),
+    () => tracker.trackEvent(falseEvent, options)
   );
 };

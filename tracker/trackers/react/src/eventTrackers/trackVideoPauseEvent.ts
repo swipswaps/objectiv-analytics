@@ -8,5 +8,5 @@ import { EventTrackerParameters } from '../types';
 /**
  * Factors a VideoPauseEvent and hands it over to the given `tracker` via its `trackEvent` method.
  */
-export const trackVideoPauseEvent = ({ tracker, locationStack, globalContexts }: EventTrackerParameters) =>
-  tracker.trackEvent(makeVideoPauseEvent({ location_stack: locationStack, global_contexts: globalContexts }));
+export const trackVideoPauseEvent = ({ tracker, locationStack, globalContexts, options }: EventTrackerParameters) =>
+  tracker.trackEvent(makeVideoPauseEvent({ location_stack: locationStack, global_contexts: globalContexts }), options);

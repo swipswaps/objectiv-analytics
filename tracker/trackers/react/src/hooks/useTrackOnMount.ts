@@ -3,14 +3,14 @@
  */
 
 import { TrackerEventConfig } from '@objectiv/tracker-core';
-import { TrackConditionalHookParameters } from '../types';
+import { TrackEventParameters } from '../types';
 import { useTracker } from './consumers/useTracker';
 import { useOnMount } from './useOnMount';
 
 /**
  * The parameters of useTrackOnMount
  */
-export type TrackOnMountHookParameters = TrackConditionalHookParameters & {
+export type TrackOnMountHookParameters = Partial<TrackEventParameters> & {
   /**
    * The Event to track
    */
@@ -21,9 +21,9 @@ export type TrackOnMountHookParameters = TrackConditionalHookParameters & {
  * A side effect that triggers the given TrackerEvent on mount.
  */
 export const useTrackOnMount = (parameters: TrackOnMountHookParameters) => {
-  const { event, tracker = useTracker() } = parameters;
+  const { event, tracker = useTracker(), options } = parameters;
 
   return useOnMount(() => {
-    tracker.trackEvent(event);
+    tracker.trackEvent(event, options);
   });
 };

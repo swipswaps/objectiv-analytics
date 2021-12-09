@@ -20,7 +20,7 @@ describe('SectionHiddenEvent', () => {
     trackSectionHiddenEvent({ tracker });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()));
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()), undefined);
   });
 
   it('should track an SectionHiddenEvent (hook relying on ObjectivProvider)', () => {
@@ -78,7 +78,8 @@ describe('SectionHiddenEvent', () => {
         makeSectionHiddenEvent({
           location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
         })
-      )
+      ),
+      undefined
     );
   });
 });

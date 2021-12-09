@@ -8,5 +8,5 @@ import { EventTrackerParameters } from '../types';
 /**
  * Factors a VideoStartEvent and hands it over to the given `tracker` via its `trackEvent` method.
  */
-export const trackVideoStartEvent = ({ tracker, locationStack, globalContexts }: EventTrackerParameters) =>
-  tracker.trackEvent(makeVideoStartEvent({ location_stack: locationStack, global_contexts: globalContexts }));
+export const trackVideoStartEvent = ({ tracker, locationStack, globalContexts, options }: EventTrackerParameters) =>
+  tracker.trackEvent(makeVideoStartEvent({ location_stack: locationStack, global_contexts: globalContexts }), options);

@@ -3,14 +3,14 @@
  */
 
 import { TrackerEventConfig } from '@objectiv/tracker-core';
-import { TrackConditionalHookParameters } from '../types';
+import { TrackEventParameters } from '../types';
 import { useTracker } from './consumers/useTracker';
 import { useOnUnmount } from './useOnUnmount';
 
 /**
  * The parameters of useTrackOnUnmount
  */
-export type TrackOnUnmountHookParameters = TrackConditionalHookParameters & {
+export type TrackOnUnmountHookParameters = Partial<TrackEventParameters> & {
   /**
    * The Event to track
    */
@@ -21,9 +21,9 @@ export type TrackOnUnmountHookParameters = TrackConditionalHookParameters & {
  * A side effect that triggers the given TrackerEvent on unmount.
  */
 export const useTrackOnUnmount = (parameters: TrackOnUnmountHookParameters) => {
-  const { event, tracker = useTracker() } = parameters;
+  const { event, tracker = useTracker(), options } = parameters;
 
   return useOnUnmount(() => {
-    tracker.trackEvent(event);
+    tracker.trackEvent(event, options);
   });
 };
