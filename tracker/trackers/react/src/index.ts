@@ -52,7 +52,6 @@ export * from './hooks/useOnUnmount';
 export * from './hooks/useParentLocationContext';
 export * from './hooks/useSectionHiddenEventTracker';
 export * from './hooks/useSectionVisibleEventTracker';
-export * from './hooks/useTrackApplicationLoadedEvent';
 export * from './hooks/useTracker';
 export * from './hooks/useTrackOnChange';
 export * from './hooks/useTrackOnMount';

@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeApplicationLoadedEvent, makeURLChangeEvent } from '@objectiv/tracker-core';
+import { makeApplicationLoadedEvent } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import {
   makeSectionContext,
@@ -28,9 +28,8 @@ describe('trackApplicationLoaded', () => {
 
     render(<ObjectivProvider tracker={tracker}>app</ObjectivProvider>);
 
-    expect(tracker.trackEvent).toHaveBeenCalledTimes(2);
+    expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
     expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeApplicationLoadedEvent()));
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeURLChangeEvent()));
   });
 
   it('should track an ApplicationLoadedEvent (programmatic)', () => {
