@@ -8,7 +8,7 @@ from bach import DataFrame
 from bach.types import register_dtype, get_dtype_from_db_dtype
 from bach_open_taxonomy.stack.util import sessionized_data_model
 from sql_models.graph_operations import find_node
-from bach.dataframe import _escape_parameter_characters
+from bach.dataframe import escape_parameter_characters
 
 
 class ObjectivStack(SeriesJsonb.Json):
@@ -241,15 +241,38 @@ class SeriesLocationStack(SeriesJsonb):
         """
         return self.LocationStack(self)
 
+class ModelsHub:
+    def __init__(self, df):
+        self._df = df
+
+    # def unique_users(self, time_aggregation=None):
+    #     return self._df.groupby(time_aggregation).cookie_id.nunique()
+
+    def unique_users(self):
+        """
+        Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
+        ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
+        """
+        return self._df.groupby(self._df.moment.dt.sql_format(self._df.time_aggregation)).cookie_id.nunique()
+
 
 class ObjectivFrame(DataFrame):
-    # TODO what if you use the constructor to create a objectiv frame? nothing to prevent you from this.
     # TODO get_sample returns a normal DataFrame
     # TODO it is possible to change event_type and location_stack, but they are assumed to contain expected
     #  data in this ObjectivFrame
+    def __init__(self, **kwargs):
+        try:
+            self.time_aggregation = kwargs.pop('time_aggregation')
+        except KeyError:
+            pass
+        super().__init__(**kwargs)
+
+    @property
+    def models_hub(self):
+        return ModelsHub(self)
 
     @classmethod
-    def from_table(cls, engine):
+    def from_table(cls, engine, time_aggregation):
         table_name = 'data'  # todo make this a parameter
 
         sql = f"""
@@ -286,6 +309,8 @@ class ObjectivFrame(DataFrame):
                               dtypes=dtypes,
                               group_by=None
                               )
+
+        df.time_aggregation = time_aggregation
 
         df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
         df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
@@ -325,24 +350,27 @@ class ObjectivFrame(DataFrame):
 
     def create_sample_feature_frame(self, table_name, overwrite=False):
         df, original_node = self._prepare_sample()
-
         with df.engine.connect() as conn:
             if overwrite:
                 sql = f'DROP TABLE IF EXISTS {quote_identifier(table_name)}'
-                sql = _escape_parameter_characters(conn, sql)
+                sql = escape_parameter_characters(conn, sql)
                 conn.execute(sql)
             sql = f'create temporary table {quote_identifier(table_name)} as ({df.view_sql()})'
-            sql = _escape_parameter_characters(conn, sql)
+            sql = escape_parameter_characters(conn, sql)
             conn.execute(sql)
 
         new_base_node = SampleSqlModel(table_name=table_name, previous=original_node, name='feature_sample')
 
-        return ObjectivFrame.get_instance(engine=df.engine,
+        sample_df = ObjectivFrame.get_instance(engine=df.engine,
                                           base_node=new_base_node,
                                           index_dtypes=df.index_dtypes,
                                           dtypes=df.dtypes,
                                           group_by=None,
                                           order_by=None)
+
+        sample_df.time_aggregation = df.time_aggregation
+
+        return sample_df
 
     # def apply_feature_frame_sample_changes(self, feature_frame):
     #     # todo some assertions that this works
@@ -446,3 +474,7 @@ class ObjectivFrame(DataFrame):
         fig.update_layout(title_text=text_in_title, font_size=10)
 
         return fig
+
+    def copy_override(self, **kwargs):
+        return super().copy_override(time_aggregation=self.time_aggregation,
+                                     **kwargs)
