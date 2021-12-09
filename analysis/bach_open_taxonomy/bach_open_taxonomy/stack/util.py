@@ -17,6 +17,7 @@ def basic_feature_model(session_gap_seconds=1800) -> SqlModel:
         )
     )
 
+
 def sessionized_data_model(session_gap_seconds=1800) -> SqlModel:
     """ Give a linked SessionizedData model"""
     extracted_contexts = ExtractedContexts()

@@ -250,7 +250,7 @@ class ObjectivFrame(DataFrame):
 
     @classmethod
     def from_table(cls, engine):
-        table_name = 'data'  # migt make this a parameter later
+        table_name = 'data'  # todo make this a parameter
 
         sql = f"""
             select column_name, data_type
@@ -269,6 +269,7 @@ class ObjectivFrame(DataFrame):
         index_dtype = {'event_id': dtypes.pop('event_id')}
         # remove key that don't end up in final data.
         dtypes.pop('value')
+        dtypes['user_id'] = dtypes.pop('cookie_id')
 
         model = sessionized_data_model()
 
@@ -337,11 +338,11 @@ class ObjectivFrame(DataFrame):
         new_base_node = SampleSqlModel(table_name=table_name, previous=original_node, name='feature_sample')
 
         return ObjectivFrame.get_instance(engine=df.engine,
-                                         base_node=new_base_node,
-                                         index_dtypes=df.index_dtypes,
-                                         dtypes=df.dtypes,
-                                         group_by=None,
-                                         order_by=None)
+                                          base_node=new_base_node,
+                                          index_dtypes=df.index_dtypes,
+                                          dtypes=df.dtypes,
+                                          group_by=None,
+                                          order_by=None)
 
     # def apply_feature_frame_sample_changes(self, feature_frame):
     #     # todo some assertions that this works
@@ -352,12 +353,13 @@ class ObjectivFrame(DataFrame):
     #                                                                   'event_type',
     #                                                                   'event_count']]
     #
-    #     return self.merge(feature_frame.get_unsampled()[created_features], left_index=True, right_index=True)
+    #     return self.merge(feature_frame.get_unsampled()[created_features], left_index=True,
+    #     right_index=True)
 
     def apply_feature_frame_sample_changes(self, feature_frame):
         created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
-                                                                      'event_type',
-                                                                      'event_count']]
+                                                                               'event_type',
+                                                                               'event_count']]
         df = feature_frame[['location_stack', 'event_type'] + created_features]
         df['feature_hash'] = df._hash_features()
         self['feature_hash'] = self._hash_features()
@@ -395,9 +397,9 @@ class ObjectivFrame(DataFrame):
         contexts = pdf[stack_column].map(lambda x: [[a, y] for a, y in enumerate(x)]).explode()
         contexts.dropna(inplace=True)
         sankey_prep = pdf.join(pd.DataFrame(contexts.to_list(),
-                                           index=contexts.index,
-                                           columns=['context_index', 'context'])
-                              ).reset_index()
+                                            index=contexts.index,
+                                            columns=['context_index', 'context'])
+                               ).reset_index()
         sankey_prep = sankey_prep[['feature_hash', 'context_index', 'context', 'event_count']].sort_values(
             'context_index', ascending=False)
         sankey_prep['source'] = sankey_prep.context.map(repr).astype('str')

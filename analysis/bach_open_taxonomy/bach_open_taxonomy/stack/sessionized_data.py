@@ -19,7 +19,7 @@ _SQL = \
             case when coalesce(
                 extract(
                     epoch from (moment - lag(moment, 1)
-                        over (partition by cookie_id order by moment, event_id))
+                        over (partition by user_id order by moment, event_id))
                 ) > {session_gap_seconds},
                 true
             ) then true end as is_start_of_session
@@ -29,12 +29,12 @@ _SQL = \
         select
             *,
             -- generates a session_start_id for each is_start_of_session
-            case 
-                when is_start_of_session then 
+            case
+                when is_start_of_session then
                     row_number() over (partition by is_start_of_session order by moment asc)
             end as session_start_id,
             -- generates a unique number for each session, but not in the right order.
-            count(is_start_of_session) over (order by cookie_id, moment, event_id) as is_one_session
+            count(is_start_of_session) over (order by user_id, moment, event_id) as is_one_session
         from session_starts_{{id}}
     )
     select

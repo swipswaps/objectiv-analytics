@@ -13,7 +13,7 @@ SELECT
   sd.event_id,
   sd.day,
   sd.moment,
-  sd.cookie_id,
+  sd.user_id,
   sd.session_id,
   sd.session_hit_number,
   sd.global_contexts,
