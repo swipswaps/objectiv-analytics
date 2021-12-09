@@ -6,7 +6,7 @@ import { ReactNode, useContext } from 'react';
 import { trackApplicationLoadedEvent } from '../../eventTrackers/trackApplicationLoadedEvent';
 import { useOnMount } from '../../hooks/useOnMount';
 import { LocationTree } from '../LocationTree';
-import { ObjectivProviderContext } from "./ObjectivProviderContext";
+import { ObjectivProviderContext } from './ObjectivProviderContext';
 import { TrackerProviderContext } from './TrackerProviderContext';
 import { TrackingContext } from './TrackingContext';
 import { TrackingContextProvider } from './TrackingContextProvider';
@@ -48,7 +48,7 @@ export const ObjectivProvider = ({ children, tracker, options }: ObjectivProvide
   const { trackApplicationLoaded } = { ...objectivProviderDefaultOptions, ...options };
   const objectivProviderPresent = useContext(ObjectivProviderContext);
 
-  if(objectivProviderPresent) {
+  if (objectivProviderPresent) {
     console.error(`
       ｢objectiv｣ ObjectivProvider should not be nested and should be placed as high as possible in the Application. 
       To override Tracker and/or LocationStack, use TrackingContextProvider instead.

@@ -65,17 +65,18 @@ describe('ObjectivProvider', () => {
   it('should console.error if nested', () => {
     render(
       <ObjectivProvider tracker={tracker}>
-        <ObjectivProvider tracker={tracker}>
-          test
-        </ObjectivProvider>
+        <ObjectivProvider tracker={tracker}>test</ObjectivProvider>
       </ObjectivProvider>
     );
 
     expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenNthCalledWith(1, `
+    expect(console.error).toHaveBeenNthCalledWith(
+      1,
+      `
       ｢objectiv｣ ObjectivProvider should not be nested and should be placed as high as possible in the Application. 
       To override Tracker and/or LocationStack, use TrackingContextProvider instead.
-    `);
+    `
+    );
   });
 
   it('should support render-props', () => {
