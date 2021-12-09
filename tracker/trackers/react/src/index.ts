@@ -20,6 +20,7 @@ export * from './common/factories/recursiveGetTextFromChildren';
 export * from './common/providers/LocationProvider';
 export * from './common/providers/LocationProviderContext';
 export * from './common/providers/ObjectivProvider';
+export * from './common/providers/ObjectivProviderContext';
 export * from './common/providers/TrackerProvider';
 export * from './common/providers/TrackerProviderContext';
 export * from './common/providers/TrackingContext';

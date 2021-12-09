@@ -2,9 +2,11 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { ReactNode } from 'react';
+import { ReactNode, useContext } from 'react';
 import { trackApplicationLoadedEvent } from '../../eventTrackers/trackApplicationLoadedEvent';
 import { useOnMount } from '../../hooks/useOnMount';
+import { LocationTree } from '../LocationTree';
+import { ObjectivProviderContext } from "./ObjectivProviderContext";
 import { TrackerProviderContext } from './TrackerProviderContext';
 import { TrackingContext } from './TrackingContext';
 import { TrackingContextProvider } from './TrackingContextProvider';
@@ -39,20 +41,32 @@ export type ObjectivProviderProps = TrackerProviderContext & {
 };
 
 /**
- * ObjectivProvider adds automating tracking of ApplicationLoadedEvent and URLChangeEvent to TrackingContextProvider.
+ * ObjectivProvider adds automating tracking of ApplicationLoadedEvent to TrackingContextProvider.
+ * It also clears the LocationTree we use for validating Locations on mount.
  */
 export const ObjectivProvider = ({ children, tracker, options }: ObjectivProviderProps) => {
   const { trackApplicationLoaded } = { ...objectivProviderDefaultOptions, ...options };
+  const objectivProviderPresent = useContext(ObjectivProviderContext);
+
+  if(objectivProviderPresent) {
+    console.error(`
+      ｢objectiv｣ ObjectivProvider should not be nested and should be placed as high as possible in the Application. 
+      To override Tracker and/or LocationStack, use TrackingContextProvider instead.
+    `);
+  }
 
   useOnMount(() => {
     if (trackApplicationLoaded) {
       trackApplicationLoadedEvent({ tracker });
     }
+    LocationTree.clear();
   });
 
   return (
-    <TrackingContextProvider tracker={tracker}>
-      {(trackingContext) => (typeof children === 'function' ? children(trackingContext) : children)}
-    </TrackingContextProvider>
+    <ObjectivProviderContext.Provider value={true}>
+      <TrackingContextProvider tracker={tracker}>
+        {(trackingContext) => (typeof children === 'function' ? children(trackingContext) : children)}
+      </TrackingContextProvider>
+    </ObjectivProviderContext.Provider>
   );
 };
