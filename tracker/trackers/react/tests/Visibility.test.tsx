@@ -31,7 +31,7 @@ describe('Visibility', () => {
     expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()), undefined);
   });
 
-  it('should track a SectionHiddenEvent (hook relying on ObjectivProvider)', () => {
+  it('should track a SectionHiddenEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
@@ -106,7 +106,7 @@ describe('Visibility', () => {
     );
   });
 
-  it('should track a SectionVisibleEvent (hook relying on ObjectivProvider)', () => {
+  it('should track a SectionVisibleEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 

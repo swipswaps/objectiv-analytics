@@ -31,7 +31,7 @@ describe('AbortedEvent', () => {
     expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeAbortedEvent()), undefined);
   });
 
-  it('should track an AbortedEvent (hook relying on ObjectivProvider)', () => {
+  it('should track an AbortedEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 

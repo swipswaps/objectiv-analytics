@@ -31,7 +31,7 @@ describe('ClickEvent', () => {
     expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()), undefined);
   });
 
-  it('should track a ClickEvent (hook relying on ObjectivProvider)', () => {
+  it('should track a ClickEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 

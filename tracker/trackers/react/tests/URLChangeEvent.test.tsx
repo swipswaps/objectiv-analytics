@@ -31,7 +31,7 @@ describe('URLChangeEvent', () => {
     expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeURLChangeEvent()), undefined);
   });
 
-  it('should track a URLChangeEvent (hook relying on ObjectivProvider)', () => {
+  it('should track a URLChangeEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 

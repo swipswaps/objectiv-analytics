@@ -27,7 +27,7 @@ describe('SectionVisibleEvent', () => {
     );
   });
 
-  it('should track a SectionVisibleEvent (hook relying on ObjectivProvider)', () => {
+  it('should track a SectionVisibleEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 

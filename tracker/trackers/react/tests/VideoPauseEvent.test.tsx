@@ -31,7 +31,7 @@ describe('trackVideoPause', () => {
     expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVideoPauseEvent()), undefined);
   });
 
-  it('should track a VideoPauseEvent (hook relying on ObjectivProvider)', () => {
+  it('should track a VideoPauseEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 

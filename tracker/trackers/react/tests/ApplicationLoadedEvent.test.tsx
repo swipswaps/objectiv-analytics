@@ -52,7 +52,7 @@ describe('trackApplicationLoaded', () => {
     );
   });
 
-  it('should track an ApplicationLoadedEvent (hook relying on ObjectivProvider)', () => {
+  it('should track an ApplicationLoadedEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
