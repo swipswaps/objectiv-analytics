@@ -1,4 +1,4 @@
-# Objectiv React Tracker
+# Objectiv React Tracker Core
 
 [placeholder]
 
@@ -7,12 +7,12 @@
 To install the most recent stable version:
 
 ```sh
-yarn add @objectiv/tracker-react
+yarn add @objectiv/tracker-core-react
 ```
 
 ### or
 ```sh
-npm install @objectiv/tracker-react
+npm install @objectiv/tracker-core-react
 ```
 
 ## Usage
