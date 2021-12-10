@@ -4,7 +4,7 @@ module.exports = {
   reporters: ['jest-standard-reporter'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}'],
   moduleNameMapper: {
+    '@objectiv/schema': '<rootDir>/../../core/schema/src',
     '@objectiv/tracker-core': '<rootDir>/../../core/tracker/src',
-    '@objectiv/tracker-core-react': '<rootDir>/../../core/react/src',
   },
 };

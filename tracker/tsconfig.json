@@ -35,6 +35,7 @@
       "@objectiv/schema": ["core/schema/src"],
       "@objectiv/plugin-*": ["plugins/*/src"],
       "@objectiv/tracker-core": ["core/tracker/src"],
+      "@objectiv/tracker-core-react": ["core/react/src"],
       "@objectiv/tracker-*": ["trackers/*/src"],
     }
   },

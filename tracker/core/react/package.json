@@ -1,7 +1,7 @@
 {
-  "name": "@objectiv/tracker-react",
+  "name": "@objectiv/tracker-core-react",
   "version": "0.0.1",
-  "description": "Objectiv React application analytics tracker for the open taxonomy for analytics",
+  "description": "Core functionality for Objectiv React trackers",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [
@@ -15,7 +15,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/objectiv/objectiv-analytics.git",
-    "directory": "tracker/trackers/react"
+    "directory": "tracker/core/react"
   },
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
   "contributors": [
@@ -45,13 +45,17 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.6",
+    "@testing-library/react": "^11.2.7",
+    "@testing-library/react-hooks": "^7.0.0",
     "@types/jest": "^27.0.2",
+    "@types/react": "^17.0.11",
     "depcheck": "^1.4.2",
     "jest": "^27.3.1",
-    "jest-fetch-mock": "^3.0.3",
     "jest-standard-reporter": "^2.0.0",
-    "jest-useragent-mock": "^0.1.1",
     "prettier": "^2.4.1",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-test-renderer": "^17.0.2",
     "rollup": "^2.58.3",
     "rollup-plugin-filesize": "^9.1.1",
     "rollup-plugin-sizes": "^1.0.4",
@@ -59,11 +63,15 @@
     "rollup-plugin-ts": "^1.4.7",
     "shx": "^0.3.3",
     "ts-jest": "^27.0.7",
-    "typescript": "^4.4.4",
-    "xhr-mock": "^2.5.1"
+    "typescript": "^4.4.4"
   },
   "dependencies": {
+    "@objectiv/schema": "~0.0.1",
     "@objectiv/tracker-core": "~0.0.1",
-    "@objectiv/tracker-core-react": "~0.0.1"
+    "fast-deep-equal": "^3.1.3"
+  },
+  "peerDependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2"
   }
 }
