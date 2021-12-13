@@ -612,7 +612,7 @@ class DataFrame:
         self._index = df.index
         self._data = df.data
         self._group_by = df.group_by
-        self._order_by = df._order_by
+        self._order_by = df.order_by
         return self
 
     def get_sample(self,
