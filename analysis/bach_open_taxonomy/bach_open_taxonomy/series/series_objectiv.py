@@ -246,6 +246,21 @@ class ModelHub:
     def __init__(self, df):
         self._df = df
 
+    @staticmethod
+    def BuildFrame(one: 'BachSeries', other: 'BachSeries'):
+        """
+        Buids a dataframe from two series with the same index. Can be used for series that are returned from
+        the model hub
+        """
+        df = one.to_frame()
+        if one.base_node == other.base_node:
+            df[other.name] = other
+        else:
+            if len(one.index.keys()) == 1 and one.index.keys() == other.index.keys():
+                df = df.merge(other, left_index=True, right_index=True)
+
+        return df
+
     class Aggregate:
         """
         filter param takes SeriesBoolean. filter methods always return SeriesBoolean.
@@ -253,7 +268,7 @@ class ModelHub:
         def __init__(self, df):
             self._df = df
 
-        def _generic_aggregation(self, time_aggregation, column, filter):
+        def _generic_aggregation(self, time_aggregation, column, filter, f):
             if not time_aggregation:
                 time_aggregation = self._df.time_aggregation
             gb = self._df.moment.dt.sql_format(time_aggregation) if time_aggregation else None
@@ -264,7 +279,10 @@ class ModelHub:
                     df = df.materialize()
                 df = df[df._filter]
 
-            return df.groupby(gb)[column].nunique()
+                f = f + '_' + filter.name
+
+            series = df.groupby(gb)[column].nunique()
+            return series.copy_override(name=f)
 
         def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
@@ -272,7 +290,7 @@ class ModelHub:
             ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
             :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
             """
-            return self._generic_aggregation(time_aggregation=time_aggregation, column='user_id', filter=filter)
+            return self._generic_aggregation(time_aggregation=time_aggregation, column='user_id', filter=filter, f='unique_users')
 
         def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
@@ -282,7 +300,9 @@ class ModelHub:
             """
             return self._generic_aggregation(time_aggregation=time_aggregation,
                                              column='session_id',
-                                             filter=filter)
+                                             filter=filter,
+                                             f='unique_sessions')
+
 
     class Filter:
         """
@@ -298,17 +318,19 @@ class ModelHub:
             # todo can we allow another timeframe for this (like not start_date and end_date)?
             window = self._df.groupby('user_id').window()
             first_session = window['session_id'].min()
-            return first_session == self._df.session_id
+            series = first_session == self._df.session_id
+            return series.copy_override(name='is_first_session')
 
         def conversion(self, name):
             conversion_stack, conversion_event = self._df.conversion_events[name]
 
             if conversion_stack is None:
-                return self._df.event_type == conversion_event
+                series = self._df.event_type == conversion_event
             elif conversion_event is None:
-                return conversion_stack.notnull()
+                series = conversion_stack.notnull()
             else:
-                return ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
+                series = ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
+            return series.copy_override(name='conversion')
             # todo add conversion count over a windows like session , user etc
 
     @property
