@@ -246,66 +246,87 @@ class ModelHub:
     def __init__(self, df):
         self._df = df
 
-    # def unique_users(self, time_aggregation=None):
-    #     return self._df.groupby(time_aggregation).cookie_id.nunique()
-
-    def _generic_aggregation(self, time_aggregation, column, filter):
-        if not time_aggregation:
-            time_aggregation = self._df.time_aggregation
-        #
-        # if not time_aggregation:
-        #     gb = None
-        # else:
-        #     gb = self._df.moment.dt.sql_format(time_aggregation)
-        gb = self._df.moment.dt.sql_format(time_aggregation) if time_aggregation else None
-        df = self._df.copy_override()
-        if filter:
-            df['_filter'] = filter
-            if filter.expression.has_windowed_aggregate_function:
-                df = df.materialize()
-            df = df[df._filter]
-
-        return df.groupby(gb)[column].nunique()
-
-    # todo make distinction between aggregation functions and 'attribute' functions: attributes can be seen as
-    #  a column in the original df (like is_first_session). those can later be used for aggreagations or
-    #  filters. perhaps like .model_hub.agg.unique_users() vs .model_hub.attr.is_new_user()
-    def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
+    class Aggregate:
         """
-        Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-        ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
-        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+        filter param takes SeriesBoolean. filter methods always return SeriesBoolean.
         """
-        return self._generic_aggregation(time_aggregation=time_aggregation, column='user_id', filter=filter)
+        def __init__(self, df):
+            self._df = df
 
-    def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
+        def _generic_aggregation(self, time_aggregation, column, filter):
+            if not time_aggregation:
+                time_aggregation = self._df.time_aggregation
+            gb = self._df.moment.dt.sql_format(time_aggregation) if time_aggregation else None
+            df = self._df.copy_override()
+            if filter:
+                df['_filter'] = filter
+                if filter.expression.has_windowed_aggregate_function:
+                    df = df.materialize()
+                df = df[df._filter]
+
+            return df.groupby(gb)[column].nunique()
+
+        def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
+            """
+            Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
+            ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
+            :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+            """
+            return self._generic_aggregation(time_aggregation=time_aggregation, column='user_id', filter=filter)
+
+        def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
+            """
+            Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
+            ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
+            :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+            """
+            return self._generic_aggregation(time_aggregation=time_aggregation,
+                                             column='session_id',
+                                             filter=filter)
+
+    class Filter:
         """
-        Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-        ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
-        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+        methods in this class can be used as filters in aggregation models.
+        always return SeriesBoolean
         """
-        return self._generic_aggregation(time_aggregation=time_aggregation,
-                                         column='session_id',
-                                         filter=filter)
+        def __init__(self, df):
+            self._df = df
 
-    def is_first_session(self) -> 'SeriesBoolean':
-        # todo think about materialization. if df comntains a column created like this can't always be used
-        #  for aggreagations
-        # todo can we allow another timeframe for this (like not start_date and end_date)?
-        window = self._df.groupby('user_id').window()
-        first_session = window['session_id'].min()
-        return first_session == self._df.session_id
+        def is_first_session(self) -> 'SeriesBoolean':
+            # todo think about materialization. if df comntains a column created like this can't always be used
+            #  for aggreagations
+            # todo can we allow another timeframe for this (like not start_date and end_date)?
+            window = self._df.groupby('user_id').window()
+            first_session = window['session_id'].min()
+            return first_session == self._df.session_id
 
-    def conversion(self, name):
-        conversion_stack, conversion_event = self._df.conversion_events[name]
+        def conversion(self, name):
+            conversion_stack, conversion_event = self._df.conversion_events[name]
 
-        if conversion_stack is None:
-            return self._df.event_type == conversion_event
-        elif conversion_event is None:
-            return conversion_stack.notnull()
-        else:
-            return ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
-        # todo add conversion count over a windows like session , user etc
+            if conversion_stack is None:
+                return self._df.event_type == conversion_event
+            elif conversion_event is None:
+                return conversion_stack.notnull()
+            else:
+                return ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
+            # todo add conversion count over a windows like session , user etc
+
+    @property
+    def f(self):
+        return self.Filter(self._df)
+
+    @property
+    def filter(self):
+        return self.Filter(self._df)
+
+    @property
+    def agg(self):
+        return self.Aggregate(self._df)
+
+    @property
+    def aggregate(self):
+        return self.Aggregate(self._df)
+
 
 class ObjectivFrame(DataFrame):
     # TODO get_sample returns a normal DataFrame
@@ -324,6 +345,10 @@ class ObjectivFrame(DataFrame):
 
     @property
     def model_hub(self):
+        return ModelHub(self)
+
+    @property
+    def mh(self):
         return ModelHub(self)
 
     @classmethod
