@@ -293,7 +293,7 @@ class ModelHub:
         def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
             Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-            ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
+            ie. ``time_aggregation=='YYYY-MM-DD' aggregates by date.
             :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
             """
             return self._generic_aggregation(time_aggregation=time_aggregation,
@@ -304,7 +304,7 @@ class ModelHub:
         def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
             Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-            ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
+            ie. ``time_aggregation=='YYYY-MM-DD' aggregates by date.
             :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
             """
             return self._generic_aggregation(time_aggregation=time_aggregation,
@@ -404,7 +404,7 @@ class ObjectivFrame(DataFrame):
         """
         :param engine: an sqlalchemy engine for the database.
         :param time_aggregation: can be used to set a default aggregation timeframe interval that is used for
-            models that use aggregation. Ie. YYYYMMDD aggregates to days (dates). Setting it to None
+            models that use aggregation. Ie. YYYY-MM-DD aggregates to days (dates). Setting it to None
             aggregates over the entire selected dataset.
         """
         table_name = 'data'
