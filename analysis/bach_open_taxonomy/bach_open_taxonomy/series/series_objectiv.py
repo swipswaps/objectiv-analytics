@@ -317,7 +317,6 @@ class ModelHub:
         methods in this class can be used as filters in aggregation models.
         always return SeriesBoolean
         """
-
         def __init__(self, df):
             self._df = df
 
@@ -341,6 +340,29 @@ class ModelHub:
                 series = ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
             return series.copy_override(name='conversion')
             # todo add conversion count over a windows like session , user etc
+
+        def conversions(self, name, partition='session_id'):
+            # todo returns a series that does not have the same base node as self._df (so it needs to be
+            #  merged)
+            df = self._df.copy_override()
+            df['_conversion'] = df.mh.f.conversion(name)
+            df = df.materialize()
+            exp = f"case when {{}} then row_number() over (partition by {{}}, {{}}) end"
+            df['_conversion_counter'] = df['_conversion'].copy_override(
+                dtype='int64',
+                expression=Expression.construct(exp, df['_conversion'], df[partition], df['_conversion']))
+            df = df.materialize()
+            exp = f"count({{}}) over (partition by {{}} order by {{}}, {{}})"
+            df = df.materialize()
+            df['conversions'] = df['_conversion_counter'].copy_override(
+                dtype='int64',
+                expression=Expression.construct(exp,
+                                                df['_conversion_counter'],
+                                                df[partition],
+                                                df[partition],
+                                                df['moment']))
+
+            return df.conversions
 
     @property
     def f(self):
