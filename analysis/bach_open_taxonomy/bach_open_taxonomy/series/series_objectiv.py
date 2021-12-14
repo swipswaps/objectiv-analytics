@@ -9,6 +9,10 @@ from bach.types import register_dtype, get_dtype_from_db_dtype
 from bach_open_taxonomy.stack.util import sessionized_data_model
 from sql_models.graph_operations import find_node
 from bach.dataframe import escape_parameter_characters
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bach.series import Series, SeriesBoolean
 
 
 class ObjectivStack(SeriesJsonb.Json):
@@ -247,7 +251,7 @@ class ModelHub:
         self._df = df
 
     @staticmethod
-    def build_frame(one: 'BachSeries', other: 'BachSeries'):
+    def build_frame(one: 'Series', other: 'Series'):
         """
         Buids a dataframe from two series with the same index. Can be used for series that are returned from
         the model hub
@@ -429,13 +433,13 @@ class ObjectivFrame(DataFrame):
                               group_by=None
                               )
 
-        df.time_aggregation = time_aggregation
-        df.conversion_events = {}
+        df.time_aggregation = time_aggregation  # type: ignore
+        df.conversion_events = {}  # type: ignore
 
         df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
         df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
 
-        return df
+        return df  # type: ignore
 
     def add_conversion_event(self,
                              conversion_stack: 'SeriesLocationStack' = None,
