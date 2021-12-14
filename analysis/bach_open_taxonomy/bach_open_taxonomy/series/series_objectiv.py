@@ -1,6 +1,14 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import os
+
+# added for metabase export
+import requests
+import json
+import types
+import copy
+
 from bach.series import SeriesJsonb
 from bach.expression import Expression, quote_string, quote_identifier
 from bach.sql_model import SampleSqlModel
@@ -242,9 +250,147 @@ class SeriesLocationStack(SeriesJsonb):
         """
         return self.LocationStack(self)
 
+
+class MetaBase:
+
+    # config per model
+    config = {
+        'unique_users': {
+            'display': 'line',
+            'name': 'unique users /day',
+            'description': 'This is a test',
+            'dimensions': ['date'],
+            'metrics': ['count']
+        },
+        'unique_sessions': {
+            'display': 'bar',
+            'name': 'unique sessions / day',
+            'description': 'Unique sessions from Model Hub',
+            'dimensions': ['date'],
+            'metrics': ['count']
+        }
+    }
+
+    def __init__(self, username: str = None, password: str = None, url: str = None, database_id: int = 2):
+        if not username:
+            username = os.getenv('METABASE_USERNAME', 'objectiv')
+
+        if not password:
+            password = os.getenv('METABASE_PASSWORD', '')
+
+        self._database_id = database_id
+
+        if url:
+            self._url = url
+        else:
+            self._url = os.getenv('METABASE_URL')
+        print(f'using: {username} / {self._url}')
+        self._session_id = self._get_session_id(username, password)
+
+        # config by calling dataframe / model
+        self._df = None
+        self._config = None
+
+    def _get_session_id(self, username: str, password: str) -> str:
+
+        data = json.dumps({'username': username, 'password': password})
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(f'{self._url}/api/session', data=data, headers=headers)
+
+        response_json = response.json()
+
+        if 'id' in response_json:
+            return response_json['id']
+        else:
+            raise KeyError('Could not find id in JSON response from MetaBase')
+
+    def _do_request(self, url: str, data: dict, method='post') -> requests.Response:
+        print(f'Doing API request to: {url}')
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Metabase-Session': self._session_id
+        }
+        if method == 'get':
+            response = requests.get(url, data=json.dumps(data), headers=headers)
+        elif method == 'post':
+            response = requests.post(url, data=json.dumps(data), headers=headers)
+        elif method == 'put':
+            response = requests.put(url, data=json.dumps(data), headers=headers)
+        else:
+            raise ValueError(f'Unsupported method called: {method}')
+
+        return response
+
+    def set_model(self, df: DataFrame, config: dict):
+        self._df = df
+        self._config = config
+
+    def add_update_card(self) -> dict:
+        data = {
+            'collection_id': None,
+            'dataset_query': {
+                'database': self._database_id,
+                'native': {
+                    'query': self._df.view_sql()
+                },
+                'type': 'native'
+            },
+            'description': self._config['description'],
+            'display': self._config['display'],
+            'name': self._config['name'],
+            'visualization_settings': {
+                'graph_dimensions': self._config['dimensions'],
+                'graph_metrics': self._config['metrics']
+            }
+        }
+        response = self._do_request(url=f'{self._url}/api/card', method='get', data={})
+
+        # the default is to create a new card
+        method = 'post'
+        url = f'{self._url}/api/card'
+
+        for card in response.json():
+            if card['description'] == self._config['description'] and \
+                    card['name'] == self._config['name']:
+
+                card_id = card['id']
+                url = f'{self._url}/api/card/{card_id}'
+                method = 'put'
+                print(f'found card @ {card_id} ')
+
+        response = self._do_request(url=url, data=data, method=method).json()
+
+        card_id = response['id']
+        view_url = f'{self._url}/card/{card_id}'
+        print(f'card modified using {method} at -> {view_url}')
+
+        self.update_dashboard(card_id=card_id, dashboard_id=3)
+
+        return response
+
+    def update_dashboard(self, card_id: int, dashboard_id: int):
+        resp = self._do_request(f'{self._url}/api/dashboard/{dashboard_id}', method='get', data ={})
+
+        # list of card_id's currently on the dashboard
+        cards = [card['card']['id'] for card in resp.json()['ordered_cards']]
+        if card_id not in cards:
+            print(f'could not find {card_id} on dashboard, adding to {cards}')
+
+            url = f'{self._url}/api/dashboard/{dashboard_id}/cards'
+            data = {'cardId': card_id}
+            response = self._do_request(url=url, method='post', data=data)
+
+
 class ModelHub:
     def __init__(self, df):
         self._df = df
+        self._metabase_instance = None
+
+    @property
+    def _metabase(self):
+        if not self._metabase_instance:
+            self._metabase_instance = MetaBase()
+        return self._metabase_instance
 
     # def unique_users(self, time_aggregation=None):
     #     return self._df.groupby(time_aggregation).cookie_id.nunique()
@@ -265,7 +411,22 @@ class ModelHub:
                 df = df.materialize()
             df = df[df._filter]
 
-        return df.groupby(gb)[column].nunique()
+        def init_metabase(self, model_type: str, config: dict = None):
+            if not config:
+                config = MetaBase.config[model_type]
+            self._metabase.set_model(df=self, config=config)
+            return self
+
+        def to_metabase(self):
+            self._metabase.add_update_card()
+
+        series = df.groupby(gb)[column].nunique()
+        mb = self._metabase
+        series._metabase = copy.copy(mb)
+        series.init_metabase = types.MethodType(init_metabase, series)
+        series.to_metabase = types.MethodType(to_metabase, series)
+
+        return series
 
     # todo make distinction between aggregation functions and 'attribute' functions: attributes can be seen as
     #  a column in the original df (like is_first_session). those can later be used for aggreagations or
@@ -276,7 +437,8 @@ class ModelHub:
         ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
         :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
         """
-        return self._generic_aggregation(time_aggregation=time_aggregation, column='user_id', filter=filter)
+        return self._generic_aggregation(time_aggregation=time_aggregation, column='user_id', filter=filter)\
+            .init_metabase(model_type='unique_users')
 
     def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
         """
@@ -286,7 +448,7 @@ class ModelHub:
         """
         return self._generic_aggregation(time_aggregation=time_aggregation,
                                          column='session_id',
-                                         filter=filter)
+                                         filter=filter).init_metabase(model_type='unique_sessions')
 
     def is_first_session(self) -> 'SeriesBoolean':
         # todo think about materialization. if df comntains a column created like this can't always be used
@@ -307,6 +469,7 @@ class ModelHub:
             return ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
         # todo add conversion count over a windows like session , user etc
 
+
 class ObjectivFrame(DataFrame):
     # TODO get_sample returns a normal DataFrame
     # TODO it is possible to change event_type and location_stack, but they are assumed to contain expected
@@ -322,6 +485,8 @@ class ObjectivFrame(DataFrame):
             pass
         super().__init__(**kwargs)
 
+        self._metabase = None
+
     @property
     def model_hub(self):
         return ModelHub(self)
@@ -331,7 +496,8 @@ class ObjectivFrame(DataFrame):
                    engine,
                    start_date=None,
                    end_date=None,
-                   time_aggregation: str = None) -> 'ObjectivFrame':
+                   time_aggregation: str = None,
+                   table_name = 'data') -> 'ObjectivFrame':
         """
         :param engine: an sqlalchemy engine for the database.
         :param time_aggregation: can be used to set a default aggregation timeframe interval that is used for
@@ -340,7 +506,7 @@ class ObjectivFrame(DataFrame):
         """
         # todo time_aggregation is very loosely defined (using postgres formatting) and also returns string.
         #  maybe better to give a few options (month, day, hour, quarter etc).
-        table_name = 'data'  # todo make this a parameter
+        #table_name = 'data'  # todo make this a parameter
 
         sql = f"""
             select column_name, data_type
