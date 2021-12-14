@@ -254,14 +254,14 @@ class ModelHub:
     def build_frame(one: 'Series', other: 'Series'):
         """
         Buids a dataframe from two series with the same index. Can be used for series that are returned from
-        the model hub
+        aggregations of the model hub.
         """
         df = one.to_frame()
         if one.base_node == other.base_node:
             df[other.name] = other
         else:
-            # todo also 'moment' or new column name for aggregation?
-            if len(one.index.keys()) == 1 and one.index.keys() == other.index.keys():
+            one_keys = one.index.keys()
+            if len(one_keys) == 1 and one_keys == other.index.keys() and list(one_keys)[0]:
                 df = df.merge(other, left_index=True, right_index=True)
 
         return df
@@ -321,9 +321,6 @@ class ModelHub:
             self._df = df
 
         def is_first_session(self) -> 'SeriesBoolean':
-            # todo think about materialization. if df contains a column created like this can't always be
-            #  used for aggreagations
-            # todo can we allow another timeframe for this (like not start_date and end_date)?
             window = self._df.groupby('user_id').window()
             first_session = window['session_id'].min()
             series = first_session == self._df.session_id
@@ -339,11 +336,8 @@ class ModelHub:
             else:
                 series = ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
             return series.copy_override(name='conversion')
-            # todo add conversion count over a windows like session , user etc
 
         def conversions(self, name, partition='session_id'):
-            # todo returns a series that does not have the same base node as self._df (so it needs to be
-            #  merged)
             df = self._df.copy_override()
             df['_conversion'] = df.mh.f.conversion(name)
             df = df.materialize()
@@ -382,9 +376,6 @@ class ModelHub:
 
 
 class ObjectivFrame(DataFrame):
-    # TODO get_sample returns a normal DataFrame
-    # TODO it is possible to change event_type and location_stack, but they are assumed to contain expected
-    #  data in this ObjectivFrame
     def __init__(self, **kwargs):
         try:
             self.time_aggregation = kwargs.pop('time_aggregation')
@@ -416,9 +407,7 @@ class ObjectivFrame(DataFrame):
             models that use aggregation. Ie. YYYYMMDD aggregates to days (dates). Setting it to None
             aggregates over the entire selected dataset.
         """
-        # todo time_aggregation is very loosely defined (using postgres formatting) and also returns string.
-        #  maybe better to give a few options (month, day, hour, quarter etc).
-        table_name = 'data'  # todo make this a parameter
+        table_name = 'data'
 
         sql = f"""
             select column_name, data_type
@@ -531,18 +520,6 @@ class ObjectivFrame(DataFrame):
         sample_df.end_date = end_date
 
         return sample_df
-
-    # def apply_feature_frame_sample_changes(self, feature_frame):
-    #     # todo some assertions that this works
-    #     # todo this way would be nice if we can apply changes directly on top of self (instead of merge)
-    #     #  merge is super slow
-    #
-    #     created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
-    #                                                                   'event_type',
-    #                                                                   'event_count']]
-    #
-    #     return self.merge(feature_frame.get_unsampled()[created_features], left_index=True,
-    #     right_index=True)
 
     def apply_feature_frame_sample_changes(self, feature_frame):
         created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
