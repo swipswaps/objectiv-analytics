@@ -262,7 +262,7 @@ class MetaBase:
     # config per model
     config = {
         'default': {
-          'display': 'line',
+          'display': 'bar',
           'name': 'Generic / default graph',
           'description': 'This is a generic graph',
           'dimensions': [],
@@ -338,26 +338,22 @@ class MetaBase:
 
         return response
 
-    def set_model(self, df: DataFrame, config: dict):
-        self._df = df
-        self._config = config
-
-    def add_update_card(self) -> dict:
+    def add_update_card(self, df: DataFrame, config: dict) -> dict:
         data = {
             'collection_id': None,
             'dataset_query': {
                 'database': self._database_id,
                 'native': {
-                    'query': self._df.view_sql()
+                    'query': df.view_sql()
                 },
                 'type': 'native'
             },
-            'description': self._config['description'],
-            'display': self._config['display'],
-            'name': self._config['name'],
+            'description': config['description'],
+            'display': config['display'],
+            'name': config['name'],
             'visualization_settings': {
-                'graph_dimensions': self._config['dimensions'],
-                'graph_metrics': self._config['metrics']
+                'graph_dimensions': config['dimensions'],
+                'graph_metrics': config['metrics']
             }
         }
         response = self._do_request(url=f'{self._url}/api/card', method='get')
@@ -367,8 +363,8 @@ class MetaBase:
         url = f'{self._url}/api/card'
 
         for card in response.json():
-            if card['description'] == self._config['description'] and \
-                    card['name'] == self._config['name']:
+            if card['description'] == config['description'] and \
+                    card['name'] == config['name']:
 
                 card_id = card['id']
                 url = f'{self._url}/api/card/{card_id}'
@@ -397,24 +393,20 @@ class MetaBase:
             data = {'cardId': card_id}
             response = self._do_request(url=url, method='post', data=data)
 
-    def add_metabase(self, Series):
-        def init_metabase(self, model_type: str = None, config: dict = None):
-            if not config:
-                if model_type in MetaBase.config:
-                    config = MetaBase.config[model_type]
-                else:
-                    config = MetaBase.config['default']
-            self._metabase.set_model(df=self, config=config)
-            return self
+    def to_metabase(self, df: DataFrame, model_type: str = None, config: dict = None):
+        if isinstance(df, Series):
+            print('converting to df')
+            df = df.to_frame()
+        if not config:
+            config = {}
 
-        def to_metabase(self):
-            if not self._metabase._config:
-                self.init_metabase()
-            self._metabase.add_update_card()
+        if model_type in MetaBase.config:
+            card_config = MetaBase.config[model_type]
+        else:
+            card_config = MetaBase.config['default']
 
-        Series._metabase = copy.copy(self)
-        Series.init_metabase = init_metabase
-        Series.to_metabase = to_metabase
+        card_config.update(config)
+        self.add_update_card(df, card_config)
 
 
 class ModelHub:
@@ -422,7 +414,10 @@ class ModelHub:
         self._df = df
 
         # init metabase
-        MetaBase().add_metabase(Series)
+        self._metabase = MetaBase()
+
+    def to_metabase(self, df, model_type: str = None, config: dict = None):
+        return self._metabase.to_metabase(df, model_type, config)
 
     @staticmethod
     def build_frame(one: 'Series', other: 'Series'):
@@ -473,7 +468,7 @@ class ModelHub:
             return self._generic_aggregation(time_aggregation=time_aggregation,
                                              column='user_id',
                                              filter=filter,
-                                             f='unique_users').init_metabase('unique_users')
+                                             f='unique_users')
 
         def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
@@ -484,7 +479,7 @@ class ModelHub:
             return self._generic_aggregation(time_aggregation=time_aggregation,
                                              column='session_id',
                                              filter=filter,
-                                             f='unique_sessions').init_metabase('unique_users')
+                                             f='unique_sessions')
 
     class Filter:
         """
