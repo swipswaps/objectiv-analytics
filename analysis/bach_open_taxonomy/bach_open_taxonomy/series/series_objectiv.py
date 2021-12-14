@@ -9,6 +9,7 @@ import json
 import types
 import copy
 
+from bach.series import Series
 from bach.series import SeriesJsonb
 from bach.expression import Expression, quote_string, quote_identifier
 from bach.sql_model import SampleSqlModel
@@ -256,8 +257,17 @@ class SeriesLocationStack(SeriesJsonb):
 
 class MetaBase:
 
+    _session_id = None
+
     # config per model
     config = {
+        'default': {
+          'display': 'line',
+          'name': 'Generic / default graph',
+          'description': 'This is a generic graph',
+          'dimensions': [],
+          'metrics': []
+        },
         'unique_users': {
             'display': 'line',
             'name': 'unique users /day',
@@ -287,15 +297,16 @@ class MetaBase:
             self._url = url
         else:
             self._url = os.getenv('METABASE_URL')
+
         print(f'using: {username} / {self._url}')
-        self._session_id = self._get_session_id(username, password)
+        if not MetaBase._session_id:
+            MetaBase._session_id = self._get_session_id(username, password)
 
         # config by calling dataframe / model
         self._df = None
         self._config = None
 
     def _get_session_id(self, username: str, password: str) -> str:
-
         data = json.dumps({'username': username, 'password': password})
         headers = {'Content-Type': 'application/json'}
         response = requests.post(f'{self._url}/api/session', data=data, headers=headers)
@@ -303,11 +314,14 @@ class MetaBase:
         response_json = response.json()
 
         if 'id' in response_json:
+            print(f'got new session id: {response_json["id"]}')
             return response_json['id']
         else:
             raise KeyError('Could not find id in JSON response from MetaBase')
 
-    def _do_request(self, url: str, data: dict, method='post') -> requests.Response:
+    def _do_request(self, url: str, data: dict = None, method='post') -> requests.Response:
+        if data is None:
+            data = {}
         print(f'Doing API request to: {url}')
         headers = {
             'Content-Type': 'application/json',
@@ -346,7 +360,7 @@ class MetaBase:
                 'graph_metrics': self._config['metrics']
             }
         }
-        response = self._do_request(url=f'{self._url}/api/card', method='get', data={})
+        response = self._do_request(url=f'{self._url}/api/card', method='get')
 
         # the default is to create a new card
         method = 'post'
@@ -372,7 +386,7 @@ class MetaBase:
         return response
 
     def update_dashboard(self, card_id: int, dashboard_id: int):
-        resp = self._do_request(f'{self._url}/api/dashboard/{dashboard_id}', method='get', data ={})
+        resp = self._do_request(f'{self._url}/api/dashboard/{dashboard_id}', method='get')
 
         # list of card_id's currently on the dashboard
         cards = [card['card']['id'] for card in resp.json()['ordered_cards']]
@@ -383,32 +397,32 @@ class MetaBase:
             data = {'cardId': card_id}
             response = self._do_request(url=url, method='post', data=data)
 
-
-class ModelHub:
-    def __init__(self, df):
-        self._df = df
-        self._metabase_instance = None
-
-    @property
-    def _metabase(self):
-        if not self._metabase_instance:
-            self._metabase_instance = MetaBase()
-        return self._metabase_instance
-
-    def add_metabase(self, series):
-        def init_metabase(self, model_type: str, config: dict = None):
+    def add_metabase(self, Series):
+        def init_metabase(self, model_type: str = None, config: dict = None):
             if not config:
-                config = MetaBase.config[model_type]
+                if model_type in MetaBase.config:
+                    config = MetaBase.config[model_type]
+                else:
+                    config = MetaBase.config['default']
             self._metabase.set_model(df=self, config=config)
             return self
 
         def to_metabase(self):
+            if not self._metabase._config:
+                self.init_metabase()
             self._metabase.add_update_card()
 
-        series._metabase = copy.copy(self._metabase)
-        series.init_metabase = types.MethodType(init_metabase, series)
-        series.to_metabase = types.MethodType(to_metabase, series)
-        return series
+        Series._metabase = copy.copy(self)
+        Series.init_metabase = init_metabase
+        Series.to_metabase = to_metabase
+
+
+class ModelHub:
+    def __init__(self, df):
+        self._df = df
+
+        # init metabase
+        MetaBase().add_metabase(Series)
 
     @staticmethod
     def build_frame(one: 'Series', other: 'Series'):
@@ -459,7 +473,7 @@ class ModelHub:
             return self._generic_aggregation(time_aggregation=time_aggregation,
                                              column='user_id',
                                              filter=filter,
-                                             f='unique_users')
+                                             f='unique_users').init_metabase('unique_users')
 
         def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
@@ -470,7 +484,7 @@ class ModelHub:
             return self._generic_aggregation(time_aggregation=time_aggregation,
                                              column='session_id',
                                              filter=filter,
-                                             f='unique_sessions')
+                                             f='unique_sessions').init_metabase('unique_users')
 
     class Filter:
         """
