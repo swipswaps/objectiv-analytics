@@ -9,7 +9,6 @@ from bach.types import register_dtype, get_dtype_from_db_dtype
 from bach_open_taxonomy.stack.util import sessionized_data_model
 from sql_models.graph_operations import find_node
 from bach.dataframe import escape_parameter_characters
-from typing import Union
 
 
 class ObjectivStack(SeriesJsonb.Json):
@@ -242,12 +241,13 @@ class SeriesLocationStack(SeriesJsonb):
         """
         return self.LocationStack(self)
 
+
 class ModelHub:
     def __init__(self, df):
         self._df = df
 
     @staticmethod
-    def BuildFrame(one: 'BachSeries', other: 'BachSeries'):
+    def build_frame(one: 'BachSeries', other: 'BachSeries'):
         """
         Buids a dataframe from two series with the same index. Can be used for series that are returned from
         the model hub
@@ -256,6 +256,7 @@ class ModelHub:
         if one.base_node == other.base_node:
             df[other.name] = other
         else:
+            # todo also 'moment' or new column name for aggregation?
             if len(one.index.keys()) == 1 and one.index.keys() == other.index.keys():
                 df = df.merge(other, left_index=True, right_index=True)
 
@@ -265,6 +266,7 @@ class ModelHub:
         """
         filter param takes SeriesBoolean. filter methods always return SeriesBoolean.
         """
+
         def __init__(self, df):
             self._df = df
 
@@ -290,7 +292,10 @@ class ModelHub:
             ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
             :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
             """
-            return self._generic_aggregation(time_aggregation=time_aggregation, column='user_id', filter=filter, f='unique_users')
+            return self._generic_aggregation(time_aggregation=time_aggregation,
+                                             column='user_id',
+                                             filter=filter,
+                                             f='unique_users')
 
         def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
@@ -303,18 +308,18 @@ class ModelHub:
                                              filter=filter,
                                              f='unique_sessions')
 
-
     class Filter:
         """
         methods in this class can be used as filters in aggregation models.
         always return SeriesBoolean
         """
+
         def __init__(self, df):
             self._df = df
 
         def is_first_session(self) -> 'SeriesBoolean':
-            # todo think about materialization. if df comntains a column created like this can't always be used
-            #  for aggreagations
+            # todo think about materialization. if df contains a column created like this can't always be
+            #  used for aggreagations
             # todo can we allow another timeframe for this (like not start_date and end_date)?
             window = self._df.groupby('user_id').window()
             first_session = window['session_id'].min()
@@ -440,7 +445,7 @@ class ObjectivFrame(DataFrame):
             raise ValueError('At least one of conversion_stack or conversion_event should be set.')
 
         if not name:
-            name = f'conversion_{len(self.conversion_events)+1}'
+            name = f'conversion_{len(self.conversion_events) + 1}'
 
         self.conversion_events[name] = conversion_stack, conversion_event
 
@@ -489,11 +494,11 @@ class ObjectivFrame(DataFrame):
         new_base_node = SampleSqlModel(table_name=table_name, previous=original_node, name='feature_sample')
 
         sample_df = ObjectivFrame.get_instance(engine=df.engine,
-                                          base_node=new_base_node,
-                                          index_dtypes=df.index_dtypes,
-                                          dtypes=df.dtypes,
-                                          group_by=None,
-                                          order_by=None)
+                                               base_node=new_base_node,
+                                               index_dtypes=df.index_dtypes,
+                                               dtypes=df.dtypes,
+                                               group_by=None,
+                                               order_by=None)
 
         sample_df.time_aggregation = df.time_aggregation
         sample_df.start_date = start_date
