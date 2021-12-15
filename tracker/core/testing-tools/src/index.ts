@@ -4,6 +4,7 @@
 
 export * from './ConfigurableMockTransport'
 export * from './LogTransport'
+export * from './matchUUID'
 export * from './mockConsole'
 export * from './SpyTransport'
 export * from './UnusableTransport'
