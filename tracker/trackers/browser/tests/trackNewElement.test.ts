@@ -2,6 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+import { matchUUID, mockConsole } from '@objectiv/testing-tools';
 import {
   generateUUID,
   LocationCollision,
@@ -13,8 +14,6 @@ import {
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackNewElement } from '../src/mutationObserver/trackNewElement';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
-import { matchUUID } from './mocks/matchUUID';
-import { mockConsole } from './mocks/MockConsole';
 
 describe('trackNewElement', () => {
   beforeEach(() => {

@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { LogTransport, mockConsole, UnusableTransport } from "@objectiv/testing-tools";
+import { LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-tools';
 import {
   ApplicationContextPlugin,
   ContextsConfig,

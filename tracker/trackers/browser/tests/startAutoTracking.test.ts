@@ -2,6 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+import { matchUUID } from '@objectiv/testing-tools';
 import { generateUUID, makeSectionContext } from '@objectiv/tracker-core';
 import {
   AutoTrackingState,
@@ -15,7 +16,6 @@ import {
   TaggingAttribute,
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
-import { matchUUID } from './mocks/matchUUID';
 
 describe('startAutoTracking', () => {
   beforeEach(() => {

@@ -2,6 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+import { matchUUID } from '@objectiv/testing-tools';
 import {
   generateUUID,
   makeAbortedEvent,
@@ -37,7 +38,6 @@ import {
   trackVisibility,
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
-import { matchUUID } from './mocks/matchUUID';
 
 describe('trackEvent', () => {
   const testElement = document.createElement('div');

@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { matchUUID, SpyTransport } from "@objectiv/testing-tools";
+import { matchUUID, SpyTransport } from '@objectiv/testing-tools';
 import { makeWebDocumentContext, Tracker } from '@objectiv/tracker-core';
 import { trackDocumentLoadedEvent } from '../src/';
 

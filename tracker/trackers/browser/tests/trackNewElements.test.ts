@@ -2,6 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+import { matchUUID } from '@objectiv/testing-tools';
 import { generateUUID, makeSectionContext } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
@@ -13,7 +14,6 @@ import {
   TaggingAttribute,
 } from '../src';
 import { trackNewElements } from '../src/mutationObserver/trackNewElements';
-import { matchUUID } from './mocks/matchUUID';
 
 describe('trackNewElements', () => {
   beforeEach(() => {

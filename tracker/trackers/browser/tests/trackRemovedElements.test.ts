@@ -2,11 +2,11 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+import { matchUUID } from '@objectiv/testing-tools';
 import { generateUUID, makeSectionContext } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackRemovedElements } from '../src/mutationObserver/trackRemovedElements';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
-import { matchUUID } from './mocks/matchUUID';
 
 describe('trackRemovedElements', () => {
   beforeEach(() => {

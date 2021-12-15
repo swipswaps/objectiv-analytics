@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { mockConsole } from "@objectiv/testing-tools";
+import { mockConsole } from '@objectiv/testing-tools';
 import { Tracker, TrackerRepository } from '../src';
 
 describe('TrackerRepository', () => {
