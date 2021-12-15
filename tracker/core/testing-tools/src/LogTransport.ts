@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { TrackerConsole, TrackerTransportConfig, TrackerTransportInterface } from '../../src';
+import { TrackerConsole, TrackerTransportConfig, TrackerTransportInterface } from "@objectiv/tracker-core";
 
 export class LogTransport implements TrackerTransportInterface {
   readonly console?: TrackerConsole;

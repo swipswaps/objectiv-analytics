@@ -2476,6 +2476,16 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@objectiv/testing-tools@workspace:core/testing-tools":
+  version: 0.0.0-use.local
+  resolution: "@objectiv/testing-tools@workspace:core/testing-tools"
+  dependencies:
+    depcheck: ^1.4.2
+    prettier: ^2.4.1
+    typescript: ^4.4.4
+  languageName: unknown
+  linkType: soft
+
 "@objectiv/tracker-angular@workspace:trackers/angular":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-angular@workspace:trackers/angular"

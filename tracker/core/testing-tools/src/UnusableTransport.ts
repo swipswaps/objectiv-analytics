@@ -2,7 +2,9 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { TrackerConsole, TrackerTransportConfig, TrackerTransportInterface } from '../../src';
+import { TrackerConsole, TrackerTransportConfig } from "@objectiv/tracker-core";
+
+import { TrackerTransportInterface } from "@objectiv/tracker-core";
 
 export class UnusableTransport implements TrackerTransportInterface {
   readonly console?: TrackerConsole;

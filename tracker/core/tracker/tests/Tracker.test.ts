@@ -2,6 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+import { LogTransport, mockConsole, UnusableTransport } from "@objectiv/testing-tools";
 import {
   ApplicationContextPlugin,
   ContextsConfig,
@@ -13,9 +14,6 @@ import {
   TrackerQueue,
   TrackerQueueMemoryStore,
 } from '../src';
-import { LogTransport } from './mocks/LogTransport';
-import { mockConsole } from './mocks/MockConsole';
-import { UnusableTransport } from './mocks/UnusableTransport';
 
 describe('Tracker', () => {
   it('should instantiate with just applicationId', () => {
