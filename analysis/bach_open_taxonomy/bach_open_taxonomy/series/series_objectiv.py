@@ -397,17 +397,24 @@ class ObjectivFrame(DataFrame):
 
     @classmethod
     def from_table(cls,
-                   engine,
+                   engine=None,
                    start_date=None,
                    end_date=None,
                    time_aggregation: str = None) -> 'ObjectivFrame':
         """
-        :param engine: an sqlalchemy engine for the database.
+        :param engine: a Sqlalchemy Engine for the database. If not given, env DSN is used to create one. If
+            that's not there, the default of 'postgresql://objectiv:@localhost:5432/objectiv' will be used.
         :param time_aggregation: can be used to set a default aggregation timeframe interval that is used for
             models that use aggregation. Ie. YYYY-MM-DD aggregates to days (dates). Setting it to None
             aggregates over the entire selected dataset.
         """
         table_name = 'data'
+
+        if engine is None:
+            import sqlalchemy
+            import os
+            dsn = os.environ.get('DSN', 'postgresql://objectiv:@localhost:5432/objectiv')
+            engine = sqlalchemy.create_engine(dsn, pool_size=1, max_overflow=0)
 
         sql = f"""
             select column_name, data_type
@@ -421,7 +428,7 @@ class ObjectivFrame(DataFrame):
 
         if dtypes != {'event_id': 'uuid', 'day': 'date', 'moment': 'timestamp', 'cookie_id': 'uuid',
                       'value': 'json'}:
-            raise KeyError(f'Expected columns not in table {table_name}')
+            raise KeyError(f'Expected columns not in table {table_name}. Found: {dtypes}')
 
         index_dtype = {'event_id': dtypes.pop('event_id')}
         # remove key that don't end up in final data.
