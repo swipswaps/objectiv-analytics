@@ -340,7 +340,7 @@ class MetaBase:
 
     def add_update_card(self, df: DataFrame, config: dict) -> dict:
         data = {
-            'collection_id': None,
+            'collection_id': 2,
             'dataset_query': {
                 'database': self._database_id,
                 'native': {
@@ -362,6 +362,8 @@ class MetaBase:
         method = 'post'
         url = f'{self._url}/api/card'
 
+        # but if we can find an existing card that matches
+        # we update, rather than create
         for card in response.json():
             if card['description'] == config['description'] and \
                     card['name'] == config['name']:
@@ -369,7 +371,6 @@ class MetaBase:
                 card_id = card['id']
                 url = f'{self._url}/api/card/{card_id}'
                 method = 'put'
-                print(f'found card @ {card_id} ')
 
         response = self._do_request(url=url, data=data, method=method).json()
 
@@ -391,6 +392,7 @@ class MetaBase:
 
             url = f'{self._url}/api/dashboard/{dashboard_id}/cards'
             data = {'cardId': card_id}
+            # TODO: check response
             response = self._do_request(url=url, method='post', data=data)
 
     def to_metabase(self, df: DataFrame, model_type: str = None, config: dict = None):
@@ -404,6 +406,9 @@ class MetaBase:
             card_config = MetaBase.config[model_type]
         else:
             card_config = MetaBase.config['default']
+
+        config['dimensions'] = [k for k in df.index.keys()]
+        config['metrics'] = [k for k in df.data.keys()]
 
         card_config.update(config)
         self.add_update_card(df, card_config)
@@ -423,14 +428,14 @@ class ModelHub:
     def build_frame(one: 'Series', other: 'Series'):
         """
         Buids a dataframe from two series with the same index. Can be used for series that are returned from
-        the model hub
+        aggregations of the model hub.
         """
         df = one.to_frame()
         if one.base_node == other.base_node:
             df[other.name] = other
         else:
-            # todo also 'moment' or new column name for aggregation?
-            if len(one.index.keys()) == 1 and one.index.keys() == other.index.keys():
+            one_keys = one.index.keys()
+            if len(one_keys) == 1 and one_keys == other.index.keys() and list(one_keys)[0]:
                 df = df.merge(other, left_index=True, right_index=True)
 
         return df
@@ -462,7 +467,7 @@ class ModelHub:
         def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
             Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-            ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
+            ie. ``time_aggregation=='YYYY-MM-DD' aggregates by date.
             :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
             """
             return self._generic_aggregation(time_aggregation=time_aggregation,
@@ -473,7 +478,7 @@ class ModelHub:
         def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
             Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-            ie. ``time_aggregation=='YYYYMMDD' aggregates by date.
+            ie. ``time_aggregation=='YYYY-MM-DD' aggregates by date.
             :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
             """
             return self._generic_aggregation(time_aggregation=time_aggregation,
@@ -486,14 +491,10 @@ class ModelHub:
         methods in this class can be used as filters in aggregation models.
         always return SeriesBoolean
         """
-
         def __init__(self, df):
             self._df = df
 
         def is_first_session(self) -> 'SeriesBoolean':
-            # todo think about materialization. if df contains a column created like this can't always be
-            #  used for aggreagations
-            # todo can we allow another timeframe for this (like not start_date and end_date)?
             window = self._df.groupby('user_id').window()
             first_session = window['session_id'].min()
             series = first_session == self._df.session_id
@@ -509,7 +510,27 @@ class ModelHub:
             else:
                 series = ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
             return series.copy_override(name='conversion')
-            # todo add conversion count over a windows like session , user etc
+
+        def conversions(self, name, partition='session_id'):
+            df = self._df.copy_override()
+            df['_conversion'] = df.mh.f.conversion(name)
+            df = df.materialize()
+            exp = f"case when {{}} then row_number() over (partition by {{}}, {{}}) end"
+            df['_conversion_counter'] = df['_conversion'].copy_override(
+                dtype='int64',
+                expression=Expression.construct(exp, df['_conversion'], df[partition], df['_conversion']))
+            df = df.materialize()
+            exp = f"count({{}}) over (partition by {{}} order by {{}}, {{}})"
+            df = df.materialize()
+            df['conversions'] = df['_conversion_counter'].copy_override(
+                dtype='int64',
+                expression=Expression.construct(exp,
+                                                df['_conversion_counter'],
+                                                df[partition],
+                                                df[partition],
+                                                df['moment']))
+
+            return df.conversions
 
     @property
     def f(self):
@@ -529,9 +550,6 @@ class ModelHub:
 
 
 class ObjectivFrame(DataFrame):
-    # TODO get_sample returns a normal DataFrame
-    # TODO it is possible to change event_type and location_stack, but they are assumed to contain expected
-    #  data in this ObjectivFrame
     def __init__(self, **kwargs):
         try:
             self.time_aggregation = kwargs.pop('time_aggregation')
@@ -555,20 +573,25 @@ class ObjectivFrame(DataFrame):
 
     @classmethod
     def from_table(cls,
-                   engine,
+                   engine=None,
                    start_date=None,
                    end_date=None,
-                   time_aggregation: str = None,
-                   table_name = 'data') -> 'ObjectivFrame':
+                   time_aggregation: str = None) -> 'ObjectivFrame':
         """
-        :param engine: an sqlalchemy engine for the database.
+        :param engine: a Sqlalchemy Engine for the database. If not given, env DSN is used to create one. If
+            that's not there, the default of 'postgresql://objectiv:@localhost:5432/objectiv' will be used.
         :param time_aggregation: can be used to set a default aggregation timeframe interval that is used for
-            models that use aggregation. Ie. YYYYMMDD aggregates to days (dates). Setting it to None
+            models that use aggregation. Ie. YYYY-MM-DD aggregates to days (dates). Setting it to None
             aggregates over the entire selected dataset.
         """
-        # todo time_aggregation is very loosely defined (using postgres formatting) and also returns string.
-        #  maybe better to give a few options (month, day, hour, quarter etc).
-        #table_name = 'data'  # todo make this a parameter
+
+        table_name = 'data'
+
+        if engine is None:
+            import sqlalchemy
+            import os
+            dsn = os.environ.get('DSN', 'postgresql://objectiv:@localhost:5432/objectiv')
+            engine = sqlalchemy.create_engine(dsn, pool_size=1, max_overflow=0)
 
         sql = f"""
             select column_name, data_type
@@ -582,7 +605,7 @@ class ObjectivFrame(DataFrame):
 
         if dtypes != {'event_id': 'uuid', 'day': 'date', 'moment': 'timestamp', 'cookie_id': 'uuid',
                       'value': 'json'}:
-            raise KeyError(f'Expected columns not in table {table_name}')
+            raise KeyError(f'Expected columns not in table {table_name}. Found: {dtypes}')
 
         index_dtype = {'event_id': dtypes.pop('event_id')}
         # remove key that don't end up in final data.
@@ -681,18 +704,6 @@ class ObjectivFrame(DataFrame):
         sample_df.end_date = end_date
 
         return sample_df
-
-    # def apply_feature_frame_sample_changes(self, feature_frame):
-    #     # todo some assertions that this works
-    #     # todo this way would be nice if we can apply changes directly on top of self (instead of merge)
-    #     #  merge is super slow
-    #
-    #     created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
-    #                                                                   'event_type',
-    #                                                                   'event_count']]
-    #
-    #     return self.merge(feature_frame.get_unsampled()[created_features], left_index=True,
-    #     right_index=True)
 
     def apply_feature_frame_sample_changes(self, feature_frame):
         created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
