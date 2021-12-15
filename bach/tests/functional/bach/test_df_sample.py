@@ -98,12 +98,13 @@ def test_sample_operations_filter():
 def test_combine_unsampled_with_before_data():
     # Test that the get_unsampled() df has a base_node and state that is compatible with the base_node and
     # state of the original df
-    dff = get_bt_with_test_data(True)
-    dff_s = dff[['municipality', 'city']].get_sample(
+    dff = get_bt_with_test_data(True)[['municipality', 'city']].materialize()
+    dff_s = dff.get_sample(
         'sample_example_table', overwrite=True, sample_percentage=50
     )
     dff_s['e'] = dff_s.city + '_extended'
     new_dff = dff_s.get_unsampled()
+    assert new_dff.all_series.keys() == dff_s.all_series.keys()
     dff['e'] = new_dff.e
 
 
