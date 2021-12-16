@@ -1,10 +1,13 @@
 from copy import copy
 from enum import Enum
-from typing import List, Dict, Optional, cast
+from typing import List, Dict, Optional, cast, TypeVar
 
 from bach.series import Series, SeriesInt64
 from bach.expression import Expression, WindowFunctionExpression
 from bach.dataframe import SortColumn
+from sql_models.model import SqlModel
+
+G = TypeVar('G', bound='GroupBy')
 
 
 class WindowFrameMode(Enum):
@@ -58,9 +61,8 @@ class GroupBy:
         for col in group_by_columns:
             if not isinstance(col, Series):
                 raise ValueError(f'Unsupported argument type: {type(col)}')
-            if col.expression.is_constant and not isinstance(col, SeriesInt64):
-                # Dictated by PG
-                raise ValueError('Non-integer constant group by series not supported')
+            if col.expression.is_constant:
+                raise ValueError('Grouping on a Series whose expression is a constant, is not supported.')
             if col.expression.has_windowed_aggregate_function:
                 raise ValueError('Window functions can not be used to group, '
                                  'please materialize first.')
@@ -95,6 +97,10 @@ class GroupBy:
     @property
     def index(self) -> Dict[str, Series]:
         return copy(self._index)
+
+    def copy_override_base_node(self: G, base_node: SqlModel) -> G:
+        new_cols = [col.copy_override(base_node=base_node) for col in self.index.values()]
+        return self.__class__(group_by_columns=new_cols)
 
 
 class Cube(GroupBy):
