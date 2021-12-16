@@ -255,6 +255,10 @@ class SeriesLocationStack(SeriesJsonb):
         return self.LocationStack(self)
 
 
+class MetaBaseException(Exception):
+    pass
+
+
 class MetaBase:
 
     _session_id = None
@@ -290,7 +294,8 @@ class MetaBase:
                  url: str = None,
                  database_id: int = None,
                  dashboard_id: int = None,
-                 collection_id: int = None):
+                 collection_id: int = None,
+                 web_url: str = None):
         if username:
             self._username = username
         else:
@@ -321,6 +326,11 @@ class MetaBase:
         else:
             self._url = os.getenv('METABASE_URL')
 
+        if web_url:
+            self._web_url = web_url
+        else:
+            self._web_url = os.getenv('METABASE_WEB_URL', self._url)
+
         # config by calling dataframe / model
         self._df = None
         self._config = None
@@ -330,25 +340,25 @@ class MetaBase:
         headers = {'Content-Type': 'application/json'}
         response = requests.post(f'{self._url}/api/session', data=data, headers=headers)
 
+        if response.status_code != 200:
+            raise MetaBaseException(f'Session ID request failed with code: {response.status_code}')
+
         response_json = response.json()
 
         if 'id' in response_json:
-            print(f'got new session id: {response_json["id"]}')
             return response_json['id']
         else:
             raise KeyError('Could not find id in JSON response from MetaBase')
 
     def _get_session_id(self):
-        if self._session_id is None:
-            self._session_id = self._get_new_session_id()
+        if MetaBase._session_id is None:
+            MetaBase._session_id = self._get_new_session_id()
 
-        return self._session_id
+        return MetaBase._session_id
 
     def _do_request(self, url: str, data: dict = None, method='post') -> requests.Response:
         if data is None:
             data = {}
-        print(f'Doing API request to: {url}')
-        print(f'poayload: {data}')
         headers = {
             'Content-Type': 'application/json',
             'X-Metabase-Session': self._get_session_id()
@@ -360,7 +370,7 @@ class MetaBase:
         elif method == 'put':
             response = requests.put(url, data=json.dumps(data), headers=headers)
         else:
-            raise ValueError(f'Unsupported method called: {method}')
+            raise MetaBaseException(f'Unsupported method called: {method}')
 
         return response
 
@@ -382,8 +392,10 @@ class MetaBase:
                 'graph_metrics': config['metrics']
             }
         }
-        print(data)
         response = self._do_request(url=f'{self._url}/api/card', method='get')
+
+        if response.status_code != 200:
+            raise MetaBaseException(f'Failed to obtain list of existing cards with code: {response.status_code}')
 
         # the default is to create a new card
         method = 'post'
@@ -399,32 +411,38 @@ class MetaBase:
                 url = f'{self._url}/api/card/{card_id}'
                 method = 'put'
 
-        response = self._do_request(url=url, data=data, method=method).json()
-        print(f'got response: {response}')
-        card_id = response['id']
-        view_url = f'{self._url}/card/{card_id}'
-        print(f'card modified using {method} at -> {view_url}')
+        response = self._do_request(url=url, data=data, method=method)
+        if response.status_code != 200:
+            raise MetaBaseException(f'Failed to add card @ {url} with {data} (code={response.status_code}')
+
+        response_json = response.json()
+        card_id = response_json['id']
 
         self.update_dashboard(card_id=card_id, dashboard_id=self._dashboard_id)
 
-        return response
+        return f'{self._web_url}/card/{card_id}'
 
     def update_dashboard(self, card_id: int, dashboard_id: int):
-        resp = self._do_request(f'{self._url}/api/dashboard/{dashboard_id}', method='get')
+        response = self._do_request(f'{self._url}/api/dashboard/{dashboard_id}', method='get')
+
+        if response.status_code != 200:
+            raise MetaBaseException(f'Failed to get cards list for dashboard {dashboard_id} '
+                                    f'(code={response.status_code}')
 
         # list of card_id's currently on the dashboard
-        cards = [card['card']['id'] for card in resp.json()['ordered_cards']]
+        cards = [card['card']['id'] for card in response.json()['ordered_cards']]
         if card_id not in cards:
-            print(f'could not find {card_id} on dashboard, adding to {cards}')
 
             url = f'{self._url}/api/dashboard/{dashboard_id}/cards'
             data = {'cardId': card_id}
-            # TODO: check response
+
             response = self._do_request(url=url, method='post', data=data)
+
+            if response.status_code != 200:
+                raise ValueError(f'Adding card to dashboard failed with code: {response.status_code}')
 
     def to_metabase(self, df: DataFrame, model_type: str = None, config: dict = None):
         if isinstance(df, Series):
-            print('converting to df')
             df = df.to_frame()
         if not config:
             config = {}
@@ -438,7 +456,8 @@ class MetaBase:
         config['metrics'] = [k for k in df.data.keys()]
 
         card_config.update(config)
-        self.add_update_card(df, card_config)
+
+        return self.add_update_card(df, card_config)
 
 
 class ModelHub:
