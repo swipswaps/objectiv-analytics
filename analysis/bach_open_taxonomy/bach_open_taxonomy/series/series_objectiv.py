@@ -667,3 +667,12 @@ class ObjectivFrame(DataFrame):
                                      time_aggregation=self.time_aggregation,
                                      conversion_events=self.conversion_events,
                                      **kwargs)
+
+    def materialize(self, **kwargs):
+        df = super().materialize(**kwargs)
+        df.time_aggregation = self.time_aggregation  # type: ignore
+        df.start_date = self.start_date  # type: ignore
+        df.end_date = self.end_date  # type: ignore
+        df.conversion_events = self.conversion_events  # type: ignore
+
+        return df
