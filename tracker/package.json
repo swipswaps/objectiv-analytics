@@ -29,6 +29,6 @@
     "check:dependencies": "yarn workspaces foreach --parallel --exclude root --exclude @objectiv/tracker-angular --verbose run check:dependencies",
     "publish": "yarn check:dependencies && yarn workspaces foreach --exclude root --exclude @objectiv/utilities --exclude @objectiv/testing-tools --verbose run npm-publish",
     "publish:verdaccio": "yarn workspaces foreach --exclude root --exclude @objectiv/utilities --exclude @objectiv/testing-tools --verbose run npm-publish:verdaccio",
-    "utils:generate": "yarn workspace @objectiv/utilities generate && yarn prettify:generated && yarn tsc"
+    "utils:generate": "yarn workspace @objectiv/utilities generate && yarn prettify:generated && yarn tsc:generated"
   }
 }
