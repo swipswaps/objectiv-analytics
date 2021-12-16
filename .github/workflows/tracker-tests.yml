@@ -19,9 +19,9 @@ jobs:
           check-latest: true
           cache: 'yarn'
           cache-dependency-path: tracker/yarn.lock
-        run: |
-          cd tracker
-          yarn install
+      - run: |
+        cd tracker
+        yarn install
       - name: Run tests for all packages
         run: |
           cd tracker
