@@ -437,7 +437,6 @@ class DataFrame:
         index_dtypes = {k: dtypes[k] for k in index}
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
 
-        # TODO: create BachSqlModel from model, without inserting node
         columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
         bach_model = BachSqlModel(
             model_spec=model.model_spec,
