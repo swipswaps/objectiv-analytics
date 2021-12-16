@@ -4,10 +4,10 @@
   "private": true,
   "license": "Apache-2.0",
   "workspaces": [
-    "core/**",
-    "plugins/**",
-    "trackers/**",
-    "transports/**"
+    "core/*",
+    "plugins/*",
+    "trackers/*",
+    "transports/*"
   ],
   "scripts": {
     "clear": "yarn exec make clean && yarn test --clearCache && yarn cache clean",
