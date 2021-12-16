@@ -7,7 +7,7 @@ source /services/venv/bin/activate
 sleep 10
 for sql in /services/*.sql
 do
-  echo "Loading data from $sql into $POSTGRES_HOSTNAME/$database"
+  echo "Loading data from $sql into $POSTGRES_HOSTNAME/$POSTGRES_DATABASE"
   cat $sql | psql -U $POSTGRES_USER -h $POSTGRES_HOSTNAME $POSTGRES_DATABASE
 done
 
