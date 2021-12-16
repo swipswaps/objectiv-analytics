@@ -19,7 +19,6 @@ jobs:
           check-latest: true
           cache: 'yarn'
           cache-dependency-path: tracker/yarn.lock
-      - name: Install monorepo dependencies
         run: |
           cd tracker
           yarn install
