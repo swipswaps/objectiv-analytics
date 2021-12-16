@@ -59,7 +59,7 @@ class SampleSqlModel(SqlModel):
     extra property: previous.
 
     The previous property is not used in the generated sql at all, but can be used to track a previous
-    SqlModel. This is useful for how we implemented sampling, as that effectively insert a sql-model in the
+    SqlModel. This is useful for how we implemented sampling, as that effectively inserts a sql-model in the
     graph that has no regular reference to the previous node in the graph. By storing the previous node
     here, we can later still reconstruct what the actual previous node was with some custom logic.
 

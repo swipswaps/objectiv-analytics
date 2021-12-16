@@ -252,7 +252,7 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
 
     def instantiate(self: TB) -> 'SqlModel[TB]':
         """
-        Create an instance of SqlModel[T] based on the properties, references,
+        Create an instance of SqlModel[TB] based on the properties, references,
         materialization, and properties_to_sql of self.
 
         If the exact same instance (as determined by result.hash) has been created already by this class,
