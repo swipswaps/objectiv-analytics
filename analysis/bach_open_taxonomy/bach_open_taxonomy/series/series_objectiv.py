@@ -275,15 +275,17 @@ class MetaBase:
         },
         'unique_users': {
             'display': 'line',
-            'name': 'unique users /day',
-            'description': 'This is a test',
+            'name': 'Unique Users',
+            'description': 'Unique Users',
+            'result_metadata': [],
             'dimensions': ['date'],
             'metrics': ['count']
         },
         'unique_sessions': {
             'display': 'bar',
-            'name': 'unique sessions / day',
+            'name': 'Unique Sessions',
             'description': 'Unique sessions from Model Hub',
+            'result_metadata': [],
             'dimensions': ['date'],
             'metrics': ['count']
         }
