@@ -7,10 +7,10 @@ from bach.expression import Expression
 from sql_models.util import quote_identifier
 from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelBuilder, SqlModelSpec, Materialization
 
-TB = TypeVar('TB', bound='BachSqlModel')
+TB = TypeVar('TB', bound='BachSqlModelBuilder')
 
 
-class BachSqlModel(CustomSqlModelBuilder):
+class BachSqlModelBuilder(CustomSqlModelBuilder):
 
     def __call__(self: TB, **values: Union[int, str, Expression, Sequence[Expression],
                                            SqlModel, SqlModelBuilder]) -> SqlModel[TB]:
