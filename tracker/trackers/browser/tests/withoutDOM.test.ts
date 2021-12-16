@@ -4,9 +4,9 @@
  */
 
 import { generateUUID, makeClickEvent } from '@objectiv/tracker-core';
+import { DebugTransport } from '@objectiv/transport-debug';
 import {
   BrowserTracker,
-  DebugTransport,
   getLocationHref,
   getTracker,
   makeMutationCallback,

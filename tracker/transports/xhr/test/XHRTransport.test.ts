@@ -2,10 +2,10 @@
  * Copyright 2021 Objectiv B.V.
  */
 
+import { mockConsole } from '@objectiv/testing-tools';
 import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
 import xhrMock from 'xhr-mock';
-import { XMLHttpRequestTransport } from '../src';
-import { mockConsole } from './mocks/MockConsole';
+import { XHRTransport } from '../src';
 
 beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -19,7 +19,7 @@ afterEach(() => {
   jest.resetAllMocks();
 });
 
-describe('XMLHttpRequestTransport', () => {
+describe('XHRTransport', () => {
   const MOCK_ENDPOINT = '/test-endpoint';
 
   const testEvent = new TrackerEvent({
@@ -27,10 +27,10 @@ describe('XMLHttpRequestTransport', () => {
   });
 
   it('should send using `xhr` with the default xhr function', async () => {
-    const testTransport = new XMLHttpRequestTransport({
+    const testTransport = new XHRTransport({
       endpoint: MOCK_ENDPOINT,
     });
-    const testTransportWithConsole = new XMLHttpRequestTransport({
+    const testTransportWithConsole = new XHRTransport({
       endpoint: MOCK_ENDPOINT,
       console: mockConsole,
     });
@@ -54,10 +54,10 @@ describe('XMLHttpRequestTransport', () => {
   });
 
   it('should send using `xhr` with the default xhr function - 500 error example', async () => {
-    const testTransport = new XMLHttpRequestTransport({
+    const testTransport = new XHRTransport({
       endpoint: MOCK_ENDPOINT,
     });
-    const testTransportWithConsole = new XMLHttpRequestTransport({
+    const testTransportWithConsole = new XHRTransport({
       endpoint: MOCK_ENDPOINT,
       console: mockConsole,
     });
@@ -84,10 +84,10 @@ describe('XMLHttpRequestTransport', () => {
   });
 
   it('should send using `xhr` with the default xhr function - onError example', async () => {
-    const testTransport = new XMLHttpRequestTransport({
+    const testTransport = new XHRTransport({
       endpoint: MOCK_ENDPOINT,
     });
-    const testTransportWithConsole = new XMLHttpRequestTransport({
+    const testTransportWithConsole = new XHRTransport({
       endpoint: MOCK_ENDPOINT,
       console: mockConsole,
     });
@@ -145,7 +145,7 @@ describe('XMLHttpRequestTransport', () => {
       });
     };
 
-    const testTransport = new XMLHttpRequestTransport({
+    const testTransport = new XHRTransport({
       endpoint: MOCK_ENDPOINT,
       xmlHttpRequestFunction: customXMLHttpRequestFunction,
     });
@@ -162,7 +162,7 @@ describe('XMLHttpRequestTransport', () => {
 
   it('should be safe to call with an empty array of Events for devs without TS', async () => {
     // Create our XMLHttpRequest Transport Instance
-    const testTransport = new XMLHttpRequestTransport({
+    const testTransport = new XHRTransport({
       endpoint: MOCK_ENDPOINT,
     });
     jest.spyOn(testTransport, 'xmlHttpRequestFunction');

@@ -5,7 +5,7 @@
 import { mockConsole } from '@objectiv/testing-tools';
 import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
-import { defaultFetchFunction, defaultFetchParameters, FetchAPITransport } from '../src';
+import { defaultFetchFunction, defaultFetchOptions, FetchTransport } from '../src';
 
 const MOCK_ENDPOINT = 'http://test-endpoint';
 
@@ -13,7 +13,7 @@ const testEvent = new TrackerEvent({
   _type: 'test-event',
 });
 
-describe('FetchAPITransport', () => {
+describe('FetchTransport', () => {
   beforeAll(() => {
     fetchMock.enableMocks();
   });
@@ -28,32 +28,33 @@ describe('FetchAPITransport', () => {
   });
 
   it('should send using `fetch` API with the default fetch function', async () => {
-    const testTransport = new FetchAPITransport({
+    const testTransport = new FetchTransport({
       endpoint: MOCK_ENDPOINT,
       console: mockConsole,
     });
+    expect(testTransport.isUsable()).toBe(true);
     await testTransport.handle(testEvent);
     expect(fetch).toHaveBeenCalledWith(MOCK_ENDPOINT, {
       body: JSON.stringify({
         events: [testEvent],
         transport_time: Date.now(),
       }),
-      ...defaultFetchParameters,
+      ...defaultFetchOptions,
     });
   });
 
   it('should send using `fetch` API with the provided customized fetch function', async () => {
-    const customParameters: RequestInit = {
-      ...defaultFetchParameters,
+    const customOptions: RequestInit = {
+      ...defaultFetchOptions,
       mode: 'cors',
       cache: 'no-cache',
       headers: {
         'Content-Type': 'application/json',
       },
     };
-    const testTransport = new FetchAPITransport({
+    const testTransport = new FetchTransport({
       endpoint: MOCK_ENDPOINT,
-      fetchFunction: ({ endpoint, events }) => defaultFetchFunction({ endpoint, events, parameters: customParameters }),
+      fetchFunction: ({ endpoint, events }) => defaultFetchFunction({ endpoint, events, options: customOptions }),
     });
     await testTransport.handle(testEvent);
     expect(fetch).toHaveBeenCalledWith(MOCK_ENDPOINT, {
@@ -61,13 +62,13 @@ describe('FetchAPITransport', () => {
         events: [testEvent],
         transport_time: Date.now(),
       }),
-      ...customParameters,
+      ...customOptions,
     });
   });
 
   it('should be safe to call with an empty array of Events for devs without TS', async () => {
     // Create our Fetch Transport Instance
-    const testTransport = new FetchAPITransport({
+    const testTransport = new FetchTransport({
       endpoint: MOCK_ENDPOINT,
     });
 
@@ -80,10 +81,10 @@ describe('FetchAPITransport', () => {
 
   it('should reject with TransportSendError on http status !== 200', async () => {
     // Create our Fetch Transport Instance
-    const testTransport = new FetchAPITransport({
+    const testTransport = new FetchTransport({
       endpoint: MOCK_ENDPOINT,
     });
-    const testTransportWithConsole = new FetchAPITransport({
+    const testTransportWithConsole = new FetchTransport({
       endpoint: MOCK_ENDPOINT,
       console: mockConsole,
     });
@@ -109,10 +110,10 @@ describe('FetchAPITransport', () => {
 
   it('should reject with TransportSendError on network failures', async () => {
     // Create our Fetch Transport Instance
-    const testTransport = new FetchAPITransport({
+    const testTransport = new FetchTransport({
       endpoint: MOCK_ENDPOINT,
     });
-    const testTransportWithConsole = new FetchAPITransport({
+    const testTransportWithConsole = new FetchTransport({
       endpoint: MOCK_ENDPOINT,
       console: mockConsole,
     });

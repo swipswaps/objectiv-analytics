@@ -38,6 +38,7 @@
       "@objectiv/tracker-core": ["core/tracker/src"],
       "@objectiv/tracker-core-react": ["core/react/src"],
       "@objectiv/tracker-*": ["trackers/*/src"],
+      "@objectiv/transport-*": ["transports/*/src"]
     }
   },
   "exclude": [
