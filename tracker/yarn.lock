@@ -2466,7 +2466,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/queue-local-storage@workspace:queues/local-storage":
+"@objectiv/queue-local-storage@^0.0.1, @objectiv/queue-local-storage@workspace:queues/local-storage":
   version: 0.0.0-use.local
   resolution: "@objectiv/queue-local-storage@workspace:queues/local-storage"
   dependencies:
@@ -2538,6 +2538,7 @@ __metadata:
   resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
   dependencies:
     "@objectiv/plugin-web-document-context": ^0.0.1
+    "@objectiv/queue-local-storage": ^0.0.1
     "@objectiv/testing-tools": 0.0.1
     "@objectiv/tracker-core": ^0.0.1
     "@objectiv/transport-debug": ^0.0.1
@@ -2631,6 +2632,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react@workspace:trackers/react"
   dependencies:
+    "@objectiv/queue-local-storage": ^0.0.1
     "@objectiv/testing-tools": 0.0.1
     "@objectiv/tracker-core": ~0.0.1
     "@objectiv/tracker-core-react": ~0.0.1
