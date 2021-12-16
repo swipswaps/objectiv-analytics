@@ -325,7 +325,7 @@ class MetaBase:
         if url:
             self._url = url
         else:
-            self._url = os.getenv('METABASE_URL', '')
+            self._url = os.getenv('METABASE_URL', '2')
 
         if web_url:
             self._web_url = web_url
@@ -476,9 +476,11 @@ class ModelHub:
         self._df = df
 
         # init metabase
-        self._metabase = MetaBase()
+        self._metabase = None
 
     def to_metabase(self, df, model_type: str = None, config: dict = None):
+        if not self._metabase:
+            self._metabase = MetaBase()
         return self._metabase.to_metabase(df, model_type, config)
 
     @staticmethod
