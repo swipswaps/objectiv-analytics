@@ -6,8 +6,6 @@ import os
 # added for metabase export
 import requests
 import json
-import types
-import copy
 
 from bach.series import Series
 from bach.series import SeriesJsonb
