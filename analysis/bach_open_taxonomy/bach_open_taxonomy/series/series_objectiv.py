@@ -325,7 +325,7 @@ class MetaBase:
         if url:
             self._url = url
         else:
-            self._url = os.getenv('METABASE_URL')
+            self._url = os.getenv('METABASE_URL', '')
 
         if web_url:
             self._web_url = web_url
