@@ -418,12 +418,16 @@ class MetaBase:
             raise MetaBaseException(f'Failed to add card @ {url} with {data} (code={response.status_code})')
 
         response_json = response.json()
-        card_id = response_json['id']
+        if 'id' in response_json:
+            card_id = response_json['id']
+        else:
+            raise MetaBaseException(f'No card ID in response {response_json}')
 
-        self.update_dashboard(card_id=card_id, dashboard_id=self._dashboard_id)
+        dashboard_info = self.update_dashboard(card_id=card_id, dashboard_id=self._dashboard_id)
 
         return {
-            'url': f'{self._web_url}/card/{card_id}',
+            'card': f'{self._web_url}/card/{card_id}',
+            'dashboard': f'{self._web_url}/dashboard/{self._dashboard_id}-{dashboard_info["name"].lower().replace(" ", "-")}',
             'username': self._username,
             'password': self._password
         }
@@ -435,8 +439,9 @@ class MetaBase:
             raise MetaBaseException(f'Failed to get cards list for dashboard {dashboard_id} '
                                     f'(code={response.status_code}')
 
+        dashboard_info = response.json()
         # list of card_id's currently on the dashboard
-        cards = [card['card']['id'] for card in response.json()['ordered_cards']]
+        cards = [card['card']['id'] for card in dashboard_info['ordered_cards']]
         if card_id not in cards:
 
             url = f'{self._url}/api/dashboard/{dashboard_id}/cards'
@@ -446,6 +451,7 @@ class MetaBase:
 
             if response.status_code != 200:
                 raise ValueError(f'Adding card to dashboard failed with code: {response.status_code}')
+        return dashboard_info
 
     def to_metabase(self, df: DataFrame, model_type: str = None, config: dict = None):
         if isinstance(df, Series):
