@@ -5,12 +5,12 @@ from typing import Dict, Any, Union, Sequence, TypeVar
 
 from bach.expression import Expression
 from sql_models.util import quote_identifier
-from sql_models.model import CustomSqlModel, SqlModel, SqlModelBuilder, SqlModelSpec, Materialization
+from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelBuilder, SqlModelSpec, Materialization
 
 TB = TypeVar('TB', bound='BachSqlModel')
 
 
-class BachSqlModel(CustomSqlModel):
+class BachSqlModel(CustomSqlModelBuilder):
 
     def __call__(self: TB, **values: Union[int, str, Expression, Sequence[Expression],
                                            SqlModel, SqlModelBuilder]) -> SqlModel[TB]:
@@ -69,7 +69,7 @@ class SampleSqlModel(SqlModel):
         self.previous = previous
         sql = 'SELECT * FROM {table_name}'
         super().__init__(
-            model_spec=CustomSqlModel(sql=sql, name=name),
+            model_spec=CustomSqlModelBuilder(sql=sql, name=name),
             properties={'table_name': quote_identifier(table_name)},
             references={},
             materialization=Materialization.CTE

@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
-from sql_models.model import SqlModelBuilder, CustomSqlModel
+from sql_models.model import SqlModelBuilder, CustomSqlModelBuilder
 from sql_models.sql_generator import to_sql
 from tests.unit.sql_models.test_graph_operations import get_simple_test_graph
 from tests.unit.sql_models.util import assert_roughly_equal_sql
@@ -37,7 +37,7 @@ def test__escape_value():
 
 def test_format_injection():
     # Make sure that (parts of) format strings in the properties of a model don't mess up the sql generation.
-    mb = CustomSqlModel('select {a} from x')
+    mb = CustomSqlModelBuilder('select {a} from x')
     result = to_sql(mb(a='y'))
     assert result == 'select y from x'
     result = to_sql(mb(a="'{y}'"))
@@ -50,7 +50,7 @@ def test_format_injection():
     assert result == "select '{{{y}' from x"
 
     model = mb(a="'{{y}}'")
-    mb = CustomSqlModel('select {a} from {{x}}')
+    mb = CustomSqlModelBuilder('select {a} from {{x}}')
     result = to_sql(mb(a='y', x=model))
     expected = 'with "CustomSqlModel___1415e9e145b7bdd712c6fadaac5a6483" as (select \'{{y}}\' from x)\n' \
                'select y from "CustomSqlModel___1415e9e145b7bdd712c6fadaac5a6483"'
