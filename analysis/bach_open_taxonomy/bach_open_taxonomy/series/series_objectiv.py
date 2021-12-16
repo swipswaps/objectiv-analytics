@@ -266,11 +266,12 @@ class MetaBase:
     # config per model
     config = {
         'default': {
-          'display': 'bar',
-          'name': 'Generic / default graph',
-          'description': 'This is a generic graph',
-          'dimensions': [],
-          'metrics': []
+            'display': 'bar',
+            'name': 'Generic / default graph',
+            'description': 'This is a generic graph',
+            'result_metadata': [],
+            'dimensions': [],
+            'metrics': []
         },
         'unique_users': {
             'display': 'line',
@@ -387,9 +388,10 @@ class MetaBase:
             'description': config['description'],
             'display': config['display'],
             'name': config['name'],
+            'result_metadata': config['result_metadata'],
             'visualization_settings': {
-                'graph_dimensions': config['dimensions'],
-                'graph_metrics': config['metrics']
+                'graph.dimensions': config['dimensions'],
+                'graph.metrics': config['metrics']
             }
         }
         response = self._do_request(url=f'{self._url}/api/card', method='get')
@@ -412,15 +414,19 @@ class MetaBase:
                 method = 'put'
 
         response = self._do_request(url=url, data=data, method=method)
-        if response.status_code != 200:
-            raise MetaBaseException(f'Failed to add card @ {url} with {data} (code={response.status_code}')
+        if response.status_code != 202:
+            raise MetaBaseException(f'Failed to add card @ {url} with {data} (code={response.status_code})')
 
         response_json = response.json()
         card_id = response_json['id']
 
         self.update_dashboard(card_id=card_id, dashboard_id=self._dashboard_id)
 
-        return f'{self._web_url}/card/{card_id}'
+        return {
+            'url': f'{self._web_url}/card/{card_id}',
+            'username': self._username,
+            'password': self._password
+        }
 
     def update_dashboard(self, card_id: int, dashboard_id: int):
         response = self._do_request(f'{self._url}/api/dashboard/{dashboard_id}', method='get')
@@ -452,11 +458,10 @@ class MetaBase:
         else:
             card_config = MetaBase.config['default']
 
-        config['dimensions'] = [k for k in df.index.keys()]
-        config['metrics'] = [k for k in df.data.keys()]
+        card_config['dimensions'] = [k for k in df.index.keys()]
+        card_config['metrics'] = [k for k in df.data.keys()]
 
         card_config.update(config)
-
         return self.add_update_card(df, card_config)
 
 
