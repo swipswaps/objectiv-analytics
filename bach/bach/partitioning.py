@@ -62,6 +62,10 @@ class GroupBy:
             if not isinstance(col, Series):
                 raise ValueError(f'Unsupported argument type: {type(col)}')
             if col.expression.is_constant:
+                # We don't support this currently. If we allow this we would generate sql of the form (this
+                # assumes the constants is '5'): `... group by (5)`. The sql is valid, it groups by the
+                # fifth column of the query. But it doesn't make any sense to support that, the user should
+                # be explicit in naming the columns that he wants to group on.
                 raise ValueError('Grouping on a Series whose expression is a constant, is not supported.')
             if col.expression.has_windowed_aggregate_function:
                 raise ValueError('Window functions can not be used to group, '
