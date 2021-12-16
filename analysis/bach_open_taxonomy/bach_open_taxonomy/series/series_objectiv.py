@@ -284,30 +284,49 @@ class MetaBase:
         }
     }
 
-    def __init__(self, username: str = None, password: str = None, url: str = None, database_id: int = 2):
-        if not username:
-            username = os.getenv('METABASE_USERNAME', 'objectiv')
+    def __init__(self,
+                 username: str = None,
+                 password: str = None,
+                 url: str = None,
+                 database_id: int = None,
+                 dashboard_id: int = None,
+                 collection_id: int = None):
+        if username:
+            self._username = username
+        else:
+            self._username = os.getenv('METABASE_USERNAME', 'objectiv')
 
-        if not password:
-            password = os.getenv('METABASE_PASSWORD', '')
+        if password:
+            self._password = password
+        else:
+            self._password = os.getenv('METABASE_PASSWORD', '')
 
-        self._database_id = database_id
+        if database_id:
+            self._database_id = database_id
+        else:
+            self._database_id = int(os.getenv('METABASE_DATABASE_ID', 1))
+
+        if dashboard_id:
+            self._dashboard_id = dashboard_id
+        else:
+            self._dashboard_id = int(os.getenv('METABASE_DASHBOARD_ID', 1))
+
+        if collection_id:
+            self._collection_id = collection_id
+        else:
+            self._collection_id = int(os.getenv('METABASE_COLLECTION_ID', 0))
 
         if url:
             self._url = url
         else:
             self._url = os.getenv('METABASE_URL')
 
-        print(f'using: {username} / {self._url}')
-        if not MetaBase._session_id:
-            MetaBase._session_id = self._get_session_id(username, password)
-
         # config by calling dataframe / model
         self._df = None
         self._config = None
 
-    def _get_session_id(self, username: str, password: str) -> str:
-        data = json.dumps({'username': username, 'password': password})
+    def _get_new_session_id(self) -> str:
+        data = json.dumps({'username': self._username, 'password': self._password})
         headers = {'Content-Type': 'application/json'}
         response = requests.post(f'{self._url}/api/session', data=data, headers=headers)
 
@@ -319,13 +338,20 @@ class MetaBase:
         else:
             raise KeyError('Could not find id in JSON response from MetaBase')
 
+    def _get_session_id(self):
+        if self._session_id is None:
+            self._session_id = self._get_new_session_id()
+
+        return self._session_id
+
     def _do_request(self, url: str, data: dict = None, method='post') -> requests.Response:
         if data is None:
             data = {}
         print(f'Doing API request to: {url}')
+        print(f'poayload: {data}')
         headers = {
             'Content-Type': 'application/json',
-            'X-Metabase-Session': self._session_id
+            'X-Metabase-Session': self._get_session_id()
         }
         if method == 'get':
             response = requests.get(url, data=json.dumps(data), headers=headers)
@@ -340,7 +366,7 @@ class MetaBase:
 
     def add_update_card(self, df: DataFrame, config: dict) -> dict:
         data = {
-            'collection_id': 2,
+            'collection_id': self._collection_id,
             'dataset_query': {
                 'database': self._database_id,
                 'native': {
@@ -356,6 +382,7 @@ class MetaBase:
                 'graph_metrics': config['metrics']
             }
         }
+        print(data)
         response = self._do_request(url=f'{self._url}/api/card', method='get')
 
         # the default is to create a new card
@@ -373,12 +400,12 @@ class MetaBase:
                 method = 'put'
 
         response = self._do_request(url=url, data=data, method=method).json()
-
+        print(f'got response: {response}')
         card_id = response['id']
         view_url = f'{self._url}/card/{card_id}'
         print(f'card modified using {method} at -> {view_url}')
 
-        self.update_dashboard(card_id=card_id, dashboard_id=3)
+        self.update_dashboard(card_id=card_id, dashboard_id=self._dashboard_id)
 
         return response
 
