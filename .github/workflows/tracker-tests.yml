@@ -28,7 +28,7 @@ jobs:
       - name: Check dependencies
         working-directory: tracker
         run: yarn check:dependencies
-      - name: test if TS schema is up to date
+      - name: Test if TS schema is up to date
         working-directory: tracker
         run: |
           yarn utils:generate
