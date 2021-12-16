@@ -105,9 +105,8 @@ class BachSqlModel(SqlModel[T]):
     from the sql.
 
     The column information is not used for sql generation, but can be used by other code
-    interacting with the models. The information is not reflected in the `hash`, because for the purpose of
-    sql generation it doesn't matter and
-
+    interacting with the models. The information is not reflected in the `hash`, as it doesn't matter for
+    the purpose of sql generation.
     """
     def __init__(self,
                  model_spec: T,
