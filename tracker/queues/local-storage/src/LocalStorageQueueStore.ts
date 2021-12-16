@@ -13,9 +13,9 @@ import {
 /**
  * A Local Storage implementation of a TrackerQueueStore.
  */
-export class TrackerQueueLocalStorage implements TrackerQueueStoreInterface {
+export class LocalStorageQueueStore implements TrackerQueueStoreInterface {
   readonly console?: TrackerConsole;
-  queueStoreName = `TrackerQueueLocalStorage`;
+  queueStoreName = `LocalStorageQueueStore`;
   readonly localStorageKey: string;
 
   constructor(

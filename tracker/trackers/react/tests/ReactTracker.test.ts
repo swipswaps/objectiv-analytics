@@ -72,7 +72,7 @@ describe('BrowserTracker', () => {
       processFunction: expect.any(Function),
       processingEventIds: [],
       store: {
-        queueStoreName: 'TrackerQueueLocalStorage',
+        queueStoreName: 'LocalStorageQueueStore',
         localStorageKey: 'objectiv-events-queue-app-id',
       },
     });

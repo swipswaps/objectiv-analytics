@@ -1,21 +1,22 @@
 {
-  "name": "@objectiv/tracker-browser",
+  "name": "@objectiv/queue-local-storage",
   "version": "0.0.1",
-  "description": "Objectiv Web application analytics tracker for the open taxonomy for analytics",
+  "description": "A TrackerQueueStore based on localStorage API",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [
     "objectiv",
     "tracking",
-    "web",
     "analytics",
     "events",
-    "taxonomy"
+    "taxonomy",
+    "queue",
+    "localstorage"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/objectiv/objectiv-analytics.git",
-    "directory": "tracker/trackers/browser"
+    "directory": "tracker/queue/local-storage"
   },
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
   "contributors": [
@@ -49,9 +50,7 @@
     "@types/jest": "^27.0.2",
     "depcheck": "^1.4.2",
     "jest": "^27.3.1",
-    "jest-fetch-mock": "^3.0.3",
     "jest-standard-reporter": "^2.0.0",
-    "jest-useragent-mock": "^0.1.1",
     "prettier": "^2.4.1",
     "rollup": "^2.58.3",
     "rollup-plugin-filesize": "^9.1.1",
@@ -63,15 +62,6 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "@objectiv/plugin-web-document-context": "^0.0.1",
-    "@objectiv/queue-local-storage": "^0.0.1",
-    "@objectiv/tracker-core": "^0.0.1",
-    "@objectiv/transport-debug": "^0.0.1",
-    "@objectiv/transport-fetch": "^0.0.1",
-    "@objectiv/transport-xhr": "^0.0.1",
-    "superstruct": "^0.15.3"
-  },
-  "peerDependencies": {
-    "uuid-random": "^1.3.2"
+    "@objectiv/tracker-core": "~0.0.1"
   }
 }

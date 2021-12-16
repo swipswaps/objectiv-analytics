@@ -7,7 +7,6 @@
   "keywords": [
     "objectiv",
     "tracking",
-    "react",
     "analytics",
     "events",
     "taxonomy",
@@ -18,7 +17,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/objectiv/objectiv-analytics.git",
-    "directory": "tracker/trackers/react"
+    "directory": "tracker/transports/xhr"
   },
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
   "contributors": [
