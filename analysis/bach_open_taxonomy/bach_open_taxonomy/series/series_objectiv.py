@@ -1,6 +1,13 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import os
+
+# added for metabase export
+import requests
+import json
+
+from bach.series import Series
 from bach.series import SeriesJsonb
 from bach.expression import Expression, quote_string, quote_identifier
 from bach.sql_model import SampleSqlModel
@@ -9,6 +16,10 @@ from bach.types import register_dtype, get_dtype_from_db_dtype
 from bach_open_taxonomy.stack.util import sessionized_data_model
 from sql_models.graph_operations import find_node
 from bach.dataframe import escape_parameter_characters
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bach.series import Series, SeriesBoolean
 
 
 class ObjectivStack(SeriesJsonb.Json):
@@ -242,15 +253,416 @@ class SeriesLocationStack(SeriesJsonb):
         return self.LocationStack(self)
 
 
+class MetaBaseException(Exception):
+    pass
+
+
+class MetaBase:
+
+    _session_id = None
+
+    # config per model
+    config = {
+        'default': {
+            'display': 'bar',
+            'name': 'Generic / default graph',
+            'description': 'This is a generic graph',
+            'result_metadata': [],
+            'dimensions': [],
+            'metrics': []
+        },
+        'unique_users': {
+            'display': 'line',
+            'name': 'Unique Users',
+            'description': 'Unique Users',
+            'result_metadata': [],
+            'dimensions': ['date'],
+            'metrics': ['count']
+        },
+        'unique_sessions': {
+            'display': 'bar',
+            'name': 'Unique Sessions',
+            'description': 'Unique sessions from Model Hub',
+            'result_metadata': [],
+            'dimensions': ['date'],
+            'metrics': ['count']
+        }
+    }
+
+    def __init__(self,
+                 username: str = None,
+                 password: str = None,
+                 url: str = None,
+                 database_id: int = None,
+                 dashboard_id: int = None,
+                 collection_id: int = None,
+                 web_url: str = None):
+        if username:
+            self._username = username
+        else:
+            self._username = os.getenv('METABASE_USERNAME', 'objectiv')
+
+        if password:
+            self._password = password
+        else:
+            self._password = os.getenv('METABASE_PASSWORD', '')
+
+        if database_id:
+            self._database_id = database_id
+        else:
+            self._database_id = int(os.getenv('METABASE_DATABASE_ID', 1))
+
+        if dashboard_id:
+            self._dashboard_id = dashboard_id
+        else:
+            self._dashboard_id = int(os.getenv('METABASE_DASHBOARD_ID', 1))
+
+        if collection_id:
+            self._collection_id = collection_id
+        else:
+            self._collection_id = int(os.getenv('METABASE_COLLECTION_ID', 0))
+
+        if url:
+            self._url = url
+        else:
+            self._url = os.getenv('METABASE_URL', '2')
+
+        if web_url:
+            self._web_url = web_url
+        else:
+            self._web_url = os.getenv('METABASE_WEB_URL', self._url)
+
+        # config by calling dataframe / model
+        self._df = None
+        self._config = None
+
+    def _get_new_session_id(self) -> str:
+        data = json.dumps({'username': self._username, 'password': self._password})
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(f'{self._url}/api/session', data=data, headers=headers)
+
+        if response.status_code != 200:
+            raise MetaBaseException(f'Session ID request failed with code: {response.status_code}')
+
+        response_json = response.json()
+
+        if 'id' in response_json:
+            return response_json['id']
+        else:
+            raise KeyError('Could not find id in JSON response from MetaBase')
+
+    def _get_session_id(self):
+        if MetaBase._session_id is None:
+            MetaBase._session_id = self._get_new_session_id()
+
+        return MetaBase._session_id
+
+    def _do_request(self, url: str, data: dict = None, method='post') -> requests.Response:
+        if data is None:
+            data = {}
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Metabase-Session': self._get_session_id()
+        }
+        if method == 'get':
+            response = requests.get(url, data=json.dumps(data), headers=headers)
+        elif method == 'post':
+            response = requests.post(url, data=json.dumps(data), headers=headers)
+        elif method == 'put':
+            response = requests.put(url, data=json.dumps(data), headers=headers)
+        else:
+            raise MetaBaseException(f'Unsupported method called: {method}')
+
+        return response
+
+    def add_update_card(self, df: DataFrame, config: dict) -> dict:
+        data = {
+            'collection_id': self._collection_id,
+            'dataset_query': {
+                'database': self._database_id,
+                'native': {
+                    'query': df.view_sql()
+                },
+                'type': 'native'
+            },
+            'description': config['description'],
+            'display': config['display'],
+            'name': config['name'],
+            'result_metadata': config['result_metadata'],
+            'visualization_settings': {
+                'graph.dimensions': config['dimensions'],
+                'graph.metrics': config['metrics']
+            }
+        }
+        response = self._do_request(url=f'{self._url}/api/card', method='get')
+
+        if response.status_code != 200:
+            raise MetaBaseException(f'Failed to obtain list of existing cards with code: {response.status_code}')
+
+        # the default is to create a new card
+        method = 'post'
+        url = f'{self._url}/api/card'
+
+        # but if we can find an existing card that matches
+        # we update, rather than create
+        for card in response.json():
+            if card['description'] == config['description'] and \
+                    card['name'] == config['name']:
+
+                card_id = card['id']
+                url = f'{self._url}/api/card/{card_id}'
+                method = 'put'
+
+        response = self._do_request(url=url, data=data, method=method)
+        if response.status_code != 202:
+            raise MetaBaseException(f'Failed to add card @ {url} with {data} (code={response.status_code})')
+
+        response_json = response.json()
+        if 'id' in response_json:
+            card_id = response_json['id']
+        else:
+            raise MetaBaseException(f'No card ID in response {response_json}')
+
+        dashboard_info = self.update_dashboard(card_id=card_id, dashboard_id=self._dashboard_id)
+
+        return {
+            'card': f'{self._web_url}/card/{card_id}',
+            'dashboard': f'{self._web_url}/dashboard/{self._dashboard_id}-{dashboard_info["name"].lower().replace(" ", "-")}',
+            'username': self._username,
+            'password': self._password
+        }
+
+    def update_dashboard(self, card_id: int, dashboard_id: int):
+        response = self._do_request(f'{self._url}/api/dashboard/{dashboard_id}', method='get')
+
+        if response.status_code != 200:
+            raise MetaBaseException(f'Failed to get cards list for dashboard {dashboard_id} '
+                                    f'(code={response.status_code}')
+
+        dashboard_info = response.json()
+        # list of card_id's currently on the dashboard
+        cards = [card['card']['id'] for card in dashboard_info['ordered_cards']]
+        if card_id not in cards:
+
+            url = f'{self._url}/api/dashboard/{dashboard_id}/cards'
+            data = {'cardId': card_id}
+
+            response = self._do_request(url=url, method='post', data=data)
+
+            if response.status_code != 200:
+                raise ValueError(f'Adding card to dashboard failed with code: {response.status_code}')
+        return dashboard_info
+
+    def to_metabase(self, df: DataFrame, model_type: str = None, config: dict = None):
+        if isinstance(df, Series):
+            df = df.to_frame()
+        if not config:
+            config = {}
+
+        if model_type in MetaBase.config:
+            card_config = MetaBase.config[model_type]
+        else:
+            card_config = MetaBase.config['default']
+
+        card_config['dimensions'] = [k for k in df.index.keys()]
+        card_config['metrics'] = [k for k in df.data.keys()]
+
+        card_config.update(config)
+        return self.add_update_card(df, card_config)
+
+
+class ModelHub:
+    def __init__(self, df):
+        self._df = df
+
+        # init metabase
+        self._metabase = None
+
+    def to_metabase(self, df, model_type: str = None, config: dict = None):
+        if not self._metabase:
+            self._metabase = MetaBase()
+        return self._metabase.to_metabase(df, model_type, config)
+
+    @staticmethod
+    def combine(*series: 'Series'):
+        """
+        Buids a dataframe from multiple series with "moment" as index. Can be used for series that are
+        returned from aggregations of the model hub.
+        :param *series: The Series that are combined into a DataFrame. At least two Series should be passed
+            and should have "moment" as index.
+        :returns: DataFrame of with each Series as column.
+        """
+        if len(series) < 2:
+            raise KeyError("At least two series should be passed")
+        first_series = series[0]
+        series = series[1:]
+        df = first_series.to_frame()
+        first_series_index_keys = first_series.index.keys()
+        if list(first_series_index_keys)[0] != 'moment' and len(first_series_index_keys) != 1:
+            raise KeyError("Index of all series should be 'moment'")
+
+        for current_series in series:
+            if first_series_index_keys == current_series.index.keys():
+                df = df.merge(current_series, left_index=True, right_index=True)
+
+        return df
+
+    class Aggregate:
+        """
+        filter param takes SeriesBoolean. filter methods always return SeriesBoolean.
+        """
+        def __init__(self, df):
+            self._df = df
+
+        def _generic_aggregation(self, time_aggregation, column, filter, name):
+            if not time_aggregation:
+                time_aggregation = self._df.time_aggregation
+            gb = self._df.moment.dt.sql_format(time_aggregation) if time_aggregation else None
+            df = self._df.copy_override()
+            if filter:
+                df['_filter'] = filter
+                if filter.expression.has_windowed_aggregate_function:
+                    df = df.materialize()
+                df = df[df._filter]
+
+                name += '_' + filter.name
+
+            series = df.groupby(gb)[column].nunique()
+            return series.copy_override(name=name)
+
+        def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
+            """
+            Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
+            ie. ``time_aggregation=='YYYY-MM-DD' aggregates by date.
+            :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+            :param filter: the output of this model is only based on the rows for which the filter is True.
+            """
+            return self._generic_aggregation(time_aggregation=time_aggregation,
+                                             column='user_id',
+                                             filter=filter,
+                                             name='unique_users')
+
+        def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
+            """
+            Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
+            ie. ``time_aggregation=='YYYY-MM-DD' aggregates by date.
+            :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+            :param filter: the output of this model is only based on the rows for which the filter is True.
+            """
+            return self._generic_aggregation(time_aggregation=time_aggregation,
+                                             column='session_id',
+                                             filter=filter,
+                                             name='unique_sessions')
+
+    class Filter:
+        """
+        Methods in this class can be used as filters in aggregation models.
+        Always return SeriesBoolean with same index and base node as the ObjectivFrame the method is applied
+        to.
+        """
+        def __init__(self, df):
+            self._df = df
+
+        def is_first_session(self) -> 'SeriesBoolean':
+            """
+            Labels a session True if the session is the first session of that user in the data.
+            :returns: SeriesBoolean with same index and base node as the ObjectivFrame this method is applied
+                to.
+            """
+            window = self._df.groupby('user_id').window()
+            first_session = window['session_id'].min()
+            series = first_session == self._df.session_id
+            return series.copy_override(name='is_first_session')
+
+        def conversion(self, name):
+            """
+            Labels a hit True if it is a conversion hit.
+            :param name: the name of the conversion to label as set in ObjectivFrame.conversion_events.
+            :returns: SeriesBoolean with same index and base node as the ObjectivFrame this method is applied
+                to.
+            """
+            conversion_stack, conversion_event = self._df.conversion_events[name]
+
+            if conversion_stack is None:
+                series = self._df.event_type == conversion_event
+            elif conversion_event is None:
+                series = conversion_stack.notnull()
+            else:
+                series = ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
+            return series.copy_override(name='conversion')
+
+    @property
+    def f(self):
+        return self.Filter(self._df)
+
+    @property
+    def filter(self):
+        return self.Filter(self._df)
+
+    @property
+    def agg(self):
+        return self.Aggregate(self._df)
+
+    @property
+    def aggregate(self):
+        return self.Aggregate(self._df)
+
+
 class ObjectivFrame(DataFrame):
-    # TODO what if you use the constructor to create a objectiv frame? nothing to prevent you from this.
-    # TODO get_sample returns a normal DataFrame
-    # TODO it is possible to change event_type and location_stack, but they are assumed to contain expected
-    #  data in this ObjectivFrame
+    def __init__(self, **kwargs):
+        try:
+            self.time_aggregation = kwargs.pop('time_aggregation')
+        except KeyError:
+            pass
+        try:
+            self.start_date = kwargs.pop('start_date')
+        except KeyError:
+            pass
+        try:
+            self.end_date = kwargs.pop('end_date')
+        except KeyError:
+            pass
+        try:
+            self.conversion_events = kwargs.pop('conversion_events')
+        except KeyError:
+            pass
+        super().__init__(**kwargs)
+
+        self._metabase = None
+
+    @property
+    def model_hub(self):
+        return ModelHub(self)
+
+    @property
+    def mh(self):
+        return ModelHub(self)
 
     @classmethod
-    def from_table(cls, engine):
-        table_name = 'data'  # todo make this a parameter
+    def from_table(cls,
+                   engine=None,
+                   start_date=None,
+                   end_date=None,
+                   time_aggregation: str = None) -> 'ObjectivFrame':
+        """
+        :param engine: a Sqlalchemy Engine for the database. If not given, env DSN is used to create one. If
+            that's not there, the default of 'postgresql://objectiv:@localhost:5432/objectiv' will be used.
+        :param start_date: first date for which data is loaded to the DataFrame. If None, data is loaded from
+            the first date in the sql table.
+        :param end_date: last date for which data is loaded to the DataFrame. If None, data is loaded up to
+            and including the last date in the sql table.
+        :param time_aggregation: can be used to set a default aggregation timeframe interval that is used for
+            models that use aggregation. Ie. YYYY-MM-DD aggregates to days (dates). Setting it to None
+            aggregates over the entire selected dataset.
+        """
+
+        table_name = 'data'
+
+        if engine is None:
+            import sqlalchemy
+            import os
+            dsn = os.environ.get('DSN', 'postgresql://objectiv:@localhost:5432/objectiv')
+            engine = sqlalchemy.create_engine(dsn, pool_size=1, max_overflow=0)
 
         sql = f"""
             select column_name, data_type
@@ -264,14 +676,14 @@ class ObjectivFrame(DataFrame):
 
         if dtypes != {'event_id': 'uuid', 'day': 'date', 'moment': 'timestamp', 'cookie_id': 'uuid',
                       'value': 'json'}:
-            raise KeyError(f'Expected columns not in table {table_name}')
+            raise KeyError(f'Expected columns not in table {table_name}. Found: {dtypes}')
 
         index_dtype = {'event_id': dtypes.pop('event_id')}
         # remove key that don't end up in final data.
         dtypes.pop('value')
         dtypes['user_id'] = dtypes.pop('cookie_id')
 
-        model = sessionized_data_model()
+        model = sessionized_data_model(start_date=start_date, end_date=end_date)
 
         dtypes.update({'session_id': 'int64',
                        'session_hit_number': 'int64',
@@ -287,10 +699,38 @@ class ObjectivFrame(DataFrame):
                               group_by=None
                               )
 
+        df.time_aggregation = time_aggregation  # type: ignore
+        df.start_date = start_date  # type: ignore
+        df.end_date = end_date  # type: ignore
+        df.conversion_events = {}  # type: ignore
+
         df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
         df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
 
-        return df
+        return df  # type: ignore
+
+    def add_conversion_event(self,
+                             location_stack: 'SeriesLocationStack' = None,
+                             event_type: str = None,
+                             name: str = None):
+        """
+        Label events that are used as conversions. All labeled conversion events are set in
+        ObjectivFrame.conversion_events.
+        :param location_stack: the location stack that is labeled as conversion. Can be any slice in of a
+            objectiv_location_stack type column. Optionally use in conjunction with event_type to label a
+            conversion.
+        :param event_type: the event type that is labeled as conversion. Optionally use in conjunction with
+            objectiv_location_stack to label a conversion.
+        :param name: the name to use for the labeled conversion event. If None it will use 'conversion_#',
+            where # is the number of the added conversion.
+        """
+        if location_stack is None and event_type is None:
+            raise ValueError('At least one of conversion_stack or conversion_event should be set.')
+
+        if not name:
+            name = f'conversion_{len(self.conversion_events) + 1}'
+
+        self.conversion_events[name] = location_stack, event_type
 
     @staticmethod
     def from_model():
@@ -324,8 +764,17 @@ class ObjectivFrame(DataFrame):
         return df.drop(columns=['event_number']), original_node
 
     def create_sample_feature_frame(self, table_name, overwrite=False):
+        """
+        Create a df that contains only all unique combinations of the location stack and event_type. This
+        allows for manipulating this data on a small data set, while all changes can be applied to all hits
+        later. Use ObjectivFrame.apply_feature_frame_sample_changes later to apply changes made in this
+        ObjectivFrame.
+        :param table_name: the name of the sql table to store the data of the unique location_stack and
+            event_types.
+        :param overwrite: if True, the sql table is overwritten if it already exists.
+        :returns: an ObjectivFrame with only all unique combinations of the location stack and event_type.
+        """
         df, original_node = self._prepare_sample()
-
         with df.engine.connect() as conn:
             if overwrite:
                 sql = f'DROP TABLE IF EXISTS {quote_identifier(table_name)}'
@@ -337,26 +786,27 @@ class ObjectivFrame(DataFrame):
 
         new_base_node = SampleSqlModel(table_name=table_name, previous=original_node, name='feature_sample')
 
-        return ObjectivFrame.get_instance(engine=df.engine,
-                                          base_node=new_base_node,
-                                          index_dtypes=df.index_dtypes,
-                                          dtypes=df.dtypes,
-                                          group_by=None,
-                                          order_by=None)
+        sample_df = ObjectivFrame.get_instance(engine=df.engine,
+                                               base_node=new_base_node,
+                                               index_dtypes=df.index_dtypes,
+                                               dtypes=df.dtypes,
+                                               group_by=None,
+                                               order_by=None)
 
-    # def apply_feature_frame_sample_changes(self, feature_frame):
-    #     # todo some assertions that this works
-    #     # todo this way would be nice if we can apply changes directly on top of self (instead of merge)
-    #     #  merge is super slow
-    #
-    #     created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
-    #                                                                   'event_type',
-    #                                                                   'event_count']]
-    #
-    #     return self.merge(feature_frame.get_unsampled()[created_features], left_index=True,
-    #     right_index=True)
+        sample_df.time_aggregation = df.time_aggregation
+        sample_df.start_date = df.start_date
+        sample_df.end_date = df.end_date
+        sample_df.conversion_events = df.conversion_events
+
+        return sample_df
 
     def apply_feature_frame_sample_changes(self, feature_frame):
+        """
+        Returns a new ObjectivFrame in which all changes made in feature_frame are applied to the full data
+        set.
+        :param feature_frame: the sample ObjectivFrame made by ObjectivFrame.create_sample_feature_frame.
+        :returns: a new ObjectivFrame.
+        """
         created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
                                                                                'event_type',
                                                                                'event_count']]
@@ -446,3 +896,19 @@ class ObjectivFrame(DataFrame):
         fig.update_layout(title_text=text_in_title, font_size=10)
 
         return fig
+
+    def copy_override(self, **kwargs):
+        return super().copy_override(start_date=self.start_date,
+                                     end_date=self.end_date,
+                                     time_aggregation=self.time_aggregation,
+                                     conversion_events=self.conversion_events,
+                                     **kwargs)
+
+    def materialize(self, **kwargs):
+        df = super().materialize(**kwargs)
+        df.time_aggregation = self.time_aggregation  # type: ignore
+        df.start_date = self.start_date  # type: ignore
+        df.end_date = self.end_date  # type: ignore
+        df.conversion_events = self.conversion_events  # type: ignore
+
+        return df

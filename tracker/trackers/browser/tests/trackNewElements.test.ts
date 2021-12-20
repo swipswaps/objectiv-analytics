@@ -2,18 +2,18 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { generateUUID } from '@objectiv/tracker-core';
+import { matchUUID } from '@objectiv/testing-tools';
+import { generateUUID, makeOverlayContext } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
   getTracker,
   getTrackerRepository,
   makeTracker,
   tagButton,
-  tagElement,
   TaggingAttribute,
+  tagOverlay,
 } from '../src';
 import { trackNewElements } from '../src/mutationObserver/trackNewElements';
-import { matchUUID } from './mocks/matchUUID';
 
 describe('trackNewElements', () => {
   beforeEach(() => {
@@ -35,7 +35,7 @@ describe('trackNewElements', () => {
       TaggingAttribute.tagChildren,
       JSON.stringify([
         { queryAll: '#button', tagAs: tagButton({ id: 'button', text: 'button' }) },
-        { queryAll: '#child-div', tagAs: tagElement({ id: 'child-div' }) },
+        { queryAll: '#child-div', tagAs: tagOverlay({ id: 'child-div' }) },
       ])
     );
 
@@ -64,12 +64,7 @@ describe('trackNewElements', () => {
         _type: 'SectionVisibleEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [
-          {
-            _type: 'SectionContext',
-            id: 'child-div',
-          },
-        ],
+        location_stack: [makeOverlayContext({ id: 'child-div' })],
       })
     );
   });
