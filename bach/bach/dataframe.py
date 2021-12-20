@@ -10,11 +10,12 @@ from sqlalchemy.future import Connection
 from bach.expression import Expression, SingleValueExpression
 from bach.sql_model import BachSqlModelBuilder
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from sql_models.model import SqlModel
+from sql_models.model import SqlModel, Materialization
 from sql_models.sql_generator import to_sql
 
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
+    from bach.savepoints import Savepoints
     from bach.series import Series, SeriesBoolean, SeriesAbstractNumeric
 
 # TODO exclude from docs
@@ -522,8 +523,8 @@ class DataFrame:
             'base_node': base_node if base_node is not None else self._base_node,
             'index': index if index is not None else self._index,
             'series': series if series is not None else self._data,
-            'group_by': self._group_by if group_by is None else group_by[0],
-            'order_by': order_by if order_by is not None else self._order_by
+            'group_by': group_by[0] if group_by is not None else self._group_by,
+            'order_by': order_by if order_by is not None else self.order_by
         }
 
         expression_class = SingleValueExpression if single_value else Expression
@@ -587,9 +588,14 @@ class DataFrame:
 
         If you want to create a snapshot of the data, have a look at :py:meth:`get_sample()`
 
+        Calling `copy(df)` will invoke this copy function, i.e. `copy(df)` is implemented as df.copy()
+
         :returns: a copy of the dataframe
         """
         return self.copy_override()
+
+    def __copy__(self):
+        return self.copy()
 
     def materialize(self, node_name='manual_materialize', inplace=False, limit: Any = None) -> 'DataFrame':
         """
@@ -633,6 +639,25 @@ class DataFrame:
         self._data = df.data
         self._group_by = df.group_by
         self._order_by = df.order_by
+        return self
+
+    def set_savepoint(
+            self,
+            save_points: 'Savepoints',
+            name: str,
+            materialization: Materialization = Materialization.QUERY,
+    ):
+        """
+        Set the current state as a savepoint in save_points.
+
+        :param save_points: Savepoints object that's responsible for tracking all savepoints.
+        :param name: Name for the savepoint. This will be the name of the table or view if that's set as
+            materialization. Must be unique both within the Savepoints and within the base_node.
+        :param materialization: materialization of the savepoint in the database.
+        """
+        if not self.is_materialized:
+            self.materialize(node_name=name, inplace=True, limit=None)
+        save_points.add_df(name, self, materialization)
         return self
 
     def get_sample(self,
