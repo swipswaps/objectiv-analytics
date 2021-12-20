@@ -397,7 +397,8 @@ class MetaBase:
         response = self._do_request(url=f'{self._url}/api/card', method='get')
 
         if response.status_code != 200:
-            raise MetaBaseException(f'Failed to obtain list of existing cards with code: {response.status_code}')
+            response_code = response.status_code
+            raise MetaBaseException(f'Failed to obtain list of existing cards with code: {response_code}')
 
         # the default is to create a new card
         method = 'post'
@@ -425,9 +426,11 @@ class MetaBase:
 
         dashboard_info = self.update_dashboard(card_id=card_id, dashboard_id=self._dashboard_id)
 
+        dashboard_name = dashboard_info["name"].lower().replace(" ", "-")
+
         return {
             'card': f'{self._web_url}/card/{card_id}',
-            'dashboard': f'{self._web_url}/dashboard/{self._dashboard_id}-{dashboard_info["name"].lower().replace(" ", "-")}',
+            'dashboard': f'{self._web_url}/dashboard/{self._dashboard_id}-{dashboard_name}',
             'username': self._username,
             'password': self._password
         }
@@ -511,6 +514,7 @@ class ModelHub:
         """
         filter param takes SeriesBoolean. filter methods always return SeriesBoolean.
         """
+
         def __init__(self, df):
             self._df = df
 
@@ -560,6 +564,7 @@ class ModelHub:
         Always return SeriesBoolean with same index and base node as the ObjectivFrame the method is applied
         to.
         """
+
         def __init__(self, df):
             self._df = df
 
@@ -639,11 +644,12 @@ class ObjectivFrame(DataFrame):
         return ModelHub(self)
 
     @classmethod
-    def from_table(cls,
-                   engine=None,
-                   start_date=None,
-                   end_date=None,
-                   time_aggregation: str = None) -> 'ObjectivFrame':
+    def from_objectiv_data(cls,
+                           engine=None,
+                           start_date=None,
+                           end_date=None,
+                           time_aggregation: str = None,
+                           table_name: str = 'data') -> 'ObjectivFrame':
         """
         :param engine: a Sqlalchemy Engine for the database. If not given, env DSN is used to create one. If
             that's not there, the default of 'postgresql://objectiv:@localhost:5432/objectiv' will be used.
@@ -654,10 +660,8 @@ class ObjectivFrame(DataFrame):
         :param time_aggregation: can be used to set a default aggregation timeframe interval that is used for
             models that use aggregation. Ie. YYYY-MM-DD aggregates to days (dates). Setting it to None
             aggregates over the entire selected dataset.
+        :param table_name: the name of the sql table where the data is stored.
         """
-
-        table_name = 'data'
-
         if engine is None:
             import sqlalchemy
             import os
@@ -683,7 +687,7 @@ class ObjectivFrame(DataFrame):
         dtypes.pop('value')
         dtypes['user_id'] = dtypes.pop('cookie_id')
 
-        model = sessionized_data_model(start_date=start_date, end_date=end_date)
+        model = sessionized_data_model(start_date=start_date, end_date=end_date, table_name=table_name)
 
         dtypes.update({'session_id': 'int64',
                        'session_hit_number': 'int64',
@@ -733,12 +737,16 @@ class ObjectivFrame(DataFrame):
         self.conversion_events[name] = location_stack, event_type
 
     @staticmethod
-    def from_model():
-        raise NotImplementedError('Use ObjectivFrame.from_table(engine) to instantiate')
+    def from_table(*args, **kwargs):
+        raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
 
     @staticmethod
-    def from_pandas():
-        raise NotImplementedError('Use ObjectivFrame.from_table(engine) to instantiate')
+    def from_model(*args, **kwargs):
+        raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
+
+    @staticmethod
+    def from_pandas(*args, **kwargs):
+        raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
 
     def _hash_features(self, location_stack_column='location_stack'):
         expression_str = "md5(concat({} #>> {}, {}))"
