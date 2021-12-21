@@ -60,7 +60,7 @@ services:
     networks:
       - obj
     ports:
-      - 5432:5432
+      - "127.0.0.1:5432:5432"
     environment:
       <<: *db_env_variables
       # WARNING: Disabling authentication here
