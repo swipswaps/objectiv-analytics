@@ -397,8 +397,8 @@ class MetaBase:
         response = self._do_request(url=f'{self._url}/api/card', method='get')
 
         if response.status_code != 200:
-            response_code = response.status_code
-            raise MetaBaseException(f'Failed to obtain list of existing cards with code: {response_code}')
+            raise MetaBaseException(f'Failed to obtain list of existing cards with code: '
+                                    f'{response.status_code}')
 
         # the default is to create a new card
         method = 'post'
@@ -430,7 +430,12 @@ class MetaBase:
 
         return {
             'card': f'{self._web_url}/card/{card_id}',
+<<<<<<< HEAD
             'dashboard': f'{self._web_url}/dashboard/{self._dashboard_id}-{dashboard_name}',
+=======
+            'dashboard': f'{self._web_url}/dashboard/{self._dashboard_id}-'
+                         f'{dashboard_info["name"].lower().replace(" ", "-")}',
+>>>>>>> main
             'username': self._username,
             'password': self._password
         }
