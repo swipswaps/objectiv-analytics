@@ -48,10 +48,14 @@ class Savepoints:
 
         :TODO: comments
         """
-        if name in self._entries:
-            raise ValueError(f'Savepoint with name "{name}" already exists.')
         if name is None or not re.match('^[a-zA-Z0-9_]+$', name):
             raise ValueError(f'Name must match ^[a-zA-Z0-9_]+$, name: "{name}"')
+        if name in self._entries:
+            existing = self._entries[name]
+            if existing.df_original != df or existing.materialization != materialization:
+                raise ValueError(f'A different savepoint with the name "{name}" already exists.')
+            # Nothing to do, we already have this entry
+            return
         self._entries[name] = SavepointInfo(
             name=name,
             df_original=df.copy(),
@@ -71,7 +75,7 @@ class Savepoints:
         """
         info = self._entries[savepoint_name]
         if engine.url not in info.written_to_db:
-            raise ValueError(f'Savepoint "{savepoint_name}" has not been materialized with the given'
+            raise ValueError(f'Savepoint "{savepoint_name}" has not been materialized with the given '
                              f'engine.url ({engine.url}). '
                              f'Use get_df() to get the original DataFrame, or materialize the savepoint in '
                              f'a database by calling execute_sql().')

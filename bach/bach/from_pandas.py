@@ -68,12 +68,15 @@ def from_pandas_store_table(engine: Engine,
     model = model_builder(table_name=quote_identifier(table_name))
 
     # Should this also use _df_or_series?
+    from bach.savepoints import Savepoints
     return DataFrame.get_instance(
         engine=engine,
         base_node=model,
         index_dtypes=index_dtypes,
         dtypes=dtypes,
-        group_by=None
+        group_by=None,
+        order_by=[],
+        savepoints=Savepoints()
     )
 
 
@@ -133,12 +136,15 @@ def from_pandas_ephemeral(
     model_builder = BachSqlModelBuilder(sql=sql, name=name)
     model = model_builder(all_values_expr=all_values_expr, column_names_expr=column_names_expr)
 
+    from bach.savepoints import Savepoints
     return DataFrame.get_instance(
         engine=engine,
         base_node=model,
         index_dtypes=index_dtypes,
         dtypes=dtypes,
-        group_by=None
+        group_by=None,
+        order_by=[],
+        savepoints=Savepoints()
     )
 
 

@@ -444,13 +444,15 @@ class Series(ABC):
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
         else:
             order_by = []
+        from bach.savepoints import Savepoints
         return DataFrame(
             engine=self._engine,
             base_node=self._base_node,
             index=self._index,
             series={self._name: self},
             group_by=self._group_by,
-            order_by=order_by
+            order_by=order_by,
+            savepoints=Savepoints()
         )
 
     @staticmethod
@@ -827,12 +829,14 @@ class Series(ABC):
         if len(series) == 1:
             return series[0]
 
+        from bach.savepoints import Savepoints
         return DataFrame(engine=self.engine,
                          base_node=self.base_node,
                          index=group_by.index,
                          series={s.name: s for s in series},
                          group_by=group_by,
-                         order_by=[])
+                         order_by=[],
+                         savepoints=Savepoints())
 
     def _check_unwrap_groupby(self,
                               wrapped: Optional[WrappedPartition],

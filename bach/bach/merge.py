@@ -257,6 +257,7 @@ def merge(
         new_column_list=new_index_list + new_data_list
     )
 
+    # TODO: handle savepoints
     return left.copy_override(
         engine=left.engine,
         base_node=model,

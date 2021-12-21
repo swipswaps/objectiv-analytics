@@ -137,7 +137,8 @@ class DataFrame:
             index: Dict[str, 'Series'],
             series: Dict[str, 'Series'],
             group_by: Optional['GroupBy'],
-            order_by: List[SortColumn] = None
+            order_by: List[SortColumn],
+            savepoints: 'Savepoints'
     ):
         """
         Instantiate a new DataFrame.
@@ -160,6 +161,7 @@ class DataFrame:
         self._data: Dict[str, Series] = {}
         self._group_by = group_by
         self._order_by = order_by if order_by is not None else []
+        self._savepoints = savepoints
         for key, value in series.items():
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
@@ -219,6 +221,10 @@ class DataFrame:
         Get the current sort order, if any.
         """
         return copy(self._order_by)
+
+    @property
+    def savepoints(self) -> 'Savepoints':
+        return self._savepoints
 
     @property
     def all_series(self) -> Dict[str, 'Series']:
@@ -365,13 +371,15 @@ class DataFrame:
         index_dtypes = {k: dtypes[k] for k in index}
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
 
+        from bach.savepoints import Savepoints
         return cls.get_instance(
             engine=engine,
             base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             group_by=None,
-            order_by=[]
+            order_by=[],
+            savepoints=Savepoints()
         )
 
     @classmethod
@@ -445,7 +453,8 @@ class DataFrame:
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
-            order_by: List[SortColumn] = None,
+            order_by: List[SortColumn],
+            savepoints: 'Savepoints'
     ) -> 'DataFrame':
         """
         INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
@@ -481,7 +490,8 @@ class DataFrame:
             index=index,
             series=series,
             group_by=group_by,
-            order_by=order_by
+            order_by=order_by,
+            savepoints=savepoints
         )
 
     def copy_override(
@@ -495,6 +505,7 @@ class DataFrame:
             index_dtypes: Dict[str, str] = None,
             series_dtypes: Dict[str, str] = None,
             single_value: bool = False,
+            savepoints: 'Savepoints' = None,
             **kwargs
     ) -> 'DataFrame':
         """
@@ -524,7 +535,8 @@ class DataFrame:
             'index': index if index is not None else self._index,
             'series': series if series is not None else self._data,
             'group_by': group_by[0] if group_by is not None else self._group_by,
-            'order_by': order_by if order_by is not None else self.order_by
+            'order_by': order_by if order_by is not None else self.order_by,
+            'savepoints': savepoints if savepoints is not None else self.savepoints
         }
 
         expression_class = SingleValueExpression if single_value else Expression
@@ -628,7 +640,8 @@ class DataFrame:
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             group_by=None,
-            order_by=[]
+            order_by=[],
+            savepoints=self.savepoints
         )
 
         if not inplace:
@@ -641,12 +654,7 @@ class DataFrame:
         self._order_by = df.order_by
         return self
 
-    def set_savepoint(
-            self,
-            save_points: 'Savepoints',
-            name: str,
-            materialization: Materialization = Materialization.QUERY,
-    ):
+    def set_savepoint(self, name: str, materialization: Union[Materialization, str] = Materialization.QUERY):
         """
         Set the current state as a savepoint in save_points.
 
@@ -657,7 +665,9 @@ class DataFrame:
         """
         if not self.is_materialized:
             self.materialize(node_name=name, inplace=True, limit=None)
-        save_points.add_df(name, self, materialization)
+        if isinstance(materialization, str):
+            materialization = Materialization.get_by_name(materialization)
+        self.savepoints.add_df(name=name, df=self, materialization=materialization)
         return self
 
     def get_sample(self,

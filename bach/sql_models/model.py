@@ -55,6 +55,13 @@ class Materialization(Enum):
     def is_cte(self) -> bool:
         return self.value.is_cte
 
+    @classmethod
+    def get_by_name(cls, name) -> 'Materialization':
+        for mat in cls:
+            if mat.value.name == name:
+                return mat
+        raise KeyError(f'no such Materialization: "{name}"')
+
 
 # special reference-level format string that will be filled in at sql-generation time with a per-model
 # unique string
