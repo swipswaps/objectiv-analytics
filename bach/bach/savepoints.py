@@ -2,6 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 import re
+from copy import copy
 from typing import NamedTuple, Dict, Optional, List, Set, Sequence
 
 from sqlalchemy.engine import Engine
@@ -36,6 +37,27 @@ class Savepoints:
 
     def __init__(self):
         self._entries: Dict[str, SavepointInfo] = {}
+
+    def merge(self, other: 'Savepoints'):
+        """
+        INTERNAL
+        Update this Savepoints object by adding all savepoints from other.
+        """
+        for name, entry in other._entries.items():
+            if name in self._entries:
+                existing = self._entries[name]
+                if existing.df_original != entry.df_original \
+                        or existing.materialization != entry.materialization:
+                    raise ValueError(f'Conflicting savepoints. The savepoint "{name}" exists in both '
+                                     f'Savepoints objects, but is different.')
+                existing.written_to_db.update(entry.written_to_db)
+            else:
+                self._entries[name] = SavepointInfo(
+                    name=name,
+                    df_original=entry.df_original.copy(),
+                    materialization=entry.materialization,
+                    written_to_db=copy(entry.written_to_db)
+                )
 
     def add_df(self, name: str, df: DataFrame, materialization: Materialization):
         """
