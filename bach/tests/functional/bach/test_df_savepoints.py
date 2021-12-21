@@ -39,7 +39,6 @@ def test_savepoint_simple():
 
     df['x'] = 'abcdef'
     df = df[['city', 'founding', 'x']]
-    df = df.materialize()
     df.set_savepoint("savepoint2")
 
     result = df.savepoints.execute_sql(engine)
@@ -48,7 +47,6 @@ def test_savepoint_simple():
 
     df = df.savepoints.get_df('savepoint1')
     df = df[df.skating_order == 2]
-    df.materialize()
     df = df[['city', 'municipality']]
     # TODO: there is a bug in is_materialized. The df is marked as materialized because all columns are
     # unchanged, however the fact that some columns are missing (compared to the base_node) is not
@@ -67,14 +65,11 @@ def test_savepoint_tables():
     df.set_savepoint("savepoint1", 'table')
     df['x'] = 'abcdef'
     df = df[['city', 'founding', 'x']]
-    df = df.materialize()
     df.set_savepoint("savepoint2", 'view')
 
     df = df.savepoints.get_df('savepoint1')
     df = df[df.skating_order == 2]
-    df.materialize()
     df = df[['city', 'municipality']]
-    df.materialize(inplace=True)
     df.set_savepoint('savepoint3', Materialization.VIEW)
 
     expected_columns = ['_index_skating_order', 'city', 'municipality']
