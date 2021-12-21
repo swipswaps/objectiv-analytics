@@ -426,16 +426,10 @@ class MetaBase:
 
         dashboard_info = self.update_dashboard(card_id=card_id, dashboard_id=self._dashboard_id)
 
-        dashboard_name = dashboard_info["name"].lower().replace(" ", "-")
-
         return {
             'card': f'{self._web_url}/card/{card_id}',
-<<<<<<< HEAD
-            'dashboard': f'{self._web_url}/dashboard/{self._dashboard_id}-{dashboard_name}',
-=======
             'dashboard': f'{self._web_url}/dashboard/{self._dashboard_id}-'
                          f'{dashboard_info["name"].lower().replace(" ", "-")}',
->>>>>>> main
             'username': self._username,
             'password': self._password
         }
