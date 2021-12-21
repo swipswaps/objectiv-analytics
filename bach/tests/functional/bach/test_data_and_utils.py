@@ -16,7 +16,7 @@ from sqlalchemy.engine import ResultProxy
 from bach import DataFrame, Series
 from bach.types import get_series_type_from_db_dtype
 
-DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
+DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://@localhost:5432/postgres')
 
 # Three data tables for testing are defined here that can be used in tests
 # 1. cities: 3 rows (or 11 for the full dataset) of data on cities
@@ -101,7 +101,7 @@ JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
 _TABLE_DATAFRAME_CACHE: Dict[str, 'DataFrame'] = {}
 
 
-def _get_bt(
+def get_bt(
         table: str,
         dataset: List[List[Any]],
         columns: List[str],
@@ -147,20 +147,20 @@ def get_from_df(table: str, df: pandas.DataFrame, convert_objects=True) -> DataF
 
 def get_bt_with_test_data(full_data_set: bool = False) -> DataFrame:
     if full_data_set:
-        return _get_bt('test_table_full', TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
-    return _get_bt('test_table_partial', TEST_DATA_CITIES, CITIES_COLUMNS, True)
+        return get_bt('test_table_full', TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
+    return get_bt('test_table_partial', TEST_DATA_CITIES, CITIES_COLUMNS, True)
 
 
 def get_bt_with_food_data() -> DataFrame:
-    return _get_bt('test_merge_table_1', TEST_DATA_FOOD, FOOD_COLUMNS, True)
+    return get_bt('test_merge_table_1', TEST_DATA_FOOD, FOOD_COLUMNS, True)
 
 
 def get_bt_with_railway_data() -> DataFrame:
-    return _get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
+    return get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
 
 
 def get_bt_with_json_data(as_json=True) -> DataFrame:
-    bt = _get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)
+    bt = get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)
     if as_json:
         bt['dict_column'] = bt.dict_column.astype('jsonb')
         bt['list_column'] = bt.list_column.astype('jsonb')

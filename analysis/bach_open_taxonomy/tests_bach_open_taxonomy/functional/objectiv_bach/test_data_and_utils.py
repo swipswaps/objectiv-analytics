@@ -7,7 +7,7 @@ This file does not contain any test, but having the file's name start with `test
 as a test file. This makes pytest rewrite the asserts to give clearer errors.
 """
 
-from tests.functional.bach.test_data_and_utils import _get_bt, run_query
+from tests.functional.bach.test_data_and_utils import get_bt, run_query
 from bach_open_taxonomy import ObjectivFrame
 from bach import DataFrame
 import sqlalchemy
@@ -53,7 +53,7 @@ TEST_DATA_OBJECTIV = '''
 '''
 
 def get_bt_with_json_data_real() -> DataFrame:
-    bt = _get_bt('test_json_table_real', TEST_DATA_JSON_REAL, JSON_COLUMNS_REAL, True)
+    bt = get_bt('test_json_table_real', TEST_DATA_JSON_REAL, JSON_COLUMNS_REAL, True)
     bt['global_contexts'] = bt.global_contexts.astype('jsonb')
     bt['location_stack'] = bt.location_stack.astype('jsonb')
     return bt
