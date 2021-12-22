@@ -11,12 +11,12 @@ from sql_models.model import Materialization
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data
 
 
-def test_add_df():
+def test_add_savepoint():
     df = get_bt_with_test_data()
     sps = Savepoints()
-    sps.add_df('test', df, Materialization.TABLE)
+    sps.add_savepoint('test', df, Materialization.TABLE)
     df2 = df.groupby('municipality').min()
-    sps.add_df('test2', df2, Materialization.TABLE)
+    sps.add_savepoint('test2', df2, Materialization.TABLE)
 
     # Assert that we can get a copy of the original dataframes back again
     assert sps.get_df('test') is not df
@@ -24,14 +24,14 @@ def test_add_df():
     assert sps.get_df('test2') is not df2
     assert sps.get_df('test2') == df2
     # Assert that we can get all savepoints
-    assert len(sps.list()) == 2
+    assert len(sps.all) == 2
 
 
 def test_execute_sql_queries():
     df = get_bt_with_test_data()
     engine = df.engine
     sps = Savepoints()
-    sps.add_df('the_name', df, Materialization.QUERY)
+    sps.add_savepoint('the_name', df, Materialization.QUERY)
     result = sps.execute_sql(engine)
     assert result.data == {
         'the_name': [
@@ -44,7 +44,7 @@ def test_execute_sql_queries():
 
     df = df[df.skating_order < 3]
     df = df.materialize()
-    sps.add_df('second_point', df, Materialization.QUERY)
+    sps.add_savepoint('second_point', df, Materialization.QUERY)
     result = sps.execute_sql(engine)
     assert result.data == {
         'the_name': [
@@ -66,22 +66,22 @@ def test_execute_sql_create_objects():
     sps = Savepoints()
 
     df = df.materialize()
-    sps.add_df('sp_first_point', df, Materialization.TABLE)
+    sps.add_savepoint('sp_first_point', df, Materialization.TABLE)
 
     # reduce df to one row and add savepoint
     df = df[df.skating_order == 1]
     df = df.materialize()
-    sps.add_df('sp_second_point', df, Materialization.VIEW)
+    sps.add_savepoint('sp_second_point', df, Materialization.VIEW)
 
     # Change columns in df and add savepoint
     df = df[['skating_order', 'city', 'founding']]
     df['x'] = 12345
     df = df.materialize()
-    sps.add_df('sp_third_point', df, Materialization.TABLE)
+    sps.add_savepoint('sp_third_point', df, Materialization.TABLE)
 
     # No changes, add query
     df = df.materialize()
-    sps.add_df('sp_final_point', df, Materialization.QUERY)
+    sps.add_savepoint('sp_final_point', df, Materialization.QUERY)
 
     expected_data = {
         'sp_final_point': [

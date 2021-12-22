@@ -597,6 +597,7 @@ class DataFrame:
         this is a metadata copy only, no actual data is duplicated and changes to the underlying data
         will represented in both copy and original.
         Changes to data, index, sorting, grouping etc. on the copy will not affect the original.
+        The savepoints on the other hand will be shared by the original and the copy.
 
         If you want to create a snapshot of the data, have a look at :py:meth:`get_sample()`
 
@@ -667,7 +668,7 @@ class DataFrame:
             self.materialize(node_name=name, inplace=True, limit=None)
         if isinstance(materialization, str):
             materialization = Materialization.get_by_name(materialization)
-        self.savepoints.add_df(name=name, df=self, materialization=materialization)
+        self.savepoints.add_savepoint(name=name, df=self, materialization=materialization)
         return self
 
     def get_sample(self,
