@@ -8,7 +8,7 @@ from sqlalchemy.future import Engine
 
 from bach.savepoints import Savepoints, CreatedObject
 from sql_models.model import Materialization
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data
+from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
 def test_add_savepoint():
@@ -27,40 +27,35 @@ def test_add_savepoint():
     assert len(sps.all) == 2
 
 
-def test_execute_sql_queries():
+def test_write_to_db_queries_only():
     df = get_bt_with_test_data()
     engine = df.engine
     sps = Savepoints()
     sps.add_savepoint('the_name', df, Materialization.QUERY)
-    result = sps.execute_sql(engine)
-    assert result.data == {
-        'the_name': [
-            (1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285),
-            (2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456),
-            (3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268)
-        ]
-    }
-    assert result.created == []
-
+    result = sps.write_to_db(engine)
+    assert result == []
     df = df[df.skating_order < 3]
     df = df.materialize()
     sps.add_savepoint('second_point', df, Materialization.QUERY)
-    result = sps.execute_sql(engine)
-    assert result.data == {
-        'the_name': [
-            (1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285),
-            (2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456),
-            (3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268)
+    result = sps.write_to_db(engine)
+    assert result == []
+
+    # assert that the second_point doesn't assume anything has been materialized and just works
+    df_use_materialized = sps.get_materialized_df('second_point')
+    assert df_use_materialized.to_pandas().values.tolist() == df.to_pandas().values.tolist()
+    assert_equals_data(
+        df_use_materialized,
+        expected_columns=[
+            '_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding'
         ],
-        'second_point': [
-            (1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285),
-            (2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456)
+        expected_data=[
+             [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285],
+             [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456]
         ]
-    }
-    assert result.created == []
+    )
 
 
-def test_execute_sql_create_objects():
+def test_write_to_db_create_objects():
     df = get_bt_with_test_data()
     engine = df.engine
     sps = Savepoints()
@@ -83,32 +78,40 @@ def test_execute_sql_create_objects():
     df = df.materialize()
     sps.add_savepoint('sp_final_point', df, Materialization.QUERY)
 
-    expected_data = {
-        'sp_final_point': [
-            (1, 1, 'Ljouwert', 1285, 12345),
-        ]
-    }
-    expected_object_names = ['sp_first_point', 'sp_second_point', 'sp_third_point']
+    expected_columns = ['_index_skating_order', 'skating_order', 'city', 'founding', 'x']
+    expected_data = [[1, 1, 'Ljouwert', 1285, 12345]]
 
-    result = sps.execute_sql(engine)
-    assert result.data == expected_data
-    assert [co.name for co in result.created] == expected_object_names
     assert sps.to_sql()['sp_final_point'] == \
            'select "_index_skating_order", "skating_order", "city", "founding", "x" from ' \
            '"sp_third_point"   limit all'
 
+    # get_materialized_df assumes that all tables and views have been created, so this will not yet work
+    df_use_materialized = sps.get_materialized_df('sp_final_point')
+    with pytest.raises(Exception, match='relation "sp_third_point" does not exist'):
+        assert_equals_data(df_use_materialized, expected_columns, expected_data)
+
+    expected_created = [
+        CreatedObject('sp_first_point', Materialization.TABLE),
+        CreatedObject('sp_second_point', Materialization.VIEW),
+        CreatedObject('sp_third_point', Materialization.TABLE),
+    ]
+
+    result = sps.write_to_db(engine)
+    assert result == expected_created
+    # now that 'sp_third_point' exists, the df from `et_materialized_df('sp_final_point')` should work too
+    assert_equals_data(df_use_materialized, expected_columns, expected_data)
+
     with pytest.raises(Exception):
         # We expect a DB exception if we try to recreate the same tables/views
-        sps.execute_sql(engine)
+        sps.write_to_db(engine)
 
     # Recreating with overwrite=True should work tho, as that drops the tables/views first
-    result = sps.execute_sql(engine, overwrite=True)
-    assert result.data == expected_data
-    assert [co.name for co in result.created] == expected_object_names
+    result = sps.write_to_db(engine, overwrite=True)
+    assert result == expected_created
 
     # Test clean up:
     # TODO: make test clean-up robust to failures half-way
-    remove_created_db_objects(engine, result.created)
+    remove_created_db_objects(engine, result)
 
 
 def remove_created_db_objects(engine: Engine, created_objects: List[CreatedObject]):

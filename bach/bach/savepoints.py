@@ -20,7 +20,6 @@ class SavepointEntry(NamedTuple):
     name: str
     df_original: 'DataFrame'
     materialization: Materialization
-    written_to_db: Set[str]
 
 
 class CreatedObject(NamedTuple):
@@ -29,14 +28,6 @@ class CreatedObject(NamedTuple):
     """
     name: str
     materialization: Materialization
-
-
-class SqlExecutionResult(NamedTuple):
-    """
-    TODO
-    """
-    created: List[CreatedObject]
-    data: Dict[str, List[tuple]]
 
 
 class Savepoints:
@@ -67,13 +58,11 @@ class Savepoints:
                         or existing.materialization != entry.materialization:
                     raise ValueError(f'Conflicting savepoints. The savepoint "{name}" exists in both '
                                      f'Savepoints objects, but is different.')
-                existing.written_to_db.update(entry.written_to_db)
             else:
                 self._entries[name] = SavepointEntry(
                     name=name,
                     df_original=entry.df_original.copy(),
                     materialization=entry.materialization,
-                    written_to_db=copy(entry.written_to_db)
                 )
 
     def add_savepoint(self, name: str, df: DataFrame, materialization: Materialization):
@@ -93,14 +82,13 @@ class Savepoints:
         self._entries[name] = SavepointEntry(
             name=name,
             df_original=df.copy(),
-            materialization=materialization,
-            written_to_db=set()
+            materialization=materialization
         )
 
     def update_savepoint(self, name: str, materialization: Materialization):
         """
 
-        NOTE: This does not undo any side-effects from earlier called function, such as :meth:`execute_sql()`
+        NOTE: This does not undo any side-effects from earlier called function, such as :meth:`write_to_db()`
             i.e. if materialization was 'table' before and is changed to 'view', then an existing table in
             the database is not updated.
         """
@@ -110,14 +98,13 @@ class Savepoints:
         self._entries[name] = SavepointEntry(
             name=current.name,
             df_original=current.df_original,
-            materialization=materialization,
-            written_to_db=set()
+            materialization=materialization
         )
 
     def remove_savepoint(self, name: str):
         """
         Discard the savepoint.
-        NOTE: This does not undo any side-effects from earlier called function, such as :meth:`execute_sql()`
+        NOTE: This does not undo any side-effects from earlier called function, such as :meth:`write_to_db()`
         """
         del self._entries[name]
 
@@ -127,23 +114,24 @@ class Savepoints:
         """
         return self._entries[savepoint_name].df_original.copy()
 
-    def get_materialized_df(self, engine: Engine, savepoint_name: str) -> 'DataFrame':
+    def get_materialized_df(self, savepoint_name: str, engine_override: Engine = None) -> 'DataFrame':
         """
         Return the DataFrame that was saved with the given name, but with an updated base_node.
-        The updated base_node assumes that :meth:`execute_sql()` has been executed. Where possible it
+        The updated base_node assumes that :meth:`write_to_db()` has been executed. Where possible it
         will query one of the created tables or views, instead of the original source tables.
+        :param savepoint_name: name of the savepoint
+        :param engine_override: optional, allows overriding the 'engine' of the returned dataframe. This is
+            useful if the savepoints were persisted to a different database than from which they originally
+            came (typically if write_to_db() was invoked with a different `engine` argument than the
+            original_df's engine).
         """
         info = self._entries[savepoint_name]
-        if engine.url not in info.written_to_db:
-            raise ValueError(f'Savepoint "{savepoint_name}" has not been materialized with the given '
-                             f'engine.url ({engine.url}). '
-                             f'Use get_df() to get the original DataFrame, or materialize the savepoint in '
-                             f'a database by calling execute_sql().')
         full_graph = self._get_combined_graph()
         graph = full_graph.references[f'ref_{info.name}']
-        return info.df_original\
-            .copy_override_base_node(base_node=graph)\
-            .copy_override(engine=engine)
+        new_df = info.df_original.copy_override_base_node(base_node=graph)
+        if engine_override is not None:
+            new_df = new_df.copy_override(engine=engine_override)
+        return new_df
 
     @property
     def all(self) -> List[SavepointEntry]:
@@ -153,13 +141,17 @@ class Savepoints:
     def names(self) -> List[str]:
         return [entry.name for entry in self._entries.values()]
 
-    def execute_sql(self, engine: Engine, overwrite: bool = False) -> SqlExecutionResult:
+    def write_to_db(self, engine: Engine, overwrite: bool = False) -> List[CreatedObject]:
         """
+        Create the tables and views for all of the savepoints that have a table or view materialization.
 
+        :engine: DB connection to use
+        :overwrite: If true, drop table/view statements will be run first
+        :return: List of all created objects
         """
-        sql_statements = self.to_sql()
         result_created = []
-        result_data = {}
+        drop_statements = self.get_drop_statements()
+        create_statements = self.get_create_statements()
 
         with engine.connect() as conn:
             with conn.begin() as transaction:
@@ -167,27 +159,16 @@ class Savepoints:
                     # This is a bit fragile. Drop statements might fail if other objects (which we might not
                     # consider) depend on a view/table, or if the object type (view/table) is different than
                     # we assume. For now that's just the way it is, the user will get an error.
-                    drop_statements = self.get_drop_statements()
                     if drop_statements:
                         drop_sql = '; '.join(drop_statements.values())
                         conn.execute(drop_sql)
 
-                for name, statement in sql_statements.items():
+                for name, statement in create_statements.items():
                     info = self._entries[name]
-                    query_result = conn.execute(statement)
-                    if info.materialization == Materialization.QUERY:
-                        # We return the combined result of all sql statements with QUERY materialization
-                        # TODO: change format so it includes column names?
-                        #  Perhaps return full pandas DFs, similar to what to_pandas() does?
-                        result_data[name] = list(query_result)
-                    elif info.materialization in (Materialization.TABLE, Materialization.VIEW):
-                        result_created.append(CreatedObject(name=name, materialization=info.materialization))
-                    info.written_to_db.add(engine.url)
+                    conn.execute(statement)
+                    result_created.append(CreatedObject(name=name, materialization=info.materialization))
                 transaction.commit()
-        return SqlExecutionResult(
-            created=result_created,
-            data=result_data
-        )
+        return result_created
 
     def get_drop_statements(self) -> Dict[str, str]:
         """
