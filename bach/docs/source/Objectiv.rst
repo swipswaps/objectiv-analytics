@@ -11,7 +11,7 @@ Reference
 ---------
 .. autosummary::
     :template: autosummary/class_short.rst
-    :toctree: objectiv
+    :toctree: Objectiv
 
     ObjectivStack
     SeriesGlobalContexts
