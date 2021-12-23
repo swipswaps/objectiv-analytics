@@ -2,9 +2,6 @@
 Copyright 2021 Objectiv B.V.
 
 Utilities and a dataset for testing Bach Open Taxonomy.
-
-This file does not contain any test, but having the file's name start with `test_` makes pytest treat it
-as a test file. This makes pytest rewrite the asserts to give clearer errors.
 """
 
 from tests.functional.bach.test_data_and_utils import get_bt, run_query
