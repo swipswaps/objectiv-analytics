@@ -17,20 +17,19 @@ jobs:
         with:
           node-version: '14'
           check-latest: true
-      - name: Install monorepo dependencies
-        run: |
-          cd tracker
-          yarn install
+          cache: 'yarn'
+          cache-dependency-path: tracker/yarn.lock
+      - name: Install dependencies
+        working-directory: tracker
+        run: yarn install
       - name: Run tests for all packages
-        run: |
-          cd tracker
-          yarn test:ci
+        working-directory: tracker
+        run: yarn test:ci
       - name: Check dependencies
+        working-directory: tracker
+        run: yarn check:dependencies
+      - name: Test if TS schema is up to date
+        working-directory: tracker
         run: |
-          cd tracker
-          yarn check:dependencies
-      - name: test if TS schema is up to date
-        run: |
-          cd tracker
           yarn utils:generate
           test $(git status -s -uno | wc -l) -eq 0

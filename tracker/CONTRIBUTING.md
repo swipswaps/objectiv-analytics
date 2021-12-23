@@ -155,6 +155,9 @@ Runs prettier for `core/schema/src/*`, `core/tracker/src/ContextFactories.ts` an
 ### `yarn tsc`
 Runs the TypeScript compiler for all typed packages.
 
+### `yarn tsc:generated`
+Runs the TypeScript compiler for `core/schema` and `core/tracker`.
+
 ### `yarn test`
 Runs the tests for all packages.
 
