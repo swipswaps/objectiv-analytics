@@ -178,7 +178,7 @@ class Savepoints:
         """
         sql_statements = self.to_sql()
         drop_statements = {}
-        for name in reversed(sql_statements.keys()):
+        for name in reversed(list(sql_statements.keys())):
             info = self._entries[name]
             if info.materialization == Materialization.TABLE:
                 drop_statements[name] = f'drop table if exists {quote_identifier(name)}'
