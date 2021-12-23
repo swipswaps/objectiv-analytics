@@ -694,11 +694,14 @@ class ObjectivFrame(DataFrame):
                        'event_type': 'string',
                        'stack_event_types': 'jsonb'})
 
+        from bach.savepoints import Savepoints
         df = cls.get_instance(engine=engine,
                               base_node=model,
                               index_dtypes=index_dtype,
                               dtypes=dtypes,
-                              group_by=None
+                              group_by=None,
+                              order_by=[],
+                              savepoints=Savepoints()
                               )
 
         df.time_aggregation = time_aggregation  # type: ignore
