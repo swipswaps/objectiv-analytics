@@ -647,6 +647,8 @@ class ObjectivFrame(DataFrame):
                    end_date=None,
                    time_aggregation: str = None) -> 'ObjectivFrame':
         """
+        Loads data from table into frame
+
         :param engine: a Sqlalchemy Engine for the database. If not given, env DSN is used to create one. If
             that's not there, the default of 'postgresql://objectiv:@localhost:5432/objectiv' will be used.
         :param start_date: first date for which data is loaded to the DataFrame. If None, data is loaded from
@@ -718,6 +720,7 @@ class ObjectivFrame(DataFrame):
         """
         Label events that are used as conversions. All labeled conversion events are set in
         ObjectivFrame.conversion_events.
+
         :param location_stack: the location stack that is labeled as conversion. Can be any slice in of a
             objectiv_location_stack type column. Optionally use in conjunction with event_type to label a
             conversion.
@@ -771,6 +774,7 @@ class ObjectivFrame(DataFrame):
         allows for manipulating this data on a small data set, while all changes can be applied to all hits
         later. Use ObjectivFrame.apply_feature_frame_sample_changes later to apply changes made in this
         ObjectivFrame.
+
         :param table_name: the name of the sql table to store the data of the unique location_stack and
             event_types.
         :param overwrite: if True, the sql table is overwritten if it already exists.
