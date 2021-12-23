@@ -36,11 +36,11 @@ class Savepoints:
     the moment it is being added to a Savepoints object.
 
     Functionality:
-    - Converted the savepoints to SQL using :meth:`Savepoints.to_sql()`
-    - Materialized as tables or views in a database using :meth:`Savepoints.write_to_databse()`.
-    - TODO: serialized to a file, and later restored by deserializing
-    - TODO: exported as a DBT project
-    - TODO: exported to BI tools
+    - Convert the savepoints to SQL using :meth:`Savepoints.to_sql()`
+    - Materialize as tables or views in a database using :meth:`Savepoints.write_to_databse()`.
+    - TODO: serialize to a file, and later restored by deserializing
+    - TODO: export as a DBT project
+    - TODO: export to BI tools
     """
 
     def __init__(self):
