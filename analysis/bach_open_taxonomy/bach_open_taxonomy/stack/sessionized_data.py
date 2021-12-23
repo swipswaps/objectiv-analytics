@@ -40,7 +40,11 @@ _SQL = \
     select
         *,
         -- populates the correct session_id for all rows with the same value for is_one_session
-        first_value(session_start_id) over (partition by is_one_session order by moment, event_id) as session_id,
+        first_value(
+            session_start_id
+        ) over (
+            partition by is_one_session order by moment, event_id
+        ) as session_id,
         row_number() over (partition by is_one_session order by moment, event_id) as session_hit_number
     from session_id_and_start_{{id}}
     '''
