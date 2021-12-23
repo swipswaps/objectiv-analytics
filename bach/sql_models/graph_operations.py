@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 from collections import deque
-from typing import NamedTuple, List, Dict, Set, Tuple, Optional, Callable, Deque
+from typing import NamedTuple, List, Dict, Set, Tuple, Optional, Callable, Deque, Any, Hashable
 
 from sql_models.model import SqlModel, RefPath
 
@@ -117,7 +117,9 @@ def find_nodes(
 
     This function uses a breadth first approach, and the returned FoundNodes are in the order they were
     found. If a node is encountered multiple times, then only the first or last occurrence will be in the
-    result depending on the value of use_last_found_instance.
+    result depending on the value of use_last_found_instance. Note: this does not mean that the result cannot
+    contain nodes that are equal to each other, but it does mean that the result will never contain the same
+    object twice.
 
     :param start_node: start node
     :param function: Function that should return either True or False for a given SqlModel
@@ -128,19 +130,21 @@ def find_nodes(
         The returned nodes are in the order in which they were encountered. As a result the reference_path
         of the returned tuples monotonically increases when iterating the list.
     """
-    result_nodes: Dict[SqlModel, FoundNode] = {}
+    # result_nodes maps the id of the found objects to a FoundNode object
+    result_nodes: Dict[int, FoundNode] = {}
     queue: Deque[Tuple[SqlModel, RefPath]] = deque()
     queue.append((start_node, tuple()))
     while queue:
         node, path = queue.popleft()
+        current_id = id(node)
         if function(node):
-            if node not in result_nodes:
-                result_nodes[node] = FoundNode(node, path)
-            elif node in result_nodes and not first_instance:
+            if current_id not in result_nodes:
+                result_nodes[current_id] = FoundNode(node, path)
+            elif current_id in result_nodes and not first_instance:
                 # we rely on the fact that python 3.7+ will keep the insertion order. So we'll have to
                 # remove and reinsert the item to get it in the right position in the returned result.
-                del result_nodes[node]
-                result_nodes[node] = FoundNode(node, path)
+                del result_nodes[current_id]
+                result_nodes[current_id] = FoundNode(node, path)
         for next_path, next_node in node.references.items():
             next_tuple = (next_node, path + (next_path,))
             queue.append(next_tuple)
@@ -188,6 +192,57 @@ def replace_node_in_graph(start_node: SqlModel,
         dependent_model_ids=dependent_model_ids,
         replaced_models={}
     )
+
+
+def get_all_properties(start_node: SqlModel) -> Dict[str, Dict[RefPath, Any]]:
+    """
+    Get all properties in the graph.
+
+    :return: Dict, keys: property name values: dictionary. The subdictionary has as key the path to
+        all nodes that use the property, and as values the value in that node.
+    """
+    return _get_all_properties_recursive(start_node, tuple())
+
+
+def _get_all_properties_recursive(start_node: SqlModel, path_so_far: RefPath):
+    result = {name: {path_so_far: value} for name, value in start_node.properties.items()}
+    for reference_name, reference in start_node.references.items():
+        _next_reference_path = (*path_so_far, reference_name)
+        result_ref = _get_all_properties_recursive(reference, _next_reference_path)
+        for name, path_values in result_ref.items():
+            result.setdefault(name, {}).update(path_values)
+    return result
+
+
+def update_properties_in_graph(start_node: SqlModel, property_values: Dict[str, Hashable]) -> SqlModel:
+    """
+    Return a copy of the SqlModel with the given properties updated throughout the tree.
+
+    Will only update properties of nodes that already have that property. If a node doesn't have any of the
+    properties in property_values then nothing happens with that node.
+
+    :param start_node: start node
+    :param property_values: Dictionary mapping property names to new values.
+    :return: Updated copy of the start_node. If nothing needs to be updated, then the start_node unchanged.
+    """
+    find_keys = set(property_values.keys())
+
+    def filter(node: SqlModel) -> bool:
+        node_keys = set(node.properties.keys())
+        return bool(find_keys.intersection(node_keys))
+
+    found_nodes = find_nodes(start_node, function=filter)
+    for found_node in found_nodes:
+        node_keys = set(found_node.model.properties.keys())
+        matching_keys = find_keys.intersection(node_keys)
+        dict_to_update = {
+            key: property_values[key]
+            for key in matching_keys if found_node.model.properties[key] != property_values[key]
+        }
+        new_dict = found_node.model.properties
+        new_dict.update(dict_to_update)
+        start_node = start_node.set(found_node.reference_path, **new_dict)
+    return start_node
 
 
 def _replace_model_in_graph_recursively(
