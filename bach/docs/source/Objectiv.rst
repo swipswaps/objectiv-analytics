@@ -13,6 +13,7 @@ Reference
     :template: autosummary/class_short.rst
     :toctree: Objectiv
 
+    ObjectivFrame
     ObjectivStack
     SeriesGlobalContexts
     SeriesLocationStack
