@@ -774,7 +774,7 @@ class ObjectivFrame(DataFrame):
         allows for manipulating this data on a small data set, while all changes can be applied to all hits
         later. Use ObjectivFrame.apply_feature_frame_sample_changes later to apply changes made in this
         ObjectivFrame.
-        
+
         :param table_name: the name of the sql table to store the data of the unique location_stack and
             event_types.
         :param overwrite: if True, the sql table is overwritten if it already exists.
