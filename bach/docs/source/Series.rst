@@ -22,10 +22,10 @@ It should generally not be required to construct Series instances manually.
 Slicing and index access
 ~~~~~~~~~~~~~~~~~~~~~~~~
 Series support a few standard operations to get specific values:
-series[:3] will return the first 3 values of the Series. Sort order of the series is important, so use
+Series[:3] will return the first 3 values of the Series. Sort order of the Series is important, so use
 `Series.sort_values()` before slicing. Any slice with positive parameters is supported.
 
-Index lookups like series['key'] are also possible, and yield the value of the series where the index
+Index lookups like Series['key'] are also possible, and yield the value of the Series where the index
 matches 'key'.
 
 Database access
@@ -46,7 +46,7 @@ Boolean Operations
 ~~~~~~~~~~~~~~~~~~
 A special subclass, :py:class:`SeriesBoolean`, can be used to filter
 DataFrames, and these Series are easily created using comparison operations like equals (==),
-less-than (<), not(~) on two series: `boolean_series = a == b`
+less-than (<), not(~) on two Series: `boolean_Series = a == b`
 
 More complex boolean operations like `a.isin(b)` are also supported, as well as multi-compares:
 `a > b.any_value()` being True when there is a value in `b` where `a > b == True`
@@ -72,7 +72,7 @@ Series.window_* namespace.
 
 Types
 ~~~~~
-Series have a specific type that determines what kind of operations are available. All numeric series
+Series have a specific type that determines what kind of operations are available. All numeric Series
 support arithmetic operations and aggregations for example. It may or may not be possible to perform
 operations on different types. A comparison or arithmetic operation between a Int64 and Float Series
 is okay, while a comparison operation is not.
@@ -83,7 +83,7 @@ Reference
 ---------
 .. autosummary::
     :template: autosummary/class_short.rst
-    :toctree: series
+    :toctree: Series
 
     Series
     SeriesBoolean
@@ -99,7 +99,7 @@ Reference by function
 Creation / re-framing
 ~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.from_const
     Series.to_frame
@@ -108,7 +108,7 @@ Creation / re-framing
 Value accessors
 ~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.head
     Series.to_pandas
@@ -122,7 +122,7 @@ Attributes and underlying data
 Axes
 ++++
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.name
     Series.index
@@ -132,7 +132,7 @@ Axes
 Types
 +++++
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.dtype
     Series.astype
@@ -140,7 +140,7 @@ Types
 Sql Model
 +++++++++
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.engine
     Series.base_node
@@ -149,7 +149,7 @@ Sql Model
 Comparison and set operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.all_values
     Series.any_value
@@ -161,7 +161,7 @@ Comparison and set operations
 Conversion, reshaping, sorting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.sort_values
     Series.fillna
@@ -169,7 +169,7 @@ Conversion, reshaping, sorting
 Function application, aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.agg
     Series.aggregate
@@ -182,7 +182,7 @@ All types
 +++++++++
 
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.count
     Series.min
@@ -194,7 +194,7 @@ All types
 Numeric
 +++++++
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     SeriesAbstractNumeric.mean
     SeriesAbstractNumeric.sem
@@ -205,7 +205,7 @@ Numeric
 Window
 ++++++
 .. autosummary::
-    :toctree: series
+    :toctree: Series
 
     Series.window_first_value
     Series.window_lag

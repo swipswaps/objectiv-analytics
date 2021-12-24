@@ -59,7 +59,7 @@ patterns = [
 # list of special cases, where we have a subdir, with an introduction at toplevel
 # eg /dataframe.html and /dataframe/
 for fn in glob.glob(f'{html_dir}/*'):
-    dn = fn.replace('.html', '').lower()
+    dn = fn.replace('.html', '')
     if path.isfile(fn) and path.isdir(dn):
         patterns.extend([f'{path.basename(dn)}.*', f'{path.basename(fn).replace(".html", "")}.*'])
 

@@ -11,9 +11,10 @@ Reference
 ---------
 .. autosummary::
     :template: autosummary/class_short.rst
-    :toctree: objectiv
+    :toctree: Objectiv
 
+    ObjectivFrame
     ObjectivStack
     SeriesGlobalContexts
     SeriesLocationStack
-    FeatureFrame
+

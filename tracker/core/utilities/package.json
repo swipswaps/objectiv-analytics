@@ -13,8 +13,7 @@
     "check:dependencies": "npx depcheck"
   },
   "devDependencies": {
-    "depcheck": "^1.4.2",
     "json5": "^2.2.0",
-    "prettier": "^2.4.1"
+    "prettier": "^2.5.1"
   }
 }
