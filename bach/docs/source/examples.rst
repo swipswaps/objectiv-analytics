@@ -9,8 +9,10 @@ aggregate operations, and getting the resulting data filtered and sorted.
 In the examples we'll assume that the database has a table called 'example', with a few specific
 columns. The SQL to create that table can be found below in :ref:`appendix_example_data`.
 
-We also have `live example notebook <https://notebook.objectiv.io/lab?path=product_analytics.ipynb>`_ that
-you can use to get a feel for Bach.
+To get a taste of what you can do with Objectiv Bach, There is a `demo
+<https://objectiv.io/docs/quickstart-guide>`_ available that enables you to run the full Objectiv pipeline
+on your local machine. It includes our website as a demo app, a Jupyter Notebook environment with working
+models and a Metabase environment to output data to.
 
 
 Create a DataFrame from a database table
