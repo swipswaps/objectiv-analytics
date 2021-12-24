@@ -14,6 +14,7 @@ Reference
     :toctree: Objectiv
 
     ObjectivFrame
+    ModelHub
     ObjectivStack
     SeriesGlobalContexts
     SeriesLocationStack
