@@ -15,7 +15,6 @@ Reference
 
     ObjectivFrame
     ModelHub
-    ObjectivStack
     SeriesGlobalContexts
     SeriesLocationStack
 
