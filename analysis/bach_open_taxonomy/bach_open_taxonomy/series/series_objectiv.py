@@ -608,7 +608,7 @@ class ModelHub:
             Labels a hit True if it is a conversion hit.
 
             :param name: the name of the conversion to label as set in
-                :py:attr:`bach_open_taxonomy.ObjectivFrame`.
+                :py:attr:`bach_open_taxonomy.ObjectivFrame.conversion_events`.
             :returns: SeriesBoolean with same base node as the ObjectivFrame this method is applied to.
             """
 
@@ -760,7 +760,7 @@ class ObjectivFrame(DataFrame):
                            time_aggregation: str = None,
                            table_name: str = 'data') -> 'ObjectivFrame':
         """
-        Loads data from table into an ObjectivFrame.
+        Loads data from table into an ObjectivFrame object.
 
         :param engine: a Sqlalchemy Engine for the database. If not given, env DSN is used to create one. If
             that's not there, the default of 'postgresql://objectiv:@localhost:5432/objectiv' will be used.
@@ -905,7 +905,7 @@ class ObjectivFrame(DataFrame):
         """
         Create a df that contains only all unique combinations of the location stack and event_type. This
         allows for manipulating this data on a small data set, while all changes can be applied to all hits
-        later. Use ObjectivFrame.apply_feature_frame_sample_changes later to apply changes made in
+        later. Use :py:meth:`apply_feature_frame_sample_changes` later to apply changes made in
         this ObjectivFrame.
 
         :param table_name: the name of the sql table to store the data of the unique location_stack and
@@ -943,7 +943,8 @@ class ObjectivFrame(DataFrame):
         """
         Returns a new ObjectivFrame in which all changes made in feature_frame are applied to the full data
         set.
-        :param feature_frame: the sample ObjectivFrame made by ObjectivFrame.create_sample_feature_frame.
+
+        :param feature_frame: the sample ObjectivFrame made by :py:meth:`create_sample_feature_frame`.
         :returns: a new ObjectivFrame.
         """
         created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
@@ -1056,7 +1057,7 @@ class ObjectivFrame(DataFrame):
         Overrides materialize from Objectiv Bach.
 
         It carries the additional attributes from ObjectivFrame to the materialized ObjectivFrame. See
-        bach.Dataframe.materialize for documentation.
+        :py:meth:`bach.DataFrame.materialize` for documentation.
 
         :returns: ObjectivFrame with the current DataFrame's state as base_node
         """
