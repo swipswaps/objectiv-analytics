@@ -493,8 +493,8 @@ class ModelHub:
 
     def to_metabase(self, df, model_type: str = None, config: dict = None):
         """
-        Plot data in `df` to Metabase. If a card already exists, it will be updated. If `df` is a :py:class:`bach.Series`
-        , it will call :py:meth:`bach.Series.to_frame`.
+        Plot data in `df` to Metabase. If a card already exists, it will be updated. If `df` is a
+        :py:class:`bach.Series`, it will call :py:meth:`bach.Series.to_frame`.
 
         Default options can be overridden using the config dictionary.
 
