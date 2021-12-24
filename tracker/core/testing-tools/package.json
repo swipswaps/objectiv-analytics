@@ -14,9 +14,7 @@
     "check:dependencies": "npx depcheck"
   },
   "devDependencies": {
-    "@objectiv/tracker-core": "0.0.1",
-    "depcheck": "^1.4.2",
-    "prettier": "^2.4.1",
-    "typescript": "^4.4.4"
+    "prettier": "^2.5.1",
+    "typescript": "^4.5.4"
   }
 }
