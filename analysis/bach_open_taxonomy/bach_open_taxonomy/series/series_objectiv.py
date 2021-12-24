@@ -650,7 +650,7 @@ class ObjectivFrame(DataFrame):
                            time_aggregation: str = None,
                            table_name: str = 'data') -> 'ObjectivFrame':
         """
-        Loads data from table into frame
+        Loads data from table into an ObjectivFrame.
 
         :param engine: a Sqlalchemy Engine for the database. If not given, env DSN is used to create one. If
             that's not there, the default of 'postgresql://objectiv:@localhost:5432/objectiv' will be used.
@@ -740,14 +740,32 @@ class ObjectivFrame(DataFrame):
 
     @staticmethod
     def from_table(*args, **kwargs):
+        """
+        INTERNAL
+
+        Overrides from_table from Objectiv Bach, so that it can't be used. An ObjectivFrame should be
+        instantiated with from_objectiv_data.
+        """
         raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
 
     @staticmethod
     def from_model(*args, **kwargs):
+        """
+        INTERNAL
+
+        Overrides from_model from Objectiv Bach, so that it can't be used. An ObjectivFrame should be
+        instantiated with from_objectiv_data.
+        """
         raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
 
     @staticmethod
     def from_pandas(*args, **kwargs):
+        """
+        INTERNAL
+
+        Overrides from_pandas from Objectiv Bach, so that it can't be used. An ObjectivFrame should be
+        instantiated with from_objectiv_data.
+        """
         raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
 
     def _hash_features(self, location_stack_column='location_stack'):
@@ -777,8 +795,8 @@ class ObjectivFrame(DataFrame):
         """
         Create a df that contains only all unique combinations of the location stack and event_type. This
         allows for manipulating this data on a small data set, while all changes can be applied to all hits
-        later. Use ObjectivFrame.apply_feature_frame_sample_changes later to apply changes made in this
-        ObjectivFrame.
+        later. Use ObjectivFrame.apply_feature_frame_sample_changes later to apply changes made in
+        this ObjectivFrame.
 
         :param table_name: the name of the sql table to store the data of the unique location_stack and
             event_types.
@@ -834,7 +852,8 @@ class ObjectivFrame(DataFrame):
         Function that calculates the links between contexts on the stack. It returns a DataFrame with the
         links 'from' and 'to' contexts. This function queries the database.
 
-        :param stack_column: The column that contains the stack for which the links will be calculated.
+        :param stack_column: The column that contains the stack for which the links will be calculated. If
+            None, the standard location stack column of an ObjectivFrame is used ('location_stack').
         :param count_method: The function for aggregating the data.
         """
         sampled_node_tuple = find_node(
@@ -881,7 +900,7 @@ class ObjectivFrame(DataFrame):
         """
         Display the Sankey chart of a location stack. This function queries the database.
 
-        :param: stack_column. The column for which to display the chart. If None the location stack with
+        :param stack_column: The column for which to display the chart. If None the location stack with
             which the Feature Frame is initialized is selected.
         :param text_in_title: A text to display in the title of the graph.
         :param node_color: Optionally the color of the nodes can be adjusted.
@@ -909,6 +928,13 @@ class ObjectivFrame(DataFrame):
         return fig
 
     def copy_override(self, **kwargs):
+        """
+        INTERNAL
+
+        Overrides copy_override from Objectiv Bach, so that it carries the
+        additional attributes from ObjectivFrame to the copy.
+        """
+
         return super().copy_override(start_date=self.start_date,
                                      end_date=self.end_date,
                                      time_aggregation=self.time_aggregation,
@@ -916,6 +942,14 @@ class ObjectivFrame(DataFrame):
                                      **kwargs)
 
     def materialize(self, **kwargs):
+        """
+        Overrides materialize from Objectiv Bach.
+
+        It carries the additional attributes from ObjectivFrame to the materialized ObjectivFrame. See
+        bach.Dataframe.materialize for documentation.
+
+        :returns: ObjectivFrame with the current DataFrame's state as base_node
+        """
         df = super().materialize(**kwargs)
         df.time_aggregation = self.time_aggregation  # type: ignore
         df.start_date = self.start_date  # type: ignore
