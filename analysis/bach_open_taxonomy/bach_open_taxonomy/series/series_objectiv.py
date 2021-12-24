@@ -492,6 +492,16 @@ class ModelHub:
         self._metabase = None
 
     def to_metabase(self, df, model_type: str = None, config: dict = None):
+        """
+        Plot data in `df` to Metabase. If a card already exists, it will be updated. If `df` is a :py:class:`bach.Series`
+        , it will call :py:meth:`bach.Series.to_frame`.
+
+        Default options can be overridden using the config dictionary.
+
+        :param df: :py:meth:`bach.DataFrame` or :py:meth:`bach.Series` to push to MetaBase.
+        :param model_type: Preset output to Metabase for a specific model. eg, 'unique_users'
+        :param config: Override default config options for the graph to be added/updated in Metabase.
+        """
         if not self._metabase:
             self._metabase = MetaBase()
         return self._metabase.to_metabase(df, model_type, config)
