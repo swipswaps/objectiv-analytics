@@ -524,10 +524,11 @@ class ModelHub:
 
     class Aggregate:
         """
-        Models that return aggregated data in some form from the original ObjectivFrame. Methods in this
-        class can be filtered with the filter parameter, which always takes SeriesBoolean. The ModelHub
-        can also create specific commonly used filters with methods from
-        :py:class:`bach_open_taxonomy.ModelHub.Filter`.
+        Models that return aggregated data in some form from the original ObjectivFrame.
+
+        Methods in this class can be filtered with the filter parameter, which always takes SeriesBoolean. The
+        ModelHub can also create specific commonly used filters with methods from
+        :py:attr:`bach_open_taxonomy.ModelHub.filter`.
         """
 
         def __init__(self, df):
@@ -584,6 +585,7 @@ class ModelHub:
     class Filter:
         """
         Methods in this class can be used as filters in aggregation models.
+
         Always return SeriesBoolean with same base node as the ObjectivFrame the method is applied
         to.
         """
@@ -682,10 +684,8 @@ class ObjectivFrame(DataFrame):
     It loads the data as stored by the Objectiv Tracker, makes a few transformations, and sets the right data
     types.
 
-    This object points to the data on which the models from the open model hub will be applied. The
-    `time_aggregation` parameter determines the standard timeframe that is used with aggregation functions
-    from the model hub. Ie. 'YYYY-MM-DD' means that days are used for the time aggregation. Only data starting
-    at `start_date` is used for all following operations.
+    This object points to the data on which the models from the open model hub can be applied. An
+    ObjectivFrame is instantiated with :py:meth:`from_objectiv_data`.
     """
     def __init__(self, **kwargs):
         try:
