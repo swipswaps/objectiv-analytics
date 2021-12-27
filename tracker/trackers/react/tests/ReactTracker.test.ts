@@ -186,12 +186,16 @@ describe('BrowserTracker', () => {
 
       const trackedEvent = await testTracker.trackEvent(testEvent);
 
-      expect(trackedEvent.global_contexts).toHaveLength(1);
+      expect(trackedEvent.global_contexts).toHaveLength(2);
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             _type: 'ApplicationContext',
             id: 'app-id',
+          }),
+          expect.objectContaining({
+            _type: 'PathContext',
+            id: 'http://localhost/',
           }),
         ])
       );

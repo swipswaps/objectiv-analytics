@@ -792,7 +792,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url":
+"@objectiv/plugin-path-context-from-url@^0.0.1, @objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url"
   dependencies:
@@ -988,6 +988,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react@workspace:trackers/react"
   dependencies:
+    "@objectiv/plugin-path-context-from-url": ^0.0.1
     "@objectiv/queue-local-storage": ^0.0.1
     "@objectiv/testing-tools": 0.0.1
     "@objectiv/tracker-core": ~0.0.1

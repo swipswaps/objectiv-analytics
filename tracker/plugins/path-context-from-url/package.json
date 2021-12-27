@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/plugin-path-context-from-url",
-  "version": "0.0.2",
+  "version": "0.0.1",
   "description": "Plugin for Objectiv trackers to automatically generate and attach PathContext from URLs",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
