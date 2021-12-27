@@ -4,7 +4,12 @@
 
 import { makeNonInteractiveEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { makeContentContext, TrackingContextProvider, trackNonInteractiveEvent, useNonInteractiveEventTracker } from '../src';
+import {
+  makeContentContext,
+  TrackingContextProvider,
+  trackNonInteractiveEvent,
+  useNonInteractiveEventTracker,
+} from '../src';
 
 describe('NonInteractiveEvent', () => {
   beforeEach(() => {
@@ -22,7 +27,11 @@ describe('NonInteractiveEvent', () => {
     trackNonInteractiveEvent({ tracker });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeNonInteractiveEvent()), undefined);
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeNonInteractiveEvent()),
+      undefined
+    );
   });
 
   it('should track an NonInteractiveEvent (hook relying on TrackingContextProvider)', () => {

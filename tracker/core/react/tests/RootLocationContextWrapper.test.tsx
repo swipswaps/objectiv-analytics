@@ -4,7 +4,13 @@
 
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
-import { RootLocationContextWrapper, ObjectivProvider, trackPressEvent, usePressEventTracker, LocationTree } from '../src';
+import {
+  RootLocationContextWrapper,
+  ObjectivProvider,
+  trackPressEvent,
+  usePressEventTracker,
+  LocationTree,
+} from '../src';
 
 describe('RootLocationContextWrapper', () => {
   beforeEach(() => {

@@ -83,7 +83,6 @@ export * from './eventTrackers/trackMediaStopEvent';
 export * from './eventTrackers/trackNonInteractiveEvent';
 export * from './eventTrackers/trackVisibility';
 
-export * from './locationTaggers/tagPressable';
 export * from './locationTaggers/tagChild';
 export * from './locationTaggers/tagChildren';
 export * from './locationTaggers/tagContent';
@@ -94,6 +93,7 @@ export * from './locationTaggers/tagLocation';
 export * from './locationTaggers/tagMediaPlayer';
 export * from './locationTaggers/tagNavigation';
 export * from './locationTaggers/tagOverlay';
+export * from './locationTaggers/tagPressable';
 export * from './locationTaggers/tagRootLocation';
 
 export * from './mutationObserver/AutoTrackingState';
