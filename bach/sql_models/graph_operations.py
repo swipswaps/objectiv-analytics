@@ -117,7 +117,9 @@ def find_nodes(
 
     This function uses a breadth first approach, and the returned FoundNodes are in the order they were
     found. If a node is encountered multiple times, then only the first or last occurrence will be in the
-    result depending on the value of use_last_found_instance.
+    result depending on the value of use_last_found_instance. Note: this does not mean that the result cannot
+    contain nodes that are equal to each other, but it does mean that the result will never contain the same
+    object twice.
 
     :param start_node: start node
     :param function: Function that should return either True or False for a given SqlModel
@@ -128,19 +130,21 @@ def find_nodes(
         The returned nodes are in the order in which they were encountered. As a result the reference_path
         of the returned tuples monotonically increases when iterating the list.
     """
-    result_nodes: Dict[SqlModel, FoundNode] = {}
+    # result_nodes maps the id of the found objects to a FoundNode object
+    result_nodes: Dict[int, FoundNode] = {}
     queue: Deque[Tuple[SqlModel, RefPath]] = deque()
     queue.append((start_node, tuple()))
     while queue:
         node, path = queue.popleft()
+        current_id = id(node)
         if function(node):
-            if node not in result_nodes:
-                result_nodes[node] = FoundNode(node, path)
-            elif node in result_nodes and not first_instance:
+            if current_id not in result_nodes:
+                result_nodes[current_id] = FoundNode(node, path)
+            elif current_id in result_nodes and not first_instance:
                 # we rely on the fact that python 3.7+ will keep the insertion order. So we'll have to
                 # remove and reinsert the item to get it in the right position in the returned result.
-                del result_nodes[node]
-                result_nodes[node] = FoundNode(node, path)
+                del result_nodes[current_id]
+                result_nodes[current_id] = FoundNode(node, path)
         for next_path, next_node in node.references.items():
             next_tuple = (next_node, path + (next_path,))
             queue.append(next_tuple)
