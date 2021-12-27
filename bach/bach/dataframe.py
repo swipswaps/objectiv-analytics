@@ -1,15 +1,16 @@
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
-    TYPE_CHECKING, Callable
+    TYPE_CHECKING, Callable, Hashable
 from uuid import UUID
 
 import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression
+from bach.expression import Expression, SingleValueExpression, RawToken, PlaceHolderToken, \
+    ConstValueExpression
 from bach.sql_model import BachSqlModelBuilder
-from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
+from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
 from sql_models.model import SqlModel
 from sql_models.sql_generator import to_sql
 
@@ -36,6 +37,11 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 class SortColumn(NamedTuple):
     expression: Expression
     asc: bool
+
+
+class DtypeValuePair(NamedTuple):
+    dtype: str
+    value: Hashable
 
 
 class DataFrame:
@@ -136,7 +142,8 @@ class DataFrame:
             index: Dict[str, 'Series'],
             series: Dict[str, 'Series'],
             group_by: Optional['GroupBy'],
-            order_by: List[SortColumn] = None
+            order_by: List[SortColumn] = None,
+            placeholders: Dict[str, 'DtypeValuePair'] = None
     ):
         """
         Instantiate a new DataFrame.
@@ -159,6 +166,7 @@ class DataFrame:
         self._data: Dict[str, Series] = {}
         self._group_by = group_by
         self._order_by = order_by if order_by is not None else []
+        self._placeholders = placeholders if placeholders else {}
         for key, value in series.items():
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
@@ -218,6 +226,10 @@ class DataFrame:
         Get the current sort order, if any.
         """
         return copy(self._order_by)
+
+    @property
+    def placeholders(self) -> Dict[str, DtypeValuePair]:
+        return copy(self._placeholders)
 
     @property
     def all_series(self) -> Dict[str, 'Series']:
@@ -480,7 +492,8 @@ class DataFrame:
             index=index,
             series=series,
             group_by=group_by,
-            order_by=order_by
+            order_by=order_by,
+            placeholders={}  # TODO
         )
 
     def copy_override(
@@ -491,6 +504,7 @@ class DataFrame:
             series: Dict[str, 'Series'] = None,
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
             order_by: List[SortColumn] = None,
+            placeholders: Dict[str, DtypeValuePair] = None,
             index_dtypes: Dict[str, str] = None,
             series_dtypes: Dict[str, str] = None,
             single_value: bool = False,
@@ -523,7 +537,8 @@ class DataFrame:
             'index': index if index is not None else self._index,
             'series': series if series is not None else self._data,
             'group_by': self._group_by if group_by is None else group_by[0],
-            'order_by': order_by if order_by is not None else self._order_by
+            'order_by': order_by if order_by is not None else self._order_by,
+            'placeholders': placeholders if placeholders is not None else self.placeholders
         }
 
         expression_class = SingleValueExpression if single_value else Expression
@@ -1451,38 +1466,41 @@ class DataFrame:
             having_clause = having_clause if having_clause else Expression.construct('')
 
             columns += [s.get_column_expression() for s in self._data.values()]
+            columns_str = ', '.join(expr.to_sql() for expr in columns)
 
             model_builder = BachSqlModelBuilder(
                 name=name,
-                sql="""
-                    select {columns}
-                    from {{prev}}
-                    {where}
-                    {group_by}
-                    {having}
-                    {order_by} {limit}
+                sql=f"""
+                    select {columns_str}
+                    from {{{{prev}}}}
+                    {{where}}
+                    {{group_by}}
+                    {{having}}
+                    {{order_by}} {{limit}}
                     """
             )
             return model_builder(
-                columns=columns,
                 where=where_clause,
                 group_by=group_by_clause,
                 having=having_clause,
                 order_by=self._get_order_by_clause(),
                 limit=limit_clause,
-                prev=self.base_node
+                prev=self.base_node,
+                **self._get_placeholder_values_mapping()
             )
         else:
+            # TODO: this breaks a lot of injection escaping logic
+            columns_str = ', '.join(expr.to_sql() for expr in self._get_all_column_expressions())
             model_builder = BachSqlModelBuilder(
                 name=name,
-                sql='select {columns} from {{_last_node}} {where} {order} {limit}'
+                sql=f'select {columns_str} from {{{{_last_node}}}} {{where}} {{order}} {{limit}}'
             )
             return model_builder(
-                columns=self._get_all_column_expressions(),
                 _last_node=self.base_node,
                 where=where_clause,
                 order=self._get_order_by_clause(),
-                limit=limit_clause
+                limit=limit_clause,
+                **self._get_placeholder_values_mapping()
             )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
@@ -1865,6 +1883,67 @@ class DataFrame:
         """
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
+
+    def create_placeholder(self, name: str, value: Any) -> Tuple['DataFrame', 'Series']:
+        # todo: check that name doesn't yet exist in base_node and in self.all_series
+        # todo: track newly defined references in self.
+        from bach.series.series import placeholder_series
+        series = placeholder_series(
+            base=self,
+            value=value,
+            name=name
+        )
+        placeholders = self.placeholders
+        placeholders[name] = DtypeValuePair(series.dtype, value)
+        df = self.copy_override(placeholders=placeholders)
+        return df, series
+
+    def set_placeholder(self, name: str, value: Any) -> 'DataFrame':
+        placeholders = self.placeholders
+        dtype_new = value_to_dtype(value)
+
+        # todo: implement function to get all valid placeholder values both in self.base_node
+        #  and self.all_series
+        if name in placeholders:
+            dtype_old = placeholders[name].dtype  # TODO: 2) make 'dtype' a type
+            if dtype_old != dtype_new:
+                raise ValueError(f'Cannot change dtype of placeholder. old: {dtype_old} new: {dtype_new}')
+        placeholders[name] = DtypeValuePair(dtype_new, value)
+        return self.copy_override(placeholders=placeholders)
+
+    def _get_placeholder_values_mapping(self) -> Dict[str, str]:
+        result = {}
+        for name, dv in self.placeholders.items():
+            dtype = value_to_dtype(dv.value)
+            if dtype != dv.dtype:  # should never happen
+                Exception(f'Dtype of value {dv.value} {dtype} does not match registered dtype {dv.dtype}')
+            property_name = PlaceHolderToken.name_to_sql(name)
+            series_type = get_series_type_from_dtype(dtype)
+            # TODO: `expr` likely contains redundant 'CASTS', only get the actual value.
+            #  The casts might be confusing when we export this in someway where a user can see the filled-in
+            #  values
+            expr = series_type.supported_value_to_expression(dv.value)
+            sql = expr.to_sql()
+            result[property_name] = sql
+        return result
+
+    def _get_all_available_placeholders(self) -> Dict[str, str]:
+        # TODO: get similar function for self.base_node
+        found_tokens = []
+        for series in self.all_series.values():
+            tokens = series.expression.get_all_tokens()
+            for token in tokens:
+                if isinstance(token, PlaceHolderToken):
+                    found_tokens.append(token)
+        result: Dict[str, str] = {}
+        for ft in found_tokens:
+            if ft.name in result and result[ft.name] != ft.dtype:
+                # TODO: if this happens, it's shitty
+                raise Exception(f'Placeholder {ft.name} appears multiple times with different dtypes: '
+                                f' {result[ft.name]} and {ft.dtype}. This is not a recoverable error. '
+                                f'Go back a few steps before the later placeholder was introduced.')
+            result[ft.name] = ft.dtype
+        return result
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

@@ -35,6 +35,19 @@ class RawToken(ExpressionToken):
 
 
 @dataclass(frozen=True)
+class PlaceHolderToken(ExpressionToken):
+    dtype: str
+    name: str
+
+    def to_sql(self) -> str:
+        return '{' + self.name_to_sql(self.name) + '}'
+
+    @classmethod
+    def name_to_sql(cls, name: str) -> str:
+        return '__bach_placeholder_' + f'{name}'
+
+
+@dataclass(frozen=True)
 class ColumnReferenceToken(ExpressionToken):
     column_name: str
 
@@ -62,6 +75,15 @@ class ModelReferenceToken(ExpressionToken):
 class StringValueToken(ExpressionToken):
     """ Wraps a string value. The value in this object is unescaped and unquoted. """
     value: str
+
+    def to_sql(self) -> str:
+        return SqlModelSpec.escape_format_string(quote_string(self.value))
+
+
+@dataclass(frozen=True)
+class VariableStringValueToken(ExpressionToken):
+    value: str
+    reference_name: str
 
     def to_sql(self) -> str:
         return SqlModelSpec.escape_format_string(quote_string(self.value))
@@ -145,6 +167,11 @@ class Expression:
     def raw(cls, raw: str) -> 'Expression':
         """ Return an expression that contains a single RawToken. """
         return cls([RawToken(raw)])
+
+    @classmethod
+    def placeholder(cls, dtype: str, name: str) -> 'Expression':
+        """ Return an expression that contains a single RawToken. """
+        return cls([PlaceHolderToken(dtype=dtype, name=name)])
 
     @classmethod
     def string_value(cls, value: str) -> 'Expression':
@@ -236,6 +263,24 @@ class Expression:
                 rv[data_item.refname()] = data_item.model
         return rv
 
+    def get_all_tokens(self) -> List[ExpressionToken]:
+        result = []
+        for data_item in self.data:
+            if isinstance(data_item, Expression):
+                result.extend(data_item.get_all_tokens())
+            else:
+                result.append(data_item)
+        return result
+
+    # def get_constants(self) -> List['ConstValueExpression']:
+    #     result = []
+    #     for data_item in self.data:
+    #         if isinstance(data_item, ConstValueExpression):
+    #            result.append(data_item)
+    #         elif isinstance(data_item, Expression):
+    #             result.extend(data_item.get_constants())
+    #     return result
+
     def to_sql(self, table_name: Optional[str] = None) -> str:
         """
         Compile the expression to a SQL fragment by calling to_sql() on every token or expression in data
@@ -274,7 +319,13 @@ class SingleValueExpression(Expression):
 
 
 class ConstValueExpression(SingleValueExpression):
-    pass
+    def __init__(
+            self,
+            data: Union['Expression', List[Union[ExpressionToken, 'Expression']]] = None,
+            name: Optional[str] = None
+    ):
+        super().__init__(data)
+        self.name = name
 
 
 class AggregateFunctionExpression(Expression):

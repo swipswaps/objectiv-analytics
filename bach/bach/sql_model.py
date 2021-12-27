@@ -12,13 +12,15 @@ TB = TypeVar('TB', bound='BachSqlModelBuilder')
 
 class BachSqlModelBuilder(CustomSqlModelBuilder):
 
-    def __call__(self: TB, **values: Union[int, str, Expression, Sequence[Expression],
-                                           SqlModel, SqlModelBuilder]) -> SqlModel[TB]:
+    def __call__(self: TB,
+                 **values: Union[int, str, Expression, Sequence[Expression], SqlModel, SqlModelBuilder]
+                 ) -> SqlModel[TB]:
         """ Only add Expression types in signature """
         return super().__call__(**values)
 
-    def set_values(self: TB, **values: Union[int, str, Expression, Sequence[Expression],
-                                             SqlModel, SqlModelBuilder]) -> TB:
+    def set_values(self: TB,
+                   **values: Union[int, str, Expression, Sequence[Expression], SqlModel, SqlModelBuilder]
+                   ) -> TB:
         """
         Set references that are required to resolve the entire model tree
         """
