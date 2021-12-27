@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
+import { PathContextFromURLPlugin } from '@objectiv/plugin-path-context-from-url';
 import { makeTrackerDefaultPluginsList } from '@objectiv/tracker-core';
 import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
 
@@ -11,5 +11,5 @@ import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
  */
 export const makeDefaultPluginsList = (trackerConfig: BrowserTrackerConfig) => [
   ...makeTrackerDefaultPluginsList(trackerConfig),
-  new WebDocumentContextPlugin({ console: trackerConfig.console }),
+  new PathContextFromURLPlugin(trackerConfig),
 ];

@@ -2,14 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeVideoStartEvent } from '@objectiv/tracker-core';
+import { makeMediaEvent } from '@objectiv/tracker-core';
 import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';
 
 /**
- * trackVideoStart is a shorthand for trackEvent. It eases triggering VideoStart events programmatically
+ * trackMediaEvent is a shorthand for trackEvent. It eases triggering MediaEvent programmatically.
  */
-export const trackVideoStart = ({
+export const trackMediaEvent = ({
   element,
   locationStack,
   globalContexts,
@@ -17,7 +17,7 @@ export const trackVideoStart = ({
   onError,
 }: InteractiveEventTrackerParameters) => {
   return trackEvent({
-    event: makeVideoStartEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    event: makeMediaEvent({ location_stack: locationStack, global_contexts: globalContexts }),
     element,
     tracker,
     onError,

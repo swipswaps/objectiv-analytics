@@ -2,8 +2,8 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeButtonContext } from '@objectiv/tracker-core';
-import { isTaggedElement, processTagChildrenElement, tagButton, tagElement, TaggingAttribute } from '../src';
+import { makePressableContext } from '@objectiv/tracker-core';
+import { isTaggedElement, processTagChildrenElement, tagPressable, tagContent, TaggingAttribute } from '../src';
 
 describe('processChildrenTrackingElement', () => {
   beforeEach(() => {
@@ -48,9 +48,9 @@ describe('processChildrenTrackingElement', () => {
         { queryAll: '#some-id-1' },
         { queryAll: '#some-id-2', tagAs: null },
         { queryAll: '#some-id-3', tagAs: {} },
-        { tagAs: tagElement({ id: 'element-id-1' }) },
-        { queryAll: null, tagAs: tagElement({ id: 'element-id-2' }) },
-        { queryAll: '', tagAs: tagElement({ id: 'element-id-3' }) },
+        { tagAs: tagContent({ id: 'element-id-1' }) },
+        { queryAll: null, tagAs: tagContent({ id: 'element-id-2' }) },
+        { queryAll: '', tagAs: tagContent({ id: 'element-id-3' }) },
       ])
     );
 
@@ -62,8 +62,8 @@ describe('processChildrenTrackingElement', () => {
     div.setAttribute(
       TaggingAttribute.tagChildren,
       JSON.stringify([
-        { queryAll: '#button-id-1', tagAs: tagButton({ id: 'button-id', text: 'button' }) },
-        { queryAll: '[class="button"]', tagAs: tagButton({ id: 'button-id', text: 'button' }) },
+        { queryAll: '#button-id-1', tagAs: tagPressable({ id: 'button-id' }) },
+        { queryAll: '[class="button"]', tagAs: tagPressable({ id: 'button-id' }) },
       ])
     );
 
@@ -79,17 +79,17 @@ describe('processChildrenTrackingElement', () => {
     div.setAttribute(
       TaggingAttribute.tagChildren,
       JSON.stringify([
-        { queryAll: '#button-id-1', tagAs: tagButton({ id: 'button-id', text: 'button' }) },
-        { queryAll: '[class="button"]', tagAs: tagButton({ id: 'button-id', text: 'button' }) },
+        { queryAll: '#button-id-1', tagAs: tagPressable({ id: 'button-id' }) },
+        { queryAll: '[class="button"]', tagAs: tagPressable({ id: 'button-id' }) },
       ])
     );
 
     const result = processTagChildrenElement(div);
 
-    const expectedButtonContext = makeButtonContext({ id: 'button-id', text: 'button' });
+    const expectedPressableContext = makePressableContext({ id: 'button-id' });
 
     expect(result).toHaveLength(1);
     expect(isTaggedElement(result[0])).toBe(true);
-    expect(JSON.parse(result[0].getAttribute(TaggingAttribute.context) ?? '')).toStrictEqual(expectedButtonContext);
+    expect(JSON.parse(result[0].getAttribute(TaggingAttribute.context) ?? '')).toStrictEqual(expectedPressableContext);
   });
 });

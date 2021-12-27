@@ -4,7 +4,7 @@ module.exports = {
   reporters: ['jest-standard-reporter'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}'],
   moduleNameMapper: {
-    '@objectiv/plugin-path-context-from-url': '<rootDir>../../plugins/path-context-from-url/src',
+    '@objectiv/plugin-(.*)': '<rootDir>/../../plugins/$1/src',
     '@objectiv/queue-(.*)': '<rootDir>/../../queues/$1/src',
     '@objectiv/testing-tools': '<rootDir>../../core/testing-tools/src',
     '@objectiv/tracker-core': '<rootDir>/../../core/tracker/src',

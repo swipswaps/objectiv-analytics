@@ -5,18 +5,22 @@
 import { matchUUID } from '@objectiv/testing-tools';
 import {
   generateUUID,
-  makeAbortedEvent,
+  makeFailureEvent,
   makeApplicationLoadedEvent,
-  makeButtonContext,
-  makeClickEvent,
-  makeCompletedEvent,
+  makePressableContext,
+  makePressEvent,
+  makeSuccessEvent,
   makeInputChangeEvent,
-  makeSectionContext,
-  makeSectionHiddenEvent,
-  makeSectionVisibleEvent,
-  makeURLChangeEvent,
-  makeVideoPauseEvent,
-  makeVideoStartEvent,
+  makeInteractiveEvent,
+  makeContentContext,
+  makeHiddenEvent,
+  makeVisibleEvent,
+  makeMediaEvent,
+  makeMediaLoadEvent,
+  makeMediaPauseEvent,
+  makeMediaStartEvent,
+  makeMediaStopEvent,
+  makeNonInteractiveEvent,
 } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
@@ -24,17 +28,21 @@ import {
   getTrackerRepository,
   makeTracker,
   TaggingAttribute,
-  trackAborted,
-  trackApplicationLoaded,
-  trackClick,
-  trackCompleted,
+  trackFailureEvent,
+  trackApplicationLoadedEvent,
+  trackPressEvent,
+  trackSuccessEvent,
   trackEvent,
-  trackInputChange,
-  trackSectionHidden,
-  trackSectionVisible,
-  trackURLChange,
-  trackVideoPause,
-  trackVideoStart,
+  trackInputChangeEvent,
+  trackInteractiveEvent,
+  trackHiddenEvent,
+  trackVisibleEvent,
+  trackMediaEvent,
+  trackMediaLoadEvent,
+  trackMediaPauseEvent,
+  trackMediaStartEvent,
+  trackMediaStopEvent,
+  trackNonInteractiveEvent,
   trackVisibility,
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
@@ -58,13 +66,13 @@ describe('trackEvent', () => {
   it('should use the global tracker instance if available', () => {
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
 
-    trackEvent({ event: makeClickEvent(), element: testElement });
+    trackEvent({ event: makePressEvent(), element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [],
@@ -88,47 +96,47 @@ describe('trackEvent', () => {
     section.appendChild(childSection);
     childSection.appendChild(button);
 
-    trackEvent({ event: makeClickEvent(), element: button });
+    trackEvent({ event: makePressEvent(), element: button });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [
-          makeSectionContext({ id: 'main' }),
-          makeSectionContext({ id: 'parent' }),
-          makeSectionContext({ id: 'child' }),
-          makeButtonContext({ id: 'button', text: 'button' }),
+          makeContentContext({ id: 'main' }),
+          makeContentContext({ id: 'parent' }),
+          makeContentContext({ id: 'child' }),
+          makePressableContext({ id: 'button' }),
         ],
       })
     );
 
-    trackEvent({ event: makeClickEvent({ location_stack: [makeSectionContext({ id: 'custom' })] }), element: button });
+    trackEvent({ event: makePressEvent({ location_stack: [makeContentContext({ id: 'custom' })] }), element: button });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeSectionContext({ id: 'custom' })],
+        location_stack: [makeContentContext({ id: 'custom' })],
       })
     );
 
-    trackEvent({ event: makeClickEvent({ location_stack: [makeSectionContext({ id: 'custom' })] }) });
+    trackEvent({ event: makePressEvent({ location_stack: [makeContentContext({ id: 'custom' })] }) });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(3);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       3,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeSectionContext({ id: 'custom' })],
+        location_stack: [makeContentContext({ id: 'custom' })],
       })
     );
   });
@@ -140,14 +148,14 @@ describe('trackEvent', () => {
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
     expect(trackerOverride.trackEvent).not.toHaveBeenCalled();
 
-    trackEvent({ event: makeClickEvent(), element: testElement, tracker: trackerOverride });
+    trackEvent({ event: makePressEvent(), element: testElement, tracker: trackerOverride });
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
     expect(trackerOverride.trackEvent).toHaveBeenCalledTimes(1);
     expect(trackerOverride.trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [],
@@ -157,36 +165,36 @@ describe('trackEvent', () => {
 
   it('should track Tagged Elements with a location stack', () => {
     const testDivToTrack = document.createElement('div');
-    testDivToTrack.setAttribute(TaggingAttribute.context, JSON.stringify(makeSectionContext({ id: 'test' })));
+    testDivToTrack.setAttribute(TaggingAttribute.context, JSON.stringify(makeContentContext({ id: 'test' })));
 
     const div = document.createElement('div');
-    div.setAttribute(TaggingAttribute.context, JSON.stringify(makeSectionContext({ id: 'div' })));
+    div.setAttribute(TaggingAttribute.context, JSON.stringify(makeContentContext({ id: 'div' })));
 
     const midSection = document.createElement('section');
-    midSection.setAttribute(TaggingAttribute.context, JSON.stringify(makeSectionContext({ id: 'mid' })));
+    midSection.setAttribute(TaggingAttribute.context, JSON.stringify(makeContentContext({ id: 'mid' })));
 
     const untrackedSection = document.createElement('div');
 
     const topSection = document.createElement('body');
-    topSection.setAttribute(TaggingAttribute.context, JSON.stringify(makeSectionContext({ id: 'top' })));
+    topSection.setAttribute(TaggingAttribute.context, JSON.stringify(makeContentContext({ id: 'top' })));
 
     div.appendChild(testDivToTrack);
     midSection.appendChild(div);
     untrackedSection.appendChild(midSection);
     topSection.appendChild(untrackedSection);
 
-    trackEvent({ event: makeClickEvent(), element: testDivToTrack });
+    trackEvent({ event: makePressEvent(), element: testDivToTrack });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        ...makeClickEvent(),
+        ...makePressEvent(),
         location_stack: expect.arrayContaining([
-          expect.objectContaining({ _type: 'SectionContext', id: 'top' }),
-          expect.objectContaining({ _type: 'SectionContext', id: 'mid' }),
-          expect.objectContaining({ _type: 'SectionContext', id: 'div' }),
-          expect.objectContaining({ _type: 'SectionContext', id: 'test' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'top' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'mid' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'div' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'test' }),
         ]),
       })
     );
@@ -194,32 +202,32 @@ describe('trackEvent', () => {
 
   it('should track regular Elements with a location stack if their parents are Tagged Elements', () => {
     const div = document.createElement('div');
-    div.setAttribute(TaggingAttribute.context, JSON.stringify(makeSectionContext({ id: 'div' })));
+    div.setAttribute(TaggingAttribute.context, JSON.stringify(makeContentContext({ id: 'div' })));
 
     const midSection = document.createElement('section');
-    midSection.setAttribute(TaggingAttribute.context, JSON.stringify(makeSectionContext({ id: 'mid' })));
+    midSection.setAttribute(TaggingAttribute.context, JSON.stringify(makeContentContext({ id: 'mid' })));
 
     const untrackedSection = document.createElement('div');
 
     const topSection = document.createElement('body');
-    topSection.setAttribute(TaggingAttribute.context, JSON.stringify(makeSectionContext({ id: 'top' })));
+    topSection.setAttribute(TaggingAttribute.context, JSON.stringify(makeContentContext({ id: 'top' })));
 
     div.appendChild(testElement);
     midSection.appendChild(div);
     untrackedSection.appendChild(midSection);
     topSection.appendChild(untrackedSection);
 
-    trackEvent({ event: makeClickEvent(), element: testElement });
+    trackEvent({ event: makePressEvent(), element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        ...makeClickEvent(),
+        ...makePressEvent(),
         location_stack: expect.arrayContaining([
-          expect.objectContaining({ _type: 'SectionContext', id: 'top' }),
-          expect.objectContaining({ _type: 'SectionContext', id: 'mid' }),
-          expect.objectContaining({ _type: 'SectionContext', id: 'div' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'top' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'mid' }),
+          expect.objectContaining({ _type: 'ContentContext', id: 'div' }),
         ]),
       })
     );
@@ -230,112 +238,147 @@ describe('trackEvent', () => {
 
     div.appendChild(testElement);
 
-    trackEvent({ event: makeClickEvent(), element: testElement });
+    trackEvent({ event: makePressEvent(), element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makePressEvent()));
   });
 
-  it('should track a Click Event', () => {
-    trackClick({ element: testElement });
+  it('should track a ClickEvent', () => {
+    trackPressEvent({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeClickEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makePressEvent()));
   });
 
-  it('should track a Input Change Event', () => {
-    trackInputChange({ element: testElement });
+  it('should track a InputChangeEvent', () => {
+    trackInputChangeEvent({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeInputChangeEvent()));
   });
 
-  it('should track a Section Visible Event', () => {
-    trackSectionVisible({ element: testElement });
+  it('should track an InteractiveEvent', () => {
+    trackInteractiveEvent({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionVisibleEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeInteractiveEvent()));
   });
 
-  it('should track a Section Hidden Event', () => {
-    trackSectionHidden({ element: testElement });
+  it('should track a VisibleEvent', () => {
+    trackVisibleEvent({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVisibleEvent()));
   });
 
-  it('should track a Video Start Event', () => {
-    trackVideoStart({ element: testElement });
+  it('should track a HiddenEvent', () => {
+    trackHiddenEvent({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVideoStartEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeHiddenEvent()));
   });
 
-  it('should track a Video Pause Event', () => {
-    trackVideoPause({ element: testElement });
+  it('should track a MediaEvent', () => {
+    trackMediaEvent({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVideoPauseEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeMediaEvent()));
   });
 
-  it('should track either a Section Visible or Section Hidden Event based on the given state', () => {
+  it('should track a MediaLoadEvent', () => {
+    trackMediaLoadEvent({ element: testElement });
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeMediaLoadEvent()));
+  });
+
+  it('should track a MediaStartEvent', () => {
+    trackMediaStartEvent({ element: testElement });
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeMediaStartEvent()));
+  });
+
+  it('should track a MediaPauseEvent', () => {
+    trackMediaPauseEvent({ element: testElement });
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeMediaPauseEvent()));
+  });
+
+  it('should track a MediaStopEvent', () => {
+    trackMediaStopEvent({ element: testElement });
+
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeMediaStopEvent()));
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+  });
+
+  it('should track an NonInteractiveEvent', () => {
+    trackNonInteractiveEvent({ element: testElement });
+
+    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeNonInteractiveEvent()));
+  });
+
+  it('should track either a VisibleEvent or HiddenEvent based on the given state', () => {
     trackVisibility({ element: testElement, isVisible: true });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionVisibleEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVisibleEvent()));
 
     trackVisibility({ element: testElement, isVisible: false });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeSectionHiddenEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeHiddenEvent()));
   });
 
-  it('should track an Application Loaded Event', () => {
-    trackApplicationLoaded();
+  it('should track an ApplicationLoadedEvent', () => {
+    trackApplicationLoadedEvent();
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeApplicationLoadedEvent()));
 
-    trackApplicationLoaded({ element: testElement });
+    trackApplicationLoadedEvent({ element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeApplicationLoadedEvent()));
   });
 
-  it('should track a URL Change Event', () => {
-    trackURLChange();
+  it('should track a SuccessCompletedEvent', () => {
+    trackSuccessEvent({ message: 'ok' });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeURLChangeEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeSuccessEvent({ message: 'ok' }))
+    );
 
-    trackURLChange({ element: testElement });
+    trackSuccessEvent({ message: 'ok', element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeURLChangeEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining(makeSuccessEvent({ message: 'ok' }))
+    );
   });
 
-  it('should track a Completed Event', () => {
-    trackCompleted();
+  it('should track an FailureEvent', () => {
+    trackFailureEvent({ message: 'ko' });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeCompletedEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining(makeFailureEvent({ message: 'ko' }))
+    );
 
-    trackCompleted({ element: testElement });
-
-    expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeCompletedEvent()));
-  });
-
-  it('should track an Aborted Event', () => {
-    trackAborted();
-
-    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeAbortedEvent()));
-
-    trackAborted({ element: testElement });
+    trackFailureEvent({ message: 'ko', element: testElement });
 
     expect(getTracker().trackEvent).toHaveBeenCalledTimes(2);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(2, expect.objectContaining(makeAbortedEvent()));
+    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining(makeFailureEvent({ message: 'ko' }))
+    );
   });
 });
 
@@ -348,7 +391,7 @@ describe('trackEvent', () => {
   it('should console.error if a Tracker instance cannot be retrieved and was not provided either', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    const parameters = { event: makeClickEvent(), element: testElement };
+    const parameters = { event: makePressEvent(), element: testElement };
     trackEvent(parameters);
 
     expect(console.error).toHaveBeenCalledTimes(2);

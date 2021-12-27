@@ -2,14 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeInputChangeEvent } from '@objectiv/tracker-core';
+import { makeMediaLoadEvent } from '@objectiv/tracker-core';
 import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';
 
 /**
- * trackInputChange is a shorthand for trackEvent. It eases triggering InputChange events programmatically
+ * trackMediaLoadEvent is a shorthand for trackEvent. It eases triggering MediaLoadEvent programmatically.
  */
-export const trackInputChange = ({
+export const trackMediaLoadEvent = ({
   element,
   locationStack,
   globalContexts,
@@ -17,7 +17,7 @@ export const trackInputChange = ({
   onError,
 }: InteractiveEventTrackerParameters) => {
   return trackEvent({
-    event: makeInputChangeEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    event: makeMediaLoadEvent({ location_stack: locationStack, global_contexts: globalContexts }),
     element,
     tracker,
     onError,

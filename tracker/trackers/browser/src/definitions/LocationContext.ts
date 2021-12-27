@@ -23,75 +23,42 @@ export const AbstractLocationContext = assign(
 );
 
 /**
- * AbstractSectionContext struct
+ * AbstractPressableContext struct
  */
-export const AbstractSectionContext = assign(
+export const AbstractPressableContext = assign(
   AbstractLocationContext,
   object({
-    __section_context: literal(true),
+    __pressable_context: literal(true),
   })
 );
 
 /**
- * AbstractItemContext struct
+ * RootLocationContext struct
  */
-export const AbstractItemContext = assign(
+export const RootLocationContext = assign(
   AbstractLocationContext,
   object({
-    __item_context: literal(true),
+    _type: literal('RootLocationContext'),
   })
 );
 
 /**
- * AbstractActionContext struct
+ * ContentContext struct
  */
-export const AbstractActionContext = assign(
-  AbstractItemContext,
+export const ContentContext = assign(
+  AbstractLocationContext,
   object({
-    __action_context: literal(true),
-    text: string(),
+    _type: literal('ContentContext'),
   })
 );
 
 /**
- * ElementContext struct
+ * ExpandableContext struct
  */
-export const SectionContext = assign(
-  AbstractSectionContext,
+export const ExpandableContext = assign(
+  AbstractLocationContext,
   object({
-    _type: literal('SectionContext'),
-  })
-);
-
-/**
- * WebDocumentContext struct
- */
-export const WebDocumentContext = assign(
-  AbstractSectionContext,
-  object({
-    _type: literal('WebDocumentContext'),
-    url: string(),
-  })
-);
-
-/**
- * ScreenContext struct
- */
-export const ScreenContext = assign(
-  AbstractSectionContext,
-  object({
-    _type: literal('ScreenContext'),
-    screen: string(),
-  })
-);
-
-/**
- * ExpandableSectionContext struct
- */
-export const ExpandableSectionContext = assign(
-  AbstractSectionContext,
-  object({
-    _type: literal('ExpandableSectionContext'),
+    _type: literal('ExpandableContext'),
   })
 );
 
@@ -99,7 +66,7 @@ export const ExpandableSectionContext = assign(
  * MediaPlayerContext struct
  */
 export const MediaPlayerContext = assign(
-  AbstractSectionContext,
+  AbstractLocationContext,
   object({
     _type: literal('MediaPlayerContext'),
   })
@@ -109,7 +76,7 @@ export const MediaPlayerContext = assign(
  * NavigationContext struct
  */
 export const NavigationContext = assign(
-  AbstractSectionContext,
+  AbstractLocationContext,
   object({
     _type: literal('NavigationContext'),
   })
@@ -119,19 +86,9 @@ export const NavigationContext = assign(
  * OverlayContext struct
  */
 export const OverlayContext = assign(
-  AbstractSectionContext,
+  AbstractLocationContext,
   object({
     _type: literal('OverlayContext'),
-  })
-);
-
-/**
- * ItemContext struct
- */
-export const ItemContext = assign(
-  AbstractItemContext,
-  object({
-    _type: literal('ItemContext'),
   })
 );
 
@@ -139,29 +96,19 @@ export const ItemContext = assign(
  * InputContext struct
  */
 export const InputContext = assign(
-  AbstractItemContext,
+  AbstractLocationContext,
   object({
     _type: literal('InputContext'),
   })
 );
 
 /**
- * ActionContext struct
+ * OverlayContext struct
  */
-export const ActionContext = assign(
-  AbstractActionContext,
+export const PressableContext = assign(
+  AbstractPressableContext,
   object({
-    _type: literal('ActionContext'),
-  })
-);
-
-/**
- * ButtonContext struct
- */
-export const ButtonContext = assign(
-  AbstractActionContext,
-  object({
-    _type: literal('ButtonContext'),
+    _type: literal('PressableContext'),
   })
 );
 
@@ -169,7 +116,7 @@ export const ButtonContext = assign(
  * LinkContext struct
  */
 export const LinkContext = assign(
-  AbstractActionContext,
+  AbstractPressableContext,
   object({
     _type: literal('LinkContext'),
     href: string(),
@@ -180,61 +127,36 @@ export const LinkContext = assign(
  * Struct union to match any LocationContext
  */
 export const AnyLocationContext = union([
-  SectionContext,
-  WebDocumentContext,
-  ScreenContext,
-  ExpandableSectionContext,
+  ContentContext,
+  ExpandableContext,
+  InputContext,
+  LinkContext,
   MediaPlayerContext,
   NavigationContext,
   OverlayContext,
-  ItemContext,
-  InputContext,
-  ActionContext,
-  ButtonContext,
-  LinkContext,
+  PressableContext,
+  RootLocationContext,
 ]);
 
 export type AnyLocationContext = Infer<typeof AnyLocationContext>;
 
 /**
- * Struct union to match any SectionContext
+ * Struct union to match any PressableContext
  */
-export const AnySectionContext = union([
-  SectionContext,
-  WebDocumentContext,
-  ScreenContext,
-  ExpandableSectionContext,
-  MediaPlayerContext,
-  NavigationContext,
-  OverlayContext,
-]);
+export const AnyPressableContext = union([LinkContext, PressableContext]);
 
-export type AnySectionContext = Infer<typeof AnySectionContext>;
+export type AnyPressableContext = Infer<typeof AnyPressableContext>;
 
 /**
- * Struct union to match any ItemContext
+ * Struct union to match any Clickable Context, that is AnyPressableContext + ExpandableContext
  */
-export const AnyItemContext = union([ItemContext, InputContext, ActionContext, ButtonContext, LinkContext]);
-
-export type AnyItemContext = Infer<typeof AnyItemContext>;
-
-/**
- * Struct union to match any ActionContext
- */
-export const AnyActionContext = union([ActionContext, ButtonContext, LinkContext]);
-
-export type AnyActionContext = Infer<typeof AnyActionContext>;
-
-/**
- * Struct union to match any Clickable Context, that is Action Contexts + ExpandableSectionContext
- */
-export const AnyClickableContext = union([AnyActionContext, ExpandableSectionContext]);
+export const AnyClickableContext = union([AnyPressableContext, ExpandableContext]);
 
 export type AnyClickableContext = Infer<typeof AnyClickableContext>;
 
 /**
- * Struct union to match any Showable Context, that is Overlays and ExpandableSectionContext
+ * Struct union to match any Showable Context, that is Overlays and ExpandableContext
  */
-export const AnyShowableContext = union([OverlayContext, ExpandableSectionContext]);
+export const AnyShowableContext = union([OverlayContext, ExpandableContext]);
 
 export type AnyShowableContext = Infer<typeof AnyShowableContext>;

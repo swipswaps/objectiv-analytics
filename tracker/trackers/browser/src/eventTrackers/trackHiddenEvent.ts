@@ -2,14 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeClickEvent } from '@objectiv/tracker-core';
+import { makeHiddenEvent } from '@objectiv/tracker-core';
 import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';
 
 /**
- * trackClick is a shorthand for trackEvent. It eases triggering Click events programmatically
+ * trackHiddenEvent is a shorthand for trackEvent. It eases triggering HiddenEvent programmatically.
  */
-export const trackClick = ({
+export const trackHiddenEvent = ({
   element,
   locationStack,
   globalContexts,
@@ -17,7 +17,7 @@ export const trackClick = ({
   onError,
 }: InteractiveEventTrackerParameters) => {
   return trackEvent({
-    event: makeClickEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    event: makeHiddenEvent({ location_stack: locationStack, global_contexts: globalContexts }),
     element,
     tracker,
     onError,

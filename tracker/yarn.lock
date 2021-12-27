@@ -820,15 +820,6 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/plugin-web-document-context@npm:^0.0.1":
-  version: 0.0.1
-  resolution: "@objectiv/plugin-web-document-context@npm:0.0.1"
-  peerDependencies:
-    "@objectiv/tracker-core": ^0.0.1
-  checksum: 005a5bfce95850559f3ea98c160ae2e60280a18e361f2da89a06b81f075b3d93a0d3d6ea9564bf9f2068d090023ad57d5b0ebc1eec0b3e45acadc8abdbdd5210
-  languageName: node
-  linkType: hard
-
 "@objectiv/queue-local-storage@^0.0.1, @objectiv/queue-local-storage@workspace:queues/local-storage":
   version: 0.0.0-use.local
   resolution: "@objectiv/queue-local-storage@workspace:queues/local-storage"
@@ -896,7 +887,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
   dependencies:
-    "@objectiv/plugin-web-document-context": ^0.0.1
+    "@objectiv/plugin-path-context-from-url": ^0.0.1
     "@objectiv/queue-local-storage": ^0.0.1
     "@objectiv/testing-tools": 0.0.1
     "@objectiv/tracker-core": ^0.0.1

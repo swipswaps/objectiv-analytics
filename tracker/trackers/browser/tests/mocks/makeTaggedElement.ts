@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeButtonContext, makeInputContext, makeSectionContext } from '@objectiv/tracker-core';
+import { makePressableContext, makeInputContext, makeContentContext } from '@objectiv/tracker-core';
 import { stringifyLocationContext, TaggedElement, TaggingAttribute } from '../../src';
 
 export const makeTaggedElement = (
@@ -19,12 +19,12 @@ export const makeTaggedElement = (
   if (contextId && trackClicks) {
     trackedDiv.setAttribute(
       TaggingAttribute.context,
-      stringifyLocationContext(makeButtonContext({ id: contextId, text: id }))
+      stringifyLocationContext(makePressableContext({ id: contextId }))
     );
   } else if (contextId && trackBlurs) {
     trackedDiv.setAttribute(TaggingAttribute.context, stringifyLocationContext(makeInputContext({ id: contextId })));
   } else if (contextId) {
-    trackedDiv.setAttribute(TaggingAttribute.context, stringifyLocationContext(makeSectionContext({ id: contextId })));
+    trackedDiv.setAttribute(TaggingAttribute.context, stringifyLocationContext(makeContentContext({ id: contextId })));
   }
 
   if (trackClicks) {

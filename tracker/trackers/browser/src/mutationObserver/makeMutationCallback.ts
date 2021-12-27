@@ -3,13 +3,10 @@
  */
 
 import { TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
-import { getLocationHref } from '../common/getLocationHref';
 import { isTaggedElement } from '../common/guards/isTaggedElement';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { trackURLChange } from '../eventTrackers/trackURLChange';
 import { getTracker } from '../getTracker';
-import { AutoTrackingState } from './AutoTrackingState';
 import { trackNewElements } from './trackNewElements';
 import { trackRemovedElements } from './trackRemovedElements';
 import { trackVisibilityHiddenEvent } from './trackVisibilityHiddenEvent';
@@ -33,24 +30,11 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * We also monitor nodes that are removed. If those nodes are Tagged Elements of which we were tracking visibility
  * we will trigger visibility: hidden events for them.
  * We also clean them up from TrackerElementLocations.
- *
- * SPA URL changes (default enabled, configurable)
- * We can leverage the same Observer to detect also URL changes. To do so we simply keep track of the last URL we have
- * detected previously and if it's different we automatically trigger a URL change event.
  */
-export const makeMutationCallback = (trackURLChangeEvents: boolean, console?: TrackerConsole): MutationCallback => {
+export const makeMutationCallback = (console?: TrackerConsole): MutationCallback => {
   return (mutationsList) => {
     try {
       const tracker = getTracker();
-
-      if (trackURLChangeEvents) {
-        // Track SPA URL changes
-        const currentURL = getLocationHref();
-        if (currentURL !== AutoTrackingState.previousURL) {
-          AutoTrackingState.previousURL = currentURL;
-          trackURLChange({ tracker });
-        }
-      }
 
       // Track DOM changes
       mutationsList.forEach(({ addedNodes, removedNodes, target, attributeName, oldValue }) => {

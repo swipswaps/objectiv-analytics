@@ -2,14 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeVideoPauseEvent } from '@objectiv/tracker-core';
+import { makeInputChangeEvent } from '@objectiv/tracker-core';
 import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';
 
 /**
- * trackVideoPause is a shorthand for trackEvent. It eases triggering VideoPause events programmatically
+ * trackInputChangeEvent is a shorthand for trackEvent. It eases triggering InputChangeEvent programmatically.
  */
-export const trackVideoPause = ({
+export const trackInputChangeEvent = ({
   element,
   locationStack,
   globalContexts,
@@ -17,7 +17,7 @@ export const trackVideoPause = ({
   onError,
 }: InteractiveEventTrackerParameters) => {
   return trackEvent({
-    event: makeVideoPauseEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    event: makeInputChangeEvent({ location_stack: locationStack, global_contexts: globalContexts }),
     element,
     tracker,
     onError,

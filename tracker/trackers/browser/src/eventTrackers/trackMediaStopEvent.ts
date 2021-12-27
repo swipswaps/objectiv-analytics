@@ -2,14 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeSectionVisibleEvent } from '@objectiv/tracker-core';
+import { makeMediaStopEvent } from '@objectiv/tracker-core';
 import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';
 
 /**
- * trackSectionVisible is a shorthand for trackEvent. It eases triggering SectionVisible events programmatically
+ * trackMediaStopEvent is a shorthand for trackEvent. It eases triggering MediaStopEvent programmatically.
  */
-export const trackSectionVisible = ({
+export const trackMediaStopEvent = ({
   element,
   locationStack,
   globalContexts,
@@ -17,7 +17,7 @@ export const trackSectionVisible = ({
   onError,
 }: InteractiveEventTrackerParameters) => {
   return trackEvent({
-    event: makeSectionVisibleEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    event: makeMediaStopEvent({ location_stack: locationStack, global_contexts: globalContexts }),
     element,
     tracker,
     onError,

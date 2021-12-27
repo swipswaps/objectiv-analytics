@@ -8,9 +8,10 @@ import { NonInteractiveEventTrackerParameters } from '../definitions/NonInteract
 import { trackEvent } from './trackEvent';
 
 /**
- * trackApplicationLoaded is a shorthand for trackEvent. It eases triggering ApplicationLoaded events programmatically
+ * trackApplicationLoadedEvent is a shorthand for trackEvent. It eases triggering ApplicationLoadedEvent
+ * programmatically.
  */
-export const trackApplicationLoaded = (parameters: NonInteractiveEventTrackerParameters = {}) => {
+export const trackApplicationLoadedEvent = (parameters: NonInteractiveEventTrackerParameters = {}) => {
   try {
     const { element = document, locationStack, globalContexts, tracker } = parameters;
     return trackEvent({

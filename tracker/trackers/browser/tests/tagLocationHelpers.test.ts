@@ -4,15 +4,16 @@
 
 import { matchUUID } from '@objectiv/testing-tools';
 import {
-  tagButton,
-  tagElement,
-  tagExpandableElement,
+  tagPressable,
+  tagContent,
+  tagExpandable,
   TaggingAttribute,
   tagInput,
   tagLink,
   tagMediaPlayer,
   tagNavigation,
   tagOverlay,
+  tagRootLocation,
 } from '../src';
 
 describe('tagLocationHelpers', () => {
@@ -25,9 +26,9 @@ describe('tagLocationHelpers', () => {
 
   it('should return an empty object when error occurs', () => {
     // @ts-ignore
-    expect(tagElement()).toBeUndefined();
+    expect(tagContent()).toBeUndefined();
     // @ts-ignore
-    expect(tagExpandableElement()).toBeUndefined();
+    expect(tagExpandable()).toBeUndefined();
     // @ts-ignore
     expect(tagInput()).toBeUndefined();
     // @ts-ignore
@@ -39,41 +40,41 @@ describe('tagLocationHelpers', () => {
     // @ts-ignore
     expect(tagOverlay()).toBeUndefined();
     // @ts-ignore
-    expect(tagButton()).toBeUndefined();
+    expect(tagRootLocation()).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ wrong: 'test-button' })).toBeUndefined();
+    expect(tagPressable()).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ id: undefined })).toBeUndefined();
+    expect(tagPressable({ wrong: 'test-button' })).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ id: 0, text: 'test' })).toBeUndefined();
+    expect(tagPressable({ id: undefined })).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ id: false, text: 'test' })).toBeUndefined();
+    expect(tagPressable({ id: 0 })).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ id: true, text: 'test' })).toBeUndefined();
+    expect(tagPressable({ id: false })).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ id: {}, text: 'test' })).toBeUndefined();
+    expect(tagPressable({ id: true })).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ id: Infinity, text: 'test' })).toBeUndefined();
+    expect(tagPressable({ id: {} })).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ id: -Infinity, text: 'test' })).toBeUndefined();
+    expect(tagPressable({ id: Infinity })).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ id: 'test', text: 'test', options: 'nope' })).toBeUndefined();
+    expect(tagPressable({ id: -Infinity })).toBeUndefined();
     // @ts-ignore
-    expect(tagButton({ id: 'test', text: 'test', options: 'nope' }, null)).toBeUndefined();
+    expect(tagPressable({ id: 'test', options: 'nope' })).toBeUndefined();
+    // @ts-ignore
+    expect(tagPressable({ id: 'test', options: 'nope' }, null)).toBeUndefined();
   });
 
-  it('tagButton', () => {
-    const taggingAttributes = tagButton({ id: 'test-button', text: 'Click Me' });
+  it('tagPressable', () => {
+    const taggingAttributes = tagPressable({ id: 'test-button' });
 
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __item_context: true,
-        __action_context: true,
-        _type: 'ButtonContext',
+        __pressable_context: true,
+        _type: 'PressableContext',
         id: 'test-button',
-        text: 'Click Me',
       }),
       [TaggingAttribute.trackClicks]: 'true',
     };
@@ -81,15 +82,14 @@ describe('tagLocationHelpers', () => {
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
   });
 
-  it('tagElement', () => {
-    const taggingAttributes = tagElement({ id: 'test-section' });
+  it('tagContent', () => {
+    const taggingAttributes = tagContent({ id: 'test-section' });
 
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
-        _type: 'SectionContext',
+        _type: 'ContentContext',
         id: 'test-section',
       }),
     };
@@ -97,15 +97,14 @@ describe('tagLocationHelpers', () => {
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
   });
 
-  it('tagExpandableElement', () => {
-    const taggingAttributes = tagExpandableElement({ id: 'test-expandable' });
+  it('tagExpandable', () => {
+    const taggingAttributes = tagExpandable({ id: 'test-expandable' });
 
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
-        _type: 'ExpandableSectionContext',
+        _type: 'ExpandableContext',
         id: 'test-expandable',
       }),
       [TaggingAttribute.trackClicks]: 'true',
@@ -122,7 +121,6 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __item_context: true,
         _type: 'InputContext',
         id: 'test-input',
       }),
@@ -133,17 +131,15 @@ describe('tagLocationHelpers', () => {
   });
 
   it('tagLink', () => {
-    const taggingAttributes = tagLink({ id: 'link', text: 'Click Me', href: '/test' });
+    const taggingAttributes = tagLink({ id: 'link', href: '/test' });
 
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __item_context: true,
-        __action_context: true,
+        __pressable_context: true,
         _type: 'LinkContext',
         id: 'link',
-        text: 'Click Me',
         href: '/test',
       }),
       [TaggingAttribute.trackClicks]: 'true',
@@ -159,7 +155,6 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
         _type: 'MediaPlayerContext',
         id: 'test-media-player',
       }),
@@ -175,7 +170,6 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
         _type: 'NavigationContext',
         id: 'test-nav',
       }),
@@ -191,11 +185,25 @@ describe('tagLocationHelpers', () => {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
         _type: 'OverlayContext',
         id: 'test-overlay',
       }),
       [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
+    };
+
+    expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
+  });
+
+  it('tagRootLocation', () => {
+    const taggingAttributes = tagRootLocation({ id: 'test-page' });
+
+    const expectedTaggingAttributes = {
+      [TaggingAttribute.elementId]: matchUUID,
+      [TaggingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        _type: 'RootLocationContext',
+        id: 'test-page',
+      }),
     };
 
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);

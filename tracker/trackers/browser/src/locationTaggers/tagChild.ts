@@ -14,12 +14,12 @@ import { tagChildren } from './tagChildren';
  *
  *    tagChild({
  *      query: '#button1',
- *      tagAs: tagButton({ id: 'button1', text: 'Button 1' })
+ *      tagAs: tagPressable({ id: 'button1', text: 'Button 1' })
  *    })
  *
  *    tagChild({
  *      query: '#button2',
- *      tagAs: tagButton({ id: 'button2', text: 'Button 2' })
+ *      tagAs: tagPressable({ id: 'button2', text: 'Button 2' })
  *    })
  *
  */

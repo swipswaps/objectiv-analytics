@@ -2,14 +2,14 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeSectionHiddenEvent } from '@objectiv/tracker-core';
+import { makeVisibleEvent } from '@objectiv/tracker-core';
 import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';
 
 /**
- * trackSectionHidden is a shorthand for trackEvent. It eases triggering SectionHidden events programmatically
+ * trackVisibleEvent is a shorthand for trackEvent. It eases triggering VisibleEvent programmatically.
  */
-export const trackSectionHidden = ({
+export const trackVisibleEvent = ({
   element,
   locationStack,
   globalContexts,
@@ -17,7 +17,7 @@ export const trackSectionHidden = ({
   onError,
 }: InteractiveEventTrackerParameters) => {
   return trackEvent({
-    event: makeSectionHiddenEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+    event: makeVisibleEvent({ location_stack: locationStack, global_contexts: globalContexts }),
     element,
     tracker,
     onError,
