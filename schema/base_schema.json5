@@ -226,7 +226,7 @@
       "description": "A Location Context that uniquely represents the top-level UI location of the user.\n\n",
       "parents": ["AbstractLocationContext"]
     },
-    "ExpandableSectionContext": {
+    "ExpandableContext": {
       "description": "A Location Context that describes a section of the UI that can expand & collapse.\n\n",
       "parents": ["AbstractLocationContext"]
     },

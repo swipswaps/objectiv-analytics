@@ -284,7 +284,7 @@ class RootLocationContext(AbstractLocationContext):
         AbstractLocationContext.__init__(self, id=id, **kwargs)
 
 
-class ExpandableSectionContext(AbstractLocationContext):
+class ExpandableContext(AbstractLocationContext):
     """
         A Location Context that describes a section of the UI that can expand & collapse.
 
@@ -295,7 +295,7 @@ class ExpandableSectionContext(AbstractLocationContext):
                 A unique string identifier to be combined with the Context Type (`_type`)
                 for Context instance uniqueness.
     """
-    _type = 'ExpandableSectionContext'
+    _type = 'ExpandableContext'
 
     def __init__(self, id: str, **kwargs: Optional[Any]):
         """
@@ -1223,8 +1223,8 @@ def make_context(_type: str, **kwargs) -> AbstractContext:
         return LinkContext(**kwargs)
     if _type == "RootLocationContext":
         return RootLocationContext(**kwargs)
-    if _type == "ExpandableSectionContext":
-        return ExpandableSectionContext(**kwargs)
+    if _type == "ExpandableContext":
+        return ExpandableContext(**kwargs)
     if _type == "MediaPlayerContext":
         return MediaPlayerContext(**kwargs)
     if _type == "NavigationContext":
