@@ -8,9 +8,14 @@ import { useLocationStack } from '../consumers/useLocationStack';
 import { useTracker } from '../consumers/useTracker';
 
 /**
+ * The parameters of useApplicationLoadedEventTracker. No extra attributes, same as EventTrackerHookParameters.
+ */
+export type ApplicationLoadedEventTrackerHookParameters = EventTrackerHookParameters;
+
+/**
  * Returns an ApplicationLoadedEvent Tracker callback function, ready to be triggered.
  */
-export const useApplicationLoadedEventTracker = (parameters: EventTrackerHookParameters = {}) => {
+export const useApplicationLoadedEventTracker = (parameters: ApplicationLoadedEventTrackerHookParameters = {}) => {
   const { tracker = useTracker(), locationStack = useLocationStack(), globalContexts } = parameters;
 
   return () => trackApplicationLoadedEvent({ tracker, locationStack, globalContexts });
