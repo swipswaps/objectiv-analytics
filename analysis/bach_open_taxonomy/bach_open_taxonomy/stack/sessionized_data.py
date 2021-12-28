@@ -31,7 +31,7 @@ _SQL = \
             -- generates a session_start_id for each is_start_of_session
             case
                 when is_start_of_session then
-                    row_number() over (partition by is_start_of_session order by moment asc)
+                    row_number() over (partition by is_start_of_session order by moment, event_id)
             end as session_start_id,
             -- generates a unique number for each session, but not in the right order.
             count(is_start_of_session) over (order by user_id, moment, event_id) as is_one_session
@@ -40,7 +40,11 @@ _SQL = \
     select
         *,
         -- populates the correct session_id for all rows with the same value for is_one_session
-        first_value(session_start_id) over (partition by is_one_session order by moment) as session_id,
-        row_number() over (partition by is_one_session order by moment, event_id asc) as session_hit_number
+        first_value(
+            session_start_id
+        ) over (
+            partition by is_one_session order by moment, event_id
+        ) as session_id,
+        row_number() over (partition by is_one_session order by moment, event_id) as session_hit_number
     from session_id_and_start_{{id}}
     '''

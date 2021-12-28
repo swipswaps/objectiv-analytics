@@ -4,8 +4,8 @@ Copyright 2021 Objectiv B.V.
 
 # Any import from from bach_open_taxonomy initializes all the types, do not remove
 from bach_open_taxonomy import __version__
-
-from tests.functional.bach.test_data_and_utils import get_bt_with_json_data_real, assert_equals_data
+from tests_bach_open_taxonomy.functional.objectiv_bach.data_and_utils import get_bt_with_json_data_real
+from tests.functional.bach.test_data_and_utils import assert_equals_data
 
 
 def test_get_real_data():
