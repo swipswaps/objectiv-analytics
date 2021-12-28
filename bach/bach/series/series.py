@@ -304,7 +304,7 @@ class Series(ABC):
         result = cls.get_class_instance(
             base=base,
             name=name,
-            expression=ConstValueExpression(cls.value_to_expression(value), name=name),
+            expression=ConstValueExpression(cls.value_to_expression(value)),
             group_by=None,
         )
         return result
@@ -672,10 +672,7 @@ class Series(ABC):
                 dtype = dtype[other.dtype]
         return self.copy_override(dtype=dtype, expression=expression)
 
-    def _arithmetic_operation(self,
-                              other: 'Series',
-                              operation: str,
-                              fmt_str: str,
+    def _arithmetic_operation(self, other: 'Series', operation: str, fmt_str: str,
                               other_dtypes: Tuple[str, ...] = (),
                               dtype: Union[str, Mapping[str, Optional[str]]] = None) -> 'Series':
         """
@@ -1180,7 +1177,7 @@ def placeholder_series(base: Union[Series, DataFrame],
     result = series_type.get_class_instance(
         base=base,
         name=name,
-        expression=ConstValueExpression(series_type.supported_value_to_placeholder(value, name), name=name),
+        expression=ConstValueExpression(series_type.supported_value_to_placeholder(value, name)),
         group_by=None,
     )
     return result

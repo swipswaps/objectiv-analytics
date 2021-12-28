@@ -80,15 +80,6 @@ class StringValueToken(ExpressionToken):
         return SqlModelSpec.escape_format_string(quote_string(self.value))
 
 
-@dataclass(frozen=True)
-class VariableStringValueToken(ExpressionToken):
-    value: str
-    reference_name: str
-
-    def to_sql(self) -> str:
-        return SqlModelSpec.escape_format_string(quote_string(self.value))
-
-
 class Expression:
     """
     Immutable object representing a fragment of SQL as a sequence of sql-tokens or Expressions.
@@ -272,15 +263,6 @@ class Expression:
                 result.append(data_item)
         return result
 
-    # def get_constants(self) -> List['ConstValueExpression']:
-    #     result = []
-    #     for data_item in self.data:
-    #         if isinstance(data_item, ConstValueExpression):
-    #            result.append(data_item)
-    #         elif isinstance(data_item, Expression):
-    #             result.extend(data_item.get_constants())
-    #     return result
-
     def to_sql(self, table_name: Optional[str] = None) -> str:
         """
         Compile the expression to a SQL fragment by calling to_sql() on every token or expression in data
@@ -319,13 +301,7 @@ class SingleValueExpression(Expression):
 
 
 class ConstValueExpression(SingleValueExpression):
-    def __init__(
-            self,
-            data: Union['Expression', List[Union[ExpressionToken, 'Expression']]] = None,
-            name: Optional[str] = None
-    ):
-        super().__init__(data)
-        self.name = name
+    pass
 
 
 class AggregateFunctionExpression(Expression):

@@ -1,9 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from bach import SeriesInt64, const_to_series
 from bach.dataframe import DtypeValuePair
-from bach.expression import VariableStringValueToken
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
