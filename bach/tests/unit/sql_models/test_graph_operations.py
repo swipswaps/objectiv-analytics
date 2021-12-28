@@ -263,15 +263,22 @@ def test_update_properties_in_graph():
         ),
         ref_right=ValueModel(key='a', val=2)
     )
+
+    # Updating non existing properties doesn't do anything
+    assert graph is update_properties_in_graph(graph, {'x': 'X'})
+
+    # Assert current state
     assert get_node(graph, ('ref_left',)).properties == {'val': 3}
     assert get_node(graph, ('ref_right',)).properties == {'val': 2, 'key': 'a'}
     assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 1, 'key': 'a'}
 
+    # Update one property
     graph = update_properties_in_graph(graph, {'val': 5})
     assert get_node(graph, ('ref_left',)).properties == {'val': 5}
     assert get_node(graph, ('ref_right',)).properties == {'val': 5, 'key': 'a'}
     assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 5, 'key': 'a'}
 
+    # Update two properties
     graph = update_properties_in_graph(graph, {'val': 1234, 'key': 'b'})
     assert get_node(graph, ('ref_left',)).properties == {'val': 1234}
     assert get_node(graph, ('ref_right',)).properties == {'val': 1234, 'key': 'b'}

@@ -198,8 +198,8 @@ def get_all_properties(start_node: SqlModel) -> Dict[str, Dict[RefPath, Any]]:
     """
     Get all properties in the graph.
 
-    :return: Dict, keys: property name values: dictionary. The subdictionary has as key the path to
-        all nodes that use the property, and as values the value in that node.
+    :return: Dict, keys: property name, values: dictionary. The values sub-dictionary has as key the path
+        to all nodes that use the property, and as values the value in that node.
     """
     return _get_all_properties_recursive(start_node, tuple())
 
