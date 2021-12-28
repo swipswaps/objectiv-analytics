@@ -203,7 +203,7 @@ Runs the generator utility. This will generate:
 ### `yarn version --help`
 Shows the `version` command help
 
-### `yarn version --interactive`
+### `yarn version check --interactive`
 Creates a release strategy for the current branch
 
 ### `yarn version check`
