@@ -41,7 +41,7 @@ class SortColumn(NamedTuple):
 
 
 class DtypeValuePair(NamedTuple):
-    dtype: str
+    dtype: str  # TODO: make 'dtype' a type instead of using str
     value: Hashable
 
 
@@ -1894,8 +1894,15 @@ class DataFrame:
                                     skipna=skipna, ddof=ddof, **kwargs)
 
     def create_placeholder(self, name: str, value: Any) -> Tuple['DataFrame', 'Series']:
+        """
+        Create a Series object that can be used as a placeholder, within the returned DataFrame. The
+        DataFrame will have the placeholder with the given values set in :meth:`DataFrame.placeholders`
+
+        The placeholder value can later be changed using :meth:`DataFrame.set_placeholder`
+
+        :return: Tuple with DataFrame and Series object.
+        """
         # todo: check that name doesn't yet exist in base_node and in self.all_series
-        # todo: track newly defined references in self.
         from bach.series.series import placeholder_series
         series = placeholder_series(
             base=self,
@@ -1908,13 +1915,16 @@ class DataFrame:
         return df, series
 
     def set_placeholder(self, name: str, value: Any) -> 'DataFrame':
+        """
+        Return a copy of this DataFrame with the placeholder value updated.
+        """
         placeholders = self.placeholders
         dtype_new = value_to_dtype(value)
 
         # todo: implement function to get all valid placeholder values both in self.base_node
         #  and self.all_series
         if name in placeholders:
-            dtype_old = placeholders[name].dtype  # TODO: 2) make 'dtype' a type
+            dtype_old = placeholders[name].dtype
             if dtype_old != dtype_new:
                 raise ValueError(f'Cannot change dtype of placeholder. old: {dtype_old} new: {dtype_new}')
         placeholders[name] = DtypeValuePair(dtype_new, value)
