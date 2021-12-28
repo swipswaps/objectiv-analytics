@@ -11,6 +11,7 @@ from bach.expression import Expression, SingleValueExpression, RawToken, PlaceHo
     ConstValueExpression
 from bach.sql_model import BachSqlModelBuilder
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
+from sql_models.graph_operations import update_properties_in_graph
 from sql_models.model import SqlModel
 from sql_models.sql_generator import to_sql
 
@@ -457,6 +458,7 @@ class DataFrame:
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
             order_by: List[SortColumn] = None,
+            placeholders: Dict[str, 'DtypeValuePair'] = None
     ) -> 'DataFrame':
         """
         INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
@@ -493,7 +495,7 @@ class DataFrame:
             series=series,
             group_by=group_by,
             order_by=order_by,
-            placeholders={}  # TODO
+            placeholders=placeholders
         )
 
     def copy_override(
@@ -637,7 +639,8 @@ class DataFrame:
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             group_by=None,
-            order_by=[]
+            order_by=[],
+            placeholders=self.placeholders
         )
 
         if not inplace:
@@ -648,6 +651,7 @@ class DataFrame:
         self._data = df.data
         self._group_by = df.group_by
         self._order_by = df.order_by
+        self._placeholders = df.placeholders
         return self
 
     def get_sample(self,
@@ -1466,14 +1470,17 @@ class DataFrame:
             having_clause = having_clause if having_clause else Expression.construct('')
 
             columns += [s.get_column_expression() for s in self._data.values()]
+            # TODO: this breaks a lot of injection escaping logic
             columns_str = ', '.join(expr.to_sql() for expr in columns)
+            where_str = where_clause.to_sql()
+            filter_expressions = [_s.expression for _s in self.all_series.values()] + [where_clause]
 
             model_builder = BachSqlModelBuilder(
                 name=name,
                 sql=f"""
                     select {columns_str}
                     from {{{{prev}}}}
-                    {{where}}
+                    {where_str}
                     {{group_by}}
                     {{having}}
                     {{order_by}} {{limit}}
@@ -1486,21 +1493,22 @@ class DataFrame:
                 order_by=self._get_order_by_clause(),
                 limit=limit_clause,
                 prev=self.base_node,
-                **self._get_placeholder_values_mapping()
+                **self._get_placeholder_values_mapping(filter_expressions=filter_expressions)
             )
         else:
             # TODO: this breaks a lot of injection escaping logic
             columns_str = ', '.join(expr.to_sql() for expr in self._get_all_column_expressions())
+            where_str = where_clause.to_sql()
+            filter_expressions = [_s.expression for _s in self.all_series.values()] + [where_clause]
             model_builder = BachSqlModelBuilder(
                 name=name,
-                sql=f'select {columns_str} from {{{{_last_node}}}} {{where}} {{order}} {{limit}}'
+                sql=f'select {columns_str} from {{{{_last_node}}}} {where_str} {{order}} {{limit}}'
             )
             return model_builder(
                 _last_node=self.base_node,
-                where=where_clause,
                 order=self._get_order_by_clause(),
                 limit=limit_clause,
-                **self._get_placeholder_values_mapping()
+                **self._get_placeholder_values_mapping(filter_expressions=filter_expressions)
             )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
@@ -1511,6 +1519,8 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
+        property_values = self._get_placeholder_values_mapping(filter_expressions=None)
+        model = update_properties_in_graph(start_node=model, property_values=property_values)
         return to_sql(model)
 
     def _get_all_column_expressions(self) -> List[Expression]:
@@ -1911,9 +1921,18 @@ class DataFrame:
         placeholders[name] = DtypeValuePair(dtype_new, value)
         return self.copy_override(placeholders=placeholders)
 
-    def _get_placeholder_values_mapping(self) -> Dict[str, str]:
+    def _get_placeholder_values_mapping(self, filter_expressions: List['Expression'] = None) -> Dict[str, str]:
+        """
+        Get a mapping of variable-name to value for all values in self.placeholders.
+
+        :filter_series: Only return entries for which there is a placeholdertoken in these series. Set to
+            None for no filtering at all.
+        """
         result = {}
+        available_tokens = self._get_all_placeholder_token_names(filter_expressions or [])
         for name, dv in self.placeholders.items():
+            if filter_expressions is not None and name not in available_tokens:
+                continue
             dtype = value_to_dtype(dv.value)
             if dtype != dv.dtype:  # should never happen
                 Exception(f'Dtype of value {dv.value} {dtype} does not match registered dtype {dv.dtype}')
@@ -1927,6 +1946,15 @@ class DataFrame:
             result[property_name] = sql
         return result
 
+    @staticmethod
+    def _get_all_placeholder_token_names(filter_expressions: List['Expression']) -> Set[str]:
+        found_tokens = set()
+        for expression in filter_expressions:
+            for token in expression.get_all_tokens():
+                if isinstance(token, PlaceHolderToken):
+                    found_tokens.add(token.name)
+        return found_tokens
+
     def _get_all_available_placeholders(self) -> Dict[str, str]:
         # TODO: get similar function for self.base_node
         found_tokens = []
@@ -1939,6 +1967,7 @@ class DataFrame:
         for ft in found_tokens:
             if ft.name in result and result[ft.name] != ft.dtype:
                 # TODO: if this happens, it's shitty
+                # TODO: move this check?
                 raise Exception(f'Placeholder {ft.name} appears multiple times with different dtypes: '
                                 f' {result[ft.name]} and {ft.dtype}. This is not a recoverable error. '
                                 f'Go back a few steps before the later placeholder was introduced.')
