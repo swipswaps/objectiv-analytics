@@ -40,11 +40,11 @@ class PlaceHolderToken(ExpressionToken):
     name: str
 
     def to_sql(self) -> str:
-        return '{' + self.name_to_sql(self.name) + '}'
+        return '{' + self.dtype_name_to_sql(self.dtype, self.name) + '}'
 
     @classmethod
-    def name_to_sql(cls, name: str) -> str:
-        return '__bach_placeholder_' + f'{name}'
+    def dtype_name_to_sql(cls, dtype: str, name: str) -> str:
+        return f'__bach_placeholder__{dtype}__{name}'
 
 
 @dataclass(frozen=True)

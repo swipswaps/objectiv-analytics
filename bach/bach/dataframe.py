@@ -1487,7 +1487,6 @@ class DataFrame:
                     """
             )
             return model_builder(
-                where=where_clause,
                 group_by=group_by_clause,
                 having=having_clause,
                 order_by=self._get_order_by_clause(),
@@ -1921,7 +1920,9 @@ class DataFrame:
         placeholders[name] = DtypeValuePair(dtype_new, value)
         return self.copy_override(placeholders=placeholders)
 
-    def _get_placeholder_values_mapping(self, filter_expressions: List['Expression'] = None) -> Dict[str, str]:
+    def _get_placeholder_values_mapping(self,
+                                        filter_expressions: List['Expression'] = None
+                                        ) -> Dict[str, str]:
         """
         Get a mapping of variable-name to value for all values in self.placeholders.
 
@@ -1936,7 +1937,7 @@ class DataFrame:
             dtype = value_to_dtype(dv.value)
             if dtype != dv.dtype:  # should never happen
                 Exception(f'Dtype of value {dv.value} {dtype} does not match registered dtype {dv.dtype}')
-            property_name = PlaceHolderToken.name_to_sql(name)
+            property_name = PlaceHolderToken.dtype_name_to_sql(dtype=dtype, name=name)
             series_type = get_series_type_from_dtype(dtype)
             # TODO: `expr` likely contains redundant 'CASTS', only get the actual value.
             #  The casts might be confusing when we export this in someway where a user can see the filled-in
@@ -1957,6 +1958,8 @@ class DataFrame:
 
     def _get_all_available_placeholders(self) -> Dict[str, str]:
         # TODO: get similar function for self.base_node
+        # TODO: check based on the name of the placeholder (which contains the dtype) whether the
+        #  dtype is correct
         found_tokens = []
         for series in self.all_series.values():
             tokens = series.expression.get_all_tokens()
