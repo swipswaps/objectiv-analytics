@@ -1,6 +1,7 @@
 # Objectiv React Tracker Core
 
-[placeholder]
+Provides Context Providers, Location Wrappers and Hooks to wrap components in Contexts and trigger Events based on the 
+open taxonomy schema.
 
 ---
 ## Package Installation
