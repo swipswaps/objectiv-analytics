@@ -27,6 +27,15 @@ def test_add_savepoint():
     assert len(sps.all) == 2
 
 
+def test_add_savepoint_double():
+    df = get_bt_with_test_data()
+    sps = Savepoints()
+    df = df.materialize()
+    sps.add_savepoint('first', df, Materialization.TABLE)
+    with pytest.raises(Exception, match='Another savepoint has the same base_node'):
+        sps.add_savepoint('second', df, Materialization.QUERY)
+
+
 def test_write_to_db_queries_only():
     df = get_bt_with_test_data()
     engine = df.engine

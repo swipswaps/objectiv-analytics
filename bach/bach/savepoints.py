@@ -79,6 +79,13 @@ class Savepoints:
                 raise ValueError(f'A different savepoint with the name "{name}" already exists.')
             # Nothing to do, we already have this entry
             return
+        existing_basenodes = {entry.df_original.base_node: entry.name for entry in self._entries.values()}
+        if df.base_node in existing_basenodes:
+            # We cannot support having the same base_node as multiple savepoints. This will give problems
+            # if the different savepoints have different materialization
+            raise ValueError(f'Another savepoint has the same base_node, not allowed. Other savepont: '
+                             f'{existing_basenodes[df.base_node]}')
+
         self._entries[name] = SavepointEntry(
             name=name,
             df_original=df.copy(),
