@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 // noinspection UnnecessaryLocalVariableJS
@@ -21,7 +21,7 @@ const fs = require('fs');
 const JSON5 = require('json5');
 
 const COPYRIGHT = `/*
- * Copyright ${new Date().getFullYear()} Objectiv B.V.
+ * Copyright 2021-${new Date().getFullYear()} Objectiv B.V.
  */
  \n
 `;
