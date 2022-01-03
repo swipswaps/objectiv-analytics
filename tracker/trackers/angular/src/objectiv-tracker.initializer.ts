@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { APP_INITIALIZER, Provider } from '@angular/core';

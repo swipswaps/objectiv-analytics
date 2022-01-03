@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { ContextsConfig, Tracker, TrackerConfig, TrackerPlugins } from '@objectiv/tracker-core';
