@@ -2,8 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 import re
-from copy import copy
-from typing import NamedTuple, Dict, List, Set
+from typing import NamedTuple, Dict, List, Union
 
 from sqlalchemy.engine import Engine
 
@@ -46,6 +45,14 @@ class Savepoints:
     def __init__(self):
         self._entries: Dict[str, SavepointEntry] = {}
 
+    @property
+    def all(self) -> List[SavepointEntry]:
+        return list(self._entries.values())
+
+    @property
+    def names(self) -> List[str]:
+        return [entry.name for entry in self._entries.values()]
+
     def merge(self, other: 'Savepoints'):
         """
         INTERNAL
@@ -79,6 +86,8 @@ class Savepoints:
                 raise ValueError(f'A different savepoint with the name "{name}" already exists.')
             # Nothing to do, we already have this entry
             return
+        if not df.is_materialized:
+            raise ValueError('Can only create a savepoint from materialized DataFrames.')
         existing_basenodes = {entry.df_original.base_node: entry.name for entry in self._entries.values()}
         if df.base_node in existing_basenodes:
             # We cannot support having the same base_node as multiple savepoints. This will give problems
@@ -92,13 +101,19 @@ class Savepoints:
             materialization=materialization
         )
 
-    def update_savepoint(self, name: str, materialization: Materialization):
+    def set_materialization(self, name: str, materialization: Union[Materialization, str]):
         """
+        Set the materialization of a savepoint, prior to calling :meth:`write_to_db()`. Calling this function
+        does not materialize anything to the database by itself.
 
-        NOTE: This does not undo any side-effects from earlier called function, such as :meth:`write_to_db()`
-            i.e. if materialization was 'table' before and is changed to 'view', then an existing table in
-            the database is not updated.
+        NOTE: This alos does not undo any side-effects from earlier called functions, such as
+            :meth:`write_to_db()` i.e. if materialization was 'table' before and is changed to 'view', then
+            an existing table in the database is not updated into a view.
+
+        :param name: name of savepoint
+        :param materialization: materialization value
         """
+        materialization = Materialization.normalize(materialization)
         current = self._entries[name]
         if current.materialization == materialization:
             return
@@ -140,22 +155,26 @@ class Savepoints:
             new_df = new_df.copy_override(engine=engine_override)
         return new_df
 
-    @property
-    def all(self) -> List[SavepointEntry]:
-        return list(self._entries.values())
-
-    @property
-    def names(self) -> List[str]:
-        return [entry.name for entry in self._entries.values()]
-
-    def write_to_db(self, engine: Engine, overwrite: bool = False) -> List[CreatedObject]:
+    def write_to_db(self, engine_override: Engine = None, overwrite: bool = False) -> List[CreatedObject]:
         """
         Create the tables and views for all of the savepoints that have a table or view materialization.
 
-        :engine: DB connection to use
-        :overwrite: If true, drop table/view statements will be run first
+        :param engine_override: optional. If not set this will use the engine of the original dataframes in
+            the savepoints. If the savepoints do not all share the same engine, then this parameter is
+            mandatory.
+        :param overwrite: If true, drop table/view statements will be run first
         :return: List of all created objects
         """
+        if not self._entries:
+            return []  # nothing to do
+        if engine_override:
+            engine = engine_override
+        else:
+            engines = {entry.df_original.engine for entry in self._entries.values()}
+            if len(engines) != 1:
+                raise ValueError("engine_override cannot be None if the savepoints's entries don't all "
+                                 "share the same engine.")
+            engine = list(engines)[0]
         result_created = []
         drop_statements = self.get_drop_statements()
         create_statements = self.get_create_statements()
@@ -242,15 +261,19 @@ class Savepoints:
         others = [entry for entry in self.all if entry.materialization
                   not in (Materialization.TABLE, Materialization.VIEW)]
         result = [f'Savepoint, entries: {len(self.all)}']
+
         result.append(f'\tTables, entries: {len(tables)}')
         for table in tables:
             result.append(f'\t\t{table.name}')
+
         result.append(f'\tViews, entries: {len(views)}')
         for view in views:
             result.append(f'\t\t{view.name}')
+
         result.append(f'\tOther, entries: {len(others)}')
         for other in others:
             result.append(f'\t\t{other.name}')
+
         string = '\n'.join(result)
         return string
 

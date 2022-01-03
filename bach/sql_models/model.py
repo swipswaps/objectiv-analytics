@@ -62,6 +62,15 @@ class Materialization(Enum):
                 return mat
         raise KeyError(f'no such Materialization: "{name}"')
 
+    @classmethod
+    def normalize(cls, materialization: Union['Materialization', str]) -> 'Materialization':
+        if isinstance(materialization, str):
+            return Materialization.get_by_name(materialization)
+        if isinstance(materialization, Materialization):
+            return materialization
+        raise ValueError(f'materialization must be of type str or Materialization, '
+                         f'encountered type: {type(materialization)}')
+
 
 # special reference-level format string that will be filled in at sql-generation time with a per-model
 # unique string

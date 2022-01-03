@@ -3,6 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
+from bach.savepoints import CreatedObject
 from sql_models.model import Materialization
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 from tests.functional.bach.test_savepoints import remove_created_db_objects
@@ -12,7 +13,7 @@ def test_savepoint_materialization():
     df = get_bt_with_test_data()
 
     engine = df.engine
-    df.set_savepoint("savepoint1", 'table')
+    df.set_savepoint("savepoint1")
     df['x'] = 'abcdef'
     df = df[['city', 'founding', 'x']]
     df.set_savepoint("savepoint2", 'view')
@@ -24,7 +25,6 @@ def test_savepoint_materialization():
 
     expected_columns = ['_index_skating_order', 'city', 'municipality']
     expected_data = [[2, 'Snits', 'Súdwest-Fryslân']]
-
     assert_equals_data(df, expected_columns=expected_columns, expected_data=expected_data)
 
     df_mat = df.savepoints.get_materialized_df('savepoint3', engine)
@@ -34,7 +34,15 @@ def test_savepoint_materialization():
         df_mat.to_pandas()
 
     # Create tables and views, then try again
-    created_result = df.savepoints.write_to_db(engine)
+    df.savepoints.set_materialization('savepoint1', 'table')
+    created_result = df.savepoints.write_to_db()
+
+    assert created_result == [
+        CreatedObject('savepoint1', Materialization.TABLE),
+        CreatedObject('savepoint3', Materialization.VIEW),
+        CreatedObject('savepoint2', Materialization.VIEW),
+    ]
+
     df_mat = df.savepoints.get_materialized_df('savepoint3', engine)
     assert_equals_data(df_mat, expected_columns=expected_columns, expected_data=expected_data)
 

@@ -16,6 +16,7 @@ def test_add_savepoint():
     sps = Savepoints()
     sps.add_savepoint('test', df, Materialization.TABLE)
     df2 = df.groupby('municipality').min()
+    df2.materialize(inplace=True)
     sps.add_savepoint('test2', df2, Materialization.TABLE)
 
     # Assert that we can get a copy of the original dataframes back again
@@ -105,17 +106,17 @@ def test_write_to_db_create_objects():
         CreatedObject('sp_third_point', Materialization.TABLE),
     ]
 
-    result = sps.write_to_db(engine)
+    result = sps.write_to_db()
     assert result == expected_created
     # now that 'sp_third_point' exists, the df from `et_materialized_df('sp_final_point')` should work too
     assert_equals_data(df_use_materialized, expected_columns, expected_data)
 
     with pytest.raises(Exception):
         # We expect a DB exception if we try to recreate the same tables/views
-        sps.write_to_db(engine)
+        sps.write_to_db()
 
     # Recreating with overwrite=True should work tho, as that drops the tables/views first
-    result = sps.write_to_db(engine, overwrite=True)
+    result = sps.write_to_db(overwrite=True)
     assert result == expected_created
 
     # Test clean up:

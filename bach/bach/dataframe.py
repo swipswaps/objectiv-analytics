@@ -655,19 +655,20 @@ class DataFrame:
         self._order_by = df.order_by
         return self
 
-    def set_savepoint(self, name: str, materialization: Union[Materialization, str] = Materialization.QUERY):
+    def set_savepoint(self, name: str, materialization: Union[Materialization, str] = Materialization.CTE):
         """
         Set the current state as a savepoint in save_points.
 
         :param save_points: Savepoints object that's responsible for tracking all savepoints.
         :param name: Name for the savepoint. This will be the name of the table or view if that's set as
             materialization. Must be unique both within the Savepoints and within the base_node.
-        :param materialization: materialization of the savepoint in the database.
+        :param materialization: Optional materialization of the savepoint in the database. This doesn't do
+            anything unless self.savepoints.write_to_db() gets called and the savepoints are actually
+                materialized into the database.
         """
         if not self.is_materialized:
             self.materialize(node_name=name, inplace=True, limit=None)
-        if isinstance(materialization, str):
-            materialization = Materialization.get_by_name(materialization)
+        materialization = Materialization.normalize(materialization)
         self.savepoints.add_savepoint(name=name, df=self, materialization=materialization)
         return self
 
