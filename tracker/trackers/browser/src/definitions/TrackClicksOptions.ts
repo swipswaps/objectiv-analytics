@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
 import { Infer, literal, object, optional, union } from 'superstruct';

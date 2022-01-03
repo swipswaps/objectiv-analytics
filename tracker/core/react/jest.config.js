@@ -1,3 +1,7 @@
+/*
+ * Copyright 2022 Objectiv B.V.
+ */
+
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',

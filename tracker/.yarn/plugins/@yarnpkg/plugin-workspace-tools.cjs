@@ -1,3 +1,7 @@
+/*
+ * Copyright 2022 Objectiv B.V.
+ */
+
 /* eslint-disable */
 //prettier-ignore
 module.exports = {

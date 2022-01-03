@@ -1,6 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
- * @jest-environment node
+ * Copyright 2022 Objectiv B.V.
  */
 import { PathContextFromURLPlugin } from '../src';
 

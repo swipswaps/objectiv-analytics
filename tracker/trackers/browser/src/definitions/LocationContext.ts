@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
 import { assign, Infer, literal, object, string, union } from 'superstruct';
