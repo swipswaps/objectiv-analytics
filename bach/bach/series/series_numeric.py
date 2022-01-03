@@ -152,14 +152,14 @@ class SeriesInt64(SeriesAbstractNumeric):
         return Expression.construct('cast({} as bigint)', Expression.raw(str(value)))
 
     @classmethod
-    def supported_value_to_placeholder(cls, value: int, name: str) -> Expression:
+    def supported_value_to_variable(cls, value: int, name: str) -> Expression:
         # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
         # consistently get bigints, so always cast the result
         # See the section on numeric constants in the Postgres documentation
         # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
         return Expression.construct(
             'cast({} as bigint)',
-            Expression.placeholder(dtype=cls.dtype, name=name)
+            Expression.variable(dtype=cls.dtype, name=name)
         )
 
     @classmethod

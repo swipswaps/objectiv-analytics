@@ -35,7 +35,7 @@ class RawToken(ExpressionToken):
 
 
 @dataclass(frozen=True)
-class PlaceHolderToken(ExpressionToken):
+class VariableToken(ExpressionToken):
     dtype: str
     name: str
 
@@ -44,7 +44,7 @@ class PlaceHolderToken(ExpressionToken):
 
     @classmethod
     def dtype_name_to_sql(cls, dtype: str, name: str) -> str:
-        return f'__bach_placeholder__{dtype}__{name}'
+        return f'__bach_variable__{dtype}__{name}'
 
 
 @dataclass(frozen=True)
@@ -160,9 +160,9 @@ class Expression:
         return cls([RawToken(raw)])
 
     @classmethod
-    def placeholder(cls, dtype: str, name: str) -> 'Expression':
+    def variable(cls, dtype: str, name: str) -> 'Expression':
         """ Return an expression that contains a single RawToken. """
-        return cls([PlaceHolderToken(dtype=dtype, name=name)])
+        return cls([VariableToken(dtype=dtype, name=name)])
 
     @classmethod
     def string_value(cls, value: str) -> 'Expression':

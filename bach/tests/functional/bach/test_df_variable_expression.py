@@ -17,12 +17,12 @@ def test_basic():
         ]
     )
 
-    df, add_value = df.create_placeholder(name='add_value', value=1000)
-    df, filter_value = df.create_placeholder(name='filter_value', value=2400)
+    df, add_value = df.create_variable(name='add_value', value=1000)
+    df, filter_value = df.create_variable(name='filter_value', value=2400)
     df['founding'] = df.founding + add_value
     df = df[df.founding < filter_value]
 
-    assert df.placeholders == {
+    assert df.variables == {
         'add_value': DtypeValuePair(dtype='int64', value=1000),
         'filter_value': DtypeValuePair(dtype='int64', value=2400)
     }
@@ -35,9 +35,9 @@ def test_basic():
         ]
     )
 
-    df = df.set_placeholder('add_value', 2000)
-    df = df.set_placeholder('filter_value', 4400)
-    assert df.placeholders == {
+    df = df.set_variable('add_value', 2000)
+    df = df.set_variable('filter_value', 4400)
+    assert df.variables == {
         'add_value': DtypeValuePair(dtype='int64', value=2000),
         'filter_value': DtypeValuePair(dtype='int64', value=4400)
     }
@@ -52,8 +52,8 @@ def test_basic():
     )
 
     df = df.materialize()
-    df = df.set_placeholder('add_value', 3000)
-    assert df.placeholders == {
+    df = df.set_variable('add_value', 3000)
+    assert df.variables == {
         'add_value': DtypeValuePair(dtype='int64', value=3000),
         'filter_value': DtypeValuePair(dtype='int64', value=4400)
     }

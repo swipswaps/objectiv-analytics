@@ -7,8 +7,7 @@ import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression, RawToken, PlaceHolderToken, \
-    ConstValueExpression
+from bach.expression import Expression, SingleValueExpression, VariableToken
 from bach.sql_model import BachSqlModelBuilder
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
 from sql_models.graph_operations import update_properties_in_graph
@@ -144,7 +143,7 @@ class DataFrame:
             series: Dict[str, 'Series'],
             group_by: Optional['GroupBy'],
             order_by: List[SortColumn] = None,
-            placeholders: Dict[str, 'DtypeValuePair'] = None
+            variables: Dict[str, 'DtypeValuePair'] = None
     ):
         """
         Instantiate a new DataFrame.
@@ -167,7 +166,7 @@ class DataFrame:
         self._data: Dict[str, Series] = {}
         self._group_by = group_by
         self._order_by = order_by if order_by is not None else []
-        self._placeholders = placeholders if placeholders else {}
+        self._variables = variables if variables else {}
         for key, value in series.items():
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
@@ -229,8 +228,8 @@ class DataFrame:
         return copy(self._order_by)
 
     @property
-    def placeholders(self) -> Dict[str, DtypeValuePair]:
-        return copy(self._placeholders)
+    def variables(self) -> Dict[str, DtypeValuePair]:
+        return copy(self._variables)
 
     @property
     def all_series(self) -> Dict[str, 'Series']:
@@ -458,7 +457,7 @@ class DataFrame:
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
             order_by: List[SortColumn] = None,
-            placeholders: Dict[str, 'DtypeValuePair'] = None
+            variables: Dict[str, 'DtypeValuePair'] = None
     ) -> 'DataFrame':
         """
         INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
@@ -495,7 +494,7 @@ class DataFrame:
             series=series,
             group_by=group_by,
             order_by=order_by,
-            placeholders=placeholders
+            variables=variables
         )
 
     def copy_override(
@@ -506,7 +505,7 @@ class DataFrame:
             series: Dict[str, 'Series'] = None,
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
             order_by: List[SortColumn] = None,
-            placeholders: Dict[str, DtypeValuePair] = None,
+            variables: Dict[str, DtypeValuePair] = None,
             index_dtypes: Dict[str, str] = None,
             series_dtypes: Dict[str, str] = None,
             single_value: bool = False,
@@ -540,7 +539,7 @@ class DataFrame:
             'series': series if series is not None else self._data,
             'group_by': self._group_by if group_by is None else group_by[0],
             'order_by': order_by if order_by is not None else self._order_by,
-            'placeholders': placeholders if placeholders is not None else self.placeholders
+            'variables': variables if variables is not None else self.variables
         }
 
         expression_class = SingleValueExpression if single_value else Expression
@@ -640,7 +639,7 @@ class DataFrame:
             dtypes=series_dtypes,
             group_by=None,
             order_by=[],
-            placeholders=self.placeholders
+            variables=self.variables
         )
 
         if not inplace:
@@ -651,7 +650,7 @@ class DataFrame:
         self._data = df.data
         self._group_by = df.group_by
         self._order_by = df.order_by
-        self._placeholders = df.placeholders
+        self._variables = df.variables
         return self
 
     def get_sample(self,
@@ -1492,7 +1491,7 @@ class DataFrame:
                 order_by=self._get_order_by_clause(),
                 limit=limit_clause,
                 prev=self.base_node,
-                **self._get_placeholder_values_mapping(filter_expressions=filter_expressions)
+                **self._get_variable_values_mapping(filter_expressions=filter_expressions)
             )
         else:
             # TODO: this breaks a lot of injection escaping logic
@@ -1507,7 +1506,7 @@ class DataFrame:
                 _last_node=self.base_node,
                 order=self._get_order_by_clause(),
                 limit=limit_clause,
-                **self._get_placeholder_values_mapping(filter_expressions=filter_expressions)
+                **self._get_variable_values_mapping(filter_expressions=filter_expressions)
             )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
@@ -1518,7 +1517,7 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        property_values = self._get_placeholder_values_mapping(filter_expressions=None)
+        property_values = self._get_variable_values_mapping(filter_expressions=None)
         model = update_properties_in_graph(start_node=model, property_values=property_values)
         return to_sql(model)
 
@@ -1893,61 +1892,61 @@ class DataFrame:
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
-    def create_placeholder(self, name: str, value: Any) -> Tuple['DataFrame', 'Series']:
+    def create_variable(self, name: str, value: Any) -> Tuple['DataFrame', 'Series']:
         """
-        Create a Series object that can be used as a placeholder, within the returned DataFrame. The
-        DataFrame will have the placeholder with the given values set in :meth:`DataFrame.placeholders`
+        Create a Series object that can be used as a variable, within the returned DataFrame. The
+        DataFrame will have the variable with the given values set in :meth:`DataFrame.variables`
 
-        The placeholder value can later be changed using :meth:`DataFrame.set_placeholder`
+        The variable value can later be changed using :meth:`DataFrame.set_variable`
 
         :return: Tuple with DataFrame and Series object.
         """
         # todo: check that name doesn't yet exist in base_node and in self.all_series
-        from bach.series.series import placeholder_series
-        series = placeholder_series(
+        from bach.series.series import variable_series
+        series = variable_series(
             base=self,
             value=value,
             name=name
         )
-        placeholders = self.placeholders
-        placeholders[name] = DtypeValuePair(series.dtype, value)
-        df = self.copy_override(placeholders=placeholders)
+        variables = self.variables
+        variables[name] = DtypeValuePair(series.dtype, value)
+        df = self.copy_override(variables=variables)
         return df, series
 
-    def set_placeholder(self, name: str, value: Any) -> 'DataFrame':
+    def set_variable(self, name: str, value: Any) -> 'DataFrame':
         """
-        Return a copy of this DataFrame with the placeholder value updated.
+        Return a copy of this DataFrame with the variable value updated.
         """
-        placeholders = self.placeholders
+        variables = self.variables
         dtype_new = value_to_dtype(value)
 
-        # todo: implement function to get all valid placeholder values both in self.base_node
+        # todo: implement function to get all valid variable values both in self.base_node
         #  and self.all_series
-        if name in placeholders:
-            dtype_old = placeholders[name].dtype
+        if name in variables:
+            dtype_old = variables[name].dtype
             if dtype_old != dtype_new:
-                raise ValueError(f'Cannot change dtype of placeholder. old: {dtype_old} new: {dtype_new}')
-        placeholders[name] = DtypeValuePair(dtype_new, value)
-        return self.copy_override(placeholders=placeholders)
+                raise ValueError(f'Cannot change dtype of variable. old: {dtype_old} new: {dtype_new}')
+        variables[name] = DtypeValuePair(dtype_new, value)
+        return self.copy_override(variables=variables)
 
-    def _get_placeholder_values_mapping(self,
-                                        filter_expressions: List['Expression'] = None
-                                        ) -> Dict[str, str]:
+    def _get_variable_values_mapping(self,
+                                     filter_expressions: List['Expression'] = None
+                                     ) -> Dict[str, str]:
         """
-        Get a mapping of variable-name to value for all values in self.placeholders.
+        Get a mapping of variable-name to value for all values in self.variables.
 
-        :filter_series: Only return entries for which there is a placeholdertoken in these series. Set to
+        :filter_series: Only return entries for which there is a VariableToken in these series. Set to
             None for no filtering at all.
         """
         result = {}
-        available_tokens = self._get_all_placeholder_token_names(filter_expressions or [])
-        for name, dv in self.placeholders.items():
+        available_tokens = self._get_all_variable_token_names(filter_expressions or [])
+        for name, dv in self.variables.items():
             if filter_expressions is not None and name not in available_tokens:
                 continue
             dtype = value_to_dtype(dv.value)
             if dtype != dv.dtype:  # should never happen
                 Exception(f'Dtype of value {dv.value} {dtype} does not match registered dtype {dv.dtype}')
-            property_name = PlaceHolderToken.dtype_name_to_sql(dtype=dtype, name=name)
+            property_name = VariableToken.dtype_name_to_sql(dtype=dtype, name=name)
             series_type = get_series_type_from_dtype(dtype)
             # TODO: `expr` likely contains redundant 'CASTS', only get the actual value.
             #  The casts might be confusing when we export this in someway where a user can see the filled-in
@@ -1958,32 +1957,32 @@ class DataFrame:
         return result
 
     @staticmethod
-    def _get_all_placeholder_token_names(filter_expressions: List['Expression']) -> Set[str]:
+    def _get_all_variable_token_names(filter_expressions: List['Expression']) -> Set[str]:
         found_tokens = set()
         for expression in filter_expressions:
             for token in expression.get_all_tokens():
-                if isinstance(token, PlaceHolderToken):
+                if isinstance(token, VariableToken):
                     found_tokens.add(token.name)
         return found_tokens
 
-    def _get_all_available_placeholders(self) -> Dict[str, str]:
+    def _get_all_available_variables(self) -> Dict[str, str]:
         # TODO: get similar function for self.base_node
-        # TODO: check based on the name of the placeholder (which contains the dtype) whether the
+        # TODO: check based on the name of the variable (which contains the dtype) whether the
         #  dtype is correct
         found_tokens = []
         for series in self.all_series.values():
             tokens = series.expression.get_all_tokens()
             for token in tokens:
-                if isinstance(token, PlaceHolderToken):
+                if isinstance(token, VariableToken):
                     found_tokens.append(token)
         result: Dict[str, str] = {}
         for ft in found_tokens:
             if ft.name in result and result[ft.name] != ft.dtype:
                 # TODO: if this happens, it's shitty
                 # TODO: move this check?
-                raise Exception(f'Placeholder {ft.name} appears multiple times with different dtypes: '
+                raise Exception(f'variable {ft.name} appears multiple times with different dtypes: '
                                 f' {result[ft.name]} and {ft.dtype}. This is not a recoverable error. '
-                                f'Go back a few steps before the later placeholder was introduced.')
+                                f'Go back a few steps before the later variable was introduced.')
             result[ft.name] = ft.dtype
         return result
 

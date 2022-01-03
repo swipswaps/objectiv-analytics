@@ -186,7 +186,7 @@ class Series(ABC):
 
     @classmethod
     # TODO: @abstractmethod
-    def supported_value_to_placeholder(cls, value: Any, name: str) -> Expression:
+    def supported_value_to_variable(cls, value: Any, name: str) -> Expression:
         """
         INTERNAL: TODO
         """
@@ -1164,9 +1164,9 @@ def const_to_series(base: Union[Series, DataFrame],
     return series_type.from_const(base=base, value=value, name=name)
 
 
-def placeholder_series(base: Union[Series, DataFrame],
-                       value: Any,
-                       name: str) -> Series:
+def variable_series(base: Union[Series, DataFrame],
+                    value: Any,
+                    name: str) -> Series:
     """
     INTERNAL: TODO
     """
@@ -1177,7 +1177,7 @@ def placeholder_series(base: Union[Series, DataFrame],
     result = series_type.get_class_instance(
         base=base,
         name=name,
-        expression=ConstValueExpression(series_type.supported_value_to_placeholder(value, name)),
+        expression=ConstValueExpression(series_type.supported_value_to_variable(value, name)),
         group_by=None,
     )
     return result
