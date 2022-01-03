@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/transport-debug",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "A TrackerTransport that logs incoming events to console.debug",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",

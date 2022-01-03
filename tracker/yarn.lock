@@ -891,7 +891,7 @@ __metadata:
     "@objectiv/queue-local-storage": ^0.0.5
     "@objectiv/testing-tools": 0.0.5
     "@objectiv/tracker-core": ^0.0.5
-    "@objectiv/transport-debug": ^0.0.4
+    "@objectiv/transport-debug": ^0.0.5
     "@objectiv/transport-fetch": ^0.0.5
     "@objectiv/transport-xhr": ^0.0.5
     "@rollup/plugin-commonjs": ^21.0.1
@@ -1005,7 +1005,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/transport-debug@^0.0.4, @objectiv/transport-debug@workspace:transports/debug":
+"@objectiv/transport-debug@^0.0.5, @objectiv/transport-debug@workspace:transports/debug":
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-debug@workspace:transports/debug"
   dependencies:
