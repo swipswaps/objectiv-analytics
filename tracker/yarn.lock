@@ -916,7 +916,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-core-react@workspace:core/react, @objectiv/tracker-core-react@~1.0.0":
+"@objectiv/tracker-core-react@workspace:core/react, @objectiv/tracker-core-react@~0.0.4":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-core-react@workspace:core/react"
   dependencies:
@@ -983,7 +983,7 @@ __metadata:
     "@objectiv/queue-local-storage": ^0.0.4
     "@objectiv/testing-tools": 0.0.1
     "@objectiv/tracker-core": ~0.0.4
-    "@objectiv/tracker-core-react": ~1.0.0
+    "@objectiv/tracker-core-react": ~0.0.4
     "@objectiv/transport-fetch": ^0.0.4
     "@objectiv/transport-xhr": ^0.0.4
     "@rollup/plugin-commonjs": ^21.0.1
