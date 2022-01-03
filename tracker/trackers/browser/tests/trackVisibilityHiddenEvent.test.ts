@@ -68,7 +68,7 @@ describe('trackVisibilityHiddenEvent', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionHiddenEvent',
+        _type: 'HiddenEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [],
@@ -90,7 +90,7 @@ describe('trackVisibilityHiddenEvent', () => {
     expect(trackerOverride.trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionHiddenEvent',
+        _type: 'HiddenEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [],

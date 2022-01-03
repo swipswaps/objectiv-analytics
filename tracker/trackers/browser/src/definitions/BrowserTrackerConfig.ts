@@ -18,10 +18,5 @@ export type BrowserTrackerConfig = TrackerConfig & {
   /**
    * Optional. Whether to track application loaded events automatically. Enabled by default.
    */
-  trackApplicationLoaded?: boolean;
-
-  /**
-   * Optional. Whether to track URL change events automatically. Enabled by default.
-   */
-  trackURLChanges?: boolean;
+  trackApplicationLoadedEvent?: boolean;
 };

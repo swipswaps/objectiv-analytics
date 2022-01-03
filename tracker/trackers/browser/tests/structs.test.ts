@@ -2,7 +2,7 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeSectionContext } from '@objectiv/tracker-core';
+import { makeContentContext } from '@objectiv/tracker-core';
 import {
   ChildrenTaggingQueries,
   parseLocationContext,
@@ -14,7 +14,7 @@ import {
   stringifyTagChildren,
   stringifyTrackVisibility,
   stringifyValidate,
-  tagElement,
+  tagContent,
   TaggingAttribute,
   TrackClicksAttribute,
   TrackClicksOptions,
@@ -25,7 +25,7 @@ import {
 describe('structs', () => {
   describe('Location Contexts', () => {
     it('Should stringify and parse Section Context', () => {
-      const context = makeSectionContext({ id: 'test' });
+      const context = makeContentContext({ id: 'test' });
       const stringifiedElementContext = stringifyLocationContext(context);
       expect(stringifiedElementContext).toStrictEqual(JSON.stringify(context));
 
@@ -166,7 +166,7 @@ describe('structs', () => {
     });
 
     it('Should stringify and parse Children Attributes', () => {
-      const elementTaggingAttributes = tagElement({ id: 'test' });
+      const elementTaggingAttributes = tagContent({ id: 'test' });
       const children: ChildrenTaggingQueries = [
         {
           queryAll: '#id',

@@ -40,8 +40,8 @@ export type ReactTrackerConfig = TrackerConfig & {
  *  const queueStorage = new TrackerQueueLocalStorage({ trackerId, console })
  *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
  *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
- *  const webDocumentContextPlugin = new WebDocumentContextPlugin({ console });
- *  const plugins = new TrackerPlugins({ plugins: [ applicationContextPlugin, webDocumentContextPlugin ], console });
+ *  const pathContextFromURLPlugin = new PathContextFromURLPlugin({ console });
+ *  const plugins = new TrackerPlugins({ plugins: [ applicationContextPlugin, pathContextFromURLPlugin ], console });
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
  *  @see makeDefaultTransport

@@ -23,11 +23,11 @@ import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerC
  *    tagChildren([
  *      {
  *        queryAll: 'button[aria-label="Previous"]',
- *        tagAs: tagButton({ id: 'prev', text: 'Previous' })
+ *        tagAs: tagPressable({ id: 'prev', text: 'Previous' })
  *      },
  *      {
  *        queryAll: 'button[aria-label="Next"]',
- *        tagAs: tagButton({ id: 'next', text: 'Next' })
+ *        tagAs: tagPressable({ id: 'next', text: 'Next' })
  *      }
  *    ])
  */

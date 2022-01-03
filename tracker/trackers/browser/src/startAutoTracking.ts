@@ -5,7 +5,7 @@
 import { trackerErrorHandler } from './common/trackerErrorHandler';
 import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
 import { TaggingAttribute } from './definitions/TaggingAttribute';
-import { trackApplicationLoaded } from './eventTrackers/trackApplicationLoaded';
+import { trackApplicationLoadedEvent } from './eventTrackers/trackApplicationLoadedEvent';
 import { getTracker } from './getTracker';
 import { AutoTrackingState } from './mutationObserver/AutoTrackingState';
 import { makeMutationCallback } from './mutationObserver/makeMutationCallback';
@@ -16,9 +16,7 @@ import { trackNewElements } from './mutationObserver/trackNewElements';
  * Also tracks application Loaded.
  * Safe to call multiple times: it will auto-track only once.
  */
-export const startAutoTracking = (
-  options?: Pick<BrowserTrackerConfig, 'trackURLChanges' | 'trackApplicationLoaded' | 'console'>
-) => {
+export const startAutoTracking = (options?: Pick<BrowserTrackerConfig, 'trackApplicationLoadedEvent' | 'console'>) => {
   try {
     // Nothing to do if we are already auto-tracking
     if (AutoTrackingState.observerInstance) {
@@ -26,7 +24,7 @@ export const startAutoTracking = (
     }
 
     // Create Mutation Observer Callback
-    const mutationCallback = makeMutationCallback(options?.trackURLChanges ?? true, options?.console);
+    const mutationCallback = makeMutationCallback(options?.console);
 
     // Create Mutation Observer
     AutoTrackingState.observerInstance = new MutationObserver(mutationCallback);
@@ -44,9 +42,9 @@ export const startAutoTracking = (
     });
 
     // Track ApplicationLoaded Event - once
-    if ((options?.trackApplicationLoaded ?? true) && !AutoTrackingState.applicationLoaded) {
+    if ((options?.trackApplicationLoadedEvent ?? true) && !AutoTrackingState.applicationLoaded) {
       AutoTrackingState.applicationLoaded = true;
-      trackApplicationLoaded({ tracker: getTracker() });
+      trackApplicationLoadedEvent({ tracker: getTracker() });
     }
   } catch (error) {
     trackerErrorHandler(error);

@@ -14,8 +14,8 @@ import { tagLocation } from './tagLocation';
  */
 export const tagLink = (parameters: TagLinkParameters): TagLocationReturnValue => {
   try {
-    const { id, text, href, options } = create(parameters, TagLinkParameters);
-    return tagLocation({ instance: makeLinkContext({ id, text, href }), options, onError: parameters.onError });
+    const { id, href, options } = create(parameters, TagLinkParameters);
+    return tagLocation({ instance: makeLinkContext({ id, href }), options, onError: parameters.onError });
   } catch (error) {
     return trackerErrorHandler(error, parameters);
   }

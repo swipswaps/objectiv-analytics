@@ -8,8 +8,8 @@ import {
   LocationTree,
   NavigationContextWrapper,
   ObjectivProvider,
-  trackClickEvent,
-  useClickEventTracker,
+  trackPressEvent,
+  usePressEventTracker,
 } from '../src';
 
 describe('NavigationContextWrapper', () => {
@@ -29,8 +29,8 @@ describe('NavigationContextWrapper', () => {
 
     const navigationContextProps = { id: 'test-navigation' };
     const TrackedButton = () => {
-      const trackClickEvent = useClickEventTracker();
-      return <nav onClick={trackClickEvent}>Trigger Event</nav>;
+      const trackPressEvent = usePressEventTracker();
+      return <nav onClick={trackPressEvent}>Trigger Event</nav>;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -48,7 +48,7 @@ describe('NavigationContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'NavigationContext',
@@ -68,7 +68,7 @@ describe('NavigationContextWrapper', () => {
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
         <NavigationContextWrapper {...navigationContextProps}>
-          {(trackingContext) => <nav onClick={() => trackClickEvent(trackingContext)}>Trigger Event</nav>}
+          {(trackingContext) => <nav onClick={() => trackPressEvent(trackingContext)}>Trigger Event</nav>}
         </NavigationContextWrapper>
       </ObjectivProvider>
     );
@@ -81,7 +81,7 @@ describe('NavigationContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'NavigationContext',

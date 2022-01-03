@@ -1,6 +1,6 @@
 # Objectiv React Tracker
 
-[placeholder]
+Objectiv tracker for React applications that embraces the open taxonomy for analytics. Supports core tracking methods and default auto-tracking (ApplicationLoaded) out of the box.
 
 ---
 ## Package Installation

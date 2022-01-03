@@ -2,21 +2,21 @@
  * Copyright 2021 Objectiv B.V.
  */
 
-import { makeSectionHiddenEvent, makeSectionVisibleEvent } from '@objectiv/tracker-core';
+import { makeHiddenEvent, makeVisibleEvent } from '@objectiv/tracker-core';
 import { EventTrackerParameters } from '../types';
 
 /**
- * The parameters of `trackVisibility`
+ * The parameters of `trackVisibility`. Has one extra attribute, `isVisible`, as mandatory parameter.
  */
 export type TrackVisibilityParameters = EventTrackerParameters & {
   /**
-   * Determines whether a SectionVisibleEvent or a SectionHidden event is tracked
+   * Determines whether a VisibleEvent or a HiddenEvent is tracked
    */
   isVisible: boolean;
 };
 
 /**
- * Factors either a SectionVisibleEvent or a SectionHiddenEvent, depending on the given `isVisible` parameter, and
+ * Factors either a VisibleEvent or a HiddenEvent, depending on the given `isVisible` parameter, and
  * hands it over to the given `tracker` via its `trackEvent` method.
  */
 export const trackVisibility = ({
@@ -28,8 +28,5 @@ export const trackVisibility = ({
 }: TrackVisibilityParameters) => {
   const extraContexts = { location_stack: locationStack, global_contexts: globalContexts };
 
-  return tracker.trackEvent(
-    isVisible ? makeSectionVisibleEvent(extraContexts) : makeSectionHiddenEvent(extraContexts),
-    options
-  );
+  return tracker.trackEvent(isVisible ? makeVisibleEvent(extraContexts) : makeHiddenEvent(extraContexts), options);
 };

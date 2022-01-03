@@ -8,20 +8,20 @@ import { useLocationStack } from '../consumers/useLocationStack';
 import { useTracker } from '../consumers/useTracker';
 
 /**
- * The parameters of `useTrackVisibility`
+ * The parameters of `useTrackVisibility`. Has one extra attribute, `isVisible`, as mandatory parameter.
  */
-export type TrackVisibilityHookParameters = EventTrackerHookParameters & {
+export type VisibilityTrackerHookParameters = EventTrackerHookParameters & {
   /**
-   * Determines whether a SectionVisibleEvent or a SectionHidden event is tracked
+   * Determines whether a VisibleEvent or a Hidden event is tracked
    */
   isVisible: boolean;
 };
 
 /**
- * Returns a SectionVisibleEvent / SectionHiddenEvent Tracker ready to be triggered.
+ * Returns a VisibleEvent / HiddenEvent Tracker ready to be triggered.
  * The `isVisible` parameter determines which Visibility Event is triggered.
  */
-export const useVisibilityTracker = (parameters: TrackVisibilityHookParameters) => {
+export const useVisibilityTracker = (parameters: VisibilityTrackerHookParameters) => {
   const { isVisible, tracker = useTracker(), locationStack = useLocationStack(), globalContexts } = parameters;
 
   return () => trackVisibility({ isVisible, tracker, locationStack, globalContexts });

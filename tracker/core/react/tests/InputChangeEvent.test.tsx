@@ -4,7 +4,7 @@
 
 import { makeInputChangeEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { makeSectionContext, TrackingContextProvider, trackInputChangeEvent, useInputChangeEventTracker } from '../src';
+import { makeContentContext, TrackingContextProvider, trackInputChangeEvent, useInputChangeEventTracker } from '../src';
 
 describe('InputChangeEvent', () => {
   beforeEach(() => {
@@ -56,15 +56,15 @@ describe('InputChangeEvent', () => {
     const Component = () => {
       const trackInputChangeEvent = useInputChangeEventTracker({
         tracker: customTracker,
-        locationStack: [makeSectionContext({ id: 'override' })],
+        locationStack: [makeContentContext({ id: 'override' })],
       });
       trackInputChangeEvent();
 
       return <>Component triggering InputChangeEvent</>;
     };
 
-    const location1 = makeSectionContext({ id: 'root' });
-    const location2 = makeSectionContext({ id: 'child' });
+    const location1 = makeContentContext({ id: 'root' });
+    const location2 = makeContentContext({ id: 'child' });
 
     render(
       <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
@@ -78,7 +78,7 @@ describe('InputChangeEvent', () => {
       1,
       expect.objectContaining(
         makeInputChangeEvent({
-          location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
+          location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'override' })],
         })
       ),
       undefined
