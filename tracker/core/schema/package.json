@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/schema",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "Objectiv TypeScript implementation of the open taxonomy for analytics",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -38,9 +38,8 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
-    "depcheck": "^1.4.2",
-    "prettier": "^2.4.1",
+    "prettier": "^2.5.1",
     "shx": "^0.3.3",
-    "typescript": "^4.4.4"
+    "typescript": "^4.5.4"
   }
 }

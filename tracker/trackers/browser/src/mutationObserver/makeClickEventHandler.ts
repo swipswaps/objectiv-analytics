@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { BrowserTracker } from '../BrowserTracker';
@@ -7,7 +7,7 @@ import { isTaggedElement } from '../common/guards/isTaggedElement';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { TrackClicksOptions } from '../definitions/TrackClicksOptions';
-import { trackClick } from '../eventTrackers/trackClick';
+import { trackPressEvent } from '../eventTrackers/trackPressEvent';
 
 /**
  * A factory to make the event handler to attach to new TaggedElements with the `trackClicks` attributes set
@@ -24,7 +24,7 @@ export const makeClickEventHandler = (
       // Or the Event's currentTarget is am Element tagged to track Clicks (eg: the Event bubbled up to from a child)
       (isTaggedElement(event.currentTarget) && event.currentTarget.hasAttribute(TaggingAttribute.trackClicks))
     ) {
-      trackClick({ element, tracker });
+      trackPressEvent({ element, tracker });
 
       // If required prevent this event from propagating and attempt to wait for it to be fully executed
       if (trackClicksOptions) {

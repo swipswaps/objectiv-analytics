@@ -1,11 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { makeApplicationLoadedEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import {
-  makeSectionContext,
+  makeContentContext,
   ObjectivProvider,
   trackApplicationLoadedEvent,
   TrackingContextProvider,
@@ -85,15 +85,15 @@ describe('trackApplicationLoaded', () => {
     const Component = () => {
       const trackApplicationLoadedEvent = useApplicationLoadedEventTracker({
         tracker: customTracker,
-        locationStack: [makeSectionContext({ id: 'override' })],
+        locationStack: [makeContentContext({ id: 'override' })],
       });
       trackApplicationLoadedEvent();
 
       return <>Component triggering ApplicationLoadedEvent</>;
     };
 
-    const location1 = makeSectionContext({ id: 'root' });
-    const location2 = makeSectionContext({ id: 'child' });
+    const location1 = makeContentContext({ id: 'root' });
+    const location2 = makeContentContext({ id: 'child' });
 
     render(
       <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
@@ -107,7 +107,7 @@ describe('trackApplicationLoaded', () => {
       1,
       expect.objectContaining(
         makeApplicationLoadedEvent({
-          location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
+          location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'override' })],
         })
       ),
       undefined

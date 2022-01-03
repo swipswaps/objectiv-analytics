@@ -1,11 +1,9 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 /**
- * Events must provide a `name` and optionally can, but most likely will, carry a list of Location and Global
- * Contexts. Additionally, every event must have an `ApplicationContext` to be able to distinguish from what
- * application the event originated.
+ * This is the abstract parent of all Events.
  * Inheritance: AbstractEvent
  */
 export abstract class AbstractEvent {
@@ -41,13 +39,7 @@ export abstract class AbstractEvent {
 }
 
 /**
- * Abstract Contexts define either properties required by Collectors or internal ones for hierarchical
- * discrimination purposes.
- * All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement.
- * For example we never want to mix Location Contexts with Global Contexts and Events may requires specific Contexts
- * to be present in their Location Stack. Eg. a NavigationContext instead of a generic SectionContext.
- * This ensures that Events are carrying the Contexts they require, making them meaningful and identifiable.
- * All Contexts inherit from AbstractContext. It defines the bare minimum properties every Context must implement.
+ * AbstractContext defines the bare minimum properties for every Context. All Contexts inherit from it.
  * Inheritance: AbstractContext
  */
 export abstract class AbstractContext {
@@ -64,22 +56,19 @@ export abstract class AbstractContext {
 }
 
 /**
- * This is the abstract parent of all location contexts. LocationContexts are used to populate Trackers or Events
- * `location_stack` properties. A Location Stack is meant to describe accurately where an Event originated in the
- * UI Eg. Sections, Menus, etc.
- * Inheritance: AbstractLocationContext -> AbstractContext
- */
-export abstract class AbstractLocationContext extends AbstractContext {
-  readonly __location_context = true;
-}
-
-/**
- * Global_contexts are used to populate Trackers or Events `global_contexts` properties. They carry information
- * that is not related to where the Event originated, such as device, platform or business data.
+ * This is the abstract parent of all Global Contexts. Global contexts add general information to an Event.
  * Inheritance: AbstractGlobalContext -> AbstractContext
  */
 export abstract class AbstractGlobalContext extends AbstractContext {
   readonly __global_context = true;
+}
+
+/**
+ * AbstractLocationContext are the abstract parents of all Location Contexts. Location Contexts are meant to describe where an event originated from in the visual UI.
+ * Inheritance: AbstractLocationContext -> AbstractContext
+ */
+export abstract class AbstractLocationContext extends AbstractContext {
+  readonly __location_context = true;
 }
 
 /**
@@ -92,14 +81,6 @@ export abstract class AbstractNonInteractiveEvent extends AbstractEvent {
 
 /**
  *
- * Inheritance: AbstractVideoEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export abstract class AbstractVideoEvent extends AbstractNonInteractiveEvent {
-  readonly __video_event = true;
-}
-
-/**
- *
  * Inheritance: AbstractInteractiveEvent -> AbstractEvent
  */
 export abstract class AbstractInteractiveEvent extends AbstractEvent {
@@ -108,29 +89,16 @@ export abstract class AbstractInteractiveEvent extends AbstractEvent {
 
 /**
  *
- * Inheritance: AbstractSectionContext -> AbstractLocationContext -> AbstractContext
+ * Inheritance: AbstractMediaEvent -> AbstractNonInteractiveEvent -> AbstractEvent
  */
-export abstract class AbstractSectionContext extends AbstractLocationContext {
-  readonly __section_context = true;
+export abstract class AbstractMediaEvent extends AbstractNonInteractiveEvent {
+  readonly __media_event = true;
 }
 
 /**
  *
- * Inheritance: AbstractItemContext -> AbstractLocationContext -> AbstractContext
+ * Inheritance: AbstractPressableContext -> AbstractLocationContext -> AbstractContext
  */
-export abstract class AbstractItemContext extends AbstractLocationContext {
-  readonly __item_context = true;
-}
-
-/**
- *
- * Inheritance: AbstractActionContext -> AbstractItemContext -> AbstractLocationContext -> AbstractContext
- */
-export abstract class AbstractActionContext extends AbstractItemContext {
-  readonly __action_context = true;
-
-  /**
-   * The text of the interactive element or, for visuals, a string describing it
-   */
-  text: string;
+export abstract class AbstractPressableContext extends AbstractLocationContext {
+  readonly __pressable_context = true;
 }

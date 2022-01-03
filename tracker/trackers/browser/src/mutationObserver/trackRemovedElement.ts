@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { TrackerElementLocations } from '@objectiv/tracker-core';
@@ -9,7 +9,7 @@ import { parseTrackVisibility } from '../common/parsers/parseTrackVisibility';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { GuardableElement } from '../definitions/GuardableElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { trackSectionHidden } from '../eventTrackers/trackSectionHidden';
+import { trackHiddenEvent } from '../eventTrackers/trackHiddenEvent';
 
 /**
  * Given a removed GuardableElement node it will:
@@ -27,7 +27,7 @@ export const trackRemovedElement = (element: GuardableElement, tracker: BrowserT
       if (element.hasAttribute(TaggingAttribute.trackVisibility)) {
         const trackVisibility = parseTrackVisibility(element.getAttribute(TaggingAttribute.trackVisibility));
         if (trackVisibility.mode === 'auto') {
-          trackSectionHidden({ element, tracker });
+          trackHiddenEvent({ element, tracker });
         }
       }
 

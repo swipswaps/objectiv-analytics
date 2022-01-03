@@ -207,7 +207,7 @@ class SeriesLocationStack(SeriesJsonb):
         Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
         accessor. Same as :py:attr:`obj`
 
-        .. autoclass:: bach_open_taxonomy.series.SeriesLocationStack.LocationStack
+        .. autoclass:: bach_open_taxonomy.series.ObjectivStack
             :members:
             :noindex:
 
@@ -474,6 +474,17 @@ class MetaBase:
 
 
 class ModelHub:
+    """
+    Class for the open model hub. Used in ObjectivFrame.
+
+    The ModelHub contains a growing collection of open-source, free to use data models
+    that you can take, stack and run to quickly build highly specific model stacks for product analysis and
+    exploration. It includes models for a wide range of typical product analytics use cases.
+
+    All models are compatible with datasets that have been validated against the open analytics taxonomy. The
+    source is available for all models and you’re free to make any changes. You can use the included
+    pandas-compatible Bach modeling library to customize them, or even add in advanced ML models.
+    """
     def __init__(self, df):
         self._df = df
 
@@ -481,6 +492,16 @@ class ModelHub:
         self._metabase = None
 
     def to_metabase(self, df, model_type: str = None, config: dict = None):
+        """
+        Plot data in `df` to Metabase. If a card already exists, it will be updated. If `df` is a
+        :py:class:`bach.Series`, it will call :py:meth:`bach.Series.to_frame`.
+
+        Default options can be overridden using the config dictionary.
+
+        :param df: :py:meth:`bach.DataFrame` or :py:meth:`bach.Series` to push to MetaBase.
+        :param model_type: Preset output to Metabase for a specific model. eg, 'unique_users'
+        :param config: Override default config options for the graph to be added/updated in Metabase.
+        """
         if not self._metabase:
             self._metabase = MetaBase()
         return self._metabase.to_metabase(df, model_type, config)
@@ -488,6 +509,8 @@ class ModelHub:
     @staticmethod
     def combine(*series: 'Series'):
         """
+        INTERNAL
+
         Buids a dataframe from multiple series with "moment" as index. Can be used for series that are
         returned from aggregations of the model hub.
         :param *series: The Series that are combined into a DataFrame. At least two Series should be passed
@@ -511,14 +534,19 @@ class ModelHub:
 
     class Aggregate:
         """
-        filter param takes SeriesBoolean. filter methods always return SeriesBoolean.
+        Models that return aggregated data in some form from the original ObjectivFrame.
+
+        Methods in this class can be filtered with the filter parameter, which always takes SeriesBoolean. The
+        ModelHub can also create specific commonly used filters with methods from
+        :py:attr:`bach_open_taxonomy.ModelHub.filter`.
         """
+
         def __init__(self, df):
             self._df = df
 
         def _generic_aggregation(self, time_aggregation, column, filter, name):
             if not time_aggregation:
-                time_aggregation = self._df.time_aggregation
+                time_aggregation = self._df._time_aggregation
             gb = self._df.moment.dt.sql_format(time_aggregation) if time_aggregation else None
             df = self._df.copy_override()
             if filter:
@@ -534,11 +562,15 @@ class ModelHub:
 
         def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
+            Calculate the unique users in the ObjectivFrame.
+
             Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-            ie. ``time_aggregation=='YYYY-MM-DD' aggregates by date.
+            ie. ``time_aggregation=='YYYY-MM-DD'`` aggregates by date.
+
             :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
             :param filter: the output of this model is only based on the rows for which the filter is True.
             """
+
             return self._generic_aggregation(time_aggregation=time_aggregation,
                                              column='user_id',
                                              filter=filter,
@@ -546,11 +578,15 @@ class ModelHub:
 
         def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
             """
+            Calculate the unique sessions in the ObjectivFrame.
+
             Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-            ie. ``time_aggregation=='YYYY-MM-DD' aggregates by date.
+            ie. ``time_aggregation=='YYYY-MM-DD'`` aggregates by date.
+
             :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
             :param filter: the output of this model is only based on the rows for which the filter is True.
             """
+
             return self._generic_aggregation(time_aggregation=time_aggregation,
                                              column='session_id',
                                              filter=filter,
@@ -559,18 +595,21 @@ class ModelHub:
     class Filter:
         """
         Methods in this class can be used as filters in aggregation models.
-        Always return SeriesBoolean with same index and base node as the ObjectivFrame the method is applied
+
+        Always return SeriesBoolean with same base node as the ObjectivFrame the method is applied
         to.
         """
+
         def __init__(self, df):
             self._df = df
 
         def is_first_session(self) -> 'SeriesBoolean':
             """
             Labels a session True if the session is the first session of that user in the data.
-            :returns: SeriesBoolean with same index and base node as the ObjectivFrame this method is applied
-                to.
+
+            :returns: SeriesBoolean with same base node as the ObjectivFrame this method is applied to.
             """
+
             window = self._df.groupby('user_id').window()
             first_session = window['session_id'].min()
             series = first_session == self._df.session_id
@@ -579,11 +618,13 @@ class ModelHub:
         def conversion(self, name):
             """
             Labels a hit True if it is a conversion hit.
-            :param name: the name of the conversion to label as set in ObjectivFrame.conversion_events.
-            :returns: SeriesBoolean with same index and base node as the ObjectivFrame this method is applied
-                to.
+
+            :param name: the name of the conversion to label as set in
+                :py:attr:`bach_open_taxonomy.ObjectivFrame.conversion_events`.
+            :returns: SeriesBoolean with same base node as the ObjectivFrame this method is applied to.
             """
-            conversion_stack, conversion_event = self._df.conversion_events[name]
+
+            conversion_stack, conversion_event = self._df._conversion_events[name]
 
             if conversion_stack is None:
                 series = self._df.event_type == conversion_event
@@ -595,37 +636,82 @@ class ModelHub:
 
     @property
     def f(self):
+        """
+        Access filter methods from the model hub. Same as :py:meth:`filter`.
+
+        .. autoclass:: bach_open_taxonomy.series.ModelHub.Filter
+            :members:
+            :noindex:
+
+        """
+
         return self.Filter(self._df)
 
     @property
     def filter(self):
+        """
+        Access filter methods from the model hub. Same as :py:meth:`f`.
+
+        .. autoclass:: bach_open_taxonomy.series.ModelHub.Filter
+            :members:
+            :noindex:
+
+        """
+
         return self.Filter(self._df)
 
     @property
     def agg(self):
+        """
+        Access aggregation methods from the model hub. Same as :py:meth:`aggregate`.
+
+        .. autoclass:: bach_open_taxonomy.series.ModelHub.Aggregate
+            :members:
+            :noindex:
+
+        """
+
         return self.Aggregate(self._df)
 
     @property
     def aggregate(self):
+        """
+        Access aggregation methods from the model hub. Same as :py:meth:`agg`.
+
+        .. autoclass:: bach_open_taxonomy.series.ModelHub.Aggregate
+            :members:
+            :noindex:
+
+        """
         return self.Aggregate(self._df)
 
 
 class ObjectivFrame(DataFrame):
+    """
+    The Objectiv Frame is an extension to Bach DataFrame to use specifically for data that was collected with
+    Objectiv’s Tracker.
+
+    It loads the data as stored by the Objectiv Tracker, makes a few transformations, and sets the right data
+    types.
+
+    This object points to the data on which the models from the open model hub can be applied. An
+    ObjectivFrame is instantiated with :py:meth:`from_objectiv_data`.
+    """
     def __init__(self, **kwargs):
         try:
-            self.time_aggregation = kwargs.pop('time_aggregation')
+            self._time_aggregation = kwargs.pop('time_aggregation')
         except KeyError:
             pass
         try:
-            self.start_date = kwargs.pop('start_date')
+            self._start_date = kwargs.pop('start_date')
         except KeyError:
             pass
         try:
-            self.end_date = kwargs.pop('end_date')
+            self._end_date = kwargs.pop('end_date')
         except KeyError:
             pass
         try:
-            self.conversion_events = kwargs.pop('conversion_events')
+            self._conversion_events = kwargs.pop('conversion_events')
         except KeyError:
             pass
         super().__init__(**kwargs)
@@ -633,20 +719,59 @@ class ObjectivFrame(DataFrame):
         self._metabase = None
 
     @property
+    def time_aggregation(self):
+        """
+        Time aggregation used for aggregation models as set with :py:meth:`from_objectiv_data`
+        """
+        return self._time_aggregation
+
+    @property
+    def start_date(self):
+        """
+        Start date as set with :py:meth:`from_objectiv_data`
+        """
+        return self._start_date
+
+    @property
+    def end_date(self):
+        """
+        End date as set with :py:meth:`from_objectiv_data`
+        """
+        return self._end_date
+
+    @property
+    def conversion_events(self):
+        """
+        Dictionary of all events that are labeled as conversion.
+
+        Set with :py:meth:`add_conversion_event`
+        """
+        return self._conversion_events
+
+    @property
     def model_hub(self):
+        """
+        Access the :py:class:`ModelHub` from the ObjectivFrame. Same as :py:meth:`mh`.
+        """
         return ModelHub(self)
 
     @property
     def mh(self):
+        """
+        Access the :py:class:`ModelHub` from the ObjectivFrame. Same as :py:meth:`model_hub`.
+        """
         return ModelHub(self)
 
     @classmethod
-    def from_table(cls,
-                   engine=None,
-                   start_date=None,
-                   end_date=None,
-                   time_aggregation: str = None) -> 'ObjectivFrame':
+    def from_objectiv_data(cls,
+                           engine=None,
+                           start_date=None,
+                           end_date=None,
+                           time_aggregation: str = None,
+                           table_name: str = 'data') -> 'ObjectivFrame':
         """
+        Loads data from table into an ObjectivFrame object.
+
         :param engine: a Sqlalchemy Engine for the database. If not given, env DSN is used to create one. If
             that's not there, the default of 'postgresql://objectiv:@localhost:5432/objectiv' will be used.
         :param start_date: first date for which data is loaded to the DataFrame. If None, data is loaded from
@@ -656,10 +781,8 @@ class ObjectivFrame(DataFrame):
         :param time_aggregation: can be used to set a default aggregation timeframe interval that is used for
             models that use aggregation. Ie. YYYY-MM-DD aggregates to days (dates). Setting it to None
             aggregates over the entire selected dataset.
+        :param table_name: the name of the sql table where the data is stored.
         """
-
-        table_name = 'data'
-
         if engine is None:
             import sqlalchemy
             import os
@@ -685,7 +808,7 @@ class ObjectivFrame(DataFrame):
         dtypes.pop('value')
         dtypes['user_id'] = dtypes.pop('cookie_id')
 
-        model = sessionized_data_model(start_date=start_date, end_date=end_date)
+        model = sessionized_data_model(start_date=start_date, end_date=end_date, table_name=table_name)
 
         dtypes.update({'session_id': 'int64',
                        'session_hit_number': 'int64',
@@ -704,10 +827,10 @@ class ObjectivFrame(DataFrame):
                               savepoints=Savepoints()
                               )
 
-        df.time_aggregation = time_aggregation  # type: ignore
-        df.start_date = start_date  # type: ignore
-        df.end_date = end_date  # type: ignore
-        df.conversion_events = {}  # type: ignore
+        df._time_aggregation = time_aggregation  # type: ignore
+        df._start_date = start_date  # type: ignore
+        df._end_date = end_date  # type: ignore
+        df._conversion_events = {}  # type: ignore
 
         df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
         df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
@@ -720,7 +843,8 @@ class ObjectivFrame(DataFrame):
                              name: str = None):
         """
         Label events that are used as conversions. All labeled conversion events are set in
-        ObjectivFrame.conversion_events.
+        :py:attr:`conversion_events`.
+
         :param location_stack: the location stack that is labeled as conversion. Can be any slice in of a
             objectiv_location_stack type column. Optionally use in conjunction with event_type to label a
             conversion.
@@ -733,17 +857,39 @@ class ObjectivFrame(DataFrame):
             raise ValueError('At least one of conversion_stack or conversion_event should be set.')
 
         if not name:
-            name = f'conversion_{len(self.conversion_events) + 1}'
+            name = f'conversion_{len(self._conversion_events) + 1}'
 
-        self.conversion_events[name] = location_stack, event_type
-
-    @staticmethod
-    def from_model():
-        raise NotImplementedError('Use ObjectivFrame.from_table(engine) to instantiate')
+        self._conversion_events[name] = location_stack, event_type
 
     @staticmethod
-    def from_pandas():
-        raise NotImplementedError('Use ObjectivFrame.from_table(engine) to instantiate')
+    def from_table(*args, **kwargs):
+        """
+        INTERNAL
+
+        Overrides from_table from Objectiv Bach, so that it can't be used. An ObjectivFrame should be
+        instantiated with from_objectiv_data.
+        """
+        raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
+
+    @staticmethod
+    def from_model(*args, **kwargs):
+        """
+        INTERNAL
+
+        Overrides from_model from Objectiv Bach, so that it can't be used. An ObjectivFrame should be
+        instantiated with from_objectiv_data.
+        """
+        raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
+
+    @staticmethod
+    def from_pandas(*args, **kwargs):
+        """
+        INTERNAL
+
+        Overrides from_pandas from Objectiv Bach, so that it can't be used. An ObjectivFrame should be
+        instantiated with from_objectiv_data.
+        """
+        raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
 
     def _hash_features(self, location_stack_column='location_stack'):
         expression_str = "md5(concat({} #>> {}, {}))"
@@ -772,8 +918,9 @@ class ObjectivFrame(DataFrame):
         """
         Create a df that contains only all unique combinations of the location stack and event_type. This
         allows for manipulating this data on a small data set, while all changes can be applied to all hits
-        later. Use ObjectivFrame.apply_feature_frame_sample_changes later to apply changes made in this
-        ObjectivFrame.
+        later. Use :py:meth:`apply_feature_frame_sample_changes` later to apply changes made in
+        this ObjectivFrame.
+
         :param table_name: the name of the sql table to store the data of the unique location_stack and
             event_types.
         :param overwrite: if True, the sql table is overwritten if it already exists.
@@ -798,10 +945,10 @@ class ObjectivFrame(DataFrame):
                                                group_by=None,
                                                order_by=None)
 
-        sample_df.time_aggregation = df.time_aggregation
-        sample_df.start_date = df.start_date
-        sample_df.end_date = df.end_date
-        sample_df.conversion_events = df.conversion_events
+        sample_df._time_aggregation = df._time_aggregation
+        sample_df._start_date = df._start_date
+        sample_df._end_date = df._end_date
+        sample_df._conversion_events = df._conversion_events
 
         return sample_df
 
@@ -809,7 +956,8 @@ class ObjectivFrame(DataFrame):
         """
         Returns a new ObjectivFrame in which all changes made in feature_frame are applied to the full data
         set.
-        :param feature_frame: the sample ObjectivFrame made by ObjectivFrame.create_sample_feature_frame.
+
+        :param feature_frame: the sample ObjectivFrame made by :py:meth:`create_sample_feature_frame`.
         :returns: a new ObjectivFrame.
         """
         created_features = [x for x in feature_frame.data_columns if x not in ['location_stack',
@@ -828,7 +976,8 @@ class ObjectivFrame(DataFrame):
         Function that calculates the links between contexts on the stack. It returns a DataFrame with the
         links 'from' and 'to' contexts. This function queries the database.
 
-        :param stack_column: The column that contains the stack for which the links will be calculated.
+        :param stack_column: The column that contains the stack for which the links will be calculated. If
+            None, the standard location stack column of an ObjectivFrame is used ('location_stack').
         :param count_method: The function for aggregating the data.
         """
         sampled_node_tuple = find_node(
@@ -875,7 +1024,7 @@ class ObjectivFrame(DataFrame):
         """
         Display the Sankey chart of a location stack. This function queries the database.
 
-        :param: stack_column. The column for which to display the chart. If None the location stack with
+        :param stack_column: The column for which to display the chart. If None the location stack with
             which the Feature Frame is initialized is selected.
         :param text_in_title: A text to display in the title of the graph.
         :param node_color: Optionally the color of the nodes can be adjusted.
@@ -903,17 +1052,32 @@ class ObjectivFrame(DataFrame):
         return fig
 
     def copy_override(self, **kwargs):
-        return super().copy_override(start_date=self.start_date,
-                                     end_date=self.end_date,
-                                     time_aggregation=self.time_aggregation,
-                                     conversion_events=self.conversion_events,
+        """
+        INTERNAL
+
+        Overrides copy_override from Objectiv Bach, so that it carries the
+        additional attributes from ObjectivFrame to the copy.
+        """
+
+        return super().copy_override(start_date=self._start_date,
+                                     end_date=self._end_date,
+                                     time_aggregation=self._time_aggregation,
+                                     conversion_events=self._conversion_events,
                                      **kwargs)
 
     def materialize(self, **kwargs):
+        """
+        Overrides materialize from Objectiv Bach.
+
+        It carries the additional attributes from ObjectivFrame to the materialized ObjectivFrame. See
+        :py:meth:`bach.DataFrame.materialize` for documentation.
+
+        :returns: ObjectivFrame with the current DataFrame's state as base_node
+        """
         df = super().materialize(**kwargs)
-        df.time_aggregation = self.time_aggregation  # type: ignore
-        df.start_date = self.start_date  # type: ignore
-        df.end_date = self.end_date  # type: ignore
-        df.conversion_events = self.conversion_events  # type: ignore
+        df._time_aggregation = self._time_aggregation  # type: ignore
+        df._start_date = self._start_date  # type: ignore
+        df._end_date = self._end_date  # type: ignore
+        df._conversion_events = self._conversion_events  # type: ignore
 
         return df

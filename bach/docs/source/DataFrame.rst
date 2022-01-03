@@ -73,7 +73,7 @@ Reference
 ---------
 .. autosummary::
     :template: autosummary/class_short.rst
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame
 
@@ -83,7 +83,7 @@ Reference by function
 Creation
 ~~~~~~~~
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.from_table
     DataFrame.from_model
@@ -93,7 +93,7 @@ Creation
 Value accessors
 ~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.head
     DataFrame.to_pandas
@@ -105,7 +105,7 @@ Attributes and underlying data
 Axes
 ++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.index
     DataFrame.data
@@ -118,7 +118,7 @@ Axes
 Types
 +++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.dtypes
     DataFrame.index_dtypes
@@ -127,7 +127,7 @@ Types
 Sql Model
 +++++++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.materialize
     DataFrame.get_sample
@@ -138,7 +138,7 @@ Sql Model
 Reshaping, indexing, sorting & merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.sort_values
     DataFrame.rename
@@ -150,7 +150,7 @@ Reshaping, indexing, sorting & merging
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.agg
     DataFrame.aggregate
@@ -161,7 +161,7 @@ Aggregation & windowing
     DataFrame.rolling
     DataFrame.expanding
 
-.. _dataframe.stats:
+.. _DataFrame.stats:
 
 Computations & descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,7 +169,7 @@ Computations & descriptive stats
 All types
 +++++++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.count
     DataFrame.min
@@ -181,7 +181,7 @@ All types
 Numeric
 +++++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.mean
     DataFrame.sem

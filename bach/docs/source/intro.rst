@@ -11,11 +11,9 @@ dataframe operations in your notebook. It uses a SQL abstraction layer that enab
 full dataset, and you can output models to SQL with a single command. It includes a set of operations that
 enable effective feature creation for datasets that embrace the open taxonomy of analytics.
 
-We've set up a online `sandboxed notebook <https://notebook.objectiv.io/lab?path=product_analytics.ipynb>`_
-with Objectiv Analytics data for you to play around, to demonstrate what Bach can do without the need to
-install anything. Beware this is python compiled to javascript, running in the browser; so the performance
-is not the same as running Bach in a normal python notebook. Especially the initial loading can be slow.
-
+To get a taste of what you can do with Objectiv Bach, There is a `demo 
+<https://objectiv.io/docs/quickstart-guide>`_ available that enables you to run the full Objectiv pipeline on your local machine. It includes our website as a demo app, a Jupyter Notebook 
+environment with working models and a Metabase environment to output data to.
 
 What is Bach?
 -------------

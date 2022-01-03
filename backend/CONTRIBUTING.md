@@ -17,7 +17,7 @@ pip install -r requirements-dev.txt
 
 ## Start DB
 ```bash
-cd ..; docker-compose up --detach postgres
+cd ..; docker-compose up --detach objectiv_postgres
 cd backend; python objectiv_backend/tools/db_init/db_init.py
 ```
 SECURITY WARNING: The above docker-compose command starts a postgres container that allows connections

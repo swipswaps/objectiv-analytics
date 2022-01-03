@@ -1,5 +1,5 @@
 
-from objectiv_backend.schema.schema import make_event_from_dict, SectionContext, HttpContext, make_context
+from objectiv_backend.schema.schema import make_event_from_dict, ContentContext, HttpContext, make_context
 import json
 from typing import Dict, Any
 from objectiv_backend.common.event_utils import add_global_context_to_event, get_context
@@ -12,25 +12,27 @@ CLICK_EVENT_JSON = '''
 {
     "events":[
         {
-            "_type":"ClickEvent",
+            "_type":"PressEvent",
             "location_stack":[
                 {
-                    "_type":"WebDocumentContext",
-                    "id":"#document",
-                    "url":"http://localhost:3000/"
+                    "_type":"RootLocationContext",
+                    "id":"home"
                 },{
                     "_type":"NavigationContext",
                     "id":"navigation"
                 },{
-                    "_type":"ButtonContext",
-                    "id":"open-drawer",
-                    "text":"open drawer"
+                    "_type":"PressableContext",
+                    "id":"open-drawer"
                 }
             ],
             "global_contexts":[
                 {
                     "_type":"ApplicationContext",
                     "id":"rod-web-demo"
+                },
+                {
+                    "_type":"PathContext",
+                    "id":"http://localhost:3000/"
                 }
             ],
             "time":1630049334860,
@@ -80,17 +82,17 @@ def test_make_event_from_dict():
     assert(validate_event_adheres_to_schema(event_schema=event_schema, event=event) != [])
 
 
-def test_make_section_context():
-    section_context = {
-        'id': 'section_id',
-        '_type': 'SectionContext'
+def test_make_content_context():
+    content_context = {
+        'id': 'content_id',
+        '_type': 'ContentContext'
     }
 
-    context = SectionContext(**section_context)
+    context = ContentContext(**content_context)
     # check dictionaries are the same
-    assert(context == section_context)
+    assert(context == content_context)
     # check json serialized versions are the same
-    assert(json.dumps(context) == json.dumps(section_context))
+    assert(json.dumps(context) == json.dumps(content_context))
 
 
 def test_add_global_context():

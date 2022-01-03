@@ -1,7 +1,8 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { PathContextFromURLPlugin } from '@objectiv/plugin-path-context-from-url';
 import { makeTrackerDefaultPluginsList } from '@objectiv/tracker-core';
 import { ReactTrackerConfig } from '../../ReactTracker';
 
@@ -10,4 +11,5 @@ import { ReactTrackerConfig } from '../../ReactTracker';
  */
 export const makeDefaultPluginsList = (trackerConfig: ReactTrackerConfig) => [
   ...makeTrackerDefaultPluginsList(trackerConfig),
+  new PathContextFromURLPlugin(trackerConfig),
 ];

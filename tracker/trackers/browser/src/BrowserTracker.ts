@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { ContextsConfig, Tracker, TrackerConfig, TrackerPlugins } from '@objectiv/tracker-core';
@@ -29,8 +29,8 @@ import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
  *  const queueStorage = new LocalStorageQueueStore({ trackerId, console })
  *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
  *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
- *  const webDocumentContextPlugin = new WebDocumentContextPlugin({ console });
- *  const plugins = new TrackerPlugins({ plugins: [ applicationContextPlugin, webDocumentContextPlugin ], console });
+ *  const pathContextFromURLPlugin = new PathContextFromURLPlugin({ console });
+ *  const plugins = new TrackerPlugins({ plugins: [ applicationContextPlugin, pathContextFromURLPlugin ], console });
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
  *  See also `makeDefaultTransport`, `makeDefaultQueue` and

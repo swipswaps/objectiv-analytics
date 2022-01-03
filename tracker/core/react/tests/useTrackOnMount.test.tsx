@@ -1,8 +1,8 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeSectionVisibleEvent, Tracker } from '@objectiv/tracker-core';
+import { makeVisibleEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect } from 'react';
@@ -30,7 +30,7 @@ describe('useTrackOnMount', () => {
   };
 
   const Application = () => {
-    useTrackOnMount({ event: makeSectionVisibleEvent() });
+    useTrackOnMount({ event: makeVisibleEvent() });
 
     useEffect(renderSpy);
 
@@ -41,7 +41,7 @@ describe('useTrackOnMount', () => {
     render(<Index />);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
   });
 
   it('should not execute on unmount', () => {
@@ -50,7 +50,7 @@ describe('useTrackOnMount', () => {
     unmount();
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
   });
 
   it('should not execute on rerender', () => {
@@ -61,16 +61,16 @@ describe('useTrackOnMount', () => {
 
     expect(renderSpy).toHaveBeenCalledTimes(3);
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
   });
 
   it('should allow overriding the tracker with a custom one', () => {
     const spyTransport2 = { transportName: 'spyTransport2', handle: jest.fn(), isUsable: () => true };
     const anotherTracker = new Tracker({ applicationId: 'app-id', transport: spyTransport2 });
-    renderHook(() => useTrackOnMount({ event: makeSectionVisibleEvent(), tracker: anotherTracker }));
+    renderHook(() => useTrackOnMount({ event: makeVisibleEvent(), tracker: anotherTracker }));
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionVisibleEvent' }));
+    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
   });
 });

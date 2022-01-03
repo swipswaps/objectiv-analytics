@@ -1,10 +1,10 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
-import { LinkContextWrapper, LocationTree, ObjectivProvider, trackClickEvent, useClickEventTracker } from '../src';
+import { LinkContextWrapper, LocationTree, ObjectivProvider, trackPressEvent, usePressEventTracker } from '../src';
 
 describe('LinkContextWrapper', () => {
   beforeEach(() => {
@@ -21,10 +21,10 @@ describe('LinkContextWrapper', () => {
     const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const linkContextProps = { id: 'test-link', text: 'text', href: 'test' };
+    const linkContextProps = { id: 'test-link', href: 'test' };
     const TrackedButton = () => {
-      const trackClickEvent = useClickEventTracker();
-      return <a onClick={trackClickEvent}>Trigger Event</a>;
+      const trackPressEvent = usePressEventTracker();
+      return <a onClick={trackPressEvent}>Trigger Event</a>;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -42,7 +42,7 @@ describe('LinkContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'LinkContext',
@@ -58,11 +58,11 @@ describe('LinkContextWrapper', () => {
     const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
     jest.spyOn(spyTransport, 'handle');
 
-    const linkContextProps = { id: 'test-link', text: 'text', href: 'test' };
+    const linkContextProps = { id: 'test-link', href: 'test' };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
         <LinkContextWrapper {...linkContextProps}>
-          {(trackingContext) => <a onClick={() => trackClickEvent(trackingContext)}>Trigger Event</a>}
+          {(trackingContext) => <a onClick={() => trackPressEvent(trackingContext)}>Trigger Event</a>}
         </LinkContextWrapper>
       </ObjectivProvider>
     );
@@ -75,7 +75,7 @@ describe('LinkContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'LinkContext',

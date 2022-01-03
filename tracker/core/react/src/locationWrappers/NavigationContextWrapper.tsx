@@ -1,15 +1,15 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { makeNavigationContext } from '../common/factories/makeNavigationContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
-import { SectionContextWrapperProps } from './SectionContextWrapper';
+import { ContentContextWrapperProps } from './ContentContextWrapper';
 
 /**
- * The props of NavigationContextWrapper. No extra attributes, same as SectionContextWrapper.
+ * The props of NavigationContextWrapper. No extra attributes, same as ContentContextWrapper.
  */
-export type NavigationContextWrapperProps = SectionContextWrapperProps;
+export type NavigationContextWrapperProps = ContentContextWrapperProps;
 
 /**
  * Wraps its children in a NavigationContext.

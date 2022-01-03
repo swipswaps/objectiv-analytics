@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 // noinspection UnnecessaryLocalVariableJS
@@ -21,7 +21,7 @@ const fs = require('fs');
 const JSON5 = require('json5');
 
 const COPYRIGHT = `/*
- * Copyright ${new Date().getFullYear()} Objectiv B.V.
+ * Copyright 2021-${new Date().getFullYear()} Objectiv B.V.
  */
  \n
 `;
@@ -184,7 +184,22 @@ function createFactory(
   // - location_stack and global_contexts are always optional because most often the Tracker provides them
   // - id is not overridable because the Tracker is responsible to provide one
   // - time is not overridable because the Tracker is responsible to provide one
+
   let are_all_props_optional = true;
+
+  // we do a preliminary iteration on all properties to find out if they are all optional or not
+  Object.keys(merged_properties).forEach((mp) => {
+    if (!merged_properties[mp]['type']) {
+      return;
+    }
+
+    if (params.object_type === 'event' && ['location_stack', 'global_contexts', 'id', 'time'].includes(mp)) {
+      return;
+    }
+
+    are_all_props_optional = false;
+  });
+
   const return_omit = [];
   Object.keys(merged_properties).forEach((mp) => {
     if (merged_properties[mp]['discriminator']) {
@@ -193,13 +208,12 @@ function createFactory(
       if (params.object_type === 'event' && ['location_stack', 'global_contexts'].includes(mp)) {
         // because the global_contexts and location_stack arrays are optional
         // we provide an empty array as default here
-        properties.push(`${mp}: ${props_name}?.${mp} ?? []`);
+        properties.push(`${mp}: ${props_name}${are_all_props_optional ? '?.' : '.'}${mp} ?? []`);
         props[mp] = `${mp}?: ${merged_properties[mp]['type']}`;
       } else if (params.object_type === 'event' && ['id', 'time'].includes(mp)) {
         // simply don't add the property and adjust the return type to omit it as well
         return_omit.push(mp);
       } else {
-        are_all_props_optional = false;
         properties.push(`${mp}: ${props_name}.${mp}`);
         props[mp] = `${mp}: ${merged_properties[mp]['type']}`;
       }
