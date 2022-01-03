@@ -657,7 +657,7 @@ class DataFrame:
 
     def set_savepoint(self, name: str, materialization: Union[Materialization, str] = Materialization.CTE):
         """
-        Set the current state as a savepoint in save_points.
+        Set the current state as a savepoint in `self.savepoints`.
 
         :param save_points: Savepoints object that's responsible for tracking all savepoints.
         :param name: Name for the savepoint. This will be the name of the table or view if that's set as
