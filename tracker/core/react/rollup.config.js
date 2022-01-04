@@ -20,6 +20,6 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [peerDepsExternal(), nodeResolve({ browser: true }), commonjs(), ts(), terser(), sizes(), filesize()],
+    plugins: [nodeResolve({ browser: true }), peerDepsExternal(), commonjs(), ts(), terser(), sizes(), filesize()],
   },
 ];
