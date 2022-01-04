@@ -114,10 +114,12 @@ def get_bt(
         import pandas as pd
         df = get_pandas_df(dataset, columns)
         _TABLE_DATAFRAME_CACHE[lookup_key] = get_from_df(table, df, convert_objects)
-    # We don't even renew the 'engine', as creating the database connection takes a bit of time too. If
+    # We don't even renew the `engine`, as creating the database connection takes a bit of time too. If
     # we ever do into trouble because of stale connection or something, then we can change it at that point
     # in time.
-    return _TABLE_DATAFRAME_CACHE[lookup_key].copy_override()
+    # However we do renew the `savepoints`, as that contains state
+    from bach.savepoints import Savepoints
+    return _TABLE_DATAFRAME_CACHE[lookup_key].copy_override(savepoints=Savepoints())
 
 
 def get_pandas_df(dataset: List[List[Any]], columns: List[str]) -> pandas.DataFrame:
