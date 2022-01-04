@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/tracker-browser",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Objectiv Web application analytics tracker for the open taxonomy for analytics",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -25,10 +25,11 @@
       "url": "https://github.com/sdirosa"
     }
   ],
-  "main": "src/index.ts",
-  "module": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.js",
   "files": [
-    "src"
+    "dist"
   ],
   "scripts": {
     "build": "rollup -c --silent --failAfterWarnings",
@@ -61,12 +62,12 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "@objectiv/plugin-path-context-from-url": "^0.0.5",
-    "@objectiv/queue-local-storage": "^0.0.5",
-    "@objectiv/tracker-core": "^0.0.5",
-    "@objectiv/transport-debug": "^0.0.5",
-    "@objectiv/transport-fetch": "^0.0.5",
-    "@objectiv/transport-xhr": "^0.0.5",
+    "@objectiv/plugin-path-context-from-url": "^0.0.6",
+    "@objectiv/queue-local-storage": "^0.0.6",
+    "@objectiv/tracker-core": "^0.0.6",
+    "@objectiv/transport-debug": "^0.0.6",
+    "@objectiv/transport-fetch": "^0.0.6",
+    "@objectiv/transport-xhr": "^0.0.6",
     "superstruct": "^0.15.3"
   },
   "peerDependencies": {
