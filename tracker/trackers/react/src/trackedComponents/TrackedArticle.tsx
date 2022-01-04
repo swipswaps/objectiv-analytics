@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContentContextWrapper } from "../locationWrappers/ContentContextWrapper";
+import { ContentContextWrapper } from "@objectiv/tracker-core-react/src/locationWrappers/ContentContextWrapper";
 import React from "react";
 
 export type TrackedArticleProps = React.HTMLAttributes<HTMLDivElement> & { id?: string, forwardId?: boolean };

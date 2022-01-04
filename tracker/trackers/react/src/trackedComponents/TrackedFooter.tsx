@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { NavigationContextWrapper } from "../locationWrappers/NavigationContextWrapper";
+import { NavigationContextWrapper } from "@objectiv/tracker-core-react/src/locationWrappers/NavigationContextWrapper";
 import React from "react";
 
 export type TrackedFooterProps = React.HTMLAttributes<HTMLDivElement> & { id?: string, forwardId?: boolean };

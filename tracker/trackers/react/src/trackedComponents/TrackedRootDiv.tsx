@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { RootLocationContextWrapper } from "../locationWrappers/RootLocationContextWrapper";
+import { RootLocationContextWrapper } from "@objectiv/tracker-core-react/src/locationWrappers/RootLocationContextWrapper";
 import React from "react";
 
 export type TrackedRootDivProps = React.HTMLAttributes<HTMLDivElement> & { id: string, forwardId?: boolean };

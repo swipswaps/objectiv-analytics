@@ -2,8 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { OverlayContextWrapper } from "../locationWrappers/OverlayContextWrapper";
-import { trackVisibility } from "../eventTrackers/trackVisibility";
+import { OverlayContextWrapper } from "@objectiv/tracker-core-react/src/locationWrappers/OverlayContextWrapper";
+import { trackVisibility } from "@objectiv/tracker-core-react/src/eventTrackers/trackVisibility";
 import React from 'react';
 import { TrackedComponent } from "./trackedTypes";
 

@@ -3,10 +3,10 @@
  */
 
 import Link, { LinkProps } from "@docusaurus/Link";
-import { LinkContextWrapper } from "../locationWrappers/LinkContextWrapper";
-import { makeIdFromString } from "../common/factories/makeIdFromString";
-import { makeTextFromChildren } from "../common/factories/makeTextFromChildren";
-import { trackPressEvent } from "../eventTrackers/trackPressEvent";
+import { LinkContextWrapper } from "@objectiv/tracker-core-react/src/locationWrappers/LinkContextWrapper";
+import { makeIdFromString } from "@objectiv/tracker-core-react/src/common/factories/makeIdFromString";
+import { makeTextFromChildren } from "@objectiv/tracker-core-react/src/common/factories/makeTextFromChildren";
+import { trackPressEvent } from "@objectiv/tracker-core-react/src/eventTrackers/trackPressEvent";
 import React from 'react';
 import { TrackedComponent } from "./trackedTypes";
 
