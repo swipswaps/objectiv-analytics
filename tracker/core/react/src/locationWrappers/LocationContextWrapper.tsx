@@ -3,7 +3,7 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { LocationTree } from '../common/LocationTree';
 import { LocationProvider } from '../common/providers/LocationProvider';
 import { TrackingContext } from '../common/providers/TrackingContext';

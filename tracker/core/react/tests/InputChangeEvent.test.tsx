@@ -4,6 +4,7 @@
 
 import { makeInputChangeEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
+import React from 'react';
 import { makeContentContext, TrackingContextProvider, trackInputChangeEvent, useInputChangeEventTracker } from '../src';
 
 describe('InputChangeEvent', () => {

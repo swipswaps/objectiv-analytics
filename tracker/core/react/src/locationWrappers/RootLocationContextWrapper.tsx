@@ -5,6 +5,7 @@
 import { makeRootLocationContext } from '../common/factories/makeRootLocationContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
 import { ContentContextWrapperProps } from './ContentContextWrapper';
+import React from 'react';
 
 /**
  * The props of RootLocationContextWrapper. No extra attributes, same as ContentContextWrapper.

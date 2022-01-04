@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ReactNode, useContext } from 'react';
+import React, { ReactNode, useContext } from 'react';
 import { trackApplicationLoadedEvent } from '../../eventTrackers/trackApplicationLoadedEvent';
 import { useOnMount } from '../../hooks/useOnMount';
 import { LocationTree } from '../LocationTree';

@@ -5,6 +5,7 @@
 import { makeNavigationContext } from '../common/factories/makeNavigationContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
 import { ContentContextWrapperProps } from './ContentContextWrapper';
+import React from 'react';
 
 /**
  * The props of NavigationContextWrapper. No extra attributes, same as ContentContextWrapper.

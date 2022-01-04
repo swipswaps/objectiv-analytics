@@ -5,6 +5,7 @@
 import { makeInputContext } from '../common/factories/makeInputContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
 import { ContentContextWrapperProps } from './ContentContextWrapper';
+import React from 'react';
 
 /**
  * The props of InputContextWrapper. No extra attributes, same as ContentContextWrapper.
