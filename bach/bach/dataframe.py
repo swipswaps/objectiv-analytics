@@ -8,7 +8,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression, VariableToken
-from bach.sql_model import BachSqlModelBuilder
+from bach.sql_model import BachSqlModelBuilder, CurrentNodeSqlModelBuilder
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
 from sql_models.graph_operations import update_properties_in_graph
 from sql_models.model import SqlModel
@@ -1449,6 +1449,7 @@ class DataFrame:
 
         limit_clause = Expression.construct('' if limit_str is None else f'{limit_str}')
         where_clause = where_clause if where_clause else Expression.construct('')
+        group_by_clause = None
         if self.group_by:
 
             not_aggregated = [s.name for s in self._data.values()
@@ -1469,45 +1470,25 @@ class DataFrame:
             having_clause = having_clause if having_clause else Expression.construct('')
 
             columns += [s.get_column_expression() for s in self._data.values()]
-            # TODO: this breaks a lot of injection escaping logic
-            columns_str = ', '.join(expr.to_sql() for expr in columns)
-            where_str = where_clause.to_sql()
-            filter_expressions = [_s.expression for _s in self.all_series.values()] + [where_clause]
-
-            model_builder = BachSqlModelBuilder(
-                name=name,
-                sql=f"""
-                    select {columns_str}
-                    from {{{{prev}}}}
-                    {where_str}
-                    {{group_by}}
-                    {{having}}
-                    {{order_by}} {{limit}}
-                    """
-            )
-            return model_builder(
-                group_by=group_by_clause,
-                having=having_clause,
-                order_by=self._get_order_by_clause(),
-                limit=limit_clause,
-                prev=self.base_node,
-                **self._get_variable_values_mapping(filter_expressions=filter_expressions)
-            )
         else:
-            # TODO: this breaks a lot of injection escaping logic
-            columns_str = ', '.join(expr.to_sql() for expr in self._get_all_column_expressions())
-            where_str = where_clause.to_sql()
-            filter_expressions = [_s.expression for _s in self.all_series.values()] + [where_clause]
-            model_builder = BachSqlModelBuilder(
-                name=name,
-                sql=f'select {columns_str} from {{{{_last_node}}}} {where_str} {{order}} {{limit}}'
-            )
-            return model_builder(
-                _last_node=self.base_node,
-                order=self._get_order_by_clause(),
-                limit=limit_clause,
-                **self._get_variable_values_mapping(filter_expressions=filter_expressions)
-            )
+            columns = self._get_all_column_expressions()
+
+        model_builder = CurrentNodeSqlModelBuilder(
+            name=name,
+            columns=columns,
+            where_clause=where_clause,
+            group_by_clause=group_by_clause,
+            having_clause=having_clause,
+            order_by_clause=self._get_order_by_clause(),
+            limit_clause=limit_clause
+        )
+        # TODO: get full filter_expressions here, not just columns and where_clause
+        filter_expressions = columns + [where_clause]
+        variable_mapping = self._get_variable_values_mapping(filter_expressions=filter_expressions)
+        model_builder.set_values(prev=self.base_node)
+        model_builder.set_values(**variable_mapping)
+        # todo: type
+        return model_builder.instantiate()  # type: ignore
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
         """

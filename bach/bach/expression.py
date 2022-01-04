@@ -68,7 +68,7 @@ class ModelReferenceToken(ExpressionToken):
         return f'reference{self.model.hash}'
 
     def to_sql(self) -> str:
-        return f'{{{self.refname()}}}'
+        return f'{{{{{self.refname()}}}}}'
 
 
 @dataclass(frozen=True)
@@ -77,7 +77,12 @@ class StringValueToken(ExpressionToken):
     value: str
 
     def to_sql(self) -> str:
-        return SqlModelSpec.escape_format_string(quote_string(self.value))
+        # TODO: add comment
+        return SqlModelSpec.escape_format_string(
+                    SqlModelSpec.escape_format_string(
+                        quote_string(self.value)
+                    )
+                )
 
 
 class Expression:
