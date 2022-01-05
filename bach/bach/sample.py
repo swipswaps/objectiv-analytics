@@ -58,7 +58,11 @@ def get_sample(df: DataFrame,
 
     # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
     # in get_unsampled() by switching this new node for the old node again.
-    new_base_node = SampleSqlModel(table_name=table_name, previous=original_node)
+    new_base_node = SampleSqlModel(
+        table_name=table_name,
+        previous=original_node,
+        columns=original_node.columns
+    )
     return df.copy_override_base_node(base_node=new_base_node)
 
 

@@ -420,6 +420,10 @@ class SqlModel(Generic[T]):
         return hashlib.md5(data_bytes).hexdigest()
 
     @property
+    def model_spec(self):
+        return deepcopy(self._model_spec)
+
+    @property
     def generic_name(self) -> str:
         """ Name for the type of model."""
         return self._generic_name

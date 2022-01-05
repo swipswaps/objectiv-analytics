@@ -8,9 +8,9 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression
-from bach.sql_model import BachSqlModelBuilder
+from bach.sql_model import BachSqlModelBuilder, BachSqlModel
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from sql_models.model import SqlModel, Materialization
+from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder
 from sql_models.sql_generator import to_sql
 
 if TYPE_CHECKING:
@@ -133,7 +133,7 @@ class DataFrame:
     def __init__(
             self,
             engine: Engine,
-            base_node: SqlModel[BachSqlModelBuilder],
+            base_node: BachSqlModel,
             index: Dict[str, 'Series'],
             series: Dict[str, 'Series'],
             group_by: Optional['GroupBy'],
@@ -195,7 +195,7 @@ class DataFrame:
         return self._engine
 
     @property
-    def base_node(self) -> SqlModel[BachSqlModelBuilder]:
+    def base_node(self) -> BachSqlModel:
         """
         INTERNAL: Get the current base node
         """
@@ -288,6 +288,8 @@ class DataFrame:
         """
         if self.group_by or self.order_by:
             return False
+        if tuple(self.all_series.keys()) != self.base_node.columns:
+            return False
         for name, series in self.all_series.items():
             if series.expression != Expression.column_reference(name):
                 return False
@@ -308,8 +310,8 @@ class DataFrame:
             self._order_by == other._order_by
 
     @classmethod
-    def _get_dtypes(cls, engine: Engine, node: SqlModel[BachSqlModelBuilder]) -> Dict[str, str]:
-        new_node = BachSqlModelBuilder(sql='select * from {{previous}} limit 0')(previous=node)
+    def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
+        new_node = CustomSqlModelBuilder(sql='select * from {{previous}} limit 0')(previous=node)
         select_statement = to_sql(new_node)
         sql = f"""
             create temporary table tmp_table_name on commit drop as
@@ -342,7 +344,7 @@ class DataFrame:
         """
         # todo: why is an index mandatory if you can reset it later?
         # todo: don't create a temporary table, the real table (and its meta data) already exists
-        model = BachSqlModelBuilder(sql=f'SELECT * FROM {table_name}').instantiate()
+        model = CustomSqlModelBuilder(sql=f'SELECT * FROM {table_name}').instantiate()
         return cls._from_node(engine, model, index)
 
     @classmethod
@@ -361,20 +363,29 @@ class DataFrame:
         """
         # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
         # select expressions, where clauses, or limits
-        wrapped_model = BachSqlModelBuilder(sql='SELECT * FROM {{model}}')(model=model)
+        wrapped_model = CustomSqlModelBuilder(sql='SELECT * FROM {{model}}')(model=model)
         return cls._from_node(engine, wrapped_model, index)
 
     @classmethod
-    def _from_node(cls, engine, model: SqlModel[BachSqlModelBuilder], index: List[str]) -> 'DataFrame':
+    def _from_node(cls, engine, model: SqlModel, index: List[str]) -> 'DataFrame':
         dtypes = cls._get_dtypes(engine, model)
 
         index_dtypes = {k: dtypes[k] for k in index}
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
 
+        columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
+        bach_model = BachSqlModel(
+            model_spec=model.model_spec,
+            properties=model.properties,
+            references=model.references,
+            materialization=model.materialization,
+            materialization_name=model.materialization_name,
+            columns=columns
+        )
         from bach.savepoints import Savepoints
         return cls.get_instance(
             engine=engine,
-            base_node=model,
+            base_node=bach_model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             group_by=None,
@@ -449,7 +460,7 @@ class DataFrame:
     def get_instance(
             cls,
             engine,
-            base_node: SqlModel[BachSqlModelBuilder],
+            base_node: BachSqlModel,
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
@@ -1460,7 +1471,7 @@ class DataFrame:
     def get_current_node(self, name: str,
                          limit: Union[int, slice] = None,
                          where_clause: Expression = None,
-                         having_clause: Expression = None) -> SqlModel[BachSqlModelBuilder]:
+                         having_clause: Expression = None) -> BachSqlModel:
         """
         INTERNAL: Translate the current state of this DataFrame into a SqlModel.
 
@@ -1507,28 +1518,32 @@ class DataFrame:
 
             group_by_column_expr = self.group_by.get_group_by_column_expression()
             if group_by_column_expr:
-                columns = self.group_by.get_index_column_expressions()
+                column_exprs = self.group_by.get_index_column_expressions()
+                column_names = tuple(self.group_by.index.keys())
                 group_by_clause = Expression.construct('group by {}', group_by_column_expr)
             else:
-                columns = []
+                column_exprs = []
+                column_names = tuple()
                 group_by_clause = Expression.construct('')
             having_clause = having_clause if having_clause else Expression.construct('')
 
-            columns += [s.get_column_expression() for s in self._data.values()]
+            column_exprs += [s.get_column_expression() for s in self._data.values()]
+            column_names += tuple(self._data.keys())
 
             model_builder = BachSqlModelBuilder(
                 name=name,
                 sql="""
-                    select {columns}
+                    select {column_exprs}
                     from {{prev}}
                     {where}
                     {group_by}
                     {having}
                     {order_by} {limit}
-                    """
+                    """,
+                columns=tuple(column_names)
             )
             return model_builder(
-                columns=columns,
+                column_exprs=column_exprs,
                 where=where_clause,
                 group_by=group_by_clause,
                 having=having_clause,
@@ -1539,7 +1554,8 @@ class DataFrame:
         else:
             model_builder = BachSqlModelBuilder(
                 name=name,
-                sql='select {columns} from {{_last_node}} {where} {order} {limit}'
+                sql='select {columns} from {{_last_node}} {where} {order} {limit}',
+                columns=tuple(self.all_series.keys())
             )
             return model_builder(
                 columns=self._get_all_column_expressions(),

@@ -149,3 +149,9 @@ def test_is_materialized():
     df['city'] = df['x']
     del df['x']
     assert not df.is_materialized
+
+    # removing columns
+    df = df_original.copy()
+    assert df.is_materialized
+    del df['municipality']
+    assert not df.is_materialized
