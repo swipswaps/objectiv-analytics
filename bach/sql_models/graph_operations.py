@@ -228,11 +228,11 @@ def update_properties_in_graph(start_node: SqlModel, property_values: Dict[str, 
     """
     find_keys = set(property_values.keys())
 
-    def filter(node: SqlModel) -> bool:
-        node_keys = set(node.properties.keys())
-        return bool(find_keys.intersection(node_keys))
+    def filter_function(node: SqlModel) -> bool:
+        filter_node_keys = set(node.properties.keys())
+        return bool(find_keys.intersection(filter_node_keys))
 
-    found_nodes = find_nodes(start_node, function=filter)
+    found_nodes = find_nodes(start_node, function=filter_function)
     for found_node in found_nodes:
         node_keys = set(found_node.model.properties.keys())
         matching_keys = find_keys.intersection(node_keys)
