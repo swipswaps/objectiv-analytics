@@ -51,8 +51,14 @@ export class TrackerQueue implements TrackerQueueInterface {
   readonly batchDelayMs: number;
   readonly concurrency: number;
 
-  // Hold a list of Event IDs that are currently being processed
+  // Holds a list of Event IDs that are currently being processed
   processingEventIds: string[] = [];
+
+  // Holds when we last sent a batch, used to determine if we should wait
+  lastRunTimestamp: number = 0;
+
+  // State to avoid concurrent runs
+  running: boolean = false;
 
   /**
    * Initializes batching configuration with some sensible values.
@@ -78,14 +84,9 @@ export class TrackerQueue implements TrackerQueueInterface {
     this.processFunction = processFunction;
   }
 
-  startRunner() {
-    setInterval(async () => {
-      await this.run();
-    }, this.batchDelayMs);
-  }
-
   async push(...args: NonEmptyArray<TrackerEvent>): Promise<any> {
-    return this.store.write(...args);
+    await this.store.write(...args);
+    return this.run();
   }
 
   async readBatch(): Promise<TrackerEvent[]> {
@@ -102,6 +103,18 @@ export class TrackerQueue implements TrackerQueueInterface {
       return Promise.reject('TrackerQueue `processFunction` has not been set.');
     }
 
+    if (this.running || this.isIdle()) {
+      return false;
+    }
+
+    this.running = true;
+
+    // Wait to avoid sending batches too close to each other, based on batchDelayMs
+    const msSinceLastRun = Date.now() - this.lastRunTimestamp;
+    if(msSinceLastRun < this.batchDelayMs) {
+      await new Promise(resolve => setTimeout(resolve, this.batchDelayMs - msSinceLastRun))
+    }
+
     // Load and process as many Event batches as `concurrency` allows. For each Event we create a Promise.
     let processPromises: Promise<any>[] = [];
 
@@ -110,7 +123,7 @@ export class TrackerQueue implements TrackerQueueInterface {
 
       // No need to continue if there are no more Events to process
       if (!isNonEmptyArray(eventsBatch)) {
-        return;
+        break;
       }
 
       if (this.console) {
@@ -137,7 +150,10 @@ export class TrackerQueue implements TrackerQueueInterface {
       );
     }
 
-    return Promise.all(processPromises);
+    await Promise.all(processPromises);
+    this.running = false;
+    this.lastRunTimestamp = Date.now();
+    return this.run();
   }
 
   async flush(): Promise<any> {

@@ -3,15 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore } from '../src';
-
-beforeEach(() => {
-  jest.useFakeTimers();
-});
-
-afterEach(() => {
-  jest.useRealTimers();
-});
+import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore, } from '../src';
 
 describe('TrackerQueueMemoryStore', () => {
   const TrackerEvent1 = new TrackerEvent({ id: 'a', _type: 'a' });
@@ -77,85 +69,56 @@ describe('TrackerQueue', () => {
   const TrackerEvent3 = new TrackerEvent({ _type: 'c' });
 
   it('should instantiate to a 0 length Queue', () => {
-    const testQueue = new TrackerQueue({ console: mockConsole });
+    const testQueue = new TrackerQueue({ console: mockConsole, batchDelayMs: 1 });
     expect(testQueue.store.length).toBe(0);
   });
 
   it('should allow enqueuing multiple items at once', () => {
-    const testQueue = new TrackerQueue();
+    const testQueue = new TrackerQueue({ batchDelayMs: 1 });
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
+    testQueue.setProcessFunction(processFunctionSpy);
     testQueue.push(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(testQueue.store.length).toBe(3);
   });
 
   it('should allow setting batchSize and batchDelayMs', () => {
     const testQueue = new TrackerQueue({ batchSize: 123, batchDelayMs: 456 });
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
+    testQueue.setProcessFunction(processFunctionSpy);
     expect(testQueue.batchSize).toBe(123);
     expect(testQueue.batchDelayMs).toBe(456);
   });
 
   it('should throw an exception if the processFunction has not been set', async () => {
-    const testQueue = new TrackerQueue({ batchSize: 1 });
+    const testQueue = new TrackerQueue({ batchSize: 1, batchDelayMs: 1 });
     await expect(testQueue.run()).rejects.toBe('TrackerQueue `processFunction` has not been set.');
   });
 
   it('should enqueue and dequeue in the expected order', async () => {
-    const processFunctionSpy = jest.fn(() => Promise.resolve());
     const memoryStore = new TrackerQueueMemoryStore();
-    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, store: memoryStore, console: mockConsole });
+    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, store: memoryStore, batchDelayMs: 1, console: mockConsole });
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
     testQueue.setProcessFunction(processFunctionSpy);
     expect(testQueue.store.length).toBe(0);
 
-    await testQueue.push(TrackerEvent1);
-    expect(memoryStore.length).toBe(1);
+    await testQueue.push(TrackerEvent1, TrackerEvent2, TrackerEvent3);
 
-    await testQueue.push(TrackerEvent2);
-    expect(memoryStore.length).toBe(2);
-
-    await testQueue.push(TrackerEvent3);
-    expect(memoryStore.length).toBe(3);
-
-    await testQueue.run();
-
+    expect(processFunctionSpy).toHaveBeenCalledTimes(3);
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent1);
-    expect(memoryStore.length).toBe(2);
-
-    processFunctionSpy.mockClear();
-    await testQueue.run();
-
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent2);
-    expect(memoryStore.length).toBe(1);
-
-    processFunctionSpy.mockClear();
-    await testQueue.run();
-
     expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
     expect(memoryStore.length).toBe(0);
   });
 
   it('should support batches', async () => {
+    const testQueue = new TrackerQueue({ batchSize: 2, concurrency: 1, batchDelayMs: 1 });
     const processFunctionSpy = jest.fn(() => Promise.resolve());
-    const testQueue = new TrackerQueue({ batchSize: 2, concurrency: 1 });
     testQueue.setProcessFunction(processFunctionSpy);
     await testQueue.push(TrackerEvent1, TrackerEvent2, TrackerEvent3);
-    expect(testQueue.store.length).toBe(3);
 
-    await testQueue.run();
-
-    expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent1, TrackerEvent2);
-    expect(testQueue.store.length).toBe(1);
-    expect(testQueue.processingEventIds).toHaveLength(0);
-
-    processFunctionSpy.mockClear();
-    await testQueue.run();
-
-    expect(processFunctionSpy).toHaveBeenCalledWith(TrackerEvent3);
-    expect(testQueue.store.length).toBe(0);
-    expect(testQueue.processingEventIds).toHaveLength(0);
-
-    processFunctionSpy.mockClear();
-    await testQueue.run();
-
-    expect(processFunctionSpy).not.toHaveBeenCalled();
+    expect(processFunctionSpy).toHaveBeenCalledTimes(2);
+    expect(processFunctionSpy).toHaveBeenNthCalledWith(1, TrackerEvent1, TrackerEvent2);
+    expect(processFunctionSpy).toHaveBeenNthCalledWith(2, TrackerEvent3);
     expect(testQueue.store.length).toBe(0);
     expect(testQueue.processingEventIds).toHaveLength(0);
   });
@@ -165,8 +128,8 @@ describe('TrackerQueue', () => {
     const TrackerEvent5 = new TrackerEvent({ _type: 'e' });
     const TrackerEvent6 = new TrackerEvent({ _type: 'f' });
     const TrackerEvent7 = new TrackerEvent({ _type: 'g' });
+    const testQueue = new TrackerQueue({ batchSize: 3, concurrency: 3, batchDelayMs: 1 });
     const processFunctionSpy = jest.fn(() => Promise.resolve());
-    const testQueue = new TrackerQueue({ batchSize: 3, concurrency: 3 });
     testQueue.setProcessFunction(processFunctionSpy);
     await testQueue.push(
       TrackerEvent1,
@@ -177,9 +140,6 @@ describe('TrackerQueue', () => {
       TrackerEvent6,
       TrackerEvent7
     );
-    expect(testQueue.store.length).toBe(7);
-
-    await testQueue.run();
 
     expect(processFunctionSpy).toHaveBeenCalledTimes(3);
     expect(processFunctionSpy).toHaveBeenNthCalledWith(1, ...[TrackerEvent1, TrackerEvent2, TrackerEvent3]);
@@ -190,23 +150,14 @@ describe('TrackerQueue', () => {
   });
 
   it('should flush pending events', async () => {
-    const TrackerEvent4 = new TrackerEvent({ _type: 'd' });
-    const TrackerEvent5 = new TrackerEvent({ _type: 'e' });
-    const TrackerEvent6 = new TrackerEvent({ _type: 'f' });
-    const TrackerEvent7 = new TrackerEvent({ _type: 'g' });
-    const processFunctionSpy = jest.fn(() => Promise.resolve());
-    const testQueue = new TrackerQueue({ batchSize: 3, concurrency: 3 });
-    testQueue.setProcessFunction(processFunctionSpy);
-    await testQueue.push(
+    const testQueue = new TrackerQueue({ batchSize: 3, concurrency: 3, batchDelayMs: 1 });
+    await testQueue.store.write(
       TrackerEvent1,
       TrackerEvent2,
       TrackerEvent3,
-      TrackerEvent4,
-      TrackerEvent5,
-      TrackerEvent6,
-      TrackerEvent7
-    );
-    expect(testQueue.store.length).toBe(7);
+    )
+    expect(testQueue.store.length).toBe(3);
+    expect(testQueue.isIdle()).toBe(false);
 
     await testQueue.flush();
 
@@ -214,18 +165,31 @@ describe('TrackerQueue', () => {
     expect(testQueue.isIdle()).toBe(true);
   });
 
-  it('startRunner should start the setInterval that will execute `run` automatically after enough time', async () => {
-    const processFunctionSpy = jest.fn(() => Promise.resolve());
-    const testQueue = new TrackerQueue();
-    testQueue.setProcessFunction(processFunctionSpy);
+  it('should not allow concurrent runs', async () => {
+    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, batchDelayMs: 1 });
+    testQueue.setProcessFunction(() => Promise.resolve());
+    await testQueue.store.write(
+      TrackerEvent1,
+      TrackerEvent2,
+      TrackerEvent3,
+    )
+    await testQueue.run();
+    expect(await testQueue.run()).toBe(false);
+  });
 
-    jest.spyOn(testQueue, 'run');
-    expect(testQueue.run).not.toHaveBeenCalled();
-
-    testQueue.startRunner();
-
-    jest.advanceTimersByTime(testQueue.batchDelayMs);
-
-    expect(testQueue.run).toHaveBeenCalled();
+  //TODO rename batchDelayMs to runDelayMs?
+  it('should wait at least `batchDelayMs` between runs', async () => {
+    jest.spyOn(global, 'setTimeout')
+;    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, batchDelayMs: 100 });
+    testQueue.setProcessFunction(() => Promise.resolve());
+    await testQueue.store.write(
+      TrackerEvent1,
+      TrackerEvent2,
+      TrackerEvent3,
+    )
+    expect(testQueue.running).toBe(false);
+    await testQueue.run();
+    expect(testQueue.running).toBe(false);
+    expect(setTimeout).toHaveBeenCalledTimes(2);
   });
 });

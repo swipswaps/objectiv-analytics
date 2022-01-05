@@ -57,11 +57,6 @@ export interface TrackerQueueInterface {
   setProcessFunction(processFunction: TrackerQueueProcessFunction): void;
 
   /**
-   * Starts the runner process
-   */
-  startRunner(): void;
-
-  /**
    * Adds one or more TrackerEvents to the Queue
    */
   push(...args: NonEmptyArray<TrackerEvent>): Promise<any>;

@@ -386,8 +386,6 @@ describe('TrackerTransportRetry', () => {
       expect.arrayContaining([new Error('maxRetryMs reached')])
     );
 
-    jest.runAllTimers();
-
     expect(retryTransportAttempt.retry).toHaveBeenCalledTimes(1);
     expect(slowFailingTransport.handle).toHaveBeenCalledTimes(1);
     expect(retryTransportAttempt.errors[0]).toStrictEqual(new Error('maxRetryMs reached'));
