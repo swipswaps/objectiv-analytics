@@ -5,6 +5,7 @@
 import { makeHiddenEvent, makeVisibleEvent, Tracker } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { TrackerProvider, useTrackOnToggle } from '../src';
 

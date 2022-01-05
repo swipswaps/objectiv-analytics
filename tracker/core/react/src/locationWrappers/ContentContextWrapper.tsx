@@ -2,6 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import React from 'react';
 import { makeContentContext } from '../common/factories/makeContentContext';
 import { LocationContextWrapper, LocationContextWrapperProps } from './LocationContextWrapper';
 

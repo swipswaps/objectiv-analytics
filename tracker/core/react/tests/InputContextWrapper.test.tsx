@@ -4,6 +4,7 @@
 
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByTestId, render } from '@testing-library/react';
+import React from 'react';
 import {
   InputContextWrapper,
   LocationTree,

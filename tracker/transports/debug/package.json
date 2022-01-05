@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/transport-debug",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "A TrackerTransport that logs incoming events to console.debug",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -45,7 +45,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
-    "@objectiv/testing-tools": "0.0.5",
+    "@objectiv/testing-tools": "0.0.6",
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.1.1",
     "@types/jest": "^27.0.3",
@@ -62,6 +62,6 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "@objectiv/tracker-core": "~0.0.5"
+    "@objectiv/tracker-core": "~0.0.6"
   }
 }

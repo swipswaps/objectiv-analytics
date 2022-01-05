@@ -6,6 +6,7 @@ import { makeMediaPlayerContext } from '../common/factories/makeMediaPlayerConte
 import { LocationContextWrapper } from './LocationContextWrapper';
 
 import { ContentContextWrapperProps } from './ContentContextWrapper';
+import React from 'react';
 /**
  * The props of MediaPlayerContextWrapper. No extra attributes, same as ContentContextWrapper.
  */

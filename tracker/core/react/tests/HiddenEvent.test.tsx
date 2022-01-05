@@ -4,6 +4,7 @@
 
 import { makeHiddenEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
+import React from 'react';
 import { makeContentContext, TrackingContextProvider, trackHiddenEvent, useHiddenEventTracker } from '../src';
 
 describe('HiddenEvent', () => {

@@ -4,6 +4,7 @@
 
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
+import React from 'react';
 import { PressableContextWrapper, LocationTree, ObjectivProvider, trackPressEvent, usePressEventTracker } from '../src';
 
 describe('PressableContextWrapper', () => {

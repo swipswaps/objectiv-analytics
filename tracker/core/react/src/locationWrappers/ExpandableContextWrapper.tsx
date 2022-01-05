@@ -5,6 +5,7 @@
 import { makeExpandableContext } from '../common/factories/makeExpandableContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
 import { ContentContextWrapperProps } from './ContentContextWrapper';
+import React from 'react';
 
 /**
  * The props of ExpandableContextWrapper. No extra attributes, same as ContentContextWrapper.
