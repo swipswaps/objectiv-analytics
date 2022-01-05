@@ -1,12 +1,12 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import {
   LocationProvider,
-  makeSectionContext,
+  makeContentContext,
   TrackingContextProvider,
   useLocationStack,
   useTracker,
@@ -80,7 +80,7 @@ describe('TrackingContextProvider', () => {
   });
 
   it('should inherit location from parents', () => {
-    const rootSection = makeSectionContext({ id: 'root' });
+    const rootSection = makeContentContext({ id: 'root' });
 
     const Component = () => {
       const trackingContext = useTrackingContext();
@@ -106,8 +106,8 @@ describe('TrackingContextProvider', () => {
   });
 
   it('should support extending the location', () => {
-    const rootSection = makeSectionContext({ id: 'root' });
-    const childSection = makeSectionContext({ id: 'child' });
+    const rootSection = makeContentContext({ id: 'root' });
+    const childSection = makeContentContext({ id: 'child' });
 
     const Component = () => {
       const trackingContext = useTrackingContext();

@@ -1,8 +1,8 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeSectionHiddenEvent, makeSectionVisibleEvent } from '@objectiv/tracker-core';
+import { makeHiddenEvent, makeVisibleEvent } from '@objectiv/tracker-core';
 import { InteractiveEventTrackerParameters } from '../definitions/InteractiveEventTrackerParameters';
 import { trackEvent } from './trackEvent';
 
@@ -19,8 +19,8 @@ export const trackVisibility = ({
 }: InteractiveEventTrackerParameters & { isVisible: boolean }) => {
   return trackEvent({
     event: isVisible
-      ? makeSectionVisibleEvent({ location_stack: locationStack, global_contexts: globalContexts })
-      : makeSectionHiddenEvent({ location_stack: locationStack, global_contexts: globalContexts }),
+      ? makeVisibleEvent({ location_stack: locationStack, global_contexts: globalContexts })
+      : makeHiddenEvent({ location_stack: locationStack, global_contexts: globalContexts }),
     element,
     tracker,
     onError,

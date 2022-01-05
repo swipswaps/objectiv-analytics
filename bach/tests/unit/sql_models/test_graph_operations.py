@@ -173,6 +173,18 @@ def test_find_nodes():
     ]
 
 
+def test_find_nodes_duplicates():
+    vm1 = ValueModel.build(key='a', val=1)
+    vm2 = ValueModel.build(key='a', val=1)
+    graph = JoinModel.build(ref_left=vm1, ref_right=vm2)
+    result = find_nodes(graph, lambda node: node.generic_name == 'ValueModel')
+    assert len(result) == 2
+    assert result == [
+        FoundNode(model=vm1, reference_path=('ref_left',)),
+        FoundNode(model=vm2, reference_path=('ref_right',))
+    ]
+
+
 def test_find_nodes_path_length():
     # Test for nodes that can be found through multiple paths.
     # The order of the returned nodes from find_nodes() depends on the length of the reference path. For
@@ -230,13 +242,3 @@ def _assert_graph_difference(graph: SqlModel,
     for path in changed_paths:
         assert get_node(new_graph, path) is not get_node(graph, path)
         assert get_node(new_graph, path).hash != get_node(graph, path).hash
-
-
-def test_update_node_materialization():
-    # TODO
-    pass
-
-
-def test_update_node_reference():
-    # TODO: test and implementation
-    pass

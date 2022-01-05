@@ -1,9 +1,9 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { matchUUID } from '@objectiv/testing-tools';
-import { generateUUID, makeSectionContext } from '@objectiv/tracker-core';
+import { generateUUID, makeContentContext } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackRemovedElements } from '../src/mutationObserver/trackRemovedElements';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
@@ -63,10 +63,10 @@ describe('trackRemovedElements', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionHiddenEvent',
+        _type: 'HiddenEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeSectionContext({ id: 'div' })],
+        location_stack: [makeContentContext({ id: 'div' })],
       })
     );
   });

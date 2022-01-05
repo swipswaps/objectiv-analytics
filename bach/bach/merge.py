@@ -256,13 +256,20 @@ def merge(
         new_column_list=new_index_list + new_data_list
     )
 
+    if isinstance(right, Series):
+        from bach.savepoints import Savepoints
+        right_savepoints = Savepoints()
+    else:
+        right_savepoints = right.savepoints
+
     return left.copy_override(
         engine=left.engine,
         base_node=model,
         index_dtypes={rc.name: rc.dtype for rc in new_index_list},
         series_dtypes={rc.name: rc.dtype for rc in new_data_list},
         group_by=None,
-        order_by=[]  # merging resets any sorting
+        order_by=[],  # merging resets any sorting
+        savepoints=left.savepoints.merge(right_savepoints)
     )
 
 

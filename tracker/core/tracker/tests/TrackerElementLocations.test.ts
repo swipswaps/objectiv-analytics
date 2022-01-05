@@ -1,13 +1,13 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import {
   getLocationPath,
   LocationCollision,
   LocationStack,
-  makeButtonContext,
-  makeSectionContext,
+  makePressableContext,
+  makeContentContext,
   TrackerElementLocations,
 } from '../src';
 
@@ -16,15 +16,15 @@ describe('TrackerElementLocations', () => {
     TrackerElementLocations.clear();
   });
 
-  const rootSectionContext = makeSectionContext({ id: 'root' });
-  const overlayContext = makeButtonContext({ id: 'overlay', text: 'modal' });
-  const buttonContext = makeButtonContext({ id: 'button', text: 'ok' });
+  const rootSectionContext = makeContentContext({ id: 'root' });
+  const overlayContext = makePressableContext({ id: 'overlay' });
+  const buttonContext = makePressableContext({ id: 'button' });
 
   it('getLocationPath', () => {
     const testCases: [LocationStack, string][] = [
       [[], ''],
-      [[makeSectionContext({ id: 'test' })], 'Section:test'],
-      [[makeSectionContext({ id: 'parent' }), makeSectionContext({ id: 'child' })], 'Section:parent / Section:child'],
+      [[makeContentContext({ id: 'test' })], 'Content:test'],
+      [[makeContentContext({ id: 'parent' }), makeContentContext({ id: 'child' })], 'Content:parent / Content:child'],
     ];
     testCases.forEach(([locationStack, locationPath]) => {
       expect(getLocationPath(locationStack)).toMatch(locationPath);
@@ -44,7 +44,7 @@ describe('TrackerElementLocations', () => {
       [
         [rootSectionContext, buttonContext],
         'btn-5',
-        { collidingElementId: 'btn-5', existingElementId: 'btn-4', locationPath: 'Section:root / Button:button' },
+        { collidingElementId: 'btn-5', existingElementId: 'btn-4', locationPath: 'Content:root / Pressable:button' },
       ],
 
       // An Element can have multiple Locations - in this example the button has been reused in a modal
@@ -57,7 +57,7 @@ describe('TrackerElementLocations', () => {
         {
           collidingElementId: 'btn-6',
           existingElementId: 'btn-4',
-          locationPath: 'Section:root / Button:overlay / Button:button',
+          locationPath: 'Content:root / Pressable:overlay / Pressable:button',
         },
       ],
 
@@ -85,17 +85,17 @@ describe('TrackerElementLocations', () => {
         [
           'button-1',
           [
-            'Section:root.Button:button1',
-            'Section:root.Overlay:modal1.Button:button1',
-            'Section:root.Overlay:modal2.Button:button1',
+            'Content:root.Pressable:button1',
+            'Content:root.Overlay:modal1.Pressable:button1',
+            'Content:root.Overlay:modal2.Pressable:button1',
           ],
         ],
         [
           'button-2',
           [
-            'Section:root.Button:button2',
-            'Section:root.Overlay:modal2.Button:button2',
-            'Section:root.Overlay:modal3.Button:button2',
+            'Content:root.Pressable:button2',
+            'Content:root.Overlay:modal2.Pressable:button2',
+            'Content:root.Overlay:modal3.Pressable:button2',
           ],
         ],
       ]);
@@ -112,9 +112,9 @@ describe('TrackerElementLocations', () => {
           [
             'button-2',
             [
-              'Section:root.Button:button2',
-              'Section:root.Overlay:modal2.Button:button2',
-              'Section:root.Overlay:modal3.Button:button2',
+              'Content:root.Pressable:button2',
+              'Content:root.Overlay:modal2.Pressable:button2',
+              'Content:root.Overlay:modal3.Pressable:button2',
             ],
           ],
         ])
@@ -128,9 +128,9 @@ describe('TrackerElementLocations', () => {
           [
             'button-1',
             [
-              'Section:root.Button:button1',
-              'Section:root.Overlay:modal1.Button:button1',
-              'Section:root.Overlay:modal2.Button:button1',
+              'Content:root.Pressable:button1',
+              'Content:root.Overlay:modal1.Pressable:button1',
+              'Content:root.Overlay:modal2.Pressable:button1',
             ],
           ],
         ])

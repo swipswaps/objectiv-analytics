@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import commonjs from '@rollup/plugin-commonjs';
@@ -19,6 +19,6 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [nodeResolve(), commonjs(), ts(), terser(), sizes(), filesize()],
+    plugins: [nodeResolve({ browser: true }), commonjs(), ts(), terser(), sizes(), filesize()],
   },
 ];

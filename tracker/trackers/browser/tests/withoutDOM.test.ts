@@ -1,9 +1,9 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  * @jest-environment node
  */
 
-import { generateUUID, makeClickEvent } from '@objectiv/tracker-core';
+import { generateUUID, makePressEvent } from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import {
   BrowserTracker,
@@ -12,11 +12,10 @@ import {
   makeMutationCallback,
   makeTracker,
   startAutoTracking,
-  trackAborted,
-  trackApplicationLoaded,
-  trackCompleted,
+  trackFailureEvent,
+  trackApplicationLoadedEvent,
+  trackSuccessEvent,
   trackEvent,
-  trackURLChange,
 } from '../src';
 
 describe('Without DOM', () => {
@@ -37,7 +36,7 @@ describe('Without DOM', () => {
   });
 
   it('should console.error if a Tracker instance cannot be retrieved because DOM is not available', async () => {
-    const parameters = { eventFactory: makeClickEvent, element: null };
+    const parameters = { eventFactory: makePressEvent, element: null };
     // @ts-ignore
     trackEvent(parameters);
 
@@ -46,45 +45,34 @@ describe('Without DOM', () => {
   });
 
   it('should console.error id Application Loaded Event fails at retrieving the document element', () => {
-    trackApplicationLoaded();
+    trackApplicationLoadedEvent();
 
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {});
 
-    trackApplicationLoaded({ onError: console.error });
-    expect(console.error).toHaveBeenCalledTimes(2);
-    expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
-  });
-
-  it('should console.error id URL Change Event fails at retrieving the document element', () => {
-    trackURLChange();
-
-    expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {});
-
-    trackURLChange({ onError: console.error });
+    trackApplicationLoadedEvent({ onError: console.error });
     expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });
 
   it('should console.error id Completed Event fails at retrieving the document element', () => {
-    trackCompleted();
+    trackSuccessEvent({ message: 'ok' });
 
     expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {});
+    expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), { message: 'ok' });
 
-    trackCompleted({ onError: console.error });
+    trackSuccessEvent({ message: 'ok', onError: console.error });
     expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });
 
   it('should console.error id Aborted Event fails at retrieving the document element', () => {
-    trackAborted();
+    trackFailureEvent({ message: 'ko' });
 
     expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {});
+    expect(console.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), { message: 'ko' });
 
-    trackAborted({ onError: console.error });
+    trackFailureEvent({ message: 'ko', onError: console.error });
     expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });
@@ -108,7 +96,7 @@ describe('Without DOM', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     const tracker = new BrowserTracker({ applicationId: 'app', transport: new DebugTransport() });
     jest.spyOn(tracker, 'trackEvent');
-    const mutationCallback = makeMutationCallback(false);
+    const mutationCallback = makeMutationCallback();
 
     // @ts-ignore
     mutationCallback('not a list');

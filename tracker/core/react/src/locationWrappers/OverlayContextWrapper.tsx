@@ -1,15 +1,15 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { makeOverlayContext } from '../common/factories/makeOverlayContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
-import { SectionContextWrapperProps } from './SectionContextWrapper';
+import { ContentContextWrapperProps } from './ContentContextWrapper';
 
 /**
- * The props of OverlayContextWrapper. No extra attributes, same as SectionContextWrapper.
+ * The props of OverlayContextWrapper. No extra attributes, same as ContentContextWrapper.
  */
-export type OverlayContextWrapperProps = SectionContextWrapperProps;
+export type OverlayContextWrapperProps = ContentContextWrapperProps;
 
 /**
  * Wraps its children in an OverlayContext.

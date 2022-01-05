@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { matchUUID } from '@objectiv/testing-tools';
@@ -50,7 +50,7 @@ describe('trackVisibilityVisibleEvent', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionVisibleEvent',
+        _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [],
@@ -68,7 +68,7 @@ describe('trackVisibilityVisibleEvent', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionVisibleEvent',
+        _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [],

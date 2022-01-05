@@ -19,17 +19,20 @@ The Objectiv JavaScript Tracker is composed of three workspaces.
 
 This is a complete list of the currently available packages.
 
-| Name                                  | Type      | Path                          | Links                                                     |
-|---------------------------------------|-----------|-------------------------------|-----------------------------------------------------------|
-| @objectiv/schema                      | core      | /core/schema                  | [README](/tracker/core/schema/README.md)                  |
-| @objectiv/tracker-core                | core      | /core/tracker                 | [README](/tracker/core/tracker/README.md)                 |
-| @objectiv/utilities                   | core      | /core/utilities               | [README](/tracker/core/utilities/README.md)               |
-| @objectiv/plugin-web-document-context | plugin    | /plugins/web-document-context | [README](/tracker/plugins/web-document-context/README.md) |
-| @objectiv/tracker-angular             | tracker   | /trackers/angular             | [README](/tracker/trackers/angular/README.md)             |
-| @objectiv/tracker-browser             | tracker   | /trackers/browser             | [README](/tracker/trackers/browser/README.md)             |
-| @objectiv/transport-debug             | transport | /transports/browser           | [README](/tracker/transports/debug/README.md)             |
-| @objectiv/transport-fetch             | transport | /transports/browser           | [README](/tracker/transports/fetch/README.md)             |
-| @objectiv/transport-xhr               | transport | /transports/browser           | [README](/tracker/transports/xhr/README.md)               |
+| Name                                   | Type      | Path                           | Links                                                      |
+|----------------------------------------|-----------|--------------------------------|------------------------------------------------------------|
+| @objectiv/schema                       | core      | /core/schema                   | [README](/tracker/core/schema/README.md)                   |
+| @objectiv/tracker-core                 | core      | /core/tracker                  | [README](/tracker/core/tracker/README.md)                  |
+| @objectiv/tracker-core-react           | core      | /core/react                    | [README](/tracker/core/react/README.md)                    |
+| @objectiv/testing-tools                | core      | /core/testing-tools            | [README](/tracker/core/testing-tools/README.md)            |
+| @objectiv/utilities                    | core      | /core/utilities                | [README](/tracker/core/utilities/README.md)                |
+| @objectiv/plugin-path-context-from-url | plugin    | /plugins/path-context-from-url | [README](/tracker/plugins/path-context-from-url/README.md) |
+| @objectiv/tracker-angular              | tracker   | /trackers/angular              | [README](/tracker/trackers/angular/README.md)              |
+| @objectiv/tracker-browser              | tracker   | /trackers/browser              | [README](/tracker/trackers/browser/README.md)              |
+| @objectiv/tracker-react                | tracker   | /trackers/react                | [README](/tracker/trackers/react/README.md)                |
+| @objectiv/transport-debug              | transport | /transports/browser            | [README](/tracker/transports/debug/README.md)              |
+| @objectiv/transport-fetch              | transport | /transports/browser            | [README](/tracker/transports/fetch/README.md)              |
+| @objectiv/transport-xhr                | transport | /transports/browser            | [README](/tracker/transports/xhr/README.md)                |
 
 >Note: Packages may be completely independent of each other. Currently, many of them share the same testing framework or bundler but that's not required. Each has its own local configurations and may diverge if needed.
 
@@ -155,6 +158,9 @@ Runs prettier for `core/schema/src/*`, `core/tracker/src/ContextFactories.ts` an
 ### `yarn tsc`
 Runs the TypeScript compiler for all typed packages.
 
+### `yarn tsc:generated`
+Runs the TypeScript compiler for `core/schema` and `core/tracker`.
+
 ### `yarn test`
 Runs the tests for all packages.
 
@@ -197,7 +203,7 @@ Runs the generator utility. This will generate:
 ### `yarn version --help`
 Shows the `version` command help
 
-### `yarn version --interactive`
+### `yarn version check --interactive`
 Creates a release strategy for the current branch
 
 ### `yarn version check`

@@ -1,11 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { AbstractGlobalContext } from './abstracts';
 
 /**
- * Global context containing the origin (application id) of the event
+ * A GlobalContext describing in which app the event happens, like a website or iOS app.
  * Inheritance: ApplicationContext -> AbstractGlobalContext -> AbstractContext
  */
 export interface ApplicationContext extends AbstractGlobalContext {
@@ -13,22 +13,6 @@ export interface ApplicationContext extends AbstractGlobalContext {
    * Typescript discriminator
    */
   readonly _type: 'ApplicationContext';
-}
-
-/**
- * Generic global context to encapsulate any errors
- * Inheritance: ErrorContext -> AbstractGlobalContext -> AbstractContext
- */
-export interface ErrorContext extends AbstractGlobalContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'ErrorContext';
-
-  /**
-   * Error message
-   */
-  message: string;
 }
 
 /**
@@ -48,23 +32,7 @@ export interface CookieIdContext extends AbstractGlobalContext {
 }
 
 /**
- * Context with meta info pertaining to the current session.
- * Inheritance: SessionContext -> AbstractGlobalContext -> AbstractContext
- */
-export interface SessionContext extends AbstractGlobalContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'SessionContext';
-
-  /**
-   * Hit counter relative to the current session, this event originated in.
-   */
-  hit_number: number;
-}
-
-/**
- * Global context with meta information about the agent that sent the event.
+ * A GlobalContext describing meta information about the agent that sent the event.
  * Inheritance: HttpContext -> AbstractGlobalContext -> AbstractContext
  */
 export interface HttpContext extends AbstractGlobalContext {
@@ -87,4 +55,31 @@ export interface HttpContext extends AbstractGlobalContext {
    * (public) IP address of the agent that sent the event.
    */
   remote_address: string;
+}
+
+/**
+ * A GlobalContext describing the path where the user is when an event is sent.
+ * Inheritance: PathContext -> AbstractGlobalContext -> AbstractContext
+ */
+export interface PathContext extends AbstractGlobalContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'PathContext';
+}
+
+/**
+ * A GlobalContext describing meta information about the current session.
+ * Inheritance: SessionContext -> AbstractGlobalContext -> AbstractContext
+ */
+export interface SessionContext extends AbstractGlobalContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'SessionContext';
+
+  /**
+   * Hit counter relative to the current session, this event originated in.
+   */
+  hit_number: number;
 }

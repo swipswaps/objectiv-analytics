@@ -1,15 +1,15 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { makeMediaPlayerContext } from '../common/factories/makeMediaPlayerContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
 
-import { SectionContextWrapperProps } from './SectionContextWrapper';
+import { ContentContextWrapperProps } from './ContentContextWrapper';
 /**
- * The props of MediaPlayerContextWrapper. No extra attributes, same as SectionContextWrapper.
+ * The props of MediaPlayerContextWrapper. No extra attributes, same as ContentContextWrapper.
  */
-export type MediaPlayerContextWrapperProps = SectionContextWrapperProps;
+export type MediaPlayerContextWrapperProps = ContentContextWrapperProps;
 
 /**
  * Wraps its children in a MediaPlayerContext.

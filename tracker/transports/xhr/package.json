@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/transport-xhr",
-  "version": "0.0.1",
+  "version": "0.0.5",
   "description": "A TrackerTransport based on XMLHttpRequest API",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -45,25 +45,24 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
-    "@objectiv/testing-tools": "0.0.1",
+    "@objectiv/testing-tools": "0.0.5",
     "@rollup/plugin-commonjs": "^21.0.1",
-    "@rollup/plugin-node-resolve": "^13.0.6",
-    "@types/jest": "^27.0.2",
-    "depcheck": "^1.4.2",
-    "jest": "^27.3.1",
+    "@rollup/plugin-node-resolve": "^13.1.1",
+    "@types/jest": "^27.0.3",
+    "jest": "^27.4.5",
     "jest-standard-reporter": "^2.0.0",
-    "prettier": "^2.4.1",
-    "rollup": "^2.58.3",
+    "prettier": "^2.5.1",
+    "rollup": "^2.61.1",
     "rollup-plugin-filesize": "^9.1.1",
     "rollup-plugin-sizes": "^1.0.4",
     "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-ts": "^1.4.7",
+    "rollup-plugin-ts": "^2.0.4",
     "shx": "^0.3.3",
-    "ts-jest": "^27.0.7",
-    "typescript": "^4.4.4",
+    "ts-jest": "^27.1.2",
+    "typescript": "^4.5.4",
     "xhr-mock": "^2.5.1"
   },
   "dependencies": {
-    "@objectiv/tracker-core": "~0.0.1"
+    "@objectiv/tracker-core": "~0.0.5"
   }
 }

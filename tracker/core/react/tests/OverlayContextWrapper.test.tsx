@@ -1,10 +1,10 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
-import { OverlayContextWrapper, ObjectivProvider, trackClickEvent, useClickEventTracker, LocationTree } from '../src';
+import { OverlayContextWrapper, ObjectivProvider, trackPressEvent, usePressEventTracker, LocationTree } from '../src';
 
 describe('OverlayContextWrapper', () => {
   beforeEach(() => {
@@ -23,8 +23,8 @@ describe('OverlayContextWrapper', () => {
 
     const overlayContextProps = { id: 'test-overlay' };
     const TrackedButton = () => {
-      const trackClickEvent = useClickEventTracker();
-      return <div onClick={trackClickEvent}>Trigger Event</div>;
+      const trackPressEvent = usePressEventTracker();
+      return <div onClick={trackPressEvent}>Trigger Event</div>;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -42,7 +42,7 @@ describe('OverlayContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'OverlayContext',
@@ -62,7 +62,7 @@ describe('OverlayContextWrapper', () => {
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
         <OverlayContextWrapper {...overlayContextProps}>
-          {(trackingContext) => <div onClick={() => trackClickEvent(trackingContext)}>Trigger Event</div>}
+          {(trackingContext) => <div onClick={() => trackPressEvent(trackingContext)}>Trigger Event</div>}
         </OverlayContextWrapper>
       </ObjectivProvider>
     );
@@ -75,7 +75,7 @@ describe('OverlayContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'OverlayContext',

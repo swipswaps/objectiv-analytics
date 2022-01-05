@@ -5,6 +5,7 @@ from typing import List, Dict, Union, cast
 
 from bach import get_series_type_from_dtype, DataFrame
 from bach.expression import Expression
+from bach.savepoints import Savepoints
 
 
 def get_fake_df(index_names: List[str], data_names: List[str], dtype: Union[str, Dict[str, str]] = 'int64'):
@@ -40,7 +41,7 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype: Union[str,
             group_by=cast('GroupBy', None))
 
     return DataFrame(engine=engine, base_node=base_node,
-                     index=index, series=data, group_by=None)
+                     index=index, series=data, group_by=None, order_by=[], savepoints=Savepoints())
 
 
 def get_fake_df_test_data() -> DataFrame:
