@@ -6,9 +6,9 @@ from typing import List
 import pytest
 
 from sql_models.graph_operations import get_graph_nodes_info, get_node, get_node_info_selected_node, \
-    find_nodes, find_node, FoundNode
+    find_nodes, find_node, FoundNode, get_all_properties, update_properties_in_graph
 from sql_models.model import RefPath, SqlModel
-from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel
+from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel, RefValueModel
 
 
 def get_simple_test_graph():
@@ -231,6 +231,64 @@ def test_find_nodes_path_length():
     result = find_nodes(graph, function=lambda n: n is vm2, first_instance=False)
     assert result == [FoundNode(model=vm2, reference_path=('ref_left', 'ref_right', 'ref_left', 'ref_left'))]
 
+
+def test_get_all_properties():
+    graph = JoinModel.build(
+        ref_left=RefValueModel(
+            val=3,
+            ref=ValueModel(key='a', val=1)
+        ),
+        ref_right=ValueModel(key='a', val=2)
+    )
+    result = get_all_properties(graph)
+    assert result == {
+        'key': {
+            ('ref_right',): 'a',
+            ('ref_left', 'ref'): 'a'
+        }
+        ,
+        'val': {
+            ('ref_left', ): 3,
+            ('ref_right',): 2,
+            ('ref_left', 'ref'): 1
+        }
+    }
+
+
+def test_update_properties_in_graph():
+    graph = JoinModel.build(
+        ref_left=RefValueModel(
+            val=3,
+            ref=ValueModel(key='a', val=1)
+        ),
+        ref_right=ValueModel(key='a', val=2)
+    )
+
+    # Updating non existing properties doesn't do anything
+    assert graph is update_properties_in_graph(graph, {'x': 'X'})
+
+    # Assert current state
+    assert get_node(graph, ('ref_left',)).properties == {'val': 3}
+    assert get_node(graph, ('ref_right',)).properties == {'val': 2, 'key': 'a'}
+    assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 1, 'key': 'a'}
+
+    # Update one property
+    graph = update_properties_in_graph(graph, {'val': 5})
+    assert get_node(graph, ('ref_left',)).properties == {'val': 5}
+    assert get_node(graph, ('ref_right',)).properties == {'val': 5, 'key': 'a'}
+    assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 5, 'key': 'a'}
+
+    # Update two properties
+    graph = update_properties_in_graph(graph, {'val': 1234, 'key': 'b'})
+    assert get_node(graph, ('ref_left',)).properties == {'val': 1234}
+    assert get_node(graph, ('ref_right',)).properties == {'val': 1234, 'key': 'b'}
+    assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 1234, 'key': 'b'}
+
+    # Update property to value it already has, nothing changes
+    graph = update_properties_in_graph(graph, {'val': 1234})
+    assert get_node(graph, ('ref_left',)).properties == {'val': 1234}
+    assert get_node(graph, ('ref_right',)).properties == {'val': 1234, 'key': 'b'}
+    assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 1234, 'key': 'b'}
 
 
 def _assert_graph_difference(graph: SqlModel,
