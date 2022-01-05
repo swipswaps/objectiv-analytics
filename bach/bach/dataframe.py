@@ -876,6 +876,7 @@ class DataFrame:
                         self._data = df.data
                         self._group_by = df.group_by
                         self._order_by = df.order_by
+                        self._savepoints = df.savepoints
                     else:
                         raise NotImplementedError('Incompatible series can not be added to the dataframe.')
 
