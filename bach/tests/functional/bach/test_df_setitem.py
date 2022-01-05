@@ -10,7 +10,7 @@ from bach import SeriesInt64, SeriesString, SeriesFloat64, SeriesDate, SeriesTim
     SeriesTime, SeriesTimedelta, Series, \
     SeriesJsonb, SeriesBoolean
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_db_type, \
-    assert_equals_data, CITIES_INDEX_AND_COLUMNS
+    assert_equals_data, CITIES_INDEX_AND_COLUMNS, get_bt_with_railway_data
 
 
 def check_set_const(constant, db_type: str, expected_series: Type[Series]):
@@ -150,7 +150,6 @@ def test_set_series_column():
     )
     assert filtered_bt.town == filtered_bt['town']
 
-
 def test_set_multiple():
     bt = get_bt_with_test_data()
     bt['duplicated_column'] = bt['founding']
@@ -184,6 +183,54 @@ def test_set_existing():
         ]
     )
     assert bt.city == bt['city']
+
+def test_set_different_base_node():
+    # set different shape series / different index name
+    bt = get_bt_with_test_data(full_data_set=True)
+    bt = bt[bt.skating_order>7]
+    filtered_bt = bt[bt.skating_order<9]
+
+    bt['a'] = filtered_bt['city']
+
+    assert_equals_data(
+        bt,
+        expected_columns=CITIES_INDEX_AND_COLUMNS + ['a'],
+        expected_data=[
+            [8, 8, 'Boalsert', 'Súdwest-Fryslân', 10120, 1455, 'Boalsert'],
+            [9, 9, 'Harns', 'Harlingen', 14740, 1234, None],
+            [10, 10, 'Frjentsjer', 'Waadhoeke', 12760, 1374, None],
+            [11, 11, 'Dokkum', 'Noardeast-Fryslân', 12675, 1298, None]
+        ]
+    )
+
+    # set existing column
+    bt = get_bt_with_test_data()
+    mt = get_bt_with_railway_data()
+    bt['skating_order'] = mt['station']
+    assert_db_type(bt['skating_order'], 'text', SeriesString)
+    assert_equals_data(
+        bt,
+        expected_columns=CITIES_INDEX_AND_COLUMNS,
+        expected_data=[
+            [1, 'IJlst', 'Ljouwert', 'Leeuwarden', 93485, 1285],
+            [2, 'Heerenveen', 'Snits', 'Súdwest-Fryslân', 33520, 1456],
+            [3, 'Heerenveen IJsstadion', 'Drylts', 'Súdwest-Fryslân', 3055, 1268]
+        ]
+    )
+
+    # set dataframe
+    bt = get_bt_with_test_data()
+    mt = get_bt_with_railway_data()
+    bt[['a','city']] = mt[['town','station']]
+    assert_equals_data(
+        bt,
+        expected_columns=CITIES_INDEX_AND_COLUMNS + ['a'],
+        expected_data=[
+            [1, 1, 'IJlst', 'Leeuwarden', 93485, 1285, 'Drylts'],
+            [2, 2, 'Heerenveen', 'Súdwest-Fryslân', 33520, 1456, 'It Hearrenfean'],
+            [3, 3, 'Heerenveen IJsstadion', 'Súdwest-Fryslân', 3055, 1268, 'It Hearrenfean']
+        ]
+    )
 
 
 def test_set_existing_referencing_other_column_experience():

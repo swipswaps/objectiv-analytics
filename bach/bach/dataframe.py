@@ -817,7 +817,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['Series', int, str, float, UUID]):
+                    value: Union['DataFrame', 'Series', int, str, float, UUID]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -827,6 +827,8 @@ class DataFrame:
             if key in self.index:
                 # Cannot set an index column, and cannot have a column name both in self.index and self.data
                 raise ValueError(f'Column name "{key}" already exists as index.')
+            if isinstance(value, DataFrame):
+                raise ValueError("Can't set a DataFrame as a single column")
             if not isinstance(value, Series):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
@@ -848,8 +850,32 @@ class DataFrame:
                                          f'given series was not single value or an independent subquery. '
                                          f'GroupBy Value: {value.group_by}, df: {self._group_by}')
                     elif value.base_node != self.base_node:
-                        raise ValueError('Base node of assigned value does not match DataFrame and the '
-                                         'given series was not single value or an independent subquery.')
+                        if not (len(value.index) == 1 and len(self.index) == 1):
+                            raise ValueError('setting with different base nodes only works with one level'
+                                             'index')
+
+                        index_name = self.index_columns[0]
+                        renamed_index = list(value.index.values())[0].copy_override(name=index_name)
+                        if self.index[index_name].dtype != renamed_index.dtype:
+                            raise ValueError('dtypes of indexes should be the same')
+                        renamed_value = value.copy_override(name=key, index={index_name: renamed_index})
+
+                        df = self.merge(renamed_value,
+                                        left_index=True,
+                                        right_index=True,
+                                        how='left',
+                                        suffixes=('', '__remove'))
+
+                        if key in self.data_columns:
+                            df[key] = df[key + '__remove']
+                            df.drop(columns=[key + '__remove'], inplace=True)
+
+                        self._engine = df.engine
+                        self._base_node = df.base_node
+                        self._index = df.index
+                        self._data = df.data
+                        self._group_by = df.group_by
+                        self._order_by = df.order_by
                     else:
                         raise NotImplementedError('Incompatible series can not be added to the dataframe.')
 
