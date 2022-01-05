@@ -284,6 +284,12 @@ def test_update_properties_in_graph():
     assert get_node(graph, ('ref_right',)).properties == {'val': 1234, 'key': 'b'}
     assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 1234, 'key': 'b'}
 
+    # Update property to value it already has, nothing changes
+    graph = update_properties_in_graph(graph, {'val': 1234})
+    assert get_node(graph, ('ref_left',)).properties == {'val': 1234}
+    assert get_node(graph, ('ref_right',)).properties == {'val': 1234, 'key': 'b'}
+    assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 1234, 'key': 'b'}
+
 
 def _assert_graph_difference(graph: SqlModel,
                              new_graph: SqlModel,

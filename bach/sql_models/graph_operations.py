@@ -218,8 +218,9 @@ def update_properties_in_graph(start_node: SqlModel, property_values: Dict[str, 
     """
     Return a copy of the SqlModel with the given properties updated throughout the tree.
 
-    Will only update properties of nodes that already have that property. If a node doesn't have any of the
-    properties in property_values then nothing happens with that node.
+    Will only update properties of nodes that already have that property and for which that property has a
+    different value. If a node doesn't have any of the properties in property_values, or all the values match
+    already, then nothing happens with that node.
 
     :param start_node: start node
     :param property_values: Dictionary mapping property names to new values.
@@ -239,6 +240,8 @@ def update_properties_in_graph(start_node: SqlModel, property_values: Dict[str, 
             key: property_values[key]
             for key in matching_keys if found_node.model.properties[key] != property_values[key]
         }
+        if not dict_to_update:
+            continue
         new_dict = found_node.model.properties
         new_dict.update(dict_to_update)
         start_node = start_node.set(found_node.reference_path, **new_dict)
