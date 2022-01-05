@@ -4,6 +4,7 @@
 
 import { mockConsole } from '@objectiv/testing-tools';
 import { TrackerEvent, TrackerPlugins, TrackerQueue, TrackerTransportRetry } from '@objectiv/tracker-core';
+import { DebugTransport } from "@objectiv/transport-debug";
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
@@ -189,7 +190,7 @@ describe('BrowserTracker', () => {
     });
 
     it('should auto-track Application and Path Contexts by default', async () => {
-      const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
+      const testTracker = new BrowserTracker({ applicationId: 'app-id', transport: new DebugTransport() });
       const testEvent = new TrackerEvent({ _type: 'test-event' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testEvent.global_contexts).toHaveLength(0);
