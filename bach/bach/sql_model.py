@@ -100,18 +100,19 @@ class BachSqlModelBuilder(CustomSqlModelBuilder):
         return rv
 
 
-class CurrentNodeSqlModelBuilder(SqlModelBuilder):
+class CurrentNodeSqlModelBuilder(BachSqlModelBuilder):
 
     def __init__(self,
                  name: str,
-                 columns: List[Expression],
+                 column_names: Tuple[str, ...],
+                 column_exprs: List[Expression],
                  where_clause: Optional[Expression],
                  group_by_clause: Optional[Expression],
                  having_clause: Optional[Expression],
                  order_by_clause: Optional[Expression],
                  limit_clause: Expression):
 
-        columns_str = ', '.join(expr.to_sql() for expr in columns)
+        columns_str = ', '.join(expr.to_sql() for expr in column_exprs)
         where_str = where_clause.to_sql() if where_clause else ''
         group_by_str = group_by_clause.to_sql() if group_by_clause else ''
         having_str = having_clause.to_sql() if having_clause else ''
@@ -128,14 +129,10 @@ class CurrentNodeSqlModelBuilder(SqlModelBuilder):
             {limit_str}
             """
 
-        # super().__init__() will check that the references and properties don't overlap. So we must
-        #  have self.sql in place before we call it
-        self._sql = sql
-        self._generic_name = name
-        super().__init__()
+        super().__init__(sql, name, column_names)
 
         # Add all references found in the Expressions to self.references
-        all_expressions = cast(List[Optional[Expression]], copy(columns))
+        all_expressions = cast(List[Optional[Expression]], copy(column_exprs))
         all_expressions += [where_clause, group_by_clause, having_clause, order_by_clause, limit_clause]
         expression_references = self._get_expression_references(all_expressions)
         # help mypy by casting `Union[SqlModelBuilder, SqlModel]` to `SqlModel`

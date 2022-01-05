@@ -1556,7 +1556,8 @@ class DataFrame:
 
         model_builder = CurrentNodeSqlModelBuilder(
             name=name,
-            columns=column_exprs,
+            column_names=column_names,
+            column_exprs=column_exprs,
             where_clause=where_clause,
             group_by_clause=group_by_clause,
             having_clause=having_clause,
