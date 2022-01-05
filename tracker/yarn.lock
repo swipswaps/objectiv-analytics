@@ -796,7 +796,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url"
   dependencies:
-    "@objectiv/testing-tools": 0.0.5
+    "@objectiv/testing-tools": 0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
     "@types/jest": ^27.0.3
@@ -824,7 +824,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/queue-local-storage@workspace:queues/local-storage"
   dependencies:
-    "@objectiv/testing-tools": 0.0.5
+    "@objectiv/testing-tools": 0.0.6
     "@objectiv/tracker-core": ~0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
@@ -853,7 +853,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/testing-tools@0.0.5, @objectiv/testing-tools@workspace:core/testing-tools":
+"@objectiv/testing-tools@0.0.6, @objectiv/testing-tools@workspace:core/testing-tools":
   version: 0.0.0-use.local
   resolution: "@objectiv/testing-tools@workspace:core/testing-tools"
   dependencies:
@@ -889,7 +889,7 @@ __metadata:
   dependencies:
     "@objectiv/plugin-path-context-from-url": ^0.0.6
     "@objectiv/queue-local-storage": ^0.0.6
-    "@objectiv/testing-tools": 0.0.5
+    "@objectiv/testing-tools": 0.0.6
     "@objectiv/tracker-core": ^0.0.6
     "@objectiv/transport-debug": ^0.0.6
     "@objectiv/transport-fetch": ^0.0.6
@@ -955,7 +955,7 @@ __metadata:
   resolution: "@objectiv/tracker-core@workspace:core/tracker"
   dependencies:
     "@objectiv/schema": ^0.0.6
-    "@objectiv/testing-tools": 0.0.5
+    "@objectiv/testing-tools": 0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
     "@types/jest": ^27.0.3
@@ -982,7 +982,7 @@ __metadata:
   dependencies:
     "@objectiv/plugin-path-context-from-url": ^0.0.6
     "@objectiv/queue-local-storage": ^0.0.6
-    "@objectiv/testing-tools": 0.0.5
+    "@objectiv/testing-tools": 0.0.6
     "@objectiv/tracker-core": ~0.0.6
     "@objectiv/tracker-core-react": ~0.0.6
     "@objectiv/transport-fetch": ^0.0.6
@@ -1014,7 +1014,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-debug@workspace:transports/debug"
   dependencies:
-    "@objectiv/testing-tools": 0.0.5
+    "@objectiv/testing-tools": 0.0.6
     "@objectiv/tracker-core": ~0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
@@ -1037,7 +1037,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-fetch@workspace:transports/fetch"
   dependencies:
-    "@objectiv/testing-tools": 0.0.5
+    "@objectiv/testing-tools": 0.0.6
     "@objectiv/tracker-core": ~0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
@@ -1061,7 +1061,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-xhr@workspace:transports/xhr"
   dependencies:
-    "@objectiv/testing-tools": 0.0.5
+    "@objectiv/testing-tools": 0.0.6
     "@objectiv/tracker-core": ~0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1

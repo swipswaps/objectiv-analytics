@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@objectiv/schema": "^0.0.6",
-    "@objectiv/testing-tools": "0.0.5",
+    "@objectiv/testing-tools": "0.0.6",
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.1.1",
     "@types/jest": "^27.0.3",
