@@ -2,12 +2,12 @@
 Copyright 2021 Objectiv B.V.
 """
 import json
-from typing import Optional, Dict, Union, TYPE_CHECKING, Any
+from typing import Optional, Dict, Union, TYPE_CHECKING
 
-from bach.series import Series, const_to_series
+from bach.series import Series
 from bach.expression import Expression
-from sql_models.util import quote_string, quote_identifier
-from sql_models.model import SqlModel
+from bach.sql_model import BachSqlModel
+from sql_models.util import quote_string
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
@@ -287,7 +287,7 @@ class SeriesJson(SeriesJsonb):
 
     def __init__(self,
                  engine,
-                 base_node: SqlModel,
+                 base_node: BachSqlModel,
                  index: Dict[str, 'Series'],
                  name: str,
                  expression: Expression,

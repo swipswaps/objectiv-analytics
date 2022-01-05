@@ -13,6 +13,7 @@ from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_
 from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
+from bach.sql_model import BachSqlModel
 from sql_models.util import quote_identifier
 from bach.types import value_to_dtype
 from sql_models.model import SqlModel
@@ -55,7 +56,7 @@ class Series(ABC):
     # and is shared with other Series and DataFrames that can change it's state.
     def __init__(self,
                  engine,
-                 base_node: SqlModel,
+                 base_node: BachSqlModel,
                  index: Dict[str, 'Series'],
                  name: str,
                  expression: Expression,
@@ -210,7 +211,7 @@ class Series(ABC):
         return self._engine
 
     @property
-    def base_node(self) -> SqlModel:
+    def base_node(self) -> BachSqlModel:
         """
         Get this Series' base_node
         """

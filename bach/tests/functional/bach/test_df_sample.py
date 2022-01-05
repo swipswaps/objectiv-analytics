@@ -102,6 +102,7 @@ def test_combine_unsampled_with_before_data():
     )
     dff_s['e'] = dff_s.city + '_extended'
     new_dff = dff_s.get_unsampled()
+    assert new_dff.all_series.keys() == dff_s.all_series.keys()
     dff['e'] = new_dff.e
 
 
