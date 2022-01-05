@@ -4,6 +4,7 @@
 
 import { makeSuccessEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
+import React from 'react';
 import { makeContentContext, trackSuccessEvent, TrackingContextProvider, useSuccessEventTracker } from '../src';
 
 describe('SuccessEvent', () => {

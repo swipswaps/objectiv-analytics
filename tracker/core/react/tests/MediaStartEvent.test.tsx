@@ -4,6 +4,7 @@
 
 import { makeMediaStartEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
+import React from 'react';
 import { makeContentContext, TrackingContextProvider, trackMediaStartEvent, useMediaStartEventTracker } from '../src';
 
 describe('trackMediaStart', () => {

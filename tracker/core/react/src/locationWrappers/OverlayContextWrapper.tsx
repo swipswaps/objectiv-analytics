@@ -5,6 +5,7 @@
 import { makeOverlayContext } from '../common/factories/makeOverlayContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
 import { ContentContextWrapperProps } from './ContentContextWrapper';
+import React from 'react';
 
 /**
  * The props of OverlayContextWrapper. No extra attributes, same as ContentContextWrapper.

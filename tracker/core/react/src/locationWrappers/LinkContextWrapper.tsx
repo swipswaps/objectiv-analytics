@@ -5,6 +5,7 @@
 import { makeLinkContext } from '../common/factories/makeLinkContext';
 import { LocationContextWrapper } from './LocationContextWrapper';
 import { ContentContextWrapperProps } from './ContentContextWrapper';
+import React from 'react';
 
 /**
  * The props of LinkContextWrapper.
