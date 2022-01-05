@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackerConsole, TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
+import { TrackerConsole, TrackerEvent, makeTransportSendError } from '@objectiv/tracker-core';
 import { defaultFetchOptions } from './defaultFetchOptions';
 
 /**
@@ -55,7 +55,7 @@ export const defaultFetchFunction = async ({
             console.groupEnd();
           }
 
-          reject(new TransportSendError());
+          reject(makeTransportSendError());
         }
       })
       .catch(() => {
@@ -66,7 +66,7 @@ export const defaultFetchFunction = async ({
           console.groupEnd();
         }
 
-        reject(new TransportSendError());
+        reject(makeTransportSendError());
       });
   });
 };

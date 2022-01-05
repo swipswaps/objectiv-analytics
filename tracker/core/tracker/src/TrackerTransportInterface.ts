@@ -2,7 +2,6 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import ExtendableError from 'es6-error';
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent } from './TrackerEvent';
@@ -14,9 +13,20 @@ export type TransportableEvent = TrackerEvent | Promise<TrackerEvent>;
 
 /**
  * A custom error thrown by Sending Transports (eg: Fetch) whenever the Collector was not reachable.
- * RetryTransportAttempts will react to it by retrying.
+ * RetryTransportAttempts will react to it by retrying. Comes with a guard to easily check it.
  */
-export class TransportSendError extends ExtendableError {}
+const TransportSendErrorName = 'TransportSendError';
+
+export const makeTransportSendError = () => {
+  const error = new Error();
+  error.name = TransportSendErrorName;
+
+  return error;
+}
+
+export const isTransportSendError = (error: Error) => {
+  return error.name === TransportSendErrorName;
+}
 
 /**
  * The configuration of TrackerTransportTransportSwitch
