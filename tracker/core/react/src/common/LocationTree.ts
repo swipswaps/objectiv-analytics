@@ -1,10 +1,14 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
 import { getLocationPath } from '@objectiv/tracker-core';
 import { LocationContext } from '../types';
+
+/**
+ * TODO: this module is highly experimental and currently not enabled
+ */
 
 /**
  * LocationTree nodes have the same shape of LocationContext but they can have children LocationNodes themselves.

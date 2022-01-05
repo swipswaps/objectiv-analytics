@@ -1,13 +1,13 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
+import { PathContextFromURLPlugin } from '@objectiv/plugin-path-context-from-url';
 import {
   generateUUID,
   getLocationPath,
   LocationStack,
-  makeSectionContext,
+  makeContentContext,
   TrackerPlugins,
 } from '@objectiv/tracker-core';
 import { BrowserTracker, getElementLocationStack, TaggableElement } from '../src';
@@ -44,12 +44,12 @@ describe('getElementLocationStack', () => {
 
   describe('Should reconstruct the Location Stack solely based on the DOM tree', () => {
     const expectedPathsByElement: [TaggableElement, string][] = [
-      [mainSection, 'Section:main'],
-      [div, 'Section:main'],
-      [parentSection, 'Section:main / Section:parent'],
-      [section, 'Section:main / Section:parent'],
-      [childSection, 'Section:main / Section:parent / Section:child'],
-      [button, 'Section:main / Section:parent / Section:child / Button:button'],
+      [mainSection, 'Content:main'],
+      [div, 'Content:main'],
+      [parentSection, 'Content:main / Content:parent'],
+      [section, 'Content:main / Content:parent'],
+      [childSection, 'Content:main / Content:parent / Content:child'],
+      [button, 'Content:main / Content:parent / Content:child / Pressable:button'],
     ];
 
     expectedPathsByElement.forEach(([element, expectedLocationPath]) => {
@@ -66,17 +66,17 @@ describe('getElementLocationStack', () => {
     const applicationId = 'app';
     const endpoint = 'http://test';
     const plugins: TrackerPlugins = new TrackerPlugins({
-      plugins: [new WebDocumentContextPlugin({ documentContextId: applicationId })],
+      plugins: [new PathContextFromURLPlugin()],
     });
     const tracker = new BrowserTracker({ applicationId, endpoint, plugins });
 
     const expectedPathsByElement: [TaggableElement, string][] = [
-      [mainSection, 'WebDocument:app / Section:main'],
-      [div, 'WebDocument:app / Section:main'],
-      [parentSection, 'WebDocument:app / Section:main / Section:parent'],
-      [section, 'WebDocument:app / Section:main / Section:parent'],
-      [childSection, 'WebDocument:app / Section:main / Section:parent / Section:child'],
-      [button, 'WebDocument:app / Section:main / Section:parent / Section:child / Button:button'],
+      [mainSection, 'Content:main'],
+      [div, 'Content:main'],
+      [parentSection, 'Content:main / Content:parent'],
+      [section, 'Content:main / Content:parent'],
+      [childSection, 'Content:main / Content:parent / Content:child'],
+      [button, 'Content:main / Content:parent / Content:child / Pressable:button'],
     ];
 
     expectedPathsByElement.forEach(([element, expectedLocationPath]) => {
@@ -92,19 +92,19 @@ describe('getElementLocationStack', () => {
   describe('Should reconstruct the Location Stack including the Tracker Location Stack and Plugins', () => {
     const applicationId = 'app';
     const endpoint = 'http://test';
-    const location_stack: LocationStack = [makeSectionContext({ id: 'root' })];
+    const location_stack: LocationStack = [makeContentContext({ id: 'root' })];
     const plugins: TrackerPlugins = new TrackerPlugins({
-      plugins: [new WebDocumentContextPlugin({ documentContextId: applicationId })],
+      plugins: [new PathContextFromURLPlugin()],
     });
     const tracker = new BrowserTracker({ applicationId, endpoint, plugins, location_stack });
 
     const expectedPathsByElement: [TaggableElement, string][] = [
-      [mainSection, 'WebDocument:app / Section:root / Section:main'],
-      [div, 'WebDocument:app / Section:root / Section:main'],
-      [parentSection, 'WebDocument:app / Section:root / Section:main / Section:parent'],
-      [section, 'WebDocument:app / Section:root / Section:main / Section:parent'],
-      [childSection, 'WebDocument:app / Section:root / Section:main / Section:parent / Section:child'],
-      [button, 'WebDocument:app / Section:root / Section:main / Section:parent / Section:child / Button:button'],
+      [mainSection, 'Content:root / Content:main'],
+      [div, 'Content:root / Content:main'],
+      [parentSection, 'Content:root / Content:main / Content:parent'],
+      [section, 'Content:root / Content:main / Content:parent'],
+      [childSection, 'Content:root / Content:main / Content:parent / Content:child'],
+      [button, 'Content:root / Content:main / Content:parent / Content:child / Pressable:button'],
     ];
 
     expectedPathsByElement.forEach(([element, expectedLocationPath]) => {

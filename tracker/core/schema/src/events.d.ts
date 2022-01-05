@@ -1,163 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { AbstractNonInteractiveEvent, AbstractVideoEvent, AbstractInteractiveEvent } from './abstracts';
+import { AbstractInteractiveEvent, AbstractNonInteractiveEvent, AbstractMediaEvent } from './abstracts';
 
 /**
- * Non interactive events, are events that are not (directly) triggered by an interaction. For example:
- * Consider the following flow of events:
- * 1. press play in a video player -> ButtonEvent -> interactive
- * 2. Videoplayer starting playback -> MediaStartEvent -> non-interactive
- * Inheritance: NonInteractiveEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface NonInteractiveEvent extends AbstractNonInteractiveEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'NonInteractiveEvent';
-}
-
-/**
- * A non interactive event, that would be emitted when an action completes successfully, e.g. a form that
- * is posted.
- * Inheritance: CompletedEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface CompletedEvent extends AbstractNonInteractiveEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'CompletedEvent';
-}
-
-/**
- * A non interactive event, that would be emitted when an action fails or is aborted, e.g. a form that
- * is posted, but not successfully.
- * Inheritance: AbortedEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface AbortedEvent extends AbstractNonInteractiveEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'AbortedEvent';
-}
-
-/**
- * A non interactive event that is emitted after a document finishes loading. It should provide a
- * `WebDocumentContext` which should describe the state (eg. URL) of the event.
- * NOTE: with SPA's this probably only happens once, as page (re)loads don't happen after the initial page load
- * Inheritance: DocumentLoadedEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface DocumentLoadedEvent extends AbstractNonInteractiveEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'DocumentLoadedEvent';
-}
-
-/**
- * non interactive event that is emitted when the URL of a page has changed. Also contains a `WebDocumentContext`
- * that details the change.
- * Inheritance: URLChangeEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface URLChangeEvent extends AbstractNonInteractiveEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'URLChangeEvent';
-}
-
-/**
- * non interactive event that is emitted after an application (eg. SPA) has finished loading.
- * Contains a `SectionContext`
- * Inheritance: ApplicationLoadedEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface ApplicationLoadedEvent extends AbstractNonInteractiveEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'ApplicationLoadedEvent';
-}
-
-/**
- * Non interactive event, emitted after a section (`SectionContext`) has become visible.
- * Inheritance: SectionVisibleEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface SectionVisibleEvent extends AbstractNonInteractiveEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'SectionVisibleEvent';
-}
-
-/**
- * Non interactive event, emitted after a section (`SectionContext`) has become invisible.
- * Inheritance: SectionHiddenEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface SectionHiddenEvent extends AbstractNonInteractiveEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'SectionHiddenEvent';
-}
-
-/**
- * Family of non interactive events triggered by a video player
- * Inheritance: VideoEvent -> AbstractVideoEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface VideoEvent extends AbstractVideoEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'VideoEvent';
-}
-
-/**
- * Event emitted after a video completes loading.
- * Inheritance: VideoLoadEvent -> AbstractVideoEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface VideoLoadEvent extends AbstractVideoEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'VideoLoadEvent';
-}
-
-/**
- * Event emitted after a video starts playback.
- * Inheritance: VideoStartEvent -> AbstractVideoEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface VideoStartEvent extends AbstractVideoEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'VideoStartEvent';
-}
-
-/**
- * Event emitted after a video stops playback.
- * Inheritance: VideoStopEvent -> AbstractVideoEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface VideoStopEvent extends AbstractVideoEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'VideoStopEvent';
-}
-
-/**
- * Event emitted after a video pauses playback (toggle).
- * Inheritance: VideoPauseEvent -> AbstractVideoEvent -> AbstractNonInteractiveEvent -> AbstractEvent
- */
-export interface VideoPauseEvent extends AbstractVideoEvent {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'VideoPauseEvent';
-}
-
-/**
- * Events that are the direct result of a user interaction. Eg. a Button Click
+ * The parent of Events that are the direct result of a user interaction, e.g. a button click.
  * Inheritance: InteractiveEvent -> AbstractInteractiveEvent -> AbstractEvent
  */
 export interface InteractiveEvent extends AbstractInteractiveEvent {
@@ -168,14 +16,42 @@ export interface InteractiveEvent extends AbstractInteractiveEvent {
 }
 
 /**
- * Event triggered by a user clicking on an element
- * Inheritance: ClickEvent -> AbstractInteractiveEvent -> AbstractEvent
+ * The parent of Events that are not directly triggered by a user action.
+ * Inheritance: NonInteractiveEvent -> AbstractNonInteractiveEvent -> AbstractEvent
  */
-export interface ClickEvent extends AbstractInteractiveEvent {
+export interface NonInteractiveEvent extends AbstractNonInteractiveEvent {
   /**
    * Typescript discriminator
    */
-  readonly _type: 'ClickEvent';
+  readonly _type: 'NonInteractiveEvent';
+}
+
+/**
+ * A NonInteractive event that is emitted after an application (eg. SPA) has finished loading.
+ * Inheritance: ApplicationLoadedEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface ApplicationLoadedEvent extends AbstractNonInteractiveEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'ApplicationLoadedEvent';
+}
+
+/**
+ * A NonInteractiveEvent that is sent when a user action results in a error,
+ * like an invalid email when sending a form.
+ * Inheritance: FailureEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface FailureEvent extends AbstractNonInteractiveEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'FailureEvent';
+
+  /**
+   * Failure message.
+   */
+  message: string;
 }
 
 /**
@@ -187,4 +63,111 @@ export interface InputChangeEvent extends AbstractInteractiveEvent {
    * Typescript discriminator
    */
   readonly _type: 'InputChangeEvent';
+}
+
+/**
+ * An InteractiveEvent that is sent when a user presses on a pressable element
+ * (like a link, button, icon).
+ * Inheritance: PressEvent -> AbstractInteractiveEvent -> AbstractEvent
+ */
+export interface PressEvent extends AbstractInteractiveEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'PressEvent';
+}
+
+/**
+ * A NonInteractiveEvent that's emitted after a LocationContext has become invisible.
+ * Inheritance: HiddenEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface HiddenEvent extends AbstractNonInteractiveEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'HiddenEvent';
+}
+
+/**
+ * A NonInteractiveEvent that's emitted after a section LocationContext has become visible.
+ * Inheritance: VisibleEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface VisibleEvent extends AbstractNonInteractiveEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'VisibleEvent';
+}
+
+/**
+ * A NonInteractiveEvent that is sent when a user action is successfully completed,
+ * like sending an email form.
+ * Inheritance: SuccessEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface SuccessEvent extends AbstractNonInteractiveEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'SuccessEvent';
+
+  /**
+   * Success message.
+   */
+  message: string;
+}
+
+/**
+ * The parent of non-interactive events that are triggered by a media player.
+ * It requires a MediaPlayerContext to detail the origin of the event.
+ * Inheritance: MediaEvent -> AbstractMediaEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface MediaEvent extends AbstractMediaEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'MediaEvent';
+}
+
+/**
+ * A MediaEvent that's emitted after a media item completes loading.
+ * Inheritance: MediaLoadEvent -> AbstractMediaEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface MediaLoadEvent extends AbstractMediaEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'MediaLoadEvent';
+}
+
+/**
+ * A MediaEvent that's emitted after a media item pauses playback.
+ * Inheritance: MediaPauseEvent -> AbstractMediaEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface MediaPauseEvent extends AbstractMediaEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'MediaPauseEvent';
+}
+
+/**
+ * A MediaEvent that's emitted after a media item starts playback.
+ * Inheritance: MediaStartEvent -> AbstractMediaEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface MediaStartEvent extends AbstractMediaEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'MediaStartEvent';
+}
+
+/**
+ * A MediaEvent that's emitted after a media item stops playback.
+ * Inheritance: MediaStopEvent -> AbstractMediaEvent -> AbstractNonInteractiveEvent -> AbstractEvent
+ */
+export interface MediaStopEvent extends AbstractMediaEvent {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'MediaStopEvent';
 }

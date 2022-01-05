@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 export * from '@objectiv/tracker-core';
@@ -43,7 +43,6 @@ export * from './definitions/LocationTaggerParameters';
 export * from './definitions/NonInteractiveEventTrackerParameters';
 export * from './definitions/ParentTaggedElement';
 export * from './definitions/TagLocationAttributes';
-export * from './definitions/TagButtonParameters';
 export * from './definitions/TagChildrenAttributes';
 export * from './definitions/TagChildrenElement';
 export * from './definitions/TagChildrenReturnValue';
@@ -58,6 +57,8 @@ export * from './definitions/TrackClicksAttribute';
 export * from './definitions/TrackClicksOptions';
 export * from './definitions/TrackedElement';
 export * from './definitions/TrackerErrorHandlerCallback';
+export * from './definitions/TrackFailureEventParameters';
+export * from './definitions/TrackSuccessEventParameters';
 export * from './definitions/TrackVisibilityAttribute';
 export * from './definitions/Uuid';
 export * from './definitions/ValidateAttribute';
@@ -65,30 +66,35 @@ export * from './definitions/ValidChildrenTaggingQuery';
 export * from './definitions/WaitForQueueOptions';
 export * from './definitions/WaitUntilTrackedOptions';
 
-export * from './eventTrackers/trackAborted';
-export * from './eventTrackers/trackApplicationLoaded';
-export * from './eventTrackers/trackClick';
-export * from './eventTrackers/trackCompleted';
+export * from './eventTrackers/trackFailureEvent';
+export * from './eventTrackers/trackApplicationLoadedEvent';
+export * from './eventTrackers/trackPressEvent';
+export * from './eventTrackers/trackSuccessEvent';
 export * from './eventTrackers/trackEvent';
-export * from './eventTrackers/trackInputChange';
-export * from './eventTrackers/trackSectionHidden';
-export * from './eventTrackers/trackSectionVisible';
-export * from './eventTrackers/trackURLChange';
-export * from './eventTrackers/trackVideoPause';
-export * from './eventTrackers/trackVideoStart';
+export * from './eventTrackers/trackInputChangeEvent';
+export * from './eventTrackers/trackInteractiveEvent';
+export * from './eventTrackers/trackHiddenEvent';
+export * from './eventTrackers/trackVisibleEvent';
+export * from './eventTrackers/trackMediaEvent';
+export * from './eventTrackers/trackMediaLoadEvent';
+export * from './eventTrackers/trackMediaPauseEvent';
+export * from './eventTrackers/trackMediaStartEvent';
+export * from './eventTrackers/trackMediaStopEvent';
+export * from './eventTrackers/trackNonInteractiveEvent';
 export * from './eventTrackers/trackVisibility';
 
-export * from './locationTaggers/tagButton';
 export * from './locationTaggers/tagChild';
 export * from './locationTaggers/tagChildren';
-export * from './locationTaggers/tagElement';
-export * from './locationTaggers/tagExpandableElement';
+export * from './locationTaggers/tagContent';
+export * from './locationTaggers/tagExpandable';
 export * from './locationTaggers/tagInput';
 export * from './locationTaggers/tagLink';
 export * from './locationTaggers/tagLocation';
 export * from './locationTaggers/tagMediaPlayer';
 export * from './locationTaggers/tagNavigation';
 export * from './locationTaggers/tagOverlay';
+export * from './locationTaggers/tagPressable';
+export * from './locationTaggers/tagRootLocation';
 
 export * from './mutationObserver/AutoTrackingState';
 export * from './mutationObserver/makeBlurEventHandler';

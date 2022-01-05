@@ -1,10 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeSectionHiddenEvent, Tracker } from '@objectiv/tracker-core';
+import { makeHiddenEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
+import React from 'react';
 import { useEffect } from 'react';
 import { TrackerProvider, useTrackOnUnmount } from '../src';
 
@@ -30,7 +31,7 @@ describe('useTrackOnUnmount', () => {
   };
 
   const Application = () => {
-    useTrackOnUnmount({ event: makeSectionHiddenEvent() });
+    useTrackOnUnmount({ event: makeHiddenEvent() });
 
     useEffect(renderSpy);
 
@@ -49,7 +50,7 @@ describe('useTrackOnUnmount', () => {
     unmount();
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionHiddenEvent' }));
+    expect(spyTransport.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 
   it('should not execute on rerender', () => {
@@ -69,14 +70,12 @@ describe('useTrackOnUnmount', () => {
       isUsable: () => true,
     };
     const anotherTracker = new Tracker({ applicationId: 'app-id', transport: spyTransport2 });
-    const { unmount } = renderHook(() =>
-      useTrackOnUnmount({ event: makeSectionHiddenEvent(), tracker: anotherTracker })
-    );
+    const { unmount } = renderHook(() => useTrackOnUnmount({ event: makeHiddenEvent(), tracker: anotherTracker }));
 
     unmount();
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'SectionHiddenEvent' }));
+    expect(spyTransport2.handle).toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 });

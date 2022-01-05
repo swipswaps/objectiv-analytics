@@ -1,8 +1,8 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ReactNode } from 'react';
+import React, { ReactNode } from 'react';
 import { LocationProvider } from './LocationProvider';
 import { LocationProviderContext } from './LocationProviderContext';
 import { TrackerProvider } from './TrackerProvider';

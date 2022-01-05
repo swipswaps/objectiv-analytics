@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { assert, validate } from 'superstruct';
@@ -23,11 +23,11 @@ import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerC
  *    tagChildren([
  *      {
  *        queryAll: 'button[aria-label="Previous"]',
- *        tagAs: tagButton({ id: 'prev', text: 'Previous' })
+ *        tagAs: tagPressable({ id: 'prev', text: 'Previous' })
  *      },
  *      {
  *        queryAll: 'button[aria-label="Next"]',
- *        tagAs: tagButton({ id: 'next', text: 'Next' })
+ *        tagAs: tagPressable({ id: 'next', text: 'Next' })
  *      }
  *    ])
  */

@@ -1,10 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { TrackerProvider, useTrackOnChange } from '../src';
 

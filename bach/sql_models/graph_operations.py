@@ -218,8 +218,9 @@ def update_properties_in_graph(start_node: SqlModel, property_values: Mapping[st
     """
     Return a copy of the SqlModel with the given properties updated throughout the tree.
 
-    Will only update properties of nodes that already have that property. If a node doesn't have any of the
-    properties in property_values then nothing happens with that node.
+    Will only update properties of nodes that already have that property and for which that property has a
+    different value. If a node doesn't have any of the properties in property_values, or all the values match
+    already, then nothing happens with that node.
 
     :param start_node: start node
     :param property_values: Dictionary mapping property names to new values.
@@ -227,11 +228,11 @@ def update_properties_in_graph(start_node: SqlModel, property_values: Mapping[st
     """
     find_keys = set(property_values.keys())
 
-    def filter(node: SqlModel) -> bool:
-        node_keys = set(node.properties.keys())
-        return bool(find_keys.intersection(node_keys))
+    def filter_function(node: SqlModel) -> bool:
+        filter_node_keys = set(node.properties.keys())
+        return bool(find_keys.intersection(filter_node_keys))
 
-    found_nodes = find_nodes(start_node, function=filter)
+    found_nodes = find_nodes(start_node, function=filter_function)
     for found_node in found_nodes:
         node_keys = set(found_node.model.properties.keys())
         matching_keys = find_keys.intersection(node_keys)
@@ -239,6 +240,8 @@ def update_properties_in_graph(start_node: SqlModel, property_values: Mapping[st
             key: property_values[key]
             for key in matching_keys if found_node.model.properties[key] != property_values[key]
         }
+        if not dict_to_update:
+            continue
         new_dict = found_node.model.properties
         new_dict.update(dict_to_update)
         start_node = start_node.set(found_node.reference_path, **new_dict)

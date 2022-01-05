@@ -1,10 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeSectionHiddenEvent, makeSectionVisibleEvent, Tracker } from '@objectiv/tracker-core';
+import { makeHiddenEvent, makeVisibleEvent, Tracker } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
+import React from 'react';
 import { useEffect, useState } from 'react';
 import { TrackerProvider, useTrackOnToggle } from '../src';
 
@@ -39,7 +40,7 @@ describe('useTrackOnToggle', () => {
 
   const Application = () => {
     const [menuOpen, setMenuOpen] = useState(false);
-    useTrackOnToggle({ state: menuOpen, trueEvent: makeSectionVisibleEvent(), falseEvent: makeSectionHiddenEvent() });
+    useTrackOnToggle({ state: menuOpen, trueEvent: makeVisibleEvent(), falseEvent: makeHiddenEvent() });
 
     useEffect(renderSpy);
 
@@ -86,9 +87,9 @@ describe('useTrackOnToggle', () => {
     fireEvent.click(toggleMenuButton);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(3);
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'SectionVisibleEvent' }));
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ _type: 'SectionHiddenEvent' }));
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(3, expect.objectContaining({ _type: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ _type: 'HiddenEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(3, expect.objectContaining({ _type: 'VisibleEvent' }));
   });
 
   it('should allow overriding the tracker with a custom one', () => {
@@ -98,8 +99,8 @@ describe('useTrackOnToggle', () => {
       (state) =>
         useTrackOnToggle({
           state,
-          trueEvent: makeSectionVisibleEvent(),
-          falseEvent: makeSectionHiddenEvent(),
+          trueEvent: makeVisibleEvent(),
+          falseEvent: makeHiddenEvent(),
           tracker: anotherTracker,
         }),
       { initialProps: false }
@@ -110,7 +111,7 @@ describe('useTrackOnToggle', () => {
 
     expect(spyTransport.handle).not.toHaveBeenCalled();
     expect(spyTransport2.handle).toHaveBeenCalledTimes(2);
-    expect(spyTransport2.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'SectionVisibleEvent' }));
-    expect(spyTransport2.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ _type: 'SectionHiddenEvent' }));
+    expect(spyTransport2.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport2.handle).toHaveBeenNthCalledWith(2, expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 });

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { matchUUID } from '@objectiv/testing-tools';
@@ -9,7 +9,7 @@ import {
   getTracker,
   getTrackerRepository,
   makeTracker,
-  tagButton,
+  tagPressable,
   TaggingAttribute,
   tagOverlay,
 } from '../src';
@@ -34,7 +34,7 @@ describe('trackNewElements', () => {
     div1.setAttribute(
       TaggingAttribute.tagChildren,
       JSON.stringify([
-        { queryAll: '#button', tagAs: tagButton({ id: 'button', text: 'button' }) },
+        { queryAll: '#button', tagAs: tagPressable({ id: 'button' }) },
         { queryAll: '#child-div', tagAs: tagOverlay({ id: 'child-div' }) },
       ])
     );
@@ -61,7 +61,7 @@ describe('trackNewElements', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionVisibleEvent',
+        _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [makeOverlayContext({ id: 'child-div' })],

@@ -1,13 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import { ReactNode } from 'react';
-import { LocationTree } from '../common/LocationTree';
+import React, { ReactNode } from 'react';
 import { LocationProvider } from '../common/providers/LocationProvider';
 import { TrackingContext } from '../common/providers/TrackingContext';
-import { useParentLocationContext } from '../hooks/consumers/useParentLocationContext';
 import { useTracker } from '../hooks/consumers/useTracker';
 import { LocationContext } from '../types';
 
@@ -33,8 +31,8 @@ export type LocationContextWrapperProps = {
 export const LocationContextWrapper = ({ children, locationContext }: LocationContextWrapperProps) => {
   const tracker = useTracker();
 
-  // Add new LocationEntry to LocationTree as well
-  LocationTree.add(locationContext, useParentLocationContext());
+  // TODO: Add new LocationEntry to LocationTree as well (LocationTree is not ready for production yet)
+  //LocationTree.add(locationContext, useParentLocationContext());
 
   return (
     <LocationProvider locationStack={[locationContext]}>

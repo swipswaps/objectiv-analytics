@@ -1,10 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeSectionHiddenEvent, makeSectionVisibleEvent, Tracker } from '@objectiv/tracker-core';
+import { makeHiddenEvent, makeVisibleEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
-import { makeSectionContext, TrackingContextProvider, trackVisibility, useVisibilityTracker } from '../src';
+import React from 'react';
+import { makeContentContext, TrackingContextProvider, trackVisibility, useVisibilityTracker } from '../src';
 
 describe('Visibility', () => {
   beforeEach(() => {
@@ -15,17 +16,17 @@ describe('Visibility', () => {
     jest.resetAllMocks();
   });
 
-  it('should track a SectionHiddenEvent (programmatic)', () => {
+  it('should track a HiddenEvent (programmatic)', () => {
     const tracker = new Tracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
     trackVisibility({ tracker, isVisible: false });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeSectionHiddenEvent()), undefined);
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeHiddenEvent()), undefined);
   });
 
-  it('should track a SectionHiddenEvent (hook relying on TrackingContextProvider)', () => {
+  it('should track a HiddenEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
 
@@ -33,7 +34,7 @@ describe('Visibility', () => {
       const trackVisibility = useVisibilityTracker({ isVisible: false });
       trackVisibility();
 
-      return <>Component triggering SectionHiddenEvent via Visibility Event Tracker</>;
+      return <>Component triggering HiddenEvent via Visibility Event Tracker</>;
     };
 
     render(
@@ -43,10 +44,10 @@ describe('Visibility', () => {
     );
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'SectionHiddenEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 
-  it('should track a SectionHiddenEvent (hook with custom tracker and location)', () => {
+  it('should track a HiddenEvent (hook with custom tracker and location)', () => {
     const tracker = new Tracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
@@ -57,15 +58,15 @@ describe('Visibility', () => {
       const trackVisibility = useVisibilityTracker({
         isVisible: false,
         tracker: customTracker,
-        locationStack: [makeSectionContext({ id: 'override' })],
+        locationStack: [makeContentContext({ id: 'override' })],
       });
       trackVisibility();
 
-      return <>Component triggering SectionHiddenEvent</>;
+      return <>Component triggering HiddenEvent</>;
     };
 
-    const location1 = makeSectionContext({ id: 'root' });
-    const location2 = makeSectionContext({ id: 'child' });
+    const location1 = makeContentContext({ id: 'root' });
+    const location2 = makeContentContext({ id: 'child' });
 
     render(
       <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
@@ -78,29 +79,25 @@ describe('Visibility', () => {
     expect(customTracker.trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(
-        makeSectionHiddenEvent({
-          location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
+        makeHiddenEvent({
+          location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'override' })],
         })
       ),
       undefined
     );
   });
 
-  it('should track a SectionVisibleEvent (programmatic)', () => {
+  it('should track a VisibleEvent (programmatic)', () => {
     const tracker = new Tracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
     trackVisibility({ tracker, isVisible: true });
 
     expect(tracker.trackEvent).toHaveBeenCalledTimes(1);
-    expect(tracker.trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining(makeSectionVisibleEvent()),
-      undefined
-    );
+    expect(tracker.trackEvent).toHaveBeenNthCalledWith(1, expect.objectContaining(makeVisibleEvent()), undefined);
   });
 
-  it('should track a SectionVisibleEvent (hook relying on TrackingContextProvider)', () => {
+  it('should track a VisibleEvent (hook relying on TrackingContextProvider)', () => {
     const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
     const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
 
@@ -108,7 +105,7 @@ describe('Visibility', () => {
       const trackVisibility = useVisibilityTracker({ isVisible: true });
       trackVisibility();
 
-      return <>Component triggering SectionVisibleEvent via Visibility Event Tracker</>;
+      return <>Component triggering VisibleEvent via Visibility Event Tracker</>;
     };
 
     render(
@@ -118,10 +115,10 @@ describe('Visibility', () => {
     );
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'SectionVisibleEvent' }));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'VisibleEvent' }));
   });
 
-  it('should track a SectionVisibleEvent (hook with custom tracker and location)', () => {
+  it('should track a VisibleEvent (hook with custom tracker and location)', () => {
     const tracker = new Tracker({ applicationId: 'app-id' });
     jest.spyOn(tracker, 'trackEvent');
 
@@ -132,15 +129,15 @@ describe('Visibility', () => {
       const trackVisibility = useVisibilityTracker({
         isVisible: true,
         tracker: customTracker,
-        locationStack: [makeSectionContext({ id: 'override' })],
+        locationStack: [makeContentContext({ id: 'override' })],
       });
       trackVisibility();
 
-      return <>Component triggering SectionVisibleEvent via Visibility Event Tracker</>;
+      return <>Component triggering VisibleEvent via Visibility Event Tracker</>;
     };
 
-    const location1 = makeSectionContext({ id: 'root' });
-    const location2 = makeSectionContext({ id: 'child' });
+    const location1 = makeContentContext({ id: 'root' });
+    const location2 = makeContentContext({ id: 'child' });
 
     render(
       <TrackingContextProvider tracker={tracker} locationStack={[location1, location2]}>
@@ -153,8 +150,8 @@ describe('Visibility', () => {
     expect(customTracker.trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(
-        makeSectionVisibleEvent({
-          location_stack: [expect.objectContaining({ _type: 'SectionContext', id: 'override' })],
+        makeVisibleEvent({
+          location_stack: [expect.objectContaining({ _type: 'ContentContext', id: 'override' })],
         })
       ),
       undefined

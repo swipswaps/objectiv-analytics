@@ -1,15 +1,15 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { useContext } from 'react';
+import React from 'react';
 import { TrackerProviderContext } from '../../common/providers/TrackerProviderContext';
 
 /**
  * A utility hook to easily retrieve the Tracker instance from the TrackerProviderContext.
  */
 export const useTracker = () => {
-  const trackerProviderContext = useContext(TrackerProviderContext);
+  const trackerProviderContext = React.useContext(TrackerProviderContext);
 
   if (!trackerProviderContext) {
     throw new Error(`
@@ -19,5 +19,5 @@ export const useTracker = () => {
   }
 
   // Return a frozen version of the actual Tracker safeguard against mutations
-  return Object.freeze(trackerProviderContext.tracker);
+  return trackerProviderContext.tracker;
 };

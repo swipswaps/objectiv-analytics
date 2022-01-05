@@ -11,11 +11,13 @@ from bach.expression import Expression, SingleValueExpression, VariableToken
 from bach.sql_model import BachSqlModelBuilder, CurrentNodeSqlModelBuilder
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
 from sql_models.graph_operations import update_properties_in_graph
-from sql_models.model import SqlModel
+from sql_models.model import SqlModel, Materialization
+
 from sql_models.sql_generator import to_sql
 
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
+    from bach.savepoints import Savepoints
     from bach.series import Series, SeriesBoolean, SeriesAbstractNumeric
 
 # TODO exclude from docs
@@ -142,7 +144,8 @@ class DataFrame:
             index: Dict[str, 'Series'],
             series: Dict[str, 'Series'],
             group_by: Optional['GroupBy'],
-            order_by: List[SortColumn] = None,
+            order_by: List[SortColumn],
+            savepoints: 'Savepoints',
             variables: Dict[str, 'DtypeValuePair'] = None
     ):
         """
@@ -166,6 +169,7 @@ class DataFrame:
         self._data: Dict[str, Series] = {}
         self._group_by = group_by
         self._order_by = order_by if order_by is not None else []
+        self._savepoints = savepoints
         self._variables = variables if variables else {}
         for key, value in series.items():
             if key != value.name:
@@ -226,6 +230,10 @@ class DataFrame:
         Get the current sort order, if any.
         """
         return copy(self._order_by)
+
+    @property
+    def savepoints(self) -> 'Savepoints':
+        return self._savepoints
 
     @property
     def variables(self) -> Dict[str, DtypeValuePair]:
@@ -376,13 +384,16 @@ class DataFrame:
         index_dtypes = {k: dtypes[k] for k in index}
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
 
+        from bach.savepoints import Savepoints
         return cls.get_instance(
             engine=engine,
             base_node=model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             group_by=None,
-            order_by=[]
+            order_by=[],
+            savepoints=Savepoints(),
+            variables={}
         )
 
     @classmethod
@@ -456,8 +467,9 @@ class DataFrame:
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
-            order_by: List[SortColumn] = None,
-            variables: Dict[str, 'DtypeValuePair'] = None
+            order_by: List[SortColumn],
+            savepoints: 'Savepoints',
+            variables: Dict[str, 'DtypeValuePair']
     ) -> 'DataFrame':
         """
         INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
@@ -494,6 +506,7 @@ class DataFrame:
             series=series,
             group_by=group_by,
             order_by=order_by,
+            savepoints=savepoints,
             variables=variables
         )
 
@@ -509,6 +522,7 @@ class DataFrame:
             index_dtypes: Dict[str, str] = None,
             series_dtypes: Dict[str, str] = None,
             single_value: bool = False,
+            savepoints: 'Savepoints' = None,
             **kwargs
     ) -> 'DataFrame':
         """
@@ -539,6 +553,7 @@ class DataFrame:
             'series': series if series is not None else self._data,
             'group_by': self._group_by if group_by is None else group_by[0],
             'order_by': order_by if order_by is not None else self._order_by,
+            'savepoints': savepoints if savepoints is not None else self.savepoints,
             'variables': variables if variables is not None else self.variables
         }
 
@@ -600,12 +615,18 @@ class DataFrame:
         this is a metadata copy only, no actual data is duplicated and changes to the underlying data
         will represented in both copy and original.
         Changes to data, index, sorting, grouping etc. on the copy will not affect the original.
+        The savepoints on the other hand will be shared by the original and the copy.
 
         If you want to create a snapshot of the data, have a look at :py:meth:`get_sample()`
+
+        Calling `copy(df)` will invoke this copy function, i.e. `copy(df)` is implemented as df.copy()
 
         :returns: a copy of the dataframe
         """
         return self.copy_override()
+
+    def __copy__(self):
+        return self.copy()
 
     def materialize(self, node_name='manual_materialize', inplace=False, limit: Any = None) -> 'DataFrame':
         """
@@ -639,6 +660,7 @@ class DataFrame:
             dtypes=series_dtypes,
             group_by=None,
             order_by=[],
+            savepoints=self.savepoints,
             variables=self.variables
         )
 
@@ -651,6 +673,23 @@ class DataFrame:
         self._group_by = df.group_by
         self._order_by = df.order_by
         self._variables = df.variables
+        return self
+
+    def set_savepoint(self, name: str, materialization: Union[Materialization, str] = Materialization.CTE):
+        """
+        Set the current state as a savepoint in `self.savepoints`.
+
+        :param save_points: Savepoints object that's responsible for tracking all savepoints.
+        :param name: Name for the savepoint. This will be the name of the table or view if that's set as
+            materialization. Must be unique both within the Savepoints and within the base_node.
+        :param materialization: Optional materialization of the savepoint in the database. This doesn't do
+            anything unless self.savepoints.write_to_db() gets called and the savepoints are actually
+                materialized into the database.
+        """
+        if not self.is_materialized:
+            self.materialize(node_name=name, inplace=True, limit=None)
+        materialization = Materialization.normalize(materialization)
+        self.savepoints.add_savepoint(name=name, df=self, materialization=materialization)
         return self
 
     def get_sample(self,
@@ -798,7 +837,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['Series', int, str, float, UUID]):
+                    value: Union['DataFrame', 'Series', int, str, float, UUID]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -808,6 +847,8 @@ class DataFrame:
             if key in self.index:
                 # Cannot set an index column, and cannot have a column name both in self.index and self.data
                 raise ValueError(f'Column name "{key}" already exists as index.')
+            if isinstance(value, DataFrame):
+                raise ValueError("Can't set a DataFrame as a single column")
             if not isinstance(value, Series):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
@@ -829,8 +870,33 @@ class DataFrame:
                                          f'given series was not single value or an independent subquery. '
                                          f'GroupBy Value: {value.group_by}, df: {self._group_by}')
                     elif value.base_node != self.base_node:
-                        raise ValueError('Base node of assigned value does not match DataFrame and the '
-                                         'given series was not single value or an independent subquery.')
+                        if not (len(value.index) == 1 and len(self.index) == 1):
+                            raise ValueError('setting with different base nodes only works with one level'
+                                             'index')
+
+                        index_name = self.index_columns[0]
+                        renamed_index = list(value.index.values())[0].copy_override(name=index_name)
+                        if self.index[index_name].dtype != renamed_index.dtype:
+                            raise ValueError('dtypes of indexes should be the same')
+                        renamed_value = value.copy_override(name=key, index={index_name: renamed_index})
+
+                        df = self.merge(renamed_value,
+                                        left_index=True,
+                                        right_index=True,
+                                        how='left',
+                                        suffixes=('', '__remove'))
+
+                        if key in self.data_columns:
+                            df[key] = df[key + '__remove']
+                            df.drop(columns=[key + '__remove'], inplace=True)
+
+                        self._engine = df.engine
+                        self._base_node = df.base_node
+                        self._index = df.index
+                        self._data = df.data
+                        self._group_by = df.group_by
+                        self._order_by = df.order_by
+                        self._savepoints = df.savepoints
                     else:
                         raise NotImplementedError('Incompatible series can not be added to the dataframe.')
 

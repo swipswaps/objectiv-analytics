@@ -1,9 +1,10 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByTestId, render } from '@testing-library/react';
+import React from 'react';
 import {
   InputContextWrapper,
   LocationTree,

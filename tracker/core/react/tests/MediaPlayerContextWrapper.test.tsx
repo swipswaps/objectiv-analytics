@@ -1,15 +1,16 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
+import React from 'react';
 import {
   LocationTree,
   MediaPlayerContextWrapper,
   ObjectivProvider,
-  trackClickEvent,
-  useClickEventTracker,
+  trackPressEvent,
+  usePressEventTracker,
 } from '../src';
 
 describe('MediaPlayerContextWrapper', () => {
@@ -29,8 +30,8 @@ describe('MediaPlayerContextWrapper', () => {
 
     const mediaPlayerContextProps = { id: 'test-media-player' };
     const TrackedButton = () => {
-      const trackClickEvent = useClickEventTracker();
-      return <div onClick={trackClickEvent}>Trigger Event</div>;
+      const trackPressEvent = usePressEventTracker();
+      return <div onClick={trackPressEvent}>Trigger Event</div>;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -48,7 +49,7 @@ describe('MediaPlayerContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'MediaPlayerContext',
@@ -68,7 +69,7 @@ describe('MediaPlayerContextWrapper', () => {
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
         <MediaPlayerContextWrapper {...mediaPlayerContextProps}>
-          {(trackingContext) => <div onClick={() => trackClickEvent(trackingContext)}>Trigger Event</div>}
+          {(trackingContext) => <div onClick={() => trackPressEvent(trackingContext)}>Trigger Event</div>}
         </MediaPlayerContextWrapper>
       </ObjectivProvider>
     );
@@ -81,7 +82,7 @@ describe('MediaPlayerContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'MediaPlayerContext',

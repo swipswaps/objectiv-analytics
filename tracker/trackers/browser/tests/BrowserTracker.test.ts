@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
@@ -10,6 +10,14 @@ import { clear, mockUserAgent } from 'jest-useragent-mock';
 import { BrowserTracker } from '../src/';
 
 describe('BrowserTracker', () => {
+  beforeEach(() => {
+    fetchMock.enableMocks();
+  });
+
+  afterEach(() => {
+    fetchMock.resetMocks();
+  });
+
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'group').mockImplementation(() => {});
@@ -150,7 +158,7 @@ describe('BrowserTracker', () => {
       const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testTracker.plugins?.plugins).toEqual(
-        expect.arrayContaining([expect.objectContaining({ pluginName: 'WebDocumentContextPlugin' })])
+        expect.arrayContaining([expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' })])
       );
     });
 
@@ -178,7 +186,7 @@ describe('BrowserTracker', () => {
       clear();
     });
 
-    it('should auto-track Application and WebDocument Contexts by default', async () => {
+    it('should auto-track Application and Path Contexts by default', async () => {
       const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       const testEvent = new TrackerEvent({ _type: 'test-event' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
@@ -187,23 +195,16 @@ describe('BrowserTracker', () => {
 
       const trackedEvent = await testTracker.trackEvent(testEvent);
 
-      expect(trackedEvent.location_stack).toHaveLength(1);
-      expect(trackedEvent.location_stack).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            _type: 'WebDocumentContext',
-            id: '#document',
-            url: 'http://localhost/',
-          }),
-        ])
-      );
-
-      expect(trackedEvent.global_contexts).toHaveLength(1);
+      expect(trackedEvent.global_contexts).toHaveLength(2);
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
             _type: 'ApplicationContext',
             id: 'app-id',
+          }),
+          expect.objectContaining({
+            _type: 'PathContext',
+            id: 'http://localhost/',
           }),
         ])
       );

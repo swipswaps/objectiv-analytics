@@ -1,9 +1,9 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { matchUUID } from '@objectiv/testing-tools';
-import { generateUUID, makeSectionContext } from '@objectiv/tracker-core';
+import { generateUUID, makeContentContext } from '@objectiv/tracker-core';
 import {
   AutoTrackingState,
   BrowserTracker,
@@ -26,21 +26,11 @@ describe('startAutoTracking', () => {
   });
 
   it('options', () => {
-    startAutoTracking({ trackApplicationLoaded: false, trackURLChanges: false });
+    startAutoTracking({ trackApplicationLoadedEvent: false });
     stopAutoTracking();
-    startAutoTracking({ trackURLChanges: false });
+    startAutoTracking({ trackApplicationLoadedEvent: true });
     stopAutoTracking();
-    startAutoTracking({ trackApplicationLoaded: false });
-    stopAutoTracking();
-    startAutoTracking({ trackApplicationLoaded: true, trackURLChanges: true });
-    stopAutoTracking();
-    startAutoTracking({ trackURLChanges: true });
-    stopAutoTracking();
-    startAutoTracking({ trackApplicationLoaded: true });
-    stopAutoTracking();
-    startAutoTracking({ trackApplicationLoaded: true, trackURLChanges: false });
-    stopAutoTracking();
-    startAutoTracking({ trackApplicationLoaded: false, trackURLChanges: true });
+    startAutoTracking({ trackApplicationLoadedEvent: false });
     stopAutoTracking();
     startAutoTracking({});
     stopAutoTracking();
@@ -67,69 +57,9 @@ describe('startAutoTracking', () => {
     const tracker = new BrowserTracker({ endpoint: 'endpoint', applicationId: 'app' });
     jest.spyOn(tracker, 'trackEvent');
 
-    startAutoTracking({ trackApplicationLoaded: false, trackURLChanges: false });
+    startAutoTracking({ trackApplicationLoadedEvent: false });
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
-  });
-});
-
-describe('makeMutationCallback - url changes', () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
-    makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
-    expect(getTracker()).toBeInstanceOf(BrowserTracker);
-    jest.spyOn(getTracker(), 'trackEvent');
-  });
-
-  it('should not track url changes', () => {
-    const mutationCallback = makeMutationCallback(false);
-    const mutationObserver = new MutationObserver(mutationCallback);
-
-    Object.defineProperty(window, 'location', {
-      value: {
-        href: 'http://localhost/new-url',
-      },
-      writable: true,
-    });
-    mutationCallback([], mutationObserver);
-
-    expect(getTracker().trackEvent).not.toHaveBeenCalled();
-  });
-
-  it('should track url changes only urls change', () => {
-    const mutationCallback = makeMutationCallback(true);
-    const mutationObserver = new MutationObserver(mutationCallback);
-
-    Object.defineProperty(window, 'location', {
-      value: {
-        href: 'http://localhost/',
-      },
-      writable: true,
-    });
-    AutoTrackingState.previousURL = 'http://localhost/';
-
-    mutationCallback([], mutationObserver);
-
-    expect(getTracker().trackEvent).not.toHaveBeenCalled();
-
-    Object.defineProperty(window, 'location', {
-      value: {
-        href: 'http://localhost/another-url',
-      },
-      writable: true,
-    });
-    mutationCallback([], mutationObserver);
-
-    expect(getTracker().trackEvent).toHaveBeenCalledTimes(1);
-    expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        _type: 'URLChangeEvent',
-        id: matchUUID,
-        global_contexts: [],
-        location_stack: [],
-      })
-    );
   });
 });
 
@@ -140,7 +70,7 @@ describe('makeMutationCallback - new nodes', () => {
     trackerRepository.add(tracker);
     trackerRepository.setDefault(tracker.trackerId);
     jest.spyOn(tracker, 'trackEvent');
-    const mutationCallback = makeMutationCallback(false);
+    const mutationCallback = makeMutationCallback();
     const mutationObserver = new MutationObserver(mutationCallback);
 
     const trackedDiv = makeTaggedElement('div', 'div', 'div');
@@ -160,19 +90,19 @@ describe('makeMutationCallback - new nodes', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionVisibleEvent',
+        _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeSectionContext({ id: 'div' })],
+        location_stack: [makeContentContext({ id: 'div' })],
       })
     );
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       2,
       expect.objectContaining({
-        _type: 'SectionVisibleEvent',
+        _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeSectionContext({ id: 'div' })],
+        location_stack: [makeContentContext({ id: 'div' })],
       })
     );
   });
@@ -180,7 +110,7 @@ describe('makeMutationCallback - new nodes', () => {
   it('should console.error if there are no Trackers', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     getTrackerRepository().trackersMap = new Map();
-    const mutationCallback = makeMutationCallback(false);
+    const mutationCallback = makeMutationCallback();
     const mutationObserver = new MutationObserver(mutationCallback);
 
     const trackedDiv = makeTaggedElement('div', 'div', 'div');
@@ -214,7 +144,7 @@ describe('makeMutationCallback - removed nodes', () => {
     trackerRepository.add(tracker);
     trackerRepository.setDefault(tracker.trackerId);
     jest.spyOn(tracker, 'trackEvent');
-    const mutationCallback = makeMutationCallback(false);
+    const mutationCallback = makeMutationCallback();
     const mutationObserver = new MutationObserver(mutationCallback);
 
     const trackedDiv = makeTaggedElement('div', 'div', 'div');
@@ -232,10 +162,10 @@ describe('makeMutationCallback - removed nodes', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionHiddenEvent',
+        _type: 'HiddenEvent',
         id: matchUUID,
         global_contexts: [],
-        location_stack: [makeSectionContext({ id: 'div' })],
+        location_stack: [makeContentContext({ id: 'div' })],
       })
     );
   });
@@ -243,7 +173,7 @@ describe('makeMutationCallback - removed nodes', () => {
 
 describe('makeMutationCallback - attribute changes', () => {
   it('should remove element from TrackerElementLocations when its id changes', () => {
-    const mutationCallback = makeMutationCallback(false);
+    const mutationCallback = makeMutationCallback();
     const mutationObserver = new MutationObserver(mutationCallback);
 
     const trackedDiv = makeTaggedElement('div', 'div', 'div');

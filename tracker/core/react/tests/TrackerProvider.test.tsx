@@ -1,9 +1,10 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
+import React from 'react';
 import { TrackerProvider, useTracker } from '../src';
 
 describe('TrackerProvider', () => {

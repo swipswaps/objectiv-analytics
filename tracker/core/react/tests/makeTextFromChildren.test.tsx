@@ -1,7 +1,8 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
+import React from 'react';
 import { ReactNode } from 'react';
 import { makeTextFromChildren } from '../src';
 

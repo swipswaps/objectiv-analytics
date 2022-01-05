@@ -1,15 +1,16 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
+import React from 'react';
 import {
   LocationTree,
   NavigationContextWrapper,
   ObjectivProvider,
-  trackClickEvent,
-  useClickEventTracker,
+  trackPressEvent,
+  usePressEventTracker,
 } from '../src';
 
 describe('NavigationContextWrapper', () => {
@@ -29,8 +30,8 @@ describe('NavigationContextWrapper', () => {
 
     const navigationContextProps = { id: 'test-navigation' };
     const TrackedButton = () => {
-      const trackClickEvent = useClickEventTracker();
-      return <nav onClick={trackClickEvent}>Trigger Event</nav>;
+      const trackPressEvent = usePressEventTracker();
+      return <nav onClick={trackPressEvent}>Trigger Event</nav>;
     };
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -48,7 +49,7 @@ describe('NavigationContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'NavigationContext',
@@ -68,7 +69,7 @@ describe('NavigationContextWrapper', () => {
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
         <NavigationContextWrapper {...navigationContextProps}>
-          {(trackingContext) => <nav onClick={() => trackClickEvent(trackingContext)}>Trigger Event</nav>}
+          {(trackingContext) => <nav onClick={() => trackPressEvent(trackingContext)}>Trigger Event</nav>}
         </NavigationContextWrapper>
       </ObjectivProvider>
     );
@@ -81,7 +82,7 @@ describe('NavigationContextWrapper', () => {
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
             _type: 'NavigationContext',
