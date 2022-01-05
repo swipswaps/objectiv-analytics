@@ -10,7 +10,7 @@ import json
 from bach.series import Series
 from bach.series import SeriesJsonb
 from bach.expression import Expression, quote_string, quote_identifier
-from bach.sql_model import SampleSqlModel
+from bach.sql_model import SampleSqlModel, BachSqlModel
 from bach import DataFrame
 from bach.types import register_dtype, get_dtype_from_db_dtype
 from bach_open_taxonomy.stack.util import sessionized_data_model
@@ -803,23 +803,27 @@ class ObjectivFrame(DataFrame):
                       'value': 'json'}:
             raise KeyError(f'Expected columns not in table {table_name}. Found: {dtypes}')
 
-        index_dtype = {'event_id': dtypes.pop('event_id')}
-        # remove key that don't end up in final data.
-        dtypes.pop('value')
-        dtypes['user_id'] = dtypes.pop('cookie_id')
-
         model = sessionized_data_model(start_date=start_date, end_date=end_date, table_name=table_name)
-
-        dtypes.update({'session_id': 'int64',
-                       'session_hit_number': 'int64',
-                       'global_contexts': 'jsonb',
-                       'location_stack': 'jsonb',
-                       'event_type': 'string',
-                       'stack_event_types': 'jsonb'})
+        # The model returned by `sessionized_data_model()` has different columns than the underlying table.
+        # Note that the order of index_dtype and dtypes matters, as we use it below to get the model_columns
+        index_dtype = {'event_id': 'uuid'}
+        dtypes = {
+            'day': 'date',
+            'moment': 'timestamp',
+            'user_id': 'uuid',
+            'global_contexts': 'jsonb',
+            'location_stack': 'jsonb',
+            'event_type': 'string',
+            'stack_event_types': 'jsonb',
+            'session_id': 'int64',
+            'session_hit_number': 'int64'
+        }
+        model_columns = tuple(index_dtype.keys()) + tuple(dtypes.keys())
+        bach_model = BachSqlModel.from_sql_model(sql_model=model, columns=model_columns)
 
         from bach.savepoints import Savepoints
         df = cls.get_instance(engine=engine,
-                              base_node=model,
+                              base_node=bach_model,
                               index_dtypes=index_dtype,
                               dtypes=dtypes,
                               group_by=None,

@@ -133,6 +133,18 @@ class BachSqlModel(SqlModel[T]):
         """ Columns returned by the query of this model, in order."""
         return self._columns
 
+    @classmethod
+    def from_sql_model(cls, sql_model: SqlModel, columns: Tuple[str, ...]) -> 'BachSqlModel':
+        """ From any SqlModel create a BachSqlModel with the given column definitions. """
+        return cls(
+            model_spec=sql_model.model_spec,
+            properties=sql_model.properties,
+            references=sql_model.references,
+            materialization=sql_model.materialization,
+            materialization_name=sql_model.materialization_name,
+            columns=columns
+        )
+
 
 class SampleSqlModel(BachSqlModel):
     """
