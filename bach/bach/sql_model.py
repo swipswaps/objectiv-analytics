@@ -1,15 +1,21 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from copy import copy
+import typing
 from typing import Dict, Any, Union, Sequence, TypeVar, Tuple, List, Optional, cast, Mapping, Hashable
 
-from bach.expression import Expression
+from bach.expression import Expression, get_expression_references, get_variable_token_names, VariableToken
+from bach.types import value_to_dtype, get_series_type_from_dtype
 from sql_models.util import quote_identifier
 from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelBuilder, SqlModelSpec, Materialization
 
 TB = TypeVar('TB', bound='BachSqlModelBuilder')
 T = TypeVar('T', bound='SqlModelSpec')
+
+
+if typing.TYPE_CHECKING:
+    # TODO: move this somewhere where we don't need to do this if?
+    from bach.dataframe import DtypeValuePair
 
 
 class BachSqlModelBuilder(CustomSqlModelBuilder):
@@ -83,7 +89,7 @@ class BachSqlModelBuilder(CustomSqlModelBuilder):
         return super().set_values(**values)
 
     @staticmethod
-    def properties_to_sql(properties: Dict[str, Any]) -> Dict[str, str]:
+    def properties_to_sql(properties: Mapping[str, Any]) -> Dict[str, str]:
         """
         We accept Expressions and lists of expressions as properties too, and they need to escape
         themselves if they want to. This allows them to carry references that will be completed
@@ -101,6 +107,8 @@ class BachSqlModelBuilder(CustomSqlModelBuilder):
 
 
 class CurrentNodeSqlModelBuilder(BachSqlModelBuilder):
+    # TODO: extend BachSqlModel directly, like SampleSqlModel?
+    #
 
     def __init__(self,
                  name: str,
@@ -132,10 +140,9 @@ class CurrentNodeSqlModelBuilder(BachSqlModelBuilder):
         super().__init__(sql, name, column_names)
 
         # Add all references found in the Expressions to self.references
-        all_expressions = cast(List[Optional[Expression]], copy(column_exprs))
-        all_expressions += [where_clause, group_by_clause, having_clause, order_by_clause, limit_clause]
-        expression_references = self._get_expression_references(all_expressions)
-        # help mypy by casting `Union[SqlModelBuilder, SqlModel]` to `SqlModel`
+        nullable_expressions = [where_clause, group_by_clause, having_clause, order_by_clause, limit_clause]
+        all_expressions = column_exprs + [expr for expr in nullable_expressions if expr is not None]
+        expression_references = get_expression_references(all_expressions)
         self._check_reference_conflicts(self._references, expression_references)
         self._references.update(expression_references)
 
@@ -146,16 +153,6 @@ class CurrentNodeSqlModelBuilder(BachSqlModelBuilder):
     @property
     def generic_name(self):
         return self._generic_name
-
-    def _get_expression_references(self, expressions: List[Optional[Expression]]) -> Dict[str, SqlModel]:
-        """ Util function: Get a dictionary of reference name to referred SqlModel from the expressions. """
-        result: Dict[str, SqlModel] = {}
-        for expr in expressions:
-            if expr is not None:
-                references = expr.get_references()
-                self._check_reference_conflicts(result, references)
-                result.update(references)
-        return result
 
     @staticmethod
     def _check_reference_conflicts(left: Mapping[str, Any], right: Mapping[str, Any]) -> None:
@@ -181,8 +178,8 @@ class BachSqlModel(SqlModel[T]):
     """
     def __init__(self,
                  model_spec: T,
-                 properties: Dict[str, Hashable],
-                 references: Dict[str, 'SqlModel'],
+                 properties: Mapping[str, Hashable],
+                 references: Mapping[str, 'SqlModel'],
                  materialization: Materialization,
                  materialization_name: Optional[str],
                  columns: Tuple[str, ...]
@@ -237,6 +234,7 @@ class SampleSqlModel(BachSqlModel):
         self.previous = previous
         sql = 'SELECT * FROM {table_name}'
         super().__init__(
+            # TODO: Use SqlModelBuilder, or create some base spec class?
             model_spec=BachSqlModelBuilder(sql=sql, name=name, columns=columns),
             properties={'table_name': quote_identifier(table_name)},
             references={},
@@ -244,3 +242,35 @@ class SampleSqlModel(BachSqlModel):
             materialization_name=None,
             columns=columns
         )
+
+
+def get_variable_values_sql(
+        variable_values: Dict[str, 'DtypeValuePair'],
+        expressions: List['Expression']
+) -> Dict[str, str]:
+    """
+    Take a dictionary with variable_values and return a dict with the variable values as sql.
+
+    The return dictinary is filtered. It only contains variables for which at least one of the expressions
+    contains a VariableToken with that name.
+
+    :param variable_values: Mapping of variable to value.
+    :param expressions: list of expressions. Only variable that occur in these expressions are returned.
+    :return: Dictionary mapping variable name to sql
+    """
+    result = {}
+    available_tokens = get_variable_token_names(expressions)
+    filtered_variables = {name: dv for name, dv in variable_values.items() if name in available_tokens}
+    for name, dv in filtered_variables.items():
+        dtype = value_to_dtype(dv.value)
+        if dtype != dv.dtype:  # should never happen
+            Exception(f'Dtype of value {dv.value} {dtype} does not match registered dtype {dv.dtype}')
+        property_name = VariableToken.dtype_name_to_sql(dtype=dtype, name=name)
+        series_type = get_series_type_from_dtype(dtype)
+        # TODO: `expr` likely contains redundant 'CASTS', only get the actual value.
+        #  The casts might be confusing when we export this in someway where a user can see the filled-in
+        #  values
+        expr = series_type.supported_value_to_expression(dv.value)
+        sql = expr.to_sql()
+        result[property_name] = sql
+    return result

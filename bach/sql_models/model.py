@@ -16,7 +16,7 @@ from abc import abstractmethod, ABCMeta
 from copy import deepcopy
 from enum import Enum
 from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, Hashable, NamedTuple, Optional, \
-    MutableMapping
+    Mapping, MutableMapping, cast
 
 from sql_models.util import extract_format_fields
 
@@ -134,7 +134,7 @@ class SqlModelSpec:
         return value.replace('{', '{{').replace('}', '}}')
 
     @staticmethod
-    def properties_to_sql(properties: Dict[str, Any]) -> Dict[str, str]:
+    def properties_to_sql(properties: Mapping[str, Any]) -> Dict[str, str]:
         """
         Child classes can override this function if some of the properties require conversion before being
         used in format(). Should be a constant, pure, and immutable function.
@@ -147,8 +147,8 @@ class SqlModelSpec:
         return {key: SqlModelSpec.escape_format_string(str(val)) for key, val in properties.items()}
 
     def assert_adheres_to_spec(self,
-                               references: Dict[str, 'SqlModel'],
-                               properties: Dict[str, Any]):
+                               references: Mapping[str, 'SqlModel'],
+                               properties: Mapping[str, Any]):
         """
         Verify that the references and properties adhere to the specifications of self.
         :raise Exception: If a reference or property is missing
@@ -361,8 +361,8 @@ class SqlModel(Generic[T]):
     """
     def __init__(self,
                  model_spec: T,
-                 properties: Dict[str, Hashable],
-                 references: Dict[str, 'SqlModel'],
+                 properties: Mapping[str, Hashable],
+                 references: Mapping[str, 'SqlModel'],
                  materialization: Materialization,
                  materialization_name: Optional[str] = None
                  ):
@@ -380,8 +380,8 @@ class SqlModel(Generic[T]):
         self._model_spec = model_spec
         self._generic_name = model_spec.generic_name
         self._sql = model_spec.sql
-        self._references: Dict[str, 'SqlModel'] = references
-        self._properties: Dict[str, Any] = properties
+        self._references: Mapping[str, 'SqlModel'] = references
+        self._properties: Mapping[str, Any] = properties
         self._materialization = materialization
         self._materialization_name = materialization_name
         self._property_formatter = model_spec.properties_to_sql
@@ -439,15 +439,15 @@ class SqlModel(Generic[T]):
         return self._sql
 
     @property
-    def references(self) -> Dict[str, 'SqlModel']:
+    def references(self) -> MutableMapping[str, 'SqlModel']:
         # return shallow-copy of the dictionary.
         # keys are strings and thus immutable, values are included uncopied.
         return {key: value for key, value in self._references.items()}
 
     @property
-    def properties(self) -> Dict[str, Any]:
+    def properties(self) -> MutableMapping[str, Any]:
         # return deepcopy of the dictionary
-        return deepcopy(self._properties)
+        return cast(MutableMapping[str, Any], deepcopy(self._properties))
 
     @property
     def materialization(self) -> Materialization:
@@ -469,7 +469,7 @@ class SqlModel(Generic[T]):
     def properties_formatted(self) -> Dict[str, str]:
         return self._property_formatter(self._properties)
 
-    def copy_set(self, new_properties: Dict[str, Any]) -> 'SqlModel[T]':
+    def copy_set(self, new_properties: Mapping[str, Any]) -> 'SqlModel[T]':
         """
         Return a copy with the given properties of this model updated.
         """

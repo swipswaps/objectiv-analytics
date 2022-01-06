@@ -7,7 +7,7 @@ import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression, VariableToken
+from bach.expression import Expression, SingleValueExpression, VariableToken, get_variable_token_names
 from bach.sql_model import BachSqlModelBuilder, BachSqlModel, CurrentNodeSqlModelBuilder
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
 from sql_models.graph_operations import update_properties_in_graph
@@ -1999,7 +1999,7 @@ class DataFrame:
             None for no filtering at all.
         """
         result = {}
-        available_tokens = self._get_all_variable_token_names(filter_expressions or [])
+        available_tokens = get_variable_token_names(filter_expressions or [])
         for name, dv in self.variables.items():
             if filter_expressions is not None and name not in available_tokens:
                 continue
@@ -2015,15 +2015,6 @@ class DataFrame:
             sql = expr.to_sql()
             result[property_name] = sql
         return result
-
-    @staticmethod
-    def _get_all_variable_token_names(filter_expressions: List['Expression']) -> Set[str]:
-        found_tokens = set()
-        for expression in filter_expressions:
-            for token in expression.get_all_tokens():
-                if isinstance(token, VariableToken):
-                    found_tokens.add(token.name)
-        return found_tokens
 
     def _get_all_available_variables(self) -> Dict[str, str]:
         # TODO: get similar function for self.base_node

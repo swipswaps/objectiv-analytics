@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple
+from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set, Mapping, Any
 from sql_models.model import SqlModel, SqlModelSpec
 from sql_models.util import quote_string, quote_identifier
 
@@ -337,3 +337,39 @@ class WindowFunctionExpression(Expression):
     def has_aggregate_function(self) -> bool:
         # If a window expression contains an aggregate function, it's not an aggregate expression
         return False
+
+
+def get_variable_token_names(expressions: List['Expression']) -> Set[str]:
+    """
+    Get the names of all VariableTokens in the list of expressions
+    """
+    found_tokens = set()
+    for expression in expressions:
+        for token in expression.get_all_tokens():
+            if isinstance(token, VariableToken):
+                found_tokens.add(token.name)
+    return found_tokens
+
+
+def get_expression_references(expressions: List[Expression]) -> Dict[str, SqlModel]:
+    """
+    Util function: Get a dictionary of reference name to referred SqlModel from the expressions.
+    """
+    result: Dict[str, SqlModel] = {}
+    for expr in expressions:
+        if expr is not None:
+            references = expr.get_references()
+            _check_reference_conflicts(result, references)
+            result.update(references)
+    return result
+
+
+def _check_reference_conflicts(left: Mapping[str, Any], right: Mapping[str, Any]) -> None:
+    """
+    Util function: Check that two dicts with references don't have conflicting values.
+    """
+    for ref_name, model in right.items():
+        if left.get(ref_name) not in (None, model):
+            # This should never happen. We have this check as a backstop assertion to fail early
+            raise Exception(f'Encountered reference {ref_name} before, but with a different value: '
+                            f'{left.get(ref_name)} != {model}')
