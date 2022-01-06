@@ -4,10 +4,10 @@
 
 import React from 'react';
 import { ReactNode } from 'react';
-import { makeTextFromChildren } from '../src';
+import { makeTitleFromChildren } from '../src';
 
-describe('makeTextFromChildren', () => {
-  // setting output to `null` means expecting `makeTextFromChildren` to throw
+describe('makeTitleFromChildren', () => {
+  // setting output to `null` means expecting `makeTitleFromChildren` to throw
   const testCases: [input: ReactNode, output: string | null][] = [
     [undefined, null],
     [null, null],
@@ -40,11 +40,11 @@ describe('makeTextFromChildren', () => {
   testCases.forEach(([input, output]) =>
     it(`'${JSON.stringify(input)}' -> '${output === null ? 'throw' : JSON.stringify(output)}'`, () => {
       if (output === null) {
-        expect(() => makeTextFromChildren(input)).toThrow(
-          'Could not infer any text from children nodes. Please provide one manually.'
+        expect(() => makeTitleFromChildren(input)).toThrow(
+          'Could not infer a title from children nodes. Please provide one manually.'
         );
       } else {
-        expect(makeTextFromChildren(input)).toBe(output);
+        expect(makeTitleFromChildren(input)).toBe(output);
       }
     })
   );

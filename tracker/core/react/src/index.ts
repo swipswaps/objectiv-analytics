@@ -13,7 +13,7 @@ export * from './common/factories/makeNavigationContext';
 export * from './common/factories/makeOverlayContext';
 export * from './common/factories/makePressableContext';
 export * from './common/factories/makeRootLocationContext';
-export * from './common/factories/makeTextFromChildren';
+export * from './common/factories/makeTitleFromChildren';
 export * from './common/factories/recursiveGetTextFromChildren';
 
 export * from './common/providers/LocationProvider';
