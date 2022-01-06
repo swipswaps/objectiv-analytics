@@ -3,14 +3,14 @@ Copyright 2021 Objectiv B.V.
 """
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Mapping, Hashable
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeValuePair
-from bach.expression import Expression, get_expression_references, get_variable_token_names
+from bach.expression import Expression, get_expression_references
 from sql_models.model import Materialization, CustomSqlModelBuilder, SqlModel
 from sql_models.util import quote_identifier
-from bach.sql_model import BachSqlModelBuilder, BachSqlModel, get_variable_values_sql
+from bach.sql_model import BachSqlModel, get_variable_values_sql
 
 
 class How(Enum):

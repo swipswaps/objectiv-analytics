@@ -2,110 +2,19 @@
 Copyright 2021 Objectiv B.V.
 """
 import typing
-from typing import Dict, Any, Union, Sequence, TypeVar, Tuple, List, Optional, cast, Mapping, Hashable
+from typing import Dict, TypeVar, Tuple, List, Optional, Mapping, Hashable
 
 from bach.expression import Expression, get_expression_references, get_variable_token_names, VariableToken
 from bach.types import value_to_dtype, get_series_type_from_dtype
 from sql_models.util import quote_identifier
 from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelBuilder, SqlModelSpec, Materialization
 
-TB = TypeVar('TB', bound='BachSqlModelBuilder')
 T = TypeVar('T', bound='SqlModelSpec')
 
 
 if typing.TYPE_CHECKING:
     # TODO: move this somewhere where we don't need to do this if?
     from bach.dataframe import DtypeValuePair
-
-
-class BachSqlModelBuilder(CustomSqlModelBuilder):
-    """
-    Adds two features over the normal CustomSqlModelBuilder:
-    1. Support for Expressions and Lists of Expressions as properties
-    2. Instantiate BachSqlModel classes instead of regular SqlModel classes. BachSqlModel instances track the
-        names of the columns that the query returns.
-
-    # TODO: clean this up
-    """
-
-    def __init__(self, sql: str, name: Optional[str], columns: Tuple[str, ...]):
-        super().__init__(sql=sql, name=name)
-        self.columns: Tuple[str, ...] = columns
-
-    def __call__(
-            self: TB,
-            **values: Union[int, str, Expression, Sequence[Expression], SqlModel, SqlModelBuilder]
-    ) -> 'BachSqlModel[TB]':
-        """ Only add Expression types in signature """
-        return cast('BachSqlModel[TB]', super().__call__(**values))
-
-    def instantiate(self: TB) -> 'BachSqlModel[TB]':
-        """
-        Create an instance of BachSqlModel[TB] based on the properties, references,
-        materialization, properties_to_sql, and columns of self.
-
-        If the exact same instance (as determined by result.hash) has been created already by this class,
-        then that instance is returned and the newly created instance is discarded.
-        """
-        if not self.columns:
-            raise Exception('Columns not set on BachSqlModelBuilder.')
-
-        # based on the super class's implementation
-        self._check_is_complete()
-        instance = BachSqlModel(model_spec=self,
-                                properties=self.properties,
-                                references=self.references,
-                                materialization=self.materialization,
-                                materialization_name=self.materialization_name,
-                                columns=self.columns)
-        # If we already once created the exact same instance, then we'll return that one and discard the
-        # newly created instance.
-        is_new = (
-            instance.hash not in self._cache_created_instances
-            or not isinstance(self._cache_created_instances[instance.hash], BachSqlModel)
-        )
-        if is_new:
-            self._cache_created_instances[instance.hash] = instance
-        return cast(BachSqlModel, self._cache_created_instances[instance.hash])
-
-    def set_columns(self: TB, columns: Tuple[str, ...]):
-        self.columns = columns
-
-    def set_values(self: TB,
-                   **values: Union[int, str, Expression, Sequence[Expression], SqlModel, SqlModelBuilder]
-                   ) -> TB:
-        """
-        Set references that are required to resolve the entire model tree
-        """
-        for k, v in values.items():
-            refs = []
-            if isinstance(v, list) and all(isinstance(li, Expression) for li in v):
-                refs = [value.get_references() for value in v]
-            elif isinstance(v, Expression):
-                refs = [v.get_references()]
-
-            for r in refs:
-                for rk, rv in r.items():
-                    self._references[rk] = rv
-
-        return super().set_values(**values)
-
-    @staticmethod
-    def properties_to_sql(properties: Mapping[str, Any]) -> Dict[str, str]:
-        """
-        We accept Expressions and lists of expressions as properties too, and they need to escape
-        themselves if they want to. This allows them to carry references that will be completed
-        in the reference phase in _single_model_to_sql() from sql_generator.py
-        """
-        rv = {}
-        for k, v in properties.items():
-            if isinstance(v, list) and all(isinstance(li, Expression) for li in v):
-                rv[k] = ", ".join([value.to_sql() for value in v])
-            elif isinstance(v, Expression):
-                rv[k] = v.to_sql()
-            else:
-                rv[k] = SqlModelSpec.escape_format_string(str(v))
-        return rv
 
 
 class BachSqlModel(SqlModel[T]):

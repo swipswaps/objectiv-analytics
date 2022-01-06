@@ -8,8 +8,9 @@ from sqlalchemy.engine import Engine
 
 from bach import DataFrame, get_series_type_from_dtype
 from bach.expression import Expression
+from sql_models.model import CustomSqlModelBuilder
 from sql_models.util import quote_identifier
-from bach.sql_model import BachSqlModelBuilder
+from bach.sql_model import BachSqlModel
 
 
 def from_pandas(engine: Engine,
@@ -65,14 +66,15 @@ def from_pandas_store_table(engine: Engine,
 
     # Todo, this should use from_table from here on.
     columns = tuple(index_dtypes.keys()) + tuple(dtypes.keys())
-    model_builder = BachSqlModelBuilder(sql='select * from {table_name}', name=table_name, columns=columns)
-    model = model_builder(table_name=quote_identifier(table_name))
+    model_builder = CustomSqlModelBuilder(sql='select * from {table_name}', name=table_name)
+    sql_model = model_builder(table_name=quote_identifier(table_name))
+    bach_model = BachSqlModel.from_sql_model(sql_model, columns=columns)
 
     # Should this also use _df_or_series?
     from bach.savepoints import Savepoints
     return DataFrame.get_instance(
         engine=engine,
-        base_node=model,
+        base_node=bach_model,
         index_dtypes=index_dtypes,
         dtypes=dtypes,
         group_by=None,
@@ -135,13 +137,14 @@ def from_pandas_ephemeral(
     )
 
     sql = 'select * from (values \n{all_values_expr}\n) as t({column_names_expr})\n'
-    model_builder = BachSqlModelBuilder(sql=sql, name=name, columns=tuple(column_names))
-    model = model_builder(all_values_expr=all_values_expr, column_names_expr=column_names_expr)
+    model_builder = CustomSqlModelBuilder(sql=sql, name=name)
+    sql_model = model_builder(all_values_expr=all_values_expr, column_names_expr=column_names_expr)
+    bach_model = BachSqlModel.from_sql_model(sql_model, columns=tuple(column_names))
 
     from bach.savepoints import Savepoints
     return DataFrame.get_instance(
         engine=engine,
-        base_node=model,
+        base_node=bach_model,
         index_dtypes=index_dtypes,
         dtypes=dtypes,
         group_by=None,
