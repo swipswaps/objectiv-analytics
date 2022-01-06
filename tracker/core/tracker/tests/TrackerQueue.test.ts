@@ -3,7 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore, } from '../src';
+import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore } from '../src';
 
 describe('TrackerQueueMemoryStore', () => {
   const TrackerEvent1 = new TrackerEvent({ id: 'a', _type: 'a' });
@@ -96,7 +96,13 @@ describe('TrackerQueue', () => {
 
   it('should enqueue and dequeue in the expected order', async () => {
     const memoryStore = new TrackerQueueMemoryStore();
-    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, store: memoryStore, batchDelayMs: 1, console: mockConsole });
+    const testQueue = new TrackerQueue({
+      batchSize: 1,
+      concurrency: 1,
+      store: memoryStore,
+      batchDelayMs: 1,
+      console: mockConsole,
+    });
     const processFunctionSpy = jest.fn(() => Promise.resolve());
     testQueue.setProcessFunction(processFunctionSpy);
     expect(testQueue.store.length).toBe(0);
@@ -151,11 +157,7 @@ describe('TrackerQueue', () => {
 
   it('should flush pending events', async () => {
     const testQueue = new TrackerQueue({ batchSize: 3, concurrency: 3, batchDelayMs: 1 });
-    await testQueue.store.write(
-      TrackerEvent1,
-      TrackerEvent2,
-      TrackerEvent3,
-    )
+    await testQueue.store.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(testQueue.store.length).toBe(3);
     expect(testQueue.isIdle()).toBe(false);
 
@@ -168,25 +170,17 @@ describe('TrackerQueue', () => {
   it('should not allow concurrent runs', async () => {
     const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, batchDelayMs: 1 });
     testQueue.setProcessFunction(() => Promise.resolve());
-    await testQueue.store.write(
-      TrackerEvent1,
-      TrackerEvent2,
-      TrackerEvent3,
-    )
+    await testQueue.store.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     await testQueue.run();
     expect(await testQueue.run()).toBe(false);
   });
 
   //TODO rename batchDelayMs to runDelayMs?
   it('should wait at least `batchDelayMs` between runs', async () => {
-    jest.spyOn(global, 'setTimeout')
-;    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, batchDelayMs: 100 });
+    jest.spyOn(global, 'setTimeout');
+    const testQueue = new TrackerQueue({ batchSize: 1, concurrency: 1, batchDelayMs: 100 });
     testQueue.setProcessFunction(() => Promise.resolve());
-    await testQueue.store.write(
-      TrackerEvent1,
-      TrackerEvent2,
-      TrackerEvent3,
-    )
+    await testQueue.store.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(testQueue.running).toBe(false);
     await testQueue.run();
     expect(testQueue.running).toBe(false);

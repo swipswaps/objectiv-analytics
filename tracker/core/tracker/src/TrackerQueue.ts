@@ -111,8 +111,8 @@ export class TrackerQueue implements TrackerQueueInterface {
 
     // Wait to avoid sending batches too close to each other, based on batchDelayMs
     const msSinceLastRun = Date.now() - this.lastRunTimestamp;
-    if(msSinceLastRun < this.batchDelayMs) {
-      await new Promise(resolve => setTimeout(resolve, this.batchDelayMs - msSinceLastRun))
+    if (msSinceLastRun < this.batchDelayMs) {
+      await new Promise((resolve) => setTimeout(resolve, this.batchDelayMs - msSinceLastRun));
     }
 
     // Load and process as many Event batches as `concurrency` allows. For each Event we create a Promise.

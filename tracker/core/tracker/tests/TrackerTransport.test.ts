@@ -11,7 +11,7 @@ import {
   TrackerTransportGroup,
   TrackerTransportRetry,
   TrackerTransportRetryAttempt,
-  TrackerTransportSwitch
+  TrackerTransportSwitch,
 } from '../src';
 
 const testEventName = 'test-event';

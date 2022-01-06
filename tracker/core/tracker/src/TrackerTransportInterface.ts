@@ -22,11 +22,11 @@ export const makeTransportSendError = () => {
   error.name = TransportSendErrorName;
 
   return error;
-}
+};
 
 export const isTransportSendError = (error: Error) => {
   return error.name === TransportSendErrorName;
-}
+};
 
 /**
  * The configuration of TrackerTransportTransportSwitch

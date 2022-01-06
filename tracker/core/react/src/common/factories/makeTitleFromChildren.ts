@@ -11,12 +11,12 @@ import { recursiveGetTextFromChildrenNode } from './recursiveGetTextFromChildren
  *
  * @see makeIdFromString
  */
-export const makeTextFromChildren = (children: ReactNode): string => {
+export const makeTitleFromChildren = (children: ReactNode): string => {
   const text = recursiveGetTextFromChildrenNode(children);
 
   // Throw if we did not manage to get any text
   if (!text) {
-    throw new Error('Could not infer any text from children nodes. Please provide one manually.');
+    throw new Error('Could not infer a title from children nodes. Please provide one manually.');
   }
 
   return text.trim();
