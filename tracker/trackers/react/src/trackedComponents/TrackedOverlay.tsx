@@ -2,13 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { OverlayContextWrapper, TrackedComponent, trackVisibility } from "@objectiv/tracker-react";
+import { OverlayContextWrapper, TrackedComponent, trackVisibility } from '@objectiv/tracker-react';
 import React from 'react';
 
 export type TrackedOverlayProps = TrackedComponent<React.HTMLAttributes<HTMLDivElement>> & {
-  id: string,
-  forwardId?: boolean,
-  isVisible: boolean
+  id: string;
+  forwardId?: boolean;
+  isVisible: boolean;
 };
 
 // TODO support forward ref, we need a generic type since Component can be any HTML element or React Component
@@ -17,13 +17,14 @@ export const TrackedOverlay = (props: TrackedOverlayProps) => {
 
   return (
     <OverlayContextWrapper id={id}>
-      {trackingContext => {
+      {(trackingContext) => {
         trackVisibility({ isVisible, ...trackingContext });
-        return Component ?
-          <Component {...otherProps} id={forwardId ? id: undefined} /> :
-          <div {...otherProps} id={forwardId ? id: undefined} />;
+        return Component ? (
+          <Component {...otherProps} id={forwardId ? id : undefined} />
+        ) : (
+          <div {...otherProps} id={forwardId ? id : undefined} />
+        );
       }}
-
     </OverlayContextWrapper>
   );
 };
