@@ -24,6 +24,8 @@ class BachSqlModelBuilder(CustomSqlModelBuilder):
     1. Support for Expressions and Lists of Expressions as properties
     2. Instantiate BachSqlModel classes instead of regular SqlModel classes. BachSqlModel instances track the
         names of the columns that the query returns.
+
+    # TODO: clean this up
     """
 
     def __init__(self, sql: str, name: Optional[str], columns: Tuple[str, ...]):
@@ -106,66 +108,6 @@ class BachSqlModelBuilder(CustomSqlModelBuilder):
         return rv
 
 
-class CurrentNodeSqlModelBuilder(BachSqlModelBuilder):
-    # TODO: extend BachSqlModel directly, like SampleSqlModel?
-    #
-
-    def __init__(self,
-                 name: str,
-                 column_names: Tuple[str, ...],
-                 column_exprs: List[Expression],
-                 where_clause: Optional[Expression],
-                 group_by_clause: Optional[Expression],
-                 having_clause: Optional[Expression],
-                 order_by_clause: Optional[Expression],
-                 limit_clause: Expression):
-
-        columns_str = ', '.join(expr.to_sql() for expr in column_exprs)
-        where_str = where_clause.to_sql() if where_clause else ''
-        group_by_str = group_by_clause.to_sql() if group_by_clause else ''
-        having_str = having_clause.to_sql() if having_clause else ''
-        order_by_str = order_by_clause.to_sql() if order_by_clause else ''
-        limit_str = limit_clause.to_sql() if limit_clause else ''
-
-        sql = f"""
-            select {columns_str}
-            from {{{{prev}}}}
-            {where_str}
-            {group_by_str}
-            {having_str}
-            {order_by_str}
-            {limit_str}
-            """
-
-        super().__init__(sql, name, column_names)
-
-        # Add all references found in the Expressions to self.references
-        nullable_expressions = [where_clause, group_by_clause, having_clause, order_by_clause, limit_clause]
-        all_expressions = column_exprs + [expr for expr in nullable_expressions if expr is not None]
-        expression_references = get_expression_references(all_expressions)
-        self._check_reference_conflicts(self._references, expression_references)
-        self._references.update(expression_references)
-
-    @property
-    def sql(self):
-        return self._sql
-
-    @property
-    def generic_name(self):
-        return self._generic_name
-
-    @staticmethod
-    def _check_reference_conflicts(left: Mapping[str, Any], right: Mapping[str, Any]) -> None:
-        """
-        Util function: Check that two dicts with references don't have conflicting values.
-        """
-        for ref_name, model in right.items():
-            if left.get(ref_name) not in (None, model):
-                # This should never happen. We have this check as a backstop assertion to fail early
-                raise Exception(f'Encountered reference {ref_name} before, but with a different value: '
-                                f'{left.get(ref_name)} != {model}')
-
-
 class BachSqlModel(SqlModel[T]):
     """
     SqlModel with meta information about the columns that it produces.
@@ -235,12 +177,62 @@ class SampleSqlModel(BachSqlModel):
         sql = 'SELECT * FROM {table_name}'
         super().__init__(
             # TODO: Use SqlModelBuilder, or create some base spec class?
-            model_spec=BachSqlModelBuilder(sql=sql, name=name, columns=columns),
+            model_spec=CustomSqlModelBuilder(sql=sql, name=name),
             properties={'table_name': quote_identifier(table_name)},
             references={},
             materialization=Materialization.CTE,
             materialization_name=None,
             columns=columns
+        )
+
+
+class CurrentNodeSqlModel(BachSqlModel):
+    def __init__(self, *,
+                 name: str,
+                 column_names: Tuple[str, ...],
+                 column_exprs: List[Expression],
+                 where_clause: Optional[Expression],
+                 group_by_clause: Optional[Expression],
+                 having_clause: Optional[Expression],
+                 order_by_clause: Optional[Expression],
+                 limit_clause: Expression,
+                 previous_node: BachSqlModel,
+                 variables: Dict[str, 'DtypeValuePair']):
+
+        columns_str = ', '.join(expr.to_sql() for expr in column_exprs)
+        where_str = where_clause.to_sql() if where_clause else ''
+        group_by_str = group_by_clause.to_sql() if group_by_clause else ''
+        having_str = having_clause.to_sql() if having_clause else ''
+        order_by_str = order_by_clause.to_sql() if order_by_clause else ''
+        limit_str = limit_clause.to_sql() if limit_clause else ''
+
+        sql = f"""
+            select {columns_str}
+            from {{{{prev}}}}
+            {where_str}
+            {group_by_str}
+            {having_str}
+            {order_by_str}
+            {limit_str}
+            """
+
+        # Add all references found in the Expressions to self.references
+        nullable_expressions = [where_clause, group_by_clause, having_clause, order_by_clause, limit_clause]
+        all_expressions = column_exprs + [expr for expr in nullable_expressions if expr is not None]
+        expression_references = get_expression_references(all_expressions)
+        references: Dict[str, SqlModel] = {'prev': previous_node}
+        # todo: call _check_reference_conflicts() ?
+        references.update(expression_references)
+
+        properties = get_variable_values_sql(variables, all_expressions)
+
+        super().__init__(
+            model_spec=CustomSqlModelBuilder(sql=sql, name=name),
+            properties=properties,
+            references=references,
+            materialization=Materialization.CTE,
+            materialization_name=None,
+            columns=column_names
         )
 
 

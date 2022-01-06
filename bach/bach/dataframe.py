@@ -8,7 +8,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression, VariableToken, get_variable_token_names
-from bach.sql_model import BachSqlModelBuilder, BachSqlModel, CurrentNodeSqlModelBuilder
+from bach.sql_model import BachSqlModel, CurrentNodeSqlModel
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
 from sql_models.graph_operations import update_properties_in_graph
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder
@@ -524,7 +524,7 @@ class DataFrame:
     def copy_override(
             self,
             engine: Engine = None,
-            base_node: SqlModel[BachSqlModelBuilder] = None,
+            base_node: BachSqlModel = None,
             index: Dict[str, 'Series'] = None,
             series: Dict[str, 'Series'] = None,
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
@@ -596,7 +596,7 @@ class DataFrame:
 
         return self.__class__(**args, **kwargs)
 
-    def copy_override_base_node(self, base_node: SqlModel) -> 'DataFrame':
+    def copy_override_base_node(self, base_node: BachSqlModel) -> 'DataFrame':
         """
         INTERNAL
 
@@ -1554,7 +1554,7 @@ class DataFrame:
             column_exprs = [s.get_column_expression() for s in self.all_series.values()]
             column_names = tuple(self.all_series.keys())
 
-        model_builder = CurrentNodeSqlModelBuilder(
+        return CurrentNodeSqlModel(
             name=name,
             column_names=column_names,
             column_exprs=column_exprs,
@@ -1562,15 +1562,10 @@ class DataFrame:
             group_by_clause=group_by_clause,
             having_clause=having_clause,
             order_by_clause=self._get_order_by_clause(),
-            limit_clause=limit_clause
+            limit_clause=limit_clause,
+            previous_node=self.base_node,
+            variables=self.variables
         )
-        # TODO: get full filter_expressions here, not just columns and where_clause
-        filter_expressions = column_exprs + [where_clause]
-        variable_mapping = self._get_variable_values_mapping(filter_expressions=filter_expressions)
-        model_builder.set_values(prev=self.base_node)
-        model_builder.set_values(**variable_mapping)
-        # todo: type
-        return model_builder.instantiate()  # type: ignore
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
         """

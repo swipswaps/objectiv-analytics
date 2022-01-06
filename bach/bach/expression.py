@@ -1,7 +1,6 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set, Mapping, Any
 from sql_models.model import SqlModel, SqlModelSpec
@@ -9,7 +8,7 @@ from sql_models.util import quote_string, quote_identifier
 
 if TYPE_CHECKING:
     from bach import Series
-    from bach.sql_model import BachSqlModelBuilder
+    from bach.sql_model import BachSqlModel
 
 
 @dataclass(frozen=True)
@@ -62,7 +61,7 @@ class ColumnReferenceToken(ExpressionToken):
 
 @dataclass(frozen=True)
 class ModelReferenceToken(ExpressionToken):
-    model: SqlModel['BachSqlModelBuilder']
+    model: 'BachSqlModel'
 
     def refname(self) -> str:
         return f'reference{self.model.hash}'
@@ -183,7 +182,7 @@ class Expression:
         return cls([ColumnReferenceToken(field_name)])
 
     @classmethod
-    def model_reference(cls, model: SqlModel['BachSqlModelBuilder']) -> 'Expression':
+    def model_reference(cls, model: 'BachSqlModel') -> 'Expression':
         """ Construct an expression for model, where model is a reference to a model. """
         return cls([ModelReferenceToken(model)])
 
@@ -250,7 +249,7 @@ class Expression:
                 result.append(data_item)
         return self.__class__(result)
 
-    def get_references(self) -> Dict[str, SqlModel['BachSqlModelBuilder']]:
+    def get_references(self) -> Dict[str, 'BachSqlModel']:
         rv = {}
         for data_item in self.data:
             if isinstance(data_item, Expression):

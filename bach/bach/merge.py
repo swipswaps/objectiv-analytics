@@ -337,7 +337,7 @@ def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
 
 
 class MergeSqlModel(BachSqlModel):
-    def __init__(self,
+    def __init__(self, *,
                  column_names: Tuple[str, ...],
                  columns_expr: Expression,
                  join_type_expr: Expression,
