@@ -147,7 +147,7 @@ class CurrentNodeSqlModel(BachSqlModel):
 
 def get_variable_values_sql(
         variable_values: Dict[str, 'DtypeValuePair'],
-        expressions: List['Expression']
+        filter_expressions: List['Expression'] = None
 ) -> Dict[str, str]:
     """
     Take a dictionary with variable_values and return a dict with the variable values as sql.
@@ -156,12 +156,14 @@ def get_variable_values_sql(
     contains a VariableToken with that name.
 
     :param variable_values: Mapping of variable to value.
-    :param expressions: list of expressions. Only variable that occur in these expressions are returned.
+    :param expressions: list of expressions. Only variables that occur in these expressions are returned.
+                        if None, then no filtering is applied.
     :return: Dictionary mapping variable name to sql
     """
     result = {}
-    available_tokens = get_variable_token_names(expressions)
-    filtered_variables = {name: dv for name, dv in variable_values.items() if name in available_tokens}
+    available_tokens = get_variable_token_names(filter_expressions or [])
+    filtered_variables = {name: dv for name, dv in variable_values.items()
+                          if filter_expressions is None or name in available_tokens}
     for name, dv in filtered_variables.items():
         dtype = value_to_dtype(dv.value)
         if dtype != dv.dtype:  # should never happen

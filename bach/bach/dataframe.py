@@ -8,7 +8,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression, VariableToken, get_variable_token_names
-from bach.sql_model import BachSqlModel, CurrentNodeSqlModel
+from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
 from sql_models.graph_operations import update_properties_in_graph
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder
@@ -1575,7 +1575,7 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        property_values = self._get_variable_values_mapping(filter_expressions=None)
+        property_values = get_variable_values_sql(variable_values=self.variables, filter_expressions=None)
         # TODO: fix typing here, or move all BachSqlModel logic to SqlModel, or both?
         model = update_properties_in_graph(start_node=model, property_values=property_values)  # type: ignore
         return to_sql(model)
@@ -1983,33 +1983,6 @@ class DataFrame:
                 raise ValueError(f'Cannot change dtype of variable. old: {dtype_old} new: {dtype_new}')
         variables[name] = DtypeValuePair(dtype_new, value)
         return self.copy_override(variables=variables)
-
-    def _get_variable_values_mapping(self,
-                                     filter_expressions: List['Expression'] = None
-                                     ) -> Dict[str, str]:
-        """
-        Get a mapping of variable-name to value for all values in self.variables.
-
-        :filter_series: Only return entries for which there is a VariableToken in these series. Set to
-            None for no filtering at all.
-        """
-        result = {}
-        available_tokens = get_variable_token_names(filter_expressions or [])
-        for name, dv in self.variables.items():
-            if filter_expressions is not None and name not in available_tokens:
-                continue
-            dtype = value_to_dtype(dv.value)
-            if dtype != dv.dtype:  # should never happen
-                Exception(f'Dtype of value {dv.value} {dtype} does not match registered dtype {dv.dtype}')
-            property_name = VariableToken.dtype_name_to_sql(dtype=dtype, name=name)
-            series_type = get_series_type_from_dtype(dtype)
-            # TODO: `expr` likely contains redundant 'CASTS', only get the actual value.
-            #  The casts might be confusing when we export this in someway where a user can see the filled-in
-            #  values
-            expr = series_type.supported_value_to_expression(dv.value)
-            sql = expr.to_sql()
-            result[property_name] = sql
-        return result
 
     def _get_all_available_variables(self) -> Dict[str, str]:
         # TODO: get similar function for self.base_node
