@@ -52,6 +52,11 @@ export class ReactTracker extends Tracker {
   constructor(trackerConfig: ReactTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = trackerConfig;
 
+    // Exit without doing anything if there's no window, eg: SSR
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     // Either `transport` or `endpoint` must be provided
     if (!config.transport && !config.endpoint) {
       throw new Error('Either `transport` or `endpoint` must be provided');

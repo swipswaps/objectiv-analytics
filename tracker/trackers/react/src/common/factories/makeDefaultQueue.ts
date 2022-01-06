@@ -10,7 +10,7 @@ import { ReactTrackerConfig } from '../../ReactTracker';
  * A factory to create the default Queue of React Tracker.
  */
 export const makeDefaultQueue = (trackerConfig: ReactTrackerConfig): TrackerQueueInterface => {
-  const Store = typeof window !== 'undefined' ? LocalStorageQueueStore : TrackerQueueMemoryStore;
+  const Store = typeof localStorage !== 'undefined' ? LocalStorageQueueStore : TrackerQueueMemoryStore;
 
   return new TrackerQueue({
     store: new Store({
