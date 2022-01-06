@@ -2,9 +2,9 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Tracker } from "@objectiv/tracker-core";
-import { render } from "@testing-library/react";
-import React from "react";
+import { Tracker } from '@objectiv/tracker-core';
+import { render } from '@testing-library/react';
+import React from 'react';
 import { LocationContextWrapper, makeContentContext, ObjectivProvider, useParentLocationContext } from '../src/';
 
 describe('useParentLocationContext', () => {
@@ -43,6 +43,5 @@ describe('useParentLocationContext', () => {
 
     expect(console.log).toHaveBeenCalledTimes(1);
     expect(console.log).toHaveBeenNthCalledWith(1, expect.objectContaining(parentContext2));
-
-  })
+  });
 });

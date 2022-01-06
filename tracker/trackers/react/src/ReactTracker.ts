@@ -62,8 +62,8 @@ export class ReactTracker extends Tracker {
       throw new Error('Please provider either `transport` or `endpoint`, not both at same time');
     }
 
-    // If node is in `development` mode and console has not been configured, automatically use the browser's console
-    if (!config.console && process.env.NODE_ENV?.startsWith('dev')) {
+    // If node is in `development` on web and console has not been configured, automatically use the browser's console
+    if (!config.console && process.env.NODE_ENV?.startsWith('dev') && typeof window !== 'undefined') {
       config.console = console;
     }
 

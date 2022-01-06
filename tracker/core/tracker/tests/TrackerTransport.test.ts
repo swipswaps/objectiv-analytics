@@ -5,13 +5,13 @@
 import { ConfigurableMockTransport, LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-tools';
 import {
   ContextsConfig,
+  makeTransportSendError,
   Tracker,
   TrackerEvent,
   TrackerTransportGroup,
   TrackerTransportRetry,
   TrackerTransportRetryAttempt,
   TrackerTransportSwitch,
-  TransportSendError,
 } from '../src';
 
 const testEventName = 'test-event';
@@ -313,7 +313,7 @@ describe('TrackerTransportRetry', () => {
 
   it('should retry once', async () => {
     jest.useRealTimers();
-    const mockedError = new TransportSendError('You shall not pass!');
+    const mockedError = makeTransportSendError();
     const logTransport = new LogTransport();
     jest
       .spyOn(logTransport, 'handle')
@@ -339,7 +339,7 @@ describe('TrackerTransportRetry', () => {
 
   it('should retry three times', async () => {
     jest.useRealTimers();
-    const mockedError = new TransportSendError('You shall not pass!');
+    const mockedError = makeTransportSendError();
     const logTransport = new LogTransport();
     jest.spyOn(logTransport, 'handle').mockReturnValue(Promise.reject(mockedError));
     const retryTransport = new TrackerTransportRetry({
@@ -368,7 +368,7 @@ describe('TrackerTransportRetry', () => {
   it('should stop retrying if we reached maxRetryMs', async () => {
     const slowFailingTransport = {
       transportName: 'SlowFailingTransport',
-      handle: async () => new Promise((_, reject) => setTimeout(() => reject(new TransportSendError()), 100)),
+      handle: async () => new Promise((_, reject) => setTimeout(() => reject(makeTransportSendError()), 100)),
       isUsable: () => true,
     };
     jest.spyOn(slowFailingTransport, 'handle');
@@ -385,8 +385,6 @@ describe('TrackerTransportRetry', () => {
     await expect(retryTransportAttempt.run()).rejects.toEqual(
       expect.arrayContaining([new Error('maxRetryMs reached')])
     );
-
-    jest.runAllTimers();
 
     expect(retryTransportAttempt.retry).toHaveBeenCalledTimes(1);
     expect(slowFailingTransport.handle).toHaveBeenCalledTimes(1);

@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackerConsole, TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
+import { makeTransportSendError, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 
 /**
  * The default XMLHttpRequest function implementation.
@@ -48,7 +48,7 @@ export const defaultXHRFunction = ({
           console.groupEnd();
         }
 
-        reject(new TransportSendError());
+        reject(makeTransportSendError());
       }
     };
     xhr.onerror = () => {
@@ -59,7 +59,7 @@ export const defaultXHRFunction = ({
         console.groupEnd();
       }
 
-      reject(new TransportSendError());
+      reject(makeTransportSendError());
     };
     xhr.send(
       JSON.stringify({

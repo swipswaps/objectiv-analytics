@@ -62,7 +62,6 @@
     "typescript": "^4.5.4"
   },
   "dependencies": {
-    "es6-error": "^4.1.1",
     "uuid-random": "^1.3.2"
   }
 }
