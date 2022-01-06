@@ -475,7 +475,7 @@ describe('Tracker', () => {
       expect(trackerQueue.processFunction).not.toBeUndefined();
       expect(trackerQueue.processFunction).not.toHaveBeenCalled();
 
-      await testTracker.queue?.store.write(testEvent1,testEvent2);
+      await testTracker.queue?.store.write(testEvent1, testEvent2);
 
       expect(queueStore.length).toBe(2);
 

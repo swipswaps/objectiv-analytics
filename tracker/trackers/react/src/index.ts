@@ -17,6 +17,8 @@ export * from './trackedComponents/TrackedFooter';
 export * from './trackedComponents/TrackedHeader';
 export * from './trackedComponents/TrackedMain';
 export * from './trackedComponents/TrackedNav';
+export * from './trackedComponents/TrackedOverlay';
+export * from './trackedComponents/TrackedRootDiv';
 export * from './trackedComponents/TrackedSection';
 export * from './trackedComponents/trackedTypes';
 

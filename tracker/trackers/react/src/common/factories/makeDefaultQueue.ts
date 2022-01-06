@@ -19,4 +19,4 @@ export const makeDefaultQueue = (trackerConfig: ReactTrackerConfig): TrackerQueu
     }),
     console: trackerConfig.console,
   });
-}
+};

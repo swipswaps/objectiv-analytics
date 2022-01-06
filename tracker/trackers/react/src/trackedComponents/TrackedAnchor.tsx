@@ -8,19 +8,19 @@ import {
   makeTitleFromChildren,
   PressEventTrackerParameters,
   TrackingContext,
-  trackPressEvent
-} from "@objectiv/tracker-react";
+  trackPressEvent,
+} from '@objectiv/tracker-react';
 import React, { MouseEvent } from 'react';
-import { executeOnce } from "../common/executeOnce";
-import { TrackedComponent } from "./trackedTypes";
+import { executeOnce } from '../common/executeOnce';
+import { TrackedComponent } from './trackedTypes';
 
 export type TrackedAnchorProps = TrackedComponent<React.AnchorHTMLAttributes<HTMLAnchorElement>> & {
-  href: string,
-  id?: string,
-  title?: string,
-  forwardId?: boolean,
-  forwardTitle?: boolean,
-  external?: boolean
+  href: string;
+  id?: string;
+  title?: string;
+  forwardId?: boolean;
+  forwardTitle?: boolean;
+  external?: boolean;
 };
 
 export const TrackedAnchor = React.forwardRef<HTMLAnchorElement, TrackedAnchorProps>((props, ref) => {
@@ -36,38 +36,44 @@ export const TrackedAnchor = React.forwardRef<HTMLAnchorElement, TrackedAnchorPr
   const handleClick = executeOnce(async (event: MouseEvent<HTMLAnchorElement>, trackingContext: TrackingContext) => {
     const eventClone = new (event.nativeEvent.constructor as any)(event.type, event);
     event.preventDefault();
-    const trackPressEventPayload: PressEventTrackerParameters = {...trackingContext, ...{
-        options: !external ? undefined : {
-          waitForQueue: true,
-          flushQueue: true
-        }
-      }
-    }
-    if(external) {
-      await trackPressEvent(trackPressEventPayload)
+    const trackPressEventPayload: PressEventTrackerParameters = {
+      ...trackingContext,
+      ...{
+        options: !external
+          ? undefined
+          : {
+              waitForQueue: true,
+              flushQueue: true,
+            },
+      },
+    };
+    if (external) {
+      await trackPressEvent(trackPressEventPayload);
     } else {
       trackPressEvent(trackPressEventPayload);
     }
     event.target.dispatchEvent(eventClone);
     props.onClick && props.onClick(event);
-  })
+  });
 
   // The final set of props for the Component or anchor
   const componentProps = {
     ...otherProps,
-    ...ref ? {ref} : {},
-    ...forwardId ? {id} : {},
-    ...forwardTitle ? {title} : {}
-  }
+    ...(ref ? { ref } : {}),
+    ...(forwardId ? { id } : {}),
+    ...(forwardTitle ? { title } : {}),
+  };
 
   // The actual component
   return (
     <LinkContextWrapper id={anchorId} href={props.href}>
-      {(trackingContext) => (
-        Component ?
-          <Component {...componentProps} onClick={(event) => handleClick(event, trackingContext)} /> :
+      {(trackingContext) =>
+        Component ? (
+          <Component {...componentProps} onClick={(event) => handleClick(event, trackingContext)} />
+        ) : (
           <a {...componentProps} onClick={(event) => handleClick(event, trackingContext)} />
-      )}
+        )
+      }
     </LinkContextWrapper>
   );
-})
+});

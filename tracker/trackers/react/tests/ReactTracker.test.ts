@@ -4,7 +4,7 @@
 
 import { mockConsole } from '@objectiv/testing-tools';
 import { TrackerEvent, TrackerPlugins, TrackerQueue, TrackerTransportRetry } from '@objectiv/tracker-core';
-import { DebugTransport } from "@objectiv/transport-debug";
+import { DebugTransport } from '@objectiv/transport-debug';
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
