@@ -1,6 +1,6 @@
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
-    TYPE_CHECKING, Callable, Hashable, Sequence
+    TYPE_CHECKING, Callable, Sequence
 from uuid import UUID
 
 import pandas
