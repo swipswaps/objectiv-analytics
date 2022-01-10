@@ -4,7 +4,7 @@
 
 import { AbstractLocationContext } from '@objectiv/schema';
 import { GlobalContexts, Tracker, TrackEventOptions } from '@objectiv/tracker-core';
-import { useEffect } from 'react';
+import { ComponentType, ReactHTML, useEffect } from 'react';
 
 /**
  * A uniquely identifiable LocationContext
@@ -72,3 +72,8 @@ export type EventTrackerParameters = TrackEventParameters & {
  * Hooks will be automatically invoked to retrieve a Tracker instance and LocationStack.
  */
 export type EventTrackerHookParameters = Partial<EventTrackerParameters>;
+
+/**
+ * Generic enriching the given type with a `Component` property that can be either a React Component or a JSX element.
+ */
+export type WithComponentProp<T> = T & { Component: ComponentType<T> | keyof ReactHTML };

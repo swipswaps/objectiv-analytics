@@ -25,6 +25,7 @@ export * from './common/providers/TrackerProviderContext';
 export * from './common/providers/TrackingContext';
 export * from './common/providers/TrackingContextProvider';
 
+export * from './common/executeOnce';
 export * from './common/LocationTree';
 
 export * from './eventTrackers/trackApplicationLoadedEvent';
@@ -83,5 +84,7 @@ export * from './locationWrappers/NavigationContextWrapper';
 export * from './locationWrappers/OverlayContextWrapper';
 export * from './locationWrappers/PressableContextWrapper';
 export * from './locationWrappers/RootLocationContextWrapper';
+
+export * from './trackedContexts/TrackedContentContext';
 
 export * from './types';
