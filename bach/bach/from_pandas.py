@@ -129,16 +129,16 @@ def from_pandas_ephemeral(
             per_column_expr.append(series_type.value_to_expression(val))
         row_expr = Expression.construct('({})', _combine_expression(per_column_expr))
         per_row_expr.append(row_expr)
-    all_values_expr = _combine_expression(per_row_expr, join_str=',\n')
+    all_values_str = _combine_expression(per_row_expr, join_str=',\n').to_sql()
 
     column_names = list(index_dtypes.keys()) + list(dtypes.keys())
-    column_names_expr = _combine_expression(
+    column_names_str = _combine_expression(
         [Expression.raw(quote_identifier(column_name)) for column_name in column_names]
-    )
+    ).to_sql()
 
-    sql = 'select * from (values \n{all_values_expr}\n) as t({column_names_expr})\n'
+    sql = f'select * from (values \n{all_values_str}\n) as t({column_names_str})\n'
     model_builder = CustomSqlModelBuilder(sql=sql, name=name)
-    sql_model = model_builder(all_values_expr=all_values_expr, column_names_expr=column_names_expr)
+    sql_model = model_builder()
     bach_model = BachSqlModel.from_sql_model(sql_model, columns=tuple(column_names))
 
     from bach.savepoints import Savepoints

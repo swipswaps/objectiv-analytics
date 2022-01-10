@@ -125,6 +125,16 @@ class CurrentNodeSqlModel(BachSqlModel):
             {limit_str}
             """
 
+        sql = (
+            f"select {columns_str} \n"
+            f"from {{{{prev}}}} \n"
+            f"{where_str} \n"
+            f"{group_by_str} \n"
+            f"{having_str} \n"
+            f"{order_by_str} \n"
+            f"{limit_str} \n"
+        )
+
         # Add all references found in the Expressions to self.references
         nullable_expressions = [where_clause, group_by_clause, having_clause, order_by_clause, limit_clause]
         all_expressions = column_exprs + [expr for expr in nullable_expressions if expr is not None]
@@ -133,7 +143,8 @@ class CurrentNodeSqlModel(BachSqlModel):
         # todo: call _check_reference_conflicts() ?
         references.update(expression_references)
 
-        properties = get_variable_values_sql(variables, all_expressions)
+        filtered_variables = filter_variables(variables, all_expressions)
+        properties = get_variable_values_sql(filtered_variables)
 
         super().__init__(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
@@ -145,26 +156,27 @@ class CurrentNodeSqlModel(BachSqlModel):
         )
 
 
-def get_variable_values_sql(
+def filter_variables(
         variable_values: Dict[str, 'DtypeValuePair'],
-        filter_expressions: List['Expression'] = None
-) -> Dict[str, str]:
+        filter_expressions: List['Expression']
+) -> Dict[str, 'DtypeValuePair']:
+    """
+    Util function: Return a copy of the variable_values, with only the variables for which there is a
+    VariableToken in the filter_expressions.
+    """
+    available_tokens = get_variable_token_names(filter_expressions)
+    return {name: dv for name, dv in variable_values.items() if name in available_tokens}
+
+
+def get_variable_values_sql(variable_values: Dict[str, 'DtypeValuePair']) -> Dict[str, str]:
     """
     Take a dictionary with variable_values and return a dict with the variable values as sql.
 
-    The return dictinary is filtered. It only contains variables for which at least one of the expressions
-    contains a VariableToken with that name.
-
     :param variable_values: Mapping of variable to value.
-    :param expressions: list of expressions. Only variables that occur in these expressions are returned.
-                        if None, then no filtering is applied.
     :return: Dictionary mapping variable name to sql
     """
     result = {}
-    available_tokens = get_variable_token_names(filter_expressions or [])
-    filtered_variables = {name: dv for name, dv in variable_values.items()
-                          if filter_expressions is None or name in available_tokens}
-    for name, dv in filtered_variables.items():
+    for name, dv in variable_values.items():
         dtype = value_to_dtype(dv.value)
         if dtype != dv.dtype:  # should never happen
             Exception(f'Dtype of value {dv.value} {dtype} does not match registered dtype {dv.dtype}')

@@ -10,7 +10,7 @@ from bach.dataframe import DtypeValuePair
 from bach.expression import Expression, get_expression_references
 from sql_models.model import Materialization, CustomSqlModelBuilder, SqlModel
 from sql_models.util import quote_identifier
-from bach.sql_model import BachSqlModel, get_variable_values_sql
+from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables
 
 
 class How(Enum):
@@ -366,7 +366,8 @@ class MergeSqlModel(BachSqlModel):
         references.update(expression_references)
 
         # Set all variables that are applicable to this model
-        properties = get_variable_values_sql(variables, all_expressions)
+        filtered_variables = filter_variables(variables, all_expressions)
+        properties = get_variable_values_sql(filtered_variables)
 
         super().__init__(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),

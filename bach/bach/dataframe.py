@@ -1575,7 +1575,7 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        property_values = get_variable_values_sql(variable_values=self.variables, filter_expressions=None)
+        property_values = get_variable_values_sql(variable_values=self.variables)
         # TODO: fix typing here, or move all BachSqlModel logic to SqlModel, or both?
         model = update_properties_in_graph(start_node=model, property_values=property_values)  # type: ignore
         return to_sql(model)
@@ -1985,6 +1985,8 @@ class DataFrame:
         return self.copy_override(variables=variables)
 
     def _get_all_available_variables(self) -> Dict[str, str]:
+        # TODO: REMOVE? not used?
+
         # TODO: get similar function for self.base_node
         # TODO: check based on the name of the variable (which contains the dtype) whether the
         #  dtype is correct

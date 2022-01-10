@@ -30,7 +30,11 @@ class RawToken(ExpressionToken):
     raw: str
 
     def to_sql(self) -> str:
-        return SqlModelSpec.escape_format_string(self.raw)
+        return SqlModelSpec.escape_format_string(
+            SqlModelSpec.escape_format_string(
+                self.raw
+            )
+        )
 
 
 @dataclass(frozen=True)
