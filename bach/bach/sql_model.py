@@ -4,10 +4,10 @@ Copyright 2021 Objectiv B.V.
 import typing
 from typing import Dict, TypeVar, Tuple, List, Optional, Mapping, Hashable
 
-from bach.expression import Expression, get_expression_references, get_variable_token_names, VariableToken
+from bach.expression import Expression, get_variable_token_names, VariableToken
 from bach.types import value_to_dtype, get_series_type_from_dtype
 from sql_models.util import quote_identifier
-from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelBuilder, SqlModelSpec, Materialization
+from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelSpec, Materialization
 
 T = TypeVar('T', bound='SqlModelSpec')
 
@@ -85,7 +85,6 @@ class SampleSqlModel(BachSqlModel):
         self.previous = previous
         sql = 'SELECT * FROM {table_name}'
         super().__init__(
-            # TODO: Use SqlModelBuilder, or create some base spec class?
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
             properties={'table_name': quote_identifier(table_name)},
             references={},
@@ -115,16 +114,6 @@ class CurrentNodeSqlModel(BachSqlModel):
         order_by_str = order_by_clause.to_sql() if order_by_clause else ''
         limit_str = limit_clause.to_sql() if limit_clause else ''
 
-        sql = f"""
-            select {columns_str}
-            from {{{{prev}}}}
-            {where_str}
-            {group_by_str}
-            {having_str}
-            {order_by_str}
-            {limit_str}
-            """
-
         sql = (
             f"select {columns_str} \n"
             f"from {{{{prev}}}} \n"
@@ -138,11 +127,9 @@ class CurrentNodeSqlModel(BachSqlModel):
         # Add all references found in the Expressions to self.references
         nullable_expressions = [where_clause, group_by_clause, having_clause, order_by_clause, limit_clause]
         all_expressions = column_exprs + [expr for expr in nullable_expressions if expr is not None]
-        expression_references = get_expression_references(all_expressions)
-        references: Dict[str, SqlModel] = {'prev': previous_node}
-        # todo: call _check_reference_conflicts() ?
-        references.update(expression_references)
+        references = construct_references({'prev': previous_node}, all_expressions)
 
+        # Set all relevant variables as properties
         filtered_variables = filter_variables(variables, all_expressions)
         properties = get_variable_values_sql(filtered_variables)
 
@@ -154,6 +141,38 @@ class CurrentNodeSqlModel(BachSqlModel):
             materialization_name=None,
             columns=column_names
         )
+
+
+def construct_references(
+        base_references: Mapping[str, 'SqlModel'],
+        expressions: List['Expression']
+) -> Dict[str, 'SqlModel']:
+    """
+    Create a dictionary of references consisting of the base_references and all references found in the
+    expressions.
+
+    Will raise an exception if there are references with the same name that reference different models.
+    """
+    result: Dict[str, SqlModel] = {}
+    for expr in expressions:
+        references = expr.get_references()
+        _check_reference_conflicts(result, references)
+        result.update(references)
+    _check_reference_conflicts(base_references, result)
+    result.update(base_references)
+    return result
+
+
+def _check_reference_conflicts(left: Mapping[str, 'SqlModel'], right: Mapping[str, 'SqlModel']) -> None:
+    """
+    Util function: Check that two dicts with references don't have conflicting values.
+    """
+    for ref_name, model in right.items():
+        if left.get(ref_name) not in (None, model):
+            # This should never happen, if other code doesn't mess up.
+            # We have this check as a backstop assertion to fail early
+            raise Exception(f'Encountered reference {ref_name} before, but with a different value: '
+                            f'{left.get(ref_name)} != {model}')
 
 
 def filter_variables(

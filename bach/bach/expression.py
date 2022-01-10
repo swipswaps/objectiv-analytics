@@ -301,7 +301,11 @@ class ExpressionAsNameExpression(Expression):
 
     @classmethod
     def construct_specific(cls, expr: Expression, name: str) -> 'Expression':
-        return cls.construct('{} as {}', expr, Expression.identifier(name))
+        ident_expr = Expression.identifier(name)
+        if expr.to_sql() == ident_expr.to_sql():
+            # this is to prevent generating sql of the form `x as x`, we'll just return `x` in that case
+            return expr
+        return cls.construct('{} as {}', expr, ident_expr)
 
 
 class NonAtomicExpression(Expression):
@@ -383,27 +387,3 @@ def get_variable_token_names(expressions: List['Expression']) -> Set[str]:
             if isinstance(token, VariableToken):
                 found_tokens.add(token.name)
     return found_tokens
-
-
-def get_expression_references(expressions: List[Expression]) -> Dict[str, SqlModel]:
-    """
-    Util function: Get a dictionary of reference name to referred SqlModel from the expressions.
-    """
-    result: Dict[str, SqlModel] = {}
-    for expr in expressions:
-        if expr is not None:
-            references = expr.get_references()
-            _check_reference_conflicts(result, references)
-            result.update(references)
-    return result
-
-
-def _check_reference_conflicts(left: Mapping[str, Any], right: Mapping[str, Any]) -> None:
-    """
-    Util function: Check that two dicts with references don't have conflicting values.
-    """
-    for ref_name, model in right.items():
-        if left.get(ref_name) not in (None, model):
-            # This should never happen. We have this check as a backstop assertion to fail early
-            raise Exception(f'Encountered reference {ref_name} before, but with a different value: '
-                            f'{left.get(ref_name)} != {model}')

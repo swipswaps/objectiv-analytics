@@ -7,11 +7,9 @@ from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeValuePair
-from bach.expression import Expression, get_expression_references, ExpressionAsNameExpression, \
-    join_expressions
-from sql_models.model import Materialization, CustomSqlModelBuilder, SqlModel
-from sql_models.util import quote_identifier
-from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables
+from bach.expression import Expression, ExpressionAsNameExpression, join_expressions
+from sql_models.model import Materialization, CustomSqlModelBuilder
+from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
 
 
 class How(Enum):
@@ -315,7 +313,6 @@ def _get_merge_sql_model(
     )
     join_type_expr = Expression.construct('full outer' if how == How.outer else how.value)
 
-    # TODO: pass and set variables
     return MergeSqlModel(
         column_names=tuple(rc.name for rc in new_column_list),
         columns_expr=columns_expr,
@@ -358,14 +355,12 @@ class MergeSqlModel(BachSqlModel):
             '''
         name = 'merge_sql'
 
-        # Get all references from the expressions, and set those as proper references on this model
-        # TODO: extract this into a function
+        # Add all references found in the Expressions to self.references
         all_expressions = [columns_expr, join_type_expr, on_clause]
-        expression_references = get_expression_references(all_expressions)
-        # help mypy by casting `Union[SqlModelBuilder, SqlModel]` to `SqlModel`
-        references: Dict[str, SqlModel] = {'left_node': left_node, 'right_node': right_node}
-        # todo: call _check_reference_conflicts() ?
-        references.update(expression_references)
+        references = construct_references(
+            base_references={'left_node': left_node, 'right_node': right_node},
+            expressions=all_expressions
+        )
 
         # Set all variables that are applicable to this model
         filtered_variables = filter_variables(variables, all_expressions)

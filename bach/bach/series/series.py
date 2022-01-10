@@ -12,7 +12,8 @@ from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_
 
 from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
-    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
+    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression, \
+    ExpressionAsNameExpression
 from bach.sql_model import BachSqlModel
 from sql_models.util import quote_identifier
 from bach.types import value_to_dtype
@@ -354,11 +355,7 @@ class Series(ABC):
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
         expression = self.expression.resolve_column_references(table_alias)
-        quoted_column_name = quote_identifier(self.name)
-        if expression.to_sql() == quoted_column_name:
-            return expression
-
-        return Expression.construct('{} as {}', expression, Expression.raw(quoted_column_name))
+        return ExpressionAsNameExpression.construct_specific(expression, self.name)
 
     def _get_supported(self, operation_name: str, supported_dtypes: Tuple[str, ...], other: 'Series'):
         """

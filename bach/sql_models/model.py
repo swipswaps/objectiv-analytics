@@ -11,6 +11,7 @@ Models:
   model graph.
 
 """
+import collections
 import hashlib
 from abc import abstractmethod, ABCMeta
 from copy import deepcopy
@@ -301,11 +302,10 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
                     raise ValueError(f'reference ({key}) is of incorrect type: {type(value)}')
                 self._references[key] = value
             elif key in self.spec_properties:
-                # todo: enable below check, after we stop using lists in properties in Bach
-                # # There is not straightforward way to check whether a value is immutable. However virtual
-                # # all immutable objects are also hashable, so we check that instead.
-                # if not isinstance(value, collections.abc.Hashable):
-                #     raise ValueError(f'property ({key}) is of incorrect type: {type(value)}')
+                # There is no straightforward way to check whether a value is immutable. However virtual
+                # all immutable objects are also hashable, so we check that instead.
+                if not isinstance(value, collections.abc.Hashable):
+                    raise ValueError(f'property ({key}) is of incorrect type: {type(value)}')
                 self._properties[key] = value
             else:
                 raise ValueError(f'Provided parameter {key} is not a valid property nor reference for '
