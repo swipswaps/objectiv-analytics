@@ -661,14 +661,14 @@ class Series(ABC):
                                       f'for {self.__class__} and {other.__class__}')
 
         other = const_to_series(base=self, value=other)
-        self_checked, other = self._get_supported(operation, other_dtypes, other)
-        expression = NonAtomicExpression.construct(fmt_str, self_checked, other)
+        self_modified, other = self._get_supported(operation, other_dtypes, other)
+        expression = NonAtomicExpression.construct(fmt_str, self_modified, other)
         if isinstance(dtype, dict):
             if other.dtype not in dtype:
                 dtype = None
             else:
                 dtype = dtype[other.dtype]
-        return self_checked.copy_override(dtype=dtype, expression=expression)
+        return self_modified.copy_override(dtype=dtype, expression=expression)
 
     def _arithmetic_operation(self, other: 'Series', operation: str, fmt_str: str,
                               other_dtypes: Tuple[str, ...] = (),

@@ -64,10 +64,10 @@ class SeriesUuid(Series):
 
     def _comparator_operation(self, other, comparator, other_dtypes=('uuid', 'string')):
         other = const_to_series(base=self, value=other)
-        sefl, other = self._get_supported(f"comparator '{comparator}'", other_dtypes, other)
+        self_modified, other = self._get_supported(f"comparator '{comparator}'", other_dtypes, other)
         if other.dtype == 'uuid':
-            expression = Expression.construct(f'({{}}) {comparator} ({{}})', sefl, other)
+            expression = Expression.construct(f'({{}}) {comparator} ({{}})', self_modified, other)
         else:
-            expression = Expression.construct(f'({{}}) {comparator} (cast({{}} as uuid))', sefl, other)
+            expression = Expression.construct(f'({{}}) {comparator} (cast({{}} as uuid))', self_modified, other)
 
-        return sefl.copy_override(dtype='bool', expression=expression)
+        return self_modified.copy_override(dtype='bool', expression=expression)
