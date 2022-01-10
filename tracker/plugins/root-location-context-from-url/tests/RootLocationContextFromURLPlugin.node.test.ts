@@ -6,7 +6,7 @@ import { RootLocationContextFromURLPlugin } from '../src';
 
 describe('RootLocationContextFromURLPlugin - node', () => {
   it('should instantiate as unusable', () => {
-    const testPathContextFromURLPlugin = new RootLocationContextFromURLPlugin();
-    expect(testPathContextFromURLPlugin.isUsable()).toBe(false);
+    const testRootLocationContextFromURLPlugin = new RootLocationContextFromURLPlugin();
+    expect(testRootLocationContextFromURLPlugin.isUsable()).toBe(false);
   });
 });

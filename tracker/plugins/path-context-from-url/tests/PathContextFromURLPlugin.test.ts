@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from "@objectiv/testing-tools";
+import { mockConsole } from '@objectiv/testing-tools';
 import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
 import { PathContextFromURLPlugin } from '../src';
 

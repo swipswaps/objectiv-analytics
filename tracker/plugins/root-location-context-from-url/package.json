@@ -1,7 +1,7 @@
 {
-  "name": "@objectiv/plugin-path-context-from-url",
+  "name": "@objectiv/plugin-root-location-context-from-url",
   "version": "0.0.6",
-  "description": "Plugin for Objectiv trackers to automatically generate and attach PathContext from URLs",
+  "description": "Plugin for Objectiv trackers to automatically generate and attach RootLocationContext from URLs",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [
@@ -12,7 +12,8 @@
     "events",
     "taxonomy",
     "plugin",
-    "url"
+    "url",
+    "root"
   ],
   "repository": {
     "type": "git",

@@ -1,18 +1,18 @@
-# Objectiv PathContextFromURL Plugin
+# Objectiv RootLocationContextFromURL Plugin
 
-Plugin for Objectiv web trackers. Detects the current URL via the document's Location API and factors in a `PathContext` that is attached to each `TrackerEvent`'s `global_contexts` before transport.
+Plugin for Objectiv web trackers. Detects the current URL via the document's Location API and factors in a `RootLocationContext` that is attached to each `TrackerEvent`'s `location_stack`, before transport, as the topmost LocationContext.
 
 ---
 ## Package Installation
 To install the most recent stable version:
 
 ```sh
-yarn add @objectiv/plugin-path-context-from-url
+yarn add @objectiv/plugin-root-location-context-from-url
 ```
 
 ### or
 ```sh
-npm install @objectiv/plugin-path-context-from-url
+npm install @objectiv/plugin-root-location-context-from-url
 ```
 
 # Usage

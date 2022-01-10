@@ -3,8 +3,8 @@ import {
   makeRootLocationContext,
   TrackerConsole,
   TrackerPluginConfig,
-  TrackerPluginInterface
-} from "@objectiv/tracker-browser";
+  TrackerPluginInterface,
+} from '@objectiv/tracker-core';
 
 /**
  * The RootLocationContextFromURL Plugin factors a RootLocationContext out of the first slug of the current URL.
@@ -29,18 +29,25 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
    */
   beforeTransport(contexts: Required<ContextsConfig>): void {
     const pathname = location.pathname;
-    const rootLocationContextId = pathname === '/' ? 'home' : pathname.split('/')[1].trim().toLowerCase();
-    if(rootLocationContextId){
+    const rootLocationContextId = ['/', ''].includes(pathname) ? 'home' : pathname?.split('/')[1].trim().toLowerCase();
+    if (rootLocationContextId) {
       contexts.location_stack.unshift(makeRootLocationContext({ id: rootLocationContextId }));
     } else if (this.console) {
-      this.console.error(`%c｢objectiv:${this.pluginName}｣ Could not generate a RootLocationContext from ${location.pathname}`, 'font-weight: bold')
+      this.console.error(
+        `%c｢objectiv:${this.pluginName}｣ Could not generate a RootLocationContext from "${location.pathname}"`,
+        'font-weight: bold'
+      );
     }
   }
 
   /**
-   * Make this plugin usable only on web, eg: Document and Location APIs are both available
+   * Make this plugin usable only on web, eg: Document and Location APIs (including `pathname`) are both available
    */
   isUsable(): boolean {
-    return typeof document !== 'undefined' && typeof document.location !== 'undefined';
+    return (
+      typeof document !== 'undefined' &&
+      typeof document.location !== 'undefined' &&
+      typeof document.location.pathname !== 'undefined'
+    );
   }
 }

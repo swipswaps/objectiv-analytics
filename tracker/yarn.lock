@@ -820,6 +820,34 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url":
+  version: 0.0.0-use.local
+  resolution: "@objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url"
+  dependencies:
+    "@objectiv/testing-tools": 0.0.6
+    "@rollup/plugin-commonjs": ^21.0.1
+    "@rollup/plugin-node-resolve": ^13.1.1
+    "@types/jest": ^27.0.3
+    jest: ^27.4.5
+    jest-extended: ^1.1.0
+    jest-fetch-mock: ^3.0.3
+    jest-standard-reporter: ^2.0.0
+    jest-useragent-mock: ^0.1.1
+    prettier: ^2.5.1
+    rollup: ^2.61.1
+    rollup-plugin-filesize: ^9.1.1
+    rollup-plugin-peer-deps-external: ^2.2.4
+    rollup-plugin-sizes: ^1.0.4
+    rollup-plugin-terser: ^7.0.2
+    rollup-plugin-ts: ^2.0.4
+    shx: ^0.3.3
+    ts-jest: ^27.1.2
+    typescript: ^4.5.4
+  peerDependencies:
+    "@objectiv/tracker-core": ^0.0.6
+  languageName: unknown
+  linkType: soft
+
 "@objectiv/queue-local-storage@^0.0.6, @objectiv/queue-local-storage@workspace:queues/local-storage":
   version: 0.0.0-use.local
   resolution: "@objectiv/queue-local-storage@workspace:queues/local-storage"
