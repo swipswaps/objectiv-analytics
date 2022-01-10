@@ -1,7 +1,7 @@
 {
-  "name": "@objectiv/tracker-browser",
+  "name": "@objectiv/plugin-root-location-context-from-url",
   "version": "0.0.6",
-  "description": "Objectiv Web application analytics tracker for the open taxonomy for analytics",
+  "description": "Plugin for Objectiv trackers to automatically generate and attach RootLocationContext from URLs",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [
@@ -10,12 +10,15 @@
     "web",
     "analytics",
     "events",
-    "taxonomy"
+    "taxonomy",
+    "plugin",
+    "url",
+    "root"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/objectiv/objectiv-analytics.git",
-    "directory": "tracker/trackers/browser"
+    "directory": "tracker/plugins/path-context-from-url"
   },
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
   "contributors": [
@@ -48,12 +51,14 @@
     "@rollup/plugin-node-resolve": "^13.1.1",
     "@types/jest": "^27.0.3",
     "jest": "^27.4.5",
+    "jest-extended": "^1.1.0",
     "jest-fetch-mock": "^3.0.3",
     "jest-standard-reporter": "^2.0.0",
     "jest-useragent-mock": "^0.1.1",
     "prettier": "^2.5.1",
     "rollup": "^2.61.1",
     "rollup-plugin-filesize": "^9.1.1",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
     "rollup-plugin-sizes": "^1.0.4",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-ts": "^2.0.4",
@@ -61,17 +66,7 @@
     "ts-jest": "^27.1.2",
     "typescript": "^4.5.4"
   },
-  "dependencies": {
-    "@objectiv/plugin-path-context-from-url": "^0.0.6",
-    "@objectiv/plugin-root-location-context-from-url": "^0.0.6",
-    "@objectiv/queue-local-storage": "^0.0.6",
-    "@objectiv/tracker-core": "^0.0.6",
-    "@objectiv/transport-debug": "^0.0.6",
-    "@objectiv/transport-fetch": "^0.0.6",
-    "@objectiv/transport-xhr": "^0.0.6",
-    "superstruct": "^0.15.3"
-  },
   "peerDependencies": {
-    "uuid-random": "^1.3.2"
+    "@objectiv/tracker-core": "^0.0.6"
   }
 }
