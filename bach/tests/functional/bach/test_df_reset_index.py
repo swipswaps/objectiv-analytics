@@ -9,23 +9,23 @@ from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, ass
 def test_reset_index_to_empty():
     bt = get_bt_with_test_data()
     assert list(bt.index.keys()) == ['_index_skating_order']
-    assert '_index_skating_order' not in bt.data.keys()
+    assert '_index_skating_order' not in bt.data
 
     # regular
     rbt = bt.reset_index()
     assert list(rbt.index.keys()) == []
-    assert '_index_skating_order' in rbt.data.keys()
+    assert '_index_skating_order' in rbt.data
 
     # inplace
     ipbt = get_bt_with_test_data()
     ipbt.reset_index(inplace=True)
     assert list(ipbt.index.keys()) == []
-    assert '_index_skating_order' in ipbt.data.keys()
+    assert '_index_skating_order' in ipbt.data
 
     # drop
     dbt = bt.reset_index(drop=True)
     assert list(dbt.index.keys()) == []
-    assert '_index_skating_order' not in bt.data.keys()
+    assert '_index_skating_order' not in bt.data
 
     for r in [bt, rbt, ipbt, dbt]:
         for s in r.index.values():
@@ -33,6 +33,24 @@ def test_reset_index_to_empty():
         for s in r.data.values():
             assert(s.index == r.index)
         r.head()
+
+    bt_cp = bt.copy()
+    bt_cp = bt_cp.set_index(['skating_order', 'city'], append=True)
+    final_index = ['_index_skating_order', 'skating_order']
+    # level
+    lbt = bt_cp.reset_index(level='city')
+    assert 'city' in lbt.data
+    assert list(lbt.index.keys()) == final_index
+
+    # level + drop
+    lbt = bt_cp.reset_index(level='city', drop=True)
+    assert 'city' not in lbt.data
+    assert list(lbt.index.keys()) == final_index
+
+    # dropping invalid level
+    invalid_level = 'random'
+    with pytest.raises(ValueError, match=fr"'{invalid_level}' level not found"):
+        bt_cp.reset_index(level=['city', invalid_level])
 
 
 def test_set_index():
