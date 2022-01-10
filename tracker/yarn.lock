@@ -820,7 +820,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url":
+"@objectiv/plugin-root-location-context-from-url@^0.0.6, @objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url"
   dependencies:
@@ -916,6 +916,7 @@ __metadata:
   resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
   dependencies:
     "@objectiv/plugin-path-context-from-url": ^0.0.6
+    "@objectiv/plugin-root-location-context-from-url": ^0.0.6
     "@objectiv/queue-local-storage": ^0.0.6
     "@objectiv/testing-tools": 0.0.6
     "@objectiv/tracker-core": ^0.0.6
@@ -1008,6 +1009,7 @@ __metadata:
   resolution: "@objectiv/tracker-react@workspace:trackers/react"
   dependencies:
     "@objectiv/plugin-path-context-from-url": ^0.0.6
+    "@objectiv/plugin-root-location-context-from-url": ^0.0.6
     "@objectiv/queue-local-storage": ^0.0.6
     "@objectiv/testing-tools": 0.0.6
     "@objectiv/tracker-core": ~0.0.6
