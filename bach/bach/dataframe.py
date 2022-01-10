@@ -1000,15 +1000,20 @@ class DataFrame:
         df._index = {}
         return None if inplace else df
 
-    def set_index(self, keys: Union[str, 'Series', List[Union[str, 'Series']]],
-                  append: bool = False, drop: bool = True, inplace: bool = False) -> Optional['DataFrame']:
+    def set_index(
+        self,
+        keys: Union[str, 'Series', List[Union[str, 'Series']]],
+        drop: bool = True,
+        append: bool = False,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
         """
         Set this dataframe's index to the the index given in keys
 
         :param keys: the keys of the new index. Can be a column name str, a Series, or a list of those. If
             Series are passed, they should have the same base node as the DataFrame they are set on.
-        :param append: whether to append to the existing index or replace.
         :param drop: delete columns to be used as the new index.
+        :param append: whether to append to the existing index or replace.
         :param inplace: update the current DataFrame or return a new DataFrame. This is not always supported
             and will raise if it is not.
         :returns: a DataFrame with the new index or None if ``inplace=True``.
