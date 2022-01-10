@@ -3,13 +3,25 @@
  */
 
 import { PathContextFromURLPlugin } from '@objectiv/plugin-path-context-from-url';
-import { makeTrackerDefaultPluginsList } from '@objectiv/tracker-core';
+import { RootLocationContextFromURLPlugin } from '@objectiv/plugin-root-location-context-from-url';
+import { makeTrackerDefaultPluginsList, TrackerPluginInterface } from '@objectiv/tracker-core';
 import { ReactTrackerConfig } from '../../ReactTracker';
 
 /**
  * The default list of Plugins of React Tracker
  */
-export const makeDefaultPluginsList = (trackerConfig: ReactTrackerConfig) => [
-  ...makeTrackerDefaultPluginsList(trackerConfig),
-  new PathContextFromURLPlugin(trackerConfig),
-];
+export const makeDefaultPluginsList = (trackerConfig: ReactTrackerConfig) => {
+  const { trackPathContextFromURL = true, trackRootLocationContextFromURL = true } = trackerConfig;
+
+  const plugins: TrackerPluginInterface[] = [...makeTrackerDefaultPluginsList(trackerConfig)];
+
+  if (trackPathContextFromURL) {
+    plugins.push(new PathContextFromURLPlugin(trackerConfig));
+  }
+
+  if (trackRootLocationContextFromURL) {
+    plugins.push(new RootLocationContextFromURLPlugin(trackerConfig));
+  }
+
+  return plugins;
+};
