@@ -86,5 +86,6 @@ export * from './locationWrappers/PressableContextWrapper';
 export * from './locationWrappers/RootLocationContextWrapper';
 
 export * from './trackedContexts/TrackedContentContext';
+export * from './trackedContexts/TrackedExpandableContext';
 
 export * from './types';

@@ -4,27 +4,12 @@
 
 import React from 'react';
 import { ContentContextWrapper } from '../locationWrappers/ContentContextWrapper';
-import { WithComponentProp } from '../types';
-
-/**
- * The props of TrackedContentContext.
- */
-export type TrackedContentContextProps = WithComponentProp<React.HTMLAttributes<HTMLElement>> & {
-  /**
-   * The unique id of the ContentContext
-   */
-  id: string;
-
-  /**
-   * Whether to forward the given id to the given Component
-   */
-  forwardId?: boolean;
-};
+import { TrackedContextProps } from '../types';
 
 /**
  * Generates a new React Element already wrapped in a ContentContext.
  */
-export const TrackedContentContext = React.forwardRef<HTMLElement, TrackedContentContextProps>((props, ref) => {
+export const TrackedContentContext = React.forwardRef<HTMLElement, TrackedContextProps>((props, ref) => {
   const { id, Component, forwardId = false, ...otherProps } = props;
 
   const componentProps = {

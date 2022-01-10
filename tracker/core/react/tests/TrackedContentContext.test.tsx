@@ -8,11 +8,6 @@ import { fireEvent, getByText, render, screen } from '@testing-library/react';
 import React, { createRef } from 'react';
 import { LocationTree, ObjectivProvider, TrackedContentContext, usePressEventTracker } from '../src';
 
-const TrackedButton = () => {
-  const trackPressEvent = usePressEventTracker();
-  return <div onClick={trackPressEvent}>Trigger Event</div>;
-};
-
 describe('TrackedContentContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
@@ -27,6 +22,11 @@ describe('TrackedContentContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
     const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+
+    const TrackedButton = () => {
+      const trackPressEvent = usePressEventTracker();
+      return <div onClick={trackPressEvent}>Trigger Event</div>;
+    };
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -83,7 +83,7 @@ describe('TrackedContentContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedContentContext Component={'div'} id={'content-id-2'} ref={ref} data-testid={'test-div'}>
+        <TrackedContentContext Component={'div'} id={'content-id'} ref={ref} data-testid={'test-div'}>
           test
         </TrackedContentContext>
       </ObjectivProvider>
