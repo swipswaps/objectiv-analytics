@@ -7,7 +7,8 @@ from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeValuePair
-from bach.expression import Expression, get_expression_references
+from bach.expression import Expression, get_expression_references, ExpressionAsNameExpression, \
+    join_expressions
 from sql_models.model import Materialization, CustomSqlModelBuilder, SqlModel
 from sql_models.util import quote_identifier
 from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables
@@ -309,8 +310,9 @@ def _get_merge_sql_model(
     else:
         on_clause = Expression.construct('')
 
-    columns_fmt_str = ", ".join(f'{{}} as {quote_identifier(rc.name)}' for rc in new_column_list)
-    columns_expr = Expression.construct(columns_fmt_str, *[rc.expression for rc in new_column_list])
+    columns_expr = join_expressions(
+        [ExpressionAsNameExpression.construct_specific(rc.expression, rc.name) for rc in new_column_list]
+    )
     join_type_expr = Expression.construct('full outer' if how == How.outer else how.value)
 
     # TODO: pass and set variables

@@ -7,7 +7,7 @@ import pandas
 from sqlalchemy.engine import Engine
 
 from bach import DataFrame, get_series_type_from_dtype
-from bach.expression import Expression
+from bach.expression import Expression, join_expressions
 from sql_models.model import CustomSqlModelBuilder
 from sql_models.util import quote_identifier
 from bach.sql_model import BachSqlModel
@@ -127,12 +127,12 @@ def from_pandas_ephemeral(
         for i, series_type in enumerate(column_series_type, start=1):
             val = row[i]
             per_column_expr.append(series_type.value_to_expression(val))
-        row_expr = Expression.construct('({})', _combine_expression(per_column_expr))
+        row_expr = Expression.construct('({})', join_expressions(per_column_expr))
         per_row_expr.append(row_expr)
-    all_values_str = _combine_expression(per_row_expr, join_str=',\n').to_sql()
+    all_values_str = join_expressions(per_row_expr, join_str=',\n').to_sql()
 
     column_names = list(index_dtypes.keys()) + list(dtypes.keys())
-    column_names_str = _combine_expression(
+    column_names_str = join_expressions(
         [Expression.raw(quote_identifier(column_name)) for column_name in column_names]
     ).to_sql()
 
@@ -152,11 +152,6 @@ def from_pandas_ephemeral(
         savepoints=Savepoints(),
         variables={}
     )
-
-
-def _combine_expression(expressions: List[Expression], join_str: str = ', ') -> Expression:
-    fmt = join_str.join(['{}'] * len(expressions))
-    return Expression.construct(fmt, *expressions)
 
 
 def _from_pd_shared(

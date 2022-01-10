@@ -88,6 +88,18 @@ class StringValueToken(ExpressionToken):
                 )
 
 
+@dataclass(frozen=True)
+class IdentifierToken(ExpressionToken):
+    name: str
+
+    def to_sql(self) -> str:
+        return SqlModelSpec.escape_format_string(
+            SqlModelSpec.escape_format_string(
+                quote_identifier(self.name)
+            )
+        )
+
+
 class Expression:
     """
     Immutable object representing a fragment of SQL as a sequence of sql-tokens or Expressions.
@@ -179,6 +191,10 @@ class Expression:
         :param value: unquoted, unescaped string value.
         """
         return cls([StringValueToken(value)])
+
+    @classmethod
+    def identifier(cls, name: str) -> 'Expression':
+        return cls([IdentifierToken(name=name)])
 
     @classmethod
     def column_reference(cls, field_name: str) -> 'Expression':
@@ -281,6 +297,13 @@ class Expression:
         return ''.join([d.to_sql() for d in self.resolve_column_references(table_name).data])
 
 
+class ExpressionAsNameExpression(Expression):
+
+    @classmethod
+    def construct_specific(cls, expr: Expression, name: str) -> 'Expression':
+        return cls.construct('{} as {}', expr, Expression.identifier(name))
+
+
 class NonAtomicExpression(Expression):
     """
     An expression that needs '( .. )' around it when used together with other Expressions
@@ -340,6 +363,14 @@ class WindowFunctionExpression(Expression):
     def has_aggregate_function(self) -> bool:
         # If a window expression contains an aggregate function, it's not an aggregate expression
         return False
+
+
+def join_expressions(expressions: List[Expression], join_str: str = ', ') -> Expression:
+    """
+    Construct an expression consisting of the given list of expressions joined by the join_str.
+    """
+    fmt = join_str.join(['{}'] * len(expressions))
+    return Expression.construct(fmt, *expressions)
 
 
 def get_variable_token_names(expressions: List['Expression']) -> Set[str]:
