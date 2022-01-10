@@ -139,4 +139,29 @@ describe('RootLocationContextFromURLPlugin', () => {
       `font-weight: bold`
     );
   });
+
+  it('should allow overriding the id factory function', async () => {
+    Object.defineProperty(window, 'location', {
+      value: {
+        href: 'https://spa.app#welcome',
+      },
+      writable: true,
+    });
+
+    const makeRootLocationIdFromHash = () => location.href?.split('#')[1].trim().toLowerCase();
+
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin({ idFactoryFunction: makeRootLocationIdFromHash  })] }),
+    });
+    const testEvent = new TrackerEvent({ _type: 'test-event' });
+    expect(testEvent.location_stack).toHaveLength(0);
+    const trackedEvent = await testTracker.trackEvent(testEvent);
+    expect(trackedEvent.location_stack).toHaveLength(1);
+    expect(trackedEvent.location_stack[0]).toEqual({
+      __location_context: true,
+      _type: 'RootLocationContext',
+      id: 'welcome',
+    });
+  });
 });

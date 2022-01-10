@@ -5,6 +5,14 @@ import {
   TrackerPluginConfig,
   TrackerPluginInterface,
 } from '@objectiv/tracker-core';
+import { makeRootLocationId } from "./makeRootLocationId";
+
+/**
+ * The configuration object of RootLocationContextFromURLPlugin.
+ */
+export type RootLocationContextFromURLPluginConfig = TrackerPluginConfig & {
+  idFactoryFunction?: typeof makeRootLocationId;
+}
 
 /**
  * The RootLocationContextFromURL Plugin factors a RootLocationContext out of the first slug of the current URL.
@@ -12,12 +20,14 @@ import {
 export class RootLocationContextFromURLPlugin implements TrackerPluginInterface {
   readonly console?: TrackerConsole;
   readonly pluginName = `RootLocationContextFromURLPlugin`;
+  readonly idFactoryFunction: typeof makeRootLocationId;
 
   /**
    * The constructor is merely responsible for processing the given TrackerPluginConfiguration `console` parameter.
    */
-  constructor(config?: TrackerPluginConfig) {
+  constructor(config?: RootLocationContextFromURLPluginConfig) {
     this.console = config?.console;
+    this.idFactoryFunction = config?.idFactoryFunction ?? makeRootLocationId;
 
     if (this.console) {
       this.console.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
@@ -28,8 +38,8 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
    * Generate a fresh RootLocationContext before each TrackerEvent is handed over to the TrackerTransport.
    */
   beforeTransport(contexts: Required<ContextsConfig>): void {
-    const pathname = location.pathname;
-    const rootLocationContextId = ['/', ''].includes(pathname) ? 'home' : pathname?.split('/')[1].trim().toLowerCase();
+    const rootLocationContextId = this.idFactoryFunction();
+
     if (rootLocationContextId) {
       contexts.location_stack.unshift(makeRootLocationContext({ id: rootLocationContextId }));
     } else if (this.console) {
@@ -41,13 +51,12 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
   }
 
   /**
-   * Make this plugin usable only on web, eg: Document and Location APIs (including `pathname`) are both available
+   * Make this plugin usable only on web, eg: Document and Location APIs are both available
    */
   isUsable(): boolean {
     return (
       typeof document !== 'undefined' &&
-      typeof document.location !== 'undefined' &&
-      typeof document.location.pathname !== 'undefined'
+      typeof document.location !== 'undefined'
     );
   }
 }
