@@ -1005,7 +1005,7 @@ class DataFrame:
         series = df._data if drop else df.all_series
         if level:
             series = df._data
-            levels_to_remove = [level] if isinstance(level, str) else list(level)
+            levels_to_remove = [level] if isinstance(level, str) else level
 
             for lvl in levels_to_remove:
                 if lvl not in df._index:
