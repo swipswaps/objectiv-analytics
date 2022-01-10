@@ -143,24 +143,19 @@ class SeriesInt64(SeriesAbstractNumeric):
     supported_db_dtype = 'bigint'
     supported_value_types = (int, numpy.int64)
 
-    @classmethod
-    def supported_value_to_expression(cls, value: int) -> Expression:
-        # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
-        # consistently get bigints, so always cast the result
-        # See the section on numeric constants in the Postgres documentation
-        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
-        return Expression.construct('cast({} as bigint)', Expression.raw(str(value)))
+    # Notes for supported_value_to_literal() and supported_literal_to_expression():
+    # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
+    # consistently get bigints, so always cast the result
+    # See the section on numeric constants in the Postgres documentation
+    # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
 
     @classmethod
-    def supported_value_to_variable(cls, value: int, name: str) -> Expression:
-        # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
-        # consistently get bigints, so always cast the result
-        # See the section on numeric constants in the Postgres documentation
-        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
-        return Expression.construct(
-            'cast({} as bigint)',
-            Expression.variable(dtype=cls.dtype, name=name)
-        )
+    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+        return Expression.construct('cast({} as bigint)', literal)
+
+    @classmethod
+    def supported_value_to_literal(cls, value: int) -> Expression:
+        return Expression.raw(str(value))
 
     @classmethod
     def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
@@ -196,27 +191,28 @@ class SeriesInt64(SeriesAbstractNumeric):
             expression=Expression.construct('cast({} as bigint)', series.expression))
 
 
-class SeriesInt64Variable(SeriesInt64):
-    pass
-
-
 class SeriesFloat64(SeriesAbstractNumeric):
     dtype = 'float64'
     dtype_aliases = ('float', 'double', 'f8', float, numpy.float64, 'double precision')
     supported_db_dtype = 'double precision'
     supported_value_types = (float, numpy.float64)
 
+    # Notes for supported_value_to_literal() and supported_literal_to_expression():
+    # Postgres will automatically parse any number with a decimal point as a number of type `numeric`,
+    # which could be casted to float. However we specify the value always as a string, as there are some
+    # values that cannot be expressed as a numeric literal directly (NaN, infinity, and -infinity), and
+    # a value that cannot be represented as numeric (-0.0).
+    # See the sections on numeric constants, and on fLoating-point types in the Postgres documentation
+    # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+    # https://www.postgresql.org/docs/14/datatype-numeric.html#DATATYPE-FLOAT
+
     @classmethod
-    def supported_value_to_expression(cls, value: Union[float, numpy.float64]) -> Expression:
-        # Postgres will automatically parse any number with a decimal point as a number of type `numeric`,
-        # which could be casted to float. However we specify the value always as a string, as there are some
-        # values that cannot be expressed as a numeric literal directly (NaN, infinity, and -infinity), and
-        # a value that cannot be represented as numeric (-0.0).
-        # See the sections on numeric constants, and on fLoating-point types in the Postgres documentation
-        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
-        # https://www.postgresql.org/docs/14/datatype-numeric.html#DATATYPE-FLOAT
-        str_value = str(value)
-        return Expression.construct("cast({} as float)", Expression.string_value(str_value))
+    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+        return Expression.construct("cast({} as float)", literal)
+
+    @classmethod
+    def supported_value_to_literal(cls, value: Union[float, numpy.float64]) -> Expression:
+        return Expression.string_value(str(value))
 
     @classmethod
     def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:

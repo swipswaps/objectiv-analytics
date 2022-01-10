@@ -201,10 +201,7 @@ def get_variable_values_sql(variable_values: Dict[str, 'DtypeValuePair']) -> Dic
             Exception(f'Dtype of value {dv.value} {dtype} does not match registered dtype {dv.dtype}')
         property_name = VariableToken.dtype_name_to_sql(dtype=dtype, name=name)
         series_type = get_series_type_from_dtype(dtype)
-        # TODO: `expr` likely contains redundant 'CASTS', only get the actual value.
-        #  The casts might be confusing when we export this in someway where a user can see the filled-in
-        #  values
-        expr = series_type.supported_value_to_expression(dv.value)
+        expr = series_type.supported_value_to_literal(dv.value)
         sql = expr.to_sql()
         result[property_name] = sql
     return result
