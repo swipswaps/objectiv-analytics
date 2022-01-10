@@ -68,6 +68,8 @@ class SeriesUuid(Series):
         if other.dtype == 'uuid':
             expression = Expression.construct(f'({{}}) {comparator} ({{}})', self_modified, other)
         else:
-            expression = Expression.construct(f'({{}}) {comparator} (cast({{}} as uuid))', self_modified, other)
+            expression = Expression.construct(f'({{}}) {comparator} (cast({{}} as uuid))',
+                                              self_modified,
+                                              other)
 
         return self_modified.copy_override(dtype='bool', expression=expression)
