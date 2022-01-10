@@ -985,7 +985,7 @@ class DataFrame:
         With reset_index, all indexes are removed from the DataFrame, so that the DataFrame does not have any
         index Series. A new index can be set with :py:meth:`set_index`.
 
-        :param drop: if True, the dropped index is added to the data columns of the DataFrame. If False it
+        :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
             is removed.
         :param inplace: update the current DataFrame or return a new DataFrame.
         :returns: DataFrame with the index dropped or None if ``inplace=True``.
