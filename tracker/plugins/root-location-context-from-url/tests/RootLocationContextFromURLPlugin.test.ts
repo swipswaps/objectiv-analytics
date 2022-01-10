@@ -1,0 +1,87 @@
+/*
+ * Copyright 2021-2022 Objectiv B.V.
+ */
+
+import { mockConsole } from "@objectiv/testing-tools";
+import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { RootLocationContextFromURLPlugin } from "../src/RootLocationContextFromURL";
+
+describe('PathContextFromURLPlugin', () => {
+  it('should instantiate without a console', () => {
+    const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin();
+    expect(testRootLocationContextPlugin).toBeInstanceOf(RootLocationContextFromURLPlugin);
+    expect(testRootLocationContextPlugin.console).toBeUndefined();
+  });
+
+  it('should instantiate with the given console', () => {
+    const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin({ console: mockConsole });
+    expect(testRootLocationContextPlugin).toBeInstanceOf(RootLocationContextFromURLPlugin);
+    expect(testRootLocationContextPlugin.console).toBe(mockConsole);
+  });
+
+  it('should add the RootLocationContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin()] }),
+    });
+    const eventContexts: ContextsConfig = {
+      location_stack: [
+        { __location_context: true, _type: 'section', id: 'A' },
+        { __location_context: true, _type: 'section', id: 'B' },
+      ],
+      global_contexts: [
+        { __global_context: true, _type: 'GlobalA', id: 'abc' },
+        { __global_context: true, _type: 'GlobalB', id: 'def' },
+      ],
+    };
+    const testEvent = new TrackerEvent({ _type: 'test-event', ...eventContexts });
+    expect(testEvent.location_stack).toHaveLength(2);
+    const trackedEvent = await testTracker.trackEvent(testEvent);
+    expect(trackedEvent.location_stack).toHaveLength(3);
+    expect(trackedEvent.location_stack[0]).toEqual(
+      {
+        __location_context: true,
+        _type: 'RootLocationContext',
+        id: 'home',
+      }
+    );
+    expect(trackedEvent.global_contexts).toHaveLength(2);
+  });
+
+  it('should add the RootLocationContext with id: home', async () => {
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin()] }),
+    });
+    const testEvent = new TrackerEvent({ _type: 'test-event' });
+    expect(testEvent.location_stack).toHaveLength(0);
+    const trackedEvent = await testTracker.trackEvent(testEvent);
+    expect(trackedEvent.location_stack).toHaveLength(1);
+    expect(trackedEvent.location_stack[0]).toEqual(
+      {
+        __location_context: true,
+        _type: 'RootLocationContext',
+        id: 'home',
+      }
+    );
+  });
+
+  it('should add the RootLocationContext with id: dashboard', async () => {
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin()] }),
+    });
+    const testEvent = new TrackerEvent({ _type: 'test-event' });
+    expect(testEvent.location_stack).toHaveLength(0);
+    const trackedEvent = await testTracker.trackEvent(testEvent);
+    expect(trackedEvent.location_stack).toHaveLength(1);
+    expect(trackedEvent.location_stack[0]).toEqual(
+      {
+        __location_context: true,
+        _type: 'RootLocationContext',
+        id: 'home',
+      }
+    );
+  });
+
+});
