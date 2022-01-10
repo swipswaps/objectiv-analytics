@@ -10,4 +10,4 @@ export const makeRootLocationId = () => {
   const pathname = location.pathname;
 
   return ['/', ''].includes(pathname) ? 'home' : pathname?.split('/')[1].trim().toLowerCase();
-}
+};

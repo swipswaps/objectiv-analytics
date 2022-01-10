@@ -5,14 +5,14 @@ import {
   TrackerPluginConfig,
   TrackerPluginInterface,
 } from '@objectiv/tracker-core';
-import { makeRootLocationId } from "./makeRootLocationId";
+import { makeRootLocationId } from './makeRootLocationId';
 
 /**
  * The configuration object of RootLocationContextFromURLPlugin.
  */
 export type RootLocationContextFromURLPluginConfig = TrackerPluginConfig & {
   idFactoryFunction?: typeof makeRootLocationId;
-}
+};
 
 /**
  * The RootLocationContextFromURL Plugin factors a RootLocationContext out of the first slug of the current URL.
@@ -54,9 +54,6 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
    * Make this plugin usable only on web, eg: Document and Location APIs are both available
    */
   isUsable(): boolean {
-    return (
-      typeof document !== 'undefined' &&
-      typeof document.location !== 'undefined'
-    );
+    return typeof document !== 'undefined' && typeof document.location !== 'undefined';
   }
 }

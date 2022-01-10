@@ -16,6 +16,16 @@ export type ReactTrackerConfig = TrackerConfig & {
    * The collector endpoint URL.
    */
   endpoint?: string;
+
+  /**
+   * Optional. Whether to automatically create PathContext based on URLs. Enabled by default.
+   */
+  trackPathContextFromURL?: boolean;
+
+  /**
+   * Optional. Whether to automatically create RootLocationContext based on URLs first slugs. Enabled by default.
+   */
+  trackRootLocationContextFromURL?: boolean;
 };
 
 /**

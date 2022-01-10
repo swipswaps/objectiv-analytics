@@ -63,6 +63,7 @@
   },
   "dependencies": {
     "@objectiv/plugin-path-context-from-url": "^0.0.6",
+    "@objectiv/plugin-root-location-context-from-url": "^0.0.6",
     "@objectiv/queue-local-storage": "^0.0.6",
     "@objectiv/tracker-core": "^0.0.6",
     "@objectiv/transport-debug": "^0.0.6",

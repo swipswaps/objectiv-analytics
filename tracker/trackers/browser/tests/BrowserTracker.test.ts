@@ -161,7 +161,30 @@ describe('BrowserTracker', () => {
       const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testTracker.plugins?.plugins).toEqual(
-        expect.arrayContaining([expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' })])
+        expect.arrayContaining([
+          expect.objectContaining({ pluginName: 'ApplicationContextPlugin' }),
+          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
+          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
+        ])
+      );
+    });
+
+    it('should allow disabling PathContextFromURLPlugin and RootLocationContextFromURLPlugin', () => {
+      const testTracker = new BrowserTracker({
+        applicationId: 'app-id',
+        endpoint: 'localhost',
+        trackPathContextFromURL: false,
+        trackRootLocationContextFromURL: false,
+      });
+      expect(testTracker).toBeInstanceOf(BrowserTracker);
+      expect(testTracker.plugins?.plugins).toEqual(
+        expect.arrayContaining([expect.objectContaining({ pluginName: 'ApplicationContextPlugin' })])
+      );
+      expect(testTracker.plugins?.plugins).toEqual(
+        expect.not.arrayContaining([
+          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
+          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
+        ])
       );
     });
 

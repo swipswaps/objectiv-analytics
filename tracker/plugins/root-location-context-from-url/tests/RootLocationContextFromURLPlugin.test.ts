@@ -152,7 +152,9 @@ describe('RootLocationContextFromURLPlugin', () => {
 
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin({ idFactoryFunction: makeRootLocationIdFromHash  })] }),
+      plugins: new TrackerPlugins({
+        plugins: [new RootLocationContextFromURLPlugin({ idFactoryFunction: makeRootLocationIdFromHash })],
+      }),
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
