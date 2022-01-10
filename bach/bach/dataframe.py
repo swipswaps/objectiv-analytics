@@ -1012,7 +1012,7 @@ class DataFrame:
                     raise ValueError(f'\'{lvl}\' level not found in index')
 
                 if not drop:
-                    series[lvl] = df.index[str(lvl)]
+                    series[lvl] = df.index[lvl]
 
             new_index = {idx: series for idx, series in df.index.items() if idx not in levels_to_remove}
 
