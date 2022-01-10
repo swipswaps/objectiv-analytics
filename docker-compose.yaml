@@ -103,7 +103,7 @@ services:
 
   objectiv_metabase:
     container_name: objectiv_metabase
-    image: metabase/metabase
+    image: objectiv/metabase
     ports:
       - "127.0.0.1:3000:3000"
     networks:
