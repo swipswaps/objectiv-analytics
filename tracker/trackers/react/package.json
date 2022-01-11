@@ -46,7 +46,10 @@
     "@objectiv/testing-tools": "^0.0.6",
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.1.1",
+    "@testing-library/react": "^12.1.2",
+    "@testing-library/react-hooks": "^7.0.2",
     "@types/jest": "^27.0.3",
+    "@types/react": "^17.0.38",
     "jest": "^27.4.5",
     "jest-fetch-mock": "^3.0.3",
     "jest-standard-reporter": "^2.0.0",
@@ -68,7 +71,6 @@
     "@objectiv/plugin-root-location-context-from-url": "^0.0.6",
     "@objectiv/queue-local-storage": "^0.0.6",
     "@objectiv/tracker-core": "~0.0.6",
-    "@objectiv/tracker-core-react": "~0.0.6",
     "@objectiv/transport-fetch": "^0.0.6",
     "@objectiv/transport-xhr": "^0.0.6"
   },

@@ -2,9 +2,9 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { PressEventTrackerParameters, TrackingContext } from '@objectiv/tracker-core-react';
-import { trackPressEvent } from '../eventTrackers/trackPressEvent';
+import { PressEventTrackerParameters, trackPressEvent } from '../eventTrackers/trackPressEvent';
 import { MouseEvent } from 'react';
+import { TrackingContext } from './providers/TrackingContext';
 
 /**
  * Tracks a PressEvent, Can optionally wait until tracked and then re-dispatches the original event.

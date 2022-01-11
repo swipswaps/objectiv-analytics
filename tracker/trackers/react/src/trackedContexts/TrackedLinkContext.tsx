@@ -2,11 +2,11 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackingContext } from '@objectiv/tracker-core-react';
 import React from 'react';
 import { executeOnce } from '../common/executeOnce';
 import { makeIdFromString } from '../common/factories/makeIdFromString';
 import { makeTitleFromChildren } from '../common/factories/makeTitleFromChildren';
+import { TrackingContext } from '../common/providers/TrackingContext';
 import { trackPressEventHandler } from '../common/trackPressEventHandler';
 import { LinkContextWrapper } from '../locationWrappers/LinkContextWrapper';
 import { TrackedPressableContextProps } from '../types';
