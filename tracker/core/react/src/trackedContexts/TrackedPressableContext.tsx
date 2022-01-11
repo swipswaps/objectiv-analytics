@@ -9,13 +9,13 @@ import { makeTitleFromChildren } from '../common/factories/makeTitleFromChildren
 import { TrackingContext } from '../common/providers/TrackingContext';
 import { trackPressEventHandler } from '../common/trackPressEventHandler';
 import { PressableContextWrapper } from '../locationWrappers/PressableContextWrapper';
-import { TrackedPressableProps } from '../types';
+import { TrackedPressableContextProps } from '../types';
 
 /**
  * Generates a new React Element already wrapped in an PressableContext.
  * Automatically tracks PressEvent when the given Component receives an `onClick` SyntheticEvent.
  */
-export const TrackedPressableContext = React.forwardRef<HTMLElement, TrackedPressableProps>((props, ref) => {
+export const TrackedPressableContext = React.forwardRef<HTMLElement, TrackedPressableContextProps>((props, ref) => {
   const {
     Component,
     id,

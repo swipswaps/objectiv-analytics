@@ -6,13 +6,13 @@ import React, { useState } from 'react';
 import { trackVisibility } from '../eventTrackers/trackVisibility';
 import { useOnChange } from '../hooks/useOnChange';
 import { OverlayContextWrapper } from '../locationWrappers/OverlayContextWrapper';
-import { TrackedShowableProps } from '../types';
+import { TrackedShowableContextProps } from '../types';
 
 /**
  * Generates a new React Element already wrapped in an OverlayContext.
  * Automatically tracks HiddenEvent and VisibleEvent based on the given `isVisible` prop.
  */
-export const TrackedOverlayContext = React.forwardRef<HTMLElement, TrackedShowableProps>((props, ref) => {
+export const TrackedOverlayContext = React.forwardRef<HTMLElement, TrackedShowableContextProps>((props, ref) => {
   const [wasVisible, setWasVisible] = useState<boolean>(false);
   const { id, Component, forwardId = false, isVisible = false, ...otherProps } = props;
 

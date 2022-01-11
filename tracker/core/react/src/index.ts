@@ -96,4 +96,7 @@ export * from './trackedContexts/TrackedNavigationContext';
 export * from './trackedContexts/TrackedPressableContext';
 export * from './trackedContexts/TrackedRootLocationContext';
 
+export * from './trackedElements/TrackedAnchor';
+export * from './trackedElements/TrackedButton';
+
 export * from './types';

@@ -96,7 +96,7 @@ export type TrackedContextProps<T = HTMLElement> = WithComponentProp<AllHTMLAttr
 /**
  * The props of Contexts supporting Visibility events. Extends TrackedContextProps with then `isVisible` property.
  */
-export type TrackedShowableProps = TrackedContextProps & {
+export type TrackedShowableContextProps = TrackedContextProps & {
   /**
    * Whether to track visibility events automatically when this prop changes state.
    */
@@ -106,7 +106,7 @@ export type TrackedShowableProps = TrackedContextProps & {
 /**
  * The props of TrackedPressableContext. Extends TrackedContextProps with then `isVisible` property.
  */
-export type TrackedPressableProps = Omit<TrackedContextProps, 'id'> & {
+export type TrackedPressableContextProps = Omit<TrackedContextProps, 'id'> & {
   /**
    * The unique id of the LocationContext. Optional because we will attempt to auto-detect it.
    */

@@ -9,12 +9,12 @@ import { makeIdFromString } from '../common/factories/makeIdFromString';
 import { makeTitleFromChildren } from '../common/factories/makeTitleFromChildren';
 import { trackPressEventHandler } from '../common/trackPressEventHandler';
 import { LinkContextWrapper } from '../locationWrappers/LinkContextWrapper';
-import { TrackedPressableProps } from '../types';
+import { TrackedPressableContextProps } from '../types';
 
 /**
  * The props of TrackedLinkContext. Extends TrackedPressableProps with the `href` property.
  */
-export type TrackedLinkProps = TrackedPressableProps & {
+export type TrackedLinkContextProps = TrackedPressableContextProps & {
   /**
    * The destination url.
    */
@@ -30,7 +30,7 @@ export type TrackedLinkProps = TrackedPressableProps & {
  * Generates a new React Element already wrapped in an LinkContext.
  * Automatically tracks PressEvent when the given Component receives an `onClick` SyntheticEvent.
  */
-export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkProps>((props, ref) => {
+export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkContextProps>((props, ref) => {
   const {
     Component,
     id,

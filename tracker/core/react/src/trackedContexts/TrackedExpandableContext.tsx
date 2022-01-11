@@ -6,13 +6,13 @@ import React, { useState } from 'react';
 import { trackVisibility } from '../eventTrackers/trackVisibility';
 import { useOnChange } from '../hooks/useOnChange';
 import { ExpandableContextWrapper } from '../locationWrappers/ExpandableContextWrapper';
-import { TrackedShowableProps } from '../types';
+import { TrackedShowableContextProps } from '../types';
 
 /**
  * Generates a new React Element already wrapped in an ExpandableContext.
  * Automatically tracks HiddenEvent and VisibleEvent based on the given `isVisible` prop.
  */
-export const TrackedExpandableContext = React.forwardRef<HTMLElement, TrackedShowableProps>((props, ref) => {
+export const TrackedExpandableContext = React.forwardRef<HTMLElement, TrackedShowableContextProps>((props, ref) => {
   const [wasVisible, setWasVisible] = useState<boolean>(false);
   const { id, Component, forwardId = false, isVisible = false, ...otherProps } = props;
 
