@@ -355,7 +355,9 @@ class Series(ABC):
     def _get_supported(self, operation_name: str, supported_dtypes: Tuple[str, ...], other: 'Series'):
         """
         Check whether `other` is supported for this operation, and if not, possibly do something
-        about it by using subquery / materialization
+        about it by using subquery / materialization / aligning base nodes using a merge.
+
+        :returns: the (modified) series and (modified) other.
         """
         if not (other.expression.is_constant or other.expression.is_independent_subquery):
             # we should maybe create a subquery

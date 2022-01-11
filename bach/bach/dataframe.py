@@ -73,9 +73,12 @@ class DataFrame:
     **Moving Series around**
 
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
-    DataFrame is possible if they share the same base node. This means that they originate from the same data
-    source. In most cases this means that the series that is to be set to the DataFrame is a result of
-    operations on the DataFrame that is started with.
+    DataFrame is possible if they share the same base node or index dtype. DataFrames and Series share the
+    same base node if that they originate from the same data source. In most cases this means that the series
+    that is to be set to the DataFrame is a result of operations on the DataFrame that is started with.
+    If a Series or DataFrame do not share the same base node, the new column is or columns are set using a
+    merge on the index. This works for one level indexes where the dtype of the series is the same as the
+    DataFrame's index dtype.
 
     **Examples**
 
@@ -83,9 +86,6 @@ class DataFrame:
 
         df['a'] = df.column_name + 5
         df['b'] = ''
-
-    If a Series of DataFrames do not share the same base node, it is possible to combine the data using
-    :py:meth:`merge`.
 
 
     **Database access**
@@ -887,7 +887,18 @@ class DataFrame:
         else:
             raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
 
-    def _index_merge(self, key, value, how='left'):
+    def _index_merge(self,
+                     key: str,
+                     value: 'Series',
+                     how: str = 'left'):
+        """"
+        Internal method used by __setitem__ to set a series using a merge on index. Modifies the DataFrame
+        with the added column. The DataFrames index name is the same as the original DataFrame's.
+
+        :param key: name of the column to set.
+        :param value: Series that is set.
+        :param how: 'left' or 'outer'.
+        """
         if not (len(value.index) == 1 and len(self.index) == 1):
 
             raise ValueError('setting with different base nodes only supported for one level'
