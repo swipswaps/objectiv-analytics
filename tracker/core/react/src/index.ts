@@ -91,5 +91,6 @@ export * from './trackedContexts/TrackedExpandableContext';
 export * from './trackedContexts/TrackedInputContext';
 export * from './trackedContexts/TrackedNavigationContext';
 export * from './trackedContexts/TrackedPressableContext';
+export * from './trackedContexts/TrackedRootLocationContext';
 
 export * from './types';
