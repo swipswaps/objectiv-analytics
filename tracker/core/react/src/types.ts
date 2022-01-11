@@ -92,3 +92,28 @@ export type TrackedContextProps<T = HTMLElement> = WithComponentProp<AllHTMLAttr
    */
   forwardId?: boolean;
 };
+
+/**
+ * The props of TrackedPressableContext. Extends TrackedContextProps with then `isVisible` property.
+ */
+export type TrackedPressableProps = Omit<TrackedContextProps, 'id'> & {
+  /**
+   * The unique id of the LocationContext. Optional because we will attempt to auto-detect it.
+   */
+  id?: string;
+
+  /**
+   * The title is used to generate a unique identifier. Optional because we will attempt to auto-detect it.
+   */
+  title?: string;
+
+  /**
+   * Whether to forward the given title to the given Component.
+   */
+  forwardTitle?: boolean;
+
+  /**
+   * Whether to block and wait for the Tracker having sent the event. Eg: a button redirecting to a new location.
+   */
+  waitUntilTracked?: boolean;
+};
