@@ -10,8 +10,8 @@ from sqlalchemy.future import Connection
 from bach.expression import Expression, SingleValueExpression, VariableToken, get_variable_token_names
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
-from sql_models.graph_operations import update_properties_in_graph
-from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder
+from sql_models.graph_operations import update_properties_in_graph, get_all_properties
+from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
 from sql_models.sql_generator import to_sql
 
@@ -1984,27 +1984,42 @@ class DataFrame:
         variables[name] = DtypeValuePair(dtype_new, value)
         return self.copy_override(variables=variables)
 
-    def _get_all_available_variables(self) -> Dict[str, str]:
-        # TODO: REMOVE? not used?
+    def get_all_defined_variables(self) \
+            -> List[Tuple[str, str, Optional[Hashable], RefPath, Optional[Hashable]]]:
+        """
 
-        # TODO: get similar function for self.base_node
-        # TODO: check based on the name of the variable (which contains the dtype) whether the
-        #  dtype is correct
-        found_tokens = []
+        """
+        return self.get_all_defined_variables_series() + self.get_all_defined_variables_base_node()
+
+    # TODO: document
+    # TODO: add NamedTuple
+
+    def get_all_defined_variables_series(self) \
+            -> List[Tuple[str, str, Optional[Hashable], RefPath, Optional[Hashable]]]:
+        all_tokens = []
         for series in self.all_series.values():
-            tokens = series.expression.get_all_tokens()
-            for token in tokens:
-                if isinstance(token, VariableToken):
-                    found_tokens.append(token)
-        result: Dict[str, str] = {}
-        for ft in found_tokens:
-            if ft.name in result and result[ft.name] != ft.dtype:
-                # TODO: if this happens, it's shitty
-                # TODO: move this check?
-                raise Exception(f'variable {ft.name} appears multiple times with different dtypes: '
-                                f' {result[ft.name]} and {ft.dtype}. This is not a recoverable error. '
-                                f'Go back a few steps before the later variable was introduced.')
-            result[ft.name] = ft.dtype
+            all_tokens.extend(series.expression.get_all_tokens())
+        variable_tokens = [token for token in all_tokens if isinstance(token, VariableToken)]
+
+        result = []
+        for vt in variable_tokens:
+            value = None if vt.name not in self.variables else self.variables[vt.name].value
+            name_type_value = (vt.name, vt.dtype, value, tuple(), None)
+            result.append(name_type_value)
+        return result
+
+    def get_all_defined_variables_base_node(self) \
+        -> List[Tuple[str, str, Optional[Hashable], RefPath, Optional[Hashable]]]:
+        result = []
+        all_properties = get_all_properties(self.base_node)
+        for name, values_dict in all_properties.items():
+            parsed_name = VariableToken.property_name_to_dtype_name(name)
+            if parsed_name:
+                name, dtype = parsed_name
+                for ref_path, old_value in values_dict.items():
+                    value = None if name not in self.variables else self.variables[name].value
+                    name_type_value = (name, dtype, value, ref_path, old_value)
+                    result.append(name_type_value)
         return result
 
 

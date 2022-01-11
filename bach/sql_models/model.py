@@ -445,9 +445,9 @@ class SqlModel(Generic[T]):
         return {key: value for key, value in self._references.items()}
 
     @property
-    def properties(self) -> MutableMapping[str, Any]:
+    def properties(self) -> MutableMapping[str, Hashable]:
         # return deepcopy of the dictionary
-        return cast(MutableMapping[str, Any], deepcopy(self._properties))
+        return cast(MutableMapping[str, Hashable], deepcopy(self._properties))
 
     @property
     def materialization(self) -> Materialization:

@@ -194,7 +194,7 @@ def replace_node_in_graph(start_node: SqlModel,
     )
 
 
-def get_all_properties(start_node: SqlModel) -> Dict[str, Dict[RefPath, Any]]:
+def get_all_properties(start_node: SqlModel) -> Dict[str, Dict[RefPath, Hashable]]:
     """
     Get all properties in the graph.
 

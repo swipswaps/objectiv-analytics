@@ -1,6 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import re
 from dataclasses import dataclass
 from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set, Mapping, Any
 from sql_models.model import SqlModel, SqlModelSpec
@@ -43,11 +44,22 @@ class VariableToken(ExpressionToken):
     name: str
 
     def to_sql(self) -> str:
-        return '{' + self.dtype_name_to_sql(self.dtype, self.name) + '}'
+        return '{' + self.dtype_name_to_property_name(self.dtype, self.name) + '}'
 
     @classmethod
-    def dtype_name_to_sql(cls, dtype: str, name: str) -> str:
-        return f'__bach_variable__{dtype}__{name}'
+    def dtype_name_to_property_name(cls, dtype: str, name: str) -> str:
+        return f'___bach_variable___{dtype}___{name}'
+
+    @classmethod
+    def property_name_to_dtype_name(cls, property_name: str) -> Optional[Tuple[str, str]]:
+        """
+        Reverse of dtype_name_to_property_name.
+        Will return None if the property_name doesn't match the pattern
+        """
+        match = re.match('^___bach_variable___([a-zA-Z0-9)]+)___(.+)$', property_name)
+        if not match:
+            return None
+        return match.group(1), match.group(2)
 
 
 @dataclass(frozen=True)
