@@ -7,7 +7,7 @@ import { TrackedPressableContext } from '../trackedContexts/TrackedPressableCont
 import { TrackedPressableContextProps } from '../types';
 
 /**
- * Generates a TrackedPressableContext preconfigured with a HTMLButtonElement as Component.
+ * Generates a TrackedPressableContext preconfigured with a <button> Element as Component.
  */
 export const TrackedButton = React.forwardRef<HTMLButtonElement, Omit<TrackedPressableContextProps, 'Component'>>(
   (props, ref) => <TrackedPressableContext {...props} Component={'button'} ref={ref} />

@@ -98,5 +98,11 @@ export * from './trackedContexts/TrackedRootLocationContext';
 
 export * from './trackedElements/TrackedAnchor';
 export * from './trackedElements/TrackedButton';
+export * from './trackedElements/TrackedDiv';
+export * from './trackedElements/TrackedFooter';
+export * from './trackedElements/TrackedHeader';
+export * from './trackedElements/TrackedMain';
+export * from './trackedElements/TrackedNav';
+export * from './trackedElements/TrackedSection';
 
 export * from './types';

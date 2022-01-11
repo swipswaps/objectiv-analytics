@@ -127,3 +127,13 @@ export type TrackedPressableContextProps = Omit<TrackedContextProps, 'id'> & {
    */
   waitUntilTracked?: boolean;
 };
+
+/**
+ * Overrides TrackedContextProps to not require an id, assuming that semantically there should be only one Element
+ */
+export type SingletonTrackedElementProps = Omit<TrackedContextProps, 'Component' | 'id'> & {
+  /**
+   * Optional identifier to be provided only in case of uniqueness collisions, defaults to 'footer'
+   */
+  id?: string;
+};
