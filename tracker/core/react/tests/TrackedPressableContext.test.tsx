@@ -113,16 +113,14 @@ describe('TrackedPressableContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedPressableContext Component={'a'} data-testid={'test-pressable'} ref={ref}>
+        <TrackedPressableContext Component={'a'} ref={ref}>
           Press me!
         </TrackedPressableContext>
       </ObjectivProvider>
     );
 
     expect(ref.current).toMatchInlineSnapshot(`
-      <a
-        data-testid="test-pressable"
-      >
+      <a>
         Press me!
       </a>
     `);
@@ -134,12 +132,7 @@ describe('TrackedPressableContext', () => {
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedPressableContext
-          Component={'button'}
-          id={'pressable-id'}
-          onClick={clickSpy}
-          data-testid={'test-pressable'}
-        >
+        <TrackedPressableContext Component={'button'} id={'pressable-id'} onClick={clickSpy}>
           Press me
         </TrackedPressableContext>
       </ObjectivProvider>
@@ -160,12 +153,7 @@ describe('TrackedPressableContext', () => {
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedPressableContext
-          Component={'button'}
-          waitUntilTracked={false}
-          data-testid={'test-pressable'}
-          onClick={clickSpy}
-        >
+        <TrackedPressableContext Component={'button'} waitUntilTracked={false} onClick={clickSpy}>
           Press me
         </TrackedPressableContext>
       </ObjectivProvider>
@@ -191,12 +179,7 @@ describe('TrackedPressableContext', () => {
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedPressableContext
-          Component={'button'}
-          waitUntilTracked={true}
-          data-testid={'test-pressable'}
-          onClick={clickSpy}
-        >
+        <TrackedPressableContext Component={'button'} waitUntilTracked={true} onClick={clickSpy}>
           Press me
         </TrackedPressableContext>
       </ObjectivProvider>

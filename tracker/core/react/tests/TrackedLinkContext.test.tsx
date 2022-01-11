@@ -134,16 +134,14 @@ describe('TrackedLinkContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedLinkContext Component={'a'} href={'/some-url'} data-testid={'test-link'} ref={ref}>
+        <TrackedLinkContext Component={'a'} href={'/some-url'} ref={ref}>
           Press me!
         </TrackedLinkContext>
       </ObjectivProvider>
     );
 
     expect(ref.current).toMatchInlineSnapshot(`
-      <a
-        data-testid="test-link"
-      >
+      <a>
         Press me!
       </a>
     `);
@@ -155,13 +153,7 @@ describe('TrackedLinkContext', () => {
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedLinkContext
-          Component={'a'}
-          id={'link-id'}
-          href={'/some-url'}
-          onClick={clickSpy}
-          data-testid={'test-link'}
-        >
+        <TrackedLinkContext Component={'a'} id={'link-id'} href={'/some-url'} onClick={clickSpy}>
           Press me
         </TrackedLinkContext>
       </ObjectivProvider>
@@ -182,13 +174,7 @@ describe('TrackedLinkContext', () => {
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedLinkContext
-          Component={'a'}
-          href={'/some-url'}
-          waitUntilTracked={false}
-          data-testid={'test-link'}
-          onClick={clickSpy}
-        >
+        <TrackedLinkContext Component={'a'} href={'/some-url'} waitUntilTracked={false} onClick={clickSpy}>
           Press me
         </TrackedLinkContext>
       </ObjectivProvider>
@@ -214,13 +200,7 @@ describe('TrackedLinkContext', () => {
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedLinkContext
-          Component={'a'}
-          href={'/some-url'}
-          waitUntilTracked={true}
-          data-testid={'test-link'}
-          onClick={clickSpy}
-        >
+        <TrackedLinkContext Component={'a'} href={'/some-url'} waitUntilTracked={true} onClick={clickSpy}>
           Press me
         </TrackedLinkContext>
       </ObjectivProvider>

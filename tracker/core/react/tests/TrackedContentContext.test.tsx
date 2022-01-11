@@ -64,17 +64,17 @@ describe('TrackedContentContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedContentContext Component={'div'} id={'content-id-1'} data-testid={'test-div-1'}>
+        <TrackedContentContext Component={'div'} id={'content-id-1'} data-testid={'test-content-1'}>
           test
         </TrackedContentContext>
-        <TrackedContentContext Component={'div'} id={'content-id-2'} forwardId={true} data-testid={'test-div-2'}>
+        <TrackedContentContext Component={'div'} id={'content-id-2'} forwardId={true} data-testid={'test-content-2'}>
           test
         </TrackedContentContext>
       </ObjectivProvider>
     );
 
-    expect(screen.getByTestId('test-div-1').getAttribute('id')).toBe(null);
-    expect(screen.getByTestId('test-div-2').getAttribute('id')).toBe('content-id-2');
+    expect(screen.getByTestId('test-content-1').getAttribute('id')).toBe(null);
+    expect(screen.getByTestId('test-content-2').getAttribute('id')).toBe('content-id-2');
   });
 
   it('should allow forwarding refs', () => {
@@ -83,16 +83,14 @@ describe('TrackedContentContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedContentContext Component={'div'} id={'content-id'} ref={ref} data-testid={'test-div'}>
+        <TrackedContentContext Component={'div'} id={'content-id'} ref={ref}>
           test
         </TrackedContentContext>
       </ObjectivProvider>
     );
 
     expect(ref.current).toMatchInlineSnapshot(`
-      <div
-        data-testid="test-div"
-      >
+      <div>
         test
       </div>
     `);

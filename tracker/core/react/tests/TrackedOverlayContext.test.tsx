@@ -6,14 +6,14 @@ import { SpyTransport } from '@objectiv/testing-tools';
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render, screen } from '@testing-library/react';
 import React, { createRef } from 'react';
-import { LocationTree, ObjectivProvider, TrackedExpandableContext, usePressEventTracker } from '../src';
+import { LocationTree, ObjectivProvider, TrackedOverlayContext, usePressEventTracker } from '../src';
 
 const TrackedButton = () => {
   const trackPressEvent = usePressEventTracker();
   return <div onClick={trackPressEvent}>Trigger Event</div>;
 };
 
-describe('TrackedExpandableContext', () => {
+describe('TrackedOverlayContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     LocationTree.clear();
@@ -23,16 +23,16 @@ describe('TrackedExpandableContext', () => {
     jest.resetAllMocks();
   });
 
-  it('should wrap the given Component in an ExpandableContext', () => {
+  it('should wrap the given Component in an OverlayContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
     const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedExpandableContext Component={'div'} id={'expandable-id'}>
+        <TrackedOverlayContext Component={'div'} id={'modal-id'}>
           <TrackedButton />
-        </TrackedExpandableContext>
+        </TrackedOverlayContext>
       </ObjectivProvider>
     );
 
@@ -51,8 +51,8 @@ describe('TrackedExpandableContext', () => {
         _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'ExpandableContext',
-            id: 'expandable-id',
+            _type: 'OverlayContext',
+            id: 'modal-id',
           }),
         ],
       })
@@ -66,9 +66,9 @@ describe('TrackedExpandableContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedExpandableContext Component={'div'} id={'expandable-id'} isVisible={false}>
+        <TrackedOverlayContext Component={'div'} id={'modal-id'} isVisible={false}>
           <TrackedButton />
-        </TrackedExpandableContext>
+        </TrackedOverlayContext>
       </ObjectivProvider>
     );
 
@@ -86,9 +86,9 @@ describe('TrackedExpandableContext', () => {
 
     const { rerender } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedExpandableContext Component={'div'} id={'expandable-id'} isVisible={false}>
+        <TrackedOverlayContext Component={'div'} id={'modal-id'} isVisible={false}>
           <TrackedButton />
-        </TrackedExpandableContext>
+        </TrackedOverlayContext>
       </ObjectivProvider>
     );
 
@@ -102,9 +102,9 @@ describe('TrackedExpandableContext', () => {
 
     rerender(
       <ObjectivProvider tracker={tracker}>
-        <TrackedExpandableContext Component={'div'} id={'expandable-id'} isVisible={true}>
+        <TrackedOverlayContext Component={'div'} id={'modal-id'} isVisible={true}>
           <TrackedButton />
-        </TrackedExpandableContext>
+        </TrackedOverlayContext>
       </ObjectivProvider>
     );
 
@@ -119,9 +119,9 @@ describe('TrackedExpandableContext', () => {
 
     rerender(
       <ObjectivProvider tracker={tracker}>
-        <TrackedExpandableContext Component={'div'} id={'expandable-id'} isVisible={false}>
+        <TrackedOverlayContext Component={'div'} id={'modal-id'} isVisible={false}>
           <TrackedButton />
-        </TrackedExpandableContext>
+        </TrackedOverlayContext>
       </ObjectivProvider>
     );
 
@@ -138,22 +138,17 @@ describe('TrackedExpandableContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedExpandableContext Component={'div'} id={'expandable-id-1'} data-testid={'test-expandable-1'}>
+        <TrackedOverlayContext Component={'div'} id={'modal-id-1'} data-testid={'test-overlay-1'}>
           test
-        </TrackedExpandableContext>
-        <TrackedExpandableContext
-          Component={'div'}
-          id={'expandable-id-2'}
-          forwardId={true}
-          data-testid={'test-expandable-2'}
-        >
+        </TrackedOverlayContext>
+        <TrackedOverlayContext Component={'div'} id={'modal-id-2'} forwardId={true} data-testid={'test-overlay-2'}>
           test
-        </TrackedExpandableContext>
+        </TrackedOverlayContext>
       </ObjectivProvider>
     );
 
-    expect(screen.getByTestId('test-expandable-1').getAttribute('id')).toBe(null);
-    expect(screen.getByTestId('test-expandable-2').getAttribute('id')).toBe('expandable-id-2');
+    expect(screen.getByTestId('test-overlay-1').getAttribute('id')).toBe(null);
+    expect(screen.getByTestId('test-overlay-2').getAttribute('id')).toBe('modal-id-2');
   });
 
   it('should allow forwarding refs', () => {
@@ -162,26 +157,16 @@ describe('TrackedExpandableContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedExpandableContext Component={'ul'} id={'expandable-id'} ref={ref}>
-          <li>option 1</li>
-          <li>option 2</li>
-          <li>option 3</li>
-        </TrackedExpandableContext>
+        <TrackedOverlayContext Component={'div'} id={'modal-id'} ref={ref}>
+          Modal content
+        </TrackedOverlayContext>
       </ObjectivProvider>
     );
 
     expect(ref.current).toMatchInlineSnapshot(`
-      <ul>
-        <li>
-          option 1
-        </li>
-        <li>
-          option 2
-        </li>
-        <li>
-          option 3
-        </li>
-      </ul>
+      <div>
+        Modal content
+      </div>
     `);
   });
 });

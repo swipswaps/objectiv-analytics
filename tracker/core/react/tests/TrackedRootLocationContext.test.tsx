@@ -30,7 +30,7 @@ describe('TrackedRootLocationContext', () => {
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedRootLocationContext Component={'div'} id={'root-div-id'}>
+        <TrackedRootLocationContext Component={'div'} id={'root-id'}>
           <TrackedButton />
         </TrackedRootLocationContext>
       </ObjectivProvider>
@@ -52,7 +52,7 @@ describe('TrackedRootLocationContext', () => {
         location_stack: [
           expect.objectContaining({
             _type: 'RootLocationContext',
-            id: 'root-div-id',
+            id: 'root-id',
           }),
         ],
       })
@@ -64,22 +64,17 @@ describe('TrackedRootLocationContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedRootLocationContext Component={'div'} id={'root-div-id-1'} data-testid={'test-root-div-1'}>
+        <TrackedRootLocationContext Component={'div'} id={'root-id-1'} data-testid={'test-root-1'}>
           test
         </TrackedRootLocationContext>
-        <TrackedRootLocationContext
-          Component={'div'}
-          id={'root-div-id-2'}
-          forwardId={true}
-          data-testid={'test-root-div-2'}
-        >
+        <TrackedRootLocationContext Component={'div'} id={'root-id-2'} forwardId={true} data-testid={'test-root-2'}>
           test
         </TrackedRootLocationContext>
       </ObjectivProvider>
     );
 
-    expect(screen.getByTestId('test-root-div-1').getAttribute('id')).toBe(null);
-    expect(screen.getByTestId('test-root-div-2').getAttribute('id')).toBe('root-div-id-2');
+    expect(screen.getByTestId('test-root-1').getAttribute('id')).toBe(null);
+    expect(screen.getByTestId('test-root-2').getAttribute('id')).toBe('root-id-2');
   });
 
   it('should allow forwarding refs', () => {
@@ -88,16 +83,14 @@ describe('TrackedRootLocationContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedRootLocationContext Component={'div'} id={'root-div-id'} ref={ref} data-testid={'test-div'}>
+        <TrackedRootLocationContext Component={'div'} id={'root-id'} ref={ref}>
           test
         </TrackedRootLocationContext>
       </ObjectivProvider>
     );
 
     expect(ref.current).toMatchInlineSnapshot(`
-      <div
-        data-testid="test-div"
-      >
+      <div>
         test
       </div>
     `);

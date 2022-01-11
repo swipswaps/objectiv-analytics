@@ -6,9 +6,9 @@ import { SpyTransport } from '@objectiv/testing-tools';
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render, screen } from '@testing-library/react';
 import React, { createRef } from 'react';
-import { LocationTree, ObjectivProvider, TrackedNavigationContext, usePressEventTracker } from '../src';
+import { LocationTree, ObjectivProvider, TrackedMediaPlayerContext, usePressEventTracker } from '../src';
 
-describe('TrackedNavigationContext', () => {
+describe('TrackedMediaPlayerContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     LocationTree.clear();
@@ -18,21 +18,21 @@ describe('TrackedNavigationContext', () => {
     jest.resetAllMocks();
   });
 
-  it('should wrap the given Component in a NavigationContext', () => {
+  it('should wrap the given Component in a MediaPlayerContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
     const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
 
     const TrackedButton = () => {
       const trackPressEvent = usePressEventTracker();
-      return <nav onClick={trackPressEvent}>Trigger Event</nav>;
+      return <video onClick={trackPressEvent}>Trigger Event</video>;
     };
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedNavigationContext Component={'nav'} id={'nav-id'}>
+        <TrackedMediaPlayerContext Component={'video'} id={'video-id'}>
           <TrackedButton />
-        </TrackedNavigationContext>
+        </TrackedMediaPlayerContext>
       </ObjectivProvider>
     );
 
@@ -51,8 +51,8 @@ describe('TrackedNavigationContext', () => {
         _type: 'PressEvent',
         location_stack: [
           expect.objectContaining({
-            _type: 'NavigationContext',
-            id: 'nav-id',
+            _type: 'MediaPlayerContext',
+            id: 'video-id',
           }),
         ],
       })
@@ -64,17 +64,17 @@ describe('TrackedNavigationContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedNavigationContext Component={'nav'} id={'nav-id-1'} data-testid={'test-nav-1'}>
+        <TrackedMediaPlayerContext Component={'video'} id={'video-id-1'} data-testid={'test-video-1'}>
           test
-        </TrackedNavigationContext>
-        <TrackedNavigationContext Component={'nav'} id={'nav-id-2'} forwardId={true} data-testid={'test-nav-2'}>
+        </TrackedMediaPlayerContext>
+        <TrackedMediaPlayerContext Component={'video'} id={'video-id-2'} forwardId={true} data-testid={'test-video-2'}>
           test
-        </TrackedNavigationContext>
+        </TrackedMediaPlayerContext>
       </ObjectivProvider>
     );
 
-    expect(screen.getByTestId('test-nav-1').getAttribute('id')).toBe(null);
-    expect(screen.getByTestId('test-nav-2').getAttribute('id')).toBe('nav-id-2');
+    expect(screen.getByTestId('test-video-1').getAttribute('id')).toBe(null);
+    expect(screen.getByTestId('test-video-2').getAttribute('id')).toBe('video-id-2');
   });
 
   it('should allow forwarding refs', () => {
@@ -83,16 +83,16 @@ describe('TrackedNavigationContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedNavigationContext Component={'nav'} id={'nav-id'} ref={ref}>
+        <TrackedMediaPlayerContext Component={'video'} id={'video-id'} ref={ref}>
           test
-        </TrackedNavigationContext>
+        </TrackedMediaPlayerContext>
       </ObjectivProvider>
     );
 
     expect(ref.current).toMatchInlineSnapshot(`
-      <nav>
+      <video>
         test
-      </nav>
+      </video>
     `);
   });
 });

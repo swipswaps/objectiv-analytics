@@ -133,7 +133,7 @@ describe('TrackedInputContext', () => {
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <TrackedInputContext Component={'input'} type={'text'} defaultValue={'test 1'} id={'expandable-id'} ref={ref} />
+        <TrackedInputContext Component={'input'} type={'text'} defaultValue={'test 1'} id={'input-id'} ref={ref} />
       </ObjectivProvider>
     );
 
@@ -155,7 +155,7 @@ describe('TrackedInputContext', () => {
           Component={'input'}
           type={'text'}
           defaultValue={''}
-          id={'expandable-id'}
+          id={'input-id'}
           onBlur={blurSpy}
           data-testid={'test-input'}
         />

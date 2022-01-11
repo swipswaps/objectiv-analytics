@@ -5,14 +5,14 @@
 import React, { useState } from 'react';
 import { trackVisibility } from '../eventTrackers/trackVisibility';
 import { useOnChange } from '../hooks/useOnChange';
-import { ExpandableContextWrapper } from '../locationWrappers/ExpandableContextWrapper';
+import { OverlayContextWrapper } from '../locationWrappers/OverlayContextWrapper';
 import { TrackedShowableProps } from '../types';
 
 /**
- * Generates a new React Element already wrapped in an ExpandableContext.
+ * Generates a new React Element already wrapped in an OverlayContext.
  * Automatically tracks HiddenEvent and VisibleEvent based on the given `isVisible` prop.
  */
-export const TrackedExpandableContext = React.forwardRef<HTMLElement, TrackedShowableProps>((props, ref) => {
+export const TrackedOverlayContext = React.forwardRef<HTMLElement, TrackedShowableProps>((props, ref) => {
   const [wasVisible, setWasVisible] = useState<boolean>(false);
   const { id, Component, forwardId = false, isVisible = false, ...otherProps } = props;
 
@@ -25,13 +25,13 @@ export const TrackedExpandableContext = React.forwardRef<HTMLElement, TrackedSho
   };
 
   return (
-    <ExpandableContextWrapper id={id}>
+    <OverlayContextWrapper id={id}>
       {(trackingContext) => {
         if ((wasVisible && !isVisible) || (!wasVisible && isVisible)) {
           trackVisibility({ isVisible, ...trackingContext });
         }
         return React.createElement(Component, componentProps);
       }}
-    </ExpandableContextWrapper>
+    </OverlayContextWrapper>
   );
 });
