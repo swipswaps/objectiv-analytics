@@ -69,8 +69,6 @@ export const TrackedPressableContext = React.forwardRef<HTMLElement, TrackedPres
     ...(forwardTitle ? { title } : {}),
   };
 
-  console.log(componentProps);
-
   return (
     <PressableContextWrapper id={anchorId}>
       {(trackingContext) =>
