@@ -257,8 +257,7 @@ def merge(
         right_savepoints = right.savepoints
         right_variables = right.variables
     # TODO: something more sophisticated? Detect problems?
-    variables = copy(right_variables)
-    variables.update(left.variables)
+    variables = _merge_variables(left.variables, right_variables)
 
     model = _get_merge_sql_model(
         left=left,
@@ -280,6 +279,28 @@ def merge(
         savepoints=left.savepoints.merge(right_savepoints),
         variables=variables
     )
+
+
+def _merge_variables(
+        left: Dict[str, 'DtypeValuePair'],
+        right: Dict[str, 'DtypeValuePair']
+) -> Dict[str, 'DtypeValuePair']:
+    """
+
+    """
+    # Check that for variables that are in both left and right the dtypes match
+    for name in left.keys() & right.keys():
+        if left[name].dtype != right[name].dtype:
+            raise ValueError(f'Incompatible variables. Dtype does not match between left and right. '
+                             f'Variable: "{name}", '
+                             f'left dtype: {left[name].dtype}, '
+                             f'right dtype: { right[name].dtype}.')
+    # If a variable is in both left and right, and the types are the same then we don't care if the values
+    # are different, we'll stick with the left value. This might give unexpected behaviour if not anticipated
+    # by the user, but that's the danger of using global variables.
+    result = copy(right)
+    result.update(left)
+    return result
 
 
 def _get_merge_sql_model(
@@ -344,6 +365,17 @@ class MergeSqlModel(BachSqlModel):
                  left_node: BachSqlModel,
                  right_node: BachSqlModel,
                  variables: Dict[str, DtypeValuePair]):
+        """
+        :param column_names: tuple with the column_names in order
+        :param columns_expr: A single expression that expresses projecting all needed columns from either
+            left or right
+        :param join_type_expr: expression expressing the join type, e.g. an expression that represents
+            the string 'inner', 'cross', or similar
+        :param on_clause: single expression that expresses the on clause
+        :param left_node, sql-model of the materialized left side of the join
+        :param right_node, sql-model of the materialized right side of the join
+        :param variables: Dictionary of all variable values
+        """
         columns_str = columns_expr.to_sql()
         join_type_str = join_type_expr.to_sql()
         on_str = on_clause.to_sql()
