@@ -73,8 +73,8 @@ describe('TrackedContentContext', () => {
       </ObjectivProvider>
     );
 
-    expect(screen.getByTestId('test-div-1').id).toBe('');
-    expect(screen.getByTestId('test-div-2').id).toBe('content-id-2');
+    expect(screen.getByTestId('test-div-1').getAttribute('id')).toBe(null);
+    expect(screen.getByTestId('test-div-2').getAttribute('id')).toBe('content-id-2');
   });
 
   it('should allow forwarding refs', () => {

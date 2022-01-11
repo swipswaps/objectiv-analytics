@@ -6,8 +6,7 @@ import { SpyTransport } from '@objectiv/testing-tools';
 import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React, { createRef } from 'react';
-import { LocationTree, ObjectivProvider } from '../src';
-import { TrackedInputContext } from '../src/trackedContexts/TrackedInputContext';
+import { LocationTree, ObjectivProvider, TrackedInputContext } from '../src';
 
 describe('TrackedInputContext', () => {
   beforeEach(() => {
@@ -124,8 +123,8 @@ describe('TrackedInputContext', () => {
       </ObjectivProvider>
     );
 
-    expect(screen.getByTestId('test-input-1').id).toBe('');
-    expect(screen.getByTestId('test-input-2').id).toBe('input-id-2');
+    expect(screen.getByTestId('test-input-1').getAttribute('id')).toBe(null);
+    expect(screen.getByTestId('test-input-2').getAttribute('id')).toBe('input-id-2');
   });
 
   it('should allow forwarding refs', () => {
