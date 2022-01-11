@@ -89,6 +89,7 @@ export * from './locationWrappers/RootLocationContextWrapper';
 export * from './trackedContexts/TrackedContentContext';
 export * from './trackedContexts/TrackedExpandableContext';
 export * from './trackedContexts/TrackedInputContext';
+export * from './trackedContexts/TrackedNavigationContext';
 export * from './trackedContexts/TrackedPressableContext';
 
 export * from './types';
