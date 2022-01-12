@@ -104,6 +104,7 @@ export * from './trackedElements/TrackedButton';
 export * from './trackedElements/TrackedDiv';
 export * from './trackedElements/TrackedFooter';
 export * from './trackedElements/TrackedHeader';
+export * from './trackedElements/TrackedInput';
 export * from './trackedElements/TrackedMain';
 export * from './trackedElements/TrackedNav';
 export * from './trackedElements/TrackedSection';
