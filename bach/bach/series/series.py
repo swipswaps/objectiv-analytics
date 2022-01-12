@@ -1175,11 +1175,15 @@ def const_to_series(base: Union[Series, DataFrame],
     return series_type.from_const(base=base, value=value, name=name)
 
 
-def variable_series(base: Union[Series, DataFrame],
-                    value: Any,
-                    name: str) -> Series:
+def variable_series(base: Union[Series, DataFrame], value: Any, name: str) -> Series:
     """
-    INTERNAL: TODO
+    INTERNAL: Return a series with the same dtype as the value, but with a VariableToken instead of the
+    value's literal in the series.expression.
+    :param base: Base series or DataFrame. The new Series object will share its engine, index, and
+        base_node with this one.
+    :param value: constant value, used to determine the dtype of the series and the VariableToken in the
+        series's expression.
+    :param name: name of the variable
     """
     if isinstance(value, Series):
         return value
@@ -1189,7 +1193,7 @@ def variable_series(base: Union[Series, DataFrame],
     variable_expression = series_type.supported_literal_to_expression(variable_placeholder)
     result = series_type.get_class_instance(
         base=base,
-        name=name,
+        name='__variable__',
         expression=ConstValueExpression(variable_expression),
         group_by=None,
     )

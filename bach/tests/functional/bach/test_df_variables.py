@@ -220,3 +220,31 @@ def test_get_all_variable_usage():
         DefinedVariable(name='second', dtype='string', value=None, ref_path=('model',), old_value="'test'"),
         DefinedVariable(name='first', dtype='int64', value=None, ref_path=('model', 'prev'), old_value='1234')
     ]
+
+
+def test_variable_escaping():
+    df = get_bt_with_test_data()[['city']]
+    df = df[df['city'] == 'Ljouwert']
+
+    weird_value = ' %(test)s %%  ? {test} {{test2}} {{{test3}}} {{}"test"{}\'test\'\'"'
+    normal_value = 'test'
+    df, str_variable1 = df.create_variable(name='str_variable1', value=weird_value)
+    df, str_variable2 = df.create_variable(name='str_variable2', value=normal_value)
+    df['x'] = str_variable1
+    df['y'] = str_variable2
+
+    assert_equals_data(
+        df,
+        expected_columns=['_index_skating_order', 'city', 'x', 'y'],
+        expected_data=[[1, 'Ljouwert', weird_value, normal_value]]
+    )
+
+    df.materialize()
+    df, str_variable3 = df.create_variable(name='str_variable3', value=normal_value)
+    df['z'] = str_variable3
+    df = df.set_variable('str_variable2', weird_value)
+    assert_equals_data(
+        df,
+        expected_columns=['_index_skating_order', 'city', 'x', 'y', 'z'],
+        expected_data=[[1, 'Ljouwert', weird_value, weird_value, normal_value]]
+    )

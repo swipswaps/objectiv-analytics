@@ -193,6 +193,8 @@ def get_variable_values_sql(variable_values: Dict['DtypeNamePair', Hashable]) ->
     """
     Take a dictionary with variable_values and return a dict with the full variable names and the values
     as sql.
+    The sql assumes it will be used as values for SqlModels's placeholders. i.e. It will not be format
+    escaped, unlike if it would be used directly into SqlModel.sql in which case it would be escaped twice.
 
     :param variable_values: Mapping of variable to value.
     :return: Dictionary mapping full variable name to sql literal
@@ -206,6 +208,7 @@ def get_variable_values_sql(variable_values: Dict['DtypeNamePair', Hashable]) ->
         property_name = VariableToken.dtype_name_to_property_name(dtype=dtype, name=name)
         series_type = get_series_type_from_dtype(dtype)
         expr = series_type.supported_value_to_literal(value)
-        sql = expr.to_sql()
+        double_escaped_sql = expr.to_sql()
+        sql = double_escaped_sql.format().format()
         result[property_name] = sql
     return result

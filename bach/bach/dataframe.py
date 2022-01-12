@@ -2008,11 +2008,7 @@ class DataFrame:
         :return: Tuple with DataFrame and Series object.
         """
         from bach.series.series import variable_series
-        series = variable_series(
-            base=self,
-            value=value,
-            name=name
-        )
+        series = variable_series(base=self, value=value, name=name)
         variables = self.variables
         variables[DtypeNamePair(dtype=series.dtype, name=name)] = value
         df = self.copy_override(variables=variables)
@@ -2021,8 +2017,6 @@ class DataFrame:
     def set_variable(self, name: str, value: Any) -> 'DataFrame':
         """
         Return a copy of this DataFrame with the variable value updated.
-
-        Shorthand for create_variable(name, value)[0]
         """
         df, _ = self.create_variable(name, value)
         return df
