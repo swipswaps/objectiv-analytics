@@ -304,6 +304,25 @@ def test_groupby_dataframe_agg_per_series_syntax():
         }
 
 
+def test_groupby_agg_func_order() -> None:
+    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants', 'founding']]
+    btg = bt.groupby('municipality')
+    result_bt = btg.agg({'founding': ['max', 'min'], 'inhabitants': 'min'})
+    assert_equals_data(
+        result_bt,
+        order_by='municipality',
+        expected_columns=['municipality', 'founding_max', 'founding_min', 'inhabitants_min'],
+        expected_data=[
+            ['De Friese Meren', 1426, 1426, 700],
+            ['Harlingen', 1234, 1234, 14740],
+            ['Leeuwarden', 1285, 1285, 93485],
+            ['Noardeast-Fryslân', 1298, 1298, 12675],
+            ['Súdwest-Fryslân', 1456, 1061, 870],
+            ['Waadhoeke', 1374, 1374, 12760],
+        ],
+    )
+
+
 def test_groupby_dataframe_agg_multiple_per_series_syntax():
     bt = get_bt_with_test_data(full_data_set=True)
     btg = bt.groupby('municipality')

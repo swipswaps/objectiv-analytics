@@ -1630,12 +1630,15 @@ class DataFrame:
             suffixes=suffixes
         )
 
-    def _apply_func_to_series(self,
-                              func: Union[ColumnFunction, Dict[str, ColumnFunction]],
-                              axis: int = 1,
-                              numeric_only: bool = False,
-                              exclude_non_applied: bool = False,
-                              *args, **kwargs) -> List['Series']:
+    def _apply_func_to_series(
+        self,
+        func: Union[ColumnFunction, Dict[str, ColumnFunction]],
+        axis: int = 1,
+        numeric_only: bool = False,
+        exclude_non_applied: bool = False,
+        *args,
+        **kwargs,
+    ) -> List['Series']:
         """
         :param func: function, str, list or dict to apply to all series
             Function to use on the data. If a function, must work when passed a
@@ -1685,17 +1688,20 @@ class DataFrame:
             raise TypeError(f'Unsupported type for func: {type(func)}')
 
         new_series = {}
-        for name, series in self._data.items():
-            if name not in apply_dict:
-                if not exclude_non_applied:
-                    new_series[name] = series.copy_override()
-                continue
-            for applied in series.apply_func(apply_dict[name], *args, **kwargs):
+        for name, apply_func in apply_dict.items():
+            for applied in self._data[name].apply_func(apply_func, *args, **kwargs):
                 if applied.name in new_series:
                     raise ValueError(f'duplicate result series: {applied.name}')
                 new_series[applied.name] = applied
 
-        return list(new_series.values())
+        applied_series = list(new_series.values())
+        if exclude_non_applied:
+            return applied_series
+
+        non_applied_series = [
+            series.copy_override() for name, series in self._data.items() if name not in apply_dict
+        ]
+        return applied_series + non_applied_series
 
     def aggregate(self,
                   func: Union[ColumnFunction, Dict[str, ColumnFunction]],
@@ -1707,12 +1713,14 @@ class DataFrame:
         """
         return self.agg(func, axis, numeric_only, *args, **kwargs)
 
-    def agg(self,
-            func: Union[ColumnFunction, Dict[str, ColumnFunction]],
-            axis: int = 1,
-            numeric_only: bool = False,
-            *args,
-            **kwargs) -> 'DataFrame':
+    def agg(
+        self,
+        func: Union[ColumnFunction, Dict[str, ColumnFunction]],
+        axis: int = 1,
+        numeric_only: bool = False,
+        *args,
+        **kwargs,
+    ) -> 'DataFrame':
         """
         Aggregate using one or more operations over the specified axis.
 
@@ -1746,7 +1754,7 @@ class DataFrame:
                                               df.group_by, *args, **kwargs)
 
         # If the new series have a different group_by or index, we need to copy that
-        if len(new_series):
+        if new_series:
             new_index = new_series[0].index
             new_group_by = new_series[0].group_by
 
