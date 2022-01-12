@@ -4,6 +4,7 @@
 
 import { mockConsole } from '@objectiv/testing-tools';
 import { TrackerEvent, TrackerPlugins, TrackerQueue, TrackerTransportRetry } from '@objectiv/tracker-core';
+import { DebugTransport } from '@objectiv/transport-debug';
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
@@ -77,6 +78,8 @@ describe('BrowserTracker', () => {
       batchDelayMs: 1000,
       batchSize: 10,
       concurrency: 4,
+      lastRunTimestamp: 0,
+      running: false,
       processFunction: expect.any(Function),
       processingEventIds: [],
       store: {
@@ -158,7 +161,30 @@ describe('BrowserTracker', () => {
       const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testTracker.plugins?.plugins).toEqual(
-        expect.arrayContaining([expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' })])
+        expect.arrayContaining([
+          expect.objectContaining({ pluginName: 'ApplicationContextPlugin' }),
+          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
+          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
+        ])
+      );
+    });
+
+    it('should allow disabling PathContextFromURLPlugin and RootLocationContextFromURLPlugin', () => {
+      const testTracker = new BrowserTracker({
+        applicationId: 'app-id',
+        endpoint: 'localhost',
+        trackPathContextFromURL: false,
+        trackRootLocationContextFromURL: false,
+      });
+      expect(testTracker).toBeInstanceOf(BrowserTracker);
+      expect(testTracker.plugins?.plugins).toEqual(
+        expect.arrayContaining([expect.objectContaining({ pluginName: 'ApplicationContextPlugin' })])
+      );
+      expect(testTracker.plugins?.plugins).toEqual(
+        expect.not.arrayContaining([
+          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
+          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
+        ])
       );
     });
 
@@ -187,7 +213,7 @@ describe('BrowserTracker', () => {
     });
 
     it('should auto-track Application and Path Contexts by default', async () => {
-      const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
+      const testTracker = new BrowserTracker({ applicationId: 'app-id', transport: new DebugTransport() });
       const testEvent = new TrackerEvent({ _type: 'test-event' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testEvent.global_contexts).toHaveLength(0);

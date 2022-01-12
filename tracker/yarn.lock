@@ -392,7 +392,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.12.5, @babel/runtime@npm:^7.13.8":
+"@babel/runtime@npm:^7.12.5":
+  version: 7.16.7
+  resolution: "@babel/runtime@npm:7.16.7"
+  dependencies:
+    regenerator-runtime: ^0.13.4
+  checksum: 47912f0aaacd1cab2e2552aaf3e6eaffbcaf2d5ac9b07a89a12ac0d42029cb92c070b0d16f825e4277c4a34677c54d8ffe85e1f7c6feb57de58f700eec67ce2f
+  languageName: node
+  linkType: hard
+
+"@babel/runtime@npm:^7.13.8":
   version: 7.16.5
   resolution: "@babel/runtime@npm:7.16.5"
   dependencies:
@@ -796,7 +805,35 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url"
   dependencies:
-    "@objectiv/testing-tools": 0.0.6
+    "@objectiv/testing-tools": ^0.0.6
+    "@rollup/plugin-commonjs": ^21.0.1
+    "@rollup/plugin-node-resolve": ^13.1.1
+    "@types/jest": ^27.0.3
+    jest: ^27.4.5
+    jest-extended: ^1.1.0
+    jest-fetch-mock: ^3.0.3
+    jest-standard-reporter: ^2.0.0
+    jest-useragent-mock: ^0.1.1
+    prettier: ^2.5.1
+    rollup: ^2.61.1
+    rollup-plugin-filesize: ^9.1.1
+    rollup-plugin-peer-deps-external: ^2.2.4
+    rollup-plugin-sizes: ^1.0.4
+    rollup-plugin-terser: ^7.0.2
+    rollup-plugin-ts: ^2.0.4
+    shx: ^0.3.3
+    ts-jest: ^27.1.2
+    typescript: ^4.5.4
+  peerDependencies:
+    "@objectiv/tracker-core": ^0.0.6
+  languageName: unknown
+  linkType: soft
+
+"@objectiv/plugin-root-location-context-from-url@^0.0.6, @objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url":
+  version: 0.0.0-use.local
+  resolution: "@objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url"
+  dependencies:
+    "@objectiv/testing-tools": ^0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
     "@types/jest": ^27.0.3
@@ -824,7 +861,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/queue-local-storage@workspace:queues/local-storage"
   dependencies:
-    "@objectiv/testing-tools": 0.0.6
+    "@objectiv/testing-tools": ^0.0.6
     "@objectiv/tracker-core": ~0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
@@ -843,7 +880,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/schema@^0.0.6, @objectiv/schema@workspace:core/schema, @objectiv/schema@~0.0.6":
+"@objectiv/schema@^0.0.6, @objectiv/schema@workspace:core/schema":
   version: 0.0.0-use.local
   resolution: "@objectiv/schema@workspace:core/schema"
   dependencies:
@@ -853,7 +890,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/testing-tools@0.0.6, @objectiv/testing-tools@workspace:core/testing-tools":
+"@objectiv/testing-tools@^0.0.6, @objectiv/testing-tools@workspace:core/testing-tools":
   version: 0.0.0-use.local
   resolution: "@objectiv/testing-tools@workspace:core/testing-tools"
   dependencies:
@@ -888,8 +925,9 @@ __metadata:
   resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
   dependencies:
     "@objectiv/plugin-path-context-from-url": ^0.0.6
+    "@objectiv/plugin-root-location-context-from-url": ^0.0.6
     "@objectiv/queue-local-storage": ^0.0.6
-    "@objectiv/testing-tools": 0.0.6
+    "@objectiv/testing-tools": ^0.0.6
     "@objectiv/tracker-core": ^0.0.6
     "@objectiv/transport-debug": ^0.0.6
     "@objectiv/transport-fetch": ^0.0.6
@@ -916,50 +954,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-core-react@workspace:core/react, @objectiv/tracker-core-react@~0.0.6":
-  version: 0.0.0-use.local
-  resolution: "@objectiv/tracker-core-react@workspace:core/react"
-  dependencies:
-    "@objectiv/schema": ~0.0.6
-    "@objectiv/tracker-core": ~0.0.6
-    "@rollup/plugin-commonjs": ^21.0.1
-    "@rollup/plugin-node-resolve": ^13.1.1
-    "@testing-library/react": ^12.1.2
-    "@testing-library/react-hooks": ^7.0.2
-    "@types/jest": ^27.0.3
-    "@types/react": ^17.0.38
-    fast-deep-equal: ^3.1.3
-    jest: ^27.4.5
-    jest-standard-reporter: ^2.0.0
-    prettier: ^2.5.1
-    react: ^17.0.2
-    react-dom: ^17.0.2
-    react-test-renderer: ^17.0.2
-    rollup: ^2.61.1
-    rollup-plugin-filesize: ^9.1.1
-    rollup-plugin-peer-deps-external: ^2.2.4
-    rollup-plugin-sizes: ^1.0.4
-    rollup-plugin-terser: ^7.0.2
-    rollup-plugin-ts: ^2.0.4
-    shx: ^0.3.3
-    ts-jest: ^27.1.2
-    typescript: ^4.5.4
-  peerDependencies:
-    react: ^17.0.2
-    react-dom: ^17.0.2
-  languageName: unknown
-  linkType: soft
-
 "@objectiv/tracker-core@^0.0.6, @objectiv/tracker-core@workspace:core/tracker, @objectiv/tracker-core@~0.0.6":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-core@workspace:core/tracker"
   dependencies:
     "@objectiv/schema": ^0.0.6
-    "@objectiv/testing-tools": 0.0.6
+    "@objectiv/testing-tools": ^0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
     "@types/jest": ^27.0.3
-    es6-error: ^4.1.1
     jest: ^27.4.5
     jest-standard-reporter: ^2.0.0
     mockdate: ^3.0.5
@@ -981,23 +984,27 @@ __metadata:
   resolution: "@objectiv/tracker-react@workspace:trackers/react"
   dependencies:
     "@objectiv/plugin-path-context-from-url": ^0.0.6
+    "@objectiv/plugin-root-location-context-from-url": ^0.0.6
     "@objectiv/queue-local-storage": ^0.0.6
-    "@objectiv/testing-tools": 0.0.6
+    "@objectiv/testing-tools": ^0.0.6
     "@objectiv/tracker-core": ~0.0.6
-    "@objectiv/tracker-core-react": ~0.0.6
     "@objectiv/transport-fetch": ^0.0.6
     "@objectiv/transport-xhr": ^0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
+    "@testing-library/react": ^12.1.2
+    "@testing-library/react-hooks": ^7.0.2
     "@types/jest": ^27.0.3
+    "@types/react": ^17.0.38
     jest: ^27.4.5
     jest-fetch-mock: ^3.0.3
     jest-standard-reporter: ^2.0.0
     jest-useragent-mock: ^0.1.1
     prettier: ^2.5.1
+    react: ^17.0.2
+    react-dom: ^17.0.2
     rollup: ^2.61.1
     rollup-plugin-filesize: ^9.1.1
-    rollup-plugin-peer-deps-external: ^2.2.4
     rollup-plugin-sizes: ^1.0.4
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^2.0.4
@@ -1014,7 +1021,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-debug@workspace:transports/debug"
   dependencies:
-    "@objectiv/testing-tools": 0.0.6
+    "@objectiv/testing-tools": ^0.0.6
     "@objectiv/tracker-core": ~0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
@@ -1037,7 +1044,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-fetch@workspace:transports/fetch"
   dependencies:
-    "@objectiv/testing-tools": 0.0.6
+    "@objectiv/testing-tools": ^0.0.6
     "@objectiv/tracker-core": ~0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
@@ -1061,7 +1068,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-xhr@workspace:transports/xhr"
   dependencies:
-    "@objectiv/testing-tools": 0.0.6
+    "@objectiv/testing-tools": ^0.0.6
     "@objectiv/tracker-core": ~0.0.6
     "@rollup/plugin-commonjs": ^21.0.1
     "@rollup/plugin-node-resolve": ^13.1.1
@@ -2756,13 +2763,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"es6-error@npm:^4.1.1":
-  version: 4.1.1
-  resolution: "es6-error@npm:4.1.1"
-  checksum: ae41332a51ec1323da6bbc5d75b7803ccdeddfae17c41b6166ebbafc8e8beb7a7b80b884b7fab1cc80df485860ac3c59d78605e860bb4f8cd816b3d6ade0d010
-  languageName: node
-  linkType: hard
-
 "esbuild-android-arm64@npm:0.14.8":
   version: 0.14.8
   resolution: "esbuild-android-arm64@npm:0.14.8"
@@ -3114,7 +3114,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-deep-equal@npm:^3.1.1, fast-deep-equal@npm:^3.1.3":
+"fast-deep-equal@npm:^3.1.1":
   version: 3.1.3
   resolution: "fast-deep-equal@npm:3.1.3"
   checksum: e21a9d8d84f53493b6aa15efc9cfd53dd5b714a1f23f67fb5dc8f574af80df889b3bce25dc081887c6d25457cce704e636395333abad896ccdec03abaf1f3f9d
@@ -6006,7 +6006,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pretty-format@npm:^27.0.0, pretty-format@npm:^27.0.2, pretty-format@npm:^27.4.2":
+"pretty-format@npm:^27.0.0, pretty-format@npm:^27.4.2":
   version: 27.4.2
   resolution: "pretty-format@npm:27.4.2"
   dependencies:
@@ -6015,6 +6015,17 @@ __metadata:
     ansi-styles: ^5.0.0
     react-is: ^17.0.1
   checksum: 0daaf00c4dcb35493e57d30147e8045d0c45cb47fc4c94e3ab1892401abe939627c39975c77cc81eb2581aaa5b12bf23ef669fa550bec68b396fb79dd8c10afa
+  languageName: node
+  linkType: hard
+
+"pretty-format@npm:^27.0.2":
+  version: 27.4.6
+  resolution: "pretty-format@npm:27.4.6"
+  dependencies:
+    ansi-regex: ^5.0.1
+    ansi-styles: ^5.0.0
+    react-is: ^17.0.1
+  checksum: 5eda32e4e47ddd1a9e8fe9ebef519b217ba403eb8bcb804ba551dfb37f87e674472013fcf78480ab535844fdddcc706fac94511eba349bfb94a138a02d1a7a59
   languageName: node
   linkType: hard
 
@@ -6141,36 +6152,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-is@npm:^16.12.0 || ^17.0.0, react-is@npm:^17.0.1, react-is@npm:^17.0.2":
+"react-is@npm:^17.0.1":
   version: 17.0.2
   resolution: "react-is@npm:17.0.2"
   checksum: 9d6d111d8990dc98bc5402c1266a808b0459b5d54830bbea24c12d908b536df7883f268a7868cfaedde3dd9d4e0d574db456f84d2e6df9c4526f99bb4b5344d8
-  languageName: node
-  linkType: hard
-
-"react-shallow-renderer@npm:^16.13.1":
-  version: 16.14.1
-  resolution: "react-shallow-renderer@npm:16.14.1"
-  dependencies:
-    object-assign: ^4.1.1
-    react-is: ^16.12.0 || ^17.0.0
-  peerDependencies:
-    react: ^16.0.0 || ^17.0.0
-  checksum: f344c663c48720d19559b4198b1f63ad47a3f11bedc92ede053a6c0706b5209e6110086f3ccc6db04eda9f0d1a415845956ddfb6ce09a922167d4831fcba9314
-  languageName: node
-  linkType: hard
-
-"react-test-renderer@npm:^17.0.2":
-  version: 17.0.2
-  resolution: "react-test-renderer@npm:17.0.2"
-  dependencies:
-    object-assign: ^4.1.1
-    react-is: ^17.0.2
-    react-shallow-renderer: ^16.13.1
-    scheduler: ^0.20.2
-  peerDependencies:
-    react: 17.0.2
-  checksum: e6b5c6ed2a0bde2c34f1ab9523ff9bc4c141a271daf730d6b852374e83acc0155d58ab71a318251e953ebfa65b8bebb9c5dce3eba1ccfcbef7cc4e1e8261c401
   languageName: node
   linkType: hard
 

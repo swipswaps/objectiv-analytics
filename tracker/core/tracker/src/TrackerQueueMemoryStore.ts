@@ -9,6 +9,8 @@ import { TrackerQueueStoreConfig, TrackerQueueStoreInterface } from './TrackerQu
 
 /**
  * An in-memory implementation of a TrackerQueueStore.
+ *
+ * TODO: move this to its own package: MemoryQueueStore
  */
 export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
   readonly console?: TrackerConsole;

@@ -165,12 +165,9 @@ export class Tracker implements Contexts, TrackerConfig {
           // Set the queue processFunction to transport.handle method: the queue will run Transport.handle for each batch
           this.queue.setProcessFunction(processFunction);
 
-          // And start the Queue runner
-          this.queue.startRunner();
-
           if (this.console) {
             this.console.log(
-              `%c｢objectiv:Tracker:${this.trackerId}｣ ${this.queue.queueName} runner for ${this.transport.transportName} started`,
+              `%c｢objectiv:Tracker:${this.trackerId}｣ ${this.queue.queueName} is ready to run ${this.transport.transportName}`,
               'font-weight:bold'
             );
           }

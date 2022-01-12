@@ -3,7 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { TrackerEvent, TransportSendError } from '@objectiv/tracker-core';
+import { makeTransportSendError, TrackerEvent } from '@objectiv/tracker-core';
 import xhrMock from 'xhr-mock';
 import { XHRTransport } from '../src';
 
@@ -70,17 +70,17 @@ describe('XHRTransport', () => {
     try {
       await testTransport.handle(testEvent);
     } catch (error) {
-      expect(error).toStrictEqual(new TransportSendError());
+      expect(error).toStrictEqual(makeTransportSendError());
     }
 
     try {
       await testTransportWithConsole.handle(testEvent);
     } catch (error) {
-      expect(error).toStrictEqual(new TransportSendError());
+      expect(error).toStrictEqual(makeTransportSendError());
     }
 
-    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
-    await expect(testTransportWithConsole.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
+    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(makeTransportSendError());
+    await expect(testTransportWithConsole.handle(testEvent)).rejects.toStrictEqual(makeTransportSendError());
   });
 
   it('should send using `xhr` with the default xhr function - onError example', async () => {
@@ -97,17 +97,17 @@ describe('XHRTransport', () => {
     try {
       await testTransport.handle(testEvent);
     } catch (error) {
-      expect(error).toStrictEqual(new TransportSendError());
+      expect(error).toStrictEqual(makeTransportSendError());
     }
 
     try {
       await testTransportWithConsole.handle(testEvent);
     } catch (error) {
-      expect(error).toStrictEqual(new TransportSendError());
+      expect(error).toStrictEqual(makeTransportSendError());
     }
 
-    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
-    await expect(testTransportWithConsole.handle(testEvent)).rejects.toStrictEqual(new TransportSendError());
+    await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(makeTransportSendError());
+    await expect(testTransportWithConsole.handle(testEvent)).rejects.toStrictEqual(makeTransportSendError());
   });
 
   it('should send using `xhr` with the provided customized xhr function', async () => {
