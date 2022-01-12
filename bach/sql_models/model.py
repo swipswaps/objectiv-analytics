@@ -130,11 +130,6 @@ class SqlModelSpec:
         raise NotImplementedError()
 
     @staticmethod
-    def escape_format_string(value: str) -> str:
-        """ Escape value for python's format() function. i.e. `_escape_value(value).format() == value` """
-        return value.replace('{', '{{').replace('}', '}}')
-
-    @staticmethod
     def properties_to_sql(properties: Mapping[str, Any]) -> Dict[str, str]:
         """
         Child classes can override this function if some of the properties require conversion before being
@@ -145,7 +140,7 @@ class SqlModelSpec:
         """
         # Override for non-default behaviour
         # If we switch to jinja templates, then we won't need this function anymore.
-        return {key: SqlModelSpec.escape_format_string(str(val)) for key, val in properties.items()}
+        return {key: escape_format_string(str(val)) for key, val in properties.items()}
 
     def assert_adheres_to_spec(self,
                                references: Mapping[str, 'SqlModel'],
@@ -670,3 +665,19 @@ class CustomSqlModelBuilder(SqlModelBuilder):
     @property
     def generic_name(self):
         return self._generic_name
+
+
+def escape_format_string(value: str, times=1) -> str:
+    """
+    Escape value for python's format() function. i.e. `escape_format_string(value).format() == value`.
+
+    SqlModels.sql is formatted twice by the sql_generator.py's to_sql() function. Once to replace the
+    placeholder values, and once to replace the references.
+    So any raw sql that is part of a SqlModel.sql and contains either '{' or '}' should be escaped twice.
+    Any values that get inserted by the first call to format (replacing the placeholders), should be escaped
+    once.
+    """
+    value = value.replace('{', '{{').replace('}', '}}')
+    if times == 1:
+        return value
+    return escape_format_string(value, times=times - 1)

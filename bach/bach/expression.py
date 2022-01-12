@@ -3,8 +3,9 @@ Copyright 2021 Objectiv B.V.
 """
 import re
 from dataclasses import dataclass
-from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set, Mapping, Any, Type
-from sql_models.model import SqlModel, SqlModelSpec
+from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set
+
+from sql_models.model import escape_format_string
 from sql_models.util import quote_string, quote_identifier
 
 if TYPE_CHECKING:
@@ -22,6 +23,12 @@ class ExpressionToken:
             raise TypeError("Cannot instantiate ExpressionToken directly. Instantiate a subclass.")
 
     def to_sql(self):
+        """
+        Must be implemented by subclasses. Generated SQL must be assumed to be used as raw sql in
+        SqlModel.sql, therefore unknown/untrusted/etc. values should be properly escaped:
+         * escape_format_string() twice, unless the value is a specific SqlModel placeholder or reference
+         * other escaping/quoting as needed.
+        """
         # Not abstract so we can stay a dataclass.
         raise NotImplementedError()
 
@@ -31,11 +38,7 @@ class RawToken(ExpressionToken):
     raw: str
 
     def to_sql(self) -> str:
-        return SqlModelSpec.escape_format_string(
-            SqlModelSpec.escape_format_string(
-                self.raw
-            )
-        )
+        return escape_format_string(self.raw, times=2)
 
 
 @dataclass(frozen=True)
@@ -97,12 +100,7 @@ class StringValueToken(ExpressionToken):
     value: str
 
     def to_sql(self) -> str:
-        # TODO: add comment
-        return SqlModelSpec.escape_format_string(
-                    SqlModelSpec.escape_format_string(
-                        quote_string(self.value)
-                    )
-                )
+        return escape_format_string(quote_string(self.value), times=2)
 
 
 @dataclass(frozen=True)
@@ -110,11 +108,7 @@ class IdentifierToken(ExpressionToken):
     name: str
 
     def to_sql(self) -> str:
-        return SqlModelSpec.escape_format_string(
-            SqlModelSpec.escape_format_string(
-                quote_identifier(self.name)
-            )
-        )
+        return escape_format_string(quote_identifier(self.name), times=2)
 
 
 class Expression:

@@ -256,7 +256,8 @@ def merge(
     else:
         right_savepoints = right.savepoints
         right_variables = right.variables
-    # TODO: something more sophisticated? Detect problems?
+    # copy right_variables, and then overwrite with left. This means that the left variables 'win' in case
+    # where the same variable name/dtype exist in both left and right
     variables = copy(right_variables)
     variables.update(left.variables)
 
