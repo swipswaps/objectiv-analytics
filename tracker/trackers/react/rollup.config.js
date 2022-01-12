@@ -3,12 +3,12 @@
  */
 
 import commonjs from '@rollup/plugin-commonjs';
-import { nodeResolve } from '@rollup/plugin-node-resolve';
 import filesize from 'rollup-plugin-filesize';
-import peerDepsExternal from 'rollup-plugin-peer-deps-external';
+import pkg from './package.json';
 import sizes from 'rollup-plugin-sizes';
-import { terser } from 'rollup-plugin-terser';
 import ts from 'rollup-plugin-ts';
+import { nodeResolve } from '@rollup/plugin-node-resolve';
+import { terser } from 'rollup-plugin-terser';
 
 export default [
   {
@@ -20,6 +20,7 @@ export default [
         sourcemap: true,
       },
     ],
-    plugins: [nodeResolve({ browser: true }), peerDepsExternal(), commonjs(), ts(), terser(), sizes(), filesize()],
+    plugins: [nodeResolve({ browser: true }), commonjs(), ts(), terser(), sizes(), filesize()],
+    external: [...Object.keys(pkg.dependencies || {}), ...Object.keys(pkg.peerDependencies || {})],
   },
 ];

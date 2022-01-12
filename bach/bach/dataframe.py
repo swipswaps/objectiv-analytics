@@ -1,6 +1,6 @@
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
-    TYPE_CHECKING, Callable
+    TYPE_CHECKING, Callable, Sequence
 from uuid import UUID
 
 import pandas
@@ -1010,14 +1010,20 @@ class DataFrame:
         df._data = new_data
         return None if inplace else df
 
-    def reset_index(self, drop: bool = False, inplace: bool = False) -> Optional['DataFrame']:
+    def reset_index(
+        self,
+        level: Optional[Union[str, Sequence[str]]] = None,
+        drop: bool = False,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
         """
         Drops the current index.
 
         With reset_index, all indexes are removed from the DataFrame, so that the DataFrame does not have any
         index Series. A new index can be set with :py:meth:`set_index`.
 
-        :param drop: if True, the dropped index is added to the data columns of the DataFrame. If False it
+        :param level: Removes given levels from index. Removes all levels by default
+        :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
             is removed.
         :param inplace: update the current DataFrame or return a new DataFrame.
         :returns: DataFrame with the index dropped or None if ``inplace=True``.
@@ -1027,20 +1033,39 @@ class DataFrame:
             # materialize, but raise if inplace is required.
             df = df.materialize(node_name='reset_index', inplace=inplace)
 
+        new_index = {}
         series = df._data if drop else df.all_series
+        if level is not None:
+            series = df._data
+            levels_to_remove = [level] if isinstance(level, str) else level
+
+            for lvl in levels_to_remove:
+                if lvl not in df._index:
+                    raise ValueError(f'\'{lvl}\' level not found in index')
+
+                if not drop:
+                    series[lvl] = df.index[lvl]
+
+            new_index = {idx: series for idx, series in df.index.items() if idx not in levels_to_remove}
+
         df._data = {n: s.copy_override(index={}) for n, s in series.items()}
-        df._index = {}
+        df._index = new_index
         return None if inplace else df
 
-    def set_index(self, keys: Union[str, 'Series', List[Union[str, 'Series']]],
-                  append: bool = False, drop: bool = True, inplace: bool = False) -> Optional['DataFrame']:
+    def set_index(
+        self,
+        keys: Union[str, 'Series', List[Union[str, 'Series']]],
+        drop: bool = True,
+        append: bool = False,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
         """
         Set this dataframe's index to the the index given in keys
 
         :param keys: the keys of the new index. Can be a column name str, a Series, or a list of those. If
             Series are passed, they should have the same base node as the DataFrame they are set on.
-        :param append: whether to append to the existing index or replace.
         :param drop: delete columns to be used as the new index.
+        :param append: whether to append to the existing index or replace.
         :param inplace: update the current DataFrame or return a new DataFrame. This is not always supported
             and will raise if it is not.
         :returns: a DataFrame with the new index or None if ``inplace=True``.

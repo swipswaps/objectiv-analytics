@@ -19,4 +19,14 @@ export type BrowserTrackerConfig = TrackerConfig & {
    * Optional. Whether to track application loaded events automatically. Enabled by default.
    */
   trackApplicationLoadedEvent?: boolean;
+
+  /**
+   * Optional. Whether to automatically create PathContext based on URLs. Enabled by default.
+   */
+  trackPathContextFromURL?: boolean;
+
+  /**
+   * Optional. Whether to automatically create RootLocationContext based on URLs first slugs. Enabled by default.
+   */
+  trackRootLocationContextFromURL?: boolean;
 };
