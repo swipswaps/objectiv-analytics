@@ -44,5 +44,6 @@ describe('TrackedInputContext', () => {
           }),
         ],
       })
-    );  });
+    );
+  });
 });
