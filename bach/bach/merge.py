@@ -3,10 +3,10 @@ Copyright 2021 Objectiv B.V.
 """
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
-from bach.dataframe import DtypeValuePair
+from bach.dataframe import DtypeNamePair
 from bach.expression import Expression, ExpressionAsNameExpression, join_expressions
 from sql_models.model import Materialization, CustomSqlModelBuilder
 from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
@@ -257,7 +257,8 @@ def merge(
         right_savepoints = right.savepoints
         right_variables = right.variables
     # TODO: something more sophisticated? Detect problems?
-    variables = _merge_variables(left.variables, right_variables)
+    variables = copy(right_variables)
+    variables.update(left.variables)
 
     model = _get_merge_sql_model(
         left=left,
@@ -281,28 +282,6 @@ def merge(
     )
 
 
-def _merge_variables(
-        left: Dict[str, 'DtypeValuePair'],
-        right: Dict[str, 'DtypeValuePair']
-) -> Dict[str, 'DtypeValuePair']:
-    """
-
-    """
-    # Check that for variables that are in both left and right the dtypes match
-    for name in left.keys() & right.keys():
-        if left[name].dtype != right[name].dtype:
-            raise ValueError(f'Incompatible variables. Dtype does not match between left and right. '
-                             f'Variable: "{name}", '
-                             f'left dtype: {left[name].dtype}, '
-                             f'right dtype: { right[name].dtype}.')
-    # If a variable is in both left and right, and the types are the same then we don't care if the values
-    # are different, we'll stick with the left value. This might give unexpected behaviour if not anticipated
-    # by the user, but that's the danger of using global variables.
-    result = copy(right)
-    result.update(left)
-    return result
-
-
 def _get_merge_sql_model(
         left: DataFrame,
         right: DataFrameOrSeries,
@@ -310,7 +289,7 @@ def _get_merge_sql_model(
         real_left_on: List[str],
         real_right_on: List[str],
         new_column_list: List[ResultColumn],
-        variables: Dict[str, 'DtypeValuePair']
+        variables: Dict['DtypeNamePair', Hashable]
 ) -> BachSqlModel:
     """
     Give the SqlModel to join left and right and select the new_column_list. This model also uses the
@@ -364,7 +343,7 @@ class MergeSqlModel(BachSqlModel):
                  on_clause: Expression,
                  left_node: BachSqlModel,
                  right_node: BachSqlModel,
-                 variables: Dict[str, DtypeValuePair]):
+                 variables: Dict['DtypeNamePair', Hashable]):
         """
         :param column_names: tuple with the column_names in order
         :param columns_expr: A single expression that expresses projecting all needed columns from either

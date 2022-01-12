@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import typing
 from typing import Dict, TypeVar, Tuple, List, Optional, Mapping, Hashable
 
-from bach.expression import Expression, get_variable_token_names, VariableToken
+from bach.expression import Expression, get_variable_tokens, VariableToken
 from bach.types import value_to_dtype, get_series_type_from_dtype
 from sql_models.util import quote_identifier
 from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelSpec, Materialization
@@ -14,7 +14,7 @@ T = TypeVar('T', bound='SqlModelSpec')
 
 if typing.TYPE_CHECKING:
     # TODO: move this somewhere where we don't need to do this if?
-    from bach.dataframe import DtypeValuePair
+    from bach.dataframe import DtypeNamePair
 
 
 class BachSqlModel(SqlModel[T]):
@@ -105,7 +105,7 @@ class CurrentNodeSqlModel(BachSqlModel):
                  order_by_clause: Optional[Expression],
                  limit_clause: Expression,
                  previous_node: BachSqlModel,
-                 variables: Dict[str, 'DtypeValuePair']):
+                 variables: Dict['DtypeNamePair', Hashable]):
 
         columns_str = ', '.join(expr.to_sql() for expr in column_exprs)
         where_str = where_clause.to_sql() if where_clause else ''
@@ -176,32 +176,36 @@ def _check_reference_conflicts(left: Mapping[str, 'SqlModel'], right: Mapping[st
 
 
 def filter_variables(
-        variable_values: Dict[str, 'DtypeValuePair'],
+        variable_values: Dict['DtypeNamePair', Hashable],
         filter_expressions: List['Expression']
-) -> Dict[str, 'DtypeValuePair']:
+) -> Dict['DtypeNamePair', Hashable]:
     """
     Util function: Return a copy of the variable_values, with only the variables for which there is a
     VariableToken in the filter_expressions.
     """
-    available_tokens = get_variable_token_names(filter_expressions)
-    return {name: dv for name, dv in variable_values.items() if name in available_tokens}
+    available_tokens = get_variable_tokens(filter_expressions)
+    dtype_names = {token.dtype_name for token in available_tokens}
+
+    return {dtype_name: value for dtype_name, value in variable_values.items() if dtype_name in dtype_names}
 
 
-def get_variable_values_sql(variable_values: Dict[str, 'DtypeValuePair']) -> Dict[str, str]:
+def get_variable_values_sql(variable_values: Dict['DtypeNamePair', Hashable]) -> Dict[str, str]:
     """
-    Take a dictionary with variable_values and return a dict with the variable values as sql.
+    Take a dictionary with variable_values and return a dict with the full variable names and the values
+    as sql.
 
     :param variable_values: Mapping of variable to value.
-    :return: Dictionary mapping variable name to sql
+    :return: Dictionary mapping full variable name to sql literal
     """
     result = {}
-    for name, dv in variable_values.items():
-        dtype = value_to_dtype(dv.value)
-        if dtype != dv.dtype:  # should never happen
-            Exception(f'Dtype of value {dv.value} {dtype} does not match registered dtype {dv.dtype}')
+    for dtype_name, value in variable_values.items():
+        dtype, name = dtype_name
+        value_dtype = value_to_dtype(value)
+        if dtype != value_dtype:  # should never happen
+            Exception(f'Dtype of value {value}, {value_dtype} does not match registered dtype {dtype}')
         property_name = VariableToken.dtype_name_to_property_name(dtype=dtype, name=name)
         series_type = get_series_type_from_dtype(dtype)
-        expr = series_type.supported_value_to_literal(dv.value)
+        expr = series_type.supported_value_to_literal(value)
         sql = expr.to_sql()
         result[property_name] = sql
     return result

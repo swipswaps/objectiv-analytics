@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import re
 from dataclasses import dataclass
-from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set, Mapping, Any
+from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set, Mapping, Any, Type
 from sql_models.model import SqlModel, SqlModelSpec
 from sql_models.util import quote_string, quote_identifier
 
@@ -46,12 +46,17 @@ class VariableToken(ExpressionToken):
     def to_sql(self) -> str:
         return '{' + self.dtype_name_to_property_name(self.dtype, self.name) + '}'
 
+    @property
+    def dtype_name(self):
+        from bach.dataframe import DtypeNamePair
+        return DtypeNamePair(dtype=self.dtype, name=self.name)
+
     @classmethod
     def dtype_name_to_property_name(cls, dtype: str, name: str) -> str:
         return f'___bach_variable___{dtype}___{name}'
 
     @classmethod
-    def property_name_to_dtype_name(cls, property_name: str) -> Optional[Tuple[str, str]]:
+    def property_name_to_token(cls, property_name: str) -> Optional['VariableToken']:
         """
         Reverse of dtype_name_to_property_name.
         Will return None if the property_name doesn't match the pattern
@@ -59,7 +64,7 @@ class VariableToken(ExpressionToken):
         match = re.match('^___bach_variable___([a-zA-Z0-9)]+)___(.+)$', property_name)
         if not match:
             return None
-        return match.group(1), match.group(2)
+        return cls(match.group(1), match.group(2))
 
 
 @dataclass(frozen=True)
@@ -389,7 +394,7 @@ def join_expressions(expressions: List[Expression], join_str: str = ', ') -> Exp
     return Expression.construct(fmt, *expressions)
 
 
-def get_variable_token_names(expressions: List['Expression']) -> Set[str]:
+def get_variable_tokens(expressions: List['Expression']) -> Set[VariableToken]:
     """
     Get the names of all VariableTokens in the list of expressions
     """
@@ -397,5 +402,5 @@ def get_variable_token_names(expressions: List['Expression']) -> Set[str]:
     for expression in expressions:
         for token in expression.get_all_tokens():
             if isinstance(token, VariableToken):
-                found_tokens.add(token.name)
+                found_tokens.add(token)
     return found_tokens

@@ -7,9 +7,9 @@ import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression, VariableToken, get_variable_token_names
+from bach.expression import Expression, SingleValueExpression, VariableToken
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
-from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype, value_to_dtype
+from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import update_properties_in_graph, get_all_properties
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
@@ -41,9 +41,17 @@ class SortColumn(NamedTuple):
     asc: bool
 
 
-class DtypeValuePair(NamedTuple):
+class DtypeNamePair(NamedTuple):
     dtype: str  # TODO: make 'dtype' a type instead of using str
-    value: Hashable
+    name: str
+
+
+class DefinedVariable(NamedTuple):
+    name: str
+    dtype: str
+    value: Optional[Hashable]
+    ref_path: Optional[RefPath]
+    old_value: Optional[Hashable]
 
 
 class DataFrame:
@@ -146,7 +154,7 @@ class DataFrame:
             group_by: Optional['GroupBy'],
             order_by: List[SortColumn],
             savepoints: 'Savepoints',
-            variables: Dict[str, 'DtypeValuePair'] = None
+            variables: Dict['DtypeNamePair', Hashable] = None
     ):
         """
         Instantiate a new DataFrame.
@@ -236,7 +244,14 @@ class DataFrame:
         return self._savepoints
 
     @property
-    def variables(self) -> Dict[str, DtypeValuePair]:
+    def variables(self) -> Dict[DtypeNamePair, Hashable]:
+        """
+        Get all variables for which values are set, which will be used when querying the database.
+
+        Note that there might also be variables defined earlier in self.base_node, that already have a value.
+        Those variables values will not be changed, unless they are listed here. To get an overview of all
+        variables on which the values in this DataFrame depend use :meth:`get_all_defined_variables()`
+        """
         return copy(self._variables)
 
     @property
@@ -480,7 +495,7 @@ class DataFrame:
             group_by: Optional['GroupBy'],
             order_by: List[SortColumn],
             savepoints: 'Savepoints',
-            variables: Dict[str, 'DtypeValuePair']
+            variables: Dict['DtypeNamePair', Hashable]
     ) -> 'DataFrame':
         """
         INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
@@ -529,7 +544,7 @@ class DataFrame:
             series: Dict[str, 'Series'] = None,
             group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
             order_by: List[SortColumn] = None,
-            variables: Dict[str, DtypeValuePair] = None,
+            variables: Dict[DtypeNamePair, Hashable] = None,
             index_dtypes: Dict[str, str] = None,
             series_dtypes: Dict[str, str] = None,
             single_value: bool = False,
@@ -1501,6 +1516,7 @@ class DataFrame:
         :param having_clause: The having-clause to apply in case group_by is set, if any
         :returns: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
+        self._assert_all_variables_set()
 
         if isinstance(limit, int):
             limit = slice(0, limit)
@@ -1554,6 +1570,7 @@ class DataFrame:
             column_exprs = [s.get_column_expression() for s in self.all_series.values()]
             column_names = tuple(self.all_series.keys())
 
+        # TODO: update variable in base_node
         return CurrentNodeSqlModel(
             name=name,
             column_names=column_names,
@@ -1570,6 +1587,8 @@ class DataFrame:
     def view_sql(self, limit: Union[int, slice] = None) -> str:
         """
         Translate the current state of this DataFrame into a SQL query.
+
+        This includes setting all variable values that are in self.variables.
 
         :param limit: the limit to apply, either as a max amount of rows or a slice of the data.
         :returns: SQL query
@@ -1950,13 +1969,19 @@ class DataFrame:
     def create_variable(self, name: str, value: Any) -> Tuple['DataFrame', 'Series']:
         """
         Create a Series object that can be used as a variable, within the returned DataFrame. The
-        DataFrame will have the variable with the given values set in :meth:`DataFrame.variables`
+        DataFrame will have the variable with the given values set in :meth:`DataFrame.variables`.
 
         The variable value can later be changed using :meth:`DataFrame.set_variable`
 
+        ## Multiple variables with the same name
+        For variables the combination (name, dtype) uniquely identifies a variable. That means that there
+        can be multiple variables with the same name, if they are of different types. This is counter to
+        how a lot of programming languages handle variables. But it prevents a lot of error conditions and
+        edge cases around merging DataFrames and Series with the same variables, and building on top of
+        SqlModels that already have variables.
+
         :return: Tuple with DataFrame and Series object.
         """
-        # todo: check that name doesn't yet exist in base_node and in self.all_series
         from bach.series.series import variable_series
         series = variable_series(
             base=self,
@@ -1964,38 +1989,44 @@ class DataFrame:
             name=name
         )
         variables = self.variables
-        variables[name] = DtypeValuePair(series.dtype, value)
+        variables[DtypeNamePair(dtype=series.dtype, name=name)] = value
         df = self.copy_override(variables=variables)
         return df, series
 
     def set_variable(self, name: str, value: Any) -> 'DataFrame':
         """
         Return a copy of this DataFrame with the variable value updated.
+
+        Shorthand for create_variable(name, value)[0]
         """
-        variables = self.variables
-        dtype_new = value_to_dtype(value)
+        df, _ = self.create_variable(name, value)
+        return df
 
-        # todo: implement function to get all valid variable values both in self.base_node
-        #  and self.all_series
-        if name in variables:
-            dtype_old = variables[name].dtype
-            if dtype_old != dtype_new:
-                raise ValueError(f'Cannot change dtype of variable. old: {dtype_old} new: {dtype_new}')
-        variables[name] = DtypeValuePair(dtype_new, value)
-        return self.copy_override(variables=variables)
-
-    def get_all_defined_variables(self) \
-            -> List[Tuple[str, str, Optional[Hashable], RefPath, Optional[Hashable]]]:
+    def get_all_variable_usage(self) -> List[DefinedVariable]:
         """
+        Get all variables that influence the values of this DataFrame.
+        This includes both variables that are used in the current `self.series`, but also variables that
+        were used in earlier steps, i.e. in the SqlModels of `self.base_node`.
 
+        The output of this method can be useful for diagnosing issues with variables. If a variable is used
+        multiple times, then it will appear here multiple times. If a variable has conflicting definitions
+        then the conflicting dtypes and/or values are all returned.
+
+        :return: List of DefinedVariable tuples. The fields in each tuple:
+            - name: name of the variable
+            - dtype: dtype
+            - value: value that is currently set in `self.variables`, or None if there is no value
+            - ref_path: If the variable is used in an already materialized part of the DataFrame, i.e.
+                the usage is in self.base_node, then this is the reference path from self.base_node to the
+                SqlModel in which the variable usage occurs. If the variable is used in self.series instead,
+                then this is None
+            - old_value: If the variable is used in an already materialized part of the DataFrame, then it
+                also has a value already. That is this value. Will be None if this variable usage is not in
+                self.base_node.
         """
-        return self.get_all_defined_variables_series() + self.get_all_defined_variables_base_node()
+        return self._get_all_used_variables_series() + self._get_all_used_variables_base_node()
 
-    # TODO: document
-    # TODO: add NamedTuple
-
-    def get_all_defined_variables_series(self) \
-            -> List[Tuple[str, str, Optional[Hashable], RefPath, Optional[Hashable]]]:
+    def _get_all_used_variables_series(self) -> List[DefinedVariable]:
         all_tokens = []
         for series in self.all_series.values():
             all_tokens.extend(series.expression.get_all_tokens())
@@ -2003,24 +2034,40 @@ class DataFrame:
 
         result = []
         for vt in variable_tokens:
-            value = None if vt.name not in self.variables else self.variables[vt.name].value
-            name_type_value = (vt.name, vt.dtype, value, tuple(), None)
-            result.append(name_type_value)
+            dtype_name = DtypeNamePair(dtype=vt.dtype, name=vt.name)
+            value = None if dtype_name not in self.variables else self.variables[dtype_name]
+            result.append(
+                DefinedVariable(name=vt.name, dtype=vt.dtype, value=value, ref_path=None, old_value=None)
+            )
         return result
 
-    def get_all_defined_variables_base_node(self) \
-        -> List[Tuple[str, str, Optional[Hashable], RefPath, Optional[Hashable]]]:
+    def _get_all_used_variables_base_node(self) -> List[DefinedVariable]:
         result = []
         all_properties = get_all_properties(self.base_node)
-        for name, values_dict in all_properties.items():
-            parsed_name = VariableToken.property_name_to_dtype_name(name)
-            if parsed_name:
-                name, dtype = parsed_name
-                for ref_path, old_value in values_dict.items():
-                    value = None if name not in self.variables else self.variables[name].value
-                    name_type_value = (name, dtype, value, ref_path, old_value)
-                    result.append(name_type_value)
+        for property_name, values_dict in all_properties.items():
+            token = VariableToken.property_name_to_token(property_name)
+            if token is None:
+                continue
+            for ref_path, old_value in values_dict.items():
+                dtype_name = token.dtype_name
+                value = None if dtype_name not in self.variables else self.variables[dtype_name]
+                result.append(
+                    DefinedVariable(
+                        name=dtype_name.name, dtype=dtype_name.dtype,
+                        value=value, ref_path=ref_path, old_value=old_value)
+                )
         return result
+
+    def _assert_all_variables_set(self):
+        """
+        Asserts that all variables used in the series are set. Raises an Exception if a variable is not set.
+        """
+        used_variables = self._get_all_used_variables_series()
+        for var in used_variables:
+            dtype_name = DtypeNamePair(dtype=var.dtype, name=var.name)
+            if dtype_name not in self.variables:
+                raise Exception(f'Variable {dtype_name.name}, with dtype {dtype_name.dtype} is used, '
+                                f'but not set. Use create_variable() to assign a value')
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
