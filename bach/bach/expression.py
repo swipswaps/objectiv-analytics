@@ -192,6 +192,17 @@ class Expression:
         return cls(data=data)
 
     @classmethod
+    def construct_expr_as_name(cls, expr: 'Expression', name: str) -> 'Expression':
+        """
+        Construct an expression that represents the sql: {expr} as "name"
+        """
+        ident_expr = Expression.identifier(name)
+        if expr.to_sql() == ident_expr.to_sql():
+            # this is to prevent generating sql of the form `x as x`, we'll just return `x` in that case
+            return expr
+        return cls.construct('{} as {}', expr, ident_expr)
+
+    @classmethod
     def raw(cls, raw: str) -> 'Expression':
         """ Return an expression that contains a single RawToken. """
         return cls([RawToken(raw)])
@@ -312,17 +323,6 @@ class Expression:
         :return SQL representation of the expression.
         """
         return ''.join([d.to_sql() for d in self.resolve_column_references(table_name).data])
-
-
-class ExpressionAsNameExpression(Expression):
-
-    @classmethod
-    def construct_specific(cls, expr: Expression, name: str) -> 'Expression':
-        ident_expr = Expression.identifier(name)
-        if expr.to_sql() == ident_expr.to_sql():
-            # this is to prevent generating sql of the form `x as x`, we'll just return `x` in that case
-            return expr
-        return cls.construct('{} as {}', expr, ident_expr)
 
 
 class NonAtomicExpression(Expression):

@@ -7,7 +7,7 @@ from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeNamePair
-from bach.expression import Expression, ExpressionAsNameExpression, join_expressions
+from bach.expression import Expression, join_expressions
 from sql_models.model import Materialization, CustomSqlModelBuilder
 from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
 
@@ -309,7 +309,7 @@ def _get_merge_sql_model(
         on_clause = Expression.construct('')
 
     columns_expr = join_expressions(
-        [ExpressionAsNameExpression.construct_specific(rc.expression, rc.name) for rc in new_column_list]
+        [Expression.construct_expr_as_name(rc.expression, rc.name) for rc in new_column_list]
     )
     join_type_expr = Expression.construct('full outer' if how == How.outer else how.value)
 
