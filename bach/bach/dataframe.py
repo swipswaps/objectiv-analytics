@@ -1003,7 +1003,7 @@ class DataFrame:
 
         new_index = {}
         series = df._data if drop else df.all_series
-        if level:
+        if level is not None:
             series = df._data
             levels_to_remove = [level] if isinstance(level, str) else level
 

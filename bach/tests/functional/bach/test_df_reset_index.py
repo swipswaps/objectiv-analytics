@@ -53,6 +53,13 @@ def test_reset_index_to_empty():
         bt_cp.reset_index(level=['city', invalid_level])
 
 
+def test_reset_index_no_change():
+    bt = get_bt_with_test_data()
+    bt = bt.set_index(['skating_order', 'city'], append=True)
+    lbt = bt.reset_index(level=[])
+    assert list(lbt.index.keys()) == list(bt.index.keys())
+
+
 def test_set_index():
     bt = get_bt_with_test_data()[['municipality', 'city', 'inhabitants']]
     assert list(bt.index.keys()) == ['_index_skating_order']
