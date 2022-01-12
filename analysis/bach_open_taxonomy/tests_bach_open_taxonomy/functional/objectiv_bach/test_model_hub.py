@@ -65,7 +65,7 @@ def test_objectiv_frame_unique_sessions():
 
 def test_objectiv_frame_filters():
     df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
-    is_first_session = df.mh.filter.is_first_session()
+    is_first_session = df.mh.map.is_first_session()
 
     assert_equals_data(
         is_first_session,
@@ -101,7 +101,7 @@ def test_objectiv_conversion_events():
     df.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
                             event_type='ClickEvent',
                             name='github_clicks')
-    conversion_event = df.mh.f.conversion('github_clicks')
+    conversion_event = df.mh.map.is_conversion('github_clicks')
 
     assert_equals_data(
         conversion_event,
