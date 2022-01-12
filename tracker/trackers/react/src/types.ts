@@ -4,7 +4,7 @@
 
 import { AbstractLocationContext } from '@objectiv/schema';
 import { GlobalContexts, Tracker, TrackEventOptions } from '@objectiv/tracker-core';
-import { useEffect } from 'react';
+import { AllHTMLAttributes, ComponentType, ReactHTML, useEffect } from 'react';
 
 /**
  * A uniquely identifiable LocationContext
@@ -72,3 +72,68 @@ export type EventTrackerParameters = TrackEventParameters & {
  * Hooks will be automatically invoked to retrieve a Tracker instance and LocationStack.
  */
 export type EventTrackerHookParameters = Partial<EventTrackerParameters>;
+
+/**
+ * Generic enriching the given type with a `Component` property that can be either a React Component or a JSX element.
+ */
+export type WithComponentProp<T> = T & { Component: ComponentType<T> | keyof ReactHTML };
+
+/**
+ * The props of all HTMLElement TrackedContexts.
+ */
+export type TrackedContextProps<T = HTMLElement> = WithComponentProp<AllHTMLAttributes<T>> & {
+  /**
+   * The unique id of the LocationContext
+   */
+  id: string;
+
+  /**
+   * Whether to forward the given id to the given Component
+   */
+  forwardId?: boolean;
+};
+
+/**
+ * The props of Contexts supporting Visibility events. Extends TrackedContextProps with then `isVisible` property.
+ */
+export type TrackedShowableContextProps = TrackedContextProps & {
+  /**
+   * Whether to track visibility events automatically when this prop changes state.
+   */
+  isVisible?: boolean;
+};
+
+/**
+ * The props of TrackedPressableContext. Extends TrackedContextProps with then `isVisible` property.
+ */
+export type TrackedPressableContextProps = Omit<TrackedContextProps, 'id'> & {
+  /**
+   * The unique id of the LocationContext. Optional because we will attempt to auto-detect it.
+   */
+  id?: string;
+
+  /**
+   * The title is used to generate a unique identifier. Optional because we will attempt to auto-detect it.
+   */
+  title?: string;
+
+  /**
+   * Whether to forward the given title to the given Component.
+   */
+  forwardTitle?: boolean;
+
+  /**
+   * Whether to block and wait for the Tracker having sent the event. Eg: a button redirecting to a new location.
+   */
+  waitUntilTracked?: boolean;
+};
+
+/**
+ * Overrides TrackedContextProps to not require an id, assuming that semantically there should be only one Element
+ */
+export type SingletonTrackedElementProps = Omit<TrackedContextProps, 'Component' | 'id'> & {
+  /**
+   * Optional identifier to be provided only in case of uniqueness collisions, defaults to 'footer'
+   */
+  id?: string;
+};

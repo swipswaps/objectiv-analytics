@@ -3,6 +3,7 @@
  */
 
 export * from './ConfigurableMockTransport';
+export * from './expectToThrow';
 export * from './localStorageMock';
 export * from './LogTransport';
 export * from './matchUUID';
