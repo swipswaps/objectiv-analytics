@@ -116,10 +116,10 @@ describe('TrackedLinkContext', () => {
     render(
       <ObjectivProvider tracker={tracker}>
         <TrackedLinkContext Component={'a'} href={'/some-url'} data-testid={'test-link-1'}>
-          test
+          test 1
         </TrackedLinkContext>
         <TrackedLinkContext Component={'a'} href={'/some-url'} forwardHref={true} data-testid={'test-link-2'}>
-          test
+          test 2
         </TrackedLinkContext>
       </ObjectivProvider>
     );

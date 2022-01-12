@@ -5,12 +5,12 @@
 import { Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import { LocationContextWrapper, makeContentContext, ObjectivProvider, useParentLocationContext } from '../src/';
+import { ContentContextWrapper, ObjectivProvider, useParentLocationContext } from '../src/';
 
 describe('useParentLocationContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'debug').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -20,28 +20,25 @@ describe('useParentLocationContext', () => {
   it('should return the parent location context', () => {
     const tracker = new Tracker({ applicationId: 'app-id' });
 
-    const parentContext1 = makeContentContext({ id: 'parent-1' });
-    const parentContext2 = makeContentContext({ id: 'parent-2' });
-
     const TestChild = () => {
       const parentLocationContext = useParentLocationContext();
 
-      console.log(parentLocationContext);
+      console.debug(parentLocationContext);
 
       return <div>test child</div>;
     };
 
     render(
       <ObjectivProvider tracker={tracker}>
-        <LocationContextWrapper locationContext={parentContext1}>
-          <LocationContextWrapper locationContext={parentContext2}>
+        <ContentContextWrapper id={'parent-1'}>
+          <ContentContextWrapper id={'parent-2'}>
             <TestChild />
-          </LocationContextWrapper>
-        </LocationContextWrapper>
+          </ContentContextWrapper>
+        </ContentContextWrapper>
       </ObjectivProvider>
     );
 
-    expect(console.log).toHaveBeenCalledTimes(1);
-    expect(console.log).toHaveBeenNthCalledWith(1, expect.objectContaining(parentContext2));
+    expect(console.debug).toHaveBeenCalledTimes(1);
+    expect(console.debug).toHaveBeenNthCalledWith(1, expect.objectContaining({ id: 'parent-2' }));
   });
 });

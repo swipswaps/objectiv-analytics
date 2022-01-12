@@ -4,9 +4,14 @@
 
 import { AbstractLocationContext } from '@objectiv/schema';
 import React, { ReactNode } from 'react';
+import { LocationTree } from '../common/LocationTree';
 import { LocationProvider } from '../common/providers/LocationProvider';
 import { TrackingContext } from '../common/providers/TrackingContext';
+import { useParentLocationContext } from '../hooks/consumers/useParentLocationContext';
 import { useTracker } from '../hooks/consumers/useTracker';
+import { useOnChange } from '../hooks/useOnChange';
+import { useOnMount } from '../hooks/useOnMount';
+import { useOnUnmount } from '../hooks/useOnUnmount';
 import { LocationContext } from '../types';
 
 /**
@@ -30,9 +35,20 @@ export type LocationContextWrapperProps = {
  */
 export const LocationContextWrapper = ({ children, locationContext }: LocationContextWrapperProps) => {
   const tracker = useTracker();
+  const parentLocationContext = useParentLocationContext();
 
-  // TODO: Add new LocationEntry to LocationTree as well (LocationTree is not ready for production yet)
-  //LocationTree.add(locationContext, useParentLocationContext());
+  useOnMount(() => {
+    LocationTree.add(locationContext, parentLocationContext);
+  });
+
+  useOnUnmount(() => {
+    LocationTree.remove(locationContext);
+  });
+
+  useOnChange<LocationContext<AbstractLocationContext>>(locationContext, (previousLocationContext) => {
+    LocationTree.remove(previousLocationContext);
+    LocationTree.add(locationContext, parentLocationContext);
+  });
 
   return (
     <LocationProvider locationStack={[locationContext]}>
