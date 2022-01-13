@@ -74,7 +74,7 @@ class DataFrame:
 
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
     DataFrame is possible if they share the same base node or index dtype. DataFrames and Series share the
-    same base node if that they originate from the same data source. In most cases this means that the series
+    same base node if they originate from the same data source. In most cases this means that the series
     that is to be set to the DataFrame is a result of operations on the DataFrame that is started with.
     If a Series or DataFrame do not share the same base node, the new column is or columns are set using a
     merge on the index. This works for one level indexes where the dtype of the series is the same as the
@@ -857,11 +857,11 @@ class DataFrame:
                         name=key, index=self._index, group_by=[self._group_by])
                 else:
                     if value.group_by != self._group_by:
-                        if value.group_by and not value._expression.has_aggregate_function:
+                        if value.group_by and not value.expression.has_aggregate_function:
                             raise ValueError('Setting a grouped Series to a DataFrame is only supported if '
                                              'the Series is aggregated.')
                         if self.group_by and \
-                                not self._data[self.data_columns[0]]._expression.has_aggregate_function:
+                                not all(_s.expression.has_aggregate_function for _s in self.data.values()):
                             raise ValueError('Setting new columns to grouped DataFrame is only supported if '
                                              'the DataFrame has aggregated columns.')
                     elif value.base_node != self.base_node:
