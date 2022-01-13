@@ -15,7 +15,7 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel
 from sql_models.util import quote_identifier
-from bach.types import value_to_dtype
+from bach.types import value_to_dtype, is_supported_db_dtype
 from sql_models.model import SqlModel
 
 if TYPE_CHECKING:
@@ -882,12 +882,15 @@ class Series(ABC):
             raise ValueError(f'group_by {type(group_by)} not supported')
         return group_by
 
-    def _derived_agg_func(self,
-                          partition: Optional[WrappedPartition],
-                          expression: Union[str, Expression],
-                          dtype: str = None,
-                          skipna: bool = True,
-                          min_count: int = None) -> 'Series':
+    def _derived_agg_func(
+        self,
+        partition: Optional[WrappedPartition],
+        expression: Union[str, Expression],
+        dtype: str = None,
+        cast_db_type: bool = False,
+        skipna: bool = True,
+        min_count: int = None,
+    ) -> 'Series':
         """
         Create a derived Series that aggregates underlying Series through the given expression.
         If no partition to aggregate on is given, and the Series does not have one set,
@@ -919,8 +922,12 @@ class Series(ABC):
                              f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
 
+        derived_dtype = self.dtype if dtype is None else dtype
         if isinstance(expression, str):
-            expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
+            base_expression = f'{expression}({{}})'
+            if cast_db_type and is_supported_db_dtype(derived_dtype):
+                base_expression = f'cast({base_expression} as {derived_dtype})'
+            expression = AggregateFunctionExpression.construct(base_expression, self)
 
         partition = self._check_unwrap_groupby(partition)
 
@@ -936,8 +943,6 @@ class Series(ABC):
                     f'CASE WHEN {{}} >= {min_count} THEN {{}} ELSE NULL END',
                     self.count(partition, skipna=skipna), expression
                 )
-
-        derived_dtype = self.dtype if dtype is None else dtype
 
         if not isinstance(partition, Window):
             if self._group_by and self._group_by != partition:

@@ -26,6 +26,7 @@ def test_df_categorical_describe() -> None:
         percentiles=None,
     )
     result = df_describer.describe()
+    print(result)
 
 
 def test_df_numerical_describe() -> None:

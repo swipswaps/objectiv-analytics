@@ -4,19 +4,24 @@ from enum import Enum
 from typing import Optional, Union, Sequence, List
 
 from bach import DataFrameOrSeries, DataFrame, Series, SeriesString, SeriesAbstractNumeric
-from bach.expression import Expression
-from bach.sql_model import BachSqlModelBuilder, BachSqlModel
-from sql_models.util import quote_identifier
+from bach.sql_model import BachSqlModelBuilder
 
 
 def describe_frame(
-        frame: DataFrameOrSeries,
-        include: Optional[Union[str, Sequence[str]]],
-        exclude: Optional[Union[str, Sequence[str]]],
-        datetime_is_numeric: bool,
-        percentiles: Optional[Sequence[float]],
+    frame: DataFrameOrSeries,
+    include: Optional[Union[str, Sequence[str]]],
+    exclude: Optional[Union[str, Sequence[str]]],
+    datetime_is_numeric: bool,
+    percentiles: Optional[Sequence[float]],
 ) -> DataFrameOrSeries:
-    ...
+    describer = DataFrameDescriber(
+        df=frame.to_frame() if isinstance(frame, Series) else frame,
+        include=include,
+        exclude=exclude,
+        datetime_is_numeric=datetime_is_numeric,
+        percentiles=percentiles,
+    )
+    return describer.describe()
 
 
 class SupportedStats(Enum):
@@ -39,61 +44,48 @@ class SupportedStats(Enum):
 
 
 _SUPPORTED_STATS_X_STMT = {
-    SupportedStats.COUNT: 'count({col})',
-    SupportedStats.MEAN: 'cast(avg({col}) as double precision)',
-    SupportedStats.STD: 'cast(stddev({col}) as double precision)',
-    SupportedStats.MIN: 'min({col})',
-    SupportedStats.MAX: 'max({col})',
-    SupportedStats.UNIQUE: 'count( distinct {col})',
-    SupportedStats.TOP: 'top({col})',
-    SupportedStats.FREQ: 'freq({col})',
+    SupportedStats.COUNT: DataFrame.count,
+    SupportedStats.MEAN: DataFrame.mean,
+    SupportedStats.STD: DataFrame.std,
+    SupportedStats.MIN: DataFrame.min,
+    SupportedStats.MAX: DataFrame.max,
+    SupportedStats.UNIQUE: DataFrame.nunique,
 }
 
 
 @dataclass
-class FrameDescriber:
-    datetime_is_numeric: bool
-    percentiles: Optional[Sequence[float]]
-
-    def describe(self) -> DataFrameOrSeries:
-        raise NotImplemented('describe method is not implemented.')
-
-    def _get_stats_model(
-        self,
-        all_select_stat_expressions: List[Expression],
-        described_columns: List[str],
-        base_node: BachSqlModel,
-    ) -> BachSqlModel[BachSqlModelBuilder]:
-        formatted_queries = []
-        col_expressions = {}
-
-        for idx, expr in enumerate(all_select_stat_expressions):
-            formatted_queries.append(f'select {{columns_{idx}}} from {{{{base_node}}}}')
-            col_expressions[f'columns_{idx}'] = expr
-
-        final_query = ' union '.join(formatted_queries)
-
-        model_builder = BachSqlModelBuilder(
-            name='stats_sql',
-            sql=final_query,
-            columns=('stats', *described_columns),
-        )
-        return model_builder(**col_expressions, base_node=base_node)
-
-    def _format_stat_stmt(self, stat: SupportedStats, column_name: str) -> str:
-        return _SUPPORTED_STATS_X_STMT[stat].format(col=quote_identifier(column_name))
-
-
-@dataclass
-class DataFrameDescriber(FrameDescriber):
+class DataFrameDescriber:
     df: DataFrame
     include: Optional[Union[str, Sequence[str]]]
     exclude: Optional[Union[str, Sequence[str]]]
+    datetime_is_numeric: bool
+    percentiles: Optional[Sequence[float]]
 
+    STAT_COLUMN_NAME = 'stat'
     main_stat: SupportedStats = SupportedStats.NUMERICAL
 
     def __post_init__(self) -> None:
+        self._process_params()
+
+    def describe(self) -> DataFrameOrSeries:
+        described_columns = []
+        for name, series in self.df.data.items():
+            if (
+                (isinstance(series, SeriesString) and self.main_stat == SupportedStats.CATEGORICAL)
+                or (isinstance(series, SeriesAbstractNumeric) and self.main_stat == SupportedStats.NUMERICAL)
+            ):
+                described_columns.append(name)
+
+        return self._get_stats(described_columns)
+
+    def _process_params(self) -> None:
+        if self.percentiles and any(pt < 0 or pt > 1 for pt in self.percentiles):
+            raise ValueError('percentiles should be between 0 and 1.')
+        elif not self.percentiles:
+            self.percentiles = [0.25, 0.5, 0.75]
+
         dtypes_series = defaultdict(set)
+
         for series in self.df.data.values():
             if isinstance(series, SeriesString):
                 dtypes_series[SupportedStats.CATEGORICAL].add(series.name)
@@ -101,62 +93,44 @@ class DataFrameDescriber(FrameDescriber):
             if isinstance(series, SeriesAbstractNumeric):
                 dtypes_series[SupportedStats.NUMERICAL].add(series.name)
 
-        include = set()
-        exclude = set()
-        if len(dtypes_series[SupportedStats.CATEGORICAL]) == len(self.df.data):
+        if (
+            len(dtypes_series[SupportedStats.CATEGORICAL]) == len(self.df.data)
+            or not dtypes_series[SupportedStats.NUMERICAL]
+        ):
             self.main_stat = SupportedStats.CATEGORICAL
-            include = dtypes_series[SupportedStats.CATEGORICAL]
-            exclude = dtypes_series[SupportedStats.NUMERICAL]
-
         elif dtypes_series[SupportedStats.NUMERICAL]:
             self.main_stat = SupportedStats.NUMERICAL
-            include = dtypes_series[SupportedStats.NUMERICAL]
-            exclude = dtypes_series[SupportedStats.CATEGORICAL]
 
-        self.include = list(include | (set(self.include) if self.include else set()))
-        self.exclude = list(exclude | set(self.exclude) if self.exclude else set())
+    def _get_stats(self, columns_to_describe: List[str]) -> DataFrame:
+        final_df: Optional[DataFrame] = None
+        for pos, stat in enumerate(self.main_stat.value):
+            stat_df = self.df.copy_override()[columns_to_describe]
+            stat_df = _SUPPORTED_STATS_X_STMT[SupportedStats(stat)](stat_df)
+            stat_df = stat_df.materialize()
+            stat_df = stat_df.rename(
+                columns=dict(zip(stat_df.data.keys(), columns_to_describe)),  # original column names should remain
+            )
+            stat_df[self.STAT_COLUMN_NAME] = stat
+            stat_df[f'{self.STAT_COLUMN_NAME}_position'] = pos
+            final_df = stat_df if not final_df else self._append_stats(final_df, stat_df)
 
-        self._validate_params()
+        final_df = final_df.sort_values(by=f'{self.STAT_COLUMN_NAME}_position')
+        final_df = final_df[[self.STAT_COLUMN_NAME] + columns_to_describe]
+        return final_df.set_index(self.STAT_COLUMN_NAME)[columns_to_describe]
 
-    def describe(self) -> DataFrameOrSeries:
-        described_columns = [
-            series_name
-            for series_name in self.df.data
-            if series_name in self.include and series_name not in self.exclude
-        ]
-        all_select_stat_expressions = self._get_stat_expressions(described_columns)
-
-        model = self._get_stats_model(
-            all_select_stat_expressions,
-            described_columns,
-            self.df.base_node,
+    def _append_stats(self, stats_1_df: DataFrame, stats_2_df: DataFrame) -> DataFrame:
+        # TODO: Implement DataFrame.append
+        df1 = stats_1_df.materialize(node_name='main_stats')
+        df2 = stats_2_df.materialize(node_name='stats_to_append')
+        sql = '''
+            select * from {{main_stats}}
+            union
+            select * from {{stats_to_append}}
+        '''
+        model_builder = BachSqlModelBuilder(
+            name='stats_sql',
+            sql=sql,
+            columns=tuple(stats_1_df.data.keys()),
         )
-        return DataFrame.from_model(
-            engine=self.df.engine,
-            model=model,
-            index=['stat'],
-        )
-
-    def _validate_params(self) -> None:
-        ...
-
-    def _get_stat_expressions(self, columns_to_describe: List[str]) -> List[Expression]:
-        all_select_stat_stmts = []
-        for stat in self.main_stat.value:
-            select_stat_stmts = [f"'{stat}' as {quote_identifier('stat')}"]
-            for label in columns_to_describe:
-                series = self.df[label]
-                stat_function = self._format_stat_stmt(SupportedStats(stat), series.name)
-                select_stat_stmts.append(f'{stat_function} as {quote_identifier(series.name)}')
-
-            all_select_stat_stmts.append(Expression.construct(fmt=','.join(select_stat_stmts)))
-
-        return all_select_stat_stmts
-
-
-@dataclass
-class SeriesDescriber(FrameDescriber):
-    series: Series
-
-    def describe(self) -> DataFrameOrSeries:
-        ...
+        model = model_builder(main_stats=df1.base_node, stats_to_append=df2.base_node)
+        return DataFrame.from_model(engine=self.df.engine, model=model, index=[])
