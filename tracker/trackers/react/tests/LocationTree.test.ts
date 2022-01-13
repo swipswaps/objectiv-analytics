@@ -31,6 +31,17 @@ describe('LocationTree', () => {
     expect(console.log).not.toHaveBeenCalled();
   });
 
+  it('should console.error multiple roots', () => {
+    const root1 = makeContentContext({ id: 'root1' });
+    const root2 = makeContentContext({ id: 'root2' });
+
+    LocationTree.add(root1, null);
+    LocationTree.add(root2, null);
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith(`｢objectiv｣ Multiple root locations detected: ${root2.id}`);
+  });
+
   it('should add nodes', () => {
     const root = makeRootLocationContext({ id: 'root' });
     const nav = makeNavigationContext({ id: 'nav' });
@@ -193,24 +204,17 @@ describe('LocationTree', () => {
     const section1 = makeContentContext({ id: '1' });
     const section2 = makeContentContext({ id: 'oops' });
     const section3 = makeContentContext({ id: 'oops' });
-    const section4 = makeContentContext({ id: 'oops' });
-    const anotherRoot = makeContentContext({ id: 'root' });
-    const section5 = makeContentContext({ id: 'oops' });
 
     LocationTree.add(rootSection, null);
     LocationTree.add(section1, rootSection);
     LocationTree.add(section2, rootSection);
     LocationTree.add(section3, rootSection);
-    LocationTree.add(section4, rootSection);
-    LocationTree.add(anotherRoot, null);
-    LocationTree.add(section5, anotherRoot);
 
-    expect(console.error).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenNthCalledWith(
       1,
       '｢objectiv｣ Location collision detected: Content:root / Content:oops'
     );
-    expect(console.error).toHaveBeenNthCalledWith(2, '｢objectiv｣ Location collision detected: Content:root');
   });
 
   it('should log the Location tree', () => {
@@ -231,7 +235,7 @@ describe('LocationTree', () => {
     LocationTree.add(section2b, section2);
     LocationTree.add(section3, rootSection);
     LocationTree.add(section3a, section3);
-    LocationTree.add(footer, null);
+    LocationTree.add(footer, rootSection);
     LocationTree.add(section4, footer);
 
     jest.spyOn(console, 'log').mockImplementation(() => {});
@@ -246,7 +250,7 @@ describe('LocationTree', () => {
     expect(console.log).toHaveBeenNthCalledWith(5, '    ContentContext:2b');
     expect(console.log).toHaveBeenNthCalledWith(6, '  ContentContext:3');
     expect(console.log).toHaveBeenNthCalledWith(7, '    ContentContext:3a');
-    expect(console.log).toHaveBeenNthCalledWith(8, 'ContentContext:footer');
-    expect(console.log).toHaveBeenNthCalledWith(9, '  ContentContext:4');
+    expect(console.log).toHaveBeenNthCalledWith(8, '  ContentContext:footer');
+    expect(console.log).toHaveBeenNthCalledWith(9, '    ContentContext:4');
   });
 });

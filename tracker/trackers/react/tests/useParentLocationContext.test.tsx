@@ -10,7 +10,7 @@ import { ContentContextWrapper, ObjectivProvider, useParentLocationContext } fro
 describe('useParentLocationContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    jest.spyOn(console, 'debug').mockImplementation(() => {});
+    jest.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -23,7 +23,7 @@ describe('useParentLocationContext', () => {
     const TestChild = () => {
       const parentLocationContext = useParentLocationContext();
 
-      console.debug(parentLocationContext);
+      console.log(parentLocationContext);
 
       return <div>test child</div>;
     };
@@ -38,7 +38,7 @@ describe('useParentLocationContext', () => {
       </ObjectivProvider>
     );
 
-    expect(console.debug).toHaveBeenCalledTimes(1);
-    expect(console.debug).toHaveBeenNthCalledWith(1, expect.objectContaining({ id: 'parent-2' }));
+    expect(console.log).toHaveBeenCalledTimes(1);
+    expect(console.log).toHaveBeenNthCalledWith(1, expect.objectContaining({ id: 'parent-2' }));
   });
 });

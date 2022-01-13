@@ -3,10 +3,9 @@
  */
 
 import { SpyTransport } from '@objectiv/testing-tools';
-import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/react';
 import React, { createRef } from 'react';
-import { LocationTree, ObjectivProvider, TrackedPressableContext } from '../src';
+import { LocationTree, ObjectivProvider, ReactTracker, TrackedPressableContext } from '../src';
 
 describe('TrackedPressableContext', () => {
   beforeEach(() => {
@@ -22,7 +21,7 @@ describe('TrackedPressableContext', () => {
   it('should wrap the given Component in a PressableContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -45,18 +44,18 @@ describe('TrackedPressableContext', () => {
       2,
       expect.objectContaining({
         _type: 'PressEvent',
-        location_stack: [
+        location_stack: expect.arrayContaining([
           expect.objectContaining({
             _type: 'PressableContext',
             id: 'pressable-id',
           }),
-        ],
+        ]),
       })
     );
   });
 
   it('should allow forwarding the id property', () => {
-    const tracker = new Tracker({ applicationId: 'app-id' });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
 
     render(
       <ObjectivProvider tracker={tracker}>
@@ -79,7 +78,7 @@ describe('TrackedPressableContext', () => {
   });
 
   it('should allow forwarding the title property', () => {
-    const tracker = new Tracker({ applicationId: 'app-id' });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
 
     render(
       <ObjectivProvider tracker={tracker}>
@@ -108,7 +107,7 @@ describe('TrackedPressableContext', () => {
   });
 
   it('should allow forwarding refs', () => {
-    const tracker = new Tracker({ applicationId: 'app-id' });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
     const ref = createRef<HTMLDivElement>();
 
     render(
@@ -128,7 +127,7 @@ describe('TrackedPressableContext', () => {
 
   it('should execute the given onClick as well', async () => {
     const clickSpy = jest.fn();
-    const tracker = new Tracker({ applicationId: 'app-id' });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -149,7 +148,7 @@ describe('TrackedPressableContext', () => {
     const spyTransport = new SpyTransport();
     const handleMock = jest.fn(async () => new Promise((resolve) => setTimeout(resolve, 10000)));
     jest.spyOn(spyTransport, 'handle').mockImplementation(handleMock);
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -175,7 +174,7 @@ describe('TrackedPressableContext', () => {
     jest
       .spyOn(spyTransport, 'handle')
       .mockImplementation(async () => new Promise((resolve) => setTimeout(resolve, 100)));
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -196,12 +195,12 @@ describe('TrackedPressableContext', () => {
       1,
       expect.objectContaining({
         _type: 'PressEvent',
-        location_stack: [
+        location_stack: expect.arrayContaining([
           expect.objectContaining({
             _type: 'PressableContext',
             id: 'press-me',
           }),
-        ],
+        ]),
       })
     );
   });

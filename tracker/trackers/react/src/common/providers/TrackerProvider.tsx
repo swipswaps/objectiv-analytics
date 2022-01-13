@@ -3,6 +3,7 @@
  */
 
 import React, { ReactNode } from 'react';
+import { LocationTree } from '../LocationTree';
 import { TrackerProviderContext } from './TrackerProviderContext';
 
 /**
@@ -24,8 +25,12 @@ export type TrackerProviderProps = TrackerProviderContext & {
  * @see LocationStackProvider
  * @see ObjectivProvider
  */
-export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => (
-  <TrackerProviderContext.Provider value={{ tracker }}>
-    {typeof children === 'function' ? children({ tracker }) : children}
-  </TrackerProviderContext.Provider>
-);
+export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => {
+  LocationTree.initialize(tracker);
+
+  return (
+    <TrackerProviderContext.Provider value={{ tracker }}>
+      {typeof children === 'function' ? children({ tracker }) : children}
+    </TrackerProviderContext.Provider>
+  );
+};
