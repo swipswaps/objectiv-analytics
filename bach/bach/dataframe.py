@@ -654,6 +654,20 @@ class DataFrame:
     def __copy__(self):
         return self.copy()
 
+    def _update_self_from_df(self, df: 'DataFrame') -> 'DataFrame':
+        """
+        INTERNAL: Modify self by copying all properties of 'df' to self. Returns self.
+        """
+        self._engine = df.engine
+        self._base_node = df.base_node
+        self._index = df.index
+        self._data = df.data
+        self._group_by = df.group_by
+        self._order_by = df.order_by
+        self._savepoints = df.savepoints
+        self._variables = df.variables
+        return self
+
     def materialize(self, node_name='manual_materialize', inplace=False, limit: Any = None) -> 'DataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
@@ -692,14 +706,7 @@ class DataFrame:
 
         if not inplace:
             return df
-        self._engine = df.engine
-        self._base_node = df.base_node
-        self._index = df.index
-        self._data = df.data
-        self._group_by = df.group_by
-        self._order_by = df.order_by
-        self._variables = df.variables
-        return self
+        return self._update_self_from_df(df)
 
     def set_savepoint(self, name: str, materialization: Union[Materialization, str] = Materialization.CTE):
         """
@@ -967,13 +974,7 @@ class DataFrame:
             df.drop(columns=[key + '__remove'], inplace=True)
         df.drop(columns=[value_index_name + '__index'], inplace=True, errors='ignore')
 
-        self._engine = df.engine
-        self._base_node = df.base_node
-        self._index = df.index
-        self._data = df.data
-        self._group_by = df.group_by
-        self._order_by = df.order_by
-        self._savepoints = df.savepoints
+        self._update_self_from_df(df)
 
     def rename(self, mapper: Union[Dict[str, str], Callable[[str], str]] = None,
                index: Union[Dict[str, str], Callable[[str], str]] = None,
