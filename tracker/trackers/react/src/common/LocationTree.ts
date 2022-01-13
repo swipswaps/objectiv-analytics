@@ -162,6 +162,8 @@ export const LocationTree = {
 
     if (locationPathsSize === locationPaths.size) {
       LocationTree.error(locationId, `Location collision detected: ${locationPath}`);
+      // No point in continuing to validate this node children, exit early
+      return;
     }
 
     // Rerun validation for each child

@@ -204,16 +204,50 @@ describe('LocationTree', () => {
     const section1 = makeContentContext({ id: '1' });
     const section2 = makeContentContext({ id: 'oops' });
     const section3 = makeContentContext({ id: 'oops' });
+    const section4 = makeContentContext({ id: 'oops' });
 
     LocationTree.add(rootSection, null);
     LocationTree.add(section1, rootSection);
     LocationTree.add(section2, rootSection);
     LocationTree.add(section3, rootSection);
+    LocationTree.add(section4, rootSection);
 
-    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledTimes(2);
     expect(console.error).toHaveBeenNthCalledWith(
       1,
       '｢objectiv｣ Location collision detected: Content:root / Content:oops'
+    );
+    expect(console.error).toHaveBeenNthCalledWith(
+      2,
+      '｢objectiv｣ Location collision detected: Content:root / Content:oops'
+    );
+  });
+
+  it('should not console.error collisions in children of already colliding nodes', () => {
+    const rootSection = makeContentContext({ id: 'root' });
+    const section1 = makeContentContext({ id: '1' });
+    const section2 = makeContentContext({ id: 'oops' });
+    const section3 = makeContentContext({ id: 'oops' });
+    const section4 = makeContentContext({ id: '1' });
+    const section5 = makeContentContext({ id: 'oops' });
+    const section6 = makeContentContext({ id: 'oops' });
+
+    LocationTree.add(rootSection, null);
+    LocationTree.add(section1, rootSection);
+    LocationTree.add(section2, rootSection);
+    LocationTree.add(section3, rootSection);
+    LocationTree.add(section4, rootSection);
+    LocationTree.add(section5, section4);
+    LocationTree.add(section6, section4);
+
+    expect(console.error).toHaveBeenCalledTimes(2);
+    expect(console.error).toHaveBeenNthCalledWith(
+      1,
+      '｢objectiv｣ Location collision detected: Content:root / Content:oops'
+    );
+    expect(console.error).toHaveBeenNthCalledWith(
+      2,
+      '｢objectiv｣ Location collision detected: Content:root / Content:1'
     );
   });
 
