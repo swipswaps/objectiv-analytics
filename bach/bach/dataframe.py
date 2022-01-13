@@ -978,13 +978,19 @@ class DataFrame:
         df._data = new_data
         return None if inplace else df
 
-    def reset_index(self, drop: bool = False, inplace: bool = False) -> Optional['DataFrame']:
+    def reset_index(
+        self,
+        level: Optional[Union[str, Sequence[str]]] = None,
+        drop: bool = False,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
         """
         Drops the current index.
 
         With reset_index, all indexes are removed from the DataFrame, so that the DataFrame does not have any
         index Series. A new index can be set with :py:meth:`set_index`.
 
+        :param level: Removes given levels from index. Removes all levels by default
         :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
             is removed.
         :param inplace: update the current DataFrame or return a new DataFrame.
@@ -995,9 +1001,23 @@ class DataFrame:
             # materialize, but raise if inplace is required.
             df = df.materialize(node_name='reset_index', inplace=inplace)
 
+        new_index = {}
         series = df._data if drop else df.all_series
+        if level is not None:
+            series = df._data
+            levels_to_remove = [level] if isinstance(level, str) else level
+
+            for lvl in levels_to_remove:
+                if lvl not in df._index:
+                    raise ValueError(f'\'{lvl}\' level not found in index')
+
+                if not drop:
+                    series[lvl] = df.index[lvl]
+
+            new_index = {idx: series for idx, series in df.index.items() if idx not in levels_to_remove}
+
         df._data = {n: s.copy_override(index={}) for n, s in series.items()}
-        df._index = {}
+        df._index = new_index
         return None if inplace else df
 
     def set_index(
@@ -1630,12 +1650,15 @@ class DataFrame:
             suffixes=suffixes
         )
 
-    def _apply_func_to_series(self,
-                              func: Union[ColumnFunction, Dict[str, ColumnFunction]],
-                              axis: int = 1,
-                              numeric_only: bool = False,
-                              exclude_non_applied: bool = False,
-                              *args, **kwargs) -> List['Series']:
+    def _apply_func_to_series(
+        self,
+        func: Union[ColumnFunction, Dict[str, ColumnFunction]],
+        axis: int = 1,
+        numeric_only: bool = False,
+        exclude_non_applied: bool = False,
+        *args,
+        **kwargs,
+    ) -> List['Series']:
         """
         :param func: function, str, list or dict to apply to all series
             Function to use on the data. If a function, must work when passed a
@@ -1685,17 +1708,20 @@ class DataFrame:
             raise TypeError(f'Unsupported type for func: {type(func)}')
 
         new_series = {}
-        for name, series in self._data.items():
-            if name not in apply_dict:
-                if not exclude_non_applied:
-                    new_series[name] = series.copy_override()
-                continue
-            for applied in series.apply_func(apply_dict[name], *args, **kwargs):
+        for name, apply_func in apply_dict.items():
+            for applied in self._data[name].apply_func(apply_func, *args, **kwargs):
                 if applied.name in new_series:
                     raise ValueError(f'duplicate result series: {applied.name}')
                 new_series[applied.name] = applied
 
-        return list(new_series.values())
+        applied_series = list(new_series.values())
+        if exclude_non_applied:
+            return applied_series
+
+        non_applied_series = [
+            series.copy_override() for name, series in self._data.items() if name not in apply_dict
+        ]
+        return applied_series + non_applied_series
 
     def aggregate(self,
                   func: Union[ColumnFunction, Dict[str, ColumnFunction]],
@@ -1707,12 +1733,14 @@ class DataFrame:
         """
         return self.agg(func, axis, numeric_only, *args, **kwargs)
 
-    def agg(self,
-            func: Union[ColumnFunction, Dict[str, ColumnFunction]],
-            axis: int = 1,
-            numeric_only: bool = False,
-            *args,
-            **kwargs) -> 'DataFrame':
+    def agg(
+        self,
+        func: Union[ColumnFunction, Dict[str, ColumnFunction]],
+        axis: int = 1,
+        numeric_only: bool = False,
+        *args,
+        **kwargs,
+    ) -> 'DataFrame':
         """
         Aggregate using one or more operations over the specified axis.
 
@@ -1746,7 +1774,7 @@ class DataFrame:
                                               df.group_by, *args, **kwargs)
 
         # If the new series have a different group_by or index, we need to copy that
-        if len(new_series):
+        if new_series:
             new_index = new_series[0].index
             new_group_by = new_series[0].group_by
 

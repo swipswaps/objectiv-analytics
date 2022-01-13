@@ -2,6 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { expectToThrow } from '@objectiv/testing-tools';
 import { Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
@@ -18,6 +19,7 @@ describe('TrackingContextProvider', () => {
   beforeEach(() => {
     jest.resetAllMocks();
     jest.spyOn(console, 'log').mockImplementation(() => {});
+    jest.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -139,10 +141,15 @@ describe('TrackingContextProvider', () => {
       return null;
     };
 
-    expect(() => render(<Component />)).toThrow(`
+    expectToThrow(
+      () => {
+        render(<Component />);
+      },
+      `
       Couldn't get a LocationStack. 
       Is the Component in a ObjectivProvider, TrackingContextProvider or LocationProvider?
-    `);
+    `
+    );
   });
 
   it('should throw when TrackerProvider is not higher up in the component tree', () => {
@@ -151,9 +158,14 @@ describe('TrackingContextProvider', () => {
       return null;
     };
 
-    expect(() => render(<Component />)).toThrow(`
+    expectToThrow(
+      () => {
+        render(<Component />);
+      },
+      `
       Couldn't get a Tracker. 
       Is the Component in a ObjectivProvider, TrackingContextProvider or TrackerProvider?
-    `);
+    `
+    );
   });
 });

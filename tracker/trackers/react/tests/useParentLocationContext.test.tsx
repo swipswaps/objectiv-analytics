@@ -10,7 +10,7 @@ import { LocationContextWrapper, makeContentContext, ObjectivProvider, useParent
 describe('useParentLocationContext', () => {
   beforeEach(() => {
     jest.resetAllMocks();
-    jest.spyOn(console, 'log');
+    jest.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
