@@ -26,3 +26,16 @@ def test_df_categorical_describe() -> None:
         percentiles=None,
     )
     result = df_describer.describe()
+
+
+def test_df_numerical_describe() -> None:
+    df = get_bt_with_test_data()[['city', 'skating_order', 'inhabitants']]
+    df_describer = DataFrameDescriber(
+        df=df,
+        include=None,
+        exclude=None,
+        datetime_is_numeric=False,
+        percentiles=None,
+    )
+    result = df_describer.describe()
+    print(result)
