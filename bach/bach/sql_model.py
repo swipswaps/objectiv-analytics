@@ -13,7 +13,6 @@ T = TypeVar('T', bound='SqlModelSpec')
 
 
 if typing.TYPE_CHECKING:
-    # TODO: move this somewhere where we don't need to do this if?
     from bach.dataframe import DtypeNamePair
 
 

@@ -24,7 +24,6 @@ def test_column_names():
 def test_column_names_merge():
     # When merging we construct a specific sql query that names each column, so test that separately here
     bt = _get_dataframe_with_weird_column_names()
-    # TODO: update this test too
     bt2 = get_bt_with_test_data()[['city']]
     bt = bt.merge(bt2, on='city')
     expected_columns = ['_index_skating_order_x', '_index_skating_order_y',

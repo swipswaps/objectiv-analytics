@@ -1628,7 +1628,6 @@ class DataFrame:
             column_exprs = [s.get_column_expression() for s in self.all_series.values()]
             column_names = tuple(self.all_series.keys())
 
-        # TODO: update variable in base_node
         return CurrentNodeSqlModel(
             name=name,
             column_names=column_names,
