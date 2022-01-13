@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from bach.series import SeriesBoolean
+    from bach.series import SeriesBoolean, SeriesInt64
 
 
 class Aggregate:
@@ -12,7 +12,7 @@ class Aggregate:
     Models that return aggregated data in some form from the original ObjectivFrame.
 
     Methods in this class can be filtered with the filter parameter, which always takes SeriesBoolean. The
-    ModelHub can also create specific commonly used filters with methods from
+    ModelHub can also create specific commonly used filters with methods that return SeriesBoolean from
     :py:attr:`bach_open_taxonomy.ModelHub.map`.
     """
 
@@ -35,7 +35,7 @@ class Aggregate:
         series = df.groupby(gb)[column].nunique()
         return series.copy_override(name=name)
 
-    def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
+    def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None) -> 'SeriesInt64':
         """
         Calculate the unique users in the ObjectivFrame.
 
@@ -44,6 +44,7 @@ class Aggregate:
 
         :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
         :param filter: the output of this model is only based on the rows for which the filter is True.
+        :returns: series with results.
         """
 
         return self._generic_aggregation(time_aggregation=time_aggregation,
@@ -51,7 +52,7 @@ class Aggregate:
                                          filter=filter,
                                          name='unique_users')
 
-    def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None):
+    def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None) -> 'SeriesInt64':
         """
         Calculate the unique sessions in the ObjectivFrame.
 
@@ -60,6 +61,7 @@ class Aggregate:
 
         :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
         :param filter: the output of this model is only based on the rows for which the filter is True.
+        :returns: series with results.
         """
 
         return self._generic_aggregation(time_aggregation=time_aggregation,
@@ -68,7 +70,12 @@ class Aggregate:
                                          name='unique_sessions')
 
     def session_duration(self, time_aggregation: str = None):
-        # calculate duration of each session
+        """
+        Calculate the average duration of sessions per time interval as set with ``time_aggregation``.
+
+        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+        :returns: series with results.
+        """
         df = self._df.copy_override()
         if not time_aggregation:
             time_aggregation = self._df._time_aggregation
@@ -77,25 +84,21 @@ class Aggregate:
             df[time_aggregation] = df.moment.dt.sql_format(time_aggregation)
             gb = ['session_id', time_aggregation]
 
-        session_duration = df.groupby(gb).aggregate(
-            {'moment': ['min', 'max']})
-
+        session_duration = df.groupby(gb).aggregate({'moment': ['min', 'max']})
         session_duration['session_duration'] = session_duration['moment_max'] - session_duration['moment_min']
-
-        # check which sessions have duration of zero and filter these out, as they are bounces
+        # remove "bounces"
         session_duration = session_duration[(session_duration['session_duration'] > '0')]
 
-        return session_duration.groupby(time_aggregation).aggregate(
-            {'session_duration': 'mean'})
+        return session_duration.groupby(time_aggregation).aggregate({'session_duration': 'mean'})
 
     def frequency(self):
-        # number of total sessions per user
+        """
+        Calculate a frequency table for the number users by number of sessions.
+
+        :returns: series with results.
+        """
+
         total_sessions_user = self._df.groupby(['user_id']).aggregate({'session_id': 'nunique'})
-
-        # calculate frequency
         frequency = total_sessions_user.groupby(['session_id_nunique']).aggregate({'user_id': 'nunique'})
-
-        # add total users and calculate share per number of sessions
-        frequency['share_of_users'] = frequency['user_id_nunique'] / self._df['user_id'].nunique()
 
         return frequency

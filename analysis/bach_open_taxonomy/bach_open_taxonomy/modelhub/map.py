@@ -10,10 +10,10 @@ if TYPE_CHECKING:
 
 class Map:
     """
-    Methods in this class can be used to map data in the Objectiv Frame to column values.
+    Methods in this class can be used to map data in the Objectiv Frame to series values.
 
-    Always returns Series with same base node and/or index as the ObjectivFrame the method is applied
-    to.
+    Always returns Series with same index as the ObjectivFrame the method is applied to, so the can be set
+    as columns to that ObjectivFrame
     """
 
     def __init__(self, df):
@@ -21,21 +21,22 @@ class Map:
 
     def is_first_session(self) -> 'SeriesBoolean':
         """
-        Labels a session True if the session is the first session of that user in the data.
+        Labels all hits in a session True if that session is the first session of that user in the data.
 
-        :returns: SeriesBoolean with same base node as the ObjectivFrame this method is applied to.
+        :returns: SeriesBoolean with the same index as the ObjectivFrame this method is applied to.
         """
 
         window = self._df.groupby('user_id').window()
         first_session = window['session_id'].min()
         series = first_session == self._df.session_id
-        return series.copy_override(name='is_first_session')
+        return series.copy_override(name='is_first_session', index=self._df.index)
 
     def is_new_user(self, time_aggregation=None) -> 'SeriesBoolean':
         """
-        Labels a user True if the user is first seen in the given time_aggregation.
+        Labels all hits True if the user is first seen in the period given time_aggregation.
 
-        :returns: SeriesBoolean with same base node as the ObjectivFrame this method is applied to.
+        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+        :returns: SeriesBoolean with the same index as the ObjectivFrame this method is applied to.
         """
 
         if not time_aggregation:
@@ -49,15 +50,15 @@ class Map:
 
         series = is_first_session_time_aggregation == is_first_session
 
-        return series.copy_override(name='is_new_user')
+        return series.copy_override(name='is_new_user', index=self._df.index)
 
-    def is_conversion(self, name):
+    def is_conversion_event(self, name: str):
         """
-        Labels a hit True if it is a conversion hit.
+        Labels a hit True if it is a conversion event, all other hits are labeled False.
 
         :param name: the name of the conversion to label as set in
             :py:attr:`bach_open_taxonomy.ObjectivFrame.conversion_events`.
-        :returns: SeriesBoolean with same base node as the ObjectivFrame this method is applied to.
+        :returns: SeriesBoolean with same index as the ObjectivFrame this method is applied to.
         """
 
         conversion_stack, conversion_event = self._df._conversion_events[name]
@@ -68,41 +69,62 @@ class Map:
             series = conversion_stack.notnull()
         else:
             series = ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
-        return series.copy_override(name='conversion')
+        return series.copy_override(name='is_conversion_event')
 
-    def conversions(self, name, partition='session_id'):
+    def conversion_count(self, name: str, partition='session_id'):
         """
         Counts the number of time a user is converted at a moment in time given a partition (ie session_id
-        or user_id).
+        or user_id). If a user did not convert, or hits are after first conversion, None is returned for those
+        hits.
 
-        :returns: series with conversion counter per partition.
+        :param name: the name of the conversion to label as set in
+            :py:attr:`bach_open_taxonomy.ObjectivFrame.conversion_events`.
+        :param partition: the partition over which the number of conversions are counted. Can be any column
+            of the ObjectivFrame
+        :returns: SeriesInt64 with same index as the ObjectivFrame this method is applied to.
         """
+
         df = self._df.copy_override()
-        df['_conversion'] = df.mh.map.is_conversion(name)
-        df = df.materialize()
+        df['__conversion'] = df.mh.map.is_conversion_event(name)
         exp = f"case when {{}} then row_number() over (partition by {{}}, {{}}) end"
-        df['_conversion_counter'] = df['_conversion'].copy_override(
+        df['__conversion_counter'] = df['__conversion'].copy_override(
             dtype='int64',
-            expression=Expression.construct(exp, df['_conversion'], df[partition], df['_conversion']))
+            expression=Expression.construct(exp, df['__conversion'], df[partition], df['__conversion']))
         df = df.materialize()
         exp = f"count({{}}) over (partition by {{}} order by {{}}, {{}})"
-        df = df.materialize()
-        df['conversions'] = df['_conversion_counter'].copy_override(
+        df['conversion_count'] = df['__conversion_counter'].copy_override(
             dtype='int64',
             expression=Expression.construct(exp,
-                                            df['_conversion_counter'],
+                                            df['__conversion_counter'],
                                             df[partition],
                                             df[partition],
                                             df['moment']))
 
-        return df.conversions
+        return df.conversion_count
 
-    def funnel(self, name, filter: 'SeriesBoolean' = None, partition='session_id'):
+    def pre_conversion_hit_number(self,
+                                  name: str,
+                                  filter: 'SeriesBoolean' = None,
+                                  partition: str = 'session_id'):
+        """
+        Returns a count backwards from the first conversion, given the partition. I.e. first hit before
+        converting is 1, second hit before converting 2, etc. Returns None if there are no conversions in the
+        partition or after the first conversion.
+
+        :param name: the name of the conversion to label as set in
+            :py:attr:`bach_open_taxonomy.ObjectivFrame.conversion_events`.
+        :param filter: filters hits from being counted. Returns None for filtered hits.
+        :param partition: the partition over which the number of conversions are counted. Can be any column
+            of the ObjectivFrame
+        :returns: SeriesInt64 with same index as the ObjectivFrame this method is applied to.
+        """
         df = self._df.copy_override()
         if filter:
-            df['_filter'] = filter
+            # todo when bach supports boolean indexing with series with the same index but different base
+            #  nodes, this is not longer necessary
+            df['__filter'] = filter
 
-        df['__conversions'] = df.mh.map.conversions(name=name)
+        df['__conversions'] = df.mh.map.conversion_count(name=name)
 
         window = df.groupby(partition).window()
         converted = window['__conversions'].max()
@@ -113,15 +135,16 @@ class Map:
         pre_conversion_hits = pre_conversion_hits[pre_conversion_hits['__conversions'] == 0]
 
         if filter:
-            pre_conversion_hits = pre_conversion_hits[pre_conversion_hits._filter]
+            pre_conversion_hits = pre_conversion_hits[pre_conversion_hits['__filter']]
 
         window = pre_conversion_hits.sort_values(['session_id',
                                                   'session_hit_number'],
                                                  ascending=[True,
                                                             False]).groupby('session_id').window()
-        pre_conversion_hits['hit_number_before_converting'] = pre_conversion_hits.session_hit_number.\
+        pre_conversion_hits['pre_conversion_hit_number'] = pre_conversion_hits.session_hit_number.\
             window_row_number(window)
 
         pre_conversion_hits = pre_conversion_hits.materialize()
-        df['hit_number_before_converting'] = pre_conversion_hits['hit_number_before_converting']
-        return df['hit_number_before_converting']
+        df['pre_conversion_hit_number'] = pre_conversion_hits['pre_conversion_hit_number']
+
+        return df['pre_conversion_hit_number']

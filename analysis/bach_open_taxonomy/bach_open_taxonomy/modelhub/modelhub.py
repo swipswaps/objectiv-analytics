@@ -45,7 +45,10 @@ class ModelHub:
 
     def filter(self, filter: 'SeriesBoolean'):
         """"
-        returns only the rows where filter == True
+        Filters the ObjectivFrame for all hits where the filter is True.
+
+        :param filter: SeriesBoolean, where hits are True for those returned.
+        :returns: A filtered ObjectivFrame
         """
         df = self._df
 
