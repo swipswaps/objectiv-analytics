@@ -677,7 +677,6 @@ def escape_format_string(value: str, times=1) -> str:
     Any values that get inserted by the first call to format (replacing the placeholders), should be escaped
     once.
     """
-    value = value.replace('{', '{{').replace('}', '}}')
-    if times == 1:
-        return value
-    return escape_format_string(value, times=times - 1)
+    for _ in range(times):
+        value = value.replace('{', '{{').replace('}', '}}')
+    return value
