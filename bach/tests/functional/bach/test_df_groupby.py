@@ -558,14 +558,14 @@ def test_groupby_frame_split_recombine():
     assert btg1a == btg1  # inplies base_node and group_by are equal
 
     # can not add columns from grouped df to ungrouped df
-    with pytest.raises(ValueError, match="GroupBy of assigned value does not match DataFrame and the given "
-                                         "series was not single value or an independent subquery"):
+    with pytest.raises(ValueError, match="Setting a grouped Series to a DataFrame is only supported if the"
+                                         " Series is aggregated"):
         bt2 = bt.drop(columns=['founding'])
         bt2['founding'] = btg1b
 
     # can not add columns from ungrouped df to grouped df
-    with pytest.raises(ValueError, match="GroupBy of assigned value does not match DataFrame and the given "
-                                         "series was not single value or an independent subquery"):
+    with pytest.raises(ValueError, match="Setting new columns to grouped DataFrame is only supported if the"
+                                         " DataFrame has aggregated columns"):
         bt2 = btg1.drop(columns=['founding'])
         bt2['founding'] = bt['founding']
 
@@ -659,8 +659,10 @@ def test_unmaterializable_groupby_boolean_functions():
     assert btg_min_fnd.group_by != bt.group_by
     assert not btg_min_fnd.expression.is_single_value
 
-    with pytest.raises(ValueError, match='rhs has a different base_node or group_by, but contains more than one value.'):
+    with pytest.raises(ValueError, match='dtypes of indexes should be the same'):
+        # todo pandas: Can only compare identically-labeled Series objects
         bt[btg_min_fnd == bt.founding]
 
-    with pytest.raises(ValueError, match='rhs has a different base_node or group_by, but contains more than one value.'):
+    with pytest.raises(ValueError, match='dtypes of indexes should be the same'):
+        # todo pandas: Can only compare identically-labeled Series objects
         bt[bt.founding == btg_min_fnd]

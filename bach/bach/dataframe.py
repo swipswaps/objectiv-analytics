@@ -88,9 +88,12 @@ class DataFrame:
     **Moving Series around**
 
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
-    DataFrame is possible if they share the same base node. This means that they originate from the same data
-    source. In most cases this means that the series that is to be set to the DataFrame is a result of
-    operations on the DataFrame that is started with.
+    DataFrame is possible if they share the same base node or index dtype. DataFrames and Series share the
+    same base node if that they originate from the same data source. In most cases this means that the series
+    that is to be set to the DataFrame is a result of operations on the DataFrame that is started with.
+    If a Series or DataFrame do not share the same base node, the new column is or columns are set using a
+    merge on the index. This works for one level indexes where the dtype of the series is the same as the
+    DataFrame's index dtype.
 
     **Examples**
 
@@ -98,9 +101,6 @@ class DataFrame:
 
         df['a'] = df.column_name + 5
         df['b'] = ''
-
-    If a Series of DataFrames do not share the same base node, it is possible to combine the data using
-    :py:meth:`merge`.
 
 
     **Database access**
@@ -892,39 +892,18 @@ class DataFrame:
                         name=key, index=self._index, group_by=[self._group_by])
                 else:
                     if value.group_by != self._group_by:
-                        raise ValueError(f'GroupBy of assigned value does not match DataFrame and the '
-                                         f'given series was not single value or an independent subquery. '
-                                         f'GroupBy Value: {value.group_by}, df: {self._group_by}')
+                        if value.group_by and not value._expression.has_aggregate_function:
+                            raise ValueError('Setting a grouped Series to a DataFrame is only supported if '
+                                             'the Series is aggregated.')
+                        if self.group_by and \
+                                not self._data[self.data_columns[0]]._expression.has_aggregate_function:
+                            raise ValueError('Setting new columns to grouped DataFrame is only supported if '
+                                             'the DataFrame has aggregated columns.')
                     elif value.base_node != self.base_node:
-                        if not (len(value.index) == 1 and len(self.index) == 1):
-                            raise ValueError('setting with different base nodes only works with one level'
-                                             'index')
-
-                        index_name = self.index_columns[0]
-                        renamed_index = list(value.index.values())[0].copy_override(name=index_name)
-                        if self.index[index_name].dtype != renamed_index.dtype:
-                            raise ValueError('dtypes of indexes should be the same')
-                        renamed_value = value.copy_override(name=key, index={index_name: renamed_index})
-
-                        df = self.merge(renamed_value,
-                                        left_index=True,
-                                        right_index=True,
-                                        how='left',
-                                        suffixes=('', '__remove'))
-
-                        if key in self.data_columns:
-                            df[key] = df[key + '__remove']
-                            df.drop(columns=[key + '__remove'], inplace=True)
-
-                        self._engine = df.engine
-                        self._base_node = df.base_node
-                        self._index = df.index
-                        self._data = df.data
-                        self._group_by = df.group_by
-                        self._order_by = df.order_by
-                        self._savepoints = df.savepoints
+                        pass
                     else:
                         raise NotImplementedError('Incompatible series can not be added to the dataframe.')
+                    self._index_merge(key=key, value=value)
 
         elif isinstance(key, list):
             if len(key) == 0:
@@ -942,6 +921,59 @@ class DataFrame:
                 self.__setitem__(sub_key, series_list[i])
         else:
             raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
+
+    def _index_merge(self,
+                     key: str,
+                     value: 'Series',
+                     how: str = 'left'):
+        """"
+        Internal method used by __setitem__ to set a series using a merge on index. Modifies the DataFrame
+        with the added column. The DataFrames index name is the same as the original DataFrame's.
+
+        :param key: name of the column to set.
+        :param value: Series that is set.
+        :param how: 'left' or 'outer'.
+        """
+        if not (len(value.index) == 1 and len(self.index) == 1):
+
+            raise ValueError('setting with different base nodes only supported for one level'
+                             ' index')
+        index_name = self.index_columns[0]
+        value_index_name = list(value.index.keys())[0]
+        if self.index[index_name].dtype != value.index[value_index_name].dtype:
+            raise ValueError('dtypes of indexes should be the same')
+        renamed_value = value.copy_override(name=key)
+
+        if how == 'outer':
+            renamed_value = renamed_value.to_frame().materialize()
+            renamed_value[value_index_name + '__index'] = renamed_value.index[value_index_name]
+
+        df = self.merge(renamed_value,
+                        left_index=True,
+                        right_index=True,
+                        how=how,
+                        suffixes=('', '__remove'))
+
+        if how == 'outer':
+            new_index = df.index[index_name].fillna(df[value_index_name + '__index'])
+        elif how == 'left':
+            new_index = df.index[index_name]
+        else:
+            raise NotImplementedError(f'how "{how}" not supported')
+
+        df.set_index(new_index, inplace=True)
+        if key in self.data_columns:
+            df[key] = df[key + '__remove']
+            df.drop(columns=[key + '__remove'], inplace=True)
+        df.drop(columns=[value_index_name + '__index'], inplace=True, errors='ignore')
+
+        self._engine = df.engine
+        self._base_node = df.base_node
+        self._index = df.index
+        self._data = df.data
+        self._group_by = df.group_by
+        self._order_by = df.order_by
+        self._savepoints = df.savepoints
 
     def rename(self, mapper: Union[Dict[str, str], Callable[[str], str]] = None,
                index: Union[Dict[str, str], Callable[[str], str]] = None,
