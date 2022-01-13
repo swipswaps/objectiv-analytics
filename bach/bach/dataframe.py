@@ -324,6 +324,11 @@ class DataFrame:
         return True
 
     def __eq__(self, other: Any) -> bool:
+        """
+        Compares two DataFrames for equality.
+        Compares all fields that (potentially) influence the values of the data represented by the DataFrame,
+        i.e. all fields except for self.savepoints
+        """
         if not isinstance(other, DataFrame):
             return False
         # We cannot just compare the data and index properties, because the Series objects have
@@ -335,7 +340,8 @@ class DataFrame:
             self.engine == other.engine and \
             self.base_node == other.base_node and \
             self._group_by == other._group_by and \
-            self._order_by == other._order_by
+            self._order_by == other._order_by and \
+            self._variables == other._variables
 
     @classmethod
     def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
