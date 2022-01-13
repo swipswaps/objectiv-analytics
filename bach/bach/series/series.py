@@ -367,6 +367,8 @@ class Series(ABC):
                 else:
                     # align base nodes and group by
                     df = self.to_frame()
+                    # todo now using private method from DataFrame. This will change to use merge, once this
+                    #  type of 'index merge' works with that method.
                     df._index_merge(key='__other', value=other, how='outer')
                     return df[self.name], df['__other']
                     # todo pandas: if name of both series are same, use that name of result. we always use

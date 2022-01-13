@@ -856,18 +856,13 @@ class DataFrame:
                     self._data[key] = Series.as_independent_subquery(value).copy_override(
                         name=key, index=self._index, group_by=[self._group_by])
                 else:
-                    if value.group_by != self._group_by:
-                        if value.group_by and not value.expression.has_aggregate_function:
-                            raise ValueError('Setting a grouped Series to a DataFrame is only supported if '
-                                             'the Series is aggregated.')
-                        if self.group_by and \
-                                not all(_s.expression.has_aggregate_function for _s in self.data.values()):
-                            raise ValueError('Setting new columns to grouped DataFrame is only supported if '
-                                             'the DataFrame has aggregated columns.')
-                    elif value.base_node != self.base_node:
-                        pass
-                    else:
-                        raise NotImplementedError('Incompatible series can not be added to the dataframe.')
+                    if value.group_by and not value.expression.has_aggregate_function:
+                        raise ValueError('Setting a grouped Series to a DataFrame is only supported if '
+                                         'the Series is aggregated.')
+                    if self.group_by and \
+                        not all(_s.expression.has_aggregate_function for _s in self.data.values()):
+                        raise ValueError('Setting new columns to grouped DataFrame is only supported if '
+                                         'the DataFrame has aggregated columns.')
                     self._index_merge(key=key, value=value)
 
         elif isinstance(key, list):
@@ -899,6 +894,8 @@ class DataFrame:
         :param value: Series that is set.
         :param how: 'left' or 'outer'.
         """
+
+        # todo This method's functionality will be implementd in merge()
         if not (len(value.index) == 1 and len(self.index) == 1):
 
             raise ValueError('setting with different base nodes only supported for one level'
