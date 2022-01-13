@@ -1,9 +1,9 @@
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Union, Sequence, List
 
-from bach import DataFrameOrSeries, DataFrame, Series, SeriesString, SeriesAbstractNumeric
+from bach import DataFrame, Series, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries
 from bach.sql_model import BachSqlModelBuilder
 
 
@@ -13,7 +13,7 @@ def describe_frame(
     exclude: Optional[Union[str, Sequence[str]]],
     datetime_is_numeric: bool,
     percentiles: Optional[Sequence[float]],
-) -> DataFrameOrSeries:
+) -> DataFrame:
     describer = DataFrameDescriber(
         df=frame.to_frame() if isinstance(frame, Series) else frame,
         include=include,
@@ -62,12 +62,12 @@ class DataFrameDescriber:
     percentiles: Optional[Sequence[float]]
 
     STAT_COLUMN_NAME = 'stat'
-    main_stat: SupportedStats = SupportedStats.NUMERICAL
+    main_stat: SupportedStats = field(init=False)
 
     def __post_init__(self) -> None:
         self._process_params()
 
-    def describe(self) -> DataFrameOrSeries:
+    def describe(self) -> DataFrame:
         described_columns = []
         for name, series in self.df.data.items():
             if (
@@ -84,6 +84,10 @@ class DataFrameDescriber:
         elif not self.percentiles:
             self.percentiles = [0.25, 0.5, 0.75]
 
+        if not self.main_stat:
+            self.main_stat = self._get_stat_type_based_on_all_columns()
+
+    def _get_stat_type_based_on_all_columns(self) -> SupportedStats:
         dtypes_series = defaultdict(set)
 
         for series in self.df.data.values():
@@ -97,9 +101,11 @@ class DataFrameDescriber:
             len(dtypes_series[SupportedStats.CATEGORICAL]) == len(self.df.data)
             or not dtypes_series[SupportedStats.NUMERICAL]
         ):
-            self.main_stat = SupportedStats.CATEGORICAL
+            return SupportedStats.CATEGORICAL
         elif dtypes_series[SupportedStats.NUMERICAL]:
-            self.main_stat = SupportedStats.NUMERICAL
+            return SupportedStats.NUMERICAL
+
+        raise ValueError('DataFrame or Series has no supported dtype for description.')
 
     def _get_stats(self, columns_to_describe: List[str]) -> DataFrame:
         final_df: Optional[DataFrame] = None
