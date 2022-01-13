@@ -860,7 +860,7 @@ class DataFrame:
                         raise ValueError('Setting a grouped Series to a DataFrame is only supported if '
                                          'the Series is aggregated.')
                     if self.group_by and \
-                        not all(_s.expression.has_aggregate_function for _s in self.data.values()):
+                            not all(_s.expression.has_aggregate_function for _s in self.data.values()):
                         raise ValueError('Setting new columns to grouped DataFrame is only supported if '
                                          'the DataFrame has aggregated columns.')
                     self._index_merge(key=key, value=value)
