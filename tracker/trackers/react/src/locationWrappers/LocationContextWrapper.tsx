@@ -4,6 +4,7 @@
 
 import { AbstractLocationContext } from '@objectiv/schema';
 import React, { ReactNode } from 'react';
+import { isDevMode } from '../common/isDevMode';
 import { LocationTree } from '../common/LocationTree';
 import { LocationProvider } from '../common/providers/LocationProvider';
 import { TrackingContext } from '../common/providers/TrackingContext';
@@ -38,16 +39,22 @@ export const LocationContextWrapper = ({ children, locationContext }: LocationCo
   const parentLocationContext = useParentLocationContext();
 
   useOnMount(() => {
-    LocationTree.add(locationContext, parentLocationContext);
+    if (isDevMode()) {
+      LocationTree.add(locationContext, parentLocationContext);
+    }
   });
 
   useOnUnmount(() => {
-    LocationTree.remove(locationContext);
+    if (isDevMode()) {
+      LocationTree.remove(locationContext);
+    }
   });
 
   useOnChange<LocationContext<AbstractLocationContext>>(locationContext, (previousLocationContext) => {
-    LocationTree.remove(previousLocationContext);
-    LocationTree.add(locationContext, parentLocationContext);
+    if (isDevMode()) {
+      LocationTree.remove(previousLocationContext);
+      LocationTree.add(locationContext, parentLocationContext);
+    }
   });
 
   return (

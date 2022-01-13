@@ -6,6 +6,7 @@ import { ContextsConfig, Tracker, TrackerConfig, TrackerPlugins } from '@objecti
 import { makeDefaultPluginsList } from './common/factories/makeDefaultPluginsList';
 import { makeDefaultQueue } from './common/factories/makeDefaultQueue';
 import { makeDefaultTransport } from './common/factories/makeDefaultTransport';
+import { isDevMode } from './common/isDevMode';
 
 /**
  * React Tracker can be configured in an easier way, as opposed to the core tracker.
@@ -73,7 +74,7 @@ export class ReactTracker extends Tracker {
     }
 
     // If node is in `development` on web and console has not been configured, automatically use the browser's console
-    if (!config.console && process.env.NODE_ENV?.startsWith('dev') && typeof window !== 'undefined') {
+    if (!config.console && isDevMode()) {
       config.console = console;
     }
 
