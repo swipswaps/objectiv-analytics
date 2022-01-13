@@ -237,7 +237,7 @@ def test_set_different_base_node():
 def test_set_different_group_by():
     bt = get_bt_with_test_data(full_data_set=True)
     mt = get_bt_with_railway_data()
-    bt_g = bt.groupby('city')[['inhabitants','founding']]
+    bt_g = bt.groupby('city')[['inhabitants', 'founding']]
     mt_g = mt.groupby('town').station_id.count()
 
     with pytest.raises(ValueError, match="Setting new columns to grouped DataFrame is only supported if the"
