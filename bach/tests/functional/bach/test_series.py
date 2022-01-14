@@ -7,7 +7,7 @@ import pytest
 
 from bach import DataFrame, SeriesString, SeriesInt64
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
-    get_from_df
+    get_from_df, get_bt_with_railway_data
 
 
 def test_series__getitem__():
@@ -212,8 +212,8 @@ def test_unique():
     uq_single = muni_single.unique()
     assert uq_single.expression.is_single_value == muni_single.expression.is_single_value == True
 
-    with pytest.raises(ValueError, match='GroupBy of assigned value does not match DataFrame'):
-        # the uq series has a different groupby
+    with pytest.raises(ValueError, match='dtypes of indexes should be the same'):
+        # the uq series have an index with different dtypes
         bt['uq'] = uq
 
     assert_equals_data(
@@ -382,5 +382,27 @@ def test_series_different_aggregations():
                        ['Súdwest-Fryslân', 0.5454545454545454], ['Waadhoeke', 0.09090909090909091]]
     )
 
-    with pytest.raises(Exception, match='different base_node or group_by, but contains more than one value.'):
+    with pytest.raises(Exception, match='setting with different base nodes only supported for one level'
+                                        ' index'):
+        # todo give a better error: bt.skating_order.nunique() is a single value
         bt.skating_order.nunique() / bt.groupby('municipality').skating_order.nunique()
+
+
+def test_series_different_base_nodes():
+    bt = get_bt_with_test_data()
+    mt = get_bt_with_railway_data()
+    bt_s = bt.skating_order + mt.platforms
+
+    assert_equals_data(
+        bt_s,
+        expected_columns=['_index_skating_order', 'skating_order'],
+        expected_data=[
+            [1, 2],
+            [2, 3],
+            [3, 5],
+            [4, None],
+            [5, None],
+            [6, None],
+            [7, None]
+        ]
+    )

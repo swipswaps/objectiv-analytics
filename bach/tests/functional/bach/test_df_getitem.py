@@ -170,5 +170,6 @@ def test_get_item_mixed_groupby():
     with pytest.raises(ValueError, match="Can not apply aggregated BooleanSeries with non matching group_by"):
         grouped_other[grouped_sum > 50000]
     # or the combination of both, behold!
-    with pytest.raises(ValueError, match="rhs has a different base_node or group_by"):
+    with pytest.raises(ValueError, match="Cannot apply Boolean series with a different base_node to DataFrame"):
+        # todo do internal merge, similar to setting with different base nodes
         grouped_other[grouped_sum > grouped_other_sum]

@@ -3,6 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 from typing import Type
+import pytest
 
 import numpy as np
 
@@ -229,6 +230,38 @@ def test_set_different_base_node():
             [1, 1, 'IJlst', 'Leeuwarden', 93485, 1285, 'Drylts'],
             [2, 2, 'Heerenveen', 'Súdwest-Fryslân', 33520, 1456, 'It Hearrenfean'],
             [3, 3, 'Heerenveen IJsstadion', 'Súdwest-Fryslân', 3055, 1268, 'It Hearrenfean']
+        ]
+    )
+
+
+def test_set_different_group_by():
+    bt = get_bt_with_test_data(full_data_set=True)
+    mt = get_bt_with_railway_data()
+    bt_g = bt.groupby('city')[['inhabitants', 'founding']]
+    mt_g = mt.groupby('town').station_id.count()
+
+    with pytest.raises(ValueError, match="Setting new columns to grouped DataFrame is only supported if the"
+                                         " DataFrame has aggregated columns"):
+        bt_g['a'] = mt_g
+
+    bt_g = bt_g.max()
+    bt_g['a'] = mt_g
+
+    assert_equals_data(
+        bt_g,
+        expected_columns=['city', 'inhabitants_max', 'founding_max', 'a'],
+        expected_data=[
+            ['Harns', 14740, 1234, None],
+            ['Dokkum', 12675, 1298, None],
+            ['Snits', 33520, 1456, 2],
+            ['Boalsert', 10120, 1455, None],
+            ['Starum', 960, 1061, None],
+            ['Warkum', 4440, 1399, None],
+            ['Sleat', 700, 1426, None],
+            ['Ljouwert', 93485, 1285, 2],
+            ['Frjentsjer', 12760, 1374, None],
+            ['Drylts', 3055, 1268, 1],
+            ['Hylpen', 870, 1225, None]
         ]
     )
 
