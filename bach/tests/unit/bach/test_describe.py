@@ -1,15 +1,13 @@
 import pytest
 
-from bach.describe import DataFrameDescriber
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data
-from tests.unit.bach.util import get_fake_df_test_data, get_fake_df
+from bach.describe import DataFrameDescriber, SupportedStats
+from tests.unit.bach.util import get_fake_df
 
 
-def test_process_params() -> None:
-    fake_df = get_fake_df(['a'], ['b', 'c'])
+def test_process_params_percentile_error() -> None:
     with pytest.raises(ValueError, match=r'percentiles should'):
         DataFrameDescriber(
-            df=get_fake_df_test_data(),
+            df=get_fake_df(['a'], ['b']),
             include=None,
             exclude=None,
             datetime_is_numeric=False,
@@ -17,26 +15,75 @@ def test_process_params() -> None:
         )
 
 
-def test_df_categorical_describe() -> None:
-    df = get_bt_with_test_data()[['city', 'municipality']]
-    df_describer = DataFrameDescriber(
-        df=df,
-        include=None,
+def test_process_params_empty_df() -> None:
+    with pytest.raises(ValueError, match=r'Cannot describe a Dataframe'):
+        DataFrameDescriber(
+            df=get_fake_df([], []),
+            include=None,
+            exclude=None,
+            datetime_is_numeric=False,
+            percentiles=None,
+        )
+
+
+def test_process_params_unsupported_type() -> None:
+    with pytest.raises(ValueError, match=r'.* has no supported dtype to describe.'):
+        DataFrameDescriber(
+            df=get_fake_df([], ['a'], dtype='json'),
+            include=None,
+            exclude=None,
+            datetime_is_numeric=False,
+            percentiles=None,
+        )
+
+
+def test_invalid_include_exclude_params() -> None:
+    df = get_fake_df([], ['a'], dtype='integer')
+    with pytest.raises(ValueError, match=r'Unknown dtype: random'):
+        DataFrameDescriber(
+            df=df,
+            include='random',
+            exclude=None,
+            datetime_is_numeric=False,
+            percentiles=None,
+        )
+
+    with pytest.raises(ValueError, match=r'Unknown dtype: random2'):
+        DataFrameDescriber(
+            df=df,
+            include=None,
+            exclude='random2',
+            datetime_is_numeric=False,
+            percentiles=None,
+        )
+
+
+def test_process_params_main_stat() -> None:
+    fake_df = get_fake_df(
+        index_names=[],
+        data_names=['a', 'b', 'c'],
+        dtype={
+            'a': 'string',
+            'b': 'integer',
+            'c': 'bool',
+            'd': 'timestamp',
+        },
+    )
+
+    num_describer = DataFrameDescriber(
+        df=fake_df,
+        include='integer',
         exclude=None,
         datetime_is_numeric=False,
         percentiles=None,
     )
-    result = df_describer.describe()
+    assert num_describer.main_stat == SupportedStats.NUMERICAL
 
-
-def test_df_numerical_describe() -> None:
-    df = get_bt_with_test_data()[['city', 'skating_order', 'inhabitants']]
-    df_describer = DataFrameDescriber(
-        df=df,
+    cat_describer = DataFrameDescriber(
+        df=fake_df,
         include=None,
-        exclude=None,
+        exclude='integer',
         datetime_is_numeric=False,
         percentiles=None,
     )
-    result = df_describer.describe()
-    print(result)
+    assert cat_describer.main_stat == SupportedStats.CATEGORICAL

@@ -1,9 +1,12 @@
 from collections import defaultdict
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, Union, Sequence, List
+from typing import Optional, Union, Sequence, List, Type, Dict, Callable
 
-from bach import DataFrame, Series, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries
+from bach import (
+    DataFrame, Series, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries, SeriesBoolean,
+    get_series_type_from_dtype,
+)
 from bach.sql_model import BachSqlModelBuilder
 
 
@@ -43,7 +46,7 @@ class SupportedStats(Enum):
     )
 
 
-_SUPPORTED_STATS_X_STMT = {
+_SUPPORTED_STATS_X_STMT: Dict[SupportedStats, Callable[[DataFrame], DataFrame]] = {
     SupportedStats.COUNT: DataFrame.count,
     SupportedStats.MEAN: DataFrame.mean,
     SupportedStats.STD: DataFrame.std,
@@ -52,17 +55,21 @@ _SUPPORTED_STATS_X_STMT = {
     SupportedStats.UNIQUE: DataFrame.nunique,
 }
 
+FilteringDType = Union[Optional[Union[str, Sequence[str]]], List[Type]]
+
 
 @dataclass
 class DataFrameDescriber:
     df: DataFrame
-    include: Optional[Union[str, Sequence[str]]]
-    exclude: Optional[Union[str, Sequence[str]]]
+    include: FilteringDType
+    exclude: FilteringDType
     datetime_is_numeric: bool
     percentiles: Optional[Sequence[float]]
 
-    STAT_COLUMN_NAME = 'stat'
     main_stat: SupportedStats = field(init=False)
+
+    STAT_COLUMN_NAME = 'stat'
+    RESULT_DECIMALS = 2
 
     def __post_init__(self) -> None:
         self._process_params()
@@ -78,51 +85,83 @@ class DataFrameDescriber:
 
         return self._get_stats(described_columns)
 
+    @staticmethod
+    def _get_casted_filtering_dtypes(filtering_dtypes: FilteringDType) -> List[Type]:
+        casted_dtypes: List[Type] = []
+        if not filtering_dtypes:
+            return casted_dtypes
+
+        filtering_dtypes = filtering_dtypes if not isinstance(filtering_dtypes, str) else [filtering_dtypes]
+        return [get_series_type_from_dtype(dtype) for dtype in filtering_dtypes]
+
+    @staticmethod
+    def _rename_agg_columns(
+        df: DataFrame, original_columns: List[str], columns_to_describe: List[str],
+    ) -> DataFrame:
+        column_renames = {
+            renamed_col: og_col
+            for renamed_col, og_col in zip(df.data_columns, original_columns)
+            if og_col in columns_to_describe
+        }
+        return df.rename(columns=column_renames)  # type: ignore
+
     def _process_params(self) -> None:
+        if not self.df.data:
+            raise ValueError('Cannot describe a Dataframe without columns')
+
         if self.percentiles and any(pt < 0 or pt > 1 for pt in self.percentiles):
             raise ValueError('percentiles should be between 0 and 1.')
         elif not self.percentiles:
             self.percentiles = [0.25, 0.5, 0.75]
 
-        if not self.main_stat:
-            self.main_stat = self._get_stat_type_based_on_all_columns()
+        self.include = self._get_casted_filtering_dtypes(self.include)
+        self.exclude = self._get_casted_filtering_dtypes(self.exclude)
+        self.main_stat = self._get_stat_type_based_on_all_columns()
 
     def _get_stat_type_based_on_all_columns(self) -> SupportedStats:
         dtypes_series = defaultdict(set)
-
         for series in self.df.data.values():
-            if isinstance(series, SeriesString):
+            if (
+                self.include and not isinstance(series, tuple(self.include))  # type: ignore
+                or self.exclude and isinstance(series, tuple(self.exclude))  # type: ignore
+            ):
+                continue
+
+            if isinstance(series, (SeriesString, SeriesBoolean)):
                 dtypes_series[SupportedStats.CATEGORICAL].add(series.name)
 
             if isinstance(series, SeriesAbstractNumeric):
                 dtypes_series[SupportedStats.NUMERICAL].add(series.name)
 
-        if (
-            len(dtypes_series[SupportedStats.CATEGORICAL]) == len(self.df.data)
-            or not dtypes_series[SupportedStats.NUMERICAL]
-        ):
-            return SupportedStats.CATEGORICAL
-        elif dtypes_series[SupportedStats.NUMERICAL]:
+        # TODO: Allow combined stats for both types
+        if dtypes_series[SupportedStats.NUMERICAL]:
             return SupportedStats.NUMERICAL
 
-        raise ValueError('DataFrame or Series has no supported dtype for description.')
+        if dtypes_series[SupportedStats.CATEGORICAL]:
+            return SupportedStats.CATEGORICAL
+
+        raise ValueError('DataFrame or Series has no supported dtype to describe.')
 
     def _get_stats(self, columns_to_describe: List[str]) -> DataFrame:
-        final_df: Optional[DataFrame] = None
+        final_df: DataFrame
         for pos, stat in enumerate(self.main_stat.value):
             stat_df = self.df.copy_override()[columns_to_describe]
-            stat_df = _SUPPORTED_STATS_X_STMT[SupportedStats(stat)](stat_df)
-            stat_df = stat_df.materialize()
-            stat_df = stat_df.rename(
-                columns=dict(zip(stat_df.data.keys(), columns_to_describe)),  # original column names should remain
-            )
+            stat_df = stat_df.to_frame() if isinstance(stat_df, Series) else stat_df
+            original_columns = stat_df.index_columns + stat_df.data_columns
+
+            stat_df = _SUPPORTED_STATS_X_STMT[SupportedStats(stat)](stat_df).materialize()
+
+            stat_df = self._rename_agg_columns(
+                df=stat_df, original_columns=original_columns, columns_to_describe=columns_to_describe,
+            )  # original column names should remain
             stat_df[self.STAT_COLUMN_NAME] = stat
             stat_df[f'{self.STAT_COLUMN_NAME}_position'] = pos
-            final_df = stat_df if not final_df else self._append_stats(final_df, stat_df)
+            final_df = stat_df if pos == 0 else self._append_stats(final_df, stat_df)
 
         final_df = final_df.sort_values(by=f'{self.STAT_COLUMN_NAME}_position')
-        final_df = final_df[[self.STAT_COLUMN_NAME] + columns_to_describe]
-        return final_df.set_index(self.STAT_COLUMN_NAME)[columns_to_describe]
+        final_df = final_df.round(decimals=self.RESULT_DECIMALS)
+        final_df = final_df[[self.STAT_COLUMN_NAME] + columns_to_describe]  # type: ignore
+        return final_df.set_index(self.STAT_COLUMN_NAME)  # type: ignore
 
     def _append_stats(self, stats_1_df: DataFrame, stats_2_df: DataFrame) -> DataFrame:
         # TODO: Implement DataFrame.append
