@@ -14,7 +14,7 @@ from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import add_global_context_to_event
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
 from objectiv_backend.end_points.extra_output import events_to_json, write_data_to_fs_if_configured, \
-    write_data_to_s3_if_configured
+    write_data_to_s3_if_configured, write_data_to_snowplow_if_configured
 from objectiv_backend.schema.validate_events import validate_structure_event_list, EventError
 from objectiv_backend.workers.pg_queues import PostgresQueues, ProcessingStage
 from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
@@ -224,12 +224,14 @@ def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):
         finally:
             connection.close()
 
-    if not output_config.file_system and not output_config.aws:
-        return
     for prefix, events in ('OK', ok_events), ('NOK', nok_events):
         if events:
             data = events_to_json(events)
             moment = datetime.utcnow()
+            write_data_to_snowplow_if_configured(events=events)
+            if not output_config.file_system and not output_config.aws:
+                return
+
             write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
             write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 
@@ -252,12 +254,13 @@ def write_async_events(events: EventDataList):
         finally:
             connection.close()
 
-    if not output_config.file_system and not output_config.aws:
-        return
     prefix = 'RAW'
     if events:
         data = events_to_json(events)
         moment = datetime.utcnow()
+
+        if not output_config.file_system and not output_config.aws:
+            return
         write_data_to_fs_if_configured(data=data, prefix=prefix, moment=moment)
         write_data_to_s3_if_configured(data=data, prefix=prefix, moment=moment)
 

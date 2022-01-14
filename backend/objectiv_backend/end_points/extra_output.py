@@ -6,15 +6,17 @@ Functions to write data to S3 and the local filesystem.
 This is experimental code, and not ready for production use.
 """
 import json
+import requests
+import base64
 from datetime import datetime
 from io import BytesIO
-from typing import List
+from typing import List,Dict
 
 import boto3
 from botocore.exceptions import ClientError
 
 from objectiv_backend.common.config import get_collector_config
-from objectiv_backend.common.types import EventDataList
+from objectiv_backend.common.types import EventDataList, EventData
 
 
 def events_to_json(events: EventDataList) -> str:
@@ -69,3 +71,51 @@ def write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> 
         s3_client.upload_fileobj(file_obj, aws_config.bucket, object_name)
     except ClientError as e:
         print(f'Error uploading to s3: {e} ')
+
+
+def make_snowplow_custom_context(event: Dict) -> str:
+    outer_event = {
+        "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
+        "data": [event]
+    }
+    outer_event_json = json.dumps(outer_event)
+    return str(base64.b64encode(outer_event_json.encode('UTF-8')), 'UTF-8')
+
+
+def objectiv_event_to_snowplow(event: EventData) -> Dict:
+    return {
+        "schema": "iglu:io.objectiv/taxonomy/jsonschema/1-0-0",
+        "data": event
+    }
+
+
+def write_data_to_snowplow_if_configured(events: EventDataList) -> None:
+    """
+    Write data to Snowplow
+    :param events: events to write
+    """
+    url = 'http://34.107.238.153/com.snowplowanalytics.snowplow/tp2'
+    headers = {
+        'Content-Type': 'application/json; charset=UTF-8'
+    }
+
+    payload = {
+        "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+        "data": []
+    }
+
+    for event in events:
+        snowplow_event = objectiv_event_to_snowplow(event)
+        snowplow_custom_context = make_snowplow_custom_context(snowplow_event)
+        payload["data"].append({
+                    "e": "se",  # mandatory: event type: unstructured event
+                    "p": "web",  # mandatory: platform
+                    "tv": "objectiv-tracker-0.0.5",  # mandatory: tracker version
+                    "cx": snowplow_custom_context})
+
+    print(f'sending payload: {json.dumps(payload, indent=4)}')
+
+    x = requests.post(url, json=payload, headers=headers)
+    print(x)
+    print(x.headers)
+
