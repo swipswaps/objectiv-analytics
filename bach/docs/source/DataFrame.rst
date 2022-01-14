@@ -36,7 +36,7 @@ Moving Series around
 ~~~~~~~~~~~~~~~~~~~~
 Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
 DataFrame is possible if they share the same base node or index dtype. DataFrames and Series share the
-same base node if that they originate from the same data source. In most cases this means that the series
+same base node if they originate from the same data source. In most cases this means that the series
 that is to be set to the DataFrame is a result of operations on the DataFrame that is started with.
 If a Series or DataFrame do not share the same base node, the new column is or columns are set using a
 merge on the index. This works for one level indexes where the dtype of the series is the same as the

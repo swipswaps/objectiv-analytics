@@ -74,7 +74,7 @@ class DataFrame:
 
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
     DataFrame is possible if they share the same base node or index dtype. DataFrames and Series share the
-    same base node if that they originate from the same data source. In most cases this means that the series
+    same base node if they originate from the same data source. In most cases this means that the series
     that is to be set to the DataFrame is a result of operations on the DataFrame that is started with.
     If a Series or DataFrame do not share the same base node, the new column is or columns are set using a
     merge on the index. This works for one level indexes where the dtype of the series is the same as the
@@ -856,18 +856,13 @@ class DataFrame:
                     self._data[key] = Series.as_independent_subquery(value).copy_override(
                         name=key, index=self._index, group_by=[self._group_by])
                 else:
-                    if value.group_by != self._group_by:
-                        if value.group_by and not value._expression.has_aggregate_function:
-                            raise ValueError('Setting a grouped Series to a DataFrame is only supported if '
-                                             'the Series is aggregated.')
-                        if self.group_by and \
-                                not self._data[self.data_columns[0]]._expression.has_aggregate_function:
-                            raise ValueError('Setting new columns to grouped DataFrame is only supported if '
-                                             'the DataFrame has aggregated columns.')
-                    elif value.base_node != self.base_node:
-                        pass
-                    else:
-                        raise NotImplementedError('Incompatible series can not be added to the dataframe.')
+                    if value.group_by and not value.expression.has_aggregate_function:
+                        raise ValueError('Setting a grouped Series to a DataFrame is only supported if '
+                                         'the Series is aggregated.')
+                    if self.group_by and \
+                            not all(_s.expression.has_aggregate_function for _s in self.data.values()):
+                        raise ValueError('Setting new columns to grouped DataFrame is only supported if '
+                                         'the DataFrame has aggregated columns.')
                     self._index_merge(key=key, value=value)
 
         elif isinstance(key, list):
@@ -899,6 +894,8 @@ class DataFrame:
         :param value: Series that is set.
         :param how: 'left' or 'outer'.
         """
+
+        # todo This method's functionality will be implementd in merge()
         if not (len(value.index) == 1 and len(self.index) == 1):
 
             raise ValueError('setting with different base nodes only supported for one level'
@@ -1682,12 +1679,15 @@ class DataFrame:
             suffixes=suffixes
         )
 
-    def _apply_func_to_series(self,
-                              func: Union[ColumnFunction, Dict[str, ColumnFunction]],
-                              axis: int = 1,
-                              numeric_only: bool = False,
-                              exclude_non_applied: bool = False,
-                              *args, **kwargs) -> List['Series']:
+    def _apply_func_to_series(
+        self,
+        func: Union[ColumnFunction, Dict[str, ColumnFunction]],
+        axis: int = 1,
+        numeric_only: bool = False,
+        exclude_non_applied: bool = False,
+        *args,
+        **kwargs,
+    ) -> List['Series']:
         """
         :param func: function, str, list or dict to apply to all series
             Function to use on the data. If a function, must work when passed a
@@ -1737,17 +1737,20 @@ class DataFrame:
             raise TypeError(f'Unsupported type for func: {type(func)}')
 
         new_series = {}
-        for name, series in self._data.items():
-            if name not in apply_dict:
-                if not exclude_non_applied:
-                    new_series[name] = series.copy_override()
-                continue
-            for applied in series.apply_func(apply_dict[name], *args, **kwargs):
+        for name, apply_func in apply_dict.items():
+            for applied in self._data[name].apply_func(apply_func, *args, **kwargs):
                 if applied.name in new_series:
                     raise ValueError(f'duplicate result series: {applied.name}')
                 new_series[applied.name] = applied
 
-        return list(new_series.values())
+        applied_series = list(new_series.values())
+        if exclude_non_applied:
+            return applied_series
+
+        non_applied_series = [
+            series.copy_override() for name, series in self._data.items() if name not in apply_dict
+        ]
+        return applied_series + non_applied_series
 
     def aggregate(self,
                   func: Union[ColumnFunction, Dict[str, ColumnFunction]],
@@ -1759,12 +1762,14 @@ class DataFrame:
         """
         return self.agg(func, axis, numeric_only, *args, **kwargs)
 
-    def agg(self,
-            func: Union[ColumnFunction, Dict[str, ColumnFunction]],
-            axis: int = 1,
-            numeric_only: bool = False,
-            *args,
-            **kwargs) -> 'DataFrame':
+    def agg(
+        self,
+        func: Union[ColumnFunction, Dict[str, ColumnFunction]],
+        axis: int = 1,
+        numeric_only: bool = False,
+        *args,
+        **kwargs,
+    ) -> 'DataFrame':
         """
         Aggregate using one or more operations over the specified axis.
 
@@ -1798,7 +1803,7 @@ class DataFrame:
                                               df.group_by, *args, **kwargs)
 
         # If the new series have a different group_by or index, we need to copy that
-        if len(new_series):
+        if new_series:
             new_index = new_series[0].index
             new_group_by = new_series[0].group_by
 
