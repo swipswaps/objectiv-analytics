@@ -1,16 +1,20 @@
 ![Objectiv Logo](https://objectiv.io/docs/img/logo-objectiv-large.svg "Objectiv Logo")
 
-Objectiv is an open-source product analytics pipeline for reusable modeling.
+Objectiv is a complete, self-hosted product analytics stack designed for
+effective data modeling and exploration with minimal gruntwork.
 
-With Objectiv, you can take, stack and run [pre-built data models](https://www.objectiv.io/docs/open-model-hub) off the shelf to quickly build highly specific model stacks for in-depth product analytics and exploration. Objectiv's reusable modeling is enabled by validating all collected data against an [open analytics taxonomy](https://www.objectiv.io/docs//taxonomy) to ensure it is clean, consistent and structured with effective modeling in mind.
+![Objectiv Stack](https://www.objectiv.io/docs/img/objectiv-stack.svg "Objectiv Stack")
 
-![Objectiv Overview](https://www.objectiv.io/docs/img/objectiv-overview.svg "Objectiv Overview")
+It includes everything you need to answer common product analytics questions now, while
+providing a solid foundation for in-depth analysis & machine learning down the road.
 
-With the included [Objectiv Bach](https://www.objectiv.io/docs/modeling) modeling library, you can customize or build models with familiar Pandas-like dataframe operations that run on your full SQL dataset. When you're ready to share your findings, you can output to open-source BI tools with a single command.
+### Highlights
+* Collect [model-ready data](https://www.objectiv.io/docs/tracking/core-concepts) that doesn't require cleaning and transformation
+* Ensure compatibility with many models by validating against an [open analytics taxonomy](https://www.objectiv.io/docs/taxonomy)
+* Build reusable models with [Pandas-like modeling](https://www.objectiv.io/docs/modeling) that runs on the full dataset
+* Chain together custom & [pre-built models](https://www.objectiv.io/docs/open-model-hub) to answer in-depth questions quickly
 
 Check out [objectiv.io](https://www.objectiv.io) to learn more.
-
-- - -
 
 ## Getting Started
 
