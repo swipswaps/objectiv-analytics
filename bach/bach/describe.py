@@ -78,7 +78,7 @@ class DataFrameDescriber:
         described_columns = []
         for name, series in self.df.data.items():
             if (
-                (isinstance(series, SeriesString) and self.main_stat == SupportedStats.CATEGORICAL)
+                (isinstance(series, (SeriesString, SeriesBoolean)) and self.main_stat == SupportedStats.CATEGORICAL)
                 or (isinstance(series, SeriesAbstractNumeric) and self.main_stat == SupportedStats.NUMERICAL)
             ):
                 described_columns.append(name)
