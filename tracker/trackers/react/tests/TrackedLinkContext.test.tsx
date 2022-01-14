@@ -5,7 +5,14 @@
 import { SpyTransport } from '@objectiv/testing-tools';
 import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/react';
 import React, { createRef } from 'react';
-import { LocationTree, ObjectivProvider, ReactTracker, TrackedLinkContext } from '../src';
+import {
+  LocationTree,
+  ObjectivProvider,
+  ReactTracker,
+  TrackedDiv,
+  TrackedLinkContext,
+  TrackedRootLocationContext,
+} from '../src';
 
 describe('TrackedLinkContext', () => {
   beforeEach(() => {
@@ -76,6 +83,28 @@ describe('TrackedLinkContext', () => {
 
     expect(screen.getByTestId('test-link-1').getAttribute('id')).toBe(null);
     expect(screen.getByTestId('test-link-2').getAttribute('id')).toBe('link-id-2');
+  });
+
+  it('should console.error if an id cannot be automatically generated', () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
+
+    render(
+      <ObjectivProvider tracker={tracker}>
+        <TrackedRootLocationContext Component={'div'} id={'root'}>
+          <TrackedDiv id={'content'}>
+            <TrackedLinkContext Component={'a'} href={'/some-url'}>
+              {/* nothing to see here */}
+            </TrackedLinkContext>
+          </TrackedDiv>
+        </TrackedRootLocationContext>
+      </ObjectivProvider>
+    );
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith(
+      '｢objectiv｣ Could not generate a valid id for LinkContext @ RootLocation:root / Content:content. Please provide either the `title` or the `id` property manually.'
+    );
   });
 
   it('should allow forwarding the title property', () => {

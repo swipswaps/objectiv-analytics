@@ -5,7 +5,6 @@
 import { makeIdFromString } from '../src';
 
 describe('makeIdFromString', () => {
-  // setting output to `null` means expecting `makeIdFromString` to throw
   const testCases: [input: string, output: string | null][] = [
     // @ts-ignore
     [undefined, null],
@@ -37,12 +36,8 @@ describe('makeIdFromString', () => {
   ];
 
   testCases.forEach(([input, output]) =>
-    it(`'${JSON.stringify(input)}' -> '${output === null ? 'throw' : JSON.stringify(output)}'`, () => {
-      if (output === null) {
-        expect(() => makeIdFromString(input)).toThrow('Could not generated a valid id. Please provide one manually.');
-      } else {
-        expect(makeIdFromString(input)).toBe(output);
-      }
+    it(`${JSON.stringify(input)} -> ${JSON.stringify(output)}`, () => {
+      expect(makeIdFromString(input)).toBe(output);
     })
   );
 });

@@ -6,8 +6,8 @@
  * Converts the given text to a standardized format to be used as identifier for Location Contexts.
  * This may be used, among others, to infer a valid identifier from the title / label of a Button.
  */
-export const makeIdFromString = (sourceString: string): string => {
-  let id;
+export const makeIdFromString = (sourceString: string): string | null => {
+  let id = '';
 
   if (typeof sourceString === 'string') {
     id = sourceString
@@ -17,7 +17,7 @@ export const makeIdFromString = (sourceString: string): string => {
       .trim()
       // Replace spaces with dashes
       .replace(/[\s]+/g, '-')
-      // Remove non alphanumeric characters except dashes and underscores
+      // Remove non-alphanumeric characters except dashes and underscores
       .replace(/[^a-zA-Z0-9_-]+/g, '')
       // Get rid of duplicated dashes
       .replace(/-+/g, '-')
@@ -26,12 +26,12 @@ export const makeIdFromString = (sourceString: string): string => {
       // Get rid of leading or trailing underscores and dashes
       .replace(/^([-_])*|([-_])*$/g, '')
       // Truncate to 64 chars
-      .substr(0, 64);
+      .slice(0, 64);
   }
 
-  // Throw if we did not manage to generate a valid id
-  if (!id) {
-    throw new Error('Could not generated a valid id. Please provide one manually.');
+  // Catch empty strings and return null
+  if (!id || !id.length) {
+    return null;
   }
 
   // Return processed id
