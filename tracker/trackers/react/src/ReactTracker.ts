@@ -74,7 +74,7 @@ export class ReactTracker extends Tracker {
     }
 
     // If node is in `development` on web and console has not been configured, automatically use the browser's console
-    if (!config.console && isDevMode()) {
+    if (config.console === undefined && isDevMode()) {
       config.console = console;
     }
 
