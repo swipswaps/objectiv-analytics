@@ -3,10 +3,9 @@
  */
 
 import { SpyTransport } from '@objectiv/testing-tools';
-import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render, screen } from '@testing-library/react';
 import React, { createRef } from 'react';
-import { LocationTree, ObjectivProvider, TrackedContentContext, usePressEventTracker } from '../src';
+import { LocationTree, ObjectivProvider, ReactTracker, TrackedContentContext, usePressEventTracker } from '../src';
 
 describe('TrackedContentContext', () => {
   beforeEach(() => {
@@ -21,7 +20,7 @@ describe('TrackedContentContext', () => {
   it('should wrap the given Component in a ContentContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const TrackedButton = () => {
       const trackPressEvent = usePressEventTracker();
@@ -49,18 +48,18 @@ describe('TrackedContentContext', () => {
       2,
       expect.objectContaining({
         _type: 'PressEvent',
-        location_stack: [
+        location_stack: expect.arrayContaining([
           expect.objectContaining({
             _type: 'ContentContext',
             id: 'content-id',
           }),
-        ],
+        ]),
       })
     );
   });
 
   it('should allow forwarding the id property', () => {
-    const tracker = new Tracker({ applicationId: 'app-id' });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
 
     render(
       <ObjectivProvider tracker={tracker}>
@@ -78,7 +77,7 @@ describe('TrackedContentContext', () => {
   });
 
   it('should allow forwarding refs', () => {
-    const tracker = new Tracker({ applicationId: 'app-id' });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
     const ref = createRef<HTMLDivElement>();
 
     render(

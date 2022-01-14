@@ -7,17 +7,10 @@ import { recursiveGetTextFromChildrenNode } from './recursiveGetTextFromChildren
 
 /**
  * Retrieve text from given ReactNode children.
- * The resulting text may be may be used, among others, to infer a valid text and identifier for a Button.
+ * The resulting text may be used, among others, to infer a valid text and identifier for a Button.
  *
  * @see makeIdFromString
  */
 export const makeTitleFromChildren = (children: ReactNode): string => {
-  const text = recursiveGetTextFromChildrenNode(children);
-
-  // Throw if we did not manage to get any text
-  if (!text) {
-    throw new Error('Could not infer a title from children nodes. Please provide one manually.');
-  }
-
-  return text.trim();
+  return recursiveGetTextFromChildrenNode(children)?.trim() ?? '';
 };

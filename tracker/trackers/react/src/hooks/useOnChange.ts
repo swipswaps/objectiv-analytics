@@ -9,7 +9,7 @@ import { OnChangeEffectCallback } from '../types';
 /**
  * A side effect that monitors the given `state` and runs the given `effect` when it changes.
  */
-export const useOnChange = <T>(state: T, effect: OnChangeEffectCallback) => {
+export const useOnChange = <T>(state: T, effect: OnChangeEffectCallback<T>) => {
   let previousStateRef = useRef<T>(state);
   let latestEffectRef = useRef(effect);
 

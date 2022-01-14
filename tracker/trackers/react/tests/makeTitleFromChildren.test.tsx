@@ -7,16 +7,14 @@ import { ReactNode } from 'react';
 import { makeTitleFromChildren } from '../src';
 
 describe('makeTitleFromChildren', () => {
-  // setting output to `null` means expecting `makeTitleFromChildren` to throw
-  const testCases: [input: ReactNode, output: string | null][] = [
-    [undefined, null],
-    [null, null],
-    [false, null],
-    [true, null],
-    [[], null],
-    [{}, null],
-    ['', null],
-
+  const testCases: [input: ReactNode, output: string][] = [
+    [undefined, ''],
+    [null, ''],
+    [false, ''],
+    [true, ''],
+    [[], ''],
+    [{}, ''],
+    ['', ''],
     [0, '0'],
     [123, '123'],
     [456.12, '456.12'],
@@ -38,14 +36,8 @@ describe('makeTitleFromChildren', () => {
   ];
 
   testCases.forEach(([input, output]) =>
-    it(`'${JSON.stringify(input)}' -> '${output === null ? 'throw' : JSON.stringify(output)}'`, () => {
-      if (output === null) {
-        expect(() => makeTitleFromChildren(input)).toThrow(
-          'Could not infer a title from children nodes. Please provide one manually.'
-        );
-      } else {
-        expect(makeTitleFromChildren(input)).toBe(output);
-      }
+    it(`${JSON.stringify(input)} -> ${JSON.stringify(output)}`, () => {
+      expect(makeTitleFromChildren(input)).toBe(output);
     })
   );
 });

@@ -24,7 +24,7 @@ export type LocationStack = LocationContext<AbstractLocationContext>[];
 /**
  * A custom generic EffectCallback that receives the monitored `previousState` and `state` values
  */
-export type OnChangeEffectCallback = <T>(previousState: T, state: T) => void;
+export type OnChangeEffectCallback<T> = (previousState: T, state: T) => void;
 
 /**
  * A custom EffectCallback that receives the monitored `previousState` and `state` boolean values

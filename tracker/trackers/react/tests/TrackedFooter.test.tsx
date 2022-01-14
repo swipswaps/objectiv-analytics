@@ -3,10 +3,9 @@
  */
 
 import { SpyTransport } from '@objectiv/testing-tools';
-import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
 import React from 'react';
-import { LocationTree, ObjectivProvider, TrackedFooter, usePressEventTracker } from '../src';
+import { LocationTree, ObjectivProvider, ReactTracker, TrackedFooter, usePressEventTracker } from '../src';
 
 describe('TrackedFooter', () => {
   beforeEach(() => {
@@ -21,7 +20,7 @@ describe('TrackedFooter', () => {
   it('should wrap the given Component in a NavigationContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const TrackedButton = () => {
       const trackPressEvent = usePressEventTracker();
@@ -44,12 +43,12 @@ describe('TrackedFooter', () => {
     expect(spyTransport.handle).toHaveBeenCalledWith(
       expect.objectContaining({
         _type: 'PressEvent',
-        location_stack: [
+        location_stack: expect.arrayContaining([
           expect.objectContaining({
             _type: 'NavigationContext',
             id: 'footer',
           }),
-        ],
+        ]),
       })
     );
   });
@@ -57,7 +56,7 @@ describe('TrackedFooter', () => {
   it('should allow specifying a custom id', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const TrackedButton = () => {
       const trackPressEvent = usePressEventTracker();
@@ -80,12 +79,12 @@ describe('TrackedFooter', () => {
     expect(spyTransport.handle).toHaveBeenCalledWith(
       expect.objectContaining({
         _type: 'PressEvent',
-        location_stack: [
+        location_stack: expect.arrayContaining([
           expect.objectContaining({
             _type: 'NavigationContext',
             id: 'secondary-footer',
           }),
-        ],
+        ]),
       })
     );
   });
