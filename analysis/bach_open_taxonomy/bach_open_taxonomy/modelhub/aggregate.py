@@ -13,7 +13,7 @@ class Aggregate:
 
     Methods in this class can be filtered with the filter parameter, which always takes SeriesBoolean. The
     ModelHub can also create specific commonly used filters with methods that return SeriesBoolean from
-    :py:attr:`bach_open_taxonomy.ModelHub.map`.
+    :py:attr:`ModelHub.map`.
     """
 
     def __init__(self, df):

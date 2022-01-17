@@ -57,7 +57,7 @@ class Map:
         Labels a hit True if it is a conversion event, all other hits are labeled False.
 
         :param name: the name of the conversion to label as set in
-            :py:attr:`bach_open_taxonomy.ObjectivFrame.conversion_events`.
+            :py:attr:`ObjectivFrame.conversion_events`.
         :returns: SeriesBoolean with same index as the ObjectivFrame this method is applied to.
         """
 
@@ -78,7 +78,7 @@ class Map:
         hits.
 
         :param name: the name of the conversion to label as set in
-            :py:attr:`bach_open_taxonomy.ObjectivFrame.conversion_events`.
+            :py:attr:`ObjectivFrame.conversion_events`.
         :param partition: the partition over which the number of conversions are counted. Can be any column
             of the ObjectivFrame
         :returns: SeriesInt64 with same index as the ObjectivFrame this method is applied to.
@@ -112,7 +112,7 @@ class Map:
         partition or after the first conversion.
 
         :param name: the name of the conversion to label as set in
-            :py:attr:`bach_open_taxonomy.ObjectivFrame.conversion_events`.
+            :py:attr:`ObjectivFrame.conversion_events`.
         :param filter: filters hits from being counted. Returns None for filtered hits.
         :param partition: the partition over which the number of conversions are counted. Can be any column
             of the ObjectivFrame

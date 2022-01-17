@@ -226,6 +226,13 @@ class ObjectivFrame(DataFrame):
         raise NotImplementedError('Use ObjectivFrame.from_objectiv_data() to instantiate')
 
     def _hash_features(self, location_stack_column='location_stack'):
+        """
+        generates a hash for the columns `location_stack_column` and `event_type`.
+
+        :param location_stack_column: name of the location stack column to include in the hash. Uses
+            'location_stack' if None.
+        :returns: series with hashes.
+        """
         expression_str = "md5(concat({} #>> {}, {}))"
         expression = Expression.construct(
             expression_str,
@@ -236,6 +243,10 @@ class ObjectivFrame(DataFrame):
         return self[location_stack_column].copy_override(dtype='string', expression=expression)
 
     def _prepare_sample(self, location_stack_column='location_stack'):
+        """
+        prepares a sample of all unique combinations of values in location_stack_column and event_type. Also
+        adds a count for the number of hits per unique combination of those.
+        """
         df = self[[location_stack_column, 'event_type']]
         df[location_stack_column] = df[location_stack_column].ls.feature_stack
         feature_hash = df._hash_features(location_stack_column=location_stack_column)

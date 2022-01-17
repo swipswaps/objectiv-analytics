@@ -15,7 +15,7 @@ class ModelHub:
     Class for the open model hub. Used in ObjectivFrame.
 
     The ModelHub contains a growing collection of open-source, free to use data models
-    that you can take, stack and run to quickly build highly specific model stacks for product analysis and
+    that you can take, chain and run to quickly build highly specific model stacks for product analysis and
     exploration. It includes models for a wide range of typical product analytics use cases.
 
     All models are compatible with datasets that have been validated against the open analytics taxonomy. The
@@ -44,7 +44,7 @@ class ModelHub:
         return self._metabase.to_metabase(df, model_type, config)
 
     def filter(self, filter: 'SeriesBoolean'):
-        """"
+        """
         Filters the ObjectivFrame for all hits where the filter is True.
 
         :param filter: SeriesBoolean, where hits are True for those returned.
@@ -72,7 +72,7 @@ class ModelHub:
         """
         Access map methods from the model hub.
 
-        .. autoclass:: bach_open_taxonomy.series.ModelHub.Filter
+        .. autoclass:: Map
             :members:
             :noindex:
 
@@ -85,7 +85,7 @@ class ModelHub:
         """
         Access aggregation methods from the model hub. Same as :py:meth:`aggregate`.
 
-        .. autoclass:: bach_open_taxonomy.series.ModelHub.Aggregate
+        .. autoclass:: Aggregate
             :members:
             :noindex:
 
@@ -98,7 +98,7 @@ class ModelHub:
         """
         Access aggregation methods from the model hub. Same as :py:meth:`agg`.
 
-        .. autoclass:: bach_open_taxonomy.series.ModelHub.Aggregate
+        .. autoclass:: Aggregate
             :members:
             :noindex:
 
