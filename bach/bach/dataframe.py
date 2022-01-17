@@ -1920,7 +1920,7 @@ class DataFrame:
         """
         from bach.series import SeriesAbstractNumeric
 
-        df = self
+        df = self.copy_override()
         for col in df.data.values():
             if not isinstance(col, SeriesAbstractNumeric):
                 continue

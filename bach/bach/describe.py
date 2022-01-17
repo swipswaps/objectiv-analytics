@@ -148,7 +148,7 @@ class DataFrameDescriber:
     def _get_stats(self, columns_to_describe: List[str]) -> DataFrame:
         final_df: DataFrame
         for pos, stat in enumerate(self.main_stat.value):
-            stat_df = self.df.copy_override()[columns_to_describe]
+            stat_df = self.df[columns_to_describe]
             stat_df = stat_df.to_frame() if isinstance(stat_df, Series) else stat_df
             original_columns = stat_df.index_columns + stat_df.data_columns
 
