@@ -355,7 +355,9 @@ class Series(ABC):
     def _get_supported(self, operation_name: str, supported_dtypes: Tuple[str, ...], other: 'Series'):
         """
         Check whether `other` is supported for this operation, and if not, possibly do something
-        about it by using subquery / materialization
+        about it by using subquery / materialization / aligning base nodes using a merge.
+
+        :returns: the (modified) series and (modified) other.
         """
         if not (other.expression.is_constant or other.expression.is_independent_subquery):
             # we should maybe create a subquery
@@ -363,13 +365,18 @@ class Series(ABC):
                 if other.expression.is_single_value:
                     other = self.as_independent_subquery(other)
                 else:
-                    # TODO improve error
-                    raise ValueError("rhs has a different base_node or group_by, but contains more than one "
-                                     "value. This is not supported.")
+                    # align base nodes and group by
+                    df = self.to_frame()
+                    # todo now using private method from DataFrame. This will change to use merge, once this
+                    #  type of 'index merge' works with that method.
+                    df._index_merge(key='__other', value=other, how='outer')
+                    return df[self.name], df['__other']
+                    # todo pandas: if name of both series are same, use that name of result. we always use
+                    #  name of self
 
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
-        return other
+        return self, other
 
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.Series:
         """
@@ -658,14 +665,14 @@ class Series(ABC):
                                       f'for {self.__class__} and {other.__class__}')
 
         other = const_to_series(base=self, value=other)
-        other = self._get_supported(operation, other_dtypes, other)
-        expression = NonAtomicExpression.construct(fmt_str, self, other)
+        self_modified, other = self._get_supported(operation, other_dtypes, other)
+        expression = NonAtomicExpression.construct(fmt_str, self_modified, other)
         if isinstance(dtype, dict):
             if other.dtype not in dtype:
                 dtype = None
             else:
                 dtype = dtype[other.dtype]
-        return self.copy_override(dtype=dtype, expression=expression)
+        return self_modified.copy_override(dtype=dtype, expression=expression)
 
     def _arithmetic_operation(self, other: 'Series', operation: str, fmt_str: str,
                               other_dtypes: Tuple[str, ...] = (),

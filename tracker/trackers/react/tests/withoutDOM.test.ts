@@ -6,7 +6,7 @@
 import { ReactTracker } from '../src';
 
 describe('Without DOM', () => {
-  it('should not instantiate LocalStorage but MemoryQueue instead', () => {
+  it('ReactTracker: should not instantiate LocalStorage but MemoryQueue instead', () => {
     expect(
       new ReactTracker({
         applicationId: 'app-id',

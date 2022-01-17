@@ -3,59 +3,30 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import { getLocationPath } from '@objectiv/tracker-core';
+import { generateUUID, getLocationPath, Tracker } from '@objectiv/tracker-core';
 import { LocationContext } from '../types';
 
 /**
- * TODO: this module is highly experimental and currently not enabled
- */
-
-/**
- * LocationTree nodes have the same shape of LocationContext but they can have children LocationNodes themselves.
+ * LocationTree nodes have the same shape of LocationContext, but they can have a parent LocationNode themselves.
  */
 export type LocationNode = LocationContext<AbstractLocationContext> & {
   /**
-   * An array of LocationNode objects, which may contain more children themselves.
+   * The parent LocationNode identifier.
    */
-  children: LocationNode[];
+  parentLocationId: string | null;
 };
 
 /**
- * LocationTree root node has `id`, `_type` and `__location_id` hardcoded to null. It's just a container.
+ * Holds which node id is the root one. Trackers may carry plugins that enrich LocationStacks before sending events.
  */
-export type LocationRootNode = {
-  /**
-   * LocationRootNode id can only be null.
-   */
-  id: null;
-
-  /**
-   * LocationRootNode _type can only be null.
-   */
-  _type: null;
-
-  /**
-   * LocationRootNode __location_id can only be null.
-   */
-  __location_id: null;
-
-  /**
-   * An array of LocationNode objects, which may contain more children themselves.
-   */
-  children: LocationNode[];
-};
+export let rootId: string | null = null;
 
 /**
- * Internal state to hold the complete known LocationTree.
+ * Internal state to hold a complete list of all known LocationNodes.
  * Each node, exception made for the root one, is a uniquely identifiable Location Context.
- * All nodes may have children LocationNodes.
+ * All nodes, except the root ine, have a parent LocationNode.
  */
-const locationTree: LocationRootNode = {
-  id: null,
-  _type: null,
-  __location_id: null,
-  children: [],
-};
+export let locationNodes: LocationNode[] = [];
 
 /**
  * Internal state to keep track of which identifiers are already known for a certain issue. This is used to prevent
@@ -63,110 +34,193 @@ const locationTree: LocationRootNode = {
  *
  * NOTE: Currently we support only `collision` issues. As more checks are implemented this Map may change.
  */
-const errorCache = new Map<string, 'collision'>();
+export const errorCache = new Map<string, 'collision'>();
 
 /**
- * LocationTree is a global object providing a few utility methods to interact with the `locationTree` global state.
+ * LocationTree is a global object providing a few utility methods to interact with the `locationNodes` global state.
  * LocationContextWrapper makes sure to add new LocationNodes to the tree whenever a Location Wrapper is used.
  */
 export const LocationTree = {
   /**
-   * completely resets LocationTree state. Mainly useful while testing.
+   * Completely resets LocationTree state. Mainly useful while testing.
    */
   clear: () => {
-    locationTree.children = [];
+    locationNodes = [];
     errorCache.clear();
   },
 
   /**
-   * Logs a readable version of the `locationTree` state to the console
+   * Helper method to return a list of children of the given LocationNode
    */
-  log: (locationNode: LocationNode | LocationRootNode = locationTree, depth = 0) => {
-    if (!locationNode) {
-      return;
-    }
-
-    // Only log nodes with _type and id, this leaves out the LocationRootNode node
-    if (locationNode._type && locationNode.id) {
-      console.log('  '.repeat(depth) + locationNode._type + ':' + locationNode.id);
-    }
-
-    depth++;
-
-    locationNode.children.forEach((locationChildNode) => LocationTree.log(locationChildNode, depth));
+  children: ({ __location_id }: LocationNode): LocationNode[] => {
+    return locationNodes.filter(({ parentLocationId }) => parentLocationId === __location_id);
   },
 
   /**
-   * Finds a node by its id recursively. Returns `null` if a node cannot be found with the given identifier.
-   * A starting node, other than the whole `locationTree` state, can be specified.
+   * Helper method to return the rootNode from the list of locationNodes
    */
-  findByLocationId: (
-    locationId: string | null,
-    locationNode: LocationNode | LocationRootNode = locationTree
-  ): null | LocationNode | LocationRootNode => {
-    if (locationNode.__location_id === locationId) {
-      return locationNode;
-    }
-
-    let result: null | LocationNode | LocationRootNode = null;
-
-    for (let i = 0; result === null && i < locationNode.children.length; i++) {
-      result = LocationTree.findByLocationId(locationId, locationNode.children[i]);
-    }
-
-    return result;
+  rootNode: (): LocationNode | null => {
+    return locationNodes.find(({ parentLocationId }) => parentLocationId === null) ?? null;
   },
 
   /**
-   * Checks the validity of the `locationTree` state.
-   * Currently we perform only Uniqueness Check: if identical branches are detected they will be logged to the console.
+   * Helper method to log and register an error for the given locationId
    *
-   * Note: This method is invoked automatically when calling `LocationTree.add`.
+   * NOTE: Currently we support only `collision` issues. As more checks are implemented the type parameter may change.
    */
-  validate: (
-    locationNode: LocationNode | LocationRootNode = locationTree,
-    locationStack: AbstractLocationContext[] = [],
-    locationPaths: Set<string> = new Set()
-  ) => {
-    // Only push nodes with _type and id, this leaves out the LocationRootNode node
-    if (locationNode._type && locationNode.id) {
-      locationStack.push(locationNode);
-    }
-
-    // Collision detection
-    const locationPath = getLocationPath(locationStack);
-    const locationPathsSize = locationPaths.size;
-    locationPaths.add(locationPath);
-
-    if (locationPathsSize === locationPaths.size && errorCache.get(locationPath) !== 'collision') {
-      console.error(`｢objectiv｣ Location collision detected: ${locationPath}`);
+  error: (locationId: string, message: string, type: 'collision' = 'collision') => {
+    if (errorCache.get(locationId) !== type) {
+      console.error(`｢objectiv｣ ${message}`);
       console.log(`Location Tree:`);
       LocationTree.log();
-      errorCache.set(locationPath, 'collision');
+      errorCache.set(locationId, type);
     }
+  },
 
-    // Rerun validation for each child
-    locationNode.children.map((childLocationNode) =>
-      LocationTree.validate(childLocationNode, [...locationStack], locationPaths)
+  /**
+   * Clears and re-initializes the LocationTree nodes based on the given Tracker's Plugins.
+   *
+   * This method receives an instance of the Tracker and infers LocationStack mutations from its Plugins.
+   * All lifecycle methods of each Plugin are executed and LocationStack mutations, if any, are collected.
+   * LocationContexts are then converted to LocationNodes and pushed in the LocationTree state.
+   * The Root element of the LocationTree gets also adjusted accordingly, so that we may add more Nodes correctly.
+   */
+  initialize: (tracker: Tracker) => {
+    LocationTree.clear();
+
+    // Clone the given Tracker into a new one with only plugins configured and run their lifecycles
+    const trackerClone = new Tracker({ applicationId: tracker.applicationId, plugins: tracker.plugins });
+    trackerClone.plugins.initialize(trackerClone);
+    trackerClone.plugins.beforeTransport(trackerClone);
+
+    // Convert AbstractLocationContext[] to LocationContext<AbstractLocationContext>[]
+    const locationStack: LocationContext<AbstractLocationContext>[] = trackerClone.location_stack.map(
+      (locationContext) => ({
+        __location_id: generateUUID(),
+        ...locationContext,
+      })
+    );
+
+    // Add LocationStack Contexts to LocationTree and update what the root node should be
+    locationStack.reduce(
+      (
+        parentLocationContext: LocationContext<AbstractLocationContext> | null,
+        locationContext: LocationContext<AbstractLocationContext>
+      ) => {
+        LocationTree.add(locationContext, parentLocationContext);
+        // Update the rootId to the last LocationContext we add this way. This effectively updates the root node.
+        rootId = locationContext.__location_id;
+        return locationContext;
+      },
+      null
     );
   },
 
   /**
-   * Adds the given LocationContext to the `locationTree` state, then invokes `LocationTree.validate` to report issues.
+   * Logs a readable version of the `locationNodes` state to the console
+   */
+  log: (locationNode?: LocationNode, depth = 0) => {
+    const nodeToLog = locationNode ?? LocationTree.rootNode();
+    if (!nodeToLog) {
+      return;
+    }
+    // Log the given node
+    console.log('  '.repeat(depth) + nodeToLog._type + ':' + nodeToLog.id);
+
+    // Increase depth
+    depth++;
+
+    // Recursively log children, if any
+    LocationTree.children(nodeToLog).forEach((childLocationNode: LocationNode) =>
+      LocationTree.log(childLocationNode, depth)
+    );
+  },
+
+  /**
+   * Checks the validity of the `locationNodes` state.
+   * Currently, we perform only Uniqueness Check: if identical branches are detected they will be logged to the console.
+   *
+   * Note: This method is invoked automatically when calling `LocationTree.add`.
+   */
+  validate: (
+    locationNode?: LocationNode,
+    locationStack: AbstractLocationContext[] = [],
+    locationPaths: Set<string> = new Set()
+  ) => {
+    const nodeToValidate = locationNode ?? LocationTree.rootNode();
+    if (!nodeToValidate) {
+      return;
+    }
+
+    locationStack.push(nodeToValidate);
+
+    // Collision detection
+    const locationId = nodeToValidate.__location_id;
+    const locationPath = getLocationPath(locationStack);
+    const locationPathsSize = locationPaths.size;
+    locationPaths.add(locationPath);
+
+    if (locationPathsSize === locationPaths.size) {
+      LocationTree.error(locationId, `Location collision detected: ${locationPath}`);
+      // No point in continuing to validate this node children, exit early
+      return;
+    }
+
+    // Rerun validation for each child
+    LocationTree.children(nodeToValidate).map((childLocationNode: LocationNode) => {
+      LocationTree.validate(childLocationNode, [...locationStack], locationPaths);
+    });
+  },
+
+  /**
+   * Adds the given LocationContext to the `locationNodes` state, then invokes `LocationTree.validate` to report issues.
    *
    * Note: This method is invoked automatically by LocationContextWrapper.
    */
   add: (
     locationContext: LocationContext<AbstractLocationContext>,
-    parentLocation?: LocationContext<AbstractLocationContext>
+    parentLocationContext: LocationContext<AbstractLocationContext> | null
   ) => {
-    const parentLocationNode = LocationTree.findByLocationId(parentLocation?.__location_id ?? null);
-    if (!parentLocationNode) {
-      throw new Error('Parent LocationNode not found.');
+    const parentLocationId = parentLocationContext?.__location_id ?? rootId;
+
+    // Forbid adding multiple roots
+    if (parentLocationId === null && LocationTree.rootNode()) {
+      LocationTree.error(locationContext.__location_id, `Multiple root locations detected: ${locationContext.id}`);
     }
 
-    parentLocationNode.children.push({ ...locationContext, children: [] });
+    // Create and push the new LocationNode into the LocationTree
+    locationNodes.push({ ...locationContext, parentLocationId });
 
+    // Run validation to check if the tree is still valid
     LocationTree.validate();
+  },
+
+  /**
+   * Removes the LocationNode corresponding to the given LocationContext from the LocationTree and errorCache.
+   * Performs also a recursive cleanup of orphaned nodes afterwards.
+   *
+   * Note: This method is invoked automatically by LocationContextWrapper.
+   */
+  remove: (locationContext: LocationContext<AbstractLocationContext>) => {
+    locationNodes = locationNodes.filter(({ __location_id }) => __location_id !== locationContext.__location_id);
+    errorCache.delete(locationContext.__location_id);
+
+    const sizeBeforeCleanup = locationNodes.length;
+
+    // Filter out all nodes that have a parentLocationId that does not exist anymore
+    locationNodes = locationNodes.reduce((accumulator, locationNode) => {
+      if (!locationNode.parentLocationId) {
+        accumulator.push(locationNode);
+      }
+      if (locationNodes.some(({ __location_id }) => __location_id === locationNode.parentLocationId)) {
+        accumulator.push(locationNode);
+      }
+      return accumulator;
+    }, [] as LocationNode[]);
+
+    // Keep running until the cleaned up tree stop changing in size
+    if (sizeBeforeCleanup !== locationNodes.length) {
+      LocationTree.remove(locationContext);
+    }
   },
 };

@@ -3,10 +3,9 @@
  */
 
 import { SpyTransport } from '@objectiv/testing-tools';
-import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { LocationTree, ObjectivProvider, TrackedInput } from '../src';
+import { LocationTree, ObjectivProvider, ReactTracker, TrackedInput } from '../src';
 
 describe('TrackedInputContext', () => {
   beforeEach(() => {
@@ -21,7 +20,7 @@ describe('TrackedInputContext', () => {
   it('should wrap the given Component in an InputContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     render(
       <ObjectivProvider tracker={tracker}>
@@ -37,12 +36,12 @@ describe('TrackedInputContext', () => {
     expect(spyTransport.handle).toHaveBeenCalledWith(
       expect.objectContaining({
         _type: 'InputChangeEvent',
-        location_stack: [
+        location_stack: expect.arrayContaining([
           expect.objectContaining({
             _type: 'InputContext',
             id: 'input-id',
           }),
-        ],
+        ]),
       })
     );
   });

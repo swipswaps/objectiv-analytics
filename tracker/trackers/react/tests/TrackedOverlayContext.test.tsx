@@ -3,10 +3,9 @@
  */
 
 import { SpyTransport } from '@objectiv/testing-tools';
-import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render, screen } from '@testing-library/react';
 import React, { createRef } from 'react';
-import { LocationTree, ObjectivProvider, TrackedOverlayContext, usePressEventTracker } from '../src';
+import { LocationTree, ObjectivProvider, ReactTracker, TrackedOverlayContext, usePressEventTracker } from '../src';
 
 const TrackedButton = () => {
   const trackPressEvent = usePressEventTracker();
@@ -26,7 +25,7 @@ describe('TrackedOverlayContext', () => {
   it('should wrap the given Component in an OverlayContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -49,12 +48,12 @@ describe('TrackedOverlayContext', () => {
       2,
       expect.objectContaining({
         _type: 'PressEvent',
-        location_stack: [
+        location_stack: expect.arrayContaining([
           expect.objectContaining({
             _type: 'OverlayContext',
             id: 'modal-id',
           }),
-        ],
+        ]),
       })
     );
   });
@@ -62,7 +61,7 @@ describe('TrackedOverlayContext', () => {
   it('should not track an HiddenEvent when initialized with isVisible=false', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     render(
       <ObjectivProvider tracker={tracker}>
@@ -82,7 +81,7 @@ describe('TrackedOverlayContext', () => {
   it('should track an VisibleEvent when isVisible switches from false to true and vice-versa a HiddenEvent', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const { rerender } = render(
       <ObjectivProvider tracker={tracker}>
@@ -134,7 +133,7 @@ describe('TrackedOverlayContext', () => {
   });
 
   it('should allow forwarding the id property', () => {
-    const tracker = new Tracker({ applicationId: 'app-id' });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
 
     render(
       <ObjectivProvider tracker={tracker}>
@@ -152,7 +151,7 @@ describe('TrackedOverlayContext', () => {
   });
 
   it('should allow forwarding refs', () => {
-    const tracker = new Tracker({ applicationId: 'app-id' });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
     const ref = createRef<HTMLDivElement>();
 
     render(

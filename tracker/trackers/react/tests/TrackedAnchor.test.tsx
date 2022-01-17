@@ -3,10 +3,9 @@
  */
 
 import { SpyTransport } from '@objectiv/testing-tools';
-import { Tracker } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
 import React from 'react';
-import { LocationTree, ObjectivProvider, TrackedAnchor } from '../src';
+import { LocationTree, ObjectivProvider, ReactTracker, TrackedAnchor } from '../src';
 
 describe('TrackedAnchor', () => {
   beforeEach(() => {
@@ -21,7 +20,7 @@ describe('TrackedAnchor', () => {
   it('should wrap the given Component in a LinkContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
-    const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const { container } = render(
       <ObjectivProvider tracker={tracker}>
@@ -37,13 +36,13 @@ describe('TrackedAnchor', () => {
     expect(spyTransport.handle).toHaveBeenCalledWith(
       expect.objectContaining({
         _type: 'PressEvent',
-        location_stack: [
+        location_stack: expect.arrayContaining([
           expect.objectContaining({
             _type: 'LinkContext',
             id: 'trigger-event',
             href: '/some-url',
           }),
-        ],
+        ]),
       })
     );
   });
