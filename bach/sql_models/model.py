@@ -140,7 +140,7 @@ class SqlModelSpec:
         """
         # Override for non-default behaviour
         # If we switch to jinja templates, then we won't need this function anymore.
-        return {key: escape_format_string(str(val)) for key, val in properties.items()}
+        return {key: escape_placeholder_value(str(val)) for key, val in properties.items()}
 
     def assert_adheres_to_spec(self,
                                references: Mapping[str, 'SqlModel'],
@@ -665,6 +665,22 @@ class CustomSqlModelBuilder(SqlModelBuilder):
     @property
     def generic_name(self):
         return self._generic_name
+
+
+def escape_raw_sql(sql: str) -> str:
+    """
+    Take any raw sql that will be used in a model and escape all '{' and '}'. This prevents the sql_generator
+    from interpreting '{' and '}' as either placeholders or references.
+    """
+    return escape_format_string(sql, 2)
+
+
+def escape_placeholder_value(value: str) -> str:
+    """
+    Take any value that will be used as a placeholder value, and escape all '{' and '}'. This prevents
+    the sql_generator from interpreting '{' and '}' as references.
+    """
+    return escape_format_string(value, 1)
 
 
 def escape_format_string(value: str, times=1) -> str:

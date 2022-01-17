@@ -1680,9 +1680,12 @@ class DataFrame:
 
         The interface of this function is similar to pandas' merge, but the following parameters are not
         supported: `sort`, `copy`, `indicator`, and `validate`.
-        Additionally when merging two frames that have conflicting columns names, and joining on indices,
+        Additionally, when merging two frames that have conflicting columns names, and joining on indices,
         then the resulting columns/column names can differ slightly from Pandas.
 
+        If variables are set (see :meth:`DataFrame.variables`), then values from self will be used in cases
+        where a variable name/dtype combination has been defined in both the `self` and `right`
+        DataFramesOrSeries.
 
         :param right: DataFrame or Series to join on self
         :param how: supported values: {‘left’, ‘right’, ‘outer’, ‘inner’, ‘cross’}
@@ -2029,7 +2032,12 @@ class DataFrame:
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
-    def create_variable(self, name: str, value: Any) -> Tuple['DataFrame', 'Series']:
+    def create_variable(
+            self,
+            name: str,
+            value: Any,
+            *, dtype: Optional[str] = None
+    ) -> Tuple['DataFrame', 'Series']:
         """
         Create a Series object that can be used as a variable, within the returned DataFrame. The
         DataFrame will have the variable with the given values set in :meth:`DataFrame.variables`.
@@ -2043,20 +2051,31 @@ class DataFrame:
         edge cases around merging DataFrames and Series with the same variables, and building on top of
         SqlModels that already have variables.
 
+        :param name: name of variable to update
+        :param value: value of variable
+        :param dtype: optional. If not set it will be derived from the value, if set we check that it
+            matches the value. If dtype doesn't match the value's dtype, then an Exception is raised.
         :return: Tuple with DataFrame and Series object.
         """
         from bach.series.series import variable_series
         series = variable_series(base=self, value=value, name=name)
+        if dtype is not None and dtype != series.dtype:
+            raise ValueError(f"Dtype of value ({series.dtype}) and provided dtype ({dtype}) don't match.")
         variables = self.variables
         variables[DtypeNamePair(dtype=series.dtype, name=name)] = value
         df = self.copy_override(variables=variables)
         return df, series
 
-    def set_variable(self, name: str, value: Any) -> 'DataFrame':
+    def set_variable(self, name: str, value: Any, *, dtype: Optional[str] = None) -> 'DataFrame':
         """
         Return a copy of this DataFrame with the variable value updated.
+        :param name: name of variable to update
+        :param value: new value of variable
+        :param dtype: optional. If not set it will be derived from the value, if set we check that it
+            matches the value. If dtype doesn't match the value's dtype, then an Exception is raised.
+        :return: copy of this DataFrame, with the value updated.
         """
-        df, _ = self.create_variable(name, value)
+        df, _ = self.create_variable(name, value, dtype=dtype)
         return df
 
     def get_all_variable_usage(self) -> List[DefinedVariable]:

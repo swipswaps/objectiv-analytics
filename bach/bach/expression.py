@@ -5,7 +5,7 @@ import re
 from dataclasses import dataclass
 from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set
 
-from sql_models.model import escape_format_string
+from sql_models.model import escape_raw_sql
 from sql_models.util import quote_string, quote_identifier
 
 if TYPE_CHECKING:
@@ -38,7 +38,7 @@ class RawToken(ExpressionToken):
     raw: str
 
     def to_sql(self) -> str:
-        return escape_format_string(self.raw, times=2)
+        return escape_raw_sql(self.raw)
 
 
 @dataclass(frozen=True)
@@ -100,7 +100,7 @@ class StringValueToken(ExpressionToken):
     value: str
 
     def to_sql(self) -> str:
-        return escape_format_string(quote_string(self.value), times=2)
+        return escape_raw_sql(quote_string(self.value))
 
 
 @dataclass(frozen=True)
@@ -108,7 +108,7 @@ class IdentifierToken(ExpressionToken):
     name: str
 
     def to_sql(self) -> str:
-        return escape_format_string(quote_identifier(self.name), times=2)
+        return escape_raw_sql(quote_identifier(self.name))
 
 
 class Expression:
