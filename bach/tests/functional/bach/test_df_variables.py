@@ -100,6 +100,17 @@ def test_set_variable_double_types():
         ]
     )
 
+    # We can be explicit about which dtype we want to set. If it doesn't match the value this will give an
+    # error
+    df.set_variable('variable', 1234, dtype='int64')
+    df.set_variable('variable', '1234', dtype='string')
+    with pytest.raises(ValueError,
+                       match=r"Dtype of value \(int64\) and provided dtype \(string\) don't match"):
+        df.set_variable('variable', 1234, dtype='string')
+    with pytest.raises(ValueError,
+                       match=r"Dtype of value \(string\) and provided dtype \(int64\) don't match"):
+        df.set_variable('variable', '1234', dtype='int64')
+
 
 def test_variable_missing():
     # test case where a variable is used in the series, but has no value assigned.
