@@ -1656,10 +1656,7 @@ class DataFrame:
         model = self.get_current_node('view_sql', limit=limit)
         placeholder_values = get_variable_values_sql(variable_values=self.variables)
         # TODO: fix typing here, or move all BachSqlModel logic to SqlModel, or both?
-        model = update_placeholders_in_graph(
-            start_node=model,
-            placeholder_values=placeholder_values
-        )  # type: ignore
+        model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)  # type: ignore  # noqa
         return to_sql(model)
 
     def merge(
