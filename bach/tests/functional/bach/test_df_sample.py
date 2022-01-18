@@ -153,7 +153,7 @@ def test_sample_grouped():
     bt = get_bt_with_test_data(True)
     bt = bt[['municipality', 'inhabitants', 'founding']]
     bt['founding_century'] = (bt['founding'] // 100) + 1
-    btg = bt.groupby('municipality').sort_values('municipality')
+    btg = bt.groupby('municipality')
     btg_min = btg.min()
 
     btg_sample = btg.get_sample(table_name='test_data_sample',
@@ -185,7 +185,8 @@ def test_sample_grouped():
         expected_data=[
             ['De Friese Meren', 25.0],
             ['Súdwest-Fryslân', 23.0]
-        ]
+        ],
+        order_by='municipality'
     )
 
     # Assert unsampled data.
@@ -202,5 +203,6 @@ def test_sample_grouped():
             ['Noardeast-Fryslân', 23.0, 33.0, 13.0],
             ['Súdwest-Fryslân', 25.0, 35.0, 11.0],
             ['Waadhoeke', 24.0, 34.0, 14.0]
-        ]
+        ],
+        order_by='municipality'
     )
