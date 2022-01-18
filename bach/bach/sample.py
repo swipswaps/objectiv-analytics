@@ -66,7 +66,7 @@ def get_sample(df: DataFrame,
     return df.copy_override_base_node(base_node=new_base_node)
 
 
-def get_unsampled(df) -> 'DataFrame':
+def get_unsampled(df: DataFrame) -> 'DataFrame':
     """
     See :py:meth:`bach.DataFrame.get_unsampled` for more information.
     """
