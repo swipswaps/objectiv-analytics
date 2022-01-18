@@ -10,7 +10,7 @@ from sqlalchemy.future import Connection
 from bach.expression import Expression, SingleValueExpression, VariableToken
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from sql_models.graph_operations import update_properties_in_graph, get_all_properties
+from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
 from sql_models.sql_generator import to_sql
@@ -410,7 +410,7 @@ class DataFrame:
         columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
         bach_model = BachSqlModel(
             model_spec=model.model_spec,
-            properties=model.properties,
+            placeholders=model.placeholders,
             references=model.references,
             materialization=model.materialization,
             materialization_name=model.materialization_name,
@@ -1654,9 +1654,12 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        property_values = get_variable_values_sql(variable_values=self.variables)
+        placeholder_values = get_variable_values_sql(variable_values=self.variables)
         # TODO: fix typing here, or move all BachSqlModel logic to SqlModel, or both?
-        model = update_properties_in_graph(start_node=model, property_values=property_values)  # type: ignore
+        model = update_placeholders_in_graph(
+            start_node=model,
+            placeholder_values=placeholder_values
+        )  # type: ignore
         return to_sql(model)
 
     def merge(
@@ -2124,9 +2127,9 @@ class DataFrame:
 
     def _get_all_used_variables_base_node(self) -> List[DefinedVariable]:
         result = []
-        all_properties = get_all_properties(self.base_node)
-        for property_name, values_dict in all_properties.items():
-            token = VariableToken.property_name_to_token(property_name)
+        all_placeholders = get_all_placeholders(self.base_node)
+        for placeholder_name, values_dict in all_placeholders.items():
+            token = VariableToken.placeholder_name_to_token(placeholder_name)
             if token is None:
                 continue
             for ref_path, old_value in values_dict.items():
