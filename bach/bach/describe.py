@@ -123,8 +123,9 @@ class DataFrameDescriber:
 
     def _get_stats(self) -> DataFrame:
         final_df: DataFrame
+        df = self.df.reset_index(drop=True)
         for pos, stat in enumerate(self.main_stat.value):
-            stat_df = self.df[self.series_to_describe]
+            stat_df = df[self.series_to_describe]
             stat_df = stat_df.to_frame() if isinstance(stat_df, Series) else stat_df
             original_series_names = stat_df.index_columns + stat_df.data_columns
 

@@ -45,13 +45,14 @@ def test_get_casted_filtering_dtypes() -> None:
 
 def test_process_params_main_stat() -> None:
     fake_df = get_fake_df(
-        index_names=[],
-        data_names=['a', 'b', 'c'],
+        index_names=['e'],
+        data_names=['a', 'b', 'c', 'd'],
         dtype={
             'a': 'string',
             'b': 'integer',
             'c': 'bool',
             'd': 'timestamp',
+            'e': 'uuid',
         },
     )
 
