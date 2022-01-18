@@ -77,19 +77,21 @@ class Aggregate:
         :returns: series with results.
         """
         df = self._df.copy_override()
+        df['moment2'] = df.moment
         if not time_aggregation:
             time_aggregation = self._df._time_aggregation
         gb = ['session_id']
         if time_aggregation:
-            df[time_aggregation] = df.moment.dt.sql_format(time_aggregation)
-            gb = ['session_id', time_aggregation]
+            gb = ['session_id', df.moment.dt.sql_format(time_aggregation)]
 
-        session_duration = df.groupby(gb).aggregate({'moment': ['min', 'max']})
-        session_duration['session_duration'] = session_duration['moment_max'] - session_duration['moment_min']
+        session_duration = df.groupby(gb).aggregate({'moment2': ['min', 'max']})
+        session_duration['session_duration'] = session_duration['moment2_max']-session_duration['moment2_min']
         # remove "bounces"
         session_duration = session_duration[(session_duration['session_duration'] > '0')]
-
-        return session_duration.groupby(time_aggregation).aggregate({'session_duration': 'mean'})
+        if time_aggregation:
+            return session_duration.groupby('moment').session_duration.mean()
+        else:
+            return session_duration.session_duration.mean()
 
     def frequency(self):
         """

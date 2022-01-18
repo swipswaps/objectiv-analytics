@@ -74,8 +74,7 @@ class Map:
     def conversion_count(self, name: str, partition='session_id'):
         """
         Counts the number of time a user is converted at a moment in time given a partition (ie session_id
-        or user_id). If a user did not convert, or hits are after first conversion, None is returned for those
-        hits.
+        or user_id).
 
         :param name: the name of the conversion to label as set in
             :py:attr:`ObjectivFrame.conversion_events`.

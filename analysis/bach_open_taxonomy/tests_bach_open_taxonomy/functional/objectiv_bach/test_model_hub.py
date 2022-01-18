@@ -214,7 +214,7 @@ def test_session_duration():
 
     assert_equals_data(
         s,
-        expected_columns=['session_duration_mean'],
+        expected_columns=['session_duration'],
         expected_data=[
             [datetime.timedelta(microseconds=2667)]
         ]
@@ -225,7 +225,7 @@ def test_session_duration():
 
     assert_equals_data(
         bts,
-        expected_columns=['YYYY-MM-DD', 'session_duration_mean'],
+        expected_columns=['moment', 'session_duration'],
         expected_data=[
             ['2021-11-29', datetime.timedelta(microseconds=1000)],
             ['2021-11-30', datetime.timedelta(microseconds=4000)],

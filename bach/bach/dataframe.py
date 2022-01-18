@@ -1813,7 +1813,8 @@ class DataFrame:
             raise ValueError("series do not agree on new index / group_by")
 
         return df.copy_override(index=new_index, group_by=[new_group_by],
-                                series={s.name: s for s in new_series})
+                                series={s.name: s for s in new_series},
+                                order_by=[])
 
     def _aggregate_func(self, func: str, axis, level, numeric_only, *args, **kwargs) -> 'DataFrame':
         """

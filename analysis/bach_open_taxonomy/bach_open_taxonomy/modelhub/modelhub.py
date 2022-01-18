@@ -18,6 +18,13 @@ class ModelHub:
     that you can take, chain and run to quickly build highly specific model stacks for product analysis and
     exploration. It includes models for a wide range of typical product analytics use cases.
 
+    The model hub has two main type of functions: :py:attr:`map` and :py:attr:`aggregate`.
+
+    1. :py:attr:`map` functions are models that always return a series with the same shape and index as the
+       ObjectivFrame they originate from.
+    2. :py:attr:`aggregate` fuctions are models that return aggregated data in some form from the
+       ObjectivFrame.
+
     All models are compatible with datasets that have been validated against the open analytics taxonomy. The
     source is available for all models and you’re free to make any changes. You can use the included
     pandas-compatible Bach modeling library to customize them, or even add in advanced ML models.
