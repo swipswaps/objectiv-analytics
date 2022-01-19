@@ -1,12 +1,12 @@
 ![Objectiv Logo](https://objectiv.io/docs/img/logo-objectiv-large.svg "Objectiv Logo")
 
 Objectiv is a complete, self-hosted product analytics stack designed for
-effective data modeling and exploration with minimal gruntwork.
+data science without gruntwork.
 
 ![Objectiv Stack](https://www.objectiv.io/docs/img/objectiv-stack.svg "Objectiv Stack")
 
-It includes everything you need to answer common product analytics questions now, while
-providing a solid foundation for in-depth analysis & machine learning down the road.
+It includes everything you need to answer your product analytics questions with speed and precision.
+Straight from your notebook on the full, raw dataset. No cleaning, transformations or tracking plans required.
 
 ### Highlights
 * Collect [model-ready data](https://www.objectiv.io/docs/tracking/core-concepts) that doesn't require cleaning and transformation
