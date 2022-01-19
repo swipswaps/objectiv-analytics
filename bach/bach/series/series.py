@@ -102,6 +102,9 @@ class Series(ABC):
             raise ValueError('Expression has an aggregation function set, but there is no group_by')
         if sorted_ascending is not None and index_sorting:
             raise ValueError('Series cannot be sorted by both value and index.')
+        if index_sorting and len(index_sorting) != len(index):
+            raise ValueError(f'Length of index_sorting ({len(index_sorting)}) should match '
+                             f'length of index ({len(index)}).')
 
         self._engine = engine
         self._base_node = base_node
@@ -366,9 +369,15 @@ class Series(ABC):
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
 
-        Big fat warning: both group_by and sorted_ascending can legally be None, but if you want to set that,
-        set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
+        Special cases:
+        1. Big fat warning: both group_by and sorted_ascending can legally be None, but if you want to set
+        that, set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
+
+        2. If index is not None, then index_sorting is automatically set to `[]` unless overridden
         """
+        if index and index_sorting is None:
+            index_sorting = []
+
         klass = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
         return klass(
             engine=self._engine if engine is None else engine,
@@ -1025,7 +1034,8 @@ class Series(ABC):
             return self.copy_override(dtype=derived_dtype,
                                       index=partition.index,
                                       group_by=[partition],
-                                      expression=expression)
+                                      expression=expression,
+                                      index_sorting=[])
         else:
             # The window expression already contains the full partition and sorting, no need
             # to keep that with this series, the expression can be used without any of those.

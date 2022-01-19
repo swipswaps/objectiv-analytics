@@ -79,8 +79,11 @@ def test_equals():
     sright = sright.copy_override(sorted_ascending=[None])
     assert sleft.equals(sright)
 
-    sright = int_type(engine=None, base_node=None, index={}, name='test', expression=expr_test,
-                      group_by=None, sorted_ascending=None, index_sorting=[True])
-    assert not sleft.equals(sright)
-    sright = sright.copy_override(index_sorting=[])
+    index_series = sleft
+    sleft = int_type(engine=None, base_node=None, index={'a': index_series}, name='test',
+                     expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[])
+    sright = int_type(engine=None, base_node=None, index={'a': index_series}, name='test',
+                      expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[])
     assert sleft.equals(sright)
+    sright = sright.copy_override(index_sorting=[True])
+    assert not sleft.equals(sright)
