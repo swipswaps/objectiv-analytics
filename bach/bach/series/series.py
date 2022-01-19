@@ -3,7 +3,8 @@ Copyright 2021 Objectiv B.V.
 """
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping
+from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
+    TypeVar
 from uuid import UUID
 
 import pandas
@@ -20,6 +21,7 @@ if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
     from bach.series import SeriesBoolean
 
+T = TypeVar('T', bound='Series')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
@@ -59,7 +61,8 @@ class Series(ABC):
                  name: str,
                  expression: Expression,
                  group_by: Optional['GroupBy'],
-                 sorted_ascending: Optional[bool] = None):
+                 sorted_ascending: Optional[bool],
+                 index_sorting: List[bool]):
         """
         Initialize a new Series object.
         If a Series is associated with a DataFrame. The engine, base_node and index
@@ -87,6 +90,8 @@ class Series(ABC):
         :param expression: Expression that this Series represents
         :param group_by: The requested aggregation for this series.
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
+        :param index_sorting: list of bools indicating whether to sort ascending/descending on the different
+            columns of the index. Empty list for no sorting on index.
         """
         if index == {} and group_by and group_by.index != {}:
             # not a completely watertight check, because a group_by on {} is valid.
@@ -95,6 +100,8 @@ class Series(ABC):
             raise ValueError(f'Series and aggregation index do not match: {group_by.index} != {index}')
         if not group_by and expression.has_aggregate_function:
             raise ValueError('Expression has an aggregation function set, but there is no group_by')
+        if sorted_ascending is not None and index_sorting:
+            raise ValueError('Series cannot be sorted by both value and index.')
 
         self._engine = engine
         self._base_node = base_node
@@ -103,6 +110,7 @@ class Series(ABC):
         self._expression = expression
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
+        self._index_sorting = index_sorting
 
     @property
     @classmethod
@@ -248,9 +256,16 @@ class Series(ABC):
     @property
     def sorted_ascending(self) -> Optional[bool]:
         """
-        Get this Series' sorting, if any
+        Get this Series' sorting by value. None indicates that the Series is not sorted by value.
         """
         return self._sorted_ascending
+
+    @property
+    def index_sorting(self) -> List[bool]:
+        """
+        Get this Series' index sorting. An empty list indicates no sorting by index.
+        """
+        return self._index_sorting
 
     @property
     def expression(self) -> Expression:
@@ -264,7 +279,8 @@ class Series(ABC):
             name: str,
             expression: Expression,
             group_by: Optional['GroupBy'],
-            sorted_ascending: Optional[bool] = None
+            sorted_ascending: Optional[bool] = None,
+            index_sorting: List[bool] = None
     ):
         """ INTERNAL: Create an instance of this class. """
         return cls(
@@ -274,7 +290,8 @@ class Series(ABC):
             name=name,
             expression=expression,
             group_by=group_by,
-            sorted_ascending=sorted_ascending
+            sorted_ascending=sorted_ascending,
+            index_sorting=[] if index_sorting is None else index_sorting
         )
 
     @classmethod
@@ -342,12 +359,14 @@ class Series(ABC):
                       index=None,
                       name=None,
                       expression=None,
-                      group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
-                      sorted_ascending=None):
+                      group_by: Optional[List[Optional['GroupBy']]] = None,  # List so [None] != None
+                      sorted_ascending: Optional[List[Optional[bool]]] = None,   # List so [None] != None
+                      index_sorting: Optional[List[bool]] = None
+                      ):
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
 
-        Big fat warning: group_by can legally be None, but if you want to set that,
+        Big fat warning: both group_by and sorted_ascending can legally be None, but if you want to set that,
         set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
         """
         klass = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
@@ -358,7 +377,8 @@ class Series(ABC):
             name=self._name if name is None else name,
             expression=self._expression if expression is None else expression,
             group_by=self._group_by if group_by is None else group_by[0],
-            sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending
+            sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending[0],
+            index_sorting=self._index_sorting if index_sorting is None else index_sorting
         )
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
@@ -443,7 +463,7 @@ class Series(ABC):
         """
         return self.to_pandas().array
 
-    def sort_values(self, ascending=True):
+    def sort_values(self, *, ascending=True):
         """
         Sort this Series by its values.
         Returns a new instance and does not actually modify the instance it is called on.
@@ -451,7 +471,28 @@ class Series(ABC):
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
             return self
-        return self.copy_override(sorted_ascending=ascending)
+        return self.copy_override(sorted_ascending=[ascending])
+
+    def sort_index(self: T, *, ascending: Union[List[bool], bool] = True) -> T:
+        """
+        Return a copy of this Series, that is sorted by the index.
+        :param ascending: either a bool indicating whether to sort ascending or descending, or a list of
+            bools indicating ascending/descending for each of the index levels/columns.
+        """
+        if isinstance(ascending, list):
+            if len(ascending) != len(self.index):
+                raise ValueError(f'Length of ascending ({len(ascending)}) should match '
+                                 f'index levels ({len(self.index)}).')
+            ascending_list = ascending
+        else:
+            ascending_list = [ascending] * len(self.index)
+        if not all(isinstance(asc, bool) for asc in ascending_list):
+            raise ValueError('Parameter ascending should be a bool or a list of bools')
+
+        return self.copy_override(
+            sorted_ascending=[None],
+            index_sorting=ascending_list
+        )
 
     def view_sql(self):
         return self.to_frame().view_sql()
@@ -464,6 +505,11 @@ class Series(ABC):
         """
         if self._sorted_ascending is not None:
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
+        elif self.index_sorting:
+            order_by = []
+            for i, index_series in enumerate(self.index.values()):
+                asc = self.index_sorting[i]
+                order_by.append(SortColumn(expression=index_series.expression, asc=asc))
         else:
             order_by = []
         from bach.savepoints import Savepoints
@@ -474,7 +520,8 @@ class Series(ABC):
             series={self._name: self},
             group_by=self._group_by,
             order_by=order_by,
-            savepoints=Savepoints()
+            savepoints=Savepoints(),
+            variables={}
         )
 
     @staticmethod
@@ -571,7 +618,8 @@ class Series(ABC):
                 self.expression == other.expression and
                 # avoid loops here.
                 (recursion == 'GroupBy' or self.group_by == other.group_by) and
-                self._sorted_ascending == other._sorted_ascending
+                self.sorted_ascending == other.sorted_ascending and
+                self.index_sorting == other.index_sorting
         )
 
     def __getitem__(self, key: Union[Any, slice]):

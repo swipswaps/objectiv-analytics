@@ -37,42 +37,50 @@ def test_equals():
     expr_other = Expression.construct('test::text')
 
     sleft = int_type(engine=None, base_node=None, index={}, name='test',
-                     expression=expr_test, group_by=None)
+                     expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[])
     sright = int_type(engine=None, base_node=None, index={}, name='test',
-                      expression=expr_test, group_by=None)
+                      expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[])
     assert sleft.equals(sright)
 
     # different expression
     sright = int_type(engine=None, base_node=None, index={}, name='test',
-                      expression=expr_other, group_by=None)
+                      expression=expr_other, group_by=None, sorted_ascending=None, index_sorting=[])
     assert not sleft.equals(sright)
 
     # different name
     sright = int_type(engine=None, base_node=None, index={}, name='test_2',
-                      expression=expr_test, group_by=None)
+                      expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[])
     assert not sleft.equals(sright)
 
     # different base_node
     sright = int_type(engine=None, base_node='test', index={}, name='test',
-                      expression=expr_test, group_by=None)
+                      expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[])
     assert not sleft.equals(sright)
 
     # different engine
     sright = int_type(engine='test', base_node=None, index={}, name='test',
-                      expression=expr_test, group_by=None)
+                      expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[])
     assert not sleft.equals(sright)
 
     # different type
     sright = float_type(engine=None, base_node=None, index={}, name='test',
-                        expression=expr_test, group_by=None)
+                        expression=expr_test, group_by=None, sorted_ascending=None, index_sorting=[])
     assert not sleft.equals(sright)
 
     # different group_by
-    sright = float_type(engine=None, base_node=None, index={}, name='test', expression=expr_test,
-                        group_by=GroupBy(group_by_columns=[]))
+    sright = int_type(engine=None, base_node=None, index={}, name='test', expression=expr_test,
+                      group_by=GroupBy(group_by_columns=[]), sorted_ascending=None, index_sorting=[])
     assert not sleft.equals(sright)
 
     # different sorting
-    sright = float_type(engine=None, base_node=None, index={}, name='test', expression=expr_test,
-                        sorted_ascending=True, group_by=None)
+    sright = int_type(engine=None, base_node=None, index={}, name='test', expression=expr_test,
+                      group_by=None, sorted_ascending=True, index_sorting=[])
     assert not sleft.equals(sright)
+    sright = sright.copy_override(sorted_ascending=[None])
+    assert sleft.equals(sright)
+
+    sright = int_type(engine=None, base_node=None, index={}, name='test', expression=expr_test,
+                      group_by=None, sorted_ascending=None, index_sorting=[True])
+    assert not sleft.equals(sright)
+    sright = sright.copy_override(index_sorting=[])
+    assert sleft.equals(sright)

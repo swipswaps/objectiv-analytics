@@ -518,7 +518,9 @@ class DataFrame:
                 index={},  # Empty index for index series
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by
+                group_by=group_by,
+                sorted_ascending=None,
+                index_sorting=[]
             )
         series: Dict[str, Series] = {}
         for key, value in dtypes.items():
@@ -529,7 +531,9 @@ class DataFrame:
                 index=index,
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by
+                group_by=group_by,
+                sorted_ascending=None,
+                index_sorting=[]
             )
         return cls(
             engine=engine,
@@ -599,7 +603,9 @@ class DataFrame:
                     engine=args['engine'], base_node=args['base_node'],
                     index={},  # Empty index for index series
                     name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by']
+                    group_by=args['group_by'],
+                    sorted_ascending=None,
+                    index_sorting=[]
                 )
             args['index'] = new_index
 
@@ -611,7 +617,9 @@ class DataFrame:
                     engine=args['engine'], base_node=args['base_node'],
                     index=args['index'],
                     name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by']
+                    group_by=args['group_by'],
+                    sorted_ascending=None,
+                    index_sorting=[]
                 )
                 args['series'] = new_series
 
