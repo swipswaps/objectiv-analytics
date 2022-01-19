@@ -5,7 +5,7 @@ from typing import cast, TYPE_CHECKING
 
 from bach import DataFrame
 from bach.dataframe import escape_parameter_characters
-from bach.sql_model import SampleSqlModel
+from bach.sql_model import SampleSqlModel, BachSqlModel
 from sql_models.graph_operations import find_node, replace_node_in_graph
 from sql_models.sql_generator import to_sql
 from sql_models.util import quote_identifier
@@ -58,7 +58,7 @@ def get_sample(df: DataFrame,
 
     # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
     # in get_unsampled() by switching this new node for the old node again.
-    new_base_node = SampleSqlModel(
+    new_base_node = SampleSqlModel.get_instance(
         table_name=table_name,
         previous=original_node,
         columns=original_node.columns
@@ -85,4 +85,11 @@ def get_unsampled(df: DataFrame) -> 'DataFrame':
         reference_path=sampled_node_tuple.reference_path,
         replacement_model=sampled_node_tuple.model.previous
     )
+    # help mypy
+    # We know for sure that df.base_node is a BachSqlModel, and we know that
+    # sampled_node_tuple.model.previous is a BachSqlModel too, as that was once the base_node.
+    # if reference_path == (), then updated_graph is simply the sampled_node_tuple.model.previous
+    # else updated_graph will be a copy of base_node, with updated references. In both cases it's a
+    # BachSqlModel. Assert that:
+    assert isinstance(updated_graph, BachSqlModel)
     return df.copy_override_base_node(base_node=updated_graph)

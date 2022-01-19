@@ -314,7 +314,7 @@ def _get_merge_sql_model(
     )
     join_type_expr = Expression.construct('full outer' if how == How.outer else how.value)
 
-    return MergeSqlModel(
+    return MergeSqlModel.get_instance(
         column_names=tuple(rc.name for rc in new_column_list),
         columns_expr=columns_expr,
         join_type_expr=join_type_expr,
@@ -337,14 +337,15 @@ def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
 
 
 class MergeSqlModel(BachSqlModel):
-    def __init__(self, *,
-                 column_names: Tuple[str, ...],
-                 columns_expr: Expression,
-                 join_type_expr: Expression,
-                 on_clause: Expression,
-                 left_node: BachSqlModel,
-                 right_node: BachSqlModel,
-                 variables: Dict['DtypeNamePair', Hashable]):
+    @staticmethod
+    def get_instance(*,
+                     column_names: Tuple[str, ...],
+                     columns_expr: Expression,
+                     join_type_expr: Expression,
+                     on_clause: Expression,
+                     left_node: BachSqlModel,
+                     right_node: BachSqlModel,
+                     variables: Dict['DtypeNamePair', Hashable]) -> 'MergeSqlModel':
         """
         :param column_names: tuple with the column_names in order
         :param columns_expr: A single expression that expresses projecting all needed columns from either
@@ -378,7 +379,7 @@ class MergeSqlModel(BachSqlModel):
         filtered_variables = filter_variables(variables, all_expressions)
         placeholders = get_variable_values_sql(filtered_variables)
 
-        super().__init__(
+        return MergeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
             placeholders=placeholders,
             references=references,

@@ -18,9 +18,16 @@ from abc import abstractmethod, ABCMeta
 from copy import deepcopy
 from enum import Enum
 from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, Hashable, NamedTuple, Optional, \
-    Mapping, MutableMapping, cast
+    Mapping, MutableMapping, cast, Literal
 
 from sql_models.util import extract_format_fields
+
+
+class Empty(Enum):
+    token = 0
+
+
+empty = Empty.token
 
 
 class MaterializationType(NamedTuple):
@@ -84,6 +91,7 @@ RefPath = Tuple[str, ...]
 
 T = TypeVar('T', bound='SqlModelSpec')
 TB = TypeVar('TB', bound='SqlModelBuilder')
+TSqlModel = TypeVar('TSqlModel', bound='SqlModel')
 
 
 class SqlModelSpec:
@@ -467,7 +475,28 @@ class SqlModel(Generic[T]):
     def placeholders_formatted(self) -> Dict[str, str]:
         return self._placeholder_formatter(self._placeholders)
 
-    def copy_set(self, new_placeholders: Mapping[str, Any]) -> 'SqlModel[T]':
+    def copy_override(
+            self: TSqlModel,
+            model_spec: Union[T, Empty] = empty,
+            placeholders: Union[Mapping[str, Hashable], Empty] = empty,
+            references: Union[Mapping[str, 'SqlModel'], Empty] = empty,
+            materialization: Union[Materialization, Empty] = empty,
+            materialization_name: Union[Optional[str], Empty] = empty
+    ) -> TSqlModel:
+        """
+        TODO: comments
+        """
+        materialization_name_value = \
+            materialization_name if materialization_name is not empty else self.materialization_name
+        return self.__class__(
+            model_spec=model_spec if model_spec is not empty else self.model_spec,
+            placeholders=placeholders if placeholders is not empty else self.placeholders,
+            references=references if references is not empty else self.references,
+            materialization=materialization if materialization is not empty else self.materialization,
+            materialization_name=materialization_name_value
+        )
+
+    def copy_set(self: TSqlModel, new_placeholders: Mapping[str, Any]) -> TSqlModel:
         """
         Return a copy with the given placeholder values of this model updated.
         """
@@ -477,16 +506,9 @@ class SqlModel(Generic[T]):
                 raise ValueError(f'Trying to update non-existing placeholder key: {new_key}. '
                                  f'placeholder keys: {sorted(placeholders.keys())}')
             placeholders[new_key] = new_val
-        return SqlModel(
-            model_spec=self._model_spec,
-            references=self.references,
-            placeholders=placeholders,
-            materialization=self.materialization,
-            materialization_name=self.materialization_name
-        )
+        return self.copy_override(placeholders=placeholders)
 
-    def copy_link(self,
-                  new_references: Dict[str, 'SqlModel']) -> 'SqlModel[T]':
+    def copy_link(self: TSqlModel, new_references: Dict[str, 'SqlModel']) -> TSqlModel:
         """
         Create a copy with the given references of this model updated.
 
@@ -499,45 +521,27 @@ class SqlModel(Generic[T]):
                 raise ValueError(f'Trying to update non-existing references key: {new_key}. '
                                  f'Reference keys: {sorted(references.keys())}')
             references[new_key] = new_val
-        return SqlModel(
-            model_spec=self._model_spec,
-            references=references,
-            placeholders=self.placeholders,
-            materialization=self.materialization,
-            materialization_name=self.materialization_name
-        )
+        return self.copy_override(references=references)
 
-    def copy_set_materialization(self, materialization: Materialization) -> 'SqlModel[T]':
+    def copy_set_materialization(self: TSqlModel, materialization: Materialization) -> TSqlModel:
         """
         Create a copy with the given materialization of this model updated.
         """
         if self.materialization == materialization:
             return self
-        return SqlModel(
-            model_spec=self._model_spec,
-            references=self.references,
-            placeholders=self.placeholders,
-            materialization=materialization,
-            materialization_name=self.materialization_name
-        )
+        return self.copy_override(materialization=materialization)
 
-    def copy_set_materialization_name(self, materialization_name: Optional[str]) -> 'SqlModel[T]':
+    def copy_set_materialization_name(self: TSqlModel, materialization_name: Optional[str]) -> TSqlModel:
         """
         Create a copy with the given materialization_name of this model updated.
         """
         if self.materialization_name == materialization_name:
             return self
-        return SqlModel(
-            model_spec=self._model_spec,
-            references=self.references,
-            placeholders=self.placeholders,
-            materialization=self.materialization,
-            materialization_name=materialization_name
-        )
+        return self.copy_override(materialization_name=materialization_name)
 
-    def set(self,
+    def set(self: TSqlModel,
             reference_path: RefPath,
-            **placeholders) -> 'SqlModel[T]':
+            **placeholders) -> TSqlModel:
         """
         Create a (partial) copy of the graph that can be reached from self, with the placeholder values of
         the referenced node updated.
@@ -551,13 +555,15 @@ class SqlModel(Generic[T]):
         :return: an updated copy of this node
         """
         # import locally to prevent cyclic imports
-        from sql_models.graph_operations import get_node, replace_node_in_graph
+        from sql_models.graph_operations import get_node, replace_non_start_node_in_graph
+        if reference_path == tuple():
+            return self.copy_set(placeholders)
         replacement_model = get_node(self, reference_path).copy_set(placeholders)
-        return replace_node_in_graph(self, reference_path, replacement_model)
+        return replace_non_start_node_in_graph(self, reference_path, replacement_model)
 
-    def link(self,
+    def link(self: TSqlModel,
              reference_path: RefPath,
-             **references) -> 'SqlModel[T]':
+             **references) -> TSqlModel:
         """
         Create a (partial) copy of the graph that can be reached from self, with the references of the
         referenced node updated.
@@ -571,13 +577,16 @@ class SqlModel(Generic[T]):
         :return: an updated copy of this node
         """
         # import locally to prevent cyclic imports
-        from sql_models.graph_operations import get_node, replace_node_in_graph
+        from sql_models.graph_operations import get_node, replace_non_start_node_in_graph
+        if reference_path == tuple():
+            return self.copy_link(new_references=references)
         replacement_model = get_node(self, reference_path).copy_link(references)
-        return replace_node_in_graph(self, reference_path, replacement_model)
+        result = replace_non_start_node_in_graph(self, reference_path, replacement_model)
+        return result
 
-    def set_materialization(self,
+    def set_materialization(self: TSqlModel,
                             reference_path: RefPath,
-                            materialization: Materialization) -> 'SqlModel[T]':
+                            materialization: Materialization) -> TSqlModel:
         """
         Create a (partial) copy of the graph that can be reached from self, with the materialization of the
         referenced node updated.
@@ -591,13 +600,15 @@ class SqlModel(Generic[T]):
         :return: an updated copy of this node
         """
         # import locally to prevent cyclic imports
-        from sql_models.graph_operations import get_node, replace_node_in_graph
+        from sql_models.graph_operations import get_node, replace_non_start_node_in_graph
+        if reference_path == tuple():
+            return self.copy_set_materialization(materialization)
         replacement_model = get_node(self, reference_path).copy_set_materialization(materialization)
-        return replace_node_in_graph(self, reference_path, replacement_model)
+        return replace_non_start_node_in_graph(self, reference_path, replacement_model)
 
-    def set_materialization_name(self,
+    def set_materialization_name(self: TSqlModel,
                                  reference_path: RefPath,
-                                 materialization_name: Optional[str]) -> 'SqlModel[T]':
+                                 materialization_name: Optional[str]) -> TSqlModel:
         """
         Create a (partial) copy of the graph that can be reached from self, with the materialization_name of
         the referenced node updated.
@@ -611,10 +622,12 @@ class SqlModel(Generic[T]):
         :return: an updated copy of this node
         """
         # import locally to prevent cyclic imports
-        from sql_models.graph_operations import get_node, replace_node_in_graph
+        from sql_models.graph_operations import get_node, replace_non_start_node_in_graph
+        if reference_path == tuple():
+            return self.copy_set_materialization_name(materialization_name)
         replacement_model = get_node(self, reference_path).copy_set_materialization_name(
             materialization_name)
-        return replace_node_in_graph(self, reference_path, replacement_model)
+        return replace_non_start_node_in_graph(self, reference_path, replacement_model)
 
     def __eq__(self, other) -> bool:
         """
