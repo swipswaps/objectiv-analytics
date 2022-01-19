@@ -723,7 +723,7 @@ class DataFrame:
             materialization. Must be unique both within the Savepoints and within the base_node.
         :param materialization: Optional materialization of the savepoint in the database. This doesn't do
             anything unless self.savepoints.write_to_db() gets called and the savepoints are actually
-                materialized into the database.
+            materialized into the database.
         """
         if not self.is_materialized:
             self.materialize(node_name=name, inplace=True, limit=None)
@@ -2050,7 +2050,8 @@ class DataFrame:
 
         The variable value can later be changed using :meth:`DataFrame.set_variable`
 
-        ## Multiple variables with the same name
+        **Multiple variables with the same name**
+
         For variables the combination (name, dtype) uniquely identifies a variable. That means that there
         can be multiple variables with the same name, if they are of different types. This is counter to
         how a lot of programming languages handle variables. But it prevents a lot of error conditions and
@@ -2061,7 +2062,7 @@ class DataFrame:
         :param value: value of variable
         :param dtype: optional. If not set it will be derived from the value, if set we check that it
             matches the value. If dtype doesn't match the value's dtype, then an Exception is raised.
-        :return: Tuple with DataFrame and Series object.
+        :return: Tuple with DataFrame and the Series object that can be used as a variable.
         """
         from bach.series.series import variable_series
         series = variable_series(base=self, value=value, name=name)
@@ -2075,6 +2076,7 @@ class DataFrame:
     def set_variable(self, name: str, value: Any, *, dtype: Optional[str] = None) -> 'DataFrame':
         """
         Return a copy of this DataFrame with the variable value updated.
+
         :param name: name of variable to update
         :param value: new value of variable
         :param dtype: optional. If not set it will be derived from the value, if set we check that it
@@ -2094,17 +2096,22 @@ class DataFrame:
         multiple times, then it will appear here multiple times. If a variable has conflicting definitions
         then the conflicting dtypes and/or values are all returned.
 
-        :return: List of DefinedVariable tuples. The fields in each tuple:
-            - name: name of the variable
-            - dtype: dtype
-            - value: value that is currently set in `self.variables`, or None if there is no value
-            - ref_path: If the variable is used in an already materialized part of the DataFrame, i.e.
-                the usage is in self.base_node, then this is the reference path from self.base_node to the
-                SqlModel in which the variable usage occurs. If the variable is used in self.series instead,
-                then this is None
-            - old_value: If the variable is used in an already materialized part of the DataFrame, then it
-                also has a value already. That is this value. Will be None if this variable usage is not in
-                self.base_node.
+        **Returned data**
+
+        This method returns a list of DefinedVariable tuples, the fields in the tuples:
+
+        * name: name of the variable
+        * dtype: dtype
+        * value: value that is currently set in `self.variables`, or None if there is no value
+        * ref_path: If the variable is used in an already materialized part of the DataFrame, i.e.
+          the usage is in self.base_node, then this is the reference path from self.base_node to the
+          SqlModel in which the variable usage occurs. If the variable is used in self.series instead,
+          then this is None
+        * old_value: If the variable is used in an already materialized part of the DataFrame, then it
+          also has a value already. That is this value. Will be None if this variable usage is not in
+          self.base_node.
+
+        :return: List with all usages of variables in this DataFrame.
         """
         return self._get_all_used_variables_series() + self._get_all_used_variables_base_node()
 
