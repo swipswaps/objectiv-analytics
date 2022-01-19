@@ -1,6 +1,5 @@
 from copy import copy
 from dataclasses import dataclass
-from functools import reduce
 from typing import Tuple, Dict, Hashable, List
 
 from bach import DataFrame, SeriesString
@@ -88,6 +87,8 @@ class AppendOperation:
                 if series_name not in final_series
             }
         )
+        if self.sort:
+            return {s: final_series[s] for s in sorted(final_series)}
         return final_series
 
     def _fill_missing_series(
