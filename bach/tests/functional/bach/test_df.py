@@ -1,9 +1,11 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import numpy as np
+import pandas as pd
 import pytest
 from bach import DataFrame, SeriesBoolean
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
+from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, get_from_df
 
 
 def test_basic():
@@ -115,3 +117,17 @@ def test_boolean_indexing_same_node():
             [11, 11, 'Dokkum', 'Noardeast-Fryslân', 12675, 1298]
         ]
     )
+
+
+def test_round():
+    pdf = pd.DataFrame(
+        data={
+            'a': [1.9, 3.0, 4.123, 6.425124, 2.00000000001, 2.1, np.nan, 7.],
+            'b': [11.9, 32.0, 43.123, 64.425124, 25.00000000001, 6, np.nan, 78.],
+        },
+    )
+    bt = get_from_df('test_round', pdf)
+
+    for i in 0, 3, 5, 9:
+        np.testing.assert_equal(pdf.round(i).values, bt.round(i).values)
+        np.testing.assert_equal(pdf.round(decimals=i).values, bt.round(decimals=i).values)
