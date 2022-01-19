@@ -100,6 +100,63 @@ def test_series_sort_values():
         )
 
 
+def test_series_sort_index_simple():
+    df = get_bt_with_test_data(full_data_set=False)
+    s_city = df.set_index(['skating_order'])['city']
+    assert_equals_data(
+        s_city.sort_index(ascending=True),
+        expected_columns=['skating_order', 'city'],
+        expected_data=[[1, 'Ljouwert'], [2, 'Snits'], [3, 'Drylts']]
+    )
+    assert_equals_data(
+        s_city.sort_index(ascending=[True]),
+        expected_columns=['skating_order', 'city'],
+        expected_data=[[1, 'Ljouwert'], [2, 'Snits'], [3, 'Drylts']]
+    )
+    assert_equals_data(
+        s_city.sort_index(ascending=False),
+        expected_columns=['skating_order', 'city'],
+        expected_data=[[3, 'Drylts'], [2, 'Snits'], [1, 'Ljouwert']]
+    )
+    assert_equals_data(
+        s_city.sort_index(ascending=[False]),
+        expected_columns=['skating_order', 'city'],
+        expected_data=[[3, 'Drylts'], [2, 'Snits'], [1, 'Ljouwert']]
+    )
+
+
+def test_series_sort_index_multi_level():
+    df = get_bt_with_railway_data()
+    s_station = df.set_index(['platforms', 'station_id'])['station']
+    s_station = s_station.sort_values(ascending=True)  # sort_index should override this
+    assert_equals_data(
+        s_station.sort_index(ascending=True),
+        expected_columns=['platforms', 'station_id', 'station'],
+        expected_data=[
+            [1, 1, 'IJlst'],
+            [1, 2, 'Heerenveen'],
+            [1, 5, 'Camminghaburen'],
+            [2, 3, 'Heerenveen IJsstadion'],
+            [2, 6, 'Sneek'],
+            [2, 7, 'Sneek Noord'],
+            [4, 4, 'Leeuwarden']
+        ]
+    )
+    assert_equals_data(
+        s_station.sort_index(ascending=[True, False]),
+        expected_columns=['platforms', 'station_id', 'station'],
+        expected_data=[
+            [1, 5, 'Camminghaburen'],
+            [1, 2, 'Heerenveen'],
+            [1, 1, 'IJlst'],
+            [2, 7, 'Sneek Noord'],
+            [2, 6, 'Sneek'],
+            [2, 3, 'Heerenveen IJsstadion'],
+            [4, 4, 'Leeuwarden']
+        ]
+    )
+
+
 def test_fillna():
     # TODO test fillna with series instead of constants.
     values = [1, np.nan, 3, np.nan, 7]

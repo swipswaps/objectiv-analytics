@@ -518,7 +518,9 @@ class DataFrame:
                 index={},  # Empty index for index series
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by
+                group_by=group_by,
+                sorted_ascending=None,
+                index_sorting=[]
             )
         series: Dict[str, Series] = {}
         for key, value in dtypes.items():
@@ -529,7 +531,9 @@ class DataFrame:
                 index=index,
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by
+                group_by=group_by,
+                sorted_ascending=None,
+                index_sorting=[]
             )
         return cls(
             engine=engine,
@@ -599,7 +603,9 @@ class DataFrame:
                     engine=args['engine'], base_node=args['base_node'],
                     index={},  # Empty index for index series
                     name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by']
+                    group_by=args['group_by'],
+                    sorted_ascending=None,
+                    index_sorting=[]
                 )
             args['index'] = new_index
 
@@ -611,7 +617,9 @@ class DataFrame:
                     engine=args['engine'], base_node=args['base_node'],
                     index=args['index'],
                     name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by']
+                    group_by=args['group_by'],
+                    sorted_ascending=None,
+                    index_sorting=[]
                 )
                 args['series'] = new_series
 
@@ -634,8 +642,15 @@ class DataFrame:
         if group_by is not None:
             group_by = group_by.copy_override_base_node(base_node=base_node)
 
-        series = {name: series.copy_override(base_node=base_node, group_by=[group_by], index=index)
-                  for name, series in self.data.items()}
+        series = {
+            name: series.copy_override(
+                base_node=base_node,
+                group_by=[group_by],
+                index=index,
+                index_sorting=[]
+            )
+            for name, series in self.data.items()
+        }
 
         return self.copy_override(base_node=base_node, index=index, series=series, group_by=[group_by])
 
@@ -1087,7 +1102,7 @@ class DataFrame:
 
             new_index = {idx: series for idx, series in df.index.items() if idx not in levels_to_remove}
 
-        df._data = {n: s.copy_override(index={}) for n, s in series.items()}
+        df._data = {n: s.copy_override(index={}, index_sorting=[]) for n, s in series.items()}
         df._index = new_index
         return None if inplace else df
 
@@ -1128,13 +1143,13 @@ class DataFrame:
                     raise ValueError(f'series \'{k}\' not found')
                 idx_series = df.all_series[k]
 
-            new_index[idx_series.name] = idx_series.copy_override(index={})
+            new_index[idx_series.name] = idx_series.copy_override(index={}, index_sorting=[])
 
             if not drop and idx_series.name not in df._index and idx_series.name in df._data:
                 raise ValueError('When adding existing series to the index, drop must be True'
                                  ' because duplicate column names are not supported.')
 
-        new_series = {n: s.copy_override(index=new_index) for n, s in df._data.items()
+        new_series = {n: s.copy_override(index=new_index, index_sorting=[]) for n, s in df._data.items()
                       if n not in new_index}
 
         df._index = new_index
@@ -1264,7 +1279,7 @@ class DataFrame:
         """
         # update the series to also contain our group_by and group_by index
         # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
-        new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index)
+        new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index, index_sorting=[])
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
         return df.copy_override(
             engine=df.engine,
