@@ -46,8 +46,6 @@ class ObjectivFrame(DataFrame):
             pass
         super().__init__(**kwargs)
 
-        self._metabase = None
-
     @property
     def time_aggregation(self):
         """
