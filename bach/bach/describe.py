@@ -7,7 +7,8 @@ from bach import (
     DataFrame, Series, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries, SeriesBoolean,
     get_series_type_from_dtype,
 )
-from bach.sql_model import BachSqlModelBuilder
+from bach.sql_model import BachSqlModel, construct_references
+from sql_models.model import CustomSqlModelBuilder, Materialization
 
 
 def describe_frame(
@@ -125,7 +126,7 @@ class DataFrameDescriber:
         final_df: DataFrame
         df = self.df.reset_index(drop=True)
         for pos, stat in enumerate(self.main_stat.value):
-            stat_df = df[self.series_to_describe]
+            stat_df = df[self.series_to_describe]  # type: ignore
             stat_df = stat_df.to_frame() if isinstance(stat_df, Series) else stat_df
             original_series_names = stat_df.index_columns + stat_df.data_columns
 
@@ -152,12 +153,18 @@ class DataFrameDescriber:
             union
             select * from {{stats_to_append}}
         '''
-        model_builder = BachSqlModelBuilder(
-            name='stats_sql',
-            sql=sql,
-            columns=tuple(stats_1_df.data.keys()),
+        references = construct_references(
+            base_references={'main_stats': df1.base_node, 'stats_to_append': df2.base_node},
+            expressions=[],
         )
-        model = model_builder(main_stats=df1.base_node, stats_to_append=df2.base_node)
+        model = BachSqlModel(
+            model_spec=CustomSqlModelBuilder(sql=sql, name='stats_sql'),
+            properties={},
+            references=references,
+            columns=tuple(stats_1_df.data.keys()),
+            materialization=Materialization.CTE,
+            materialization_name=None,
+        )
         return DataFrame.from_model(engine=self.df.engine, model=model, index=[])
 
     def _rename_agg_series(self, df: DataFrame, original_series_names: List[str]) -> DataFrame:
