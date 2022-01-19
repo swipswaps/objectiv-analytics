@@ -11,10 +11,8 @@ from bach.series import SeriesJsonb
 from bach.expression import Expression, quote_string, quote_identifier
 from bach import DataFrame
 from bach.types import register_dtype
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from bach.series import Series
+from bach.series import Series
 
 
 class ObjectivStack(SeriesJsonb.Json):
