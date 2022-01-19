@@ -12,7 +12,7 @@ Straight from your notebook on the full, raw dataset. No cleaning, transformatio
 * Collect [model-ready data](https://www.objectiv.io/docs/tracking/core-concepts) that doesn't require cleaning and transformation
 * Ensure compatibility with many models by validating against an [open analytics taxonomy](https://www.objectiv.io/docs/taxonomy)
 * Build reusable models with [Pandas-like modeling](https://www.objectiv.io/docs/modeling) that runs on the full dataset
-* Chain together custom & [pre-built models](https://www.objectiv.io/docs/open-model-hub) to answer in-depth questions quickly
+* Chain together custom & [pre-built models](https://objectiv.io/docs/modeling/Objectiv/bach_open_taxonomy.ModelHub) to answer in-depth questions quickly
 
 Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
