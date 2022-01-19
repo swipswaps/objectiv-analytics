@@ -3,6 +3,8 @@
  */
 
 import React, { ReactNode } from 'react';
+import { isDevMode } from '../isDevMode';
+import { LocationTree } from '../LocationTree';
 import { TrackerProviderContext } from './TrackerProviderContext';
 
 /**
@@ -24,8 +26,14 @@ export type TrackerProviderProps = TrackerProviderContext & {
  * @see LocationStackProvider
  * @see ObjectivProvider
  */
-export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => (
-  <TrackerProviderContext.Provider value={{ tracker }}>
-    {typeof children === 'function' ? children({ tracker }) : children}
-  </TrackerProviderContext.Provider>
-);
+export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => {
+  if (isDevMode()) {
+    LocationTree.initialize(tracker);
+  }
+
+  return (
+    <TrackerProviderContext.Provider value={{ tracker }}>
+      {typeof children === 'function' ? children({ tracker }) : children}
+    </TrackerProviderContext.Provider>
+  );
+};

@@ -5,7 +5,6 @@
 import React, { ReactNode, useContext } from 'react';
 import { trackApplicationLoadedEvent } from '../../eventTrackers/trackApplicationLoadedEvent';
 import { useOnMount } from '../../hooks/useOnMount';
-import { LocationTree } from '../LocationTree';
 import { ObjectivProviderContext } from './ObjectivProviderContext';
 import { TrackerProviderContext } from './TrackerProviderContext';
 import { TrackingContext } from './TrackingContext';
@@ -59,7 +58,6 @@ export const ObjectivProvider = ({ children, tracker, options }: ObjectivProvide
     if (trackApplicationLoaded) {
       trackApplicationLoadedEvent({ tracker });
     }
-    LocationTree.clear();
   });
 
   return (
