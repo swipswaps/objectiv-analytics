@@ -15,14 +15,12 @@ class AppendOperation:
     ignore_index: bool = False
     sort: bool = False
 
-    def __post_init__(self) -> None:
-        if self.ignore_index:
-            self.caller_df = self.caller_df.reset_index(drop=True)
-            self.other_df = self.other_df.reset_index(drop=True)
-
     def append(self) -> DataFrame:
         caller_df = self._fill_missing_series(df=self.caller_df, reference_df=self.other_df)
         other_df = self._fill_missing_series(df=self.other_df, reference_df=self.caller_df, cast_types=True)
+        if self.ignore_index:
+            caller_df = caller_df.reset_index(drop=True)
+            other_df = other_df.reset_index(drop=True)
 
         appended_indexes = self._get_indexes()
         appended_series = self._get_series()
@@ -100,8 +98,8 @@ class AppendOperation:
             if name not in df_cp.all_series:
                 df_cp[name] = None
                 df_cp[name] = df_cp[name].astype(series.dtype)
-            elif cast_types and df_cp[name].dtype != series.dtype:
-                df_cp[name] = df_cp[name].astype(series.dtype)
+            elif cast_types and df_cp.all_series[name].dtype != series.dtype:
+                df_cp.all_series[name] = df_cp.all_series[name].astype(series.dtype)
 
         return df_cp
 
