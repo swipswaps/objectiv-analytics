@@ -68,3 +68,31 @@ def test_append_w_multiple_indexes() -> None:
         else:
             assert str(expected_idx) == result_idx
 
+
+def test_append_w_ignore_index_n_sort() -> None:
+    caller_pdf = pd.DataFrame({'a': [1, 2, 3, 4, 5], 'b': ['a', 'b', 'c', 'd', 'e']})
+    other_pdf = pd.DataFrame({'d': [6, 7, 8, 9], 'c': ['f', 'g', 'h', 'i']})
+
+    caller_df = get_from_df('caller_df', caller_pdf)
+
+    other_df = get_from_df('other_df', other_pdf)
+    other_df = other_df.set_index(['d'])
+
+    result = AppendOperation(
+        caller_df=caller_df,
+        other_df=other_df,
+        ignore_index=True,
+    ).append().to_pandas()
+
+    expected = caller_pdf.append(other_pdf.set_index(['d']), ignore_index=True)
+    pd.testing.assert_frame_equal(expected, result)
+
+    result2 = AppendOperation(
+        caller_df=caller_df,
+        other_df=other_df,
+        ignore_index=True,
+        sort=True,
+    ).append().to_pandas()
+
+    expected2 = caller_pdf.append(other_pdf.set_index(['d']), ignore_index=True, sort=True)
+    pd.testing.assert_frame_equal(expected2, result2)
