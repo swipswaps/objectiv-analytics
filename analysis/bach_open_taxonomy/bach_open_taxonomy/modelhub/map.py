@@ -3,6 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 from bach.expression import Expression
 from typing import TYPE_CHECKING
+from bach.partitioning import WindowFrameBoundary
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
@@ -26,7 +27,7 @@ class Map:
         :returns: SeriesBoolean with the same index as the ObjectivFrame this method is applied to.
         """
 
-        window = self._df.groupby('user_id').window()
+        window = self._df.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
         first_session = window['session_id'].min()
         series = first_session == self._df.session_id
         return series.copy_override(name='is_first_session', index=self._df.index)
@@ -42,10 +43,11 @@ class Map:
         if not time_aggregation:
             time_aggregation = self._df._time_aggregation
 
-        window = self._df.groupby('user_id').window()
+        window = self._df.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
         is_first_session = window['session_id'].min()
 
-        window = self._df.groupby([self._df.moment.dt.sql_format(time_aggregation), 'user_id']).window()
+        window = self._df.groupby([self._df.moment.dt.sql_format(time_aggregation),
+                                   'user_id']).window(end_boundary=WindowFrameBoundary.FOLLOWING)
         is_first_session_time_aggregation = window['session_id'].min()
 
         series = is_first_session_time_aggregation == is_first_session
