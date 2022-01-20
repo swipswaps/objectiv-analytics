@@ -192,7 +192,7 @@ class SeriesInt64(SeriesAbstractNumeric):
 
     def round(self, decimals: int = 0) -> 'SeriesAbstractNumeric':
         # round() should not affect int dtype series.
-        return self.copy_override()
+        return self
 
 
 class SeriesFloat64(SeriesAbstractNumeric):

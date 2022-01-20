@@ -131,6 +131,11 @@ def test_round():
     bt = get_from_df('test_round', pdf)
 
     for i in 0, 3, 5, 9:
-        pd.testing.assert_frame_equal(pdf.round(i), bt.round(i).to_pandas(), check_names=False)
-        pd.testing.assert_frame_equal(pdf.round(decimals=i), bt.round(decimals=i).to_pandas(), check_names=False)
+        result = bt.round(i).sort_values(by=['c']).to_pandas()
+        expected = pdf.round(i).sort_values(by='c')
+        pd.testing.assert_frame_equal(expected, result, check_names=False)
+
+        result2 = bt.round(decimals=i).sort_values(by=['c']).to_pandas()
+        expected2 = pdf.round(decimals=i).sort_values(by='c')
+        pd.testing.assert_frame_equal(expected2, result2, check_names=False)
 

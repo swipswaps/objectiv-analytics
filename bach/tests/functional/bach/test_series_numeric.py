@@ -58,8 +58,13 @@ def test_round_integer():
     bt = get_from_df('test_round', pdf)
 
     for i in 0, 3, 5, 9:
-        np.testing.assert_equal(pdf[0].round(i).values, bt['0'].round(i).values)
-        np.testing.assert_equal(pdf[0].round(decimals=i).values, bt['0'].round(decimals=i).values)
+        result = bt['0'].round(i).sort_values().to_pandas()
+        expected = pdf[0].round(i).sort_values()
+        pd.testing.assert_series_equal(expected, result, check_names=False, check_index=False)
+
+        result2 = bt['0'].round(decimals=i).sort_values().to_pandas()
+        expected2 = pdf[0].round(decimals=i).sort_values()
+        pd.testing.assert_series_equal(expected2, result2, check_names=False, check_index=False)
 
 
 def test_dataframe_agg_skipna_parameter():
