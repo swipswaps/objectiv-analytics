@@ -124,10 +124,13 @@ def test_round():
         data={
             'a': [1.9, 3.0, 4.123, 6.425124, 2.00000000001, 2.1, np.nan, 7.],
             'b': [11.9, 32.0, 43.123, 64.425124, 25.00000000001, 6, np.nan, 78.],
+            'c': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+            'd': [1, 2, 3, 4, 5, 6, 7, 8],
         },
     )
     bt = get_from_df('test_round', pdf)
 
     for i in 0, 3, 5, 9:
-        np.testing.assert_equal(pdf.round(i).values, bt.round(i).values)
-        np.testing.assert_equal(pdf.round(decimals=i).values, bt.round(decimals=i).values)
+        pd.testing.assert_frame_equal(pdf.round(i), bt.round(i).to_pandas(), check_names=False)
+        pd.testing.assert_frame_equal(pdf.round(decimals=i), bt.round(decimals=i).to_pandas(), check_names=False)
+
