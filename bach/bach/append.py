@@ -41,8 +41,7 @@ class AppendOperation:
         )
         other_df = other_df.materialize()
 
-        appended_df = self._get_appended_df(caller_df, other_df)
-        return self._transform_index(appended_df)
+        return self._get_appended_df(caller_df, other_df)
 
     @staticmethod
     def _fill_missing_series(
@@ -137,32 +136,6 @@ class AppendOperation:
 
         return final_series
 
-    def _transform_index(self, appended_df: DataFrame) -> DataFrame:
-        if self.ignore_index or len(appended_df.index) == 1:
-            return appended_df
-
-        all_index_dtypes = set(appended_df.index_dtypes.values())
-
-        concat_index_str = ",".join(["{}"] * len(appended_df.index))
-
-        new_index_expr = Expression.construct(
-            f"concat_ws('/', {concat_index_str})", *appended_df.index.values(),
-        )
-        appended_df['new_index'] = SeriesString(
-            base_node=appended_df.base_node,
-            engine=appended_df.engine,
-            expression=new_index_expr,
-            group_by=None,
-            sorted_ascending=None,
-            name='new_index',
-            index=appended_df.index,
-        )
-
-        if len(all_index_dtypes) == 1 and len(appended_df.index) == 2:
-            appended_df['new_index'] = appended_df['new_index'].astype(all_index_dtypes.pop())
-
-        return appended_df.set_index('new_index', drop=True)
-
     def _get_appended_df(self, caller_df: DataFrame, other_df: DataFrame) -> DataFrame:
         new_indexes = self._get_indexes()
         new_data_columns = self._get_series()
@@ -170,7 +143,7 @@ class AppendOperation:
         variables = copy(caller_df.variables)
         variables.update(other_df.variables)
 
-        return caller_df.copy_override(
+        df = caller_df.copy_override(
             engine=caller_df.engine,
             base_node=self._get_append_model(caller_df, other_df, variables),
             index_dtypes=get_result_columns_dtype_mapping(list(new_indexes.values())),
@@ -178,6 +151,7 @@ class AppendOperation:
             savepoints=caller_df.savepoints.merge(other_df.savepoints),
             variables=variables,
         )
+        return self._transform_index(df)
 
     def _get_append_model(
         self,
@@ -211,6 +185,31 @@ class AppendOperation:
             variables=variables,  # type: ignore
         )
 
+    def _transform_index(self, appended_df: DataFrame) -> DataFrame:
+        if self.ignore_index or len(appended_df.index) == 1:
+            return appended_df
+
+        all_index_dtypes = set(appended_df.index_dtypes.values())
+
+        concat_index_str = ",".join(["{}"] * len(appended_df.index))
+
+        new_index_expr = Expression.construct(
+            f"concat_ws('/', {concat_index_str})", *appended_df.index.values(),
+        )
+        appended_df['new_index'] = SeriesString(
+            base_node=appended_df.base_node,
+            engine=appended_df.engine,
+            expression=new_index_expr,
+            group_by=None,
+            sorted_ascending=None,
+            name='new_index',
+            index=appended_df.index,
+        )
+
+        if len(all_index_dtypes) == 1 and len(appended_df.index) == 2:
+            appended_df['new_index'] = appended_df['new_index'].astype(all_index_dtypes.pop())
+
+        return appended_df.set_index('new_index', drop=True)
 
 class AppendSqlModel(BachSqlModel):
     def __init__(
