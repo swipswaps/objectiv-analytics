@@ -190,6 +190,10 @@ class SeriesInt64(SeriesAbstractNumeric):
         return series.copy_override(
             expression=Expression.construct('cast({} as bigint)', series.expression))
 
+    def round(self, decimals: int = 0) -> 'SeriesAbstractNumeric':
+        # round() should not affect int dtype series.
+        return self
+
 
 class SeriesFloat64(SeriesAbstractNumeric):
     dtype = 'float64'

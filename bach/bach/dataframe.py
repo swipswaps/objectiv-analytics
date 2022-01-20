@@ -1984,6 +1984,23 @@ class DataFrame:
         return self._aggregate_func('nunique', axis=axis,
                                     level=None, numeric_only=False, skipna=skipna, **kwargs)
 
+    def round(self, decimals: int = 0):
+        """
+        Returns a DataFrame with rounded numerical values
+
+        :param decimals: number of decimal places to round each numeric column
+        :returns: a new DataFrame with rounded numerical columns
+        """
+        from bach.series import SeriesAbstractNumeric
+
+        df = self.copy_override()
+        for col in df.data.values():
+            if not isinstance(col, SeriesAbstractNumeric):
+                continue
+            df._data[col.name] = col.round(decimals)
+
+        return df
+
     # def skew(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
     #     return self._aggregate_func('skew', axis, level, numeric_only,
     #                                 skipna=skipna, **kwargs)
