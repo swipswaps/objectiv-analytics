@@ -8,6 +8,7 @@ from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeNamePair
 from bach.expression import Expression, join_expressions
+from bach.utils import ResultColumn, get_result_columns_dtype_mapping
 from sql_models.model import Materialization, CustomSqlModelBuilder
 from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
 
@@ -114,18 +115,12 @@ def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> Li
     raise ValueError(f'Type of {var_name} is not supported. Type: {type(x_on)}')
 
 
-class ResultColumn(NamedTuple):
-    name: str
-    expression: 'Expression'
-    dtype: str
-
-
 def _determine_result_columns(
-        left: DataFrame,
-        right: DataFrameOrSeries,
-        left_on: List[str],
-        right_on: List[str],
-        suffixes: Tuple[str, str]
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    left_on: List[str],
+    right_on: List[str],
+    suffixes: Tuple[str, str],
 ) -> Tuple[List[ResultColumn], List[ResultColumn]]:
     """
     Determine which columns should be in the DataFrame after merging left and right, with the given
@@ -274,8 +269,8 @@ def merge(
     return left.copy_override(
         engine=left.engine,
         base_node=model,
-        index_dtypes={rc.name: rc.dtype for rc in new_index_list},
-        series_dtypes={rc.name: rc.dtype for rc in new_data_list},
+        index_dtypes=get_result_columns_dtype_mapping(new_index_list),
+        series_dtypes=get_result_columns_dtype_mapping(new_data_list),
         group_by=None,
         order_by=[],  # merging resets any sorting
         savepoints=left.savepoints.merge(right_savepoints),

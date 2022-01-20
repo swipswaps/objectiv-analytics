@@ -41,18 +41,30 @@ def test_append_w_non_aligned_columns() -> None:
 def test_append_w_multiple_indexes() -> None:
     caller_pdf = pd.DataFrame({'a': [1, 2, 3, 4, 5], 'b': ['a', 'b', 'c', 'd', 'e']})
     other_pdf = pd.DataFrame({'d': [6, 7, 8, 9], 'c': ['f', 'g', 'h', 'i']})
+    other_pdf['b'] = 0
+    other_pdf['e'] = 'a'
 
     caller_df = get_from_df('caller_df', caller_pdf)
 
     other_df = get_from_df('other_df', other_pdf)
-    other_df = other_df.set_index([''])
+    other_df = other_df.set_index(['b', 'e'])
     result = AppendOperation(
         caller_df=caller_df,
         other_df=other_df,
-    ).append().reset_index(drop=False)
+    ).append().to_pandas()
 
-    expected = caller_pdf.append(other_pdf).reset_index(drop=False)
-    expected = expected.rename(columns={'index': '_index_0'})
+    other_pdf = other_pdf.set_index(['b', 'e'])
+    expected = caller_pdf.append(other_pdf)
 
-    result_pdf = result.to_pandas()
-    pd.testing.assert_frame_equal(expected, result_pdf)
+    pd.testing.assert_frame_equal(
+        expected.reset_index(drop=True),
+        result.reset_index(drop=True),
+    )
+
+    # check index values
+    for expected_idx, result_idx in zip(expected.index.values, result.index.values):
+        if isinstance(expected_idx, tuple):
+            assert f'{expected_idx[0]}/{expected_idx[1]}' == result_idx
+        else:
+            assert str(expected_idx) == result_idx
+
