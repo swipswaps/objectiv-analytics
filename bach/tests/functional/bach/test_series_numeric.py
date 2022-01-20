@@ -52,6 +52,16 @@ def test_round():
         np.testing.assert_equal(pdf[0].round(decimals=i).values, bt['0'].round(decimals=i).values)
 
 
+def test_round_integer():
+    values = [1, 3, 4, 6, 2, 2, 6, 7]
+    pdf = pd.DataFrame(data=values)
+    bt = get_from_df('test_round', pdf)
+
+    for i in 0, 3, 5, 9:
+        np.testing.assert_equal(pdf[0].round(i).values, bt['0'].round(i).values)
+        np.testing.assert_equal(pdf[0].round(decimals=i).values, bt['0'].round(decimals=i).values)
+
+
 def test_dataframe_agg_skipna_parameter():
     # test full parameter traversal
     bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
