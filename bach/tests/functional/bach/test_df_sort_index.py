@@ -56,7 +56,7 @@ def test_index_sort_w_ascending():
     with pytest.raises(ValueError, match=r'Length of ascending'):
         bt.sort_index(ascending=[True, False])
 
-    result = bt.sort_index(ascending=False)
+    result = bt.sort_index(level=['founding', 'founding'], ascending=[False, True])
     assert_equals_data(
         result,
         expected_columns=['founding', 'city'],

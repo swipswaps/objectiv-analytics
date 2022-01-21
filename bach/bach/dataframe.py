@@ -1529,7 +1529,7 @@ class DataFrame:
         """
         Sort dataframe by index levels.
         :param level: int or level name or list of ints or level names.
-         If not specified, all index columns are used
+         If not specified, all index series are used
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `level` must also be a list and ``len(ascending) == len(level)``.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
@@ -1557,8 +1557,7 @@ class DataFrame:
                 raise ValueError(f'dataframe has no {idx_l} index level.')
 
             level_name = idx_l if isinstance(idx_l, str) else self.index_columns[idx_l]  # type: ignore
-            if level_name not in index_columns:
-                index_columns.append(level_name)
+            index_columns.append(level_name)
 
         return index_columns
 
