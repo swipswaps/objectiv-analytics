@@ -1,5 +1,5 @@
 from typing import NamedTuple, Dict, List
-
+from bach.expression import Expression
 
 class ResultColumn(NamedTuple):
     name: str

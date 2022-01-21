@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
+from typing import Union, List, Tuple, Optional, Dict, Set, Hashable
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeNamePair
