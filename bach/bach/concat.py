@@ -30,7 +30,7 @@ class ConcatOperation:
 
             dfs.append(self._fill_missing_series(df=df_cp).materialize())
 
-        return self._get_df(dfs)
+        return self._get_concatenated_dataframe(dfs)
 
     def _fill_missing_series(self, df: DataFrame) -> DataFrame:
         df_cp = df.copy_override()
@@ -106,7 +106,7 @@ class ConcatOperation:
 
         return final_series
 
-    def _get_df(self, dfs: List[DataFrame]) -> DataFrame:
+    def _get_concatenated_dataframe(self, dfs: List[DataFrame]) -> DataFrame:
         new_indexes = self._get_indexes()
         new_data_columns = self._get_series()
 
@@ -156,7 +156,7 @@ class ConcatSqlModel(BachSqlModel):
         all_nodes: List[BachSqlModel],
         variables: Dict['DtypeNamePair', Hashable],
     ) -> None:
-        name = 'append_sql'
+        name = 'concat_sql'
         base_sql = 'select {column_expr} from {node}'
         sql = ' union all '.join(
             base_sql.format(column_expr=col_expr.to_sql(), node=f"{{{{node_{idx}}}}}")
