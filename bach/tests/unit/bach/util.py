@@ -26,7 +26,9 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype: Union[str,
             index={},
             name=name,
             expression=Expression.column_reference(name),
-            group_by=cast('GroupBy', None)
+            group_by=cast('GroupBy', None),
+            sorted_ascending=None,
+            index_sorting=[]
         )
 
     data: Dict[str, 'Series'] = {}
@@ -38,7 +40,10 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype: Union[str,
             index=index,
             name=name,
             expression=Expression.column_reference(name),
-            group_by=cast('GroupBy', None))
+            group_by=cast('GroupBy', None),
+            sorted_ascending=None,
+            index_sorting=[]
+        )
 
     return DataFrame(engine=engine, base_node=base_node,
                      index=index, series=data, group_by=None, order_by=[], savepoints=Savepoints())
