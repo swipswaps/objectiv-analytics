@@ -2015,6 +2015,16 @@ class DataFrame:
         return self._aggregate_func('mode', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
+    def quantile(self, q: Union[float, List[float]] = 0.5, numeric_only: bool = True, **kwargs):
+        """
+        Returns the mode of all values in each column.
+
+        :param q: value or list of values between 0 and 1.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
+        return self._aggregate_func('quantile', q, numeric_only, **kwargs)
+
     def nunique(self, axis=1, skipna=True, **kwargs):
         """
         Returns the number of unique values in each column.

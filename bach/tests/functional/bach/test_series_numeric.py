@@ -122,3 +122,13 @@ def test_aggregations_sum_mincount():
 
         # We have different nan handling: nan vs None
         assert (math.isnan(pd_agg) and bt_agg_value is None) or bt_agg_value == pd_agg
+
+
+def test_aggregations_quantile():
+    pdf = pd.DataFrame(data={'a': range(5), 'b': [1, 3, 5, 7, 9]})
+    bt = get_from_df('test_aggregations_quantile', pdf)
+
+    for column, quantile in zip(pdf.columns, [0.25, 0.5, 0.75]):
+        expected = pdf[column].quantile(q=quantile)
+        result = bt[column].quantile(q=quantile).values[0]
+        assert expected == result

@@ -1069,6 +1069,19 @@ class Series(ABC):
             skipna=skipna
         )
 
+    def quantile(self, q: Union[float, List[float]] = 0.5, partition: WrappedPartition = None):
+        quantiles = [q] if isinstance(q, float) else q
+        for qt in quantiles:
+            if qt < 0 or qt > 1:
+                raise ValueError(f'value {qt} should be between 0 and 1.')
+
+        return self._derived_agg_func(
+            partition=partition,
+            expression=AggregateFunctionExpression.construct(
+                f'percentile_cont({q}) within group (order by {{}})',
+            ),
+        )
+
     def nunique(self, partition: WrappedPartition = None, skipna: bool = True):
         from bach.partitioning import Window
         partition = self._check_unwrap_groupby(partition, notin=Window)
