@@ -22,10 +22,10 @@ def test_sort_index_basic():
 
 def test_sort_index_w_level():
     btr = get_bt_with_railway_data()
-    btr = btr.set_index(['town', 'platforms'], drop=True)
+    btr = btr.set_index(['town', 'platforms', 'station_id'], drop=True)
 
-    with pytest.raises(ValueError, match=r'dataframe has only 2 levels'):
-        btr.sort_index(level=3)
+    with pytest.raises(ValueError, match=r'dataframe has only 3 levels'):
+        btr.sort_index(level=4)
 
     with pytest.raises(ValueError, match=r'dataframe has no random index level'):
         btr.sort_index(level='random')
@@ -33,7 +33,7 @@ def test_sort_index_w_level():
     with pytest.raises(ValueError, match=r'dataframe has no random index level'):
         btr.sort_index(level=[0, 'random'])
 
-    result = btr.sort_index(level=['platforms', 0, 'platforms'])
+    result = btr.sort_index(level=['platforms', 0, 'platforms', 'station_id'])
     assert_equals_data(
         result,
         expected_columns=['town', 'platforms', 'station_id', 'station'],
@@ -42,12 +42,11 @@ def test_sort_index_w_level():
             ['It Hearrenfean', 1, 2, 'Heerenveen'],
             ['Ljouwert', 1, 5, 'Camminghaburen'],
             ['It Hearrenfean', 2, 3, 'Heerenveen IJsstadion'],
-            ['Snits', 2, 7, 'Sneek Noord'],
             ['Snits', 2, 6, 'Sneek'],
+            ['Snits', 2, 7, 'Sneek Noord'],
             ['Ljouwert', 4, 4, 'Leeuwarden'],
         ],
     )
-
 
 def test_index_sort_w_ascending():
     bt = get_bt_with_test_data()[['founding', 'city']]

@@ -1536,7 +1536,7 @@ class DataFrame:
         :returns: a new DataFrame with the specified ordering if ``inplace=False``,
          otherwise it updates the original and returns None.
         """
-        sort_by = self.index_columns if not level else self._get_index_columns_by_level(level)
+        sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
         df = self.sort_values(by=sort_by, ascending=ascending)
 
         if inplace:
@@ -1545,8 +1545,8 @@ class DataFrame:
 
         return df
 
-    def _get_index_columns_by_level(self, level: Level) -> List[str]:
-        index_columns = []
+    def _get_indexes_by_level(self, level: Level) -> List[str]:
+        selected_indexes = []
         nlevels = len(self.index_columns)
 
         for idx_l in level if isinstance(level, list) else [level]:
@@ -1556,10 +1556,10 @@ class DataFrame:
             if isinstance(idx_l, str) and idx_l not in self.index_columns:
                 raise ValueError(f'dataframe has no {idx_l} index level.')
 
-            level_name = idx_l if isinstance(idx_l, str) else self.index_columns[idx_l]
-            index_columns.append(level_name)
+            level_name = idx_l if isinstance(idx_l, str) else self.index_columns[idx_l]  # type: ignore
+            selected_indexes.append(level_name)
 
-        return index_columns
+        return selected_indexes
 
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.DataFrame:
         """
