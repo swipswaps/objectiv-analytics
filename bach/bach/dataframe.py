@@ -2196,7 +2196,7 @@ class DataFrame:
         sort: bool = False,
     ) -> 'DataFrame':
         """
-        Append rows of other dataframe to the end of the caller dataframe.
+        Append rows of other dataframes to the the caller dataframe.
         Non-shared columns between dataframes are added to the caller.
 
         :param other: objects to be added

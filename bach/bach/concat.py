@@ -1,8 +1,11 @@
+import itertools
+from collections import defaultdict
 from dataclasses import dataclass
-from typing import Tuple, Dict, Hashable, List
+from operator import attrgetter
+from typing import Tuple, Dict, Hashable, List, Set
 
 from bach.dataframe import DtypeNamePair
-from bach import DataFrame, const_to_series
+from bach import DataFrame, const_to_series, get_series_type_from_dtype, SeriesAbstractNumeric, Series
 from bach.expression import Expression, join_expressions
 from bach.sql_model import BachSqlModel, construct_references, get_variable_values_sql, filter_variables
 from bach.utils import ResultSeries, get_result_series_dtype_mapping
@@ -33,78 +36,97 @@ class ConcatOperation:
         return self._get_concatenated_dataframe(dfs)
 
     def _fill_missing_series(self, df: DataFrame) -> DataFrame:
+        """
+        adds non-shared series between current df and resultant concatenated df
+        """
         df_cp = df.copy_override()
         new_indexes = self._get_indexes()
         new_data_series = self._get_series()
 
-        def _fill_series(
-            df_cp: DataFrame, result_series: Dict[str, ResultSeries],
-        ) -> DataFrame:
-            for idx, rc in result_series.items():
-                if idx not in df_cp.all_series:
-                    df_cp[idx] = const_to_series(base=df_cp, value=None, name=idx)
-                    df_cp[idx] = df_cp[rc.name].astype(rc.dtype)
-                elif df_cp.all_series[idx].dtype != rc.dtype:
-                    df_cp.all_series[rc.name] = df_cp.all_series[rc.name].astype(rc.dtype)
+        all_result_series: Dict[str, ResultSeries] = {**new_indexes, **new_data_series}
+        for name, result_series in all_result_series.items():
+            if name not in df_cp.all_series:
+                df_cp[name] = const_to_series(base=df_cp, value=None, name=name)
+                df_cp[name] = df_cp[name].astype(result_series.dtype)
+                continue
 
-            return df_cp
+            if name in df_cp.index:
+                df_cp.index[name] = df_cp.index[name].astype(result_series.dtype)
+            else:
+                df_cp[name] = df_cp[name].astype(result_series.dtype)
 
-        df_cp = _fill_series(df_cp, new_indexes)
-        df_cp = _fill_series(df_cp, new_data_series)
         return df_cp
 
     def _join_series_expressions(self, df: DataFrame) -> Expression:
+        """
+        generates the column expression for df's subquery
+        """
         new_indexes = self._get_indexes()
         new_data_series = self._get_series()
 
-        def _add_expressions(
-            result_series: Dict[str, ResultSeries], existing_series: List[str],
-        ) -> List[Expression]:
-            expressions = []
-            for idx, rc in result_series.items():
-                if idx not in existing_series:
-                    expressions.append(Expression.construct('NULL as {}', Expression.identifier(rc.name)))
-                else:
-                    expressions.append(Expression.construct_expr_as_name(expr=rc.expression, name=rc.name))
+        expressions = []
 
-            return expressions
+        all_result_series: Dict[str, ResultSeries] = {**new_indexes, **new_data_series}
+        for idx, rc in all_result_series.items():
+            if idx not in df.all_series:
+                expressions.append(Expression.construct('NULL as {}', Expression.identifier(rc.name)))
+            else:
+                expressions.append(Expression.construct_expr_as_name(expr=rc.expression, name=rc.name))
 
-        index_expressions = _add_expressions(new_indexes, df.index_columns)
-        data_series_expressions = _add_expressions(new_data_series, df.data_columns)
-        return join_expressions(index_expressions + data_series_expressions)
+        return join_expressions(expressions)
 
     def _get_indexes(self) -> Dict[str, ResultSeries]:
+        """
+        gets the indexes of the final concatenated dataframe
+        """
         if self.ignore_index:
             return {}
 
-        new_indexes: Dict[str, ResultSeries] = {}
-        for df in self.dfs:
-            if not new_indexes:
-                new_indexes = {
-                    idx: ResultSeries(name=idx, expression=series.expression, dtype=series.dtype)
-                    for idx, series in df.index.items()
-                }
-                continue
+        all_indexes = list(itertools.chain.from_iterable(df.index.values() for df in self.dfs))
+        merged_indexes = self._get_result_series(all_indexes)
 
-            if set(new_indexes.keys()) != set(df.index_columns):
+        # all dataframes should have the same indexes
+        for df in self.dfs:
+            if set(merged_indexes.keys()) != set(df.index_columns):
                 raise ValueError('concatenation with different index levels is not supported yet.')
 
-        return new_indexes
+        return merged_indexes
 
     def _get_series(self) -> Dict[str, ResultSeries]:
-        final_series = {
-            series_name: ResultSeries(
-                name=series_name,
-                expression=df[series_name].expression,
-                dtype=df[series_name].dtype,
-            )
-            for df in self.dfs
-            for series_name in df.data_columns
-        }
-        if self.sort:
-            return {s: final_series[s] for s in sorted(final_series)}
+        """
+        gets the data series of the final concatenated dataframe
+        """
+        all_series = list(itertools.chain.from_iterable(df.data.values() for df in self.dfs))
+        return self._get_result_series(all_series)
 
-        return final_series
+    def _get_result_series(self, series: List[Series]) -> Dict[str, ResultSeries]:
+        """
+        merges all shared series and defines final dtype
+        """
+
+        series_dtypes = defaultdict(set)
+        for s in series:
+            series_dtypes[s.name].add(s.dtype)
+
+        result_series = {}
+        series_names = sorted(series_dtypes) if self.sort else series_dtypes.keys()
+        for series_name in series_names:
+            final_dtype = 'string'
+            if len(series_dtypes[series_name]) == 1:
+                final_dtype = series_dtypes[series_name].pop()
+            elif all(
+                issubclass(get_series_type_from_dtype(dtype), SeriesAbstractNumeric)
+                for dtype in series_dtypes[series_name]
+            ):
+                final_dtype = 'float64'
+
+            result_series[series_name] = ResultSeries(
+                name=series_name,
+                expression=Expression.identifier(series_name),
+                dtype=final_dtype,
+            )
+
+        return result_series
 
     def _get_concatenated_dataframe(self, dfs: List[DataFrame]) -> DataFrame:
         new_indexes = self._get_indexes()
@@ -113,12 +135,11 @@ class ConcatOperation:
         main_df = dfs[0]
         variables = {}
         savepoints = main_df.savepoints
-        for df in dfs:
+        for df in reversed(dfs):
             variables.update(df.variables)
             savepoints.merge(df.savepoints)
 
         return main_df.copy_override(
-            engine=main_df.engine,
             base_node=self._get_model(dfs, variables),
             index_dtypes=get_result_series_dtype_mapping(list(new_indexes.values())),
             series_dtypes=get_result_series_dtype_mapping(list(new_data_series.values())),
@@ -160,7 +181,7 @@ class ConcatSqlModel(BachSqlModel):
         base_sql = 'select {serie_expr} from {node}'
         sql = ' union all '.join(
             base_sql.format(serie_expr=col_expr.to_sql(), node=f"{{{{node_{idx}}}}}")
-            for idx, (col_expr, node) in enumerate(zip(all_series_expressions, all_nodes))
+            for idx, col_expr in enumerate(all_series_expressions)
         )
 
         references = construct_references(
@@ -168,20 +189,14 @@ class ConcatSqlModel(BachSqlModel):
             expressions=all_series_expressions
         )
 
+        filtered_variables = filter_variables(variables, all_series_expressions)
+        properties = get_variable_values_sql(filtered_variables)
+
         super().__init__(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            properties=self._get_properties(variables, all_series_expressions),
+            properties=properties,
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
             columns=series_names
         )
-
-    @classmethod
-    def _get_properties(
-        cls,
-        variables: Dict['DtypeNamePair', Hashable],
-        expressions: List[Expression],
-    ) -> Dict[str, str]:
-        filtered_variables = filter_variables(variables, expressions)
-        return get_variable_values_sql(filtered_variables)
