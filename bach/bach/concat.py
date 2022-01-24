@@ -189,12 +189,9 @@ class ConcatSqlModel(BachSqlModel):
             expressions=all_series_expressions
         )
 
-        filtered_variables = filter_variables(variables, all_series_expressions)
-        properties = get_variable_values_sql(filtered_variables)
-
         super().__init__(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            properties=properties,
+            placeholders=self._get_placeholders(variables, all_series_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
