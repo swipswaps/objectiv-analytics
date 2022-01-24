@@ -1,8 +1,9 @@
+from abc import ABC
 from dataclasses import dataclass
-from typing import Tuple, Dict, Hashable, List
+from typing import Tuple, Dict, Hashable, List, overload, Sequence, Set
 
-from bach.dataframe import DtypeNamePair
-from bach import DataFrame, const_to_series
+from bach.dataframe import DtypeNamePair, DataFrameOrSeries
+from bach import DataFrame, const_to_series, Series
 from bach.expression import Expression, join_expressions
 from bach.sql_model import BachSqlModel, construct_references, get_variable_values_sql, filter_variables
 from bach.utils import ResultSeries, get_result_series_dtype_mapping
@@ -10,27 +11,44 @@ from sql_models.model import CustomSqlModelBuilder, Materialization
 
 
 @dataclass
-class ConcatOperation:
-    dfs: List[DataFrame]
+class ConcatOperation(ABC):
+    objects: Sequence[DataFrameOrSeries]
     ignore_index: bool = False
     sort: bool = False
 
-    def __call__(self, *args, **kwargs) -> DataFrame:
-        if not len(self.dfs):
-            raise ValueError('no dataframe or series to concatenate.')
+    def __call__(self, *args, **kwargs) -> DataFrameOrSeries:
+        if not len(self.objects):
+            raise ValueError('no objects to concatenate.')
 
-        if len(self.dfs) == 1:
-            return self.dfs[0].copy_override()
+        if len(self.objects) == 1:
+            return self.objects[0].copy_override()
+        return self._get_concatenated_object()
 
+    def _get_concatenated_object(self) -> DataFrameOrSeries:
+        raise NotImplementedError()
+
+    def _get_model(
+        self,
+        objects: List[DataFrameOrSeries],
+        variables: Dict['DtypeNamePair', Hashable],
+    ) -> 'ConcatSqlModel':
+        raise NotImplementedError()
+
+
+class DataFrameConcatOperation(ConcatOperation):
+    def _get_overridden_objects(self) -> List[DataFrame]:
         dfs: List[DataFrame] = []
-        for df in self.dfs:
-            df_cp = df.copy_override()
+        for obj in self.objects:
+            if isinstance(obj, Series):
+                raise Exception('Cannot concat Series to DataFrame')
+
+            df = obj.copy_override()
             if self.ignore_index:
-                df_cp.reset_index(drop=True, inplace=True)
+                df.reset_index(drop=True, inplace=True)
 
-            dfs.append(self._fill_missing_series(df=df_cp).materialize())
+            dfs.append(self._fill_missing_series(df=df).materialize())
 
-        return self._get_concatenated_dataframe(dfs)
+        return dfs
 
     def _fill_missing_series(self, df: DataFrame) -> DataFrame:
         df_cp = df.copy_override()
@@ -53,7 +71,10 @@ class ConcatOperation:
         df_cp = _fill_series(df_cp, new_data_series)
         return df_cp
 
-    def _join_series_expressions(self, df: DataFrame) -> Expression:
+    def _join_series_expressions(self, df: DataFrameOrSeries) -> Expression:
+        if isinstance(df, Series):
+            return df.expression
+
         new_indexes = self._get_indexes()
         new_data_series = self._get_series()
 
@@ -78,7 +99,10 @@ class ConcatOperation:
             return {}
 
         new_indexes: Dict[str, ResultSeries] = {}
-        for df in self.dfs:
+        for df in self.objects:
+            if isinstance(df, Series):
+                continue
+
             if not new_indexes:
                 new_indexes = {
                     idx: ResultSeries(name=idx, expression=series.expression, dtype=series.dtype)
@@ -98,7 +122,7 @@ class ConcatOperation:
                 expression=df[series_name].expression,
                 dtype=df[series_name].dtype,
             )
-            for df in self.dfs
+            for df in self.objects if isinstance(df, DataFrame)
             for series_name in df.data_columns
         }
         if self.sort:
@@ -106,20 +130,21 @@ class ConcatOperation:
 
         return final_series
 
-    def _get_concatenated_dataframe(self, dfs: List[DataFrame]) -> DataFrame:
+    def _get_concatenated_object(self) -> DataFrameOrSeries:
+        objects = self._get_overridden_objects()
         new_indexes = self._get_indexes()
         new_data_series = self._get_series()
 
-        main_df = dfs[0]
+        main_df: DataFrame = objects[0]
         variables = {}
         savepoints = main_df.savepoints
-        for df in dfs:
+        for df in objects:
             variables.update(df.variables)
             savepoints.merge(df.savepoints)
 
         return main_df.copy_override(
             engine=main_df.engine,
-            base_node=self._get_model(dfs, variables),
+            base_node=self._get_model(objects, variables),
             index_dtypes=get_result_series_dtype_mapping(list(new_indexes.values())),
             series_dtypes=get_result_series_dtype_mapping(list(new_data_series.values())),
             savepoints=savepoints,
@@ -128,7 +153,7 @@ class ConcatOperation:
 
     def _get_model(
         self,
-        dfs: List[DataFrame],
+        objects: Sequence[DataFrameOrSeries],
         variables: Dict['DtypeNamePair', Hashable],
     ) -> 'ConcatSqlModel':
         new_indexes = self._get_indexes()
@@ -137,12 +162,55 @@ class ConcatOperation:
         new_index_names = [rs.name for rs in new_indexes.values()]
         new_data_series_names = [rs.name for rs in new_data_series.values()]
 
-        series_expressions = [self._join_series_expressions(df=df) for df in dfs]
+        series_expressions = [self._join_series_expressions(df=df) for df in objects]
 
         return ConcatSqlModel(
             series_names=tuple(new_index_names + new_data_series_names),
             all_series_expressions=series_expressions,
-            all_nodes=[df.base_node for df in dfs],
+            all_nodes=[df.base_node for df in objects],
+            variables=variables,  # type: ignore
+        )
+
+
+class SeriesConcatOperation(ConcatOperation):
+    def _get_overridden_objects(self) -> List[Series]:
+        series = []
+        for obj in self.objects:
+            if isinstance(obj, DataFrame):
+                raise Exception('Cannot concat DataFrame to Series')
+            series.append(obj)
+        return series
+
+    def _get_concatenated_object(self) -> DataFrameOrSeries:
+        objects = self._get_overridden_objects()
+        main_series: Series = objects[0]
+        all_names = []
+        dtypes: Set[str] = set()
+        for series in objects:
+            all_names.append(series.name)
+            dtypes.update(series.dtype)
+
+        final_dtype = 'string' if len(dtypes) > 1 else dtypes.pop()
+        final_name = '_'.join(all_names)
+
+        return main_series.copy_override(
+            engine=main_series.engine,
+            base_node=self._get_model(objects, variables={}),
+            name=final_name,
+            dtype=final_dtype,
+        )
+
+    def _get_model(
+        self,
+        objects: Sequence[DataFrameOrSeries],
+        variables: Dict['DtypeNamePair', Hashable],
+    ) -> 'ConcatSqlModel':
+        series_expressions = [obj.expression for obj in objects]
+
+        return ConcatSqlModel(
+            series_names=tuple('concatenated_series'),
+            all_series_expressions=series_expressions,
+            all_nodes=[series.base_node for series in objects],
             variables=variables,  # type: ignore
         )
 

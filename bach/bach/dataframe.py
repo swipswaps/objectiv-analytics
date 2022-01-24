@@ -2205,16 +2205,17 @@ class DataFrame:
 
         :return: a new dataframe with all rows from appended Dataframes.
         """
-        from bach.concat import ConcatOperation
+        from bach.concat import DataFrameConcatOperation
         if isinstance(other, list) and not other:
             raise ValueError('no dataframe or series to append.')
 
         other_dfs = other if isinstance(other, list) else [other]
-        return ConcatOperation(
-            dfs=[self] + other_dfs,
+        concatenated_df = DataFrameConcatOperation(
+            objects=[self] + other_dfs,
             ignore_index=ignore_index,
             sort=sort,
         )()
+        return concatenated_df if isinstance(concatenated_df, DataFrame) else concatenated_df.to_frame()
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

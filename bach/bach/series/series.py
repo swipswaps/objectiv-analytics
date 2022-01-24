@@ -1215,6 +1215,26 @@ class Series(ABC):
             self.dtype
         )
 
+    def append(
+        self,
+        other: Union['DataFrame', List['DataFrame']],
+        ignore_index: bool = False,
+        sort: bool = False,
+    ) -> 'Series':
+        from bach.concat import SeriesConcatOperation
+        if isinstance(other, list) and not other:
+            raise ValueError('no series to append.')
+
+        other_series = other if isinstance(other, list) else [other]
+        concatenated_series = SeriesConcatOperation(
+            objects=[self] + other_series,
+            ignore_index=ignore_index,
+            sort=sort,
+        )()
+        if isinstance(concatenated_series, DataFrame):
+            raise Exception('concatenated series should result in new series.')
+        return concatenated_series
+
 
 def const_to_series(base: Union[Series, DataFrame],
                     value: Optional[Union[Series, int, float, str, UUID]],
