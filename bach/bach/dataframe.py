@@ -1556,7 +1556,7 @@ class DataFrame:
             if isinstance(idx_l, str) and idx_l not in self.index_columns:
                 raise ValueError(f'dataframe has no {idx_l} index level.')
 
-            level_name = idx_l if isinstance(idx_l, str) else self.index_columns[idx_l]  # type: ignore
+            level_name = idx_l if isinstance(idx_l, str) else self.index_columns[idx_l]
             selected_indexes.append(level_name)
 
         return selected_indexes
