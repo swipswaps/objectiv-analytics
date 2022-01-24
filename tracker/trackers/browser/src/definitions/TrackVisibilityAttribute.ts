@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { boolean, Infer, literal, object, union } from 'superstruct';
+import { boolean, literal, object, union } from 'superstruct';
 
 /**
  * The definition of the `trackVisibility` Tagging Attribute
@@ -12,4 +12,4 @@ export const TrackVisibilityAttribute = union([
   object({ mode: literal('manual'), isVisible: boolean() }),
 ]);
 
-export type TrackVisibilityAttribute = Infer<typeof TrackVisibilityAttribute>;
+export type TrackVisibilityAttribute = { mode: 'auto' } | { mode: 'manual'; isVisible: boolean };

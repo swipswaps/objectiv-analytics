@@ -2,7 +2,18 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { assign, Infer, literal, object, string, union } from 'superstruct';
+import {
+  ContentContext as SchemaContentContext,
+  ExpandableContext as SchemaExpandableContext,
+  InputContext as SchemaInputContext,
+  LinkContext as SchemaLinkContext,
+  MediaPlayerContext as SchemaMediaPlayerContext,
+  NavigationContext as SchemaNavigationContext,
+  OverlayContext as SchemaOverlayContext,
+  PressableContext as SchemaPressableContext,
+  RootLocationContext as SchemaRootLocationContext,
+} from '@objectiv/schema';
+import { assign, literal, object, string, union } from 'superstruct';
 
 /**
  * Abstract Context struct
@@ -138,25 +149,34 @@ export const AnyLocationContext = union([
   RootLocationContext,
 ]);
 
-export type AnyLocationContext = Infer<typeof AnyLocationContext>;
+export type AnyLocationContext =
+  | SchemaContentContext
+  | SchemaExpandableContext
+  | SchemaInputContext
+  | SchemaLinkContext
+  | SchemaMediaPlayerContext
+  | SchemaNavigationContext
+  | SchemaOverlayContext
+  | SchemaPressableContext
+  | SchemaRootLocationContext;
 
 /**
  * Struct union to match any PressableContext
  */
 export const AnyPressableContext = union([LinkContext, PressableContext]);
 
-export type AnyPressableContext = Infer<typeof AnyPressableContext>;
+export type AnyPressableContext = SchemaLinkContext | SchemaPressableContext;
 
 /**
  * Struct union to match any Clickable Context, that is AnyPressableContext + ExpandableContext
  */
 export const AnyClickableContext = union([AnyPressableContext, ExpandableContext]);
 
-export type AnyClickableContext = Infer<typeof AnyClickableContext>;
+export type AnyClickableContext = AnyPressableContext | SchemaExpandableContext;
 
 /**
  * Struct union to match any Showable Context, that is Overlays and ExpandableContext
  */
 export const AnyShowableContext = union([OverlayContext, ExpandableContext]);
 
-export type AnyShowableContext = Infer<typeof AnyShowableContext>;
+export type AnyShowableContext = SchemaOverlayContext | SchemaExpandableContext;

@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Infer, object, string } from 'superstruct';
+import { object, string } from 'superstruct';
 import { TaggingAttribute } from './TaggingAttribute';
 
 /**
@@ -12,4 +12,6 @@ export const TagChildrenAttributes = object({
   [TaggingAttribute.tagChildren]: string(),
 });
 
-export type TagChildrenAttributes = Infer<typeof TagChildrenAttributes>;
+export type TagChildrenAttributes = {
+  [TaggingAttribute.tagChildren]: string;
+};

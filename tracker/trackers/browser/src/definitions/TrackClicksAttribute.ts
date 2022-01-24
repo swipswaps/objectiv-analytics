@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { boolean, Infer, literal, object, union } from 'superstruct';
+import { boolean, literal, object, union } from 'superstruct';
 import { WaitUntilTrackedOptions } from './WaitUntilTrackedOptions';
 
 /**
@@ -14,4 +14,8 @@ export const TrackClicksAttribute = union([
     waitUntilTracked: union([literal(true), WaitUntilTrackedOptions]),
   }),
 ]);
-export type TrackClicksAttribute = Infer<typeof TrackClicksAttribute>;
+export type TrackClicksAttribute =
+  | boolean
+  | {
+      waitUntilTracked: true | WaitUntilTrackedOptions;
+    };

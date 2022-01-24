@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Infer, object, string } from 'superstruct';
+import { object, string } from 'superstruct';
 import { TagLocationAttributes } from './TagLocationAttributes';
 
 /**
@@ -12,4 +12,7 @@ export const ValidChildrenTaggingQuery = object({
   queryAll: string(),
   tagAs: TagLocationAttributes,
 });
-export type ValidChildrenTaggingQuery = Infer<typeof ValidChildrenTaggingQuery>;
+export type ValidChildrenTaggingQuery = {
+  queryAll: string;
+  tagAs: TagLocationAttributes;
+};

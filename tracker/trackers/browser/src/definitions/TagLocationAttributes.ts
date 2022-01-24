@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Infer, object, optional, string } from 'superstruct';
+import { object, optional, string } from 'superstruct';
 import { TaggingAttribute } from './TaggingAttribute';
 import { Uuid } from './Uuid';
 
@@ -18,4 +18,12 @@ export const TagLocationAttributes = object({
   [TaggingAttribute.trackVisibility]: optional(string()),
   [TaggingAttribute.validate]: optional(string()),
 });
-export type TagLocationAttributes = Infer<typeof TagLocationAttributes>;
+export type TagLocationAttributes = {
+  [TaggingAttribute.elementId]: string;
+  [TaggingAttribute.parentElementId]?: string;
+  [TaggingAttribute.context]: string;
+  [TaggingAttribute.trackClicks]?: string;
+  [TaggingAttribute.trackBlurs]?: string;
+  [TaggingAttribute.trackVisibility]?: string;
+  [TaggingAttribute.validate]?: string;
+};

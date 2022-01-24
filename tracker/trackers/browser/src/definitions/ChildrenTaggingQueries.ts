@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { array, Infer } from 'superstruct';
+import { array } from 'superstruct';
 import { ChildrenTaggingQuery } from './ChildrenTaggingQuery';
 
 /**
@@ -10,4 +10,4 @@ import { ChildrenTaggingQuery } from './ChildrenTaggingQuery';
  */
 export const ChildrenTaggingQueries = array(ChildrenTaggingQuery);
 
-export type ChildrenTaggingQueries = Infer<typeof ChildrenTaggingQueries>;
+export type ChildrenTaggingQueries = ChildrenTaggingQuery[];

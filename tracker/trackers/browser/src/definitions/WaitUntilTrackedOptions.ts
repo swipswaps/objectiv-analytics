@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Infer, number, object, optional } from 'superstruct';
+import { number, object, optional } from 'superstruct';
 import { FlushQueueOptions } from './FlushQueueOptions';
 
 /**
@@ -13,4 +13,8 @@ export const WaitUntilTrackedOptions = object({
   timeoutMs: optional(number()),
   flushQueue: optional(FlushQueueOptions),
 });
-export type WaitUntilTrackedOptions = Infer<typeof WaitUntilTrackedOptions>;
+export type WaitUntilTrackedOptions = {
+  intervalMs?: number;
+  timeoutMs?: number;
+  flushQueue?: FlushQueueOptions;
+};

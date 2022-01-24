@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Infer, optional } from 'superstruct';
+import { optional } from 'superstruct';
 import { TagChildrenAttributes } from './TagChildrenAttributes';
 
 /**
@@ -10,4 +10,4 @@ import { TagChildrenAttributes } from './TagChildrenAttributes';
  */
 export const TagChildrenReturnValue = optional(TagChildrenAttributes);
 
-export type TagChildrenReturnValue = Infer<typeof TagChildrenReturnValue>;
+export type TagChildrenReturnValue = TagChildrenAttributes | undefined;
