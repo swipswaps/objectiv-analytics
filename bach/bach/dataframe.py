@@ -10,7 +10,7 @@ from sqlalchemy.future import Connection
 from bach.expression import Expression, SingleValueExpression, VariableToken
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from sql_models.graph_operations import update_properties_in_graph, get_all_properties
+from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
 from sql_models.sql_generator import to_sql
@@ -34,6 +34,8 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - string function name
 #     - list of functions and/or function names, e.g. [SeriesInt64.sum, 'mean']
 #     - dict of axis labels -> functions, function names or list of such.
+
+Level = Union[int, List[int], str, List[str]]
 
 
 class SortColumn(NamedTuple):
@@ -410,7 +412,7 @@ class DataFrame:
         columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
         bach_model = BachSqlModel(
             model_spec=model.model_spec,
-            properties=model.properties,
+            placeholders=model.placeholders,
             references=model.references,
             materialization=model.materialization,
             materialization_name=model.materialization_name,
@@ -1518,6 +1520,47 @@ class DataFrame:
                     for by_series, asc_item in zip(by_series_list, ascending)]
         return self.copy_override(order_by=order_by)
 
+    def sort_index(
+        self,
+        level: Optional[Level] = None,
+        ascending: Union[bool, List[bool]] = True,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
+        """
+        Sort dataframe by index levels.
+        :param level: int or level name or list of ints or level names.
+         If not specified, all index series are used
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `level` must also be a list and ``len(ascending) == len(level)``.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+        :returns: a new DataFrame with the specified ordering if ``inplace=False``,
+         otherwise it updates the original and returns None.
+        """
+        sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
+        df = self.sort_values(by=sort_by, ascending=ascending)
+
+        if inplace:
+            self._update_self_from_df(df)
+            return None
+
+        return df
+
+    def _get_indexes_by_level(self, level: Level) -> List[str]:
+        selected_indexes = []
+        nlevels = len(self.index_columns)
+
+        for idx_l in level if isinstance(level, list) else [level]:
+            if isinstance(idx_l, int) and nlevels < idx_l:
+                raise ValueError(f'dataframe has only {nlevels} levels.')
+
+            if isinstance(idx_l, str) and idx_l not in self.index_columns:
+                raise ValueError(f'dataframe has no {idx_l} index level.')
+
+            level_name = idx_l if isinstance(idx_l, str) else self.index_columns[idx_l]
+            selected_indexes.append(level_name)
+
+        return selected_indexes
+
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.DataFrame:
         """
         Run a SQL query representing the current state of this DataFrame against the database and return the
@@ -1669,9 +1712,9 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        property_values = get_variable_values_sql(variable_values=self.variables)
+        placeholder_values = get_variable_values_sql(variable_values=self.variables)
         # TODO: fix typing here, or move all BachSqlModel logic to SqlModel, or both?
-        model = update_properties_in_graph(start_node=model, property_values=property_values)  # type: ignore
+        model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)  # type: ignore  # noqa
         return to_sql(model)
 
     def merge(
@@ -2163,9 +2206,9 @@ class DataFrame:
 
     def _get_all_used_variables_base_node(self) -> List[DefinedVariable]:
         result = []
-        all_properties = get_all_properties(self.base_node)
-        for property_name, values_dict in all_properties.items():
-            token = VariableToken.property_name_to_token(property_name)
+        all_placeholders = get_all_placeholders(self.base_node)
+        for placeholder_name, values_dict in all_placeholders.items():
+            token = VariableToken.placeholder_name_to_token(placeholder_name)
             if token is None:
                 continue
             for ref_path, old_value in values_dict.items():
