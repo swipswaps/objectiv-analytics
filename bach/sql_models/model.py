@@ -9,6 +9,7 @@ Models:
   extend this class and not the SqlModel class.
 * `CustomSqlModelBuilder`: Utility child of SqlModelSpec that can be used to add a node with custom sql to a
   model graph.
+* `Materialization`: Specifies what kind of SQL should be generated: a query or a specific create statement
 
 """
 import collections
@@ -87,10 +88,10 @@ TB = TypeVar('TB', bound='SqlModelBuilder')
 
 class SqlModelSpec:
     """
-    Abstract immutable class that specifies the sql, properties, and references that a
+    Abstract immutable class that specifies the sql, placeholders, and references that a
     SqlModel instance should have.
 
-    Child classes need to define the actual template by implementing the sql, properties, and reference
+    Child classes need to define the actual template by implementing the sql, placeholders, and reference
     functions.
 
     Generally it's better to actually extend of the subclass ComposableSqlModel, as that has some methods
@@ -98,10 +99,10 @@ class SqlModelSpec:
     """
 
     def __init__(self):
-        # Basic check on the child-classes implementation of spec_references and spec_properties
-        overlap = self.spec_references.intersection(self.spec_properties)
+        # Basic check on the child-classes implementation of spec_references and spec_placeholders
+        overlap = self.spec_references.intersection(self.spec_placeholders)
         if overlap:
-            raise Exception(f'Specified reference names and specified property names of class overlap.'
+            raise Exception(f'Specified reference names and specified placeholder names of class overlap.'
                             f'This indicates an error in the implementation of the'
                             f'{self.__class__.__name__} class. Overlap: {overlap}')
 
@@ -125,33 +126,33 @@ class SqlModelSpec:
 
     @property
     @abstractmethod
-    def spec_properties(self) -> Set[str]:
+    def spec_placeholders(self) -> Set[str]:
         """ Must be implemented by child class. Return value should typically be a constant. """
         raise NotImplementedError()
 
     @staticmethod
-    def properties_to_sql(properties: Mapping[str, Any]) -> Dict[str, str]:
+    def placeholders_to_sql(placeholders: Mapping[str, Any]) -> Dict[str, str]:
         """
-        Child classes can override this function if some of the properties require conversion before being
+        Child classes can override this function if some of the placeholders require conversion before being
         used in format(). Should be a constant, pure, and immutable function.
 
         If any format string exists, and it should not be substituted in the reference resolving step,
-        it should be escaped.
+        it should be escaped with escape_placeholder_value.
         """
         # Override for non-default behaviour
         # If we switch to jinja templates, then we won't need this function anymore.
-        return {key: escape_placeholder_value(str(val)) for key, val in properties.items()}
+        return {key: escape_placeholder_value(str(val)) for key, val in placeholders.items()}
 
     def assert_adheres_to_spec(self,
                                references: Mapping[str, 'SqlModel'],
-                               properties: Mapping[str, Any]):
+                               placeholders: Mapping[str, Any]):
         """
-        Verify that the references and properties adhere to the specifications of self.
-        :raise Exception: If a reference or property is missing
+        Verify that the references and placeholder values adhere to the specifications of self.
+        :raise Exception: If a reference or placeholder value is missing
         """
         spec = self
         reference_keys = set(references.keys())
-        property_keys = set(properties.keys())
+        placeholder_keys = set(placeholders.keys())
         # Allow for more references to be present, as they could've been added dynamically.
         if len(spec.spec_references - reference_keys) > 0:
             raise Exception(f'Provided references for model {spec.__class__.__name__} '
@@ -162,10 +163,10 @@ class SqlModelSpec:
                 raise Exception(f'Provided reference for model {spec.__class__.__name__} is not an '
                                 f'instance of SqlModel. '
                                 f'Reference: {reference_key}, type: {type(reference_value)}')
-        if property_keys != spec.spec_properties:
-            raise Exception(f'Provided properties for model {spec.__class__.__name__} '
-                            f'do not match required properties: '
-                            f'{sorted(property_keys)} != {sorted(spec.spec_properties)}')
+        if placeholder_keys != spec.spec_placeholders:
+            raise Exception(f'Provided placeholders for model {spec.__class__.__name__} '
+                            f'do not match required placeholders: '
+                            f'{sorted(placeholder_keys)} != {sorted(spec.spec_placeholders)}')
 
 
 class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
@@ -180,15 +181,15 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         2.3) user __call__() on an instance of this class
 
     A single SqlModelBuilder can be used to instantiate multiple SqlModel models. If this
-    class is used multiple times to create an instance with the same properties, references,
+    class is used multiple times to create an instance with the same placeholders, references,
     and materialization, then the same instance is returned each time.
     """
 
     def __init__(self, **values: Any):
-        # initialize values first, so any indirect calls to references and properties
+        # initialize values first, so any indirect calls to references and placeholders
         # in super.__init__() will work
         self._references: Dict[str, Union[SqlModelBuilder, SqlModel]] = {}
-        self._properties: Dict[str, Any] = {}
+        self._placeholders: Dict[str, Any] = {}
         super().__init__()
         self.set_values(**values)
         self.materialization = Materialization.CTE
@@ -198,16 +199,16 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
     @property
     def spec_references(self) -> Set[str]:
         """
-        Automatically determine the reference names from the sql property.
+        Automatically determine the reference names from the sql, which contains '{{reference}}' strings.
         """
         # get all format strings that are formatted as {{x}}, but explicitly remove the
         # REFERENCE_UNIQUE_FIELD, as it is a magic value that will be filled in later.
         return extract_format_fields(self.sql, 2) - {REFERENCE_UNIQUE_FIELD}
 
     @property
-    def spec_properties(self) -> Set[str]:
+    def spec_placeholders(self) -> Set[str]:
         """
-        Automatically determine the property names from the sql property.
+        Automatically determine the placeholder names from the sql, which contains '{placeholder}' strings.
         """
         return extract_format_fields(self.sql)
 
@@ -218,9 +219,9 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
         return {key: value for key, value in self._references.items()}
 
     @property
-    def properties(self):
+    def placeholders(self):
         # return deepcopy of the dictionary
-        return deepcopy(self._properties)
+        return deepcopy(self._placeholders)
 
     @classmethod
     def build(cls: Type[TB], **values) -> 'SqlModel[TB]':
@@ -265,15 +266,15 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
 
     def instantiate(self: TB) -> 'SqlModel[TB]':
         """
-        Create an instance of SqlModel[TB] based on the properties, references,
-        materialization, and properties_to_sql of self.
+        Create an instance of SqlModel[TB] based on the placeholders, references,
+        materialization, and placeholders_to_sql of self.
 
         If the exact same instance (as determined by result.hash) has been created already by this class,
         then that instance is returned and the newly created instance is discarded.
         """
         self._check_is_complete()
         instance = SqlModel(model_spec=self,
-                            properties=self.properties,
+                            placeholders=self.placeholders,
                             references=self.references,
                             materialization=self.materialization,
                             materialization_name=self.materialization_name)
@@ -285,8 +286,8 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
 
     def set_values(self: TB, **values) -> TB:
         """
-        Set values that can either be references or properties.
-        If a value is a property then it must be immutable
+        Set values that can either be references or placeholders.
+        If a value is a placeholder value then it must be immutable
         If a value is a reference then it must either be an instance of SqlModelBuilder or of SqlModel
         :param values:
         :return: self
@@ -296,17 +297,17 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
                 if not isinstance(value, (SqlModel, SqlModelBuilder)):
                     raise ValueError(f'reference ({key}) is of incorrect type: {type(value)}')
                 self._references[key] = value
-            elif key in self.spec_properties:
+            elif key in self.spec_placeholders:
                 # There is no straightforward way to check whether a value is immutable. However virtual
                 # all immutable objects are also hashable, so we check that instead.
                 if not isinstance(value, collections.abc.Hashable):
-                    raise ValueError(f'property ({key}) is of incorrect type: {type(value)}')
-                self._properties[key] = value
+                    raise ValueError(f'placeholder ({key}) is of incorrect type: {type(value)}')
+                self._placeholders[key] = value
             else:
-                raise ValueError(f'Provided parameter {key} is not a valid property nor reference for '
+                raise ValueError(f'Provided parameter {key} is not a valid placeholder nor reference for '
                                  f'class {self.__class__.__name__}. '
                                  f'Valid references: {self.spec_references}. '
-                                 f'Valid properties: {self.spec_properties}.')
+                                 f'Valid placeholders: {self.spec_placeholders}.')
         return self
 
     def set_materialization(self: TB, materialization: Materialization) -> TB:
@@ -327,14 +328,15 @@ class SqlModelBuilder(SqlModelSpec, metaclass=ABCMeta):
 
     def _check_is_complete(self):
         """
-        Raises an Exception if either references or properties are missing
+        Raises an Exception if either references or placeholder values are missing
         """
-        self.assert_adheres_to_spec(references=self.references, properties=self.properties)
+        self.assert_adheres_to_spec(references=self.references, placeholders=self.placeholders)
 
 
 class SqlModel(Generic[T]):
     """
-    An Immutable Sql Model consists of a sql select query, properties and references to other Sql models.
+    An Immutable Sql Model consists of a sql select query, placeholder values and references to other
+    Sql models.
 
     # Graphs of models
     The references to other models make it is possible to use the output of the sql queries of other models
@@ -356,18 +358,18 @@ class SqlModel(Generic[T]):
     """
     def __init__(self,
                  model_spec: T,
-                 properties: Mapping[str, Hashable],
+                 placeholders: Mapping[str, Hashable],
                  references: Mapping[str, 'SqlModel'],
                  materialization: Materialization,
                  materialization_name: Optional[str] = None
                  ):
         """
-        :param model_spec: ModelSpec class defining the sql, and the names of the properties and references
+        :param model_spec: ModelSpec class defining the sql, and the names of the placeholders and references
             that this class must have.
-        :param properties: Dictionary mapping property names to property values. Important: the values must
-            be immutable. If not then the instance as a whole is not immutable, which will invalidate
-            assumptions that code might hold about these instances. See the class's docstring for information
-            on why this is important.
+        :param placeholders: Dictionary mapping placeholder names to placeholder values. Important: the
+            values must be immutable. If not then the instance as a whole is not immutable, which will
+            invalidate assumptions that code might hold about these instances. See the class's docstring
+            for information on why this is important.
         :param references: Dictionary mapping reference names to instances of SqlModels.
         :param materialization: TODO
         :param materialization_name: TODO
@@ -376,15 +378,15 @@ class SqlModel(Generic[T]):
         self._generic_name = model_spec.generic_name
         self._sql = model_spec.sql
         self._references: Mapping[str, 'SqlModel'] = references
-        self._properties: Mapping[str, Any] = properties
+        self._placeholders: Mapping[str, Any] = placeholders
         self._materialization = materialization
         self._materialization_name = materialization_name
-        self._property_formatter = model_spec.properties_to_sql
+        self._placeholder_formatter = model_spec.placeholders_to_sql
 
-        # Verify completeness of this object: references and properties
+        # Verify completeness of this object: references and placeholders
         self._model_spec.assert_adheres_to_spec(references=self.references,
-                                                properties=self.properties)
-        # Calculate unique hash for this model's sql, properties, materialization and references
+                                                placeholders=self.placeholders)
+        # Calculate unique hash for this model's sql, placeholder values, materialization and references
         self._hash = self._calculate_hash()
 
     def _calculate_hash(self) -> str:
@@ -395,16 +397,17 @@ class SqlModel(Generic[T]):
         Attributes considered in hash:
             1. generic_name
             2. sql
-            3. properties
+            3. placeholder values
             4. materialization
-            5. references, and recursively their sql, properties, materialization, and their references
-            6. specific_name
+            5. references, and recursively their generic_name, sql, placeholder values, materialization,
+                materialization_name, and recursive references
+            6. materialization_name
         :return: 32 character string representation of md5 hash
         """
         data = {
             'generic_name': self.generic_name,
             'sql': self.sql,
-            'properties': self.properties_formatted,
+            'properties': self.placeholders_formatted,
             'materialization': self.materialization.value,
             'references': {
                 ref_name: model.hash for ref_name, model in self.references.items()
@@ -440,9 +443,9 @@ class SqlModel(Generic[T]):
         return {key: value for key, value in self._references.items()}
 
     @property
-    def properties(self) -> MutableMapping[str, Hashable]:
+    def placeholders(self) -> MutableMapping[str, Hashable]:
         # return deepcopy of the dictionary
-        return cast(MutableMapping[str, Hashable], deepcopy(self._properties))
+        return cast(MutableMapping[str, Hashable], deepcopy(self._placeholders))
 
     @property
     def materialization(self) -> Materialization:
@@ -461,23 +464,23 @@ class SqlModel(Generic[T]):
         return self._hash
 
     @property
-    def properties_formatted(self) -> Dict[str, str]:
-        return self._property_formatter(self._properties)
+    def placeholders_formatted(self) -> Dict[str, str]:
+        return self._placeholder_formatter(self._placeholders)
 
-    def copy_set(self, new_properties: Mapping[str, Any]) -> 'SqlModel[T]':
+    def copy_set(self, new_placeholders: Mapping[str, Any]) -> 'SqlModel[T]':
         """
-        Return a copy with the given properties of this model updated.
+        Return a copy with the given placeholder values of this model updated.
         """
-        properties = self.properties
-        for new_key, new_val in new_properties.items():
-            if new_key not in properties:
-                raise ValueError(f'Trying to update non-existing property key: {new_key}. '
-                                 f'Property keys: {sorted(properties.keys())}')
-            properties[new_key] = new_val
+        placeholders = self.placeholders
+        for new_key, new_val in new_placeholders.items():
+            if new_key not in placeholders:
+                raise ValueError(f'Trying to update non-existing placeholder key: {new_key}. '
+                                 f'placeholder keys: {sorted(placeholders.keys())}')
+            placeholders[new_key] = new_val
         return SqlModel(
             model_spec=self._model_spec,
             references=self.references,
-            properties=properties,
+            placeholders=placeholders,
             materialization=self.materialization,
             materialization_name=self.materialization_name
         )
@@ -499,7 +502,7 @@ class SqlModel(Generic[T]):
         return SqlModel(
             model_spec=self._model_spec,
             references=references,
-            properties=self.properties,
+            placeholders=self.placeholders,
             materialization=self.materialization,
             materialization_name=self.materialization_name
         )
@@ -513,7 +516,7 @@ class SqlModel(Generic[T]):
         return SqlModel(
             model_spec=self._model_spec,
             references=self.references,
-            properties=self.properties,
+            placeholders=self.placeholders,
             materialization=materialization,
             materialization_name=self.materialization_name
         )
@@ -527,29 +530,29 @@ class SqlModel(Generic[T]):
         return SqlModel(
             model_spec=self._model_spec,
             references=self.references,
-            properties=self.properties,
+            placeholders=self.placeholders,
             materialization=self.materialization,
             materialization_name=materialization_name
         )
 
     def set(self,
             reference_path: RefPath,
-            **properties) -> 'SqlModel[T]':
+            **placeholders) -> 'SqlModel[T]':
         """
-        Create a (partial) copy of the graph that can be reached from self, with the properties of the
-        referenced node updated.
+        Create a (partial) copy of the graph that can be reached from self, with the placeholder values of
+        the referenced node updated.
 
         The node identified by the reference_path is copied and updated, as are all nodes that
         (indirectly) refer that node. The updated version of self is returned.
 
         This instance, and all nodes that it refers recursively are unchanged.
         :param reference_path: references to traverse to get to the node that has to be updated
-        :param properties: properties to update
+        :param placeholders: placeholder values to update
         :return: an updated copy of this node
         """
         # import locally to prevent cyclic imports
         from sql_models.graph_operations import get_node, replace_node_in_graph
-        replacement_model = get_node(self, reference_path).copy_set(properties)
+        replacement_model = get_node(self, reference_path).copy_set(placeholders)
         return replace_node_in_graph(self, reference_path, replacement_model)
 
     def link(self,
@@ -615,7 +618,7 @@ class SqlModel(Generic[T]):
 
     def __eq__(self, other) -> bool:
         """
-        Two SqlModels are equal if they have the same unique hash, and the same property_formatter.
+        Two SqlModels are equal if they have the same unique hash, and the same placeholder_formatter.
         This means the SqlModels effectively will lead to the same sql code when compiled. And
         additionally, derived models (e.g. through .set()) will be equal too if they are derived in the
         same way.
@@ -628,13 +631,13 @@ class SqlModel(Generic[T]):
             return False
         # There is one edge-case (other than incredible unlikely md5 hash-collisions) where comparing the
         # hash to determine equality is not satisfactory. If a model has a non-standard
-        # self._property_formatter. Then the following scenario is possible:
+        # self._placeholder_formatter. Then the following scenario is possible:
         #   a.hash == b.hash
-        #   c, d = a.set(tuple(), property='new value'), b.set(tuple(), property='new value')
+        #   c, d = a.set(tuple(), placeholder='new value'), b.set(tuple(), placeholder='new value')
         #   c.hash != d.hash
         # The same operation on two equal objects should render two equal objects again. By also including
-        # the _property_formatter in the comparison we can guarantee that.
-        return self.hash == other.hash and self._property_formatter == other._property_formatter
+        # the _placeholder_formatter in the comparison we can guarantee that.
+        return self.hash == other.hash and self._placeholder_formatter == other._placeholder_formatter
 
     def __hash__(self) -> int:
         """ python hash. Must not be confused with the unique hash that is self.hash """

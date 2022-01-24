@@ -376,11 +376,11 @@ class MergeSqlModel(BachSqlModel):
 
         # Set all variables that are applicable to this model
         filtered_variables = filter_variables(variables, all_expressions)
-        properties = get_variable_values_sql(filtered_variables)
+        placeholders = get_variable_values_sql(filtered_variables)
 
         super().__init__(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            properties=properties,
+            placeholders=placeholders,
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

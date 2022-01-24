@@ -6,7 +6,7 @@ from typing import List
 import pytest
 
 from sql_models.graph_operations import get_graph_nodes_info, get_node, get_node_info_selected_node, \
-    find_nodes, find_node, FoundNode, get_all_properties, update_properties_in_graph
+    find_nodes, find_node, FoundNode, get_all_placeholders, update_placeholders_in_graph
 from sql_models.model import RefPath, SqlModel
 from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel, RefValueModel
 
@@ -48,7 +48,7 @@ def test_get_graph_nodes_info():
     val_nodes = [node_info for node_info in info if node_info.reference_path == ('ref_left', 'ref')]
     assert len(val_nodes) == 1
     val_node = val_nodes[0]
-    assert val_node.model.properties == {'key': 'a', 'val': 1}
+    assert val_node.model.placeholders == {'key': 'a', 'val': 1}
     assert val_node.model.generic_name == 'ValueModel'
     assert val_node.in_edges == []
     assert len(val_node.out_edges) == 1
@@ -232,7 +232,7 @@ def test_find_nodes_path_length():
     assert result == [FoundNode(model=vm2, reference_path=('ref_left', 'ref_right', 'ref_left', 'ref_left'))]
 
 
-def test_get_all_properties():
+def test_get_all_placeholders():
     graph = JoinModel.build(
         ref_left=RefValueModel(
             val=3,
@@ -240,7 +240,7 @@ def test_get_all_properties():
         ),
         ref_right=ValueModel(key='a', val=2)
     )
-    result = get_all_properties(graph)
+    result = get_all_placeholders(graph)
     assert result == {
         'key': {
             ('ref_right',): 'a',
@@ -255,7 +255,7 @@ def test_get_all_properties():
     }
 
 
-def test_update_properties_in_graph():
+def test_update_placeholders_in_graph():
     graph = JoinModel.build(
         ref_left=RefValueModel(
             val=3,
@@ -264,31 +264,31 @@ def test_update_properties_in_graph():
         ref_right=ValueModel(key='a', val=2)
     )
 
-    # Updating non existing properties doesn't do anything
-    assert graph is update_properties_in_graph(graph, {'x': 'X'})
+    # Updating non existing placeholders doesn't do anything
+    assert graph is update_placeholders_in_graph(graph, {'x': 'X'})
 
     # Assert current state
-    assert get_node(graph, ('ref_left',)).properties == {'val': 3}
-    assert get_node(graph, ('ref_right',)).properties == {'val': 2, 'key': 'a'}
-    assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 1, 'key': 'a'}
+    assert get_node(graph, ('ref_left',)).placeholders == {'val': 3}
+    assert get_node(graph, ('ref_right',)).placeholders == {'val': 2, 'key': 'a'}
+    assert get_node(graph, ('ref_left', 'ref')).placeholders == {'val': 1, 'key': 'a'}
 
     # Update one property
-    graph = update_properties_in_graph(graph, {'val': 5})
-    assert get_node(graph, ('ref_left',)).properties == {'val': 5}
-    assert get_node(graph, ('ref_right',)).properties == {'val': 5, 'key': 'a'}
-    assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 5, 'key': 'a'}
+    graph = update_placeholders_in_graph(graph, {'val': 5})
+    assert get_node(graph, ('ref_left',)).placeholders == {'val': 5}
+    assert get_node(graph, ('ref_right',)).placeholders == {'val': 5, 'key': 'a'}
+    assert get_node(graph, ('ref_left', 'ref')).placeholders == {'val': 5, 'key': 'a'}
 
-    # Update two properties
-    graph = update_properties_in_graph(graph, {'val': 1234, 'key': 'b'})
-    assert get_node(graph, ('ref_left',)).properties == {'val': 1234}
-    assert get_node(graph, ('ref_right',)).properties == {'val': 1234, 'key': 'b'}
-    assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 1234, 'key': 'b'}
+    # Update two placeholders
+    graph = update_placeholders_in_graph(graph, {'val': 1234, 'key': 'b'})
+    assert get_node(graph, ('ref_left',)).placeholders == {'val': 1234}
+    assert get_node(graph, ('ref_right',)).placeholders == {'val': 1234, 'key': 'b'}
+    assert get_node(graph, ('ref_left', 'ref')).placeholders == {'val': 1234, 'key': 'b'}
 
     # Update property to value it already has, nothing changes
-    graph = update_properties_in_graph(graph, {'val': 1234})
-    assert get_node(graph, ('ref_left',)).properties == {'val': 1234}
-    assert get_node(graph, ('ref_right',)).properties == {'val': 1234, 'key': 'b'}
-    assert get_node(graph, ('ref_left', 'ref')).properties == {'val': 1234, 'key': 'b'}
+    graph = update_placeholders_in_graph(graph, {'val': 1234})
+    assert get_node(graph, ('ref_left',)).placeholders == {'val': 1234}
+    assert get_node(graph, ('ref_right',)).placeholders == {'val': 1234, 'key': 'b'}
+    assert get_node(graph, ('ref_left', 'ref')).placeholders == {'val': 1234, 'key': 'b'}
 
 
 def _assert_graph_difference(graph: SqlModel,
