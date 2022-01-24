@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Tuple, Dict, Hashable, List
 
 from bach.dataframe import DtypeNamePair
-from bach import DataFrame, DataFrameOrSeries, Series
+from bach import DataFrame, Series, const_to_series
 from bach.expression import Expression, join_expressions
 from bach.sql_model import BachSqlModel, construct_references, get_variable_values_sql, filter_variables
 from bach.utils import ResultColumn, get_result_columns_dtype_mapping
@@ -11,11 +11,11 @@ from sql_models.model import CustomSqlModelBuilder, Materialization
 
 @dataclass
 class ConcatOperation:
-    dfs: List[DataFrameOrSeries]
+    dfs: List[DataFrame]
     ignore_index: bool = False
     sort: bool = False
 
-    def __call__(self, *args, **kwargs) -> DataFrameOrSeries:
+    def __call__(self, *args, **kwargs) -> DataFrame:
         if not len(self.dfs):
             raise ValueError('no dataframe or series to concatenate.')
 
@@ -24,11 +24,11 @@ class ConcatOperation:
 
         dfs: List[DataFrame] = []
         for df in self.dfs:
-            df = df.to_frame() if isinstance(df, Series) else df.copy_override()
+            df_cp = df.copy_override()
             if self.ignore_index:
-                df = df.reset_index(drop=True)
+                df_cp.reset_index(drop=True, inplace=True)
 
-            dfs.append(self._fill_missing_series(df=df).materialize())
+            dfs.append(self._fill_missing_series(df=df_cp).materialize())
 
         return self._get_df(dfs)
 
@@ -42,7 +42,7 @@ class ConcatOperation:
         ) -> DataFrame:
             for idx, rc in result_columns.items():
                 if idx not in df_cp.all_series:
-                    df_cp[idx] = None
+                    df_cp[idx] = const_to_series(base=df_cp, value=None, name=idx)
                     df_cp[idx] = df_cp[rc.name].astype(rc.dtype)
                 elif df_cp.all_series[idx].dtype != rc.dtype:
                     df_cp.all_series[rc.name] = df_cp.all_series[rc.name].astype(rc.dtype)
@@ -77,7 +77,7 @@ class ConcatOperation:
         if self.ignore_index:
             return {}
 
-        new_indexes = {}
+        new_indexes: Dict[str, ResultColumn] = {}
         for df in self.dfs:
             if not new_indexes:
                 new_indexes = {

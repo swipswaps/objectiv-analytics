@@ -2191,7 +2191,7 @@ class DataFrame:
 
     def append(
         self,
-        other: Union['DataFrameOrSeries', List['DataFrameOrSeries']],
+        other: Union['DataFrame', List['DataFrame']],
         ignore_index: bool = False,
         sort: bool = False,
     ) -> 'DataFrame':
