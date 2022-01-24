@@ -29,10 +29,10 @@ def test_fill_missing_series() -> None:
         assert set(df.data_columns) <= set(result.data_columns)
 
 
-def test_join_column_expressions() -> None:
+def test_join_series_expressions() -> None:
     df1 = get_fake_df(['a'], ['b'])
     df2 = get_fake_df(['a'], ['b', 'e'])
-    result = ConcatOperation(dfs=[df1, df2])._join_column_expressions(df1)
+    result = ConcatOperation(dfs=[df1, df2])._join_series_expressions(df1)
 
     assert isinstance(result, Expression)
     assert len(result.data) == 5
