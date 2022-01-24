@@ -35,6 +35,8 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - list of functions and/or function names, e.g. [SeriesInt64.sum, 'mean']
 #     - dict of axis labels -> functions, function names or list of such.
 
+Level = Union[int, List[int], str, List[str]]
+
 
 class SortColumn(NamedTuple):
     expression: Expression
@@ -1517,6 +1519,47 @@ class DataFrame:
         order_by = [SortColumn(expression=by_series.expression, asc=asc_item)
                     for by_series, asc_item in zip(by_series_list, ascending)]
         return self.copy_override(order_by=order_by)
+
+    def sort_index(
+        self,
+        level: Optional[Level] = None,
+        ascending: Union[bool, List[bool]] = True,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
+        """
+        Sort dataframe by index levels.
+        :param level: int or level name or list of ints or level names.
+         If not specified, all index series are used
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `level` must also be a list and ``len(ascending) == len(level)``.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+        :returns: a new DataFrame with the specified ordering if ``inplace=False``,
+         otherwise it updates the original and returns None.
+        """
+        sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
+        df = self.sort_values(by=sort_by, ascending=ascending)
+
+        if inplace:
+            self._update_self_from_df(df)
+            return None
+
+        return df
+
+    def _get_indexes_by_level(self, level: Level) -> List[str]:
+        selected_indexes = []
+        nlevels = len(self.index_columns)
+
+        for idx_l in level if isinstance(level, list) else [level]:
+            if isinstance(idx_l, int) and nlevels < idx_l:
+                raise ValueError(f'dataframe has only {nlevels} levels.')
+
+            if isinstance(idx_l, str) and idx_l not in self.index_columns:
+                raise ValueError(f'dataframe has no {idx_l} index level.')
+
+            level_name = idx_l if isinstance(idx_l, str) else self.index_columns[idx_l]
+            selected_indexes.append(level_name)
+
+        return selected_indexes
 
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.DataFrame:
         """
