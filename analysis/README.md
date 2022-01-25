@@ -1,7 +1,8 @@
 # Objectiv Analysis
 
 ## Setup Objectiv for data analysis
-Clone this repository and install the following packages with `pip -e` from the root of the repository:
+Clone this repository and install the following packages with `pip install -e` from the root of the
+repository:
 ```bash
 pip install -e bach
 pip install -e analysis/bach_open_taxonomy
@@ -11,7 +12,7 @@ You can now import the package and work with your data in python. This can be do
 object. 
 ```python
 from bach_open_taxonomy import ObjectivFrame
-of = ObjectivFrame.from_objectiv_data(db_url='postgresql://user:pass@localhost:5433/database',
+of = ObjectivFrame.from_objectiv_data(db_url='postgresql://user:pass@localhost:5432/database',
                                       table_name='data',
                                       time_aggregation='YYYY-MM-DD')
 ```
