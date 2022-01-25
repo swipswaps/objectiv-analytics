@@ -217,7 +217,7 @@ class SeriesConcatOperation(ConcatOperation):
         """
         creates new copies for each series to be concatenated
         """
-        series = []
+        series: List[Series] = []
         for obj in self.objects:
             if isinstance(obj, DataFrame):
                 raise Exception('Cannot concat DataFrame to Series')
@@ -225,7 +225,8 @@ class SeriesConcatOperation(ConcatOperation):
             df = obj.to_frame()
             if not df.is_materialized:
                 df.materialize(inplace=True)
-            series.append(df[obj.name])
+
+            series.append(df.all_series[obj.name])
 
         return series
 
