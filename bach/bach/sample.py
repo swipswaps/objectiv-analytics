@@ -79,8 +79,8 @@ def get_unsampled(df: DataFrame) -> 'DataFrame':
     if sampled_node_tuple is None:
         raise ValueError('No sampled node found. Cannot un-sample data that has not been sampled.')
 
-    # help mypy: sampled_node_tuple.model is guaranteed to be a SampleSqlModel, as that was the
-    # filter function for find_node() filtered on
+    # help mypy: sampled_node_tuple.model is guaranteed to be a SampleSqlModel, as that is what the
+    # filter function for find_node() above filtered on
     assert isinstance(sampled_node_tuple.model, SampleSqlModel)
 
     replacement_model = sampled_node_tuple.model.previous

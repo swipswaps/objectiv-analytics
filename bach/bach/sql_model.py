@@ -7,7 +7,7 @@ from typing import Dict, TypeVar, Tuple, List, Optional, Mapping, Hashable, Unio
 from bach.expression import Expression, get_variable_tokens, VariableToken
 from bach.types import value_to_dtype, get_series_type_from_dtype
 from sql_models.util import quote_identifier
-from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelSpec, Materialization, empty, Empty
+from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelSpec, Materialization, not_set, NotSet
 
 T = TypeVar('T', bound='SqlModelSpec')
 TSqlModel = TypeVar('TSqlModel', bound='BachSqlModel')
@@ -54,25 +54,26 @@ class BachSqlModel(SqlModel[T]):
 
     def copy_override(
             self: TSqlModel,
-            model_spec: Union[T, Empty] = empty,
-            placeholders: Union[Mapping[str, Hashable], Empty] = empty,
-            references: Union[Mapping[str, 'SqlModel'], Empty] = empty,
-            materialization: Union[Materialization, Empty] = empty,
-            materialization_name: Union[Optional[str], Empty] = empty,
-            columns: Union[Tuple[str, ...], Empty] = empty
+            *,
+            model_spec: T = None,
+            placeholders: Mapping[str, Hashable] = None,
+            references: Mapping[str, 'SqlModel'] = None,
+            materialization: Materialization = None,
+            materialization_name: Union[Optional[str], NotSet] = not_set,
+            columns: Tuple[str, ...] = None
     ) -> TSqlModel:
         """
-        TODO: comments
+        Similar to super class's implementation, but adds optional 'columns' parameter
         """
         materialization_name_value = \
-            materialization_name if materialization_name is not empty else self.materialization_name
+            self.materialization_name if materialization_name is not_set else materialization_name
         return self.__class__(
-            model_spec=model_spec if model_spec is not empty else self.model_spec,
-            placeholders=placeholders if placeholders is not empty else self.placeholders,
-            references=references if references is not empty else self.references,
-            materialization=materialization if materialization is not empty else self.materialization,
+            model_spec=self.model_spec if model_spec is None else model_spec,
+            placeholders=self.placeholders if placeholders is None else placeholders,
+            references=self.references if references is None else references,
+            materialization=self.materialization if materialization is None else materialization,
             materialization_name=materialization_name_value,
-            columns=columns if columns is not empty else self.columns
+            columns=self.columns if columns is None else columns
         )
 
     @classmethod

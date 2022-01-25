@@ -18,16 +18,19 @@ from abc import abstractmethod, ABCMeta
 from copy import deepcopy
 from enum import Enum
 from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, Hashable, NamedTuple, Optional, \
-    Mapping, MutableMapping, cast, Literal
+    Mapping, MutableMapping, cast
 
 from sql_models.util import extract_format_fields
 
 
-class Empty(Enum):
+class NotSet(Enum):
+    """
+    INTERNAL: of special token used to indicate that an Optional value is not passed to a function.
+    """
     token = 0
 
 
-empty = Empty.token
+not_set = NotSet.token
 
 
 class MaterializationType(NamedTuple):
@@ -477,22 +480,27 @@ class SqlModel(Generic[T]):
 
     def copy_override(
             self: TSqlModel,
-            model_spec: Union[T, Empty] = empty,
-            placeholders: Union[Mapping[str, Hashable], Empty] = empty,
-            references: Union[Mapping[str, 'SqlModel'], Empty] = empty,
-            materialization: Union[Materialization, Empty] = empty,
-            materialization_name: Union[Optional[str], Empty] = empty
+            *,
+            model_spec: T = None,
+            placeholders: Mapping[str, Hashable] = None,
+            references: Mapping[str, 'SqlModel'] = None,
+            materialization: Materialization = None,
+            materialization_name: Union[Optional[str], NotSet] = not_set
     ) -> TSqlModel:
         """
-        TODO: comments
+        Create a copy of this instance, with the specified fields updated.
+        Any fields that are not set will get the current value in the returned copy.
+
+        Note that as None is a valid value for materialization_name, therefore we use the special token
+        `not_set` to mean "keep current value".
         """
         materialization_name_value = \
-            materialization_name if materialization_name is not empty else self.materialization_name
+            self.materialization_name if materialization_name is not_set else materialization_name
         return self.__class__(
-            model_spec=model_spec if model_spec is not empty else self.model_spec,
-            placeholders=placeholders if placeholders is not empty else self.placeholders,
-            references=references if references is not empty else self.references,
-            materialization=materialization if materialization is not empty else self.materialization,
+            model_spec=self.model_spec if model_spec is None else model_spec,
+            placeholders=self.placeholders if placeholders is None else placeholders,
+            references=self.references if references is None else references,
+            materialization=self.materialization if materialization is None else materialization,
             materialization_name=materialization_name_value
         )
 
