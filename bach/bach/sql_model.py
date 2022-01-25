@@ -107,7 +107,7 @@ class SampleSqlModel(BachSqlModel):
                  materialization: Materialization,
                  materialization_name: Optional[str],
                  columns: Tuple[str, ...],
-                 previous: SqlModel
+                 previous: BachSqlModel
                  ):
         self.previous = previous
         super().__init__(
@@ -122,7 +122,7 @@ class SampleSqlModel(BachSqlModel):
     @staticmethod
     def get_instance(*,
                      table_name: str,
-                     previous: SqlModel,
+                     previous: BachSqlModel,
                      columns: Tuple[str, ...],
                      name: str = 'sample_node') -> 'SampleSqlModel':
         """ Helper function to instantiate a SampleSqlModel """

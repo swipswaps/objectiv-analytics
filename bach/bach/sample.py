@@ -6,7 +6,7 @@ from typing import cast, TYPE_CHECKING
 from bach import DataFrame
 from bach.dataframe import escape_parameter_characters
 from bach.sql_model import SampleSqlModel, BachSqlModel
-from sql_models.graph_operations import find_node, replace_node_in_graph
+from sql_models.graph_operations import find_node, replace_node_in_graph, replace_non_start_node_in_graph
 from sql_models.sql_generator import to_sql
 from sql_models.util import quote_identifier
 
@@ -79,17 +79,20 @@ def get_unsampled(df: DataFrame) -> 'DataFrame':
     if sampled_node_tuple is None:
         raise ValueError('No sampled node found. Cannot un-sample data that has not been sampled.')
 
-    assert isinstance(sampled_node_tuple.model, SampleSqlModel)  # help mypy
-    updated_graph = replace_node_in_graph(
-        start_node=df.base_node,
-        reference_path=sampled_node_tuple.reference_path,
-        replacement_model=sampled_node_tuple.model.previous
-    )
-    # help mypy
-    # We know for sure that df.base_node is a BachSqlModel, and we know that
-    # sampled_node_tuple.model.previous is a BachSqlModel too, as that was once the base_node.
-    # if reference_path == (), then updated_graph is simply the sampled_node_tuple.model.previous
-    # else updated_graph will be a copy of base_node, with updated references. In both cases it's a
-    # BachSqlModel. Assert that:
-    assert isinstance(updated_graph, BachSqlModel)
+    # help mypy: sampled_node_tuple.model is guaranteed to be a SampleSqlModel, as that was the
+    # filter function for find_node() filtered on
+    assert isinstance(sampled_node_tuple.model, SampleSqlModel)
+
+    replacement_model = sampled_node_tuple.model.previous
+    reference_path = sampled_node_tuple.reference_path
+    # Splitting the empty reference path case from the non-empty makes it easy to verify (for us and mypy)
+    # that we get the correct type (namely `BachSqlModel`) base_node again
+    if reference_path == tuple():
+        updated_graph = replacement_model
+    else:
+        updated_graph = replace_non_start_node_in_graph(
+            start_node=df.base_node,
+            reference_path=reference_path,
+            replacement_model=replacement_model
+        )
     return df.copy_override_base_node(base_node=updated_graph)
