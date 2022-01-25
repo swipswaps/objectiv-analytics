@@ -44,7 +44,7 @@ class ConcatOperation(ABC):
 
     def _get_indexes(self) -> Dict[str, ResultSeries]:
         """
-        gets the indexes of the final concatenated dataframe
+        gets the indexes of the final concatenated dataframe or series
         """
         if self.ignore_index:
             return {}
@@ -98,6 +98,9 @@ class ConcatOperation(ABC):
 
 class DataFrameConcatOperation(ConcatOperation):
     def _get_overridden_objects(self) -> List[DataFrame]:
+        """
+        generates a copy for each dataframe and prepares them for concatentation
+        """
         dfs: List[DataFrame] = []
         for obj in self.objects:
             if isinstance(obj, Series):
@@ -209,16 +212,19 @@ class DataFrameConcatOperation(ConcatOperation):
 
 class SeriesConcatOperation(ConcatOperation):
     def _get_overridden_objects(self) -> List[Series]:
+        """
+        creates new copies for each series to be concatenated
+        """
         series = []
         for obj in self.objects:
             if isinstance(obj, DataFrame):
                 raise Exception('Cannot concat DataFrame to Series')
-            series.append(obj)
+            series.append(obj.copy_override())
         return series
 
     def _get_series(self) -> Dict[str, ResultSeries]:
         """
-        gets the data series of the final concatenated dataframe
+        gets the final data series result
         """
         all_names = []
         dtypes: Set[str] = set()
