@@ -906,7 +906,7 @@ __metadata:
     "@angular/compiler": ^13.1.1
     "@angular/compiler-cli": ^13.1.1
     "@angular/core": ^13.1.1
-    "@objectiv/tracker-browser": ^0.0.6
+    "@objectiv/tracker-browser": ^0.0.7
     ng-packagr: ^13.1.2
     prettier: ^2.5.1
     rxjs: ^7.4.0
@@ -915,12 +915,12 @@ __metadata:
     typescript: ^4.5.4
     zone.js: ^0.11.4
   peerDependencies:
-    "@objectiv/tracker-browser": ^0.0.6
+    "@objectiv/tracker-browser": ^0.0.7
     uuid-random: ^1.3.2
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-browser@^0.0.6, @objectiv/tracker-browser@workspace:trackers/browser":
+"@objectiv/tracker-browser@^0.0.7, @objectiv/tracker-browser@workspace:trackers/browser":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
   dependencies:
