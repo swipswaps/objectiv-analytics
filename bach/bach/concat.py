@@ -39,7 +39,9 @@ class ConcatOperation(ABC):
             raise ValueError('no objects to concatenate.')
 
         if len(self.objects) == 1:
-            return self.objects[0].copy_override()
+            return self.objects[0].copy_override(
+                index={} if self.ignore_index else self.objects[0].index,
+            )
         return self._get_concatenated_object()
 
     def _get_indexes(self) -> Dict[str, ResultSeries]:
@@ -215,11 +217,16 @@ class SeriesConcatOperation(ConcatOperation):
         """
         creates new copies for each series to be concatenated
         """
-        series = []
+        series: List[Series] = []
         for obj in self.objects:
             if isinstance(obj, DataFrame):
                 raise Exception('Cannot concat DataFrame to Series')
-            series.append(obj.copy_override())
+
+            df = obj.to_frame()
+            if not df.is_materialized:
+                df.materialize(inplace=True)
+            series.append(df.all_series[obj.name])
+
         return series
 
     def _get_series(self) -> Dict[str, ResultSeries]:
@@ -248,10 +255,12 @@ class SeriesConcatOperation(ConcatOperation):
         if isinstance(obj, DataFrame):
             raise Exception('a series object is expected.')
 
-        dtype = get_merged_series_dtype({
-            series.dtype for series in self.objects if isinstance(series, Series)
-        })
-        series_expression = obj.astype(dtype).expression
+        result_series = list(self._get_series().values())[0]
+
+        series_expression = Expression.construct_expr_as_name(
+            expr=obj.astype(result_series.dtype).expression,
+            name=result_series.name,
+        )
 
         if self.ignore_index:
             return series_expression
@@ -264,11 +273,16 @@ class SeriesConcatOperation(ConcatOperation):
         main_series: Series = objects[0]
         final_result_series = list(self._get_series().values())[0]
 
-        return main_series.copy_override(
+        series_cls = get_series_type_from_dtype(final_result_series.dtype)
+        return series_cls(
+            engine=main_series.engine,
             base_node=self._get_model(objects, variables={}),
             name=final_result_series.name,
-            dtype=final_result_series.dtype,
+            expression=Expression.column_reference(final_result_series.name),
             index={} if self.ignore_index else main_series.index,
+            group_by=None,
+            index_sorting=[] if self.ignore_index else main_series.index_sorting,
+            sorted_ascending=None,
         )
 
     def _get_model(
