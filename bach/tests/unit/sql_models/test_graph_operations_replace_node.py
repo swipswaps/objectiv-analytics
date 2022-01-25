@@ -5,15 +5,42 @@ Tests for the replace_node_in_graph() function in sql_models.generic.graph_opera
 There are a lot of cases to consider for that function, that's why this file has been split of from
     test_graph_operations.py
 """
-from sql_models.graph_operations import get_node, replace_node_in_graph, get_graph_nodes_info
+import pytest
+
+from sql_models.graph_operations import get_node, replace_node_in_graph, get_graph_nodes_info, \
+    replace_non_start_node_in_graph
+from sql_models.model import SqlModel, RefPath
 from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel, RefValueModel
+
+
+def call_replace_node_in_graph(
+        start_node: SqlModel,
+        reference_path: RefPath,
+        replacement_model: SqlModel) -> SqlModel:
+    """
+    Helper, calls both replace_node_in_graph() and replace_non_start_node_in_graph() and returns the result.
+    Additional makes sure that:
+        1) both functions give the same output (if reference_path != tuple())
+        2) replace_non_start_node_in_graph() raises an exception if reference_path is an empty tuple
+        3) replace_non_start_node_in_graph() returns the same type as start_node
+    """
+    result1 = replace_node_in_graph(start_node, reference_path, replacement_model)
+    if reference_path == tuple():
+        with pytest.raises(ValueError, match='reference path cannot be empty'):
+            replace_non_start_node_in_graph(start_node, reference_path, replacement_model)
+        return result1
+    result2 = replace_non_start_node_in_graph(start_node, reference_path, replacement_model)
+    assert result1 == result2
+    assert result1.hash == result2.hash  # should be implied by the previous, but let's double check
+    assert type(result2) == type(start_node)
+    return result1
 
 
 def test_replace_node_in_graph_trivial():
     # One node graph
     graph1 = ValueModel.build(key='a', val=1)
     replacement_node1 = ValueModel.build(key='b', val=99)
-    new_graph1 = replace_node_in_graph(graph1, tuple(), replacement_node1)
+    new_graph1 = call_replace_node_in_graph(graph1, tuple(), replacement_node1)
     assert graph1.placeholders['val'] == 1
     assert new_graph1.placeholders['val'] == 99
     assert graph1.hash != new_graph1.hash
@@ -24,7 +51,7 @@ def test_replace_node_in_graph_trivial():
     rm = RefModel.build(ref=vm1)
     graph2 = JoinModel.build(ref_left=rm, ref_right=vm2)
     replacement_node2 = ValueModel.build(key='b', val=99)
-    new_graph2 = replace_node_in_graph(graph2, tuple(), replacement_node2)
+    new_graph2 = call_replace_node_in_graph(graph2, tuple(), replacement_node2)
     assert graph2.placeholders == {}
     assert len(graph2.references) == 2
     assert new_graph2.placeholders['val'] == 99
@@ -45,7 +72,7 @@ def test_replace_node_in_graph_simple():
 
     replacement_node = ValueModel.build(key='b', val=99)
 
-    new_graph = replace_node_in_graph(graph, ('ref_left', 'ref'), replacement_node)
+    new_graph = call_replace_node_in_graph(graph, ('ref_left', 'ref'), replacement_node)
     assert get_node(graph, ('ref_left', 'ref')).placeholders['val'] == 1
     assert get_node(new_graph, ('ref_left', 'ref')).placeholders['val'] == 99
     assert graph.hash != new_graph.hash
@@ -65,8 +92,8 @@ def test_replace_node_in_graph_simple_duplicate_paths():
     replacement_node = ValueModel.build(key='b', val=99)
 
     # build two new graphs: use both reference paths
-    new_graph1 = replace_node_in_graph(graph, ('ref_left', 'ref'), replacement_node)
-    new_graph2 = replace_node_in_graph(graph, ('ref_right',), replacement_node)
+    new_graph1 = call_replace_node_in_graph(graph, ('ref_left', 'ref'), replacement_node)
+    new_graph2 = call_replace_node_in_graph(graph, ('ref_right',), replacement_node)
 
     info = get_graph_nodes_info(graph)
     new_info = get_graph_nodes_info(new_graph1)
@@ -107,8 +134,8 @@ def test_replace_node_in_graph_duplicate_paths2():
 
     replacement_node = ValueModel.build(key='b', val=99)
     # build two new graphs: use both reference paths
-    new_graph1 = replace_node_in_graph(graph, ('ref_left', 'ref', 'ref'), replacement_node)
-    new_graph2 = replace_node_in_graph(graph, ('ref_right', 'ref', 'ref'), replacement_node)
+    new_graph1 = call_replace_node_in_graph(graph, ('ref_left', 'ref', 'ref'), replacement_node)
+    new_graph2 = call_replace_node_in_graph(graph, ('ref_right', 'ref', 'ref'), replacement_node)
     info = get_graph_nodes_info(graph)
     new_info = get_graph_nodes_info(new_graph1)
 
@@ -152,8 +179,8 @@ def test_replace_node_in_graph_non_leaf_node():
     graph = JoinModel.build(ref_left=rm2, ref_right=rm3)
 
     replacement_node = RefValueModel.build(ref=rvm1, val=1337)
-    new_graph1 = replace_node_in_graph(graph, ('ref_left', 'ref', 'ref'), replacement_node)
-    new_graph2 = replace_node_in_graph(graph, ('ref_right', 'ref', 'ref'), replacement_node)
+    new_graph1 = call_replace_node_in_graph(graph, ('ref_left', 'ref', 'ref'), replacement_node)
+    new_graph2 = call_replace_node_in_graph(graph, ('ref_right', 'ref', 'ref'), replacement_node)
     info = get_graph_nodes_info(graph)
     new_info = get_graph_nodes_info(new_graph1)
 
@@ -209,8 +236,8 @@ def test_replace_node_in_graph_complex1():
     graph = JoinModel.build(ref_left=jm2, ref_right=rm2)
 
     replacement_node = RefValueModel.build(ref=rvm1, val=1337)
-    new_graph1 = replace_node_in_graph(graph, ('ref_right', 'ref', 'ref'), replacement_node)
-    new_graph2 = replace_node_in_graph(graph, ('ref_left', 'ref_right', 'ref'), replacement_node)
+    new_graph1 = call_replace_node_in_graph(graph, ('ref_right', 'ref', 'ref'), replacement_node)
+    new_graph2 = call_replace_node_in_graph(graph, ('ref_left', 'ref_right', 'ref'), replacement_node)
     info = get_graph_nodes_info(graph)
     new_info = get_graph_nodes_info(new_graph1)
 
@@ -270,9 +297,9 @@ def test_replace_node_in_graph_complex2():
     graph = JoinModel.build(ref_left=jm2, ref_right=rm2)
 
     replacement_node = RefValueModel.build(ref=vm1, val=1337)
-    new_graph1 = replace_node_in_graph(graph, ('ref_right', 'ref', 'ref', 'ref'), replacement_node)
-    new_graph2 = replace_node_in_graph(graph, ('ref_left', 'ref_right', 'ref', 'ref'), replacement_node)
-    new_graph3 = replace_node_in_graph(graph, ('ref_left', 'ref_left', 'ref_right'), replacement_node)
+    new_graph1 = call_replace_node_in_graph(graph, ('ref_right', 'ref', 'ref', 'ref'), replacement_node)
+    new_graph2 = call_replace_node_in_graph(graph, ('ref_left', 'ref_right', 'ref', 'ref'), replacement_node)
+    new_graph3 = call_replace_node_in_graph(graph, ('ref_left', 'ref_left', 'ref_right'), replacement_node)
     info = get_graph_nodes_info(graph)
     new_info = get_graph_nodes_info(new_graph1)
 
