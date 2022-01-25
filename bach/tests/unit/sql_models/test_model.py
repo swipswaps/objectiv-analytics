@@ -7,7 +7,7 @@ from typing import List
 import pytest
 
 from sql_models.graph_operations import get_node, get_graph_nodes_info
-from sql_models.model import SqlModel, RefPath, CustomSqlModelBuilder
+from sql_models.model import SqlModel, RefPath, CustomSqlModelBuilder, Materialization
 from sql_models.sql_generator import to_sql
 from tests.unit.sql_models.util import RefModel, ValueModel, JoinModel
 
@@ -257,8 +257,87 @@ def test_link():
 
 
 def test_set_materialization():
-    pass
-    # TODO
+    # Graph:
+    # vm1 <--+-- rm <-----\
+    #         \            +-- graph
+    #          +-- jm1 <--/
+    #         /
+    # vm2 <--+
+    #
+    vm1 = ValueModel.build(key='a', val=1)
+    vm2 = ValueModel.build(key='a', val=2)
+    rm = RefModel.build(ref=vm1)
+    jm1 = JoinModel.build(ref_left=vm2, ref_right=vm1)
+    graph = JoinModel.build(ref_left=jm1, ref_right=rm)
+
+    # baseline asserts:
+    assert len(get_graph_nodes_info(graph)) == 5
+    assert get_node(graph, ('ref_right', 'ref')) is vm1
+    assert get_node(graph, ('ref_left', 'ref_right')) is vm1
+    assert graph.materialization == Materialization.CTE
+    assert vm1.materialization == Materialization.CTE
+    assert rm.materialization == Materialization.CTE
+
+    # update graph:
+    new_graph1 = graph.set_materialization(tuple(), Materialization.VIEW)
+    assert new_graph1.__class__ == graph.__class__
+    assert new_graph1.hash == graph.copy_set_materialization(Materialization.VIEW).hash
+    assert new_graph1.materialization == Materialization.VIEW
+    assert new_graph1.hash != graph.hash
+    assert get_node(new_graph1, ('ref_right',)) is rm
+    assert get_node(new_graph1, ('ref_right', 'ref')) is vm1
+    assert get_node(new_graph1, ('ref_left', 'ref_right')) is vm1
+
+    # update vm1
+    new_graph2 = graph.set_materialization(('ref_right', 'ref'), Materialization.TABLE)
+    assert new_graph2.__class__ == graph.__class__
+    assert get_node(new_graph2, ('ref_right', 'ref')).materialization == Materialization.TABLE
+    assert get_node(new_graph2, ('ref_left', 'ref_right')).materialization == Materialization.TABLE
+    assert get_node(new_graph2, ('ref_right',)) is not rm
+    assert get_node(new_graph2, ('ref_right', 'ref')) is not vm1
+    assert get_node(new_graph2, ('ref_left', 'ref_right')) is not vm1
+
+
+def test_set_materialization_name():
+    # Graph:
+    # vm1 <--+-- rm <-----\
+    #         \            +-- graph
+    #          +-- jm1 <--/
+    #         /
+    # vm2 <--+
+    #
+    vm1 = ValueModel.build(key='a', val=1)
+    vm2 = ValueModel.build(key='a', val=2)
+    rm = RefModel.build(ref=vm1)
+    jm1 = JoinModel.build(ref_left=vm2, ref_right=vm1)
+    graph = JoinModel.build(ref_left=jm1, ref_right=rm)
+
+    # baseline asserts:
+    assert len(get_graph_nodes_info(graph)) == 5
+    assert get_node(graph, ('ref_right', 'ref')) is vm1
+    assert get_node(graph, ('ref_left', 'ref_right')) is vm1
+    assert graph.materialization_name is None
+    assert vm1.materialization_name is None
+    assert rm.materialization_name is None
+
+    # update graph:
+    new_graph1 = graph.set_materialization_name(tuple(), 'test')
+    assert new_graph1.__class__ == graph.__class__
+    assert new_graph1.hash == graph.copy_set_materialization_name('test').hash
+    assert new_graph1.materialization_name == 'test'
+    assert new_graph1.hash != graph.hash
+    assert get_node(new_graph1, ('ref_right',)) is rm
+    assert get_node(new_graph1, ('ref_right', 'ref')) is vm1
+    assert get_node(new_graph1, ('ref_left', 'ref_right')) is vm1
+
+    # update vm1
+    new_graph2 = graph.set_materialization_name(('ref_right', 'ref'), 'other_name')
+    assert new_graph2.__class__ == graph.__class__
+    assert get_node(new_graph2, ('ref_right', 'ref')).materialization_name == 'other_name'
+    assert get_node(new_graph2, ('ref_left', 'ref_right')).materialization_name == 'other_name'
+    assert get_node(new_graph2, ('ref_right',)) is not rm
+    assert get_node(new_graph2, ('ref_right', 'ref')) is not vm1
+    assert get_node(new_graph2, ('ref_left', 'ref_right')) is not vm1
 
 
 def _assert_graph_difference(graph: SqlModel,
