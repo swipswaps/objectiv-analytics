@@ -207,29 +207,6 @@ def test_sample_grouped():
 
 
 def test_sample_operations_variable():
-    bt = get_bt_with_test_data(True)
-    bt_sample = bt.get_sample(table_name='test_data_sample',
-                              filter=bt.skating_order % 2 == 0,
-                              overwrite=True)
-
-    bt_sample, var = bt_sample.create_variable('var', 10)
-    bt_sample['better_city'] = bt_sample.city + '_better'
-    bt_sample['a'] = bt_sample.city.str[:2] + bt_sample.municipality.str[:2]
-    bt_sample['big_city'] = bt_sample.inhabitants + var
-    bt_sample['b'] = bt_sample.inhabitants + bt_sample.founding
-    assert bt_sample.skating_order.nunique().value == 5
-
-    all_data_bt = bt_sample.get_unsampled()
-    all_data_bt['extra_ppl'] = all_data_bt.inhabitants + 5
-
-    assert_equals_data(
-        all_data_bt,
-        expected_columns=_EXPECTED_COLUMNS_OPERATIONS,
-        expected_data=_EXPECTED_DATA_OPERATIONS
-    )
-
-
-def test_sample_operations_variable():
     # Test to prevent regression: using variables and materializing them should not change the SqlModel type
     # and then break when calling `is_materialized` after unsample()
     bt = get_bt_with_test_data(True)
