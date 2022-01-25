@@ -1070,24 +1070,13 @@ class Series(ABC):
         )
 
     def quantile(self, q: Union[float, List[float]] = 0.5, partition: WrappedPartition = None):
-
-        if isinstance(q, float):
-            if q < 0 or q > 1:
-                raise ValueError(f'value {q} should be between 0 and 1.')
-            return self._derived_agg_func(
-                partition=partition,
-                expression=AggregateFunctionExpression.construct(
-                    f'percentile_cont({q}) within group (order by {{}})',
-                    self,
-                )
-            )
-
+        quantiles = [q] if isinstance(q, float) else q
         quantile_results = []
-        for qt in q:
+        for qt in quantiles:
             if qt < 0 or qt > 1:
                 raise ValueError(f'value {qt} should be between 0 and 1.')
 
-            q_result = self._derived_agg_func(
+            agg_result = self._derived_agg_func(
                 partition=partition,
                 expression=AggregateFunctionExpression.construct(
                     f'percentile_cont({qt}) within group (order by {{}})',
@@ -1095,16 +1084,17 @@ class Series(ABC):
                 ),
             )
 
-            q_result = q_result.copy_override(
-                index={'q': const_to_series(q_result, value=qt, name='q')}, group_by=[None],
-            )
-            q_result.view_sql()
-            quantile_results.append(q_result)
+            quantile_df = agg_result.to_frame().materialize()
+            # maps the resultant quantile
+            quantile_df['q'] = qt
+            quantile_df = quantile_df.set_index('q')
+
+            quantile_results.append(quantile_df[self.name])
 
         from bach.concat import SeriesConcatOperation
         return SeriesConcatOperation(
             objects=quantile_results,
-            ignore_index=False,
+            ignore_index=len(quantiles) == 1,  # should keep q index if multiple quantiles were calculated
         )()
 
     def nunique(self, partition: WrappedPartition = None, skipna: bool = True):

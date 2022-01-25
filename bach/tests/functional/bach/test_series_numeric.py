@@ -128,12 +128,14 @@ def test_aggregations_quantile():
     pdf = pd.DataFrame(data={'a': range(5), 'b': [1, 3, 5, 7, 9]})
     bt = get_from_df('test_aggregations_quantile', pdf)
 
-    quantiles = [0.25, 0.5, 0.75]
+    quantiles = [0.25, 0.3, 0.5, 0.75, 0.86]
 
-    for column, quantile in zip(pdf.columns, [0.25, 0.5, 0.75]):
+    for column, quantile in zip(pdf.columns, quantiles):
         expected = pdf[column].quantile(q=quantile)
         result = bt[column].quantile(q=quantile).values[0]
         assert expected == result
 
-        result2 = bt[column].quantile(q=quantiles)
-        print('hola')
+    for column in pdf.columns:
+        expected_all_quantiles = pdf[column].quantile(q=quantiles)
+        result_all_quantiles = bt[column].quantile(q=quantiles).sort_index()
+        pd.testing.assert_series_equal(expected_all_quantiles, result_all_quantiles.to_pandas(), check_names=False)

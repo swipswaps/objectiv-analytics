@@ -39,7 +39,9 @@ class ConcatOperation(ABC):
             raise ValueError('no objects to concatenate.')
 
         if len(self.objects) == 1:
-            return self.objects[0].copy_override()
+            return self.objects[0].copy_override(
+                index={} if self.ignore_index else self.objects[0].index,
+            )
         return self._get_concatenated_object()
 
     def _get_indexes(self) -> Dict[str, ResultSeries]:
@@ -219,7 +221,12 @@ class SeriesConcatOperation(ConcatOperation):
         for obj in self.objects:
             if isinstance(obj, DataFrame):
                 raise Exception('Cannot concat DataFrame to Series')
-            series.append(obj.copy_override())
+
+            df = obj.to_frame()
+            if not df.is_materialized:
+                df.materialize(inplace=True)
+            series.append(df[obj.name])
+
         return series
 
     def _get_series(self) -> Dict[str, ResultSeries]:
