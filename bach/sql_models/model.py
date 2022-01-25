@@ -25,7 +25,8 @@ from sql_models.util import extract_format_fields
 
 class NotSet(Enum):
     """
-    INTERNAL: of special token used to indicate that an Optional value is not passed to a function.
+    INTERNAL: Special token used as default value for parameters, to distinguish the default value from
+    None for Optional values.
     """
     token = 0
 
