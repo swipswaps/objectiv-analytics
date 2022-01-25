@@ -16,8 +16,7 @@ export type LocationProviderContext = {
 };
 
 /**
- * A Context to retrieve LocationEntries and LocationStack.
- * Components may access Context state either via `useContext(LocationProviderContext)` or `useLocationEntries()`
- * or `useLocationStack()`.
+ * A Context to retrieve a LocationStack.
+ * Components may access Context state either via `useContext(LocationProviderContext)` or `useLocationStack()`.
  */
 export const LocationProviderContext = createContext<null | LocationProviderContext>(null);
