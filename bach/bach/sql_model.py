@@ -125,6 +125,7 @@ class SampleSqlModel(BachSqlModel):
                      previous: SqlModel,
                      columns: Tuple[str, ...],
                      name: str = 'sample_node') -> 'SampleSqlModel':
+        """ Helper function to instantiate a SampleSqlModel """
         sql = 'SELECT * FROM {table_name}'
         return SampleSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
