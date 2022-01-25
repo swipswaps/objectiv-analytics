@@ -194,55 +194,58 @@ def replace_node_in_graph(start_node: SqlModel,
     )
 
 
-def get_all_properties(start_node: SqlModel) -> Dict[str, Dict[RefPath, Hashable]]:
+def get_all_placeholders(start_node: SqlModel) -> Dict[str, Dict[RefPath, Hashable]]:
     """
-    Get all properties in the graph.
+    Get all placeholders in the graph.
 
-    :return: Dict, keys: property name, values: dictionary. The values sub-dictionary has as key the path
-        to all nodes that use the property, and as values the value in that node.
+    :return: Dict, keys: placeholder name, values: dictionary. The values sub-dictionary has as key the path
+        to all nodes that use the placeholder, and as values the value in that node.
     """
-    return _get_all_properties_recursive(start_node, tuple())
+    return _get_all_placeholders_recursive(start_node, tuple())
 
 
-def _get_all_properties_recursive(start_node: SqlModel, path_so_far: RefPath):
-    result = {name: {path_so_far: value} for name, value in start_node.properties.items()}
+def _get_all_placeholders_recursive(start_node: SqlModel, path_so_far: RefPath):
+    result = {name: {path_so_far: value} for name, value in start_node.placeholders.items()}
     for reference_name, reference in start_node.references.items():
         _next_reference_path = (*path_so_far, reference_name)
-        result_ref = _get_all_properties_recursive(reference, _next_reference_path)
+        result_ref = _get_all_placeholders_recursive(reference, _next_reference_path)
         for name, path_values in result_ref.items():
             result.setdefault(name, {}).update(path_values)
     return result
 
 
-def update_properties_in_graph(start_node: SqlModel, property_values: Mapping[str, Hashable]) -> SqlModel:
+def update_placeholders_in_graph(
+        start_node: SqlModel,
+        placeholder_values: Mapping[str, Hashable]
+) -> SqlModel:
     """
-    Return a copy of the SqlModel with the given properties updated throughout the tree.
+    Return a copy of the SqlModel with the given placeholder values updated throughout the tree.
 
-    Will only update properties of nodes that already have that property and for which that property has a
-    different value. If a node doesn't have any of the properties in property_values, or all the values match
-    already, then nothing happens with that node.
+    Will only update placeholder values of nodes that already have that placeholder and for which that
+    placeholder has a different value. If a node doesn't have any of the placeholders in placeholder_values,
+    or all the values match already, then nothing happens with that node.
 
     :param start_node: start node
-    :param property_values: Dictionary mapping property names to new values.
+    :param placeholder_values: Dictionary mapping placeholder names to new values.
     :return: Updated copy of the start_node. If nothing needs to be updated, then the start_node unchanged.
     """
-    find_keys = set(property_values.keys())
+    find_keys = set(placeholder_values.keys())
 
     def filter_function(node: SqlModel) -> bool:
-        filter_node_keys = set(node.properties.keys())
+        filter_node_keys = set(node.placeholders.keys())
         return bool(find_keys.intersection(filter_node_keys))
 
     found_nodes = find_nodes(start_node, function=filter_function)
     for found_node in found_nodes:
-        node_keys = set(found_node.model.properties.keys())
+        node_keys = set(found_node.model.placeholders.keys())
         matching_keys = find_keys.intersection(node_keys)
         dict_to_update = {
-            key: property_values[key]
-            for key in matching_keys if found_node.model.properties[key] != property_values[key]
+            key: placeholder_values[key]
+            for key in matching_keys if found_node.model.placeholders[key] != placeholder_values[key]
         }
         if not dict_to_update:
             continue
-        new_dict = found_node.model.properties
+        new_dict = found_node.model.placeholders
         new_dict.update(dict_to_update)
         start_node = start_node.set(found_node.reference_path, **new_dict)
     return start_node
