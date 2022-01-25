@@ -248,10 +248,12 @@ class SeriesConcatOperation(ConcatOperation):
         if isinstance(obj, DataFrame):
             raise Exception('a series object is expected.')
 
-        dtype = get_merged_series_dtype({
-            series.dtype for series in self.objects if isinstance(series, Series)
-        })
-        series_expression = obj.astype(dtype).expression
+        result_series = list(self._get_series().values())[0]
+
+        series_expression = Expression.construct_expr_as_name(
+            expr=obj.astype(result_series.dtype).expression,
+            name=result_series.name,
+        )
 
         if self.ignore_index:
             return series_expression
@@ -264,11 +266,16 @@ class SeriesConcatOperation(ConcatOperation):
         main_series: Series = objects[0]
         final_result_series = list(self._get_series().values())[0]
 
-        return main_series.copy_override(
+        series_cls = get_series_type_from_dtype(final_result_series.dtype)
+        return series_cls(
+            engine=main_series.engine,
             base_node=self._get_model(objects, variables={}),
             name=final_result_series.name,
-            dtype=final_result_series.dtype,
+            expression=Expression.column_reference(final_result_series.name),
             index={} if self.ignore_index else main_series.index,
+            group_by=None,
+            index_sorting=[] if self.ignore_index else main_series.index_sorting,
+            sorted_ascending=None,
         )
 
     def _get_model(
