@@ -10,6 +10,7 @@ from sql_models.graph_operations import find_node
 from bach.dataframe import escape_parameter_characters
 from bach_open_taxonomy.modelhub.modelhub import ModelHub
 from typing import TYPE_CHECKING
+import sqlalchemy
 
 if TYPE_CHECKING:
     from bach_open_taxonomy.series import SeriesLocationStack
@@ -92,7 +93,7 @@ class ObjectivFrame(DataFrame):
 
     @classmethod
     def from_objectiv_data(cls,
-                           engine=None,
+                           db_url: str = None,
                            start_date=None,
                            end_date=None,
                            time_aggregation: str = None,
@@ -100,8 +101,9 @@ class ObjectivFrame(DataFrame):
         """
         Loads data from table into an ObjectivFrame object.
 
-        :param engine: a Sqlalchemy Engine for the database. If not given, env DSN is used to create one. If
-            that's not there, the default of 'postgresql://objectiv:@localhost:5432/objectiv' will be used.
+        :param db_url: the url that indicate database dialect and connection arguments. If not given, env DSN
+            is used to create one. If that's not there, the default of
+            'postgresql://objectiv:@localhost:5432/objectiv' will be used.
         :param start_date: first date for which data is loaded to the DataFrame. If None, data is loaded from
             the first date in the sql table.
         :param end_date: last date for which data is loaded to the DataFrame. If None, data is loaded up to
@@ -111,11 +113,12 @@ class ObjectivFrame(DataFrame):
             aggregates over the entire selected dataset.
         :param table_name: the name of the sql table where the data is stored.
         """
-        if engine is None:
-            import sqlalchemy
+        if db_url is None:
             import os
             dsn = os.environ.get('DSN', 'postgresql://objectiv:@localhost:5432/objectiv')
             engine = sqlalchemy.create_engine(dsn, pool_size=1, max_overflow=0)
+        else:
+            engine = sqlalchemy.create_engine(db_url, pool_size=1, max_overflow=0)
 
         sql = f"""
             select column_name, data_type
