@@ -1220,6 +1220,14 @@ class Series(ABC):
         other: Union['Series', List['Series']],
         ignore_index: bool = False,
     ) -> 'Series':
+        """
+        Append rows of other series to the caller series.
+
+        :param other: objects to be added
+        :param ignore_index: if true, drops indexes of all objects to be appended
+
+        :return: a new series with all rows from appended other.
+        """
         from bach.concat import SeriesConcatOperation
         if not other:
             raise ValueError('no series to append.')
