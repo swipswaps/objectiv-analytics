@@ -2242,6 +2242,34 @@ class DataFrame:
                 raise Exception(f'Variable {dtype_name.name}, with dtype {dtype_name.dtype} is used, '
                                 f'but not set. Use create_variable() to assign a value')
 
+    def append(
+        self,
+        other: Union['DataFrame', List['DataFrame']],
+        ignore_index: bool = False,
+        sort: bool = False,
+    ) -> 'DataFrame':
+        """
+        Append rows of other dataframes to the the caller dataframe.
+        Non-shared columns between dataframes are added to the caller.
+
+        :param other: objects to be added
+        :param ignore_index: if true, drops indexes of all object to be appended
+        :param sort: if true, columns are sorted alphanumerically
+
+        :return: a new dataframe with all rows from appended Dataframes.
+        """
+        from bach.concat import DataFrameConcatOperation
+        if isinstance(other, list) and not other:
+            raise ValueError('no dataframe or series to append.')
+
+        other_dfs = other if isinstance(other, list) else [other]
+        concatenated_df = DataFrameConcatOperation(
+            objects=[self] + other_dfs,
+            ignore_index=ignore_index,
+            sort=sort,
+        )()
+        return concatenated_df if isinstance(concatenated_df, DataFrame) else concatenated_df.to_frame()
+
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     """

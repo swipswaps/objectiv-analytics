@@ -7,7 +7,7 @@ import pytest
 
 from bach import DataFrame, get_series_type_from_dtype
 from bach.expression import Expression
-from bach.merge import _determine_left_on_right_on, _determine_result_columns, ResultColumn, merge, How
+from bach.merge import _determine_left_on_right_on, _determine_result_columns, ResultSeries, merge, How
 from tests.unit.bach.util import get_fake_df
 
 
@@ -120,33 +120,33 @@ def test__determine_result_columns():
     result = _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
     assert result == (
         [
-            ResultColumn(name='a', expression=Expression.construct('"l"."a"'), dtype='int64'),
+            ResultSeries(name='a', expression=Expression.construct('"l"."a"'), dtype='int64'),
         ], [
-            ResultColumn(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
-            ResultColumn(name='c_x', expression=Expression.construct('"l"."c"'), dtype='int64'),
-            ResultColumn(name='c_y', expression=Expression.construct('"r"."c"'), dtype='float64'),
-            ResultColumn(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
+            ResultSeries(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
+            ResultSeries(name='c_x', expression=Expression.construct('"l"."c"'), dtype='int64'),
+            ResultSeries(name='c_y', expression=Expression.construct('"r"."c"'), dtype='float64'),
+            ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
     result = _determine_result_columns(left, right, ['c'], ['c'], ('_x', '_y'))
     assert result == (
         [
-            ResultColumn(name='a_x', expression=Expression.construct('"l"."a"'), dtype='int64'),
-            ResultColumn(name='a_y', expression=Expression.construct('"r"."a"'), dtype='float64'),
+            ResultSeries(name='a_x', expression=Expression.construct('"l"."a"'), dtype='int64'),
+            ResultSeries(name='a_y', expression=Expression.construct('"r"."a"'), dtype='float64'),
         ], [
-            ResultColumn(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
-            ResultColumn(name='c', expression=Expression.construct('"l"."c"'), dtype='int64'),
-            ResultColumn(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
+            ResultSeries(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
+            ResultSeries(name='c', expression=Expression.construct('"l"."c"'), dtype='int64'),
+            ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
     result = _determine_result_columns(left, right, ['a', 'c'], ['a', 'c'], ('_x', '_y'))
     assert result == (
         [
-            ResultColumn(name='a', expression=Expression.construct('"l"."a"'), dtype='int64'),
+            ResultSeries(name='a', expression=Expression.construct('"l"."a"'), dtype='int64'),
         ], [
-            ResultColumn(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
-            ResultColumn(name='c', expression=Expression.construct('"l"."c"'), dtype='int64'),
-            ResultColumn(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
+            ResultSeries(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
+            ResultSeries(name='c', expression=Expression.construct('"l"."c"'), dtype='int64'),
+            ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
 
