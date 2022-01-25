@@ -2,18 +2,16 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { array, create } from 'superstruct';
-import { ChildrenTaggingQueries } from '../../definitions/ChildrenTaggingQueries';
-import { ValidChildrenTaggingQuery } from '../../definitions/ValidChildrenTaggingQuery';
+import { ValidChildrenTaggingQuery } from '@objectiv/tracker-browser';
+import { parseJson } from './parseJson';
 
 /**
  * ChildrenTaggingAttribute parser
  */
-export const parseTagChildren = (stringifiedChildrenTaggingAttribute: string | null) => {
+export const parseTagChildren = (stringifiedChildrenTaggingAttribute: string | null): ValidChildrenTaggingQuery[] => {
   if (stringifiedChildrenTaggingAttribute === null) {
     throw new Error('Received `null` while attempting to parse Children Tagging Attribute');
   }
 
-  const queries = create(JSON.parse(stringifiedChildrenTaggingAttribute), ChildrenTaggingQueries);
-  return create(queries, array(ValidChildrenTaggingQuery));
+  return parseJson(stringifiedChildrenTaggingAttribute);
 };

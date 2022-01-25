@@ -946,11 +946,8 @@ __metadata:
     rollup-plugin-terser: ^7.0.2
     rollup-plugin-ts: ^2.0.4
     shx: ^0.3.3
-    superstruct: ^0.15.3
     ts-jest: ^27.1.2
     typescript: ^4.5.4
-  peerDependencies:
-    uuid-random: ^1.3.2
   languageName: unknown
   linkType: soft
 
@@ -6888,13 +6885,6 @@ __metadata:
   bin:
     stylus: bin/stylus
   checksum: 5ec06f3186aaa4802cc2f04f93665a71348954e3d10f6cb26d7cdba7108fcdfa5e9a330fa7694fa0d0d31d8decf6b18349f49bbaadde96351e30d549dfb272c7
-  languageName: node
-  linkType: hard
-
-"superstruct@npm:^0.15.3":
-  version: 0.15.3
-  resolution: "superstruct@npm:0.15.3"
-  checksum: b39a2caf28fd9e3f968f4aab504ea6646a2efe59609cc034ef9afef87cd84505b270683ad2bf609e6358ce36f09aab1cbacd4a5286706c28194597d91b31a453
   languageName: node
   linkType: hard
 

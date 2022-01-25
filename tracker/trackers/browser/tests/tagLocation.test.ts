@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsole } from '@objectiv/testing-tools';
+import { matchUUID } from '@objectiv/testing-tools';
 import {
   makePressableContext,
   makeExpandableContext,
@@ -13,7 +13,6 @@ import {
   makeOverlayContext,
   makeContentContext,
 } from '@objectiv/tracker-core';
-import { StructError } from 'superstruct';
 import { tagContent, TaggingAttribute, tagLocation } from '../src';
 
 describe('tagLocation', () => {
@@ -58,7 +57,7 @@ describe('tagLocation', () => {
     tagLocation({ instance: {}, onError: errorCallback });
 
     expect(errorCallback).toHaveBeenCalledTimes(1);
-    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(StructError);
+    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(Error);
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
@@ -256,17 +255,5 @@ describe('tagLocation', () => {
     };
 
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
-  });
-
-  it('should not allow extra attributes', () => {
-    expect(mockConsole.log).not.toHaveBeenCalled();
-    const customContentContext = { ...makeContentContext({ id: 'test-overlay' }), extraMetadata: { test: 123 } };
-    const taggingAttributes = tagLocation({
-      instance: customContentContext,
-      onError: (error) => mockConsole.log(error),
-    });
-
-    expect(taggingAttributes).toBeUndefined();
-    expect(mockConsole.log).toHaveBeenCalled();
   });
 });

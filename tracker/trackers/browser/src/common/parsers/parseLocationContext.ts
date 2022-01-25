@@ -2,12 +2,18 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { AnyLocationContext } from '../../definitions/LocationContext';
+import { isLocationContext } from '../guards/isLocationContext';
 import { parseJson } from './parseJson';
 
 /**
  * LocationContexts parser
  */
 export const parseLocationContext = (stringifiedContext: string | null) => {
-  return parseJson(stringifiedContext, AnyLocationContext);
+  const locationContext = parseJson(stringifiedContext);
+
+  if (!isLocationContext(locationContext)) {
+    throw new Error(`LocationContext is not valid: ${JSON.stringify(stringifiedContext)}`);
+  }
+
+  return locationContext;
 };

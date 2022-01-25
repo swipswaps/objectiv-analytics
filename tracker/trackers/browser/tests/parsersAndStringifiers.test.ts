@@ -15,14 +15,13 @@ import {
   stringifyTrackVisibility,
   stringifyValidate,
   tagContent,
-  TaggingAttribute,
   TrackClicksAttribute,
   TrackClicksOptions,
   TrackVisibilityAttribute,
   ValidateAttribute,
 } from '../src';
 
-describe('structs', () => {
+describe('parsersAndStringifiers', () => {
   describe('Location Contexts', () => {
     it('Should stringify and parse Section Context', () => {
       const context = makeContentContext({ id: 'test' });
@@ -108,7 +107,7 @@ describe('structs', () => {
 
   describe('Validate Attribute', () => {
     it('Should parse to { locationUniqueness: true } by default', () => {
-      const parsedValidateEmptyObject = parseValidate('{}');
+      const parsedValidateEmptyObject = parseValidate('');
       expect(parsedValidateEmptyObject).toStrictEqual({ locationUniqueness: true });
 
       const parsedValidateNull = parseValidate(null);
@@ -140,9 +139,7 @@ describe('structs', () => {
       expect(() => stringifyValidate({ locationUniqueness: null })).toThrow();
     });
 
-    it('Should not parse strings that are not Visibility Attributes or malformed', () => {
-      // @ts-ignore
-      expect(() => parseValidate('')).toThrow();
+    it('Should not parse strings that are not validate Attributes or malformed', () => {
       // @ts-ignore
       expect(() => parseValidate('{"whatIsThis":true}')).toThrow();
       // @ts-ignore
@@ -189,11 +186,6 @@ describe('structs', () => {
           ...childQuery,
           tagAs: {
             ...childQuery.tagAs,
-            [TaggingAttribute.parentElementId]: undefined,
-            [TaggingAttribute.trackBlurs]: undefined,
-            [TaggingAttribute.trackClicks]: undefined,
-            [TaggingAttribute.trackVisibility]: undefined,
-            [TaggingAttribute.validate]: undefined,
           },
         }))
       );
