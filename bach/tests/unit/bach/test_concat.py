@@ -1,20 +1,43 @@
+from unittest.mock import patch, MagicMock
+
 import pytest
 
-from bach.concat import DataFrameConcatOperation
+from bach.concat import DataFrameConcatOperation, SeriesConcatOperation
 from bach.expression import Expression
 from tests.unit.bach.util import get_fake_df
 
 
-def test_dataframe_concat_empty_df() -> None:
+def test_concat_empty_objects() -> None:
     with pytest.raises(ValueError, match=r'no objects to concat'):
         DataFrameConcatOperation(objects=[])()
 
+    with pytest.raises(ValueError, match=r'no objects to concat'):
+        SeriesConcatOperation(objects=[])()
 
-def test_dataframe_concat_one_df() -> None:
+
+def test_concat_one_object() -> None:
     df = get_fake_df([], ['b', 'c'])
     result = DataFrameConcatOperation(objects=[df])()
 
     assert df.all_series == result.all_series
+
+    result2 = DataFrameConcatOperation(objects=[df.b])()
+
+    assert df.b.dtype == result2.dtype
+    assert df.b.expression == result2.expression
+
+
+@patch.object(DataFrameConcatOperation, '_fill_missing_series')
+def test_get_overridden_objects_error(mocked_fill_missing_seris: MagicMock) -> None:
+    df = get_fake_df([], ['c', 'd'])
+
+    with pytest.raises(Exception, match='Cannot concat Series to DataFrame'):
+        DataFrameConcatOperation(objects=[df, df.c])._get_overridden_objects()
+
+    mocked_fill_missing_seris.assert_called_once()
+
+    with pytest.raises(Exception, match='Cannot concat DataFrame to Series'):
+        SeriesConcatOperation(objects=[df, df.c])._get_overridden_objects()
 
 
 def test_dataframe_concat_fill_missing_series() -> None:

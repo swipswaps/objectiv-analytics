@@ -1217,19 +1217,17 @@ class Series(ABC):
 
     def append(
         self,
-        other: Union['DataFrame', List['DataFrame']],
+        other: Union['Series', List['Series']],
         ignore_index: bool = False,
-        sort: bool = False,
     ) -> 'Series':
         from bach.concat import SeriesConcatOperation
-        if isinstance(other, list) and not other:
+        if not other:
             raise ValueError('no series to append.')
 
         other_series = other if isinstance(other, list) else [other]
         concatenated_series = SeriesConcatOperation(
             objects=[self] + other_series,
             ignore_index=ignore_index,
-            sort=sort,
         )()
         if isinstance(concatenated_series, DataFrame):
             raise Exception('concatenated series should result in new series.')

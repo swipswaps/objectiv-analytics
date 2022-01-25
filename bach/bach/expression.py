@@ -47,7 +47,7 @@ class VariableToken(ExpressionToken):
     name: str
 
     def to_sql(self) -> str:
-        return '{' + self.dtype_name_to_property_name(self.dtype, self.name) + '}'
+        return '{' + self.dtype_name_to_placeholder_name(self.dtype, self.name) + '}'
 
     @property
     def dtype_name(self):
@@ -55,16 +55,16 @@ class VariableToken(ExpressionToken):
         return DtypeNamePair(dtype=self.dtype, name=self.name)
 
     @classmethod
-    def dtype_name_to_property_name(cls, dtype: str, name: str) -> str:
+    def dtype_name_to_placeholder_name(cls, dtype: str, name: str) -> str:
         return f'___bach_variable___{dtype}___{name}'
 
     @classmethod
-    def property_name_to_token(cls, property_name: str) -> Optional['VariableToken']:
+    def placeholder_name_to_token(cls, placeholder_name: str) -> Optional['VariableToken']:
         """
-        Reverse of dtype_name_to_property_name.
-        Will return None if the property_name doesn't match the pattern
+        Reverse of dtype_name_to_placeholder_name().
+        Will return None if the placeholder_name doesn't match the pattern
         """
-        match = re.match('^___bach_variable___([a-zA-Z0-9)]+)___(.+)$', property_name)
+        match = re.match('^___bach_variable___([a-zA-Z0-9)]+)___(.+)$', placeholder_name)
         if not match:
             return None
         return cls(match.group(1), match.group(2))
