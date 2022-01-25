@@ -52,7 +52,7 @@ class ConcatOperation(ABC):
         all_indexes = list(itertools.chain.from_iterable(obj.index.values() for obj in self.objects))
         merged_indexes = self._get_result_series(all_indexes)
 
-        # all dataframes should have the same indexes
+        # all objects should have the same indexes
         for obj in self.objects:
             if set(merged_indexes.keys()) != set(obj.index.keys()):
                 raise ValueError('concatenation with different index levels is not supported yet.')
