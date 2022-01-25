@@ -1069,7 +1069,7 @@ class Series(ABC):
             skipna=skipna
         )
 
-    def quantile(self, q: Union[float, List[float]] = 0.5, partition: WrappedPartition = None):
+    def quantile(self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5):
         quantiles = [q] if isinstance(q, float) else q
         quantile_results = []
         for qt in quantiles:

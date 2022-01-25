@@ -2015,7 +2015,15 @@ class DataFrame:
         return self._aggregate_func('mode', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
-    def quantile(self, q: Union[float, List[float]] = 0.5, numeric_only: bool = True, **kwargs):
+    def quantile(
+        self,
+        q: Union[float, List[float]] = 0.5,
+        axis=1,
+        skipna=True,
+        level=None,
+        numeric_only=False,
+        **kwargs,
+    ):
         """
         Returns the mode of all values in each column.
 
@@ -2023,7 +2031,14 @@ class DataFrame:
         :param numeric_only: whether to aggregate numeric series only, or attempt all.
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
-        return self._aggregate_func('quantile', q, numeric_only, **kwargs)
+        return self._aggregate_func(
+            func='quantile',
+            axis=axis,
+            numeric_only=numeric_only,
+            level=level,
+            q=q,
+            **kwargs,
+        )
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """

@@ -139,3 +139,20 @@ def test_round():
         expected2 = pdf.round(decimals=i).sort_values(by='c')
         pd.testing.assert_frame_equal(expected2, result2, check_names=False)
 
+
+def test_quantile():
+    pdf = pd.DataFrame(
+        data={
+            'a': [1, 2, 3, 4, 5, 6, np.nan, 7.],
+            'b': [11.9, 32.0, 43.123, 64.425124, 25.00000000001, 6, np.nan, 78.],
+            'c': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+        },
+    )
+    bt = get_from_df('test_quantile', pdf)
+
+    quantiles = [0.5, [0.2, 0.4]]
+
+    for q in quantiles:
+        result = bt.quantile(q).to_pandas()
+        expected = pdf.quantile(q)
+        pd.testing.assert_frame_equal(result, expected)
