@@ -10,7 +10,7 @@ from sql_models.util import quote_identifier
 from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelSpec, Materialization, not_set, NotSet
 
 T = TypeVar('T', bound='SqlModelSpec')
-TSqlModel = TypeVar('TSqlModel', bound='BachSqlModel')
+TBachSqlModel = TypeVar('TBachSqlModel', bound='BachSqlModel')
 
 
 if typing.TYPE_CHECKING:
@@ -53,7 +53,7 @@ class BachSqlModel(SqlModel[T]):
         return self._columns
 
     def copy_override(
-            self: TSqlModel,
+            self: TBachSqlModel,
             *,
             model_spec: T = None,
             placeholders: Mapping[str, Hashable] = None,
@@ -61,7 +61,7 @@ class BachSqlModel(SqlModel[T]):
             materialization: Materialization = None,
             materialization_name: Union[Optional[str], NotSet] = not_set,
             columns: Tuple[str, ...] = None
-    ) -> TSqlModel:
+    ) -> TBachSqlModel:
         """
         Similar to super class's implementation, but adds optional 'columns' parameter
         """
@@ -118,6 +118,32 @@ class SampleSqlModel(BachSqlModel):
             materialization=materialization,
             materialization_name=materialization_name,
             columns=columns
+        )
+
+    def copy_override(
+            self: 'SampleSqlModel',
+            *,
+            model_spec: T = None,
+            placeholders: Mapping[str, Hashable] = None,
+            references: Mapping[str, 'SqlModel'] = None,
+            materialization: Materialization = None,
+            materialization_name: Union[Optional[str], NotSet] = not_set,
+            columns: Tuple[str, ...] = None,
+            previous: BachSqlModel = None
+    ) -> 'SampleSqlModel':
+        """
+        Similar to super class's implementation, but adds optional 'previous' parameter
+        """
+        materialization_name_value = \
+            self.materialization_name if materialization_name is not_set else materialization_name
+        return self.__class__(
+            model_spec=self.model_spec if model_spec is None else model_spec,
+            placeholders=self.placeholders if placeholders is None else placeholders,
+            references=self.references if references is None else references,
+            materialization=self.materialization if materialization is None else materialization,
+            materialization_name=materialization_name_value,
+            columns=self.columns if columns is None else columns,
+            previous=self.previous if previous is None else previous
         )
 
     @staticmethod
