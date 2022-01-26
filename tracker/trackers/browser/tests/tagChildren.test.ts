@@ -24,6 +24,8 @@ describe('tagChild and tagChildren', () => {
     // @ts-ignore
     expect(tagChild([])).toBeUndefined();
     // @ts-ignore
+    expect(tagChild({ queryAll: 'test', tagAs: {} })).toBeUndefined();
+    // @ts-ignore
     expect(tagChild({ tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
     expect(tagChild({ queryAll: null, tagAs: tagContent({ id: 'test' }) })).toBeUndefined();

@@ -10,7 +10,7 @@ import { LocationTaggerParameters } from '../../definitions/LocationTaggerParame
 export const isLocationTaggerParameters = (
   object: Partial<LocationTaggerParameters>
 ): object is LocationTaggerParameters => {
-  if (!(typeof object === 'object')) {
+  if (typeof object !== 'object' || object === null) {
     return false;
   }
 

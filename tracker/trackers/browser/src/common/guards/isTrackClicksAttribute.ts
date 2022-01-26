@@ -13,6 +13,10 @@ export const isTrackClicksAttribute = (attribute: Partial<TrackClicksAttribute>)
     return false;
   }
 
+  if (attribute === null) {
+    return false;
+  }
+
   if (
     typeof attribute === 'object' &&
     attribute.waitUntilTracked !== true &&

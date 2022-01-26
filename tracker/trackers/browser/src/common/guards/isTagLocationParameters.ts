@@ -10,7 +10,7 @@ import { isTagLocationOptions } from './isTagLocationOptions';
  * A type guard to determine if the given object is a TagLocationParameters.
  */
 export const isTagLocationParameters = (object: Partial<TagLocationParameters>): object is TagLocationParameters => {
-  if (!(typeof object === 'object')) {
+  if (typeof object !== 'object' || object === null) {
     return false;
   }
 

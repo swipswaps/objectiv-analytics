@@ -16,6 +16,7 @@ export * from './common/guards/isShowableContext';
 export * from './common/guards/isTagChildrenElement';
 export * from './common/guards/isTaggableElement';
 export * from './common/guards/isTaggedElement';
+export * from './common/guards/isTagLocationAttributes';
 export * from './common/guards/isTagLocationOptions';
 export * from './common/guards/isTagLocationParameters';
 export * from './common/guards/isTrackClicksAttribute';

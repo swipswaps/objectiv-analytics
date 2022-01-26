@@ -11,7 +11,11 @@ import { isFlushQueueOptions } from './isFlushQueueOptions';
 export const isWaitUntilTrackedOptions = (
   object: Partial<WaitUntilTrackedOptions>
 ): object is WaitUntilTrackedOptions => {
-  if (!object.intervalMs === undefined && object.timeoutMs === undefined && object.flushQueue === undefined) {
+  if (typeof object !== 'object' || object === null) {
+    return false;
+  }
+
+  if (object.intervalMs === undefined && object.timeoutMs === undefined && object.flushQueue === undefined) {
     return false;
   }
 

@@ -10,7 +10,7 @@ import { TrackVisibilityAttribute } from '../../definitions/TrackVisibilityAttri
 export const isTrackVisibilityAttribute = (
   object: Partial<TrackVisibilityAttribute>
 ): object is TrackVisibilityAttribute => {
-  if (!(typeof object === 'object')) {
+  if (typeof object !== 'object' || object === null) {
     return false;
   }
 

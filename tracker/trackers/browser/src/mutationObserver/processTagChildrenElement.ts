@@ -3,7 +3,6 @@
  */
 
 import { ValidChildrenTaggingQuery } from '@objectiv/tracker-browser';
-import { getObjectKeys } from '@objectiv/tracker-core';
 import { isTagChildrenElement } from '../common/guards/isTagChildrenElement';
 import { parseTagChildren } from '../common/parsers/parseTagChildren';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
@@ -27,13 +26,6 @@ export const processTagChildrenElement = (element: Element): TaggedElement[] => 
 
     queries.forEach((query: ValidChildrenTaggingQuery) => {
       const { queryAll, tagAs }: ValidChildrenTaggingQuery = query;
-
-      // Strip out undefined attributes
-      getObjectKeys(tagAs).forEach((key) => {
-        if (tagAs[key] === undefined) {
-          delete tagAs[key];
-        }
-      });
 
       element.querySelectorAll(queryAll).forEach((queriedElement) => {
         for (let [key, value] of Object.entries<string | undefined>(tagAs)) {

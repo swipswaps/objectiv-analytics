@@ -9,12 +9,16 @@ import { AnyLocationContext } from '../../definitions/LocationContext';
  * A type guard to determine if the given object is a LocationContext.
  */
 export const isLocationContext = (locationContext: AbstractLocationContext): locationContext is AnyLocationContext => {
-  if (!locationContext?._type) {
-    throw new Error('LocationContext is missing the `_type` attribute');
+  if (typeof locationContext !== 'object' || locationContext === null) {
+    return false;
   }
 
-  if (!locationContext?.id) {
-    throw new Error('LocationContext is missing the `id` attribute');
+  if (!locationContext._type) {
+    return false;
+  }
+
+  if (!locationContext.id) {
+    return false;
   }
 
   return [

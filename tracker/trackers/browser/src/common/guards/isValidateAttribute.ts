@@ -8,7 +8,7 @@ import { ValidateAttribute } from '../../definitions/ValidateAttribute';
  * A type guard to determine if the given object is a ValidateAttribute.
  */
 export const isValidateAttribute = (object: Partial<ValidateAttribute>): object is ValidateAttribute => {
-  if (!(typeof object === 'object')) {
+  if (typeof object !== 'object' || object === null) {
     return false;
   }
 

@@ -47,7 +47,52 @@ describe('tagLocation', () => {
     // @ts-ignore
     expect(tagLocation({ instance: 'test' })).toBeUndefined();
     // @ts-ignore
+    expect(tagLocation({ instance: { _type: 'nope' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: { _type: 'ContentContext' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: { id: 'nope' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: { _type: 'Nope', id: 'nope' } })).toBeUndefined();
+    // @ts-ignore
     expect(tagLocation({ instance: makeContentContext({ id: 'test' }), options: 'invalid' })).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: null } })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: 'nope' } })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: {} } })).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({
+        instance: makeContentContext({ id: 'test' }),
+        options: { trackClicks: { waitUntilTracked: 'nope' } },
+      })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: { waitUntilTracked: {} } } })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackBlurs: 'nope' } })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackVisibility: 'nope' } })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackVisibility: {} } })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { validate: 'nope' } })
+    ).toBeUndefined();
   });
 
   it('should call `onError` callback when an error occurs', () => {

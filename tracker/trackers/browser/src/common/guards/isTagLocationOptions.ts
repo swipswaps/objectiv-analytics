@@ -11,7 +11,7 @@ import { isValidateAttribute } from './isValidateAttribute';
  * A type guard to determine if the given object is a TagLocationOptions.
  */
 export const isTagLocationOptions = (object: Partial<TagLocationOptions>): object is TagLocationOptions => {
-  if (typeof object !== 'object') {
+  if (typeof object !== 'object' || object === null) {
     return false;
   }
 

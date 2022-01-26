@@ -3,6 +3,7 @@
  */
 
 import { ValidChildrenTaggingQuery } from '../../definitions/ValidChildrenTaggingQuery';
+import { isTagLocationAttributes } from './isTagLocationAttributes';
 
 /**
  * A type guard to determine if the given object is a TagChildrenParameters.
@@ -10,7 +11,7 @@ import { ValidChildrenTaggingQuery } from '../../definitions/ValidChildrenTaggin
 export const isValidChildrenTaggingQuery = (
   object: Partial<ValidChildrenTaggingQuery>
 ): object is ValidChildrenTaggingQuery => {
-  if (!(typeof object === 'object')) {
+  if (typeof object !== 'object' || object === null) {
     return false;
   }
 
@@ -19,6 +20,10 @@ export const isValidChildrenTaggingQuery = (
   }
 
   if (object.queryAll !== undefined && typeof object.queryAll !== 'string') {
+    return false;
+  }
+
+  if (object.tagAs !== undefined && !isTagLocationAttributes(object.tagAs)) {
     return false;
   }
 
