@@ -1,21 +1,5 @@
-from unittest.mock import patch, MagicMock
-
-import pytest
-
 from bach import Series
-from bach.concat import SeriesConcatOperation
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
-
-
-@patch.object(SeriesConcatOperation, '__call__')
-def test_series_append_errors(mocked_concat_call: MagicMock) -> None:
-    bt = get_bt_with_test_data(full_data_set=False)
-    mocked_concat_call.return_value = bt
-    with pytest.raises(ValueError, match='no series to append'):
-        bt.city.append(other=[])
-
-    with pytest.raises(Exception, match='concatenated series should result in new series.'):
-        bt.city.append(bt.city)
 
 
 def test_series_append_same_dtype() -> None:
