@@ -165,35 +165,6 @@ def find_node(
     return result[0]
 
 
-def replace_node_in_graph(start_node: SqlModel,
-                          reference_path: RefPath,
-                          replacement_model: SqlModel) -> SqlModel:
-    """
-    Create a (partial) copy of the graph that can be reached from start_node, with the referenced node
-    replaced by replacement_model. All nodes along all reference paths to the referenced node will be
-    replaced with copies of the original nodes that (indirectly) link to replacement_model.
-
-    The original start node, and all nodes that it refers recursively are unchanged.
-    :param start_node: start node
-    :param reference_path: references to traverse to get to the node that has to be updated
-    :param replacement_model: model instance that will replace the reference node
-    :return: an updated copy of the start node
-    """
-    selected_node = get_node_info_selected_node(start_node, reference_path)
-    dependent_model_ids = _get_all_dependent_node_model_ids(selected_node)
-    # the dependent_model_ids are guaranteed to uniquely identify python objects as long as those objects
-    # exist. We still have a reference to the start node here, so all objects that are being replaced are
-    # guaranteed to still exist at the end of this function, ergo we can safely use dependent_model_ids to
-    # identify python objects.
-    return _replace_model_in_graph_recursively(
-        current_node=start_node,
-        model_to_replace=selected_node.model,
-        replacement_node=replacement_model,
-        dependent_model_ids=dependent_model_ids,
-        replaced_models={}
-    )
-
-
 def get_all_placeholders(start_node: SqlModel) -> Dict[str, Dict[RefPath, Hashable]]:
     """
     Get all placeholders in the graph.
@@ -249,6 +220,35 @@ def update_placeholders_in_graph(
         new_dict.update(dict_to_update)
         start_node = start_node.set(found_node.reference_path, **new_dict)
     return start_node
+
+
+def replace_node_in_graph(start_node: SqlModel,
+                          reference_path: RefPath,
+                          replacement_model: SqlModel) -> SqlModel:
+    """
+    Create a (partial) copy of the graph that can be reached from start_node, with the referenced node
+    replaced by replacement_model. All nodes along all reference paths to the referenced node will be
+    replaced with copies of the original nodes that (indirectly) link to replacement_model.
+
+    The original start node, and all nodes that it refers recursively are unchanged.
+    :param start_node: start node
+    :param reference_path: references to traverse to get to the node that has to be updated
+    :param replacement_model: model instance that will replace the reference node
+    :return: an updated copy of the start node
+    """
+    selected_node = get_node_info_selected_node(start_node, reference_path)
+    dependent_model_ids = _get_all_dependent_node_model_ids(selected_node)
+    # the dependent_model_ids are guaranteed to uniquely identify python objects as long as those objects
+    # exist. We still have a reference to the start node here, so all objects that are being replaced are
+    # guaranteed to still exist at the end of this function, ergo we can safely use dependent_model_ids to
+    # identify python objects.
+    return _replace_model_in_graph_recursively(
+        current_node=start_node,
+        model_to_replace=selected_node.model,
+        replacement_node=replacement_model,
+        dependent_model_ids=dependent_model_ids,
+        replaced_models={}
+    )
 
 
 def _replace_model_in_graph_recursively(
