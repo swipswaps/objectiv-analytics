@@ -508,6 +508,9 @@ class SqlModel(Generic[T]):
     def copy_set(self: TSqlModel, new_placeholders: Mapping[str, Any]) -> TSqlModel:
         """
         Return a copy with the given placeholder values of this model updated.
+
+        deprecated:: Use copy_override() if possible.
+            https://github.com/objectiv/objectiv-analytics/issues/412
         """
         placeholders = self.placeholders
         for new_key, new_val in new_placeholders.items():
@@ -523,6 +526,9 @@ class SqlModel(Generic[T]):
 
         Take care to not create cycles in the reference graph when using this function. Generally when
         working with a full graph of models its best to use the wrapper methods in graph_operations.py
+
+        deprecated:: Use copy_override() if possible.
+            https://github.com/objectiv/objectiv-analytics/issues/412
         """
         references = self.references
         for new_key, new_val in new_references.items():
@@ -535,6 +541,9 @@ class SqlModel(Generic[T]):
     def copy_set_materialization(self: TSqlModel, materialization: Materialization) -> TSqlModel:
         """
         Create a copy with the given materialization of this model updated.
+
+        deprecated:: Use copy_override() if possible.
+            https://github.com/objectiv/objectiv-analytics/issues/412
         """
         if self.materialization == materialization:
             return self
@@ -543,6 +552,9 @@ class SqlModel(Generic[T]):
     def copy_set_materialization_name(self: TSqlModel, materialization_name: Optional[str]) -> TSqlModel:
         """
         Create a copy with the given materialization_name of this model updated.
+
+        deprecated:: Use copy_override() if possible.
+            https://github.com/objectiv/objectiv-analytics/issues/412
         """
         if self.materialization_name == materialization_name:
             return self
