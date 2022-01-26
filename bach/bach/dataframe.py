@@ -2296,7 +2296,7 @@ class DataFrame:
             ignore_index=ignore_index,
             sort=sort,
         )()
-        return concatenated_df if isinstance(concatenated_df, DataFrame) else concatenated_df.to_frame()
+        return concatenated_df
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

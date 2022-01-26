@@ -1254,19 +1254,17 @@ class Series(ABC):
         :param other: objects to be added
         :param ignore_index: if true, drops indexes of all objects to be appended
 
-        :return: a new series with all rows from appended other.
+        :return:  a new series with all rows from appended other or self if other is empty.
         """
         from bach.concat import SeriesConcatOperation
         if not other:
-            raise ValueError('no series to append.')
+            return self
 
         other_series = other if isinstance(other, list) else [other]
         concatenated_series = SeriesConcatOperation(
             objects=[self] + other_series,
             ignore_index=ignore_index,
         )()
-        if isinstance(concatenated_series, DataFrame):
-            raise Exception('concatenated series should result in new series.')
         return concatenated_series
 
 
