@@ -150,9 +150,12 @@ def test_quantile():
     )
     bt = get_from_df('test_quantile', pdf)
 
-    quantiles = [0.5, [0.2, 0.4]]
+    quantiles = [[0.2, 0.4], 0.5]
 
     for q in quantiles:
-        result = bt.quantile(q).to_pandas()
-        expected = pdf.quantile(q)
-        pd.testing.assert_frame_equal(result, expected)
+        result = bt.quantile(q).sort_index()
+
+        # pandas returns a series when calculating just 1 quantile
+        result_values = result.values if isinstance(q, list) else result.values[0]
+        expected = pdf.reset_index(drop=False).quantile(q)
+        np.testing.assert_equal(expected.values, result_values)

@@ -2020,15 +2020,14 @@ class DataFrame:
         self,
         q: Union[float, List[float]] = 0.5,
         axis=1,
-        skipna=True,
-        level=None,
-        numeric_only=False,
+        numeric_only=True,
         **kwargs,
     ):
         """
         Returns the mode of all values in each column.
 
         :param q: value or list of values between 0 and 1.
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
         :param numeric_only: whether to aggregate numeric series only, or attempt all.
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
@@ -2039,19 +2038,27 @@ class DataFrame:
         new_series = df._apply_func_to_series(
             func='quantile',
             axis=axis,
-            numeric_only=True,
+            numeric_only=numeric_only,
             exclude_non_applied=True,
             partition=df.group_by,
             q=q,
             **kwargs,
         )
-        # TODO: check all have the same index
-        series_to_df = [series.to_frame() for series in new_series]
-        df = reduce(
-            lambda left, right: left.merge(right, left_index=True, right_index=True),
-            series_to_df
+        unique_quantile = isinstance(q, float) or len(q) == 1
+
+        from bach.concat import DataFrameConcatOperation
+        quantile_df = DataFrameConcatOperation([series.to_frame() for series in new_series])()
+
+        #  when multiple quantiles are calculated, each new series has "q" series as index
+        quantile_df = quantile_df.sum() if unique_quantile else quantile_df.groupby(by='q').sum()
+
+        quantile_df.rename(
+            columns={
+                name: name.replace('_sum', '') for name in quantile_df.data_columns
+            },
+            inplace=True
         )
-        return self
+        return quantile_df
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """

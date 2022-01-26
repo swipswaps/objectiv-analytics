@@ -1082,14 +1082,14 @@ class Series(ABC):
                     f'percentile_cont({qt}) within group (order by {{}})',
                     self,
                 ),
+                dtype='float64',
             )
 
             quantile_df = agg_result.to_frame().materialize()
             # maps the resultant quantile
             quantile_df['q'] = qt
-            quantile_df = quantile_df.set_index('q')
-
-            quantile_results.append(quantile_df[self.name])
+            quantile_df.set_index('q', inplace=True)
+            quantile_results.append(quantile_df.all_series[self.name])
 
         from bach.concat import SeriesConcatOperation
         return SeriesConcatOperation(
