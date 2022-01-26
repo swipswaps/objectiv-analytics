@@ -17,6 +17,9 @@ DEFAULT_CONCAT_SERIES_DTYPE = 'string'
 
 
 def _get_merged_series_dtype(dtypes: Set[str]) -> str:
+    """
+    returns a final dtype when trying to combine series with different dtypes
+    """
     if len(dtypes) == 1:
         return dtypes.pop()
     elif all(
@@ -67,10 +70,6 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
 
         return merged_indexes
 
-    @abstractmethod
-    def _get_series(self) -> Dict[str, ResultSeries]:
-        raise NotImplementedError()
-
     def _get_result_series(self, series: List[Series]) -> Dict[str, ResultSeries]:
         """
         merges all shared series and defines final dtype
@@ -90,6 +89,10 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
             )
             for series_name in series_names
         }
+
+    @abstractmethod
+    def _get_series(self) -> Dict[str, ResultSeries]:
+        raise NotImplementedError()
 
     @abstractmethod
     def _join_series_expressions(self, obj: TDataFrameOrSeries) -> Expression:
