@@ -235,7 +235,6 @@ class SeriesConcatOperation(ConcatOperation[Series]):
             df = obj.to_frame()
             if not df.is_materialized:
                 df.materialize(inplace=True)
-
             series.append(df.all_series[obj.name])
 
         return series
