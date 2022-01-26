@@ -1,4 +1,5 @@
 from copy import copy
+from functools import reduce
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable, Hashable, Sequence
 from uuid import UUID
@@ -2031,14 +2032,26 @@ class DataFrame:
         :param numeric_only: whether to aggregate numeric series only, or attempt all.
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
-        return self._aggregate_func(
+        df = self
+        if df.group_by is None:
+            df = df.groupby()
+
+        new_series = df._apply_func_to_series(
             func='quantile',
             axis=axis,
-            numeric_only=numeric_only,
-            level=level,
+            numeric_only=True,
+            exclude_non_applied=True,
+            partition=df.group_by,
             q=q,
             **kwargs,
         )
+        # TODO: check all have the same index
+        series_to_df = [series.to_frame() for series in new_series]
+        df = reduce(
+            lambda left, right: left.merge(right, left_index=True, right_index=True),
+            series_to_df
+        )
+        return self
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """
