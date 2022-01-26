@@ -12,7 +12,8 @@
   },
   "angularCompilerOptions": {
     "strictMetadataEmit": true,
-    "skipTemplateCodegen": true
+    "skipTemplateCodegen": true,
+    "enableIvy": false
   },
   "exclude": ["**/node_modules", "**/dist"]
 }
