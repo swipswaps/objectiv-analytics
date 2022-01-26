@@ -5,8 +5,8 @@ from typing import cast, TYPE_CHECKING
 
 from bach import DataFrame
 from bach.dataframe import escape_parameter_characters
-from bach.sql_model import SampleSqlModel, BachSqlModel
-from sql_models.graph_operations import find_node, replace_node_in_graph, replace_non_start_node_in_graph
+from bach.sql_model import SampleSqlModel
+from sql_models.graph_operations import find_node, replace_node_in_graph
 from sql_models.sql_generator import to_sql
 from sql_models.util import quote_identifier
 
@@ -83,16 +83,9 @@ def get_unsampled(df: DataFrame) -> 'DataFrame':
     # filter function for find_node() above filtered on
     assert isinstance(sampled_node_tuple.model, SampleSqlModel)
 
-    replacement_model = sampled_node_tuple.model.previous
-    reference_path = sampled_node_tuple.reference_path
-    # Splitting the empty reference path case from the non-empty makes it easy to verify (for us and mypy)
-    # that we get the correct type (namely `BachSqlModel`) base_node again
-    if reference_path == tuple():
-        updated_graph = replacement_model
-    else:
-        updated_graph = replace_non_start_node_in_graph(
-            start_node=df.base_node,
-            reference_path=reference_path,
-            replacement_model=replacement_model
-        )
+    updated_graph = replace_node_in_graph(
+        start_node=df.base_node,
+        reference_path=sampled_node_tuple.reference_path,
+        replacement_model=sampled_node_tuple.model.previous
+    )
     return df.copy_override_base_node(base_node=updated_graph)

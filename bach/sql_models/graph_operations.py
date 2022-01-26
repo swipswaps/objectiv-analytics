@@ -2,7 +2,8 @@
 Copyright 2021 Objectiv B.V.
 """
 from collections import deque
-from typing import NamedTuple, List, Dict, Set, Tuple, Optional, Callable, Deque, Hashable, Mapping, TypeVar
+from typing import NamedTuple, List, Dict, Set, Tuple, Optional, Callable, Deque, Hashable, Mapping,\
+    TypeVar,  Union
 
 from sql_models.model import SqlModel, RefPath
 
@@ -227,9 +228,9 @@ def update_placeholders_in_graph(
 
 
 def replace_node_in_graph(
-        start_node: SqlModel,
+        start_node: TSqlModel,
         reference_path: RefPath,
-        replacement_model: SqlModel) -> SqlModel:
+        replacement_model: T2SqlModel) -> Union[TSqlModel, T2SqlModel]:
     """
     Create a (partial) copy of the graph that can be reached from start_node, with the referenced node
     replaced by replacement_model. All nodes along all reference paths to the referenced node will be
