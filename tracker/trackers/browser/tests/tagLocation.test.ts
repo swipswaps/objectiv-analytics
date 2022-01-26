@@ -56,20 +56,20 @@ describe('tagLocation', () => {
     expect(tagLocation({ instance: { _type: 'Nope', id: 'nope' } })).toBeUndefined();
     // @ts-ignore
     expect(tagLocation({ instance: makeContentContext({ id: 'test' }), options: 'invalid' })).toBeUndefined();
-    // @ts-ignore
     expect(
+      // @ts-ignore
       tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: null } })
     ).toBeUndefined();
-    // @ts-ignore
     expect(
+      // @ts-ignore
       tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: 'nope' } })
     ).toBeUndefined();
     // @ts-ignore
     expect(tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: {} } })).toBeUndefined();
-    // @ts-ignore
     expect(
       tagLocation({
         instance: makeContentContext({ id: 'test' }),
+        // @ts-ignore
         options: { trackClicks: { waitUntilTracked: 'nope' } },
       })
     ).toBeUndefined();
@@ -77,20 +77,20 @@ describe('tagLocation', () => {
     expect(
       tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: { waitUntilTracked: {} } } })
     ).toBeUndefined();
-    // @ts-ignore
     expect(
+      // @ts-ignore
       tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackBlurs: 'nope' } })
     ).toBeUndefined();
-    // @ts-ignore
     expect(
+      // @ts-ignore
       tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackVisibility: 'nope' } })
     ).toBeUndefined();
-    // @ts-ignore
     expect(
+      // @ts-ignore
       tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackVisibility: {} } })
     ).toBeUndefined();
-    // @ts-ignore
     expect(
+      // @ts-ignore
       tagLocation({ instance: makeContentContext({ id: 'test' }), options: { validate: 'nope' } })
     ).toBeUndefined();
   });
