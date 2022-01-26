@@ -48,9 +48,9 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
             raise ValueError('no objects to concatenate.')
 
         if len(self.objects) == 1:
-            return self.objects[0].copy_override(
-                index={} if self.ignore_index else self.objects[0].index,  # type: ignore
-            )
+            index = {} if self.ignore_index else self.objects[0].index
+            return self.objects[0].copy_override(index=index)  # type: ignore
+
         return self._get_concatenated_object()
 
     def _get_indexes(self) -> Dict[str, ResultSeries]:
