@@ -111,7 +111,7 @@ class ConcatOperation:
         result_series = {}
         series_names = sorted(series_dtypes) if self.sort else series_dtypes.keys()
         for series_name in series_names:
-            final_dtype = 'string'
+
             if len(series_dtypes[series_name]) == 1:
                 final_dtype = series_dtypes[series_name].pop()
             elif all(
@@ -119,6 +119,9 @@ class ConcatOperation:
                 for dtype in series_dtypes[series_name]
             ):
                 final_dtype = 'float64'
+
+            else:
+                final_dtype = 'string'
 
             result_series[series_name] = ResultSeries(
                 name=series_name,
@@ -135,6 +138,9 @@ class ConcatOperation:
         main_df = dfs[0]
         variables = {}
         savepoints = main_df.savepoints
+
+        # variables are overridden based on the order of concatenation. This means that the initial dataframe
+        # will have higher priority over the following dataframes
         for df in reversed(dfs):
             variables.update(df.variables)
             savepoints.merge(df.savepoints)
