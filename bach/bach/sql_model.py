@@ -88,6 +88,15 @@ class BachSqlModel(SqlModel[T]):
             columns=columns
         )
 
+    @classmethod
+    def _get_placeholders(
+        cls,
+        variables: Dict['DtypeNamePair', Hashable],
+        expressions: List[Expression],
+    ) -> Dict[str, str]:
+        filtered_variables = filter_variables(variables, expressions)
+        return get_variable_values_sql(filtered_variables)
+
 
 class SampleSqlModel(BachSqlModel):
     """

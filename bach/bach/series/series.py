@@ -1217,7 +1217,7 @@ class Series(ABC):
 
 
 def const_to_series(base: Union[Series, DataFrame],
-                    value: Union[Series, int, float, str, UUID],
+                    value: Optional[Union[Series, int, float, str, UUID]],
                     name: str = None) -> Series:
     """
     INTERNAL: Take a value and return a Series representing a column with that value.
