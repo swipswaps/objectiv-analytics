@@ -2024,7 +2024,7 @@ class DataFrame:
         **kwargs,
     ):
         """
-        Returns the mode of all values in each column.
+        Returns the quantile of all numeric columns.
 
         :param q: value or list of values between 0 and 1.
         :param axis: only ``axis=1`` is supported. This means columns are aggregated.
