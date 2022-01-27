@@ -3,11 +3,12 @@ Copyright 2021 Objectiv B.V.
 """
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
+from typing import Union, List, Tuple, Optional, Dict, Set, Hashable
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeNamePair
 from bach.expression import Expression, join_expressions
+from bach.utils import ResultSeries, get_result_series_dtype_mapping
 from sql_models.model import Materialization, CustomSqlModelBuilder
 from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
 
@@ -114,19 +115,13 @@ def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> Li
     raise ValueError(f'Type of {var_name} is not supported. Type: {type(x_on)}')
 
 
-class ResultColumn(NamedTuple):
-    name: str
-    expression: 'Expression'
-    dtype: str
-
-
 def _determine_result_columns(
-        left: DataFrame,
-        right: DataFrameOrSeries,
-        left_on: List[str],
-        right_on: List[str],
-        suffixes: Tuple[str, str]
-) -> Tuple[List[ResultColumn], List[ResultColumn]]:
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    left_on: List[str],
+    right_on: List[str],
+    suffixes: Tuple[str, str],
+) -> Tuple[List[ResultSeries], List[ResultSeries]]:
     """
     Determine which columns should be in the DataFrame after merging left and right, with the given
     left_on and right_on values.
@@ -162,7 +157,7 @@ def _determine_result_columns(
     return new_index_list, new_data_list
 
 
-def _check_no_column_name_conflicts(result_columns: List[ResultColumn]):
+def _check_no_column_name_conflicts(result_columns: List[ResultSeries]):
     """ Helper of _determine_result_columns, checks that there are no duplicate names in the list.  """
     seen = set()
     for rc in result_columns:
@@ -192,15 +187,15 @@ def _get_column_name_expr_dtype(
         conflicting_names: Set[str],
         suffix: str,
         table_alias: str
-) -> List[ResultColumn]:
+) -> List[ResultSeries]:
     """ Helper of _determine_result_columns. """
-    new_index_list: List[ResultColumn] = []
+    new_index_list: List[ResultSeries] = []
     for index_name, series in source_series.items():
         new_name = index_name
         if index_name in conflicting_names:
             new_name = index_name + suffix
         new_index_list.append(
-                ResultColumn(
+                ResultSeries(
                     name=new_name,
                     expression=series.expression.resolve_column_references(table_alias),
                     dtype=series.dtype
@@ -274,8 +269,8 @@ def merge(
     return left.copy_override(
         engine=left.engine,
         base_node=model,
-        index_dtypes={rc.name: rc.dtype for rc in new_index_list},
-        series_dtypes={rc.name: rc.dtype for rc in new_data_list},
+        index_dtypes=get_result_series_dtype_mapping(new_index_list),
+        series_dtypes=get_result_series_dtype_mapping(new_data_list),
         group_by=None,
         order_by=[],  # merging resets any sorting
         savepoints=left.savepoints.merge(right_savepoints),
@@ -289,7 +284,7 @@ def _get_merge_sql_model(
         how: How,
         real_left_on: List[str],
         real_right_on: List[str],
-        new_column_list: List[ResultColumn],
+        new_column_list: List[ResultSeries],
         variables: Dict['DtypeNamePair', Hashable]
 ) -> BachSqlModel:
     """
@@ -374,13 +369,9 @@ class MergeSqlModel(BachSqlModel):
             expressions=all_expressions
         )
 
-        # Set all variables that are applicable to this model
-        filtered_variables = filter_variables(variables, all_expressions)
-        properties = get_variable_values_sql(filtered_variables)
-
         super().__init__(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            properties=properties,
+            placeholders=self._get_placeholders(variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

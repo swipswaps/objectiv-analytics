@@ -28,7 +28,7 @@ class BachSqlModel(SqlModel[T]):
     """
     def __init__(self,
                  model_spec: T,
-                 properties: Mapping[str, Hashable],
+                 placeholders: Mapping[str, Hashable],
                  references: Mapping[str, 'SqlModel'],
                  materialization: Materialization,
                  materialization_name: Optional[str],
@@ -41,7 +41,7 @@ class BachSqlModel(SqlModel[T]):
         self._columns = columns
         super().__init__(
             model_spec=model_spec,
-            properties=properties,
+            placeholders=placeholders,
             references=references,
             materialization=materialization,
             materialization_name=materialization_name)
@@ -56,12 +56,21 @@ class BachSqlModel(SqlModel[T]):
         """ From any SqlModel create a BachSqlModel with the given column definitions. """
         return cls(
             model_spec=sql_model.model_spec,
-            properties=sql_model.properties,
+            placeholders=sql_model.placeholders,
             references=sql_model.references,
             materialization=sql_model.materialization,
             materialization_name=sql_model.materialization_name,
             columns=columns
         )
+
+    @classmethod
+    def _get_placeholders(
+        cls,
+        variables: Dict['DtypeNamePair', Hashable],
+        expressions: List[Expression],
+    ) -> Dict[str, str]:
+        filtered_variables = filter_variables(variables, expressions)
+        return get_variable_values_sql(filtered_variables)
 
 
 class SampleSqlModel(BachSqlModel):
@@ -85,7 +94,7 @@ class SampleSqlModel(BachSqlModel):
         sql = 'SELECT * FROM {table_name}'
         super().__init__(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            properties={'table_name': quote_identifier(table_name)},
+            placeholders={'table_name': quote_identifier(table_name)},
             references={},
             materialization=Materialization.CTE,
             materialization_name=None,
@@ -128,13 +137,13 @@ class CurrentNodeSqlModel(BachSqlModel):
         all_expressions = column_exprs + [expr for expr in nullable_expressions if expr is not None]
         references = construct_references({'prev': previous_node}, all_expressions)
 
-        # Set all relevant variables as properties
+        # Set all relevant variables as placeholders
         filtered_variables = filter_variables(variables, all_expressions)
-        properties = get_variable_values_sql(filtered_variables)
+        placeholders = get_variable_values_sql(filtered_variables)
 
         super().__init__(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            properties=properties,
+            placeholders=placeholders,
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
@@ -204,10 +213,10 @@ def get_variable_values_sql(variable_values: Dict['DtypeNamePair', Hashable]) ->
         value_dtype = value_to_dtype(value)
         if dtype != value_dtype:  # should never happen
             Exception(f'Dtype of value {value}, {value_dtype} does not match registered dtype {dtype}')
-        property_name = VariableToken.dtype_name_to_property_name(dtype=dtype, name=name)
+        placeholder_name = VariableToken.dtype_name_to_placeholder_name(dtype=dtype, name=name)
         series_type = get_series_type_from_dtype(dtype)
         expr = series_type.supported_value_to_literal(value)
         double_escaped_sql = expr.to_sql()
         sql = double_escaped_sql.format().format()
-        result[property_name] = sql
+        result[placeholder_name] = sql
     return result

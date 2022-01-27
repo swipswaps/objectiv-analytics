@@ -2,7 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 import json
-from typing import Optional, Dict, Union, TYPE_CHECKING
+from typing import Optional, Dict, Union, TYPE_CHECKING, List
 
 from bach.series import Series
 from bach.expression import Expression
@@ -296,7 +296,8 @@ class SeriesJson(SeriesJsonb):
                  name: str,
                  expression: Expression,
                  group_by: 'GroupBy',
-                 sorted_ascending: Optional[bool] = None):
+                 sorted_ascending: Optional[bool],
+                 index_sorting: List[bool]):
 
         super().__init__(engine=engine,
                          base_node=base_node,
@@ -304,4 +305,5 @@ class SeriesJson(SeriesJsonb):
                          name=name,
                          expression=Expression.construct(f'cast({{}} as jsonb)', expression),
                          group_by=group_by,
-                         sorted_ascending=sorted_ascending)
+                         sorted_ascending=sorted_ascending,
+                         index_sorting=index_sorting)

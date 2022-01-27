@@ -14,8 +14,8 @@ def test_replace_node_in_graph_trivial():
     graph1 = ValueModel.build(key='a', val=1)
     replacement_node1 = ValueModel.build(key='b', val=99)
     new_graph1 = replace_node_in_graph(graph1, tuple(), replacement_node1)
-    assert graph1.properties['val'] == 1
-    assert new_graph1.properties['val'] == 99
+    assert graph1.placeholders['val'] == 1
+    assert new_graph1.placeholders['val'] == 99
     assert graph1.hash != new_graph1.hash
 
     # Four node graph. replace first node
@@ -25,9 +25,9 @@ def test_replace_node_in_graph_trivial():
     graph2 = JoinModel.build(ref_left=rm, ref_right=vm2)
     replacement_node2 = ValueModel.build(key='b', val=99)
     new_graph2 = replace_node_in_graph(graph2, tuple(), replacement_node2)
-    assert graph2.properties == {}
+    assert graph2.placeholders == {}
     assert len(graph2.references) == 2
-    assert new_graph2.properties['val'] == 99
+    assert new_graph2.placeholders['val'] == 99
     assert len(new_graph2.references) == 0
     assert graph2.hash != new_graph2.hash
 
@@ -46,8 +46,8 @@ def test_replace_node_in_graph_simple():
     replacement_node = ValueModel.build(key='b', val=99)
 
     new_graph = replace_node_in_graph(graph, ('ref_left', 'ref'), replacement_node)
-    assert get_node(graph, ('ref_left', 'ref')).properties['val'] == 1
-    assert get_node(new_graph, ('ref_left', 'ref')).properties['val'] == 99
+    assert get_node(graph, ('ref_left', 'ref')).placeholders['val'] == 1
+    assert get_node(new_graph, ('ref_left', 'ref')).placeholders['val'] == 99
     assert graph.hash != new_graph.hash
 
 
@@ -73,12 +73,12 @@ def test_replace_node_in_graph_simple_duplicate_paths():
 
     assert len(info) == 3
     assert get_node(graph, ('ref_left', 'ref')) is get_node(graph, ('ref_right',))
-    assert get_node(graph, ('ref_left', 'ref')).properties['val'] == 1
-    assert get_node(graph, ('ref_right',)).properties['val'] == 1
+    assert get_node(graph, ('ref_left', 'ref')).placeholders['val'] == 1
+    assert get_node(graph, ('ref_right',)).placeholders['val'] == 1
 
     assert len(new_info) == 3  # The node that is referenced twice should be replace by a single node again
-    assert get_node(new_graph1, ('ref_left', 'ref')).properties['val'] == 99
-    assert get_node(new_graph1, ('ref_right',)).properties['val'] == 99
+    assert get_node(new_graph1, ('ref_left', 'ref')).placeholders['val'] == 99
+    assert get_node(new_graph1, ('ref_right',)).placeholders['val'] == 99
     assert get_node(new_graph1, ('ref_left', 'ref')).hash == get_node(new_graph1, ('ref_right',)).hash
     assert get_node(new_graph1, ('ref_left', 'ref')) is get_node(new_graph1, ('ref_right',))
     assert graph.hash != new_graph1.hash
@@ -115,14 +115,14 @@ def test_replace_node_in_graph_duplicate_paths2():
     assert len(info) == 5
     # two paths to same node
     assert get_node(graph, ('ref_left', 'ref', 'ref')) is get_node(graph, ('ref_right', 'ref', 'ref'))
-    assert get_node(graph, ('ref_left', 'ref', 'ref')).properties['val'] == 1
-    assert get_node(graph, ('ref_right', 'ref', 'ref')).properties['val'] == 1
+    assert get_node(graph, ('ref_left', 'ref', 'ref')).placeholders['val'] == 1
+    assert get_node(graph, ('ref_right', 'ref', 'ref')).placeholders['val'] == 1
 
     assert len(new_info) == 5  # All nodes should be replaced one on one with new nodes
     new_node_left = get_node(new_graph1, ('ref_left', 'ref', 'ref'))
     new_node_right = get_node(new_graph1, ('ref_right', 'ref', 'ref'))
-    assert new_node_left.properties['val'] == 99
-    assert new_node_right.properties['val'] == 99
+    assert new_node_left.placeholders['val'] == 99
+    assert new_node_right.placeholders['val'] == 99
     assert new_node_left.hash == new_node_right.hash
     assert new_node_left is new_node_right
     assert graph.hash != new_graph1.hash
@@ -163,15 +163,15 @@ def test_replace_node_in_graph_non_leaf_node():
     node_left = get_node(graph, ('ref_left', 'ref', 'ref'))
     node_right = get_node(graph, ('ref_right', 'ref', 'ref'))
     assert node_left is node_right
-    assert node_left.properties['val'] == 10
-    assert node_right.properties['val'] == 10
+    assert node_left.placeholders['val'] == 10
+    assert node_right.placeholders['val'] == 10
     assert get_node(node_left, ('ref', )) is get_node(node_right, ('ref', ))
 
     assert len(new_info) == 7  # Number of nodes shouldn't change
     new_node_left = get_node(new_graph1, ('ref_left', 'ref', 'ref'))
     new_node_right = get_node(new_graph1, ('ref_right', 'ref', 'ref'))
-    assert new_node_left.properties['val'] == 1337
-    assert new_node_right.properties['val'] == 1337
+    assert new_node_left.placeholders['val'] == 1337
+    assert new_node_right.placeholders['val'] == 1337
     assert new_node_left.hash == new_node_right.hash
     assert new_node_left is new_node_right
     assert get_node(new_node_left, ('ref',)) is get_node(new_node_right, ('ref',))
@@ -220,15 +220,15 @@ def test_replace_node_in_graph_complex1():
     node_left = get_node(graph, ('ref_right', 'ref', 'ref'))
     node_right = get_node(graph, ('ref_left', 'ref_right', 'ref'))
     assert node_left is node_right
-    assert node_left.properties['val'] == 10
-    assert node_right.properties['val'] == 10
+    assert node_left.placeholders['val'] == 10
+    assert node_right.placeholders['val'] == 10
     assert get_node(node_left, ('ref', )) is get_node(node_right, ('ref', ))
 
     assert len(new_info) == 9  # Number of nodes shouldn't change
     new_node_left = get_node(new_graph1, ('ref_right', 'ref', 'ref'))
     new_node_right = get_node(new_graph1, ('ref_left', 'ref_right', 'ref'))
-    assert new_node_left.properties['val'] == 1337
-    assert new_node_right.properties['val'] == 1337
+    assert new_node_left.placeholders['val'] == 1337
+    assert new_node_right.placeholders['val'] == 1337
     assert new_node_left.hash == new_node_right.hash
     assert new_node_left is new_node_right
     assert get_node(new_node_left, ('ref',)) is get_node(new_node_right, ('ref',))
@@ -284,9 +284,9 @@ def test_replace_node_in_graph_complex2():
     node_three = get_node(graph, ('ref_left', 'ref_left', 'ref_right'))
     assert node_one is node_two
     assert node_one is node_three
-    assert node_one.properties['val'] == 5
-    assert node_two.properties['val'] == 5
-    assert node_three.properties['val'] == 5
+    assert node_one.placeholders['val'] == 5
+    assert node_two.placeholders['val'] == 5
+    assert node_three.placeholders['val'] == 5
     assert get_node(node_one, ('ref',)) is get_node(node_two, ('ref', ))
     assert get_node(node_one, ('ref',)) is get_node(node_three, ('ref',))
 
@@ -296,9 +296,9 @@ def test_replace_node_in_graph_complex2():
     new_node_three = get_node(new_graph1, ('ref_left', 'ref_left', 'ref_right'))
     assert new_node_one is new_node_two
     assert new_node_one is new_node_three
-    assert new_node_one.properties['val'] == 1337
-    assert new_node_two.properties['val'] == 1337
-    assert new_node_three.properties['val'] == 1337
+    assert new_node_one.placeholders['val'] == 1337
+    assert new_node_two.placeholders['val'] == 1337
+    assert new_node_three.placeholders['val'] == 1337
     assert get_node(new_node_one, ('ref',)) is get_node(new_node_two, ('ref', ))
     assert get_node(new_node_one, ('ref',)) is get_node(new_node_three, ('ref',))
     assert graph.hash != new_graph1.hash

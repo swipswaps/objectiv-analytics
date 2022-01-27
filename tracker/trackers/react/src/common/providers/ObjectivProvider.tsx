@@ -41,7 +41,6 @@ export type ObjectivProviderProps = TrackerProviderContext & {
 
 /**
  * ObjectivProvider adds automating tracking of ApplicationLoadedEvent to TrackingContextProvider.
- * It also clears the LocationTree we use for validating Locations on mount.
  */
 export const ObjectivProvider = ({ children, tracker, options }: ObjectivProviderProps) => {
   const { trackApplicationLoaded } = { ...objectivProviderDefaultOptions, ...options };

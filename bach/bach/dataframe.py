@@ -10,7 +10,7 @@ from sqlalchemy.future import Connection
 from bach.expression import Expression, SingleValueExpression, VariableToken
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from sql_models.graph_operations import update_properties_in_graph, get_all_properties
+from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
 from sql_models.sql_generator import to_sql
@@ -34,6 +34,8 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - string function name
 #     - list of functions and/or function names, e.g. [SeriesInt64.sum, 'mean']
 #     - dict of axis labels -> functions, function names or list of such.
+
+Level = Union[int, List[int], str, List[str]]
 
 
 class SortColumn(NamedTuple):
@@ -410,7 +412,7 @@ class DataFrame:
         columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
         bach_model = BachSqlModel(
             model_spec=model.model_spec,
-            properties=model.properties,
+            placeholders=model.placeholders,
             references=model.references,
             materialization=model.materialization,
             materialization_name=model.materialization_name,
@@ -518,7 +520,9 @@ class DataFrame:
                 index={},  # Empty index for index series
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by
+                group_by=group_by,
+                sorted_ascending=None,
+                index_sorting=[]
             )
         series: Dict[str, Series] = {}
         for key, value in dtypes.items():
@@ -529,7 +533,9 @@ class DataFrame:
                 index=index,
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by
+                group_by=group_by,
+                sorted_ascending=None,
+                index_sorting=[]
             )
         return cls(
             engine=engine,
@@ -599,7 +605,9 @@ class DataFrame:
                     engine=args['engine'], base_node=args['base_node'],
                     index={},  # Empty index for index series
                     name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by']
+                    group_by=args['group_by'],
+                    sorted_ascending=None,
+                    index_sorting=[]
                 )
             args['index'] = new_index
 
@@ -611,7 +619,9 @@ class DataFrame:
                     engine=args['engine'], base_node=args['base_node'],
                     index=args['index'],
                     name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by']
+                    group_by=args['group_by'],
+                    sorted_ascending=None,
+                    index_sorting=[]
                 )
                 args['series'] = new_series
 
@@ -634,8 +644,15 @@ class DataFrame:
         if group_by is not None:
             group_by = group_by.copy_override_base_node(base_node=base_node)
 
-        series = {name: series.copy_override(base_node=base_node, group_by=[group_by], index=index)
-                  for name, series in self.data.items()}
+        series = {
+            name: series.copy_override(
+                base_node=base_node,
+                group_by=[group_by],
+                index=index,
+                index_sorting=[]
+            )
+            for name, series in self.data.items()
+        }
 
         return self.copy_override(base_node=base_node, index=index, series=series, group_by=[group_by])
 
@@ -723,7 +740,7 @@ class DataFrame:
             materialization. Must be unique both within the Savepoints and within the base_node.
         :param materialization: Optional materialization of the savepoint in the database. This doesn't do
             anything unless self.savepoints.write_to_db() gets called and the savepoints are actually
-                materialized into the database.
+            materialized into the database.
         """
         if not self.is_materialized:
             self.materialize(node_name=name, inplace=True, limit=None)
@@ -1087,7 +1104,7 @@ class DataFrame:
 
             new_index = {idx: series for idx, series in df.index.items() if idx not in levels_to_remove}
 
-        df._data = {n: s.copy_override(index={}) for n, s in series.items()}
+        df._data = {n: s.copy_override(index={}, index_sorting=[]) for n, s in series.items()}
         df._index = new_index
         return None if inplace else df
 
@@ -1128,13 +1145,13 @@ class DataFrame:
                     raise ValueError(f'series \'{k}\' not found')
                 idx_series = df.all_series[k]
 
-            new_index[idx_series.name] = idx_series.copy_override(index={})
+            new_index[idx_series.name] = idx_series.copy_override(index={}, index_sorting=[])
 
             if not drop and idx_series.name not in df._index and idx_series.name in df._data:
                 raise ValueError('When adding existing series to the index, drop must be True'
                                  ' because duplicate column names are not supported.')
 
-        new_series = {n: s.copy_override(index=new_index) for n, s in df._data.items()
+        new_series = {n: s.copy_override(index=new_index, index_sorting=[]) for n, s in df._data.items()
                       if n not in new_index}
 
         df._index = new_index
@@ -1264,7 +1281,7 @@ class DataFrame:
         """
         # update the series to also contain our group_by and group_by index
         # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
-        new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index)
+        new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index, index_sorting=[])
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
         return df.copy_override(
             engine=df.engine,
@@ -1503,6 +1520,47 @@ class DataFrame:
                     for by_series, asc_item in zip(by_series_list, ascending)]
         return self.copy_override(order_by=order_by)
 
+    def sort_index(
+        self,
+        level: Optional[Level] = None,
+        ascending: Union[bool, List[bool]] = True,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
+        """
+        Sort dataframe by index levels.
+        :param level: int or level name or list of ints or level names.
+         If not specified, all index series are used
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `level` must also be a list and ``len(ascending) == len(level)``.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+        :returns: a new DataFrame with the specified ordering if ``inplace=False``,
+         otherwise it updates the original and returns None.
+        """
+        sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
+        df = self.sort_values(by=sort_by, ascending=ascending)
+
+        if inplace:
+            self._update_self_from_df(df)
+            return None
+
+        return df
+
+    def _get_indexes_by_level(self, level: Level) -> List[str]:
+        selected_indexes = []
+        nlevels = len(self.index_columns)
+
+        for idx_l in level if isinstance(level, list) else [level]:
+            if isinstance(idx_l, int) and nlevels < idx_l:
+                raise ValueError(f'dataframe has only {nlevels} levels.')
+
+            if isinstance(idx_l, str) and idx_l not in self.index_columns:
+                raise ValueError(f'dataframe has no {idx_l} index level.')
+
+            level_name = idx_l if isinstance(idx_l, str) else self.index_columns[idx_l]
+            selected_indexes.append(level_name)
+
+        return selected_indexes
+
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.DataFrame:
         """
         Run a SQL query representing the current state of this DataFrame against the database and return the
@@ -1654,9 +1712,9 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        property_values = get_variable_values_sql(variable_values=self.variables)
+        placeholder_values = get_variable_values_sql(variable_values=self.variables)
         # TODO: fix typing here, or move all BachSqlModel logic to SqlModel, or both?
-        model = update_properties_in_graph(start_node=model, property_values=property_values)  # type: ignore
+        model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)  # type: ignore  # noqa
         return to_sql(model)
 
     def merge(
@@ -2092,7 +2150,8 @@ class DataFrame:
 
         The variable value can later be changed using :meth:`DataFrame.set_variable`
 
-        ## Multiple variables with the same name
+        **Multiple variables with the same name**
+
         For variables the combination (name, dtype) uniquely identifies a variable. That means that there
         can be multiple variables with the same name, if they are of different types. This is counter to
         how a lot of programming languages handle variables. But it prevents a lot of error conditions and
@@ -2103,7 +2162,7 @@ class DataFrame:
         :param value: value of variable
         :param dtype: optional. If not set it will be derived from the value, if set we check that it
             matches the value. If dtype doesn't match the value's dtype, then an Exception is raised.
-        :return: Tuple with DataFrame and Series object.
+        :return: Tuple with DataFrame and the Series object that can be used as a variable.
         """
         from bach.series.series import variable_series
         series = variable_series(base=self, value=value, name=name)
@@ -2117,6 +2176,7 @@ class DataFrame:
     def set_variable(self, name: str, value: Any, *, dtype: Optional[str] = None) -> 'DataFrame':
         """
         Return a copy of this DataFrame with the variable value updated.
+
         :param name: name of variable to update
         :param value: new value of variable
         :param dtype: optional. If not set it will be derived from the value, if set we check that it
@@ -2136,17 +2196,22 @@ class DataFrame:
         multiple times, then it will appear here multiple times. If a variable has conflicting definitions
         then the conflicting dtypes and/or values are all returned.
 
-        :return: List of DefinedVariable tuples. The fields in each tuple:
-            - name: name of the variable
-            - dtype: dtype
-            - value: value that is currently set in `self.variables`, or None if there is no value
-            - ref_path: If the variable is used in an already materialized part of the DataFrame, i.e.
-                the usage is in self.base_node, then this is the reference path from self.base_node to the
-                SqlModel in which the variable usage occurs. If the variable is used in self.series instead,
-                then this is None
-            - old_value: If the variable is used in an already materialized part of the DataFrame, then it
-                also has a value already. That is this value. Will be None if this variable usage is not in
-                self.base_node.
+        **Returned data**
+
+        This method returns a list of DefinedVariable tuples, the fields in the tuples:
+
+        * name: name of the variable
+        * dtype: dtype
+        * value: value that is currently set in `self.variables`, or None if there is no value
+        * ref_path: If the variable is used in an already materialized part of the DataFrame, i.e.
+          the usage is in self.base_node, then this is the reference path from self.base_node to the
+          SqlModel in which the variable usage occurs. If the variable is used in self.series instead,
+          then this is None
+        * old_value: If the variable is used in an already materialized part of the DataFrame, then it
+          also has a value already. That is this value. Will be None if this variable usage is not in
+          self.base_node.
+
+        :return: List with all usages of variables in this DataFrame.
         """
         return self._get_all_used_variables_series() + self._get_all_used_variables_base_node()
 
@@ -2167,9 +2232,9 @@ class DataFrame:
 
     def _get_all_used_variables_base_node(self) -> List[DefinedVariable]:
         result = []
-        all_properties = get_all_properties(self.base_node)
-        for property_name, values_dict in all_properties.items():
-            token = VariableToken.property_name_to_token(property_name)
+        all_placeholders = get_all_placeholders(self.base_node)
+        for placeholder_name, values_dict in all_placeholders.items():
+            token = VariableToken.placeholder_name_to_token(placeholder_name)
             if token is None:
                 continue
             for ref_path, old_value in values_dict.items():
@@ -2192,6 +2257,33 @@ class DataFrame:
             if dtype_name not in self.variables:
                 raise Exception(f'Variable {dtype_name.name}, with dtype {dtype_name.dtype} is used, '
                                 f'but not set. Use create_variable() to assign a value')
+
+    def append(
+        self,
+        other: Union['DataFrame', List['DataFrame']],
+        ignore_index: bool = False,
+        sort: bool = False,
+    ) -> 'DataFrame':
+        """
+        Append rows of other dataframes to the the caller dataframe.
+        Non-shared columns between dataframes are added to the caller.
+
+        :param other: objects to be added
+        :param ignore_index: if true, drops indexes of all object to be appended
+        :param sort: if true, columns are sorted alphanumerically
+
+        :return: a new dataframe with all rows from appended Dataframes.
+        """
+        from bach.concat import ConcatOperation
+        if isinstance(other, list) and not other:
+            raise ValueError('no dataframe or series to append.')
+
+        other_dfs = other if isinstance(other, list) else [other]
+        return ConcatOperation(
+            dfs=[self] + other_dfs,
+            ignore_index=ignore_index,
+            sort=sort,
+        )()
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
