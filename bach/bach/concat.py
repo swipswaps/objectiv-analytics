@@ -34,16 +34,25 @@ def _get_merged_series_dtype(dtypes: Set[str]) -> str:
 
 
 class ConcatOperation(Generic[TDataFrameOrSeries]):
+    """
+    Abstract class that specifies the list of objects to be concatenated.
+
+    Child classes are in charged of specifying the correct type (DataFrame/Series) of all objects.
+    All classes should implement _get_concatenated_object method that returns a single object with the correct
+    instantiated type.
+    """
     objects: Sequence[TDataFrameOrSeries]
     ignore_index: bool
-    sort: bool
 
-    def __init__(self, objects: Sequence[TDataFrameOrSeries], ignore_index: bool = False, sort: bool = False):
+    def __init__(self, objects: Sequence[TDataFrameOrSeries], ignore_index: bool = False):
         self.objects = objects
         self.ignore_index = ignore_index
-        self.sort = sort
 
     def __call__(self, *args, **kwargs) -> TDataFrameOrSeries:
+        """
+        If only one object is provided for concatenation, it should just return a copy.
+        Otherwise, child class _get_concatenated_object method is called.
+        """
         if not len(self.objects):
             raise ValueError('no objects to concatenate.')
 
@@ -55,7 +64,8 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
 
     def _get_indexes(self) -> Dict[str, ResultSeries]:
         """
-        gets the indexes of the final concatenated dataframe or series
+        gets the indexes of the final concatenated dataframe or series.
+        All objects must have the same indexes, otherwise concatenation is not performed.
         """
         if self.ignore_index:
             return {}
@@ -68,6 +78,9 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
             if set(merged_indexes.keys()) != set(obj.index.keys()):
                 raise ValueError('concatenation with different index levels is not supported yet.')
 
+            if any(mi.dtype != oi.dtype for mi, oi in zip(merged_indexes.values(), obj.index.values())):
+                raise ValueError('concatenation with different index dtypes is not supported yet.')
+
         return merged_indexes
 
     def _get_result_series(self, series: List[Series]) -> Dict[str, ResultSeries]:
@@ -79,7 +92,7 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
         for s in series:
             series_dtypes[s.name].add(s.dtype)
 
-        series_names = sorted(series_dtypes) if self.sort else series_dtypes.keys()
+        series_names = series_dtypes.keys()
 
         return {
             series_name: ResultSeries(
@@ -91,30 +104,35 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
         }
 
     @abstractmethod
-    def _get_series(self) -> Dict[str, ResultSeries]:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _join_series_expressions(self, obj: TDataFrameOrSeries) -> Expression:
-        raise NotImplementedError()
-
-    @abstractmethod
     def _get_concatenated_object(self) -> TDataFrameOrSeries:
-        raise NotImplementedError()
-
-    @abstractmethod
-    def _get_model(
-        self,
-        objects: List[TDataFrameOrSeries],
-        variables: Dict['DtypeNamePair', Hashable],
-    ) -> 'ConcatSqlModel':
+        """
+        returns a single object based on the instantiated type from the child class
+        """
         raise NotImplementedError()
 
 
 class DataFrameConcatOperation(ConcatOperation[DataFrame]):
+    """
+    In order to implement this class you should provide the following params:
+    objects: a list of DataFrames to be concatenated (all DataFrames should have the same indexes)
+    ignore_index: a boolean specifying if the resultant DataFrame must preserve the original indexes or not.
+    sort: a boolean specifying the order of the data_columns in the result. If False, the order of series
+    will be based on each object's position and data_columns value.
+
+    returns a new DataFrame
+
+    Example:
+        DataFrameConcatOperation(objects=[df1, df2], ignore_index=True, sort=True)()
+    """
+    sort: bool
+
+    def __init__(self, objects: Sequence[DataFrame], ignore_index: bool = False, sort: bool = False):
+        self.sort = sort
+        super().__init__(objects=objects, ignore_index=ignore_index)
+
     def _get_overridden_objects(self) -> List[DataFrame]:
         """
-        generates a copy for each dataframe and prepares them for concatentation
+        generates a copy for each dataframe and prepares them for concatenation
         """
         dfs: List[DataFrame] = []
         for obj in self.objects:
@@ -176,9 +194,19 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
         all_series = list(
             itertools.chain.from_iterable(df.data.values() for df in self.objects)
         )
-        return self._get_result_series(all_series)
+        result_series = self._get_result_series(all_series)
+        if not self.sort:
+            return result_series
+
+        return {s: result_series[s] for s in sorted(result_series)}
 
     def _get_concatenated_object(self) -> DataFrame:
+        """
+        prepares all dataframes for concatenation (all of them have the same columns)
+        gets the resultant indexes and series for the final dataframe.
+
+        returns a new dataframe with all the rows from the provided objects
+        """
         objects = self._get_overridden_objects()
         new_indexes = self._get_indexes()
         new_data_series = self._get_series()
@@ -206,6 +234,9 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
         objects: Sequence[DataFrame],
         variables: Dict['DtypeNamePair', Hashable],
     ) -> 'ConcatSqlModel':
+        """
+        returns a ConcatSqlModel which unifies all queries from all dataframes.
+        """
         new_indexes = self._get_indexes()
         new_data_series = self._get_series()
 
@@ -218,11 +249,21 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
             columns=tuple(new_index_names + new_data_series_names),
             all_series_expressions=series_expressions,
             all_nodes=[df.base_node for df in objects],
-            variables=variables,  # type: ignore
+            variables=variables,
         )
 
 
 class SeriesConcatOperation(ConcatOperation[Series]):
+    """
+    In order to implement this class you should provide the following params:
+    objects: a list of Series to be concatenated (all Series should have the same indexes)
+    ignore_index: a boolean specifying if the resultant Series must preserve the original indexes or not.
+
+    returns a new Series
+
+    Example:
+        SeriesConcatOperation(objects=[df1, df2], ignore_index=True)()
+    """
     def _get_overridden_objects(self) -> List[Series]:
         """
         creates new copies for each series to be concatenated
@@ -256,7 +297,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
             name='_'.join(all_names),
             dtype=_get_merged_series_dtype(dtypes),
         )
-        return self._get_result_series([main_series])  # type: ignore
+        return self._get_result_series([main_series])
 
     def _join_series_expressions(self, obj: Series) -> Expression:
         """
@@ -276,6 +317,9 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         return join_expressions(index_expressions + [series_expression])
 
     def _get_concatenated_object(self) -> Series:
+        """
+        returns a series that contains all rows from all provided objects.
+        """
         objects = self._get_overridden_objects()
         main_series: Series = objects[0]
         final_result_series = list(self._get_series().values())[0]
@@ -297,13 +341,16 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         objects: Sequence[Series],
         variables: Dict['DtypeNamePair', Hashable],
     ) -> 'ConcatSqlModel':
+        """
+        returns a ConcatSqlModel that unifies all series queries into a single column.
+        """
         series_expressions = [self._join_series_expressions(obj) for obj in objects]
 
         return ConcatSqlModel(
             columns=tuple('concatenated_series'),
             all_series_expressions=series_expressions,
             all_nodes=[series.base_node for series in objects],
-            variables=variables,  # type: ignore
+            variables=variables,
         )
 
 
