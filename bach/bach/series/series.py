@@ -1070,6 +1070,11 @@ class Series(ABC):
         )
 
     def quantile(self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5):
+        """
+        When q is a float or len(q) == 1, the resultant series index will be empty
+        In case multiple quantiles are calculated, the resultant series index will have all calculated
+        quantiles as index values.
+        """
         quantiles = [q] if isinstance(q, float) else q
         quantile_results = []
         for qt in quantiles:
@@ -1087,9 +1092,15 @@ class Series(ABC):
             if len(quantiles) == 1:
                 return agg_result
 
-            quantile_df = agg_result.to_frame().materialize()
+            quantile_df = agg_result.to_frame()
             # maps the resultant quantile
-            quantile_df['q'] = qt
+            # a hack in order to avoid calling quantile_df.materialized().
+            # Currently doing quantile['q'] = qt
+            # will raise some errors since the expression is not an instance of AggregateFunctionExpression
+            quantile_df['q'] = agg_result.copy_override(
+                dtype='float64',
+                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
+            )
             quantile_df.set_index('q', inplace=True)
             quantile_results.append(quantile_df.all_series[self.name])
 

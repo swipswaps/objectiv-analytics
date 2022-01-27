@@ -8,7 +8,7 @@ import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression, VariableToken
+from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
@@ -2035,22 +2035,43 @@ class DataFrame:
         if df.group_by is None:
             df = df.groupby()
 
-        new_series = df._apply_func_to_series(
-            func='quantile',
-            axis=axis,
-            numeric_only=numeric_only,
-            exclude_non_applied=True,
-            partition=df.group_by,
-            q=q,
-            **kwargs,
-        )
-        if isinstance(q, float) or len(q) == 1:
-            return df.copy_override(base_node=new_series[0].base_node, series={s.name: s for s in new_series})
+        quantiles = [q] if isinstance(q, float) else q
 
-        # merge all quantiles based on 'q' index
-        return reduce(
-            lambda left, right: left.merge(right, on='q'), [series.to_frame() for series in new_series]
-        )
+        all_quantile_dfs = []
+        for qt in quantiles:
+            new_series = df._apply_func_to_series(
+                func='quantile',
+                axis=axis,
+                numeric_only=numeric_only,
+                exclude_non_applied=True,
+                partition=df.group_by,
+                q=qt,
+                **kwargs,
+            )
+            initial_series = new_series[0]
+            quantile_df = df.copy_override(
+                base_node=initial_series.base_node,
+                series={s.name: s for s in new_series},
+                index={},
+                group_by=[initial_series.group_by],
+            )
+            if len(quantiles) == 1:
+                return quantile_df
+
+            # a hack in order to avoid calling quantile_df.materialized().
+            # Currently doing quantile['q'] = qt
+            # will raise some errors since the expression is not an instance of AggregateFunctionExpression
+            quantile_df['q'] = initial_series.copy_override(
+                dtype='float64',
+                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
+            )
+            quantile_df.view_sql()
+            all_quantile_dfs.append(quantile_df)
+
+        from bach.concat import DataFrameConcatOperation
+        result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
+        # q column should be in the index when calculating multiple quantiles
+        return result.set_index('q')
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """
