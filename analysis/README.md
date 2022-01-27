@@ -1,15 +1,16 @@
 # Objectiv Analysis
 
-## Setup Objectiv for data analysis
+## Start modeling with Objectiv
 Clone this repository and install the following packages with `pip install -e` from the root of the
-repository:
+repository. The Bach package requires a local installation of postgres.
 ```bash
 pip install -e bach
 pip install -e analysis/bach_open_taxonomy
 ```
 
-You can now import the package and work with your data in python. This can be done with the ObjectivFrame
-object. 
+You can now import the package and work with your data in a Jupyter notebook. This can be done with the
+ObjectivFrame object. The object can be instantiated as follows, where the `db_url` and `table_name`
+should be adjusted depending on where the data is stored and how to access it.
 ```python
 from bach_open_taxonomy import ObjectivFrame
 of = ObjectivFrame.from_objectiv_data(db_url='postgresql://user:pass@localhost:5432/database',
@@ -36,6 +37,8 @@ own data. The full model hub reference is found
 to work with our [quickstart demo](https://objectiv.io/docs/quickstart-guide/), in which Metabase is included.
 
 ## Setup development environment
+This section is only required for development of the bach and open taxonomy packages. 
+
 ```bash
 virtualenv venv
 source venv/bin/activate
@@ -58,3 +61,50 @@ ipython kernel install --user --name=objectiv_venv
    1. `/bach/`
    2. `/analysis/bach_open_taxonomy/`
 * Set `analysis/venv/bin/python` as the default interpreter for the project
+
+
+## Metabase integration
+
+To enable Objectiv's Metabase integration, there are basically 2 steps:
+
+### 1. Setup connectivity from Metabase to your database
+   
+Within Metabase, switch to admin mode, and select Databases to add your database (if this has not already been
+done). Exit admin. 
+
+Switching to the overview, in the section "our data" a new collection, with the name of the database should be
+present. If you select the database, a numeric ID will be in the URL, for example: 
+"http://localhost:3000/browse/2-objectiv", in this case your database ID is 2.
+
+The collection ID can be obtained in a similar way. From the overview page, select the collection (or create
+one first) from "Our analytics". This will result in a URL like "http://localhost:3000/collection/2-objectiv",
+in this case 2 is your collection ID.
+
+Finally, if you have set up a dashboard, and want cards to be added to that automatically, open the dashboard;
+the URL should be something like "http://localhost:3000/dashboard/1-model-hub", your dashboard ID is 1. This
+optional.
+
+### 2. Configure Objectiv to communicate with Metabase. 
+
+This works through exporting variables to the environment that is running bach. 
+```
+# This is the URL where the notebook can find Metabase. If the notebook is not running in Docker
+# this will be the same as METABASE_WEB_URL
+METABASE_URL="http://localhost:3000"
+
+# this is the URL where the browser can find Metabase.
+METABASE_WEB_URL="http://localhost:3000"
+
+# username to login to Metabase. This use must have enough privileges to add/create cards
+METABASE_USERNAME="demo@objectiv.io"
+METABASE_PASSWORD="metabase1"
+
+# id of added Database
+METABASE_DATABASE_ID=2 # objectiv database
+
+# id of collection
+METABASE_COLLECTION_ID=2 # 2-objectiv
+
+# id of dashboard to add cards to
+METABASE_DASHBOARD_ID=1 # 1-model-hub
+```

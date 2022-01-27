@@ -10,7 +10,6 @@ from sql_models.graph_operations import find_node
 from bach.dataframe import escape_parameter_characters
 from bach_open_taxonomy.modelhub.modelhub import ModelHub
 from typing import TYPE_CHECKING
-import sqlalchemy
 
 if TYPE_CHECKING:
     from bach_open_taxonomy.series import SeriesLocationStack
@@ -113,12 +112,11 @@ class ObjectivFrame(DataFrame):
             aggregates over the entire selected dataset.
         :param table_name: the name of the sql table where the data is stored.
         """
+        import sqlalchemy
         if db_url is None:
             import os
-            dsn = os.environ.get('DSN', 'postgresql://objectiv:@localhost:5432/objectiv')
-            engine = sqlalchemy.create_engine(dsn, pool_size=1, max_overflow=0)
-        else:
-            engine = sqlalchemy.create_engine(db_url, pool_size=1, max_overflow=0)
+            db_url = os.environ.get('DSN', 'postgresql://objectiv:@localhost:5432/objectiv')
+        engine = sqlalchemy.create_engine(db_url, pool_size=1, max_overflow=0)
 
         sql = f"""
             select column_name, data_type
