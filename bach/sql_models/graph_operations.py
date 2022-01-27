@@ -281,7 +281,7 @@ def replace_non_start_node_in_graph(
     :raises ValueError: if reference_path is an empty tuple
     """
     if reference_path == tuple():
-        raise ValueError(f'reference path cannot be empty')
+        raise ValueError(f'reference path cannot be empty, use replace_node_in_graph() instead.')
     selected_node = get_node_info_selected_node(start_node, reference_path)
     dependent_model_ids = _get_all_dependent_node_model_ids(selected_node)
     # See replace_node_in_graph() for more comments on the implementation
