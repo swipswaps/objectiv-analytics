@@ -172,19 +172,23 @@ def test_append_w_non_materialized_df() -> None:
 
     caller_df['d'] = caller_df['b'] + caller_df['c']
 
+    caller_df = caller_df.reset_index(drop=True)
+    caller_df = caller_df.set_index('c')
+    other_df = other_df.groupby(['c'])[['b']].sum()
+
     result = caller_df.append(other_df).sort_values(by='c')
     assert_equals_data(
         result,
-        expected_columns=['_index_0', 'b', 'c', 'd'],
+        expected_columns=['c', 'b', 'd', 'b_sum'],
         expected_data=[
-            [0, 1, 1, 2],
-            [1, 2, 2, 4],
-            [2, 3, 3, 6],
-            [3, 4, 4, 8],
-            [0, 1.1, 5, None],
-            [1, 2.2, 6, None],
-            [2, 3.3, 7, None],
-            [3, 4.4, 8, None],
-            [4, 5.5, 9, None],
+            [1, 1, 2, None],
+            [2, 2, 4, None],
+            [3, 3, 6, None],
+            [4, 4, 8, None],
+            [5, None, None, 1.1],
+            [6, None, None, 2.2],
+            [7, None, None, 3.3],
+            [8, None, None, 4.4],
+            [9, None, None, 5.5],
         ],
     )

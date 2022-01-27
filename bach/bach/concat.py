@@ -143,6 +143,10 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
             if self.ignore_index:
                 df.reset_index(drop=True, inplace=True)
 
+            # need to materialize in order to avoid further problems
+            if df.group_by:
+                df.materialize(inplace=True)
+
             dfs.append(df)
 
         return dfs
