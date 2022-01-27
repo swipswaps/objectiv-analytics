@@ -17,6 +17,7 @@ from botocore.exceptions import ClientError
 
 from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.types import EventDataList, EventData
+#from objectiv_backend.end_points.collector import collect
 
 
 def events_to_json(events: EventDataList) -> str:
@@ -89,11 +90,83 @@ def objectiv_event_to_snowplow(event: EventData) -> Dict:
     }
 
 
+from objectiv_backend.snowplow.schema.ttypes import *
+from objectiv_backend.common.event_utils import get_context
+
+
+def write_data_to_pubsub(events: EventDataList) -> None:
+    from google.cloud import pubsub_v1
+
+    from thrift.protocol import TBinaryProtocol
+    from thrift.transport import TTransport
+
+    publisher = pubsub_v1.PublisherClient()
+    topic_path = 'projects/objectiv-snowplow-test-2/topics/sp-raw-topic'
+
+    for event in events:
+        payload = {
+            "schema": "iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4",
+            "data": []
+        }
+
+        try:
+            http_context = get_context(event, 'HttpContext')
+        except:
+            print(json.dumps(event, indent=4))
+            http_context = {
+                'user_agent': ''
+            }
+        try:
+            cookie_context = get_context(event, 'CookieIdContext')
+        except:
+            cookie_context = {'id': None}
+
+        print(cookie_context)
+
+        snowplow_event = objectiv_event_to_snowplow(event)
+        snowplow_custom_context = make_snowplow_custom_context(snowplow_event)
+        payload["data"].append({
+            "e": "se",  # mandatory: event type: unstructured event
+            "p": "web",  # mandatory: platform
+            "tv": "objectiv-tracker-0.0.5",  # mandatory: tracker version
+            "cx": snowplow_custom_context})
+        data = CollectorPayload(
+            schema="iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
+            ipAddress=http_context['remote_address'],
+            timestamp=int(datetime.now().timestamp()*1000),
+            encoding='UTF-8',
+            collector='mike_collector',
+            userAgent=http_context['user_agent'],
+            refererUri=http_context['referer'],
+            path='/com.snowplowanalytics.snowplow/tp2',
+            querystring=None,
+            body=json.dumps(payload),
+            headers=[],
+            contentType='application/json',
+            hostname='1.2.3.4',
+            networkUserId=cookie_context['id']
+        )
+
+        transport = TTransport.TMemoryBuffer()
+
+        protocol = TBinaryProtocol.TBinaryProtocol(transport)
+
+        data.write(protocol)
+
+        print(data)
+        #print(transport._buffer.getvalue())
+
+        publisher.publish(topic_path, transport._buffer.getvalue())
+
+
 def write_data_to_snowplow_if_configured(events: EventDataList) -> None:
     """
     Write data to Snowplow
     :param events: events to write
     """
+
+    write_data_to_pubsub(events)
+
     url = 'http://34.107.238.153/com.snowplowanalytics.snowplow/tp2'
     headers = {
         'Content-Type': 'application/json; charset=UTF-8'
@@ -105,12 +178,19 @@ def write_data_to_snowplow_if_configured(events: EventDataList) -> None:
     }
 
     for event in events:
+        try:
+            cookie_context = get_context(event, 'CookieIdContext')
+        except:
+            cookie_context = {'id': None}
+
         snowplow_event = objectiv_event_to_snowplow(event)
         snowplow_custom_context = make_snowplow_custom_context(snowplow_event)
         payload["data"].append({
                     "e": "se",  # mandatory: event type: unstructured event
                     "p": "web",  # mandatory: platform
                     "tv": "objectiv-tracker-0.0.5",  # mandatory: tracker version
+                    "eid": event['id'],
+                    "nuid": cookie_context['id'],
                     "cx": snowplow_custom_context})
 
     print(f'sending payload: {json.dumps(payload, indent=4)}')
