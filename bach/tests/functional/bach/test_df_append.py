@@ -161,3 +161,30 @@ def test_append_w_different_dtypes() -> None:
             [3, 'i', 4.0, 4],
         ],
     )
+
+
+def test_append_w_non_materialized_df() -> None:
+    caller_pdf = pd.DataFrame({'b': [1, 2, 3, 4], 'c': [1, 2, 3, 4]})
+    other_pdf = pd.DataFrame({'b': [1.1, 2.2, 3.3, 4.4, 5.5], 'c': [5, 6, 7, 8, 9]})
+
+    caller_df = get_from_df('caller_df', caller_pdf)
+    other_df = get_from_df('other_df', other_pdf)
+
+    caller_df['d'] = caller_df['b'] + caller_df['c']
+
+    result = caller_df.append(other_df).sort_values(by='c')
+    assert_equals_data(
+        result,
+        expected_columns=['_index_0', 'b', 'c', 'd'],
+        expected_data=[
+            [0, 1, 1, 2],
+            [1, 2, 2, 4],
+            [2, 3, 3, 6],
+            [3, 4, 4, 8],
+            [0, 1.1, 5, None],
+            [1, 2.2, 6, None],
+            [2, 3.3, 7, None],
+            [3, 4.4, 8, None],
+            [4, 5.5, 9, None],
+        ],
+    )
