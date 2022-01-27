@@ -2065,7 +2065,6 @@ class DataFrame:
                 dtype='float64',
                 expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
             )
-            quantile_df.view_sql()
             all_quantile_dfs.append(quantile_df)
 
         from bach.concat import DataFrameConcatOperation
