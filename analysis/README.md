@@ -22,7 +22,7 @@ We have two notebooks in the
 [analysis/notebooks/](https://github.com/objectiv/objectiv-analytics/tree/main/analysis/notebooks) folder of
 the repository that demonstrate how you can work with the data in Python. Both notebooks can run on _your_
 collected data. The only thing that might need to be adjusted is how the connection to the database is made
-(as per above).
+for the instantiation of the ObjectivFrame object (as per above).
 
 ### The open taxonomy how-to notebook ([open-taxonomy-how-to.ipynb](https://github.com/objectiv/objectiv-analytics/blob/main/analysis/notebooks/open-taxonomy-how-to.ipynb))
 This notebook demonstrates the contents and structure of the data in an interactive way. Also shows how you
@@ -35,6 +35,7 @@ conversion models to give sensible results the `add_conversion_event` paramaters
 own data. The full model hub reference is found
 [here](https://objectiv.io/docs/modeling/Objectiv/bach_open_taxonomy.ModelHub/). The Metabase example is made
 to work with our [quickstart demo](https://objectiv.io/docs/quickstart-guide/), in which Metabase is included.
+See the section at the end of this readme for how to set up Metabaser integration for your data.
 
 ## Setup development environment
 This section is only required for development of the bach and open taxonomy packages. 
