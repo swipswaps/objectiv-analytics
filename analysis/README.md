@@ -73,7 +73,7 @@ To enable Objectiv's Metabase integration, there are basically 2 steps:
 Within Metabase, switch to admin mode, and select Databases to add your database (if this has not already been
 done). Exit admin. 
 
-Switching to the overview, in the section "our data" a new collection, with the name of the database should be
+Switching to the overview, in the section "our data" a new database, with the name of the database should be
 present. If you select the database, a numeric ID will be in the URL, for example: 
 "http://localhost:3000/browse/2-objectiv", in this case your database ID is 2.
 
@@ -83,7 +83,7 @@ in this case 2 is your collection ID.
 
 Finally, if you have set up a dashboard, and want cards to be added to that automatically, open the dashboard;
 the URL should be something like "http://localhost:3000/dashboard/1-model-hub", your dashboard ID is 1. This
-optional.
+is optional.
 
 ### 2. Configure Objectiv to communicate with Metabase. 
 
