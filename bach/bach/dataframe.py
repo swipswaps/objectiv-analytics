@@ -2044,21 +2044,13 @@ class DataFrame:
             q=q,
             **kwargs,
         )
-        unique_quantile = isinstance(q, float) or len(q) == 1
+        if isinstance(q, float) or len(q) == 1:
+            return df.copy_override(base_node=new_series[0].base_node, series={s.name: s for s in new_series})
 
-        from bach.concat import DataFrameConcatOperation
-        quantile_df = DataFrameConcatOperation([series.to_frame() for series in new_series])()
-
-        #  when multiple quantiles are calculated, each new series has "q" series as index
-        quantile_df = quantile_df.sum() if unique_quantile else quantile_df.groupby(by='q').sum()
-
-        quantile_df.rename(
-            columns={
-                name: name.replace('_sum', '') for name in quantile_df.data_columns
-            },
-            inplace=True
+        # merge all quantiles based on 'q' index
+        return reduce(
+            lambda left, right: left.merge(right, on='q'), [series.to_frame() for series in new_series]
         )
-        return quantile_df
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """

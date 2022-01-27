@@ -1084,6 +1084,8 @@ class Series(ABC):
                 ),
                 dtype='float64',
             )
+            if len(quantiles) == 1:
+                return agg_result
 
             quantile_df = agg_result.to_frame().materialize()
             # maps the resultant quantile
@@ -1094,7 +1096,7 @@ class Series(ABC):
         from bach.concat import SeriesConcatOperation
         return SeriesConcatOperation(
             objects=quantile_results,
-            ignore_index=len(quantiles) == 1,  # should keep q index if multiple quantiles were calculated
+            ignore_index=False,  # should keep q index since multiple quantiles were calculated
         )()
 
     def nunique(self, partition: WrappedPartition = None, skipna: bool = True):
