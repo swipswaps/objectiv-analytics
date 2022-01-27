@@ -245,7 +245,7 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
 
         series_expressions = [self._join_series_expressions(df) for df in objects]
 
-        return ConcatSqlModel(
+        return ConcatSqlModel.get_instance(
             columns=tuple(new_index_names + new_data_series_names),
             all_series_expressions=series_expressions,
             all_nodes=[df.base_node for df in objects],
@@ -346,7 +346,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         """
         series_expressions = [self._join_series_expressions(obj) for obj in objects]
 
-        return ConcatSqlModel(
+        return ConcatSqlModel.get_instance(
             columns=tuple('concatenated_series'),
             all_series_expressions=series_expressions,
             all_nodes=[series.base_node for series in objects],
@@ -355,14 +355,15 @@ class SeriesConcatOperation(ConcatOperation[Series]):
 
 
 class ConcatSqlModel(BachSqlModel):
-    def __init__(
-        self,
+    @classmethod
+    def get_instance(
+        cls,
         *,
         columns: Tuple[str, ...],
         all_series_expressions: List[Expression],
         all_nodes: List[BachSqlModel],
         variables: Dict['DtypeNamePair', Hashable],
-    ) -> None:
+    ) -> 'ConcatSqlModel':
         name = 'concat_sql'
         base_sql = 'select {serie_expr} from {node}'
         sql = ' union all '.join(
@@ -375,9 +376,9 @@ class ConcatSqlModel(BachSqlModel):
             expressions=all_series_expressions
         )
 
-        super().__init__(
+        return ConcatSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=self._get_placeholders(variables, all_series_expressions),
+            placeholders=cls._get_placeholders(variables, all_series_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

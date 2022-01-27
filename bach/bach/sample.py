@@ -58,7 +58,7 @@ def get_sample(df: DataFrame,
 
     # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
     # in get_unsampled() by switching this new node for the old node again.
-    new_base_node = SampleSqlModel(
+    new_base_node = SampleSqlModel.get_instance(
         table_name=table_name,
         previous=original_node,
         columns=original_node.columns
@@ -66,7 +66,7 @@ def get_sample(df: DataFrame,
     return df.copy_override_base_node(base_node=new_base_node)
 
 
-def get_unsampled(df) -> 'DataFrame':
+def get_unsampled(df: DataFrame) -> 'DataFrame':
     """
     See :py:meth:`bach.DataFrame.get_unsampled` for more information.
     """
@@ -79,7 +79,10 @@ def get_unsampled(df) -> 'DataFrame':
     if sampled_node_tuple is None:
         raise ValueError('No sampled node found. Cannot un-sample data that has not been sampled.')
 
-    assert isinstance(sampled_node_tuple.model, SampleSqlModel)  # help mypy
+    # help mypy: sampled_node_tuple.model is guaranteed to be a SampleSqlModel, as that is what the
+    # filter function for find_node() above filtered on
+    assert isinstance(sampled_node_tuple.model, SampleSqlModel)
+
     updated_graph = replace_node_in_graph(
         start_node=df.base_node,
         reference_path=sampled_node_tuple.reference_path,

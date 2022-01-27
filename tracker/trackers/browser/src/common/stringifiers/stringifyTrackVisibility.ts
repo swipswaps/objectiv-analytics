@@ -3,14 +3,16 @@
  */
 
 import { TrackVisibilityAttribute } from '../../definitions/TrackVisibilityAttribute';
+import { isTrackVisibilityAttribute } from '../guards/isTrackVisibilityAttribute';
 import { stringifyJson } from './stringifyJson';
 
 /**
  * `trackVisibility` Tagging Attribute stringifier
  */
 export const stringifyTrackVisibility = (trackVisibilityAttribute: TrackVisibilityAttribute) => {
-  if (!(typeof trackVisibilityAttribute === 'object')) {
-    throw new Error(`trackVisibility must be an object, received: ${JSON.stringify(trackVisibilityAttribute)}`);
+  if (!isTrackVisibilityAttribute(trackVisibilityAttribute)) {
+    throw new Error(`trackVisibility is not valid, received: ${JSON.stringify(trackVisibilityAttribute)}`);
   }
-  return stringifyJson(trackVisibilityAttribute, TrackVisibilityAttribute);
+
+  return stringifyJson(trackVisibilityAttribute);
 };

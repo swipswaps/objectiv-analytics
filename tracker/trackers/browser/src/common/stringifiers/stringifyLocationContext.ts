@@ -3,11 +3,16 @@
  */
 
 import { AnyLocationContext } from '../../definitions/LocationContext';
+import { isLocationContext } from '../guards/isLocationContext';
 import { stringifyJson } from './stringifyJson';
 
 /**
  * LocationContexts stringifier
  */
 export const stringifyLocationContext = (contextObject: AnyLocationContext) => {
-  return stringifyJson(contextObject, AnyLocationContext);
+  if (!isLocationContext(contextObject)) {
+    throw new Error(`Object is not a valid LocationContext: ${JSON.stringify(contextObject)}`);
+  }
+
+  return stringifyJson(contextObject);
 };
