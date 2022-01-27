@@ -1215,6 +1215,30 @@ class Series(ABC):
             self.dtype
         )
 
+    def append(
+        self,
+        other: Union['Series', List['Series']],
+        ignore_index: bool = False,
+    ) -> 'Series':
+        """
+        Append rows of other series to the caller series.
+
+        :param other: objects to be added
+        :param ignore_index: if true, drops indexes of all objects to be appended
+
+        :return:  a new series with all rows from appended other or self if other is empty.
+        """
+        from bach.concat import SeriesConcatOperation
+        if not other:
+            return self
+
+        other_series = other if isinstance(other, list) else [other]
+        concatenated_series = SeriesConcatOperation(
+            objects=[self] + other_series,
+            ignore_index=ignore_index,
+        )()
+        return concatenated_series
+
 
 def const_to_series(base: Union[Series, DataFrame],
                     value: Optional[Union[Series, int, float, str, UUID]],

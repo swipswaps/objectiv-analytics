@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bach import DataFrame, SeriesString, SeriesInt64
+from bach import DataFrame, SeriesString, SeriesInt64, Series
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
     get_from_df, get_bt_with_railway_data
 
@@ -463,3 +463,14 @@ def test_series_different_base_nodes():
             [7, None]
         ]
     )
+
+
+def test_series_append_same_dtype_different_index() -> None:
+    bt = get_bt_with_test_data(full_data_set=False)[['city', 'skating_order']]
+    bt_other_index = bt.reset_index(drop=False)
+    bt_other_index['_index_skating_order'] = bt_other_index['_index_skating_order'].astype('string')
+    bt_other_index = bt_other_index.set_index('_index_skating_order')
+    bt.skating_order = bt.skating_order.astype(str)
+
+    with pytest.raises(ValueError, match='concatenation with different index dtypes is not supported yet.'):
+        bt_other_index.city.append(bt.skating_order)
