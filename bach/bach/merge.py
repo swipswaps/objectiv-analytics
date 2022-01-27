@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, Hashable
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeNamePair
@@ -309,7 +309,7 @@ def _get_merge_sql_model(
     )
     join_type_expr = Expression.construct('full outer' if how == How.outer else how.value)
 
-    return MergeSqlModel(
+    return MergeSqlModel.get_instance(
         column_names=tuple(rc.name for rc in new_column_list),
         columns_expr=columns_expr,
         join_type_expr=join_type_expr,
@@ -332,14 +332,16 @@ def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
 
 
 class MergeSqlModel(BachSqlModel):
-    def __init__(self, *,
-                 column_names: Tuple[str, ...],
-                 columns_expr: Expression,
-                 join_type_expr: Expression,
-                 on_clause: Expression,
-                 left_node: BachSqlModel,
-                 right_node: BachSqlModel,
-                 variables: Dict['DtypeNamePair', Hashable]):
+    @classmethod
+    def get_instance(cls,
+                     *,
+                     column_names: Tuple[str, ...],
+                     columns_expr: Expression,
+                     join_type_expr: Expression,
+                     on_clause: Expression,
+                     left_node: BachSqlModel,
+                     right_node: BachSqlModel,
+                     variables: Dict['DtypeNamePair', Hashable]) -> 'MergeSqlModel':
         """
         :param column_names: tuple with the column_names in order
         :param columns_expr: A single expression that expresses projecting all needed columns from either
@@ -369,9 +371,9 @@ class MergeSqlModel(BachSqlModel):
             expressions=all_expressions
         )
 
-        super().__init__(
+        return MergeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=self._get_placeholders(variables, all_expressions),
+            placeholders=cls._get_placeholders(variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

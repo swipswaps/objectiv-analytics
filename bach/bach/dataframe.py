@@ -1689,7 +1689,7 @@ class DataFrame:
             column_exprs = [s.get_column_expression() for s in self.all_series.values()]
             column_names = tuple(self.all_series.keys())
 
-        return CurrentNodeSqlModel(
+        return CurrentNodeSqlModel.get_instance(
             name=name,
             column_names=column_names,
             column_exprs=column_exprs,
@@ -1713,8 +1713,7 @@ class DataFrame:
         """
         model = self.get_current_node('view_sql', limit=limit)
         placeholder_values = get_variable_values_sql(variable_values=self.variables)
-        # TODO: fix typing here, or move all BachSqlModel logic to SqlModel, or both?
-        model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)  # type: ignore  # noqa
+        model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)
         return to_sql(model)
 
     def merge(
