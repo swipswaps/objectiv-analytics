@@ -262,7 +262,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
     returns a new Series
 
     Example:
-        SeriesConcatOperation(objects=[df1, df2], ignore_index=True)()
+        SeriesConcatOperation(objects=[s1, s2], ignore_index=True)()
     """
     def _get_overridden_objects(self) -> List[Series]:
         """
