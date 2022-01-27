@@ -150,6 +150,8 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
     def _join_series_expressions(self, obj: DataFrame) -> Expression:
         """
         generates the column expression for the object subquery
+        - if a column doesn't exist in the object's base_node, all values will be null
+        - if the column exists but has a different dtype from the result, it will be casted
         """
         new_indexes = self._get_indexes()
         new_data_series = self._get_series()
