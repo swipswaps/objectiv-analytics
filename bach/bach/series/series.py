@@ -1,12 +1,14 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import warnings
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
     TypeVar
 from uuid import UUID
 
+import numpy as np
 import pandas
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
@@ -442,11 +444,18 @@ class Series(ABC):
     def values(self):
         """
         .values property accessor akin pandas.Series.values
-
+        .. warning::
+           We recommend using :meth:`Series.to_numpy` instead.
         .. note::
             This function queries the database.
         """
-        return self.to_pandas().values
+        warnings.simplefilter('always', category=DeprecationWarning)
+        warnings.warn(
+            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
+            category=DeprecationWarning,
+        )
+        warnings.simplefilter('default', category=DeprecationWarning)
+        return self.to_numpy()
 
     @property
     def value(self):
@@ -460,7 +469,7 @@ class Series(ABC):
         if not self.expression.is_single_value:
             raise ValueError('value accessor only supported for single value expressions. '
                              'Use .values instead')
-        return self.values[0]
+        return self.to_numpy()[0]
 
     @property
     def array(self):
@@ -471,6 +480,17 @@ class Series(ABC):
             This function queries the database.
         """
         return self.to_pandas().array
+
+    def to_numpy(self) -> np.ndarray:
+        """
+        Return a Numpy representation of the Series akin :py:attr:`pandas.Series.to_numpy`
+
+        :returns: Returns the values of the Series as numpy.ndarray.
+
+        .. note::
+            This function queries the database.
+        """
+        return self.to_pandas().to_numpy()
 
     def sort_values(self, *, ascending=True):
         """

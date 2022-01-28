@@ -155,7 +155,7 @@ def test_quantile() -> None:
         result = bt.quantile(q).sort_index()
 
         # pandas returns a series when calculating just 1 quantile
-        result_values = result.values if isinstance(q, list) else result.values[0]
+        result_values = result.to_numpy() if isinstance(q, list) else result.to_numpy()[0]
         expected = pdf.reset_index(drop=False).quantile(q)
         np.testing.assert_almost_equal(expected, result_values, decimal=4)
 

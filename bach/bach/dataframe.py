@@ -1,9 +1,11 @@
+import warnings
 from copy import copy
 from functools import reduce
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable, Hashable, Sequence
 from uuid import UUID
 
+import numpy as np
 import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
@@ -1599,17 +1601,35 @@ class DataFrame:
         return self.to_pandas(limit=n)
 
     @property
-    def values(self):
+    def values(self) -> np.ndarray:
         """
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
+        .. warning::
+           We recommend using :meth:`DataFrame.to_numpy` instead.
 
         :returns: Returns the values of the DataFrame as numpy.ndarray.
 
         .. note::
             This function queries the database.
         """
-        # todo function is not recommended by pandas, change?
+        warnings.simplefilter('always', category=DeprecationWarning)
+        warnings.warn(
+            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
+            category=DeprecationWarning,
+        )
+        warnings.simplefilter('default', category=DeprecationWarning)
         return self.to_pandas().values
+
+    def to_numpy(self) -> np.ndarray:
+        """
+        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.to_numpy`
+
+        :returns: Returns the values of the DataFrame as numpy.ndarray.
+
+        .. note::
+            This function queries the database.
+        """
+        return self.to_pandas().to_numpy()
 
     def _get_order_by_clause(self) -> Expression:
         """

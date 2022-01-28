@@ -48,8 +48,8 @@ def test_round():
     for i in 0, 3, 5, 9:
         assert bt.const.round(i).expression.is_constant
         assert not bt['0'].round(i).expression.is_constant
-        np.testing.assert_equal(pdf[0].round(i).values, bt['0'].round(i).values)
-        np.testing.assert_equal(pdf[0].round(decimals=i).values, bt['0'].round(decimals=i).values)
+        np.testing.assert_equal(pdf[0].round(i).to_numpy(), bt['0'].round(i).to_numpy())
+        np.testing.assert_equal(pdf[0].round(decimals=i).to_numpy(), bt['0'].round(decimals=i).to_numpy())
 
 
 def test_round_integer():
@@ -132,7 +132,7 @@ def test_aggregations_quantile():
 
     for column, quantile in zip(pdf.columns, quantiles):
         expected = pdf[column].quantile(q=quantile)
-        result = bt[column].quantile(q=quantile).values[0]
+        result = bt[column].quantile(q=quantile).to_numpy()[0]
         assert expected == result
 
     for column in pdf.columns:
