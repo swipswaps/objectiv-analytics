@@ -1620,7 +1620,7 @@ class DataFrame:
         warnings.simplefilter('default', category=DeprecationWarning)
         return self.to_numpy()
 
-    def to_numpy(self) -> np.ndarray:
+    def to_numpy(self) -> numpy.ndarray:
         """
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.to_numpy`
 
