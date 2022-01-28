@@ -1,4 +1,5 @@
 from copy import copy
+from functools import reduce
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable, Hashable, Sequence
 from uuid import UUID
@@ -7,7 +8,7 @@ import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression, VariableToken
+from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
@@ -18,7 +19,7 @@ from sql_models.sql_generator import to_sql
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
     from bach.savepoints import Savepoints
-    from bach.series import Series, SeriesBoolean, SeriesAbstractNumeric
+    from bach.series import Series, SeriesBoolean
 
 # TODO exclude from docs
 DataFrameOrSeries = Union['DataFrame', 'Series']
@@ -2013,6 +2014,64 @@ class DataFrame:
         # slight deviation from pd.mode(axis=0, numeric_only=False, dropna=True)
         return self._aggregate_func('mode', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
+
+    def quantile(
+        self,
+        q: Union[float, List[float]] = 0.5,
+        axis=1,
+        **kwargs,
+    ):
+        """
+        Returns the quantile of all numeric columns.
+
+        :param q: value or list of values between 0 and 1.
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
+        from bach.series.series_numeric import SeriesAbstractNumeric
+        df = self
+        if all(not isinstance(s, SeriesAbstractNumeric) for s in df.all_series.values()):
+            raise ValueError('Cannot calculate quantiles for dataframe with no numeric columns.')
+
+        if df.group_by is None:
+            df = df.groupby()
+
+        quantiles = [q] if isinstance(q, float) else q
+
+        all_quantile_dfs = []
+        for qt in quantiles:
+            new_series = df._apply_func_to_series(
+                func='quantile',
+                axis=axis,
+                numeric_only=True,
+                exclude_non_applied=True,
+                partition=df.group_by,
+                q=qt,
+                **kwargs,
+            )
+            initial_series = new_series[0]
+            quantile_df = df.copy_override(
+                base_node=initial_series.base_node,
+                series={s.name: s for s in new_series},
+                index={},
+                group_by=[initial_series.group_by],
+            )
+            if len(quantiles) == 1:
+                return quantile_df
+
+            # a hack in order to avoid calling quantile_df.materialized().
+            # Currently doing quantile['q'] = qt
+            # will raise some errors since the expression is not an instance of AggregateFunctionExpression
+            quantile_df['q'] = initial_series.copy_override(
+                dtype='float64',
+                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
+            )
+            all_quantile_dfs.append(quantile_df)
+
+        from bach.concat import DataFrameConcatOperation
+        result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
+        # q column should be in the index when calculating multiple quantiles
+        return result.set_index('q')
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """

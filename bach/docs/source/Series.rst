@@ -165,6 +165,7 @@ Conversion, reshaping, sorting
 
     Series.sort_values
     Series.fillna
+    Series.append
 
 Function application, aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -190,6 +191,7 @@ All types
     Series.median
     Series.mode
     Series.nunique
+    Series.quantile
 
 Numeric
 +++++++
@@ -197,6 +199,7 @@ Numeric
     :toctree: Series
 
     SeriesAbstractNumeric.mean
+    SeriesAbstractNumeric.quantile
     SeriesAbstractNumeric.sem
     SeriesAbstractNumeric.sum
     SeriesAbstractNumeric.std

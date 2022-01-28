@@ -146,6 +146,7 @@ Reshaping, indexing, sorting & merging
     DataFrame.reset_index
     DataFrame.set_index
     DataFrame.merge
+    DataFrame.append
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -184,6 +185,7 @@ Numeric
     :toctree: DataFrame
 
     DataFrame.mean
+    DataFrame.quantile
     DataFrame.sem
     DataFrame.sum
     DataFrame.std
