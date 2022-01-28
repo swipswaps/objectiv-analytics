@@ -34,6 +34,7 @@ class DateTimeOperation:
         expression = Expression.construct('to_char({}, {})',
                                           self._series, Expression.string_value(format_str))
         str_series = self._series.copy_override(dtype='string', expression=expression)
+        # mypy assumes `self._series.copy_override` returns a SeriesAbstractDateTime
         assert isinstance(str_series, SeriesString)
         return str_series
 
