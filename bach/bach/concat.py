@@ -263,7 +263,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
                 raise Exception('Cannot concat DataFrame to Series')
 
             df = obj.to_frame()
-            if not df.is_materialized:
+            if df.group_by:
                 df.materialize(inplace=True)
             series.append(df.all_series[obj.name])
 
