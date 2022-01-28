@@ -20,18 +20,8 @@ from enum import Enum
 from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, Hashable, NamedTuple, Optional, \
     Mapping, MutableMapping, cast
 
+from bach.constants import not_set, NotSet
 from sql_models.util import extract_format_fields
-
-
-class NotSet(Enum):
-    """
-    INTERNAL: Special token used as default value for parameters, to distinguish the default value from
-    None for Optional values.
-    """
-    token = 0
-
-
-not_set = NotSet.token
 
 
 class MaterializationType(NamedTuple):
@@ -480,13 +470,13 @@ class SqlModel(Generic[T]):
         return self._placeholder_formatter(self._placeholders)
 
     def copy_override(
-            self: TSqlModel,
-            *,
-            model_spec: T = None,
-            placeholders: Mapping[str, Hashable] = None,
-            references: Mapping[str, 'SqlModel'] = None,
-            materialization: Materialization = None,
-            materialization_name: Union[Optional[str], NotSet] = not_set
+        self: TSqlModel,
+        *,
+        model_spec: T = None,
+        placeholders: Mapping[str, Hashable] = None,
+        references: Mapping[str, 'SqlModel'] = None,
+        materialization: Materialization = None,
+        materialization_name: Union[Optional[str], NotSet] = not_set
     ) -> TSqlModel:
         """
         Create a copy of this instance, with the specified fields updated.

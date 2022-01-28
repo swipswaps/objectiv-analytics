@@ -1,5 +1,4 @@
 from copy import copy
-from functools import reduce
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable, Hashable, Sequence
 from uuid import UUID
@@ -11,6 +10,7 @@ from sqlalchemy.future import Connection
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
+from bach.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
@@ -550,19 +550,19 @@ class DataFrame:
         )
 
     def copy_override(
-            self,
-            engine: Engine = None,
-            base_node: BachSqlModel = None,
-            index: Dict[str, 'Series'] = None,
-            series: Dict[str, 'Series'] = None,
-            group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
-            order_by: List[SortColumn] = None,
-            variables: Dict[DtypeNamePair, Hashable] = None,
-            index_dtypes: Dict[str, str] = None,
-            series_dtypes: Dict[str, str] = None,
-            single_value: bool = False,
-            savepoints: 'Savepoints' = None,
-            **kwargs
+        self,
+        engine: Optional[Engine] = None,
+        base_node: Optional[BachSqlModel] = None,
+        index: Optional[Dict[str, 'Series']] = None,
+        series: Optional[Dict[str, 'Series']] = None,
+        group_by: Optional[Union['GroupBy', NotSet]] = not_set,
+        order_by: Optional[List[SortColumn]] = None,
+        variables: Optional[Dict[DtypeNamePair, Hashable]] = None,
+        index_dtypes: Optional[Dict[str, str]] = None,
+        series_dtypes: Optional[Dict[str, str]] = None,
+        single_value: bool = False,
+        savepoints: Optional['Savepoints'] = None,
+        **kwargs
     ) -> 'DataFrame':
         """
         INTERNAL
@@ -590,7 +590,7 @@ class DataFrame:
             'base_node': base_node if base_node is not None else self._base_node,
             'index': index if index is not None else self._index,
             'series': series if series is not None else self._data,
-            'group_by': self._group_by if group_by is None else group_by[0],
+            'group_by': self._group_by if group_by is not_set else group_by,
             'order_by': order_by if order_by is not None else self._order_by,
             'savepoints': savepoints if savepoints is not None else self.savepoints,
             'variables': variables if variables is not None else self.variables
@@ -648,14 +648,14 @@ class DataFrame:
         series = {
             name: series.copy_override(
                 base_node=base_node,
-                group_by=[group_by],
+                group_by=group_by,
                 index=index,
                 index_sorting=[]
             )
             for name, series in self.data.items()
         }
 
-        return self.copy_override(base_node=base_node, index=index, series=series, group_by=[group_by])
+        return self.copy_override(base_node=base_node, index=index, series=series, group_by=group_by)
 
     def copy(self):
         """
@@ -877,7 +877,7 @@ class DataFrame:
 
             return self.copy_override(
                 base_node=node,
-                group_by=[None],
+                group_by=None,
                 index_dtypes={name: series.dtype for name, series in self.index.items()},
                 series_dtypes={name: series.dtype for name, series in self.data.items()},
                 single_value=single_value
@@ -913,20 +913,25 @@ class DataFrame:
                 if value.base_node == self.base_node and self._group_by == value.group_by:
                     self._data[key] = value.copy_override(name=key, index=self._index)
                 elif value.expression.is_constant:
-                    self._data[key] = value.copy_override(name=key, index=self._index,
-                                                          group_by=[self._group_by])
+                    self._data[key] = value.copy_override(
+                        name=key, index=self._index, group_by=self._group_by,
+                    )
                 elif value.expression.is_independent_subquery:
-                    self._data[key] = value.copy_override(name=key, index=self._index,
-                                                          group_by=[self._group_by])
+                    self._data[key] = value.copy_override(
+                        name=key, index=self._index, group_by=self._group_by,
+                    )
                 elif value.expression.is_single_value:
                     self._data[key] = Series.as_independent_subquery(value).copy_override(
-                        name=key, index=self._index, group_by=[self._group_by])
+                        name=key, index=self._index, group_by=self._group_by,
+                    )
                 else:
                     if value.group_by and not value.expression.has_aggregate_function:
                         raise ValueError('Setting a grouped Series to a DataFrame is only supported if '
                                          'the Series is aggregated.')
-                    if self.group_by and \
-                            not all(_s.expression.has_aggregate_function for _s in self.data.values()):
+                    if (
+                        self.group_by
+                        and not all(_s.expression.has_aggregate_function for _s in self.data.values())
+                    ):
                         raise ValueError('Setting new columns to grouped DataFrame is only supported if '
                                          'the DataFrame has aggregated columns.')
                     self._index_merge(key=key, value=value)
@@ -948,10 +953,9 @@ class DataFrame:
         else:
             raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
 
-    def _index_merge(self,
-                     key: str,
-                     value: 'Series',
-                     how: str = 'left'):
+    def _index_merge(
+        self, key: str, value: 'Series', how: str = 'left',
+    ):
         """"
         Internal method used by __setitem__ to set a series using a merge on index. Modifies the DataFrame
         with the added column. The DataFrames index name is the same as the original DataFrame's.
@@ -970,7 +974,7 @@ class DataFrame:
         value_index_name = list(value.index.keys())[0]
         if self.index[index_name].dtype != value.index[value_index_name].dtype:
             raise ValueError('dtypes of indexes should be the same')
-        renamed_value = value.copy_override(name=key)
+        renamed_value: DataFrameOrSeries = value.copy_override(name=key)
 
         if how == 'outer':
             renamed_value = renamed_value.to_frame().materialize()
@@ -1152,8 +1156,10 @@ class DataFrame:
                 raise ValueError('When adding existing series to the index, drop must be True'
                                  ' because duplicate column names are not supported.')
 
-        new_series = {n: s.copy_override(index=new_index, index_sorting=[]) for n, s in df._data.items()
-                      if n not in new_index}
+        new_series = {
+            n: s.copy_override(index=new_index, index_sorting=[]) for n, s in df._data.items()
+            if n not in new_index
+        }
 
         df._index = new_index
         df._data = new_series
@@ -1282,14 +1288,15 @@ class DataFrame:
         """
         # update the series to also contain our group_by and group_by index
         # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
-        new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index, index_sorting=[])
+        new_series = {s.name: s.copy_override(group_by=group_by, index=group_by.index, index_sorting=[])
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
         return df.copy_override(
             engine=df.engine,
             base_node=df.base_node,
             index=group_by.index,
             series=new_series,
-            group_by=[group_by])
+            group_by=group_by,
+        )
 
     def groupby(
             self,
@@ -1899,8 +1906,11 @@ class DataFrame:
                    for s in new_series):
             raise ValueError("series do not agree on new index / group_by")
 
-        return df.copy_override(index=new_index, group_by=[new_group_by],
-                                series={s.name: s for s in new_series})
+        return df.copy_override(
+            index=new_index,
+            group_by=new_group_by,
+            series={s.name: s for s in new_series},
+        )
 
     def _aggregate_func(self, func: str, axis, level, numeric_only, *args, **kwargs) -> 'DataFrame':
         """
@@ -2054,7 +2064,7 @@ class DataFrame:
                 base_node=initial_series.base_node,
                 series={s.name: s for s in new_series},
                 index={},
-                group_by=[initial_series.group_by],
+                group_by=initial_series.group_by,
             )
             if len(quantiles) == 1:
                 return quantile_df
