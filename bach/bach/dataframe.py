@@ -1618,7 +1618,7 @@ class DataFrame:
             category=DeprecationWarning,
         )
         warnings.simplefilter('default', category=DeprecationWarning)
-        return self.to_pandas().values
+        return self.to_numpy()
 
     def to_numpy(self) -> np.ndarray:
         """
