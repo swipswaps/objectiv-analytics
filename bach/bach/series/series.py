@@ -1069,47 +1069,6 @@ class Series(ABC):
             skipna=skipna
         )
 
-    def quantile(self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5):
-        """
-        When q is a float or len(q) == 1, the resultant series index will be empty
-        In case multiple quantiles are calculated, the resultant series index will have all calculated
-        quantiles as index values.
-        """
-        quantiles = [q] if isinstance(q, float) else q
-        quantile_results = []
-        for qt in quantiles:
-            if qt < 0 or qt > 1:
-                raise ValueError(f'value {qt} should be between 0 and 1.')
-
-            agg_result = self._derived_agg_func(
-                partition=partition,
-                expression=AggregateFunctionExpression.construct(
-                    f'percentile_cont({qt}) within group (order by {{}})',
-                    self,
-                ),
-                dtype='float64',
-            )
-            if len(quantiles) == 1:
-                return agg_result
-
-            quantile_df = agg_result.to_frame()
-            # maps the resultant quantile
-            # a hack in order to avoid calling quantile_df.materialized().
-            # Currently doing quantile['q'] = qt
-            # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-            quantile_df['q'] = agg_result.copy_override(
-                dtype='float64',
-                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
-            )
-            quantile_df.set_index('q', inplace=True)
-            quantile_results.append(quantile_df.all_series[self.name])
-
-        from bach.concat import SeriesConcatOperation
-        return SeriesConcatOperation(
-            objects=quantile_results,
-            ignore_index=False,  # should keep q index since multiple quantiles were calculated
-        )()
-
     def nunique(self, partition: WrappedPartition = None, skipna: bool = True):
         from bach.partitioning import Window
         partition = self._check_unwrap_groupby(partition, notin=Window)

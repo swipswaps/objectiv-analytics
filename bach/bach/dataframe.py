@@ -19,7 +19,7 @@ from sql_models.sql_generator import to_sql
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
     from bach.savepoints import Savepoints
-    from bach.series import Series, SeriesBoolean, SeriesAbstractNumeric
+    from bach.series import Series, SeriesBoolean
 
 # TODO exclude from docs
 DataFrameOrSeries = Union['DataFrame', 'Series']
@@ -2020,7 +2020,6 @@ class DataFrame:
         self,
         q: Union[float, List[float]] = 0.5,
         axis=1,
-        numeric_only=True,
         **kwargs,
     ):
         """
@@ -2028,10 +2027,13 @@ class DataFrame:
 
         :param q: value or list of values between 0 and 1.
         :param axis: only ``axis=1`` is supported. This means columns are aggregated.
-        :param numeric_only: whether to aggregate numeric series only, or attempt all.
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
+        from bach.series.series_numeric import SeriesAbstractNumeric
         df = self
+        if all(not isinstance(s, SeriesAbstractNumeric) for s in df.all_series.values()):
+            raise ValueError('Cannot calculate quantiles for dataframe with no numeric columns.')
+
         if df.group_by is None:
             df = df.groupby()
 
@@ -2042,7 +2044,7 @@ class DataFrame:
             new_series = df._apply_func_to_series(
                 func='quantile',
                 axis=axis,
-                numeric_only=numeric_only,
+                numeric_only=True,
                 exclude_non_applied=True,
                 partition=df.group_by,
                 q=qt,
