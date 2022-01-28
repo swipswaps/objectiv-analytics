@@ -101,6 +101,6 @@ class Aggregate:
         """
 
         total_sessions_user = self._df.groupby(['user_id']).aggregate({'session_id': 'nunique'})
-        frequency = total_sessions_user.groupby(['session_id_nunique']).aggregate({'user_id': 'nunique'})
+        frequency = total_sessions_user.groupby('session_id_nunique').user_id.nunique()
 
         return frequency
