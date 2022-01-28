@@ -8,7 +8,7 @@ from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHE
     TypeVar
 from uuid import UUID
 
-import numpy as np
+import numpy
 import pandas
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
@@ -481,7 +481,7 @@ class Series(ABC):
         """
         return self.to_pandas().array
 
-    def to_numpy(self) -> np.ndarray:
+    def to_numpy(self) -> numpy.ndarray:
         """
         Return a Numpy representation of the Series akin :py:attr:`pandas.Series.to_numpy`
 

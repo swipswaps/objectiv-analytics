@@ -5,7 +5,7 @@ from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTupl
     TYPE_CHECKING, Callable, Hashable, Sequence
 from uuid import UUID
 
-import numpy as np
+import numpy
 import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
@@ -1601,7 +1601,7 @@ class DataFrame:
         return self.to_pandas(limit=n)
 
     @property
-    def values(self) -> np.ndarray:
+    def values(self) -> numpy.ndarray:
         """
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
         .. warning::
