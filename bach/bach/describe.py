@@ -4,10 +4,10 @@ from typing import Optional, Union, Sequence, List, Type, Dict, Callable, Tuple
 
 from bach import (
     DataFrame, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries, SeriesBoolean,
-    get_series_type_from_dtype, SeriesAbstractDateTime, Series,
+    get_series_type_from_dtype, SeriesAbstractDateTime,
 )
 from bach.concat import DataFrameConcatOperation
-from bach.expression import Expression, AggregateFunctionExpression
+from bach.expression import Expression
 
 
 class SupportedStats(Enum):
