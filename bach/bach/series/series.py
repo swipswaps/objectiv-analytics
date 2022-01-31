@@ -484,9 +484,12 @@ class Series(ABC):
 
     def sort_index(self: T, *, ascending: Union[List[bool], bool] = True) -> T:
         """
-        Return a copy of this Series, that is sorted by the index.
+        Sort this Series by its index.
+        Returns a new instance and does not modify the instance it is called on.
+
         :param ascending: either a bool indicating whether to sort ascending or descending, or a list of
             bools indicating ascending/descending for each of the index levels/columns.
+
         """
         if isinstance(ascending, list):
             if len(ascending) != len(self.index):

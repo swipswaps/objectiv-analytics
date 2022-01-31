@@ -163,6 +163,7 @@ Conversion, reshaping, sorting
 .. autosummary::
     :toctree: Series
 
+    Series.sort_index
     Series.sort_values
     Series.fillna
     Series.append

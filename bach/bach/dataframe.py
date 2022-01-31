@@ -1529,8 +1529,9 @@ class DataFrame:
     ) -> Optional['DataFrame']:
         """
         Sort dataframe by index levels.
+
         :param level: int or level name or list of ints or level names.
-         If not specified, all index series are used
+            If not specified, all index series are used
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `level` must also be a list and ``len(ascending) == len(level)``.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
