@@ -139,7 +139,7 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
             if isinstance(obj, Series):
                 raise Exception('Cannot concat Series to DataFrame')
 
-            df = obj.copy_override()
+            df = obj.copy()
             if self.ignore_index:
                 df.reset_index(drop=True, inplace=True)
 

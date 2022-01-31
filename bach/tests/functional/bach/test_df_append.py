@@ -172,7 +172,6 @@ def test_append_w_non_materialized_df() -> None:
 
     caller_df['d'] = caller_df['b'] + caller_df['c']
 
-    caller_df = caller_df.reset_index(drop=True)
     caller_df = caller_df.set_index('c')
     other_df = other_df.groupby(['c'])[['b']].sum()
 
