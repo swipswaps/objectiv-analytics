@@ -2206,14 +2206,14 @@ class DataFrame:
         :param datetime_is_numeric: not supported
         :returns: a new DataFrame with the descriptive statistics
         """
-        from bach.describe import describe_frame
-        return describe_frame(
-            frame=self,
+        from bach.describe import DescribeOperation
+        return DescribeOperation(
+            obj=self,
             include=include,
             exclude=exclude,
             datetime_is_numeric=datetime_is_numeric,
             percentiles=percentiles,
-        )
+        )()
 
     def create_variable(
         self,
