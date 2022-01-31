@@ -390,6 +390,42 @@ class Series(ABC):
             index_sorting=self._index_sorting if index_sorting is None else index_sorting
         )
 
+    def unstack(self, level=-1, fill_value=None):
+        # todo ValueError: Index contains duplicate entries, cannot reshape --> not checked now
+        index_dict = self.index
+        if level == -1:
+            name_index_last, series_last = index_dict.popitem()
+        else:
+            raise NotImplementedError('only last index can be unstacked')
+
+        # todo here you could limit the number of columns
+        # todo None gets filtered without warning
+        values = list(filter(None, series_last.unique().values))
+        name_series = self.name
+        remaining_indexes = list(index_dict.keys())
+        df = self.to_frame().reset_index().groupby(remaining_indexes)
+
+        series_dict = {}
+        for i in values:
+            args = (series_last, const_to_series(self, i, i))
+            else_clause = ''
+            if fill_value is not None:
+                else_clause = 'else {}'
+                fill_series = const_to_series(self, fill_value, 'fill_value')
+                if fill_series.dtype != self.dtype:
+                    raise TypeError('fill_value should be of same type as the index that is unstacked')
+                args = (series_last, const_to_series(self, i, i), fill_series)
+
+            exp = f"max(case when {{}}={{}} then {name_series} {else_clause} end)"
+            series = df[name_series].copy_override(
+                name=i,
+                expression=AggregateFunctionExpression.construct(exp, *args)
+            )
+            series_dict[i] = series
+
+        return df.copy_override(series=series_dict).materialize()
+
+
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
         expression = self.expression.resolve_column_references(table_alias)
