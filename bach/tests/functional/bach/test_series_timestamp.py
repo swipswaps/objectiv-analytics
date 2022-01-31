@@ -30,7 +30,7 @@ def test_to_pandas():
     from numpy import array
     # TODO, this is not great, but at least it does not error when imported into pandas,
     # and it looks good over there
-    assert bt[['dt']].values[0] == [array(['2021-05-03T11:28:36.388000000'], dtype='datetime64[ns]')]
+    assert bt[['dt']].to_numpy()[0] == [array(['2021-05-03T11:28:36.388000000'], dtype='datetime64[ns]')]
 
 
 @pytest.mark.parametrize("asstring", [True, False])
