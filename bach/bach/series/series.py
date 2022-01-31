@@ -449,12 +449,10 @@ class Series(ABC):
         .. note::
             This function queries the database.
         """
-        warnings.simplefilter('always', category=DeprecationWarning)
         warnings.warn(
             'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
             category=DeprecationWarning,
         )
-        warnings.simplefilter('default', category=DeprecationWarning)
         return self.to_numpy()
 
     @property
