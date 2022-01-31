@@ -234,6 +234,7 @@ class DescribeOperation:
     def _get_series_per_type(self) -> Dict[Type, List[str]]:
         """
         returns a mapping between series types and series names in the dataframe to be described
+        if describe has no include and exclude, numeric columns are considered only by default
         """
         dtypes_x_series = defaultdict(list)
         for series in self.df.data.values():
