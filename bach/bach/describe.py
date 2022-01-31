@@ -34,10 +34,12 @@ _SERIES_TYPE_X_SUPPORTED_STAT: Dict[Type, Tuple[SupportedStats, ...]] = {
     SeriesString: (
         SupportedStats.COUNT,
         SupportedStats.UNIQUE,
+        SupportedStats.FREQ,
     ),
     SeriesBoolean: (
         SupportedStats.COUNT,
         SupportedStats.UNIQUE,
+        SupportedStats.FREQ,
     ),
     SeriesAbstractDateTime: (
         SupportedStats.COUNT,
@@ -56,6 +58,7 @@ _SUPPORTED_STATS_X_AGG: Dict[SupportedStats, Callable[[DataFrame], DataFrame]] =
     SupportedStats.FIRST: DataFrame.min,
     SupportedStats.LAST: DataFrame.max,
     SupportedStats.UNIQUE: DataFrame.nunique,
+    SupportedStats.FREQ: DataFrame.mode,
 }
 
 

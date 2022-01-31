@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from bach import DataFrame
-from bach.describe import DescribeOperation, SupportedStats
+from bach.describe import SupportedStats
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, get_from_df
 
 
@@ -18,8 +18,9 @@ def test_df_categorical_describe() -> None:
             'municipality',
         ],
         expected_data=[
-            [SupportedStats.COUNT.value, 3, 3],
-            [SupportedStats.UNIQUE.value, 3, 2],
+            [SupportedStats.COUNT.value, '3', '3'],
+            [SupportedStats.UNIQUE.value, '3', '2'],
+            [SupportedStats.FREQ.value, 'Drylts', 'Súdwest-Fryslân'],
         ],
     )
 
@@ -69,12 +70,13 @@ def test_include_categorical_n_numerical() -> None:
 
     expected_df = pd.DataFrame(
         data=[
-            ['count', 3., 3., 3., 3., 3.],
+            ['count', 3., '3', '3', 3., 3.],
             ['mean', 2., None, None, 43353.33, 1336.33],
             ['std', 1., None, None, 46009.97, 103.98],
             ['min', 1., None, None, 3055., 1268.],
             ['max', 3., None, None, 93485., 1456.],
-            ['unique', None, 3., 2., None, None],
+            ['unique', None, '3', '2', None, None],
+            ['freq', None, 'Drylts', 'Súdwest-Fryslân', None, None],
             ['0.25', 1.5, None, None, 18287.5, 1276.5],
             ['0.5', 2., None, None, 33520.,  1285.],
             ['0.75', 2.5, None, None, 63502.5, 1370.5],
@@ -109,5 +111,31 @@ def test_describe_datetime() -> None:
             ['last', '2010-01-01 00:00:00'],
         ],
         columns=['stat', 'dt_column'],
+    )
+    pd.testing.assert_frame_equal(expected_df, result.to_pandas())
+
+
+def test_describe_boolean() -> None:
+    pdf = pd.DataFrame(
+        data=[
+            [True],
+            [True],
+            [True],
+            [False]
+        ],
+        columns=['bool_column'],
+    )
+    df = get_from_df(table='describe_table', df=pdf)
+
+    result = df.describe()
+    result = result.reset_index(drop=False)
+
+    expected_df = pd.DataFrame(
+        data=[
+            ['count', '4'],
+            ['unique', '2'],
+            ['freq', 'true'],
+        ],
+        columns=['stat', 'bool_column'],
     )
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
