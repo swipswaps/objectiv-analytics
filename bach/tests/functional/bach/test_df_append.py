@@ -13,7 +13,7 @@ def test_append_w_aligned_columns() -> None:
 
     result = caller_df.append(other_df).sort_values('a').reset_index(drop=False)
     expected = caller_pdf.append(other_pdf).sort_values('a').reset_index(drop=False)
-    np.testing.assert_equal(expected.values, result.values)
+    np.testing.assert_equal(expected.to_numpy(), result.to_numpy())
 
 
 def test_append_w_non_aligned_columns() -> None:

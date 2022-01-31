@@ -30,3 +30,8 @@ The two main data classes of Bach are the DataFrame and Series:
 * A :py:class:`Series` object represents a single column in a DataFrame, with
   different subclasses per data type that allow for type specific operations.
 
+Get started with Bach
+---------------------
+Once your app is set up with the Objectiv tracker and the collector is running, follow the steps in the
+`readme <https://github.com/objectiv/objectiv-analytics/tree/main/analysis#setup-objectiv-for-data-analysis>`_
+to work with the data in python using Objectiv.

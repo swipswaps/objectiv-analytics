@@ -76,6 +76,5 @@ def get_objectiv_frame(time_aggregation=None):
     run_query(sqlalchemy.create_engine(DB_TEST_URL), sql)
     run_query(sqlalchemy.create_engine(DB_TEST_URL), TEST_DATA_OBJECTIV)
 
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
-    return ObjectivFrame.from_objectiv_data(engine=engine, table_name='objectiv_data',
+    return ObjectivFrame.from_objectiv_data(DB_TEST_URL, table_name='objectiv_data',
                                             time_aggregation=time_aggregation)

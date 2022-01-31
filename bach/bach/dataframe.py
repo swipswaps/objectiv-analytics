@@ -1,13 +1,16 @@
+import warnings
 from copy import copy
+from functools import reduce
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable, Hashable, Sequence
 from uuid import UUID
 
+import numpy
 import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression, VariableToken
+from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
@@ -18,7 +21,7 @@ from sql_models.sql_generator import to_sql
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
     from bach.savepoints import Savepoints
-    from bach.series import Series, SeriesBoolean, SeriesAbstractNumeric
+    from bach.series import Series, SeriesBoolean
 
 # TODO exclude from docs
 DataFrameOrSeries = Union['DataFrame', 'Series']
@@ -1528,8 +1531,9 @@ class DataFrame:
     ) -> Optional['DataFrame']:
         """
         Sort dataframe by index levels.
+
         :param level: int or level name or list of ints or level names.
-         If not specified, all index series are used
+            If not specified, all index series are used
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `level` must also be a list and ``len(ascending) == len(level)``.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
@@ -1598,17 +1602,34 @@ class DataFrame:
         return self.to_pandas(limit=n)
 
     @property
-    def values(self):
+    def values(self) -> numpy.ndarray:
         """
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
+
+        .. warning::
+           We recommend using :meth:`DataFrame.to_numpy` instead.
 
         :returns: Returns the values of the DataFrame as numpy.ndarray.
 
         .. note::
             This function queries the database.
         """
-        # todo function is not recommended by pandas, change?
-        return self.to_pandas().values
+        warnings.warn(
+            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
+            category=DeprecationWarning,
+        )
+        return self.to_numpy()
+
+    def to_numpy(self) -> numpy.ndarray:
+        """
+        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.to_numpy`
+
+        :returns: Returns the values of the DataFrame as numpy.ndarray.
+
+        .. note::
+            This function queries the database.
+        """
+        return self.to_pandas().to_numpy()
 
     def _get_order_by_clause(self) -> Expression:
         """
@@ -1689,7 +1710,7 @@ class DataFrame:
             column_exprs = [s.get_column_expression() for s in self.all_series.values()]
             column_names = tuple(self.all_series.keys())
 
-        return CurrentNodeSqlModel(
+        return CurrentNodeSqlModel.get_instance(
             name=name,
             column_names=column_names,
             column_exprs=column_exprs,
@@ -1713,8 +1734,7 @@ class DataFrame:
         """
         model = self.get_current_node('view_sql', limit=limit)
         placeholder_values = get_variable_values_sql(variable_values=self.variables)
-        # TODO: fix typing here, or move all BachSqlModel logic to SqlModel, or both?
-        model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)  # type: ignore  # noqa
+        model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)
         return to_sql(model)
 
     def merge(
@@ -2015,6 +2035,64 @@ class DataFrame:
         return self._aggregate_func('mode', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
+    def quantile(
+        self,
+        q: Union[float, List[float]] = 0.5,
+        axis=1,
+        **kwargs,
+    ):
+        """
+        Returns the quantile of all numeric columns.
+
+        :param q: value or list of values between 0 and 1.
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
+        from bach.series.series_numeric import SeriesAbstractNumeric
+        df = self
+        if all(not isinstance(s, SeriesAbstractNumeric) for s in df.all_series.values()):
+            raise ValueError('Cannot calculate quantiles for dataframe with no numeric columns.')
+
+        if df.group_by is None:
+            df = df.groupby()
+
+        quantiles = [q] if isinstance(q, float) else q
+
+        all_quantile_dfs = []
+        for qt in quantiles:
+            new_series = df._apply_func_to_series(
+                func='quantile',
+                axis=axis,
+                numeric_only=True,
+                exclude_non_applied=True,
+                partition=df.group_by,
+                q=qt,
+                **kwargs,
+            )
+            initial_series = new_series[0]
+            quantile_df = df.copy_override(
+                base_node=initial_series.base_node,
+                series={s.name: s for s in new_series},
+                index={},
+                group_by=[initial_series.group_by],
+            )
+            if len(quantiles) == 1:
+                return quantile_df
+
+            # a hack in order to avoid calling quantile_df.materialized().
+            # Currently doing quantile['q'] = qt
+            # will raise some errors since the expression is not an instance of AggregateFunctionExpression
+            quantile_df['q'] = initial_series.copy_override(
+                dtype='float64',
+                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
+            )
+            all_quantile_dfs.append(quantile_df)
+
+        from bach.concat import DataFrameConcatOperation
+        result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
+        # q column should be in the index when calculating multiple quantiles
+        return result.set_index('q')
+
     def nunique(self, axis=1, skipna=True, **kwargs):
         """
         Returns the number of unique values in each column.
@@ -2274,16 +2352,17 @@ class DataFrame:
 
         :return: a new dataframe with all rows from appended Dataframes.
         """
-        from bach.concat import ConcatOperation
+        from bach.concat import DataFrameConcatOperation
         if isinstance(other, list) and not other:
             raise ValueError('no dataframe or series to append.')
 
         other_dfs = other if isinstance(other, list) else [other]
-        return ConcatOperation(
-            dfs=[self] + other_dfs,
+        concatenated_df = DataFrameConcatOperation(
+            objects=[self] + other_dfs,
             ignore_index=ignore_index,
             sort=sort,
         )()
+        return concatenated_df
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

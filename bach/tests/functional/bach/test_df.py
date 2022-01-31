@@ -139,3 +139,36 @@ def test_round():
         expected2 = pdf.round(decimals=i).sort_values(by='c')
         pd.testing.assert_frame_equal(expected2, result2, check_names=False)
 
+
+def test_quantile() -> None:
+    pdf = pd.DataFrame(
+        data={
+            'a': [1, 2, 3, 4, 5, 6, np.nan, 7.],
+            'b': [11.9, 32.0, 43.123, 64.425124, 25.00000000001, 6, np.nan, 78.],
+            'c': ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'],
+        },
+    )
+    bt = get_from_df('test_quantile', pdf)
+    quantiles = [[0.2, 0.4], 0.5, [0.25, 0.3, 0.5, 0.75, 0.86]]
+
+    for q in quantiles:
+        result = bt.quantile(q).sort_index()
+
+        # pandas returns a series when calculating just 1 quantile
+        result_values = result.to_numpy() if isinstance(q, list) else result.to_numpy()[0]
+        expected = pdf.reset_index(drop=False).quantile(q)
+        np.testing.assert_almost_equal(expected, result_values, decimal=4)
+
+
+def test_quantile_no_numeric_columns() -> None:
+    pdf = pd.DataFrame(
+        data={
+            'a': ['a', 'b', 'c', 'd'],
+            'c': ['e', 'f', 'g', 'h'],
+        },
+    )
+    bt = get_from_df('test_quantile', pdf)
+    bt.reset_index(drop=True, inplace=True)
+
+    with pytest.raises(ValueError, match=r'Cannot calculate quantiles'):
+        bt.quantile()

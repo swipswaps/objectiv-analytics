@@ -2,9 +2,14 @@
 Copyright 2021 Objectiv B.V.
 """
 from collections import deque
-from typing import NamedTuple, List, Dict, Set, Tuple, Optional, Callable, Deque, Any, Hashable, Mapping
+from typing import NamedTuple, List, Dict, Set, Tuple, Optional, Callable, Deque, Hashable, Mapping,\
+    TypeVar,  Union
 
 from sql_models.model import SqlModel, RefPath
+
+
+TSqlModel = TypeVar('TSqlModel', bound='SqlModel')
+T2SqlModel = TypeVar('T2SqlModel', bound='SqlModel')
 
 
 class NodeInfo(NamedTuple):
@@ -186,11 +191,11 @@ def _get_all_placeholders_recursive(start_node: SqlModel, path_so_far: RefPath):
 
 
 def update_placeholders_in_graph(
-        start_node: SqlModel,
+        start_node: TSqlModel,
         placeholder_values: Mapping[str, Hashable]
-) -> SqlModel:
+) -> TSqlModel:
     """
-    Return a copy of the SqlModel with the given placeholder values updated throughout the tree.
+    Return a copy of the start_node with the given placeholder values updated throughout the tree.
 
     Will only update placeholder values of nodes that already have that placeholder and for which that
     placeholder has a different value. If a node doesn't have any of the placeholders in placeholder_values,
@@ -222,20 +227,25 @@ def update_placeholders_in_graph(
     return start_node
 
 
-def replace_node_in_graph(start_node: SqlModel,
-                          reference_path: RefPath,
-                          replacement_model: SqlModel) -> SqlModel:
+def replace_node_in_graph(
+        start_node: TSqlModel,
+        reference_path: RefPath,
+        replacement_model: T2SqlModel) -> Union[TSqlModel, T2SqlModel]:
     """
     Create a (partial) copy of the graph that can be reached from start_node, with the referenced node
     replaced by replacement_model. All nodes along all reference paths to the referenced node will be
     replaced with copies of the original nodes that (indirectly) link to replacement_model.
 
-    The original start node, and all nodes that it refers recursively are unchanged.
+    The original start node, and all nodes that it refers recursively are unchanged; the returned and
+    modified SqlModel is a copy.
     :param start_node: start node
     :param reference_path: references to traverse to get to the node that has to be updated
     :param replacement_model: model instance that will replace the reference node
-    :return: an updated copy of the start node
+    :return: an updated copy of the start node, or the replacement_node if reference_path is empty
     """
+    if reference_path == tuple():
+        return replacement_model
+
     selected_node = get_node_info_selected_node(start_node, reference_path)
     dependent_model_ids = _get_all_dependent_node_model_ids(selected_node)
     # the dependent_model_ids are guaranteed to uniquely identify python objects as long as those objects
@@ -251,13 +261,46 @@ def replace_node_in_graph(start_node: SqlModel,
     )
 
 
+def replace_non_start_node_in_graph(
+        start_node: TSqlModel,
+        reference_path: RefPath,
+        replacement_model: SqlModel) -> TSqlModel:
+    """
+    Similar to :meth:`replace_node_in_graph()`, except in this case the reference_path cannot be empty, i.e.
+    the node to replace cannot be the start_node.
+
+    The limitation that reference_path cannot be empty has the advantage that this function guarantees to
+    return a copy of the start_node, and never the replacement_model. This can be useful when one wants to
+    be sure that the return type is the same as the type of start_node.
+
+    The original start node, and all nodes that it refers recursively are unchanged.
+    :param start_node: start node
+    :param reference_path: references to traverse to get to the node that has to be updated. Cannot be empty
+    :param replacement_model: model instance that will replace the reference node
+    :return: an updated copy of the start node
+    :raises ValueError: if reference_path is an empty tuple
+    """
+    if reference_path == tuple():
+        raise ValueError(f'reference path cannot be empty, use replace_node_in_graph() instead.')
+    selected_node = get_node_info_selected_node(start_node, reference_path)
+    dependent_model_ids = _get_all_dependent_node_model_ids(selected_node)
+    # See replace_node_in_graph() for more comments on the implementation
+    return _replace_model_in_graph_recursively(
+        current_node=start_node,
+        model_to_replace=selected_node.model,
+        replacement_node=replacement_model,
+        dependent_model_ids=dependent_model_ids,
+        replaced_models={}
+    )
+
+
 def _replace_model_in_graph_recursively(
-        current_node: SqlModel,
+        current_node: TSqlModel,
         model_to_replace: SqlModel,
         replacement_node: SqlModel,
         dependent_model_ids: Set[int],
         replaced_models: Dict[int, SqlModel]
-) -> SqlModel:
+) -> TSqlModel:
     """
     Return the a copy of current_node, with the recursively referenced nodes of the original replaced by
         copies too. The replacement_node is not replaced by a copy but by replacement_node.
@@ -265,6 +308,8 @@ def _replace_model_in_graph_recursively(
 
     Effectively this can be used to replace a single node, and create a new graph that references that
     updated node.
+
+    Important limitation: current_node cannot be the same as model_to_replace!
 
     :param current_node: current node, copy of this node will be returned.
     :param model_to_replace: model that should be replaced.
@@ -276,14 +321,21 @@ def _replace_model_in_graph_recursively(
     :return: copy of current-node, with referred nodes copied and updated too.
     """
     if current_node is model_to_replace:
-        return replacement_node
+        # For a basic recursive function this would be the base case, and we'd return here. But as we want to
+        # guarantee to return the same type as current_node, we disallow this and handle the base case below
+        raise Exception('Function should only be used for the recursive case.')
     new_references = {}
     for ref_name, ref_node in current_node.references.items():
         node_id = id(ref_node)
         if node_id in dependent_model_ids:
             if node_id in replaced_models:
+                # cached case
                 new_references[ref_name] = replaced_models[node_id]
+            elif ref_node is model_to_replace:
+                # base case
+                new_references[ref_name] = replacement_node
             else:
+                # recursive case
                 new_references[ref_name] = _replace_model_in_graph_recursively(
                     current_node=ref_node,
                     model_to_replace=model_to_replace,
