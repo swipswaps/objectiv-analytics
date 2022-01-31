@@ -5,7 +5,7 @@ import warnings
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
-    TypeVar
+    TypeVar, Sequence
 from uuid import UUID
 
 import numpy
@@ -1266,6 +1266,24 @@ class Series(ABC):
             ignore_index=ignore_index,
         )()
         return concatenated_series
+
+    def describe(
+        self,
+        percentiles: Optional[Sequence[float]] = None,
+        datetime_is_numeric: bool = False,
+    ) -> 'Series':
+        """
+        Returns descriptive statistics, it will vary based on what is provided
+
+        :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
+        :param datetime_is_numeric: not supported
+        :returns: a new Series with the descriptive statistics
+        """
+        from bach.describe import DescribeOperation
+        describe_df = DescribeOperation(
+            obj=self, datetime_is_numeric=datetime_is_numeric, percentiles=percentiles,
+        )()
+        return describe_df.all_series[self.name]
 
 
 def const_to_series(base: Union[Series, DataFrame],

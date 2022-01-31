@@ -92,9 +92,7 @@ def test_include_categorical_n_numerical() -> None:
 def test_describe_datetime() -> None:
     pdf = pd.DataFrame(
         data=[
-            [np.datetime64("2000-01-01")],
-            [np.datetime64("2010-01-01")],
-            [np.datetime64("2010-01-01")],
+            [np.datetime64("2000-01-01")], [np.datetime64("2010-01-01")], [np.datetime64("2010-01-01")],
         ],
         columns=['dt_column'],
     )
@@ -117,12 +115,7 @@ def test_describe_datetime() -> None:
 
 def test_describe_boolean() -> None:
     pdf = pd.DataFrame(
-        data=[
-            [True],
-            [True],
-            [True],
-            [False]
-        ],
+        data=[[True], [True], [True], [False]],
         columns=['bool_column'],
     )
     df = get_from_df(table='describe_table', df=pdf)
