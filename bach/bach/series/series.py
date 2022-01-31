@@ -444,8 +444,10 @@ class Series(ABC):
     def values(self):
         """
         .values property accessor akin pandas.Series.values
+
         .. warning::
            We recommend using :meth:`Series.to_numpy` instead.
+
         .. note::
             This function queries the database.
         """

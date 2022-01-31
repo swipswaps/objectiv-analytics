@@ -1605,6 +1605,7 @@ class DataFrame:
     def values(self) -> numpy.ndarray:
         """
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
+
         .. warning::
            We recommend using :meth:`DataFrame.to_numpy` instead.
 

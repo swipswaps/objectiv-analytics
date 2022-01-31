@@ -192,7 +192,6 @@ All types
     Series.median
     Series.mode
     Series.nunique
-    Series.quantile
 
 Numeric
 +++++++
