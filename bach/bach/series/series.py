@@ -407,21 +407,21 @@ class Series(ABC):
 
         series_dict = {}
         for i in values:
-            args = (series_last, const_to_series(self, i, i))
+            args = (series_last, const_to_series(self, i, str(i)))
             else_clause = ''
             if fill_value is not None:
                 else_clause = 'else {}'
                 fill_series = const_to_series(self, fill_value, 'fill_value')
                 if fill_series.dtype != self.dtype:
                     raise TypeError('fill_value should be of same type as the index that is unstacked')
-                args = (series_last, const_to_series(self, i, i), fill_series)
+                args = (series_last, const_to_series(self, i, str(i)), fill_series)
 
             exp = f"max(case when {{}}={{}} then {name_series} {else_clause} end)"
             series = df[name_series].copy_override(
-                name=i,
+                name=str(i),
                 expression=AggregateFunctionExpression.construct(exp, *args)
             )
-            series_dict[i] = series
+            series_dict[str(i)] = series
 
         return df.copy_override(series=series_dict).materialize()
 

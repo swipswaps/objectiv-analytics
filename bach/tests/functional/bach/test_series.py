@@ -474,3 +474,45 @@ def test_series_append_same_dtype_different_index() -> None:
 
     with pytest.raises(ValueError, match='concatenation with different index dtypes is not supported yet.'):
         bt_other_index.city.append(bt.skating_order)
+
+
+def test_series_unstack():
+    bt = get_bt_with_test_data(full_data_set=True)
+    stacked_bt = bt.groupby(['city','municipality']).inhabitants.sum()
+    unstacked_bt = stacked_bt.unstack()
+
+    assert_equals_data(
+        unstacked_bt,
+        expected_columns=['city', 'Noardeast-Fryslân','Leeuwarden','Súdwest-Fryslân','Harlingen','Waadhoeke','De Friese Meren'],
+        expected_data=[
+            ['Boalsert', None, None, 10120, None, None, None],
+            ['Dokkum', 12675, None, None, None, None, None],
+            ['Drylts', None, None, 3055, None, None, None],
+            ['Frjentsjer', None, None, None, None, 12760, None],
+            ['Harns', None, None, None, 14740, None, None],
+            ['Hylpen', None, None, 870, None, None, None],
+            ['Ljouwert', None, 93485, None, None, None, None],
+            ['Sleat', None, None, None, None, None, 700],
+            ['Snits', None, None, 33520, None, None, None],
+            ['Starum', None, None, 960, None, None, None],
+            ['Warkum', None, None, 4440, None, None, None]
+        ],
+        order_by='city'
+    )
+
+    stacked_bt = bt.groupby(['municipality','skating_order']).city.max()
+    unstacked_bt = stacked_bt.unstack(fill_value='buh')
+
+    assert_equals_data(
+        unstacked_bt,
+        expected_columns=['municipality', '11', '9', '3', '5', '4', '10', '6', '2', '7', '1', '8'],
+        expected_data=[
+            ['De Friese Meren', 'buh', 'buh', 'buh', 'buh', 'Sleat', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'], 
+            ['Harlingen', 'buh', 'Harns', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'], 
+            ['Leeuwarden', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'Ljouwert', 'buh'], 
+            ['Noardeast-Fryslân', 'Dokkum', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'], 
+            ['Súdwest-Fryslân', 'buh', 'buh', 'Drylts', 'Starum', 'buh', 'buh', 'Hylpen', 'Snits', 'Warkum', 'buh', 'buh'], 
+            ['Waadhoeke', 'buh', 'buh', 'buh', 'buh', 'buh', 'Frjentsjer', 'buh', 'buh', 'buh', 'buh', 'buh']
+        ],
+        order_by='municipality'
+    )
