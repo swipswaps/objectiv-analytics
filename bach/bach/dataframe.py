@@ -10,8 +10,9 @@ import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
-from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
+from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression, \
+    join_expressions
+from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql, construct_references
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
@@ -2337,6 +2338,113 @@ class DataFrame:
             sort=sort,
         )()
         return concatenated_df
+
+    def drop_duplicates(
+        self,
+        subset: Optional[Union[str, Sequence[str]]] = None,
+        keep: Union[str, bool] = 'first',
+        inplace: bool = False,
+        ignore_index: bool = False,
+    ) -> Optional['DataFrame']:
+        """
+        Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
+        :param subset: series label or sequence of labels.
+        Duplications to be dropped are based on the combination of the subset of series.
+        If not provided, all series labels will be used by default.
+        :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
+         - `first`: drop all occurrences except the first one
+         - `last`:  drop all occurrences except the last one
+         - False: drops all duplicates
+         If no value is provided, first occurrences will be kept by default.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+        :param ignore_index: if true, drops indexes of the result
+
+        :return: a new dataframe with dropped duplicates if inplace = False, otherwise None.
+        """
+        if keep not in ('first', 'last', False):
+            raise ValueError('keep must be either "first", "last" or False.')
+
+        subset = [subset] if isinstance(subset, str) else subset
+        if subset and any(s not in self.data_columns for s in subset):
+            raise ValueError(
+                f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
+            )
+
+        series_to_combine = list(subset or self.data_columns)
+        df = self.copy() if not ignore_index else self.reset_index(drop=True)
+        non_subset = [name for name in df.all_series if name not in series_to_combine]
+
+        # need to treat indexes as common series
+        df.reset_index(drop=not non_subset, inplace=True)
+
+        # keep duplicates and duplication is based on all data_columns and df has no index
+        if not non_subset and keep:
+            df = df._apply_distinct()
+            if not inplace:
+                return df
+            self._update_self_from_df(df)
+            return None
+
+        # drop all duplicates
+        if keep is False:
+            freq_df = df[series_to_combine]
+            freq_df['freq'] = 1
+            freq_df = freq_df.groupby(by=series_to_combine).sum()
+            freq_df.reset_index(drop=False, inplace=True)
+
+            df = df.merge(freq_df, on=series_to_combine)
+            df = df[df.freq_sum == 1][series_to_combine + non_subset]
+        else:
+            agg_series = df[non_subset]._apply_func_to_series(
+                func='window_last_value' if keep == 'last' else 'window_first_value',
+                window=df.groupby(by=series_to_combine).window(),
+            )
+            for name, new_series in zip(non_subset, agg_series):
+                df._data[name] = new_series.copy_override(name=name)
+
+            df = df._apply_distinct()
+
+        df = df if ignore_index else df.set_index(keys=self.index_columns)
+        if not inplace:
+            return df
+
+        self._update_self_from_df(df)
+        return None
+
+    def _apply_distinct(self) -> 'DataFrame':
+        all_series_expr = [
+            Expression.construct_expr_as_name(expr=s.expression, name=s.name)
+            if s.expression.has_aggregate_function or s.expression.has_windowed_aggregate_function
+            else s.expression
+            for s in self.all_series.values()
+        ]
+
+        series_stmt = join_expressions(all_series_expr).to_sql()
+        new_node = BachSqlModel(
+            model_spec=CustomSqlModelBuilder(
+                sql=f'select distinct {series_stmt} from {{{{base_node}}}}',
+                name='distinct_sql',
+            ),
+            placeholders=BachSqlModel.get_placeholders(self.variables, all_series_expr),
+            references=construct_references(
+                base_references={'base_node': self.base_node}, expressions=all_series_expr,
+            ),
+            materialization=Materialization.CTE,
+            materialization_name=None,
+            columns=tuple(self.all_series.keys()),
+        )
+
+        return self.copy_override(
+            base_node=new_node,
+            series={
+                s.name: s.copy_override(expression=Expression.column_reference(s.name))
+                for s in self._data.values()
+            },
+            index={
+                s.name: s.copy_override(expression=Expression.column_reference(s.name))
+                for s in self._index.values()
+            },
+        )
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

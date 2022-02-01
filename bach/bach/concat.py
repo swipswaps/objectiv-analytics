@@ -367,7 +367,7 @@ class ConcatSqlModel(BachSqlModel):
 
         return ConcatSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=cls._get_placeholders(variables, all_series_expressions),
+            placeholders=cls.get_placeholders(variables, all_series_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

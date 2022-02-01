@@ -373,7 +373,7 @@ class MergeSqlModel(BachSqlModel):
 
         return MergeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=cls._get_placeholders(variables, all_expressions),
+            placeholders=cls.get_placeholders(variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

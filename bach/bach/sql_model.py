@@ -89,7 +89,7 @@ class BachSqlModel(SqlModel[T]):
         )
 
     @classmethod
-    def _get_placeholders(
+    def get_placeholders(
         cls,
         variables: Dict['DtypeNamePair', Hashable],
         expressions: List[Expression],
