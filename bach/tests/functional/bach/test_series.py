@@ -167,7 +167,7 @@ def test_fillna():
     def tf(x):
         bt_fill = bt['0'].fillna(x)
         assert bt_fill.expression.is_constant == bt['0'].expression.is_constant
-        np.testing.assert_equal(pdf[0].fillna(x).values, bt_fill.values)
+        np.testing.assert_equal(pdf[0].fillna(x).to_numpy(), bt_fill.to_numpy())
 
     assert(bt['0'].dtype == 'float64')
     tf(1.25)

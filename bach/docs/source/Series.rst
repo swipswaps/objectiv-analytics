@@ -163,6 +163,7 @@ Conversion, reshaping, sorting
 .. autosummary::
     :toctree: Series
 
+    Series.sort_index
     Series.sort_values
     Series.fillna
     Series.append
@@ -191,7 +192,6 @@ All types
     Series.median
     Series.mode
     Series.nunique
-    Series.quantile
 
 Numeric
 +++++++

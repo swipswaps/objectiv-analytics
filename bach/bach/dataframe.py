@@ -1,8 +1,10 @@
+import warnings
 from copy import copy
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable, Hashable, Sequence
 from uuid import UUID
 
+import numpy
 import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
@@ -1536,8 +1538,9 @@ class DataFrame:
     ) -> Optional['DataFrame']:
         """
         Sort dataframe by index levels.
+
         :param level: int or level name or list of ints or level names.
-         If not specified, all index series are used
+            If not specified, all index series are used
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `level` must also be a list and ``len(ascending) == len(level)``.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
@@ -1606,17 +1609,34 @@ class DataFrame:
         return self.to_pandas(limit=n)
 
     @property
-    def values(self):
+    def values(self) -> numpy.ndarray:
         """
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
+
+        .. warning::
+           We recommend using :meth:`DataFrame.to_numpy` instead.
 
         :returns: Returns the values of the DataFrame as numpy.ndarray.
 
         .. note::
             This function queries the database.
         """
-        # todo function is not recommended by pandas, change?
-        return self.to_pandas().values
+        warnings.warn(
+            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
+            category=DeprecationWarning,
+        )
+        return self.to_numpy()
+
+    def to_numpy(self) -> numpy.ndarray:
+        """
+        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.to_numpy`
+
+        :returns: Returns the values of the DataFrame as numpy.ndarray.
+
+        .. note::
+            This function queries the database.
+        """
+        return self.to_pandas().to_numpy()
 
     def _get_order_by_clause(self) -> Expression:
         """

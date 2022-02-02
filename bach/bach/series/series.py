@@ -1,12 +1,14 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import warnings
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
     TypeVar
 from uuid import UUID
 
+import numpy
 import pandas
 from sqlalchemy.future import Engine
 
@@ -448,10 +450,17 @@ class Series(ABC):
         """
         .values property accessor akin pandas.Series.values
 
+        .. warning::
+           We recommend using :meth:`Series.to_numpy` instead.
+
         .. note::
             This function queries the database.
         """
-        return self.to_pandas().values
+        warnings.warn(
+            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
+            category=DeprecationWarning,
+        )
+        return self.to_numpy()
 
     @property
     def value(self):
@@ -465,7 +474,7 @@ class Series(ABC):
         if not self.expression.is_single_value:
             raise ValueError('value accessor only supported for single value expressions. '
                              'Use .values instead')
-        return self.values[0]
+        return self.to_numpy()[0]
 
     @property
     def array(self):
@@ -476,6 +485,17 @@ class Series(ABC):
             This function queries the database.
         """
         return self.to_pandas().array
+
+    def to_numpy(self) -> numpy.ndarray:
+        """
+        Return a Numpy representation of the Series akin :py:attr:`pandas.Series.to_numpy`
+
+        :returns: Returns the values of the Series as numpy.ndarray.
+
+        .. note::
+            This function queries the database.
+        """
+        return self.to_pandas().to_numpy()
 
     def sort_values(self, *, ascending=True):
         """
@@ -489,9 +509,12 @@ class Series(ABC):
 
     def sort_index(self: T, *, ascending: Union[List[bool], bool] = True) -> T:
         """
-        Return a copy of this Series, that is sorted by the index.
+        Sort this Series by its index.
+        Returns a new instance and does not modify the instance it is called on.
+
         :param ascending: either a bool indicating whether to sort ascending or descending, or a list of
             bools indicating ascending/descending for each of the index levels/columns.
+
         """
         if isinstance(ascending, list):
             if len(ascending) != len(self.index):

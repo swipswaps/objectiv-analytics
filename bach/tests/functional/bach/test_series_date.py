@@ -115,4 +115,4 @@ def test_to_pandas():
     bt = get_bt_with_test_data()
     bt['d'] = datetime.date(2020, 3, 11)
     bt[['d']].to_pandas()
-    assert bt[['d']].values[0] == [datetime.date(2020, 3, 11)]
+    assert bt[['d']].to_numpy()[0] == [datetime.date(2020, 3, 11)]

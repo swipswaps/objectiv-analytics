@@ -366,12 +366,12 @@ def test_rolling_defaults_vs_pandas():
             # pandas can retain the sorting order and apply group_by,
             # but bach can not. We need to do one final sort in the larger df
             r['rolling'] = rolling
-            return r.sort_values([*group_by, 'skating_order'])['rolling'].values
+            return r.sort_values([*group_by, 'skating_order'])['rolling'].to_numpy()
         else:
             # we can't return the entire frame as in pandas it's not possible
             # to add the grouped, rolled up values back into the df, due to an
             # index mismatch.
-            return rolling.values
+            return rolling.to_numpy()
 
     for center in [False, True]:
         for window in range(1, 11):
@@ -405,7 +405,7 @@ def test_rolling_variations():
         r1 = df.rolling(**kwargs).sum()[[series + '_sum']]
         # the last [] is required because running this on a df will include the index as a series
         r2 = df[[series]].rolling(**kwargs).sum()[[series + '_sum']]
-        np.testing.assert_equal(r1.values, r2.values)
+        np.testing.assert_equal(r1.to_numpy(), r2.to_numpy())
 
     def _test_series_vs_full_df(df, series, **kwargs):
         # get the series
@@ -413,7 +413,7 @@ def test_rolling_variations():
         # get the frame selection
         # the last [] is required because running this on a df will include the index as a series
         r2 = df[[series]].rolling(**kwargs).sum()[[series + '_sum']]
-        np.testing.assert_equal(r1.values, r2.values)
+        np.testing.assert_equal(r1.to_numpy(), r2.to_numpy())
 
     for df in bt[['skating_order', 'inhabitants', 'founding']], bt.groupby('municipality'):
         for s in df.data_columns:
@@ -429,8 +429,8 @@ def test_expanding_defaults_vs_pandas():
     for series in bt.data_columns:
         for min_periods in range(0, 11):
             pdf: pd.DataFrame = bt[[series]].to_pandas()
-            pd_values = pdf.expanding(min_periods=min_periods).sum().values
-            bt_values = bt.expanding(min_periods=min_periods).sum()[[series + '_sum']].values
+            pd_values = pdf.expanding(min_periods=min_periods).sum().to_numpy()
+            bt_values = bt.expanding(min_periods=min_periods).sum()[[series + '_sum']].to_numpy()
             np.testing.assert_equal(pd_values, bt_values)
 
 
@@ -441,7 +441,7 @@ def test_expanding_variations():
         r1 = bt.expanding(**kwargs).sum()[[series + '_sum']]
         # the last [] is required because running this on a df will include the index as a series
         r2 = bt[[series]].expanding(**kwargs).sum()[[series + '_sum']]
-        np.testing.assert_equal(r1.values, r2.values)
+        np.testing.assert_equal(r1.to_numpy(), r2.to_numpy())
 
     def _test_series_vs_full_df(series, **kwargs):
         # get the series
@@ -449,7 +449,7 @@ def test_expanding_variations():
         # get the frame selection
         # the last [] is required because running this on a df will include the index as a series
         r2 = bt[[series]].expanding(**kwargs).sum()[[series + '_sum']]
-        np.testing.assert_equal(r1.values, r2.values)
+        np.testing.assert_equal(r1.to_numpy(), r2.to_numpy())
 
     for series in bt.data_columns:
         for min_periods in [1,5,11]:
