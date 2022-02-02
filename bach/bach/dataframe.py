@@ -973,6 +973,8 @@ class DataFrame:
         value_index_name = list(value.index.keys())[0]
         if self.index[index_name].dtype != value.index[value_index_name].dtype:
             raise ValueError('dtypes of indexes should be the same')
+
+        # FIXME We're assiging mixed types to this var.
         renamed_value: DataFrameOrSeries = value.copy_override(name=key)
 
         if how == 'outer':
