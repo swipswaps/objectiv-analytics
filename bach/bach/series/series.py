@@ -10,6 +10,7 @@ from uuid import UUID
 
 import numpy
 import pandas
+from sqlalchemy.future import Engine
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 
@@ -18,12 +19,15 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel
 from bach.types import value_to_dtype
+from sql_models.constants import NotSet, not_set
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
     from bach.series import SeriesBoolean
+    from sql_models.model import SqlModel
 
 T = TypeVar('T', bound='Series')
+TSqlModel = TypeVar('TSqlModel', bound='SqlModel')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
@@ -371,38 +375,36 @@ class Series(ABC):
         """
         return self.copy_override()
 
-    def copy_override(self,
-                      dtype=None,
-                      engine=None,
-                      base_node=None,
-                      index=None,
-                      name=None,
-                      expression=None,
-                      group_by: Optional[List[Optional['GroupBy']]] = None,  # List so [None] != None
-                      sorted_ascending: Optional[List[Optional[bool]]] = None,   # List so [None] != None
-                      index_sorting: Optional[List[bool]] = None
-                      ):
+    def copy_override(
+        self: T,
+        dtype: Optional[str] = None,
+        engine: Optional[Engine] = None,
+        base_node: Optional[TSqlModel] = None,
+        index: Optional[Dict[str, 'Series']] = None,
+        name: Optional[str] = None,
+        expression: Optional['Expression'] = None,
+        group_by: Optional[Union['GroupBy', NotSet]] = not_set,
+        sorted_ascending: Optional[Union[bool, NotSet]] = not_set,
+        index_sorting: Optional[List[bool]] = None
+    ) -> T:
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
 
-        Special cases:
-        1. Big fat warning: both group_by and sorted_ascending can legally be None, but if you want to set
-        that, set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
-
-        2. If index is not None, then index_sorting is automatically set to `[]` unless overridden
+        Special case:
+        * If index is not None, then index_sorting is automatically set to `[]` unless overridden
         """
         if index and index_sorting is None:
             index_sorting = []
 
-        klass = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
+        klass: type = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
         return klass(
             engine=self._engine if engine is None else engine,
             base_node=self._base_node if base_node is None else base_node,
             index=self._index if index is None else index,
             name=self._name if name is None else name,
             expression=self._expression if expression is None else expression,
-            group_by=self._group_by if group_by is None else group_by[0],
-            sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending[0],
+            group_by=self._group_by if group_by is not_set else group_by,
+            sorted_ascending=self._sorted_ascending if sorted_ascending is not_set else sorted_ascending,
             index_sorting=self._index_sorting if index_sorting is None else index_sorting
         )
 
@@ -514,7 +516,7 @@ class Series(ABC):
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
             return self
-        return self.copy_override(sorted_ascending=[ascending])
+        return self.copy_override(sorted_ascending=ascending)
 
     def sort_index(self: T, *, ascending: Union[List[bool], bool] = True) -> T:
         """
@@ -536,7 +538,7 @@ class Series(ABC):
             raise ValueError('Parameter ascending should be a bool or a list of bools')
 
         return self.copy_override(
-            sorted_ascending=[None],
+            sorted_ascending=None,
             index_sorting=ascending_list
         )
 
@@ -597,7 +599,7 @@ class Series(ABC):
             # The expression is lost when materializing
             expr = SingleValueExpression(expr)
 
-        s = series.copy_override(expression=expr, dtype=dtype, index={}, group_by=[None])
+        s = series.copy_override(expression=expr, dtype=dtype, index={}, group_by=None)
         return s
 
     def exists(self):
@@ -1068,17 +1070,21 @@ class Series(ABC):
                 # we're creating an aggregation on everything, this will yield one value
                 expression = SingleValueExpression(expression)
 
-            return self.copy_override(dtype=derived_dtype,
-                                      index=partition.index,
-                                      group_by=[partition],
-                                      expression=expression,
-                                      index_sorting=[])
+            return self.copy_override(
+                dtype=derived_dtype,
+                index=partition.index,
+                group_by=partition,
+                expression=expression,
+                index_sorting=[],
+            )
         else:
             # The window expression already contains the full partition and sorting, no need
             # to keep that with this series, the expression can be used without any of those.
-            return self.copy_override(dtype=derived_dtype,
-                                      group_by=[None],
-                                      expression=partition.get_window_expression(expression))
+            return self.copy_override(
+                dtype=derived_dtype,
+                group_by=None,
+                expression=partition.get_window_expression(expression),
+            )
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
         # count is not constant because it depends on the number of rows in the selection.
