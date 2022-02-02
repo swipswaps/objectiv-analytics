@@ -7,9 +7,8 @@ from typing import Dict, TypeVar, Tuple, List, Optional, Mapping, Hashable, Unio
 from bach.expression import Expression, get_variable_tokens, VariableToken
 from bach.types import value_to_dtype, get_series_type_from_dtype
 from sql_models.util import quote_identifier
-from sql_models.model import CustomSqlModelBuilder, SqlModel, Materialization
+from sql_models.model import CustomSqlModelBuilder, SqlModel, Materialization, SqlModelSpec
 from sql_models.constants import NotSet, not_set
-
 
 T = TypeVar('T', bound='SqlModelSpec')
 TBachSqlModel = TypeVar('TBachSqlModel', bound='BachSqlModel')
