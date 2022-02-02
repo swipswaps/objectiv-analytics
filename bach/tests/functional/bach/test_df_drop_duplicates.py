@@ -171,6 +171,7 @@ def test_df_keep_last_drop_duplicates() -> None:
         check_names=False,
     )
 
+
 def test_df_drop_all_duplicates() -> None:
     pdf = pd.DataFrame(
         data={
