@@ -1,8 +1,9 @@
 import warnings
 from copy import copy
-from functools import reduce
-from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
-    TYPE_CHECKING, Callable, Hashable, Sequence
+from typing import (
+    List, Set, Union, Dict, Any, Optional, Tuple,
+    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
+)
 from uuid import UUID
 
 import numpy
@@ -10,9 +11,8 @@ import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression, \
-    join_expressions
-from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql, construct_references
+from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
+from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
@@ -695,7 +695,13 @@ class DataFrame:
         self._variables = df.variables
         return self
 
-    def materialize(self, node_name='manual_materialize', inplace=False, limit: Any = None) -> 'DataFrame':
+    def materialize(
+        self,
+        node_name='manual_materialize',
+        inplace=False,
+        limit: Any = None,
+        distinct: bool = False,
+    ) -> 'DataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -710,6 +716,7 @@ class DataFrame:
         :param node_name: The name of the node that's going to be created
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param limit: The limit (slice, int) to apply.
+        :param distinct: Apply distinct statement if ``distinct=True``
         :returns: DataFrame with the current DataFrame's state as base_node
 
         .. note::
@@ -718,7 +725,7 @@ class DataFrame:
         """
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
-        node = self.get_current_node(name=node_name, limit=limit)
+        node = self.get_current_node(name=node_name, limit=limit, distinct=distinct)
 
         df = self.get_instance(
             engine=self.engine,
@@ -1644,15 +1651,20 @@ class DataFrame:
         else:
             return Expression.construct('')
 
-    def get_current_node(self, name: str,
-                         limit: Union[int, slice] = None,
-                         where_clause: Expression = None,
-                         having_clause: Expression = None) -> BachSqlModel:
+    def get_current_node(
+        self,
+        name: str,
+        limit: Union[int, slice] = None,
+        distinct: bool = False,
+        where_clause: Expression = None,
+        having_clause: Expression = None,
+    ) -> BachSqlModel:
         """
         INTERNAL: Translate the current state of this DataFrame into a SqlModel.
 
         :param name: The name of the new node
         :param limit: The limit to use
+        :param distinct: if distinct statement needs to be applied
         :param where_clause: The where-clause to apply, if any
         :param having_clause: The having-clause to apply in case group_by is set, if any
         :returns: SQL query as a SqlModel that represents the current state of this DataFrame.
@@ -1715,6 +1727,7 @@ class DataFrame:
             name=name,
             column_names=column_names,
             column_exprs=column_exprs,
+            distinct=distinct,
             where_clause=where_clause,
             group_by_clause=group_by_clause,
             having_clause=having_clause,
@@ -2370,39 +2383,38 @@ class DataFrame:
                 f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
             )
 
-        series_to_combine = list(subset or self.data_columns)
-        df = self.copy() if not ignore_index else self.reset_index(drop=True)
-        non_subset = [name for name in df.all_series if name not in series_to_combine]
+        df = self.copy()
+        if ignore_index:
+            df.reset_index(drop=True, inplace=True)
 
-        # need to treat indexes as common series
-        df.reset_index(drop=not non_subset, inplace=True)
+        dedup_on = list(subset or self.data_columns)
+        dedup_data = [name for name in df.all_series if name not in dedup_on]
 
-        # keep duplicates and duplication is based on all data_columns and df has no index
-        if not non_subset and keep:
-            df = df._apply_distinct()
-            if not inplace:
-                return df
-            self._update_self_from_df(df)
-            return None
+        # dedup_data contains index series if ignore_index = False
+        # in this case we should append those as data_columns
+        if dedup_data and not ignore_index:
+            df.reset_index(drop=False, inplace=True)
 
         # drop all duplicates
         if keep is False:
-            freq_df = df[series_to_combine]
+            freq_df = df[dedup_on]
             freq_df['freq'] = 1
-            freq_df = freq_df.groupby(by=series_to_combine).sum()
+            freq_df = freq_df.groupby(by=dedup_on).sum()
             freq_df.reset_index(drop=False, inplace=True)
 
-            df = df.merge(freq_df, on=series_to_combine)
-            df = df[df.freq_sum == 1][series_to_combine + non_subset]
-        else:
-            agg_series = df[non_subset]._apply_func_to_series(
+            df = df.merge(freq_df, on=dedup_on)
+            df = df[df.freq_sum == 1][dedup_on + dedup_data]
+        elif dedup_data:
+            agg_series = df[dedup_data]._apply_func_to_series(
                 func='window_last_value' if keep == 'last' else 'window_first_value',
-                window=df.groupby(by=series_to_combine).window(),
+                window=df.groupby(by=dedup_on).window(),
             )
-            for name, new_series in zip(non_subset, agg_series):
+            for name, new_series in zip(dedup_data, agg_series):
                 df._data[name] = new_series.copy_override(name=name)
 
-            df = df._apply_distinct()
+        # we need to just apply distinct for 'first' and 'last'.
+        if keep:
+            df.materialize(distinct=True, inplace=True)
 
         df = df if ignore_index else df.set_index(keys=self.index_columns)
         if not inplace:
@@ -2410,41 +2422,6 @@ class DataFrame:
 
         self._update_self_from_df(df)
         return None
-
-    def _apply_distinct(self) -> 'DataFrame':
-        all_series_expr = [
-            Expression.construct_expr_as_name(expr=s.expression, name=s.name)
-            if s.expression.has_aggregate_function or s.expression.has_windowed_aggregate_function
-            else s.expression
-            for s in self.all_series.values()
-        ]
-
-        series_stmt = join_expressions(all_series_expr).to_sql()
-        new_node = BachSqlModel(
-            model_spec=CustomSqlModelBuilder(
-                sql=f'select distinct {series_stmt} from {{{{base_node}}}}',
-                name='distinct_sql',
-            ),
-            placeholders=BachSqlModel.get_placeholders(self.variables, all_series_expr),
-            references=construct_references(
-                base_references={'base_node': self.base_node}, expressions=all_series_expr,
-            ),
-            materialization=Materialization.CTE,
-            materialization_name=None,
-            columns=tuple(self.all_series.keys()),
-        )
-
-        return self.copy_override(
-            base_node=new_node,
-            series={
-                s.name: s.copy_override(expression=Expression.column_reference(s.name))
-                for s in self._data.values()
-            },
-            index={
-                s.name: s.copy_override(expression=Expression.column_reference(s.name))
-                for s in self._index.values()
-            },
-        )
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

@@ -123,7 +123,7 @@ class Series(ABC):
         """
         self._engine = series._engine
         self._base_node = series._base_node
-        self._index = series.index.copy()
+        self._index = series._index.copy()
         self._name = series._name
         self._expression = series._expression
         self._group_by = series._group_by
