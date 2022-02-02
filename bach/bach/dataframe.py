@@ -2406,8 +2406,15 @@ class DataFrame:
             df = df[df.freq_sum == 1][dedup_on + dedup_data]
         elif dedup_data:
             from bach.partitioning import WindowFrameBoundary
-            window = df.groupby(by=dedup_on).window(end_boundary=WindowFrameBoundary.FOLLOWING)
-            func_to_apply = 'window_last_value' if keep == 'last' else 'window_first_value'
+            if keep == 'last':
+                func_to_apply = 'window_last_value'
+                # unbounded following is required only when last value is needed
+                end_boundary = WindowFrameBoundary.FOLLOWING
+            else:
+                func_to_apply = 'window_first_value'
+                end_boundary = WindowFrameBoundary.CURRENT_ROW
+
+            window = df.groupby(by=dedup_on).window(end_boundary=end_boundary, end_value=None)
             agg_series = df[dedup_data]._apply_func_to_series(func=func_to_apply, window=window)
 
             for name, new_series in zip(dedup_data, agg_series):
