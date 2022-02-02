@@ -153,6 +153,7 @@ Reshaping, indexing, sorting & merging
     DataFrame.sort_values
     DataFrame.rename
     DataFrame.drop
+    DataFrame.drop_duplicates
     DataFrame.reset_index
     DataFrame.set_index
     DataFrame.merge

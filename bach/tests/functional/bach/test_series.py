@@ -88,10 +88,11 @@ def test_series_value():
 def test_series_sort_values():
     bt = get_bt_with_test_data(full_data_set=True)
     bt_series = bt.city
-    kwargs_list = [{'ascending': True},
-                   {'ascending': False},
-                   {}
-                   ]
+    kwargs_list = [
+        {'ascending': True},
+        {'ascending': False},
+        {},
+    ]
     for kwargs in kwargs_list:
         assert_equals_data(
             bt_series.sort_values(**kwargs),

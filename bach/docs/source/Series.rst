@@ -167,6 +167,7 @@ Conversion, reshaping, sorting
     Series.sort_values
     Series.fillna
     Series.append
+    Series.drop_duplicates
 
 Function application, aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
