@@ -157,7 +157,7 @@ class CutOperation:
         otherwise the upper_bound is the one to be affected.
         """
         df = bucket_range_df.copy()
-        min_max_df = self._calculate_bucket_properties()
+        bucket_properties_df = self._calculate_bucket_properties()
 
         df['lower_bound'] = df[self.RANGE_SERIES_NAME].copy_override(
             expression=Expression.construct(f'lower({{}})', df['range'])
@@ -166,21 +166,24 @@ class CutOperation:
             expression=Expression.construct(f'upper({{}})', df['range'])
         )
 
-        df['lower_bound'] = (df['bucket'] - 1) * Series.as_independent_subquery(min_max_df['step'])
-        df['upper_bound'] = df['bucket'] * Series.as_independent_subquery(min_max_df['step'])
+        # current range bounds contain min and max values of the bucket
+        # we require the actual inclusive and exclusive bounds
+        step = Series.as_independent_subquery(bucket_properties_df['step'])
+        df['lower_bound'] = (df['bucket'] - 1) * step
+        df['upper_bound'] = df['bucket'] * step
 
         if self.right:
+            case_stmt = f'case when bucket = 1 then {{}} - {{}} else {{}} end'
             bound_to_adjust = 'lower_bound'
-            operator = '-'
         else:
+            case_stmt = f'case when bucket = {self.bins} then {{}} + {{}} else {{}} end'
             bound_to_adjust = 'upper_bound'
-            operator = '+'
 
         df[bound_to_adjust] = df[bound_to_adjust].copy_override(
             expression=Expression.construct(
-                f'case when bucket = 1 then {{}} {operator} {{}} else {{}} end',
+                case_stmt,
                 df[bound_to_adjust],
-                Series.as_independent_subquery(min_max_df['bin_adjustment']),
+                Series.as_independent_subquery(bucket_properties_df['bin_adjustment']),
                 df[bound_to_adjust],
             ),
         )
