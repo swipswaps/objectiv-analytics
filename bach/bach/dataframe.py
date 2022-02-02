@@ -1,7 +1,9 @@
 import warnings
 from copy import copy
-from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
-    TYPE_CHECKING, Callable, Hashable, Sequence
+from typing import (
+    List, Set, Union, Dict, Any, Optional, Tuple,
+    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
+)
 from uuid import UUID
 
 import numpy
@@ -572,7 +574,7 @@ class DataFrame:
         Create a copy of self, with the given arguments overridden
 
         There are three special parameters: index_dtypes, series_dtypes and single_value. These are used to
-        create new index and data series if index and/or series are not given. `single_value` determines
+        create new index and data series iff index and/or series are not given. `single_value` determines
         whether the Expressions for those newly created series should be SingleValueExpressions or not.
         All other arguments are passed through to `__init__`, filled with current instance values if None is
         given in the parameters.
@@ -691,7 +693,13 @@ class DataFrame:
         self._variables = df.variables
         return self
 
-    def materialize(self, node_name='manual_materialize', inplace=False, limit: Any = None) -> 'DataFrame':
+    def materialize(
+        self,
+        node_name='manual_materialize',
+        inplace=False,
+        limit: Any = None,
+        distinct: bool = False,
+    ) -> 'DataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -706,6 +714,7 @@ class DataFrame:
         :param node_name: The name of the node that's going to be created
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param limit: The limit (slice, int) to apply.
+        :param distinct: Apply distinct statement if ``distinct=True``
         :returns: DataFrame with the current DataFrame's state as base_node
 
         .. note::
@@ -714,7 +723,7 @@ class DataFrame:
         """
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
-        node = self.get_current_node(name=node_name, limit=limit)
+        node = self.get_current_node(name=node_name, limit=limit, distinct=distinct)
 
         df = self.get_instance(
             engine=self.engine,
@@ -1647,15 +1656,20 @@ class DataFrame:
         else:
             return Expression.construct('')
 
-    def get_current_node(self, name: str,
-                         limit: Union[int, slice] = None,
-                         where_clause: Expression = None,
-                         having_clause: Expression = None) -> BachSqlModel:
+    def get_current_node(
+        self,
+        name: str,
+        limit: Union[int, slice] = None,
+        distinct: bool = False,
+        where_clause: Expression = None,
+        having_clause: Expression = None,
+    ) -> BachSqlModel:
         """
         INTERNAL: Translate the current state of this DataFrame into a SqlModel.
 
         :param name: The name of the new node
         :param limit: The limit to use
+        :param distinct: if distinct statement needs to be applied
         :param where_clause: The where-clause to apply, if any
         :param having_clause: The having-clause to apply in case group_by is set, if any
         :returns: SQL query as a SqlModel that represents the current state of this DataFrame.
@@ -1718,6 +1732,7 @@ class DataFrame:
             name=name,
             column_names=column_names,
             column_exprs=column_exprs,
+            distinct=distinct,
             where_clause=where_clause,
             group_by_clause=group_by_clause,
             having_clause=having_clause,
@@ -2344,6 +2359,85 @@ class DataFrame:
             sort=sort,
         )()
         return concatenated_df
+
+    def drop_duplicates(
+        self,
+        subset: Optional[Union[str, Sequence[str]]] = None,
+        keep: Union[str, bool] = 'first',
+        inplace: bool = False,
+        ignore_index: bool = False,
+    ) -> Optional['DataFrame']:
+        """
+        Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
+        :param subset: series label or sequence of labels.
+        Duplications to be dropped are based on the combination of the subset of series.
+        If not provided, all series labels will be used by default.
+        :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
+         - `first`: drop all occurrences except the first one
+         - `last`:  drop all occurrences except the last one
+         - False: drops all duplicates
+         If no value is provided, first occurrences will be kept by default.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+        :param ignore_index: if true, drops indexes of the result
+
+        :return: a new dataframe with dropped duplicates if inplace = False, otherwise None.
+        """
+        if keep not in ('first', 'last', False):
+            raise ValueError('keep must be either "first", "last" or False.')
+
+        subset = [subset] if isinstance(subset, str) else subset
+        if subset and any(s not in self.data_columns for s in subset):
+            raise ValueError(
+                f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
+            )
+
+        df = self.copy()
+        if ignore_index:
+            df.reset_index(drop=True, inplace=True)
+
+        dedup_on = list(subset or self.data_columns)
+        dedup_data = [name for name in df.all_series if name not in dedup_on]
+
+        # dedup_data contains index series if ignore_index = False
+        # in this case we should append those as data_columns
+        if dedup_data and not ignore_index:
+            df.reset_index(drop=False, inplace=True)
+
+        # drop all duplicates
+        if keep is False:
+            freq_df = df[dedup_on]
+            freq_df['freq'] = 1
+            freq_df = freq_df.groupby(by=dedup_on).sum()
+            freq_df.reset_index(drop=False, inplace=True)
+
+            df = df.merge(freq_df, on=dedup_on)
+            df = df[df.freq_sum == 1][dedup_on + dedup_data]
+        elif dedup_data:
+            from bach.partitioning import WindowFrameBoundary
+            if keep == 'last':
+                func_to_apply = 'window_last_value'
+                # unbounded following is required only when last value is needed
+                end_boundary = WindowFrameBoundary.FOLLOWING
+            else:
+                func_to_apply = 'window_first_value'
+                end_boundary = WindowFrameBoundary.CURRENT_ROW
+
+            window = df.groupby(by=dedup_on).window(end_boundary=end_boundary, end_value=None)
+            agg_series = df[dedup_data]._apply_func_to_series(func=func_to_apply, window=window)
+
+            for name, new_series in zip(dedup_data, agg_series):
+                df._data[name] = new_series.copy_override(name=name)
+
+        # we need to just apply distinct for 'first' and 'last'.
+        if keep:
+            df.materialize(distinct=True, inplace=True)
+
+        df = df if ignore_index else df.set_index(keys=self.index_columns)
+        if not inplace:
+            return df
+
+        self._update_self_from_df(df)
+        return None
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

@@ -177,19 +177,23 @@ class SampleSqlModel(BachSqlModel):
 
 class CurrentNodeSqlModel(BachSqlModel):
     @staticmethod
-    def get_instance(*,
-                     name: str,
-                     column_names: Tuple[str, ...],
-                     column_exprs: List[Expression],
-                     where_clause: Optional[Expression],
-                     group_by_clause: Optional[Expression],
-                     having_clause: Optional[Expression],
-                     order_by_clause: Optional[Expression],
-                     limit_clause: Expression,
-                     previous_node: BachSqlModel,
-                     variables: Dict['DtypeNamePair', Hashable]) -> 'CurrentNodeSqlModel':
+    def get_instance(
+        *,
+        name: str,
+        column_names: Tuple[str, ...],
+        column_exprs: List[Expression],
+        distinct: bool,
+        where_clause: Optional[Expression],
+        group_by_clause: Optional[Expression],
+        having_clause: Optional[Expression],
+        order_by_clause: Optional[Expression],
+        limit_clause: Expression,
+        previous_node: BachSqlModel,
+        variables: Dict['DtypeNamePair', Hashable],
+    ) -> 'CurrentNodeSqlModel':
 
         columns_str = ', '.join(expr.to_sql() for expr in column_exprs)
+        distinct_stmt = ' distinct ' if distinct else ''
         where_str = where_clause.to_sql() if where_clause else ''
         group_by_str = group_by_clause.to_sql() if group_by_clause else ''
         having_str = having_clause.to_sql() if having_clause else ''
@@ -197,7 +201,7 @@ class CurrentNodeSqlModel(BachSqlModel):
         limit_str = limit_clause.to_sql() if limit_clause else ''
 
         sql = (
-            f"select {columns_str} \n"
+            f"select {distinct_stmt}{columns_str} \n"
             f"from {{{{prev}}}} \n"
             f"{where_str} \n"
             f"{group_by_str} \n"
@@ -211,13 +215,9 @@ class CurrentNodeSqlModel(BachSqlModel):
         all_expressions = column_exprs + [expr for expr in nullable_expressions if expr is not None]
         references = construct_references({'prev': previous_node}, all_expressions)
 
-        # Set all relevant variables as placeholders
-        filtered_variables = filter_variables(variables, all_expressions)
-        placeholders = get_variable_values_sql(filtered_variables)
-
         return CurrentNodeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=placeholders,
+            placeholders=BachSqlModel._get_placeholders(variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
