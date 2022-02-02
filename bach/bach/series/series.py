@@ -17,10 +17,9 @@ from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_
 from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
-from sql_models.model import SqlModel
 from bach.sql_model import BachSqlModel
 from bach.types import value_to_dtype
-from bach.constants import NotSet, not_set
+from sql_models.constants import NotSet, not_set
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
@@ -376,11 +375,8 @@ class Series(ABC):
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
 
-        Special cases:
-        1. Big fat warning: both group_by and sorted_ascending can legally be None, but if you want to set
-        that, set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
-
-        2. If index is not None, then index_sorting is automatically set to `[]` unless overridden
+        Special case:
+        * If index is not None, then index_sorting is automatically set to `[]` unless overridden
         """
         if index and index_sorting is None:
             index_sorting = []

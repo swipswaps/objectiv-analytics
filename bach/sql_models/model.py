@@ -20,7 +20,7 @@ from enum import Enum
 from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union, Hashable, NamedTuple, Optional, \
     Mapping, MutableMapping, cast
 
-from bach.constants import not_set, NotSet
+from sql_models.constants import not_set, NotSet
 from sql_models.util import extract_format_fields
 
 

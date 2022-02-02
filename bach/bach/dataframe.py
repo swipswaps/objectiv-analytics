@@ -12,7 +12,7 @@ from sqlalchemy.future import Connection
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
-from bach.constants import NotSet, not_set
+from sql_models.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
@@ -571,11 +571,8 @@ class DataFrame:
 
         Create a copy of self, with the given arguments overridden
 
-        Big fat warning: group_by can legally be None, but if you want to set that,
-        set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
-
         There are three special parameters: index_dtypes, series_dtypes and single_value. These are used to
-        create new index and data series iff index and/or series are not given. `single_value` determines
+        create new index and data series if index and/or series are not given. `single_value` determines
         whether the Expressions for those newly created series should be SingleValueExpressions or not.
         All other arguments are passed through to `__init__`, filled with current instance values if None is
         given in the parameters.
@@ -1288,8 +1285,6 @@ class DataFrame:
         Given a group_by, and a df create a new DataFrame that has all the right stuff set.
         It will not materialize, just prepared for more operations
         """
-        # update the series to also contain our group_by and group_by index
-        # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
         new_series = {s.name: s.copy_override(group_by=group_by, index=group_by.index, index_sorting=[])
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
         return df.copy_override(
