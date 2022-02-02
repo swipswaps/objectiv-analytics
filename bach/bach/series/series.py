@@ -1251,7 +1251,7 @@ class Series(ABC):
 
         :return:  a new series with all rows from appended other or self if other is empty.
         """
-        from bach.concat import SeriesConcatOperation
+        from bach.operations.concat import SeriesConcatOperation
         if not other:
             return self
 

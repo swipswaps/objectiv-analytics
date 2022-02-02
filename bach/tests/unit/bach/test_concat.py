@@ -1,6 +1,6 @@
 import pytest
 
-from bach.concat import DataFrameConcatOperation, SeriesConcatOperation
+from bach.operations.concat import DataFrameConcatOperation, SeriesConcatOperation
 from bach.expression import Expression
 from tests.unit.bach.util import get_fake_df
 

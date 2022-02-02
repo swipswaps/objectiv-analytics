@@ -1,6 +1,5 @@
 import warnings
 from copy import copy
-from functools import reduce
 from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
     TYPE_CHECKING, Callable, Hashable, Sequence
 from uuid import UUID
@@ -2088,7 +2087,7 @@ class DataFrame:
             )
             all_quantile_dfs.append(quantile_df)
 
-        from bach.concat import DataFrameConcatOperation
+        from bach.operations.concat import DataFrameConcatOperation
         result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
         # q column should be in the index when calculating multiple quantiles
         return result.set_index('q')
@@ -2326,7 +2325,7 @@ class DataFrame:
 
         :return: a new dataframe with all rows from appended Dataframes.
         """
-        from bach.concat import DataFrameConcatOperation
+        from bach.operations.concat import DataFrameConcatOperation
         if isinstance(other, list) and not other:
             raise ValueError('no dataframe or series to append.')
 

@@ -162,7 +162,7 @@ class SeriesAbstractNumeric(Series, ABC):
             quantile_df.set_index('q', inplace=True)
             quantile_results.append(quantile_df.all_series[self.name])
 
-        from bach.concat import SeriesConcatOperation
+        from bach.operations.concat import SeriesConcatOperation
         final_agg_result = SeriesConcatOperation(
             objects=quantile_results,
             ignore_index=False,  # should keep q index since multiple quantiles were calculated
