@@ -69,7 +69,7 @@ class DescribeOperation:
         datetime_is_numeric: bool = False,
         percentiles: Optional[Sequence[float]] = None,
     ) -> None:
-        self.df = obj.copy_override() if isinstance(obj, DataFrame) else obj.to_frame()
+        self.df = obj.copy() if isinstance(obj, DataFrame) else obj.to_frame()
         if not self.df.data:
             raise ValueError('Cannot describe a Dataframe without columns')
 
