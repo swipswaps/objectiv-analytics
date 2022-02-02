@@ -2408,7 +2408,7 @@ class DataFrame:
             from bach.partitioning import WindowFrameBoundary
             window = df.groupby(by=dedup_on).window(end_boundary=WindowFrameBoundary.FOLLOWING)
             func_to_apply = 'window_last_value' if keep == 'last' else 'window_first_value'
-            agg_series = df[dedup_data]._apply_func_to_series(func=func_to_apply, window=window,)
+            agg_series = df[dedup_data]._apply_func_to_series(func=func_to_apply, window=window)
 
             for name, new_series in zip(dedup_data, agg_series):
                 df._data[name] = new_series.copy_override(name=name)
