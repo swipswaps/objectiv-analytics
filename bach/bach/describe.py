@@ -1,9 +1,10 @@
+import itertools
 from collections import defaultdict
 from enum import Enum
-from typing import Optional, Union, Sequence, List, Type, Dict, Callable, Tuple
+from typing import Optional, Union, Sequence, List, Type, Tuple
 
 from bach import (
-    DataFrame, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries, SeriesBoolean,
+    DataFrame, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries,
     get_series_type_from_dtype, SeriesAbstractDateTime,
 )
 from bach.concat import DataFrameConcatOperation
@@ -16,54 +17,17 @@ class SupportedStats(Enum):
     STD = 'std'
     MIN = 'min'
     MAX = 'max'
-    FIRST = 'first'
-    LAST = 'last'
-    UNIQUE = 'unique'
-    TOP = 'top'
-    FREQ = 'freq'
+    NUNIQUE = 'nunique'
+    MODE = 'mode'
 
 
-_SERIES_TYPE_X_SUPPORTED_STAT: Dict[Type, Tuple[SupportedStats, ...]] = {
-    SeriesAbstractNumeric: (
-        SupportedStats.COUNT,
-        SupportedStats.MEAN,
-        SupportedStats.STD,
-        SupportedStats.MIN,
-        SupportedStats.MAX,
-    ),
-    SeriesString: (
-        SupportedStats.COUNT,
-        SupportedStats.UNIQUE,
-        SupportedStats.FREQ,
-    ),
-    SeriesBoolean: (
-        SupportedStats.COUNT,
-        SupportedStats.UNIQUE,
-        SupportedStats.FREQ,
-    ),
-    SeriesAbstractDateTime: (
-        SupportedStats.COUNT,
-        SupportedStats.UNIQUE,
-        SupportedStats.FIRST,
-        SupportedStats.LAST,
-    )
-}
-
-_SUPPORTED_STATS_X_AGG: Dict[SupportedStats, Callable[[DataFrame], DataFrame]] = {
-    SupportedStats.COUNT: DataFrame.count,
-    SupportedStats.MEAN: DataFrame.mean,
-    SupportedStats.STD: DataFrame.std,
-    SupportedStats.MIN: DataFrame.min,
-    SupportedStats.MAX: DataFrame.max,
-    SupportedStats.FIRST: DataFrame.min,
-    SupportedStats.LAST: DataFrame.max,
-    SupportedStats.UNIQUE: DataFrame.nunique,
-    SupportedStats.FREQ: DataFrame.mode,
-}
+_SUPPORTED_SERIES_TYPES: Tuple[Type, ...] = (
+    SeriesAbstractNumeric, SeriesString, SeriesAbstractDateTime,
+)
 
 
 def _get_casted_filtering_dtypes(
-        filtering_dtypes: Optional[Union[str, Sequence[str]]],
+    filtering_dtypes: Optional[Union[str, Sequence[str]]],
 ) -> Tuple[Type, ...]:
     """    returns a tuple containing the series type of each dtype
     """
@@ -71,7 +35,7 @@ def _get_casted_filtering_dtypes(
         return tuple()
 
     if filtering_dtypes == 'all':
-        return tuple(_SERIES_TYPE_X_SUPPORTED_STAT.keys())
+        return _SUPPORTED_SERIES_TYPES
 
     filtering_dtypes = filtering_dtypes if not isinstance(filtering_dtypes, str) else [filtering_dtypes]
     return tuple(get_series_type_from_dtype(dtype) for dtype in filtering_dtypes)
@@ -95,7 +59,6 @@ class DescribeOperation:
     percentiles: Sequence[float]
 
     STAT_SERIES_NAME = 'stat'
-    DEFAULT_EXCLUDED_TYPES = (SeriesString, SeriesBoolean)
     RESULT_DECIMALS = 2
 
     def __init__(
@@ -126,15 +89,11 @@ class DescribeOperation:
 
         Values are sorted based on the position of the stat in _SERIES_CLS_X_SUPPORTED_STAT
         """
-        series_per_stat = self._get_stat_mapping()
-        all_stats_df = [
-            self._calculate_stat(
-                series_to_aggregate=series_per_stat[stat],
-                stat=stat,
-                stat_position=pos,
-            )
-            for pos, stat in enumerate(series_per_stat)
-        ]
+        all_stats_df = []
+        for pos, stat in enumerate(SupportedStats):
+            stat_df = self._calculate_stat(stat=stat, stat_position=pos)
+            if stat_df:
+                all_stats_df.append(stat_df)
 
         percentiles_df = self._calculate_percentiles()
         if percentiles_df:
@@ -153,22 +112,28 @@ class DescribeOperation:
 
     def _calculate_stat(
         self,
-        series_to_aggregate: List[str],
         stat: SupportedStats,
         stat_position: int,
-    ) -> DataFrame:
+    ) -> Optional[DataFrame]:
         """
         Returns an aggregated dataframe based on the stat to be calculated.
         :param series_to_aggregate: List of series names that stat supports
         :param stat: aggregation to be calculated
         :param stat_position: position of the stat in the final result
         """
+        # filter series that can perform the aggregation
+        series_to_aggregate = [
+            s for s in self._get_series_to_aggregate() if hasattr(self.df.all_series[s], stat.value)
+        ]
+        if not series_to_aggregate:
+            return None
+
         stat_df = self.df[series_to_aggregate]
         assert isinstance(stat_df, DataFrame)
         stat_df.reset_index(drop=True, inplace=True)
 
         original_series_names = stat_df.data_columns
-        stat_df = _SUPPORTED_STATS_X_AGG[SupportedStats(stat)](stat_df).materialize()
+        stat_df = stat_df.agg(func=stat.value).materialize()
 
         # original column names should remain
         stat_df.rename(
@@ -183,11 +148,13 @@ class DescribeOperation:
         """
         Returns dataframe containing percentiles per each numerical series.
         """
-        series_per_type = self._get_series_per_type()
-        if not series_per_type[SeriesAbstractNumeric]:
+        series_to_aggregate = self._get_series_to_aggregate()
+        numerical_series_names = [
+            s for s in series_to_aggregate if isinstance(self.df.all_series[s], SeriesAbstractNumeric)
+        ]
+        if not numerical_series_names:
             return None
 
-        numerical_series_names = series_per_type[SeriesAbstractNumeric]
         percentile_df: DataFrame = self.df[numerical_series_names]  # type: ignore
         percentile_df.reset_index(drop=True, inplace=True)
 
@@ -203,7 +170,7 @@ class DescribeOperation:
         # original column names should remain
         columns_rename['q'] = self.STAT_SERIES_NAME
         percentile_df.rename(columns=columns_rename, inplace=True)
-        current_position = len(self._get_stat_mapping())
+        current_position = len(SupportedStats)
 
         # SeriesFloat64 + int is not supported, need an expression
         percentile_df[f'{self.STAT_SERIES_NAME}_position'] = (
@@ -215,23 +182,7 @@ class DescribeOperation:
         )
         return percentile_df
 
-    def _get_stat_mapping(self) -> Dict[SupportedStats, List[str]]:
-        """
-        returns a mapping between stats and series names, this is based on _SERIES_CLS_X_SUPPORTED_STAT
-        """
-        series_to_describe = self._get_series_per_type()
-        series_per_stat = defaultdict(list)
-
-        for type_cls, supported_stats in _SERIES_TYPE_X_SUPPORTED_STAT.items():
-            if not series_to_describe.get(type_cls):
-                continue
-
-            for stat in supported_stats:
-                series_per_stat[stat].extend(series_to_describe[type_cls])
-
-        return series_per_stat
-
-    def _get_series_per_type(self) -> Dict[Type, List[str]]:
+    def _get_series_to_aggregate(self) -> List[str]:
         """
         returns a mapping between series types and series names in the dataframe to be described
         if describe has no include and exclude, numeric columns are considered only by default
@@ -240,7 +191,7 @@ class DescribeOperation:
         for series in self.df.data.values():
             series_type = type(series)
             parent_dtype = [
-                s_type for s_type in _SERIES_TYPE_X_SUPPORTED_STAT if issubclass(series_type, s_type)
+                s_type for s_type in _SUPPORTED_SERIES_TYPES if issubclass(series_type, s_type)
             ]
             if not parent_dtype:
                 continue
@@ -257,8 +208,6 @@ class DescribeOperation:
             raise ValueError('DataFrame or Series has no supported dtype to describe.')
 
         if not self.include and not self.exclude and dtypes_x_series[SeriesAbstractNumeric]:
-            return {
-                SeriesAbstractNumeric: dtypes_x_series[SeriesAbstractNumeric],
-            }
+            return dtypes_x_series[SeriesAbstractNumeric]
 
-        return dtypes_x_series
+        return list(itertools.chain.from_iterable(dtypes_x_series.values()))

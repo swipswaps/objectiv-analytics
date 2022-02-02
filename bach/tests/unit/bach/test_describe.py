@@ -34,7 +34,7 @@ def test_get_series_per_type_unsupported_type() -> None:
             exclude=(),
             datetime_is_numeric=False,
             percentiles=None,
-        )._get_series_per_type()
+        )._get_series_to_aggregate()
 
 
 def test_get_casted_filtering_dtypes() -> None:

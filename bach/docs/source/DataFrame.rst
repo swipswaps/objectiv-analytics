@@ -182,6 +182,7 @@ All types
 .. autosummary::
     :toctree: DataFrame
 
+    DataFrame.describe
     DataFrame.count
     DataFrame.min
     DataFrame.max

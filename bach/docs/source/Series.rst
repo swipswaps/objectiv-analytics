@@ -186,6 +186,7 @@ All types
 .. autosummary::
     :toctree: Series
 
+    Series.describe
     Series.count
     Series.min
     Series.max

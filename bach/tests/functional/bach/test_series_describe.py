@@ -17,9 +17,11 @@ def test_categorical_describe() -> None:
             'city',
         ],
         expected_data=[
-            [SupportedStats.COUNT.value, '3'],
-            [SupportedStats.UNIQUE.value, '3'],
-            [SupportedStats.FREQ.value, 'Drylts'],
+            ['count', '3'],
+            ['min', 'Drylts'],
+            ['max', 'Snits'],
+            ['nunique', '3'],
+            ['mode', 'Drylts'],
         ],
     )
 
@@ -30,8 +32,8 @@ def test_numerical_describe() -> None:
     assert isinstance(result, Series)
 
     expected = pd.Series(
-        index=pd.Index(['count', 'mean', 'std', 'min', 'max', '0.5'], name='stat'),
-        data=[3., 2., 1., 1., 3., 2.],
+        index=pd.Index(['count', 'mean', 'std', 'min', 'max', 'nunique', 'mode', '0.5'], name='stat'),
+        data=[3., 2., 1., 1., 3., 3., 1., 2.],
         name='skating_order',
     )
     pd.testing.assert_series_equal(expected, result.to_pandas())
@@ -47,25 +49,9 @@ def test_describe_datetime() -> None:
     result = df.dt.describe()
 
     expected = pd.Series(
-        index=pd.Index(['count', 'unique', 'first', 'last'], name='stat'),
-        data=['3', '2', '2000-01-01 00:00:00', '2010-01-01 00:00:00'],
+        index=pd.Index(['count', 'min', 'max', 'nunique', 'mode'], name='stat'),
+        data=['3', '2000-01-01 00:00:00', '2010-01-01 00:00:00', '2', '2010-01-01 00:00:00'],
         name='dt',
     )
     pd.testing.assert_series_equal(expected, result.to_pandas())
 
-
-def test_describe_boolean() -> None:
-    p_series = pd.Series(
-        data=[True, True, True, False],
-        name='bool_column',
-    )
-    df = get_from_df(table='describe_table', df=p_series.to_frame())
-
-    result = df.bool_column.describe()
-    expected = pd.Series(
-        index=pd.Index(['count', 'unique', 'freq'], name='stat'),
-        data=['4', '2', 'true'],
-        name='bool_column',
-    )
-
-    pd.testing.assert_series_equal(expected, result.to_pandas())

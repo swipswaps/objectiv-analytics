@@ -18,9 +18,11 @@ def test_df_categorical_describe() -> None:
             'municipality',
         ],
         expected_data=[
-            [SupportedStats.COUNT.value, '3', '3'],
-            [SupportedStats.UNIQUE.value, '3', '2'],
-            [SupportedStats.FREQ.value, 'Drylts', 'Súdwest-Fryslân'],
+            ['count', '3', '3'],
+            ['min', 'Drylts', 'Leeuwarden'],
+            ['max', 'Snits', 'Súdwest-Fryslân'],
+            ['nunique', '3', '2'],
+            ['mode', 'Drylts', 'Súdwest-Fryslân'],
         ],
     )
 
@@ -33,11 +35,13 @@ def test_df_numerical_describe() -> None:
     result = result.reset_index(drop=False)
     expected_df = pd.DataFrame(
         data=[
-            ['count', 3.0, 3.0],
-            ['mean', 2.0, 43353.333],
-            ['std', 1.0, 46009.9666],
-            ['min', 1.0, 3055.0],
-            ['max', 3.0, 93485.0],
+            ['count', 3., 3.],
+            ['mean', 2., 43353.333],
+            ['std', 1., 46009.9666],
+            ['min', 1., 3055.],
+            ['max', 3., 93485.],
+            ['nunique', 3., 3.],
+            ['mode', 1., 3055.],
             ['0.5', 2., 33520.],
         ],
         columns=[
@@ -73,10 +77,10 @@ def test_include_categorical_n_numerical() -> None:
             ['count', 3., '3', '3', 3., 3.],
             ['mean', 2., None, None, 43353.33, 1336.33],
             ['std', 1., None, None, 46009.97, 103.98],
-            ['min', 1., None, None, 3055., 1268.],
-            ['max', 3., None, None, 93485., 1456.],
-            ['unique', None, '3', '2', None, None],
-            ['freq', None, 'Drylts', 'Súdwest-Fryslân', None, None],
+            ['min', 1., 'Drylts', 'Leeuwarden', 3055., 1268.],
+            ['max', 3., 'Snits', 'Súdwest-Fryslân', 93485., 1456.],
+            ['nunique', 3., '3', '2', 3., 3.],
+            ['mode', 1., 'Drylts', 'Súdwest-Fryslân', 3055., 1268.],
             ['0.25', 1.5, None, None, 18287.5, 1276.5],
             ['0.5', 2., None, None, 33520.,  1285.],
             ['0.75', 2.5, None, None, 63502.5, 1370.5],
@@ -104,31 +108,11 @@ def test_describe_datetime() -> None:
     expected_df = pd.DataFrame(
         data=[
             ['count', '3'],
-            ['unique', '2'],
-            ['first', '2000-01-01 00:00:00'],
-            ['last', '2010-01-01 00:00:00'],
+            ['min', '2000-01-01 00:00:00'],
+            ['max', '2010-01-01 00:00:00'],
+            ['nunique', '2'],
+            ['mode', '2010-01-01 00:00:00'],
         ],
         columns=['stat', 'dt_column'],
-    )
-    pd.testing.assert_frame_equal(expected_df, result.to_pandas())
-
-
-def test_describe_boolean() -> None:
-    pdf = pd.DataFrame(
-        data=[[True], [True], [True], [False]],
-        columns=['bool_column'],
-    )
-    df = get_from_df(table='describe_table', df=pdf)
-
-    result = df.describe()
-    result = result.reset_index(drop=False)
-
-    expected_df = pd.DataFrame(
-        data=[
-            ['count', '4'],
-            ['unique', '2'],
-            ['freq', 'true'],
-        ],
-        columns=['stat', 'bool_column'],
     )
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
