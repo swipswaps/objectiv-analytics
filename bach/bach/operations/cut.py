@@ -1,7 +1,7 @@
 from typing import cast
 
 from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame
-from bach.expression import Expression, AggregateFunctionExpression
+from bach.expression import Expression
 
 
 class CutOperation:
@@ -9,7 +9,7 @@ class CutOperation:
     bins: int
     right: bool
 
-    RANGE_ADJUSTMENT = 0.001
+    RANGE_ADJUSTMENT = 0.001  # Pandas.cut currently uses 1%
     RANGE_SERIES_NAME = 'range'
 
     def __init__(self, series: SeriesAbstractNumeric, bins: int, right: bool = True) -> None:
