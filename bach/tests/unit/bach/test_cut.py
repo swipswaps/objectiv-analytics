@@ -1,5 +1,7 @@
 import numpy as np
 import pandas as pd
+from psycopg2._range import NumericRange
+from decimal import Decimal
 
 from bach import Series
 from bach.operations.cut import CutOperation
@@ -29,6 +31,26 @@ def test_cut_operation() -> None:
     expected_wo_right = pd.cut(p_series, bins=10, right=False)
     result_wo_right = CutOperation(series, bins=10, right=False)()
     compare_boundaries(expected_wo_right, result_wo_right)
+
+
+def test_cut_w_include_empty_bins() -> None:
+    bins = 3
+    p_series = pd.Series(data=[1, 1, 2, 3, 6, 7, 8], name='a')
+    series = get_from_df('cut_df', p_series.to_frame()).a
+
+    result = CutOperation(
+        series=series, bins=bins, include_empty_bins=True,
+    )()
+    result = result.drop_duplicates().sort_values()
+    expected = pd.Series(
+        data=[
+            pd.Interval(0.993, 3.333),
+            pd.Interval(3.333, 5.667),
+            pd.Interval(5.667, 8),
+        ],
+        index=[1., np.nan, 7.],
+    )
+    compare_boundaries(expected, result)
 
 
 def test_cut_operation_calculate_bucket_properties() -> None:

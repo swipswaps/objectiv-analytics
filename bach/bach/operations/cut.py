@@ -8,14 +8,22 @@ class CutOperation:
     series: SeriesAbstractNumeric
     bins: int
     right: bool
+    include_empty_bins: bool
 
     RANGE_ADJUSTMENT = 0.001  # Pandas.cut currently uses 1%
     RANGE_SERIES_NAME = 'range'
 
-    def __init__(self, series: SeriesAbstractNumeric, bins: int, right: bool = True) -> None:
+    def __init__(
+        self,
+        series: SeriesAbstractNumeric,
+        bins: int,
+        right: bool = True,
+        include_empty_bins: bool = False,
+    ) -> None:
         self.series = series
         self.bins = bins
         self.right = right
+        self.include_empty_bins = include_empty_bins
 
     def __call__(self) -> SeriesFloat64:
         range_df = self._calculate_bucket_ranges()
@@ -24,7 +32,11 @@ class CutOperation:
         df.reset_index(drop=True, inplace=True)
         df['bucket'] = self._calculate_buckets()
 
-        df = df.merge(range_df, on='bucket')
+        df = df.merge(
+            range_df,
+            on='bucket',
+            how='inner' if not self.include_empty_bins else 'right',
+        )
         df.set_index(keys=self.series.name, inplace=True)
         return cast(SeriesFloat64, df.all_series[self.RANGE_SERIES_NAME])
 
@@ -129,12 +141,22 @@ class CutOperation:
         """
         Calculates upper and lower bound for each bucket.
         """
-        buckets = self._calculate_buckets()
         bucket_properties_df = self._calculate_bucket_properties()
 
         min_series = Series.as_independent_subquery(bucket_properties_df[f'{self.series.name}_min'])
         step_series = Series.as_independent_subquery(bucket_properties_df[f'step'])
 
+        # self.series might not have data for all buckets, we need to actually generate the series
+        buckets = SeriesFloat64(
+            engine=self.series.engine,
+            base_node=self.series.base_node,
+            expression=Expression.construct(f'generate_series(1, {self.bins})'),
+            name='bucket',
+            index={},
+            group_by=None,
+            sorted_ascending=None,
+            index_sorting=[],
+        )
         range_df = buckets.to_frame()
         range_df.reset_index(drop=True, inplace=True)
         range_df.drop_duplicates(ignore_index=True, inplace=True)
