@@ -164,6 +164,7 @@ class CutOperation:
 
         range_df[self.RANGE_SERIES_NAME] = range_df.bucket.copy_override(
             expression=Expression.construct(
+                # casting is needed since numrange does not support float64
                 f'numrange(cast({{}} as numeric), cast({{}} as numeric), {self.bounds})',
                 range_df.all_series['lower_bound'],
                 range_df.all_series['upper_bound'],
