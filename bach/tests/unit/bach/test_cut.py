@@ -5,6 +5,12 @@ from bach import Series
 from bach.operations.cut import CutOperation
 from tests.functional.bach.test_data_and_utils import get_from_df
 
+PD_TESTING_SETTINGS = {
+    'check_dtype': False,
+    'check_exact': False,
+    'atol': 1e-3,
+}
+
 
 def compare_boundaries(expected: pd.Series, result: Series) -> None:
     for exp, res in zip(expected.to_numpy(), result.to_numpy()):
@@ -26,6 +32,7 @@ def test_cut_operation() -> None:
 
 
 def test_cut_operation_calculate_bucket_properties() -> None:
+
     bins = 2
     # min != max
     p_series_neq = pd.Series(data=[1, 3, 5, 16, 2, 20], name='a')
@@ -57,7 +64,7 @@ def test_cut_operation_calculate_bucket_properties() -> None:
             'step': [0.002],
         },
     )
-    pd.testing.assert_frame_equal(expected_eq, result_eq.to_pandas(), check_dtype=False, check_less_precise=True)
+    pd.testing.assert_frame_equal(expected_eq, result_eq.to_pandas(), **PD_TESTING_SETTINGS)
 
     # min == max == 0
     p_series_zero = pd.Series(data=[0, 0], name='a')
@@ -73,7 +80,7 @@ def test_cut_operation_calculate_bucket_properties() -> None:
             'step': [0.001],
         },
     )
-    pd.testing.assert_frame_equal(expected_zero, result_zero.to_pandas(), check_dtype=False, check_less_precise=True)
+    pd.testing.assert_frame_equal(expected_zero, result_zero.to_pandas(), **PD_TESTING_SETTINGS)
 
 
 def test_cut_calculate_buckets() -> None:
@@ -130,6 +137,5 @@ def test_cut_calculate_bucket_ranges() -> None:
     pd.testing.assert_frame_equal(
         expect[columns_to_compare],
         result[columns_to_compare].to_pandas(),
-        check_less_precise=True,
-        check_exact=False,
+        **PD_TESTING_SETTINGS,
     )
