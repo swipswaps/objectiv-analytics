@@ -57,7 +57,7 @@ class CutOperation:
         df = self.series.to_frame()
         df.reset_index(drop=True, inplace=True)
 
-        properties_df = df.agg(['min', 'max']).materialize()
+        properties_df = df.agg(['min', 'max'])
         min_name = f'{self.series.name}_min'
         max_name = f'{self.series.name}_max'
 
@@ -67,7 +67,6 @@ class CutOperation:
         properties_df['max_adjustment'] = self._calculate_adjustments(
             to_adjust=properties_df.all_series[max_name], compare_with=properties_df.all_series[min_name],
         )
-        properties_df = properties_df.materialize()
 
         properties_df[min_name] = (
             properties_df.all_series[min_name] - properties_df.all_series['min_adjustment']
