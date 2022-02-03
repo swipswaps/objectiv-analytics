@@ -425,7 +425,6 @@ class Series(ABC):
 
         return df.copy_override(series=series_dict).materialize()
 
-
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
         expression = self.expression.resolve_column_references(table_alias)
