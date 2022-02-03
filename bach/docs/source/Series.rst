@@ -142,7 +142,6 @@ Sql Model
 .. autosummary::
     :toctree: Series
 
-    Series.engine
     Series.base_node
     Series.view_sql
 
