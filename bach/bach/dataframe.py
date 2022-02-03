@@ -2442,7 +2442,7 @@ class DataFrame:
 
     def value_counts(
         self,
-        subset: Optional[Sequence[str]] = None,
+        subset: Optional[List[str]] = None,
         normalize: bool = False,
         sort: bool = True,
         ascending: bool = False,
@@ -2467,14 +2467,14 @@ class DataFrame:
 
         if df.group_by:
             df.materialize(inplace=True)
-            df.reset_index(drop=False, inplace=True)
 
+        df.reset_index(drop=False, inplace=True)
         df = df[subset]
         assert isinstance(df, DataFrame)
 
         df['value_counts'] = 1
 
-        df = df.groupby(subset).sum()
+        df = df.groupby(by=list(subset)).sum()
         df.materialize(inplace=True)
 
         from bach.series.series_numeric import SeriesInt64, SeriesAbstractNumeric

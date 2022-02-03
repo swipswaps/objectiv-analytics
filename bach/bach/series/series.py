@@ -1334,6 +1334,7 @@ class Series(ABC):
             return self.to_frame().value_counts(normalize=normalize, sort=sort, ascending=ascending)
 
         from bach.operations.cut import CutOperation
+        assert isinstance(self, SeriesAbstractNumeric)
         bins_series = CutOperation(series=self, bins=bins, include_empty_bins=True)()
 
         bins_df = bins_series.to_frame()
@@ -1344,10 +1345,11 @@ class Series(ABC):
             normalize=normalize, sort=sort, ascending=ascending,
         )
 
+        assert isinstance(empty_bins_df, DataFrame)
         empty_bins_df['value_counts_sum'] = 0
-        empty_bins_df = empty_bins_df.set_index(CutOperation.RANGE_SERIES_NAME)
+        empty_bins_df.set_index(CutOperation.RANGE_SERIES_NAME, inplace=True)
 
-        result = value_counts_result.append(empty_bins_df['value_counts_sum'])
+        result = value_counts_result.append(empty_bins_df.all_series['value_counts_sum'])
         if sort:
             return result.sort_values(ascending=ascending)
 
