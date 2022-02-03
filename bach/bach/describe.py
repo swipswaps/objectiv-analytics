@@ -21,6 +21,7 @@ class SupportedStats(Enum):
     MODE = 'mode'
 
 
+# TODO: Remove this constant when boolean aggregations bug (min, max) is fixed.
 _SUPPORTED_SERIES_TYPES: Tuple[Type, ...] = (
     SeriesAbstractNumeric, SeriesString, SeriesAbstractDateTime,
 )
@@ -149,6 +150,8 @@ class DescribeOperation:
         Returns dataframe containing percentiles per each numerical series.
         """
         series_to_aggregate = self._get_series_to_aggregate()
+        # filter series by numerical dtypes, cannot filter by 'quantile'
+        # method since it is defined in Series class
         numerical_series_names = [
             s for s in series_to_aggregate if isinstance(self.df.all_series[s], SeriesAbstractNumeric)
         ]

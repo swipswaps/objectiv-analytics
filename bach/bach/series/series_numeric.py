@@ -101,9 +101,7 @@ class SeriesAbstractNumeric(Series, ABC):
             where N represents the number of elements
         """
         self._ddof_unsupported(ddof)
-        return self._derived_agg_func(
-            partition, 'stddev_samp', 'double precision', skipna=skipna, cast_db_type=True,
-        )
+        return self._derived_agg_func(partition, 'stddev_samp', skipna=skipna)
 
     def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
         """
@@ -124,9 +122,7 @@ class SeriesAbstractNumeric(Series, ABC):
         """
         return cast(
             'SeriesFloat64',  # for the mypies
-            self._derived_agg_func(
-                partition, 'avg', 'double precision', skipna=skipna, cast_db_type=True,
-            ),
+            self._derived_agg_func(partition, 'avg', 'double precision', skipna=skipna),
         )
 
     def quantile(

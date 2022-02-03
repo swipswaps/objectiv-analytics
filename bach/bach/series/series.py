@@ -19,7 +19,7 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel
 
-from bach.types import value_to_dtype, is_supported_db_dtype
+from bach.types import value_to_dtype
 from sql_models.constants import NotSet, not_set
 
 if TYPE_CHECKING:
@@ -1005,7 +1005,6 @@ class Series(ABC):
         partition: Optional[WrappedPartition],
         expression: Union[str, Expression],
         dtype: str = None,
-        cast_db_type: bool = False,
         skipna: bool = True,
         min_count: int = None,
     ) -> 'Series':
@@ -1040,12 +1039,8 @@ class Series(ABC):
                              f'`{self.name}` Try calling materialize() on the DataFrame'
                              f' this Series belongs to first.')
 
-        derived_dtype = self.dtype if dtype is None else dtype
         if isinstance(expression, str):
-            base_expression = f'{expression}({{}})'
-            if cast_db_type and is_supported_db_dtype(derived_dtype):
-                base_expression = f'cast({base_expression} as {derived_dtype})'
-            expression = AggregateFunctionExpression.construct(base_expression, self)
+            expression = AggregateFunctionExpression.construct(f'{expression}({{}})', self)
 
         partition = self._check_unwrap_groupby(partition)
 
@@ -1061,6 +1056,7 @@ class Series(ABC):
                     f'CASE WHEN {{}} >= {min_count} THEN {{}} ELSE NULL END',
                     self.count(partition, skipna=skipna), expression
                 )
+        derived_dtype = self.dtype if dtype is None else dtype
 
         if not isinstance(partition, Window):
             if self._group_by and self._group_by != partition:

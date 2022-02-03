@@ -32,10 +32,6 @@ def get_dtype_from_db_dtype(db_dtype: str) -> str:
     return get_series_type_from_db_dtype(db_dtype).dtype  # type: ignore
 
 
-def is_supported_db_dtype(db_dtype: str) -> bool:
-    return db_dtype in _registry.db_dtype_to_series
-
-
 def value_to_dtype(value: Any) -> str:
     """
     Give the dtype, as a string of the given value.
