@@ -199,6 +199,7 @@ Numeric
 .. autosummary::
     :toctree: Series
 
+    SeriesAbstractNumeric.cut
     SeriesAbstractNumeric.mean
     SeriesAbstractNumeric.quantile
     SeriesAbstractNumeric.sem

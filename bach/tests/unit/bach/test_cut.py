@@ -127,9 +127,9 @@ def test_cut_calculate_bucket_ranges() -> None:
     expect = pd.DataFrame(
         data={
             'bucket': [1, 2, 3],
-            'range': [pd.Interval(-0.007, 2.3333), pd.Interval(2.3333, 4.66667), pd.Interval(4.66667, 7)],
-            'lower_bound': [-0.007, 2.3333, 4.66667],
-            'upper_bound': [2.3333, 4.66667, 7.],
+            'range': [pd.Interval(0.993, 3.333), pd.Interval(3.333, 5.667), pd.Interval(5.667, 8)],
+            'lower_bound': [0.993, 3.333, 5.667],
+            'upper_bound': [3.333, 5.667, 8.],
         }
     )
     compare_boundaries(expect.range, result.range.sort_values())

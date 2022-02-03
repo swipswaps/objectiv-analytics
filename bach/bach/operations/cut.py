@@ -68,6 +68,8 @@ class CutOperation:
             to_adjust=properties_df.all_series[max_name], compare_with=properties_df.all_series[min_name],
         )
 
+        # need to adjust both min and max with the prior calculated adjustment
+        # this is mainly to avoid the case both min and max are equal
         properties_df[min_name] = (
             properties_df.all_series[min_name] - properties_df.all_series['min_adjustment']
         )
@@ -76,6 +78,7 @@ class CutOperation:
         )
 
         diff_min_max = properties_df.all_series[max_name] - properties_df.all_series[min_name]
+        # value used for expanding start/end bound
         properties_df['bin_adjustment'] = diff_min_max * self.RANGE_ADJUSTMENT
         properties_df['step'] = diff_min_max / self.bins
 
@@ -127,49 +130,20 @@ class CutOperation:
         Calculates upper and lower bound for each bucket.
         """
         buckets = self._calculate_buckets()
-        range_df = buckets.to_frame()
-        range_df.reset_index(drop=True, inplace=True)
-        range_df = range_df.groupby(by=['bucket'])
-
-        range_df[self.RANGE_SERIES_NAME] = SeriesFloat64(
-            name=self.RANGE_SERIES_NAME,
-            base_node=range_df.base_node,
-            engine=range_df.engine,
-            expression=AggregateFunctionExpression.construct(
-                f'numrange(min({{}}), max({{}}), {self.bounds})',
-                self.series,
-                self.series,
-            ),
-            index=range_df.index,
-            group_by=range_df.group_by,
-            sorted_ascending=None,
-            index_sorting=[],
-        )
-
-        range_df.reset_index(drop=False, inplace=True)
-        return self._apply_bound_adjustments(range_df)
-
-    def _apply_bound_adjustments(self, bucket_range_df: 'DataFrame') -> 'DataFrame':
-        """
-        Based on the bucket properties, performs each adjustment to the required bound.
-        if self.right is True, adjustments are done to the lower_bound of each range,
-        otherwise the upper_bound is the one to be affected.
-        """
-        df = bucket_range_df.copy()
         bucket_properties_df = self._calculate_bucket_properties()
 
-        df['lower_bound'] = df[self.RANGE_SERIES_NAME].copy_override(
-            expression=Expression.construct(f'lower({{}})', df['range'])
-        )
-        df['upper_bound'] = df[self.RANGE_SERIES_NAME].copy_override(
-            expression=Expression.construct(f'upper({{}})', df['range'])
-        )
+        min_series = Series.as_independent_subquery(bucket_properties_df[f'{self.series.name}_min'])
+        step_series = Series.as_independent_subquery(bucket_properties_df[f'step'])
 
-        # current range bounds contain min and max values of the bucket
-        # we require the actual inclusive and exclusive bounds
-        step = Series.as_independent_subquery(bucket_properties_df['step'])
-        df['lower_bound'] = (df['bucket'] - 1) * step
-        df['upper_bound'] = df['bucket'] * step
+        range_df = buckets.to_frame()
+        range_df.reset_index(drop=True, inplace=True)
+        range_df.drop_duplicates(ignore_index=True, inplace=True)
+
+        # lower_bound = (bucket - 1) *  step + min
+        range_df['lower_bound'] = (range_df.bucket - 1) * step_series + min_series
+
+        # upper_bound = bucket * step + min
+        range_df['upper_bound'] = range_df.bucket * step_series + min_series
 
         if self.right:
             case_stmt = f'case when bucket = 1 then {{}} - {{}} else {{}} end'
@@ -178,20 +152,21 @@ class CutOperation:
             case_stmt = f'case when bucket = {self.bins} then {{}} + {{}} else {{}} end'
             bound_to_adjust = 'upper_bound'
 
-        df[bound_to_adjust] = df[bound_to_adjust].copy_override(
+        # expand the correspondent boundary
+        range_df[bound_to_adjust] = range_df[bound_to_adjust].copy_override(
             expression=Expression.construct(
                 case_stmt,
-                df[bound_to_adjust],
+                range_df.all_series[bound_to_adjust],
                 Series.as_independent_subquery(bucket_properties_df['bin_adjustment']),
-                df[bound_to_adjust],
+                range_df.all_series[bound_to_adjust],
             ),
         )
 
-        df[self.RANGE_SERIES_NAME] = df[self.RANGE_SERIES_NAME].copy_override(
+        range_df[self.RANGE_SERIES_NAME] = range_df.bucket.copy_override(
             expression=Expression.construct(
                 f'numrange(cast({{}} as numeric), cast({{}} as numeric), {self.bounds})',
-                df['lower_bound'],
-                df['upper_bound'],
+                range_df.all_series['lower_bound'],
+                range_df.all_series['upper_bound'],
             ),
         )
-        return df
+        return range_df

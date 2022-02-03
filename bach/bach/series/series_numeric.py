@@ -49,6 +49,15 @@ class SeriesAbstractNumeric(Series, ABC):
             expression=Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
 
+    def cut(self, bins: int, right: bool = True) -> 'SeriesAbstractNumeric':
+        """
+        Segments values into bins.
+        :param bins: The amount of bins to segment data into
+        :param right: If true (by default), each bin will include the rightmost edge. (e.g (x,y]).
+        """
+        from bach.operations.cut import CutOperation
+        return CutOperation(series=self, bins=bins, right=right)()
+
     def _ddof_unsupported(self, ddof: Optional[int]):
         if ddof is not None and ddof != 1:
             raise NotImplementedError("ddof != 1 currently not implemented")
