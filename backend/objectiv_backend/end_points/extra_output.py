@@ -116,6 +116,9 @@ def write_data_to_pubsub(events: EventDataList) -> None:
             http_context = {
                 'user_agent': ''
             }
+
+        path_context = get_context(event, 'PathContext')
+
         try:
             cookie_context = get_context(event, 'CookieIdContext')
         except:
@@ -126,16 +129,17 @@ def write_data_to_pubsub(events: EventDataList) -> None:
         snowplow_event = objectiv_event_to_snowplow(event)
         snowplow_custom_context = make_snowplow_custom_context(snowplow_event)
         payload["data"].append({
-            "e": "se",  # mandatory: event type: unstructured event
+            "e": "se",  # mandatory: event type: structured event
             "p": "web",  # mandatory: platform
             "tv": "objectiv-tracker-0.0.5",  # mandatory: tracker version
+            "url": path_context['id'],
             "cx": snowplow_custom_context})
         data = CollectorPayload(
             schema="iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0",
             ipAddress=http_context['remote_address'],
             timestamp=int(datetime.now().timestamp()*1000),
             encoding='UTF-8',
-            collector='mike_collector',
+            collector='objectiv_collector',
             userAgent=http_context['user_agent'],
             refererUri=http_context['referer'],
             path='/com.snowplowanalytics.snowplow/tp2',
@@ -183,6 +187,14 @@ def write_data_to_snowplow_if_configured(events: EventDataList) -> None:
         except:
             cookie_context = {'id': None}
 
+        try:
+            http_context = get_context(event, 'HttpContext')
+        except:
+            print(json.dumps(event, indent=4))
+            http_context = {
+                'user_agent': ''
+            }
+        headers['User-Agent'] = http_context['user_agent']
         snowplow_event = objectiv_event_to_snowplow(event)
         snowplow_custom_context = make_snowplow_custom_context(snowplow_event)
         payload["data"].append({
@@ -190,6 +202,7 @@ def write_data_to_snowplow_if_configured(events: EventDataList) -> None:
                     "p": "web",  # mandatory: platform
                     "tv": "objectiv-tracker-0.0.5",  # mandatory: tracker version
                     "eid": event['id'],
+                    "url": 'http://localhost:8080/bier?utm_source=superspecialsource&utm_medium=test_medium&utm_channel=web&utm_campaign=test_campaign',
                     "nuid": cookie_context['id'],
                     "cx": snowplow_custom_context})
 
