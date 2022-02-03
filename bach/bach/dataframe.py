@@ -2440,6 +2440,33 @@ class DataFrame:
         self._update_self_from_df(df)
         return None
 
+    def value_counts(
+        self,
+        subset: Optional[Sequence[str]],
+        normalize: bool = False,
+        sort: bool = True,
+        ascending: bool = False,
+    ) -> 'Series':
+        """
+        Returns a series containing counts of each unique row in the DataFrame
+        :param subset: a list of series labels to be used when counting. If subset is not provided and
+        dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
+        series in group_by will be used.
+        :param normalize: returns proportions instead of frequencies
+        :param sort: sorts result by frequencies
+        :param ascending: sorts values in ascending order if true.
+
+        return: a series containing all counts per unique row.
+        """
+        from bach.operations.value_counts import DataFrameValueCountsOperation
+        return DataFrameValueCountsOperation(
+            obj=self,
+            subset=subset,
+            normalize=normalize,
+            sort=sort,
+            ascending=ascending,
+        )()
+
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     """

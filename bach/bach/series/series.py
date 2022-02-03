@@ -1309,6 +1309,32 @@ class Series(ABC):
         self._update_self_from_series(result)
         return None
 
+    def value_counts(
+        self,
+        bins: Optional[int] = None,
+        normalize: bool = False,
+        sort: bool = True,
+        ascending: bool = False,
+    ) -> 'Series':
+        """
+        Returns a series containing counts per unique value
+        :param bins: works only with numeric series, groups values into the request amount of bins
+        and counts values based on each range.
+        :param normalize: returns proportions instead of frequencies
+        :param sort: sorts result by frequencies
+        :param ascending: sorts values in ascending order if true.
+
+        return: a series containing all counts per unique row.
+        """
+        from bach.operations.value_counts import SeriesValueCountsOperation
+        return SeriesValueCountsOperation(
+            obj=self,
+            bins=bins,
+            normalize=normalize,
+            sort=sort,
+            ascending=ascending,
+        )()
+
 
 def const_to_series(base: Union[Series, DataFrame],
                     value: Optional[Union[Series, int, float, str, UUID]],
