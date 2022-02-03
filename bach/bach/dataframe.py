@@ -2442,7 +2442,7 @@ class DataFrame:
 
     def value_counts(
         self,
-        subset: Optional[Sequence[str]],
+        subset: Optional[Sequence[str]] = None,
         normalize: bool = False,
         sort: bool = True,
         ascending: bool = False,
@@ -2458,14 +2458,39 @@ class DataFrame:
 
         return: a series containing all counts per unique row.
         """
-        from bach.operations.value_counts import DataFrameValueCountsOperation
-        return DataFrameValueCountsOperation(
-            obj=self,
-            subset=subset,
-            normalize=normalize,
-            sort=sort,
-            ascending=ascending,
-        )()
+        if not subset:
+            subset = self.data_columns if not self.group_by else list(self.group_by.index.keys())
+        elif any(s not in self.data_columns for s in subset):
+            raise ValueError('subset contains invalid series.')
+
+        df = self.copy()
+
+        if df.group_by:
+            df.materialize(inplace=True)
+            df.reset_index(drop=False, inplace=True)
+
+        df = df[subset]
+        assert isinstance(df, DataFrame)
+
+        df['value_counts'] = 1
+
+        df = df.groupby(subset).sum()
+        df.materialize(inplace=True)
+
+        from bach.series.series_numeric import SeriesInt64, SeriesAbstractNumeric
+        # mypy fix
+        value_count_series: SeriesInt64 = cast(
+            SeriesInt64,
+            df.all_series[f'value_counts_sum'],
+        )
+        if sort:
+            value_count_series = value_count_series.sort_values(ascending=ascending)
+
+        if normalize:
+            assert isinstance(value_count_series, SeriesAbstractNumeric)
+            value_count_series /= value_count_series.sum()
+
+        return value_count_series
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

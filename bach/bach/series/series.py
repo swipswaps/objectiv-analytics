@@ -1326,14 +1326,32 @@ class Series(ABC):
 
         return: a series containing all counts per unique row.
         """
-        from bach.operations.value_counts import SeriesValueCountsOperation
-        return SeriesValueCountsOperation(
-            obj=self,
-            bins=bins,
-            normalize=normalize,
-            sort=sort,
-            ascending=ascending,
-        )()
+        from bach.series.series_numeric import SeriesAbstractNumeric
+        if bins and not isinstance(self, SeriesAbstractNumeric):
+            raise ValueError('Cannot calculate bins for non numeric series.')
+
+        if not bins:
+            return self.to_frame().value_counts(normalize=normalize, sort=sort, ascending=ascending)
+
+        from bach.operations.cut import CutOperation
+        bins_series = CutOperation(series=self, bins=bins, include_empty_bins=True)()
+
+        bins_df = bins_series.to_frame()
+        bins_w_values_df = bins_df[bins_series.index[self.name].notnull()]
+        empty_bins_df = bins_df[bins_series.index[self.name].isnull()]
+
+        value_counts_result = bins_w_values_df.value_counts(
+            normalize=normalize, sort=sort, ascending=ascending,
+        )
+
+        empty_bins_df['value_counts_sum'] = 0
+        empty_bins_df = empty_bins_df.set_index(CutOperation.RANGE_SERIES_NAME)
+
+        result = value_counts_result.append(empty_bins_df['value_counts_sum'])
+        if sort:
+            return result.sort_values(ascending=ascending)
+
+        return result
 
 
 def const_to_series(base: Union[Series, DataFrame],
