@@ -149,22 +149,20 @@ class DescribeOperation:
         """
         Returns dataframe containing percentiles per each numerical series.
         """
-        series_to_aggregate = self._get_series_to_aggregate()
-        # filter series by numerical dtypes, cannot filter by 'quantile'
-        # method since it is defined in Series class
-        numerical_series_names = [
-            s for s in series_to_aggregate if isinstance(self.df.all_series[s], SeriesAbstractNumeric)
+        # filter series that can perform the aggregation 'quantile' operation
+        series_to_aggregate = [
+            s for s in self._get_series_to_aggregate() if hasattr(self.df.all_series[s], 'quantile')
         ]
-        if not numerical_series_names:
+        if not series_to_aggregate:
             return None
 
-        percentile_df: DataFrame = self.df[numerical_series_names]  # type: ignore
+        percentile_df: DataFrame = self.df[series_to_aggregate]  # type: ignore
         percentile_df.reset_index(drop=True, inplace=True)
 
         percentile_df = percentile_df.quantile(q=list(self.percentiles))
         has_q_index = 'q' in percentile_df.all_series
 
-        columns_rename = dict(zip(percentile_df.data_columns, numerical_series_names))
+        columns_rename = dict(zip(percentile_df.data_columns, series_to_aggregate))
         percentile_df.reset_index(drop=not has_q_index, inplace=True)
 
         if not has_q_index:
