@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/plugin-path-context-from-url",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Plugin for Objectiv trackers to automatically generate and attach PathContext from URLs",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -28,7 +28,7 @@
     }
   ],
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -36,12 +36,12 @@
   "exports": {
     ".": {
       "require": "./dist/index.js",
-      "import": "./dist/index.mjs",
+      "import": "./dist/esm/index.js",
       "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --minify --dts --sourcemap --clean",
+    "build": "tsup src/index.ts --format cjs,esm --legacy-output --minify --dts --sourcemap --clean",
     "prettify": "prettier --write .",
     "tsc": "tsc --noEmit",
     "test": "jest --silent --runInBand",
@@ -52,7 +52,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
-    "@objectiv/testing-tools": "^0.0.8",
+    "@objectiv/testing-tools": "^0.0.9",
     "@types/jest": "^27.0.3",
     "jest": "^27.4.5",
     "jest-extended": "^1.1.0",
@@ -66,6 +66,6 @@
     "typescript": "^4.5.5"
   },
   "peerDependencies": {
-    "@objectiv/tracker-core": "^0.0.8"
+    "@objectiv/tracker-core": "^0.0.9"
   }
 }
