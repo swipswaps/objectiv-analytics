@@ -376,3 +376,22 @@ def test_set_series_single_value():
             [3, 3055, 3, 93485, 93485, 93490, 93488, 93491, 93492]
         ]
     )
+
+
+def test_set_pandas_series():
+    bt = get_bt_with_test_data()
+    pandas_series = bt['founding'].to_pandas()
+    bt['duplicated_column'] = pandas_series
+    assert_db_type(bt['duplicated_column'], 'bigint', SeriesInt64)
+    assert_equals_data(
+        bt,
+        expected_columns=[
+            '_index_skating_order',  # index
+            'skating_order', 'city', 'municipality', 'inhabitants', 'founding', 'duplicated_column'
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 1285],
+            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 1456],
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 1268],
+        ]
+    )
