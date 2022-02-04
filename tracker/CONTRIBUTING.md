@@ -213,6 +213,9 @@ Verifies if there are changes in the current branch and if a release strategy ha
 ### `yarn version apply --all`
 Executes the release strategy and bumps versions accordingly
 
+### `yarn version:patch`
+Patches all packages right away, without using version release strategies
+
 ## Troubleshooting
 
 #### `Error: Cannot find module '[...]/angular/node_modules/rollup/dist/rollup.js'`
