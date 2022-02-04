@@ -164,7 +164,7 @@ def set_time_in_events(events: EventDataList, current_millis: int, client_millis
         event['time'] = event['time'] + offset
 
 
-def _add_http_context_to_event(event: EventData) -> HttpContext:
+def _add_http_context_to_event(event: EventData):
     """ Create an HttpContext based on the data in the current request. """
 
     # try to determine the IP address of the calling user agent, by looking at some standard headers
@@ -198,8 +198,8 @@ def _add_http_context_to_event(event: EventData) -> HttpContext:
     # if so, use that.
     try:
         # all values in an HttpContext are strings
-        http_context = get_context(event, 'HttpContext')
-        http_context['remote_address'] = remote_address
+        tracker_http_context = get_context(event, 'HttpContext')
+        tracker_http_context['remote_address'] = remote_address
     except ValueError:
         # if a pre-existing context cannot be found, we create one from scratch
         http_context = {
