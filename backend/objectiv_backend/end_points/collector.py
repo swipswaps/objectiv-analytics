@@ -11,7 +11,7 @@ from flask import Response, Request
 from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.types import EventData, EventDataList, EventList
 from objectiv_backend.common.db import get_db_connection
-from objectiv_backend.common.event_utils import add_global_context_to_event
+from objectiv_backend.common.event_utils import add_global_context_to_event, get_context
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
 from objectiv_backend.end_points.extra_output import events_to_json, write_data_to_fs_if_configured, \
     write_data_to_s3_if_configured
@@ -123,9 +123,9 @@ def add_http_contexts(events: EventDataList):
     """
     Modify the given list of events: Add the HttpContext to each event
     """
-    # get http context for current request (same for all events in this request)
-    http_context: HttpContext = _get_http_context()
+    # get http context for current request
     for event in events:
+        http_context: HttpContext = _get_http_context(event=event)
         add_global_context_to_event(event=event, context=http_context)
 
 
@@ -165,14 +165,20 @@ def set_time_in_events(events: EventDataList, current_millis: int, client_millis
         event['time'] = event['time'] + offset
 
 
-def _get_http_context() -> HttpContext:
+def _get_http_context(event: EventData) -> HttpContext:
     """ Create an HttpContext based on the data in the current request. """
-    allowed_headers = ['Referer', 'User-Agent']
 
-    http_headers: Dict[str, str] = {}
-    for h, v in flask.request.headers.items():
-        if h in allowed_headers:
-            http_headers[h.lower().replace('-', '_')] = v
+    # check if there is a pre-existing http_context
+    # if so, use that.
+    try:
+        http_context = get_context(event, 'http_context')
+    except ValueError:
+        http_context: Dict[str, str] = {'id': 'http_context'}
+
+        allowed_headers = ['Referer', 'User-Agent']
+        for h, v in flask.request.headers.items():
+            if h in allowed_headers:
+                http_context[h.lower().replace('-', '_')] = v
 
     # try to determine the IP address of the calling user agent, by looking at some standard headers
     # if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
@@ -180,7 +186,7 @@ def _get_http_context() -> HttpContext:
     if 'X-Real-IP' in flask.request.headers:
         # any upstream proxy probably know the 'right' IP. If it sets the x-real-ip header to that,
         # we use that.
-        http_headers['remote_address'] = flask.request.headers['X-Real-IP']
+        http_context['remote_address'] = flask.request.headers['X-Real-IP']
     elif 'X-Forwarded-For' in flask.request.headers:
         # x-forwarded-for headers take the form of:
         # client proxy_1...proxy_n
@@ -189,21 +195,19 @@ def _get_http_context() -> HttpContext:
         # and non-routable addresses.
         hosts = str(flask.request.headers['X-Forwarded-For']).split()
         if len(hosts) > 1:
-            http_headers['remote_address'] = hosts[-1]
+            http_context['remote_address'] = hosts[-1]
         else:
             # if there's only one address there, we use that.
-            http_headers['remote_address'] = flask.request.headers['X-Forwarded-For']
+            http_context['remote_address'] = flask.request.headers['X-Forwarded-For']
     elif flask.request.remote_addr:
         # if all else fails, look for remote_addr in the request. This is the IP the current connection
         # originates from. Most likely a proxy (which is why this is the last resort).
-        http_headers['remote_address'] = flask.request.remote_addr
+        http_context['remote_address'] = flask.request.remote_addr
     else:
         # this should never happen!
-        http_headers['remote_address'] = 'unknown'
+        http_context['remote_address'] = 'unknown'
 
-    http_headers['id'] = 'http_context'
-
-    return HttpContext(**http_headers)
+    return HttpContext(**http_context)
 
 
 def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):
