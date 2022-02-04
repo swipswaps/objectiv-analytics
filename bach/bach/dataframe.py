@@ -2470,7 +2470,7 @@ class DataFrame:
             expression_fmt = f' {logical_operator} '.join([f'{{}}'] * len(dropna_series))
         else:
             # we need to add the amount of nullables in the row and compare it to the thresh
-            cases_fmt = f' + '.join([f'CASE WHEN {{}} THEN 1 ELSE 0 END'] * len(dropna_series))
+            cases_fmt = f' + '.join([f'case when {{}} then 1 else 0 end'] * len(dropna_series))
             expression_fmt = f'{cases_fmt} >= {thresh}'
 
         drop_row_series = conditions[0].copy_override(
