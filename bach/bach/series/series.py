@@ -7,6 +7,7 @@ from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHE
     TypeVar
 from uuid import UUID
 
+import numpy as np
 import pandas
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
@@ -390,40 +391,58 @@ class Series(ABC):
             index_sorting=self._index_sorting if index_sorting is None else index_sorting
         )
 
-    def unstack(self, level=-1, fill_value=None):
-        # todo ValueError: Index contains duplicate entries, cannot reshape --> not checked now
-        index_dict = self.index
-        if level == -1:
-            name_index_last, series_last = index_dict.popitem()
-        else:
-            raise NotImplementedError('only last index can be unstacked')
+    def unstack(self,
+                level: int = -1,
+                fill_value: Optional[Union[int, float, str, UUID]] = None,
+                aggregation: str = 'max'):
+        """
+        Pivot a level of the index labels.
 
-        # todo here you could limit the number of columns
-        # todo None gets filtered without warning
-        values = list(filter(None, series_last.unique().values))
+        Returns a(n unsorted) DataFrame with the values of the unstacked index as columns. In case of
+        duplicate index values that are unstacked, `aggregation` is used to aggregate the values.
+
+        :param level: selects the level of the index that is unstacked. Currently only -1 supported.
+        :param fill_value: replace missing values resulting from unstacking. Should be of same type as the
+            series that is unstacked.
+        :param aggregation: method of aggregation, in case of duplicate index values. Supported are 'max' and
+            'min'
+        :returns: DataFrame
+        """
+        index_dict = self.index
+        if len(index_dict) <= 1:
+            raise NotImplementedError('index must be a multi level index to unstack')
+        if level != -1:
+            raise NotImplementedError('only last index can be unstacked')
+        if aggregation not in ['max', 'min']:
+            raise ValueError(f"aggregation is '{aggregation}', should be 'min' or 'max'")
+
+        name_index_last, series_last = index_dict.popitem()
+        values = series_last.unique().values
+        if None in values or np.nan in values:
+            raise ValueError("index contains empty values, cannot be unstacked")
         name_series = self.name
         remaining_indexes = list(index_dict.keys())
-        df = self.to_frame().reset_index().groupby(remaining_indexes)
+        df = self.to_frame().reset_index().groupby(remaining_indexes)  # type: ignore
 
         series_dict = {}
-        for i in values:
-            args = (series_last, const_to_series(self, i, str(i)))
+        for column in values:
+            args = [series_last, const_to_series(self, column, str(column))]
             else_clause = ''
             if fill_value is not None:
                 else_clause = 'else {}'
                 fill_series = const_to_series(self, fill_value, 'fill_value')
                 if fill_series.dtype != self.dtype:
                     raise TypeError('fill_value should be of same type as the index that is unstacked')
-                args = (series_last, const_to_series(self, i, str(i)), fill_series)
+                args = args + [fill_series]
 
-            exp = f"max(case when {{}}={{}} then {name_series} {else_clause} end)"
+            exp = f"{aggregation}(case when {{}}={{}} then {name_series} {else_clause} end)"
             series = df[name_series].copy_override(
-                name=str(i),
+                name=str(column),
                 expression=AggregateFunctionExpression.construct(exp, *args)
             )
-            series_dict[str(i)] = series
+            series_dict[str(column)] = series
 
-        return df.copy_override(series=series_dict).materialize()
+        return df.copy_override(series=series_dict).materialize()  # type: ignore
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """

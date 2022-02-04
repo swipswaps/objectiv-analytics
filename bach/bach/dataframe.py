@@ -1296,9 +1296,9 @@ class DataFrame:
             by: Union[_GroupBySingleType,  # single series group_by
                       # for GroupingSets
                       Tuple[Union[_GroupBySingleType, Tuple[_GroupBySingleType, ...]], ...],
-                      List[Union[_GroupBySingleType,  # multi series
-                                 List[_GroupBySingleType],  # for grouping lists
-                                 Tuple[_GroupBySingleType, ...]]],  # for grouping lists
+                      Sequence[Union[_GroupBySingleType,  # multi series
+                                     List[_GroupBySingleType],  # for grouping lists
+                                     Tuple[_GroupBySingleType, ...]]],  # for grouping lists
                       None] = None) -> 'DataFrame':
         """
         Group by any of the series currently in this DataDrame, both from index as well as data.
