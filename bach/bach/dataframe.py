@@ -2451,7 +2451,7 @@ class DataFrame:
         Returns a series containing counts of each unique row in the DataFrame
         :param subset: a list of series labels to be used when counting. If subset is not provided and
         dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
-        series in group_by will be used.
+        series in group_by will be added to subset.
         :param normalize: returns proportions instead of frequencies
         :param sort: sorts result by frequencies
         :param ascending: sorts values in ascending order if true.
@@ -2459,38 +2459,32 @@ class DataFrame:
         return: a series containing all counts per unique row.
         """
         if not subset:
-            subset = self.data_columns if not self.group_by else list(self.group_by.index.keys())
+            subset = self.data_columns
         elif any(s not in self.data_columns for s in subset):
             raise ValueError('subset contains invalid series.')
 
-        df = self.copy()
+        if self.group_by:
+            # consider groupby series in subset
+            subset = list(self.group_by.index.keys()) + subset
 
-        if df.group_by:
-            df.materialize(inplace=True)
-
-        df.reset_index(drop=False, inplace=True)
-        df = df[subset]
-        assert isinstance(df, DataFrame)
-
-        df['value_counts'] = 1
-
-        df = df.groupby(by=list(subset)).sum()
-        df.materialize(inplace=True)
-
-        from bach.series.series_numeric import SeriesInt64, SeriesAbstractNumeric
-        # mypy fix
-        value_count_series: SeriesInt64 = cast(
-            SeriesInt64,
-            df.all_series[f'value_counts_sum'],
+        df = self.copy_override(
+            series={
+                s: self.all_series[s].copy_override(index={}, group_by=None) for s in subset
+            },
+            index={},
+            group_by=None,
         )
-        if sort:
-            value_count_series = value_count_series.sort_values(ascending=ascending)
+        df['value_counts'] = 1
+        df = df.groupby(by=list(subset)).sum()
 
         if normalize:
-            assert isinstance(value_count_series, SeriesAbstractNumeric)
-            value_count_series /= value_count_series.sum()
+            df.materialize(inplace=True)
+            df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
 
-        return value_count_series
+        if sort:
+            return df._data['value_counts_sum'].sort_values(ascending=ascending)
+
+        return df._data['value_counts_sum']
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

@@ -1,12 +1,15 @@
 import numpy as np
+from decimal import Decimal
+
 import pytest
+from psycopg2._range import NumericRange
 
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
     get_bt_with_railway_data
 
 
 def test_value_counts_basic():
-    bt = get_bt_with_test_data()[['municipality']]
+    bt = get_bt_with_test_data()['municipality']
     result = bt.value_counts()
 
     np.testing.assert_equal(
@@ -39,49 +42,34 @@ def test_value_counts_basic():
     )
 
 
-def test_value_counts_w_subset():
-    bt = get_bt_with_railway_data()
-    result = bt.value_counts(subset=['town', 'platforms'])
+def test_value_counts_w_bins() -> None:
+    bins = 4
+    inhabitants = get_bt_with_test_data(full_data_set=True)['inhabitants']
+    result = inhabitants.value_counts(bins=bins)
     np.testing.assert_equal(
-        bt.to_pandas().value_counts(subset=['town', 'platforms']).to_numpy(),
+        inhabitants.to_pandas().value_counts(bins=bins).to_numpy(),
         result.to_numpy(),
     )
+    bounds_right = '(]'
+    bin1 = NumericRange(Decimal('607.215'),  Decimal('23896.25'), bounds=bounds_right)
+    bin2 = NumericRange(Decimal('23896.25'),  Decimal('47092.5'), bounds=bounds_right)
+    bin3 = NumericRange(Decimal('47092.5'),  Decimal('70288.75'), bounds=bounds_right)
+    bin4 = NumericRange(Decimal('70288.75'), Decimal('93485'), bounds=bounds_right)
     assert_equals_data(
-        result.to_frame().sort_index(),
-        expected_columns=['town', 'platforms', 'value_counts_sum'],
+        result.sort_index(),
+        expected_columns=['range', 'value_counts_sum'],
         expected_data=[
-            ['Drylts', 1, 1],
-            ['It Hearrenfean', 1, 1],
-            ['It Hearrenfean', 2, 1],
-            ['Ljouwert', 1, 1],
-            ['Ljouwert', 4, 1],
-            ['Snits', 2, 2],
-        ],
-    )
-
-    result_normalized = bt.value_counts(subset=['town', 'platforms'], normalize=True)
-    np.testing.assert_almost_equal(
-        bt.to_pandas().value_counts(subset=['town', 'platforms'], normalize=True).to_numpy(),
-        result_normalized.to_numpy(),
-        decimal=2,
-    )
-    assert_equals_data(
-        result_normalized.to_frame().sort_index(),
-        expected_columns=['town', 'platforms', 'value_counts_sum'],
-        expected_data=[
-            ['Drylts', 1, 1 / 7],
-            ['It Hearrenfean', 1, 1 / 7],
-            ['It Hearrenfean', 2, 1 / 7],
-            ['Ljouwert', 1, 1 / 7],
-            ['Ljouwert', 4, 1 / 7],
-            ['Snits', 2, 2 / 7],
+            [bin1, 9],
+            [bin2, 1],
+            [bin3, 0],
+            [bin4, 1],
         ],
     )
 
 
 def test_value_counts_w_groupby() -> None:
     bt = get_bt_with_railway_data()[['town', 'platforms', 'station_id']].reset_index(drop=True)
-    result = bt.groupby(['town', 'platforms']).value_counts()
+    result = bt.groupby(['town', 'platforms'])['station_id'].value_counts()
     assert_equals_data(
         result.to_frame().sort_index(),
         expected_columns=['town', 'platforms', 'station_id', 'value_counts_sum'],
@@ -96,7 +84,7 @@ def test_value_counts_w_groupby() -> None:
         ],
     )
 
-    result_normalized = bt.groupby(['town', 'platforms']).value_counts(normalize=True)
+    result_normalized = bt.groupby(['town', 'platforms'])['station_id'].value_counts(normalize=True)
     assert_equals_data(
         result_normalized.to_frame().sort_index(),
         expected_columns=['town', 'platforms', 'station_id', 'value_counts_sum'],
@@ -112,6 +100,6 @@ def test_value_counts_w_groupby() -> None:
     )
 
 
-def test_subset_error() -> None:
-    with pytest.raises(ValueError, match='subset contains invalid series.'):
-        get_bt_with_railway_data().value_counts(subset=['random'])
+def test_bins_error() -> None:
+    with pytest.raises(ValueError, match='Cannot calculate bins for non numeric series.'):
+        get_bt_with_railway_data()['town'].value_counts(bins=4)

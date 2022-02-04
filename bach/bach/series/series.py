@@ -1341,15 +1341,17 @@ class Series(ABC):
         bins_w_values_df = bins_df[bins_series.index[self.name].notnull()]
         empty_bins_df = bins_df[bins_series.index[self.name].isnull()]
 
-        value_counts_result = bins_w_values_df.value_counts(
-            normalize=normalize, sort=sort, ascending=ascending,
-        )
+        # count only the bins that actually have value in the series
+        # sort is not needed since final result is sorted after appending empty bins
+        value_counts_result = bins_w_values_df.value_counts(normalize=normalize, sort=False)
 
         assert isinstance(empty_bins_df, DataFrame)
         empty_bins_df['value_counts_sum'] = 0
         empty_bins_df.set_index(CutOperation.RANGE_SERIES_NAME, inplace=True)
 
+        # append empty bins with count 0, final result must show those ranges
         result = value_counts_result.append(empty_bins_df.all_series['value_counts_sum'])
+        result = result.copy_override(name='value_counts_sum')
         if sort:
             return result.sort_values(ascending=ascending)
 
