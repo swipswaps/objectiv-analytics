@@ -2385,12 +2385,7 @@ class DataFrame:
         if keep not in ('first', 'last', False):
             raise ValueError('keep must be either "first", "last" or False.')
 
-        subset = [subset] if isinstance(subset, str) else subset
-        if subset and any(s not in self.data_columns for s in subset):
-            raise ValueError(
-                f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
-            )
-
+        subset = self._get_parsed_subset_of_data_columns(subset)
         df = self.copy()
         if ignore_index:
             df.reset_index(drop=True, inplace=True)
@@ -2438,6 +2433,68 @@ class DataFrame:
 
         self._update_self_from_df(df)
         return None
+
+    def dropna(
+        self,
+        axis: int = 0,
+        how: str = 'any',
+        thresh: Optional[int] = None,
+        subset: Optional[Union[str, Sequence[str]]] = None,
+        inplace: bool = False
+    ) -> Optional['DataFrame']:
+        """
+        Removes rows with missing values.
+
+        :param axis: only ``axis=0`` is supported. This means rows that contain missing values are dropped.
+        :param how: determines when a row is removed. Supported values:
+           - 'any': rows with at least one missing value are removed
+           - 'all': rows with all missing values are removed
+        :param thresh: determines the least amount of missing values a row needs to be removed
+        :param subset: series label or sequence of labels to be considered for missing values
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+
+        :return: a new dataframe with dropped rows if inplace = False, otherwise None.
+        """
+        if axis:
+            raise ValueError('only axis = 0 is supported.')
+
+        if how not in ('any', 'all'):
+            raise ValueError(f'{how} is not a valid value for "how" parameter.')
+
+        subset = self._get_parsed_subset_of_data_columns(subset)
+        dropna_series = subset or self.data_columns
+        logical_operator = 'or' if how == 'any' else 'and'
+
+        conditions = [self.all_series[ds].isnull() for ds in dropna_series]
+        if not thresh:
+            expression_fmt = f' {logical_operator} '.join([f'{{}}'] * len(dropna_series))
+        else:
+            # we need to add the amount of nullables in the row and compare it to the thresh
+            cases_fmt = f' + '.join([f'CASE WHEN {{}} THEN 1 ELSE 0 END'] * len(dropna_series))
+            expression_fmt = f'{cases_fmt} >= {thresh}'
+
+        drop_row_series = conditions[0].copy_override(
+            expression=Expression.construct(expression_fmt, *conditions),
+        )
+
+        dropna_df = self[~drop_row_series]
+        assert isinstance(dropna_df, DataFrame)
+
+        if inplace:
+            self._update_self_from_df(dropna_df)
+            return None
+
+        return dropna_df
+
+    def _get_parsed_subset_of_data_columns(
+        self, subset: Optional[Union[str, Sequence[str]]],
+    ) -> Optional[Sequence[str]]:
+        subset = [subset] if isinstance(subset, str) else subset
+        if subset and any(s not in self.data_columns for s in subset):
+            raise ValueError(
+                f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
+            )
+        return subset
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
