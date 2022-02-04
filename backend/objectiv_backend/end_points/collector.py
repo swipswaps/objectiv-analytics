@@ -170,10 +170,11 @@ def _get_http_context(event: EventData) -> HttpContext:
 
     # check if there is a pre-existing http_context
     # if so, use that.
+
     try:
-        http_context = get_context(event, 'http_context')
+        http_context: EventData = {k: str(v) for k, v in get_context(event, 'http_context').items()}
     except ValueError:
-        http_context: Dict[str, str] = {'id': 'http_context'}
+        http_context = {'id': 'http_context'}
 
         allowed_headers = ['Referer', 'User-Agent']
         for h, v in flask.request.headers.items():
