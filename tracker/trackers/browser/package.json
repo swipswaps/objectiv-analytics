@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/tracker-browser",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Objectiv Web application analytics tracker for the open taxonomy for analytics",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -50,7 +50,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
-    "@objectiv/testing-tools": "^0.0.8",
+    "@objectiv/testing-tools": "^0.0.9",
     "@types/jest": "^27.0.3",
     "jest": "^27.4.5",
     "jest-fetch-mock": "^3.0.3",
@@ -63,12 +63,12 @@
     "typescript": "^4.5.5"
   },
   "dependencies": {
-    "@objectiv/plugin-path-context-from-url": "^0.0.8",
-    "@objectiv/plugin-root-location-context-from-url": "^0.0.8",
-    "@objectiv/queue-local-storage": "^0.0.8",
-    "@objectiv/tracker-core": "^0.0.8",
-    "@objectiv/transport-debug": "^0.0.8",
-    "@objectiv/transport-fetch": "^0.0.8",
-    "@objectiv/transport-xhr": "^0.0.8"
+    "@objectiv/plugin-path-context-from-url": "^0.0.9",
+    "@objectiv/plugin-root-location-context-from-url": "^0.0.9",
+    "@objectiv/queue-local-storage": "^0.0.9",
+    "@objectiv/tracker-core": "^0.0.9",
+    "@objectiv/transport-debug": "^0.0.9",
+    "@objectiv/transport-fetch": "^0.0.9",
+    "@objectiv/transport-xhr": "^0.0.9"
   }
 }
