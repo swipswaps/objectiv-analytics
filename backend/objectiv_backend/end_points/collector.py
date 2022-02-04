@@ -9,7 +9,7 @@ from typing import List, Dict
 from flask import Response, Request
 
 from objectiv_backend.common.config import get_collector_config
-from objectiv_backend.common.types import EventData, EventDataList, EventList
+from objectiv_backend.common.types import EventData, EventDataList, EventList, ContextData
 from objectiv_backend.common.db import get_db_connection
 from objectiv_backend.common.event_utils import add_global_context_to_event, get_context
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
@@ -172,7 +172,8 @@ def _get_http_context(event: EventData) -> HttpContext:
     # if so, use that.
 
     try:
-        http_context: EventData = {k: str(v) for k, v in get_context(event, 'http_context').items()}
+        # all values in an HttpContext are strings
+        http_context: Dict[str, str] = {k: str(v) for k, v in get_context(event, 'http_context').items()}
     except ValueError:
         http_context = {'id': 'http_context'}
 
