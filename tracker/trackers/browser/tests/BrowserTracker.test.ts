@@ -3,7 +3,13 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { TrackerEvent, TrackerPlugins, TrackerQueue, TrackerTransportRetry } from '@objectiv/tracker-core';
+import {
+  TrackerEvent,
+  TrackerPlugins,
+  TrackerQueue,
+  TrackerQueueMemoryStore,
+  TrackerTransportRetry,
+} from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
@@ -89,13 +95,23 @@ describe('BrowserTracker', () => {
     });
   });
 
-  it('should instantiate with `transport`', () => {
+  it('should instantiate with given `transport`', () => {
     const testTracker = new BrowserTracker({
       applicationId: 'app-id',
       transport: new FetchTransport({ endpoint: 'localhost' }),
     });
     expect(testTracker).toBeInstanceOf(BrowserTracker);
     expect(testTracker.transport).toBeInstanceOf(FetchTransport);
+  });
+
+  it('should instantiate with given `queue`', () => {
+    const testTracker = new BrowserTracker({
+      applicationId: 'app-id',
+      endpoint: 'localhost',
+      queue: new TrackerQueue({ store: new TrackerQueueMemoryStore() }),
+    });
+    expect(testTracker).toBeInstanceOf(BrowserTracker);
+    expect(testTracker.queue?.store).toBeInstanceOf(TrackerQueueMemoryStore);
   });
 
   describe('env sensitive logic', () => {
@@ -163,6 +179,7 @@ describe('BrowserTracker', () => {
       expect(testTracker.plugins?.plugins).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ pluginName: 'ApplicationContextPlugin' }),
+          expect.objectContaining({ pluginName: 'HttpContextPlugin' }),
           expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
           expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
         ])
@@ -182,6 +199,7 @@ describe('BrowserTracker', () => {
       );
       expect(testTracker.plugins?.plugins).toEqual(
         expect.not.arrayContaining([
+          expect.objectContaining({ pluginName: 'HttpContextPlugin' }),
           expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
           expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
         ])
