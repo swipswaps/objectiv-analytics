@@ -1,7 +1,7 @@
 {
-  "name": "@objectiv/tracker-browser",
+  "name": "@objectiv/plugin-http-context",
   "version": "0.0.9",
-  "description": "Objectiv Web application analytics tracker for the open taxonomy for analytics",
+  "description": "Plugin for Objectiv trackers to automatically generate and attach HttpContext from document and navigator APIs",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [
@@ -10,12 +10,16 @@
     "web",
     "analytics",
     "events",
-    "taxonomy"
+    "taxonomy",
+    "plugin",
+    "httpcontext",
+    "useragent",
+    "referrer"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/objectiv/objectiv-analytics.git",
-    "directory": "tracker/trackers/browser"
+    "directory": "tracker/plugins/http-context"
   },
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
   "contributors": [
@@ -53,6 +57,7 @@
     "@objectiv/testing-tools": "^0.0.9",
     "@types/jest": "^27.0.3",
     "jest": "^27.4.5",
+    "jest-extended": "^1.1.0",
     "jest-fetch-mock": "^3.0.3",
     "jest-standard-reporter": "^2.0.0",
     "jest-useragent-mock": "^0.1.1",
@@ -62,14 +67,7 @@
     "tsup": "^5.11.13",
     "typescript": "^4.5.5"
   },
-  "dependencies": {
-    "@objectiv/plugin-http-context": "^0.0.9",
-    "@objectiv/plugin-path-context-from-url": "^0.0.9",
-    "@objectiv/plugin-root-location-context-from-url": "^0.0.9",
-    "@objectiv/queue-local-storage": "^0.0.9",
-    "@objectiv/tracker-core": "^0.0.9",
-    "@objectiv/transport-debug": "^0.0.9",
-    "@objectiv/transport-fetch": "^0.0.9",
-    "@objectiv/transport-xhr": "^0.0.9"
+  "peerDependencies": {
+    "@objectiv/tracker-core": "^0.0.9"
   }
 }

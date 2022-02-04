@@ -751,6 +751,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@objectiv/plugin-http-context@^0.0.9, @objectiv/plugin-http-context@workspace:plugins/http-context":
+  version: 0.0.0-use.local
+  resolution: "@objectiv/plugin-http-context@workspace:plugins/http-context"
+  dependencies:
+    "@objectiv/testing-tools": ^0.0.9
+    "@types/jest": ^27.0.3
+    jest: ^27.4.5
+    jest-extended: ^1.1.0
+    jest-fetch-mock: ^3.0.3
+    jest-standard-reporter: ^2.0.0
+    jest-useragent-mock: ^0.1.1
+    prettier: ^2.5.1
+    shx: ^0.3.3
+    ts-jest: ^27.1.2
+    tsup: ^5.11.13
+    typescript: ^4.5.5
+  peerDependencies:
+    "@objectiv/tracker-core": ^0.0.9
+  languageName: unknown
+  linkType: soft
+
 "@objectiv/plugin-path-context-from-url@^0.0.9, @objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url"
@@ -855,6 +876,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
   dependencies:
+    "@objectiv/plugin-http-context": ^0.0.9
     "@objectiv/plugin-path-context-from-url": ^0.0.9
     "@objectiv/plugin-root-location-context-from-url": ^0.0.9
     "@objectiv/queue-local-storage": ^0.0.9
@@ -899,6 +921,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react@workspace:trackers/react"
   dependencies:
+    "@objectiv/plugin-http-context": ^0.0.9
     "@objectiv/plugin-path-context-from-url": ^0.0.9
     "@objectiv/plugin-root-location-context-from-url": ^0.0.9
     "@objectiv/queue-local-storage": ^0.0.9
