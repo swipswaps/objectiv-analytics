@@ -12,7 +12,7 @@ full dataset, and you can output models to SQL with a single command. It include
 enable effective feature creation for datasets that embrace the open taxonomy of analytics.
 
 To get a taste of what you can do with Objectiv Bach, There is a `demo 
-<https://objectiv.io/docs/quickstart-guide>`_ available that enables you to run the full Objectiv pipeline on your local machine. It includes our website as a demo app, a Jupyter Notebook 
+</docs/quickstart-guide>`_ available that enables you to run the full Objectiv pipeline on your local machine. It includes our website as a demo app, a Jupyter Notebook 
 environment with working models and a Metabase environment to output data to.
 
 What is Bach?
