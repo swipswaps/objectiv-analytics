@@ -110,7 +110,9 @@ def test_cut_calculate_buckets() -> None:
     p_series = pd.Series(data=[1, 1, 2, 3, 4, 5, 6, 7, 8], name='a')
     series = get_from_df('cut_df', p_series.to_frame()).a
 
-    result = CutOperation(series=series, bins=bins)._calculate_buckets().sort_values()
+    cut_operation = CutOperation(series=series, bins=bins)
+    bucket_properties_df = cut_operation._calculate_bucket_properties()
+    result = cut_operation._calculate_buckets(bucket_properties_df).sort_values()
     assert isinstance(result, Series)
     expected = pd.Series(
         data=[1, 1, 1, 1, 2, 2, 3, 3, 3],
@@ -145,7 +147,9 @@ def test_cut_calculate_bucket_ranges() -> None:
     p_series = pd.Series(data=[1, 1, 2, 3, 4, 5, 6, 7, 8], name='a')
     series = get_from_df('cut_df', p_series.to_frame()).a
 
-    result = CutOperation(series=series, bins=bins)._calculate_bucket_ranges().sort_values(by='bucket')
+    cut_operation = CutOperation(series=series, bins=bins)
+    bucket_properties_df = cut_operation._calculate_bucket_properties()
+    result = cut_operation._calculate_bucket_ranges(bucket_properties_df).sort_values(by='bucket')
     expect = pd.DataFrame(
         data={
             'bucket': [1, 2, 3],

@@ -1,6 +1,6 @@
 from typing import cast
 
-from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame
+from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64
 from bach.expression import Expression
 
 
@@ -26,11 +26,12 @@ class CutOperation:
         self.include_empty_bins = include_empty_bins
 
     def __call__(self) -> SeriesFloat64:
-        range_df = self._calculate_bucket_ranges()
+        bucket_properties_df = self._calculate_bucket_properties()
+        range_df = self._calculate_bucket_ranges(bucket_properties_df)
 
         df = self.series.to_frame()
         df.reset_index(drop=True, inplace=True)
-        df['bucket'] = self._calculate_buckets()
+        df['bucket'] = self._calculate_buckets(bucket_properties_df)
 
         df = df.merge(
             range_df,
@@ -64,6 +65,8 @@ class CutOperation:
 
         * bin_adjustment: value used to adjust lower/upper bounds of the final bucket ranges.
            Based on (max - min) * RANGE_ADJUSTMENT
+
+        * step: the size of each bucket range
         ** Adjustments are needed in order to have similar bin intervals as in Pandas
         """
         df = self.series.to_frame()
@@ -96,11 +99,10 @@ class CutOperation:
 
         return properties_df
 
-    def _calculate_buckets(self) -> 'Series':
+    def _calculate_buckets(self, bucket_properties_df: 'DataFrame') -> 'Series':
         """
         calculates each bucket for all series values.
         """
-        bucket_properties_df = self._calculate_bucket_properties()
         return self.series.copy_override(
             name='bucket',
             expression=Expression.construct(
@@ -137,17 +139,15 @@ class CutOperation:
             )
         )
 
-    def _calculate_bucket_ranges(self) -> 'DataFrame':
+    def _calculate_bucket_ranges(self, bucket_properties_df: 'DataFrame') -> 'DataFrame':
         """
         Calculates upper and lower bound for each bucket.
         """
-        bucket_properties_df = self._calculate_bucket_properties()
-
         min_series = Series.as_independent_subquery(bucket_properties_df[f'{self.series.name}_min'])
         step_series = Series.as_independent_subquery(bucket_properties_df[f'step'])
 
         # self.series might not have data for all buckets, we need to actually generate the series
-        buckets = SeriesFloat64(
+        buckets = SeriesInt64(
             engine=self.series.engine,
             base_node=self.series.base_node,
             expression=Expression.construct(f'generate_series(1, {self.bins})'),

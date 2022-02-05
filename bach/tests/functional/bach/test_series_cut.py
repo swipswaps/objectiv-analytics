@@ -12,13 +12,13 @@ def test_series_cut() -> None:
     inhabitants = get_bt_with_test_data(full_data_set=True)['inhabitants']
 
     # right == true
-    result_right = inhabitants.cut(bins=bins)
+    result_right = inhabitants.cut(bins=bins).sort_index()
     bounds_right = '(]'
     bin1_right = NumericRange(Decimal('607.215'),  Decimal('23896.25'), bounds=bounds_right)
     bin2_right = NumericRange(Decimal('23896.25'),  Decimal('47092.5'), bounds=bounds_right)
     bin4_right = NumericRange(Decimal('70288.75'), Decimal('93485'), bounds=bounds_right)
     assert_equals_data(
-        result_right.sort_index(),
+        result_right,
         expected_columns=['inhabitants', 'range'],
         expected_data=[
             [700, bin1_right],
@@ -36,13 +36,13 @@ def test_series_cut() -> None:
     )
 
     # right == false
-    result_not_right = inhabitants.cut(bins=bins, right=False)
+    result_not_right = inhabitants.cut(bins=bins, right=False).sort_index()
     bounds_not_right = '[)'
     bin1_not_right = NumericRange(Decimal('700'),  Decimal('23896.25'), bounds=bounds_not_right)
     bin2_not_right = NumericRange(Decimal('23896.25'),  Decimal('47092.5'), bounds=bounds_not_right)
     bin4_not_right = NumericRange(Decimal('70288.75'), Decimal('93577.785'), bounds=bounds_not_right)
     assert_equals_data(
-        result_not_right.sort_index(),
+        result_not_right,
         expected_columns=['inhabitants', 'range'],
         expected_data=[
             [700, bin1_not_right],
@@ -62,8 +62,8 @@ def test_series_cut() -> None:
     inhabitants_pdf = inhabitants.to_pandas()
 
     to_assert = [
-        (pd.cut(inhabitants_pdf, bins=bins), result_right),
-        (pd.cut(inhabitants_pdf, bins=bins, right=False), result_not_right),
+        (pd.cut(inhabitants_pdf, bins=bins).sort_values(), result_right),
+        (pd.cut(inhabitants_pdf, bins=bins, right=False).sort_values(), result_not_right),
     ]
     for expected_pdf, result in to_assert:
         for exp, res in zip(expected_pdf.to_numpy(), result.to_numpy()):
