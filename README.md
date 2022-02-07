@@ -1,18 +1,12 @@
 ![Objectiv Logo](https://objectiv.io/docs/img/logo-objectiv-large.svg "Objectiv Logo")
 
-Objectiv is a complete, self-hosted product analytics stack designed for
-effective data modeling and exploration with minimal gruntwork.
+**Objectiv** enables you to collect model-ready data and run your entire product analytics workflow straight from your notebook. It's designed to skip the typical grunt work: no tracking plans, data cleaning and transformations are required. Just open your notebook and start modeling right away with pandas-like operations that run on the full SQL dataset.
 
 ![Objectiv Stack](https://www.objectiv.io/docs/img/objectiv-stack.svg "Objectiv Stack")
 
-It includes everything you need to answer common product analytics questions now, while
-providing a solid foundation for in-depth analysis & machine learning down the road.
-
-### Highlights
-* Collect [model-ready data](https://www.objectiv.io/docs/tracking/core-concepts) that doesn't require cleaning and transformation
-* Ensure compatibility with many models by validating against an [open analytics taxonomy](https://www.objectiv.io/docs/taxonomy)
-* Build reusable models with [Pandas-like modeling](https://www.objectiv.io/docs/modeling) that runs on the full dataset
-* Chain together custom & [pre-built models](https://www.objectiv.io/docs/open-model-hub) to answer in-depth questions quickly
+It includes what you need to answer common product analytics questions with speed and precision, while
+providing a solid foundation for advanced modeling. You can output models to SQL queries with a single
+command, and Pandas compatability means you can tap into its rich machine learning ecosystem.
 
 Check out [objectiv.io](https://www.objectiv.io) to learn more.
 

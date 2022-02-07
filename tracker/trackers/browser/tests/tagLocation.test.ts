@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsole } from '@objectiv/testing-tools';
+import { matchUUID } from '@objectiv/testing-tools';
 import {
   makePressableContext,
   makeExpandableContext,
@@ -13,7 +13,6 @@ import {
   makeOverlayContext,
   makeContentContext,
 } from '@objectiv/tracker-core';
-import { StructError } from 'superstruct';
 import { tagContent, TaggingAttribute, tagLocation } from '../src';
 
 describe('tagLocation', () => {
@@ -48,7 +47,52 @@ describe('tagLocation', () => {
     // @ts-ignore
     expect(tagLocation({ instance: 'test' })).toBeUndefined();
     // @ts-ignore
+    expect(tagLocation({ instance: { _type: 'nope' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: { _type: 'ContentContext' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: { id: 'nope' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: { _type: 'Nope', id: 'nope' } })).toBeUndefined();
+    // @ts-ignore
     expect(tagLocation({ instance: makeContentContext({ id: 'test' }), options: 'invalid' })).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: null } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: 'nope' } })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: {} } })).toBeUndefined();
+    expect(
+      tagLocation({
+        instance: makeContentContext({ id: 'test' }),
+        // @ts-ignore
+        options: { trackClicks: { waitUntilTracked: 'nope' } },
+      })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: { waitUntilTracked: {} } } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackBlurs: 'nope' } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackVisibility: 'nope' } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackVisibility: {} } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { validate: 'nope' } })
+    ).toBeUndefined();
   });
 
   it('should call `onError` callback when an error occurs', () => {
@@ -58,7 +102,7 @@ describe('tagLocation', () => {
     tagLocation({ instance: {}, onError: errorCallback });
 
     expect(errorCallback).toHaveBeenCalledTimes(1);
-    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(StructError);
+    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(Error);
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
@@ -256,17 +300,5 @@ describe('tagLocation', () => {
     };
 
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
-  });
-
-  it('should not allow extra attributes', () => {
-    expect(mockConsole.log).not.toHaveBeenCalled();
-    const customContentContext = { ...makeContentContext({ id: 'test-overlay' }), extraMetadata: { test: 123 } };
-    const taggingAttributes = tagLocation({
-      instance: customContentContext,
-      onError: (error) => mockConsole.log(error),
-    });
-
-    expect(taggingAttributes).toBeUndefined();
-    expect(mockConsole.log).toHaveBeenCalled();
   });
 });

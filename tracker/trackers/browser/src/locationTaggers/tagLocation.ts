@@ -3,16 +3,16 @@
  */
 
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
-import { create, is, validate } from 'superstruct';
+import { isClickableContext } from '../common/guards/isClickableContext';
+import { isShowableContext } from '../common/guards/isShowableContext';
+import { isTagLocationParameters } from '../common/guards/isTagLocationParameters';
 import { runIfValueIsNotUndefined } from '../common/runIfValueIsNotUndefined';
 import { stringifyLocationContext } from '../common/stringifiers/stringifyLocationContext';
 import { stringifyTrackClicks } from '../common/stringifiers/stringifyTrackClicks';
 import { stringifyTrackVisibility } from '../common/stringifiers/stringifyTrackVisibility';
 import { stringifyValidate } from '../common/stringifiers/stringifyValidate';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
-import { AnyClickableContext, AnyShowableContext, InputContext } from '../definitions/LocationContext';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
 import { TagLocationParameters } from '../definitions/TagLocationParameters';
 import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
 
@@ -32,13 +32,16 @@ import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
  */
 export const tagLocation = (parameters: TagLocationParameters): TagLocationReturnValue => {
   try {
-    // Validate input
-    const { instance, options } = create(parameters, TagLocationParameters);
+    if (!isTagLocationParameters(parameters)) {
+      throw new Error(`Invalid tagLocation parameters: ${JSON.stringify(parameters)}`);
+    }
+
+    const { instance, options } = parameters;
 
     // Determine Context type
-    const isClickable = is(instance, AnyClickableContext);
-    const isInput = is(instance, InputContext);
-    const isShowable = is(instance, AnyShowableContext);
+    const isClickable = isClickableContext(instance);
+    const isInput = instance._type === 'InputContext';
+    const isShowable = isShowableContext(instance);
 
     // Process options. Gather default attribute values
     const trackClicks = options?.trackClicks ?? (isClickable ? true : undefined);
@@ -56,9 +59,6 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
       [TaggingAttribute.trackVisibility]: runIfValueIsNotUndefined(stringifyTrackVisibility, trackVisibility),
       [TaggingAttribute.validate]: runIfValueIsNotUndefined(stringifyValidate, options?.validate),
     };
-
-    // Validate
-    validate(LocationTaggingAttributes, TagLocationAttributes);
 
     // Strip out undefined attributes and return
     getObjectKeys(LocationTaggingAttributes).forEach((key) => {

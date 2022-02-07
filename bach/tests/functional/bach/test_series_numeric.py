@@ -48,8 +48,23 @@ def test_round():
     for i in 0, 3, 5, 9:
         assert bt.const.round(i).expression.is_constant
         assert not bt['0'].round(i).expression.is_constant
-        np.testing.assert_equal(pdf[0].round(i).values, bt['0'].round(i).values)
-        np.testing.assert_equal(pdf[0].round(decimals=i).values, bt['0'].round(decimals=i).values)
+        np.testing.assert_equal(pdf[0].round(i).to_numpy(), bt['0'].round(i).to_numpy())
+        np.testing.assert_equal(pdf[0].round(decimals=i).to_numpy(), bt['0'].round(decimals=i).to_numpy())
+
+
+def test_round_integer():
+    values = [1, 3, 4, 6, 2, 2, 6, 7]
+    pdf = pd.DataFrame(data=values)
+    bt = get_from_df('test_round', pdf)
+
+    for i in 0, 3, 5, 9:
+        result = bt['0'].round(i).sort_values().to_pandas()
+        expected = pdf[0].round(i).sort_values()
+        pd.testing.assert_series_equal(expected, result, check_names=False, check_index=False)
+
+        result2 = bt['0'].round(decimals=i).sort_values().to_pandas()
+        expected2 = pdf[0].round(decimals=i).sort_values()
+        pd.testing.assert_series_equal(expected2, result2, check_names=False, check_index=False)
 
 
 def test_dataframe_agg_skipna_parameter():
@@ -107,3 +122,20 @@ def test_aggregations_sum_mincount():
 
         # We have different nan handling: nan vs None
         assert (math.isnan(pd_agg) and bt_agg_value is None) or bt_agg_value == pd_agg
+
+
+def test_aggregations_quantile():
+    pdf = pd.DataFrame(data={'a': range(5), 'b': [1, 3, 5, 7, 9]})
+    bt = get_from_df('test_aggregations_quantile', pdf)
+
+    quantiles = [0.25, 0.3, 0.5, 0.75, 0.86]
+
+    for column, quantile in zip(pdf.columns, quantiles):
+        expected = pdf[column].quantile(q=quantile)
+        result = bt[column].quantile(q=quantile).to_numpy()[0]
+        assert expected == result
+
+    for column in pdf.columns:
+        expected_all_quantiles = pdf[column].quantile(q=quantiles)
+        result_all_quantiles = bt[column].quantile(q=quantiles).sort_index()
+        pd.testing.assert_series_equal(expected_all_quantiles, result_all_quantiles.to_pandas(), check_names=False)

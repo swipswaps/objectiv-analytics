@@ -2,14 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { coerce, create, string, Struct } from 'superstruct';
-
 /**
  * JSON Objects parser
  */
-export const parseJson = <T = unknown>(stringifiedObject: string | null, struct: Struct<T>): T => {
-  return create(
-    stringifiedObject,
-    coerce(struct, string(), (value) => JSON.parse(value))
-  );
+export const parseJson = (stringifiedObject: string | null) => {
+  if (stringifiedObject === null) {
+    return null;
+  }
+
+  return JSON.parse(stringifiedObject);
 };

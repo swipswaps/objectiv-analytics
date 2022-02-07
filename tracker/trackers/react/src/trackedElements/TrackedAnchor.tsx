@@ -9,5 +9,5 @@ import { TrackedLinkContext, TrackedLinkContextProps } from '../trackedContexts/
  * Generates a TrackedAnchorContext preconfigured with an <a> Element as Component.
  */
 export const TrackedAnchor = React.forwardRef<HTMLAnchorElement, Omit<TrackedLinkContextProps, 'Component'>>(
-  (props, ref) => <TrackedLinkContext {...props} Component={'a'} ref={ref} />
+  (props, ref) => <TrackedLinkContext {...props} forwardHref={true} Component={'a'} ref={ref} />
 );

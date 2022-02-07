@@ -5,6 +5,7 @@
 import { makeContentContext } from '@objectiv/tracker-core';
 import {
   ChildrenTaggingQueries,
+  parseJson,
   parseLocationContext,
   parseTagChildren,
   parseTrackClicks,
@@ -15,14 +16,13 @@ import {
   stringifyTrackVisibility,
   stringifyValidate,
   tagContent,
-  TaggingAttribute,
   TrackClicksAttribute,
   TrackClicksOptions,
   TrackVisibilityAttribute,
   ValidateAttribute,
 } from '../src';
 
-describe('structs', () => {
+describe('parsersAndStringifiers', () => {
   describe('Location Contexts', () => {
     it('Should stringify and parse Section Context', () => {
       const context = makeContentContext({ id: 'test' });
@@ -36,10 +36,16 @@ describe('structs', () => {
     it('Should not stringify objects that are not Location Contexts', () => {
       // @ts-ignore
       expect(() => stringifyLocationContext({ id: 'not a location context' })).toThrow();
+      // @ts-ignore
+      expect(() => stringifyLocationContext({})).toThrow();
     });
 
     it('Should not parse objects that are not stringified Location Contexts', () => {
-      expect(() => parseLocationContext("{ id: 'not a location context' }")).toThrow();
+      expect(() => parseLocationContext(`{ "id": "not a location context" }`)).toThrow();
+    });
+
+    it('Should not parse objects that are invalid Location Contexts', () => {
+      expect(() => parseLocationContext(`{ "_type": "Nope", "id": "fake-news" }`)).toThrow();
     });
   });
 
@@ -108,7 +114,7 @@ describe('structs', () => {
 
   describe('Validate Attribute', () => {
     it('Should parse to { locationUniqueness: true } by default', () => {
-      const parsedValidateEmptyObject = parseValidate('{}');
+      const parsedValidateEmptyObject = parseValidate('');
       expect(parsedValidateEmptyObject).toStrictEqual({ locationUniqueness: true });
 
       const parsedValidateNull = parseValidate(null);
@@ -140,9 +146,12 @@ describe('structs', () => {
       expect(() => stringifyValidate({ locationUniqueness: null })).toThrow();
     });
 
-    it('Should not parse strings that are not Visibility Attributes or malformed', () => {
-      // @ts-ignore
-      expect(() => parseValidate('')).toThrow();
+    it('Should parse validate Attributes correctly', () => {
+      expect(parseValidate('{"locationUniqueness": false}')).toEqual({ locationUniqueness: false });
+      expect(parseValidate('{"locationUniqueness": true}')).toEqual({ locationUniqueness: true });
+    });
+
+    it('Should not parse strings that are not validate Attributes or malformed', () => {
       // @ts-ignore
       expect(() => parseValidate('{"whatIsThis":true}')).toThrow();
       // @ts-ignore
@@ -189,11 +198,6 @@ describe('structs', () => {
           ...childQuery,
           tagAs: {
             ...childQuery.tagAs,
-            [TaggingAttribute.parentElementId]: undefined,
-            [TaggingAttribute.trackBlurs]: undefined,
-            [TaggingAttribute.trackClicks]: undefined,
-            [TaggingAttribute.trackVisibility]: undefined,
-            [TaggingAttribute.validate]: undefined,
           },
         }))
       );
@@ -201,72 +205,72 @@ describe('structs', () => {
 
     it('Should not stringify objects that are not Children Attributes objects or invalid ones', () => {
       // @ts-ignore
-      expect(() => stringifyChildrenAttribute('string')).toThrow();
+      expect(() => stringifyTagChildren('string')).toThrow();
       // @ts-ignore
-      expect(() => stringifyChildrenAttribute(true)).toThrow();
+      expect(() => stringifyTagChildren(true)).toThrow();
       // @ts-ignore
-      expect(() => stringifyChildrenAttribute([null, 1, 2, 3])).toThrow();
+      expect(() => stringifyTagChildren([null, 1, 2, 3])).toThrow();
       // @ts-ignore
-      expect(() => stringifyChildrenAttribute([undefined])).toThrow();
+      expect(() => stringifyTagChildren([undefined])).toThrow();
       // @ts-ignore
-      expect(() => stringifyChildrenAttribute([true])).toThrow();
+      expect(() => stringifyTagChildren([true])).toThrow();
       // @ts-ignore
-      expect(() => stringifyChildrenAttribute([false])).toThrow();
+      expect(() => stringifyTagChildren([false])).toThrow();
       // @ts-ignore
-      expect(() => stringifyChildrenAttribute([{}])).toThrow();
+      expect(() => stringifyTagChildren([{}])).toThrow();
       // @ts-ignore
-      expect(() => stringifyChildrenAttribute([{ queryAll: '#id' }])).toThrow();
+      expect(() => stringifyTagChildren([{ queryAll: '#id' }])).toThrow();
       // @ts-ignore
-      expect(() => stringifyChildrenAttribute([{ queryAll: '#id', tagAs: 'invalid' }])).toThrow();
+      expect(() => stringifyTagChildren([{ queryAll: '#id', tagAs: 'invalid' }])).toThrow();
     });
 
     it('Should not parse strings that are not Visibility Attributes or malformed', () => {
       // @ts-ignore
-      expect(() => parseChildrenAttribute()).toThrow();
+      expect(() => parseTagChildren()).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute(null)).toThrow();
+      expect(() => parseTagChildren(null)).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute(undefined)).toThrow();
+      expect(() => parseTagChildren(undefined)).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute(true)).toThrow();
+      expect(() => parseTagChildren(true)).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute(false)).toThrow();
+      expect(() => parseTagChildren(false)).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute(0)).toThrow();
+      expect(() => parseTagChildren(0)).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute(1)).toThrow();
+      expect(() => parseTagChildren(1)).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('undefined')).toThrow();
+      expect(() => parseTagChildren('undefined')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('null')).toThrow();
+      expect(() => parseTagChildren('null')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('true')).toThrow();
+      expect(() => parseTagChildren('true')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('false')).toThrow();
+      expect(() => parseTagChildren('false')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('0')).toThrow();
+      expect(() => parseTagChildren('0')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('1')).toThrow();
+      expect(() => parseTagChildren('1')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('{}')).toThrow();
+      expect(() => parseTagChildren('{}')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('[[]]')).toThrow();
+      expect(() => parseTagChildren('[[]]')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('[null]')).toThrow();
+      expect(() => parseTagChildren('[null]')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('[true]')).toThrow();
+      expect(() => parseTagChildren('[true]')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('[false]')).toThrow();
+      expect(() => parseTagChildren('[false]')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('[0]')).toThrow();
+      expect(() => parseTagChildren('[0]')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('[1]')).toThrow();
+      expect(() => parseTagChildren('[1]')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('[{}]')).toThrow();
+      expect(() => parseTagChildren('[{}]')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('[[]]')).toThrow();
+      expect(() => parseTagChildren('[[]]')).toThrow();
       // @ts-ignore
-      expect(() => parseChildrenAttribute('[{]')).toThrow();
+      expect(() => parseTagChildren('[{]')).toThrow();
     });
   });
 
@@ -285,10 +289,6 @@ describe('structs', () => {
       },
       {
         attribute: { waitUntilTracked: true },
-        options: { waitForQueue: {}, flushQueue: true },
-      },
-      {
-        attribute: { waitUntilTracked: {} },
         options: { waitForQueue: {}, flushQueue: true },
       },
       {
@@ -326,6 +326,12 @@ describe('structs', () => {
 
         expect(trackClickOptions).toStrictEqual(testCase.options);
       });
+    });
+  });
+
+  describe('JSON edge cases', () => {
+    it('Should return null', () => {
+      expect(parseJson(null)).toBeNull();
     });
   });
 });

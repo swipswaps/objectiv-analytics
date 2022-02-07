@@ -3,7 +3,7 @@
  */
 
 import { makeNavigationContext } from '@objectiv/tracker-core';
-import { create } from 'superstruct';
+import { isLocationTaggerParameters } from '../common/guards/isLocationTaggerParameters';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { LocationTaggerParameters } from '../definitions/LocationTaggerParameters';
 import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
@@ -14,7 +14,10 @@ import { tagLocation } from './tagLocation';
  */
 export const tagNavigation = (parameters: LocationTaggerParameters): TagLocationReturnValue => {
   try {
-    const { id, options } = create(parameters, LocationTaggerParameters);
+    if (!isLocationTaggerParameters(parameters)) {
+      throw new Error(`Invalid location tagger parameters: ${JSON.stringify(parameters)}`);
+    }
+    const { id, options } = parameters;
     return tagLocation({ instance: makeNavigationContext({ id }), options, onError: parameters.onError });
   } catch (error) {
     return trackerErrorHandler(error, parameters);

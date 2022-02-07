@@ -136,5 +136,5 @@ def test_to_pandas():
     bt['a'] = uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')
     bt['c'] = SeriesUuid.sql_gen_random_uuid(bt)
     bt[['a', 'c']].to_pandas()
-    assert bt[['a']].values[0] == [uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')]
-    assert type(bt[['a']].values[0][0]) == type(uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264'))
+    assert bt[['a']].to_numpy()[0] == [uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264')]
+    assert type(bt[['a']].to_numpy()[0][0]) == type(uuid.UUID('0022c7dd-074b-4a44-a7cb-b7716b668264'))

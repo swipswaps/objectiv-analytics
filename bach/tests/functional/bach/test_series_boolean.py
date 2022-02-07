@@ -22,7 +22,7 @@ def test_to_pandas():
     bt['t'] = True
     bt['f'] = False
     bt[['t', 'f']].to_pandas()
-    numpy.testing.assert_array_equal(bt[['t', 'f']].values[0] , [True, False])
+    numpy.testing.assert_array_equal(bt[['t', 'f']].to_numpy()[0] , [True, False])
 
     
 def test_operations():

@@ -1,12 +1,16 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import warnings
 from abc import ABC, abstractmethod
 from copy import copy
-from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping
+from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
+    TypeVar
 from uuid import UUID
 
+import numpy
 import pandas
+from sqlalchemy.future import Engine
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 
@@ -15,11 +19,15 @@ from bach.expression import Expression, NonAtomicExpression, ConstValueExpressio
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel
 from bach.types import value_to_dtype
+from sql_models.constants import NotSet, not_set
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
     from bach.series import SeriesBoolean
+    from sql_models.model import SqlModel
 
+T = TypeVar('T', bound='Series')
+TSqlModel = TypeVar('TSqlModel', bound='SqlModel')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
@@ -59,7 +67,8 @@ class Series(ABC):
                  name: str,
                  expression: Expression,
                  group_by: Optional['GroupBy'],
-                 sorted_ascending: Optional[bool] = None):
+                 sorted_ascending: Optional[bool],
+                 index_sorting: List[bool]):
         """
         Initialize a new Series object.
         If a Series is associated with a DataFrame. The engine, base_node and index
@@ -87,6 +96,8 @@ class Series(ABC):
         :param expression: Expression that this Series represents
         :param group_by: The requested aggregation for this series.
         :param sorted_ascending: None for no sorting, True for sorted ascending, False for sorted descending
+        :param index_sorting: list of bools indicating whether to sort ascending/descending on the different
+            columns of the index. Empty list for no sorting on index.
         """
         if index == {} and group_by and group_by.index != {}:
             # not a completely watertight check, because a group_by on {} is valid.
@@ -95,6 +106,11 @@ class Series(ABC):
             raise ValueError(f'Series and aggregation index do not match: {group_by.index} != {index}')
         if not group_by and expression.has_aggregate_function:
             raise ValueError('Expression has an aggregation function set, but there is no group_by')
+        if sorted_ascending is not None and index_sorting:
+            raise ValueError('Series cannot be sorted by both value and index.')
+        if index_sorting and len(index_sorting) != len(index):
+            raise ValueError(f'Length of index_sorting ({len(index_sorting)}) should match '
+                             f'length of index ({len(index)}).')
 
         self._engine = engine
         self._base_node = base_node
@@ -103,6 +119,21 @@ class Series(ABC):
         self._expression = expression
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
+        self._index_sorting = index_sorting
+
+    def _update_self_from_series(self, series: 'Series') -> 'Series':
+        """
+        INTERNAL: Modify self by copying all properties of 'df' to self. Returns self.
+        """
+        self._engine = series._engine
+        self._base_node = series._base_node
+        self._index = series._index.copy()
+        self._name = series._name
+        self._expression = series._expression
+        self._group_by = series._group_by
+        self._sorted_ascending = series._sorted_ascending
+        self._index_sorting = series._index_sorting
+        return self
 
     @property
     @classmethod
@@ -248,9 +279,16 @@ class Series(ABC):
     @property
     def sorted_ascending(self) -> Optional[bool]:
         """
-        Get this Series' sorting, if any
+        Get this Series' sorting by value. None indicates that the Series is not sorted by value.
         """
         return self._sorted_ascending
+
+    @property
+    def index_sorting(self) -> List[bool]:
+        """
+        Get this Series' index sorting. An empty list indicates no sorting by index.
+        """
+        return self._index_sorting
 
     @property
     def expression(self) -> Expression:
@@ -264,7 +302,8 @@ class Series(ABC):
             name: str,
             expression: Expression,
             group_by: Optional['GroupBy'],
-            sorted_ascending: Optional[bool] = None
+            sorted_ascending: Optional[bool] = None,
+            index_sorting: List[bool] = None
     ):
         """ INTERNAL: Create an instance of this class. """
         return cls(
@@ -274,7 +313,8 @@ class Series(ABC):
             name=name,
             expression=expression,
             group_by=group_by,
-            sorted_ascending=sorted_ascending
+            sorted_ascending=sorted_ascending,
+            index_sorting=[] if index_sorting is None else index_sorting
         )
 
     @classmethod
@@ -335,30 +375,37 @@ class Series(ABC):
         """
         return self.copy_override()
 
-    def copy_override(self,
-                      dtype=None,
-                      engine=None,
-                      base_node=None,
-                      index=None,
-                      name=None,
-                      expression=None,
-                      group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
-                      sorted_ascending=None):
+    def copy_override(
+        self: T,
+        dtype: Optional[str] = None,
+        engine: Optional[Engine] = None,
+        base_node: Optional[TSqlModel] = None,
+        index: Optional[Dict[str, 'Series']] = None,
+        name: Optional[str] = None,
+        expression: Optional['Expression'] = None,
+        group_by: Optional[Union['GroupBy', NotSet]] = not_set,
+        sorted_ascending: Optional[Union[bool, NotSet]] = not_set,
+        index_sorting: Optional[List[bool]] = None
+    ) -> T:
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
 
-        Big fat warning: group_by can legally be None, but if you want to set that,
-        set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
+        Special case:
+        * If index is not None, then index_sorting is automatically set to `[]` unless overridden
         """
-        klass = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
+        if index and index_sorting is None:
+            index_sorting = []
+
+        klass: type = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
         return klass(
             engine=self._engine if engine is None else engine,
             base_node=self._base_node if base_node is None else base_node,
             index=self._index if index is None else index,
             name=self._name if name is None else name,
             expression=self._expression if expression is None else expression,
-            group_by=self._group_by if group_by is None else group_by[0],
-            sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending
+            group_by=self._group_by if group_by is not_set else group_by,
+            sorted_ascending=self._sorted_ascending if sorted_ascending is not_set else sorted_ascending,
+            index_sorting=self._index_sorting if index_sorting is None else index_sorting
         )
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
@@ -414,10 +461,17 @@ class Series(ABC):
         """
         .values property accessor akin pandas.Series.values
 
+        .. warning::
+           We recommend using :meth:`Series.to_numpy` instead.
+
         .. note::
             This function queries the database.
         """
-        return self.to_pandas().values
+        warnings.warn(
+            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
+            category=DeprecationWarning,
+        )
+        return self.to_numpy()
 
     @property
     def value(self):
@@ -431,7 +485,7 @@ class Series(ABC):
         if not self.expression.is_single_value:
             raise ValueError('value accessor only supported for single value expressions. '
                              'Use .values instead')
-        return self.values[0]
+        return self.to_numpy()[0]
 
     @property
     def array(self):
@@ -443,7 +497,18 @@ class Series(ABC):
         """
         return self.to_pandas().array
 
-    def sort_values(self, ascending=True):
+    def to_numpy(self) -> numpy.ndarray:
+        """
+        Return a Numpy representation of the Series akin :py:attr:`pandas.Series.to_numpy`
+
+        :returns: Returns the values of the Series as numpy.ndarray.
+
+        .. note::
+            This function queries the database.
+        """
+        return self.to_pandas().to_numpy()
+
+    def sort_values(self, *, ascending=True):
         """
         Sort this Series by its values.
         Returns a new instance and does not actually modify the instance it is called on.
@@ -452,6 +517,30 @@ class Series(ABC):
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
             return self
         return self.copy_override(sorted_ascending=ascending)
+
+    def sort_index(self: T, *, ascending: Union[List[bool], bool] = True) -> T:
+        """
+        Sort this Series by its index.
+        Returns a new instance and does not modify the instance it is called on.
+
+        :param ascending: either a bool indicating whether to sort ascending or descending, or a list of
+            bools indicating ascending/descending for each of the index levels/columns.
+
+        """
+        if isinstance(ascending, list):
+            if len(ascending) != len(self.index):
+                raise ValueError(f'Length of ascending ({len(ascending)}) should match '
+                                 f'index levels ({len(self.index)}).')
+            ascending_list = ascending
+        else:
+            ascending_list = [ascending] * len(self.index)
+        if not all(isinstance(asc, bool) for asc in ascending_list):
+            raise ValueError('Parameter ascending should be a bool or a list of bools')
+
+        return self.copy_override(
+            sorted_ascending=None,
+            index_sorting=ascending_list
+        )
 
     def view_sql(self):
         return self.to_frame().view_sql()
@@ -464,6 +553,11 @@ class Series(ABC):
         """
         if self._sorted_ascending is not None:
             order_by = [SortColumn(expression=self.expression, asc=self._sorted_ascending)]
+        elif self.index_sorting:
+            order_by = []
+            for i, index_series in enumerate(self.index.values()):
+                asc = self.index_sorting[i]
+                order_by.append(SortColumn(expression=index_series.expression, asc=asc))
         else:
             order_by = []
         from bach.savepoints import Savepoints
@@ -474,7 +568,8 @@ class Series(ABC):
             series={self._name: self},
             group_by=self._group_by,
             order_by=order_by,
-            savepoints=Savepoints()
+            savepoints=Savepoints(),
+            variables={}
         )
 
     @staticmethod
@@ -504,7 +599,7 @@ class Series(ABC):
             # The expression is lost when materializing
             expr = SingleValueExpression(expr)
 
-        s = series.copy_override(expression=expr, dtype=dtype, index={}, group_by=[None])
+        s = series.copy_override(expression=expr, dtype=dtype, index={}, group_by=None)
         return s
 
     def exists(self):
@@ -571,7 +666,8 @@ class Series(ABC):
                 self.expression == other.expression and
                 # avoid loops here.
                 (recursion == 'GroupBy' or self.group_by == other.group_by) and
-                self._sorted_ascending == other._sorted_ascending
+                self.sorted_ascending == other.sorted_ascending and
+                self.index_sorting == other.index_sorting
         )
 
     def __getitem__(self, key: Union[Any, slice]):
@@ -974,16 +1070,21 @@ class Series(ABC):
                 # we're creating an aggregation on everything, this will yield one value
                 expression = SingleValueExpression(expression)
 
-            return self.copy_override(dtype=derived_dtype,
-                                      index=partition.index,
-                                      group_by=[partition],
-                                      expression=expression)
+            return self.copy_override(
+                dtype=derived_dtype,
+                index=partition.index,
+                group_by=partition,
+                expression=expression,
+                index_sorting=[],
+            )
         else:
             # The window expression already contains the full partition and sorting, no need
             # to keep that with this series, the expression can be used without any of those.
-            return self.copy_override(dtype=derived_dtype,
-                                      group_by=[None],
-                                      expression=partition.get_window_expression(expression))
+            return self.copy_override(
+                dtype=derived_dtype,
+                group_by=None,
+                expression=partition.get_window_expression(expression),
+            )
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
         # count is not constant because it depends on the number of rows in the selection.
@@ -1157,9 +1258,60 @@ class Series(ABC):
             self.dtype
         )
 
+    def append(
+        self,
+        other: Union['Series', List['Series']],
+        ignore_index: bool = False,
+    ) -> 'Series':
+        """
+        Append rows of other series to the caller series.
+
+        :param other: objects to be added
+        :param ignore_index: if true, drops indexes of all objects to be appended
+
+        :return:  a new series with all rows from appended other or self if other is empty.
+        """
+        from bach.concat import SeriesConcatOperation
+        if not other:
+            return self
+
+        other_series = other if isinstance(other, list) else [other]
+        concatenated_series = SeriesConcatOperation(
+            objects=[self] + other_series,
+            ignore_index=ignore_index,
+        )()
+        return concatenated_series
+
+    def drop_duplicates(
+        self,
+        keep: Union[str, bool] = 'first',
+        inplace: bool = False,
+    ) -> Optional['Series']:
+        """
+        Return a series with duplicated rows removed.
+        :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
+         - `first`: drop all occurrences except the first one
+         - `last`:  drop all occurrences except the last one
+         - False: drops all duplicates
+         If no value is provided, first occurrences will be kept by default.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+
+        :return: a new series with dropped duplicates if inplace = False, otherwise None.
+        """
+        df = self.to_frame().drop_duplicates(keep=keep)
+        assert isinstance(df, DataFrame)
+        df.materialize(inplace=True)
+
+        result = df.all_series[self.name]
+        if not inplace:
+            return result
+
+        self._update_self_from_series(result)
+        return None
+
 
 def const_to_series(base: Union[Series, DataFrame],
-                    value: Union[Series, int, float, str, UUID],
+                    value: Optional[Union[Series, int, float, str, UUID]],
                     name: str = None) -> Series:
     """
     INTERNAL: Take a value and return a Series representing a column with that value.

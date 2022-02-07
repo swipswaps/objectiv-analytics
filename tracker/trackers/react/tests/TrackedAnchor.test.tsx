@@ -46,4 +46,26 @@ describe('TrackedAnchor', () => {
       })
     );
   });
+
+  it('should forwardHref to the given Component', () => {
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
+
+    const { container } = render(
+      <ObjectivProvider tracker={tracker}>
+        <TrackedAnchor href={'/some-url'} id={'test'}>
+          Trigger Event
+        </TrackedAnchor>
+      </ObjectivProvider>
+    );
+
+    expect(container).toMatchInlineSnapshot(`
+      <div>
+        <a
+          href="/some-url"
+        >
+          Trigger Event
+        </a>
+      </div>
+    `);
+  });
 });

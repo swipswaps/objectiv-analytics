@@ -163,8 +163,11 @@ Conversion, reshaping, sorting
 .. autosummary::
     :toctree: Series
 
+    Series.sort_index
     Series.sort_values
     Series.fillna
+    Series.append
+    Series.drop_duplicates
 
 Function application, aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -197,6 +200,7 @@ Numeric
     :toctree: Series
 
     SeriesAbstractNumeric.mean
+    SeriesAbstractNumeric.quantile
     SeriesAbstractNumeric.sem
     SeriesAbstractNumeric.sum
     SeriesAbstractNumeric.std

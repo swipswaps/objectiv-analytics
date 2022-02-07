@@ -2,14 +2,16 @@
 Copyright 2021 Objectiv B.V.
 """
 import typing
-from typing import Dict, TypeVar, Tuple, List, Optional, Mapping, Hashable
+from typing import Dict, TypeVar, Tuple, List, Optional, Mapping, Hashable, Union
 
 from bach.expression import Expression, get_variable_tokens, VariableToken
 from bach.types import value_to_dtype, get_series_type_from_dtype
 from sql_models.util import quote_identifier
-from sql_models.model import CustomSqlModelBuilder, SqlModel, SqlModelSpec, Materialization
+from sql_models.model import CustomSqlModelBuilder, SqlModel, Materialization, SqlModelSpec
+from sql_models.constants import NotSet, not_set
 
 T = TypeVar('T', bound='SqlModelSpec')
+TBachSqlModel = TypeVar('TBachSqlModel', bound='BachSqlModel')
 
 
 if typing.TYPE_CHECKING:
@@ -28,7 +30,7 @@ class BachSqlModel(SqlModel[T]):
     """
     def __init__(self,
                  model_spec: T,
-                 properties: Mapping[str, Hashable],
+                 placeholders: Mapping[str, Hashable],
                  references: Mapping[str, 'SqlModel'],
                  materialization: Materialization,
                  materialization_name: Optional[str],
@@ -41,7 +43,7 @@ class BachSqlModel(SqlModel[T]):
         self._columns = columns
         super().__init__(
             model_spec=model_spec,
-            properties=properties,
+            placeholders=placeholders,
             references=references,
             materialization=materialization,
             materialization_name=materialization_name)
@@ -51,17 +53,50 @@ class BachSqlModel(SqlModel[T]):
         """ Columns returned by the query of this model, in order."""
         return self._columns
 
+    def copy_override(
+            self: TBachSqlModel,
+            *,
+            model_spec: T = None,
+            placeholders: Mapping[str, Hashable] = None,
+            references: Mapping[str, 'SqlModel'] = None,
+            materialization: Materialization = None,
+            materialization_name: Union[Optional[str], NotSet] = not_set,
+            columns: Tuple[str, ...] = None
+    ) -> TBachSqlModel:
+        """
+        Similar to super class's implementation, but adds optional 'columns' parameter
+        """
+        materialization_name_value = \
+            self.materialization_name if materialization_name is not_set else materialization_name
+        return self.__class__(
+            model_spec=self.model_spec if model_spec is None else model_spec,
+            placeholders=self.placeholders if placeholders is None else placeholders,
+            references=self.references if references is None else references,
+            materialization=self.materialization if materialization is None else materialization,
+            materialization_name=materialization_name_value,
+            columns=self.columns if columns is None else columns
+        )
+
     @classmethod
     def from_sql_model(cls, sql_model: SqlModel, columns: Tuple[str, ...]) -> 'BachSqlModel':
         """ From any SqlModel create a BachSqlModel with the given column definitions. """
         return cls(
             model_spec=sql_model.model_spec,
-            properties=sql_model.properties,
+            placeholders=sql_model.placeholders,
             references=sql_model.references,
             materialization=sql_model.materialization,
             materialization_name=sql_model.materialization_name,
             columns=columns
         )
+
+    @classmethod
+    def _get_placeholders(
+        cls,
+        variables: Dict['DtypeNamePair', Hashable],
+        expressions: List[Expression],
+    ) -> Dict[str, str]:
+        filtered_variables = filter_variables(variables, expressions)
+        return get_variable_values_sql(filtered_variables)
 
 
 class SampleSqlModel(BachSqlModel):
@@ -77,36 +112,88 @@ class SampleSqlModel(BachSqlModel):
     See the DataFrame.sample() implementation for more information
     """
     def __init__(self,
-                 table_name: str,
-                 previous: SqlModel,
+                 model_spec: T,
+                 placeholders: Mapping[str, Hashable],
+                 references: Mapping[str, 'SqlModel'],
+                 materialization: Materialization,
+                 materialization_name: Optional[str],
                  columns: Tuple[str, ...],
-                 name: str = 'sample_node'):
+                 previous: BachSqlModel
+                 ):
         self.previous = previous
-        sql = 'SELECT * FROM {table_name}'
         super().__init__(
+            model_spec=model_spec,
+            placeholders=placeholders,
+            references=references,
+            materialization=materialization,
+            materialization_name=materialization_name,
+            columns=columns
+        )
+
+    def copy_override(
+            self: 'SampleSqlModel',
+            *,
+            model_spec: T = None,
+            placeholders: Mapping[str, Hashable] = None,
+            references: Mapping[str, 'SqlModel'] = None,
+            materialization: Materialization = None,
+            materialization_name: Union[Optional[str], NotSet] = not_set,
+            columns: Tuple[str, ...] = None,
+            previous: BachSqlModel = None
+    ) -> 'SampleSqlModel':
+        """
+        Similar to super class's implementation, but adds optional 'previous' parameter
+        """
+        materialization_name_value = \
+            self.materialization_name if materialization_name is not_set else materialization_name
+        return self.__class__(
+            model_spec=self.model_spec if model_spec is None else model_spec,
+            placeholders=self.placeholders if placeholders is None else placeholders,
+            references=self.references if references is None else references,
+            materialization=self.materialization if materialization is None else materialization,
+            materialization_name=materialization_name_value,
+            columns=self.columns if columns is None else columns,
+            previous=self.previous if previous is None else previous
+        )
+
+    @staticmethod
+    def get_instance(*,
+                     table_name: str,
+                     previous: BachSqlModel,
+                     columns: Tuple[str, ...],
+                     name: str = 'sample_node') -> 'SampleSqlModel':
+        """ Helper function to instantiate a SampleSqlModel """
+        sql = 'SELECT * FROM {table_name}'
+        return SampleSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            properties={'table_name': quote_identifier(table_name)},
+            placeholders={'table_name': quote_identifier(table_name)},
             references={},
             materialization=Materialization.CTE,
             materialization_name=None,
-            columns=columns
+            columns=columns,
+            previous=previous
         )
 
 
 class CurrentNodeSqlModel(BachSqlModel):
-    def __init__(self, *,
-                 name: str,
-                 column_names: Tuple[str, ...],
-                 column_exprs: List[Expression],
-                 where_clause: Optional[Expression],
-                 group_by_clause: Optional[Expression],
-                 having_clause: Optional[Expression],
-                 order_by_clause: Optional[Expression],
-                 limit_clause: Expression,
-                 previous_node: BachSqlModel,
-                 variables: Dict['DtypeNamePair', Hashable]):
+    @staticmethod
+    def get_instance(
+        *,
+        name: str,
+        column_names: Tuple[str, ...],
+        column_exprs: List[Expression],
+        distinct: bool,
+        where_clause: Optional[Expression],
+        group_by_clause: Optional[Expression],
+        having_clause: Optional[Expression],
+        order_by_clause: Optional[Expression],
+        limit_clause: Expression,
+        previous_node: BachSqlModel,
+        variables: Dict['DtypeNamePair', Hashable],
+    ) -> 'CurrentNodeSqlModel':
 
         columns_str = ', '.join(expr.to_sql() for expr in column_exprs)
+        distinct_stmt = ' distinct ' if distinct else ''
         where_str = where_clause.to_sql() if where_clause else ''
         group_by_str = group_by_clause.to_sql() if group_by_clause else ''
         having_str = having_clause.to_sql() if having_clause else ''
@@ -114,7 +201,7 @@ class CurrentNodeSqlModel(BachSqlModel):
         limit_str = limit_clause.to_sql() if limit_clause else ''
 
         sql = (
-            f"select {columns_str} \n"
+            f"select {distinct_stmt}{columns_str} \n"
             f"from {{{{prev}}}} \n"
             f"{where_str} \n"
             f"{group_by_str} \n"
@@ -128,13 +215,9 @@ class CurrentNodeSqlModel(BachSqlModel):
         all_expressions = column_exprs + [expr for expr in nullable_expressions if expr is not None]
         references = construct_references({'prev': previous_node}, all_expressions)
 
-        # Set all relevant variables as properties
-        filtered_variables = filter_variables(variables, all_expressions)
-        properties = get_variable_values_sql(filtered_variables)
-
-        super().__init__(
+        return CurrentNodeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            properties=properties,
+            placeholders=BachSqlModel._get_placeholders(variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
@@ -204,10 +287,10 @@ def get_variable_values_sql(variable_values: Dict['DtypeNamePair', Hashable]) ->
         value_dtype = value_to_dtype(value)
         if dtype != value_dtype:  # should never happen
             Exception(f'Dtype of value {value}, {value_dtype} does not match registered dtype {dtype}')
-        property_name = VariableToken.dtype_name_to_property_name(dtype=dtype, name=name)
+        placeholder_name = VariableToken.dtype_name_to_placeholder_name(dtype=dtype, name=name)
         series_type = get_series_type_from_dtype(dtype)
         expr = series_type.supported_value_to_literal(value)
         double_escaped_sql = expr.to_sql()
         sql = double_escaped_sql.format().format()
-        result[property_name] = sql
+        result[placeholder_name] = sql
     return result

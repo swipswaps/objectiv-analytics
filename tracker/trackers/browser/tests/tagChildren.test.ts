@@ -2,7 +2,6 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { StructError } from 'superstruct';
 import { parseTagChildren, stringifyTagChildren, tagChild, tagChildren, tagContent, TaggingAttribute } from '../src';
 
 describe('tagChild and tagChildren', () => {
@@ -24,6 +23,8 @@ describe('tagChild and tagChildren', () => {
     expect(tagChildren()).toBeUndefined();
     // @ts-ignore
     expect(tagChild([])).toBeUndefined();
+    // @ts-ignore
+    expect(tagChild({ queryAll: 'test', tagAs: {} })).toBeUndefined();
     // @ts-ignore
     expect(tagChild({ tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
@@ -55,7 +56,7 @@ describe('tagChild and tagChildren', () => {
     tagChild({ query: {} }, errorCallback);
 
     expect(errorCallback).toHaveBeenCalledTimes(1);
-    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(StructError);
+    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(Error);
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
