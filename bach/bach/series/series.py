@@ -7,7 +7,7 @@ from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHE
     TypeVar
 from uuid import UUID
 
-import numpy as np
+import numpy
 import pandas
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
@@ -401,11 +401,13 @@ class Series(ABC):
         Returns a(n unsorted) DataFrame with the values of the unstacked index as columns. In case of
         duplicate index values that are unstacked, `aggregation` is used to aggregate the values.
 
+        Series' index should be of at least two levels to unstack.
+
         :param level: selects the level of the index that is unstacked. Currently only -1 supported.
         :param fill_value: replace missing values resulting from unstacking. Should be of same type as the
             series that is unstacked.
-        :param aggregation: method of aggregation, in case of duplicate index values. Supported are 'max' and
-            'min'
+        :param aggregation: method of aggregation, in case of duplicate index values. Supports all aggregation
+            methods that :py:meth:`aggregate` supports.
         :returns: DataFrame
         """
         index_dict = self.index
@@ -413,14 +415,10 @@ class Series(ABC):
             raise NotImplementedError('index must be a multi level index to unstack')
         if level != -1:
             raise NotImplementedError('only last index can be unstacked')
-        if aggregation not in ['max', 'min']:
-            raise ValueError(f"aggregation is '{aggregation}', should be 'min' or 'max'")
-        if fill_value and value_to_dtype(fill_value) != self.dtype:
-            raise TypeError('fill_value should be of same type as the index that is unstacked')
 
         name_index_last, series_last = index_dict.popitem()
         values = series_last.unique().values
-        if None in values or np.nan in values:
+        if None in values or numpy.nan in values:
             raise ValueError("index contains empty values, cannot be unstacked")
         name_series = self.name
         remaining_indexes = list(index_dict.keys())
@@ -429,21 +427,21 @@ class Series(ABC):
         df = df.groupby(remaining_indexes)
 
         series_dict = {}
-        fill_series = const_to_series(base=self, value=fill_value, name='fill_value')
         for column in values:
             new_column_name = str(column)
             new_const_series = const_to_series(self, column, new_column_name)
-            series_dict[new_column_name] = df.all_series[name_series].copy_override(
+            new_series = df.all_series[name_series].copy_override(
                 name=new_column_name,
-                expression=AggregateFunctionExpression.construct(
-                    f"{aggregation}(case when {{}} = {{}} then {name_series} else {{}} end )",
-                    series_last,
-                    new_const_series,
-                    fill_series,
-                )
+                expression=Expression.construct(f'case when {{}} = {{}} then {name_series} end',
+                                                series_last,
+                                                new_const_series)
             )
+            new_series_aggregated = new_series.aggregate(aggregation, group_by=df.group_by)
+            if fill_value:
+                new_series_aggregated = new_series_aggregated.fillna(fill_value)
+            series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
+
         unstacked_df = df.copy_override(series=series_dict)
-        unstacked_df.materialize(inplace=True)
         return unstacked_df
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
@@ -718,7 +716,7 @@ class Series(ABC):
         Evaluate for every row in this series whether the value is missing or NULL.
 
         .. note::
-            Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+            Only NULL values in the Series in the underlying sql table will return True. numpy.nan is not
             checked for.
 
         See Also
@@ -737,7 +735,7 @@ class Series(ABC):
         Evaluate for every row in this series whether the value is not missing or NULL.
 
         .. note::
-          Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+          Only NULL values in the Series in the underlying sql table will return True. numpy.nan is not
           checked for.
 
         See Also
@@ -761,7 +759,7 @@ class Series(ABC):
             type by the series, or a TypeError is raised. Can also be another Series
 
         .. note::
-            Pandas replaces np.nan values, we can only replace NULL.
+            Pandas replaces numpy.nan values, we can only replace NULL.
 
         .. note::
             You can replace None with None, have fun, forever!

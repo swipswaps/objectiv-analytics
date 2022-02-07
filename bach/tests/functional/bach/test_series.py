@@ -478,6 +478,12 @@ def test_series_append_same_dtype_different_index() -> None:
 
 def test_series_unstack():
     bt = get_bt_with_test_data(full_data_set=True)
+    bt['municipality_none'] = bt[bt.skating_order < 10].municipality
+    stacked_bt = bt.groupby(['city','municipality_none']).inhabitants.sum()
+
+    with pytest.raises(Exception, match='index contains empty values, cannot be unstacked'):
+        stacked_bt.unstack()
+
     stacked_bt = bt.groupby(['city','municipality']).inhabitants.sum()
     unstacked_bt = stacked_bt.unstack()
 
@@ -519,8 +525,9 @@ def test_series_unstack():
             ['Harlingen', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'Harns'],
             ['Leeuwarden', 'Ljouwert', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'],
             ['Noardeast-Fryslân', 'buh', 'buh', 'Dokkum', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'],
-            ['Súdwest-Fryslân', 'buh', 'buh', 'buh', 'Snits', 'Drylts', 'buh', 'Starum', 'Hylpen', 'Warkum', 'buh', 'buh'],
+            ['Súdwest-Fryslân', 'buh', 'buh', 'buh', 'Snits', 'Drylts', 'buh', 'Starum', 'Hylpen', 'Warkum', 'Boalsert', 'buh'],
             ['Waadhoeke', 'buh', 'Frjentsjer', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh']
         ],
         order_by='municipality'
     )
+
