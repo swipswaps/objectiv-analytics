@@ -29,8 +29,18 @@ import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
  *  const queueStorage = new LocalStorageQueueStore({ trackerId, console })
  *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
  *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
+ *  const httpContextPlugin = new HttpContextPlugin({ console });
  *  const pathContextFromURLPlugin = new PathContextFromURLPlugin({ console });
- *  const plugins = new TrackerPlugins({ plugins: [ applicationContextPlugin, pathContextFromURLPlugin ], console });
+ *  const rootLocationContextFromURLPlugin = new RootLocationContextFromURLPlugin({ console });
+ *  const plugins = new TrackerPlugins({
+ *    plugins: [
+ *      applicationContextPlugin,
+ *      httpContextPlugin,
+ *      pathContextFromURLPlugin,
+ *      rootLocationContextFromURLPlugin
+ *    ],
+ *    console
+ *  });
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
  *  See also `makeDefaultTransport`, `makeDefaultQueue` and
@@ -64,7 +74,7 @@ export class BrowserTracker extends Tracker {
       config = {
         ...config,
         transport: makeDefaultTransport(config),
-        queue: makeDefaultQueue(config),
+        queue: config.queue ?? makeDefaultQueue(config),
       };
     }
 
