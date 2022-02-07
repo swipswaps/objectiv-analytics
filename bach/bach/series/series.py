@@ -1289,11 +1289,14 @@ class Series(ABC):
     ) -> Optional['Series']:
         """
         Return a series with duplicated rows removed.
+
         :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
-         - `first`: drop all occurrences except the first one
-         - `last`:  drop all occurrences except the last one
-         - False: drops all duplicates
-         If no value is provided, first occurrences will be kept by default.
+
+            * `first`: drop all occurrences except the first one
+            * `last`:  drop all occurrences except the last one
+            * False: drops all duplicates
+
+            If no value is provided, first occurrences will be kept by default.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
         :return: a new series with dropped duplicates if inplace = False, otherwise None.
