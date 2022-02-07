@@ -481,21 +481,25 @@ def test_series_unstack():
     stacked_bt = bt.groupby(['city','municipality']).inhabitants.sum()
     unstacked_bt = stacked_bt.unstack()
 
+    expected_columns = ['De Friese Meren','Harlingen','Leeuwarden','Noardeast-Fryslân','Súdwest-Fryslân','Waadhoeke']
+    assert sorted(unstacked_bt.data_columns) == expected_columns
+    unstacked_bt_sorted = unstacked_bt.copy_override(series={x: unstacked_bt[x] for x in expected_columns})
+
     assert_equals_data(
-        unstacked_bt,
-        expected_columns=['city', 'Noardeast-Fryslân','Leeuwarden','Súdwest-Fryslân','Harlingen','Waadhoeke','De Friese Meren'],
+        unstacked_bt_sorted,
+        expected_columns=['city'] + expected_columns,
         expected_data=[
-            ['Boalsert', None, None, 10120, None, None, None],
-            ['Dokkum', 12675, None, None, None, None, None],
-            ['Drylts', None, None, 3055, None, None, None],
-            ['Frjentsjer', None, None, None, None, 12760, None],
-            ['Harns', None, None, None, 14740, None, None],
-            ['Hylpen', None, None, 870, None, None, None],
-            ['Ljouwert', None, 93485, None, None, None, None],
-            ['Sleat', None, None, None, None, None, 700],
-            ['Snits', None, None, 33520, None, None, None],
-            ['Starum', None, None, 960, None, None, None],
-            ['Warkum', None, None, 4440, None, None, None]
+            ['Boalsert', None, None, None, None, 10120, None],
+            ['Dokkum', None, None, None, 12675, None, None], 
+            ['Drylts', None, None, None, None, 3055, None],
+            ['Frjentsjer', None, None, None, None, None, 12760],
+            ['Harns', None, 14740, None, None, None, None],
+            ['Hylpen', None, None, None, None, 870, None],
+            ['Ljouwert', None, None, 93485, None, None, None],
+            ['Sleat', 700, None, None, None, None, None],
+            ['Snits', None, None, None, None, 33520, None],
+            ['Starum', None, None, None, None, 960, None],
+            ['Warkum', None, None, None, None, 4440, None]
         ],
         order_by='city'
     )
@@ -503,16 +507,20 @@ def test_series_unstack():
     stacked_bt = bt.groupby(['municipality','skating_order']).city.max()
     unstacked_bt = stacked_bt.unstack(fill_value='buh')
 
+    expected_columns = ['1', '10', '11', '2', '3', '4', '5', '6', '7', '8', '9']
+    assert sorted(unstacked_bt.data_columns) == expected_columns
+    unstacked_bt_sorted = unstacked_bt.copy_override(series={x: unstacked_bt[x] for x in expected_columns})
+
     assert_equals_data(
-        unstacked_bt,
-        expected_columns=['municipality', '11', '9', '3', '5', '4', '10', '6', '2', '7', '1', '8'],
+        unstacked_bt_sorted,
+        expected_columns=['municipality'] + expected_columns,
         expected_data=[
-            ['De Friese Meren', 'buh', 'buh', 'buh', 'buh', 'Sleat', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'], 
-            ['Harlingen', 'buh', 'Harns', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'], 
-            ['Leeuwarden', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'Ljouwert', 'buh'], 
-            ['Noardeast-Fryslân', 'Dokkum', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'], 
-            ['Súdwest-Fryslân', 'buh', 'buh', 'Drylts', 'Starum', 'buh', 'buh', 'Hylpen', 'Snits', 'Warkum', 'buh', 'buh'], 
-            ['Waadhoeke', 'buh', 'buh', 'buh', 'buh', 'buh', 'Frjentsjer', 'buh', 'buh', 'buh', 'buh', 'buh']
+            ['De Friese Meren', 'buh', 'buh', 'buh', 'buh', 'buh', 'Sleat', 'buh', 'buh', 'buh', 'buh', 'buh'],
+            ['Harlingen', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'Harns'],
+            ['Leeuwarden', 'Ljouwert', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'],
+            ['Noardeast-Fryslân', 'buh', 'buh', 'Dokkum', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'],
+            ['Súdwest-Fryslân', 'buh', 'buh', 'buh', 'Snits', 'Drylts', 'buh', 'Starum', 'Hylpen', 'Warkum', 'buh', 'buh'],
+            ['Waadhoeke', 'buh', 'Frjentsjer', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh']
         ],
         order_by='municipality'
     )

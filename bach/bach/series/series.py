@@ -394,7 +394,7 @@ class Series(ABC):
     def unstack(self,
                 level: int = -1,
                 fill_value: Optional[Union[int, float, str, UUID]] = None,
-                aggregation: str = 'max'):
+                aggregation: str = 'max') -> 'DataFrame':
         """
         Pivot a level of the index labels.
 
@@ -415,6 +415,8 @@ class Series(ABC):
             raise NotImplementedError('only last index can be unstacked')
         if aggregation not in ['max', 'min']:
             raise ValueError(f"aggregation is '{aggregation}', should be 'min' or 'max'")
+        if fill_value and value_to_dtype(fill_value) != self.dtype:
+            raise TypeError('fill_value should be of same type as the index that is unstacked')
 
         name_index_last, series_last = index_dict.popitem()
         values = series_last.unique().values
@@ -422,27 +424,27 @@ class Series(ABC):
             raise ValueError("index contains empty values, cannot be unstacked")
         name_series = self.name
         remaining_indexes = list(index_dict.keys())
-        df = self.to_frame().reset_index().groupby(remaining_indexes)  # type: ignore
+        df = self.to_frame()
+        df.reset_index(inplace=True)
+        df = df.groupby(remaining_indexes)
 
         series_dict = {}
+        fill_series = const_to_series(base=self, value=fill_value, name='fill_value')
         for column in values:
-            args = [series_last, const_to_series(self, column, str(column))]
-            else_clause = ''
-            if fill_value is not None:
-                else_clause = 'else {}'
-                fill_series = const_to_series(self, fill_value, 'fill_value')
-                if fill_series.dtype != self.dtype:
-                    raise TypeError('fill_value should be of same type as the index that is unstacked')
-                args = args + [fill_series]
-
-            exp = f"{aggregation}(case when {{}}={{}} then {name_series} {else_clause} end)"
-            series = df[name_series].copy_override(
-                name=str(column),
-                expression=AggregateFunctionExpression.construct(exp, *args)
+            new_column_name = str(column)
+            new_const_series = const_to_series(self, column, new_column_name)
+            series_dict[new_column_name] = df.all_series[name_series].copy_override(
+                name=new_column_name,
+                expression=AggregateFunctionExpression.construct(
+                    f"{aggregation}(case when {{}} = {{}} then {name_series} else {{}} end )",
+                    series_last,
+                    new_const_series,
+                    fill_series,
+                )
             )
-            series_dict[str(column)] = series
-
-        return df.copy_override(series=series_dict).materialize()  # type: ignore
+        unstacked_df = df.copy_override(series=series_dict)
+        unstacked_df.materialize(inplace=True)
+        return unstacked_df
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
