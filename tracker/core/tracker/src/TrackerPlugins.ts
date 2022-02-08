@@ -3,6 +3,7 @@
  */
 
 import { ContextsConfig } from './Context';
+import { isValidIndex } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
@@ -61,14 +62,15 @@ export type TrackerPluginsConfiguration = TrackerPluginConfig & {
  */
 export class TrackerPlugins implements TrackerPluginLifecycleInterface {
   readonly console?: TrackerConsole;
-  readonly plugins: TrackerPluginInterface[];
+  plugins: TrackerPluginInterface[] = [];
 
   /**
    * Plugins can be lazy. Map through them to instantiate them.
    */
   constructor(trackerPluginsConfig: TrackerPluginsConfiguration) {
     this.console = trackerPluginsConfig.console;
-    this.plugins = trackerPluginsConfig.plugins;
+
+    trackerPluginsConfig.plugins.map((plugin) => this.add(plugin));
 
     if (this.console) {
       this.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
@@ -77,6 +79,82 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
       this.console.groupEnd();
       this.console.groupEnd();
     }
+  }
+
+  /**
+   * Gets a Plugin instance by its name. Returns null if the plugin is not found.
+   */
+  get(pluginName: string): TrackerPluginInterface | false {
+    return this.plugins.find((plugin) => plugin.pluginName === pluginName) ?? false;
+  }
+
+  /**
+   * Adds a new Plugin at the end of the plugins list, or at the specified index.
+   */
+  add(plugin: TrackerPluginInterface, index?: number): boolean {
+    if (index !== undefined && !isValidIndex(index)) {
+      if (this.console) {
+        this.console.error(`｢objectiv:TrackerPlugins｣ invalid index.`);
+      }
+      return false;
+    }
+
+    const pluginInstance = this.get(plugin.pluginName);
+
+    if (pluginInstance) {
+      if (this.console) {
+        this.console.error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: already exists. Use "replace" instead.`);
+      }
+
+      return false;
+    }
+
+    // TODO create plugins if they are functions or tuples or strings
+
+    this.plugins.splice(index !== undefined ? index : this.plugins.length, 0, plugin);
+
+    return true;
+  }
+
+  /**
+   * Removes a Plugin by its name.
+   */
+  remove(pluginName: string): boolean {
+    const pluginInstance = this.get(pluginName);
+
+    if (!pluginInstance) {
+      if (this.console) {
+        this.console.error(`｢objectiv:TrackerPlugins｣ ${pluginName}: not found.`);
+      }
+
+      return false;
+    }
+
+    this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== pluginInstance.pluginName);
+
+    return true;
+  }
+
+  /**
+   * Replaces a plugin with a new one of the same type at the same index, unless a new index has been specified.
+   */
+  replace(plugin: TrackerPluginInterface, index?: number): boolean {
+    if (index !== undefined && !isValidIndex(index)) {
+      if (this.console) {
+        this.console.error(`｢objectiv:TrackerPlugins｣ invalid index.`);
+      }
+      return false;
+    }
+
+    const originalIndex = this.plugins.findIndex(({ pluginName }) => pluginName === plugin.pluginName);
+
+    if (!this.remove(plugin.pluginName)) {
+      return false;
+    }
+
+    this.add(plugin, index !== undefined ? index : originalIndex);
+
+    return true;
   }
 
   /**
