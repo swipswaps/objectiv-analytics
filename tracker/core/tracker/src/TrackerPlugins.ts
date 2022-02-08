@@ -115,7 +115,15 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
       throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: already exists. Use "replace" instead.`);
     }
 
+    const spliceIndex = index ?? this.plugins.length;
     this.plugins.splice(index ?? this.plugins.length, 0, plugin);
+
+    if (this.console) {
+      this.console.log(
+        `%｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}.`,
+        'font-weight: bold'
+      );
+    }
   }
 
   /**
@@ -125,12 +133,16 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
     const pluginInstance = this.get(pluginName);
 
     this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== pluginInstance.pluginName);
+
+    if (this.console) {
+      this.console.log(`%｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed.`, 'font-weight: bold');
+    }
   }
 
   /**
    * Replaces a plugin with a new one of the same type at the same index, unless a new index has been specified.
    */
-  replace(plugin: TrackerPluginInterface, index?: number): boolean {
+  replace(plugin: TrackerPluginInterface, index?: number) {
     if (index !== undefined && !isValidIndex(index)) {
       throw new Error(`｢objectiv:TrackerPlugins｣ invalid index.`);
     }
@@ -140,8 +152,6 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
     this.remove(plugin.pluginName);
 
     this.add(plugin, index ?? originalIndex);
-
-    return true;
   }
 
   /**

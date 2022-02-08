@@ -2,9 +2,18 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { mockConsole } from '@objectiv/testing-tools';
 import { TrackerEvent, TrackerPluginInterface, TrackerPlugins } from '../src';
 
 describe('Plugin', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should instantiate when specifying an empty list of Plugins', () => {
     const testPlugins = new TrackerPlugins({ plugins: [] });
     expect(testPlugins).toBeInstanceOf(TrackerPlugins);
@@ -64,9 +73,21 @@ describe('Plugin', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true };
     const pluginC = { pluginName: 'test-pluginC', isUsable: () => true };
-    const testPlugins = new TrackerPlugins({ plugins: [] });
+    const testPlugins = new TrackerPlugins({ plugins: [], console: mockConsole });
+    jest.resetAllMocks();
     testPlugins.add(pluginA);
     testPlugins.add(pluginB);
+    expect(mockConsole.log).toHaveBeenCalledTimes(2);
+    expect(mockConsole.log).toHaveBeenNthCalledWith(
+      1,
+      '%｢objectiv:TrackerPlugins｣ test-pluginA added at index 0.',
+      'font-weight: bold'
+    );
+    expect(mockConsole.log).toHaveBeenNthCalledWith(
+      2,
+      '%｢objectiv:TrackerPlugins｣ test-pluginB added at index 1.',
+      'font-weight: bold'
+    );
     expect(() => testPlugins.add(pluginB)).toThrow(
       '｢objectiv:TrackerPlugins｣ test-pluginB: already exists. Use "replace" instead.'
     );
@@ -105,8 +126,15 @@ describe('Plugin', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true };
     const pluginC = { pluginName: 'test-pluginC', isUsable: () => true };
-    const testPlugins = new TrackerPlugins({ plugins: [pluginA, pluginB, pluginC] });
+    const testPlugins = new TrackerPlugins({ plugins: [pluginA, pluginB, pluginC], console: mockConsole });
+    jest.resetAllMocks();
     testPlugins.remove('test-pluginB');
+    expect(mockConsole.log).toHaveBeenCalledTimes(1);
+    expect(mockConsole.log).toHaveBeenNthCalledWith(
+      1,
+      '%｢objectiv:TrackerPlugins｣ test-pluginB removed.',
+      'font-weight: bold'
+    );
     expect(testPlugins.plugins).toEqual([
       {
         isUsable: expect.any(Function),
@@ -124,7 +152,7 @@ describe('Plugin', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true, parameterA: false };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true, parameterB: false };
     const pluginC = { pluginName: 'test-pluginC', isUsable: () => true, parameterC: false };
-    const testPlugins = new TrackerPlugins({ plugins: [pluginA, pluginB, pluginC] });
+    const testPlugins = new TrackerPlugins({ plugins: [pluginA, pluginB, pluginC], console: mockConsole });
     expect(testPlugins.plugins).toEqual([
       {
         parameterA: false,
@@ -147,7 +175,19 @@ describe('Plugin', () => {
       throw new Error('test-pluginB Plugin not found');
     }
     const newPluginB1 = { ...existingPlugin, parameterB: true };
-    expect(testPlugins.replace(newPluginB1)).toBe(true);
+    jest.resetAllMocks();
+    testPlugins.replace(newPluginB1);
+    expect(mockConsole.log).toHaveBeenCalledTimes(2);
+    expect(mockConsole.log).toHaveBeenNthCalledWith(
+      1,
+      '%｢objectiv:TrackerPlugins｣ test-pluginB removed.',
+      'font-weight: bold'
+    );
+    expect(mockConsole.log).toHaveBeenNthCalledWith(
+      2,
+      '%｢objectiv:TrackerPlugins｣ test-pluginB added at index 1.',
+      'font-weight: bold'
+    );
     expect(testPlugins.plugins).toEqual([
       {
         parameterA: false,
@@ -168,7 +208,7 @@ describe('Plugin', () => {
     const newPluginD = { pluginName: 'test-pluginD', isUsable: () => true };
     expect(() => testPlugins.replace(newPluginD)).toThrow('｢objectiv:TrackerPlugins｣ test-pluginD: not found.');
     const newPluginB2 = { pluginName: 'test-pluginB', isUsable: () => true, newParameter: { a: 1 } };
-    expect(testPlugins.replace(newPluginB2, 0)).toBe(true);
+    testPlugins.replace(newPluginB2, 0);
     expect(testPlugins.plugins).toEqual([
       {
         isUsable: expect.any(Function),
