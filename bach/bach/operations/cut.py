@@ -1,7 +1,10 @@
-from typing import cast
+from typing import cast, List, Union
 
 from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64
 from bach.expression import Expression
+import numpy
+
+from bach.savepoints import Savepoints
 
 
 class CutOperation:
@@ -193,3 +196,81 @@ class CutOperation:
             ),
         )
         return range_df
+
+
+class QCutOperation:
+    series: SeriesAbstractNumeric
+    quantiles: List[int]
+    precision: int
+
+    def __init__(
+        self, series: SeriesAbstractNumeric, q=Union[int, List[int]], precision: int = 3
+    ) -> None:
+        self.series = series
+        self.quantiles = q if isinstance(q, list) else numpy.linspace(0, 1, q + 1)
+        self.precision = precision
+
+    def __call__(self, *args, **kwargs) -> SeriesFloat64:
+        quantile_per_value = self._get_quantile_per_value()
+        return CutOperation(
+            series=quantile_per_value,
+            bins=len(self.quantiles) - 1,
+        )()
+
+    def _get_quantile_per_value(self) -> SeriesAbstractNumeric:
+        q_x_series = {
+            f'q_{q}': self.series.quantile(q=q).copy_override(name=f'q_{q}')
+            for q in self.quantiles
+        }
+
+        initial_series = q_x_series[f'q_{self.quantiles[0]}']
+        quantiles_df = initial_series.to_frame().copy_override(series=q_x_series)
+
+        quantiles_df.materialize(inplace=True)
+
+        df = self.series.to_frame()
+        df.reset_index(drop=True, inplace=True)
+
+        # need to merge in order to compare actual values with quantiles
+        df['on'] = 1
+        quantiles_df['on'] = 1
+        df = df.merge(quantiles_df)
+
+        sorted_quantiles = sorted(self.quantiles, reverse=True)
+        cases = []
+        expression_args = []
+
+        for idx, _ in enumerate(sorted_quantiles):
+            current_q_series = df.all_series[f'q_{sorted_quantiles[idx]}']
+            if idx == 0:
+                # if values are greater than the last quantile, assign null
+                cases.append(f'case when {{}} > {{}} then null')
+                expression_args.extend([self.series, current_q_series])
+                continue
+
+            previous_q_series = df.all_series[f'q_{sorted_quantiles[idx - 1]}']
+            cases.append(
+                f'case when {{}} < {{}} and {{}} <= {{}} then {{}}'
+            )
+            expression_args.extend(
+                [current_q_series, self.series, self.series, previous_q_series, previous_q_series],
+            )
+            if idx == len(self.quantiles) - 1:
+                cases.append(f'{{}}')
+                expression_args.append(current_q_series)
+
+        df['q_tag'] = self.series.copy_override(
+            base_node=df.base_node,
+            expression=Expression.construct(
+                ' else '.join(cases) + ' end ' * len(self.quantiles),
+                *expression_args,
+            ),
+            index={},
+            group_by=None,
+            dtype='float64',
+        )
+        df = df[[self.series.name, 'q_tag']]
+        df.drop_duplicates(inplace=True)
+
+        df = df.set_index(self.series.name).sort_index()
+        return df.all_series['q_tag']

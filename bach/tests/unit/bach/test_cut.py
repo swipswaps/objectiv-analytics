@@ -4,7 +4,7 @@ from psycopg2._range import NumericRange
 from decimal import Decimal
 
 from bach import Series
-from bach.operations.cut import CutOperation
+from bach.operations.cut import CutOperation, QCutOperation
 from tests.functional.bach.test_data_and_utils import get_from_df
 
 PD_TESTING_SETTINGS = {
@@ -31,6 +31,15 @@ def test_cut_operation() -> None:
     expected_wo_right = pd.cut(p_series, bins=10, right=False)
     result_wo_right = CutOperation(series, bins=10, right=False)()
     compare_boundaries(expected_wo_right, result_wo_right)
+
+
+def test_qcut_operation() -> None:
+    p_series = pd.Series(range(100), name='a')
+    series = get_from_df('qcut_df', p_series.to_frame()).a
+
+    expected = pd.qcut(p_series, q=2)
+    result = QCutOperation(series=series, q=2)()
+    compare_boundaries(expected, result)
 
 
 def test_cut_w_include_empty_bins() -> None:
