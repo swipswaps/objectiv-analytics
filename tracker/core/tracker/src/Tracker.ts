@@ -123,6 +123,8 @@ export class Tracker implements TrackerInterface {
       console: trackerConfig.console,
       plugins: makeTrackerDefaultPluginsList(trackerConfig),
     });
+
+    // Process plugins option, if specified
     if (trackerConfig.plugins !== undefined) {
       if (Array.isArray(trackerConfig.plugins)) {
         this.plugins.plugins = trackerConfig.plugins;
