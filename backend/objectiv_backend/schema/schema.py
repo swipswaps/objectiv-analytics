@@ -93,7 +93,7 @@ class HttpContext(AbstractGlobalContext):
         A GlobalContext describing meta information about the agent that sent the event.
 
         Attributes:
-        referer (str):
+        referrer (str):
                 Full URL to HTTP referrer of the current page.
         user_agent (str):
                 User-agent of the agent that sent the event.
@@ -106,13 +106,13 @@ class HttpContext(AbstractGlobalContext):
     _type = 'HttpContext'
 
     def __init__(self,
-                 referer: str,
+                 referrer: str,
                  user_agent: str,
                  remote_address: str,
                  id: str,
                  **kwargs: Optional[Any]):
         """
-        :param referer: 
+        :param referrer:
             Full URL to HTTP referrer of the current page.
         :param user_agent: 
             User-agent of the agent that sent the event.
@@ -123,7 +123,7 @@ class HttpContext(AbstractGlobalContext):
             for Context instance uniqueness.
         """
         AbstractGlobalContext.__init__(self,
-                                       referer=referer,
+                                       referrer=referrer,
                                        user_agent=user_agent,
                                        remote_address=remote_address,
                                        id=id,
