@@ -37,8 +37,8 @@ def test_qcut_operation() -> None:
     p_series = pd.Series(range(100), name='a')
     series = get_from_df('qcut_df', p_series.to_frame()).a
 
-    expected = pd.qcut(p_series, q=2)
-    result = QCutOperation(series=series, q=2)()
+    expected = pd.qcut(p_series, q=[0.25, 0.3, 0.7])
+    result = QCutOperation(series=series, q=[0.9, 0.25, 0.3, 0.7 ])()
     compare_boundaries(expected, result)
 
 

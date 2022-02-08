@@ -199,78 +199,95 @@ class CutOperation:
 
 
 class QCutOperation:
-    series: SeriesAbstractNumeric
-    quantiles: List[int]
-    precision: int
+    """
+    In order to implement this class you should provide the following params:
+    series: A numerical series
+    q: The number of quantiles or list of quantiles to be calculated
 
-    def __init__(
-        self, series: SeriesAbstractNumeric, q=Union[int, List[int]], precision: int = 3
-    ) -> None:
+    returns a new Series containing the quantile ranges per each value on the series.
+
+    Example:
+        QCutOperation(s1, q=4)()   # will calculated quantiles `0, 0.25, 0.5, 0.75, 1`
+        or
+        QCutOperation(s1, q=[0.25, 0.5, 0.75])()
+    """
+
+    series: SeriesAbstractNumeric
+    quantiles: List[float]
+
+    RANGE_SERIES_NAME = 'q_range'
+
+    def __init__(self, series: SeriesAbstractNumeric, q: Union[int, List[float]]) -> None:
         self.series = series
-        self.quantiles = q if isinstance(q, list) else numpy.linspace(0, 1, q + 1)
-        self.precision = precision
+        self.quantiles = q if isinstance(q, list) else numpy.linspace(0, 1, q + 1).tolist()
 
     def __call__(self, *args, **kwargs) -> SeriesFloat64:
-        quantile_per_value = self._get_quantile_per_value()
-        return CutOperation(
-            series=quantile_per_value,
-            bins=len(self.quantiles) - 1,
-        )()
-
-    def _get_quantile_per_value(self) -> SeriesAbstractNumeric:
-        q_x_series = {
-            f'q_{q}': self.series.quantile(q=q).copy_override(name=f'q_{q}')
-            for q in self.quantiles
-        }
-
-        initial_series = q_x_series[f'q_{self.quantiles[0]}']
-        quantiles_df = initial_series.to_frame().copy_override(series=q_x_series)
-
-        quantiles_df.materialize(inplace=True)
-
+        """
+        Gets the quantile range per bucket and assigns the correct range to each value. If the value
+        is not contained in any range, then it will be null.
+        on it, a
+        """
+        quantile_ranges_df = self._get_quantile_ranges()
         df = self.series.to_frame()
         df.reset_index(drop=True, inplace=True)
 
-        # need to merge in order to compare actual values with quantiles
-        df['on'] = 1
-        quantiles_df['on'] = 1
-        df = df.merge(quantiles_df)
-
-        sorted_quantiles = sorted(self.quantiles, reverse=True)
-        cases = []
-        expression_args = []
-
-        for idx, _ in enumerate(sorted_quantiles):
-            current_q_series = df.all_series[f'q_{sorted_quantiles[idx]}']
-            if idx == 0:
-                # if values are greater than the last quantile, assign null
-                cases.append(f'case when {{}} > {{}} then null')
-                expression_args.extend([self.series, current_q_series])
-                continue
-
-            previous_q_series = df.all_series[f'q_{sorted_quantiles[idx - 1]}']
-            cases.append(
-                f'case when {{}} < {{}} and {{}} <= {{}} then {{}}'
-            )
-            expression_args.extend(
-                [current_q_series, self.series, self.series, previous_q_series, previous_q_series],
-            )
-            if idx == len(self.quantiles) - 1:
-                cases.append(f'{{}}')
-                expression_args.append(current_q_series)
-
-        df['q_tag'] = self.series.copy_override(
-            base_node=df.base_node,
+        # currently is not possible to reference a column from another DataFrame
+        # and use the expression in the merge subquery
+        df[self.RANGE_SERIES_NAME] = df.all_series[self.series.name].copy_override(
             expression=Expression.construct(
-                ' else '.join(cases) + ' end ' * len(self.quantiles),
-                *expression_args,
+                (
+                    f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME} \n'
+                    f'then {self.RANGE_SERIES_NAME} end'
+                ),
+                df.all_series[self.series.name],
             ),
-            index={},
-            group_by=None,
-            dtype='float64',
+            name=self.RANGE_SERIES_NAME,
         )
-        df = df[[self.series.name, 'q_tag']]
-        df.drop_duplicates(inplace=True)
 
-        df = df.set_index(self.series.name).sort_index()
-        return df.all_series['q_tag']
+        df = df.merge(quantile_ranges_df, how='left', on=self.RANGE_SERIES_NAME)
+
+        result = df.all_series[self.RANGE_SERIES_NAME].copy_override(
+            index={self.series.name: df.all_series[self.series.name]},
+        )
+        return cast(SeriesFloat64, result)
+
+    def _get_quantile_ranges(self) -> 'Series':
+        """
+        Calculates the corresponding ranges per each quantile bucket.
+
+        The following series are calculated:
+        * lower_bound: for calculating the lower bound of each range it is required to calculate
+        all requested quantiles from the series.
+        * upper_bound: is the lower bound from the next range that follows the current one.
+         If current lower bound is the result of the largest quantile, the upper bound will be null.
+        * range: interval containing the calculated upper and lower bounds per bucket.
+        If the upper bound is null, the range will be null.
+
+        Returns a series containing the range of each bucket
+        """
+        lower_bound = self.series.quantile(q=self.quantiles).copy_override(name='lower_bound')
+
+        quantile_ranges_df = lower_bound.to_frame()
+        quantile_ranges_df.reset_index(drop=True, inplace=True)
+
+        # should call "series.lag" instead but just need sorting in the window function
+        quantile_ranges_df['upper_bound'] = lower_bound.copy_override(
+            expression=Expression.construct(
+                f'lag({{}}, 1, NULL) over (order by {{}} desc)',
+                quantile_ranges_df.all_series['lower_bound'],
+                quantile_ranges_df.all_series['lower_bound'],
+            ),
+            name='lower_bound'
+        )
+
+        quantile_ranges_df[self.RANGE_SERIES_NAME] = lower_bound.copy_override(
+            expression=Expression.construct(
+                f'case when {{}} is not null then numrange(cast({{}} as numeric), cast({{}} as numeric)) end',
+                quantile_ranges_df.all_series['upper_bound'],
+                quantile_ranges_df.all_series['lower_bound'],
+                quantile_ranges_df.all_series['upper_bound'],
+            ),
+        )
+
+        quantile_ranges_df.materialize(inplace=True)
+        return quantile_ranges_df.all_series[self.RANGE_SERIES_NAME]
