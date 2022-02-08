@@ -408,6 +408,63 @@ class Series(ABC):
             index_sorting=self._index_sorting if index_sorting is None else index_sorting
         )
 
+    def unstack(self,
+                level: int = -1,
+                fill_value: Optional[Union[int, float, str, UUID]] = None,
+                aggregation: str = 'max') -> 'DataFrame':
+        """
+        Pivot a level of the index labels.
+
+        Returns a(n unsorted) DataFrame with the values of the unstacked index as columns. In case of
+        duplicate index values that are unstacked, `aggregation` is used to aggregate the values.
+
+        Series' index should be of at least two levels to unstack.
+
+        :param level: selects the level of the index that is unstacked. Currently only -1 supported.
+        :param fill_value: replace missing values resulting from unstacking. Should be of same type as the
+            series that is unstacked.
+        :param aggregation: method of aggregation, in case of duplicate index values. Supports all aggregation
+            methods that :py:meth:`aggregate` supports.
+        :returns: DataFrame
+        """
+        index_dict = self.index
+        if len(index_dict) <= 1:
+            raise NotImplementedError('index must be a multi level index to unstack')
+        if level != -1:
+            raise NotImplementedError('only last index can be unstacked')
+        if type(aggregation) != str:
+            raise TypeError('invalid aggregation method')
+
+        name_index_last, series_last = index_dict.popitem()
+        values = series_last.unique().to_numpy()
+        if None in values or numpy.nan in values:
+            raise ValueError("index contains empty values, cannot be unstacked")
+        name_series = self.name
+        remaining_indexes = list(index_dict.keys())
+        df = self.to_frame()
+        df.reset_index(inplace=True)
+        df = df.groupby(remaining_indexes)
+
+        series_dict = {}
+        for column in values:
+            new_column_name = str(column)
+            new_const_series = const_to_series(self, column, new_column_name)
+            new_series = df.all_series[name_series].copy_override(
+                name=new_column_name,
+                expression=Expression.construct(f'case when {{}} = {{}} then {name_series} end',
+                                                series_last,
+                                                new_const_series)
+            )
+            new_series_aggregated = cast(
+                Series, new_series.aggregate(aggregation, group_by=df.group_by)
+            )
+            if fill_value:
+                new_series_aggregated = new_series_aggregated.fillna(fill_value)
+            series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
+
+        unstacked_df = df.copy_override(series=series_dict)
+        return unstacked_df
+
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
         expression = self.expression.resolve_column_references(table_alias)
@@ -701,7 +758,7 @@ class Series(ABC):
         Evaluate for every row in this series whether the value is missing or NULL.
 
         .. note::
-            Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+            Only NULL values in the Series in the underlying sql table will return True. numpy.nan is not
             checked for.
 
         See Also
@@ -720,7 +777,7 @@ class Series(ABC):
         Evaluate for every row in this series whether the value is not missing or NULL.
 
         .. note::
-          Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+          Only NULL values in the Series in the underlying sql table will return True. numpy.nan is not
           checked for.
 
         See Also
@@ -744,7 +801,7 @@ class Series(ABC):
             type by the series, or a TypeError is raised. Can also be another Series
 
         .. note::
-            Pandas replaces np.nan values, we can only replace NULL.
+            Pandas replaces numpy.nan values, we can only replace NULL.
 
         .. note::
             You can replace None with None, have fun, forever!
