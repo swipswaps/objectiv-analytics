@@ -9,44 +9,7 @@ import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInte
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
 
 /**
- * TrackerPlugins can be specified by instance, name or even on the fly as Objects.
- *
- * @example
- *
- *  Given a hypothetical PluginA:
- *
- *    class PluginA implements TrackerPlugin {
- *      readonly pluginName = 'pluginA';
- *      readonly parameter?: string;
- *
- *      constructor(args?: { parameter?: string }) {
- *        this.parameter = args?.parameter;
- *      }
- *
- *      isUsable() {
- *        return true;
- *      }
- *    }
- *
- *  And its factory:
- *
- *    const PluginAFactory = (parameter: string) => new PluginA({ parameter });
- *
- *  These would be all valid ways of adding it to the Plugins list:
- *
- *    PluginA
- *    new PluginA()
- *    new PluginA({ parameter: 'parameterValue' })
- *    PluginAFactory('parameterValue')
- *
- *  And it's also possible to define a Plugin on the fly as an Object:
- *
- *    {
- *      pluginName: 'pluginA',
- *      parameter: 'parameterValue',
- *      isUsable: () => true
- *    } as TrackerPlugin
- *
+ * The configuration object of TrackerPlugins. It accepts a list of plugins and, optionally, a Tracker Console.
  */
 export type TrackerPluginsConfiguration = TrackerPluginConfig & {
   plugins: TrackerPluginInterface[];
