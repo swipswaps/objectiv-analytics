@@ -751,11 +751,32 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@objectiv/plugin-path-context-from-url@^0.0.8, @objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url":
+"@objectiv/plugin-http-context@^0.0.10, @objectiv/plugin-http-context@workspace:plugins/http-context":
+  version: 0.0.0-use.local
+  resolution: "@objectiv/plugin-http-context@workspace:plugins/http-context"
+  dependencies:
+    "@objectiv/testing-tools": ^0.0.10
+    "@types/jest": ^27.0.3
+    jest: ^27.4.5
+    jest-extended: ^1.1.0
+    jest-fetch-mock: ^3.0.3
+    jest-standard-reporter: ^2.0.0
+    jest-useragent-mock: ^0.1.1
+    prettier: ^2.5.1
+    shx: ^0.3.3
+    ts-jest: ^27.1.2
+    tsup: ^5.11.13
+    typescript: ^4.5.5
+  peerDependencies:
+    "@objectiv/tracker-core": ^0.0.10
+  languageName: unknown
+  linkType: soft
+
+"@objectiv/plugin-path-context-from-url@^0.0.10, @objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.8
+    "@objectiv/testing-tools": ^0.0.10
     "@types/jest": ^27.0.3
     jest: ^27.4.5
     jest-extended: ^1.1.0
@@ -768,15 +789,15 @@ __metadata:
     tsup: ^5.11.13
     typescript: ^4.5.5
   peerDependencies:
-    "@objectiv/tracker-core": ^0.0.8
+    "@objectiv/tracker-core": ^0.0.10
   languageName: unknown
   linkType: soft
 
-"@objectiv/plugin-root-location-context-from-url@^0.0.8, @objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url":
+"@objectiv/plugin-root-location-context-from-url@^0.0.10, @objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.8
+    "@objectiv/testing-tools": ^0.0.10
     "@types/jest": ^27.0.3
     jest: ^27.4.5
     jest-extended: ^1.1.0
@@ -789,16 +810,16 @@ __metadata:
     tsup: ^5.11.13
     typescript: ^4.5.5
   peerDependencies:
-    "@objectiv/tracker-core": ^0.0.8
+    "@objectiv/tracker-core": ^0.0.10
   languageName: unknown
   linkType: soft
 
-"@objectiv/queue-local-storage@^0.0.8, @objectiv/queue-local-storage@workspace:queues/local-storage":
+"@objectiv/queue-local-storage@^0.0.10, @objectiv/queue-local-storage@workspace:queues/local-storage":
   version: 0.0.0-use.local
   resolution: "@objectiv/queue-local-storage@workspace:queues/local-storage"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.8
-    "@objectiv/tracker-core": ~0.0.8
+    "@objectiv/testing-tools": ^0.0.10
+    "@objectiv/tracker-core": ~0.0.10
     "@types/jest": ^27.0.3
     jest: ^27.4.5
     jest-standard-reporter: ^2.0.0
@@ -810,7 +831,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/schema@^0.0.8, @objectiv/schema@workspace:core/schema":
+"@objectiv/schema@^0.0.10, @objectiv/schema@workspace:core/schema":
   version: 0.0.0-use.local
   resolution: "@objectiv/schema@workspace:core/schema"
   dependencies:
@@ -820,7 +841,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/testing-tools@^0.0.8, @objectiv/testing-tools@workspace:core/testing-tools":
+"@objectiv/testing-tools@^0.0.10, @objectiv/testing-tools@workspace:core/testing-tools":
   version: 0.0.0-use.local
   resolution: "@objectiv/testing-tools@workspace:core/testing-tools"
   dependencies:
@@ -836,7 +857,7 @@ __metadata:
     "@angular/compiler": ~9.1.13
     "@angular/compiler-cli": ~9.1.13
     "@angular/core": ~9.1.13
-    "@objectiv/tracker-browser": ^0.0.8
+    "@objectiv/tracker-browser": ^0.0.10
     ng-packagr: ^9.0.0
     prettier: ^2.5.1
     rxjs: ~6.5.4
@@ -847,22 +868,23 @@ __metadata:
   peerDependencies:
     "@angular/common": ^9.0.0
     "@angular/core": ^9.0.0
-    "@objectiv/tracker-browser": ^0.0.8
+    "@objectiv/tracker-browser": ^0.0.10
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-browser@^0.0.8, @objectiv/tracker-browser@workspace:trackers/browser":
+"@objectiv/tracker-browser@^0.0.10, @objectiv/tracker-browser@workspace:trackers/browser":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
   dependencies:
-    "@objectiv/plugin-path-context-from-url": ^0.0.8
-    "@objectiv/plugin-root-location-context-from-url": ^0.0.8
-    "@objectiv/queue-local-storage": ^0.0.8
-    "@objectiv/testing-tools": ^0.0.8
-    "@objectiv/tracker-core": ^0.0.8
-    "@objectiv/transport-debug": ^0.0.8
-    "@objectiv/transport-fetch": ^0.0.8
-    "@objectiv/transport-xhr": ^0.0.8
+    "@objectiv/plugin-http-context": ^0.0.10
+    "@objectiv/plugin-path-context-from-url": ^0.0.10
+    "@objectiv/plugin-root-location-context-from-url": ^0.0.10
+    "@objectiv/queue-local-storage": ^0.0.10
+    "@objectiv/testing-tools": ^0.0.10
+    "@objectiv/tracker-core": ^0.0.10
+    "@objectiv/transport-debug": ^0.0.10
+    "@objectiv/transport-fetch": ^0.0.10
+    "@objectiv/transport-xhr": ^0.0.10
     "@types/jest": ^27.0.3
     jest: ^27.4.5
     jest-fetch-mock: ^3.0.3
@@ -876,12 +898,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-core@^0.0.8, @objectiv/tracker-core@workspace:core/tracker, @objectiv/tracker-core@~0.0.8":
+"@objectiv/tracker-core@^0.0.10, @objectiv/tracker-core@workspace:core/tracker, @objectiv/tracker-core@~0.0.10":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-core@workspace:core/tracker"
   dependencies:
-    "@objectiv/schema": ^0.0.8
-    "@objectiv/testing-tools": ^0.0.8
+    "@objectiv/schema": ^0.0.10
+    "@objectiv/testing-tools": ^0.0.10
     "@types/jest": ^27.0.3
     jest: ^27.4.5
     jest-standard-reporter: ^2.0.0
@@ -899,13 +921,14 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react@workspace:trackers/react"
   dependencies:
-    "@objectiv/plugin-path-context-from-url": ^0.0.8
-    "@objectiv/plugin-root-location-context-from-url": ^0.0.8
-    "@objectiv/queue-local-storage": ^0.0.8
-    "@objectiv/testing-tools": ^0.0.8
-    "@objectiv/tracker-core": ~0.0.8
-    "@objectiv/transport-fetch": ^0.0.8
-    "@objectiv/transport-xhr": ^0.0.8
+    "@objectiv/plugin-http-context": ^0.0.10
+    "@objectiv/plugin-path-context-from-url": ^0.0.10
+    "@objectiv/plugin-root-location-context-from-url": ^0.0.10
+    "@objectiv/queue-local-storage": ^0.0.10
+    "@objectiv/testing-tools": ^0.0.10
+    "@objectiv/tracker-core": ~0.0.10
+    "@objectiv/transport-fetch": ^0.0.10
+    "@objectiv/transport-xhr": ^0.0.10
     "@testing-library/react": ^12.1.2
     "@testing-library/react-hooks": ^7.0.2
     "@types/jest": ^27.0.3
@@ -928,12 +951,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/transport-debug@^0.0.8, @objectiv/transport-debug@workspace:transports/debug":
+"@objectiv/transport-debug@^0.0.10, @objectiv/transport-debug@workspace:transports/debug":
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-debug@workspace:transports/debug"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.8
-    "@objectiv/tracker-core": ~0.0.8
+    "@objectiv/testing-tools": ^0.0.10
+    "@objectiv/tracker-core": ~0.0.10
     "@types/jest": ^27.0.3
     jest: ^27.4.5
     jest-standard-reporter: ^2.0.0
@@ -945,12 +968,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/transport-fetch@^0.0.8, @objectiv/transport-fetch@workspace:transports/fetch":
+"@objectiv/transport-fetch@^0.0.10, @objectiv/transport-fetch@workspace:transports/fetch":
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-fetch@workspace:transports/fetch"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.8
-    "@objectiv/tracker-core": ~0.0.8
+    "@objectiv/testing-tools": ^0.0.10
+    "@objectiv/tracker-core": ~0.0.10
     "@types/jest": ^27.0.3
     jest: ^27.4.5
     jest-fetch-mock: ^3.0.3
@@ -963,12 +986,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/transport-xhr@^0.0.8, @objectiv/transport-xhr@workspace:transports/xhr":
+"@objectiv/transport-xhr@^0.0.10, @objectiv/transport-xhr@workspace:transports/xhr":
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-xhr@workspace:transports/xhr"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.8
-    "@objectiv/tracker-core": ~0.0.8
+    "@objectiv/testing-tools": ^0.0.10
+    "@objectiv/tracker-core": ~0.0.10
     "@types/jest": ^27.0.3
     jest: ^27.4.5
     jest-standard-reporter: ^2.0.0

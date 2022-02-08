@@ -475,3 +475,60 @@ def test_series_append_same_dtype_different_index() -> None:
 
     with pytest.raises(ValueError, match='concatenation with different index dtypes is not supported yet.'):
         bt_other_index.city.append(bt.skating_order)
+
+
+def test_series_unstack():
+    bt = get_bt_with_test_data(full_data_set=True)
+    bt['municipality_none'] = bt[bt.skating_order < 10].municipality
+    stacked_bt = bt.groupby(['city','municipality_none']).inhabitants.sum()
+
+    with pytest.raises(Exception, match='index contains empty values, cannot be unstacked'):
+        stacked_bt.unstack()
+
+    stacked_bt = bt.groupby(['city','municipality']).inhabitants.sum()
+    unstacked_bt = stacked_bt.unstack()
+
+    expected_columns = ['De Friese Meren','Harlingen','Leeuwarden','Noardeast-Fryslân','Súdwest-Fryslân','Waadhoeke']
+    assert sorted(unstacked_bt.data_columns) == expected_columns
+    unstacked_bt_sorted = unstacked_bt.copy_override(series={x: unstacked_bt[x] for x in expected_columns})
+
+    assert_equals_data(
+        unstacked_bt_sorted,
+        expected_columns=['city'] + expected_columns,
+        expected_data=[
+            ['Boalsert', None, None, None, None, 10120, None],
+            ['Dokkum', None, None, None, 12675, None, None], 
+            ['Drylts', None, None, None, None, 3055, None],
+            ['Frjentsjer', None, None, None, None, None, 12760],
+            ['Harns', None, 14740, None, None, None, None],
+            ['Hylpen', None, None, None, None, 870, None],
+            ['Ljouwert', None, None, 93485, None, None, None],
+            ['Sleat', 700, None, None, None, None, None],
+            ['Snits', None, None, None, None, 33520, None],
+            ['Starum', None, None, None, None, 960, None],
+            ['Warkum', None, None, None, None, 4440, None]
+        ],
+        order_by='city'
+    )
+
+    stacked_bt = bt.groupby(['municipality','skating_order']).city.max()
+    unstacked_bt = stacked_bt.unstack(fill_value='buh')
+
+    expected_columns = ['1', '10', '11', '2', '3', '4', '5', '6', '7', '8', '9']
+    assert sorted(unstacked_bt.data_columns) == expected_columns
+    unstacked_bt_sorted = unstacked_bt.copy_override(series={x: unstacked_bt[x] for x in expected_columns})
+
+    assert_equals_data(
+        unstacked_bt_sorted,
+        expected_columns=['municipality'] + expected_columns,
+        expected_data=[
+            ['De Friese Meren', 'buh', 'buh', 'buh', 'buh', 'buh', 'Sleat', 'buh', 'buh', 'buh', 'buh', 'buh'],
+            ['Harlingen', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'Harns'],
+            ['Leeuwarden', 'Ljouwert', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'],
+            ['Noardeast-Fryslân', 'buh', 'buh', 'Dokkum', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh'],
+            ['Súdwest-Fryslân', 'buh', 'buh', 'buh', 'Snits', 'Drylts', 'buh', 'Starum', 'Hylpen', 'Warkum', 'Boalsert', 'buh'],
+            ['Waadhoeke', 'buh', 'Frjentsjer', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh', 'buh']
+        ],
+        order_by='municipality'
+    )
+

@@ -903,7 +903,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['DataFrame', 'Series', int, str, float, UUID]):
+                    value: Union['DataFrame', 'Series', int, str, float, UUID, pandas.Series]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -915,6 +915,13 @@ class DataFrame:
                 raise ValueError(f'Column name "{key}" already exists as index.')
             if isinstance(value, DataFrame):
                 raise ValueError("Can't set a DataFrame as a single column")
+            if isinstance(value, pandas.Series):
+                df = pandas.DataFrame(value)
+                df.columns = [key]
+                bt = DataFrame.from_pandas(self.engine,
+                                           df,
+                                           convert_objects=True)
+                value = bt[key]
             if not isinstance(value, Series):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
@@ -1312,9 +1319,9 @@ class DataFrame:
             by: Union[_GroupBySingleType,  # single series group_by
                       # for GroupingSets
                       Tuple[Union[_GroupBySingleType, Tuple[_GroupBySingleType, ...]], ...],
-                      List[Union[_GroupBySingleType,  # multi series
-                                 List[_GroupBySingleType],  # for grouping lists
-                                 Tuple[_GroupBySingleType, ...]]],  # for grouping lists
+                      Sequence[Union[_GroupBySingleType,  # multi series
+                                     List[_GroupBySingleType],  # for grouping lists
+                                     Tuple[_GroupBySingleType, ...]]],  # for grouping lists
                       None] = None) -> 'DataFrame':
         """
         Group by any of the series currently in this DataDrame, both from index as well as data.

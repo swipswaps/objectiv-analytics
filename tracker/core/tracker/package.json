@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/tracker-core",
-  "version": "0.0.8",
+  "version": "0.0.10",
   "description": "Core functionality for Objectiv JavaScript trackers",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -25,7 +25,7 @@
     }
   ],
   "main": "./dist/index.js",
-  "module": "./dist/index.mjs",
+  "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",
   "files": [
     "dist"
@@ -33,12 +33,12 @@
   "exports": {
     ".": {
       "require": "./dist/index.js",
-      "import": "./dist/index.mjs",
+      "import": "./dist/esm/index.js",
       "types": "./dist/index.d.ts"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --minify --dts --sourcemap --clean",
+    "build": "tsup src/index.ts --format cjs,esm --legacy-output --minify --dts --sourcemap --clean",
     "prettify": "prettier --write .",
     "prettify:generated": "yarn prettier --write ./src/ContextFactories.ts ./src/EventFactories.ts",
     "tsc": "tsc --noEmit",
@@ -50,7 +50,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
-    "@objectiv/testing-tools": "^0.0.8",
+    "@objectiv/testing-tools": "^0.0.10",
     "@types/jest": "^27.0.3",
     "jest": "^27.4.5",
     "jest-standard-reporter": "^2.0.0",
@@ -62,7 +62,7 @@
     "typescript": "^4.5.5"
   },
   "dependencies": {
-    "@objectiv/schema": "^0.0.8",
+    "@objectiv/schema": "^0.0.10",
     "uuid-random": "^1.3.2"
   }
 }
