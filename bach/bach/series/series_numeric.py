@@ -43,6 +43,7 @@ class SeriesAbstractNumeric(Series, ABC):
     def round(self, decimals: int = 0) -> 'SeriesAbstractNumeric':
         """
         Round the value of this series to the given amount of decimals.
+
         :param decimals: The amount of decimals to round to
         """
         return self.copy_override(
@@ -52,6 +53,7 @@ class SeriesAbstractNumeric(Series, ABC):
     def cut(self, bins: int, right: bool = True) -> 'SeriesAbstractNumeric':
         """
         Segments values into bins.
+
         :param bins: The amount of bins to segment data into
         :param right: If true (by default), each bin will include the rightmost edge. (e.g (x,y]).
         """
@@ -139,6 +141,9 @@ class SeriesAbstractNumeric(Series, ABC):
         When q is a float or len(q) == 1, the resultant series index will remain
         In case multiple quantiles are calculated, the resultant series index will have all calculated
         quantiles as index values.
+
+        :param partition: The partition or window to apply
+        :param q: A quantile or list of quantiles to be calculated
         """
         quantiles = [q] if isinstance(q, float) else q
         quantile_results = []

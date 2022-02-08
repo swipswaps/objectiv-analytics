@@ -119,6 +119,7 @@ class DataFrame:
 
     * :py:meth:`head`
     * :py:meth:`to_pandas`
+    * :py:meth:`to_numpy`
     * :py:meth:`get_sample`
     * The property accessors :py:attr:`Series.value` (Series only), :py:attr:`values`
 
@@ -2377,14 +2378,17 @@ class DataFrame:
     ) -> Optional['DataFrame']:
         """
         Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
+
         :param subset: series label or sequence of labels.
-        Duplications to be dropped are based on the combination of the subset of series.
-        If not provided, all series labels will be used by default.
+            Duplications to be dropped are based on the combination of the subset of series.
+            If not provided, all series labels will be used by default.
         :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
-         - `first`: drop all occurrences except the first one
-         - `last`:  drop all occurrences except the last one
-         - False: drops all duplicates
-         If no value is provided, first occurrences will be kept by default.
+
+            * `first`: drop all occurrences except the first one
+            * `last`:  drop all occurrences except the last one
+            * False: drops all duplicates
+
+            If no value is provided, first occurrences will be kept by default.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param ignore_index: if true, drops indexes of the result
 
