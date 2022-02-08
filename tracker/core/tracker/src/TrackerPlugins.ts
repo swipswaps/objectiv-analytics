@@ -5,14 +5,13 @@
 import { ContextsConfig } from './Context';
 import { isValidIndex } from './helpers';
 import { Tracker } from './Tracker';
-import { TrackerConsole } from './TrackerConsole';
-import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
+import { TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
 
 /**
  * The configuration object of TrackerPlugins. It accepts a list of plugins and, optionally, a Tracker Console.
  */
-export type TrackerPluginsConfiguration = TrackerPluginConfig & {
+export type TrackerPluginsConfiguration = {
   /**
    * The Tracker instance this TrackerPlugins is bound to.
    */
@@ -33,7 +32,6 @@ export type TrackerPluginsConfiguration = TrackerPluginConfig & {
  * at the bottom of the list.
  */
 export class TrackerPlugins implements TrackerPluginLifecycleInterface {
-  readonly console?: TrackerConsole;
   readonly tracker: Tracker;
   plugins: TrackerPluginInterface[] = [];
 
@@ -41,17 +39,16 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
    * Plugins can be lazy. Map through them to instantiate them.
    */
   constructor(trackerPluginsConfig: TrackerPluginsConfiguration) {
-    this.console = trackerPluginsConfig.console;
     this.tracker = trackerPluginsConfig.tracker;
 
     trackerPluginsConfig.plugins.map((plugin) => this.add(plugin));
 
-    if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
-      this.console.group(`Plugins:`);
-      this.console.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
-      this.console.groupEnd();
-      this.console.groupEnd();
+    if (this.tracker.console) {
+      this.tracker.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
+      this.tracker.console.group(`Plugins:`);
+      this.tracker.console.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
+      this.tracker.console.groupEnd();
+      this.tracker.console.groupEnd();
     }
   }
 
@@ -90,8 +87,8 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
     const spliceIndex = index ?? this.plugins.length;
     this.plugins.splice(index ?? this.plugins.length, 0, plugin);
 
-    if (this.console) {
-      this.console.log(
+    if (this.tracker.console) {
+      this.tracker.console.log(
         `%｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}.`,
         'font-weight: bold'
       );
@@ -109,8 +106,8 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
 
     this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== pluginInstance.pluginName);
 
-    if (this.console) {
-      this.console.log(`%｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed.`, 'font-weight: bold');
+    if (this.tracker.console) {
+      this.tracker.console.log(`%｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed.`, 'font-weight: bold');
     }
   }
 

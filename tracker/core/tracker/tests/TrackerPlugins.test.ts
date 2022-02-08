@@ -14,7 +14,7 @@ describe('Plugin', () => {
     jest.resetAllMocks();
   });
 
-  const tracker = new Tracker({ applicationId: 'test-tracker' });
+  const tracker = new Tracker({ applicationId: 'test-tracker', console: mockConsole });
 
   it('should instantiate when specifying an empty list of Plugins', () => {
     const testPlugins = new TrackerPlugins({ tracker, plugins: [] });
@@ -76,7 +76,7 @@ describe('Plugin', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true, initialize: jest.fn() };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true };
     const pluginC = { pluginName: 'test-pluginC', isUsable: () => true };
-    const testPlugins = new TrackerPlugins({ tracker, plugins: [], console: mockConsole });
+    const testPlugins = new TrackerPlugins({ tracker, plugins: [] });
     jest.resetAllMocks();
     testPlugins.add(pluginA);
     expect(pluginA.initialize).toHaveBeenCalledTimes(1);
@@ -132,7 +132,7 @@ describe('Plugin', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true };
     const pluginC = { pluginName: 'test-pluginC', isUsable: () => true };
-    const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB, pluginC], console: mockConsole });
+    const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB, pluginC] });
     jest.resetAllMocks();
     testPlugins.remove('test-pluginB');
     expect(mockConsole.log).toHaveBeenCalledTimes(1);
@@ -158,7 +158,7 @@ describe('Plugin', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true, parameterA: false };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true, parameterB: false };
     const pluginC = { pluginName: 'test-pluginC', isUsable: () => true, parameterC: false };
-    const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB, pluginC], console: mockConsole });
+    const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB, pluginC] });
     expect(testPlugins.plugins).toEqual([
       {
         parameterA: false,

@@ -48,7 +48,6 @@ describe('Tracker', () => {
     expect(testTracker.plugins).toEqual({
       tracker: testTracker,
       plugins: [new ApplicationContextPlugin(trackerConfig)],
-      console: mockConsole,
     });
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);

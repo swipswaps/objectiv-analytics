@@ -120,7 +120,6 @@ export class Tracker implements TrackerInterface {
     this.transport = trackerConfig.transport;
     this.plugins = new TrackerPlugins({
       tracker: this,
-      console: trackerConfig.console,
       plugins: makeTrackerDefaultPluginsList(trackerConfig),
     });
 
