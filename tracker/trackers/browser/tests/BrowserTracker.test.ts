@@ -3,7 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore, TrackerTransportRetry, } from '@objectiv/tracker-core';
+import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore, TrackerTransportRetry } from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
