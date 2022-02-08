@@ -84,4 +84,4 @@ def test_to_pandas():
     bt[['td']].to_pandas()
     # TODO, this is not great, but at least it does not error when imported into pandas,
     # and it looks good over there
-    assert bt[['td']].values[0] == [27744277000000000]
+    assert bt[['td']].to_numpy()[0] == [27744277000000000]

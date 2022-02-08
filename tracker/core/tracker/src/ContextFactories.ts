@@ -73,21 +73,21 @@ export const makeExpandableContext = (props: { id: string }): ExpandableContext 
  * @param {Object} props - factory properties
  * @param {string} props.id - A unique string identifier to be combined with the Context Type (`_type`)
  *         for Context instance uniqueness.
- * @param {string} props.referer - Full URL to HTTP referrer of the current page.
+ * @param {string} props.referrer - Full URL to HTTP referrer of the current page.
  * @param {string} props.user_agent - User-agent of the agent that sent the event.
  * @param {string} props.remote_address - (public) IP address of the agent that sent the event.
  * @returns {HttpContext} - HttpContext: A GlobalContext describing meta information about the agent that sent the event.
  */
 export const makeHttpContext = (props: {
   id: string;
-  referer: string;
+  referrer: string;
   user_agent: string;
   remote_address: string;
 }): HttpContext => ({
   __global_context: true,
   _type: 'HttpContext',
   id: props.id,
-  referer: props.referer,
+  referrer: props.referrer,
   user_agent: props.user_agent,
   remote_address: props.remote_address,
 });

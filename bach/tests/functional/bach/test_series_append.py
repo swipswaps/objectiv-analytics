@@ -96,3 +96,25 @@ def test_series_ignore_index() -> None:
             ['Snits'],
         ],
     )
+
+
+def test_append_w_non_materialized_series() -> None:
+    bt = get_bt_with_test_data(full_data_set=False)[['city', 'skating_order']]
+
+    city_series = bt.city.unique()
+    skating_order_series = bt.set_index('city').skating_order
+
+    result = city_series.append(skating_order_series)
+
+    assert_equals_data(
+        result.sort_values(),
+        expected_columns=['city', 'city_unique_skating_order'],
+        expected_data=[
+            ['Ljouwert', '1'],
+            ['Snits', '2'],
+            ['Drylts', '3'],
+            ['Drylts', 'Drylts'],
+            ['Ljouwert', 'Ljouwert'],
+            ['Snits', 'Snits'],
+        ],
+    )

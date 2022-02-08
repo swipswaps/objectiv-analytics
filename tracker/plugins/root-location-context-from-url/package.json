@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/plugin-root-location-context-from-url",
-  "version": "0.0.7",
+  "version": "0.0.10",
   "description": "Plugin for Objectiv trackers to automatically generate and attach RootLocationContext from URLs",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -28,14 +28,21 @@
       "url": "https://github.com/sdirosa"
     }
   ],
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "module": "dist/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/index.d.ts",
   "files": [
     "dist"
   ],
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/esm/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
   "scripts": {
-    "build": "rollup -c --silent --failAfterWarnings",
+    "build": "tsup src/index.ts --format cjs,esm --legacy-output --minify --dts --sourcemap --clean",
     "prettify": "prettier --write .",
     "tsc": "tsc --noEmit",
     "test": "jest --silent --runInBand",
@@ -46,9 +53,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
-    "@objectiv/testing-tools": "^0.0.7",
-    "@rollup/plugin-commonjs": "^21.0.1",
-    "@rollup/plugin-node-resolve": "^13.1.1",
+    "@objectiv/testing-tools": "^0.0.10",
     "@types/jest": "^27.0.3",
     "jest": "^27.4.5",
     "jest-extended": "^1.1.0",
@@ -56,17 +61,12 @@
     "jest-standard-reporter": "^2.0.0",
     "jest-useragent-mock": "^0.1.1",
     "prettier": "^2.5.1",
-    "rollup": "^2.61.1",
-    "rollup-plugin-filesize": "^9.1.1",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "rollup-plugin-sizes": "^1.0.4",
-    "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-ts": "^2.0.4",
     "shx": "^0.3.3",
     "ts-jest": "^27.1.2",
-    "typescript": "^4.5.4"
+    "tsup": "^5.11.13",
+    "typescript": "^4.5.5"
   },
   "peerDependencies": {
-    "@objectiv/tracker-core": "^0.0.7"
+    "@objectiv/tracker-core": "^0.0.10"
   }
 }
