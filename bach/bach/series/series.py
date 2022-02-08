@@ -432,9 +432,11 @@ class Series(ABC):
             raise NotImplementedError('index must be a multi level index to unstack')
         if level != -1:
             raise NotImplementedError('only last index can be unstacked')
+        if type(aggregation) != str:
+            raise TypeError('invalid aggregation method')
 
         name_index_last, series_last = index_dict.popitem()
-        values = series_last.unique().values
+        values = series_last.unique().to_numpy()
         if None in values or numpy.nan in values:
             raise ValueError("index contains empty values, cannot be unstacked")
         name_series = self.name
