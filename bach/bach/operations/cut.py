@@ -4,8 +4,6 @@ from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, Series
 from bach.expression import Expression
 import numpy
 
-from bach.savepoints import Savepoints
-
 
 class CutOperation:
     series: SeriesAbstractNumeric
