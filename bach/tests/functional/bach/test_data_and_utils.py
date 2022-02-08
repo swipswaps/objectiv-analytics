@@ -97,6 +97,16 @@ TEST_DATA_JSON = [
 JSON_COLUMNS = ['row', 'dict_column', 'list_column', 'mixed_column']
 JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
 
+from uuid import UUID
+import datetime
+TEST_DATA_TYPES = [
+    [UUID('36ca4c0b-804d-48ff-809f-28cf9afd078a'), ['Sûkerbôlle'], datetime.datetime(2021,5,3,11,28,36,388), datetime.date(2021,5,3)],
+    [UUID('81a8ace2-273b-4b95-b6a6-0fba33858a22'), ['Dúmkes'], datetime.datetime(2021,5,4,23,28,36,388), datetime.date(2021,5,4)],
+    [UUID('8a70b3d3-33ec-4300-859a-bb2efcf0b188'), ['Grutte Pier Bier'], datetime.datetime(2022,5,3,14,13,13,388), datetime.date(2022,5,3)]
+]
+TYPES_COLUMNS = ['uuid_column', 'jsonb_column_a', 'moment', 'date']
+TYPES_INDEX_AND_COLUMNS = ['_index_uuid_column'] + TYPES_COLUMNS
+
 # We cache all Bach DataFrames, that way we don't have to recreate and query tables each time.
 _TABLE_DATAFRAME_CACHE: Dict[str, 'DataFrame'] = {}
 
@@ -156,10 +166,15 @@ def get_bt_with_test_data(full_data_set: bool = False) -> DataFrame:
 def get_bt_with_food_data() -> DataFrame:
     return get_bt('test_merge_table_1', TEST_DATA_FOOD, FOOD_COLUMNS, True)
 
-
 def get_bt_with_railway_data() -> DataFrame:
     return get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
 
+def get_bt_with_types_data(include_mixed=False, test_data=TEST_DATA_TYPES, columns=TYPES_COLUMNS) -> DataFrame:
+    if include_mixed:
+        to_add = [datetime.date(2021,5,3), datetime.date(2021,5,4), UUID('8a70b3d3-33ec-4300-859a-bb2efcf0b188')]
+        test_data = [x + [y] for x, y in zip(test_data, to_add)]
+        columns = columns + ['mixed_column']
+    return get_bt('test_types_table', test_data, columns, True)
 
 def get_bt_with_json_data(as_json=True) -> DataFrame:
     bt = get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)

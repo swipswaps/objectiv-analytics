@@ -7,6 +7,7 @@ import pandas
 from sqlalchemy.engine import Engine
 
 from bach import DataFrame, get_series_type_from_dtype
+from bach.types import value_to_dtype
 from bach.expression import Expression, join_expressions
 from sql_models.model import CustomSqlModelBuilder
 from sql_models.util import quote_identifier
@@ -176,26 +177,39 @@ def _from_pd_shared(
         index = f'_index_{df.index.name}'
     # set the index as a normal column, this makes it easier to convert the dtype
     df_copy = df.rename_axis(index).reset_index()
-    if convert_objects:
-        df_copy = df_copy.convert_dtypes(convert_integer=False,
-                                         convert_boolean=False,
-                                         convert_floating=False)
-    # todo add support for 'timedelta64[ns]'. pd.to_sql writes timedelta as bigint to sql, so
-    # not implemented yet
+
+    index_dtypes = {}
+    dtypes = {}
+
     supported_types = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool']
-    index_dtype = df_copy[index].dtype.name
-    if index_dtype not in supported_types:
-        raise ValueError(f"index is of type '{index_dtype}', should one of {supported_types}. "
-                         f"For 'object' columns convert_objects=True can be used to convert these columns"
-                         f"to type 'string'.")
-    index_dtypes = {index: index_dtype}
-    dtypes = {str(column_name): dtype.name for column_name, dtype in df_copy.dtypes.items()
-              if column_name in df.columns}
-    unsupported_dtypes = {str(column_name): dtype for column_name, dtype in dtypes.items()
-                          if dtype not in supported_types}
-    if unsupported_dtypes:
-        raise ValueError(f"dtypes {unsupported_dtypes} are not supported, should one of "
-                         f"{supported_types}. "
-                         f"For 'object' columns convert_objects=True can be used to convert these columns"
-                         f"to type 'string'.")
+    secondary_supported_types = {'int32': 'int64'}
+
+    for column in df_copy.columns:
+        if convert_objects:
+            df_copy[column] = df_copy[column].convert_dtypes(convert_integer=False,
+                                                             convert_boolean=False,
+                                                             convert_floating=False)
+            if df_copy[column].dtype.name == 'object':
+                types = df_copy[column].map(lambda x: type(x)).unique()
+                if len(types) == 1:
+                    final_type = value_to_dtype(df_copy[column][0])
+                else:
+                    raise ValueError(f'multiple types found in column {column}: {types}')
+            elif df_copy[column].dtype.name in secondary_supported_types.keys():
+                final_type = secondary_supported_types[df_copy[column].dtype.name]
+                df_copy[column] = df_copy[column].astype(final_type)
+            elif df_copy[column].dtype.name in supported_types:
+                final_type = df_copy[column].dtype.name
+            else:
+                raise ValueError(f'unsupported dtype for {column}')
+        else:
+            if df_copy[column].dtype.name in supported_types:
+                final_type = df_copy[column].dtype.name
+            else:
+                raise ValueError(f'unsupported dtype for {column}')  # todo same as above
+        if column == index:
+            index_dtypes[str(column)] = final_type
+        else:
+            dtypes[str(column)] = final_type
+
     return df_copy, index_dtypes, dtypes

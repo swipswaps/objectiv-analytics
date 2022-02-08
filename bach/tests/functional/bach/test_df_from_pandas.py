@@ -6,7 +6,9 @@ import sqlalchemy
 
 from bach import DataFrame
 from tests.functional.bach.test_data_and_utils import get_pandas_df, TEST_DATA_CITIES, CITIES_COLUMNS, \
-    DB_TEST_URL, assert_equals_data
+    DB_TEST_URL, assert_equals_data, get_bt_with_types_data
+from uuid import UUID
+import datetime
 
 EXPECTED_COLUMNS = [
     '_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding'
@@ -112,3 +114,16 @@ def test_from_pandas_non_happy_path():
             name='test_from_pd_table',
             materialization='table',
         )
+
+def test_from_pandas_other_types():
+    df = get_bt_with_types_data()
+    assert df.dtypes == {'uuid_column': 'uuid',
+                         'jsonb_column_a': 'jsonb',
+                         'moment': 'timestamp',
+                         'date': 'timestamp'}
+
+    assert_equals_data(
+        df,
+        expected_columns=['_index_uuid_column', 'uuid_column', 'jsonb_column_a', 'moment', 'date'],
+        expected_data=[['36ca4c0b-804d-48ff-809f-28cf9afd078a', '36ca4c0b-804d-48ff-809f-28cf9afd078a', '{Sûkerbôlle}', datetime.datetime(2021, 5, 3, 11, 28, 36, 388), datetime.datetime(2021, 5, 3, 0, 0)], ['81a8ace2-273b-4b95-b6a6-0fba33858a22', '81a8ace2-273b-4b95-b6a6-0fba33858a22', '{Dúmkes}', datetime.datetime(2021, 5, 4, 23, 28, 36, 388), datetime.datetime(2021, 5, 4, 0, 0)], ['8a70b3d3-33ec-4300-859a-bb2efcf0b188', '8a70b3d3-33ec-4300-859a-bb2efcf0b188', '{"Grutte Pier Bier"}', datetime.datetime(2022, 5, 3, 14, 13, 13, 388), datetime.datetime(2022, 5, 3, 0, 0)]]
+    )
