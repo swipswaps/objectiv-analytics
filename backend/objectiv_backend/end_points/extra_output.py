@@ -184,16 +184,21 @@ def write_data_to_snowplow_if_configured(events: EventDataList) -> None:
     for event in events:
         try:
             cookie_context = get_context(event, 'CookieIdContext')
-        except:
+        except ValueError:
             cookie_context = {'id': None}
 
         try:
             http_context = get_context(event, 'HttpContext')
-        except:
+        except ValueError:
             print(json.dumps(event, indent=4))
             http_context = {
                 'user_agent': ''
             }
+        try:
+            path_context = get_context(event, 'PathContext')
+        except ValueError:
+            path_context = {'id': ''}
+
         headers['User-Agent'] = http_context['user_agent']
         snowplow_event = objectiv_event_to_snowplow(event)
         snowplow_custom_context = make_snowplow_custom_context(snowplow_event)
@@ -202,7 +207,7 @@ def write_data_to_snowplow_if_configured(events: EventDataList) -> None:
                     "p": "web",  # mandatory: platform
                     "tv": "objectiv-tracker-0.0.5",  # mandatory: tracker version
                     "eid": event['id'],
-                    "url": 'http://localhost:8080/bier?utm_source=superspecialsource&utm_medium=test_medium&utm_channel=web&utm_campaign=test_campaign',
+                    "url": path_context['id'],
                     "nuid": cookie_context['id'],
                     "cx": snowplow_custom_context})
 
