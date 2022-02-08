@@ -163,9 +163,11 @@ Conversion, reshaping, sorting
 .. autosummary::
     :toctree: Series
 
+    Series.sort_index
     Series.sort_values
     Series.fillna
     Series.append
+    Series.drop_duplicates
 
 Function application, aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -191,7 +193,6 @@ All types
     Series.median
     Series.mode
     Series.nunique
-    Series.quantile
 
 Numeric
 +++++++

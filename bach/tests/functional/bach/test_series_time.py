@@ -21,4 +21,4 @@ def test_to_pandas():
     bt = get_bt_with_test_data()
     bt['t'] = datetime.time(23, 11, 5)
     bt[['t']].to_pandas()
-    assert bt[['t']].values[0] == [datetime.time(23, 11, 5)]
+    assert bt[['t']].to_numpy()[0] == [datetime.time(23, 11, 5)]

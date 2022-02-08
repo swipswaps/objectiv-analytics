@@ -88,10 +88,11 @@ def test_series_value():
 def test_series_sort_values():
     bt = get_bt_with_test_data(full_data_set=True)
     bt_series = bt.city
-    kwargs_list = [{'ascending': True},
-                   {'ascending': False},
-                   {}
-                   ]
+    kwargs_list = [
+        {'ascending': True},
+        {'ascending': False},
+        {},
+    ]
     for kwargs in kwargs_list:
         assert_equals_data(
             bt_series.sort_values(**kwargs),
@@ -166,7 +167,7 @@ def test_fillna():
     def tf(x):
         bt_fill = bt['0'].fillna(x)
         assert bt_fill.expression.is_constant == bt['0'].expression.is_constant
-        np.testing.assert_equal(pdf[0].fillna(x).values, bt_fill.values)
+        np.testing.assert_equal(pdf[0].fillna(x).to_numpy(), bt_fill.to_numpy())
 
     assert(bt['0'].dtype == 'float64')
     tf(1.25)

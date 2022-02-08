@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    /* Enable Node module resolution, needed for resolveJsonModule */
+    "moduleResolution": "node",
+
     /* Enable importing .json files as modules */
     "resolveJsonModule": true,
 

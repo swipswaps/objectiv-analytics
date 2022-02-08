@@ -134,15 +134,26 @@ Sql Model
     DataFrame.get_unsampled
     DataFrame.view_sql
 
+Variables
++++++++++
+.. autosummary::
+    :toctree: DataFrame
+
+    DataFrame.create_variable
+    DataFrame.set_variable
+    DataFrame.get_all_variable_usage
+
 
 Reshaping, indexing, sorting & merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
     :toctree: DataFrame
 
+    DataFrame.sort_index
     DataFrame.sort_values
     DataFrame.rename
     DataFrame.drop
+    DataFrame.drop_duplicates
     DataFrame.reset_index
     DataFrame.set_index
     DataFrame.merge

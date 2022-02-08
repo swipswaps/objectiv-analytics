@@ -3,7 +3,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import isEqual from 'fast-deep-equal/es6';
+import isEqual from 'fast-deep-equal';
 import { OnChangeEffectCallback } from '../types';
 
 /**
