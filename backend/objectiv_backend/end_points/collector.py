@@ -212,12 +212,10 @@ def add_http_context_to_event(event: EventData, request: Request):
         # if a pre-existing context cannot be found, we create one from scratch
         http_context = {
             'id': 'http_context',
-            'remote_address': remote_address}
-
-        allowed_headers = ['Referer', 'User-Agent']
-        for h, v in request.headers.items():
-            if h in allowed_headers:
-                http_context[h.lower().replace('-', '_')] = v
+            'remote_address': remote_address,
+            'referrer': request.headers['Referer'] if 'Referer' in request.headers else '',
+            'user_agent': request.headers['User-Agent'] if 'User-Agent' in request.headers else ''
+        }
 
         add_global_context_to_event(event, HttpContext(**http_context))
 

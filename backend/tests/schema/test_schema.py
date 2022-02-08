@@ -112,7 +112,7 @@ def test_add_global_context():
     context_vars = {
         '_type': 'HttpContext',
         'id': 'test-http-context-id',
-        'referer': 'test-referer',
+        'referrer': 'test-referer',
         'remote_address': 'test-address',
         'user_agent': 'test-user_agent'
     }
@@ -138,7 +138,7 @@ def test_add_context_to_incorrect_scope():
     context_vars = {
         '_type': 'HttpContext',
         'id': 'test-http-context-id',
-        'referer': 'test-referer',
+        'referrer': 'test-referer',
         'remote_address': 'test-address',
         'user_agent': 'test-user_agent'
     }
@@ -171,7 +171,7 @@ def _get_http_context():
         '_type': 'HttpContext',
         'id': 'http_context',
         'remote_address': headers['X-Real-IP'],
-        'referer': headers['Referer'],
+        'referrer': headers['Referer'],
         'user_agent': headers['User-Agent']
     }
 
@@ -194,6 +194,7 @@ def test_add_create_http_context():
 
     generated_http_context = generated_http_contexts[0]
 
+
     assert(order_dict(generated_http_context) == order_dict(_get_http_context()))
 
 
@@ -210,7 +211,7 @@ def test_enrich_http_context():
         '_type': 'HttpContext',
         'id': 'http_context',
         'remote_address': '127.0.0.1',
-        'referer': headers['Referer'],
+        'referrer': headers['Referer'],
         'user_agent': headers['User-Agent']
     }
     # add context to event

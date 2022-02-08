@@ -169,7 +169,7 @@
       "description": "A GlobalContext describing meta information about the agent that sent the event.",
       "parents": ["AbstractGlobalContext"],
       "properties": {
-        "referer": {
+        "referrer": {
           "description": "Full URL to HTTP referrer of the current page.",
           "type": "string"
         },
