@@ -112,7 +112,7 @@ class HttpContext(AbstractGlobalContext):
                  id: str,
                  **kwargs: Optional[Any]):
         """
-        :param referrer:
+        :param referrer: 
             Full URL to HTTP referrer of the current page.
         :param user_agent: 
             User-agent of the agent that sent the event.
