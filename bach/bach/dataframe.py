@@ -445,8 +445,8 @@ class DataFrame:
         Instantiate a new DataFrame based on the content of a Pandas DataFrame.
 
         The index of the Pandas DataFrame is set to the index of the DataFrame. Only single level index is
-        supported. Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'. The 'object'
-        dtype is supported if the column contains string values and convert_objects is set to True.
+        supported. Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'. If
+        convert_objects is set to True, other columns are converted to supported data types if possible.
 
         How the data is loaded depends on the chosen materialization:
 
@@ -465,8 +465,9 @@ class DataFrame:
 
         :param engine: an sqlalchemy engine for the database.
         :param df: Pandas DataFrame to instantiate as DataFrame.
-        :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
-            :py:meth:`pandas.DataFrame.convert_dtypes` method where possible.
+        :param convert_objects: If True, the data in the columns with dtypes not in this list of supported
+            dtypes are checked they contain supported data types. If the columns contain a single supported
+            data type the pandas DataFrame can be loaded as a DataFrame.
         :param name:
             * For 'table' materialization: name of the table that Pandas will write the data to.
             * For 'cte' materialization: name of the node in the underlying SqlModel graph.

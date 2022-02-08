@@ -161,10 +161,11 @@ def _from_pd_shared(
 ) -> Tuple[pandas.DataFrame, Dict[str, str], Dict[str, str]]:
     """
     Pre-processes the given Pandas DataFrame:
-    1) Add index if missing
-    2) Convert string columns to string objects (if convert_objects)
-    3) Check that the dtypes are supported
-    4) extract index_dtypes and dtypes dictionaries
+    1)  Add index if missing
+    2a) Convert string columns to string objects (if convert_objects)
+    2b) Set dtype of column that are in pandas_dtypes (if convert_objects)
+    3)  Check that the dtypes are supported
+    4)  extract index_dtypes and dtypes dictionaries
 
     :return: Tuple:
         * Modified copy of Pandas DataFrame
@@ -181,35 +182,29 @@ def _from_pd_shared(
     index_dtypes = {}
     dtypes = {}
 
-    supported_types = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool']
-    secondary_supported_types = {'int32': 'int64'}
+    pandas_dtypes = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool']
 
     for column in df_copy.columns:
-        if convert_objects:
+        dtype = df_copy[column].dtype.name
+
+        if convert_objects and dtype not in pandas_dtypes:
             df_copy[column] = df_copy[column].convert_dtypes(convert_integer=False,
                                                              convert_boolean=False,
                                                              convert_floating=False)
-            if df_copy[column].dtype.name == 'object':
+            dtype = df_copy[column].dtype.name
+
+            if dtype not in pandas_dtypes:
                 types = df_copy[column].map(lambda x: type(x)).unique()
                 if len(types) == 1:
-                    final_type = value_to_dtype(df_copy[column][0])
+                    dtype = value_to_dtype(df_copy[column][0])
                 else:
                     raise ValueError(f'multiple types found in column {column}: {types}')
-            elif df_copy[column].dtype.name in secondary_supported_types.keys():
-                final_type = secondary_supported_types[df_copy[column].dtype.name]
-                df_copy[column] = df_copy[column].astype(final_type)
-            elif df_copy[column].dtype.name in supported_types:
-                final_type = df_copy[column].dtype.name
-            else:
-                raise ValueError(f'unsupported dtype for {column}')
-        else:
-            if df_copy[column].dtype.name in supported_types:
-                final_type = df_copy[column].dtype.name
-            else:
-                raise ValueError(f'unsupported dtype for {column}')  # todo same as above
+        elif dtype not in pandas_dtypes:
+            raise ValueError(f'unsupported dtype for {column}: {dtype}')
+
         if column == index:
-            index_dtypes[str(column)] = final_type
+            index_dtypes[str(column)] = dtype
         else:
-            dtypes[str(column)] = final_type
+            dtypes[str(column)] = dtype
 
     return df_copy, index_dtypes, dtypes

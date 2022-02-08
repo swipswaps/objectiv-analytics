@@ -116,6 +116,7 @@ class TypeRegistry:
         # classes. E.g. a `bool` is also an `int`
         # Therefore this list is hardcoded here, and not automatically derived from the base_types classes
         self._register_value_klass(int, SeriesInt64)
+        self._register_value_klass(numpy.int32, SeriesInt64)
         self._register_value_klass(numpy.int64, SeriesInt64)
         self._register_value_klass(float, SeriesFloat64)
         self._register_value_klass(numpy.float64, SeriesFloat64)

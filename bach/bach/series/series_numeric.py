@@ -187,7 +187,7 @@ class SeriesInt64(SeriesAbstractNumeric):
     dtype = 'int64'
     dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64)
     supported_db_dtype = 'bigint'
-    supported_value_types = (int, numpy.int64)
+    supported_value_types = (int, numpy.int64, numpy.int32)
 
     # Notes for supported_value_to_literal() and supported_literal_to_expression():
     # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
