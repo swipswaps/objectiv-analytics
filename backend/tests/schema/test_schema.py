@@ -100,7 +100,7 @@ def test_add_global_context():
     context_vars = {
         '_type': 'HttpContext',
         'id': 'test-http-context-id',
-        'referer': 'test-referer',
+        'referrer': 'test-referrer',
         'remote_address': 'test-address',
         'user_agent': 'test-user_agent'
     }
@@ -126,7 +126,7 @@ def test_add_context_to_incorrect_scope():
     context_vars = {
         '_type': 'HttpContext',
         'id': 'test-http-context-id',
-        'referer': 'test-referer',
+        'referrer': 'test-referrer',
         'remote_address': 'test-address',
         'user_agent': 'test-user_agent'
     }
