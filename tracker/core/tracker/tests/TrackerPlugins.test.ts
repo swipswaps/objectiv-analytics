@@ -84,12 +84,12 @@ describe('Plugin', () => {
     expect(mockConsole.log).toHaveBeenCalledTimes(2);
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       1,
-      '%｢objectiv:TrackerPlugins｣ test-pluginA added at index 0.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginA added at index 0.',
       'font-weight: bold'
     );
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       2,
-      '%｢objectiv:TrackerPlugins｣ test-pluginB added at index 1.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1.',
       'font-weight: bold'
     );
     expect(() => testPlugins.add(pluginB)).toThrow(
@@ -138,7 +138,7 @@ describe('Plugin', () => {
     expect(mockConsole.log).toHaveBeenCalledTimes(1);
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       1,
-      '%｢objectiv:TrackerPlugins｣ test-pluginB removed.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginB removed.',
       'font-weight: bold'
     );
     expect(testPlugins.plugins).toEqual([
@@ -187,12 +187,12 @@ describe('Plugin', () => {
     expect(mockConsole.log).toHaveBeenCalledTimes(2);
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       1,
-      '%｢objectiv:TrackerPlugins｣ test-pluginB removed.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginB removed.',
       'font-weight: bold'
     );
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       2,
-      '%｢objectiv:TrackerPlugins｣ test-pluginB added at index 1.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1.',
       'font-weight: bold'
     );
     expect(testPlugins.plugins).toEqual([

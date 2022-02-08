@@ -89,7 +89,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
 
     if (this.tracker.console) {
       this.tracker.console.log(
-        `%｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}.`,
+        `%c｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}.`,
         'font-weight: bold'
       );
     }
@@ -107,7 +107,10 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
     this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== pluginInstance.pluginName);
 
     if (this.tracker.console) {
-      this.tracker.console.log(`%｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed.`, 'font-weight: bold');
+      this.tracker.console.log(
+        `%c｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed.`,
+        'font-weight: bold'
+      );
     }
   }
 

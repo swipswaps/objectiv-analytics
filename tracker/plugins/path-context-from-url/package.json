@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/plugin-path-context-from-url",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Plugin for Objectiv trackers to automatically generate and attach PathContext from URLs",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -52,7 +52,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
-    "@objectiv/testing-tools": "^0.0.10",
+    "@objectiv/testing-tools": "^0.0.11",
     "@types/jest": "^27.0.3",
     "jest": "^27.4.5",
     "jest-extended": "^1.1.0",
@@ -66,6 +66,6 @@
     "typescript": "^4.5.5"
   },
   "peerDependencies": {
-    "@objectiv/tracker-core": "^0.0.10"
+    "@objectiv/tracker-core": "^0.0.11"
   }
 }
