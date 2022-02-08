@@ -180,9 +180,10 @@ describe('Plugin', () => {
     if (!existingPlugin) {
       throw new Error('test-pluginB Plugin not found');
     }
-    const newPluginB1 = { ...existingPlugin, parameterB: true };
+    const newPluginB1 = { ...existingPlugin, parameterB: true, initialize: jest.fn() };
     jest.resetAllMocks();
     testPlugins.replace(newPluginB1);
+    expect(newPluginB1.initialize).toHaveBeenCalledTimes(1);
     expect(mockConsole.log).toHaveBeenCalledTimes(2);
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       1,
@@ -202,6 +203,7 @@ describe('Plugin', () => {
       },
       {
         parameterB: true,
+        initialize: expect.any(Function),
         isUsable: expect.any(Function),
         pluginName: 'test-pluginB',
       },
