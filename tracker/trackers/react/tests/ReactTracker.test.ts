@@ -3,13 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import {
-  TrackerEvent,
-  TrackerPlugins,
-  TrackerQueue,
-  TrackerQueueMemoryStore,
-  TrackerTransportRetry,
-} from '@objectiv/tracker-core';
+import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore, TrackerTransportRetry, } from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
@@ -203,7 +197,7 @@ describe('BrowserTracker', () => {
       const testTracker = new ReactTracker({
         applicationId: 'app-id',
         endpoint: 'localhost',
-        plugins: new TrackerPlugins({ plugins: [] }),
+        plugins: [],
       });
       expect(testTracker).toBeInstanceOf(ReactTracker);
       expect(testTracker.plugins?.plugins).toStrictEqual([]);

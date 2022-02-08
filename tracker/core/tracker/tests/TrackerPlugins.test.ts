@@ -3,7 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { TrackerEvent, TrackerPluginInterface, TrackerPlugins } from '../src';
+import { Tracker, TrackerEvent, TrackerPluginInterface, TrackerPlugins } from '../src';
 
 describe('Plugin', () => {
   beforeEach(() => {
@@ -14,10 +14,12 @@ describe('Plugin', () => {
     jest.resetAllMocks();
   });
 
+  const tracker = new Tracker({ applicationId: 'test-tracker' });
+
   it('should instantiate when specifying an empty list of Plugins', () => {
-    const testPlugins = new TrackerPlugins({ plugins: [] });
+    const testPlugins = new TrackerPlugins({ tracker, plugins: [] });
     expect(testPlugins).toBeInstanceOf(TrackerPlugins);
-    expect(testPlugins).toEqual({ plugins: [] });
+    expect(testPlugins).toEqual({ tracker, plugins: [] });
   });
 
   it('should instantiate when specifying a list of Plugins instances', () => {
@@ -25,9 +27,9 @@ describe('Plugin', () => {
       { pluginName: 'test-pluginA', isUsable: () => true },
       { pluginName: 'test-pluginB', isUsable: () => true },
     ];
-    const testPlugins = new TrackerPlugins({ plugins });
+    const testPlugins = new TrackerPlugins({ tracker, plugins });
     expect(testPlugins).toBeInstanceOf(TrackerPlugins);
-    expect(testPlugins).toEqual({ plugins });
+    expect(testPlugins).toEqual({ tracker, plugins });
   });
 
   it('should not allow Plugins with the same name', () => {
@@ -46,6 +48,7 @@ describe('Plugin', () => {
     expect(
       () =>
         new TrackerPlugins({
+          tracker,
           plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue1' })],
         })
     ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: already exists. Use "replace" instead.');
@@ -54,7 +57,7 @@ describe('Plugin', () => {
   it('should return false if a plugin does not exist', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true };
-    const testPlugins = new TrackerPlugins({ plugins: [pluginA, pluginB] });
+    const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB] });
     expect(testPlugins.has('test-pluginA')).toBe(true);
     expect(testPlugins.has('test-pluginB')).toBe(true);
     expect(testPlugins.has('test-pluginC')).toBe(false);
@@ -63,19 +66,20 @@ describe('Plugin', () => {
   it('should get a plugin by its name or return null', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true };
-    const testPlugins = new TrackerPlugins({ plugins: [pluginA, pluginB] });
+    const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB] });
     expect(testPlugins.get('test-pluginA')).toBe(pluginA);
     expect(testPlugins.get('test-pluginB')).toBe(pluginB);
     expect(() => testPlugins.get('test-pluginC')).toThrow('｢objectiv:TrackerPlugins｣ test-pluginC: not found.');
   });
 
   it('should add plugins', () => {
-    const pluginA = { pluginName: 'test-pluginA', isUsable: () => true };
+    const pluginA = { pluginName: 'test-pluginA', isUsable: () => true, initialize: jest.fn() };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true };
     const pluginC = { pluginName: 'test-pluginC', isUsable: () => true };
-    const testPlugins = new TrackerPlugins({ plugins: [], console: mockConsole });
+    const testPlugins = new TrackerPlugins({ tracker, plugins: [], console: mockConsole });
     jest.resetAllMocks();
     testPlugins.add(pluginA);
+    expect(pluginA.initialize).toHaveBeenCalledTimes(1);
     testPlugins.add(pluginB);
     expect(mockConsole.log).toHaveBeenCalledTimes(2);
     expect(mockConsole.log).toHaveBeenNthCalledWith(
@@ -93,6 +97,7 @@ describe('Plugin', () => {
     );
     expect(testPlugins.plugins).toEqual([
       {
+        initialize: expect.any(Function),
         isUsable: expect.any(Function),
         pluginName: 'test-pluginA',
       },
@@ -104,6 +109,7 @@ describe('Plugin', () => {
     testPlugins.add(pluginC, 1);
     expect(testPlugins.plugins).toEqual([
       {
+        initialize: expect.any(Function),
         isUsable: expect.any(Function),
         pluginName: 'test-pluginA',
       },
@@ -126,7 +132,7 @@ describe('Plugin', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true };
     const pluginC = { pluginName: 'test-pluginC', isUsable: () => true };
-    const testPlugins = new TrackerPlugins({ plugins: [pluginA, pluginB, pluginC], console: mockConsole });
+    const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB, pluginC], console: mockConsole });
     jest.resetAllMocks();
     testPlugins.remove('test-pluginB');
     expect(mockConsole.log).toHaveBeenCalledTimes(1);
@@ -152,7 +158,7 @@ describe('Plugin', () => {
     const pluginA = { pluginName: 'test-pluginA', isUsable: () => true, parameterA: false };
     const pluginB = { pluginName: 'test-pluginB', isUsable: () => true, parameterB: false };
     const pluginC = { pluginName: 'test-pluginC', isUsable: () => true, parameterC: false };
-    const testPlugins = new TrackerPlugins({ plugins: [pluginA, pluginB, pluginC], console: mockConsole });
+    const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB, pluginC], console: mockConsole });
     expect(testPlugins.plugins).toEqual([
       {
         parameterA: false,
@@ -248,6 +254,7 @@ describe('Plugin', () => {
     expect(
       () =>
         new TrackerPlugins({
+          tracker,
           plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue' })],
         })
     ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: already exists. Use "replace" instead.');
@@ -266,7 +273,7 @@ describe('Plugin', () => {
     };
     const pluginC: TrackerPluginInterface = { pluginName: 'pluginC', isUsable: () => true };
     const plugins: TrackerPluginInterface[] = [pluginA, pluginB, pluginC];
-    const testPlugins = new TrackerPlugins({ plugins });
+    const testPlugins = new TrackerPlugins({ tracker, plugins });
     expect(pluginA.beforeTransport).not.toHaveBeenCalled();
     expect(pluginB.beforeTransport).not.toHaveBeenCalled();
     const testEvent = new TrackerEvent({ _type: 'test-event' });
@@ -292,7 +299,7 @@ describe('Plugin', () => {
       beforeTransport: jest.fn(),
     };
     const plugins: TrackerPluginInterface[] = [pluginA, pluginB, pluginC];
-    const testPlugins = new TrackerPlugins({ plugins });
+    const testPlugins = new TrackerPlugins({ tracker, plugins });
     expect(pluginA.beforeTransport).not.toHaveBeenCalled();
     expect(pluginB.beforeTransport).not.toHaveBeenCalled();
     expect(pluginC.beforeTransport).not.toHaveBeenCalled();

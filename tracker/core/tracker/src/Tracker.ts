@@ -9,6 +9,7 @@ import { waitForPromise } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
 import { getLocationPath } from './TrackerElementLocations';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
+import { TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerQueueInterface } from './TrackerQueueInterface';
 import { TrackerTransportInterface } from './TrackerTransportInterface';
@@ -40,7 +41,7 @@ export type TrackerConfig = ContextsConfig & {
   /**
    * Optional. Plugins that will be executed when the Tracker initializes and before the Event is sent.
    */
-  plugins?: TrackerPlugins;
+  plugins?: TrackerPlugins | TrackerPluginInterface[];
 
   /**
    * Optional. A TrackerConsole instance for logging.
@@ -77,9 +78,18 @@ export type TrackEventOptions = {
 };
 
 /**
+ * TrackerInterface implements Contexts and TrackerConfig, with the exception that plugins are not just an array of
+ * Plugin instances, but they are wrapped in a TrackerPlugins instance.
+ */
+export type TrackerInterface = Contexts &
+  Omit<TrackerConfig, 'plugins'> & {
+    plugins: TrackerPlugins;
+  };
+
+/**
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
-export class Tracker implements Contexts, TrackerConfig {
+export class Tracker implements TrackerInterface {
   readonly console?: TrackerConsole;
   readonly applicationId: string;
   readonly trackerId: string;
@@ -108,9 +118,18 @@ export class Tracker implements Contexts, TrackerConfig {
     this.trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
     this.queue = trackerConfig.queue;
     this.transport = trackerConfig.transport;
-    this.plugins =
-      trackerConfig.plugins ??
-      new TrackerPlugins({ console: trackerConfig.console, plugins: makeTrackerDefaultPluginsList(trackerConfig) });
+    this.plugins = new TrackerPlugins({
+      tracker: this,
+      console: trackerConfig.console,
+      plugins: makeTrackerDefaultPluginsList(trackerConfig),
+    })
+    if (trackerConfig.plugins !== undefined) {
+      if(Array.isArray(trackerConfig.plugins)) {
+        this.plugins.plugins = trackerConfig.plugins;
+      } else {
+        this.plugins = trackerConfig.plugins;
+      }
+    }
 
     // Process ContextConfigs
     let new_location_stack: AbstractLocationContext[] = trackerConfig.location_stack ?? [];

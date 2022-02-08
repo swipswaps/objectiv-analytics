@@ -4,6 +4,7 @@
 
 import { ContextsConfig } from './Context';
 import { isValidIndex } from './helpers';
+import { Tracker } from './Tracker';
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
@@ -12,6 +13,14 @@ import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterfa
  * The configuration object of TrackerPlugins. It accepts a list of plugins and, optionally, a Tracker Console.
  */
 export type TrackerPluginsConfiguration = TrackerPluginConfig & {
+  /**
+   * The Tracker instance this TrackerPlugins is bound to.
+   */
+  tracker: Tracker;
+
+  /**
+   * An array of Plugins.
+   */
   plugins: TrackerPluginInterface[];
 };
 
@@ -25,6 +34,7 @@ export type TrackerPluginsConfiguration = TrackerPluginConfig & {
  */
 export class TrackerPlugins implements TrackerPluginLifecycleInterface {
   readonly console?: TrackerConsole;
+  readonly tracker: Tracker;
   plugins: TrackerPluginInterface[] = [];
 
   /**
@@ -32,6 +42,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
    */
   constructor(trackerPluginsConfig: TrackerPluginsConfiguration) {
     this.console = trackerPluginsConfig.console;
+    this.tracker = trackerPluginsConfig.tracker;
 
     trackerPluginsConfig.plugins.map((plugin) => this.add(plugin));
 
@@ -65,16 +76,14 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
   }
 
   /**
-   * Adds a new Plugin at the end of the plugins list, or at the specified index.
+   * Adds a new Plugin at the end of the plugins list, or at the specified index, and initializes it.
    */
   add(plugin: TrackerPluginInterface, index?: number) {
     if (index !== undefined && !isValidIndex(index)) {
       throw new Error(`｢objectiv:TrackerPlugins｣ invalid index.`);
     }
 
-    const pluginInstance = this.has(plugin.pluginName);
-
-    if (pluginInstance) {
+    if (this.has(plugin.pluginName)) {
       throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: already exists. Use "replace" instead.`);
     }
 
@@ -87,6 +96,9 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
         'font-weight: bold'
       );
     }
+
+    const pluginInstance = this.get(plugin.pluginName);
+    pluginInstance.initialize && pluginInstance.initialize(this.tracker);
   }
 
   /**
