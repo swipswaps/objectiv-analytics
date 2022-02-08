@@ -109,9 +109,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
       return false;
     }
 
-    // TODO create plugins if they are functions or tuples or strings
-
-    this.plugins.splice(index !== undefined ? index : this.plugins.length, 0, plugin);
+    this.plugins.splice(index ?? this.plugins.length, 0, plugin);
 
     return true;
   }
@@ -152,7 +150,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
       return false;
     }
 
-    this.add(plugin, index !== undefined ? index : originalIndex);
+    this.add(plugin, index ?? originalIndex);
 
     return true;
   }
