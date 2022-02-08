@@ -112,3 +112,30 @@ def test_from_pandas_non_happy_path():
             name='test_from_pd_table',
             materialization='table',
         )
+
+
+@pytest.mark.parametrize("materialization", ['table', 'cte'])
+def test_from_pandas_table_nan(materialization: str):
+    pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
+    pdf.loc[2, 'inhabitants'] = None
+    expected_data = EXPECTED_DATA.copy()
+    expected_data[1][4] = None
+
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    bt = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf,
+        convert_objects=True,
+        name='test_from_pd_table',
+        materialization=materialization,
+        if_exists='replace'
+    )
+
+    bt_sum = bt.inhabitants.sum()
+    assert_equals_data(
+        bt_sum,
+        expected_columns=['inhabitants'],
+        expected_data=[[96540]]
+    )
+
+    assert_equals_data(bt, expected_columns=EXPECTED_COLUMNS, expected_data=expected_data)
