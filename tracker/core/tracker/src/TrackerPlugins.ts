@@ -82,55 +82,49 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
   }
 
   /**
+   * Checks whether a Plugin instance exists by its name.
+   */
+  has(pluginName: string): boolean {
+    return this.plugins.find((plugin) => plugin.pluginName === pluginName) !== undefined;
+  }
+
+  /**
    * Gets a Plugin instance by its name. Returns null if the plugin is not found.
    */
-  get(pluginName: string): TrackerPluginInterface | false {
-    return this.plugins.find((plugin) => plugin.pluginName === pluginName) ?? false;
+  get(pluginName: string): TrackerPluginInterface {
+    const plugin = this.plugins.find((plugin) => plugin.pluginName === pluginName);
+
+    if (!plugin) {
+      throw new Error(`｢objectiv:TrackerPlugins｣ ${pluginName}: not found.`);
+    }
+
+    return plugin;
   }
 
   /**
    * Adds a new Plugin at the end of the plugins list, or at the specified index.
    */
-  add(plugin: TrackerPluginInterface, index?: number): boolean {
+  add(plugin: TrackerPluginInterface, index?: number) {
     if (index !== undefined && !isValidIndex(index)) {
-      if (this.console) {
-        this.console.error(`｢objectiv:TrackerPlugins｣ invalid index.`);
-      }
-      return false;
+      throw new Error(`｢objectiv:TrackerPlugins｣ invalid index.`);
     }
 
-    const pluginInstance = this.get(plugin.pluginName);
+    const pluginInstance = this.has(plugin.pluginName);
 
     if (pluginInstance) {
-      if (this.console) {
-        this.console.error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: already exists. Use "replace" instead.`);
-      }
-
-      return false;
+      throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: already exists. Use "replace" instead.`);
     }
 
     this.plugins.splice(index ?? this.plugins.length, 0, plugin);
-
-    return true;
   }
 
   /**
    * Removes a Plugin by its name.
    */
-  remove(pluginName: string): boolean {
+  remove(pluginName: string) {
     const pluginInstance = this.get(pluginName);
 
-    if (!pluginInstance) {
-      if (this.console) {
-        this.console.error(`｢objectiv:TrackerPlugins｣ ${pluginName}: not found.`);
-      }
-
-      return false;
-    }
-
     this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== pluginInstance.pluginName);
-
-    return true;
   }
 
   /**
@@ -138,17 +132,12 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
    */
   replace(plugin: TrackerPluginInterface, index?: number): boolean {
     if (index !== undefined && !isValidIndex(index)) {
-      if (this.console) {
-        this.console.error(`｢objectiv:TrackerPlugins｣ invalid index.`);
-      }
-      return false;
+      throw new Error(`｢objectiv:TrackerPlugins｣ invalid index.`);
     }
 
     const originalIndex = this.plugins.findIndex(({ pluginName }) => pluginName === plugin.pluginName);
 
-    if (!this.remove(plugin.pluginName)) {
-      return false;
-    }
+    this.remove(plugin.pluginName);
 
     this.add(plugin, index ?? originalIndex);
 
