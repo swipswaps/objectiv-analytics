@@ -131,8 +131,10 @@ class SeriesAbstractNumeric(Series, ABC):
         :param partition: The partition or window to apply
         :param skipna: Exclude NA/NULL values
         """
-        return cast('SeriesFloat64',  # for the mypies
-                    self._derived_agg_func(partition, 'avg', 'double precision', skipna=skipna))
+        return cast(
+            'SeriesFloat64',  # for the mypies
+            self._derived_agg_func(partition, 'avg', 'double precision', skipna=skipna),
+        )
 
     def quantile(
         self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5,

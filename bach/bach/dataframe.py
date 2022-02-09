@@ -2221,11 +2221,38 @@ class DataFrame:
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
+    def describe(
+        self,
+        percentiles: Optional[Sequence[float]] = None,
+        include: Optional[Union[str, Sequence[str]]] = None,
+        exclude: Optional[Union[str, Sequence[str]]] = None,
+        datetime_is_numeric: bool = False,
+    ) -> 'DataFrame':
+        """
+        Returns descriptive statistics.
+        The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
+
+        :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
+        :param include: dtypes to be included, if not provided calculations will be based on numerical columns
+        :param exclude: dtypes to be excluded
+        :param datetime_is_numeric: not supported
+        :returns: a new DataFrame with the descriptive statistics
+        """
+        from bach.describe import DescribeOperation
+        return DescribeOperation(
+            obj=self,
+            include=include,
+            exclude=exclude,
+            datetime_is_numeric=datetime_is_numeric,
+            percentiles=percentiles,
+        )()
+
     def create_variable(
-            self,
-            name: str,
-            value: Any,
-            *, dtype: Optional[str] = None
+        self,
+        name: str,
+        value: Any,
+        *,
+        dtype: Optional[str] = None,
     ) -> Tuple['DataFrame', 'Series']:
         """
         Create a Series object that can be used as a variable, within the returned DataFrame. The

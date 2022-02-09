@@ -5,7 +5,7 @@ import warnings
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
-    TypeVar
+    TypeVar, Sequence
 from uuid import UUID
 
 import numpy
@@ -18,6 +18,7 @@ from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel
+
 from bach.types import value_to_dtype
 from sql_models.constants import NotSet, not_set
 
@@ -1056,12 +1057,14 @@ class Series(ABC):
             raise ValueError(f'group_by {type(group_by)} not supported')
         return group_by
 
-    def _derived_agg_func(self,
-                          partition: Optional[WrappedPartition],
-                          expression: Union[str, Expression],
-                          dtype: str = None,
-                          skipna: bool = True,
-                          min_count: int = None) -> 'Series':
+    def _derived_agg_func(
+        self,
+        partition: Optional[WrappedPartition],
+        expression: Union[str, Expression],
+        dtype: str = None,
+        skipna: bool = True,
+        min_count: int = None,
+    ) -> 'Series':
         """
         Create a derived Series that aggregates underlying Series through the given expression.
         If no partition to aggregate on is given, and the Series does not have one set,
@@ -1110,7 +1113,6 @@ class Series(ABC):
                     f'CASE WHEN {{}} >= {min_count} THEN {{}} ELSE NULL END',
                     self.count(partition, skipna=skipna), expression
                 )
-
         derived_dtype = self.dtype if dtype is None else dtype
 
         if not isinstance(partition, Window):
@@ -1338,6 +1340,24 @@ class Series(ABC):
             ignore_index=ignore_index,
         )()
         return concatenated_series
+
+    def describe(
+        self,
+        percentiles: Optional[Sequence[float]] = None,
+        datetime_is_numeric: bool = False,
+    ) -> 'Series':
+        """
+        Returns descriptive statistics, it will vary based on what is provided
+
+        :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
+        :param datetime_is_numeric: not supported
+        :returns: a new Series with the descriptive statistics
+        """
+        from bach.describe import DescribeOperation
+        describe_df = DescribeOperation(
+            obj=self, datetime_is_numeric=datetime_is_numeric, percentiles=percentiles,
+        )()
+        return describe_df.all_series[self.name]
 
     def drop_duplicates(
         self,
