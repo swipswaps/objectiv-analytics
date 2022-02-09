@@ -2,10 +2,10 @@ from copy import copy
 from enum import Enum
 from typing import List, Dict, Optional, cast, TypeVar
 
-from bach.series import Series, SeriesInt64
+from bach.series import Series
 from bach.expression import Expression, WindowFunctionExpression
 from bach.dataframe import SortColumn
-from sql_models.model import SqlModel
+from bach.sql_model import BachSqlModel
 
 G = TypeVar('G', bound='GroupBy')
 
@@ -102,7 +102,7 @@ class GroupBy:
     def index(self) -> Dict[str, Series]:
         return copy(self._index)
 
-    def copy_override_base_node(self: G, base_node: SqlModel) -> G:
+    def copy_override_base_node(self: G, base_node: BachSqlModel) -> G:
         new_cols = [col.copy_override(base_node=base_node) for col in self.index.values()]
         return self.__class__(group_by_columns=new_cols)
 
