@@ -168,6 +168,7 @@ Conversion, reshaping, sorting
     Series.fillna
     Series.append
     Series.drop_duplicates
+    Series.unstack
 
 Function application, aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -187,6 +188,7 @@ All types
 .. autosummary::
     :toctree: Series
 
+    Series.describe
     Series.count
     Series.min
     Series.max

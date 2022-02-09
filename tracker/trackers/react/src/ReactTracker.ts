@@ -19,6 +19,11 @@ export type ReactTrackerConfig = TrackerConfig & {
   endpoint?: string;
 
   /**
+   * Optional. Whether to automatically create HttpContext based on Document and Navigation APIs. Enabled by default.
+   */
+  trackHttpContext?: boolean;
+
+  /**
    * Optional. Whether to automatically create PathContext based on URLs. Enabled by default.
    */
   trackPathContextFromURL?: boolean;
@@ -51,8 +56,18 @@ export type ReactTrackerConfig = TrackerConfig & {
  *  const queueStorage = new TrackerQueueLocalStorage({ trackerId, console })
  *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
  *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
+ *  const httpContextPlugin = new HttpContextPlugin({ console });
  *  const pathContextFromURLPlugin = new PathContextFromURLPlugin({ console });
- *  const plugins = new TrackerPlugins({ plugins: [ applicationContextPlugin, pathContextFromURLPlugin ], console });
+ *  const rootLocationContextFromURLPlugin = new RootLocationContextFromURLPlugin({ console });
+ *  const plugins = new TrackerPlugins({
+ *    plugins: [
+ *      applicationContextPlugin,
+ *      httpContextPlugin,
+ *      pathContextFromURLPlugin,
+ *      rootLocationContextFromURLPlugin
+ *      ],
+ *      console
+ *   });
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
  *  @see makeDefaultTransport
@@ -83,7 +98,7 @@ export class ReactTracker extends Tracker {
       config = {
         ...config,
         transport: makeDefaultTransport(config),
-        queue: makeDefaultQueue(config),
+        queue: config.queue ?? makeDefaultQueue(config),
       };
     }
 

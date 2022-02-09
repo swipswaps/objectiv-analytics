@@ -118,6 +118,7 @@ class DataFrame:
 
     * :py:meth:`head`
     * :py:meth:`to_pandas`
+    * :py:meth:`to_numpy`
     * :py:meth:`get_sample`
     * The property accessors :py:attr:`Series.value` (Series only), :py:attr:`values`
 
@@ -902,7 +903,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['DataFrame', 'Series', int, str, float, UUID]):
+                    value: Union['DataFrame', 'Series', int, str, float, UUID, pandas.Series]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -914,6 +915,13 @@ class DataFrame:
                 raise ValueError(f'Column name "{key}" already exists as index.')
             if isinstance(value, DataFrame):
                 raise ValueError("Can't set a DataFrame as a single column")
+            if isinstance(value, pandas.Series):
+                df = pandas.DataFrame(value)
+                df.columns = [key]
+                bt = DataFrame.from_pandas(self.engine,
+                                           df,
+                                           convert_objects=True)
+                value = bt[key]
             if not isinstance(value, Series):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
@@ -1311,9 +1319,9 @@ class DataFrame:
             by: Union[_GroupBySingleType,  # single series group_by
                       # for GroupingSets
                       Tuple[Union[_GroupBySingleType, Tuple[_GroupBySingleType, ...]], ...],
-                      List[Union[_GroupBySingleType,  # multi series
-                                 List[_GroupBySingleType],  # for grouping lists
-                                 Tuple[_GroupBySingleType, ...]]],  # for grouping lists
+                      Sequence[Union[_GroupBySingleType,  # multi series
+                                     List[_GroupBySingleType],  # for grouping lists
+                                     Tuple[_GroupBySingleType, ...]]],  # for grouping lists
                       None] = None) -> 'DataFrame':
         """
         Group by any of the series currently in this DataDrame, both from index as well as data.
@@ -2212,11 +2220,38 @@ class DataFrame:
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
+    def describe(
+        self,
+        percentiles: Optional[Sequence[float]] = None,
+        include: Optional[Union[str, Sequence[str]]] = None,
+        exclude: Optional[Union[str, Sequence[str]]] = None,
+        datetime_is_numeric: bool = False,
+    ) -> 'DataFrame':
+        """
+        Returns descriptive statistics.
+        The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
+
+        :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
+        :param include: dtypes to be included, if not provided calculations will be based on numerical columns
+        :param exclude: dtypes to be excluded
+        :param datetime_is_numeric: not supported
+        :returns: a new DataFrame with the descriptive statistics
+        """
+        from bach.describe import DescribeOperation
+        return DescribeOperation(
+            obj=self,
+            include=include,
+            exclude=exclude,
+            datetime_is_numeric=datetime_is_numeric,
+            percentiles=percentiles,
+        )()
+
     def create_variable(
-            self,
-            name: str,
-            value: Any,
-            *, dtype: Optional[str] = None
+        self,
+        name: str,
+        value: Any,
+        *,
+        dtype: Optional[str] = None,
     ) -> Tuple['DataFrame', 'Series']:
         """
         Create a Series object that can be used as a variable, within the returned DataFrame. The
@@ -2369,14 +2404,17 @@ class DataFrame:
     ) -> Optional['DataFrame']:
         """
         Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
+
         :param subset: series label or sequence of labels.
-        Duplications to be dropped are based on the combination of the subset of series.
-        If not provided, all series labels will be used by default.
+            Duplications to be dropped are based on the combination of the subset of series.
+            If not provided, all series labels will be used by default.
         :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
-         - `first`: drop all occurrences except the first one
-         - `last`:  drop all occurrences except the last one
-         - False: drops all duplicates
-         If no value is provided, first occurrences will be kept by default.
+
+            * `first`: drop all occurrences except the first one
+            * `last`:  drop all occurrences except the last one
+            * False: drops all duplicates
+
+            If no value is provided, first occurrences will be kept by default.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param ignore_index: if true, drops indexes of the result
 
