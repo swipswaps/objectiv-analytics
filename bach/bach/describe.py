@@ -44,12 +44,12 @@ def _get_casted_filtering_dtypes(
 
 class DescribeOperation:
     """
-    In order to implement this class you should provide the following params:
+    In order to instantiate this class you should provide the following params:
     obj: a DataFrame or Series to be described. If a series is give, it will be transformed into a DataFrame
     include: A dtype or list of dtypes to be described. If nothing is provided,
     only numerical series will be considered
     exclude: A dtype or list of dtype to be excluded from analysis.
-    datetime_is_numeric: A boolean specifying if datetime series should be treated as numeric columns
+    datetime_is_numeric: A boolean specifying if datetime series should be treated as numeric columns (not supported)
     percentiles: List-like of numbers between 0-1. If nothing is provided,
     default [.25, .5, .75] will be calculated
     """
@@ -59,7 +59,7 @@ class DescribeOperation:
     datetime_is_numeric: bool
     percentiles: Sequence[float]
 
-    STAT_SERIES_NAME = 'stat'
+    STAT_SERIES_NAME = '__stat'
     RESULT_DECIMALS = 2
 
     def __init__(

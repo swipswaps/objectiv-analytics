@@ -2228,7 +2228,8 @@ class DataFrame:
         datetime_is_numeric: bool = False,
     ) -> 'DataFrame':
         """
-        Returns descriptive statistics, it will vary based on what is provided
+        Returns descriptive statistics.
+        The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
 
         :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
         :param include: dtypes to be included, if not provided calculations will be based on numerical columns
