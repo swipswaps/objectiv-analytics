@@ -213,8 +213,8 @@ def add_http_context_to_event(event: EventData, request: Request):
         http_context = {
             'id': 'http_context',
             'remote_address': remote_address,
-            'referrer': request.headers['Referer'] if 'Referer' in request.headers else '',
-            'user_agent': request.headers['User-Agent'] if 'User-Agent' in request.headers else ''
+            'referrer': request.headers.get('Referer', ''),
+            'user_agent': request.headers.get('User-Agent', '')
         }
 
         add_global_context_to_event(event, HttpContext(**http_context))
