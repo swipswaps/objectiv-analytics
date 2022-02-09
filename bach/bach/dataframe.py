@@ -2112,10 +2112,9 @@ class DataFrame:
             # a hack in order to avoid calling quantile_df.materialized().
             # Currently doing quantile['q'] = qt
             # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-            quantile_df['q'] = initial_series.copy_override(
-                dtype='float64',
-                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
-            )
+            quantile_df['q'] = initial_series\
+                .copy_override_dtype(dtype='float64')\
+                .copy_override(expression=AggregateFunctionExpression.construct(fmt=f'{qt}'))
             all_quantile_dfs.append(quantile_df)
 
         from bach.concat import DataFrameConcatOperation
