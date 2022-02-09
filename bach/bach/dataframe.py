@@ -2489,8 +2489,9 @@ class DataFrame:
            - 'any': rows with at least one missing value are removed
            - 'all': rows with all missing values are removed
         :param thresh: determines the least amount of missing values a row needs to be removed
-        :param subset: series label or sequence of labels to be considered for missing values. If subset is None,
-        all DataFrame's series labels will be used. In case subset is an empty list, a copy from the DataFrame will
+        :param subset: series label or sequence of labels to be considered for missing values.
+        If subset is None, all DataFrame's series labels will be used.
+        In case subset is an empty list, a copy from the DataFrame will
         be returned.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
