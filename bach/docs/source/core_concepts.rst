@@ -13,10 +13,11 @@ transfer any data from the database to Bach. All operations are combined and com
 which is executed only when one of a few specific data-transfer functions is called on either a DataFrame or
 a Series object:
 
-* :py:meth:`DataFrame.to_pandas()`
-* :py:meth:`DataFrame.head()`
+* :py:meth:`DataFrame.to_pandas()` or :py:meth:`Series.to_pandas()`
+* :py:meth:`DataFrame.head()` or :py:meth:`Series.head()`
+* :py:meth:`DataFrame.to_numpy()` or :py:meth:`Series.to_numpy()`
 * The property accessors :py:attr:`DataFrame.values`, :py:attr:`Series.array` and
-  :py:attr:`Series.value` (Series only),
+  :py:attr:`Series.value`
 
 Typical usage would be to do all heavy lifting inside the database, and only query the aggregated/summarized
 output.
