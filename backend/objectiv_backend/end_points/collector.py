@@ -163,6 +163,36 @@ def set_time_in_events(events: EventDataList, current_millis: int, client_millis
         event['time'] = event['time'] + offset
 
 
+def _get_remote_address(request: Request) -> str:
+    """
+    try to determine the IP address of the calling user agent, by looking at some standard headers
+    if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
+    cases this is probably wrong.
+    :param request: original http request
+    :return: string with ip address
+    """
+
+    x_forwarded_hosts = str(request.headers.get('X-Forwarded-For', '')).split()
+    if 'X-Real-IP' in request.headers:
+        # any upstream proxy probably know the 'right' IP. If it sets the x-real-ip header to that,
+        # we use that.
+        return request.headers['X-Real-IP']
+    elif x_forwarded_hosts:
+        # x-forwarded-for headers take the form of:
+        # client proxy_1...proxy_n
+        # we're interested in proxy_n, which is the last node that connects to us, and as such
+        # has to be an Internet routed proxy. proxies before it, including the client may be internal
+        # and non-routable addresses.
+        return x_forwarded_hosts[-1]
+    elif request.remote_addr:
+        # if all else fails, look for remote_addr in the request. This is the IP the current connection
+        # originates from. Most likely a proxy (which is why this is the last resort).
+        return request.remote_addr
+
+    # this should never happen!
+    return 'unknown'
+
+
 def add_http_context_to_event(event: EventData, request: Request):
     """
         Create or enrich an HttpContext based on the data in the current request. If an HttpContext is already
@@ -173,37 +203,10 @@ def add_http_context_to_event(event: EventData, request: Request):
         :param request - request object, used to extract extra context from.
     """
 
-    # try to determine the IP address of the calling user agent, by looking at some standard headers
-    # if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
-    # cases this is probably wrong.
-    if 'X-Real-IP' in request.headers:
-        # any upstream proxy probably know the 'right' IP. If it sets the x-real-ip header to that,
-        # we use that.
-        remote_address = request.headers['X-Real-IP']
-    elif 'X-Forwarded-For' in request.headers:
-        # x-forwarded-for headers take the form of:
-        # client proxy_1...proxy_n
-        # we're interested in proxy_n, which is the last node that connects to us, and as such
-        # has to be an Internet routed proxy. proxies before it, including the client may be internal
-        # and non-routable addresses.
-        hosts = str(request.headers['X-Forwarded-For']).split()
-        if len(hosts) > 1:
-            remote_address = hosts[-1]
-        else:
-            # if there's only one address there, we use that.
-            remote_address = request.headers['X-Forwarded-For']
-    elif request.remote_addr:
-        # if all else fails, look for remote_addr in the request. This is the IP the current connection
-        # originates from. Most likely a proxy (which is why this is the last resort).
-        remote_address = request.remote_addr
-    else:
-        # this should never happen!
-        remote_address = 'unknown'
+    remote_address = _get_remote_address(request)
 
     # check if there is a pre-existing http_context
     # if so, use that.
-
-    # all values in an HttpContext are strings
     contexts = get_contexts(event, 'HttpContext')
     if contexts:
         tracker_http_context = contexts[0]
