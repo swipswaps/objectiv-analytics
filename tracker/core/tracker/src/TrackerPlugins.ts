@@ -43,7 +43,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
 
     trackerPluginsConfig.plugins.map((plugin) => {
       if (this.has(plugin.pluginName)) {
-        throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: duplicated.`);
+        throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: duplicated`);
       }
 
       this.plugins.push(plugin);
@@ -72,7 +72,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
     const plugin = this.plugins.find((plugin) => plugin.pluginName === pluginName);
 
     if (!plugin) {
-      throw new Error(`｢objectiv:TrackerPlugins｣ ${pluginName}: not found.`);
+      throw new Error(`｢objectiv:TrackerPlugins｣ ${pluginName}: not found`);
     }
 
     return plugin;
@@ -83,11 +83,11 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
    */
   add(plugin: TrackerPluginInterface, index?: number) {
     if (index !== undefined && !isValidIndex(index)) {
-      throw new Error(`｢objectiv:TrackerPlugins｣ invalid index.`);
+      throw new Error(`｢objectiv:TrackerPlugins｣ invalid index`);
     }
 
     if (this.has(plugin.pluginName)) {
-      throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: already exists. Use "replace" instead.`);
+      throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: already exists. Use "replace" instead`);
     }
 
     const spliceIndex = index ?? this.plugins.length;
@@ -95,7 +95,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
 
     if (this.tracker.console) {
       this.tracker.console.log(
-        `%c｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}.`,
+        `%c｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}`,
         'font-weight: bold'
       );
     }
@@ -113,10 +113,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
     this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== pluginInstance.pluginName);
 
     if (this.tracker.console) {
-      this.tracker.console.log(
-        `%c｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed.`,
-        'font-weight: bold'
-      );
+      this.tracker.console.log(`%c｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed`, 'font-weight: bold');
     }
   }
 
@@ -125,7 +122,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
    */
   replace(plugin: TrackerPluginInterface, index?: number) {
     if (index !== undefined && !isValidIndex(index)) {
-      throw new Error(`｢objectiv:TrackerPlugins｣ invalid index.`);
+      throw new Error(`｢objectiv:TrackerPlugins｣ invalid index`);
     }
 
     const originalIndex = this.plugins.findIndex(({ pluginName }) => pluginName === plugin.pluginName);

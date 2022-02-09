@@ -51,7 +51,7 @@ describe('Plugin', () => {
           tracker,
           plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue1' })],
         })
-    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated.');
+    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated');
   });
 
   it('should return false if a plugin does not exist', () => {
@@ -69,7 +69,7 @@ describe('Plugin', () => {
     const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB] });
     expect(testPlugins.get('test-pluginA')).toBe(pluginA);
     expect(testPlugins.get('test-pluginB')).toBe(pluginB);
-    expect(() => testPlugins.get('test-pluginC')).toThrow('｢objectiv:TrackerPlugins｣ test-pluginC: not found.');
+    expect(() => testPlugins.get('test-pluginC')).toThrow('｢objectiv:TrackerPlugins｣ test-pluginC: not found');
   });
 
   it('should add plugins', () => {
@@ -84,16 +84,16 @@ describe('Plugin', () => {
     expect(mockConsole.log).toHaveBeenCalledTimes(2);
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       1,
-      '%c｢objectiv:TrackerPlugins｣ test-pluginA added at index 0.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginA added at index 0',
       'font-weight: bold'
     );
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       2,
-      '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1',
       'font-weight: bold'
     );
     expect(() => testPlugins.add(pluginB)).toThrow(
-      '｢objectiv:TrackerPlugins｣ test-pluginB: already exists. Use "replace" instead.'
+      '｢objectiv:TrackerPlugins｣ test-pluginB: already exists. Use "replace" instead'
     );
     expect(testPlugins.plugins).toEqual([
       {
@@ -122,10 +122,10 @@ describe('Plugin', () => {
         pluginName: 'test-pluginB',
       },
     ]);
-    expect(() => testPlugins.add(pluginC, -1)).toThrow('｢objectiv:TrackerPlugins｣ invalid index.');
-    expect(() => testPlugins.add(pluginC, Infinity)).toThrow('｢objectiv:TrackerPlugins｣ invalid index.');
+    expect(() => testPlugins.add(pluginC, -1)).toThrow('｢objectiv:TrackerPlugins｣ invalid index');
+    expect(() => testPlugins.add(pluginC, Infinity)).toThrow('｢objectiv:TrackerPlugins｣ invalid index');
     // @ts-ignore
-    expect(() => testPlugins.add(pluginC, '0')).toThrow('｢objectiv:TrackerPlugins｣ invalid index.');
+    expect(() => testPlugins.add(pluginC, '0')).toThrow('｢objectiv:TrackerPlugins｣ invalid index');
   });
 
   it('should remove plugins', () => {
@@ -138,7 +138,7 @@ describe('Plugin', () => {
     expect(mockConsole.log).toHaveBeenCalledTimes(1);
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       1,
-      '%c｢objectiv:TrackerPlugins｣ test-pluginB removed.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginB removed',
       'font-weight: bold'
     );
     expect(testPlugins.plugins).toEqual([
@@ -151,7 +151,7 @@ describe('Plugin', () => {
         pluginName: 'test-pluginC',
       },
     ]);
-    expect(() => testPlugins.remove('test-pluginB')).toThrow('｢objectiv:TrackerPlugins｣ test-pluginB: not found.');
+    expect(() => testPlugins.remove('test-pluginB')).toThrow('｢objectiv:TrackerPlugins｣ test-pluginB: not found');
   });
 
   it('should replace plugins', () => {
@@ -187,12 +187,12 @@ describe('Plugin', () => {
     expect(mockConsole.log).toHaveBeenCalledTimes(2);
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       1,
-      '%c｢objectiv:TrackerPlugins｣ test-pluginB removed.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginB removed',
       'font-weight: bold'
     );
     expect(mockConsole.log).toHaveBeenNthCalledWith(
       2,
-      '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1.',
+      '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1',
       'font-weight: bold'
     );
     expect(testPlugins.plugins).toEqual([
@@ -214,7 +214,7 @@ describe('Plugin', () => {
       },
     ]);
     const newPluginD = { pluginName: 'test-pluginD', isUsable: () => true };
-    expect(() => testPlugins.replace(newPluginD)).toThrow('｢objectiv:TrackerPlugins｣ test-pluginD: not found.');
+    expect(() => testPlugins.replace(newPluginD)).toThrow('｢objectiv:TrackerPlugins｣ test-pluginD: not found');
     const newPluginB2 = { pluginName: 'test-pluginB', isUsable: () => true, newParameter: { a: 1 } };
     testPlugins.replace(newPluginB2, 0);
     expect(testPlugins.plugins).toEqual([
@@ -234,10 +234,10 @@ describe('Plugin', () => {
         pluginName: 'test-pluginC',
       },
     ]);
-    expect(() => testPlugins.replace(newPluginB2, -1)).toThrow('｢objectiv:TrackerPlugins｣ invalid index.');
-    expect(() => testPlugins.replace(newPluginB2, Infinity)).toThrow('｢objectiv:TrackerPlugins｣ invalid index.');
+    expect(() => testPlugins.replace(newPluginB2, -1)).toThrow('｢objectiv:TrackerPlugins｣ invalid index');
+    expect(() => testPlugins.replace(newPluginB2, Infinity)).toThrow('｢objectiv:TrackerPlugins｣ invalid index');
     // @ts-ignore
-    expect(() => testPlugins.replace(newPluginB2, '0')).toThrow('｢objectiv:TrackerPlugins｣ invalid index.');
+    expect(() => testPlugins.replace(newPluginB2, '0')).toThrow('｢objectiv:TrackerPlugins｣ invalid index');
   });
 
   it('constructor should behave like `add`', () => {
@@ -259,7 +259,7 @@ describe('Plugin', () => {
           tracker,
           plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue' })],
         })
-    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated.');
+    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated');
   });
 
   it('should execute all Plugins implementing the `beforeTransport` callback', () => {
