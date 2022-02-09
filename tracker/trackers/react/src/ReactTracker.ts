@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContextsConfig, Tracker, TrackerConfig, TrackerPlugins } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerConfig } from '@objectiv/tracker-core';
 import { makeDefaultPluginsList } from './common/factories/makeDefaultPluginsList';
 import { makeDefaultQueue } from './common/factories/makeDefaultQueue';
 import { makeDefaultTransport } from './common/factories/makeDefaultTransport';
@@ -59,15 +59,12 @@ export type ReactTrackerConfig = TrackerConfig & {
  *  const httpContextPlugin = new HttpContextPlugin({ console });
  *  const pathContextFromURLPlugin = new PathContextFromURLPlugin({ console });
  *  const rootLocationContextFromURLPlugin = new RootLocationContextFromURLPlugin({ console });
- *  const plugins = new TrackerPlugins({
- *    plugins: [
- *      applicationContextPlugin,
- *      httpContextPlugin,
- *      pathContextFromURLPlugin,
- *      rootLocationContextFromURLPlugin
- *      ],
- *      console
- *   });
+ *  const plugins = [
+ *    applicationContextPlugin,
+ *    httpContextPlugin,
+ *    pathContextFromURLPlugin,
+ *    rootLocationContextFromURLPlugin
+ *  ];
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
  *  @see makeDefaultTransport
@@ -106,10 +103,7 @@ export class ReactTracker extends Tracker {
     if (!config.plugins) {
       config = {
         ...config,
-        plugins: new TrackerPlugins({
-          console: trackerConfig.console,
-          plugins: makeDefaultPluginsList(config),
-        }),
+        plugins: makeDefaultPluginsList(config),
       };
     }
 
