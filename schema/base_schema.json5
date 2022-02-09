@@ -1,6 +1,6 @@
 {
   "name": "base_schema",
-  "version": {"base_schema": "0.0.2"},
+  "version": {"base_schema": "0.0.3"},
   "description": "This is the Objectiv base schema for the Open Analytics Taxonomy.",
   "events": {
     "AbstractEvent": {
@@ -169,7 +169,7 @@
       "description": "A GlobalContext describing meta information about the agent that sent the event.",
       "parents": ["AbstractGlobalContext"],
       "properties": {
-        "referer": {
+        "referrer": {
           "description": "Full URL to HTTP referrer of the current page.",
           "type": "string"
         },
