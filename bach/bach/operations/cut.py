@@ -6,7 +6,7 @@ from bach.expression import Expression
 
 class CutOperation:
     """
-    In order to implement this class you should provide the following params:
+    In order to instantiate this class you should provide the following params:
     series: a numerical series to be segmented into bins
     bins: number of equal-width bins the series will be divided into.
     right: indicates if bin ranges should include the rightmost edge (lower bound).

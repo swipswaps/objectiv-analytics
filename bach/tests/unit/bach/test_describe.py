@@ -1,6 +1,6 @@
 import pytest
 
-from bach.describe import DescribeOperation, SupportedStats, _get_casted_filtering_dtypes
+from bach.operations.describe import DescribeOperation, _get_casted_filtering_dtypes
 from tests.unit.bach.util import get_fake_df
 
 

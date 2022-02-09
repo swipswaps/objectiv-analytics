@@ -25,10 +25,8 @@ from sql_models.constants import NotSet, not_set
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
     from bach.series import SeriesBoolean
-    from sql_models.model import SqlModel
 
 T = TypeVar('T', bound='Series')
-TSqlModel = TypeVar('TSqlModel', bound='SqlModel')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
@@ -380,7 +378,7 @@ class Series(ABC):
         self: T,
         dtype: Optional[str] = None,
         engine: Optional[Engine] = None,
-        base_node: Optional[TSqlModel] = None,
+        base_node=None,  # TODO: Fix typing for base_node
         index: Optional[Dict[str, 'Series']] = None,
         name: Optional[str] = None,
         expression: Optional['Expression'] = None,
@@ -1353,7 +1351,7 @@ class Series(ABC):
         :param datetime_is_numeric: not supported
         :returns: a new Series with the descriptive statistics
         """
-        from bach.describe import DescribeOperation
+        from bach.operations.describe import DescribeOperation
         describe_df = DescribeOperation(
             obj=self, datetime_is_numeric=datetime_is_numeric, percentiles=percentiles,
         )()

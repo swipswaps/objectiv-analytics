@@ -113,7 +113,7 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
 
 class DataFrameConcatOperation(ConcatOperation[DataFrame]):
     """
-    In order to implement this class you should provide the following params:
+    In order to instantiate this class you should provide the following params:
     objects: a list of DataFrames to be concatenated (all DataFrames should have the same indexes)
     ignore_index: a boolean specifying if the resultant DataFrame must preserve the original indexes or not.
     sort: a boolean specifying the order of the data_columns in the result. If False, the order of series
@@ -244,7 +244,7 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
 
 class SeriesConcatOperation(ConcatOperation[Series]):
     """
-    In order to implement this class you should provide the following params:
+    In order to instantiate this class you should provide the following params:
     objects: a list of Series to be concatenated (all Series should have the same indexes)
     ignore_index: a boolean specifying if the resultant Series must preserve the original indexes or not.
 

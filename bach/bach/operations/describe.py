@@ -7,7 +7,7 @@ from bach import (
     DataFrame, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries,
     get_series_type_from_dtype, SeriesAbstractDateTime,
 )
-from bach.concat import DataFrameConcatOperation
+from bach.operations.concat import DataFrameConcatOperation
 from bach.expression import Expression
 
 
