@@ -57,9 +57,18 @@ export type TrackerConfig = ContextsConfig & {
 /**
  * The default list of Plugins of Web Tracker
  */
-export const makeTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
+export const makeCoreTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
   new ApplicationContextPlugin({ applicationId: trackerConfig.applicationId, console: trackerConfig.console }),
 ];
+
+/**
+ * A type guard to determine if trackerConfig plugins is an array of plugins
+ */
+export const isPluginsArray = (
+  plugins?: TrackerPlugins | TrackerPluginInterface[]
+): plugins is TrackerPluginInterface[] => {
+  return Array.isArray(plugins);
+};
 
 /**
  * The parameters object of Tracker.waitForQueue(parameters?: WaitForQueueParameters).
@@ -118,19 +127,6 @@ export class Tracker implements TrackerInterface {
     this.trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
     this.queue = trackerConfig.queue;
     this.transport = trackerConfig.transport;
-    this.plugins = new TrackerPlugins({
-      tracker: this,
-      plugins: makeTrackerDefaultPluginsList(trackerConfig),
-    });
-
-    // Process plugins option, if specified
-    if (trackerConfig.plugins !== undefined) {
-      if (Array.isArray(trackerConfig.plugins)) {
-        this.plugins.plugins = trackerConfig.plugins;
-      } else {
-        this.plugins = trackerConfig.plugins;
-      }
-    }
 
     // Process ContextConfigs
     let new_location_stack: AbstractLocationContext[] = trackerConfig.location_stack ?? [];
@@ -141,6 +137,16 @@ export class Tracker implements TrackerInterface {
     });
     this.location_stack = new_location_stack;
     this.global_contexts = new_global_contexts;
+
+    // Process plugins
+    if (isPluginsArray(trackerConfig.plugins) || trackerConfig.plugins === undefined) {
+      this.plugins = new TrackerPlugins({
+        tracker: this,
+        plugins: trackerConfig.plugins ?? makeCoreTrackerDefaultPluginsList(trackerConfig),
+      });
+    } else {
+      this.plugins = trackerConfig.plugins;
+    }
 
     // Change tracker state. If active it will initialize Plugins and start the Queue runner.
     this.setActive(trackerConfig.active ?? true);

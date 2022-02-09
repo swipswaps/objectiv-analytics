@@ -51,7 +51,7 @@ describe('Plugin', () => {
           tracker,
           plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue1' })],
         })
-    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: already exists. Use "replace" instead.');
+    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated.');
   });
 
   it('should return false if a plugin does not exist', () => {
@@ -259,7 +259,7 @@ describe('Plugin', () => {
           tracker,
           plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue' })],
         })
-    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: already exists. Use "replace" instead.');
+    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated.');
   });
 
   it('should execute all Plugins implementing the `beforeTransport` callback', () => {

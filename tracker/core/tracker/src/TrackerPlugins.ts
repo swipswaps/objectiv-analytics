@@ -41,7 +41,13 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
   constructor(trackerPluginsConfig: TrackerPluginsConfiguration) {
     this.tracker = trackerPluginsConfig.tracker;
 
-    trackerPluginsConfig.plugins.map((plugin) => this.add(plugin));
+    trackerPluginsConfig.plugins.map((plugin) => {
+      if (this.has(plugin.pluginName)) {
+        throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: duplicated.`);
+      }
+
+      this.plugins.push(plugin);
+    });
 
     if (this.tracker.console) {
       this.tracker.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
@@ -85,7 +91,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
     }
 
     const spliceIndex = index ?? this.plugins.length;
-    this.plugins.splice(index ?? this.plugins.length, 0, plugin);
+    this.plugins.splice(spliceIndex, 0, plugin);
 
     if (this.tracker.console) {
       this.tracker.console.log(
