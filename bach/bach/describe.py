@@ -49,7 +49,8 @@ class DescribeOperation:
     include: A dtype or list of dtypes to be described. If nothing is provided,
     only numerical series will be considered
     exclude: A dtype or list of dtype to be excluded from analysis.
-    datetime_is_numeric: A boolean specifying if datetime series should be treated as numeric columns (not supported)
+    datetime_is_numeric: A boolean specifying if datetime series
+    should be treated as numeric columns (not supported)
     percentiles: List-like of numbers between 0-1. If nothing is provided,
     default [.25, .5, .75] will be calculated
     """

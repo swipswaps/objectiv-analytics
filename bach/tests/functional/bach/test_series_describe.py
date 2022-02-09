@@ -13,7 +13,7 @@ def test_categorical_describe() -> None:
     assert_equals_data(
         result,
         expected_columns=[
-            'stat',
+            '__stat',
             'city',
         ],
         expected_data=[
@@ -32,7 +32,7 @@ def test_numerical_describe() -> None:
     assert isinstance(result, Series)
 
     expected = pd.Series(
-        index=pd.Index(['count', 'mean', 'std', 'min', 'max', 'nunique', 'mode', '0.5'], name='stat'),
+        index=pd.Index(['count', 'mean', 'std', 'min', 'max', 'nunique', 'mode', '0.5'], name='__stat'),
         data=[3., 2., 1., 1., 3., 3., 1., 2.],
         name='skating_order',
     )
@@ -49,7 +49,7 @@ def test_describe_datetime() -> None:
     result = df.dt.describe()
 
     expected = pd.Series(
-        index=pd.Index(['count', 'min', 'max', 'nunique', 'mode'], name='stat'),
+        index=pd.Index(['count', 'min', 'max', 'nunique', 'mode'], name='__stat'),
         data=['3', '2000-01-01 00:00:00', '2010-01-01 00:00:00', '2', '2010-01-01 00:00:00'],
         name='dt',
     )

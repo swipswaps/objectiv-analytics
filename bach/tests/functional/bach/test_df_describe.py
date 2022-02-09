@@ -13,7 +13,7 @@ def test_df_categorical_describe() -> None:
     assert_equals_data(
         result,
         expected_columns=[
-            'stat',
+            '__stat',
             'city',
             'municipality',
         ],
@@ -45,7 +45,7 @@ def test_df_numerical_describe() -> None:
             ['0.5', 2., 33520.],
         ],
         columns=[
-            'stat',
+            '__stat',
             'skating_order',
             'inhabitants',
         ],
@@ -60,7 +60,7 @@ def test_df_numerical_describe() -> None:
     result2 = df2.describe(include=['int64'], exclude=['float64'], percentiles=[0.5])
     result2 = result2.reset_index(drop=False)
     np.testing.assert_equal(
-        expected_df[['stat', 'skating_order']].to_numpy(),
+        expected_df[['__stat', 'skating_order']].to_numpy(),
         result2.to_numpy(),
     )
 
@@ -86,7 +86,7 @@ def test_include_categorical_n_numerical() -> None:
             ['0.75', 2.5, None, None, 63502.5, 1370.5],
         ],
         columns=[
-            'stat', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding',
+            '__stat', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding',
         ],
     )
 
@@ -113,6 +113,6 @@ def test_describe_datetime() -> None:
             ['nunique', '2'],
             ['mode', '2010-01-01 00:00:00'],
         ],
-        columns=['stat', 'dt_column'],
+        columns=['__stat', 'dt_column'],
     )
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
