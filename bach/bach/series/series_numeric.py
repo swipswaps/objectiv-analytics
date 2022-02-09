@@ -157,11 +157,11 @@ class SeriesAbstractNumeric(Series, ABC):
             # a hack in order to avoid calling quantile_df.materialized().
             # Currently doing quantile['q'] = qt
             # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-            quantile_df['q'] = agg_result.copy_override(
+            quantile_df['__q'] = agg_result.copy_override(
                 dtype='float64',
                 expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
             )
-            quantile_df.set_index('q', inplace=True)
+            quantile_df.set_index('__q', inplace=True)
             quantile_results.append(quantile_df.all_series[self.name])
 
         from bach.concat import SeriesConcatOperation

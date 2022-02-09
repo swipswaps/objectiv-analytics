@@ -253,6 +253,9 @@ class SeriesConcatOperation(ConcatOperation[Series]):
     Example:
         SeriesConcatOperation(objects=[s1, s2], ignore_index=True)()
     """
+
+    CONCAT_SERIES_NAME = '__concat'
+
     def _get_overridden_objects(self) -> List[Series]:
         """
         creates new copies for each series to be concatenated
@@ -283,7 +286,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
             dtypes.add(series.dtype)
 
         main_series = self.objects[0].copy_override(
-            name='_'.join(all_names),
+            name=self.CONCAT_SERIES_NAME,
             dtype=_get_merged_series_dtype(dtypes),
         )
         return self._get_result_series([main_series])
