@@ -6,6 +6,18 @@ import numpy
 
 
 class CutOperation:
+    """
+    In order to instantiate this class you should provide the following params:
+    series: a numerical series to be segmented into bins
+    bins: number of equal-width bins the series will be divided into.
+    right: indicates if bin ranges should include the rightmost edge (lower bound).
+    include_empty_bins: if true, it will return bins that contain no values in series.
+
+    returns a new Numerical Series
+
+    Example:
+        CutOperation(series=s1, bins=3)()
+    """
     series: SeriesAbstractNumeric
     bins: int
     right: bool
@@ -27,18 +39,35 @@ class CutOperation:
         self.include_empty_bins = include_empty_bins
 
     def __call__(self) -> SeriesFloat64:
+        """
+        Merges self.series with its correspondent bucket range.
+
+        returns a series containing each bin range/interval per value,
+        if self.include_empty_bins is True, ranges without values will be considered.
+        (initial series will be contained as index)
+        """
         bucket_properties_df = self._calculate_bucket_properties()
-        range_df = self._calculate_bucket_ranges(bucket_properties_df)
+        range_series = self._calculate_bucket_ranges(bucket_properties_df)
 
         df = self.series.to_frame()
         df.reset_index(drop=True, inplace=True)
-        df['bucket'] = self._calculate_buckets(bucket_properties_df)
-
-        df = df.merge(
-            range_df,
-            on='bucket',
-            how='inner' if not self.include_empty_bins else 'right',
+        df[self.RANGE_SERIES_NAME] = df.all_series[self.series.name].copy_override(
+            expression=Expression.construct(
+                (
+                    f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME} \n'
+                    f'then {self.RANGE_SERIES_NAME} end'
+                ),
+                df.all_series[self.series.name],
+            ),
+            name=self.RANGE_SERIES_NAME,
         )
+        if self.include_empty_bins:
+            # if we merge with df as left, range values will be null since left dataframe has priority
+            df = range_series.to_frame().merge(df, how='left')
+
+        else:
+            df = df.merge(range_series, how='inner')
+
         df.set_index(keys=self.series.name, inplace=True)
         return cast(SeriesFloat64, df.all_series[self.RANGE_SERIES_NAME])
 
@@ -68,6 +97,14 @@ class CutOperation:
            Based on (max - min) * RANGE_ADJUSTMENT
 
         * step: the size of each bucket range
+
+        returns a DataFrame containing the following calculated columns:
+        * {self.series.name}_min: the final minimum value of the series with applied adjustments
+        * {self.series.name}_max: the final maximum value of the series with applied adjustments
+        * bin_adjustment: the adjustment to be applied to the lower bound of the first range or
+        the upper bound of the last range. This is based on self.right
+        * step: The equal-length width of each bucket.
+
         ** Adjustments are needed in order to have similar bin intervals as in Pandas
         """
         df = self.series.to_frame()
@@ -98,26 +135,9 @@ class CutOperation:
         properties_df['bin_adjustment'] = diff_min_max * self.RANGE_ADJUSTMENT
         properties_df['step'] = diff_min_max / self.bins
 
-        return properties_df
-
-    def _calculate_buckets(self, bucket_properties_df: 'DataFrame') -> 'Series':
-        """
-        calculates each bucket for all series values.
-        """
-        return self.series.copy_override(
-            name='bucket',
-            expression=Expression.construct(
-                # we need to make sure max value is on the last bucket
-                (
-                    f'case when {{}} = {{}} then {self.bins} else \n'
-                    f'width_bucket({{}}, {{}}, {{}}, {self.bins}) end'
-                ),
-                self.series,
-                Series.as_independent_subquery(bucket_properties_df[f'{self.series.name}_max']),
-                self.series,
-                Series.as_independent_subquery(bucket_properties_df[f'{self.series.name}_min']),
-                Series.as_independent_subquery(bucket_properties_df[f'{self.series.name}_max']),
-            ),
+        final_properties = [min_name, max_name, 'bin_adjustment', 'step']
+        return properties_df.copy_override(
+            series={p: properties_df.all_series[p] for p in final_properties},
         )
 
     def _calculate_adjustments(
@@ -125,7 +145,10 @@ class CutOperation:
     ) -> 'Series':
         """
         calculates adjustment when to_adjust == compare_with.
-        If both are equal, calculations based on RANGE_ADJUSTMENT will be performed
+        If both are equal, calculations based on RANGE_ADJUSTMENT will be performed:
+        * if to_adjust != 0: RANGE_ADJUSTMENT * abs(to_adjust) else RANGE_ADJUSTMENT
+
+        returns a Series with the calculated adjustment
         """
         case_stmt = (
             f'case when {{}} = {{}} then\n'
@@ -140,9 +163,15 @@ class CutOperation:
             )
         )
 
-    def _calculate_bucket_ranges(self, bucket_properties_df: 'DataFrame') -> 'DataFrame':
+    def _calculate_bucket_ranges(self, bucket_properties_df: 'DataFrame') -> 'Series':
         """
         Calculates upper and lower bound for each bucket.
+         * bucket (integer 1 to N)
+         * lower_bound (float)
+         * upper_bound (float)
+         * range (object containing both lower_bound and upper_bound)
+
+         return a series containing each range per bucket (bucket series is found as index)
         """
         min_series = Series.as_independent_subquery(bucket_properties_df[f'{self.series.name}_min'])
         step_series = Series.as_independent_subquery(bucket_properties_df[f'step'])
@@ -193,7 +222,8 @@ class CutOperation:
                 range_df.all_series['upper_bound'],
             ),
         )
-        return range_df
+        range_df.materialize(node_name='bin_ranges', inplace=True)
+        return range_df.all_series[self.RANGE_SERIES_NAME]
 
 
 class QCutOperation:

@@ -35,7 +35,7 @@ export class HttpContextPlugin implements TrackerPluginInterface {
   initialize(contexts: Required<ContextsConfig>): void {
     const httpContext = makeHttpContext({
       id: 'http_context',
-      referer: document.referrer,
+      referrer: document.referrer,
       user_agent: navigator.userAgent,
       remote_address: '127.0.0.1',
     });

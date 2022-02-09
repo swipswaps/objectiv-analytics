@@ -39,6 +39,15 @@ def test_qcut_operation() -> None:
 
     expected = pd.qcut(p_series, q=[0.25, 0.3, 0.7])
     result = QCutOperation(series=series, q=[0.9, 0.25, 0.3, 0.7 ])()
+
+
+def test_cut_operation_boundary() -> None:
+    bins = 3
+    p_series = pd.Series(data=[1, 2, 3, 4], name='a')
+    series = get_from_df('cut_df', p_series.to_frame()).a
+
+    expected = pd.cut(p_series, bins=bins, right=True)
+    result = CutOperation(series=series, bins=bins, right=True)()
     compare_boundaries(expected, result)
 
 
@@ -63,7 +72,7 @@ def test_cut_w_include_empty_bins() -> None:
 
 
 def test_cut_operation_calculate_bucket_properties() -> None:
-
+    final_properties = ['a_min', 'a_max', 'bin_adjustment', 'step']
     bins = 2
     # min != max
     p_series_neq = pd.Series(data=[1, 3, 5, 16, 2, 20], name='a')
@@ -79,7 +88,7 @@ def test_cut_operation_calculate_bucket_properties() -> None:
             'step': [9.5],  # (max(a) - min(a)) / bins
         },
     )
-    pd.testing.assert_frame_equal(expected_neq, result_neq.to_pandas(), check_dtype=False)
+    pd.testing.assert_frame_equal(expected_neq[final_properties], result_neq.to_pandas(), check_dtype=False)
 
     # min == max
     p_series_eq = pd.Series(data=[2, 2], name='a')
@@ -95,10 +104,10 @@ def test_cut_operation_calculate_bucket_properties() -> None:
             'step': [0.002],
         },
     )
-    pd.testing.assert_frame_equal(expected_eq, result_eq.to_pandas(), **PD_TESTING_SETTINGS)
+    pd.testing.assert_frame_equal(expected_eq[final_properties], result_eq.to_pandas(), **PD_TESTING_SETTINGS)
 
     # min == max == 0
-    p_series_zero = pd.Series(data=[0, 0], name='a')
+    p_series_zero = pd.Series(data=[0, 0, 0, 0], name='a')
     series_zero = get_from_df('cut_df', p_series_zero.to_frame()).a
     result_zero = CutOperation(series=series_zero, bins=bins)._calculate_bucket_properties()
     expected_zero = pd.DataFrame(
@@ -111,26 +120,7 @@ def test_cut_operation_calculate_bucket_properties() -> None:
             'step': [0.001],
         },
     )
-    pd.testing.assert_frame_equal(expected_zero, result_zero.to_pandas(), **PD_TESTING_SETTINGS)
-
-
-def test_cut_calculate_buckets() -> None:
-    bins = 3
-    p_series = pd.Series(data=[1, 1, 2, 3, 4, 5, 6, 7, 8], name='a')
-    series = get_from_df('cut_df', p_series.to_frame()).a
-
-    cut_operation = CutOperation(series=series, bins=bins)
-    bucket_properties_df = cut_operation._calculate_bucket_properties()
-    result = cut_operation._calculate_buckets(bucket_properties_df).sort_values()
-    assert isinstance(result, Series)
-    expected = pd.Series(
-        data=[1, 1, 1, 1, 2, 2, 3, 3, 3],
-        name='bucket',
-    )
-
-    pd.testing.assert_series_equal(
-        expected, result.to_pandas(), check_index_type=False, check_names=False,
-    )
+    pd.testing.assert_frame_equal(expected_zero[final_properties], result_zero.to_pandas(), **PD_TESTING_SETTINGS)
 
 
 def test_cut_calculate_adjustments() -> None:
@@ -158,19 +148,8 @@ def test_cut_calculate_bucket_ranges() -> None:
 
     cut_operation = CutOperation(series=series, bins=bins)
     bucket_properties_df = cut_operation._calculate_bucket_properties()
-    result = cut_operation._calculate_bucket_ranges(bucket_properties_df).sort_values(by='bucket')
-    expect = pd.DataFrame(
-        data={
-            'bucket': [1, 2, 3],
-            'range': [pd.Interval(0.993, 3.333), pd.Interval(3.333, 5.667), pd.Interval(5.667, 8)],
-            'lower_bound': [0.993, 3.333, 5.667],
-            'upper_bound': [3.333, 5.667, 8.],
-        }
-    )
-    compare_boundaries(expect.range, result.range.sort_values())
-    columns_to_compare = ['bucket', 'lower_bound', 'upper_bound']
-    pd.testing.assert_frame_equal(
-        expect[columns_to_compare],
-        result[columns_to_compare].to_pandas(),
-        **PD_TESTING_SETTINGS,
+    result = cut_operation._calculate_bucket_ranges(bucket_properties_df)
+    compare_boundaries(
+        pd.Series([pd.Interval(0.993, 3.333), pd.Interval(3.333, 5.667), pd.Interval(5.667, 8)]),
+        result.sort_values(),
     )
