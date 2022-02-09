@@ -163,9 +163,14 @@ class GroupingList(GroupBy):
         super().__init__(group_by_columns=list(group_by_columns.values()))
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
-        # help mypy, our parent always returns an Expression
-        grouping_expr_list = [cast(Expression, g.get_group_by_column_expression())
-                              for g in self._grouping_list]
+        grouping_optional_expr_list = [cast(Expression, g.get_group_by_column_expression())
+                                       for g in self._grouping_list]
+
+        # ensure that there are no None expressions in the list. If there are that's a bug, and we are
+        # okay with breaking here. Without the cast mypy will complain as construct doesn't accept Nones
+        assert all(expr is not None for expr in grouping_optional_expr_list)
+        grouping_expr_list = cast(List[Expression], grouping_optional_expr_list)
+
         fmtstr = ', '.join(["{}"] * len(grouping_expr_list))
         return Expression.construct(fmtstr, *grouping_expr_list)
 
@@ -175,8 +180,14 @@ class GroupingSet(GroupingList):
     Abstraction to support SQLs
     GROUP BY GROUPING SETS ((colA,colB),(ColA),(ColC))
     """
-    def get_group_by_column_expression(self):
-        grouping_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        grouping_optional_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
+
+        # ensure that there are no None expressions in the list. If there are that's a bug, and we are
+        # okay with breaking here. Without the cast mypy will complain as construct doesn't accept Nones
+        assert all(expr is not None for expr in grouping_optional_expr_list)
+        grouping_expr_list = cast(List[Expression], grouping_optional_expr_list)
+
         fmtstr = ', '.join(["{}"] * len(grouping_expr_list))
         fmtstr = f'grouping sets ({fmtstr})'
         return Expression.construct(fmtstr, *grouping_expr_list)
