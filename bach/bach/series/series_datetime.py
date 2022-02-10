@@ -7,7 +7,7 @@ from typing import Union, cast, List
 
 import numpy
 
-from bach.series import Series, SeriesString, SeriesBoolean, SeriesAbstractNumeric
+from bach.series import Series, SeriesString, SeriesBoolean, SeriesAbstractNumeric, SeriesInt64
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 
@@ -15,6 +15,34 @@ from bach.series.series import WrappedPartition
 class DateTimeOperation:
     def __init__(self, series: 'SeriesAbstractDateTime'):
         self._series = series
+
+    @property
+    def days(self) -> SeriesAbstractNumeric:
+        expression = Expression.construct(
+            f'extract(day from {{}})', self._series,
+        )
+        days_series = self._series.copy_override(dtype='int64', expression=expression)
+        return cast(SeriesAbstractNumeric, days_series)
+
+    @property
+    def microseconds(self) -> SeriesAbstractNumeric:
+        expression = Expression.construct(
+            f'extract(microseconds from {{}})', self._series,
+        )
+        microseconds_series = self._series.copy_override(dtype='int64', expression=expression)
+        return cast(SeriesAbstractNumeric, microseconds_series)
+
+    @property
+    def nanoseconds(self) -> SeriesAbstractNumeric:
+        return cast(SeriesAbstractNumeric, self.microseconds * 10**6)
+
+    @property
+    def seconds(self) -> SeriesAbstractNumeric:
+        expression = Expression.construct(
+            f'extract(seconds from {{}})', self._series,
+        )
+        microseconds_series = self._series.copy_override(dtype='float64', expression=expression)
+        return cast(SeriesAbstractNumeric, microseconds_series)
 
     def sql_format(self, format_str: str) -> SeriesString:
         """
@@ -37,36 +65,6 @@ class DateTimeOperation:
         # mypy assumes `self._series.copy_override` returns a SeriesAbstractDateTime
         assert isinstance(str_series, SeriesString)
         return str_series
-
-
-class TimeDeltaOperation(DateTimeOperation):
-    @property
-    def days(self) -> SeriesAbstractNumeric:
-        expression = Expression.construct(
-            f'extract(day from {{}})', self._series,
-        )
-        days_series = self._series.copy_override(dtype='int64', expression=expression)
-        return cast(SeriesAbstractNumeric, days_series)
-
-    @property
-    def microseconds(self) -> SeriesAbstractNumeric:
-        expression = Expression.construct(
-            f'extract(microseconds from {{}})', self._series,
-        )
-        microseconds_series = self._series.copy_override(dtype='int64', expression=expression)
-        return cast(SeriesAbstractNumeric, microseconds_series)
-
-    @property
-    def nanoseconds(self) -> SeriesAbstractNumeric:
-        return self.microseconds * 10**6
-
-    @property
-    def seconds(self) -> SeriesAbstractNumeric:
-        expression = Expression.construct(
-            f'extract(seconds from {{}})', self._series,
-        )
-        microseconds_series = self._series.copy_override(dtype='float64', expression=expression)
-        return cast(SeriesAbstractNumeric, microseconds_series)
 
 
 class SeriesAbstractDateTime(Series, ABC):
@@ -254,17 +252,6 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     supported_db_dtype = 'interval'
     supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
 
-    @property
-    def dt(self) -> DateTimeOperation:
-        """
-        Get access to date operations.
-
-        .. autoclass:: bach.series.series_datetime.DateTimeOperation
-            :members:
-
-        """
-        return TimeDeltaOperation(self)
-
     @classmethod
     def supported_literal_to_expression(cls, literal: Expression) -> Expression:
         return Expression.construct('cast({} as interval)', literal)
@@ -340,6 +327,14 @@ class SeriesTimedelta(SeriesAbstractDateTime):
         )
         return cast('SeriesTimedelta', result)
 
-    def quantile(self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5) -> 'SeriesTimedelta':
-        result = SeriesAbstractNumeric.quantile(self.copy(), partition, q)
+    def quantile(
+        self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5,
+    ) -> 'SeriesTimedelta':
+        """
+        When q is a float or len(q) == 1, the resultant series index will remain
+        In case multiple quantiles are calculated, the resultant series index will have all calculated
+        quantiles as index values.
+        """
+        from bach.quantiles import calculate_quantiles
+        result = calculate_quantiles(series=self.copy(), partition=partition, q=q)
         return cast('SeriesTimedelta', result)

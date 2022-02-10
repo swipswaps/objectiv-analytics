@@ -2078,10 +2078,11 @@ class DataFrame:
         :param axis: only ``axis=1`` is supported. This means columns are aggregated.
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
-        df = self
-        if all(not hasattr(s, 'quantile') for s in df.all_series.values()):
+        valid_series = {s.name: s for s in self._data.values() if hasattr(s, 'quantile')}
+        if not valid_series:
             raise ValueError('Cannot calculate quantiles for dataframe with no numeric columns.')
 
+        df = self.copy_override(series=valid_series)
         if df.group_by is None:
             df = df.groupby()
 

@@ -47,6 +47,7 @@ def test_timedelta_arithmetic2():
         ]
     )
 
+
 def test_timedelta():
     mt = get_bt_with_food_data()[['skating_order', 'moment']]
 
@@ -96,12 +97,12 @@ def test_timedelta_operations():
             'start_date': [
                 np.datetime64("2022-01-01"),
                 np.datetime64("2022-01-05"),
-                np.datetime64("2018-01-10"),
+                np.datetime64("2022-01-10"),
             ],
             'end_date': [
                 np.datetime64("2022-01-03"),
                 np.datetime64("2022-01-06"),
-                np.datetime64("2018-01-10"),
+                np.datetime64("2022-01-10"),
             ]
         }
     )
@@ -110,5 +111,5 @@ def test_timedelta_operations():
     pdf['diff'] = pdf['end_date'] - pdf['start_date']
     df['diff'] = df['end_date'] - df['start_date']
     df['diff'].dt.days
-    result = df.diff.quantile()
+    result = df.diff.quantile(q=[0.25, 0.5, .75])
     print('hola')
