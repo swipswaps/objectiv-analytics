@@ -185,7 +185,7 @@ class SeriesAbstractNumeric(Series, ABC):
 
 class SeriesInt64(SeriesAbstractNumeric):
     dtype = 'int64'
-    dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64)
+    dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64, 'int32')
     supported_db_dtype = 'bigint'
     supported_value_types = (int, numpy.int64, numpy.int32)
 
