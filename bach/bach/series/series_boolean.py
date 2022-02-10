@@ -6,6 +6,7 @@ from typing import cast
 
 from bach.series import Series, const_to_series
 from bach.expression import Expression
+from bach.series.series import WrappedPartition
 
 
 class SeriesBoolean(Series, ABC):
@@ -81,3 +82,9 @@ class SeriesBoolean(Series, ABC):
         # This only works if both type are 'bool' in PG, but if the rhs is not, it will be cast
         # explicitly in _boolean_operator()
         return self._boolean_operator(other, '!=')
+
+    def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        return self._derived_agg_func(partition, 'bool_and', skipna=skipna)
+
+    def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        return self._derived_agg_func(partition, 'bool_or', skipna=skipna)
