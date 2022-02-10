@@ -55,12 +55,12 @@ describe('Context Factories', () => {
 
   it('HttpContext', () => {
     expect(
-      makeHttpContext({ id: 'http', referer: 'referer', user_agent: 'ua', remote_address: '0.0.0.0' })
+      makeHttpContext({ id: 'http', referrer: 'referrer', user_agent: 'ua', remote_address: '0.0.0.0' })
     ).toStrictEqual({
       __global_context: true,
       _type: 'HttpContext',
       id: 'http',
-      referer: 'referer',
+      referrer: 'referrer',
       user_agent: 'ua',
       remote_address: '0.0.0.0',
     });

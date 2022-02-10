@@ -537,15 +537,15 @@ def test_groupby_frame_split_series_aggregation():
     assert df_sum_series.base_node == bt.base_node
     assert df_df_sum_series.base_node == bt.base_node
 
-    assert (founding_sum.values == df_sum_series.values).all()
-    assert (founding_sum.values == df_df_sum_series.values).all()
+    assert (founding_sum.to_numpy() == df_sum_series.to_numpy()).all()
+    assert (founding_sum.to_numpy() == df_df_sum_series.to_numpy()).all()
 
     # Does math work?
     inhabitants_sum = btg1['inhabitants'].sum()
     founding_sum = btg1['founding'].sum()
     add_series_sum = btg1['founding'].sum() + btg1['inhabitants'].sum()
     assert all(
-        (founding_sum.values + inhabitants_sum.values) == add_series_sum.values
+        (founding_sum.to_numpy() + inhabitants_sum.to_numpy()) == add_series_sum.to_numpy()
     )
     # no materialization has taken place yet.
     assert inhabitants_sum.base_node == bt.base_node

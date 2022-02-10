@@ -44,7 +44,7 @@ export interface HttpContext extends AbstractGlobalContext {
   /**
    * Full URL to HTTP referrer of the current page.
    */
-  referer: string;
+  referrer: string;
 
   /**
    * User-agent of the agent that sent the event.

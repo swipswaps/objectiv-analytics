@@ -1,14 +1,16 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import warnings
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
-    TypeVar
+    TypeVar, Sequence
 from uuid import UUID
 
-import numpy as np
+import numpy
 import pandas
+from sqlalchemy.future import Engine
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 
@@ -16,13 +18,17 @@ from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel
+
 from bach.types import value_to_dtype
+from sql_models.constants import NotSet, not_set
 
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
     from bach.series import SeriesBoolean
+    from sql_models.model import SqlModel
 
 T = TypeVar('T', bound='Series')
+TSqlModel = TypeVar('TSqlModel', bound='SqlModel')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
@@ -115,6 +121,20 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
+
+    def _update_self_from_series(self, series: 'Series') -> 'Series':
+        """
+        INTERNAL: Modify self by copying all properties of 'df' to self. Returns self.
+        """
+        self._engine = series._engine
+        self._base_node = series._base_node
+        self._index = series._index.copy()
+        self._name = series._name
+        self._expression = series._expression
+        self._group_by = series._group_by
+        self._sorted_ascending = series._sorted_ascending
+        self._index_sorting = series._index_sorting
+        return self
 
     @property
     @classmethod
@@ -356,56 +376,56 @@ class Series(ABC):
         """
         return self.copy_override()
 
-    def copy_override(self,
-                      dtype=None,
-                      engine=None,
-                      base_node=None,
-                      index=None,
-                      name=None,
-                      expression=None,
-                      group_by: Optional[List[Optional['GroupBy']]] = None,  # List so [None] != None
-                      sorted_ascending: Optional[List[Optional[bool]]] = None,   # List so [None] != None
-                      index_sorting: Optional[List[bool]] = None
-                      ):
+    def copy_override(
+        self: T,
+        dtype: Optional[str] = None,
+        engine: Optional[Engine] = None,
+        base_node: Optional[TSqlModel] = None,
+        index: Optional[Dict[str, 'Series']] = None,
+        name: Optional[str] = None,
+        expression: Optional['Expression'] = None,
+        group_by: Optional[Union['GroupBy', NotSet]] = not_set,
+        sorted_ascending: Optional[Union[bool, NotSet]] = not_set,
+        index_sorting: Optional[List[bool]] = None
+    ) -> T:
         """
         INTERNAL: Copy this instance into a new one, with the given overrides
 
-        Special cases:
-        1. Big fat warning: both group_by and sorted_ascending can legally be None, but if you want to set
-        that, set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
-
-        2. If index is not None, then index_sorting is automatically set to `[]` unless overridden
+        Special case:
+        * If index is not None, then index_sorting is automatically set to `[]` unless overridden
         """
         if index and index_sorting is None:
             index_sorting = []
 
-        klass = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
+        klass: type = self.__class__ if dtype is None else get_series_type_from_dtype(dtype)
         return klass(
             engine=self._engine if engine is None else engine,
             base_node=self._base_node if base_node is None else base_node,
             index=self._index if index is None else index,
             name=self._name if name is None else name,
             expression=self._expression if expression is None else expression,
-            group_by=self._group_by if group_by is None else group_by[0],
-            sorted_ascending=self._sorted_ascending if sorted_ascending is None else sorted_ascending[0],
+            group_by=self._group_by if group_by is not_set else group_by,
+            sorted_ascending=self._sorted_ascending if sorted_ascending is not_set else sorted_ascending,
             index_sorting=self._index_sorting if index_sorting is None else index_sorting
         )
 
     def unstack(self,
                 level: int = -1,
                 fill_value: Optional[Union[int, float, str, UUID]] = None,
-                aggregation: str = 'max'):
+                aggregation: str = 'max') -> 'DataFrame':
         """
         Pivot a level of the index labels.
 
         Returns a(n unsorted) DataFrame with the values of the unstacked index as columns. In case of
         duplicate index values that are unstacked, `aggregation` is used to aggregate the values.
 
+        Series' index should be of at least two levels to unstack.
+
         :param level: selects the level of the index that is unstacked. Currently only -1 supported.
         :param fill_value: replace missing values resulting from unstacking. Should be of same type as the
             series that is unstacked.
-        :param aggregation: method of aggregation, in case of duplicate index values. Supported are 'max' and
-            'min'
+        :param aggregation: method of aggregation, in case of duplicate index values. Supports all aggregation
+            methods that :py:meth:`aggregate` supports.
         :returns: DataFrame
         """
         index_dict = self.index
@@ -413,36 +433,38 @@ class Series(ABC):
             raise NotImplementedError('index must be a multi level index to unstack')
         if level != -1:
             raise NotImplementedError('only last index can be unstacked')
-        if aggregation not in ['max', 'min']:
-            raise ValueError(f"aggregation is '{aggregation}', should be 'min' or 'max'")
+        if type(aggregation) != str:
+            raise TypeError('invalid aggregation method')
 
         name_index_last, series_last = index_dict.popitem()
-        values = series_last.unique().values
-        if None in values or np.nan in values:
+        values = series_last.unique().to_numpy()
+        if None in values or numpy.nan in values:
             raise ValueError("index contains empty values, cannot be unstacked")
         name_series = self.name
         remaining_indexes = list(index_dict.keys())
-        df = self.to_frame().reset_index().groupby(remaining_indexes)  # type: ignore
+        df = self.to_frame()
+        df.reset_index(inplace=True)
+        df = df.groupby(remaining_indexes)
 
         series_dict = {}
         for column in values:
-            args = [series_last, const_to_series(self, column, str(column))]
-            else_clause = ''
-            if fill_value is not None:
-                else_clause = 'else {}'
-                fill_series = const_to_series(self, fill_value, 'fill_value')
-                if fill_series.dtype != self.dtype:
-                    raise TypeError('fill_value should be of same type as the index that is unstacked')
-                args = args + [fill_series]
-
-            exp = f"{aggregation}(case when {{}}={{}} then {name_series} {else_clause} end)"
-            series = df[name_series].copy_override(
-                name=str(column),
-                expression=AggregateFunctionExpression.construct(exp, *args)
+            new_column_name = str(column)
+            new_const_series = const_to_series(self, column, new_column_name)
+            new_series = df.all_series[name_series].copy_override(
+                name=new_column_name,
+                expression=Expression.construct(f'case when {{}} = {{}} then {name_series} end',
+                                                series_last,
+                                                new_const_series)
             )
-            series_dict[str(column)] = series
+            new_series_aggregated = cast(
+                Series, new_series.aggregate(aggregation, group_by=df.group_by)
+            )
+            if fill_value:
+                new_series_aggregated = new_series_aggregated.fillna(fill_value)
+            series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
 
-        return df.copy_override(series=series_dict).materialize()  # type: ignore
+        unstacked_df = df.copy_override(series=series_dict)
+        return unstacked_df
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
@@ -497,10 +519,17 @@ class Series(ABC):
         """
         .values property accessor akin pandas.Series.values
 
+        .. warning::
+           We recommend using :meth:`Series.to_numpy` instead.
+
         .. note::
             This function queries the database.
         """
-        return self.to_pandas().values
+        warnings.warn(
+            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
+            category=DeprecationWarning,
+        )
+        return self.to_numpy()
 
     @property
     def value(self):
@@ -514,7 +543,7 @@ class Series(ABC):
         if not self.expression.is_single_value:
             raise ValueError('value accessor only supported for single value expressions. '
                              'Use .values instead')
-        return self.values[0]
+        return self.to_numpy()[0]
 
     @property
     def array(self):
@@ -526,6 +555,17 @@ class Series(ABC):
         """
         return self.to_pandas().array
 
+    def to_numpy(self) -> numpy.ndarray:
+        """
+        Return a Numpy representation of the Series akin :py:attr:`pandas.Series.to_numpy`
+
+        :returns: Returns the values of the Series as numpy.ndarray.
+
+        .. note::
+            This function queries the database.
+        """
+        return self.to_pandas().to_numpy()
+
     def sort_values(self, *, ascending=True):
         """
         Sort this Series by its values.
@@ -534,13 +574,16 @@ class Series(ABC):
         """
         if self._sorted_ascending is not None and self._sorted_ascending == ascending:
             return self
-        return self.copy_override(sorted_ascending=[ascending])
+        return self.copy_override(sorted_ascending=ascending)
 
     def sort_index(self: T, *, ascending: Union[List[bool], bool] = True) -> T:
         """
-        Return a copy of this Series, that is sorted by the index.
+        Sort this Series by its index.
+        Returns a new instance and does not modify the instance it is called on.
+
         :param ascending: either a bool indicating whether to sort ascending or descending, or a list of
             bools indicating ascending/descending for each of the index levels/columns.
+
         """
         if isinstance(ascending, list):
             if len(ascending) != len(self.index):
@@ -553,7 +596,7 @@ class Series(ABC):
             raise ValueError('Parameter ascending should be a bool or a list of bools')
 
         return self.copy_override(
-            sorted_ascending=[None],
+            sorted_ascending=None,
             index_sorting=ascending_list
         )
 
@@ -614,7 +657,7 @@ class Series(ABC):
             # The expression is lost when materializing
             expr = SingleValueExpression(expr)
 
-        s = series.copy_override(expression=expr, dtype=dtype, index={}, group_by=[None])
+        s = series.copy_override(expression=expr, dtype=dtype, index={}, group_by=None)
         return s
 
     def exists(self):
@@ -716,7 +759,7 @@ class Series(ABC):
         Evaluate for every row in this series whether the value is missing or NULL.
 
         .. note::
-            Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+            Only NULL values in the Series in the underlying sql table will return True. numpy.nan is not
             checked for.
 
         See Also
@@ -735,7 +778,7 @@ class Series(ABC):
         Evaluate for every row in this series whether the value is not missing or NULL.
 
         .. note::
-          Only NULL values in the Series in the underlying sql table will return True. np.nan is not
+          Only NULL values in the Series in the underlying sql table will return True. numpy.nan is not
           checked for.
 
         See Also
@@ -759,7 +802,7 @@ class Series(ABC):
             type by the series, or a TypeError is raised. Can also be another Series
 
         .. note::
-            Pandas replaces np.nan values, we can only replace NULL.
+            Pandas replaces numpy.nan values, we can only replace NULL.
 
         .. note::
             You can replace None with None, have fun, forever!
@@ -1014,12 +1057,14 @@ class Series(ABC):
             raise ValueError(f'group_by {type(group_by)} not supported')
         return group_by
 
-    def _derived_agg_func(self,
-                          partition: Optional[WrappedPartition],
-                          expression: Union[str, Expression],
-                          dtype: str = None,
-                          skipna: bool = True,
-                          min_count: int = None) -> 'Series':
+    def _derived_agg_func(
+        self,
+        partition: Optional[WrappedPartition],
+        expression: Union[str, Expression],
+        dtype: str = None,
+        skipna: bool = True,
+        min_count: int = None,
+    ) -> 'Series':
         """
         Create a derived Series that aggregates underlying Series through the given expression.
         If no partition to aggregate on is given, and the Series does not have one set,
@@ -1068,7 +1113,6 @@ class Series(ABC):
                     f'CASE WHEN {{}} >= {min_count} THEN {{}} ELSE NULL END',
                     self.count(partition, skipna=skipna), expression
                 )
-
         derived_dtype = self.dtype if dtype is None else dtype
 
         if not isinstance(partition, Window):
@@ -1085,17 +1129,21 @@ class Series(ABC):
                 # we're creating an aggregation on everything, this will yield one value
                 expression = SingleValueExpression(expression)
 
-            return self.copy_override(dtype=derived_dtype,
-                                      index=partition.index,
-                                      group_by=[partition],
-                                      expression=expression,
-                                      index_sorting=[])
+            return self.copy_override(
+                dtype=derived_dtype,
+                index=partition.index,
+                group_by=partition,
+                expression=expression,
+                index_sorting=[],
+            )
         else:
             # The window expression already contains the full partition and sorting, no need
             # to keep that with this series, the expression can be used without any of those.
-            return self.copy_override(dtype=derived_dtype,
-                                      group_by=[None],
-                                      expression=partition.get_window_expression(expression))
+            return self.copy_override(
+                dtype=derived_dtype,
+                group_by=None,
+                expression=partition.get_window_expression(expression),
+            )
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
         # count is not constant because it depends on the number of rows in the selection.
@@ -1292,6 +1340,54 @@ class Series(ABC):
             ignore_index=ignore_index,
         )()
         return concatenated_series
+
+    def describe(
+        self,
+        percentiles: Optional[Sequence[float]] = None,
+        datetime_is_numeric: bool = False,
+    ) -> 'Series':
+        """
+        Returns descriptive statistics, it will vary based on what is provided
+
+        :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
+        :param datetime_is_numeric: not supported
+        :returns: a new Series with the descriptive statistics
+        """
+        from bach.describe import DescribeOperation
+        describe_df = DescribeOperation(
+            obj=self, datetime_is_numeric=datetime_is_numeric, percentiles=percentiles,
+        )()
+        return describe_df.all_series[self.name]
+
+    def drop_duplicates(
+        self,
+        keep: Union[str, bool] = 'first',
+        inplace: bool = False,
+    ) -> Optional['Series']:
+        """
+        Return a series with duplicated rows removed.
+
+        :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
+
+            * `first`: drop all occurrences except the first one
+            * `last`:  drop all occurrences except the last one
+            * False: drops all duplicates
+
+            If no value is provided, first occurrences will be kept by default.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+
+        :return: a new series with dropped duplicates if inplace = False, otherwise None.
+        """
+        df = self.to_frame().drop_duplicates(keep=keep)
+        assert isinstance(df, DataFrame)
+        df.materialize(inplace=True)
+
+        result = df.all_series[self.name]
+        if not inplace:
+            return result
+
+        self._update_self_from_series(result)
+        return None
 
 
 def const_to_series(base: Union[Series, DataFrame],

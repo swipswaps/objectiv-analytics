@@ -66,4 +66,4 @@ jobs:
       - name: Functional tests
         run: |
           cd analysis/bach_open_taxonomy
-          pytest tests_bach_open_taxonomy/functional/
+          pytest tests_bach_open_taxonomy/functional/  -W error::DeprecationWarning

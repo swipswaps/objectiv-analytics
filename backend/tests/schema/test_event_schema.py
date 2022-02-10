@@ -182,6 +182,11 @@ def test_get_context_schema():
             'other_property': {
                 'type': 'number',
                 'description': 'test other property'
+            },
+            'optional_property': {
+                'type': 'string',
+                'description': 'this property is optional',
+                'optional': True
             }
         },
         'required': ['extra_property', 'id', 'other_property'],
@@ -192,9 +197,19 @@ def test_get_context_schema():
     assert schema.get_context_schema('ExtraContext') == extra_context_json_schema
 
 
+def test_optional_property():
+    schema = _get_schema()
+
+    other_context = schema.get_context_schema("OtherContext")
+
+    # check optional property is there
+    assert other_context['properties']['optional_property']
+
+    # check optional property is not required
+    assert other_context['required'] == ['id', 'other_property']
+
+
 # ### Below are helper functions and test data
-
-
 def _get_schema() -> EventSchema:
 
     return EventSchema()\
@@ -248,6 +263,11 @@ _SIMPLE_BASE_SCHEMA = {
                 "other_property": {
                     "type": "number",
                     "description": "test other property"
+                },
+                "optional_property": {
+                    "type": "string",
+                    "description": "this property is optional",
+                    "optional": True
                 }
             }
         }
