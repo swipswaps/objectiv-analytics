@@ -56,7 +56,7 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker, conso
             if (!existingElement) {
               TrackerElementLocations.delete(existingElementId);
             }
-            if (!collidingElementId) {
+            if (!collidingElement) {
               TrackerElementLocations.delete(collidingElementId);
             }
           }
