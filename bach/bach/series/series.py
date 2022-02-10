@@ -459,7 +459,7 @@ class Series(ABC):
             new_series_aggregated = cast(
                 Series, new_series.aggregate(aggregation, group_by=df.group_by)
             )
-            if fill_value:
+            if fill_value is not None:
                 new_series_aggregated = new_series_aggregated.fillna(fill_value)
             series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
 
