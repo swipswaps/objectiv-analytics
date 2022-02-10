@@ -3,8 +3,11 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 
+import numpy as np
+import pandas as pd
+
 from tests.functional.bach.test_data_and_utils import get_bt_with_food_data, assert_equals_data, \
-    get_bt_with_test_data
+    get_bt_with_test_data, get_from_df
 from tests.functional.bach.test_series_timestamp import types_plus_min
 
 
@@ -85,3 +88,27 @@ def test_to_pandas():
     # TODO, this is not great, but at least it does not error when imported into pandas,
     # and it looks good over there
     assert bt[['td']].to_numpy()[0] == [27744277000000000]
+
+
+def test_timedelta_operations():
+    pdf = pd.DataFrame(
+        data={
+            'start_date': [
+                np.datetime64("2022-01-01"),
+                np.datetime64("2022-01-05"),
+                np.datetime64("2018-01-10"),
+            ],
+            'end_date': [
+                np.datetime64("2022-01-03"),
+                np.datetime64("2022-01-06"),
+                np.datetime64("2018-01-10"),
+            ]
+        }
+    )
+    df = get_from_df('test_datetime_df', pdf)
+
+    pdf['diff'] = pdf['end_date'] - pdf['start_date']
+    df['diff'] = df['end_date'] - df['start_date']
+    df['diff'].dt.days
+    result = df.diff.quantile()
+    print('hola')
