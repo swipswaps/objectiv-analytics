@@ -24,6 +24,7 @@ def test__eq__():
     assert get_fake_df(['b', 'a'], ['c']) != get_fake_df(['a', 'b'], ['c'])
     # switched order data columns
     assert get_fake_df(['a'], ['b', 'c']) != get_fake_df(['a'], ['c', 'b'])
+
     left = get_fake_df(['a'], ['b', 'c'])
     right = get_fake_df(['a'], ['b', 'c'])
     assert left == right
@@ -42,6 +43,9 @@ def test__eq__():
     assert left != right
     left._order_by = [SortColumn(expression=Expression.column_reference('a'), asc=True)]
     assert left == right
+
+    # reset left, right
+    left, right = get_fake_df(['a'], ['b', 'c']),  get_fake_df(['a'], ['b', 'c'])
 
     left = left.set_variable('a', 1234)
     right = right.set_variable('a', '1234')

@@ -196,7 +196,11 @@ class DataFrame:
                                  f'df: {value.index}, series.index: {index}')
             if value.group_by != group_by:
                 raise ValueError(f'Group_by in `series` should match dataframe. '
-                                 f'df: {value.group_by}, series.index: {group_by}')
+                                 f'df: {group_by}, series.group_by: {value.group_by}')
+            if value.base_node != base_node:
+                raise ValueError(f'Base_node in `series` should match dataframe. '
+                                 f'df: {base_node}, series.base_node: {value.base_node}')
+
             self._data[key] = value
 
         for value in index.values():
