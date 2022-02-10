@@ -157,7 +157,6 @@ class EventSubSchema:
                     value['items']['type'] = 'object'
                 properties[key] = deepcopy(value)
 
-        # only add the property if it is required
         required_properties = [p for p, v in properties.items() if not v.get('optional', False)]
         schema = {
             "type": "object",
