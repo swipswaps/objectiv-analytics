@@ -10,6 +10,41 @@ DATA = {
 }
 
 
+def test_dropna_w_nan() -> None:
+    pdf = pd.DataFrame(
+        {
+            'a': ['a', 'b', None],
+        },
+    )
+    df1 = get_from_df('dropna_table', pdf)
+    df2 = df1.copy()
+    df1['b'] = float(np.nan)
+    df2['b'] = pd.Series([1, 2, 3])
+    df = df1.append(df2)
+
+    pdf2 = pd.DataFrame(
+        {
+            'a': ['a', 'b', None, 'a', 'b', None],
+            'b': [np.nan, np.nan, np.nan, 1, 2, 3],
+        },
+    )
+    expected = pdf2.dropna()
+    result = df.dropna()
+    pd.testing.assert_frame_equal(
+        expected.reset_index(drop=True),
+        result.to_pandas(),
+        check_names=False,
+    )
+
+    expected_w_thresh = pdf2.dropna(thresh=2)
+    result_w_thresh = df.dropna(thresh=2)
+    pd.testing.assert_frame_equal(
+        expected_w_thresh.reset_index(drop=True),
+        result_w_thresh.to_pandas(),
+        check_names=False,
+    )
+
+
 def test_basic_dropna() -> None:
     pdf = pd.DataFrame(DATA)
 

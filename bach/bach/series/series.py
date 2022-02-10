@@ -1389,16 +1389,15 @@ class Series(ABC):
         self._update_self_from_series(result)
         return None
 
-    def dropna(self) -> Optional['Series']:
+    def dropna(self: T) -> T:
         """
         Removes rows with missing values.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
         :return: a new series with dropped rows if inplace = False, otherwise None.
         """
         df = self.to_frame().dropna()
         assert isinstance(df, DataFrame)
-        return df.all_series[self.name]
+        return cast(T, df.all_series[self.name])
 
 
 def const_to_series(base: Union[Series, DataFrame],

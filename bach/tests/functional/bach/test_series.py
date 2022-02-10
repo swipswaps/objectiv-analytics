@@ -487,6 +487,7 @@ def test_series_dropna() -> None:
         check_names=False
     )
 
+
 def test_series_unstack():
     bt = get_bt_with_test_data(full_data_set=True)
     bt['municipality_none'] = bt[bt.skating_order < 10].municipality

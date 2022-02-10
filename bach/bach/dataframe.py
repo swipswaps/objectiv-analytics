@@ -2488,11 +2488,12 @@ class DataFrame:
         :param how: determines when a row is removed. Supported values:
            - 'any': rows with at least one missing value are removed
            - 'all': rows with all missing values are removed
-        :param thresh: determines the least amount of missing values a row needs to be removed
+        :param thresh: determines the least amount of non-missing values a row needs to have
+            in order to be kept
         :param subset: series label or sequence of labels to be considered for missing values.
-        If subset is None, all DataFrame's series labels will be used.
-        In case subset is an empty list, a copy from the DataFrame will
-        be returned.
+            If subset is None, all DataFrame's series labels will be used.
+            In case subset is an empty list, a copy from the DataFrame will
+            be returned.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
         :return: a new dataframe with dropped rows if inplace = False, otherwise None.
@@ -2511,13 +2512,20 @@ class DataFrame:
 
         logical_operator = 'or' if how == 'any' else 'and'
 
-        conditions = [self.all_series[ds].isnull() for ds in dropna_series]
+        conditions = []
+        for ds in dropna_series:
+            main_condition = self.all_series[ds].isnull()
+            if self.all_series[ds].dtype in ['float64', 'int64']:
+                main_condition = main_condition | (self.all_series[ds] == float('nan'))
+
+            conditions.append(main_condition)
+
         if not thresh:
             expression_fmt = f' {logical_operator} '.join([f'{{}}'] * len(dropna_series))
         else:
             # we need to add the amount of nullables in the row and compare it to the thresh
             cases_fmt = f' + '.join([f'case when {{}} then 1 else 0 end'] * len(dropna_series))
-            expression_fmt = f'{cases_fmt} >= {thresh}'
+            expression_fmt = f'{len(self.data_columns)} - ({cases_fmt}) < {thresh}'
 
         drop_row_series = conditions[0].copy_override(
             expression=Expression.construct(expression_fmt, *conditions),
