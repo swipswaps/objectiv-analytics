@@ -16,11 +16,6 @@ def test_series_basic_drop_duplicates() -> None:
     expected = p_series.drop_duplicates().sort_values()
     pd.testing.assert_series_equal(result.sort_values().to_pandas(), expected, check_names=False)
 
-    series_inplace = df.a.copy()
-    result_inplace = series_inplace.drop_duplicates(inplace=True)
-    assert result_inplace is None
-    pd.testing.assert_series_equal(series_inplace.sort_values().to_pandas(), expected, check_names=False)
-
 
 def test_series_keep_last_drop_duplicates() -> None:
     p_series = pd.Series(
@@ -33,11 +28,6 @@ def test_series_keep_last_drop_duplicates() -> None:
     result = df.a.drop_duplicates(keep='last')
     expected = p_series.drop_duplicates(keep='last').sort_values()
     pd.testing.assert_series_equal(result.sort_values().to_pandas(), expected, check_names=False)
-
-    series_inplace = df.a.copy()
-    result_inplace = series_inplace.drop_duplicates(keep='last', inplace=True)
-    assert result_inplace is None
-    pd.testing.assert_series_equal(series_inplace.sort_values().to_pandas(), expected, check_names=False)
 
 
 def test_series_drop_all_duplicates() -> None:
