@@ -30,9 +30,10 @@ import {
  */
 @Directive({
   selector:
-    '[tagChild], [tagChildren], [tagContent], [tagExpandable], [tagInput], [tagLink], [tagLocation], [tagMediaPlayer], [tagNavigation], [tagOverlay], [tagPressable], [tagRootLocation]',
+    '[applyTaggingAttributes], [tagChild], [tagChildren], [tagContent], [tagExpandable], [tagInput], [tagLink], [tagLocation], [tagMediaPlayer], [tagNavigation], [tagOverlay], [tagPressable], [tagRootLocation]',
 })
 export class ObjectivTrackerDirective {
+  @Input() applyTaggingAttributes: TagLocationReturnValue;
   @Input() tagChild: ChildrenTaggingQuery;
   @Input() tagChildren: ChildrenTaggingQueries;
   @Input() tagContent: LocationTaggerParameters;
@@ -83,7 +84,11 @@ export class ObjectivTrackerDirective {
     }
 
     // Merge Location Tagging Attributes and Children Tagging Attributes
-    const taggingAttributes = { ...(locationTaggingAttributes ?? {}), ...(childrenTaggingAttributes ?? {}) };
+    const taggingAttributes = {
+      ...(this.applyTaggingAttributes ?? {}),
+      ...(locationTaggingAttributes ?? {}),
+      ...(childrenTaggingAttributes ?? {})
+    };
 
     // Set all attributes on the nativeElement
     for (let [key, value] of Object.entries<string | undefined>(taggingAttributes)) {

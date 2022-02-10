@@ -213,7 +213,6 @@ describe('tagLocation', () => {
         _type: 'ExpandableContext',
         id: 'test-expandable',
       }),
-      [TaggingAttribute.trackClicks]: 'true',
       [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
