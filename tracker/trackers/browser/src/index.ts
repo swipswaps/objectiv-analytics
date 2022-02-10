@@ -73,6 +73,7 @@ export * from './definitions/TrackerErrorHandlerCallback';
 export * from './definitions/TrackFailureEventParameters';
 export * from './definitions/TrackSuccessEventParameters';
 export * from './definitions/TrackVisibilityAttribute';
+export * from './definitions/TrackVisibilityOptions';
 export * from './definitions/ValidateAttribute';
 export * from './definitions/ValidChildrenTaggingQuery';
 export * from './definitions/WaitForQueueOptions';

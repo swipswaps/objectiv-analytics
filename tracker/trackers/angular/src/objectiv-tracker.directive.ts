@@ -87,7 +87,7 @@ export class ObjectivTrackerDirective {
     const taggingAttributes = {
       ...(this.applyTaggingAttributes ?? {}),
       ...(locationTaggingAttributes ?? {}),
-      ...(childrenTaggingAttributes ?? {})
+      ...(childrenTaggingAttributes ?? {}),
     };
 
     // Set all attributes on the nativeElement

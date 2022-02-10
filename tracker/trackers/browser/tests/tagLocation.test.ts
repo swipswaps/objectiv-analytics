@@ -13,7 +13,7 @@ import {
   makeOverlayContext,
   makeContentContext,
 } from '@objectiv/tracker-core';
-import { tagContent, TaggingAttribute, tagLocation } from '../src';
+import { tagContent, TaggingAttribute, tagLocation, tagOverlay } from '../src';
 
 describe('tagLocation', () => {
   beforeEach(() => {
@@ -123,6 +123,23 @@ describe('tagLocation', () => {
         id: 'test',
       }),
     });
+
+    expect(
+      tagOverlay({
+        id: 'test',
+        options: {
+          trackVisibility: false,
+        },
+      })
+    ).toStrictEqual({
+      [TaggingAttribute.elementId]: matchUUID,
+      [TaggingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        _type: 'OverlayContext',
+        id: 'test',
+      }),
+    });
+
     expect(
       tagContent({
         id: 'test',
