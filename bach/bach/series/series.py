@@ -1389,6 +1389,16 @@ class Series(ABC):
         self._update_self_from_series(result)
         return None
 
+    def dropna(self: T) -> T:
+        """
+        Removes rows with missing values.
+
+        :return: a new series with dropped rows if inplace = False, otherwise None.
+        """
+        df = self.to_frame().dropna()
+        assert isinstance(df, DataFrame)
+        return cast(T, df.all_series[self.name])
+
 
 def const_to_series(base: Union[Series, DataFrame],
                     value: Optional[Union[Series, int, float, str, UUID]],
