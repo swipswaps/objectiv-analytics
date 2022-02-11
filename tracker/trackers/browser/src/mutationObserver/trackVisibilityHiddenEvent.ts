@@ -19,7 +19,7 @@ export const trackVisibilityHiddenEvent = (element: TaggedElement, tracker: Brow
       return;
     }
     const trackVisibility = parseTrackVisibility(element.getAttribute(TaggingAttribute.trackVisibility));
-    if (trackVisibility.mode === 'manual' && !trackVisibility.isVisible) {
+    if (trackVisibility && trackVisibility.mode === 'manual' && !trackVisibility.isVisible) {
       trackHiddenEvent({ element, tracker });
     }
   } catch (error) {

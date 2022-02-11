@@ -477,6 +477,17 @@ def test_series_append_same_dtype_different_index() -> None:
         bt_other_index.city.append(bt.skating_order)
 
 
+def test_series_dropna() -> None:
+    p_series = pd.Series(['a', None, 'c', 'd'], name='nan_series')
+    bt = get_from_df('test_dropna', p_series.to_frame()).nan_series
+    result = bt.dropna()
+    pd.testing.assert_series_equal(
+        p_series.dropna(),
+        result.to_pandas(),
+        check_names=False
+    )
+
+
 def test_series_unstack():
     bt = get_bt_with_test_data(full_data_set=True)
     bt['municipality_none'] = bt[bt.skating_order < 10].municipality
@@ -531,4 +542,3 @@ def test_series_unstack():
         ],
         order_by='municipality'
     )
-

@@ -3,7 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerEvent } from '@objectiv/tracker-core';
 import { PathContextFromURLPlugin } from '../src';
 
 describe('PathContextFromURLPlugin', () => {
@@ -22,7 +22,7 @@ describe('PathContextFromURLPlugin', () => {
   it('should add the PathContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: new TrackerPlugins({ plugins: [new PathContextFromURLPlugin()] }),
+      plugins: [new PathContextFromURLPlugin()],
     });
     const eventContexts: ContextsConfig = {
       location_stack: [

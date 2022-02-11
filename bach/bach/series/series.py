@@ -5,7 +5,7 @@ import warnings
 from abc import ABC, abstractmethod
 from copy import copy
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
-    TypeVar
+    TypeVar, Sequence
 from uuid import UUID
 
 import numpy
@@ -18,6 +18,7 @@ from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
     IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
 from bach.sql_model import BachSqlModel
+
 from bach.types import value_to_dtype
 from sql_models.constants import NotSet, not_set
 
@@ -458,7 +459,7 @@ class Series(ABC):
             new_series_aggregated = cast(
                 Series, new_series.aggregate(aggregation, group_by=df.group_by)
             )
-            if fill_value:
+            if fill_value is not None:
                 new_series_aggregated = new_series_aggregated.fillna(fill_value)
             series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
 
@@ -1056,12 +1057,14 @@ class Series(ABC):
             raise ValueError(f'group_by {type(group_by)} not supported')
         return group_by
 
-    def _derived_agg_func(self,
-                          partition: Optional[WrappedPartition],
-                          expression: Union[str, Expression],
-                          dtype: str = None,
-                          skipna: bool = True,
-                          min_count: int = None) -> 'Series':
+    def _derived_agg_func(
+        self,
+        partition: Optional[WrappedPartition],
+        expression: Union[str, Expression],
+        dtype: str = None,
+        skipna: bool = True,
+        min_count: int = None,
+    ) -> 'Series':
         """
         Create a derived Series that aggregates underlying Series through the given expression.
         If no partition to aggregate on is given, and the Series does not have one set,
@@ -1110,7 +1113,6 @@ class Series(ABC):
                     f'CASE WHEN {{}} >= {min_count} THEN {{}} ELSE NULL END',
                     self.count(partition, skipna=skipna), expression
                 )
-
         derived_dtype = self.dtype if dtype is None else dtype
 
         if not isinstance(partition, Window):
@@ -1339,6 +1341,24 @@ class Series(ABC):
         )()
         return concatenated_series
 
+    def describe(
+        self,
+        percentiles: Optional[Sequence[float]] = None,
+        datetime_is_numeric: bool = False,
+    ) -> 'Series':
+        """
+        Returns descriptive statistics, it will vary based on what is provided
+
+        :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
+        :param datetime_is_numeric: not supported
+        :returns: a new Series with the descriptive statistics
+        """
+        from bach.describe import DescribeOperation
+        describe_df = DescribeOperation(
+            obj=self, datetime_is_numeric=datetime_is_numeric, percentiles=percentiles,
+        )()
+        return describe_df.all_series[self.name]
+
     def drop_duplicates(
         self,
         keep: Union[str, bool] = 'first',
@@ -1346,11 +1366,14 @@ class Series(ABC):
     ) -> Optional['Series']:
         """
         Return a series with duplicated rows removed.
+
         :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
-         - `first`: drop all occurrences except the first one
-         - `last`:  drop all occurrences except the last one
-         - False: drops all duplicates
-         If no value is provided, first occurrences will be kept by default.
+
+            * `first`: drop all occurrences except the first one
+            * `last`:  drop all occurrences except the last one
+            * False: drops all duplicates
+
+            If no value is provided, first occurrences will be kept by default.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
         :return: a new series with dropped duplicates if inplace = False, otherwise None.
@@ -1365,6 +1388,16 @@ class Series(ABC):
 
         self._update_self_from_series(result)
         return None
+
+    def dropna(self: T) -> T:
+        """
+        Removes rows with missing values.
+
+        :return: a new series with dropped rows if inplace = False, otherwise None.
+        """
+        df = self.to_frame().dropna()
+        assert isinstance(df, DataFrame)
+        return cast(T, df.all_series[self.name])
 
 
 def const_to_series(base: Union[Series, DataFrame],

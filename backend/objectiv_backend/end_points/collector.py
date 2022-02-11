@@ -11,7 +11,7 @@ from flask import Response, Request
 from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.types import EventData, EventDataList, EventList
 from objectiv_backend.common.db import get_db_connection
-from objectiv_backend.common.event_utils import add_global_context_to_event
+from objectiv_backend.common.event_utils import add_global_context_to_event, get_contexts
 from objectiv_backend.end_points.common import get_json_response, get_cookie_id
 from objectiv_backend.end_points.extra_output import events_to_json, write_data_to_fs_if_configured, \
     write_data_to_s3_if_configured, write_data_to_snowplow_if_configured
@@ -121,12 +121,10 @@ def _get_collector_response(
 
 def add_http_contexts(events: EventDataList):
     """
-    Modify the given list of events: Add the HttpContext to each event
+    Modify the given list of events: Add or enrich the HttpContext to each event
     """
-    # get http context for current request (same for all events in this request)
-    http_context: HttpContext = _get_http_context()
     for event in events:
-        add_global_context_to_event(event=event, context=http_context)
+        add_http_context_to_event(event=event, request=flask.request)
 
 
 def add_cookie_id_contexts(events: EventDataList):
@@ -165,45 +163,64 @@ def set_time_in_events(events: EventDataList, current_millis: int, client_millis
         event['time'] = event['time'] + offset
 
 
-def _get_http_context() -> HttpContext:
-    """ Create an HttpContext based on the data in the current request. """
-    allowed_headers = ['Referer', 'User-Agent']
+def _get_remote_address(request: Request) -> str:
+    """
+    try to determine the IP address of the calling user agent, by looking at some standard headers
+    if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
+    cases this is probably wrong.
+    :param request: original http request
+    :return: string with ip address
+    """
 
-    http_headers: Dict[str, str] = {}
-    for h, v in flask.request.headers.items():
-        if h in allowed_headers:
-            http_headers[h.lower().replace('-', '_')] = v
-
-    # try to determine the IP address of the calling user agent, by looking at some standard headers
-    # if they aren't set, we fall back to 'remote_addr', which is the connecting client. In most
-    # cases this is probably wrong.
-    if 'X-Real-IP' in flask.request.headers:
+    x_forwarded_hosts = str(request.headers.get('X-Forwarded-For', '')).split()
+    if 'X-Real-IP' in request.headers:
         # any upstream proxy probably know the 'right' IP. If it sets the x-real-ip header to that,
         # we use that.
-        http_headers['remote_address'] = flask.request.headers['X-Real-IP']
-    elif 'X-Forwarded-For' in flask.request.headers:
+        return request.headers['X-Real-IP']
+    elif x_forwarded_hosts:
         # x-forwarded-for headers take the form of:
         # client proxy_1...proxy_n
         # we're interested in proxy_n, which is the last node that connects to us, and as such
         # has to be an Internet routed proxy. proxies before it, including the client may be internal
         # and non-routable addresses.
-        hosts = str(flask.request.headers['X-Forwarded-For']).split()
-        if len(hosts) > 1:
-            http_headers['remote_address'] = hosts[-1]
-        else:
-            # if there's only one address there, we use that.
-            http_headers['remote_address'] = flask.request.headers['X-Forwarded-For']
-    elif flask.request.remote_addr:
+        return x_forwarded_hosts[-1]
+    elif request.remote_addr:
         # if all else fails, look for remote_addr in the request. This is the IP the current connection
         # originates from. Most likely a proxy (which is why this is the last resort).
-        http_headers['remote_address'] = flask.request.remote_addr
+        return request.remote_addr
+
+    # this should never happen!
+    return 'unknown'
+
+
+def add_http_context_to_event(event: EventData, request: Request):
+    """
+        Create or enrich an HttpContext based on the data in the current request. If an HttpContext is already
+        present, the remote address is added to the existing context. Otherwise, a new context is created and
+        added to the global_contexts[] of the provided event.
+
+        :param event - event to add context to
+        :param request - request object, used to extract extra context from.
+    """
+
+    remote_address = _get_remote_address(request)
+
+    # check if there is a pre-existing http_context
+    # if so, use that.
+    contexts = get_contexts(event, 'HttpContext')
+    if contexts:
+        tracker_http_context = contexts[0]
+        tracker_http_context['remote_address'] = remote_address
     else:
-        # this should never happen!
-        http_headers['remote_address'] = 'unknown'
+        # if a pre-existing context cannot be found, we create one from scratch
+        http_context = {
+            'id': 'http_context',
+            'remote_address': remote_address,
+            'referrer': request.headers.get('Referer', ''),
+            'user_agent': request.headers.get('User-Agent', '')
+        }
 
-    http_headers['id'] = 'http_context'
-
-    return HttpContext(**http_headers)
+        add_global_context_to_event(event, HttpContext(**http_context))
 
 
 def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):

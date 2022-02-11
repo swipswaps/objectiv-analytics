@@ -3,7 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerEvent } from '@objectiv/tracker-core';
 import { HttpContextPlugin } from '../src';
 
 describe('HttpContextPlugin', () => {
@@ -27,7 +27,7 @@ describe('HttpContextPlugin', () => {
 
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: new TrackerPlugins({ plugins: [new HttpContextPlugin()] }),
+      plugins: [new HttpContextPlugin()],
     });
     const eventContexts: ContextsConfig = {
       location_stack: [
