@@ -33,15 +33,19 @@ get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
 
 TYPES_DATA = [
             [1, 1.324, True, datetime.datetime(2021, 5, 3, 11, 28, 36, 388), 'Ljouwert', datetime.date(2021, 5, 3),
-             ['Sûkerbôlle'], UUID('36ca4c0b-804d-48ff-809f-28cf9afd078a'), {'a': 'b'}, datetime.date(2021, 5, 3)],
+             ['Sûkerbôlle'], UUID('36ca4c0b-804d-48ff-809f-28cf9afd078a'), {'a': 'b'},
+             datetime.timedelta(days=1, seconds=7583, microseconds=100), datetime.date(2021, 5, 3)],
             [2, 2.734, True, datetime.datetime(2021, 5, 4, 23, 28, 36, 388), 'Snits', datetime.date(2021, 5, 4),
-             ['Dúmkes'], UUID('81a8ace2-273b-4b95-b6a6-0fba33858a22'), {'c': ['d', 'e']}, ['Dúmkes']],
+             ['Dúmkes'], UUID('81a8ace2-273b-4b95-b6a6-0fba33858a22'), {'c': ['d', 'e']},
+             datetime.timedelta(days=5, seconds=583, microseconds=100), ['Dúmkes']],
             [3, 3.52, False, datetime.datetime(2022, 5, 3, 14, 13, 13, 388), 'Drylts', datetime.date(2022, 5, 3),
-             ['Grutte Pier Bier'], UUID('8a70b3d3-33ec-4300-859a-bb2efcf0b188'), {'f': 'g', 'h': 'i'}, ['Grutte Pier Bier']]
+             ['Grutte Pier Bier'], UUID('8a70b3d3-33ec-4300-859a-bb2efcf0b188'), {'f': 'g', 'h': 'i'},
+             datetime.timedelta(days=4, seconds=8583, microseconds=100), ['Grutte Pier Bier']
+             ]
         ]
 TYPES_COLUMNS = ['int_column', 'float_column', 'bool_column', 'datetime_column',
        'string_column', 'date_column', 'list_column', 'uuid_column',
-       'dict_column', 'mixed_column']
+       'dict_column', 'timedelta_column', 'mixed_column']
 
 
 def test_from_pandas_table():
@@ -168,7 +172,7 @@ def test_from_pandas_types_cte():
     engine = sqlalchemy.create_engine(DB_TEST_URL)
     df = DataFrame.from_pandas(
         engine=engine,
-        df=pdf.loc[:, :'dict_column'],
+        df=pdf.loc[:, :'timedelta_column'],
         convert_objects=True,
         materialization='cte'
     )
@@ -181,7 +185,8 @@ def test_from_pandas_types_cte():
                          'date_column': 'date',
                          'list_column': 'jsonb',
                          'uuid_column': 'uuid',
-                         'dict_column': 'jsonb'}
+                         'dict_column': 'jsonb',
+                         'timedelta_column': 'timedelta'}
 
     assert_equals_data(
         df,
@@ -193,14 +198,15 @@ def test_from_pandas_types_cte():
                           'date_column',
                           'list_column',
                           'uuid_column',
-                          'dict_column'],
-        expected_data=[x[:9] for x in TYPES_DATA]
+                          'dict_column',
+                          'timedelta_column'],
+        expected_data=[x[:10] for x in TYPES_DATA]
     )
 
     with pytest.raises(TypeError, match="unsupported dtype for"):
         DataFrame.from_pandas(
             engine=engine,
-            df=pdf.loc[:, :'dict_column'],
+            df=pdf.loc[:, :'timedelta_column'],
             convert_objects=True,
             name='test_from_pd_table',
             materialization='table',
