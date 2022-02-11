@@ -175,7 +175,7 @@ def _from_pd_shared(
         * index_dtypes dict
         * dtypes dict
     """
-    if isinstance(df.index, pandas.MultiIndgit ex):
+    if isinstance(df.index, pandas.MultiIndex):
         raise ValueError("pandas.MultiIndex not supported")
 
     if df.index.name is None:
