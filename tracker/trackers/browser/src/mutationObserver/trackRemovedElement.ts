@@ -26,7 +26,7 @@ export const trackRemovedElement = (element: GuardableElement, tracker: BrowserT
       // Process visibility:hidden events in mode:auto
       if (element.hasAttribute(TaggingAttribute.trackVisibility)) {
         const trackVisibility = parseTrackVisibility(element.getAttribute(TaggingAttribute.trackVisibility));
-        if (trackVisibility.mode === 'auto') {
+        if (trackVisibility && trackVisibility.mode === 'auto') {
           trackHiddenEvent({ element, tracker });
         }
       }
