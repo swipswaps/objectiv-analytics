@@ -190,25 +190,26 @@ def _from_pd_shared(
     for column in df_copy.columns:
         dtype = df_copy[column].dtype.name
 
-        if convert_objects and dtype not in supported_pandas_dtypes:
-            df_copy[column] = df_copy[column].convert_dtypes(convert_integer=False,
-                                                             convert_boolean=False,
-                                                             convert_floating=False)
+        if dtype in supported_pandas_dtypes:
+            dtypes[str(column)] = dtype
+            continue
+
+        if convert_objects:
+            df_copy[column] = df_copy[column].convert_dtypes(
+                convert_integer=False, convert_boolean=False, convert_floating=False,
+            )
             dtype = df_copy[column].dtype.name
 
-        if dtype not in supported_pandas_dtypes:
-            if cte and convert_objects:
-                types = df_copy[column].map(lambda x: type(x)).unique()
-                if len(types) == 1:
-                    dtype = value_to_dtype(df_copy[column][0])
-                else:
-                    raise TypeError(f'multiple types found in column {column}: {types}')
-            else:
-                raise TypeError(f'unsupported dtype for {column}: {dtype}')
+        if dtype not in supported_pandas_dtypes and not(cte and convert_objects):
+            raise TypeError(f'unsupported dtype for {column}: {dtype}')
 
-        if column == index:
-            index_dtypes[str(column)] = dtype
-        else:
-            dtypes[str(column)] = dtype
+        if cte and convert_objects:
+            types = df_copy[column].apply(type).unique()
+            if len(types) != 1:
+                raise TypeError(f'multiple types found in column {column}: {types}')
+            dtype = value_to_dtype(df_copy[column][0])
 
+        dtypes[str(column)] = dtype
+    
+    index_dtypes[index] = dtypes.pop(index)
     return df_copy, index_dtypes, dtypes
