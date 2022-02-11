@@ -175,7 +175,10 @@ def _from_pd_shared(
         * index_dtypes dict
         * dtypes dict
     """
-    if df.index.name is None:  # for now only one index allowed todo check this
+    if isinstance(df.index, pandas.MultiIndgit ex):
+        raise ValueError("pandas.MultiIndex not supported")
+
+    if df.index.name is None:
         index = '_index_0'
     else:
         index = f'_index_{df.index.name}'
@@ -210,6 +213,6 @@ def _from_pd_shared(
             dtype = value_to_dtype(df_copy[column][0])
 
         dtypes[str(column)] = dtype
-    
+
     index_dtypes[index] = dtypes.pop(index)
     return df_copy, index_dtypes, dtypes
