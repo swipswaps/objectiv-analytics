@@ -19,7 +19,10 @@ export const trackVisibilityVisibleEvent = (element: TaggedElement, tracker: Bro
       return;
     }
     const trackVisibility = parseTrackVisibility(element.getAttribute(TaggingAttribute.trackVisibility));
-    if (trackVisibility.mode === 'auto' || (trackVisibility.mode === 'manual' && trackVisibility.isVisible)) {
+    if (
+      trackVisibility &&
+      (trackVisibility.mode === 'auto' || (trackVisibility.mode === 'manual' && trackVisibility.isVisible))
+    ) {
       trackVisibleEvent({ element, tracker });
     }
   } catch (error) {
