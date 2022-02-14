@@ -6,11 +6,20 @@ from typing import List, Dict, Union, cast
 from bach import get_series_type_from_dtype, DataFrame
 from bach.expression import Expression
 from bach.savepoints import Savepoints
+from bach.sql_model import BachSqlModel
+from sql_models.model import CustomSqlModelBuilder
 
 
-def get_fake_df(index_names: List[str], data_names: List[str], dtype: Union[str, Dict[str, str]] = 'int64'):
+def get_fake_df(
+        index_names: List[str],
+        data_names: List[str],
+        dtype: Union[str, Dict[str, str]] = 'int64'
+) -> DataFrame:
     engine = None
-    base_node = None
+    base_node = BachSqlModel.from_sql_model(
+        sql_model=CustomSqlModelBuilder('select * from x', name='base')(),
+        columns=('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+    )
     if isinstance(dtype, str):
         dtype = {
             col_name: dtype
