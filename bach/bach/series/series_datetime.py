@@ -47,7 +47,7 @@ class TimeDeltaOperation(DateTimeOperation):
     def components(self) -> DataFrame:
         formats = {
             'days': 'DD',
-            'hours': 'HH',
+            'hours': 'HH24',
             'minutes': 'MI',
             'seconds': 'SS',
             'milliseconds': 'MS',

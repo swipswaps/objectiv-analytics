@@ -152,19 +152,25 @@ def test_timedelta_dt_properties() -> None:
 def test_timedelta_dt_components() -> None:
     pdf = pd.DataFrame(
         data={
-            'timedelta': [
-                datetime.timedelta(days=2, hours=3, minutes=5, milliseconds=2, microseconds=4),
-                datetime.timedelta(days=3, hours=4, minutes=6, milliseconds=3, microseconds=5),
-                datetime.timedelta(days=4, hours=5, minutes=7, milliseconds=4, microseconds=5),
+            'start_date': [
+                np.datetime64("2022-01-01 12:34:56.7800"),
+                np.datetime64("2022-01-05 01:23:45.6700"),
             ],
-        },
+            'end_date': [
+                np.datetime64("2022-01-03"),
+                np.datetime64("2022-01-06"),
+            ]
+        }
     )
     df = get_from_df('test_datetime_df', pdf)
 
-    components = ['days', 'hours', 'minutes', 'milliseconds', 'microseconds']
-    result = df['diff'].dt.components.sort_index().to_pandas()
+    pdf['diff'] = pdf['end_date'] - pdf['start_date']
+    df['diff'] = df['end_date'] - df['start_date']
+
+    components = ['days', 'hours', 'minutes', 'seconds', 'milliseconds']
+    result = df['diff'].dt.components.sort_index().to_pandas()[components]
     expected = pdf['diff'].dt.components[components]
 
-    pd.testing.assert_frame_equal(expected, result)
+    pd.testing.assert_frame_equal(expected, result, check_names=False)
 
 
