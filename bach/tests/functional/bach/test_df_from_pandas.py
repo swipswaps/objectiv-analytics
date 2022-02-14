@@ -10,6 +10,7 @@ from tests.functional.bach.test_data_and_utils import get_pandas_df, TEST_DATA_C
 import datetime
 from uuid import UUID
 import pandas as pd
+import numpy as np
 
 EXPECTED_COLUMNS = [
     '_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding'
@@ -163,6 +164,30 @@ def test_from_pandas_types(materialization: str):
             'string_column'
         ],
         expected_data=[x[:5] for x in TYPES_DATA]
+    )
+
+    pdf = pd.DataFrame.from_records(TYPES_DATA, columns=TYPES_COLUMNS)
+    pdf.set_index(pdf.columns[0], drop=False, inplace=True)
+    pdf['int32_column'] = pdf.int_column.astype(np.int32)
+    df = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf[['int32_column']],
+        convert_objects=True,
+        name='test_from_pd_table',
+        materialization=materialization,
+        if_exists='replace'
+    )
+
+    assert df.index_dtypes == {'_index_int_column': 'int64'}
+    assert df.dtypes == {'int32_column': 'int64'}
+
+    assert_equals_data(
+        df,
+        expected_columns=[
+            '_index_int_column',
+            'int32_column'
+        ],
+        expected_data=[[x[0], x[0]] for x in TYPES_DATA]
     )
 
 
