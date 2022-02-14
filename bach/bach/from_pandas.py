@@ -59,7 +59,7 @@ def from_pandas_store_table(engine: Engine,
         * append: Insert new values to the existing table.
     """
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-    df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects)
+    df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects, cte=False)
 
     conn = engine.connect()
     df_copy.to_sql(name=table_name, con=conn, if_exists=if_exists, index=False)
@@ -107,7 +107,7 @@ def from_pandas_ephemeral(
         pd.convert_dtypes() method where possible.
     """
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-    df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects)
+    df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects, cte=True)
 
     # Only support case where we have a single index column for now
     if len(index_dtypes) != 1:
@@ -138,6 +138,7 @@ def from_pandas_ephemeral(
     ).to_sql()
 
     sql = f'select * from (values \n{all_values_str}\n) as t({column_names_str})\n'
+
     model_builder = CustomSqlModelBuilder(sql=sql, name=name)
     sql_model = model_builder()
     bach_model = BachSqlModel.from_sql_model(sql_model, columns=tuple(column_names))
@@ -157,21 +158,27 @@ def from_pandas_ephemeral(
 
 def _from_pd_shared(
         df: pandas.DataFrame,
-        convert_objects: bool
+        convert_objects: bool,
+        cte: bool
 ) -> Tuple[pandas.DataFrame, Dict[str, str], Dict[str, str]]:
     """
     Pre-processes the given Pandas DataFrame:
-    1) Add index if missing
-    2) Convert string columns to string objects (if convert_objects)
-    3) Check that the dtypes are supported
-    4) extract index_dtypes and dtypes dictionaries
+    1)  Add index if missing
+    2a) Convert string columns to string dtype (if convert_objects)
+    2b) Set content of columns of dtype other than `supported_pandas_dtypes` to supported types
+        (if convert_objects & cte)
+    3)  Check that the dtypes are supported
+    4)  extract index_dtypes and dtypes dictionaries
 
     :return: Tuple:
         * Modified copy of Pandas DataFrame
         * index_dtypes dict
         * dtypes dict
     """
-    if df.index.name is None:  # for now only one index allowed todo check this
+    if isinstance(df.index, pandas.MultiIndex):
+        raise ValueError("pandas.MultiIndex not supported")
+
+    if df.index.name is None:
         index = '_index_0'
     else:
         index = f'_index_{df.index.name}'
@@ -181,35 +188,31 @@ def _from_pd_shared(
     index_dtypes = {}
     dtypes = {}
 
-    supported_types = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool']
-    secondary_supported_types = {'int32': 'int64'}
+    supported_pandas_dtypes = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool', 'int32']
 
     for column in df_copy.columns:
-        if convert_objects:
-            df_copy[column] = df_copy[column].convert_dtypes(convert_integer=False,
-                                                             convert_boolean=False,
-                                                             convert_floating=False)
-            if df_copy[column].dtype.name == 'object':
-                types = df_copy[column].map(lambda x: type(x)).unique()
-                if len(types) == 1:
-                    final_type = value_to_dtype(df_copy[column][0])
-                else:
-                    raise ValueError(f'multiple types found in column {column}: {types}')
-            elif df_copy[column].dtype.name in secondary_supported_types.keys():
-                final_type = secondary_supported_types[df_copy[column].dtype.name]
-                df_copy[column] = df_copy[column].astype(final_type)
-            elif df_copy[column].dtype.name in supported_types:
-                final_type = df_copy[column].dtype.name
-            else:
-                raise ValueError(f'unsupported dtype for {column}')
-        else:
-            if df_copy[column].dtype.name in supported_types:
-                final_type = df_copy[column].dtype.name
-            else:
-                raise ValueError(f'unsupported dtype for {column}')  # todo same as above
-        if column == index:
-            index_dtypes[str(column)] = final_type
-        else:
-            dtypes[str(column)] = final_type
+        dtype = df_copy[column].dtype.name
 
+        if dtype in supported_pandas_dtypes:
+            dtypes[str(column)] = dtype
+            continue
+
+        if convert_objects:
+            df_copy[column] = df_copy[column].convert_dtypes(
+                convert_integer=False, convert_boolean=False, convert_floating=False,
+            )
+            dtype = df_copy[column].dtype.name
+
+        if dtype not in supported_pandas_dtypes and not(cte and convert_objects):
+            raise TypeError(f'unsupported dtype for {column}: {dtype}')
+
+        if cte and convert_objects:
+            types = df_copy[column].apply(type).unique()
+            if len(types) != 1:
+                raise TypeError(f'multiple types found in column {column}: {types}')
+            dtype = value_to_dtype(df_copy[column][0])
+
+        dtypes[str(column)] = dtype
+
+    index_dtypes[index] = dtypes.pop(index)
     return df_copy, index_dtypes, dtypes

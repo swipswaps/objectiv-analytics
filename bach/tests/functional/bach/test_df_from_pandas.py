@@ -6,9 +6,10 @@ import sqlalchemy
 
 from bach import DataFrame
 from tests.functional.bach.test_data_and_utils import get_pandas_df, TEST_DATA_CITIES, CITIES_COLUMNS, \
-    DB_TEST_URL, assert_equals_data, get_bt_with_types_data
-from uuid import UUID
+    DB_TEST_URL, assert_equals_data
 import datetime
+from uuid import UUID
+import pandas as pd
 
 EXPECTED_COLUMNS = [
     '_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding'
@@ -27,6 +28,24 @@ COLUMNS_INJECTION = ['Index', 'X"x"', '{test}', '{te{}{{s}}t}']
 # The expected data is what we put in, plus the index column, which equals the first column
 EXPECTED_COLUMNS_INJECTION = [f'_index_{COLUMNS_INJECTION[0]}'] + COLUMNS_INJECTION
 EXPECTED_DATA_INJECTION = [[row[0]] + row for row in TEST_DATA_INJECTION]
+
+get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
+
+TYPES_DATA = [
+            [1, 1.324, True, datetime.datetime(2021, 5, 3, 11, 28, 36, 388), 'Ljouwert', datetime.date(2021, 5, 3),
+             ['Sûkerbôlle'], UUID('36ca4c0b-804d-48ff-809f-28cf9afd078a'), {'a': 'b'},
+             datetime.timedelta(days=1, seconds=7583, microseconds=100), datetime.date(2021, 5, 3)],
+            [2, 2.734, True, datetime.datetime(2021, 5, 4, 23, 28, 36, 388), 'Snits', datetime.date(2021, 5, 4),
+             ['Dúmkes'], UUID('81a8ace2-273b-4b95-b6a6-0fba33858a22'), {'c': ['d', 'e']},
+             datetime.timedelta(days=5, seconds=583, microseconds=100), ['Dúmkes']],
+            [3, 3.52, False, datetime.datetime(2022, 5, 3, 14, 13, 13, 388), 'Drylts', datetime.date(2022, 5, 3),
+             ['Grutte Pier Bier'], UUID('8a70b3d3-33ec-4300-859a-bb2efcf0b188'), {'f': 'g', 'h': 'i'},
+             datetime.timedelta(days=4, seconds=8583, microseconds=100), ['Grutte Pier Bier']
+             ]
+        ]
+TYPES_COLUMNS = ['int_column', 'float_column', 'bool_column', 'datetime_column',
+       'string_column', 'date_column', 'list_column', 'uuid_column',
+       'dict_column', 'timedelta_column', 'mixed_column']
 
 
 def test_from_pandas_table():
@@ -86,7 +105,7 @@ def test_from_pandas_ephemeral_injection():
 def test_from_pandas_non_happy_path():
     pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS)
     engine = sqlalchemy.create_engine(DB_TEST_URL)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         # if convert_objects is false, we'll get an error, because pdf's dtype for 'city' and 'municipality'
         # is 'object
         DataFrame.from_pandas(
@@ -115,15 +134,89 @@ def test_from_pandas_non_happy_path():
             materialization='table',
         )
 
-def test_from_pandas_other_types():
-    df = get_bt_with_types_data()
-    assert df.dtypes == {'uuid_column': 'uuid',
-                         'jsonb_column_a': 'jsonb',
-                         'moment': 'timestamp',
-                         'date': 'timestamp'}
+
+@pytest.mark.parametrize("materialization", ['cte', 'table'])
+def test_from_pandas_types(materialization: str):
+    pdf = pd.DataFrame.from_records(TYPES_DATA, columns=TYPES_COLUMNS)
+    pdf.set_index(pdf.columns[0], drop=True, inplace=True)
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    df = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf.loc[:, :'string_column'],
+        convert_objects=True,
+        name='test_from_pd_table',
+        materialization=materialization,
+        if_exists='replace'
+    )
+
+    assert df.index_dtypes == {'_index_int_column': 'int64'}
+    assert df.dtypes == {'float_column': 'float64', 'bool_column': 'bool',
+                         'datetime_column': 'timestamp', 'string_column': 'string'}
 
     assert_equals_data(
         df,
-        expected_columns=['_index_uuid_column', 'uuid_column', 'jsonb_column_a', 'moment', 'date'],
-        expected_data=[['36ca4c0b-804d-48ff-809f-28cf9afd078a', '36ca4c0b-804d-48ff-809f-28cf9afd078a', '{Sûkerbôlle}', datetime.datetime(2021, 5, 3, 11, 28, 36, 388), datetime.datetime(2021, 5, 3, 0, 0)], ['81a8ace2-273b-4b95-b6a6-0fba33858a22', '81a8ace2-273b-4b95-b6a6-0fba33858a22', '{Dúmkes}', datetime.datetime(2021, 5, 4, 23, 28, 36, 388), datetime.datetime(2021, 5, 4, 0, 0)], ['8a70b3d3-33ec-4300-859a-bb2efcf0b188', '8a70b3d3-33ec-4300-859a-bb2efcf0b188', '{"Grutte Pier Bier"}', datetime.datetime(2022, 5, 3, 14, 13, 13, 388), datetime.datetime(2022, 5, 3, 0, 0)]]
+        expected_columns=[
+            '_index_int_column',
+            'float_column',
+            'bool_column',
+            'datetime_column',
+            'string_column'
+        ],
+        expected_data=[x[:5] for x in TYPES_DATA]
     )
+
+
+def test_from_pandas_types_cte():
+    pdf = pd.DataFrame.from_records(TYPES_DATA, columns=TYPES_COLUMNS)
+    pdf.set_index(pdf.columns[0], drop=True, inplace=True)
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    df = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf.loc[:, :'timedelta_column'],
+        convert_objects=True,
+        materialization='cte'
+    )
+
+    assert df.index_dtypes == {'_index_int_column': 'int64'}
+    assert df.dtypes == {'float_column': 'float64',
+                         'bool_column': 'bool',
+                         'datetime_column': 'timestamp',
+                         'string_column': 'string',
+                         'date_column': 'date',
+                         'list_column': 'jsonb',
+                         'uuid_column': 'uuid',
+                         'dict_column': 'jsonb',
+                         'timedelta_column': 'timedelta'}
+
+    assert_equals_data(
+        df,
+        expected_columns=['_index_int_column',
+                          'float_column',
+                          'bool_column',
+                          'datetime_column',
+                          'string_column',
+                          'date_column',
+                          'list_column',
+                          'uuid_column',
+                          'dict_column',
+                          'timedelta_column'],
+        expected_data=[x[:10] for x in TYPES_DATA]
+    )
+
+    with pytest.raises(TypeError, match="unsupported dtype for"):
+        DataFrame.from_pandas(
+            engine=engine,
+            df=pdf.loc[:, :'timedelta_column'],
+            convert_objects=True,
+            name='test_from_pd_table',
+            materialization='table',
+            if_exists='replace'
+        )
+
+    with pytest.raises(TypeError, match="multiple types found in column"):
+        DataFrame.from_pandas(
+            engine=engine,
+            df=pdf.loc[:, :'mixed_column'],
+            convert_objects=True,
+            materialization='cte'
+        )

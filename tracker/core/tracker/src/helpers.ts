@@ -70,3 +70,8 @@ export const waitForPromise = async ({
     clearTimeout(timeoutTimer);
   });
 };
+
+/**
+ * An index value validator. Accepts 0 and positive integers only.
+ */
+export const isValidIndex = (index: number) => Number.isInteger(index) && Number.isFinite(index) && index >= 0;

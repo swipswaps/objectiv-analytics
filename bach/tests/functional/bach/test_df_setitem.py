@@ -395,3 +395,42 @@ def test_set_pandas_series():
             [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 1268],
         ]
     )
+
+
+def test_set_pandas_series_different_shape():
+    bt = get_bt_with_test_data()
+    pandas_series = bt['founding'].to_pandas()[1:]
+    bt['duplicated_column'] = pandas_series
+    assert_db_type(bt['duplicated_column'], 'bigint', SeriesInt64)
+    assert_equals_data(
+        bt,
+        expected_columns=[
+            '_index_skating_order',  # index
+            'skating_order', 'city', 'municipality', 'inhabitants', 'founding', 'duplicated_column'
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, None],
+            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 1456],
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 1268],
+        ]
+    )
+
+
+def test_set_pandas_series_different_shape_and_name():
+    bt = get_bt_with_test_data()
+    bt2 = get_bt_with_railway_data()  # has more rows and different name index
+    pandas_series = bt2['town'].to_pandas()
+    bt['the_town'] = pandas_series
+    assert_db_type(bt['the_town'], 'text', SeriesString)
+    assert_equals_data(
+        bt,
+        expected_columns=[
+            '_index_skating_order',  # index
+            'skating_order', 'city', 'municipality', 'inhabitants', 'founding', 'the_town'
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 'Drylts'],
+            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 'It Hearrenfean'],
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 'It Hearrenfean'],
+        ]
+    )

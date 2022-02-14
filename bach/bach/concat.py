@@ -139,39 +139,23 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
             if isinstance(obj, Series):
                 raise Exception('Cannot concat Series to DataFrame')
 
-            df = obj.copy_override()
+            df = obj.copy()
             if self.ignore_index:
                 df.reset_index(drop=True, inplace=True)
 
-            dfs.append(self._fill_missing_series(df=df).materialize())
+            # need to materialize in order to avoid further problems
+            if df.group_by:
+                df.materialize(inplace=True)
+
+            dfs.append(df)
 
         return dfs
-
-    def _fill_missing_series(self, df: DataFrame) -> DataFrame:
-        """
-        adds non-shared series between current df and resultant concatenated df
-        """
-        df_cp = df.copy_override()
-        new_indexes = self._get_indexes()
-        new_data_series = self._get_series()
-
-        all_result_series: Dict[str, ResultSeries] = {**new_indexes, **new_data_series}
-        for name, result_series in all_result_series.items():
-            if name not in df_cp.all_series:
-                df_cp[name] = const_to_series(base=df_cp, value=None, name=name)
-                df_cp[name] = df_cp[name].astype(result_series.dtype)
-                continue
-
-            if name in df_cp.index:
-                df_cp.index[name] = df_cp.index[name].astype(result_series.dtype)
-            else:
-                df_cp[name] = df_cp[name].astype(result_series.dtype)
-
-        return df_cp
 
     def _join_series_expressions(self, obj: DataFrame) -> Expression:
         """
         generates the column expression for the object subquery
+        - if a column doesn't exist in the object's base_node, all values will be null
+        - if the column exists but has a different dtype from the result, it will be casted
         """
         new_indexes = self._get_indexes()
         new_data_series = self._get_series()
@@ -182,8 +166,13 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
         for idx, rc in all_result_series.items():
             if idx not in obj.all_series:
                 expressions.append(Expression.construct('NULL as {}', Expression.identifier(rc.name)))
-            else:
-                expressions.append(Expression.construct_expr_as_name(expr=rc.expression, name=rc.name))
+                continue
+
+            has_diff_dtype = rc.dtype != obj.all_series[idx].dtype
+            curr_series = obj.all_series[idx] if not has_diff_dtype else obj.all_series[idx].astype(rc.dtype)
+            expressions.append(
+                Expression.construct_expr_as_name(expr=curr_series.expression, name=rc.name)
+            )
 
         return join_expressions(expressions)
 
@@ -274,7 +263,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
                 raise Exception('Cannot concat DataFrame to Series')
 
             df = obj.to_frame()
-            if not df.is_materialized:
+            if df.group_by:
                 df.materialize(inplace=True)
             series.append(df.all_series[obj.name])
 
