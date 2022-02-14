@@ -38,8 +38,8 @@ export const TrackedPressableContext = React.forwardRef<HTMLElement, TrackedPres
     ...(forwardTitle ? { title } : {}),
   };
 
+  const locationPath = getLocationPath(useLocationStack());
   if (!pressableId) {
-    const locationPath = getLocationPath(useLocationStack());
     console.error(
       `｢objectiv｣ Could not generate a valid id for PressableContext @ ${locationPath}. Please provide either the \`title\` or the \`id\` property manually.`
     );

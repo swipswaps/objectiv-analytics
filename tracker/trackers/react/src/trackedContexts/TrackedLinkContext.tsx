@@ -56,8 +56,8 @@ export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkConte
     ...(forwardHref ? { href } : {}),
   };
 
+  const locationPath = getLocationPath(useLocationStack());
   if (!linkId) {
-    const locationPath = getLocationPath(useLocationStack());
     console.error(
       `｢objectiv｣ Could not generate a valid id for LinkContext @ ${locationPath}. Please provide either the \`title\` or the \`id\` property manually.`
     );
