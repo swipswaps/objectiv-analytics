@@ -121,11 +121,6 @@ export type TrackedPressableContextProps = Omit<TrackedContextProps, 'id'> & {
    * Whether to forward the given title to the given Component.
    */
   forwardTitle?: boolean;
-
-  /**
-   * Whether to block and wait for the Tracker having sent the event. Eg: a button redirecting to a new location.
-   */
-  waitUntilTracked?: boolean;
 };
 
 /**

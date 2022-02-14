@@ -4,10 +4,8 @@
 
 import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
 import React from 'react';
-import { executeOnce } from '../common/executeOnce';
 import { makeTitleFromChildren } from '../common/factories/makeTitleFromChildren';
-import { TrackingContext } from '../common/providers/TrackingContext';
-import { trackPressEventHandler } from '../common/trackPressEventHandler';
+import { trackPressEvent } from '../eventTrackers/trackPressEvent';
 import { useLocationStack } from '../hooks/consumers/useLocationStack';
 import { LinkContextWrapper } from '../locationWrappers/LinkContextWrapper';
 import { TrackedPressableContextProps } from '../types';
@@ -25,6 +23,11 @@ export type TrackedLinkContextProps = TrackedPressableContextProps & {
    * Whether to forward the given href to the given Component.
    */
   forwardHref?: boolean;
+
+  /**
+   * Whether to block and wait for the Tracker having sent the event. Eg: a button redirecting to a new location.
+   */
+  waitUntilTracked?: boolean;
 };
 
 /**
@@ -64,19 +67,40 @@ export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkConte
     return React.createElement(Component, componentProps);
   }
 
-  const handleClick = executeOnce(
-    async (event: React.MouseEvent<HTMLElement, MouseEvent>, trackingContext: TrackingContext) => {
-      await trackPressEventHandler(event, trackingContext, waitUntilTracked);
-      props.onClick && props.onClick(event);
-    }
-  );
-
   return (
     <LinkContextWrapper id={linkId} href={href}>
       {(trackingContext) =>
         React.createElement(Component, {
           ...componentProps,
-          onClick: (event) => handleClick(event, trackingContext),
+          onClick: async (event) => {
+            if(!waitUntilTracked) {
+              // Track PressEvent: non-blocking.
+              trackPressEvent(trackingContext);
+
+              // Execute onClick prop, if any.
+              props.onClick && props.onClick(event);
+            }else {
+              // Prevent event from being handled by the user agent.
+              event.preventDefault();
+
+              // Track PressEvent: best-effort blocking.
+              await trackPressEvent({
+                ...trackingContext,
+                options: {
+                  // Best-effort: wait for Queue to be empty. Times out to max 1s on very slow networks.
+                  waitForQueue: true,
+                  // Regardless whether waiting resulted in PressEvent being tracked, flush the Queue.
+                  flushQueue: true
+                }
+              });
+
+              // Execute onClick prop, if any.
+              props.onClick && props.onClick(event);
+
+              // Resume navigation.
+              window.location.href = href;
+            }
+          },
         })
       }
     </LinkContextWrapper>

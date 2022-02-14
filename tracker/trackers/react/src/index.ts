@@ -27,10 +27,8 @@ export * from './common/providers/TrackerProviderContext';
 export * from './common/providers/TrackingContext';
 export * from './common/providers/TrackingContextProvider';
 
-export * from './common/executeOnce';
 export * from './common/isDevMode';
 export * from './common/LocationTree';
-export * from './common/trackPressEventHandler';
 
 export * from './eventTrackers/trackApplicationLoadedEvent';
 export * from './eventTrackers/trackFailureEvent';
