@@ -324,7 +324,7 @@ class QCutOperation:
         )
 
         # must not include lower bound, since a calculated quantile might also be in the dataset
-        # so the value must get duplicated by 2 ranges
+        # so the value can generate duplicates
         bound = "'(]'"
         range_stmt = (
             f'case when {{}} is not null\n'
