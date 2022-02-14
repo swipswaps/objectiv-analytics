@@ -1,6 +1,6 @@
 import pytest
 
-from bach.describe import DescribeOperation, SupportedStats, _get_casted_filtering_dtypes
+from bach.describe import DescribeOperation
 from tests.unit.bach.util import get_fake_df
 
 
@@ -8,7 +8,7 @@ def test_process_params_percentile_error() -> None:
     with pytest.raises(ValueError, match=r'percentiles should'):
         DescribeOperation(
             obj=get_fake_df(['a'], ['b']),
-            include=(),
+            include=None,
             exclude=(),
             datetime_is_numeric=False,
             percentiles=[123],
@@ -26,18 +26,50 @@ def test_process_params_empty_df() -> None:
         )
 
 
-def test_get_series_per_type_unsupported_type() -> None:
-    with pytest.raises(ValueError, match=r'.* has no supported dtype to describe.'):
+def test_include_exclude() -> None:
+    df = get_fake_df(
+        index_names=[],
+        data_names=['a', 'b', 'c', 'd'],
+        dtype={'a': 'json', 'b': 'int64', 'c': 'float64', 'd': 'timestamp'}
+    )
+    obj = DescribeOperation(
+        obj=df,
+        include='all',
+        exclude=(),
+        datetime_is_numeric=False,
+        percentiles=None,
+    )
+    assert obj.series_to_describe == ['a', 'b', 'c', 'd']
+    obj = DescribeOperation(
+        obj=df,
+        include=None,
+        exclude=(),
+        datetime_is_numeric=False,
+        percentiles=None,
+    )
+    assert obj.series_to_describe == ['b', 'c']
+    obj = DescribeOperation(
+        obj=df,
+        include=['json', 'timestamp'],
+        exclude=(),
+        datetime_is_numeric=False,
+        percentiles=None,
+    )
+    assert obj.series_to_describe == ['a', 'd']
+    obj = DescribeOperation(
+        obj=df,
+        include=None,
+        exclude=['float64'],
+        datetime_is_numeric=False,
+        percentiles=None,
+    )
+    assert obj.series_to_describe == ['b']
+
+    with pytest.raises(ValueError, match='Include and exclude should not overlap'):
         DescribeOperation(
-            obj=get_fake_df([], ['a'], dtype='json'),
-            include=(),
-            exclude=(),
+            obj=df,
+            include='all',
+            exclude=['float64'],
             datetime_is_numeric=False,
             percentiles=None,
-        )._get_series_to_aggregate()
-
-
-def test_get_casted_filtering_dtypes() -> None:
-    with pytest.raises(ValueError, match=r'Unknown dtype: random'):
-        _get_casted_filtering_dtypes(filtering_dtypes='random')
-
+        )

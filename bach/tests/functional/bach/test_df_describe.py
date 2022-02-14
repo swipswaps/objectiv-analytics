@@ -199,7 +199,7 @@ def test_describe_json() -> None:
         data=[
             ['"a string"'],
             ['"other string"'],
-            ['{"key: "value", "another key": "value"}'],
+            ['{"key": "value", "another key": "value"}'],
             ['"a string"'],
         ],
         columns=['column'],

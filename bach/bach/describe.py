@@ -1,3 +1,4 @@
+from collections import abc
 from enum import Enum
 from typing import Optional, Union, Sequence, List, Set
 
@@ -85,7 +86,9 @@ class DescribeOperation:
                 include_dtypes = all_dtypes
         elif include == 'all':
             include_dtypes = all_dtypes
-        elif isinstance(include, list) and all(isinstance(item, str) for item in include):
+        elif isinstance(include, str):
+            raise ValueError(f'Only valid string value of include is "all", value: {include}')
+        elif isinstance(include, abc.Sequence) and all(isinstance(item, str) for item in include):
             include_dtypes = set(include)
         else:
             raise ValueError(f'Unexpected include value: {include}')
@@ -93,7 +96,9 @@ class DescribeOperation:
         # process exclude
         if exclude is None:
             exclude_dtypes = set()
-        elif isinstance(exclude, list) and all(isinstance(item, str) for item in exclude):
+        elif isinstance(exclude, str):
+            raise ValueError(f'exclude cannot be a string, value: {exclude}')
+        elif isinstance(exclude, abc.Sequence) and all(isinstance(item, str) for item in exclude):
             exclude_dtypes = set(exclude)
         else:
             raise ValueError(f'Unexpected exclude value: {exclude}')
