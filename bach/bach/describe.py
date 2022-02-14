@@ -1,3 +1,6 @@
+"""
+Copyright 2021-2022 Objectiv B.V.
+"""
 from collections import abc
 from enum import Enum
 from typing import Optional, Union, Sequence, List, Set

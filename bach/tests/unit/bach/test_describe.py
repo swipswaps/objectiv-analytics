@@ -1,3 +1,6 @@
+"""
+Copyright 2021-2022 Objectiv B.V.
+"""
 import pytest
 
 from bach.describe import DescribeOperation
