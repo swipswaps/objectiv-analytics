@@ -133,7 +133,7 @@ class SeriesAbstractNumeric(Series, ABC):
         In case multiple quantiles are calculated, the resultant series index will have all calculated
         quantiles as index values.
         """
-        from bach.quantiles import calculate_quantiles
+        from bach.quantile import calculate_quantiles
         result = calculate_quantiles(self, partition=partition, q=q)
         return cast('SeriesFloat64', result)
 

@@ -7,42 +7,17 @@ from typing import Union, cast, List
 
 import numpy
 
-from bach.series import Series, SeriesString, SeriesBoolean, SeriesAbstractNumeric, SeriesInt64
+from bach import DataFrame
+from bach.series import Series, SeriesString, SeriesBoolean, SeriesFloat64, SeriesInt64
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
+
+_SECONDS_IN_DAY = 24 * 60 * 60
 
 
 class DateTimeOperation:
     def __init__(self, series: 'SeriesAbstractDateTime'):
         self._series = series
-
-    @property
-    def days(self) -> SeriesAbstractNumeric:
-        expression = Expression.construct(
-            f'extract(day from {{}})', self._series,
-        )
-        days_series = self._series.copy_override(dtype='int64', expression=expression)
-        return cast(SeriesAbstractNumeric, days_series)
-
-    @property
-    def microseconds(self) -> SeriesAbstractNumeric:
-        expression = Expression.construct(
-            f'extract(microseconds from {{}})', self._series,
-        )
-        microseconds_series = self._series.copy_override(dtype='int64', expression=expression)
-        return cast(SeriesAbstractNumeric, microseconds_series)
-
-    @property
-    def nanoseconds(self) -> SeriesAbstractNumeric:
-        return cast(SeriesAbstractNumeric, self.microseconds * 10**6)
-
-    @property
-    def seconds(self) -> SeriesAbstractNumeric:
-        expression = Expression.construct(
-            f'extract(seconds from {{}})', self._series,
-        )
-        microseconds_series = self._series.copy_override(dtype='float64', expression=expression)
-        return cast(SeriesAbstractNumeric, microseconds_series)
 
     def sql_format(self, format_str: str) -> SeriesString:
         """
@@ -65,6 +40,53 @@ class DateTimeOperation:
         # mypy assumes `self._series.copy_override` returns a SeriesAbstractDateTime
         assert isinstance(str_series, SeriesString)
         return str_series
+
+
+class TimeDeltaOperation(DateTimeOperation):
+    @property
+    def components(self) -> DataFrame:
+        formats = {
+            'days': 'DD',
+            'hours': 'HH',
+            'minutes': 'MI',
+            'seconds': 'SS',
+            'milliseconds': 'MS',
+            'microseconds': 'US',
+        }
+        return self._series.to_frame().copy_override(
+            series={
+                date_part: self.sql_format(f).astype('int64').copy_override(name=date_part)
+                for date_part, f in formats.items()
+            }
+        )
+
+    @property
+    def days(self) -> SeriesInt64:
+        day_series = self._get_epoch() // _SECONDS_IN_DAY
+
+        day_series = day_series.astype('int64')
+        return cast(SeriesInt64, day_series.copy_override(name='days'))
+
+    @property
+    def seconds(self) -> SeriesInt64:
+        seconds_series = (self._get_epoch() % _SECONDS_IN_DAY) // 1
+
+        seconds_series = seconds_series.astype('int64')
+        return cast(SeriesInt64, seconds_series.copy_override(name='seconds'))
+
+    @property
+    def microseconds(self) -> SeriesInt64:
+        microseconds_series = (self._get_epoch() % 1) % 1 * 10**6
+        microseconds_series //= 1
+
+        microseconds_series = microseconds_series.astype('int64')
+        return cast(SeriesInt64, microseconds_series.copy_override(name='microseconds'))
+
+    def _get_epoch(self) -> SeriesFloat64:
+        expression = Expression.construct(f'extract(epoch from {{}})', self._series)
+        return cast(
+            SeriesFloat64, self._series.copy_override(name='epoch', expression=expression, dtype='float64'),
+        )
 
 
 class SeriesAbstractDateTime(Series, ABC):
@@ -303,6 +325,17 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     def __truediv__(self, other) -> 'Series':
         return self._arithmetic_operation(other, 'div', '({}) / ({})', other_dtypes=('int64', 'float64'))
 
+    @property
+    def dt(self) -> DateTimeOperation:
+        """
+        Get access to date operations.
+
+        .. autoclass:: bach.series.series_datetime.DateTimeOperation
+            :members:
+
+        """
+        return TimeDeltaOperation(self)
+
     def sum(self, partition: WrappedPartition = None,
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':
         """
@@ -335,6 +368,6 @@ class SeriesTimedelta(SeriesAbstractDateTime):
         In case multiple quantiles are calculated, the resultant series index will have all calculated
         quantiles as index values.
         """
-        from bach.quantiles import calculate_quantiles
+        from bach.quantile import calculate_quantiles
         result = calculate_quantiles(series=self.copy(), partition=partition, q=q)
         return cast('SeriesTimedelta', result)

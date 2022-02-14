@@ -95,9 +95,30 @@ def test_timedelta_operations():
     pdf = pd.DataFrame(
         data={
             'start_date': [
-                np.datetime64("2022-01-01"),
-                np.datetime64("2022-01-05"),
-                np.datetime64("2022-01-10"),
+                datetime.datetime(year=2022, month=1, day=d) for d in range(1, 17)
+            ],
+            'end_date': [
+                datetime.datetime(year=2022, month=m, day=d) for m in range(2, 4) for d in range(1, 9)
+            ]
+        }
+    )
+    df = get_from_df('test_datetime_df', pdf)
+
+    pdf['diff'] = pdf['end_date'] - pdf['start_date']
+    df['diff'] = df['end_date'] - df['start_date']
+
+    result = df['diff'].quantile(q=[0.25, 0.5, .75])
+    expected = pdf['diff'].quantile(q=[0.25, 0.5, .75])
+    np.testing.assert_equal(expected.to_numpy(), result.sort_index().to_numpy())
+
+
+def test_timedelta_dt_properties() -> None:
+    pdf = pd.DataFrame(
+        data={
+            'start_date': [
+                np.datetime64("2022-01-01 12:34:56.7800"),
+                np.datetime64("2022-01-05 01:23:45.6700"),
+                np.datetime64("2022-01-10 02:34:56.7800"),
             ],
             'end_date': [
                 np.datetime64("2022-01-03"),
@@ -110,6 +131,40 @@ def test_timedelta_operations():
 
     pdf['diff'] = pdf['end_date'] - pdf['start_date']
     df['diff'] = df['end_date'] - df['start_date']
-    df['diff'].dt.days
-    result = df.diff.quantile(q=[0.25, 0.5, .75])
-    print('hola')
+
+    dt_properties = ['days', 'seconds', 'microseconds']
+    properties_df = df.copy_override(
+        series={
+            p: getattr(df['diff'].dt, p)
+            for p in dt_properties
+        }
+    )
+    properties_pdf = pd.DataFrame(data={p: getattr(pdf['diff'].dt, p) for p in dt_properties})
+
+    pd.testing.assert_frame_equal(
+        properties_pdf,
+        properties_df.sort_index().to_pandas(),
+        check_dtype=False,
+        check_names=False,
+    )
+
+
+def test_timedelta_dt_components() -> None:
+    pdf = pd.DataFrame(
+        data={
+            'timedelta': [
+                datetime.timedelta(days=2, hours=3, minutes=5, milliseconds=2, microseconds=4),
+                datetime.timedelta(days=3, hours=4, minutes=6, milliseconds=3, microseconds=5),
+                datetime.timedelta(days=4, hours=5, minutes=7, milliseconds=4, microseconds=5),
+            ],
+        },
+    )
+    df = get_from_df('test_datetime_df', pdf)
+
+    components = ['days', 'hours', 'minutes', 'milliseconds', 'microseconds']
+    result = df['diff'].dt.components.sort_index().to_pandas()
+    expected = pdf['diff'].dt.components[components]
+
+    pd.testing.assert_frame_equal(expected, result)
+
+
