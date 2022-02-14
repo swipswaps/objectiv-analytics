@@ -65,7 +65,7 @@ def from_pandas_store_table(engine: Engine,
 
     # Todo, this should use from_table from here on.
     model_builder = BachSqlModel(sql='select * from {table_name}', name=table_name)
-    model = model_builder(table_name=quote_identifier(table_name))
+    model = model_builder(table_name=quote_identifier(engine, table_name))
 
     # Should this also use _df_or_series?
     return DataFrame.get_instance(
@@ -126,7 +126,7 @@ def from_pandas_ephemeral(
 
     column_names = list(index_dtypes.keys()) + list(dtypes.keys())
     column_names_expr = _combine_expression(
-        [Expression.raw(quote_identifier(column_name)) for column_name in column_names]
+        [Expression.raw(quote_identifier(engine, column_name)) for column_name in column_names]
     )
 
     sql = 'select * from (values \n{all_values_expr}\n) as t({column_names_expr})\n'

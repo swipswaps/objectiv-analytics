@@ -3,19 +3,21 @@ Copyright 2021 Objectiv B.V.
 """
 from typing import List, NamedTuple, Dict
 
+from sqlalchemy.engine import Engine
+
 from sql_models.model import SqlModel, REFERENCE_UNIQUE_FIELD
 from sql_models.sql_query_parser import raw_sql_to_selects
 from sql_models.util import quote_identifier
 
 
-def to_sql(model: SqlModel) -> str:
+def to_sql(engine: Engine, model: SqlModel) -> str:
     """
     Give the sql to query the given model
     :param model: model to convert to sql
     :return: executable select query
     """
     compiler_cache: Dict[str, List[SemiCompiledTuple]] = {}
-    queries = _to_cte_sql(compiler_cache=compiler_cache, model=model)
+    queries = _to_cte_sql(engine=engine, compiler_cache=compiler_cache, model=model)
     queries = _filter_duplicate_ctes(queries)
     if len(queries) == 0:
         # _to_cte_sql should never return an empty list, but this make it clear we have a len > 0 below.
@@ -65,7 +67,7 @@ def _filter_duplicate_ctes(queries: List[SemiCompiledTuple]) -> List[SemiCompile
     return result
 
 
-def _to_cte_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
+def _to_cte_sql(engine: Engine, compiler_cache: Dict[str, List[SemiCompiledTuple]],
                 model: SqlModel) -> List[SemiCompiledTuple]:
     """
     Recursively build the list of all common table expressions that are needed to generate the sql for
@@ -78,21 +80,21 @@ def _to_cte_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
         return compiler_cache[model.hash]
 
     if not model.references:
-        return _single_model_to_sql(compiler_cache=compiler_cache, model=model, reference_names={})
+        return _single_model_to_sql(engine=engine, compiler_cache=compiler_cache, model=model, reference_names={})
     result = []
     reference_names = {
-        name: model_to_quoted_cte_name(reference) for name, reference in model.references.items()
+        name: model_to_quoted_cte_name(engine, reference) for name, reference in model.references.items()
     }
     for ref_name, reference in model.references.items():
-        result.extend(_to_cte_sql(compiler_cache=compiler_cache, model=reference))
+        result.extend(_to_cte_sql(engine=engine, compiler_cache=compiler_cache, model=reference))
     result.extend(
-        _single_model_to_sql(compiler_cache=compiler_cache, model=model, reference_names=reference_names))
+        _single_model_to_sql(engine=engine, compiler_cache=compiler_cache, model=model, reference_names=reference_names))
 
     compiler_cache[model.hash] = result
     return result
 
 
-def model_to_quoted_cte_name(model):
+def model_to_quoted_cte_name(engine: Engine, model: SqlModel):
     """ Get the name for the cte that will be generated from this model, quoted and escaped. """
     # max length of an identifier name in Postgres is normally 63 characters. We'll use that as a cutoff
     # here.
@@ -100,10 +102,11 @@ def model_to_quoted_cte_name(model):
     #  1) get all cte names
     #  2) generate actual sql. Only for CTEs with conflicting names add the hash
     name = f'{model.generic_name[0:28]}___{model.hash}'
-    return quote_identifier(name)
+    return quote_identifier(engine, name)
 
 
-def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
+def _single_model_to_sql(engine: Engine,
+                         compiler_cache: Dict[str, List[SemiCompiledTuple]],
                          model: SqlModel,
                          reference_names: Dict[str, str]) -> List[SemiCompiledTuple]:
     """
@@ -118,7 +121,7 @@ def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     sql = model.sql
     # If there are any format strings in the properties that need escaping, they should have been by now.
     # Otherwise this would cause trouble the next time we call format() below for the references
-    sql = _format_sql(sql=sql, values=model.properties_formatted, model=model)
+    sql = _format_sql(sql=sql, values=model.properties_formatted(engine), model=model)
     # {{id}} (==REFERENCE_UNIQUE_FIELD) is a special placeholder that gets the unique model identifier,
     # which can be used in templates to make sure that if a model gets used multiple times,
     # the cte-names are still unique.
@@ -130,9 +133,9 @@ def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     for cte in ctes[:-1]:
         # For all CTEs the name should be set. Only for the final select (== cte[-1]) it will be None.
         assert cte.name is not None
-        result.append(SemiCompiledTuple(quoted_cte_name=quote_identifier(cte.name), sql=cte.select_sql))
+        result.append(SemiCompiledTuple(quoted_cte_name=quote_identifier(engine, cte.name), sql=cte.select_sql))
     result.append(
-        SemiCompiledTuple(quoted_cte_name=model_to_quoted_cte_name(model), sql=ctes[-1].select_sql)
+        SemiCompiledTuple(quoted_cte_name=model_to_quoted_cte_name(engine, model), sql=ctes[-1].select_sql)
     )
 
     compiler_cache[model.hash] = result

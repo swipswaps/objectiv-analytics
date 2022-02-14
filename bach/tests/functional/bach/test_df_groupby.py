@@ -365,7 +365,7 @@ def test_cube_basics():
     btc = bt.cube(['municipality','city'])
 
     assert(isinstance(btc.group_by, Cube))
-    assert(btc.group_by.get_group_by_column_expression().to_sql()
+    assert(btc.group_by.get_group_by_column_expression().to_sql(btc.engine)
            == 'cube ("municipality", "city")')
 
     result_bt = btc[['inhabitants']].sum()
@@ -395,7 +395,7 @@ def test_rollup_basics():
 
     btr = bt.rollup(['municipality','city'])
     assert(isinstance(btr.group_by, Rollup))
-    assert(btr.group_by.get_group_by_column_expression().to_sql()
+    assert(btr.group_by.get_group_by_column_expression().to_sql(btr.engine)
            == 'rollup ("municipality", "city")')
 
     result_bt = btr[['inhabitants']].sum()
@@ -429,7 +429,7 @@ def test_grouping_list_basics():
 
     # This is not the greatest test, but at least it tests the interface.
     assert(isinstance(btl1.group_by, GroupingList))
-    assert(btl1.group_by.get_group_by_column_expression().to_sql()
+    assert(btl1.group_by.get_group_by_column_expression().to_sql(btl1.engine)
            == '("municipality"), ("city")')
 
     result_bt = btl1[['inhabitants']].sum()
@@ -459,7 +459,7 @@ def test_grouping_set_basics():
     assert(bts1 == bts3)
 
     assert(isinstance(bts1.group_by, GroupingSet))
-    assert(bts1.group_by.get_group_by_column_expression().to_sql()
+    assert(bts1.group_by.get_group_by_column_expression().to_sql(bts1.engine)
            == 'grouping sets (("municipality"), ("city"))')
 
     result_bt = bts1[['inhabitants']].sum()
@@ -486,7 +486,7 @@ def test_grouping_set_basics():
     assert(bts1 == bts3)
 
     assert(isinstance(bts1.group_by, GroupingSet))
-    assert(bts1.group_by.get_group_by_column_expression().to_sql()
+    assert(bts1.group_by.get_group_by_column_expression().to_sql(bts1.engine)
            == 'grouping sets (("municipality"), ())')
 
 

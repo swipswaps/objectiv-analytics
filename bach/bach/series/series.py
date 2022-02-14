@@ -7,6 +7,7 @@ from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHE
 from uuid import UUID
 
 import pandas
+from sqlalchemy.engine import Engine
 
 from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_dtype
 
@@ -54,7 +55,7 @@ class Series(ABC):
     # to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
     # and is shared with other Series and DataFrames that can change it's state.
     def __init__(self,
-                 engine,
+                 engine: Engine,
                  base_node: SqlModel,
                  index: Dict[str, 'Series'],
                  name: str,
@@ -139,18 +140,40 @@ class Series(ABC):
         """
         return None
 
-    @property
     @classmethod
-    def supported_db_dtype(cls) -> Optional[str]:
+    def db_engine_dtype_supported(cls, engine: Engine, db_dtype: str) -> bool:
         """
-        INTERNAL: Database level data type, that can be expressed using this Series type.
-        Example: 'double precision' for a float in Postgres
+        INTERNAL: Check whether this Series type supports the given Database level data type
+        Example: 'double precision' for a float in Postgres, or 'RECORD <field FLOAT, other INT64>' in BQ
 
-        Subclasses should override this value if they intend to be the default class to handle such types.
+        Subclasses should override this method if more advanced type matching should be implemented.
         When creating a DataFrame from existing data in a database, this field will be used to
-        determine what Series to instantiate for a column.
         """
-        return None
+        if engine.name in cls.db_engine_dtypes:
+            db_dtypes = cls.db_engine_dtypes[engine.name]
+            if isinstance(db_dtypes, tuple):
+                return db_dtype in db_dtypes
+            else:
+                return db_dtype == db_dtypes
+        return False
+
+    @classmethod
+    @property
+    def db_engine_dtypes(cls) -> Dict[str, str]:
+        """
+        INTERNAL: Return the Engine.name type -> database dtypes mapping
+        For simple dtype supporting classes, this is the only db_dtype family method to implement
+        """
+        return {}
+
+    @classmethod
+    @property
+    def db_dtype(cls, engine: Engine) -> str:
+        """
+        INTERNAL: Return the complete db_dtype, nested if this Series supports that
+        The default implementation returns just the db_dtype as defined in the db_engine_dtypes dict.
+        """
+        return cls.db_engine_dtypes[engine.name]
 
     @property
     @classmethod
@@ -186,7 +209,7 @@ class Series(ABC):
 
     @classmethod
     @abstractmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, engine: Engine, source_dtype: str, expression: Expression) -> Expression:
         """
         INTERNAL: Give the sql expression to convert the given expression, of the given source dtype to the
         dtype of this Series.
@@ -262,7 +285,7 @@ class Series(ABC):
         )
 
     @classmethod
-    def value_to_expression(cls, value: Optional[Any]) -> Expression:
+    def value_to_expression(cls, engine: Engine, value: Optional[Any]) -> Expression:
         """
         INTERNAL: Give the expression for the given value.
 
@@ -278,7 +301,7 @@ class Series(ABC):
         if not isinstance(value, supported_types):
             raise TypeError(f'value should be one of {supported_types}'
                             f', actual type: {type(value)}')
-        return cls.supported_value_to_expression(value)
+        return cls.supported_value_to_expression(engine, value)
 
     @classmethod
     def from_const(cls,
@@ -296,7 +319,7 @@ class Series(ABC):
         result = cls.get_class_instance(
             base=base,
             name=name,
-            expression=ConstValueExpression(cls.value_to_expression(value)),
+            expression=ConstValueExpression(cls.value_to_expression(base.engine, value)),
             group_by=None,
         )
         return result
@@ -344,9 +367,9 @@ class Series(ABC):
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
-        expression = self.expression.resolve_column_references(table_alias)
-        quoted_column_name = quote_identifier(self.name)
-        if expression.to_sql() == quoted_column_name:
+        expression = self.expression.resolve_column_references(self._engine, table_alias)
+        quoted_column_name = quote_identifier(self._engine, self.name)
+        if expression.to_sql(self._engine) == quoted_column_name:
             return expression
 
         return Expression.construct('{} as {}', expression, Expression.raw(quoted_column_name))

@@ -15,6 +15,8 @@ from copy import deepcopy
 from enum import Enum
 from typing import TypeVar, Generic, Dict, Any, Set, Tuple, Type, Union
 
+from sqlalchemy.engine import Engine
+
 from sql_models.util import extract_format_fields
 
 
@@ -84,7 +86,7 @@ class SqlModelSpec:
         return value.replace('{', '{{').replace('}', '}}')
 
     @staticmethod
-    def properties_to_sql(properties: Dict[str, Any]) -> Dict[str, str]:
+    def properties_to_sql(engine: Engine, properties: Dict[str, Any]) -> Dict[str, str]:
         """
         Child classes can override this function if some of the properties require conversion before being
         used in format(). Should be a constant, pure, and immutable function.
@@ -380,9 +382,8 @@ class SqlModel(Generic[T]):
         """
         return self._hash
 
-    @property
-    def properties_formatted(self) -> Dict[str, str]:
-        return self._property_formatter(self._properties)
+    def properties_formatted(self, engine: Engine) -> Dict[str, str]:
+        return self._property_formatter(engine, self._properties)
 
     def copy_set(self, new_properties: Dict[str, Any]) -> 'SqlModel[T]':
         """

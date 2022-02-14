@@ -14,7 +14,7 @@ import sqlalchemy
 from sqlalchemy.engine import ResultProxy
 
 from bach import DataFrame, Series
-from bach.types import get_series_type_from_db_dtype
+from bach.types import get_series_type_from_db_engine_dtype
 
 DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
 
@@ -286,10 +286,11 @@ def assert_db_type(
     """
     sql = series.to_frame().view_sql()
     sql = f'with check_type as ({sql}) select pg_typeof("{series.name}") from check_type limit 1'
-    db_rows = run_query(sqlalchemy.create_engine(DB_TEST_URL), sql)
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    db_rows = run_query(engine, sql)
     db_values = [list(row) for row in db_rows]
     db_type = db_values[0][0]
     if expected_db_type:
         assert db_type == expected_db_type
-    series_type = get_series_type_from_db_dtype(db_type)
+    series_type = get_series_type_from_db_engine_dtype(engine, db_type)
     assert series_type == expected_series_type

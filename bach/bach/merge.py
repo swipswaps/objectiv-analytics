@@ -201,7 +201,7 @@ def _get_column_name_expr_dtype(
         new_index_list.append(
                 ResultColumn(
                     name=new_name,
-                    expression=series.expression.resolve_column_references(table_alias),
+                    expression=series.expression.resolve_column_references(series.engine, table_alias),
                     dtype=series.dtype
                 )
         )
@@ -302,8 +302,8 @@ def _get_merge_sql_model(
     for l_label, r_label in zip(real_left_on, real_right_on):
         l_expr = _get_expression(df_series=left, label=l_label)
         r_expr = _get_expression(df_series=right, label=r_label)
-        merge_conditions.append(l_expr.resolve_column_references("l"))
-        merge_conditions.append(r_expr.resolve_column_references("r"))
+        merge_conditions.append(l_expr.resolve_column_references(left.engine, "l"))
+        merge_conditions.append(r_expr.resolve_column_references(right.engine, "r"))
 
     if merge_conditions:
         fmt_str = 'on ' + 'and '.join(['({} = {})'] * (len(merge_conditions)//2))
@@ -311,7 +311,7 @@ def _get_merge_sql_model(
     else:
         on_clause = Expression.construct('')
 
-    columns_fmt_str = ", ".join(f'{{}} as {quote_identifier(rc.name)}' for rc in new_column_list)
+    columns_fmt_str = ", ".join(f'{{}} as {quote_identifier(left.engine, rc.name)}' for rc in new_column_list)
     columns_expr = Expression.construct(columns_fmt_str, *[rc.expression for rc in new_column_list])
     join_type_expr = Expression.construct('full outer' if how == How.outer else how.value)
 

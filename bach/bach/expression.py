@@ -1,9 +1,10 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple
+from sqlalchemy.engine import Engine
+
 from sql_models.model import SqlModel, SqlModelSpec
 from sql_models.util import quote_string, quote_identifier
 
@@ -21,7 +22,7 @@ class ExpressionToken:
         if self.__class__ == ExpressionToken:
             raise TypeError("Cannot instantiate ExpressionToken directly. Instantiate a subclass.")
 
-    def to_sql(self):
+    def to_sql(self, engine: Engine):
         # Not abstract so we can stay a dataclass.
         raise NotImplementedError()
 
@@ -30,7 +31,7 @@ class ExpressionToken:
 class RawToken(ExpressionToken):
     raw: str
 
-    def to_sql(self) -> str:
+    def to_sql(self, engine: Engine) -> str:
         return SqlModelSpec.escape_format_string(self.raw)
 
 
@@ -38,13 +39,13 @@ class RawToken(ExpressionToken):
 class ColumnReferenceToken(ExpressionToken):
     column_name: str
 
-    def to_sql(self):
+    def to_sql(self, engine: Engine):
         raise ValueError('ColumnReferenceTokens should be resolved first using '
                          'Expression.resolve_column_references')
 
-    def resolve(self, table_name: Optional[str]) -> RawToken:
-        t = f'{quote_identifier(table_name)}.' if table_name else ''
-        return RawToken(f'{t}{quote_identifier(self.column_name)}')
+    def resolve(self, engine: Engine, table_name: Optional[str]) -> RawToken:
+        t = f'{quote_identifier(engine, table_name)}.' if table_name else ''
+        return RawToken(f'{t}{quote_identifier(engine, self.column_name)}')
 
 
 @dataclass(frozen=True)
@@ -54,7 +55,7 @@ class ModelReferenceToken(ExpressionToken):
     def refname(self) -> str:
         return f'reference{self.model.hash}'
 
-    def to_sql(self) -> str:
+    def to_sql(self, engine: Engine) -> str:
         return f'{{{self.refname()}}}'
 
 
@@ -63,8 +64,8 @@ class StringValueToken(ExpressionToken):
     """ Wraps a string value. The value in this object is unescaped and unquoted. """
     value: str
 
-    def to_sql(self) -> str:
-        return SqlModelSpec.escape_format_string(quote_string(self.value))
+    def to_sql(self, engine: Engine) -> str:
+        return SqlModelSpec.escape_format_string(quote_string(engine, self.value))
 
 
 class Expression:
@@ -215,14 +216,14 @@ class Expression:
             d.has_windowed_aggregate_function for d in self.data if isinstance(d, Expression)
         )
 
-    def resolve_column_references(self, table_name: str = None) -> 'Expression':
+    def resolve_column_references(self, engine: Engine, table_name: str = None) -> 'Expression':
         """ resolve the table name aliases for all columns in this expression """
         result: List[Union[ExpressionToken, Expression]] = []
         for data_item in self.data:
             if isinstance(data_item, Expression):
-                result.append(data_item.resolve_column_references(table_name))
+                result.append(data_item.resolve_column_references(engine, table_name))
             elif isinstance(data_item, ColumnReferenceToken):
-                result.append(data_item.resolve(table_name))
+                result.append(data_item.resolve(engine, table_name))
             else:
                 result.append(data_item)
         return self.__class__(result)
@@ -236,14 +237,15 @@ class Expression:
                 rv[data_item.refname()] = data_item.model
         return rv
 
-    def to_sql(self, table_name: Optional[str] = None) -> str:
+    def to_sql(self, engine: Engine, table_name: Optional[str] = None) -> str:
         """
         Compile the expression to a SQL fragment by calling to_sql() on every token or expression in data
+        :param engine: The sql engine on which to target any escaping of values
         :param table_name: Optional table name, if set all column-references will be compiled as
             '"{table_name}"."{column_name}"' instead of just '"{column_name}"'.
         :return SQL representation of the expression.
         """
-        return ''.join([d.to_sql() for d in self.resolve_column_references(table_name).data])
+        return ''.join([d.to_sql(engine) for d in self.resolve_column_references(engine, table_name).data])
 
 
 class NonAtomicExpression(Expression):

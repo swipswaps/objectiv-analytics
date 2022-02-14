@@ -3,6 +3,8 @@ Copyright 2021 Objectiv B.V.
 """
 from typing import Dict, Any, Union, Sequence, TypeVar
 
+from sqlalchemy.engine import Engine
+
 from bach.expression import Expression
 from sql_models.util import quote_identifier
 from sql_models.model import CustomSqlModel, SqlModel, SqlModelBuilder, SqlModelSpec, Materialization
@@ -36,7 +38,7 @@ class BachSqlModel(CustomSqlModel):
         return super().set_values(**values)
 
     @staticmethod
-    def properties_to_sql(properties: Dict[str, Any]) -> Dict[str, str]:
+    def properties_to_sql(engine: Engine, properties: Dict[str, Any]) -> Dict[str, str]:
         """
         We accept Expressions and lists of expressions as properties too, and they need to escape
         themselves if they want to. This allows them to carry references that will be completed
@@ -45,9 +47,9 @@ class BachSqlModel(CustomSqlModel):
         rv = {}
         for k, v in properties.items():
             if isinstance(v, list) and all(isinstance(li, Expression) for li in v):
-                rv[k] = ", ".join([value.to_sql() for value in v])
+                rv[k] = ", ".join([value.to_sql(engine) for value in v])
             elif isinstance(v, Expression):
-                rv[k] = v.to_sql()
+                rv[k] = v.to_sql(engine)
             else:
                 rv[k] = SqlModelSpec.escape_format_string(str(v))
         return rv
@@ -65,12 +67,12 @@ class SampleSqlModel(SqlModel):
 
     See the DataFrame.sample() implementation for more information
     """
-    def __init__(self, table_name: str, previous: SqlModel):
+    def __init__(self, engine: Engine, table_name: str, previous: SqlModel):
         self.previous = previous
         sql = 'SELECT * FROM {table_name}'
         super().__init__(
             model_spec=CustomSqlModel(sql=sql, name='sample_node'),
-            properties={'table_name': quote_identifier(table_name)},
+            properties={'table_name': quote_identifier(engine, table_name)},
             references={},
             materialization=Materialization.CTE
         )

@@ -1,8 +1,14 @@
-# bach:
-psycopg2-binary
+# bach
 sqlalchemy
+sqlalchemy-bigquery
+psycopg2-binary
+
+google-cloud-bigquery-storage
+pyarrow
+
+# compatibility
 pandas
 numpy
 
-# sql_models:
+# sql_models
 sqlparse

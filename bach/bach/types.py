@@ -12,6 +12,7 @@ import datetime
 from uuid import UUID
 
 import numpy
+from sqlalchemy.engine import Engine
 
 if TYPE_CHECKING:
     from bach.series import Series
@@ -22,14 +23,14 @@ def get_series_type_from_dtype(dtype: Union[Type, str]) -> Type['Series']:
     return _registry.get_series_type_from_dtype(dtype)
 
 
-def get_series_type_from_db_dtype(db_dtype: str) -> Type['Series']:
+def get_series_type_from_db_engine_dtype(engine: Engine, db_dtype: str) -> Type['Series']:
     """ Given a database datatype, return the correct Series subclass. """
-    return _registry.get_series_type_from_db_dtype(db_dtype)
+    return _registry.get_series_type_from_db_engine_dtype(engine, db_dtype)
 
 
-def get_dtype_from_db_dtype(db_dtype: str) -> str:
+def get_dtype_from_db_engine_dtype(engine: Engine, db_dtype: str) -> str:
     """ Given a database datatype, return the dtype of the Series subclass for that datatype. """
-    return get_series_type_from_db_dtype(db_dtype).dtype  # type: ignore
+    return get_series_type_from_db_dtype(engine, db_dtype).dtype  # type: ignore
 
 
 def value_to_dtype(value: Any) -> str:
@@ -69,8 +70,8 @@ class TypeRegistry:
         # dtype_series: Mapping of dtype to a subclass of Series
         self.dtype_to_series: Dict[Union[Type, str], Type['Series']] = {}
 
-        # db_type_to_dtype: Mapping of Postgres types to a subclass of Series
-        self.db_dtype_to_series: Dict[str, Type['Series']] = {}
+        # db_type_to_dtype:List of Series subclasses implementing db dtypes
+        self.db_dtype_to_series: List[Type['Series']] = []
 
         # value_type_to_series: Mapping of python types to matching Series types
         # note that some types could be in this dictionary multiple times. For a subtype its super types
@@ -139,14 +140,8 @@ class TypeRegistry:
                                 f'already assigned to {self.dtype_to_series[dtype_alias]}')
             self.dtype_to_series[dtype_alias] = klass
 
-    def _register_db_dtype_klass(self, klass: Type['Series'], override=False):
-        if klass.supported_db_dtype is None:
-            return
-        db_dtype = cast(str, klass.supported_db_dtype)
-        if db_dtype in self.db_dtype_to_series and not override:
-            raise Exception(f'Type {klass} claims db_dtype {db_dtype}, which is '
-                            f'already assigned to dtype {self.db_dtype_to_series[db_dtype]}')
-        self.db_dtype_to_series[db_dtype] = klass
+    def _register_db_dtype_klass(self, klass: Type['Series']):
+        self.db_dtype_to_series.append(klass)
 
     def _register_value_klass(self, value_type: Type, klass: Type['Series'], override=False):
         for vt, kt in self.value_type_to_series:
@@ -167,7 +162,7 @@ class TypeRegistry:
         """
         self._real_init()
         self._register_dtype_klass(series_type, override_registered_types)
-        self._register_db_dtype_klass(series_type, override_registered_types)
+        self._register_db_dtype_klass(series_type)
         for value_type in value_types:
             self._register_value_klass(value_type, series_type, override_registered_types)
 
@@ -180,15 +175,16 @@ class TypeRegistry:
             raise ValueError(f'Unknown dtype: {dtype}')
         return self.dtype_to_series[dtype]
 
-    def get_series_type_from_db_dtype(self, db_dtype: str) -> Type['Series']:
+    def get_series_type_from_db_engine_dtype(self, engine: Engine, db_dtype: str) -> Type['Series']:
         """
         Given a db_dtype string, will return the correct Series object to represent such data from the
-        database..
+        database.
         """
         self._real_init()
-        if db_dtype not in self.db_dtype_to_series:
-            raise ValueError(f'Unknown db_dtype: {db_dtype}')
-        return self.db_dtype_to_series[db_dtype]
+        for s in self.db_dtype_to_series:
+            if s.db_engine_dtype_supported(engine, db_dtype):
+                return s
+        raise ValueError(f'Unsupported db_dtype: {db_dtype}')
 
     def value_to_dtype(self, value: Any) -> str:
         """
@@ -205,7 +201,7 @@ class TypeRegistry:
         for type_object, series_type in self.value_type_to_series[::-1]:
             if isinstance(value, type_object):
                 return series_type.dtype  # type: ignore
-        raise ValueError(f'No dtype know for {type(value)}')
+        raise ValueError(f'No dtype known for {type(value)}')
 
 
 _registry = TypeRegistry()

@@ -15,7 +15,8 @@ class SeriesUuid(Series):
     """
     dtype = 'uuid'
     dtype_aliases = ()
-    supported_db_dtype = 'uuid'
+    db_engine_dtypes = {'postgresql': 'uuid',
+                        'bigquery': 'UUID'}
     supported_value_types = (UUID, str)
 
     @classmethod

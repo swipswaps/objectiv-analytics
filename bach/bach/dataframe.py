@@ -9,7 +9,7 @@ from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression
 from bach.sql_model import BachSqlModel, SampleSqlModel
-from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
+from bach.types import get_series_type_from_dtype, get_dtype_from_db_engine_dtype
 from sql_models.graph_operations import replace_node_in_graph, find_node
 from sql_models.model import SqlModel
 from sql_models.sql_generator import to_sql
@@ -353,7 +353,7 @@ class DataFrame:
     @classmethod
     def _get_dtypes(cls, engine: Engine, node: SqlModel[BachSqlModel]) -> Dict[str, str]:
         new_node = BachSqlModel(sql='select * from {{previous}} limit 0')(previous=node)
-        select_statement = to_sql(new_node)
+        select_statement = to_sql(engine, new_node)
         sql = f"""
             create temporary table tmp_table_name on commit drop as
             ({select_statement});
@@ -365,7 +365,7 @@ class DataFrame:
         with engine.connect() as conn:
             sql = _escape_parameter_characters(conn, sql)
             res = conn.execute(sql)
-        return {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
+        return {x[0]: get_dtype_from_db_engine_dtype(engine, x[1]) for x in res.fetchall()}
 
     @classmethod
     def from_table(cls, engine: Engine, table_name: str, index: List[str]) -> 'DataFrame':
@@ -384,9 +384,30 @@ class DataFrame:
             In order to create this temporary table the source data is queried.
         """
         # todo: why is an index mandatory if you can reset it later?
-        # todo: don't create a temporary table, the real table (and its meta data) already exists
-        model = BachSqlModel(sql=f'SELECT * FROM {table_name}').instantiate()
-        return cls._from_node(engine, model, index)
+        from bach.dialect_bq import dtype_structure
+        sql = f"""
+            select column_name, data_type
+            from INFORMATION_SCHEMA.COLUMNS
+            where table_name = '{table_name}'
+            order by ordinal_position;
+        """
+
+        with engine.connect() as conn:
+            sql = _escape_parameter_characters(conn, sql)
+            res = conn.execute(sql)
+            dtypes = {x[0]: get_dtype_from_db_engine_dtype(engine, dtype_structure(x[1].lower())) for x in res.fetchall()}
+
+        index_dtypes = {k: dtypes[k] for k in index}
+        series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
+
+        return cls.get_instance(
+            engine=engine,
+            base_node=BachSqlModel(sql=f'SELECT * FROM {table_name}').instantiate(),
+            index_dtypes=index_dtypes,
+            dtypes=series_dtypes,
+            group_by=None,
+            order_by=[]
+        )
 
     @classmethod
     def from_model(cls, engine: Engine, model: SqlModel, index: List[str]) -> 'DataFrame':
@@ -632,7 +653,7 @@ class DataFrame:
 
         with df.engine.connect() as conn:
             if overwrite:
-                sql = f'DROP TABLE IF EXISTS {quote_identifier(table_name)}'
+                sql = f'DROP TABLE IF EXISTS {quote_identifier(df.engine, table_name)}'
                 sql = _escape_parameter_characters(conn, sql)
                 conn.execute(sql)
 
@@ -642,18 +663,18 @@ class DataFrame:
                 sql = f'''
                     create temporary table tmp_table_name on commit drop as
                     ({df.view_sql()});
-                    create temporary table {quote_identifier(table_name)} as
+                    create temporary table {quote_identifier(df.engine, table_name)} as
                     (select * from tmp_table_name
                     tablesample bernoulli({sample_percentage}) {repeatable})
                 '''
             else:
-                sql = f'create temporary table {quote_identifier(table_name)} as ({df.view_sql()})'
-            sql = _escape_parameter_characters(conn, sql)
+                sql = f'create temporary table {quote_identifier(df.engine, table_name)} as ({df.view_sql()})'
+            sql = _escape_parameter_characters(df.engine, sql)
             conn.execute(sql)
 
         # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
         # in get_unsampled() by switching this new node for the old node again.
-        new_base_node = SampleSqlModel(table_name=table_name, previous=original_node)
+        new_base_node = SampleSqlModel(engine=df.engine, table_name=table_name, previous=original_node)
 
         return DataFrame.get_instance(
             engine=df.engine,
@@ -1420,7 +1441,7 @@ class DataFrame:
         if isinstance(limit, int):
             limit = slice(0, limit)
 
-        limit_str = 'limit all'
+        limit_str = None
         if limit is not None:
             if limit.step is not None:
                 raise NotImplementedError("Step size not supported in slice")
@@ -1503,7 +1524,7 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        return to_sql(model)
+        return to_sql(self.engine, model)
 
     def _get_all_column_expressions(self) -> List[Expression]:
         """ Get a list of Expression for every column including indices in this df """
@@ -1878,7 +1899,7 @@ def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     )
 
 
-def _escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
+def _escape_parameter_characters(engine: Engine, raw_sql: str) -> str:
     """
     Return a modified copy of the given sql with the query-parameter special characters escaped.
     e.g. if the connection uses '%' to mark a parameter, then all occurrences of '%' will be replaced by '%%'

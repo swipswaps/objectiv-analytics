@@ -29,7 +29,8 @@ class SeriesBoolean(Series, ABC):
     """
     dtype = 'bool'
     dtype_aliases = ('boolean', '?', bool)
-    supported_db_dtype = 'boolean'
+    db_engine_dtypes = {'postgresql': 'boolean',
+                        'bigquery': 'BOOL'}
     supported_value_types = (bool, )
 
     @classmethod

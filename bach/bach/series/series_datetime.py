@@ -6,6 +6,7 @@ from abc import ABC
 from typing import Union, cast
 
 import numpy
+from sqlalchemy.engine import Engine
 
 from bach.series import Series, SeriesString, SeriesBoolean
 from bach.expression import Expression
@@ -82,11 +83,11 @@ class SeriesTimestamp(SeriesAbstractDateTime):
     """
     dtype = 'timestamp'
     dtype_aliases = ('datetime64', 'datetime64[ns]', numpy.datetime64)
-    supported_db_dtype = 'timestamp without time zone'
+    db_engine_dtypes = {'postgresql': 'timestamp without time zone'}
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
-    def supported_value_to_expression(cls, value: Union[str, datetime.datetime]) -> Expression:
+    def supported_value_to_expression(cls, engine: Engine, value: Union[str, datetime.datetime]) -> Expression:
         value = str(value)
         # TODO: check here already that the string has the correct format
         return Expression.construct(
@@ -94,13 +95,13 @@ class SeriesTimestamp(SeriesAbstractDateTime):
         )
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, engine: Engine, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'timestamp':
             return expression
         else:
             if source_dtype not in ['string', 'date']:
                 raise ValueError(f'cannot convert {source_dtype} to timestamp')
-            return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.db_dtype})', expression)
 
     def __add__(self, other) -> 'Series':
         return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))
@@ -124,7 +125,7 @@ class SeriesDate(SeriesAbstractDateTime):
     """
     dtype = 'date'
     dtype_aliases = tuple()  # type: ignore
-    supported_db_dtype = 'date'
+    db_engine_dtypes = {'postgresql': 'date'}
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
@@ -141,7 +142,7 @@ class SeriesDate(SeriesAbstractDateTime):
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to date')
-            return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.db_dtype})', expression)
 
     def __add__(self, other) -> 'Series':
         type_mapping = {
@@ -180,7 +181,7 @@ class SeriesTime(SeriesAbstractDateTime):
     """
     dtype = 'time'
     dtype_aliases = tuple()  # type: ignore
-    supported_db_dtype = 'time without time zone'
+    db_engine_dtypes = {'postgresql': 'time without time zone'}
     supported_value_types = (datetime.time, str)
 
     @classmethod
@@ -196,7 +197,7 @@ class SeriesTime(SeriesAbstractDateTime):
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to time')
-            return Expression.construct(f'cast ({{}} as {cls.supported_db_dtype})', expression)
+            return Expression.construct(f'cast ({{}} as {cls.db_dtype})', expression)
 
     # python supports no arithmetic on Time
 
@@ -208,7 +209,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
 
     dtype = 'timedelta'
     dtype_aliases = ('interval',)
-    supported_db_dtype = 'interval'
+    db_engine_dtypes = {'postgresql': 'interval'}
     supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
 
     @classmethod

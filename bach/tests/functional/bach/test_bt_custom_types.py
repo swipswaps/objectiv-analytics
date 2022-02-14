@@ -17,12 +17,11 @@ def test_custom_type_register(monkeypatch):
         """ Test class for custom types. """
         dtype = 'test_type'
         dtype_aliases = ('test_type_1337', )
-        supported_db_dtype = 'test_type'
         supported_value_types = (str, int)
 
     # 'test_type' should not yet exist as dtype
     # and 'string' should be the dtype for a string value
-    with pytest.raises(Exception):
+    with pytest.raises(ValueError):
         get_series_type_from_dtype('test_type')
     assert value_to_dtype('a string') == 'string'
 
@@ -32,7 +31,6 @@ def test_custom_type_register(monkeypatch):
         """ Test class for custom types. """
         dtype = 'test_type'
         dtype_aliases = ('test_type_1337',)
-        supported_db_dtype = 'test_type'
         supported_value_types = (str, int)
 
     assert get_series_type_from_dtype('test_type') is TestStringType
@@ -45,7 +43,6 @@ def test_custom_type_register(monkeypatch):
         """ Test class for custom types. """
         dtype = 'test_type'
         dtype_aliases = ('test_type_1337',)
-        supported_db_dtype = 'test_type'
         supported_value_types = (str, int)
 
     assert get_series_type_from_dtype('test_type') is TestStringType
@@ -58,7 +55,7 @@ class ReversedStringType(Series):
     """ Test class for custom types. """
     dtype = 'reversed_string'
     dtype_aliases = ('reversed_text', 'backwards_string')
-    supported_db_dtype = 'text'
+    db_engine_dtypes = {'postgres': 'text'}
     supported_value_types = (str,)
 
     @classmethod
@@ -86,12 +83,6 @@ def test_custom_type(monkeypatch):
     with pytest.raises(Exception):
         # 'reversed_string' has not be registerd yet
         bt_city.astype('reversed_string')
-
-    # the db_dtype 'text' is already taken, so registering ReversedStringType should give an error
-    with pytest.raises(Exception, match='db_dtype text, which is already assigned'):
-        _registry.register_dtype_series(ReversedStringType, [], False)
-    # with override_dtype=True, the error should disappear and 'reversed_string' should be registered
-    _registry.register_dtype_series(ReversedStringType, [], override_registered_types=True)
 
     bt_city_special = bt_city.astype('reversed_string')
 

@@ -144,9 +144,9 @@ def test_materialize():
     # have an expression that's simply the name of the column for all data columns, as the complex expression
     # has been moved to the new underlying base_node.
     for series in bt.data.values():
-        assert series.expression.to_sql() != f'"{series.name}"'
+        assert series.expression.to_sql(series.engine) != f'"{series.name}"'
     for series in bt_materialized.data.values():
-        assert series.expression.to_sql() == f'"{series.name}"'
+        assert series.expression.to_sql(series.engine) == f'"{series.name}"'
 
     # The materialized graph should have one extra node
     node_info_orig = get_graph_nodes_info(bt.get_current_node('node'))

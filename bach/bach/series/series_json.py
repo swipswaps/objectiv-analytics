@@ -90,7 +90,7 @@ class SeriesJsonb(Series):
     dtype = 'jsonb'
     # todo can only assign a type to one series type, and object is quite generic
     dtype_aliases = tuple()  # type: ignore
-    supported_db_dtype = 'jsonb'
+    db_engine_dtypes = {'postgresql': 'jsonb'}
     supported_value_types = (dict, list)
     return_dtype = dtype
 
@@ -206,7 +206,7 @@ class SeriesJsonb(Series):
         def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
             if isinstance(key, (dict, str)):
                 key = json.dumps(key)
-                quoted_key = quote_string(key)
+                quoted_key = quote_string(self._series_object.engine, key)
                 expression_str = f"""(select min(case when ({quoted_key}::jsonb) <@ value
                 then ordinality end) -1 from jsonb_array_elements({{}}) with ordinality)"""
                 return expression_str
