@@ -152,9 +152,18 @@ class DescribeOperation:
         :param stat_position: position of the stat in the final result
         """
         # filter series that can perform the aggregation
-        series_to_aggregate = [
-            s for s in self.series_to_describe if hasattr(self.df.all_series[s], stat.value)
-        ]
+        series_to_aggregate = []
+        for s in self.series_to_describe:
+            # check one: function exists on series
+            if not hasattr(self.df.all_series[s], stat.value):
+                continue
+            # check two: function doesn't raise NotImplementedError
+            try:
+                self.df.all_series[s].apply_func(stat.value)
+            except NotImplementedError:
+                continue
+            series_to_aggregate.append(s)
+
         if not series_to_aggregate:
             return None
 
