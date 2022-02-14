@@ -19,8 +19,8 @@ class SupportedStats(Enum):
 
 class DescribeOperation:
     """
-    Class that can describe a DataFrame or Series. To use: first instantiate this class, then use the
-    instantiated object as function, e.g. `df_described = DescribeOperation(obj=data_frame)()`
+    Class that can describe a DataFrame or Series. To use: first instantiate this class, then call the
+    instantiated object as a function, e.g. `df_described = DescribeOperation(obj=data_frame)()`
 
     In order to instantiate this class you should provide the following params:
     obj: a DataFrame or Series to be described. If a series is give, it will be transformed into a DataFrame
@@ -78,7 +78,7 @@ class DescribeOperation:
         numeric_dtypes = {col.dtype for col in df.data.values() if isinstance(col, SeriesAbstractNumeric)}
         all_dtypes = {col.dtype for col in df.data.values()}
 
-        # process include
+        # process `include` parameter
         if include is None:
             if numeric_dtypes:
                 include_dtypes = numeric_dtypes
@@ -93,7 +93,7 @@ class DescribeOperation:
         else:
             raise ValueError(f'Unexpected include value: {include}')
 
-        # process exclude
+        # process `exclude` parameter
         if exclude is None:
             exclude_dtypes = set()
         elif isinstance(exclude, str):
@@ -103,7 +103,7 @@ class DescribeOperation:
         else:
             raise ValueError(f'Unexpected exclude value: {exclude}')
 
-        # validate combination include and exclude
+        # validate combination of `include` and `exclude`
         if include is not None and exclude is not None and (set(include_dtypes) & set(exclude_dtypes)):
             raise ValueError(f'Include and exclude should not overlap. '
                              f'include: {include_dtypes}, exclude: {exclude_dtypes}')
@@ -154,7 +154,7 @@ class DescribeOperation:
         # filter series that can perform the aggregation
         series_to_aggregate = []
         for s in self.series_to_describe:
-            # check one: function exists on series
+            # check one: function exists on Series
             if not hasattr(self.df.all_series[s], stat.value):
                 continue
             # check two: function doesn't raise NotImplementedError
