@@ -41,7 +41,7 @@ export const TrackedPressableContext = React.forwardRef<HTMLElement, TrackedPres
   // Wrap Component in PressableContextWrapper
   return (
     <PressableContextWrapper id={pressableId}>
-      {(trackingContext) => (
+      {(trackingContext) =>
         React.createElement(Component, {
           ...componentProps,
           onClick: (event) => {
@@ -52,7 +52,7 @@ export const TrackedPressableContext = React.forwardRef<HTMLElement, TrackedPres
             props.onClick && props.onClick(event);
           },
         })
-      )}
+      }
     </PressableContextWrapper>
   );
 });

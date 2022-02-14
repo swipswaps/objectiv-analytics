@@ -73,13 +73,13 @@ export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkConte
         React.createElement(Component, {
           ...componentProps,
           onClick: async (event) => {
-            if(!waitUntilTracked) {
+            if (!waitUntilTracked) {
               // Track PressEvent: non-blocking.
               trackPressEvent(trackingContext);
 
               // Execute onClick prop, if any.
               props.onClick && props.onClick(event);
-            }else {
+            } else {
               // Prevent event from being handled by the user agent.
               event.preventDefault();
 
@@ -90,8 +90,8 @@ export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkConte
                   // Best-effort: wait for Queue to be empty. Times out to max 1s on very slow networks.
                   waitForQueue: true,
                   // Regardless whether waiting resulted in PressEvent being tracked, flush the Queue.
-                  flushQueue: true
-                }
+                  flushQueue: true,
+                },
               });
 
               // Execute onClick prop, if any.
