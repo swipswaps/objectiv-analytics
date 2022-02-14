@@ -459,7 +459,7 @@ class Series(ABC):
             new_series_aggregated = cast(
                 Series, new_series.aggregate(aggregation, group_by=df.group_by)
             )
-            if fill_value:
+            if fill_value is not None:
                 new_series_aggregated = new_series_aggregated.fillna(fill_value)
             series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
 
@@ -1388,6 +1388,16 @@ class Series(ABC):
 
         self._update_self_from_series(result)
         return None
+
+    def dropna(self: T) -> T:
+        """
+        Removes rows with missing values.
+
+        :return: a new series with dropped rows if inplace = False, otherwise None.
+        """
+        df = self.to_frame().dropna()
+        assert isinstance(df, DataFrame)
+        return cast(T, df.all_series[self.name])
 
 
 def const_to_series(base: Union[Series, DataFrame],
