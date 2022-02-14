@@ -60,4 +60,36 @@ describe('HttpContextPlugin', () => {
     Object.defineProperty(document, 'referrer', { value: originalReferrer });
     Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent });
   });
+
+  it('should default to empty strings for referrer and user_agent, whenever they are null', async () => {
+    const originalReferrer = document.referrer;
+    const originalUserAgent = navigator.userAgent;
+    Object.defineProperty(document, 'referrer', { value: null, configurable: true });
+    Object.defineProperty(navigator, 'userAgent', { value: null, configurable: true });
+
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: [new HttpContextPlugin()],
+    });
+    const testEvent = new TrackerEvent({ _type: 'test-event' });
+    expect(testEvent.location_stack).toHaveLength(0);
+    const trackedEvent = await testTracker.trackEvent(testEvent);
+    expect(trackedEvent.location_stack).toHaveLength(0);
+    expect(trackedEvent.global_contexts).toHaveLength(1);
+    expect(trackedEvent.global_contexts).toEqual(
+      expect.arrayContaining([
+        {
+          __global_context: true,
+          _type: 'HttpContext',
+          id: 'http_context',
+          referrer: '',
+          remote_address: '127.0.0.1',
+          user_agent: '',
+        },
+      ])
+    );
+
+    Object.defineProperty(document, 'referrer', { value: originalReferrer });
+    Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent });
+  });
 });
