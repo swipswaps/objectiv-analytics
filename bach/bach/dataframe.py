@@ -2232,7 +2232,8 @@ class DataFrame:
         The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
 
         :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
-        :param include: dtypes to be included, if not provided calculations will be based on numerical columns
+        :param include: dtypes to be included. If not provided calculations will be based on numerical
+            columns, if there are any numerical columns and on all columns if there are no numerical columns.
         :param exclude: dtypes to be excluded
         :param datetime_is_numeric: not supported
         :returns: a new DataFrame with the descriptive statistics
