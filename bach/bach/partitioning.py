@@ -163,8 +163,7 @@ class GroupingList(GroupBy):
         super().__init__(group_by_columns=list(group_by_columns.values()))
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
-        grouping_optional_expr_list = [cast(Expression, g.get_group_by_column_expression())
-                                       for g in self._grouping_list]
+        grouping_optional_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
 
         # Ensure that there are no None expressions in the list. If there are that's a bug, and we are
         # okay with breaking here. Without the cast mypy will complain as construct doesn't accept Nones
