@@ -63,7 +63,7 @@ class Series(ABC):
     # to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
     # and is shared with other Series and DataFrames that can change it's state.
 
-    dtype = ""
+    dtype: str = ''
     """
     The dtype of this Series. Must be overridden by subclasses.
 
