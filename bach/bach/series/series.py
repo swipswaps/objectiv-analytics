@@ -1384,13 +1384,13 @@ class Series(ABC):
         """
         Returns a series containing counts per unique value
 
-        :param bins: works only with numeric series, groups values into the request amount of bins
-        and counts values based on each range.
         :param normalize: returns proportions instead of frequencies
         :param sort: sorts result by frequencies
         :param ascending: sorts values in ascending order if true.
+        :param bins: works only with numeric series, groups values into the request amount of bins
+            and counts values based on each range.
 
-        return: a series containing all counts per unique row.
+        :return: a series containing all counts per unique row.
         """
         from bach.series.series_numeric import SeriesAbstractNumeric
         if bins and not isinstance(self, SeriesAbstractNumeric):

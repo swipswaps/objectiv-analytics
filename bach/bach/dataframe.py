@@ -2490,13 +2490,13 @@ class DataFrame:
         Returns a series containing counts of each unique row in the DataFrame
 
         :param subset: a list of series labels to be used when counting. If subset is not provided and
-        dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
-        series in group_by will be added to subset.
+            dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
+            series in group_by will be added to subset.
         :param normalize: returns proportions instead of frequencies
         :param sort: sorts result by frequencies
         :param ascending: sorts values in ascending order if true.
 
-        return: a series containing all counts per unique row.
+        :return: a series containing all counts per unique row.
         """
         if not subset:
             subset = self.data_columns
