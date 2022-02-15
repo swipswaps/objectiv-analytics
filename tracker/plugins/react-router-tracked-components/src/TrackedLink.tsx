@@ -11,7 +11,7 @@ import { makeIdFromTrackedAnchorProps } from './makeIdFromTrackedAnchorProps';
 import { TrackingOptions } from './types';
 
 /**
- * Wrapped Link will accept all LinkProps and, optionally, any of the LinkContextWrapperProps.
+ * Wrapped Link will accept all LinkProps and, optionally, TrackingOptions.
  */
 export type TrackedLinkProps = LinkProps & TrackingOptions;
 
@@ -19,7 +19,7 @@ export type TrackedLinkProps = LinkProps & TrackingOptions;
  * Wraps Link in a LinkContext and automatically instruments tracking PressEvent on click.
  */
 export const TrackedLink = React.forwardRef<HTMLAnchorElement, TrackedLinkProps>((props, ref) => {
-  const { objectiv, ...otherProps } = props;
+  const { objectiv, children, ...otherProps } = props;
 
   // Retrieve Location Path for this Component, for debugging purposes.
   const locationPath = getLocationPath(useLocationStack());
@@ -35,7 +35,7 @@ export const TrackedLink = React.forwardRef<HTMLAnchorElement, TrackedLinkProps>
     console.error(
       `｢objectiv｣ Could not generate id for LinkContext @ ${locationPath}. Either add the \`title\` prop or specify an id manually via the  \`id\` option of the \`objectiv\` prop.`
     );
-    return <Link {...otherProps} />;
+    return <Link {...otherProps}>{children}</Link>;
   }
 
   return (
@@ -50,7 +50,9 @@ export const TrackedLink = React.forwardRef<HTMLAnchorElement, TrackedLinkProps>
             external: props.objectiv?.external,
             onClick: props.onClick,
           })}
-        />
+        >
+          {children}
+        </Link>
       )}
     </LinkContextWrapper>
   );

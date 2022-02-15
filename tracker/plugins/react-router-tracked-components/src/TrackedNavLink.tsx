@@ -2,15 +2,58 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { LinkContextWrapperProps } from '@objectiv/tracker-react';
+import { getLocationPath } from '@objectiv/tracker-core';
+import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react';
 import React from 'react';
-import { NavLinkProps } from 'react-router-dom';
+import { NavLink, NavLinkProps, useHref } from 'react-router-dom';
+import { makeAnchorClickHandler } from './makeAnchorClickHandler';
+import { makeIdFromTrackedAnchorProps } from './makeIdFromTrackedAnchorProps';
+import { TrackingOptions } from './types';
+
+/**
+ * Wrapped NavLink will accept all NavLinkProps and, optionally, TrackingOptions.
+ */
+export type TrackedNavLinkProps = NavLinkProps & TrackingOptions;
 
 /**
  * Wraps NavLink in a LinkContext and automatically instruments tracking PressEvent on click.
  */
-export const TrackedNavLink = (props: NavLinkProps & LinkContextWrapperProps) => {
-  console.log(props);
+export const TrackedNavLink = React.forwardRef<HTMLAnchorElement, TrackedNavLinkProps>((props, ref) => {
+  const { objectiv, children, ...otherProps } = props;
 
-  return <>TODO</>;
-};
+  // Retrieve Location Path for this Component, for debugging purposes.
+  const locationPath = getLocationPath(useLocationStack());
+
+  // Use ReactRouter hooks to generate the `href` prop.
+  const linkContextHref = useHref(props.to);
+
+  // Attempt to generate an id for LinkContext by looking at `id`, `title`, `children` and `objectiv.contextId` props.
+  const linkContextId = makeIdFromTrackedAnchorProps(props);
+
+  // If we couldn't generate an `id`, log the issue and return a regular Link component.
+  if (!linkContextId) {
+    console.error(
+      `｢objectiv｣ Could not generate id for LinkContext @ ${locationPath}. Either add the \`title\` prop or specify an id manually via the  \`id\` option of the \`objectiv\` prop.`
+    );
+    return <NavLink {...otherProps}>{children}</NavLink>;
+  }
+
+  return (
+    <LinkContextWrapper id={linkContextId} href={linkContextHref}>
+      {(trackingContext) => (
+        <NavLink
+          {...otherProps}
+          ref={ref}
+          onClick={makeAnchorClickHandler({
+            trackingContext,
+            anchorHref: linkContextHref,
+            external: props.objectiv?.external,
+            onClick: props.onClick,
+          })}
+        >
+          {children}
+        </NavLink>
+      )}
+    </LinkContextWrapper>
+  );
+});

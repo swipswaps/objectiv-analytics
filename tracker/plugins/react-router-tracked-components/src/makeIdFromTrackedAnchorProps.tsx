@@ -10,5 +10,10 @@ import { TrackingOptions } from './types';
 /**
  * Attempts to generate an id for LinkContext by looking at `id`, `title`, `children` and `objectiv.contextId` props.
  */
-export const makeIdFromTrackedAnchorProps = (props: React.HTMLAttributes<HTMLAnchorElement> & TrackingOptions) =>
-  makeIdFromString(props.id ?? props.objectiv?.contextId ?? props.title ?? makeTitleFromChildren(props.children));
+export function makeIdFromTrackedAnchorProps(
+  props: { id?: string; title?: string; children?: React.ReactNode } & TrackingOptions
+) {
+  return makeIdFromString(
+    props.id ?? props.objectiv?.contextId ?? props.title ?? makeTitleFromChildren(props.children)
+  );
+}
