@@ -5,7 +5,7 @@
 import { HttpContextPlugin } from '@objectiv/plugin-http-context';
 import { PathContextFromURLPlugin } from '@objectiv/plugin-path-context-from-url';
 import { RootLocationContextFromURLPlugin } from '@objectiv/plugin-root-location-context-from-url';
-import { makeTrackerDefaultPluginsList, TrackerPluginInterface } from '@objectiv/tracker-core';
+import { makeCoreTrackerDefaultPluginsList, TrackerPluginInterface } from '@objectiv/tracker-core';
 import { ReactTrackerConfig } from '../../ReactTracker';
 
 /**
@@ -18,7 +18,7 @@ export const makeDefaultPluginsList = (trackerConfig: ReactTrackerConfig) => {
     trackRootLocationContextFromURL = true,
   } = trackerConfig;
 
-  const plugins: TrackerPluginInterface[] = makeTrackerDefaultPluginsList(trackerConfig);
+  const plugins: TrackerPluginInterface[] = makeCoreTrackerDefaultPluginsList(trackerConfig);
 
   if (trackHttpContext) {
     plugins.push(new HttpContextPlugin(trackerConfig));

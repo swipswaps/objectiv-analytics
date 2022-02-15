@@ -37,6 +37,7 @@ describe('TrackingContextProvider', () => {
       global_contexts: [],
       location_stack: [],
       plugins: {
+        tracker,
         console: undefined,
         plugins: [
           {

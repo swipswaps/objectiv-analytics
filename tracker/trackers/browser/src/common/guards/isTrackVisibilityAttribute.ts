@@ -8,29 +8,33 @@ import { TrackVisibilityAttribute } from '../../definitions/TrackVisibilityAttri
  * A type guard to determine if the given object is a TrackVisibilityAttribute.
  */
 export const isTrackVisibilityAttribute = (
-  object: Partial<TrackVisibilityAttribute>
-): object is TrackVisibilityAttribute => {
-  if (typeof object !== 'object' || object === null) {
+  attribute: Partial<TrackVisibilityAttribute>
+): attribute is TrackVisibilityAttribute => {
+  if (typeof attribute !== 'boolean' && typeof attribute !== 'object') {
     return false;
   }
 
-  if (!object.mode) {
+  if (typeof attribute === 'boolean') {
+    return true;
+  }
+
+  if (!attribute.mode) {
     return false;
   }
 
-  if (!['auto', 'manual'].includes(object.mode)) {
+  if (!['auto', 'manual'].includes(attribute.mode)) {
     return false;
   }
 
-  if (object.mode === 'auto' && object.hasOwnProperty('isVisible')) {
+  if (attribute.mode === 'auto' && attribute.hasOwnProperty('isVisible')) {
     return false;
   }
 
-  if (object.mode === 'manual' && !object.hasOwnProperty('isVisible')) {
+  if (attribute.mode === 'manual' && !attribute.hasOwnProperty('isVisible')) {
     return false;
   }
 
-  if (object.mode === 'manual' && typeof object.isVisible !== 'boolean') {
+  if (attribute.mode === 'manual' && typeof attribute.isVisible !== 'boolean') {
     return false;
   }
 

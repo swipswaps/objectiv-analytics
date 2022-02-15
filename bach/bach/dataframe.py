@@ -119,6 +119,7 @@ class DataFrame:
 
     * :py:meth:`head`
     * :py:meth:`to_pandas`
+    * :py:meth:`to_numpy`
     * :py:meth:`get_sample`
     * The property accessors :py:attr:`Series.value` (Series only), :py:attr:`values`
 
@@ -196,7 +197,11 @@ class DataFrame:
                                  f'df: {value.index}, series.index: {index}')
             if value.group_by != group_by:
                 raise ValueError(f'Group_by in `series` should match dataframe. '
-                                 f'df: {value.group_by}, series.index: {group_by}')
+                                 f'df: {group_by}, series.group_by: {value.group_by}')
+            if value.base_node != base_node:
+                raise ValueError(f'Base_node in `series` should match dataframe. '
+                                 f'df: {base_node}, series.base_node: {value.base_node}')
+
             self._data[key] = value
 
         for value in index.values():
@@ -450,8 +455,8 @@ class DataFrame:
         Instantiate a new DataFrame based on the content of a Pandas DataFrame.
 
         The index of the Pandas DataFrame is set to the index of the DataFrame. Only single level index is
-        supported. Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'. The 'object'
-        dtype is supported if the column contains string values and convert_objects is set to True.
+        supported. Supported dtypes are 'int32', 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'. If
+        convert_objects is set to True, other columns are converted to supported data types if possible.
 
         How the data is loaded depends on the chosen materialization:
 
@@ -470,8 +475,10 @@ class DataFrame:
 
         :param engine: an sqlalchemy engine for the database.
         :param df: Pandas DataFrame to instantiate as DataFrame.
-        :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
-            :py:meth:`pandas.DataFrame.convert_dtypes` method where possible.
+        :param convert_objects: If True, the data in the columns with dtypes not in the list of supported
+            dtypes are checked they contain supported data types. 'Object' columns that contain strings are
+            converted to the 'string' dtype and loaded accordingly. Other types can only be loaded if
+            materialization is 'cte' and the type is supported as Bach Series.
         :param name:
             * For 'table' materialization: name of the table that Pandas will write the data to.
             * For 'cte' materialization: name of the node in the underlying SqlModel graph.
@@ -903,7 +910,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['DataFrame', 'Series', int, str, float, UUID]):
+                    value: Union['DataFrame', 'Series', int, str, float, UUID, pandas.Series]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -915,6 +922,13 @@ class DataFrame:
                 raise ValueError(f'Column name "{key}" already exists as index.')
             if isinstance(value, DataFrame):
                 raise ValueError("Can't set a DataFrame as a single column")
+            if isinstance(value, pandas.Series):
+                df = pandas.DataFrame(value)
+                df.columns = [key]
+                bt = DataFrame.from_pandas(self.engine,
+                                           df,
+                                           convert_objects=True)
+                value = bt[key]
             if not isinstance(value, Series):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
@@ -1312,9 +1326,9 @@ class DataFrame:
             by: Union[_GroupBySingleType,  # single series group_by
                       # for GroupingSets
                       Tuple[Union[_GroupBySingleType, Tuple[_GroupBySingleType, ...]], ...],
-                      List[Union[_GroupBySingleType,  # multi series
-                                 List[_GroupBySingleType],  # for grouping lists
-                                 Tuple[_GroupBySingleType, ...]]],  # for grouping lists
+                      Sequence[Union[_GroupBySingleType,  # multi series
+                                     List[_GroupBySingleType],  # for grouping lists
+                                     Tuple[_GroupBySingleType, ...]]],  # for grouping lists
                       None] = None) -> 'DataFrame':
         """
         Group by any of the series currently in this DataDrame, both from index as well as data.
@@ -2213,11 +2227,38 @@ class DataFrame:
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
+    def describe(
+        self,
+        percentiles: Optional[Sequence[float]] = None,
+        include: Optional[Union[str, Sequence[str]]] = None,
+        exclude: Optional[Union[str, Sequence[str]]] = None,
+        datetime_is_numeric: bool = False,
+    ) -> 'DataFrame':
+        """
+        Returns descriptive statistics.
+        The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
+
+        :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
+        :param include: dtypes to be included, if not provided calculations will be based on numerical columns
+        :param exclude: dtypes to be excluded
+        :param datetime_is_numeric: not supported
+        :returns: a new DataFrame with the descriptive statistics
+        """
+        from bach.describe import DescribeOperation
+        return DescribeOperation(
+            obj=self,
+            include=include,
+            exclude=exclude,
+            datetime_is_numeric=datetime_is_numeric,
+            percentiles=percentiles,
+        )()
+
     def create_variable(
-            self,
-            name: str,
-            value: Any,
-            *, dtype: Optional[str] = None
+        self,
+        name: str,
+        value: Any,
+        *,
+        dtype: Optional[str] = None,
     ) -> Tuple['DataFrame', 'Series']:
         """
         Create a Series object that can be used as a variable, within the returned DataFrame. The
@@ -2370,14 +2411,17 @@ class DataFrame:
     ) -> Optional['DataFrame']:
         """
         Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
+
         :param subset: series label or sequence of labels.
-        Duplications to be dropped are based on the combination of the subset of series.
-        If not provided, all series labels will be used by default.
+            Duplications to be dropped are based on the combination of the subset of series.
+            If not provided, all series labels will be used by default.
         :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
-         - `first`: drop all occurrences except the first one
-         - `last`:  drop all occurrences except the last one
-         - False: drops all duplicates
-         If no value is provided, first occurrences will be kept by default.
+
+            * `first`: drop all occurrences except the first one
+            * `last`:  drop all occurrences except the last one
+            * False: drops all duplicates
+
+            If no value is provided, first occurrences will be kept by default.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param ignore_index: if true, drops indexes of the result
 
@@ -2386,12 +2430,7 @@ class DataFrame:
         if keep not in ('first', 'last', False):
             raise ValueError('keep must be either "first", "last" or False.')
 
-        subset = [subset] if isinstance(subset, str) else subset
-        if subset and any(s not in self.data_columns for s in subset):
-            raise ValueError(
-                f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
-            )
-
+        subset = self._get_parsed_subset_of_data_columns(subset)
         df = self.copy()
         if ignore_index:
             df.reset_index(drop=True, inplace=True)
@@ -2485,6 +2524,84 @@ class DataFrame:
             return df._data['value_counts_sum'].sort_values(ascending=ascending)
 
         return df._data['value_counts_sum']
+
+    def dropna(
+        self,
+        *,
+        axis: int = 0,
+        how: str = 'any',
+        thresh: Optional[int] = None,
+        subset: Optional[Union[str, Sequence[str]]] = None,
+        inplace: bool = False
+    ) -> Optional['DataFrame']:
+        """
+        Removes rows with missing values (NaN, None and SQL NULL).
+
+        :param axis: only ``axis=0`` is supported. This means rows that contain missing values are dropped.
+        :param how: determines when a row is removed. Supported values:
+           - 'any': rows with at least one missing value are removed
+           - 'all': rows with all missing values are removed
+        :param thresh: determines the least amount of non-missing values a row needs to have
+            in order to be kept
+        :param subset: series label or sequence of labels to be considered for missing values.
+            If subset is None, all DataFrame's series labels will be used.
+            In case subset is an empty list, a copy from the DataFrame will
+            be returned.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+
+        :return: a new dataframe with dropped rows if inplace = False, otherwise None.
+        """
+        if axis:
+            raise ValueError('only axis = 0 is supported.')
+
+        if how not in ('any', 'all'):
+            raise ValueError(f'{how} is not a valid value for "how" parameter.')
+
+        subset = self._get_parsed_subset_of_data_columns(subset)
+        dropna_series = self.data_columns if subset is None else subset
+
+        if not dropna_series:
+            return self.copy()
+
+        logical_operator = 'or' if how == 'any' else 'and'
+
+        conditions = []
+        for ds in dropna_series:
+            main_condition = self.all_series[ds].isnull()
+            if self.all_series[ds].dtype in ['float64', 'int64']:
+                main_condition = main_condition | (self.all_series[ds] == float('nan'))
+
+            conditions.append(main_condition)
+
+        if not thresh:
+            expression_fmt = f' {logical_operator} '.join([f'{{}}'] * len(dropna_series))
+        else:
+            # we need to add the amount of nullables in the row and compare it to the thresh
+            cases_fmt = f' + '.join([f'case when {{}} then 1 else 0 end'] * len(dropna_series))
+            expression_fmt = f'{len(self.data_columns)} - ({cases_fmt}) < {thresh}'
+
+        drop_row_series = conditions[0].copy_override(
+            expression=Expression.construct(expression_fmt, *conditions),
+        )
+
+        dropna_df = self[~drop_row_series]
+        assert isinstance(dropna_df, DataFrame)
+
+        if inplace:
+            self._update_self_from_df(dropna_df)
+            return None
+
+        return dropna_df
+
+    def _get_parsed_subset_of_data_columns(
+        self, subset: Optional[Union[str, Sequence[str]]],
+    ) -> Optional[Sequence[str]]:
+        subset = [subset] if isinstance(subset, str) else subset
+        if subset and any(s not in self.data_columns for s in subset):
+            raise ValueError(
+                f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
+            )
+        return subset
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

@@ -1,9 +1,8 @@
-
-from objectiv_backend.schema.schema import make_event_from_dict, ContentContext, HttpContext, make_context
 import json
 from typing import Dict, Any
-from objectiv_backend.common.event_utils import add_global_context_to_event, get_context
 
+from objectiv_backend.schema.schema import make_event_from_dict, ContentContext, HttpContext, make_context
+from objectiv_backend.common.event_utils import add_global_context_to_event, get_context
 from objectiv_backend.schema.validate_events import validate_structure_event_list, validate_event_adheres_to_schema
 from objectiv_backend.common.config import get_collector_config
 
@@ -100,7 +99,7 @@ def test_add_global_context():
     context_vars = {
         '_type': 'HttpContext',
         'id': 'test-http-context-id',
-        'referer': 'test-referer',
+        'referrer': 'test-referrer',
         'remote_address': 'test-address',
         'user_agent': 'test-user_agent'
     }
@@ -126,7 +125,7 @@ def test_add_context_to_incorrect_scope():
     context_vars = {
         '_type': 'HttpContext',
         'id': 'test-http-context-id',
-        'referer': 'test-referer',
+        'referrer': 'test-referrer',
         'remote_address': 'test-address',
         'user_agent': 'test-user_agent'
     }
@@ -151,3 +150,6 @@ def test_add_context_to_incorrect_scope():
 
     # check if event is not valid anymore
     assert(validate_event_adheres_to_schema(event_schema=event_schema, event=event) != [])
+
+
+

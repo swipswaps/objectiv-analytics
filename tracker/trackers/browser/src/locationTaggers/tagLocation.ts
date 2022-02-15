@@ -3,7 +3,7 @@
  */
 
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
-import { isClickableContext } from '../common/guards/isClickableContext';
+import { isPressableContext } from '../common/guards/isPressableContext';
 import { isShowableContext } from '../common/guards/isShowableContext';
 import { isTagLocationParameters } from '../common/guards/isTagLocationParameters';
 import { runIfValueIsNotUndefined } from '../common/runIfValueIsNotUndefined';
@@ -39,15 +39,20 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
     const { instance, options } = parameters;
 
     // Determine Context type
-    const isClickable = isClickableContext(instance);
+    const isPressable = isPressableContext(instance);
     const isInput = instance._type === 'InputContext';
     const isShowable = isShowableContext(instance);
 
     // Process options. Gather default attribute values
-    const trackClicks = options?.trackClicks ?? (isClickable ? true : undefined);
+    const trackClicks = options?.trackClicks ?? (isPressable ? true : undefined);
     const trackBlurs = options?.trackBlurs ?? (isInput ? true : undefined);
-    const trackVisibility = options?.trackVisibility ?? (isShowable ? { mode: 'auto' } : undefined);
     const parentElementId = options?.parent ? options.parent[TaggingAttribute.elementId] : undefined;
+
+    // Determine whether to auto-track visibility
+    let trackVisibility = options?.trackVisibility !== false ? options?.trackVisibility : undefined;
+    if ((options?.trackVisibility === undefined && isShowable) || options?.trackVisibility === true) {
+      trackVisibility = { mode: 'auto' };
+    }
 
     // Create output attributes object
     const LocationTaggingAttributes = {
