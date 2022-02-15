@@ -6,6 +6,7 @@ import { TrackingContext, trackPressEvent } from '@objectiv/tracker-react';
 import React from 'react';
 
 /**
+ * TODO: move to React Tracker
  * Anchor click handler factory parameters
  */
 type AnchorClickHandlerParameters = {
@@ -31,6 +32,7 @@ type AnchorClickHandlerParameters = {
 };
 
 /**
+ * TODO: move to React Tracker
  * Anchor click handler factory
  */
 export const makeAnchorClickHandler =

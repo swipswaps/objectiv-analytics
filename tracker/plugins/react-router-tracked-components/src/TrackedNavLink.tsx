@@ -8,12 +8,12 @@ import React from 'react';
 import { NavLink, NavLinkProps, useHref } from 'react-router-dom';
 import { makeAnchorClickHandler } from './makeAnchorClickHandler';
 import { makeIdFromTrackedAnchorProps } from './makeIdFromTrackedAnchorProps';
-import { TrackingOptions } from './types';
+import { ReactRouterTrackingOptionsProp } from './types';
 
 /**
  * Wrapped NavLink will accept all NavLinkProps and, optionally, TrackingOptions.
  */
-export type TrackedNavLinkProps = NavLinkProps & TrackingOptions;
+export type TrackedNavLinkProps = NavLinkProps & ReactRouterTrackingOptionsProp;
 
 /**
  * Wraps NavLink in a LinkContext and automatically instruments tracking PressEvent on click.
@@ -47,7 +47,7 @@ export const TrackedNavLink = React.forwardRef<HTMLAnchorElement, TrackedNavLink
           onClick={makeAnchorClickHandler({
             trackingContext,
             anchorHref: linkContextHref,
-            external: props.objectiv?.external,
+            external: props.reloadDocument,
             onClick: props.onClick,
           })}
         >
