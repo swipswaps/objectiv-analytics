@@ -73,7 +73,7 @@ class Map:
             series = ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
         return series.copy_override(name='is_conversion_event')
 
-    def conversions_counter(self, name: str, partition='user_id'):
+    def conversions_counter(self, name: str, partition='session_id'):
         """
         Counts the total number of conversions given a partition (ie session_id
         or user_id).
