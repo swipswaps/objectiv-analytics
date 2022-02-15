@@ -36,7 +36,8 @@ WrappedWindow = Union['Window', 'DataFrame']
 
 class Series(ABC):
     """
-    A Series that represents the generic type and its specific operations
+    Series is an abstract class. An instance of Series represents a column of data. Specific subclasses are
+    used to represent specific types of data and enable operations on that data.
 
     It can be used as a separate object to just deal with a single list of values. There are many standard
     operations on Series available to do operations like add or subtract, to create aggregations like
@@ -61,6 +62,15 @@ class Series(ABC):
     # The attributes of this class are either immutable, or this class is guaranteed not
     # to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
     # and is shared with other Series and DataFrames that can change it's state.
+
+    dtype = ""
+    """
+    The dtype of this Series. Must be overridden by subclasses.
+
+    The dtype is used to uniquely identify data of the type that is
+    represented by this Series subclass. The dtype must be unique among all Series subclasses.
+    """
+
     def __init__(self,
                  engine,
                  base_node: BachSqlModel,
@@ -100,6 +110,19 @@ class Series(ABC):
         :param index_sorting: list of bools indicating whether to sort ascending/descending on the different
             columns of the index. Empty list for no sorting on index.
         """
+        # Series is an abstract class, besides the abstractmethods, subclasses MUST override the 'dtype'
+        # class property. Unfortunately defining dtype as an "abstract-classmethod-property" makes it hard
+        # to understand for mypy, sphinx, and python. Therefore we check here that we are instantiating a
+        # proper subclass, instead of just relying on @abstractmethod.
+        # related links:
+        # https://github.com/python/mypy/issues/8532#issuecomment-600132991
+        # https://github.com/python/mypy/issues/11619 https://bugs.python.org/issue45356
+        if self.__class__ == Series:
+            raise TypeError("Cannot instantiate Series directly. Instantiate a subclass.")
+        if self.dtype == '':
+            raise NotImplementedError("Series subclasses must override `dtype` class property")
+        # End of Abstract-class check
+
         if index == {} and group_by and group_by.index != {}:
             # not a completely watertight check, because a group_by on {} is valid.
             raise ValueError(f'Index Series should be free of pending aggregation.')
@@ -135,19 +158,6 @@ class Series(ABC):
         self._sorted_ascending = series._sorted_ascending
         self._index_sorting = series._index_sorting
         return self
-
-    @property
-    @classmethod
-    @abstractmethod
-    def dtype(cls) -> str:
-        """
-        The dtype of this Series.
-
-        The dtype is used to uniquely identify data of the type that is
-        represented by this Series subclass. The dtype should be unique among all Series
-        subclasses.
-        """
-        raise NotImplementedError()
 
     @property
     @classmethod

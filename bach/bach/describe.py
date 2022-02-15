@@ -93,7 +93,7 @@ class DescribeOperation:
         else:
             raise ValueError(f'Unexpected include value: {include}')
         # resolve dtype-aliasses to the actual dtype
-        include_dtypes = {get_series_type_from_dtype(dtype).dtype for dtype in include_dtypes}  # type: ignore
+        include_dtypes = {get_series_type_from_dtype(dtype).dtype for dtype in include_dtypes}
 
         # process `exclude` parameter
         if exclude is None:
@@ -105,7 +105,7 @@ class DescribeOperation:
         else:
             raise ValueError(f'Unexpected exclude value: {exclude}')
         # resolve dtype-aliasses to the actual dtype
-        exclude_dtypes = {get_series_type_from_dtype(dtype).dtype for dtype in exclude_dtypes}  # type: ignore
+        exclude_dtypes = {get_series_type_from_dtype(dtype).dtype for dtype in exclude_dtypes}
 
         # validate combination of `include` and `exclude`
         if include is not None and exclude is not None and (set(include_dtypes) & set(exclude_dtypes)):
