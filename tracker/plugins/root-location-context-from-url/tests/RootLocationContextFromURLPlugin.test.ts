@@ -3,7 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { ContextsConfig, Tracker, TrackerEvent, TrackerPlugins } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerEvent } from '@objectiv/tracker-core';
 import { RootLocationContextFromURLPlugin } from '../src';
 
 describe('RootLocationContextFromURLPlugin', () => {
@@ -22,7 +22,7 @@ describe('RootLocationContextFromURLPlugin', () => {
   it('should add the RootLocationContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin()] }),
+      plugins: [new RootLocationContextFromURLPlugin()],
     });
     const eventContexts: ContextsConfig = {
       location_stack: [
@@ -56,7 +56,7 @@ describe('RootLocationContextFromURLPlugin', () => {
 
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin()] }),
+      plugins: [new RootLocationContextFromURLPlugin()],
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -79,7 +79,7 @@ describe('RootLocationContextFromURLPlugin', () => {
 
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin()] }),
+      plugins: [new RootLocationContextFromURLPlugin()],
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -102,7 +102,7 @@ describe('RootLocationContextFromURLPlugin', () => {
 
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin()] }),
+      plugins: [new RootLocationContextFromURLPlugin()],
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -126,7 +126,7 @@ describe('RootLocationContextFromURLPlugin', () => {
 
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: new TrackerPlugins({ plugins: [new RootLocationContextFromURLPlugin({ console: mockConsole })] }),
+      plugins: [new RootLocationContextFromURLPlugin({ console: mockConsole })],
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -152,9 +152,7 @@ describe('RootLocationContextFromURLPlugin', () => {
 
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: new TrackerPlugins({
-        plugins: [new RootLocationContextFromURLPlugin({ idFactoryFunction: makeRootLocationIdFromHash })],
-      }),
+      plugins: [new RootLocationContextFromURLPlugin({ idFactoryFunction: makeRootLocationIdFromHash })],
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);

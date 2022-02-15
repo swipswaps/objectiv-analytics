@@ -9,6 +9,7 @@ import { waitForPromise } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
 import { getLocationPath } from './TrackerElementLocations';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
+import { TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerQueueInterface } from './TrackerQueueInterface';
 import { TrackerTransportInterface } from './TrackerTransportInterface';
@@ -40,7 +41,7 @@ export type TrackerConfig = ContextsConfig & {
   /**
    * Optional. Plugins that will be executed when the Tracker initializes and before the Event is sent.
    */
-  plugins?: TrackerPlugins;
+  plugins?: TrackerPlugins | TrackerPluginInterface[];
 
   /**
    * Optional. A TrackerConsole instance for logging.
@@ -56,9 +57,18 @@ export type TrackerConfig = ContextsConfig & {
 /**
  * The default list of Plugins of Web Tracker
  */
-export const makeTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
+export const makeCoreTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
   new ApplicationContextPlugin({ applicationId: trackerConfig.applicationId, console: trackerConfig.console }),
 ];
+
+/**
+ * A type guard to determine if trackerConfig plugins is an array of plugins
+ */
+export const isPluginsArray = (
+  plugins?: TrackerPlugins | TrackerPluginInterface[]
+): plugins is TrackerPluginInterface[] => {
+  return Array.isArray(plugins);
+};
 
 /**
  * The parameters object of Tracker.waitForQueue(parameters?: WaitForQueueParameters).
@@ -77,9 +87,18 @@ export type TrackEventOptions = {
 };
 
 /**
+ * TrackerInterface implements Contexts and TrackerConfig, with the exception that plugins are not just an array of
+ * Plugin instances, but they are wrapped in a TrackerPlugins instance.
+ */
+export type TrackerInterface = Contexts &
+  Omit<TrackerConfig, 'plugins'> & {
+    plugins: TrackerPlugins;
+  };
+
+/**
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
-export class Tracker implements Contexts, TrackerConfig {
+export class Tracker implements TrackerInterface {
   readonly console?: TrackerConsole;
   readonly applicationId: string;
   readonly trackerId: string;
@@ -108,9 +127,6 @@ export class Tracker implements Contexts, TrackerConfig {
     this.trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
     this.queue = trackerConfig.queue;
     this.transport = trackerConfig.transport;
-    this.plugins =
-      trackerConfig.plugins ??
-      new TrackerPlugins({ console: trackerConfig.console, plugins: makeTrackerDefaultPluginsList(trackerConfig) });
 
     // Process ContextConfigs
     let new_location_stack: AbstractLocationContext[] = trackerConfig.location_stack ?? [];
@@ -121,6 +137,16 @@ export class Tracker implements Contexts, TrackerConfig {
     });
     this.location_stack = new_location_stack;
     this.global_contexts = new_global_contexts;
+
+    // Process plugins
+    if (isPluginsArray(trackerConfig.plugins) || trackerConfig.plugins === undefined) {
+      this.plugins = new TrackerPlugins({
+        tracker: this,
+        plugins: trackerConfig.plugins ?? makeCoreTrackerDefaultPluginsList(trackerConfig),
+      });
+    } else {
+      this.plugins = trackerConfig.plugins;
+    }
 
     // Change tracker state. If active it will initialize Plugins and start the Queue runner.
     this.setActive(trackerConfig.active ?? true);

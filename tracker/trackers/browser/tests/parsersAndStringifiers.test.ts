@@ -57,6 +57,14 @@ describe('parsersAndStringifiers', () => {
 
       const parsedVisibilityAuto = parseTrackVisibility(stringifiedVisibilityAuto);
       expect(parsedVisibilityAuto).toStrictEqual(visibilityAuto);
+
+      const parsedVisibilityAuto2 = parseTrackVisibility('true');
+      expect(parsedVisibilityAuto2).toStrictEqual(visibilityAuto);
+    });
+
+    it('Should parse false as undefined', () => {
+      const parsedVisibilityAuto2 = parseTrackVisibility('false');
+      expect(parsedVisibilityAuto2).toBeUndefined();
     });
 
     it('Should stringify and parse Visibility:manual:visible Attributes', () => {
@@ -80,8 +88,6 @@ describe('parsersAndStringifiers', () => {
     it('Should not stringify objects that are not Visibility Attributes objects or invalid ones', () => {
       // @ts-ignore
       expect(() => stringifyTrackVisibility('string')).toThrow();
-      // @ts-ignore
-      expect(() => stringifyTrackVisibility(true)).toThrow();
       // @ts-ignore
       expect(() => stringifyTrackVisibility({ mode: 'nope' })).toThrow();
       // @ts-ignore
