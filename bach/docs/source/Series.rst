@@ -202,6 +202,7 @@ Numeric
     :toctree: Series
 
     SeriesAbstractNumeric.cut
+    SeriesAbstractNumeric.qcut
     SeriesAbstractNumeric.mean
     SeriesAbstractNumeric.quantile
     SeriesAbstractNumeric.sem

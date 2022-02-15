@@ -56,7 +56,7 @@ class CutOperation:
             expression=Expression.construct(
                 (
                     f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME} \n'
-                    f'then {self.RANGE_SERIES_NAME} end'
+                    f'then {self.RANGE_SERIES_NAME} else null end'
                 ),
                 df.all_series[self.series.name],
             ),
