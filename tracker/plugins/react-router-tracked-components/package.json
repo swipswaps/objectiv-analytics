@@ -59,6 +59,7 @@
     "jest": "^27.4.5",
     "jest-standard-reporter": "^2.0.0",
     "prettier": "^2.5.1",
+    "react-router-dom": "^6.1",
     "shx": "^0.3.3",
     "ts-jest": "^27.1.2",
     "tsup": "^5.11.13",
@@ -67,6 +68,6 @@
   "peerDependencies": {
     "@objectiv/tracker-core": "^0.0.13",
     "@objectiv/tracker-react": "^0.0.13",
-    "react-router-dom": "^6"
+    "react-router-dom": "^6.1"
   }
 }
