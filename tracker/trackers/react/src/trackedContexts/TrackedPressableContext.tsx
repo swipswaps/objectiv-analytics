@@ -2,10 +2,9 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { getLocationPath } from '@objectiv/tracker-core';
+import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
 import React from 'react';
 import { executeOnce } from '../common/executeOnce';
-import { makeIdFromString } from '../common/factories/makeIdFromString';
 import { makeTitleFromChildren } from '../common/factories/makeTitleFromChildren';
 import { TrackingContext } from '../common/providers/TrackingContext';
 import { trackPressEventHandler } from '../common/trackPressEventHandler';

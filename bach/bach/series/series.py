@@ -122,20 +122,6 @@ class Series(ABC):
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
 
-    def _update_self_from_series(self, series: 'Series') -> 'Series':
-        """
-        INTERNAL: Modify self by copying all properties of 'df' to self. Returns self.
-        """
-        self._engine = series._engine
-        self._base_node = series._base_node
-        self._index = series._index.copy()
-        self._name = series._name
-        self._expression = series._expression
-        self._group_by = series._group_by
-        self._sorted_ascending = series._sorted_ascending
-        self._index_sorting = series._index_sorting
-        return self
-
     @property
     @classmethod
     @abstractmethod
@@ -459,7 +445,7 @@ class Series(ABC):
             new_series_aggregated = cast(
                 Series, new_series.aggregate(aggregation, group_by=df.group_by)
             )
-            if fill_value:
+            if fill_value is not None:
                 new_series_aggregated = new_series_aggregated.fillna(fill_value)
             series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
 
@@ -1359,11 +1345,7 @@ class Series(ABC):
         )()
         return describe_df.all_series[self.name]
 
-    def drop_duplicates(
-        self,
-        keep: Union[str, bool] = 'first',
-        inplace: bool = False,
-    ) -> Optional['Series']:
+    def drop_duplicates(self: T, keep: Union[str, bool] = 'first') -> T:
         """
         Return a series with duplicated rows removed.
 
@@ -1374,20 +1356,25 @@ class Series(ABC):
             * False: drops all duplicates
 
             If no value is provided, first occurrences will be kept by default.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
-        :return: a new series with dropped duplicates if inplace = False, otherwise None.
+        :return: a new series with dropped duplicates
         """
         df = self.to_frame().drop_duplicates(keep=keep)
         assert isinstance(df, DataFrame)
         df.materialize(inplace=True)
 
         result = df.all_series[self.name]
-        if not inplace:
-            return result
+        return cast(T, result)
 
-        self._update_self_from_series(result)
-        return None
+    def dropna(self: T) -> T:
+        """
+        Removes rows with missing values.
+
+        :return: a new series with dropped rows if inplace = False, otherwise None.
+        """
+        df = self.to_frame().dropna()
+        assert isinstance(df, DataFrame)
+        return cast(T, df.all_series[self.name])
 
 
 def const_to_series(base: Union[Series, DataFrame],

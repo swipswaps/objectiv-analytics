@@ -31,11 +31,6 @@ export type AnyLocationContext =
 export type AnyPressableContext = LinkContext | PressableContext;
 
 /**
- * Union to match any Clickable Context, that is AnyPressableContext + ExpandableContext
- */
-export type AnyClickableContext = AnyPressableContext | ExpandableContext;
-
-/**
  * Union to match any Showable Context, that is Overlays and ExpandableContext
  */
 export type AnyShowableContext = OverlayContext | ExpandableContext;
