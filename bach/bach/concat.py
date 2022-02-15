@@ -276,14 +276,11 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         """
         gets the final data series result
         """
-        all_names = []
-        dtypes: Set[str] = set()
-
-        for series in self.objects:
-            if not isinstance(series, Series):
-                continue
-            all_names.append(series.name)
-            dtypes.add(series.dtype)
+        dtypes: Set[str] = set(
+            series.dtype
+            for series in self.objects
+            if isinstance(series, Series)
+        )
 
         main_series = self.objects[0].copy_override(
             name=self.CONCAT_SERIES_NAME,
