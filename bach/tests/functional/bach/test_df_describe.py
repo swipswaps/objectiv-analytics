@@ -116,3 +116,28 @@ def test_describe_datetime() -> None:
         columns=['__stat', 'dt_column'],
     )
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
+
+
+def test_describe_boolean() -> None:
+    pdf = pd.DataFrame(
+        data=[
+            [True], [False], [True],
+        ],
+        columns=['dt_column'],
+    )
+    df = get_from_df(table='describe_table', df=pdf)
+
+    result = df.describe()
+    result = result.reset_index(drop=False)
+
+    expected_df = pd.DataFrame(
+        data=[
+            ['count', '3'],
+            ['min', 'false'],
+            ['max', 'true'],
+            ['nunique', '2'],
+            ['mode', 'true'],
+        ],
+        columns=['__stat', 'dt_column'],
+    )
+    pd.testing.assert_frame_equal(expected_df, result.to_pandas())
