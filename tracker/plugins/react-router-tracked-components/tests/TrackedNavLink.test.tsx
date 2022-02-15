@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackedNavLink, TrackedNavLinkProps } from "@objectiv/plugin-react-router-tracked-components";
+import { TrackedNavLink, TrackedNavLinkProps } from '@objectiv/plugin-react-router-tracked-components';
 import { SpyTransport } from '@objectiv/testing-tools';
 import { Tracker } from '@objectiv/tracker-core';
 import {
