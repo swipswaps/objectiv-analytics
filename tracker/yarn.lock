@@ -845,6 +845,7 @@ __metadata:
   resolution: "@objectiv/react-router-tracked-components@workspace:plugins/react-router-tracked-components"
   dependencies:
     "@objectiv/testing-tools": ^0.0.13
+    "@objectiv/tracker-react": ^0.0.13
     "@testing-library/react": ^12.1.2
     "@types/jest": ^27.0.3
     jest: ^27.4.5
@@ -948,7 +949,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-react@workspace:trackers/react":
+"@objectiv/tracker-react@^0.0.13, @objectiv/tracker-react@workspace:trackers/react":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react@workspace:trackers/react"
   dependencies:

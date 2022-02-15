@@ -54,6 +54,7 @@
   },
   "devDependencies": {
     "@objectiv/testing-tools": "^0.0.13",
+    "@objectiv/tracker-react": "^0.0.13",
     "@testing-library/react": "^12.1.2",
     "@types/jest": "^27.0.3",
     "jest": "^27.4.5",
