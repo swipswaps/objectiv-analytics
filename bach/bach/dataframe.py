@@ -2244,7 +2244,7 @@ class DataFrame:
         :param datetime_is_numeric: not supported
         :returns: a new DataFrame with the descriptive statistics
         """
-        from bach.describe import DescribeOperation
+        from bach.operations.describe import DescribeOperation
         return DescribeOperation(
             obj=self,
             include=include,
