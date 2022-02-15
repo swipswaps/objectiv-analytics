@@ -11,7 +11,7 @@ import { makeIdFromTrackedAnchorProps } from './makeIdFromTrackedAnchorProps';
 import { ReactRouterTrackingOptionsProp } from './types';
 
 /**
- * Wrapped Link will accept all LinkProps and, optionally, TrackingOptions.
+ * Wrapped Link will accept all LinkProps and, optionally, ReactRouterTrackingOptionsProp.
  */
 export type TrackedLinkProps = LinkProps & ReactRouterTrackingOptionsProp;
 

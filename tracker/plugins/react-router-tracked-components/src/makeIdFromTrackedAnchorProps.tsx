@@ -9,7 +9,7 @@ import { TrackingOptionsProp } from './types';
 
 /**
  * TODO: move to React Tracker
- * Attempts to generate an id for LinkContext by looking at `id`, `title`, `children` and `objectiv.contextId` props.
+ * Attempts to generate an id by looking at `id`, `title`, `children` and `objectiv.contextId` props.
  */
 export function makeIdFromTrackedAnchorProps(
   props: { id?: string; title?: string; children?: React.ReactNode } & TrackingOptionsProp
