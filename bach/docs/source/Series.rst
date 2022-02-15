@@ -142,7 +142,6 @@ Sql Model
 .. autosummary::
     :toctree: Series
 
-    Series.engine
     Series.base_node
     Series.view_sql
 
@@ -168,6 +167,7 @@ Conversion, reshaping, sorting
     Series.fillna
     Series.append
     Series.drop_duplicates
+    Series.dropna
     Series.unstack
 
 Function application, aggregation & windowing
