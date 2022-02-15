@@ -2,15 +2,15 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { SpyTransport } from "@objectiv/testing-tools";
-import { Tracker } from "@objectiv/tracker-core";
+import { SpyTransport } from '@objectiv/testing-tools';
+import { Tracker } from '@objectiv/tracker-core';
 import {
   ObjectivProvider,
   TrackedDiv,
   TrackedRootLocationContext,
-  TrackingContextProvider
+  TrackingContextProvider,
 } from '@objectiv/tracker-react';
-import { fireEvent, getByTestId, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, getByTestId, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { TrackedLink, TrackedLinkProps } from '../src';
@@ -75,7 +75,11 @@ describe('TrackedLink', () => {
     [
       { to: { pathname: '/', search: '?p=val', hash: '#/hash' }, children: 'test' },
       { id: 'test', href: '/?p=val#/hash' },
-    ]
+    ],
+    [
+      { to: '/', children: '🏡', objectiv: { contextId: 'emoji' } },
+      { id: 'emoji', href: '/' },
+    ],
   ];
 
   cases.forEach(([linkProps, expectedAttributes]) => {
@@ -107,26 +111,6 @@ describe('TrackedLink', () => {
     });
   });
 
-  it('should allow forwarding id and title props', () => {
-    render(
-      <BrowserRouter>
-        <ObjectivProvider tracker={tracker}>
-          <TrackedLink data-testid={'link1'} to={'/'} id={'id'} title={'title'}>
-            test
-          </TrackedLink>
-          <TrackedLink data-testid={'link2'} to={'/'} id={'id'} title={'title'} forwardId={true} forwardTitle={true}>
-            test
-          </TrackedLink>
-        </ObjectivProvider>
-      </BrowserRouter>
-    );
-
-    expect(screen.getByTestId('link1').getAttribute('id')).toBe(null);
-    expect(screen.getByTestId('link1').getAttribute('title')).toBe(null);
-    expect(screen.getByTestId('link2').getAttribute('id')).toBe('id');
-    expect(screen.getByTestId('link2').getAttribute('title')).toBe('title');
-  });
-
   it('should console.error if an id cannot be automatically generated', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -135,9 +119,7 @@ describe('TrackedLink', () => {
         <ObjectivProvider tracker={tracker}>
           <TrackedRootLocationContext Component={'div'} id={'root'}>
             <TrackedDiv id={'content'}>
-              <TrackedLink to={'/'}>
-                🏡
-              </TrackedLink>
+              <TrackedLink to={'/'}>🏡</TrackedLink>
             </TrackedDiv>
           </TrackedRootLocationContext>
         </ObjectivProvider>
@@ -146,7 +128,7 @@ describe('TrackedLink', () => {
 
     expect(console.error).toHaveBeenCalledTimes(1);
     expect(console.error).toHaveBeenCalledWith(
-      '｢objectiv｣ Could not generate id for LinkContext @ RootLocation:root / Content:content. Please provide either the `title` or the `id` property manually.'
+      '｢objectiv｣ Could not generate id for LinkContext @ RootLocation:root / Content:content. Either add the `title` prop or specify an id manually via the  `id` option of the `objectiv` prop.'
     );
   });
 
@@ -156,7 +138,7 @@ describe('TrackedLink', () => {
     render(
       <BrowserRouter>
         <ObjectivProvider tracker={tracker}>
-          <TrackedLink to='/' ref={linkRef}>
+          <TrackedLink to="/" ref={linkRef}>
             Press me!
           </TrackedLink>
         </ObjectivProvider>
@@ -178,10 +160,10 @@ describe('TrackedLink', () => {
     const { container } = render(
       <BrowserRouter>
         <ObjectivProvider tracker={tracker}>
-          <TrackedLink data-testid={'test1'} to='/' onClick={clickSpy}>
+          <TrackedLink data-testid={'test1'} to="/" onClick={clickSpy}>
             Press me!
           </TrackedLink>
-          <TrackedLink data-testid={'test2'} to='/' onClick={clickSpy} reloadDocument={true}>
+          <TrackedLink data-testid={'test2'} to="/" onClick={clickSpy} reloadDocument={true}>
             Press me!
           </TrackedLink>
         </ObjectivProvider>
@@ -207,7 +189,7 @@ describe('TrackedLink', () => {
     const { container } = render(
       <BrowserRouter>
         <ObjectivProvider tracker={tracker}>
-          <TrackedLink data-testid={'test'} to='/some-url' waitUntilTracked={true} onClick={clickSpy}>
+          <TrackedLink data-testid={'test'} to="/some-url" reloadDocument={true} onClick={clickSpy}>
             Press me
           </TrackedLink>
         </ObjectivProvider>

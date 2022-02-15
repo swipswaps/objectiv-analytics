@@ -13,4 +13,4 @@ export const TrackedNavLink = (props: NavLinkProps & LinkContextWrapperProps) =>
   console.log(props);
 
   return <>TODO</>;
-}
+};

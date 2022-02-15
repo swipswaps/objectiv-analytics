@@ -2,89 +2,54 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
-import {
-  LinkContextWrapper,
-  makeTitleFromChildren,
-  TrackedLinkContextProps,
-  trackPressEvent,
-  useLocationStack,
-} from '@objectiv/tracker-react';
+import { getLocationPath } from '@objectiv/tracker-core';
+import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react';
 import React from 'react';
 import { Link, LinkProps, useHref } from 'react-router-dom';
+import { makeAnchorClickHandler } from './makeAnchorClickHandler';
+import { makeIdFromTrackedAnchorProps } from './makeIdFromTrackedAnchorProps';
+import { TrackingOptions } from './types';
 
 /**
  * Wrapped Link will accept all LinkProps and, optionally, any of the LinkContextWrapperProps.
  */
-export type TrackedLinkProps = LinkProps & Omit<TrackedLinkContextProps, 'href' | 'forwardHref' | 'Component'>;
+export type TrackedLinkProps = LinkProps & TrackingOptions;
 
 /**
  * Wraps Link in a LinkContext and automatically instruments tracking PressEvent on click.
  */
 export const TrackedLink = React.forwardRef<HTMLAnchorElement, TrackedLinkProps>((props, ref) => {
-  const { id, title, forwardId, forwardTitle, waitUntilTracked, ...otherProps } = props;
+  const { objectiv, ...otherProps } = props;
 
   // Retrieve Location Path for this Component, for debugging purposes.
   const locationPath = getLocationPath(useLocationStack());
 
   // Use ReactRouter hooks to generate the `href` prop.
-  const linkHref = useHref(props.to);
+  const linkContextHref = useHref(props.to);
 
-  // Attempt to auto-detect `id` for LinkContext by looking at either the `title` or `children` props.
-  const linkTitle = props.title ?? makeTitleFromChildren(props.children);
-  const linkId = props.id ?? makeIdFromString(linkTitle);
-
-  // Build LinkProps
-  const linkProps = {
-    ...otherProps,
-    ...(ref ? { ref } : {}),
-    ...(forwardId ? { id } : {}),
-    ...(forwardTitle ? { title } : {}),
-  };
+  // Attempt to generate an id for LinkContext by looking at `id`, `title`, `children` and `objectiv.contextId` props.
+  const linkContextId = makeIdFromTrackedAnchorProps(props);
 
   // If we couldn't generate an `id`, log the issue and return a regular Link component.
-  if (!linkId) {
+  if (!linkContextId) {
     console.error(
-      `｢objectiv｣ Could not generate id for LinkContext @ ${locationPath}. Please provide either the \`title\` or the \`id\` property manually.`
+      `｢objectiv｣ Could not generate id for LinkContext @ ${locationPath}. Either add the \`title\` prop or specify an id manually via the  \`id\` option of the \`objectiv\` prop.`
     );
-    return <Link {...linkProps} />;
+    return <Link {...otherProps} />;
   }
 
   return (
-    <LinkContextWrapper id={linkId} href={linkHref}>
+    <LinkContextWrapper id={linkContextId} href={linkContextHref}>
       {(trackingContext) => (
         <Link
-          {...linkProps}
+          {...otherProps}
           ref={ref}
-          onClick={async (event) => {
-            if (!props.reloadDocument) {
-              // Track PressEvent: non-blocking.
-              trackPressEvent(trackingContext);
-
-              // Execute onClick prop, if any.
-              props.onClick && props.onClick(event);
-            } else {
-              // Prevent event from being handled by the user agent.
-              event.preventDefault();
-
-              // Track PressEvent: best-effort blocking.
-              await trackPressEvent({
-                ...trackingContext,
-                options: {
-                  // Best-effort: wait for Queue to be empty. Times out to max 1s on very slow networks.
-                  waitForQueue: true,
-                  // Regardless whether waiting resulted in PressEvent being tracked, flush the Queue.
-                  flushQueue: true,
-                },
-              });
-
-              // Execute onClick prop, if any.
-              props.onClick && props.onClick(event);
-
-              // Resume navigation.
-              window.location.href = linkHref;
-            }
-          }}
+          onClick={makeAnchorClickHandler({
+            trackingContext,
+            anchorHref: linkContextHref,
+            external: props.objectiv?.external,
+            onClick: props.onClick,
+          })}
         />
       )}
     </LinkContextWrapper>
