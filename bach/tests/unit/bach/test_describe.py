@@ -67,12 +67,29 @@ def test_include_exclude() -> None:
         percentiles=None,
     )
     assert obj.series_to_describe == ['b']
+    obj = DescribeOperation(
+        obj=df,
+        include=None,
+        exclude=['double'],  # alias for float64
+        datetime_is_numeric=False,
+        percentiles=None,
+    )
+    assert obj.series_to_describe == ['b']
 
     with pytest.raises(ValueError, match='Include and exclude should not overlap'):
         DescribeOperation(
             obj=df,
             include='all',
             exclude=['float64'],
+            datetime_is_numeric=False,
+            percentiles=None,
+        )
+
+    with pytest.raises(ValueError, match='Unknown dtype'):
+        DescribeOperation(
+            obj=df,
+            include=['not_a_dtype'],
+            exclude=['not_a_dtype'],
             datetime_is_numeric=False,
             percentiles=None,
         )

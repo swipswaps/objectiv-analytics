@@ -5,7 +5,7 @@ from collections import abc
 from enum import Enum
 from typing import Optional, Union, Sequence, List, Set
 
-from bach import DataFrame, SeriesAbstractNumeric, DataFrameOrSeries
+from bach import DataFrame, SeriesAbstractNumeric, DataFrameOrSeries, get_series_type_from_dtype
 from bach.concat import DataFrameConcatOperation
 from bach.expression import Expression
 
@@ -92,6 +92,8 @@ class DescribeOperation:
             include_dtypes = set(include)
         else:
             raise ValueError(f'Unexpected include value: {include}')
+        # resolve dtype-aliasses to the actual dtype
+        include_dtypes = {get_series_type_from_dtype(dtype).dtype for dtype in include_dtypes}
 
         # process `exclude` parameter
         if exclude is None:
@@ -102,6 +104,8 @@ class DescribeOperation:
             exclude_dtypes = set(exclude)
         else:
             raise ValueError(f'Unexpected exclude value: {exclude}')
+        # resolve dtype-aliasses to the actual dtype
+        exclude_dtypes = {get_series_type_from_dtype(dtype).dtype for dtype in exclude_dtypes}
 
         # validate combination of `include` and `exclude`
         if include is not None and exclude is not None and (set(include_dtypes) & set(exclude_dtypes)):
