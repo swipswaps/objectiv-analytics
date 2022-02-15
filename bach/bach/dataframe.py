@@ -2488,6 +2488,7 @@ class DataFrame:
     ) -> 'Series':
         """
         Returns a series containing counts of each unique row in the DataFrame
+
         :param subset: a list of series labels to be used when counting. If subset is not provided and
         dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
         series in group_by will be added to subset.
@@ -2520,10 +2521,12 @@ class DataFrame:
             df.materialize(inplace=True)
             df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
 
-        if sort:
-            return df._data['value_counts_sum'].sort_values(ascending=ascending)
+        df.rename(columns={'value_counts_sum': '__value_counts'}, inplace=True)
 
-        return df._data['value_counts_sum']
+        if sort:
+            return df._data['__value_counts'].sort_values(ascending=ascending)
+
+        return df._data['__value_counts']
 
     def dropna(
         self,
