@@ -2546,6 +2546,16 @@ class DataFrame:
 
         return dropna_df
 
+    def fillna(
+        self,
+        value,
+        method: Optional[str] = None,
+        axis: int = 0,
+        limit: Optional[int] = None,
+    ) -> Optional['DataFrame']:
+        print('hola')
+        return self.copy()
+
     def _get_parsed_subset_of_data_columns(
         self, subset: Optional[Union[str, Sequence[str]]],
     ) -> Optional[Sequence[str]]:

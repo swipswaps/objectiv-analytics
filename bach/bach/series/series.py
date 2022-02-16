@@ -797,6 +797,36 @@ class Series(ABC):
             other=other, operation='fillna', fmt_str='COALESCE({}, {})',
             other_dtypes=tuple([self.dtype]))
 
+    def ffill(self) -> 'Series':
+        from bach.partitioning import Window
+
+        ffill_df = self.to_frame()
+
+        partition_name = f'__partition_{self.name}'
+        ffill_df[partition_name] = self.copy_override(
+            expression=Expression.construct(f'case when {{}} is null then 0 else 1 end', self),
+            name=partition_name,
+        )
+        if not ffill_df.order_by:
+            ffill_df = ffill_df.sort_index()
+
+        ffill_df[partition_name] = ffill_df.all_series[partition_name].window_sum(
+            window=Window([], order_by=ffill_df.order_by),
+        )
+
+        ffill_df.materialize(inplace=True)
+        ffill_df[self.name] = ffill_df.all_series[self.name].window_first_value(
+            window=Window([ffill_df[partition_name]], order_by=ffill_df.order_by)
+        )
+
+        result = ffill_df.all_series[self.name]
+
+        # preserve the original sorting
+        return result.copy_override(sorted_ascending=self.sorted_ascending, index_sorting=self.index_sorting)
+
+    def bfill(self) -> 'Series':
+        return self.sort_index(ascending=False).ffill()
+
     def _binary_operation(self, other: 'Series', operation: str, fmt_str: str,
                           other_dtypes: Tuple[str, ...] = (),
                           dtype: Union[str, Mapping[str, Optional[str]]] = None) -> 'Series':
@@ -1300,6 +1330,18 @@ class Series(ABC):
         return self._derived_agg_func(
             window,
             Expression.construct(f'nth_value({{}}, {n})', self),
+            self.dtype
+        )
+
+    def window_sum(self, window: WrappedWindow = None):
+        """
+        Returns value evaluated at the row that is the n'th row of the window frame.
+        (counting from 1); returns NULL if there is no such row.
+        """
+        window = self._check_window(window)
+        return self._derived_agg_func(
+            window,
+            Expression.construct(f'sum({{}})', self),
             self.dtype
         )
 
