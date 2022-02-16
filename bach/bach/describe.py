@@ -67,7 +67,7 @@ class DescribeOperation:
     def determine_series_to_describe(
         df: DataFrame,
         include: Optional[Union[str, Sequence[str]]],
-        exclude: Optional[Sequence[str]],
+        exclude: Optional[Union[str, Sequence[str]]],
     ) -> List[str]:
         """
         Process the include and exclude parameters and determine which series of the dataframe should be
@@ -87,7 +87,7 @@ class DescribeOperation:
         elif include == 'all':
             include_dtypes = all_dtypes
         elif isinstance(include, str):
-            raise ValueError(f'Only valid string value of include is "all", value: {include}')
+            include_dtypes = {include}
         elif isinstance(include, abc.Sequence) and all(isinstance(item, str) for item in include):
             include_dtypes = set(include)
         else:
@@ -99,7 +99,7 @@ class DescribeOperation:
         if exclude is None:
             exclude_dtypes = set()
         elif isinstance(exclude, str):
-            raise ValueError(f'exclude cannot be a string, value: {exclude}')
+            exclude_dtypes = {exclude}
         elif isinstance(exclude, abc.Sequence) and all(isinstance(item, str) for item in exclude):
             exclude_dtypes = set(exclude)
         else:
