@@ -118,7 +118,7 @@ class DescribeOperation:
             dtypes = set(value)
         else:
             raise ValueError(f'Unexpected dtype value: {value}')
-        return {get_series_type_from_dtype(dtype).dtype for dtype in dtypes}  # type: ignore
+        return {get_series_type_from_dtype(dtype).dtype for dtype in dtypes}
 
     def __call__(self) -> DataFrame:
         """
