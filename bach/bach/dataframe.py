@@ -2521,12 +2521,12 @@ class DataFrame:
             df.materialize(inplace=True)
             df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
 
-        df.rename(columns={'value_counts_sum': '__value_counts'}, inplace=True)
+        df.rename(columns={'value_counts_sum': 'value_counts'}, inplace=True)
 
         if sort:
-            return df._data['__value_counts'].sort_values(ascending=ascending)
+            return df._data['value_counts'].sort_values(ascending=ascending)
 
-        return df._data['__value_counts']
+        return df._data['value_counts']
 
     def dropna(
         self,

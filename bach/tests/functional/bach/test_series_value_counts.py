@@ -19,7 +19,7 @@ def test_value_counts_basic():
 
     assert_equals_data(
         result.to_frame(),
-        expected_columns=['municipality', '__value_counts'],
+        expected_columns=['municipality', 'value_counts'],
         expected_data=[
             ['Súdwest-Fryslân', 2],
             ['Leeuwarden', 1]
@@ -34,7 +34,7 @@ def test_value_counts_basic():
     )
     assert_equals_data(
         result_normalized.to_frame(),
-        expected_columns=['municipality', '__value_counts'],
+        expected_columns=['municipality', 'value_counts'],
         expected_data=[
             ['Súdwest-Fryslân', 2 / 3],
             ['Leeuwarden', 1 / 3]
@@ -57,7 +57,7 @@ def test_value_counts_w_bins() -> None:
     bin4 = NumericRange(Decimal('70288.75'), Decimal('93485'), bounds=bounds_right)
     assert_equals_data(
         result.sort_index(),
-        expected_columns=['range', '__value_counts'],
+        expected_columns=['range', 'value_counts'],
         expected_data=[
             [bin1, 9],
             [bin2, 1],
@@ -72,7 +72,7 @@ def test_value_counts_w_groupby() -> None:
     result = bt.groupby(['town', 'platforms'])['station_id'].value_counts()
     assert_equals_data(
         result.to_frame().sort_index(),
-        expected_columns=['town', 'platforms', 'station_id', '__value_counts'],
+        expected_columns=['town', 'platforms', 'station_id', 'value_counts'],
         expected_data=[
             ['Drylts', 1, 1, 1],
             ['It Hearrenfean', 1, 2, 1],
@@ -87,7 +87,7 @@ def test_value_counts_w_groupby() -> None:
     result_normalized = bt.groupby(['town', 'platforms'])['station_id'].value_counts(normalize=True)
     assert_equals_data(
         result_normalized.to_frame().sort_index(),
-        expected_columns=['town', 'platforms', 'station_id', '__value_counts'],
+        expected_columns=['town', 'platforms', 'station_id', 'value_counts'],
         expected_data=[
             ['Drylts', 1, 1, 1 / 7],
             ['It Hearrenfean', 1, 2, 1 / 7],

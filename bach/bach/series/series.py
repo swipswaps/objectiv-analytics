@@ -1412,12 +1412,12 @@ class Series(ABC):
         value_counts_result = bins_w_values_df.value_counts(normalize=normalize, sort=False)
 
         assert isinstance(empty_bins_df, DataFrame)
-        empty_bins_df['__value_counts'] = 0
+        empty_bins_df['value_counts'] = 0
         empty_bins_df.set_index(CutOperation.RANGE_SERIES_NAME, inplace=True)
 
         # append empty bins with count 0, final result must show those ranges
-        result = value_counts_result.append(empty_bins_df.all_series['__value_counts'])
-        result = result.copy_override(name='__value_counts')
+        result = value_counts_result.append(empty_bins_df.all_series['value_counts'])
+        result = result.copy_override(name='value_counts')
         if sort:
             return result.sort_values(ascending=ascending)
 
