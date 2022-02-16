@@ -5,7 +5,7 @@ from typing import Optional, Union, Sequence, List, Type, Tuple
 
 from bach import (
     DataFrame, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries,
-    get_series_type_from_dtype, SeriesAbstractDateTime,
+    get_series_type_from_dtype, SeriesAbstractDateTime, SeriesBoolean,
 )
 from bach.concat import DataFrameConcatOperation
 from bach.expression import Expression
@@ -21,9 +21,8 @@ class SupportedStats(Enum):
     MODE = 'mode'
 
 
-# TODO: Remove this constant when boolean aggregations bug (min, max) is fixed.
 _SUPPORTED_SERIES_TYPES: Tuple[Type, ...] = (
-    SeriesAbstractNumeric, SeriesString, SeriesAbstractDateTime,
+    SeriesAbstractNumeric, SeriesString, SeriesAbstractDateTime, SeriesBoolean
 )
 
 
@@ -163,7 +162,10 @@ class DescribeOperation:
         percentile_df = percentile_df.quantile(q=list(self.percentiles))
         has_q_index = 'q' in percentile_df.all_series
 
-        columns_rename = dict(zip(percentile_df.data_columns, series_to_aggregate))
+        columns_rename = {
+            col: col.replace('_quantile', '')
+            for col in percentile_df.data_columns
+        }
         percentile_df.reset_index(drop=not has_q_index, inplace=True)
 
         if not has_q_index:
