@@ -64,7 +64,9 @@ class SeriesAbstractNumeric(Series, ABC):
         """
         Segments values into equal-sized buckets based on rank or sample quantiles.
 
-        :param q: Number of quantiles or list of quantiles to consider
+        :param q: Number of quantiles or list of quantiles to consider.
+
+        :return: series containing each quantile range/interval per value. Original series is set as index.
         """
         from bach.operations.cut import QCutOperation
         return QCutOperation(series=self, q=q)()

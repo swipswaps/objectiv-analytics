@@ -254,7 +254,6 @@ class QCutOperation:
         """
         Gets the quantile range per bucket and assigns the correct range to each value. If the value
         is not contained in any range, then it will be null.
-        on it, a
         """
         df = self.series.to_frame()
         df.reset_index(drop=True, inplace=True)
@@ -263,7 +262,7 @@ class QCutOperation:
             # need at least 2 quantiles for a range
             df[self.RANGE_SERIES_NAME] = None
         else:
-            quantile_ranges_df = self._get_quantile_ranges()
+            quantile_ranges = self._get_quantile_ranges()
             # currently is not possible to reference a column from another DataFrame
             # and use the expression in the merge subquery
             range_stmt = (
@@ -275,7 +274,7 @@ class QCutOperation:
                 name=self.RANGE_SERIES_NAME,
             )
 
-            df = df.merge(quantile_ranges_df, how='left', on=self.RANGE_SERIES_NAME)
+            df = df.merge(quantile_ranges, how='left', on=self.RANGE_SERIES_NAME)
 
         new_index = {self.series.name: df.all_series[self.series.name]}
         return cast(SeriesFloat64, df.all_series[self.RANGE_SERIES_NAME].copy_override(index=new_index))
