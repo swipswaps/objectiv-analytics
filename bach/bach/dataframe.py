@@ -1,5 +1,6 @@
 import warnings
 from copy import copy
+
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
     cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
@@ -2078,17 +2079,23 @@ class DataFrame:
         **kwargs,
     ):
         """
-        Returns the quantile of all numeric columns.
+        Returns the quantile per numeric/timedelta column.
 
         :param q: value or list of values between 0 and 1.
         :param axis: only ``axis=1`` is supported. This means columns are aggregated.
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
-        from bach.series.series_numeric import SeriesAbstractNumeric
-        df = self
-        if all(not isinstance(s, SeriesAbstractNumeric) for s in df.all_series.values()):
-            raise ValueError('Cannot calculate quantiles for dataframe with no numeric columns.')
+        valid_index = (
+            {s.name: s for s in self._index.values() if hasattr(s, 'quantile')}
+            if self.group_by is None else {}
+        )
+        valid_series = {
+            s.name: s.copy_override(index=valid_index) for s in self._data.values() if hasattr(s, 'quantile')
+        }
+        if not valid_series and not valid_index:
+            raise ValueError('DataFrame has no series supporting "quantile" operation.')
 
+        df = self.copy_override(series=valid_series, index=valid_index)
         if df.group_by is None:
             df = df.groupby()
 
@@ -2099,7 +2106,7 @@ class DataFrame:
             new_series = df._apply_func_to_series(
                 func='quantile',
                 axis=axis,
-                numeric_only=True,
+                numeric_only=False,
                 exclude_non_applied=True,
                 partition=df.group_by,
                 q=qt,
