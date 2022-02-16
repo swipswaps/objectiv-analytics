@@ -75,6 +75,7 @@ def write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> 
 
 
 def make_snowplow_custom_context(event: Dict) -> str:
+
     outer_event = {
         "schema": "iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0",
         "data": [event]
@@ -83,9 +84,9 @@ def make_snowplow_custom_context(event: Dict) -> str:
     return str(base64.b64encode(outer_event_json.encode('UTF-8')), 'UTF-8')
 
 
-def objectiv_event_to_snowplow(event: EventData) -> Dict:
+def objectiv_event_to_snowplow(event: EventData, version='1-0-0') -> Dict:
     return {
-        "schema": "iglu:io.objectiv/taxonomy/jsonschema/1-0-0",
+        "schema": f"iglu:io.objectiv/taxonomy/jsonschema/{version}",
         "data": event
     }
 
@@ -110,23 +111,25 @@ def write_data_to_pubsub(events: EventDataList) -> None:
         }
 
         try:
-            http_context = get_context(event, 'HttpContext')
-        except:
+             http_context = get_context(event, 'HttpContext')
+        except ValueError:
             print(json.dumps(event, indent=4))
             http_context = {
                 'user_agent': ''
             }
+        try:
+            cookie_context = get_context(event, 'CookieIdContext')
+        except ValueError:
+            cookie_context = {}
 
         path_context = get_context(event, 'PathContext')
 
-        try:
-            cookie_context = get_context(event, 'CookieIdContext')
-        except:
-            cookie_context = {'id': None}
+        rich_event = {k: v for k, v in event.items()}
+        rich_event['event_id'] = rich_event['id']
+        del rich_event['id']
+        rich_event['cookie_id'] = cookie_context['id']
 
-        print(cookie_context)
-
-        snowplow_event = objectiv_event_to_snowplow(event)
+        snowplow_event = objectiv_event_to_snowplow(rich_event, '2-0-1')
         snowplow_custom_context = make_snowplow_custom_context(snowplow_event)
         payload["data"].append({
             "e": "se",  # mandatory: event type: structured event
@@ -141,7 +144,7 @@ def write_data_to_pubsub(events: EventDataList) -> None:
             encoding='UTF-8',
             collector='objectiv_collector',
             userAgent=http_context['user_agent'],
-            refererUri=http_context['referer'],
+            refererUri=http_context['referrer'],
             path='/com.snowplowanalytics.snowplow/tp2',
             querystring=None,
             body=json.dumps(payload),
