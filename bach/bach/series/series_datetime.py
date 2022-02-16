@@ -103,8 +103,10 @@ class TimedeltaOperation(DateTimeOperation):
 
     @property
     def total_seconds(self) -> SeriesFloat64:
+        """
+        returns the total amount of seconds in the interval
+        """
         # extract(epoch from source) returns the total number of seconds in the interval
-        #
         expression = Expression.construct(f'extract(epoch from {{}})', self._series)
         return cast(
             SeriesFloat64,
