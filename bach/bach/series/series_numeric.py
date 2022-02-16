@@ -133,43 +133,9 @@ class SeriesAbstractNumeric(Series, ABC):
         In case multiple quantiles are calculated, the resultant series index will have all calculated
         quantiles as index values.
         """
-        quantiles = [q] if isinstance(q, float) else q
-        quantile_results = []
-        for qt in quantiles:
-            if qt < 0 or qt > 1:
-                raise ValueError(f'value {qt} should be between 0 and 1.')
-
-            agg_result = cast(
-                'SeriesFloat64',
-                self._derived_agg_func(
-                    partition=partition,
-                    expression=AggregateFunctionExpression.construct(
-                        f'percentile_cont({qt}) within group (order by {{}})',
-                        self,
-                    ),
-                ),
-            )
-            if len(quantiles) == 1:
-                return agg_result
-
-            quantile_df = agg_result.to_frame()
-            # maps the resultant quantile
-            # a hack in order to avoid calling quantile_df.materialized().
-            # Currently doing quantile['q'] = qt
-            # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-            quantile_df['q'] = agg_result.copy_override(
-                dtype='float64',
-                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
-            )
-            quantile_df.set_index('q', inplace=True)
-            quantile_results.append(quantile_df.all_series[self.name])
-
-        from bach.concat import SeriesConcatOperation
-        final_agg_result = SeriesConcatOperation(
-            objects=quantile_results,
-            ignore_index=False,  # should keep q index since multiple quantiles were calculated
-        )()
-        return cast('SeriesFloat64', final_agg_result)
+        from bach.quantile import calculate_quantiles
+        result = calculate_quantiles(self, partition=partition, q=q)
+        return cast('SeriesFloat64', result)
 
     def var(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
         """
@@ -187,9 +153,9 @@ class SeriesAbstractNumeric(Series, ABC):
 
 class SeriesInt64(SeriesAbstractNumeric):
     dtype = 'int64'
-    dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64)
+    dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64, 'int32')
     supported_db_dtype = 'bigint'
-    supported_value_types = (int, numpy.int64)
+    supported_value_types = (int, numpy.int64, numpy.int32)
 
     # Notes for supported_value_to_literal() and supported_literal_to_expression():
     # A stringified integer is a valid integer or bigint literal, depending on the size. We want to

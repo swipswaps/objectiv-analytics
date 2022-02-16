@@ -1,6 +1,7 @@
 """
 Copyright 2022 Objectiv B.V.
 """
+import datetime
 import numpy as np
 import pandas as pd
 
@@ -67,28 +68,29 @@ def test_df_numerical_describe() -> None:
     )
 
 
-def test_include_categorical_n_numerical() -> None:
+def test_include_mixed() -> None:
     df = get_bt_with_test_data()
     df['inhabitants'] = df['inhabitants'].astype('float64')
-    include_dtypes = ['string', 'float64', 'int64']
+    df['timedelta'] = datetime.timedelta(days=1)
+    include_dtypes = ['string', 'float64', 'int64', 'timedelta']
     result = df.describe(include=include_dtypes)
     result = result.reset_index(drop=False)
 
     expected_df = pd.DataFrame(
         data=[
-            ['count', 3., '3', '3', 3., 3.],
-            ['mean', 2., None, None, 43353.33, 1336.33],
-            ['std', 1., None, None, 46009.97, 103.98],
-            ['min', 1., 'Drylts', 'Leeuwarden', 3055., 1268.],
-            ['max', 3., 'Snits', 'Súdwest-Fryslân', 93485., 1456.],
-            ['nunique', 3., '3', '2', 3., 3.],
-            ['mode', 1., 'Drylts', 'Súdwest-Fryslân', 3055., 1268.],
-            ['0.25', 1.5, None, None, 18287.5, 1276.5],
-            ['0.5', 2., None, None, 33520.,  1285.],
-            ['0.75', 2.5, None, None, 63502.5, 1370.5],
+            ['count', 3., '3', '3', 3., 3., '3'],
+            ['mean', 2., None, None, 43353.33, 1336.33, '1 day'],
+            ['std', 1., None, None, 46009.97, 103.98, None],
+            ['min', 1., 'Drylts', 'Leeuwarden', 3055., 1268., '1 day'],
+            ['max', 3., 'Snits', 'Súdwest-Fryslân', 93485., 1456., '1 day'],
+            ['nunique', 3., '3', '2', 3., 3., '1'],
+            ['mode', 1., 'Drylts', 'Súdwest-Fryslân', 3055., 1268., '1 day'],
+            ['0.25', 1.5, None, None, 18287.5, 1276.5, '1 day'],
+            ['0.5', 2., None, None, 33520.,  1285., '1 day'],
+            ['0.75', 2.5, None, None, 63502.5, 1370.5, '1 day'],
         ],
         columns=[
-            '__stat', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding',
+            '__stat', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding', 'timedelta'
         ],
     )
 

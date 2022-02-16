@@ -207,7 +207,10 @@ class DescribeOperation:
         percentile_df = percentile_df.quantile(q=list(self.percentiles))
         has_q_index = 'q' in percentile_df.all_series
 
-        columns_rename = dict(zip(percentile_df.data_columns, series_to_aggregate))
+        columns_rename = {
+            col: col.replace('_quantile', '')
+            for col in percentile_df.data_columns
+        }
         percentile_df.reset_index(drop=not has_q_index, inplace=True)
 
         if not has_q_index:

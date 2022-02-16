@@ -30,4 +30,4 @@ If you want to contribute to Objectiv or use it as a base for custom development
 ## License
 This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](../LICENSE.md) for details.
 
-Unless otherwise noted, all files © 2021 Objectiv B.V.
+Unless otherwise noted, all files © 2021-2022 Objectiv B.V.
