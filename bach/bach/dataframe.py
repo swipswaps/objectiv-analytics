@@ -1,3 +1,6 @@
+"""
+Copyright 2021 Objectiv B.V.
+"""
 import warnings
 from copy import copy
 
@@ -2245,8 +2248,11 @@ class DataFrame:
         The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
 
         :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
-        :param include: dtypes to be included, if not provided calculations will be based on numerical columns
-        :param exclude: dtypes to be excluded
+        :param include: dtypes to be included.
+            Either a sequence of dtypes, a single dtype, or the special value 'all'.
+            By default calculations will be based on numerical columns, if there are any
+            numerical columns and on all columns if there are no numerical columns.
+        :param exclude: dtypes to be excluded. Either a sequence of dtypes, a single dtype, or None.
         :param datetime_is_numeric: not supported
         :returns: a new DataFrame with the descriptive statistics
         """
