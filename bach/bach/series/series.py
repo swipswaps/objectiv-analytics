@@ -364,7 +364,7 @@ class Series(ABC):
         self: T,
         dtype: Optional[str] = None,
         engine: Optional[Engine] = None,
-        base_node=None,  # TODO: Fix typing for base_node
+        base_node: Optional[BachSqlModel] = None,
         index: Optional[Dict[str, 'Series']] = None,
         name: Optional[str] = None,
         expression: Optional['Expression'] = None,
