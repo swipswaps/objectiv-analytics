@@ -86,26 +86,14 @@ class DescribeOperation:
             include_dtypes = numeric_dtypes or all_dtypes
         elif include == 'all':
             include_dtypes = all_dtypes
-        elif isinstance(include, str):
-            include_dtypes = {include}
-        elif isinstance(include, abc.Sequence) and all(isinstance(item, str) for item in include):
-            include_dtypes = set(include)
         else:
-            raise ValueError(f'Unexpected include value: {include}')
-        # resolve dtype-aliasses to the actual dtype
-        include_dtypes = {get_series_type_from_dtype(dtype).dtype for dtype in include_dtypes}  # type: ignore
+            include_dtypes = DescribeOperation.str_or_sequence_to_dtypes(include)
 
         # process `exclude` parameter
         if exclude is None:
             exclude_dtypes = set()
-        elif isinstance(exclude, str):
-            exclude_dtypes = {exclude}
-        elif isinstance(exclude, abc.Sequence) and all(isinstance(item, str) for item in exclude):
-            exclude_dtypes = set(exclude)
         else:
-            raise ValueError(f'Unexpected exclude value: {exclude}')
-        # resolve dtype-aliasses to the actual dtype
-        exclude_dtypes = {get_series_type_from_dtype(dtype).dtype for dtype in exclude_dtypes}  # type: ignore
+            exclude_dtypes = DescribeOperation.str_or_sequence_to_dtypes(exclude)
 
         # validate combination of `include` and `exclude`
         if include is not None and exclude is not None and (set(include_dtypes) & set(exclude_dtypes)):
@@ -115,6 +103,21 @@ class DescribeOperation:
         # determine series
         final_dtypes = include_dtypes - exclude_dtypes
         return [series.name for series in df.data.values() if series.dtype in final_dtypes]
+
+    @staticmethod
+    def str_or_sequence_to_dtypes(value: Union[str, Sequence[str]]) -> Set[str]:
+        """
+        Given a single dtype (or dtype alias), or a list of dtype (or aliasses), return a set of dtypes.
+        Validates that value has the correct python types, and that the dtypes are valid.
+        """
+        dtypes: Set[str]
+        if isinstance(value, str):
+            dtypes = {value}
+        elif isinstance(value, abc.Sequence) and all(isinstance(item, str) for item in value):
+            dtypes = set(value)
+        else:
+            raise ValueError(f'Unexpected dtype value: {value}')
+        return {get_series_type_from_dtype(dtype).dtype for dtype in dtypes}  # type: ignore
 
     def __call__(self) -> DataFrame:
         """
