@@ -30,6 +30,7 @@ T = TypeVar('T', bound='Series')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
+Scalar = Optional[Union[int, float, str, UUID]]
 
 
 class Series(ABC):
@@ -776,54 +777,94 @@ class Series(ABC):
         )
         return self.copy_override(dtype='bool', expression=expression)
 
-    def fillna(self, other):
+    def fillna(
+        self,
+        *,
+        value: Union[Scalar, 'Series'] = None,
+        method: Optional[str] = None,
+        axis: int = 0,
+        limit: Optional[int] = None,
+        ascending: Optional[Union[bool, List[bool]]] = None,
+    ) -> 'Series':
         """
-        Fill any NULL value with the given constant or other compatible Series
-
+        Fill any NULL value using a specified method either-or a given constant or other compatible Series
         In case a Series is given, the value from the same row is used to fill.
 
-        :param other: The value to replace the NULL values with. Should be a supported
+        :param value: The value to replace the NULL values with. Should be a supported
             type by the series, or a TypeError is raised. Can also be another Series
+
+        :param method: The method to use for replacing NULL values with:
+            - ffill/pad: Propagate the last non-nullable observed value
+            - bfill/backfill: Use the next non-nullable value
+
+        :param axis: Only axis = 0 is supported.
+
+        :param limit: Maximum amount of consecutive NULL value. Not supported
+
+        :param ascending: Required only if filling by a method is requested and series has no sorting applied.
+            By default, the filling will be performed based on sorting by index
+            ascending (True) or descending (False).
+            If this is a list, then `len(ascending) == len(series.index)``.
 
         .. note::
             Pandas replaces numpy.nan values, we can only replace NULL.
 
         .. note::
             You can replace None with None, have fun, forever!
+
+        :return: new series with replaced NULL values
         """
+        if axis:
+            raise ValueError('only axis = 0 is supported.')
+
+        if method not in (None, 'ffill', 'pad', 'bfill', 'backfill'):
+            raise ValueError(f'{method} is not a valid method.')
+
+        if method is not None and ascending is None:
+            raise ValueError(f'ascending parameter is required in order to apply {method} method.')
+
+        series = self.copy()
+        if method in ('ffill', 'pad'):
+            series = self.ffill(ascending=ascending)
+
+        if method in ('bfill', 'backfill'):
+            series = self.bfill(ascending=ascending)
+
+        if value is None:
+            return series
+
+        return self._coalesce(other=value)
+
+    def _coalesce(self, other: Union[Scalar, 'Series']) -> 'Series':
         return self._binary_operation(
-            other=other, operation='fillna', fmt_str='COALESCE({}, {})',
-            other_dtypes=tuple([self.dtype]))
-
-    def ffill(self) -> 'Series':
-        from bach.partitioning import Window
-
-        ffill_df = self.to_frame()
-
-        partition_name = f'__partition_{self.name}'
-        ffill_df[partition_name] = self.copy_override(
-            expression=Expression.construct(f'case when {{}} is null then 0 else 1 end', self),
-            name=partition_name,
-        )
-        if not ffill_df.order_by:
-            ffill_df = ffill_df.sort_index()
-
-        ffill_df[partition_name] = ffill_df.all_series[partition_name].window_sum(
-            window=Window([], order_by=ffill_df.order_by),
+            other=other, operation='fillna', fmt_str='COALESCE({}, {})', other_dtypes=tuple([self.dtype]),
         )
 
-        ffill_df.materialize(inplace=True)
-        ffill_df[self.name] = ffill_df.all_series[self.name].window_first_value(
-            window=Window([ffill_df[partition_name]], order_by=ffill_df.order_by)
-        )
+    def ffill(self, ascending: Union[bool, List[bool]] = True) -> 'Series':
+        """
+        Fill any NULL value by propagating the last non-nullable observed value
 
-        result = ffill_df.all_series[self.name]
+        :param ascending: If series has no sorting applied.
+            By default, the filling will be performed based on sorting by index
+            ascending (True) or descending (False).
+            If this is a list, then `len(ascending) == len(series.index)`
+        """
+        filled_df = self.to_frame()
+        filled_df.fillna(ascending=ascending, inplace=True, method='ffill')
+        return filled_df.all_series[self.name]
 
-        # preserve the original sorting
-        return result.copy_override(sorted_ascending=self.sorted_ascending, index_sorting=self.index_sorting)
+    def bfill(self, ascending: Union[bool, List[bool]] = True) -> 'Series':
+        """
+        Fill any NULL value by using the next non-nullable value
 
-    def bfill(self) -> 'Series':
-        return self.sort_index(ascending=False).ffill()
+        :param ascending: If series has no sorting applied.
+            By default, the filling will be performed based on sorting by index
+            ascending (True) or descending (False).
+            If this is a list, then `len(ascending) == len(series.index)`
+        """
+        filled_df = self.to_frame()
+        filled_df.fillna(ascending=ascending, inplace=True, method='bfill')
+        return filled_df.all_series[self.name]
 
     def _binary_operation(self, other: 'Series', operation: str, fmt_str: str,
                           other_dtypes: Tuple[str, ...] = (),
@@ -1418,7 +1459,7 @@ class Series(ABC):
 
 
 def const_to_series(base: Union[Series, DataFrame],
-                    value: Optional[Union[Series, int, float, str, UUID]],
+                    value: Union[Scalar, Series],
                     name: str = None) -> Series:
     """
     INTERNAL: Take a value and return a Series representing a column with that value.
