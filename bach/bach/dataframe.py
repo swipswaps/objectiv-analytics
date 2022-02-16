@@ -2407,6 +2407,8 @@ class DataFrame:
         keep: Union[str, bool] = 'first',
         inplace: bool = False,
         ignore_index: bool = False,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
     ) -> Optional['DataFrame']:
         """
         Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
@@ -2423,6 +2425,13 @@ class DataFrame:
             If no value is provided, first occurrences will be kept by default.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param ignore_index: if true, drops indexes of the result
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic
+            when keep == "first" or keep == "last". If not provided:
+            1. If dataframe has already an order_by, first and last values will be performed based on it
+            2. Else all series not considered in duplication will be used instead.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `by` must also be a list and ``len(ascending) == len(by)``.
 
         :return: a new dataframe with dropped duplicates if inplace = False, otherwise None.
         """
@@ -2430,12 +2439,18 @@ class DataFrame:
             raise ValueError('keep must be either "first", "last" or False.')
 
         subset = self._get_parsed_subset_of_data_columns(subset)
+        sort_by = self._get_parsed_subset_of_data_columns(sort_by)
+
         df = self.copy()
         if ignore_index:
             df.reset_index(drop=True, inplace=True)
 
         dedup_on = list(subset or self.data_columns)
         dedup_data = [name for name in df.all_series if name not in dedup_on]
+
+        # in case df has no order_by and no sort_by was provided
+        # it will use the series that are not included in dedup_on
+        dedup_sort = list(sort_by or dedup_data) if sort_by or not self.order_by else []
 
         # dedup_data contains index series if ignore_index = False
         # in this case we should append those as data_columns
@@ -2461,6 +2476,8 @@ class DataFrame:
                 func_to_apply = 'window_first_value'
                 end_boundary = WindowFrameBoundary.CURRENT_ROW
 
+            if dedup_sort:
+                df = df.sort_values(by=dedup_sort, ascending=ascending)
             window = df.groupby(by=dedup_on).window(end_boundary=end_boundary, end_value=None)
             agg_series = df[dedup_data]._apply_func_to_series(func=func_to_apply, window=window)
 
