@@ -7,12 +7,12 @@ This package contains automatically tracked `Link` and `NavLink` web components 
 To install the most recent stable version:
 
 ```sh
-yarn add @objectiv/react-router-tracked-components
+yarn add @objectiv/plugin-react-router-tracked-components
 ```
 
 ### or
 ```sh
-npm install @objectiv/react-router-tracked-components
+npm install @objectiv/plugin-react-router-tracked-components
 ```
 
 # Usage

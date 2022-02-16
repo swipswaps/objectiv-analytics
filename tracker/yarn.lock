@@ -802,6 +802,31 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@objectiv/plugin-react-router-tracked-components@workspace:plugins/react-router-tracked-components":
+  version: 0.0.0-use.local
+  resolution: "@objectiv/plugin-react-router-tracked-components@workspace:plugins/react-router-tracked-components"
+  dependencies:
+    "@objectiv/testing-tools": ^0.0.13
+    "@objectiv/tracker-react": ^0.0.13
+    "@testing-library/react": ^12.1.2
+    "@types/jest": ^27.0.3
+    jest: ^27.4.5
+    jest-standard-reporter: ^2.0.0
+    prettier: ^2.5.1
+    react-router-dom: ^6.1
+    shx: ^0.3.3
+    ts-jest: ^27.1.2
+    tsup: ^5.11.13
+    typescript: ^4.5.5
+  peerDependencies:
+    "@objectiv/tracker-core": ^0.0.13
+    "@objectiv/tracker-react": ^0.0.13
+    react: ">=16.8"
+    react-dom: ">=16.8"
+    react-router-dom: ^6.1
+  languageName: unknown
+  linkType: soft
+
 "@objectiv/plugin-root-location-context-from-url@^0.0.13, @objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url"
@@ -837,29 +862,6 @@ __metadata:
     ts-jest: ^27.1.2
     tsup: ^5.11.13
     typescript: ^4.5.5
-  languageName: unknown
-  linkType: soft
-
-"@objectiv/react-router-tracked-components@workspace:plugins/react-router-tracked-components":
-  version: 0.0.0-use.local
-  resolution: "@objectiv/react-router-tracked-components@workspace:plugins/react-router-tracked-components"
-  dependencies:
-    "@objectiv/testing-tools": ^0.0.13
-    "@objectiv/tracker-react": ^0.0.13
-    "@testing-library/react": ^12.1.2
-    "@types/jest": ^27.0.3
-    jest: ^27.4.5
-    jest-standard-reporter: ^2.0.0
-    prettier: ^2.5.1
-    react-router-dom: ^6.1
-    shx: ^0.3.3
-    ts-jest: ^27.1.2
-    tsup: ^5.11.13
-    typescript: ^4.5.5
-  peerDependencies:
-    "@objectiv/tracker-core": ^0.0.13
-    "@objectiv/tracker-react": ^0.0.13
-    react-router-dom: ^6.1
   languageName: unknown
   linkType: soft
 
