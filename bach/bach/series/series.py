@@ -25,10 +25,8 @@ from sql_models.constants import NotSet, not_set
 if TYPE_CHECKING:
     from bach.partitioning import GroupBy, Window
     from bach.series import SeriesBoolean
-    from sql_models.model import SqlModel
 
 T = TypeVar('T', bound='Series')
-TSqlModel = TypeVar('TSqlModel', bound='SqlModel')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
@@ -121,20 +119,6 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
-
-    def _update_self_from_series(self, series: 'Series') -> 'Series':
-        """
-        INTERNAL: Modify self by copying all properties of 'df' to self. Returns self.
-        """
-        self._engine = series._engine
-        self._base_node = series._base_node
-        self._index = series._index.copy()
-        self._name = series._name
-        self._expression = series._expression
-        self._group_by = series._group_by
-        self._sorted_ascending = series._sorted_ascending
-        self._index_sorting = series._index_sorting
-        return self
 
     @property
     @classmethod
@@ -380,7 +364,7 @@ class Series(ABC):
         self: T,
         dtype: Optional[str] = None,
         engine: Optional[Engine] = None,
-        base_node: Optional[TSqlModel] = None,
+        base_node: Optional[BachSqlModel] = None,
         index: Optional[Dict[str, 'Series']] = None,
         name: Optional[str] = None,
         expression: Optional['Expression'] = None,
@@ -1359,11 +1343,7 @@ class Series(ABC):
         )()
         return describe_df.all_series[self.name]
 
-    def drop_duplicates(
-        self,
-        keep: Union[str, bool] = 'first',
-        inplace: bool = False,
-    ) -> Optional['Series']:
+    def drop_duplicates(self: T, keep: Union[str, bool] = 'first') -> T:
         """
         Return a series with duplicated rows removed.
 
@@ -1374,20 +1354,15 @@ class Series(ABC):
             * False: drops all duplicates
 
             If no value is provided, first occurrences will be kept by default.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
-        :return: a new series with dropped duplicates if inplace = False, otherwise None.
+        :return: a new series with dropped duplicates
         """
         df = self.to_frame().drop_duplicates(keep=keep)
         assert isinstance(df, DataFrame)
         df.materialize(inplace=True)
 
         result = df.all_series[self.name]
-        if not inplace:
-            return result
-
-        self._update_self_from_series(result)
-        return None
+        return cast(T, result)
 
     def dropna(self: T) -> T:
         """
