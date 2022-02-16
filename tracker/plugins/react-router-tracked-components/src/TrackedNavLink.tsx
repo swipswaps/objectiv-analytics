@@ -3,11 +3,14 @@
  */
 
 import { getLocationPath } from '@objectiv/tracker-core';
-import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react';
+import {
+  LinkContextWrapper,
+  makeAnchorClickHandler,
+  makeIdFromTrackedAnchorProps,
+  useLocationStack,
+} from '@objectiv/tracker-react';
 import React from 'react';
 import { NavLink, NavLinkProps, useHref } from 'react-router-dom';
-import { makeAnchorClickHandler } from './makeAnchorClickHandler';
-import { makeIdFromTrackedAnchorProps } from './makeIdFromTrackedAnchorProps';
 import { ReactRouterTrackingOptionsProp } from './types';
 
 /**
@@ -47,7 +50,7 @@ export const TrackedNavLink = React.forwardRef<HTMLAnchorElement, TrackedNavLink
           onClick={makeAnchorClickHandler({
             trackingContext,
             anchorHref: linkContextHref,
-            external: props.reloadDocument,
+            waitUntilTracked: props.reloadDocument,
             onClick: props.onClick,
           })}
         >

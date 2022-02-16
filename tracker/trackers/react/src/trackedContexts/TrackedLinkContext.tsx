@@ -4,8 +4,8 @@
 
 import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
 import React from 'react';
+import { makeAnchorClickHandler } from '../common/factories/makeAnchorClickHandler';
 import { makeTitleFromChildren } from '../common/factories/makeTitleFromChildren';
-import { trackPressEvent } from '../eventTrackers/trackPressEvent';
 import { useLocationStack } from '../hooks/consumers/useLocationStack';
 import { LinkContextWrapper } from '../locationWrappers/LinkContextWrapper';
 import { TrackedPressableContextProps } from '../types';
@@ -72,35 +72,12 @@ export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkConte
       {(trackingContext) =>
         React.createElement(Component, {
           ...componentProps,
-          onClick: async (event) => {
-            if (!waitUntilTracked) {
-              // Track PressEvent: non-blocking.
-              trackPressEvent(trackingContext);
-
-              // Execute onClick prop, if any.
-              props.onClick && props.onClick(event);
-            } else {
-              // Prevent event from being handled by the user agent.
-              event.preventDefault();
-
-              // Track PressEvent: best-effort blocking.
-              await trackPressEvent({
-                ...trackingContext,
-                options: {
-                  // Best-effort: wait for Queue to be empty. Times out to max 1s on very slow networks.
-                  waitForQueue: true,
-                  // Regardless whether waiting resulted in PressEvent being tracked, flush the Queue.
-                  flushQueue: true,
-                },
-              });
-
-              // Execute onClick prop, if any.
-              props.onClick && props.onClick(event);
-
-              // Resume navigation.
-              window.location.href = href;
-            }
-          },
+          onClick: makeAnchorClickHandler({
+            trackingContext,
+            anchorHref: href,
+            waitUntilTracked: props.waitUntilTracked,
+            onClick: props.onClick,
+          }),
         })
       }
     </LinkContextWrapper>

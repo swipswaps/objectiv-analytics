@@ -2,14 +2,14 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackingContext, trackPressEvent } from '@objectiv/tracker-react';
 import React from 'react';
+import { trackPressEvent } from '../../eventTrackers/trackPressEvent';
+import { TrackingContext } from '../providers/TrackingContext';
 
 /**
- * TODO: move to React Tracker
  * Anchor click handler factory parameters
  */
-type AnchorClickHandlerParameters = {
+export type AnchorClickHandlerParameters = {
   /**
    * TrackingContext can be retrieved either from LocationWrapper render-props or via useTrackingContext.
    */
@@ -23,7 +23,7 @@ type AnchorClickHandlerParameters = {
   /**
    * If `true` the handler will cancel the given Event, wait until tracked (best-effort) and then resume navigation.
    */
-  external?: boolean;
+  waitUntilTracked?: boolean;
 
   /**
    * Custom onClick handler that may have been passed to the Tracked Component. Will be invoked after tracking.
@@ -32,12 +32,11 @@ type AnchorClickHandlerParameters = {
 };
 
 /**
- * TODO: move to React Tracker
  * Anchor click handler factory
  */
 export const makeAnchorClickHandler =
   (props: AnchorClickHandlerParameters) => async (event: React.MouseEvent<HTMLAnchorElement>) => {
-    if (!props.external) {
+    if (!props.waitUntilTracked) {
       // Track PressEvent: non-blocking.
       trackPressEvent(props.trackingContext);
 

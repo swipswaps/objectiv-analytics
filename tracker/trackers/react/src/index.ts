@@ -2,11 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+export * from './common/factories/makeAnchorClickHandler';
 export * from './common/factories/makeContentContext';
 export * from './common/factories/makeDefaultPluginsList';
 export * from './common/factories/makeDefaultQueue';
 export * from './common/factories/makeDefaultTransport';
 export * from './common/factories/makeExpandableContext';
+export * from './common/factories/makeIdFromTrackedAnchorProps';
 export * from './common/factories/makeInputContext';
 export * from './common/factories/makeLinkContext';
 export * from './common/factories/makeLocationContext';
