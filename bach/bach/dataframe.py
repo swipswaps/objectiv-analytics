@@ -1,5 +1,6 @@
 import warnings
 from copy import copy
+
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
     cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
@@ -2134,7 +2135,6 @@ class DataFrame:
         result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
         # q column should be in the index when calculating multiple quantiles
         return result.set_index('q')
-
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """

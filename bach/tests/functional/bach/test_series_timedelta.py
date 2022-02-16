@@ -148,6 +148,17 @@ def test_timedelta_dt_properties() -> None:
         check_names=False,
     )
 
+    properties_df['total_seconds'] = df['diff'].dt.total_seconds
+
+    expected_data = [
+        [1., 41103., 220000., 127503.22],
+        [0., 81374., 330000., 81374.33],
+        [-1., 77103., 220000., -9296.78],
+    ]
+    np.testing.assert_equal(
+        expected_data, properties_df.sort_index().to_numpy()
+    )
+
 
 def test_timedelta_dt_components() -> None:
     pdf = pd.DataFrame(

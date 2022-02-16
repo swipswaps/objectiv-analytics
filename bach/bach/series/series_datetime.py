@@ -3,6 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 from abc import ABC
+from enum import Enum
 from typing import Union, cast, List
 
 import numpy
@@ -13,6 +14,15 @@ from bach.expression import Expression
 from bach.series.series import WrappedPartition
 
 _SECONDS_IN_DAY = 24 * 60 * 60
+
+
+class DatePartFormats(Enum):
+    DAYS = 'DD'
+    HOURS = 'HH24'
+    MINUTES = 'MI'
+    SECONDS = 'SS'
+    MILLISECONDS = 'MS'
+    MICROSECONDS = 'US'
 
 
 class DateTimeOperation:
@@ -42,50 +52,63 @@ class DateTimeOperation:
         return str_series
 
 
-class TimeDeltaOperation(DateTimeOperation):
+class TimedeltaOperation(DateTimeOperation):
     @property
     def components(self) -> DataFrame:
-        formats = {
-            'days': 'DD',
-            'hours': 'HH24',
-            'minutes': 'MI',
-            'seconds': 'SS',
-            'milliseconds': 'MS',
-            'microseconds': 'US',
-        }
-        return self._series.to_frame().copy_override(
-            series={
-                date_part: self.sql_format(f).astype('int64').copy_override(name=date_part)
-                for date_part, f in formats.items()
-            }
-        )
+        """
+        :returns: a DataFrame containing all date parts from the timedelta.
+
+        .. note::
+            The dataframe contains only the displayed values of the timedelta.
+        """
+        component_series = {}
+        for date_part in DatePartFormats:
+            component_name = date_part.name.lower()
+            component_series[component_name] = (
+                self.sql_format(date_part.value).astype('int64').copy_override(name=component_name)
+            )
+        return self._series.to_frame().copy_override(series=component_series)
 
     @property
     def days(self) -> SeriesInt64:
-        day_series = self._get_epoch() // _SECONDS_IN_DAY
+        """
+        converts total seconds into days and returns only the integral part of the result
+        """
+        day_series = self.total_seconds // _SECONDS_IN_DAY
 
         day_series = day_series.astype('int64')
         return cast(SeriesInt64, day_series.copy_override(name='days'))
 
     @property
     def seconds(self) -> SeriesInt64:
-        seconds_series = (self._get_epoch() % _SECONDS_IN_DAY) // 1
+        """
+        removes days from total seconds (self.total_seconds % _SECONDS_IN_DAY)
+        and returns only the integral part of the result
+        """
+        seconds_series = (self.total_seconds % _SECONDS_IN_DAY) // 1
 
         seconds_series = seconds_series.astype('int64')
         return cast(SeriesInt64, seconds_series.copy_override(name='seconds'))
 
     @property
     def microseconds(self) -> SeriesInt64:
-        microseconds_series = (self._get_epoch() % 1) % 1 * 10**6
+        """
+        considers only the fractional part of the total seconds and converts it into microseconds
+        """
+        microseconds_series = (self.total_seconds % 1) * 10 ** 6
         microseconds_series //= 1
 
         microseconds_series = microseconds_series.astype('int64')
         return cast(SeriesInt64, microseconds_series.copy_override(name='microseconds'))
 
-    def _get_epoch(self) -> SeriesFloat64:
+    @property
+    def total_seconds(self) -> SeriesFloat64:
+        # extract(epoch from source) returns the total number of seconds in the interval
+        #
         expression = Expression.construct(f'extract(epoch from {{}})', self._series)
         return cast(
-            SeriesFloat64, self._series.copy_override(name='epoch', expression=expression, dtype='float64'),
+            SeriesFloat64,
+            self._series.copy_override(name='total_seconds', expression=expression, dtype='float64'),
         )
 
 
@@ -334,7 +357,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             :members:
 
         """
-        return TimeDeltaOperation(self)
+        return TimedeltaOperation(self)
 
     def sum(self, partition: WrappedPartition = None,
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':
