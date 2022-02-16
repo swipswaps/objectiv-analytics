@@ -2,10 +2,10 @@ from copy import copy
 from enum import Enum
 from typing import List, Dict, Optional, cast, TypeVar
 
-from bach.series import Series, SeriesInt64
+from bach.series import Series
 from bach.expression import Expression, WindowFunctionExpression
 from bach.dataframe import SortColumn
-from sql_models.model import SqlModel
+from bach.sql_model import BachSqlModel
 
 G = TypeVar('G', bound='GroupBy')
 
@@ -102,7 +102,7 @@ class GroupBy:
     def index(self) -> Dict[str, Series]:
         return copy(self._index)
 
-    def copy_override_base_node(self: G, base_node: SqlModel) -> G:
+    def copy_override_base_node(self: G, base_node: BachSqlModel) -> G:
         new_cols = [col.copy_override(base_node=base_node) for col in self.index.values()]
         return self.__class__(group_by_columns=new_cols)
 
@@ -163,9 +163,14 @@ class GroupingList(GroupBy):
         super().__init__(group_by_columns=list(group_by_columns.values()))
 
     def get_group_by_column_expression(self) -> Optional[Expression]:
-        # help mypy, our parent always returns an Expression
-        grouping_expr_list = [cast(Expression, g.get_group_by_column_expression())
-                              for g in self._grouping_list]
+        grouping_optional_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
+
+        # Ensure that there are no None expressions in the list. If there are that's a bug, and we are
+        # okay with breaking here. Without the cast mypy will complain as construct doesn't accept Nones
+        if None in grouping_optional_expr_list:
+            raise Exception(f'Result of get_group_by_column_expression() calls contains None, unexpected.')
+        grouping_expr_list = cast(List[Expression], grouping_optional_expr_list)
+
         fmtstr = ', '.join(["{}"] * len(grouping_expr_list))
         return Expression.construct(fmtstr, *grouping_expr_list)
 
@@ -175,8 +180,15 @@ class GroupingSet(GroupingList):
     Abstraction to support SQLs
     GROUP BY GROUPING SETS ((colA,colB),(ColA),(ColC))
     """
-    def get_group_by_column_expression(self):
-        grouping_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
+    def get_group_by_column_expression(self) -> Optional[Expression]:
+        grouping_optional_expr_list = [g.get_group_by_column_expression() for g in self._grouping_list]
+
+        # Ensure that there are no None expressions in the list. If there are that's a bug, and we are
+        # okay with breaking here. Without the cast mypy will complain as construct doesn't accept Nones
+        if None in grouping_optional_expr_list:
+            raise Exception(f'Result of get_group_by_column_expression() calls contains None, unexpected.')
+        grouping_expr_list = cast(List[Expression], grouping_optional_expr_list)
+
         fmtstr = ', '.join(["{}"] * len(grouping_expr_list))
         fmtstr = f'grouping sets ({fmtstr})'
         return Expression.construct(fmtstr, *grouping_expr_list)

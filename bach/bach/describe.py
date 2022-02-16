@@ -5,7 +5,7 @@ from typing import Optional, Union, Sequence, List, Type, Tuple
 
 from bach import (
     DataFrame, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries,
-    get_series_type_from_dtype, SeriesAbstractDateTime,
+    get_series_type_from_dtype, SeriesAbstractDateTime, SeriesBoolean,
 )
 from bach.concat import DataFrameConcatOperation
 from bach.expression import Expression
@@ -21,9 +21,8 @@ class SupportedStats(Enum):
     MODE = 'mode'
 
 
-# TODO: Remove this constant when boolean aggregations bug (min, max) is fixed.
 _SUPPORTED_SERIES_TYPES: Tuple[Type, ...] = (
-    SeriesAbstractNumeric, SeriesString, SeriesAbstractDateTime,
+    SeriesAbstractNumeric, SeriesString, SeriesAbstractDateTime, SeriesBoolean
 )
 
 
