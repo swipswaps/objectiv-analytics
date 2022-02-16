@@ -1,5 +1,5 @@
 """
-Copyright 2021-2022 Objectiv B.V.
+Copyright 2022 Objectiv B.V.
 """
 import pytest
 
@@ -45,7 +45,7 @@ def test_include_exclude() -> None:
     assert obj.series_to_describe == ['a', 'b', 'c', 'd']
     obj = DescribeOperation(
         obj=df,
-        include=None,
+        include=None,  # default to numeric
         exclude=(),
         datetime_is_numeric=False,
         percentiles=None,
@@ -61,8 +61,24 @@ def test_include_exclude() -> None:
     assert obj.series_to_describe == ['a', 'd']
     obj = DescribeOperation(
         obj=df,
+        include='json',
+        exclude=(),
+        datetime_is_numeric=False,
+        percentiles=None,
+    )
+    assert obj.series_to_describe == ['a']
+    obj = DescribeOperation(
+        obj=df,
         include=None,
         exclude=['float64'],
+        datetime_is_numeric=False,
+        percentiles=None,
+    )
+    assert obj.series_to_describe == ['b']
+    obj = DescribeOperation(
+        obj=df,
+        include=None,
+        exclude='float64',
         datetime_is_numeric=False,
         percentiles=None,
     )

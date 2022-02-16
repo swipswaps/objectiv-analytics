@@ -1,5 +1,5 @@
 """
-Copyright 2021-2022 Objectiv B.V.
+Copyright 2021 Objectiv B.V.
 """
 import json
 from typing import Optional, Dict, Union, TYPE_CHECKING, List
