@@ -63,8 +63,9 @@ class DescribeOperation:
         if self.percentiles and any(pt < 0 or pt > 1 for pt in self.percentiles):
             raise ValueError('percentiles should be between 0 and 1.')
 
-    @staticmethod
+    @classmethod
     def determine_series_to_describe(
+        cls,
         df: DataFrame,
         include: Optional[Union[str, Sequence[str]]],
         exclude: Optional[Union[str, Sequence[str]]],
@@ -87,13 +88,13 @@ class DescribeOperation:
         elif include == 'all':
             include_dtypes = all_dtypes
         else:
-            include_dtypes = DescribeOperation.str_or_sequence_to_dtypes(include)
+            include_dtypes = cls.str_or_sequence_to_dtypes(include)
 
         # process `exclude` parameter
         if exclude is None:
             exclude_dtypes = set()
         else:
-            exclude_dtypes = DescribeOperation.str_or_sequence_to_dtypes(exclude)
+            exclude_dtypes = cls.str_or_sequence_to_dtypes(exclude)
 
         # validate combination of `include` and `exclude`
         if include is not None and exclude is not None and (set(include_dtypes) & set(exclude_dtypes)):
