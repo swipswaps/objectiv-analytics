@@ -2,10 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
+import { getLocationPath } from '@objectiv/tracker-core';
 import React from 'react';
 import { makeAnchorClickHandler } from '../common/factories/makeAnchorClickHandler';
-import { makeTitleFromChildren } from '../common/factories/makeTitleFromChildren';
+import { makeIdFromTrackedAnchorProps } from '../common/factories/makeIdFromTrackedAnchorProps';
 import { useLocationStack } from '../hooks/consumers/useLocationStack';
 import { LinkContextWrapper } from '../locationWrappers/LinkContextWrapper';
 import { TrackedPressableContextProps } from '../types';
@@ -47,9 +47,7 @@ export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkConte
     ...otherProps
   } = props;
 
-  const linkTitle = title ?? makeTitleFromChildren(props.children);
-
-  const linkId = id ?? makeIdFromString(linkTitle);
+  const linkId = makeIdFromTrackedAnchorProps(props);
 
   const componentProps = {
     ...otherProps,
