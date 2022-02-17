@@ -34,7 +34,8 @@ WrappedWindow = Union['Window', 'DataFrame']
 
 class Series(ABC):
     """
-    A Series that represents the generic type and its specific operations
+    Series is an abstract class. An instance of Series represents a column of data. Specific subclasses are
+    used to represent specific types of data and enable operations on that data.
 
     It can be used as a separate object to just deal with a single list of values. There are many standard
     operations on Series available to do operations like add or subtract, to create aggregations like
@@ -59,6 +60,15 @@ class Series(ABC):
     # The attributes of this class are either immutable, or this class is guaranteed not
     # to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
     # and is shared with other Series and DataFrames that can change it's state.
+
+    dtype: str = ''
+    """
+    The dtype of this Series. Must be overridden by subclasses.
+
+    The dtype is used to uniquely identify data of the type that is
+    represented by this Series subclass. The dtype must be unique among all Series subclasses.
+    """
+
     def __init__(self,
                  engine,
                  base_node: BachSqlModel,
@@ -98,6 +108,19 @@ class Series(ABC):
         :param index_sorting: list of bools indicating whether to sort ascending/descending on the different
             columns of the index. Empty list for no sorting on index.
         """
+        # Series is an abstract class, besides the abstractmethods, subclasses MUST override the 'dtype'
+        # class property. Unfortunately defining dtype as an "abstract-classmethod-property" makes it hard
+        # to understand for mypy, sphinx, and python. Therefore we check here that we are instantiating a
+        # proper subclass, instead of just relying on @abstractmethod.
+        # related links:
+        # https://github.com/python/mypy/issues/8532#issuecomment-600132991
+        # https://github.com/python/mypy/issues/11619 https://bugs.python.org/issue45356
+        if self.__class__ == Series:
+            raise TypeError("Cannot instantiate Series directly. Instantiate a subclass.")
+        if self.dtype == '':
+            raise NotImplementedError("Series subclasses must override `dtype` class property")
+        # End of Abstract-class check
+
         if index == {} and group_by and group_by.index != {}:
             # not a completely watertight check, because a group_by on {} is valid.
             raise ValueError(f'Index Series should be free of pending aggregation.')
@@ -119,19 +142,6 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
-
-    @property
-    @classmethod
-    @abstractmethod
-    def dtype(cls) -> str:
-        """
-        The dtype of this Series.
-
-        The dtype is used to uniquely identify data of the type that is
-        represented by this Series subclass. The dtype should be unique among all Series
-        subclasses.
-        """
-        raise NotImplementedError()
 
     @property
     @classmethod
@@ -1314,7 +1324,7 @@ class Series(ABC):
 
         :return:  a new series with all rows from appended other or self if other is empty.
         """
-        from bach.concat import SeriesConcatOperation
+        from bach.operations.concat import SeriesConcatOperation
         if not other:
             return self
 
@@ -1337,7 +1347,7 @@ class Series(ABC):
         :param datetime_is_numeric: not supported
         :returns: a new Series with the descriptive statistics
         """
-        from bach.describe import DescribeOperation
+        from bach.operations.describe import DescribeOperation
         describe_df = DescribeOperation(
             obj=self, datetime_is_numeric=datetime_is_numeric, percentiles=percentiles,
         )()
@@ -1373,6 +1383,55 @@ class Series(ABC):
         df = self.to_frame().dropna()
         assert isinstance(df, DataFrame)
         return cast(T, df.all_series[self.name])
+
+    def value_counts(
+        self,
+        normalize: bool = False,
+        sort: bool = True,
+        ascending: bool = False,
+        bins: Optional[int] = None,
+    ) -> 'Series':
+        """
+        Returns a series containing counts per unique value
+
+        :param normalize: returns proportions instead of frequencies
+        :param sort: sorts result by frequencies
+        :param ascending: sorts values in ascending order if true.
+        :param bins: works only with numeric series, groups values into the request amount of bins
+            and counts values based on each range.
+
+        :return: a series containing all counts per unique row.
+        """
+        from bach.series.series_numeric import SeriesAbstractNumeric
+        if bins and not isinstance(self, SeriesAbstractNumeric):
+            raise ValueError('Cannot calculate bins for non numeric series.')
+
+        if not bins:
+            return self.to_frame().value_counts(normalize=normalize, sort=sort, ascending=ascending)
+
+        from bach.operations.cut import CutOperation
+        assert isinstance(self, SeriesAbstractNumeric)
+        bins_series = CutOperation(series=self, bins=bins, include_empty_bins=True)()
+
+        bins_df = bins_series.to_frame()
+        bins_w_values_df = bins_df[bins_series.index[self.name].notnull()]
+        empty_bins_df = bins_df[bins_series.index[self.name].isnull()]
+
+        # count only the bins that actually have value in the series
+        # sort is not needed since final result is sorted after appending empty bins
+        value_counts_result = bins_w_values_df.value_counts(normalize=normalize, sort=False)
+
+        assert isinstance(empty_bins_df, DataFrame)
+        empty_bins_df['value_counts'] = 0
+        empty_bins_df.set_index(CutOperation.RANGE_SERIES_NAME, inplace=True)
+
+        # append empty bins with count 0, final result must show those ranges
+        result = value_counts_result.append(empty_bins_df.all_series['value_counts'])
+        result = result.copy_override(name='value_counts')
+        if sort:
+            return result.sort_values(ascending=ascending)
+
+        return result
 
 
 def const_to_series(base: Union[Series, DataFrame],

@@ -2,12 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
+import { getLocationPath } from '@objectiv/tracker-core';
 import React from 'react';
-import { executeOnce } from '../common/executeOnce';
-import { makeTitleFromChildren } from '../common/factories/makeTitleFromChildren';
-import { TrackingContext } from '../common/providers/TrackingContext';
-import { trackPressEventHandler } from '../common/trackPressEventHandler';
+import { makeAnchorClickHandler } from '../common/factories/makeAnchorClickHandler';
+import { makeIdFromTrackedAnchorProps } from '../common/factories/makeIdFromTrackedAnchorProps';
 import { useLocationStack } from '../hooks/consumers/useLocationStack';
 import { LinkContextWrapper } from '../locationWrappers/LinkContextWrapper';
 import { TrackedPressableContextProps } from '../types';
@@ -25,6 +23,11 @@ export type TrackedLinkContextProps = TrackedPressableContextProps & {
    * Whether to forward the given href to the given Component.
    */
   forwardHref?: boolean;
+
+  /**
+   * Whether to block and wait for the Tracker having sent the event. Eg: a button redirecting to a new location.
+   */
+  waitUntilTracked?: boolean;
 };
 
 /**
@@ -44,9 +47,7 @@ export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkConte
     ...otherProps
   } = props;
 
-  const linkTitle = title ?? makeTitleFromChildren(props.children);
-
-  const linkId = id ?? makeIdFromString(linkTitle);
+  const linkId = makeIdFromTrackedAnchorProps(props);
 
   const componentProps = {
     ...otherProps,
@@ -56,27 +57,25 @@ export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkConte
     ...(forwardHref ? { href } : {}),
   };
 
+  const locationPath = getLocationPath(useLocationStack());
   if (!linkId) {
-    const locationPath = getLocationPath(useLocationStack());
     console.error(
       `｢objectiv｣ Could not generate a valid id for LinkContext @ ${locationPath}. Please provide either the \`title\` or the \`id\` property manually.`
     );
     return React.createElement(Component, componentProps);
   }
 
-  const handleClick = executeOnce(
-    async (event: React.MouseEvent<HTMLElement, MouseEvent>, trackingContext: TrackingContext) => {
-      await trackPressEventHandler(event, trackingContext, waitUntilTracked);
-      props.onClick && props.onClick(event);
-    }
-  );
-
   return (
     <LinkContextWrapper id={linkId} href={href}>
       {(trackingContext) =>
         React.createElement(Component, {
           ...componentProps,
-          onClick: (event) => handleClick(event, trackingContext),
+          onClick: makeAnchorClickHandler({
+            trackingContext,
+            anchorHref: href,
+            waitUntilTracked: props.waitUntilTracked,
+            onClick: props.onClick,
+          }),
         })
       }
     </LinkContextWrapper>

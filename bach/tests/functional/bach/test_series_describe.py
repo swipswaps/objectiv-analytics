@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 
 from bach import Series
-from bach.describe import SupportedStats
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, get_from_df
 
 
