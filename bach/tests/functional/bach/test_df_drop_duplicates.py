@@ -209,6 +209,42 @@ def test_df_drop_all_duplicates() -> None:
     )
 
 
+def test_drop_duplicates_w_sorting() -> None:
+    pdf = pd.DataFrame(
+        data={
+            'a': [1, 1, 1, 3, 4, 1, 1],
+            'b': ['a', 'b', 'b', 'c', 'd', 'a', 'a'],
+            'c': [1, 1, 2, 1, 1, 1, 2],
+            'd': ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
+        },
+    )
+
+    df = get_from_df('drop_dup_table', pdf)
+    result = df.drop_duplicates(subset=['a', 'b'], sort_by=['c'], ascending=False)
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0', 'a', 'b', 'c', 'd'],
+        expected_data=[
+            [2, 1, 'b', 2, 'c'],
+            [3, 3, 'c', 1, 'd'],
+            [4, 4, 'd', 1, 'e'],
+            [6, 1, 'a', 2, 'g'],
+        ],
+    )
+
+    result2 = df.sort_values(by='d').drop_duplicates(subset=['a', 'b'])
+    assert_equals_data(
+        result2.sort_index(),
+        expected_columns=['_index_0', 'a', 'b', 'c', 'd'],
+        expected_data=[
+            [0, 1, 'a', 1, 'a'],
+            [1, 1, 'b', 1, 'b'],
+            [3, 3, 'c', 1, 'd'],
+            [4, 4, 'd', 1, 'e'],
+        ],
+    )
+
 def test_errors_drop_duplicates() -> None:
     pdf = pd.DataFrame(
         data={

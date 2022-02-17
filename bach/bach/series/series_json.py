@@ -6,6 +6,7 @@ from typing import Optional, Dict, Union, TYPE_CHECKING, List
 
 from bach.series import Series
 from bach.expression import Expression
+from bach.series.series import WrappedPartition
 from bach.sql_model import BachSqlModel
 from sql_models.util import quote_string
 
@@ -276,6 +277,12 @@ class SeriesJsonb(Series):
 
     def __ge__(self, other) -> 'SeriesBoolean':
         return self._comparator_operation(other, "@>")
+
+    def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        raise NotImplementedError()
+
+    def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        raise NotImplementedError()
 
 
 class SeriesJson(SeriesJsonb):

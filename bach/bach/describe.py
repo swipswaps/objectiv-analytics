@@ -1,12 +1,11 @@
-import itertools
-from collections import defaultdict
+"""
+Copyright 2022 Objectiv B.V.
+"""
+from collections import abc
 from enum import Enum
-from typing import Optional, Union, Sequence, List, Type, Tuple
+from typing import Optional, Union, Sequence, List, Set
 
-from bach import (
-    DataFrame, SeriesString, SeriesAbstractNumeric, DataFrameOrSeries,
-    get_series_type_from_dtype, SeriesAbstractDateTime,
-)
+from bach import DataFrame, SeriesAbstractNumeric, DataFrameOrSeries, get_series_type_from_dtype
 from bach.concat import DataFrameConcatOperation
 from bach.expression import Expression
 
@@ -21,42 +20,23 @@ class SupportedStats(Enum):
     MODE = 'mode'
 
 
-# TODO: Remove this constant when boolean aggregations bug (min, max) is fixed.
-_SUPPORTED_SERIES_TYPES: Tuple[Type, ...] = (
-    SeriesAbstractNumeric, SeriesString, SeriesAbstractDateTime,
-)
-
-
-def _get_casted_filtering_dtypes(
-    filtering_dtypes: Optional[Union[str, Sequence[str]]],
-) -> Tuple[Type, ...]:
-    """    returns a tuple containing the series type of each dtype
-    """
-    if not filtering_dtypes:
-        return tuple()
-
-    if filtering_dtypes == 'all':
-        return _SUPPORTED_SERIES_TYPES
-
-    filtering_dtypes = filtering_dtypes if not isinstance(filtering_dtypes, str) else [filtering_dtypes]
-    return tuple(get_series_type_from_dtype(dtype) for dtype in filtering_dtypes)
-
-
 class DescribeOperation:
     """
+    Class that can describe a DataFrame or Series. To use: first instantiate this class, then call the
+    instantiated object as a function, e.g. `df_described = DescribeOperation(obj=data_frame)()`
+
     In order to instantiate this class you should provide the following params:
     obj: a DataFrame or Series to be described. If a series is give, it will be transformed into a DataFrame
-    include: A dtype or list of dtypes to be described. If nothing is provided,
-    only numerical series will be considered
-    exclude: A dtype or list of dtype to be excluded from analysis.
-    datetime_is_numeric: A boolean specifying if datetime series
-    should be treated as numeric columns (not supported)
-    percentiles: List-like of numbers between 0-1. If nothing is provided,
-    default [.25, .5, .75] will be calculated
+    include: A dtype or list of dtypes to be described. Will default to all numerical series if there are
+        numerical series, and in case there are no numerical series this will default to all series.
+    exclude: A dtype or list of dtype to be excluded from analysis. Should not overlap with include if
+        include is specifed.
+    datetime_is_numeric: A boolean specifying if datetime series should be treated as numeric columns
+        (not supported)
+    percentiles: List-like of numbers between 0-1. If nothing is provided, defaults to [.25, .5, .75]
     """
     df: DataFrame
-    include: Tuple[Type, ...]
-    exclude: Tuple[Type, ...]
+    series_to_describe: List[str]
     datetime_is_numeric: bool
     percentiles: Sequence[float]
 
@@ -75,8 +55,7 @@ class DescribeOperation:
         if not self.df.data:
             raise ValueError('Cannot describe a Dataframe without columns')
 
-        self.include = _get_casted_filtering_dtypes(include)
-        self.exclude = _get_casted_filtering_dtypes(exclude)
+        self.series_to_describe = self.determine_series_to_describe(self.df, include, exclude)
 
         self.datetime_is_numeric = datetime_is_numeric
         self.percentiles = percentiles or [0.25, 0.5, 0.75]
@@ -84,12 +63,69 @@ class DescribeOperation:
         if self.percentiles and any(pt < 0 or pt > 1 for pt in self.percentiles):
             raise ValueError('percentiles should be between 0 and 1.')
 
+    @classmethod
+    def determine_series_to_describe(
+        cls,
+        df: DataFrame,
+        include: Optional[Union[str, Sequence[str]]],
+        exclude: Optional[Union[str, Sequence[str]]],
+    ) -> List[str]:
+        """
+        Process the include and exclude parameters and determine which series of the dataframe should be
+        described.
+        Validates that include and exclude don't overlap, if they are both explicitly set.
+        :return: The names of the series from the dataframe to describe
+        """
+        include_dtypes: Set[str]
+        exclude_dtypes: Set[str]
+
+        numeric_dtypes = {col.dtype for col in df.data.values() if isinstance(col, SeriesAbstractNumeric)}
+        all_dtypes = {col.dtype for col in df.data.values()}
+
+        # process `include` parameter
+        if include is None:
+            include_dtypes = numeric_dtypes or all_dtypes
+        elif include == 'all':
+            include_dtypes = all_dtypes
+        else:
+            include_dtypes = cls.str_or_sequence_to_dtypes(include)
+
+        # process `exclude` parameter
+        if exclude is None:
+            exclude_dtypes = set()
+        else:
+            exclude_dtypes = cls.str_or_sequence_to_dtypes(exclude)
+
+        # validate combination of `include` and `exclude`
+        if include is not None and exclude is not None and (set(include_dtypes) & set(exclude_dtypes)):
+            raise ValueError(f'Include and exclude should not overlap. '
+                             f'include: {include_dtypes}, exclude: {exclude_dtypes}')
+
+        # determine series
+        final_dtypes = include_dtypes - exclude_dtypes
+        return [series.name for series in df.data.values() if series.dtype in final_dtypes]
+
+    @staticmethod
+    def str_or_sequence_to_dtypes(value: Union[str, Sequence[str]]) -> Set[str]:
+        """
+        Given a single dtype (or dtype alias), or a list of dtype (or aliasses), return a set of dtypes.
+        Validates that value has the correct python types, and that the dtypes are valid.
+        """
+        dtypes: Set[str]
+        if isinstance(value, str):
+            dtypes = {value}
+        elif isinstance(value, abc.Sequence) and all(isinstance(item, str) for item in value):
+            dtypes = set(value)
+        else:
+            raise ValueError(f'Unexpected dtype value: {value}')
+        return {get_series_type_from_dtype(dtype).dtype for dtype in dtypes}
+
     def __call__(self) -> DataFrame:
         """
         Generates an aggregated dataframe per stat and concatenates all results into a new dataframe
         containing all descriptive statistics of the dataset.
 
-        Values are sorted based on the position of the stat in _SERIES_CLS_X_SUPPORTED_STAT
+        Values are sorted based on the position of the stat in SupportedStats.
         """
         all_stats_df = []
         for pos, stat in enumerate(SupportedStats):
@@ -124,9 +160,18 @@ class DescribeOperation:
         :param stat_position: position of the stat in the final result
         """
         # filter series that can perform the aggregation
-        series_to_aggregate = [
-            s for s in self._get_series_to_aggregate() if hasattr(self.df.all_series[s], stat.value)
-        ]
+        series_to_aggregate = []
+        for s in self.series_to_describe:
+            # check one: function exists on Series
+            if not hasattr(self.df.all_series[s], stat.value):
+                continue
+            # check two: function doesn't raise NotImplementedError
+            try:
+                self.df.all_series[s].apply_func(stat.value)
+            except NotImplementedError:
+                continue
+            series_to_aggregate.append(s)
+
         if not series_to_aggregate:
             return None
 
@@ -152,7 +197,7 @@ class DescribeOperation:
         """
         # filter series that can perform the aggregation 'quantile' operation
         series_to_aggregate = [
-            s for s in self._get_series_to_aggregate() if hasattr(self.df.all_series[s], 'quantile')
+            s for s in self.series_to_describe if hasattr(self.df.all_series[s], 'quantile')
         ]
         if not series_to_aggregate:
             return None
@@ -163,7 +208,10 @@ class DescribeOperation:
         percentile_df = percentile_df.quantile(q=list(self.percentiles))
         has_q_index = 'q' in percentile_df.all_series
 
-        columns_rename = dict(zip(percentile_df.data_columns, series_to_aggregate))
+        columns_rename = {
+            col: col.replace('_quantile', '')
+            for col in percentile_df.data_columns
+        }
         percentile_df.reset_index(drop=not has_q_index, inplace=True)
 
         if not has_q_index:
@@ -183,33 +231,3 @@ class DescribeOperation:
             )
         )
         return percentile_df
-
-    def _get_series_to_aggregate(self) -> List[str]:
-        """
-        returns a mapping between series types and series names in the dataframe to be described
-        if describe has no include and exclude, numeric columns are considered only by default
-        """
-        dtypes_x_series = defaultdict(list)
-        for series in self.df.data.values():
-            series_type = type(series)
-            parent_dtype = [
-                s_type for s_type in _SUPPORTED_SERIES_TYPES if issubclass(series_type, s_type)
-            ]
-            if not parent_dtype:
-                continue
-
-            if (
-                self.include and not isinstance(series, self.include)
-                or self.exclude and isinstance(series, self.exclude)
-            ):
-                continue
-
-            dtypes_x_series[parent_dtype[0]].append(series.name)
-
-        if not dtypes_x_series:
-            raise ValueError('DataFrame or Series has no supported dtype to describe.')
-
-        if not self.include and not self.exclude and dtypes_x_series[SeriesAbstractNumeric]:
-            return dtypes_x_series[SeriesAbstractNumeric]
-
-        return list(itertools.chain.from_iterable(dtypes_x_series.values()))

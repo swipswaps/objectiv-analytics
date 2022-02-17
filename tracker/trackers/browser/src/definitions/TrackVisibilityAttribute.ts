@@ -5,4 +5,4 @@
 /**
  * The definition of the `trackVisibility` Tagging Attribute
  */
-export type TrackVisibilityAttribute = { mode: 'auto' } | { mode: 'manual'; isVisible: boolean };
+export type TrackVisibilityAttribute = boolean | { mode: 'auto' } | { mode: 'manual'; isVisible: boolean };

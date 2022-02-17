@@ -8,7 +8,7 @@ import {
   getLocationPath,
   LocationStack,
   makeContentContext,
-  TrackerPlugins,
+  TrackerPluginInterface,
 } from '@objectiv/tracker-core';
 import { BrowserTracker, getElementLocationStack, TaggableElement } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
@@ -65,9 +65,7 @@ describe('getElementLocationStack', () => {
   describe('Should reconstruct the Location Stack including the Plugins', () => {
     const applicationId = 'app';
     const endpoint = 'http://test';
-    const plugins: TrackerPlugins = new TrackerPlugins({
-      plugins: [new PathContextFromURLPlugin()],
-    });
+    const plugins: TrackerPluginInterface[] = [new PathContextFromURLPlugin()];
     const tracker = new BrowserTracker({ applicationId, endpoint, plugins });
 
     const expectedPathsByElement: [TaggableElement, string][] = [
@@ -93,9 +91,7 @@ describe('getElementLocationStack', () => {
     const applicationId = 'app';
     const endpoint = 'http://test';
     const location_stack: LocationStack = [makeContentContext({ id: 'root' })];
-    const plugins: TrackerPlugins = new TrackerPlugins({
-      plugins: [new PathContextFromURLPlugin()],
-    });
+    const plugins: TrackerPluginInterface[] = [new PathContextFromURLPlugin()];
     const tracker = new BrowserTracker({ applicationId, endpoint, plugins, location_stack });
 
     const expectedPathsByElement: [TaggableElement, string][] = [

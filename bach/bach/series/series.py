@@ -34,7 +34,8 @@ WrappedWindow = Union['Window', 'DataFrame']
 
 class Series(ABC):
     """
-    A Series that represents the generic type and its specific operations
+    Series is an abstract class. An instance of Series represents a column of data. Specific subclasses are
+    used to represent specific types of data and enable operations on that data.
 
     It can be used as a separate object to just deal with a single list of values. There are many standard
     operations on Series available to do operations like add or subtract, to create aggregations like
@@ -59,6 +60,15 @@ class Series(ABC):
     # The attributes of this class are either immutable, or this class is guaranteed not
     # to modify them and the property accessors always return a copy. One exception tho: `engine` is mutable
     # and is shared with other Series and DataFrames that can change it's state.
+
+    dtype: str = ''
+    """
+    The dtype of this Series. Must be overridden by subclasses.
+
+    The dtype is used to uniquely identify data of the type that is
+    represented by this Series subclass. The dtype must be unique among all Series subclasses.
+    """
+
     def __init__(self,
                  engine,
                  base_node: BachSqlModel,
@@ -98,6 +108,19 @@ class Series(ABC):
         :param index_sorting: list of bools indicating whether to sort ascending/descending on the different
             columns of the index. Empty list for no sorting on index.
         """
+        # Series is an abstract class, besides the abstractmethods, subclasses MUST override the 'dtype'
+        # class property. Unfortunately defining dtype as an "abstract-classmethod-property" makes it hard
+        # to understand for mypy, sphinx, and python. Therefore we check here that we are instantiating a
+        # proper subclass, instead of just relying on @abstractmethod.
+        # related links:
+        # https://github.com/python/mypy/issues/8532#issuecomment-600132991
+        # https://github.com/python/mypy/issues/11619 https://bugs.python.org/issue45356
+        if self.__class__ == Series:
+            raise TypeError("Cannot instantiate Series directly. Instantiate a subclass.")
+        if self.dtype == '':
+            raise NotImplementedError("Series subclasses must override `dtype` class property")
+        # End of Abstract-class check
+
         if index == {} and group_by and group_by.index != {}:
             # not a completely watertight check, because a group_by on {} is valid.
             raise ValueError(f'Index Series should be free of pending aggregation.')
@@ -119,33 +142,6 @@ class Series(ABC):
         self._group_by = group_by
         self._sorted_ascending = sorted_ascending
         self._index_sorting = index_sorting
-
-    def _update_self_from_series(self, series: 'Series') -> 'Series':
-        """
-        INTERNAL: Modify self by copying all properties of 'df' to self. Returns self.
-        """
-        self._engine = series._engine
-        self._base_node = series._base_node
-        self._index = series._index.copy()
-        self._name = series._name
-        self._expression = series._expression
-        self._group_by = series._group_by
-        self._sorted_ascending = series._sorted_ascending
-        self._index_sorting = series._index_sorting
-        return self
-
-    @property
-    @classmethod
-    @abstractmethod
-    def dtype(cls) -> str:
-        """
-        The dtype of this Series.
-
-        The dtype is used to uniquely identify data of the type that is
-        represented by this Series subclass. The dtype should be unique among all Series
-        subclasses.
-        """
-        raise NotImplementedError()
 
     @property
     @classmethod
@@ -479,7 +475,7 @@ class Series(ABC):
             new_series_aggregated = cast(
                 Series, new_series.aggregate(aggregation, group_by=df.group_by)
             )
-            if fill_value:
+            if fill_value is not None:
                 new_series_aggregated = new_series_aggregated.fillna(fill_value)
             series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
 
@@ -1397,11 +1393,7 @@ class Series(ABC):
         )()
         return describe_df.all_series[self.name]
 
-    def drop_duplicates(
-        self,
-        keep: Union[str, bool] = 'first',
-        inplace: bool = False,
-    ) -> Optional['Series']:
+    def drop_duplicates(self: T, keep: Union[str, bool] = 'first') -> T:
         """
         Return a series with duplicated rows removed.
 
@@ -1412,20 +1404,25 @@ class Series(ABC):
             * False: drops all duplicates
 
             If no value is provided, first occurrences will be kept by default.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
-        :return: a new series with dropped duplicates if inplace = False, otherwise None.
+        :return: a new series with dropped duplicates
         """
         df = self.to_frame().drop_duplicates(keep=keep)
         assert isinstance(df, DataFrame)
         df.materialize(inplace=True)
 
         result = df.all_series[self.name]
-        if not inplace:
-            return result
+        return cast(T, result)
 
-        self._update_self_from_series(result)
-        return None
+    def dropna(self: T) -> T:
+        """
+        Removes rows with missing values.
+
+        :return: a new series with dropped rows if inplace = False, otherwise None.
+        """
+        df = self.to_frame().dropna()
+        assert isinstance(df, DataFrame)
+        return cast(T, df.all_series[self.name])
 
 
 def const_to_series(base: Union[Series, DataFrame],

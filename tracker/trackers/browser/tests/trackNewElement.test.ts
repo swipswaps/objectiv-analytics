@@ -2,13 +2,12 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsole } from '@objectiv/testing-tools';
+import { matchUUID } from '@objectiv/testing-tools';
 import {
   generateUUID,
-  LocationCollision,
-  makePressableContext,
-  makeInputContext,
   makeContentContext,
+  makeInputContext,
+  makePressableContext,
   TrackerElementLocations,
 } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
@@ -61,24 +60,6 @@ describe('trackNewElement', () => {
     div.setAttribute(TaggingAttribute.validate, JSON.stringify({ locationUniqueness: false }));
     trackNewElement(div, getTracker());
     expect(TrackerElementLocations.add).not.toHaveBeenCalled();
-  });
-
-  it('should console.error if TrackerElementLocations.add returns a LocationCollision', async () => {
-    const div = makeTaggedElement('div', 'div', 'div');
-    const mockCollision: LocationCollision = {
-      locationPath: 'fake / path',
-      existingElementId: 'fake existing element id',
-      collidingElementId: 'fake colliding element id',
-    };
-    jest.spyOn(TrackerElementLocations, 'add').mockReturnValueOnce(mockCollision);
-
-    trackNewElement(div, getTracker(), mockConsole);
-
-    expect(TrackerElementLocations.add).toHaveBeenCalledTimes(1);
-    expect(TrackerElementLocations.add).toHaveNthReturnedWith(1, mockCollision);
-    expect(mockConsole.error).toHaveBeenCalledTimes(2);
-    expect(mockConsole.error).toHaveBeenNthCalledWith(1, `Existing Element:`, null);
-    expect(mockConsole.error).toHaveBeenNthCalledWith(2, `Colliding Element:`, null);
   });
 
   it('should skip the Element if it is already Tracked', async () => {
