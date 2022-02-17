@@ -106,10 +106,9 @@ class TimedeltaOperation(DateTimeOperation):
         """
         # extract(epoch from source) returns the total number of seconds in the interval
         expression = Expression.construct(f'extract(epoch from {{}})', self._series)
-        return cast(
-            SeriesFloat64,
-            self._series.copy_override(name='total_seconds', expression=expression, dtype='float64'),
-        )
+        return self._series\
+            .copy_override_type(SeriesFloat64)\
+            .copy_override(name='total_seconds', expression=expression)
 
 
 class SeriesAbstractDateTime(Series, ABC):
