@@ -177,8 +177,8 @@ class CutOperation:
 
          return a series containing each range per bucket (bucket series is found as index)
         """
-        min_series = Series.as_independent_subquery(bucket_properties_df[f'{self.series.name}_min'])
-        step_series = Series.as_independent_subquery(bucket_properties_df[f'step'])
+        min_series = Series.as_independent_subquery(bucket_properties_df.data[f'{self.series.name}_min'])
+        step_series = Series.as_independent_subquery(bucket_properties_df.data[f'step'])
 
         # self.series might not have data for all buckets, we need to actually generate the series
         buckets = SeriesInt64(
@@ -213,7 +213,7 @@ class CutOperation:
             expression=Expression.construct(
                 case_stmt,
                 range_df.all_series[bound_to_adjust],
-                Series.as_independent_subquery(bucket_properties_df['bin_adjustment']),
+                Series.as_independent_subquery(bucket_properties_df.all_series['bin_adjustment']),
                 range_df.all_series[bound_to_adjust],
             ),
         )

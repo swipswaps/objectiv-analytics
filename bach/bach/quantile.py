@@ -41,7 +41,6 @@ def calculate_quantiles(
         # Currently doing quantile['q'] = qt
         # will raise some errors since the expression is not an instance of AggregateFunctionExpression
         quantile_df['q'] = agg_result.copy_override(
-            dtype='float64',
             expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
         )
         quantile_df.set_index('q', inplace=True)
