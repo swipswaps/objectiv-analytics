@@ -3,7 +3,7 @@ from typing import cast, Union, List
 from bach.series import SeriesAbstractNumeric, SeriesTimedelta, Series, SeriesFloat64
 from bach.expression import AggregateFunctionExpression
 from bach.series.series import WrappedPartition
-from bach.concat import SeriesConcatOperation
+from bach.operations.concat import SeriesConcatOperation
 
 
 def calculate_quantiles(

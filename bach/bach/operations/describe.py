@@ -5,8 +5,10 @@ from collections import abc
 from enum import Enum
 from typing import Optional, Union, Sequence, List, Set
 
-from bach import DataFrame, SeriesAbstractNumeric, DataFrameOrSeries, get_series_type_from_dtype
-from bach.concat import DataFrameConcatOperation
+from bach import (
+    DataFrame, SeriesAbstractNumeric, DataFrameOrSeries, get_series_type_from_dtype,
+)
+from bach.operations.concat import DataFrameConcatOperation
 from bach.expression import Expression
 
 
