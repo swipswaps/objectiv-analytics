@@ -29,7 +29,7 @@ def get_series_type_from_db_dtype(db_dtype: str) -> Type['Series']:
 
 def get_dtype_from_db_dtype(db_dtype: str) -> str:
     """ Given a database datatype, return the dtype of the Series subclass for that datatype. """
-    return get_series_type_from_db_dtype(db_dtype).dtype  # type: ignore
+    return get_series_type_from_db_dtype(db_dtype).dtype
 
 
 def value_to_dtype(value: Any) -> str:

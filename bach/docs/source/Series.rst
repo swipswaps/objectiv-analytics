@@ -195,6 +195,7 @@ All types
     Series.median
     Series.mode
     Series.nunique
+    Series.value_counts
 
 Numeric
 +++++++

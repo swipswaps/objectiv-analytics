@@ -1,5 +1,8 @@
-from typing import cast, List, Union
+"""
+Copyright 2022 Objectiv B.V.
+"""
 
+from typing import cast, List, Union
 from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64
 from bach.expression import Expression
 import numpy
@@ -285,14 +288,21 @@ class QCutOperation:
 
         The following series are calculated:
         * lower_bound: for calculating the lower bound of each range it is required to calculate
-        all requested quantiles from the series. The lowest bound is adjusted since it might be
-        included in the dataset.
+            all requested quantiles from the series. The lowest bound is adjusted since it might be
+            included in the dataset.
         * upper_bound: is the lower bound from the next range that follows the current one.
-         If current lower bound is the result of the largest quantile, the upper bound will be null.
+            If current lower bound is the result of the largest quantile, the upper bound will be null.
         * range: interval containing the calculated upper and lower bounds per bucket.
-        If the upper bound is null, the range will be null.
+            If the upper bound is null, the range will be null.
 
         Returns a series containing the range of each bucket
+
+        .. note::
+            The adjustment performed on the lowest bound is done only to resemble Panda's implementation.
+            Current implementation might generate wrong ranges in very extreme edge cases,
+            such as when _RANGE_ADJUSTMENT is considerably larger than the first quantile result.
+            Therefore, be aware of this scenario.
+            Current implementation might go into a discussion in the future.
         """
         q_result = self.series.quantile(q=self.quantiles).copy_override(name='q_result')
         min_q_result = q_result.min()

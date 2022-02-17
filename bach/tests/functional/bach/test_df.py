@@ -170,5 +170,5 @@ def test_quantile_no_numeric_columns() -> None:
     bt = get_from_df('test_quantile', pdf)
     bt.reset_index(drop=True, inplace=True)
 
-    with pytest.raises(ValueError, match=r'Cannot calculate quantiles'):
+    with pytest.raises(ValueError, match=r'DataFrame has no series supporting'):
         bt.quantile()

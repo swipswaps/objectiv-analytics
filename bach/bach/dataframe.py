@@ -1,3 +1,6 @@
+"""
+Copyright 2021 Objectiv B.V.
+"""
 import warnings
 from copy import copy
 
@@ -2079,17 +2082,23 @@ class DataFrame:
         **kwargs,
     ):
         """
-        Returns the quantile of all numeric columns.
+        Returns the quantile per numeric/timedelta column.
 
         :param q: value or list of values between 0 and 1.
         :param axis: only ``axis=1`` is supported. This means columns are aggregated.
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
-        from bach.series.series_numeric import SeriesAbstractNumeric
-        df = self
-        if all(not isinstance(s, SeriesAbstractNumeric) for s in df.all_series.values()):
-            raise ValueError('Cannot calculate quantiles for dataframe with no numeric columns.')
+        valid_index = (
+            {s.name: s for s in self._index.values() if hasattr(s, 'quantile')}
+            if self.group_by is None else {}
+        )
+        valid_series = {
+            s.name: s.copy_override(index=valid_index) for s in self._data.values() if hasattr(s, 'quantile')
+        }
+        if not valid_series and not valid_index:
+            raise ValueError('DataFrame has no series supporting "quantile" operation.')
 
+        df = self.copy_override(series=valid_series, index=valid_index)
         if df.group_by is None:
             df = df.groupby()
 
@@ -2100,7 +2109,7 @@ class DataFrame:
             new_series = df._apply_func_to_series(
                 func='quantile',
                 axis=axis,
-                numeric_only=True,
+                numeric_only=False,
                 exclude_non_applied=True,
                 partition=df.group_by,
                 q=qt,
@@ -2239,8 +2248,11 @@ class DataFrame:
         The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
 
         :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
-        :param include: dtypes to be included, if not provided calculations will be based on numerical columns
-        :param exclude: dtypes to be excluded
+        :param include: dtypes to be included.
+            Either a sequence of dtypes, a single dtype, or the special value 'all'.
+            By default calculations will be based on numerical columns, if there are any
+            numerical columns and on all columns if there are no numerical columns.
+        :param exclude: dtypes to be excluded. Either a sequence of dtypes, a single dtype, or None.
         :param datetime_is_numeric: not supported
         :returns: a new DataFrame with the descriptive statistics
         """
@@ -2408,6 +2420,8 @@ class DataFrame:
         keep: Union[str, bool] = 'first',
         inplace: bool = False,
         ignore_index: bool = False,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
     ) -> Optional['DataFrame']:
         """
         Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
@@ -2424,6 +2438,13 @@ class DataFrame:
             If no value is provided, first occurrences will be kept by default.
         :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param ignore_index: if true, drops indexes of the result
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic
+            when keep == "first" or keep == "last". If not provided:
+            1. If dataframe has already an order_by, first and last values will be performed based on it
+            2. Else all series not considered in duplication will be used instead.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `by` must also be a list and ``len(ascending) == len(by)``.
 
         :return: a new dataframe with dropped duplicates if inplace = False, otherwise None.
         """
@@ -2431,12 +2452,18 @@ class DataFrame:
             raise ValueError('keep must be either "first", "last" or False.')
 
         subset = self._get_parsed_subset_of_data_columns(subset)
+        sort_by = self._get_parsed_subset_of_data_columns(sort_by)
+
         df = self.copy()
         if ignore_index:
             df.reset_index(drop=True, inplace=True)
 
         dedup_on = list(subset or self.data_columns)
         dedup_data = [name for name in df.all_series if name not in dedup_on]
+
+        # in case df has no order_by and no sort_by was provided
+        # it will use the series that are not included in dedup_on
+        dedup_sort = list(sort_by or dedup_data) if sort_by or not self.order_by else []
 
         # dedup_data contains index series if ignore_index = False
         # in this case we should append those as data_columns
@@ -2462,6 +2489,8 @@ class DataFrame:
                 func_to_apply = 'window_first_value'
                 end_boundary = WindowFrameBoundary.CURRENT_ROW
 
+            if dedup_sort:
+                df = df.sort_values(by=dedup_sort, ascending=ascending)
             window = df.groupby(by=dedup_on).window(end_boundary=end_boundary, end_value=None)
             agg_series = df[dedup_data]._apply_func_to_series(func=func_to_apply, window=window)
 
@@ -2478,6 +2507,55 @@ class DataFrame:
 
         self._update_self_from_df(df)
         return None
+
+    def value_counts(
+        self,
+        subset: Optional[List[str]] = None,
+        normalize: bool = False,
+        sort: bool = True,
+        ascending: bool = False,
+    ) -> 'Series':
+        """
+        Returns a series containing counts of each unique row in the DataFrame
+
+        :param subset: a list of series labels to be used when counting. If subset is not provided and
+            dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
+            series in group_by will be added to subset.
+        :param normalize: returns proportions instead of frequencies
+        :param sort: sorts result by frequencies
+        :param ascending: sorts values in ascending order if true.
+
+        :return: a series containing all counts per unique row.
+        """
+        if not subset:
+            subset = self.data_columns
+        elif any(s not in self.data_columns for s in subset):
+            raise ValueError('subset contains invalid series.')
+
+        if self.group_by:
+            # consider groupby series in subset
+            subset = list(self.group_by.index.keys()) + subset
+
+        df = self.copy_override(
+            series={
+                s: self.all_series[s].copy_override(index={}, group_by=None) for s in subset
+            },
+            index={},
+            group_by=None,
+        )
+        df['value_counts'] = 1
+        df = df.groupby(by=list(subset)).sum()
+
+        if normalize:
+            df.materialize(inplace=True)
+            df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
+
+        df.rename(columns={'value_counts_sum': 'value_counts'}, inplace=True)
+
+        if sort:
+            return df._data['value_counts'].sort_values(ascending=ascending)
+
+        return df._data['value_counts']
 
     def dropna(
         self,
