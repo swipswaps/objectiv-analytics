@@ -92,11 +92,11 @@ COPY docker/gunicorn.conf.py /etc/
 CMD /services/entry_point.sh
 
 # python requirements
-COPY requirements.txt /services/
+COPY requirements.in /services/
 
 RUN \
     pip --no-cache-dir install gunicorn && \
-    pip --no-cache-dir install -r requirements.txt
+    pip --no-cache-dir install -r requirements.in
 
 # Install the objectiv-backend package
 # Use a wildcard, because the exact package name depends on the current version
