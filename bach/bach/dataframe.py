@@ -2134,7 +2134,7 @@ class DataFrame:
             )
             all_quantile_dfs.append(quantile_df)
 
-        from bach.concat import DataFrameConcatOperation
+        from bach.operations.concat import DataFrameConcatOperation
         result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
         # q column should be in the index when calculating multiple quantiles
         return result.set_index('q')
@@ -2256,7 +2256,7 @@ class DataFrame:
         :param datetime_is_numeric: not supported
         :returns: a new DataFrame with the descriptive statistics
         """
-        from bach.describe import DescribeOperation
+        from bach.operations.describe import DescribeOperation
         return DescribeOperation(
             obj=self,
             include=include,
@@ -2402,7 +2402,7 @@ class DataFrame:
 
         :return: a new dataframe with all rows from appended Dataframes.
         """
-        from bach.concat import DataFrameConcatOperation
+        from bach.operations.concat import DataFrameConcatOperation
         if isinstance(other, list) and not other:
             raise ValueError('no dataframe or series to append.')
 
@@ -2507,6 +2507,55 @@ class DataFrame:
 
         self._update_self_from_df(df)
         return None
+
+    def value_counts(
+        self,
+        subset: Optional[List[str]] = None,
+        normalize: bool = False,
+        sort: bool = True,
+        ascending: bool = False,
+    ) -> 'Series':
+        """
+        Returns a series containing counts of each unique row in the DataFrame
+
+        :param subset: a list of series labels to be used when counting. If subset is not provided and
+            dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
+            series in group_by will be added to subset.
+        :param normalize: returns proportions instead of frequencies
+        :param sort: sorts result by frequencies
+        :param ascending: sorts values in ascending order if true.
+
+        :return: a series containing all counts per unique row.
+        """
+        if not subset:
+            subset = self.data_columns
+        elif any(s not in self.data_columns for s in subset):
+            raise ValueError('subset contains invalid series.')
+
+        if self.group_by:
+            # consider groupby series in subset
+            subset = list(self.group_by.index.keys()) + subset
+
+        df = self.copy_override(
+            series={
+                s: self.all_series[s].copy_override(index={}, group_by=None) for s in subset
+            },
+            index={},
+            group_by=None,
+        )
+        df['value_counts'] = 1
+        df = df.groupby(by=list(subset)).sum()
+
+        if normalize:
+            df.materialize(inplace=True)
+            df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
+
+        df.rename(columns={'value_counts_sum': 'value_counts'}, inplace=True)
+
+        if sort:
+            return df._data['value_counts'].sort_values(ascending=ascending)
+
+        return df._data['value_counts']
 
     def dropna(
         self,

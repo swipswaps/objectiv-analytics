@@ -3,7 +3,7 @@ Copyright 2022 Objectiv B.V.
 """
 import pytest
 
-from bach.describe import DescribeOperation
+from bach.operations.describe import DescribeOperation
 from tests.unit.bach.util import get_fake_df
 
 
