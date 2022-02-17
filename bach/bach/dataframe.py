@@ -1,3 +1,6 @@
+"""
+Copyright 2021 Objectiv B.V.
+"""
 import warnings
 from copy import copy
 
@@ -2079,17 +2082,23 @@ class DataFrame:
         **kwargs,
     ):
         """
-        Returns the quantile of all numeric columns.
+        Returns the quantile per numeric/timedelta column.
 
         :param q: value or list of values between 0 and 1.
         :param axis: only ``axis=1`` is supported. This means columns are aggregated.
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
-        from bach.series.series_numeric import SeriesAbstractNumeric
-        df = self
-        if all(not isinstance(s, SeriesAbstractNumeric) for s in df.all_series.values()):
-            raise ValueError('Cannot calculate quantiles for dataframe with no numeric columns.')
+        valid_index = (
+            {s.name: s for s in self._index.values() if hasattr(s, 'quantile')}
+            if self.group_by is None else {}
+        )
+        valid_series = {
+            s.name: s.copy_override(index=valid_index) for s in self._data.values() if hasattr(s, 'quantile')
+        }
+        if not valid_series and not valid_index:
+            raise ValueError('DataFrame has no series supporting "quantile" operation.')
 
+        df = self.copy_override(series=valid_series, index=valid_index)
         if df.group_by is None:
             df = df.groupby()
 
@@ -2100,7 +2109,7 @@ class DataFrame:
             new_series = df._apply_func_to_series(
                 func='quantile',
                 axis=axis,
-                numeric_only=True,
+                numeric_only=False,
                 exclude_non_applied=True,
                 partition=df.group_by,
                 q=qt,
@@ -2239,8 +2248,11 @@ class DataFrame:
         The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
 
         :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
-        :param include: dtypes to be included, if not provided calculations will be based on numerical columns
-        :param exclude: dtypes to be excluded
+        :param include: dtypes to be included.
+            Either a sequence of dtypes, a single dtype, or the special value 'all'.
+            By default calculations will be based on numerical columns, if there are any
+            numerical columns and on all columns if there are no numerical columns.
+        :param exclude: dtypes to be excluded. Either a sequence of dtypes, a single dtype, or None.
         :param datetime_is_numeric: not supported
         :returns: a new DataFrame with the descriptive statistics
         """

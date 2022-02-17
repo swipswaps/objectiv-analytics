@@ -1,3 +1,6 @@
+"""
+Copyright 2022 Objectiv B.V.
+"""
 from abc import abstractmethod
 from bach.dataframe import DataFrameOrSeries
 import itertools

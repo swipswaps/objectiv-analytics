@@ -1,3 +1,6 @@
+"""
+Copyright 2022 Objectiv B.V.
+"""
 from typing import cast
 
 from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64
