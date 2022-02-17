@@ -1,10 +1,14 @@
 """
 Copyright 2022 Objectiv B.V.
 """
-from typing import cast
 
+from typing import cast, List, Union
 from bach import SeriesAbstractNumeric, SeriesFloat64, Series, DataFrame, SeriesInt64
 from bach.expression import Expression
+import numpy
+
+
+_RANGE_ADJUSTMENT = 0.001  # Pandas.cut currently uses 1%
 
 
 class CutOperation:
@@ -24,8 +28,6 @@ class CutOperation:
     bins: int
     right: bool
     include_empty_bins: bool
-
-    RANGE_ADJUSTMENT = 0.001  # Pandas.cut currently uses 1%
     RANGE_SERIES_NAME = 'range'
 
     def __init__(
@@ -57,7 +59,7 @@ class CutOperation:
             expression=Expression.construct(
                 (
                     f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME} \n'
-                    f'then {self.RANGE_SERIES_NAME} end'
+                    f'then {self.RANGE_SERIES_NAME} else null end'
                 ),
                 df.all_series[self.series.name],
             ),
@@ -134,7 +136,7 @@ class CutOperation:
 
         diff_min_max = properties_df.all_series[max_name] - properties_df.all_series[min_name]
         # value used for expanding start/end bound
-        properties_df['bin_adjustment'] = diff_min_max * self.RANGE_ADJUSTMENT
+        properties_df['bin_adjustment'] = diff_min_max * _RANGE_ADJUSTMENT
         properties_df['step'] = diff_min_max / self.bins
 
         final_properties = [min_name, max_name, 'bin_adjustment', 'step']
@@ -154,7 +156,7 @@ class CutOperation:
         """
         case_stmt = (
             f'case when {{}} = {{}} then\n'
-            f'case when {{}} != 0 then {self.RANGE_ADJUSTMENT} * abs({{}}) else {self.RANGE_ADJUSTMENT} end\n'
+            f'case when {{}} != 0 then {_RANGE_ADJUSTMENT} * abs({{}}) else {_RANGE_ADJUSTMENT} end\n'
             f'else 0 end'
         )
         return to_adjust.copy_override(
@@ -225,5 +227,129 @@ class CutOperation:
             ),
         )
         range_df.materialize(node_name='bin_ranges', inplace=True)
-
         return range_df.all_series[self.RANGE_SERIES_NAME]
+
+
+class QCutOperation:
+    """
+    In order to instantiate this class you should provide the following params:
+    series: A numerical series
+    q: The number of quantiles or list of quantiles to be calculated
+
+    returns a new Series containing the quantile ranges per each value on the series.
+
+    Example:
+        QCutOperation(s1, q=4)()   # will calculated quantiles `0, 0.25, 0.5, 0.75, 1`
+        or
+        QCutOperation(s1, q=[0.25, 0.5, 0.75])()
+    """
+
+    series: SeriesAbstractNumeric
+    quantiles: List[float]
+
+    RANGE_SERIES_NAME = 'q_range'
+
+    def __init__(self, series: SeriesAbstractNumeric, q: Union[int, List[float]]) -> None:
+        self.series = series
+        self.quantiles = q if isinstance(q, list) else numpy.linspace(0, 1, q + 1).tolist()
+
+    def __call__(self, *args, **kwargs) -> SeriesFloat64:
+        """
+        Gets the quantile range per bucket and assigns the correct range to each value. If the value
+        is not contained in any range, then it will be null.
+        """
+        df = self.series.to_frame()
+        df.reset_index(drop=True, inplace=True)
+
+        if len(self.quantiles) == 1:
+            # need at least 2 quantiles for a range
+            df[self.RANGE_SERIES_NAME] = None
+        else:
+            quantile_ranges = self._get_quantile_ranges()
+            # currently is not possible to reference a column from another DataFrame
+            # and use the expression in the merge subquery
+            range_stmt = (
+                f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME}\n'
+                f'then {self.RANGE_SERIES_NAME} end'
+            )
+            df[self.RANGE_SERIES_NAME] = df.all_series[self.series.name].copy_override(
+                expression=Expression.construct(range_stmt, df.all_series[self.series.name]),
+                name=self.RANGE_SERIES_NAME,
+            )
+
+            df = df.merge(quantile_ranges, how='left', on=self.RANGE_SERIES_NAME)
+
+        new_index = {self.series.name: df.all_series[self.series.name]}
+        return cast(SeriesFloat64, df.all_series[self.RANGE_SERIES_NAME].copy_override(index=new_index))
+
+    def _get_quantile_ranges(self) -> 'Series':
+        """
+        Calculates the corresponding ranges per each quantile bucket.
+
+        The following series are calculated:
+        * lower_bound: for calculating the lower bound of each range it is required to calculate
+            all requested quantiles from the series. The lowest bound is adjusted since it might be
+            included in the dataset.
+        * upper_bound: is the lower bound from the next range that follows the current one.
+            If current lower bound is the result of the largest quantile, the upper bound will be null.
+        * range: interval containing the calculated upper and lower bounds per bucket.
+            If the upper bound is null, the range will be null.
+
+        Returns a series containing the range of each bucket
+
+        .. note::
+            The adjustment performed on the lowest bound is done only to resemble Panda's implementation.
+            Current implementation might generate wrong ranges in very extreme edge cases,
+            such as when _RANGE_ADJUSTMENT is considerably larger than the first quantile result.
+            Therefore, be aware of this scenario.
+            Current implementation might go into a discussion in the future.
+        """
+        q_result = self.series.quantile(q=self.quantiles).copy_override(name='q_result')
+        min_q_result = q_result.min()
+
+        quantile_ranges_df = q_result.to_frame()
+
+        # some quantiles might have the same result, we need to avoid having overlapped ranges
+        quantile_ranges_df.drop_duplicates(inplace=True, ignore_index=True)
+
+        # lowest calculated quantile might be also be in the dataset, therefore
+        # we need to extend the lowest bound
+        # Be aware that this adjustment might generate errors when
+        # 0 < lowest_quantile < RANGE_ADJUSTMENT
+        quantile_ranges_df['lower_bound'] = quantile_ranges_df.all_series['q_result'].copy_override(
+            expression=Expression.construct(
+                f'case when {{}} = {{}} then {{}} - {_RANGE_ADJUSTMENT} else {{}} end',
+                Series.as_independent_subquery(min_q_result),
+                *[quantile_ranges_df.all_series['q_result']] * 3
+            )
+        )
+
+        # should call "series.lag" instead but just need sorting in the window function
+        quantile_ranges_df['upper_bound'] = quantile_ranges_df.all_series['lower_bound'].copy_override(
+            expression=Expression.construct(
+                f'lag({{}}, 1, NULL) over (order by {{}} desc)',
+                quantile_ranges_df.all_series['lower_bound'],
+                quantile_ranges_df.all_series['lower_bound'],
+            ),
+            name='upper_bound'
+        )
+
+        # must not include lower bound, since a calculated quantile might also be in the dataset
+        # so the value can generate duplicates
+        bound = "'(]'"
+        range_stmt = (
+            f'case when {{}} is not null\n'
+            f'then numrange(cast({{}} as numeric), cast({{}} as numeric), {bound}) end'
+        )
+        lower_bound = quantile_ranges_df.all_series['lower_bound']
+        upper_bound = quantile_ranges_df.all_series['upper_bound']
+
+        quantile_ranges_df[self.RANGE_SERIES_NAME] = lower_bound.copy_override(
+            expression=Expression.construct(range_stmt, upper_bound, lower_bound, upper_bound),
+        )
+        # The expressions of lower_bound and upper_bound are complex and long. Below they are used three
+        # times in the expression for the range column. By materializing the dataframe first, we prevent the
+        # generated sql from containing duplicated code. Additionally, the generated sql becomes more
+        # readable too.
+        quantile_ranges_df.materialize(inplace=True)
+        return quantile_ranges_df.all_series[self.RANGE_SERIES_NAME]

@@ -1,10 +1,8 @@
 import numpy as np
 import pandas as pd
-from psycopg2._range import NumericRange
-from decimal import Decimal
 
 from bach import Series
-from bach.operations.cut import CutOperation
+from bach.operations.cut import CutOperation, QCutOperation
 from tests.functional.bach.test_data_and_utils import get_from_df
 
 PD_TESTING_SETTINGS = {
@@ -16,6 +14,10 @@ PD_TESTING_SETTINGS = {
 
 def compare_boundaries(expected: pd.Series, result: Series) -> None:
     for exp, res in zip(expected.to_numpy(), result.to_numpy()):
+        if not isinstance(exp, pd.Interval):
+            assert res is None or np.isnan(res)
+            continue
+
         np.testing.assert_almost_equal(exp.left, float(res.lower), decimal=2)
         np.testing.assert_almost_equal(exp.right, float(res.upper), decimal=2)
 
@@ -145,3 +147,46 @@ def test_cut_calculate_bucket_ranges() -> None:
         pd.Series([pd.Interval(0.993, 3.333), pd.Interval(3.333, 5.667), pd.Interval(5.667, 8)]),
         result.sort_values(),
     )
+
+
+def test_qcut_operation() -> None:
+    p_series = pd.Series(range(100), name='a')
+    series = get_from_df('qcut_df', p_series.to_frame()).a
+
+    expected_w_list = pd.qcut(p_series, q=[0.25, 0.3, 0.7, 0.9])
+    result_w_list = QCutOperation(series=series, q=[0.25, 0.3, 0.7, 0.9])()
+    compare_boundaries(expected_w_list, result_w_list)
+
+    expected_q_num = pd.qcut(p_series, q=4)
+    result_q_num = QCutOperation(series=series, q=4)()
+    compare_boundaries(expected_q_num, result_q_num)
+
+
+def test_qcut_operation_one_quantile() -> None:
+    p_series = pd.Series(range(10), name='a')
+    series = get_from_df('qcut_df', p_series.to_frame()).a
+    expected = pd.qcut(p_series, q=0)
+    result = QCutOperation(series=series, q=0)()
+    compare_boundaries(expected, result)
+
+    expected2 = pd.qcut(p_series, q=[0.5])
+    result2 = QCutOperation(series=series, q=[0.5])()
+    compare_boundaries(expected2, result2)
+
+
+def test_get_quantile_ranges() -> None:
+    p_series = pd.Series(data=[1, 1, 2, 3, 4, 5, 6, 7, 8], name='a')
+    series = get_from_df('cut_df', p_series.to_frame()).a
+
+    qcut_operation = QCutOperation(series=series, q=[0.25, 0.5])
+    result = qcut_operation._get_quantile_ranges()
+    compare_boundaries(pd.Series([pd.Interval(2, 4), None]), result.sort_values())
+
+
+def test_qcut_w_duplicated_quantiles() -> None:
+    p_series = pd.Series(data=[0, 1, 2, 2, 2, 2, 2], name='a')
+    series = get_from_df('cut_df', p_series.to_frame()).a
+
+    expected = pd.qcut(p_series, q=[0.25, 0.5, 0.75], duplicates='drop')
+    result = QCutOperation(series=series, q=[0.25, 0.5, 0.75])()
+    compare_boundaries(expected, result.sort_index())

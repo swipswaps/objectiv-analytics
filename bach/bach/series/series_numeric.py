@@ -60,6 +60,17 @@ class SeriesAbstractNumeric(Series, ABC):
         from bach.operations.cut import CutOperation
         return CutOperation(series=self, bins=bins, right=right)()
 
+    def qcut(self, q: Union[int, List[float]]) -> 'SeriesAbstractNumeric':
+        """
+        Segments values into equal-sized buckets based on rank or sample quantiles.
+
+        :param q: Number of quantiles or list of quantiles to consider.
+
+        :return: series containing each quantile range/interval per value. Original series is set as index.
+        """
+        from bach.operations.cut import QCutOperation
+        return QCutOperation(series=self, q=q)()
+
     def _ddof_unsupported(self, ddof: Optional[int]):
         if ddof is not None and ddof != 1:
             raise NotImplementedError("ddof != 1 currently not implemented")
