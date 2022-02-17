@@ -30,7 +30,7 @@ def get_series_type_from_db_engine_dtype(engine: Engine, db_dtype: str) -> Type[
 
 def get_dtype_from_db_engine_dtype(engine: Engine, db_dtype: str) -> str:
     """ Given a database datatype, return the dtype of the Series subclass for that datatype. """
-    return get_series_type_from_db_dtype(engine, db_dtype).dtype  # type: ignore
+    return _registry.get_series_type_from_db_engine_dtype(engine, db_dtype).dtype  # type: ignore
 
 
 def value_to_dtype(value: Any) -> str:

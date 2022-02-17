@@ -111,7 +111,7 @@ class SeriesString(Series):
     dtype = 'string'
     dtype_aliases = ('text', str)
     db_engine_dtypes = {'postgresql': 'text',
-                        'bigquery': 'string'}
+                        'bigquery': 'STRING'}
     supported_value_types = (str, type(None))  # NoneType ends up as a string for now
 
     @classmethod

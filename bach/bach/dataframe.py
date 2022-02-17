@@ -391,11 +391,16 @@ class DataFrame:
             where table_name = '{table_name}'
             order by ordinal_position;
         """
+        print(sql)
 
         with engine.connect() as conn:
             sql = _escape_parameter_characters(conn, sql)
             res = conn.execute(sql)
-            dtypes = {x[0]: get_dtype_from_db_engine_dtype(engine, dtype_structure(x[1].lower())) for x in res.fetchall()}
+            rows = res.fetchall()
+            print()
+            print(rows)
+            print()
+            dtypes = {x[0]: get_dtype_from_db_engine_dtype(engine, dtype_structure(x[1])) for x in rows}
 
         index_dtypes = {k: dtypes[k] for k in index}
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
