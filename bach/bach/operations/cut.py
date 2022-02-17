@@ -314,6 +314,8 @@ class QCutOperation:
 
         # lowest calculated quantile might be also be in the dataset, therefore
         # we need to extend the lowest bound
+        # Be aware that this adjustment might generate errors when
+        # 0 < lowest_quantile < RANGE_ADJUSTMENT
         quantile_ranges_df['lower_bound'] = quantile_ranges_df.all_series['q_result'].copy_override(
             expression=Expression.construct(
                 f'case when {{}} = {{}} then {{}} - {_RANGE_ADJUSTMENT} else {{}} end',
@@ -345,6 +347,9 @@ class QCutOperation:
         quantile_ranges_df[self.RANGE_SERIES_NAME] = lower_bound.copy_override(
             expression=Expression.construct(range_stmt, upper_bound, lower_bound, upper_bound),
         )
-
+        # The expressions of lower_bound and upper_bound are complex and long. Below they are used three
+        # times in the expression for the range column. By materializing the dataframe first, we prevent the
+        # generated sql from containing duplicated code. Additionally, the generated sql becomes more
+        # readable too.
         quantile_ranges_df.materialize(inplace=True)
         return quantile_ranges_df.all_series[self.RANGE_SERIES_NAME]
