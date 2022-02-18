@@ -2633,21 +2633,25 @@ class DataFrame:
         axis: int = 0,
         inplace: bool = False,
         limit: Optional[int] = None,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
         ascending: Union[bool, List[bool]] = True,
     ) -> Optional['DataFrame']:
-        series_to_fill = list(value.keys()) if isinstance(value, dict) else self.data_columns
 
         df = self.copy()
+        if method and value is not None:
+            raise ValueError('cannot specify both "method" and "value".')
 
         if method in ('ffill', 'pad'):
-            df.ffill(ascending=ascending, inplace=True)
+            df.ffill(sort_by=sort_by, ascending=ascending, inplace=True)
 
-        if method in ('bfill', 'backfill'):
-            df.bfill(ascending=ascending, inplace=True)
+        elif method in ('bfill', 'backfill'):
+            df.bfill(sort_by=sort_by, ascending=ascending, inplace=True)
 
-        for s in series_to_fill:
-            fill_with = value[s] if isinstance(value, dict) else value
-            df[s] = df.all_series[s].fillna(value=fill_with)
+        if value is not None:
+            series_to_fill = list(value.keys()) if isinstance(value, dict) else self.data_columns
+            for s in series_to_fill:
+                fill_with = value[s] if isinstance(value, dict) else value
+                df[s] = df.all_series[s].fillna(fill_with)
 
         if not inplace:
             return df
@@ -2656,11 +2660,45 @@ class DataFrame:
         return None
 
     def ffill(
-        self, ascending: Union[bool, List[bool]] = True, inplace: bool = False,
+        self,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+        inplace: bool = False,
     ) -> Optional['DataFrame']:
+        from bach.partitioning import Window
+
         df = self.copy()
-        df = df.sort_values(by=self.data_columns, ascending=ascending)
-        df = df._linear_interpolation(subset=self.data_columns)
+
+        if sort_by:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        if not sort_by and not df.order_by:
+            raise Exception('dataframe must be sorted in order to apply forward fill.')
+
+        # create partition per each non-nullable value in all columns to be interpolated
+        for series_name in self.data_columns:
+            partition_name = f'__partition_{series_name}'
+            df[partition_name] = self.all_series[series_name].copy_override(
+                expression=Expression.construct(
+                    f'case when {{}} is null then 0 else 1 end', self.all_series[series_name],
+                ),
+                name=partition_name,
+            )
+
+            df[partition_name] = df.all_series[partition_name].window_sum(
+                window=Window([], order_by=df.order_by),
+            )
+
+        df.materialize(inplace=True)
+
+        # assign first_value of partition
+        for series_name in self.data_columns:
+            df[series_name] = df.all_series[series_name].window_first_value(
+                window=Window([df.all_series[f'__partition_{series_name}']], order_by=df.order_by),
+            )
+
+        df = df.copy_override(series={s: df.all_series[s] for s in self.data_columns})
+
         if not inplace:
             return df
 
@@ -2668,17 +2706,24 @@ class DataFrame:
         return None
 
     def bfill(
-        self, ascending: Union[bool, List[bool]] = True, inplace: bool = False,
+        self,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+        inplace: bool = False,
     ) -> Optional['DataFrame']:
         df = self.copy()
 
-        """
-        _linear_interpolation forwards non-nullable values, therefore we need to reverse the sorting
-        """
-        reversed_asc = [not asc for asc in ascending] if isinstance(ascending, list) else not ascending
-        df = df.sort_values(by=self.data_columns, ascending=reversed_asc)
-        df = df._linear_interpolation(subset=self.data_columns)
-        df = df.sort_values(by=self.data_columns, ascending=ascending)
+        if sort_by:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        main_order_by = copy(df._order_by)
+        # bfill is similar to ffill, the difference is that the order is reversed.
+        df._order_by = [
+            SortColumn(expression=ob.expression, asc=not ob.asc)
+            for ob in main_order_by
+        ]
+        df = df.ffill()
+        df._order_by = main_order_by
 
         if not inplace:
             return df
@@ -2696,13 +2741,22 @@ class DataFrame:
             )
         return subset
 
-    def _linear_interpolation(self, subset: Sequence[str]) -> 'DataFrame':
+    def _forward_fill(
+        self,
+        subset: Optional[Sequence[str]] = None,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> 'DataFrame':
         from bach.partitioning import Window
 
-        subset = self._get_parsed_subset_of_data_columns(subset)
+        subset = self._get_parsed_subset_of_data_columns(subset) or self.data_columns
         df = self.copy()
-        if not df.order_by:
-            raise Exception('dataframe must be sorted in order to apply interpolation.')
+
+        if sort_by:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        if not sort_by and not df.order_by:
+            raise Exception('dataframe must be sorted in order to apply forward fill.')
 
         # create partition per each non-nullable value in all columns to be interpolated
         for series_name in subset:

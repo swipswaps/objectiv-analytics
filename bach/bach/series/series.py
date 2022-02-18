@@ -30,7 +30,6 @@ T = TypeVar('T', bound='Series')
 
 WrappedPartition = Union['GroupBy', 'DataFrame']
 WrappedWindow = Union['Window', 'DataFrame']
-Scalar = Optional[Union[int, float, str, UUID]]
 
 
 class Series(ABC):
@@ -819,94 +818,24 @@ class Series(ABC):
         from bach import SeriesBoolean
         return self.copy_override_type(SeriesBoolean).copy_override(expression=expression)
 
-    def fillna(
-        self,
-        *,
-        value: Union[Scalar, 'Series'] = None,
-        method: Optional[str] = None,
-        axis: int = 0,
-        limit: Optional[int] = None,
-        ascending: Optional[Union[bool, List[bool]]] = None,
-    ) -> 'Series':
+    def fillna(self, other):
         """
-        Fill any NULL value using a specified method either-or a given constant or other compatible Series
+        Fill any NULL value with the given constant or other compatible Series
+
         In case a Series is given, the value from the same row is used to fill.
 
-        :param value: The value to replace the NULL values with. Should be a supported
+        :param other: The value to replace the NULL values with. Should be a supported
             type by the series, or a TypeError is raised. Can also be another Series
-
-        :param method: The method to use for replacing NULL values with:
-            - ffill/pad: Propagate the last non-nullable observed value
-            - bfill/backfill: Use the next non-nullable value
-
-        :param axis: Only axis = 0 is supported.
-
-        :param limit: Maximum amount of consecutive NULL value. Not supported
-
-        :param ascending: Required only if filling by a method is requested and series has no sorting applied.
-            By default, the filling will be performed based on sorting by index
-            ascending (True) or descending (False).
-            If this is a list, then `len(ascending) == len(series.index)``.
 
         .. note::
             Pandas replaces numpy.nan values, we can only replace NULL.
 
         .. note::
             You can replace None with None, have fun, forever!
-
-        :return: new series with replaced NULL values
         """
-        if axis:
-            raise ValueError('only axis = 0 is supported.')
-
-        if method not in (None, 'ffill', 'pad', 'bfill', 'backfill'):
-            raise ValueError(f'{method} is not a valid method.')
-
-        if method is not None and ascending is None:
-            raise ValueError(f'ascending parameter is required in order to apply {method} method.')
-
-        series = self.copy()
-        if method in ('ffill', 'pad'):
-            series = self.ffill(ascending=ascending)
-
-        if method in ('bfill', 'backfill'):
-            series = self.bfill(ascending=ascending)
-
-        if value is None:
-            return series
-
-        return self._coalesce(other=value)
-
-    def _coalesce(self, other: Union[Scalar, 'Series']) -> 'Series':
         return self._binary_operation(
-            other=other, operation='fillna', fmt_str='COALESCE({}, {})', other_dtypes=tuple([self.dtype]),
-        )
-
-    def ffill(self, ascending: Union[bool, List[bool]] = True) -> 'Series':
-        """
-        Fill any NULL value by propagating the last non-nullable observed value
-
-        :param ascending: If series has no sorting applied.
-            By default, the filling will be performed based on sorting by index
-            ascending (True) or descending (False).
-            If this is a list, then `len(ascending) == len(series.index)`
-        """
-        filled_df = self.to_frame()
-        filled_df.fillna(ascending=ascending, inplace=True, method='ffill')
-        return filled_df.all_series[self.name]
-
-    def bfill(self, ascending: Union[bool, List[bool]] = True) -> 'Series':
-        """
-        Fill any NULL value by using the next non-nullable value
-
-        :param ascending: If series has no sorting applied.
-            By default, the filling will be performed based on sorting by index
-            ascending (True) or descending (False).
-            If this is a list, then `len(ascending) == len(series.index)`
-        """
-        filled_df = self.to_frame()
-        filled_df.fillna(ascending=ascending, inplace=True, method='bfill')
-        return filled_df.all_series[self.name]
+            other=other, operation='fillna', fmt_str='COALESCE({}, {})',
+            other_dtypes=tuple([self.dtype]))
 
     def _binary_operation(self, other: 'Series', operation: str, fmt_str: str,
                           other_dtypes: Tuple[str, ...] = (),
@@ -1558,7 +1487,7 @@ class Series(ABC):
 
 
 def const_to_series(base: Union[Series, DataFrame],
-                    value: Union[Scalar, Series],
+                    value: Optional[Union[Series, int, float, str, UUID]],
                     name: str = None) -> Series:
     """
     INTERNAL: Take a value and return a Series representing a column with that value.
