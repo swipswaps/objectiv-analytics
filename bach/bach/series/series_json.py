@@ -6,6 +6,7 @@ from typing import Optional, Dict, Union, TYPE_CHECKING, List
 
 from bach.series import Series
 from bach.expression import Expression
+from bach.series.series import WrappedPartition
 from bach.sql_model import BachSqlModel
 from sql_models.util import quote_string
 
@@ -98,7 +99,7 @@ class SeriesJsonb(Series):
         """
         class with accessor methods to json(b) type data columns.
         """
-        def __init__(self, series_object):
+        def __init__(self, series_object: 'SeriesJsonb'):
             self._series_object = series_object
 
         def __getitem__(self, key: Union[str, int, slice]):
@@ -151,10 +152,9 @@ class SeriesJsonb(Series):
             Name: jsonb_column, dtype: object
             """
             if isinstance(key, int):
-                return self._series_object.copy_override(
-                    dtype=self._series_object.return_dtype,
-                    expression=Expression.construct(f'{{}}->{key}', self._series_object)
-                )
+                return self._series_object\
+                    .copy_override_dtype(dtype=self._series_object.return_dtype)\
+                    .copy_override(expression=Expression.construct(f'{{}}->{key}', self._series_object))
             elif isinstance(key, str):
                 return self.get_value(key)
             elif isinstance(key, slice):
@@ -195,12 +195,14 @@ class SeriesJsonb(Series):
                 from jsonb_array_elements({{}}) with ordinality x
                 where ordinality - 1 {where})"""
                 expression_references += 1
-                return self._series_object.copy_override(
-                    dtype=self._series_object.return_dtype,
-                    expression=Expression.construct(
-                        combined_expression,
-                        *([self._series_object] * expression_references)
-                    ))
+                return self._series_object\
+                    .copy_override_dtype(dtype=self._series_object.return_dtype)\
+                    .copy_override(
+                        expression=Expression.construct(
+                            combined_expression,
+                            *([self._series_object] * expression_references)
+                        )
+                    )
             raise TypeError(f'key should be int or slice, actual type: {type(key)}')
 
         def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
@@ -229,7 +231,9 @@ class SeriesJsonb(Series):
             expression = Expression.construct(f"{{}}->{return_as_string_operator}{{}}",
                                               self._series_object,
                                               Expression.string_value(key))
-            return self._series_object.copy_override(dtype=return_dtype, expression=expression)
+            return self._series_object\
+                .copy_override_dtype(dtype=return_dtype)\
+                .copy_override(expression=expression)
 
     @property
     def json(self):
@@ -273,6 +277,12 @@ class SeriesJsonb(Series):
 
     def __ge__(self, other) -> 'SeriesBoolean':
         return self._comparator_operation(other, "@>")
+
+    def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        raise NotImplementedError()
+
+    def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        raise NotImplementedError()
 
 
 class SeriesJson(SeriesJsonb):

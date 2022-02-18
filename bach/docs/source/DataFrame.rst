@@ -191,6 +191,7 @@ All types
     DataFrame.median
     DataFrame.mode
     DataFrame.nunique
+    DataFrame.value_counts
 
 Numeric
 +++++++

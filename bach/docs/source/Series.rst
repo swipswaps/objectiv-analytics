@@ -195,12 +195,15 @@ All types
     Series.median
     Series.mode
     Series.nunique
+    Series.value_counts
 
 Numeric
 +++++++
 .. autosummary::
     :toctree: Series
 
+    SeriesAbstractNumeric.cut
+    SeriesAbstractNumeric.qcut
     SeriesAbstractNumeric.mean
     SeriesAbstractNumeric.quantile
     SeriesAbstractNumeric.sem

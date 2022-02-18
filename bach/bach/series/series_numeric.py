@@ -43,11 +43,33 @@ class SeriesAbstractNumeric(Series, ABC):
     def round(self, decimals: int = 0) -> 'SeriesAbstractNumeric':
         """
         Round the value of this series to the given amount of decimals.
+
         :param decimals: The amount of decimals to round to
         """
         return self.copy_override(
             expression=Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
+
+    def cut(self, bins: int, right: bool = True) -> 'SeriesAbstractNumeric':
+        """
+        Segments values into bins.
+
+        :param bins: The amount of bins to segment data into
+        :param right: If true (by default), each bin will include the rightmost edge. (e.g (x,y]).
+        """
+        from bach.operations.cut import CutOperation
+        return CutOperation(series=self, bins=bins, right=right)()
+
+    def qcut(self, q: Union[int, List[float]]) -> 'SeriesAbstractNumeric':
+        """
+        Segments values into equal-sized buckets based on rank or sample quantiles.
+
+        :param q: Number of quantiles or list of quantiles to consider.
+
+        :return: series containing each quantile range/interval per value. Original series is set as index.
+        """
+        from bach.operations.cut import QCutOperation
+        return QCutOperation(series=self, q=q)()
 
     def _ddof_unsupported(self, ddof: Optional[int]):
         if ddof is not None and ddof != 1:
@@ -132,6 +154,9 @@ class SeriesAbstractNumeric(Series, ABC):
         When q is a float or len(q) == 1, the resultant series index will remain
         In case multiple quantiles are calculated, the resultant series index will have all calculated
         quantiles as index values.
+
+        :param partition: The partition or window to apply
+        :param q: A quantile or list of quantiles to be calculated
         """
         from bach.quantile import calculate_quantiles
         result = calculate_quantiles(self, partition=partition, q=q)

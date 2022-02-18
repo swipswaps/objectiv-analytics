@@ -1,3 +1,6 @@
+"""
+Copyright 2021 Objectiv B.V.
+"""
 import warnings
 from copy import copy
 
@@ -2126,13 +2129,12 @@ class DataFrame:
             # a hack in order to avoid calling quantile_df.materialized().
             # Currently doing quantile['q'] = qt
             # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-            quantile_df['q'] = initial_series.copy_override(
-                dtype='float64',
-                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
-            )
+            quantile_df['q'] = initial_series\
+                .copy_override_dtype(dtype='float64')\
+                .copy_override(expression=AggregateFunctionExpression.construct(fmt=f'{qt}'))
             all_quantile_dfs.append(quantile_df)
 
-        from bach.concat import DataFrameConcatOperation
+        from bach.operations.concat import DataFrameConcatOperation
         result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
         # q column should be in the index when calculating multiple quantiles
         return result.set_index('q')
@@ -2246,12 +2248,15 @@ class DataFrame:
         The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
 
         :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
-        :param include: dtypes to be included, if not provided calculations will be based on numerical columns
-        :param exclude: dtypes to be excluded
+        :param include: dtypes to be included.
+            Either a sequence of dtypes, a single dtype, or the special value 'all'.
+            By default calculations will be based on numerical columns, if there are any
+            numerical columns and on all columns if there are no numerical columns.
+        :param exclude: dtypes to be excluded. Either a sequence of dtypes, a single dtype, or None.
         :param datetime_is_numeric: not supported
         :returns: a new DataFrame with the descriptive statistics
         """
-        from bach.describe import DescribeOperation
+        from bach.operations.describe import DescribeOperation
         return DescribeOperation(
             obj=self,
             include=include,
@@ -2397,7 +2402,7 @@ class DataFrame:
 
         :return: a new dataframe with all rows from appended Dataframes.
         """
-        from bach.concat import DataFrameConcatOperation
+        from bach.operations.concat import DataFrameConcatOperation
         if isinstance(other, list) and not other:
             raise ValueError('no dataframe or series to append.')
 
@@ -2502,6 +2507,55 @@ class DataFrame:
 
         self._update_self_from_df(df)
         return None
+
+    def value_counts(
+        self,
+        subset: Optional[List[str]] = None,
+        normalize: bool = False,
+        sort: bool = True,
+        ascending: bool = False,
+    ) -> 'Series':
+        """
+        Returns a series containing counts of each unique row in the DataFrame
+
+        :param subset: a list of series labels to be used when counting. If subset is not provided and
+            dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
+            series in group_by will be added to subset.
+        :param normalize: returns proportions instead of frequencies
+        :param sort: sorts result by frequencies
+        :param ascending: sorts values in ascending order if true.
+
+        :return: a series containing all counts per unique row.
+        """
+        if not subset:
+            subset = self.data_columns
+        elif any(s not in self.data_columns for s in subset):
+            raise ValueError('subset contains invalid series.')
+
+        if self.group_by:
+            # consider groupby series in subset
+            subset = list(self.group_by.index.keys()) + subset
+
+        df = self.copy_override(
+            series={
+                s: self.all_series[s].copy_override(index={}, group_by=None) for s in subset
+            },
+            index={},
+            group_by=None,
+        )
+        df['value_counts'] = 1
+        df = df.groupby(by=list(subset)).sum()
+
+        if normalize:
+            df.materialize(inplace=True)
+            df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
+
+        df.rename(columns={'value_counts_sum': 'value_counts'}, inplace=True)
+
+        if sort:
+            return df._data['value_counts'].sort_values(ascending=ascending)
+
+        return df._data['value_counts']
 
     def dropna(
         self,
