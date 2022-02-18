@@ -6,6 +6,11 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean, SeriesInt64
 
+from typing import (
+    List, Union
+)
+from bach.series import SeriesTimestamp
+
 
 class Aggregate:
     """
@@ -19,11 +24,50 @@ class Aggregate:
     def __init__(self, df):
         self._df = df
 
-    def _generic_aggregation(self, time_aggregation, column, filter, name):
-        if not time_aggregation:
+    def _check_groupby(self,
+                       local_vars={},
+                       these_columns_should_not_be_in_group_by: List[str] = []
+                       ):
+
+        if self._df.group_by:
+            raise ValueError("can't run model hub models on a grouped DataFrame, please use parameters "
+                             "(ie groupby, time_aggregation) of the model")
+
+        groupby_possible = 'groupby' in local_vars.keys()
+        time_aggregation_possible = 'time_aggregation' in local_vars.keys()
+
+        if not (groupby_possible and time_aggregation_possible):
+            return self._df
+
+        groupby = local_vars.pop('groupby', None)
+        time_aggregation = local_vars.pop('time_aggregation', None)
+        if time_aggregation is None:
             time_aggregation = self._df._time_aggregation
-        gb = self._df.moment.dt.sql_format(time_aggregation) if time_aggregation else None
-        df = self._df.copy_override()
+            # todo is setting timeaggregation in the ObjectivFrame really a good idea?
+
+        groupby_list = groupby if isinstance(groupby, list) else [groupby]
+        groupby_list = [] if groupby is None else groupby_list
+
+        if time_aggregation and time_aggregation_possible:
+            there_is_no_timestamp_column = True
+            for idx, name in enumerate(groupby_list):
+                if isinstance(self._df[name], SeriesTimestamp):
+                    groupby_list[idx] = self._df[name].dt.sql_format(time_aggregation)
+                    there_is_no_timestamp_column = False
+            if there_is_no_timestamp_column:
+                groupby_list.append(self._df.moment.dt.sql_format(time_aggregation))
+        grouped_df = self._df.groupby(groupby_list)
+
+        for key in grouped_df.group_by.index.keys():
+            if key in these_columns_should_not_be_in_group_by:
+                raise ValueError(f'"{key}" is in groupby but is needed for aggregation: not allowed to '
+                                 f'group on that')
+
+        return grouped_df
+
+    def _generic_aggregation(self, local_vars, column, filter, name):
+        df = self._check_groupby(local_vars=local_vars,
+                                 these_columns_should_not_be_in_group_by=[column]).copy_override()
         if filter:
             df['_filter'] = filter
             if filter.expression.has_windowed_aggregate_function:
@@ -32,10 +76,13 @@ class Aggregate:
 
             name += '_' + filter.name
 
-        series = df.groupby(gb)[column].nunique()
+        series = df[column].nunique()
         return series.copy_override(name=name)
 
-    def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None) -> 'SeriesInt64':
+    def unique_users(self,
+                     time_aggregation: str = None,
+                     filter: 'SeriesBoolean' = None,
+                     groupby: Union[List[str], str] = None) -> 'SeriesInt64':
         """
         Calculate the unique users in the ObjectivFrame.
 
@@ -47,12 +94,13 @@ class Aggregate:
         :returns: series with results.
         """
 
-        return self._generic_aggregation(time_aggregation=time_aggregation,
+        return self._generic_aggregation(local_vars=locals(),
                                          column='user_id',
                                          filter=filter,
                                          name='unique_users')
 
-    def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None) -> 'SeriesInt64':
+    def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None,
+                        groupby=None) -> 'SeriesInt64':
         """
         Calculate the unique sessions in the ObjectivFrame.
 
@@ -63,8 +111,7 @@ class Aggregate:
         :param filter: the output of this model is only based on the rows for which the filter is True.
         :returns: series with results.
         """
-
-        return self._generic_aggregation(time_aggregation=time_aggregation,
+        return self._generic_aggregation(local_vars=locals(),
                                          column='session_id',
                                          filter=filter,
                                          name='unique_sessions')
@@ -76,6 +123,7 @@ class Aggregate:
         :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
         :returns: series with results.
         """
+        df = self._check_groupby(local_vars=locals())
         df = self._df.copy_override()
         df['moment2'] = df.moment
         if not time_aggregation:
@@ -99,8 +147,9 @@ class Aggregate:
 
         :returns: series with results.
         """
+        df = self._check_groupby(local_vars=locals())
 
-        total_sessions_user = self._df.groupby(['user_id']).aggregate({'session_id': 'nunique'})
+        total_sessions_user = df.groupby(['user_id']).aggregate({'session_id': 'nunique'})
         frequency = total_sessions_user.groupby(['session_id_nunique']).aggregate({'user_id': 'nunique'})
 
         return frequency
