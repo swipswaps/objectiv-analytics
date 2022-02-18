@@ -2741,47 +2741,6 @@ class DataFrame:
             )
         return subset
 
-    def _forward_fill(
-        self,
-        subset: Optional[Sequence[str]] = None,
-        sort_by: Optional[Union[str, Sequence[str]]] = None,
-        ascending: Union[bool, List[bool]] = True,
-    ) -> 'DataFrame':
-        from bach.partitioning import Window
-
-        subset = self._get_parsed_subset_of_data_columns(subset) or self.data_columns
-        df = self.copy()
-
-        if sort_by:
-            df = df.sort_values(by=sort_by, ascending=ascending)
-
-        if not sort_by and not df.order_by:
-            raise Exception('dataframe must be sorted in order to apply forward fill.')
-
-        # create partition per each non-nullable value in all columns to be interpolated
-        for series_name in subset:
-            partition_name = f'__partition_{series_name}'
-            df[partition_name] = self.all_series[series_name].copy_override(
-                expression=Expression.construct(
-                    f'case when {{}} is null then 0 else 1 end', self.all_series[series_name],
-                ),
-                name=partition_name,
-            )
-
-            df[partition_name] = df.all_series[partition_name].window_sum(
-                window=Window([], order_by=df.order_by),
-            )
-
-        df.materialize(inplace=True)
-
-        # assign first_value of partition
-        for series_name in subset:
-            df[series_name] = df.all_series[series_name].window_first_value(
-                window=Window([df.all_series[f'__partition_{series_name}']], order_by=df.order_by),
-            )
-
-        return df.copy_override(series={s: df.all_series[s] for s in self.data_columns})
-
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     """
