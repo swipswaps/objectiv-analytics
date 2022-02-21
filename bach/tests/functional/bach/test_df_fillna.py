@@ -1,5 +1,5 @@
-import numpy as np
 import pandas as pd
+import pytest
 
 from tests.functional.bach.test_data_and_utils import get_from_df, assert_equals_data
 
@@ -35,6 +35,12 @@ def test_basic_fillna() -> None:
             [7, 0, 0, 1, 0],
         ],
     )
+    pd.testing.assert_frame_equal(
+        pdf.fillna(value=0),
+        result.sort_index().to_pandas(),
+        check_names=False,
+        check_dtype=False,
+    )
 
 
 def test_fillna_w_methods() -> None:
@@ -54,10 +60,17 @@ def test_fillna_w_methods() -> None:
             [0, None, 3, None, 4],
             [4, None, 3, None, 4],
             [6, None, 3, None, 4],
-            [7, None, 3, 1, 4],
-            [1, 3, 4, 1, 1],
-            [5, 1, 4, 1, 1],
+            [7, None, 3, 1,    4],
+            [1, 3,    4, 1,    1],
+            [5, 1,    4, 1,    1],
         ],
+    )
+
+    pd.testing.assert_frame_equal(
+        pdf.fillna(method='ffill').sort_index(),
+        result_ffill.sort_index().to_pandas(),
+        check_names=False,
+        check_dtype=False,
     )
     result_bfill = df.fillna(
         method='bfill', sort_by=['A', 'B', 'C'], ascending=[False, True, False],
@@ -66,13 +79,13 @@ def test_fillna_w_methods() -> None:
         result_bfill,
         expected_columns=['_index_0', 'A', 'B', 'C', 'D'],
         expected_data=[
-            [3, 3, 2, 1, 0],
-            [2, 3, 3, 1, 4],
-            [1, 3, 4, None, 1],
-            [6, 3, 4, 1, 1],
-            [0, 3, 4, 1, 1],
-            [7, 3, 4, 1, 1],
-            [4, 3, 4, 1, 1],
+            [3, 3, 2,    1,    0],
+            [2, 3, 3,    1,    4],
+            [1, 3, 4,    None, 1],
+            [6, 3, 4,    1,    1],
+            [0, 3, 4,    1,    1],
+            [7, 3, 4,    1,    1],
+            [4, 3, 4,    1,    1],
             [5, 1, None, None, None],
         ],
     )
@@ -88,13 +101,13 @@ def test_fillna_w_methods_w_sorted_df() -> None:
         expected_columns=['_index_0', 'A', 'B', 'C', 'D'],
         expected_data=[
             [0, None, None, None, None],
-            [1, 3, 4, None, 1],
-            [2, 3, 3, None, 4],
-            [3, 3, 2, None, 0],
-            [4, 3, 2, None, 0],
-            [5, 1, 2, None, 0],
-            [6, 1, 2, None, 0],
-            [7, 1, 2, 1, 0],
+            [1, 3,    4,    None, 1],
+            [2, 3,    3,    None, 4],
+            [3, 3,    2,    None, 0],
+            [4, 3,    2,    None, 0],
+            [5, 1,    2,    None, 0],
+            [6, 1,    2,    None, 0],
+            [7, 1,    2,    1,    0],
         ],
     )
 
@@ -103,13 +116,26 @@ def test_fillna_w_methods_w_sorted_df() -> None:
         result_bfill,
         expected_columns=['_index_0', 'A', 'B', 'C', 'D'],
         expected_data=[
-            [0, 3, 4, 1, 1],
-            [1, 3, 4, 1, 1],
-            [2, 1, 3, 1, 4],
-            [3, 1, 2, 1, 0],
-            [4, 1, None, 1, None],
-            [5, 1, None, 1, None],
+            [0, 3,    4,    1, 1],
+            [1, 3,    4,    1, 1],
+            [2, 1,    3,    1, 4],
+            [3, 1,    2,    1, 0],
+            [4, 1,    None, 1, None],
+            [5, 1,    None, 1, None],
             [6, None, None, 1, None],
             [7, None, None, 1, None],
         ],
     )
+
+
+def test_fillna_errors():
+    pdf = pd.DataFrame(DATA, columns=list("ABCD"))
+    df = get_from_df('test_df_fillna', pdf)
+    with pytest.raises(ValueError, match=r'cannot specify both "method" and "value".'):
+        df.fillna(value=0, method='ffill')
+
+    with pytest.raises(Exception, match=r'"random" is not a valid method.'):
+        df.fillna(method='random')
+
+    with pytest.raises(Exception, match=r'dataframe must be sorted'):
+        df.fillna(method='ffill')

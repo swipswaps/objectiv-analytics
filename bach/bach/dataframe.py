@@ -2632,14 +2632,36 @@ class DataFrame:
         method: Optional[str] = None,
         axis: int = 0,
         inplace: bool = False,
-        limit: Optional[int] = None,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
         ascending: Union[bool, List[bool]] = True,
     ) -> Optional['DataFrame']:
+        """
+        Fill any NULL value using a method or with a given value.
 
+        :param value: A scalar/series to fill all NULL values on each series
+            or a dictionary specifying which scalar/series to use for each series.
+        :param method: Method to use for filling NULL values on all DataFrame series. Supported values:
+           - "ffill"/"pad": Fill missing values by propagating the last non-nullable value in the series.
+           - "bfill"/"backfill": Fill missing values with the next non-nullable value in the series.
+        :param axis: only ``axis=0`` is supported.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `by` must also be a list and ``len(ascending) == len(by)``.
+
+        :return: a new dataframe with filled missing values if inplace = False, otherwise None.
+
+        .. note::
+            sort_by is required if DataFrame has no order_by.
+        """
         df = self.copy()
         if method and value is not None:
             raise ValueError('cannot specify both "method" and "value".')
+
+        if method and method not in ('ffill', 'pad', 'bfill', 'backfill'):
+            raise ValueError(f'"{method}" is not a valid method.')
 
         if method in ('ffill', 'pad'):
             df.ffill(sort_by=sort_by, ascending=ascending, inplace=True)
@@ -2665,7 +2687,23 @@ class DataFrame:
         ascending: Union[bool, List[bool]] = True,
         inplace: bool = False,
     ) -> Optional['DataFrame']:
+        """
+        Fill missing values by propagating the last non-nullable value in each series.
+
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `by` must also be a list and ``len(ascending) == len(by)``.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+
+        :return: a new dataframe with filled missing values if inplace = False, otherwise None.
+
+        .. note::
+            sort_by is required if DataFrame has no order_by.
+        """
         from bach.partitioning import Window
+        from bach.series.series_numeric import SeriesInt64
 
         df = self.copy()
 
@@ -2675,23 +2713,31 @@ class DataFrame:
         if not sort_by and not df.order_by:
             raise Exception('dataframe must be sorted in order to apply forward fill.')
 
-        # create partition per each non-nullable value in all columns to be interpolated
-        for series_name in self.data_columns:
-            partition_name = f'__partition_{series_name}'
-            df[partition_name] = self.all_series[series_name].copy_override(
-                expression=Expression.construct(
-                    f'case when {{}} is null then 0 else 1 end', self.all_series[series_name],
-                ),
-                name=partition_name,
+        # create a partition column for each series to be filled
+        # this column contains the cumulative sum of the total amount of observed non-nullable values
+        # till the current row. Based on these values, NULL records can be grouped by the partition and
+        # be filled with the non-nullable value respective to the partition
+        # Example:
+        # |   A  | __partition_A | filled_A |
+        # |:----:|:-------------:|:--------:|
+        # |   1  |       1       |     1    |
+        # | NULL |       1       |     1    |
+        # | NULL |       1       |     1    |
+        # |   3  |       2       |     3    |
+        # | NULL |       2       |     3    |
+        # |   4  |       3       |     4    |
+        for series_name, series in self._data.items():
+            partition_name = f'__partition_{series.name}'
+            partition_expr = Expression.construct(f'case when {{}} is null then 0 else 1 end', series)
+            partition_series = cast(
+                SeriesInt64,
+                series.copy_override(expression=partition_expr, name=partition_name).astype('int64'),
             )
+            df[partition_name] = partition_series.sum(partition=Window([], order_by=df.order_by))
 
-            df[partition_name] = df.all_series[partition_name].window_sum(
-                window=Window([], order_by=df.order_by),
-            )
+        df.materialize(node_name='fillna_partitioning', inplace=True)
 
-        df.materialize(inplace=True)
-
-        # assign first_value of partition
+        # fill gaps with the first_value per partition
         for series_name in self.data_columns:
             df[series_name] = df.all_series[series_name].window_first_value(
                 window=Window([df.all_series[f'__partition_{series_name}']], order_by=df.order_by),
@@ -2711,6 +2757,21 @@ class DataFrame:
         ascending: Union[bool, List[bool]] = True,
         inplace: bool = False,
     ) -> Optional['DataFrame']:
+        """
+        Fill missing values by using the next non-nullable value in each series.
+
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `by` must also be a list and ``len(ascending) == len(by)``.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+
+        :return: a new dataframe with filled missing values if inplace = False, otherwise None.
+
+        .. note::
+            sort_by is required if DataFrame has no order_by.
+        """
         df = self.copy()
 
         if sort_by:

@@ -1351,18 +1351,6 @@ class Series(ABC):
             self.dtype
         )
 
-    def window_sum(self, window: WrappedWindow = None):
-        """
-        Returns value evaluated at the row that is the n'th row of the window frame.
-        (counting from 1); returns NULL if there is no such row.
-        """
-        window = self._check_window(window)
-        return self._derived_agg_func(
-            window,
-            Expression.construct(f'sum({{}})', self),
-            self.dtype
-        )
-
     def append(
         self,
         other: Union['Series', List['Series']],
