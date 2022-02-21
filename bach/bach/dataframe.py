@@ -758,6 +758,7 @@ class DataFrame:
 
         :param save_points: Savepoints object that's responsible for tracking all savepoints.
         :param name: Name for the savepoint. This will be the name of the table or view if that's set as
+        :param name: Name for the savepoint. This will be the name of the table or view if that's set as
             materialization. Must be unique both within the Savepoints and within the base_node.
         :param materialization: Optional materialization of the savepoint in the database. This doesn't do
             anything unless self.savepoints.write_to_db() gets called and the savepoints are actually
@@ -2631,7 +2632,6 @@ class DataFrame:
         value: Union[Union['Series', Scalar], Dict[str, Union[Scalar, 'Series']]] = None,
         method: Optional[str] = None,
         axis: int = 0,
-        inplace: bool = False,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
         ascending: Union[bool, List[bool]] = True,
     ) -> Optional['DataFrame']:
@@ -2644,14 +2644,13 @@ class DataFrame:
            - "ffill"/"pad": Fill missing values by propagating the last non-nullable value in the series.
            - "bfill"/"backfill": Fill missing values with the next non-nullable value in the series.
         :param axis: only ``axis=0`` is supported.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param sort_by: series label or sequence of labels used to sort values.
             Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
             yield different results affecting the values to be propagated when using a filling method.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `by` must also be a list and ``len(ascending) == len(by)``.
 
-        :return: a new dataframe with filled missing values if inplace = False, otherwise None.
+        :return: a new dataframe with filled missing values.
 
         .. note::
             sort_by is required if DataFrame has no order_by.
@@ -2664,10 +2663,10 @@ class DataFrame:
             raise ValueError(f'"{method}" is not a valid method.')
 
         if method in ('ffill', 'pad'):
-            df.ffill(sort_by=sort_by, ascending=ascending, inplace=True)
+            df = df.ffill(sort_by=sort_by, ascending=ascending)
 
         elif method in ('bfill', 'backfill'):
-            df.bfill(sort_by=sort_by, ascending=ascending, inplace=True)
+            df = df.bfill(sort_by=sort_by, ascending=ascending)
 
         if value is not None:
             series_to_fill = list(value.keys()) if isinstance(value, dict) else self.data_columns
@@ -2675,18 +2674,13 @@ class DataFrame:
                 fill_with = value[s] if isinstance(value, dict) else value
                 df[s] = df.all_series[s].fillna(fill_with)
 
-        if not inplace:
-            return df
-
-        self._update_self_from_df(df)
-        return None
+        return df
 
     def ffill(
         self,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
         ascending: Union[bool, List[bool]] = True,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Fill missing values by propagating the last non-nullable value in each series.
 
@@ -2695,9 +2689,8 @@ class DataFrame:
             yield different results affecting the values to be propagated when using a filling method.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `by` must also be a list and ``len(ascending) == len(by)``.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
-        :return: a new dataframe with filled missing values if inplace = False, otherwise None.
+        :return: a new dataframe with filled missing values.
 
         .. note::
             sort_by is required if DataFrame has no order_by.
@@ -2745,20 +2738,13 @@ class DataFrame:
                 window=Window([df.all_series[f'__partition_{series_name}']], order_by=df.order_by),
             )
 
-        df = df.copy_override(series={s: df.all_series[s] for s in self.data_columns})
-
-        if not inplace:
-            return df
-
-        self._update_self_from_df(df)
-        return None
+        return df.copy_override(series={s: df.all_series[s] for s in self.data_columns})
 
     def bfill(
         self,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
         ascending: Union[bool, List[bool]] = True,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Fill missing values by using the next non-nullable value in each series.
 
@@ -2767,9 +2753,8 @@ class DataFrame:
             yield different results affecting the values to be propagated when using a filling method.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `by` must also be a list and ``len(ascending) == len(by)``.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
-        :return: a new dataframe with filled missing values if inplace = False, otherwise None.
+        :return: a new dataframe with filled missing values.
 
         .. note::
             sort_by is required if DataFrame has no order_by.
@@ -2788,11 +2773,7 @@ class DataFrame:
         df = df.ffill()
         df._order_by = main_order_by
 
-        if not inplace:
-            return df
-
-        self._update_self_from_df(df)
-        return None
+        return df
 
     def _get_parsed_subset_of_data_columns(
         self, subset: Optional[Union[str, Sequence[str]]],
