@@ -25,6 +25,19 @@ def test_variable_happy_path():
     df, filter_value = df.create_variable(name='filter_value', value=2400)
     df['founding'] = df.founding + add_value
     df['city'] = df['city'] + suffix
+
+    grouped_df = df.groupby('city').founding.max()
+    assert_equals_data(
+        grouped_df,
+        expected_columns=['city', 'founding'],
+        expected_data=[
+            ['Drylts city', 2268],
+            ['Ljouwert city', 2285],
+            ['Snits city', 2456]
+        ],
+        order_by='city'
+    )
+
     df = df[df.founding < filter_value]
 
     assert df.variables == {
@@ -41,6 +54,7 @@ def test_variable_happy_path():
         ]
     )
 
+
     df = df.set_variable('add_value', 2000)
     df = df.set_variable('filter_value', 4400)
     assert df.variables == {
@@ -56,6 +70,18 @@ def test_variable_happy_path():
             [2, 'Snits city', 3456],
             [3, 'Drylts city', 3268],
         ]
+    )
+
+    grouped_df = df.groupby('city').founding.max()
+    assert_equals_data(
+        grouped_df,
+        expected_columns=['city', 'founding'],
+        expected_data=[
+            ['Drylts city', 3268],
+            ['Ljouwert city', 3285],
+            ['Snits city', 3456]
+        ],
+        order_by='city'
     )
 
     df = df.materialize()
