@@ -3,10 +3,7 @@ changelog:
     labels:
       - "Release: Ignore for Changelog"
   categories:
-    - title: Breaking Changes 🛠
-      labels:
-        - "Type: Breaking Change"
-    - title: New Features 🎉
+    - title: Changes 🎉
       labels:
         - "Type: Epic"
         - "Type: Story"
@@ -14,9 +11,6 @@ changelog:
     - title: Fixes
       labels:
         - "Type: Bug"
-    - title: Docs
-      labels:
-        - "Area: Docs"
     - title: Demo notebooks
       labels:
         - "Area: Demo"
@@ -26,3 +20,6 @@ changelog:
     - title: Other Changes
       labels:
         - "*"
+    - title: Docs
+      labels:
+        - "Area: Docs"
