@@ -46,6 +46,15 @@ _AWS_S3_PREFIX = os.environ.get('AWS_S3_PREFIX', '')
 _OUTPUT_ENABLE_FILESYSTEM = os.environ.get('OUTPUT_ENABLE_FILESYSTEM', '') == 'true'
 _FILESYSTEM_OUTPUT_DIR = os.environ.get('FILESYSTEM_OUTPUT_DIR')
 
+# ### Snowplow settings
+_SP_SCHEMA_COLLECTOR_PAYLOAD = 'iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0'
+_SP_SCHEMA_CONTEXTS = 'iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0'
+_SP_SCHEMA_PAYLOAD_DATA = 'iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4'
+_SP_SCHEMA_OBJECTIV_TAXONOMY = 'iglu:io.objectiv/taxonomy/jsonschema/2-0-1'
+
+_SP_GCP_PROJECT = os.environ.get('SP_GCP_PROJECT', None)
+_SP_GCP_PUBSUB_TOPIC_RAW = os.environ.get('SP_GCP_PUBSUB_TOPIC_RAW', '')
+
 # Cookie settings
 _OBJ_COOKIE = 'obj_user_id'
 # default cookie duration is 1 year, can be overridden by setting `COOKIE_DURATION`
@@ -77,10 +86,21 @@ class PostgresConfig(NamedTuple):
     password: str
 
 
+class SnowplowConfig(NamedTuple):
+    gcp_project: str
+    gcp_pubsub_topic_raw: str
+
+    schema_collector_payload: str
+    schema_contexts: str
+    schema_objectiv_taxonomy: str
+    schema_payload_data: str
+
+
 class OutputConfig(NamedTuple):
     postgres: Optional[PostgresConfig]
     aws: Optional[AwsOutputConfig]
     file_system: Optional[FileSystemOutputConfig]
+    snowplow: Optional[SnowplowConfig]
 
 
 class CookieConfig(NamedTuple):
@@ -141,14 +161,31 @@ def get_config_postgres() -> Optional[PostgresConfig]:
     )
 
 
+def get_config_output_snowplow() -> SnowplowConfig:
+    if _SP_GCP_PROJECT is None:
+        return None
+    return SnowplowConfig(
+        schema_collector_payload=_SP_SCHEMA_COLLECTOR_PAYLOAD,
+        schema_contexts=_SP_SCHEMA_CONTEXTS,
+        schema_payload_data=_SP_SCHEMA_PAYLOAD_DATA,
+        schema_objectiv_taxonomy=_SP_SCHEMA_OBJECTIV_TAXONOMY,
+        gcp_project=_SP_GCP_PROJECT,
+        gcp_pubsub_topic_raw=_SP_GCP_PUBSUB_TOPIC_RAW
+    )
+
+
 def get_config_output() -> OutputConfig:
     """ Get the Collector's output settings. Raises an error if none of the outputs are configured. """
     output_config = OutputConfig(
         postgres=get_config_postgres(),
         aws=get_config_output_aws(),
-        file_system=get_config_output_file_system()
+        file_system=get_config_output_file_system(),
+        snowplow=get_config_output_snowplow()
     )
-    if not output_config.postgres and not output_config.aws and not output_config.file_system:
+    if not output_config.postgres \
+            and not output_config.aws \
+            and not output_config.file_system \
+            and not output_config.snowplow:
         raise Exception('No output configured. At least configure either Postgres, S3 or FileSystem '
                         'output.')
     return output_config
