@@ -5,13 +5,13 @@ from tests.functional.bach.test_data_and_utils import get_from_df, assert_equals
 
 DATA = [
     [None, None, None, None],
-    [3, 4, None, 1],
-    [None, 3, None, 4],
-    [None, 2, None, 0],
+    [3,    4,    None, 1],
+    [None, 3,    None, 4],
+    [None, 2,    None, 0],
     [None, None, None, None],
-    [1, None, None, None],
+    [1,    None, None, None],
     [None, None, None, None],
-    [None, None, 1, None],
+    [None, None, 1,    None],
 ]
 
 
