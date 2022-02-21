@@ -5,20 +5,20 @@ import json
 from datetime import datetime
 from urllib.parse import urlparse
 
-from objectiv_backend.snowplow.schema.ttypes import *
+
+from objectiv_backend.snowplow.schema.ttypes import CollectorPayload  # type: ignore
 
 from google.cloud import pubsub_v1
 
 from thrift.protocol import TBinaryProtocol
 from thrift.transport import TTransport
 
-from objectiv_backend.common.config import get_collector_config
+from objectiv_backend.common.config import SnowplowConfig
 from objectiv_backend.common.event_utils import get_context
 from objectiv_backend.common.types import EventDataList, EventData
 
 
-def make_snowplow_custom_context(event: Dict) -> str:
-    config = get_collector_config().output.snowplow
+def make_snowplow_custom_context(event: Dict, config: SnowplowConfig) -> str:
     snowplow_contexts_schema = config.schema_contexts
     outer_event = {
         'schema': snowplow_contexts_schema,
@@ -28,8 +28,7 @@ def make_snowplow_custom_context(event: Dict) -> str:
     return str(base64.b64encode(outer_event_json.encode('UTF-8')), 'UTF-8')
 
 
-def objectiv_event_to_snowplow(event: EventData) -> Dict:
-    config = get_collector_config().output.snowplow
+def objectiv_event_to_snowplow(event: EventData, config: SnowplowConfig) -> Dict:
     objectiv_schema = config.schema_objectiv_taxonomy
 
     return {
@@ -38,16 +37,9 @@ def objectiv_event_to_snowplow(event: EventData) -> Dict:
     }
 
 
-def objectiv_event_to_snowplow_payload(event: EventData) -> CollectorPayload:
-    config = get_collector_config().output.snowplow
-
+def objectiv_event_to_snowplow_payload(event: EventData, config: SnowplowConfig) -> CollectorPayload:
     snowplow_payload_data_schema = config.schema_payload_data
     snowplow_collector_payload_schema = config.schema_collector_payload
-
-    payload = {
-        "schema": snowplow_payload_data_schema,
-        "data": []
-    }
 
     try:
         http_context = get_context(event, 'HttpContext')
@@ -64,19 +56,22 @@ def objectiv_event_to_snowplow_payload(event: EventData) -> CollectorPayload:
     except ValueError:
         path_context = {}
 
-    query_string = urlparse(path_context.get('id', '')).query
+    query_string = urlparse(str(path_context.get('id', ''))).query
 
     rich_event = {'event_id' if k == 'id' else k: v for k, v in event.items()}
     rich_event['cookie_id'] = cookie_context.get('id', '')
 
-    snowplow_event = objectiv_event_to_snowplow(rich_event)
-    snowplow_custom_context = make_snowplow_custom_context(snowplow_event)
-    payload["data"].append({
+    snowplow_event = objectiv_event_to_snowplow(event=rich_event, config=config)
+    snowplow_custom_context = make_snowplow_custom_context(event=snowplow_event, config=config)
+    payload = {
+        "schema": snowplow_payload_data_schema,
+        "data": [{
         "e": "se",  # mandatory: event type: structured event
         "p": "web",  # mandatory: platform
         "tv": "objectiv-tracker-0.0.5",  # mandatory: tracker version
         "url": path_context.get('id', ''),
-        "cx": snowplow_custom_context})
+        "cx": snowplow_custom_context}]
+    }
 
     return CollectorPayload(
         schema=snowplow_collector_payload_schema,
@@ -110,8 +105,7 @@ def payload_to_thrift(payload: CollectorPayload) -> str:
     return transport.getvalue()
 
 
-def write_data_to_pubsub(events: EventDataList) -> None:
-    config = get_collector_config().output.snowplow
+def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig) -> None:
 
     project = config.gcp_project
     topic = config.gcp_pubsub_topic_raw
@@ -120,7 +114,7 @@ def write_data_to_pubsub(events: EventDataList) -> None:
     topic_path = f'projects/{project}/topics/{topic}'
 
     for event in events:
-        payload: CollectorPayload = objectiv_event_to_snowplow_payload(event)
+        payload: CollectorPayload = objectiv_event_to_snowplow_payload(event=event, config=config)
         data = payload_to_thrift(payload)
         publisher.publish(topic_path, data)
 

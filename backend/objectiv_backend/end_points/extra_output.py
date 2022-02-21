@@ -74,7 +74,8 @@ def write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> 
 
 
 def write_data_to_snowplow_if_configured(events: EventDataList) -> None:
-    if not get_collector_config().output.snowplow:
+    config =get_collector_config().output.snowplow
+    if not config:
         return
 
-    write_data_to_pubsub(events)
+    write_data_to_pubsub(events=events, config=config)

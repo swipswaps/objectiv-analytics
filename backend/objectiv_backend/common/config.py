@@ -161,7 +161,7 @@ def get_config_postgres() -> Optional[PostgresConfig]:
     )
 
 
-def get_config_output_snowplow() -> SnowplowConfig:
+def get_config_output_snowplow() -> Optional[SnowplowConfig]:
     if _SP_GCP_PROJECT is None:
         return None
     return SnowplowConfig(
