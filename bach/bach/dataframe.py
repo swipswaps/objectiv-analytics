@@ -1772,6 +1772,7 @@ class DataFrame:
             column_names = tuple(self.all_series.keys())
 
         return CurrentNodeSqlModel.get_instance(
+            engine=self.engine,
             name=name,
             column_names=column_names,
             column_exprs=column_exprs,
