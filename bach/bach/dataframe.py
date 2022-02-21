@@ -2702,7 +2702,7 @@ class DataFrame:
         .. note::
             sort_by is required if DataFrame has no order_by.
         """
-        from bach.partitioning import Window
+        from bach.partitioning import Window, WindowFrameMode
         from bach.series.series_numeric import SeriesInt64
 
         df = self.copy()
@@ -2733,7 +2733,9 @@ class DataFrame:
                 SeriesInt64,
                 series.copy_override(expression=partition_expr, name=partition_name).astype('int64'),
             )
-            df[partition_name] = partition_series.sum(partition=Window([], order_by=df.order_by))
+            df[partition_name] = partition_series.sum(
+                partition=Window([], mode=WindowFrameMode.ROWS, order_by=df.order_by),
+            )
 
         df.materialize(node_name='fillna_partitioning', inplace=True)
 
