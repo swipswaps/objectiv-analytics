@@ -3,11 +3,12 @@ Copyright 2021 Objectiv B.V.
 """
 from decimal import Decimal
 
+import pandas as pd
 import pytest
 
 from bach import DataFrame
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_bt_with_food_data, \
-    assert_equals_data, get_bt_with_railway_data
+    assert_equals_data, get_bt_with_railway_data, get_from_df
 
 
 def test_merge_basic():
@@ -467,3 +468,24 @@ def test_merge_non_materialized():
                 ['Súdwest-Fryslân', Decimal('36575'), Decimal('18287.500000000000')]
             ]
         )
+
+
+def test_merge_on_create_combinated_columns() -> None:
+    pdf1 = pd.DataFrame(
+        {
+            'A': ['a', 'b', 'c', 'd'],
+            'B': [100, 150, 200, 250],
+        },
+    )
+    pdf2 = pd.DataFrame(
+        {
+            'A': ['a', 'b', 'c', 'd'],
+            'B': [20, 50, 10, 25],
+        }
+    )
+    df1 = get_from_df('test_merge_1', pdf1)
+    df2 = get_from_df('test_merge_2', pdf2)
+    combined_series = {
+        'combined': df1.B / df2.B
+    }
+    df1.merge(df2, )
