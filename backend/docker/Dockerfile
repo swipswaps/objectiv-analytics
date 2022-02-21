@@ -92,6 +92,7 @@ COPY docker/gunicorn.conf.py /etc/
 CMD /services/entry_point.sh
 
 # python requirements
+# we use requirement.in, because the list with hashes is not cross-platform compatible
 COPY requirements.in /services/
 
 RUN \
