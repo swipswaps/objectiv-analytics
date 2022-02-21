@@ -1,10 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { ModuleWithProviders, NgModule } from '@angular/core';
 import { BrowserTrackerConfig } from '@objectiv/tracker-browser';
 import { ObjectivTrackerDirective } from './objectiv-tracker.directive';
+import { MakeIdFromString } from './objectiv-tracker.filter';
 import { OBJECTIV_TRACKER_INITIALIZER_PROVIDER } from './objectiv-tracker.initializer';
 import { OBJECTIV_TRACKER_CONFIG_TOKEN } from './objectiv-tracker.token';
 
@@ -14,8 +15,8 @@ import { OBJECTIV_TRACKER_CONFIG_TOKEN } from './objectiv-tracker.token';
  */
 @NgModule({
   imports: [],
-  declarations: [ObjectivTrackerDirective],
-  exports: [ObjectivTrackerDirective],
+  declarations: [ObjectivTrackerDirective, MakeIdFromString],
+  exports: [ObjectivTrackerDirective, MakeIdFromString],
 })
 export class ObjectivTrackerModule {
   static forRoot(trackerConfig: BrowserTrackerConfig): ModuleWithProviders<ObjectivTrackerModule> {

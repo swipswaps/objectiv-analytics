@@ -1,9 +1,9 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { makeMediaPlayerContext } from '@objectiv/tracker-core';
-import { create } from 'superstruct';
+import { isLocationTaggerParameters } from '../common/guards/isLocationTaggerParameters';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { LocationTaggerParameters } from '../definitions/LocationTaggerParameters';
 import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
@@ -14,7 +14,10 @@ import { tagLocation } from './tagLocation';
  */
 export const tagMediaPlayer = (parameters: LocationTaggerParameters): TagLocationReturnValue => {
   try {
-    const { id, options } = create(parameters, LocationTaggerParameters);
+    if (!isLocationTaggerParameters(parameters)) {
+      throw new Error(`Invalid location tagger parameters: ${JSON.stringify(parameters)}`);
+    }
+    const { id, options } = parameters;
     return tagLocation({ instance: makeMediaPlayerContext({ id }), options, onError: parameters.onError });
   } catch (error) {
     return trackerErrorHandler(error, parameters);

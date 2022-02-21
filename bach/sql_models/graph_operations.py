@@ -2,9 +2,14 @@
 Copyright 2021 Objectiv B.V.
 """
 from collections import deque
-from typing import NamedTuple, List, Dict, Set, Tuple, Optional, Callable, Deque
+from typing import NamedTuple, List, Dict, Set, Tuple, Optional, Callable, Deque, Hashable, Mapping,\
+    TypeVar,  Union
 
 from sql_models.model import SqlModel, RefPath
+
+
+TSqlModel = TypeVar('TSqlModel', bound='SqlModel')
+T2SqlModel = TypeVar('T2SqlModel', bound='SqlModel')
 
 
 class NodeInfo(NamedTuple):
@@ -106,55 +111,141 @@ def get_node(start_node: SqlModel, reference_path: RefPath) -> SqlModel:
     return get_node(start_node.references[first], rest)
 
 
-def find_nodes(start_node: SqlModel, function: Callable[[SqlModel], bool]) -> List[FoundNode]:
+def find_nodes(
+        start_node: SqlModel,
+        function: Callable[[SqlModel], bool],
+        first_instance: bool = True
+) -> List[FoundNode]:
     """
     Return all nodes for which function returns True, which can be found by recursively traversing the
     references starting at start_node.
 
     This function uses a breadth first approach, and the returned FoundNodes are in the order they were
-    found. If a node is encountered multiple times, then only the first occurrence will be in the result.
+    found. If a node is encountered multiple times, then only the first or last occurrence will be in the
+    result depending on the value of use_last_found_instance. Note: this does not mean that the result cannot
+    contain nodes that are equal to each other, but it does mean that the result will never contain the same
+    object twice.
 
     :param start_node: start node
     :param function: Function that should return either True or False for a given SqlModel
-    :return: A list of tuples. Each tuple contains the found SqlModel and a reference path to that model
+    :param first_instance: If set to true, if a node is encountered multiple times in the breadth first
+        search then the first occurrence will be included in the result. If set to False then the last
+        occurrence will be in the result.
+    :return: A list of tuples. Each tuple contains the found SqlModel and a reference path to that model.
+        The returned nodes are in the order in which they were encountered. As a result the reference_path
+        of the returned tuples monotonically increases when iterating the list.
     """
-    found_nodes = set()
-    result: List[FoundNode] = []
+    # result_nodes maps the id of the found objects to a FoundNode object
+    result_nodes: Dict[int, FoundNode] = {}
     queue: Deque[Tuple[SqlModel, RefPath]] = deque()
     queue.append((start_node, tuple()))
     while queue:
         node, path = queue.popleft()
-        if function(node) and node not in found_nodes:
-            found_nodes.add(node)
-            result.append(FoundNode(node, path))
+        current_id = id(node)
+        if function(node):
+            if current_id not in result_nodes:
+                result_nodes[current_id] = FoundNode(node, path)
+            elif current_id in result_nodes and not first_instance:
+                # we rely on the fact that python 3.7+ will keep the insertion order. So we'll have to
+                # remove and reinsert the item to get it in the right position in the returned result.
+                del result_nodes[current_id]
+                result_nodes[current_id] = FoundNode(node, path)
         for next_path, next_node in node.references.items():
             next_tuple = (next_node, path + (next_path,))
             queue.append(next_tuple)
-    return result
+    return list(result_nodes.values())
 
 
-def find_node(start_node: SqlModel, function: Callable[[SqlModel], bool]) -> Optional[FoundNode]:
-    """ Similar to find_nodes, but will only return the first found node, or None if none are found. """
-    result = find_nodes(start_node, function)
+def find_node(
+        start_node: SqlModel,
+        function: Callable[[SqlModel], bool],
+        first_instance: bool = True
+) -> Optional[FoundNode]:
+    """
+    Similar to find_nodes, but will only return the first node in the result, or None if none are found.
+    """
+    result = find_nodes(start_node, function, first_instance)
     if not result:
         return None
     return result[0]
 
 
-def replace_node_in_graph(start_node: SqlModel,
-                          reference_path: RefPath,
-                          replacement_model: SqlModel) -> SqlModel:
+def get_all_placeholders(start_node: SqlModel) -> Dict[str, Dict[RefPath, Hashable]]:
+    """
+    Get all placeholders in the graph.
+
+    :return: Dict, keys: placeholder name, values: dictionary. The values sub-dictionary has as key the path
+        to all nodes that use the placeholder, and as values the value in that node.
+    """
+    return _get_all_placeholders_recursive(start_node, tuple())
+
+
+def _get_all_placeholders_recursive(start_node: SqlModel, path_so_far: RefPath):
+    result = {name: {path_so_far: value} for name, value in start_node.placeholders.items()}
+    for reference_name, reference in start_node.references.items():
+        _next_reference_path = (*path_so_far, reference_name)
+        result_ref = _get_all_placeholders_recursive(reference, _next_reference_path)
+        for name, path_values in result_ref.items():
+            result.setdefault(name, {}).update(path_values)
+    return result
+
+
+def update_placeholders_in_graph(
+        start_node: TSqlModel,
+        placeholder_values: Mapping[str, Hashable]
+) -> TSqlModel:
+    """
+    Return a copy of the start_node with the given placeholder values updated throughout the tree.
+
+    Will only update placeholder values of nodes that already have that placeholder and for which that
+    placeholder has a different value. If a node doesn't have any of the placeholders in placeholder_values,
+    or all the values match already, then nothing happens with that node.
+
+    :param start_node: start node
+    :param placeholder_values: Dictionary mapping placeholder names to new values.
+    :return: Updated copy of the start_node. If nothing needs to be updated, then the start_node unchanged.
+    """
+    find_keys = set(placeholder_values.keys())
+
+    def filter_function(node: SqlModel) -> bool:
+        filter_node_keys = set(node.placeholders.keys())
+        return bool(find_keys.intersection(filter_node_keys))
+
+    found_nodes = find_nodes(start_node, function=filter_function)
+    for found_node in found_nodes:
+        node_keys = set(found_node.model.placeholders.keys())
+        matching_keys = find_keys.intersection(node_keys)
+        dict_to_update = {
+            key: placeholder_values[key]
+            for key in matching_keys if found_node.model.placeholders[key] != placeholder_values[key]
+        }
+        if not dict_to_update:
+            continue
+        new_dict = found_node.model.placeholders
+        new_dict.update(dict_to_update)
+        start_node = start_node.set(found_node.reference_path, **new_dict)
+    return start_node
+
+
+def replace_node_in_graph(
+        start_node: TSqlModel,
+        reference_path: RefPath,
+        replacement_model: T2SqlModel) -> Union[TSqlModel, T2SqlModel]:
     """
     Create a (partial) copy of the graph that can be reached from start_node, with the referenced node
     replaced by replacement_model. All nodes along all reference paths to the referenced node will be
     replaced with copies of the original nodes that (indirectly) link to replacement_model.
 
-    The original start node, and all nodes that it refers recursively are unchanged.
+    The original start node, and all nodes that it refers recursively are unchanged; the returned and
+    modified SqlModel is a copy.
     :param start_node: start node
     :param reference_path: references to traverse to get to the node that has to be updated
     :param replacement_model: model instance that will replace the reference node
-    :return: an updated copy of the start node
+    :return: an updated copy of the start node, or the replacement_node if reference_path is empty
     """
+    if reference_path == tuple():
+        return replacement_model
+
     selected_node = get_node_info_selected_node(start_node, reference_path)
     dependent_model_ids = _get_all_dependent_node_model_ids(selected_node)
     # the dependent_model_ids are guaranteed to uniquely identify python objects as long as those objects
@@ -170,13 +261,46 @@ def replace_node_in_graph(start_node: SqlModel,
     )
 
 
+def replace_non_start_node_in_graph(
+        start_node: TSqlModel,
+        reference_path: RefPath,
+        replacement_model: SqlModel) -> TSqlModel:
+    """
+    Similar to :meth:`replace_node_in_graph()`, except in this case the reference_path cannot be empty, i.e.
+    the node to replace cannot be the start_node.
+
+    The limitation that reference_path cannot be empty has the advantage that this function guarantees to
+    return a copy of the start_node, and never the replacement_model. This can be useful when one wants to
+    be sure that the return type is the same as the type of start_node.
+
+    The original start node, and all nodes that it refers recursively are unchanged.
+    :param start_node: start node
+    :param reference_path: references to traverse to get to the node that has to be updated. Cannot be empty
+    :param replacement_model: model instance that will replace the reference node
+    :return: an updated copy of the start node
+    :raises ValueError: if reference_path is an empty tuple
+    """
+    if reference_path == tuple():
+        raise ValueError(f'reference path cannot be empty, use replace_node_in_graph() instead.')
+    selected_node = get_node_info_selected_node(start_node, reference_path)
+    dependent_model_ids = _get_all_dependent_node_model_ids(selected_node)
+    # See replace_node_in_graph() for more comments on the implementation
+    return _replace_model_in_graph_recursively(
+        current_node=start_node,
+        model_to_replace=selected_node.model,
+        replacement_node=replacement_model,
+        dependent_model_ids=dependent_model_ids,
+        replaced_models={}
+    )
+
+
 def _replace_model_in_graph_recursively(
-        current_node: SqlModel,
+        current_node: TSqlModel,
         model_to_replace: SqlModel,
         replacement_node: SqlModel,
         dependent_model_ids: Set[int],
         replaced_models: Dict[int, SqlModel]
-) -> SqlModel:
+) -> TSqlModel:
     """
     Return the a copy of current_node, with the recursively referenced nodes of the original replaced by
         copies too. The replacement_node is not replaced by a copy but by replacement_node.
@@ -184,6 +308,8 @@ def _replace_model_in_graph_recursively(
 
     Effectively this can be used to replace a single node, and create a new graph that references that
     updated node.
+
+    Important limitation: current_node cannot be the same as model_to_replace!
 
     :param current_node: current node, copy of this node will be returned.
     :param model_to_replace: model that should be replaced.
@@ -195,14 +321,21 @@ def _replace_model_in_graph_recursively(
     :return: copy of current-node, with referred nodes copied and updated too.
     """
     if current_node is model_to_replace:
-        return replacement_node
+        # For a basic recursive function this would be the base case, and we'd return here. But as we want to
+        # guarantee to return the same type as current_node, we disallow this and handle the base case below
+        raise Exception('Function should only be used for the recursive case.')
     new_references = {}
     for ref_name, ref_node in current_node.references.items():
         node_id = id(ref_node)
         if node_id in dependent_model_ids:
             if node_id in replaced_models:
+                # cached case
                 new_references[ref_name] = replaced_models[node_id]
+            elif ref_node is model_to_replace:
+                # base case
+                new_references[ref_name] = replacement_node
             else:
+                # recursive case
                 new_references[ref_name] = _replace_model_in_graph_recursively(
                     current_node=ref_node,
                     model_to_replace=model_to_replace,

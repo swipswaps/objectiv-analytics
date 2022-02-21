@@ -1,12 +1,11 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { assert, validate } from 'superstruct';
+import { isValidChildrenTaggingQuery } from '../common/guards/isValidChildrenTaggingQuery';
 import { stringifyTagChildren } from '../common/stringifiers/stringifyTagChildren';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { ChildrenTaggingQueries } from '../definitions/ChildrenTaggingQueries';
-import { TagChildrenAttributes } from '../definitions/TagChildrenAttributes';
 import { TagChildrenReturnValue } from '../definitions/TagChildrenReturnValue';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
 import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerCallback';
@@ -23,11 +22,11 @@ import { TrackerErrorHandlerCallback } from '../definitions/TrackerErrorHandlerC
  *    tagChildren([
  *      {
  *        queryAll: 'button[aria-label="Previous"]',
- *        tagAs: tagButton({ id: 'prev', text: 'Previous' })
+ *        tagAs: tagPressable({ id: 'prev', text: 'Previous' })
  *      },
  *      {
  *        queryAll: 'button[aria-label="Next"]',
- *        tagAs: tagButton({ id: 'next', text: 'Next' })
+ *        tagAs: tagPressable({ id: 'next', text: 'Next' })
  *      }
  *    ])
  */
@@ -36,19 +35,15 @@ export const tagChildren = (
   onError?: TrackerErrorHandlerCallback
 ): TagChildrenReturnValue => {
   try {
-    // Validate input
-    assert(parameters, ChildrenTaggingQueries);
+    parameters.forEach((childrenTaggingQuery) => {
+      if (!isValidChildrenTaggingQuery(childrenTaggingQuery)) {
+        throw new Error(`Invalid children tagging parameters: ${JSON.stringify(parameters)}`);
+      }
+    });
 
-    // Create output attributes object
-    const LocationTaggingAttributes = {
+    return {
       [TaggingAttribute.tagChildren]: stringifyTagChildren(parameters),
     };
-
-    // Validate
-    validate(LocationTaggingAttributes, TagChildrenAttributes);
-
-    // Return
-    return LocationTaggingAttributes;
   } catch (error) {
     return trackerErrorHandler(error, parameters, onError);
   }

@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/tracker-angular",
-  "version": "0.0.1",
+  "version": "0.0.13",
   "description": "Objectiv Angular framework analytics tracker for the open taxonomy for analytics",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -29,34 +29,28 @@
   "main": "dist/index.js",
   "module": "dist/index.js",
   "scripts": {
-    "build": "ng-packagr -p package.json",
+    "build": "ng-packagr -p ng-package.json",
     "prettify": "prettier --write .",
     "tsc": "tsc --noEmit",
     "npm-publish": "(cd dist && shx rm -f .npmrc && npm publish --access=public)",
     "npm-publish:verdaccio": "(cd dist && shx cp ../../../verdaccio/.npmrc .npmrc && npm publish && rm -f .npmrc)"
   },
   "peerDependencies": {
-    "@objectiv/tracker-browser": "^0.0.1"
+    "@angular/common": "^9.0.0",
+    "@angular/core": "^9.0.0",
+    "@objectiv/tracker-browser": "^0.0.13"
   },
   "devDependencies": {
-    "@angular/compiler": "^12.2.11",
-    "@angular/compiler-cli": "^12.2.11",
-    "@angular/core": "^12.2.11",
-    "@objectiv/tracker-browser": "^0.0.1",
-    "ng-packagr": "^12.2.5",
-    "prettier": "^2.4.1",
-    "rxjs": "^7.4.0",
+    "@angular/compiler": "~9.1.13",
+    "@angular/compiler-cli": "~9.1.13",
+    "@angular/core": "~9.1.13",
+    "@objectiv/tracker-browser": "^0.0.13",
+    "ng-packagr": "^9.0.0",
+    "prettier": "^2.5.1",
+    "rxjs": "~6.5.4",
     "shx": "^0.3.3",
     "tslib": "^2.3.1",
-    "typescript": "4.3.5",
-    "zone.js": "^0.11.4"
-  },
-  "ngPackage": {
-    "lib": {
-      "entryFile": "src/index.ts",
-      "umdModuleIds": {
-        "@objectiv/tracker-browser": "objectivTrackerBrowser"
-      }
-    }
+    "typescript": "~3.8.3",
+    "zone.js": "~0.10.2"
   }
 }

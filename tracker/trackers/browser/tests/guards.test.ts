@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import {
@@ -7,6 +7,7 @@ import {
   isTagChildrenElement,
   isTaggableElement,
   isTaggedElement,
+  isWaitUntilTrackedOptions,
   TaggingAttribute,
 } from '../src';
 
@@ -145,5 +146,28 @@ describe('isParentTaggedElement', () => {
     expect(isParentTaggedElement(button)).toBe(true);
 
     // TODO cover negative cases
+  });
+});
+
+describe('isWaitUntilTrackedOptions', () => {
+  it('should return false', () => {
+    // @ts-ignore
+    expect(isWaitUntilTrackedOptions('nope')).toBe(false);
+    // @ts-ignore
+    expect(isWaitUntilTrackedOptions(null)).toBe(false);
+    // @ts-ignore
+    expect(isWaitUntilTrackedOptions(undefined)).toBe(false);
+    // @ts-ignore
+    expect(isWaitUntilTrackedOptions(0)).toBe(false);
+    // @ts-ignore
+    expect(isWaitUntilTrackedOptions(1)).toBe(false);
+    // @ts-ignore
+    expect(isWaitUntilTrackedOptions([])).toBe(false);
+    // @ts-ignore
+    expect(isWaitUntilTrackedOptions({ intervalMs: 'nope' })).toBe(false);
+    // @ts-ignore
+    expect(isWaitUntilTrackedOptions({ timeoutMs: 'nope' })).toBe(false);
+    // @ts-ignore
+    expect(isWaitUntilTrackedOptions({ flushQueue: 'nope' })).toBe(false);
   });
 });

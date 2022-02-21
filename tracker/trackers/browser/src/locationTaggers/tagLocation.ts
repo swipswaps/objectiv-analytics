@@ -1,18 +1,18 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { generateUUID, getObjectKeys } from '@objectiv/tracker-core';
-import { create, is, validate } from 'superstruct';
+import { isPressableContext } from '../common/guards/isPressableContext';
+import { isShowableContext } from '../common/guards/isShowableContext';
+import { isTagLocationParameters } from '../common/guards/isTagLocationParameters';
 import { runIfValueIsNotUndefined } from '../common/runIfValueIsNotUndefined';
 import { stringifyLocationContext } from '../common/stringifiers/stringifyLocationContext';
 import { stringifyTrackClicks } from '../common/stringifiers/stringifyTrackClicks';
 import { stringifyTrackVisibility } from '../common/stringifiers/stringifyTrackVisibility';
 import { stringifyValidate } from '../common/stringifiers/stringifyValidate';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
-import { AnyClickableContext, AnySectionContext, InputContext } from '../definitions/LocationContext';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { TagLocationAttributes } from '../definitions/TagLocationAttributes';
 import { TagLocationParameters } from '../definitions/TagLocationParameters';
 import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
 
@@ -32,19 +32,27 @@ import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
  */
 export const tagLocation = (parameters: TagLocationParameters): TagLocationReturnValue => {
   try {
-    // Validate input
-    const { instance, options } = create(parameters, TagLocationParameters);
+    if (!isTagLocationParameters(parameters)) {
+      throw new Error(`Invalid tagLocation parameters: ${JSON.stringify(parameters)}`);
+    }
+
+    const { instance, options } = parameters;
 
     // Determine Context type
-    const isClickable = is(instance, AnyClickableContext);
-    const isInput = is(instance, InputContext);
-    const isSection = is(instance, AnySectionContext);
+    const isPressable = isPressableContext(instance);
+    const isInput = instance._type === 'InputContext';
+    const isShowable = isShowableContext(instance);
 
     // Process options. Gather default attribute values
-    const trackClicks = options?.trackClicks ?? (isClickable ? true : undefined);
+    const trackClicks = options?.trackClicks ?? (isPressable ? true : undefined);
     const trackBlurs = options?.trackBlurs ?? (isInput ? true : undefined);
-    const trackVisibility = options?.trackVisibility ?? (isSection ? { mode: 'auto' } : undefined);
     const parentElementId = options?.parent ? options.parent[TaggingAttribute.elementId] : undefined;
+
+    // Determine whether to auto-track visibility
+    let trackVisibility = options?.trackVisibility !== false ? options?.trackVisibility : undefined;
+    if ((options?.trackVisibility === undefined && isShowable) || options?.trackVisibility === true) {
+      trackVisibility = { mode: 'auto' };
+    }
 
     // Create output attributes object
     const LocationTaggingAttributes = {
@@ -56,9 +64,6 @@ export const tagLocation = (parameters: TagLocationParameters): TagLocationRetur
       [TaggingAttribute.trackVisibility]: runIfValueIsNotUndefined(stringifyTrackVisibility, trackVisibility),
       [TaggingAttribute.validate]: runIfValueIsNotUndefined(stringifyValidate, options?.validate),
     };
-
-    // Validate
-    validate(LocationTaggingAttributes, TagLocationAttributes);
 
     // Strip out undefined attributes and return
     getObjectKeys(LocationTaggingAttributes).forEach((key) => {

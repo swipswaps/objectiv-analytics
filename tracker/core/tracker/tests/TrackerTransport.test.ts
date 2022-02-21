@@ -1,21 +1,18 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { ConfigurableMockTransport, LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-tools';
 import {
   ContextsConfig,
+  makeTransportSendError,
   Tracker,
   TrackerEvent,
   TrackerTransportGroup,
   TrackerTransportRetry,
   TrackerTransportRetryAttempt,
   TrackerTransportSwitch,
-  TransportSendError,
 } from '../src';
-import { ConfigurableMockTransport } from './mocks/ConfigurableMockTransport';
-import { LogTransport } from './mocks/LogTransport';
-import { mockConsole } from './mocks/MockConsole';
-import { UnusableTransport } from './mocks/UnusableTransport';
 
 const testEventName = 'test-event';
 const testContexts: ContextsConfig = {
@@ -316,7 +313,7 @@ describe('TrackerTransportRetry', () => {
 
   it('should retry once', async () => {
     jest.useRealTimers();
-    const mockedError = new TransportSendError('You shall not pass!');
+    const mockedError = makeTransportSendError();
     const logTransport = new LogTransport();
     jest
       .spyOn(logTransport, 'handle')
@@ -342,7 +339,7 @@ describe('TrackerTransportRetry', () => {
 
   it('should retry three times', async () => {
     jest.useRealTimers();
-    const mockedError = new TransportSendError('You shall not pass!');
+    const mockedError = makeTransportSendError();
     const logTransport = new LogTransport();
     jest.spyOn(logTransport, 'handle').mockReturnValue(Promise.reject(mockedError));
     const retryTransport = new TrackerTransportRetry({
@@ -369,10 +366,9 @@ describe('TrackerTransportRetry', () => {
   });
 
   it('should stop retrying if we reached maxRetryMs', async () => {
-    jest.useRealTimers();
     const slowFailingTransport = {
       transportName: 'SlowFailingTransport',
-      handle: async () => new Promise((_, reject) => setTimeout(() => reject(new TransportSendError()), 100)),
+      handle: async () => new Promise((_, reject) => setTimeout(() => reject(makeTransportSendError()), 100)),
       isUsable: () => true,
     };
     jest.spyOn(slowFailingTransport, 'handle');

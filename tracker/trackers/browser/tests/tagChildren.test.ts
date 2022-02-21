@@ -1,9 +1,8 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { StructError } from 'superstruct';
-import { parseTagChildren, stringifyTagChildren, tagChild, tagChildren, tagElement, TaggingAttribute } from '../src';
+import { parseTagChildren, stringifyTagChildren, tagChild, tagChildren, tagContent, TaggingAttribute } from '../src';
 
 describe('tagChild and tagChildren', () => {
   beforeEach(() => {
@@ -25,23 +24,25 @@ describe('tagChild and tagChildren', () => {
     // @ts-ignore
     expect(tagChild([])).toBeUndefined();
     // @ts-ignore
-    expect(tagChild({ tagAs: tagElement({ id: 'test' }) })).toBeUndefined();
+    expect(tagChild({ queryAll: 'test', tagAs: {} })).toBeUndefined();
     // @ts-ignore
-    expect(tagChild({ queryAll: null, tagAs: tagElement({ id: 'test' }) })).toBeUndefined();
+    expect(tagChild({ tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
-    expect(tagChild({ queryAll: undefined, tagAs: tagElement({ id: 'test' }) })).toBeUndefined();
+    expect(tagChild({ queryAll: null, tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
-    expect(tagChild({ queryAll: 0, tagAs: tagElement({ id: 'test' }) })).toBeUndefined();
+    expect(tagChild({ queryAll: undefined, tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
-    expect(tagChild({ queryAll: false, tagAs: tagElement({ id: 'test' }) })).toBeUndefined();
+    expect(tagChild({ queryAll: 0, tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
-    expect(tagChild({ queryAll: true, tagAs: tagElement({ id: 'test' }) })).toBeUndefined();
+    expect(tagChild({ queryAll: false, tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
-    expect(tagChild({ queryAll: {}, tagAs: tagElement({ id: 'test' }) })).toBeUndefined();
+    expect(tagChild({ queryAll: true, tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
-    expect(tagChild({ queryAll: Infinity, tagAs: tagElement({ id: 'test' }) })).toBeUndefined();
+    expect(tagChild({ queryAll: {}, tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
-    expect(tagChild({ queryAll: -Infinity, tagAs: tagElement({ id: 'test' }) })).toBeUndefined();
+    expect(tagChild({ queryAll: Infinity, tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
+    // @ts-ignore
+    expect(tagChild({ queryAll: -Infinity, tagAs: tagContent({ id: 'test' }) })).toBeUndefined();
     // @ts-ignore
     expect(tagChild({ query: -Infinity, tagAs: undefined })).toBeUndefined();
     // @ts-ignore
@@ -55,7 +56,7 @@ describe('tagChild and tagChildren', () => {
     tagChild({ query: {} }, errorCallback);
 
     expect(errorCallback).toHaveBeenCalledTimes(1);
-    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(StructError);
+    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(Error);
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
@@ -69,7 +70,7 @@ describe('tagChild and tagChildren', () => {
 
   it('should return query and tagAs attributes', () => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
-    const parameters = { queryAll: '#two', tagAs: tagElement({ id: 'element-two' }) };
+    const parameters = { queryAll: '#two', tagAs: tagContent({ id: 'element-two' }) };
 
     const attributes1 = tagChild(parameters);
     const attributes2 = tagChildren([parameters]);

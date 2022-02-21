@@ -304,6 +304,25 @@ def test_groupby_dataframe_agg_per_series_syntax():
         }
 
 
+def test_groupby_agg_func_order() -> None:
+    bt = get_bt_with_test_data(full_data_set=True)[['municipality', 'inhabitants', 'founding']]
+    btg = bt.groupby('municipality')
+    result_bt = btg.agg({'founding': ['max', 'min'], 'inhabitants': 'min'})
+    assert_equals_data(
+        result_bt,
+        order_by='municipality',
+        expected_columns=['municipality', 'founding_max', 'founding_min', 'inhabitants_min'],
+        expected_data=[
+            ['De Friese Meren', 1426, 1426, 700],
+            ['Harlingen', 1234, 1234, 14740],
+            ['Leeuwarden', 1285, 1285, 93485],
+            ['Noardeast-Fryslân', 1298, 1298, 12675],
+            ['Súdwest-Fryslân', 1456, 1061, 870],
+            ['Waadhoeke', 1374, 1374, 12760],
+        ],
+    )
+
+
 def test_groupby_dataframe_agg_multiple_per_series_syntax():
     bt = get_bt_with_test_data(full_data_set=True)
     btg = bt.groupby('municipality')
@@ -518,15 +537,15 @@ def test_groupby_frame_split_series_aggregation():
     assert df_sum_series.base_node == bt.base_node
     assert df_df_sum_series.base_node == bt.base_node
 
-    assert (founding_sum.values == df_sum_series.values).all()
-    assert (founding_sum.values == df_df_sum_series.values).all()
+    assert (founding_sum.to_numpy() == df_sum_series.to_numpy()).all()
+    assert (founding_sum.to_numpy() == df_df_sum_series.to_numpy()).all()
 
     # Does math work?
     inhabitants_sum = btg1['inhabitants'].sum()
     founding_sum = btg1['founding'].sum()
     add_series_sum = btg1['founding'].sum() + btg1['inhabitants'].sum()
     assert all(
-        (founding_sum.values + inhabitants_sum.values) == add_series_sum.values
+        (founding_sum.to_numpy() + inhabitants_sum.to_numpy()) == add_series_sum.to_numpy()
     )
     # no materialization has taken place yet.
     assert inhabitants_sum.base_node == bt.base_node
@@ -558,14 +577,14 @@ def test_groupby_frame_split_recombine():
     assert btg1a == btg1  # inplies base_node and group_by are equal
 
     # can not add columns from grouped df to ungrouped df
-    with pytest.raises(ValueError, match="GroupBy of assigned value does not match DataFrame and the given "
-                                         "series was not single value or an independent subquery"):
+    with pytest.raises(ValueError, match="Setting a grouped Series to a DataFrame is only supported if the"
+                                         " Series is aggregated"):
         bt2 = bt.drop(columns=['founding'])
         bt2['founding'] = btg1b
 
     # can not add columns from ungrouped df to grouped df
-    with pytest.raises(ValueError, match="GroupBy of assigned value does not match DataFrame and the given "
-                                         "series was not single value or an independent subquery"):
+    with pytest.raises(ValueError, match="Setting new columns to grouped DataFrame is only supported if the"
+                                         " DataFrame has aggregated columns"):
         bt2 = btg1.drop(columns=['founding'])
         bt2['founding'] = bt['founding']
 
@@ -659,8 +678,10 @@ def test_unmaterializable_groupby_boolean_functions():
     assert btg_min_fnd.group_by != bt.group_by
     assert not btg_min_fnd.expression.is_single_value
 
-    with pytest.raises(ValueError, match='rhs has a different base_node or group_by, but contains more than one value.'):
+    with pytest.raises(ValueError, match='dtypes of indexes should be the same'):
+        # todo pandas: Can only compare identically-labeled Series objects
         bt[btg_min_fnd == bt.founding]
 
-    with pytest.raises(ValueError, match='rhs has a different base_node or group_by, but contains more than one value.'):
+    with pytest.raises(ValueError, match='dtypes of indexes should be the same'):
+        # todo pandas: Can only compare identically-labeled Series objects
         bt[bt.founding == btg_min_fnd]

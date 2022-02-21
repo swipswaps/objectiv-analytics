@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { getLocationPath, TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
@@ -45,10 +45,21 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker, conso
           const { existingElementId, collidingElementId } = locationAddResult;
           const existingElement = document.querySelector(`[${TaggingAttribute.elementId}='${existingElementId}']`);
           const collidingElement = document.querySelector(`[${TaggingAttribute.elementId}='${collidingElementId}']`);
-          console.group(`｢objectiv:trackNewElement｣ Location collision detected: ${locationPath}`);
-          console.error(`Existing Element:`, existingElement);
-          console.error(`Colliding Element:`, collidingElement);
-          console.groupEnd();
+          // Sanity check, in case elements have been removed while we were performing this check
+          if (existingElement && collidingElement) {
+            console.group(`｢objectiv:trackNewElement｣ Location collision detected: ${locationPath}`);
+            console.error(`Existing Element:`, existingElement);
+            console.error(`Colliding Element:`, collidingElement);
+            console.groupEnd();
+          } else {
+            // Cleanup elements that are gone
+            if (!existingElement) {
+              TrackerElementLocations.delete(existingElementId);
+            }
+            if (!collidingElement) {
+              TrackerElementLocations.delete(collidingElementId);
+            }
+          }
         }
       }
 

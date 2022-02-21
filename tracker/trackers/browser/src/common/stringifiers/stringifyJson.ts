@@ -1,15 +1,10 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
-
-import { coerce, create, string, Struct } from 'superstruct';
 
 /**
  * JSON Objects stringifier
  */
-export const stringifyJson = <T = unknown>(object: T, struct: Struct<T>): string => {
-  return create(
-    object,
-    coerce(string(), struct, (value) => JSON.stringify(value))
-  );
+export const stringifyJson = (object: unknown): string => {
+  return JSON.stringify(object);
 };

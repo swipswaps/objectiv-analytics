@@ -1,21 +1,19 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { matchUUID } from '@objectiv/testing-tools';
 import {
-  makeButtonContext,
-  makeExpandableSectionContext,
+  makePressableContext,
+  makeExpandableContext,
   makeInputContext,
   makeLinkContext,
   makeMediaPlayerContext,
   makeNavigationContext,
   makeOverlayContext,
-  makeSectionContext,
+  makeContentContext,
 } from '@objectiv/tracker-core';
-import { StructError } from 'superstruct';
-import { tagElement, TaggingAttribute, tagLocation } from '../src';
-import { matchUUID } from './mocks/matchUUID';
-import { mockConsole } from './mocks/MockConsole';
+import { tagContent, TaggingAttribute, tagLocation, tagOverlay } from '../src';
 
 describe('tagLocation', () => {
   beforeEach(() => {
@@ -49,7 +47,52 @@ describe('tagLocation', () => {
     // @ts-ignore
     expect(tagLocation({ instance: 'test' })).toBeUndefined();
     // @ts-ignore
-    expect(tagLocation({ instance: makeSectionContext({ id: 'test' }), options: 'invalid' })).toBeUndefined();
+    expect(tagLocation({ instance: { _type: 'nope' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: { _type: 'ContentContext' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: { id: 'nope' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: { _type: 'Nope', id: 'nope' } })).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: makeContentContext({ id: 'test' }), options: 'invalid' })).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: null } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: 'nope' } })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: {} } })).toBeUndefined();
+    expect(
+      tagLocation({
+        instance: makeContentContext({ id: 'test' }),
+        // @ts-ignore
+        options: { trackClicks: { waitUntilTracked: 'nope' } },
+      })
+    ).toBeUndefined();
+    // @ts-ignore
+    expect(
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackClicks: { waitUntilTracked: {} } } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackBlurs: 'nope' } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackVisibility: 'nope' } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { trackVisibility: {} } })
+    ).toBeUndefined();
+    expect(
+      // @ts-ignore
+      tagLocation({ instance: makeContentContext({ id: 'test' }), options: { validate: 'nope' } })
+    ).toBeUndefined();
   });
 
   it('should call `onError` callback when an error occurs', () => {
@@ -59,7 +102,7 @@ describe('tagLocation', () => {
     tagLocation({ instance: {}, onError: errorCallback });
 
     expect(errorCallback).toHaveBeenCalledTimes(1);
-    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(StructError);
+    expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(Error);
   });
 
   it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
@@ -72,18 +115,33 @@ describe('tagLocation', () => {
   });
 
   it('should allow overriding whether to track click, blur and visibility events via options', () => {
-    expect(tagElement({ id: 'test' })).toStrictEqual({
+    expect(tagContent({ id: 'test' })).toStrictEqual({
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
-        _type: 'SectionContext',
+        _type: 'ContentContext',
         id: 'test',
       }),
-      [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
     });
+
     expect(
-      tagElement({
+      tagOverlay({
+        id: 'test',
+        options: {
+          trackVisibility: false,
+        },
+      })
+    ).toStrictEqual({
+      [TaggingAttribute.elementId]: matchUUID,
+      [TaggingAttribute.context]: JSON.stringify({
+        __location_context: true,
+        _type: 'OverlayContext',
+        id: 'test',
+      }),
+    });
+
+    expect(
+      tagContent({
         id: 'test',
         options: {
           trackClicks: false,
@@ -95,8 +153,7 @@ describe('tagLocation', () => {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
-        _type: 'SectionContext',
+        _type: 'ContentContext',
         id: 'test',
       }),
       [TaggingAttribute.trackClicks]: 'false',
@@ -106,45 +163,39 @@ describe('tagLocation', () => {
   });
 
   it('should allow overriding parent auto detection via options', () => {
-    const parent = tagElement({ id: 'parent' });
-    expect(tagElement({ id: 'test' })).toStrictEqual({
+    const parent = tagContent({ id: 'parent' });
+    expect(tagContent({ id: 'test' })).toStrictEqual({
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
-        _type: 'SectionContext',
+        _type: 'ContentContext',
         id: 'test',
       }),
-      [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
     });
-    expect(tagElement({ id: 'test', options: { parent } })).toStrictEqual({
+    expect(tagContent({ id: 'test', options: { parent } })).toStrictEqual({
       [TaggingAttribute.elementId]: matchUUID,
       // @ts-ignore
       [TaggingAttribute.parentElementId]: parent[TaggingAttribute.elementId],
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
-        _type: 'SectionContext',
+        _type: 'ContentContext',
         id: 'test',
       }),
-      [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
     });
   });
 
-  it('should return Button tagging attributes', () => {
+  it('should return Pressable tagging attributes', () => {
     const taggingAttributes = tagLocation({
-      instance: makeButtonContext({ id: 'test-button', text: 'Click Me' }),
+      instance: makePressableContext({ id: 'test-button' }),
     });
 
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __item_context: true,
-        __action_context: true,
-        _type: 'ButtonContext',
+        __pressable_context: true,
+        _type: 'PressableContext',
         id: 'test-button',
-        text: 'Click Me',
       }),
       [TaggingAttribute.trackClicks]: 'true',
     };
@@ -152,37 +203,33 @@ describe('tagLocation', () => {
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
   });
 
-  it('should return Element (Section) tagging attributes', () => {
-    const taggingAttributes = tagLocation({ instance: makeSectionContext({ id: 'test-section' }) });
+  it('should return Content tagging attributes', () => {
+    const taggingAttributes = tagLocation({ instance: makeContentContext({ id: 'test-section' }) });
 
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
-        _type: 'SectionContext',
+        _type: 'ContentContext',
         id: 'test-section',
       }),
-      [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
   });
 
-  it('should return ExpandableElement (ExpandableSection) tagging attributes', () => {
+  it('should return ExpandableElement (Expandable) tagging attributes', () => {
     const taggingAttributes = tagLocation({
-      instance: makeExpandableSectionContext({ id: 'test-expandable' }),
+      instance: makeExpandableContext({ id: 'test-expandable' }),
     });
 
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
-        _type: 'ExpandableSectionContext',
+        _type: 'ExpandableContext',
         id: 'test-expandable',
       }),
-      [TaggingAttribute.trackClicks]: 'true',
       [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
@@ -196,7 +243,6 @@ describe('tagLocation', () => {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __item_context: true,
         _type: 'InputContext',
         id: 'test-input',
       }),
@@ -208,18 +254,16 @@ describe('tagLocation', () => {
 
   it('should return Link tagging attributes', () => {
     const taggingAttributes = tagLocation({
-      instance: makeLinkContext({ id: 'link', text: 'link', href: '/test' }),
+      instance: makeLinkContext({ id: 'link', href: '/test' }),
     });
 
     const expectedTaggingAttributes = {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __item_context: true,
-        __action_context: true,
+        __pressable_context: true,
         _type: 'LinkContext',
         id: 'link',
-        text: 'link',
         href: '/test',
       }),
       [TaggingAttribute.trackClicks]: 'true',
@@ -235,11 +279,9 @@ describe('tagLocation', () => {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
         _type: 'MediaPlayerContext',
         id: 'test-media-player',
       }),
-      [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
@@ -252,11 +294,9 @@ describe('tagLocation', () => {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
         _type: 'NavigationContext',
         id: 'test-nav',
       }),
-      [TaggingAttribute.trackVisibility]: '{"mode":"auto"}',
     };
 
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
@@ -269,7 +309,6 @@ describe('tagLocation', () => {
       [TaggingAttribute.elementId]: matchUUID,
       [TaggingAttribute.context]: JSON.stringify({
         __location_context: true,
-        __section_context: true,
         _type: 'OverlayContext',
         id: 'test-overlay',
       }),
@@ -277,17 +316,5 @@ describe('tagLocation', () => {
     };
 
     expect(taggingAttributes).toStrictEqual(expectedTaggingAttributes);
-  });
-
-  it('should not allow extra attributes', () => {
-    expect(mockConsole.log).not.toHaveBeenCalled();
-    const customSectionContext = { ...makeSectionContext({ id: 'test-overlay' }), extraMetadata: { test: 123 } };
-    const taggingAttributes = tagLocation({
-      instance: customSectionContext,
-      onError: (error) => mockConsole.log(error),
-    });
-
-    expect(taggingAttributes).toBeUndefined();
-    expect(mockConsole.log).toHaveBeenCalled();
   });
 });

@@ -1,9 +1,9 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { makeLinkContext } from '@objectiv/tracker-core';
-import { create } from 'superstruct';
+import { isLocationTaggerParameters } from '../common/guards/isLocationTaggerParameters';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TagLinkParameters } from '../definitions/TagLinkParameters';
 import { TagLocationReturnValue } from '../definitions/TagLocationReturnValue';
@@ -14,8 +14,11 @@ import { tagLocation } from './tagLocation';
  */
 export const tagLink = (parameters: TagLinkParameters): TagLocationReturnValue => {
   try {
-    const { id, text, href, options } = create(parameters, TagLinkParameters);
-    return tagLocation({ instance: makeLinkContext({ id, text, href }), options, onError: parameters.onError });
+    if (!isLocationTaggerParameters(parameters)) {
+      throw new Error(`Invalid location tagger parameters: ${JSON.stringify(parameters)}`);
+    }
+    const { id, href, options } = parameters;
+    return tagLocation({ instance: makeLinkContext({ id, href }), options, onError: parameters.onError });
   } catch (error) {
     return trackerErrorHandler(error, parameters);
   }

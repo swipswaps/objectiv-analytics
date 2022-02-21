@@ -6,6 +6,7 @@ from typing import cast
 
 from bach.series import Series, const_to_series
 from bach.expression import Expression
+from bach.series.series import WrappedPartition
 
 
 class SeriesBoolean(Series, ABC):
@@ -33,10 +34,16 @@ class SeriesBoolean(Series, ABC):
                         'bigquery': 'BOOL'}
     supported_value_types = (bool, )
 
+    # Notes for supported_value_to_literal() and supported_literal_to_expression():
+    # 'True' and 'False' are valid boolean literals in Postgres
+    # See https://www.postgresql.org/docs/14/datatype-boolean.html
+
     @classmethod
-    def supported_value_to_expression(cls, value: bool) -> Expression:
-        # 'True' and 'False' are valid boolean literals in Postgres
-        # See https://www.postgresql.org/docs/14/datatype-boolean.html
+    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+        return literal
+
+    @classmethod
+    def supported_value_to_literal(cls, value: bool) -> Expression:
         return Expression.raw(str(value))
 
     @classmethod
@@ -76,3 +83,9 @@ class SeriesBoolean(Series, ABC):
         # This only works if both type are 'bool' in PG, but if the rhs is not, it will be cast
         # explicitly in _boolean_operator()
         return self._boolean_operator(other, '!=')
+
+    def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        return self._derived_agg_func(partition, 'bool_and', skipna=skipna)
+
+    def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        return self._derived_agg_func(partition, 'bool_or', skipna=skipna)

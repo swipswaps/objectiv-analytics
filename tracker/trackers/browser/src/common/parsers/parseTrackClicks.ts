@@ -1,9 +1,9 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackClicksAttribute } from '../../definitions/TrackClicksAttribute';
 import { TrackClicksOptions } from '../../definitions/TrackClicksOptions';
+import { isTrackClicksAttribute } from '../guards/isTrackClicksAttribute';
 import { parseJson } from './parseJson';
 
 /**
@@ -11,7 +11,11 @@ import { parseJson } from './parseJson';
  * Differently than other simplistic parsers, this one transforms the `trackClicks` attribute in a different format.
  */
 export const parseTrackClicks = (stringifiedTrackClicksAttribute: string | null): TrackClicksOptions => {
-  const parsedTrackClicks = parseJson(stringifiedTrackClicksAttribute, TrackClicksAttribute);
+  const parsedTrackClicks = parseJson(stringifiedTrackClicksAttribute);
+
+  if (!isTrackClicksAttribute(parsedTrackClicks)) {
+    throw new Error(`Invalid trackClicks attribute: ${JSON.stringify(stringifiedTrackClicksAttribute)}`);
+  }
 
   // Process `true` and `false` shorthands onto their verbose options counterparts
   if (typeof parsedTrackClicks == 'boolean') {

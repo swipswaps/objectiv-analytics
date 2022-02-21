@@ -97,32 +97,11 @@ TEST_DATA_JSON = [
 JSON_COLUMNS = ['row', 'dict_column', 'list_column', 'mixed_column']
 JSON_INDEX_AND_COLUMNS = ['_row_id'] + JSON_COLUMNS
 
-# all data below is generated dummy data
-TEST_DATA_JSON_REAL = [
-    [1,
-     '[{"_type": "ApplicationContext", "id": "rod-web-demo"}, {"id": "http_context", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0", "remote_address": "144.144.144.144", "_type": "HttpContext"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext"}]',
-     '[{"_type": "WebDocumentContext", "id": "#document", "url": "https://rick.objectiv.io/"}, {"_type": "SectionContext", "id": "home"}, {"_type": "SectionContext", "id": "yep"}, {"_type": "SectionContext", "id": "cc91EfoBh8A"}]'],
-    [2,
-     '[{"_type": "ApplicationContext", "id": "rod-web-demo"}, {"id": "http_context", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0", "remote_address": "144.144.144.144", "_type": "HttpContext"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext"}]',
-     '[{"_type": "WebDocumentContext", "id": "#document", "url": "https://rick.objectiv.io/", "_types": ["AbstractContext", "AbstractLocationContext", "SectionContext", "WebDocumentContext"]}, {"_type": "NavigationContext", "id": "navigation", "_types": ["AbstractContext", "AbstractLocationContext", "NavigationContext", "SectionContext"]}]'],
-    [3,
-     '[{"_type": "ApplicationContext", "id": "rod-web-demo"}, {"id": "http_context", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0", "remote_address": "144.144.144.144", "_type": "HttpContext"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext"}]',
-     '[{"_type": "WebDocumentContext", "id": "#document", "url": "https://rick.objectiv.io/"}, {"_type": "SectionContext", "id": "home"}, {"_type": "SectionContext", "id": "new"}, {"_type": "SectionContext", "id": "BeyEGebJ1l4"}]'],
-    [4,
-     '[{"_type": "ApplicationContext", "id": "rod-web-demo"}, {"id": "http_context", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0", "remote_address": "144.144.144.144", "_type": "HttpContext"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext"}]',
-     '[{"_type": "WebDocumentContext", "id": "#document", "url": "https://rick.objectiv.io/"}, {"_type": "SectionContext", "id": "home"}, {"_type": "SectionContext", "id": "new"}, {"_type": "SectionContext", "id": "yBwD4iYcWC4"}]'],
-    [5,
-     '[{"_type": "ApplicationContext", "id": "rod-web-demo"}, {"id": "http_context", "referer": "https://rick.objectiv.io/", "user_agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:94.0) Gecko/20100101 Firefox/94.0", "remote_address": "144.144.144.144", "_type": "HttpContext"}, {"id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "cookie_id": "f84446c6-eb76-4458-8ef4-93ade596fd5b", "_type": "CookieIdContext"}]',
-     '[{"_type": "WebDocumentContext", "id": "#document", "url": "https://rick.objectiv.io/"}, {"_type": "SectionContext", "id": "home"}, {"_type": "SectionContext", "id": "new"}, {"_type": "SectionContext", "id": "eYuUAGXN0KM"}]']
-]
-JSON_COLUMNS_REAL = ['event_id', 'global_contexts', 'location_stack']
-JSON_INDEX_AND_COLUMNS_REAL = ['_event_id'] + JSON_COLUMNS
-
 # We cache all Bach DataFrames, that way we don't have to recreate and query tables each time.
 _TABLE_DATAFRAME_CACHE: Dict[str, 'DataFrame'] = {}
 
 
-def _get_bt(
+def get_bt(
         table: str,
         dataset: List[List[Any]],
         columns: List[str],
@@ -135,10 +114,12 @@ def _get_bt(
         import pandas as pd
         df = get_pandas_df(dataset, columns)
         _TABLE_DATAFRAME_CACHE[lookup_key] = get_from_df(table, df, convert_objects)
-    # We don't even renew the 'engine', as creating the database connection takes a bit of time too. If
+    # We don't even renew the `engine`, as creating the database connection takes a bit of time too. If
     # we ever do into trouble because of stale connection or something, then we can change it at that point
     # in time.
-    return _TABLE_DATAFRAME_CACHE[lookup_key].copy_override()
+    # However we do renew the `savepoints`, as that contains state
+    from bach.savepoints import Savepoints
+    return _TABLE_DATAFRAME_CACHE[lookup_key].copy_override(savepoints=Savepoints())
 
 
 def get_pandas_df(dataset: List[List[Any]], columns: List[str]) -> pandas.DataFrame:
@@ -168,31 +149,24 @@ def get_from_df(table: str, df: pandas.DataFrame, convert_objects=True) -> DataF
 
 def get_bt_with_test_data(full_data_set: bool = False) -> DataFrame:
     if full_data_set:
-        return _get_bt('test_table_full', TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
-    return _get_bt('test_table_partial', TEST_DATA_CITIES, CITIES_COLUMNS, True)
+        return get_bt('test_table_full', TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
+    return get_bt('test_table_partial', TEST_DATA_CITIES, CITIES_COLUMNS, True)
 
 
 def get_bt_with_food_data() -> DataFrame:
-    return _get_bt('test_merge_table_1', TEST_DATA_FOOD, FOOD_COLUMNS, True)
+    return get_bt('test_merge_table_1', TEST_DATA_FOOD, FOOD_COLUMNS, True)
 
 
 def get_bt_with_railway_data() -> DataFrame:
-    return _get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
+    return get_bt('test_merge_table_2', TEST_DATA_RAILWAYS, RAILWAYS_COLUMNS, True)
 
 
 def get_bt_with_json_data(as_json=True) -> DataFrame:
-    bt = _get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)
+    bt = get_bt('test_json_table', TEST_DATA_JSON, JSON_COLUMNS, True)
     if as_json:
         bt['dict_column'] = bt.dict_column.astype('jsonb')
         bt['list_column'] = bt.list_column.astype('jsonb')
         bt['mixed_column'] = bt.mixed_column.astype('jsonb')
-    return bt
-
-
-def get_bt_with_json_data_real() -> DataFrame:
-    bt = _get_bt('test_json_table_real', TEST_DATA_JSON_REAL, JSON_COLUMNS_REAL, True)
-    bt['global_contexts'] = bt.global_contexts.astype('jsonb')
-    bt['location_stack'] = bt.location_stack.astype('jsonb')
     return bt
 
 

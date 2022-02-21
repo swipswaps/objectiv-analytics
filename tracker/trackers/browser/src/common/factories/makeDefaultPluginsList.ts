@@ -1,15 +1,31 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { WebDocumentContextPlugin } from '@objectiv/plugin-web-document-context';
-import { makeTrackerDefaultPluginsList } from '@objectiv/tracker-core';
+import { HttpContextPlugin } from '@objectiv/plugin-http-context';
+import { PathContextFromURLPlugin } from '@objectiv/plugin-path-context-from-url';
+import { RootLocationContextFromURLPlugin } from '@objectiv/plugin-root-location-context-from-url';
+import { makeCoreTrackerDefaultPluginsList, TrackerPluginInterface } from '@objectiv/tracker-core';
 import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
 
 /**
  * The default list of Plugins of Browser Tracker
  */
-export const makeDefaultPluginsList = (trackerConfig: BrowserTrackerConfig) => [
-  ...makeTrackerDefaultPluginsList(trackerConfig),
-  new WebDocumentContextPlugin({ console: trackerConfig.console }),
-];
+export const makeDefaultPluginsList = (trackerConfig: BrowserTrackerConfig) => {
+  const { trackPathContextFromURL = true, trackRootLocationContextFromURL = true } = trackerConfig;
+
+  const plugins: TrackerPluginInterface[] = [
+    ...makeCoreTrackerDefaultPluginsList(trackerConfig),
+    new HttpContextPlugin(trackerConfig),
+  ];
+
+  if (trackPathContextFromURL) {
+    plugins.push(new PathContextFromURLPlugin(trackerConfig));
+  }
+
+  if (trackRootLocationContextFromURL) {
+    plugins.push(new RootLocationContextFromURLPlugin(trackerConfig));
+  }
+
+  return plugins;
+};

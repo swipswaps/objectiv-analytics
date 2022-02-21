@@ -1,11 +1,18 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from bach.series import SeriesJsonb, SeriesString
+import os
+
+# added for metabase export
+import requests
+import json
+
+from bach.series import SeriesJsonb
 from bach.expression import Expression, quote_string, quote_identifier
-from bach.sql_model import BachSqlModel
 from bach import DataFrame
 from bach.types import register_dtype
+
+from bach.series import Series
 
 
 class ObjectivStack(SeriesJsonb.Json):
@@ -27,7 +34,7 @@ class ObjectivStack(SeriesJsonb.Json):
             self._series_object,
             Expression.string_value(key)
         )
-        return self._series_object.copy_override(dtype=dtype, expression=expression)
+        return self._series_object.copy_override_dtype(dtype).copy_override(expression=expression)
 
 
 @register_dtype(value_types=[], override_registered_types=True)
@@ -149,7 +156,9 @@ class SeriesLocationStack(SeriesJsonb):
                 expression_str,
                 self._series_object
             )
-            return self._series_object.copy_override(dtype='objectiv_location_stack', expression=expression)
+            return self._series_object\
+                .copy_override_dtype('objectiv_location_stack')\
+                .copy_override(expression=expression)
 
         @property
         def nice_name(self):
@@ -185,7 +194,7 @@ class SeriesLocationStack(SeriesJsonb):
                 self._series_object,
                 self._series_object
             )
-            return self._series_object.copy_override(dtype='string', expression=expression)
+            return self._series_object.copy_override_dtype('string').copy_override(expression=expression)
 
     @property
     def objectiv(self):
@@ -193,7 +202,7 @@ class SeriesLocationStack(SeriesJsonb):
         Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
         accessor. Same as :py:attr:`obj`
 
-        .. autoclass:: bach_open_taxonomy.series.SeriesLocationStack.LocationStack
+        .. autoclass:: bach_open_taxonomy.series.ObjectivStack
             :members:
             :noindex:
 
@@ -239,234 +248,221 @@ class SeriesLocationStack(SeriesJsonb):
         return self.LocationStack(self)
 
 
-class FeatureFrame(DataFrame):
-    """
-    Class that is based on Bach DataFrame. It shares functionality with Bach DataFrame, but it is
-    focussed on feature creation. It allows you to create features on a small dataset and write them
-    to the entire dataset when done.
-    """
+class MetaBaseException(Exception):
+    pass
 
-    def __init__(
-            self,
-            engine,
-            base_node,
-            index,
-            series,
-            group_by,
-            order_by,
-            original_df,
-            location_stack_column,
-            event_column):
-        self._original_df = original_df
-        self.location_stack_column = location_stack_column
-        self.event_column = event_column
-        super().__init__(engine=engine,
-                         base_node=base_node,
-                         index=index,
-                         series=series,
-                         group_by=group_by,
-                         order_by=order_by)
 
-    @classmethod
-    def from_data_frame(cls,
-                        df: DataFrame,
-                        location_stack_column: str,
-                        event_column: str,
-                        overwrite: bool = False,
-                        temp_table_name: str = 'objectiv_tmp_feature_data'):
-        """
-        Instantiates a Feature Frame from an original Bach Data Frame. The Bach Data Frame should contain
-        a location stack column and an event column. The database will be queried to create a table with
-        all unique features.
+class MetaBase:
 
-        :param df: The original Bach DataFrame
-        :param location_stack_column: The name of the column that contains the location stack.
-        :param event_column: The name of the column that contains the event type.
-        :param overwrite: If True, the temporary table to store the feature data will be overwritten if it
-            exists
-        :param temp_table_name: The name of the temporary table that will be used to store the feature data.
-        """
-        event_series, location_stack_series = cls.check_supported(df, location_stack_column, event_column)
+    _session_id = None
 
-        feature_df = location_stack_series.to_frame()
-        feature_df[event_column] = event_series
-        feature_df['feature_hash'] = cls.hash_features(feature_df, location_stack_column, event_column)
+    # config per model
+    config = {
+        'default': {
+            'display': 'bar',
+            'name': 'Generic / default graph',
+            'description': 'This is a generic graph',
+            'result_metadata': [],
+            'dimensions': [],
+            'metrics': []
+        },
+        'unique_users': {
+            'display': 'line',
+            'name': 'Unique Users',
+            'description': 'Unique Users',
+            'result_metadata': [],
+            'dimensions': ['date'],
+            'metrics': ['count']
+        },
+        'unique_sessions': {
+            'display': 'bar',
+            'name': 'Unique Sessions',
+            'description': 'Unique sessions from Model Hub',
+            'result_metadata': [],
+            'dimensions': ['date'],
+            'metrics': ['count']
+        }
+    }
 
-        window = feature_df.groupby(feature_df['feature_hash']).window()
-        feature_df['event_count'] = window[event_column].count()
-        feature_df['event_number'] = window[event_column].window_row_number()
-
-        feature_df = feature_df.materialize('features')
-
-        feature_df = feature_df[feature_df.event_number == 1][[location_stack_column,
-                                                               event_column,
-                                                               'feature_hash',
-                                                               'event_count']]
-        drop_table = ''
-        if overwrite:
-            drop_table = f'drop table if exists {temp_table_name};'
-        sql = f'''
-            {drop_table}
-            create temporary table {temp_table_name} AS
-            ({feature_df.view_sql()})
-        '''
-        with feature_df.engine.connect() as conn:
-            conn.execute(sql)
-
-        feature_df = feature_df.set_index('feature_hash')
-
-        new_base_node = BachSqlModel(sql=f'select * from {temp_table_name}').instantiate()
-        new_index = {key: value.dtype for key, value in feature_df.index.items()}
-        new_data = {key: value.dtype for key, value in feature_df._data.items()}
-
-        feature_df_new = DataFrame.get_instance(feature_df.engine,
-                                                base_node=new_base_node,
-                                                index_dtypes=new_index,
-                                                dtypes=new_data,
-                                                group_by=None)
-
-        return FeatureFrame(engine=feature_df_new.engine,
-                            base_node=feature_df_new.base_node,
-                            index=feature_df_new.index,
-                            series=feature_df_new._data,
-                            group_by=None,
-                            order_by=None,
-                            original_df=df,
-                            location_stack_column=location_stack_column,
-                            event_column=event_column)
-
-    @staticmethod
-    def check_supported(df, location_stack_column, event_column):
-        if not isinstance(df[event_column], SeriesString):
-            raise TypeError('only string supported for event column')
-        if isinstance(df[location_stack_column], SeriesLocationStack):
-            location_stack_series = df[location_stack_column]
-        elif isinstance(df[location_stack_column], SeriesJsonb):
-            location_stack_series = df[location_stack_column].astype('objectiv_location_stack')
+    def __init__(self,
+                 username: str = None,
+                 password: str = None,
+                 url: str = None,
+                 database_id: int = None,
+                 dashboard_id: int = None,
+                 collection_id: int = None,
+                 web_url: str = None):
+        if username:
+            self._username = username
         else:
-            raise TypeError('only jsonb type supported for location column')
+            self._username = os.getenv('METABASE_USERNAME', 'objectiv')
 
-        return df[event_column], location_stack_series.ls.feature_stack
+        if password:
+            self._password = password
+        else:
+            self._password = os.getenv('METABASE_PASSWORD', '')
 
-    @classmethod
-    def hash_features(cls, df, location_stack_column, event_column):
-        event_series, location_stack_series = cls.check_supported(df, location_stack_column, event_column)
-        expression_str = "md5(concat({} #>> {}, {}))"
-        expression = Expression.construct(
-            expression_str,
-            location_stack_series,
-            Expression.string_value('{}'),
-            event_series
-        )
-        return location_stack_series.copy_override(dtype='string', expression=expression)
+        if database_id:
+            self._database_id = database_id
+        else:
+            self._database_id = int(os.getenv('METABASE_DATABASE_ID', 1))
 
-    def write_to_full_frame(self):
-        """
-        Returns the original data frame on which this feature frame is based, but with all created
-        features added to it.
-        """
-        created_features = [x for x in self.data_columns if x not in [self.location_stack_column,
-                                                                      self.event_column,
-                                                                      'event_count']]
+        if dashboard_id:
+            self._dashboard_id = dashboard_id
+        else:
+            self._dashboard_id = int(os.getenv('METABASE_DASHBOARD_ID', 1))
 
-        feature_hash = self.hash_features(self._original_df,
-                                          self.location_stack_column,
-                                          self.event_column)
+        if collection_id:
+            self._collection_id = collection_id
+        else:
+            self._collection_id = int(os.getenv('METABASE_COLLECTION_ID', 0))
 
-        self._original_df['feature_hash'] = feature_hash
+        if url:
+            self._url = url
+        else:
+            self._url = os.getenv('METABASE_URL', '2')
 
-        return self._original_df.merge(self[created_features], left_on='feature_hash', right_index=True)
+        if web_url:
+            self._web_url = web_url
+        else:
+            self._web_url = os.getenv('METABASE_WEB_URL', self._url)
 
-    def stack_flows_from_feature_df(self,
-                                    stack_column: str = None,
-                                    count_method: str = 'sum'):
-        """
-        Function that calculates the links between contexts on the stack. It returns a DataFrame with the
-        links 'from' and 'to' contexts. This function queries the database.
+        # config by calling dataframe / model
+        self._df = None
+        self._config = None
 
-        :param stack_column: The column that contains the stack for which the links will be calculated.
-        :param count_method: The function for aggregating the data.
-        """
-        import pandas as pd
-        df = self.to_pandas()
-        if stack_column is None:
-            stack_column = self.location_stack_column
-        contexts = df[stack_column].map(lambda x: [[a, y] for a, y in enumerate(x)]).explode()
-        contexts.dropna(inplace=True)
-        sankey_prep = df.join(pd.DataFrame(contexts.to_list(),
-                                           index=contexts.index,
-                                           columns=['context_index', 'context'])
-                              ).reset_index()
+    def _get_new_session_id(self) -> str:
+        data = json.dumps({'username': self._username, 'password': self._password})
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(f'{self._url}/api/session', data=data, headers=headers)
 
-        sankey_prep = sankey_prep[['feature_hash', 'context_index', 'context', 'event_count']].sort_values(
-            'context_index', ascending=False)
-        sankey_prep['source'] = sankey_prep.context.map(repr).astype('str')
-        sankey_prep['target'] = sankey_prep.groupby('feature_hash')['source'].shift(1,
-                                                                                    fill_value='end_of_stack')
-        sankey_prep_agg = sankey_prep.groupby(['source', 'target'])['event_count'].agg(
-            count_method).reset_index().rename(columns={'event_count': 'value'})
-        categories = set(sankey_prep_agg['source']).union(set(sankey_prep_agg['target']))
-        sankey_prep_agg['source'] = pd.Categorical(sankey_prep_agg['source'], categories=categories)
-        sankey_prep_agg['target'] = pd.Categorical(sankey_prep_agg['target'], categories=categories)
+        if response.status_code != 200:
+            raise MetaBaseException(f'Session ID request failed with code: {response.status_code}')
 
-        return sankey_prep_agg
+        response_json = response.json()
 
-    def display_sankey(self,
-                       stack_column: str = None,
-                       text_in_title: str = None,
-                       node_color='blue'):
-        """
-        Display the Sankey chart of a location stack. This function queries the database.
+        if 'id' in response_json:
+            return response_json['id']
+        else:
+            raise KeyError('Could not find id in JSON response from MetaBase')
 
-        :param: stack_column. The column for which to display the chart. If None the location stack with
-            which the Feature Frame is initialized is selected.
-        :param text_in_title: A text to display in the title of the graph.
-        :param node_color: Optionally the color of the nodes can be adjusted.
-        """
-        import pandas as pd
-        import plotly.graph_objects as go  # type: ignore
-        if text_in_title is not None:
-            text_in_title = str(text_in_title)
+    def _get_session_id(self):
+        if MetaBase._session_id is None:
+            MetaBase._session_id = self._get_new_session_id()
 
-        if stack_column is None:
-            stack_column = self.location_stack_column
-        df = self.stack_flows_from_feature_df(stack_column)
-        node = dict(
-            pad=15,
-            thickness=20,
-            line=dict(color="black", width=0.5),
-            label=df.source.cat.categories,
-            color=node_color
-        )
-        link = pd.concat([df[['source', 'target']].apply(lambda x: x.cat.codes), df['value']],
-                         axis=1).to_dict('list')
-        fig = go.Figure(go.Sankey(arrangement="fixed", link=link, node=node), {'clickmode': 'event+select'})
-        fig.update_layout(title_text=text_in_title, font_size=10)
+        return MetaBase._session_id
 
-        return fig
+    def _do_request(self, url: str, data: dict = None, method='post') -> requests.Response:
+        if data is None:
+            data = {}
+        headers = {
+            'Content-Type': 'application/json',
+            'X-Metabase-Session': self._get_session_id()
+        }
+        if method == 'get':
+            response = requests.get(url, data=json.dumps(data), headers=headers)
+        elif method == 'post':
+            response = requests.post(url, data=json.dumps(data), headers=headers)
+        elif method == 'put':
+            response = requests.put(url, data=json.dumps(data), headers=headers)
+        else:
+            raise MetaBaseException(f'Unsupported method called: {method}')
 
-    def copy_override(self,
-                      engine=None,
-                      base_node=None,
-                      index=None,
-                      series=None,
-                      group_by=None,
-                      order_by=None,
-                      index_dtypes=None,
-                      series_dtypes=None,
-                      single_value=None,
-                      **kwargs
-                      ):
-        return super().copy_override(engine=engine,
-                                     base_node=base_node,
-                                     index=index,
-                                     series=series,
-                                     group_by=group_by,
-                                     order_by=order_by,
-                                     index_dtypes=index_dtypes,
-                                     series_dtypes=series_dtypes,
-                                     single_value=single_value,
-                                     original_df=self._original_df,
-                                     location_stack_column=self.location_stack_column,
-                                     event_column=self.event_column,
-                                     **kwargs)
+        return response
+
+    def add_update_card(self, df: DataFrame, config: dict) -> dict:
+        data = {
+            'collection_id': self._collection_id,
+            'dataset_query': {
+                'database': self._database_id,
+                'native': {
+                    'query': df.view_sql()
+                },
+                'type': 'native'
+            },
+            'description': config['description'],
+            'display': config['display'],
+            'name': config['name'],
+            'result_metadata': config['result_metadata'],
+            'visualization_settings': {
+                'graph.dimensions': config['dimensions'],
+                'graph.metrics': config['metrics']
+            }
+        }
+        response = self._do_request(url=f'{self._url}/api/card', method='get')
+
+        if response.status_code != 200:
+            raise MetaBaseException(f'Failed to obtain list of existing cards with code: '
+                                    f'{response.status_code}')
+
+        # the default is to create a new card
+        method = 'post'
+        url = f'{self._url}/api/card'
+
+        # but if we can find an existing card that matches
+        # we update, rather than create
+        for card in response.json():
+            if card['description'] == config['description'] and \
+                    card['name'] == config['name']:
+
+                card_id = card['id']
+                url = f'{self._url}/api/card/{card_id}'
+                method = 'put'
+
+        response = self._do_request(url=url, data=data, method=method)
+        if response.status_code != 202:
+            raise MetaBaseException(f'Failed to add card @ {url} with {data} (code={response.status_code})')
+
+        response_json = response.json()
+        if 'id' in response_json:
+            card_id = response_json['id']
+        else:
+            raise MetaBaseException(f'No card ID in response {response_json}')
+
+        dashboard_info = self.update_dashboard(card_id=card_id, dashboard_id=self._dashboard_id)
+
+        return {
+            'card': f'{self._web_url}/card/{card_id}',
+            'dashboard': f'{self._web_url}/dashboard/{self._dashboard_id}-'
+                         f'{dashboard_info["name"].lower().replace(" ", "-")}',
+            'username': self._username,
+            'password': self._password
+        }
+
+    def update_dashboard(self, card_id: int, dashboard_id: int):
+        response = self._do_request(f'{self._url}/api/dashboard/{dashboard_id}', method='get')
+
+        if response.status_code != 200:
+            raise MetaBaseException(f'Failed to get cards list for dashboard {dashboard_id} '
+                                    f'(code={response.status_code}')
+
+        dashboard_info = response.json()
+        # list of card_id's currently on the dashboard
+        cards = [card['card']['id'] for card in dashboard_info['ordered_cards']]
+        if card_id not in cards:
+
+            url = f'{self._url}/api/dashboard/{dashboard_id}/cards'
+            data = {'cardId': card_id}
+
+            response = self._do_request(url=url, method='post', data=data)
+
+            if response.status_code != 200:
+                raise ValueError(f'Adding card to dashboard failed with code: {response.status_code}')
+        return dashboard_info
+
+    def to_metabase(self, df: DataFrame, model_type: str = None, config: dict = None):
+        if isinstance(df, Series):
+            df = df.to_frame()
+        if not config:
+            config = {}
+
+        if model_type in MetaBase.config:
+            card_config = MetaBase.config[model_type]
+        else:
+            card_config = MetaBase.config['default']
+
+        card_config['dimensions'] = [k for k in df.index.keys()]
+        card_config['metrics'] = [k for k in df.data.keys()]
+
+        card_config.update(config)
+        return self.add_update_card(df, card_config)

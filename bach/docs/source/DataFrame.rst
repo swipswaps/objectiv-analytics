@@ -35,9 +35,12 @@ which the condition is true.
 Moving Series around
 ~~~~~~~~~~~~~~~~~~~~
 Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
-DataFrame is possible if they share the same base node. This means that they originate from the same data
-source. In most cases this means that the series that is to be set to the DataFrame is a result of
-operations on the DataFrame that is started with.
+DataFrame is possible if they share the same base node or index dtype. DataFrames and Series share the
+same base node if they originate from the same data source. In most cases this means that the series
+that is to be set to the DataFrame is a result of operations on the DataFrame that is started with.
+If a Series or DataFrame do not share the same base node, the new column is or columns are set using a
+merge on the index. This works for one level indexes where the dtype of the series is the same as the
+DataFrame's index dtype.
 
 Examples
 ~~~~~~~~
@@ -45,9 +48,6 @@ Examples
 
     df['a'] = df.column_name + 5
     df['b'] = ''
-
-If a Series of DataFrames do not share the same base node, it is possible to combine the data using
-:py:meth:`DataFrame.merge()`.
 
 
 Database access
@@ -73,7 +73,7 @@ Reference
 ---------
 .. autosummary::
     :template: autosummary/class_short.rst
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame
 
@@ -83,7 +83,7 @@ Reference by function
 Creation
 ~~~~~~~~
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.from_table
     DataFrame.from_model
@@ -93,7 +93,7 @@ Creation
 Value accessors
 ~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.head
     DataFrame.to_pandas
@@ -105,7 +105,7 @@ Attributes and underlying data
 Axes
 ++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.index
     DataFrame.data
@@ -118,7 +118,7 @@ Axes
 Types
 +++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.dtypes
     DataFrame.index_dtypes
@@ -127,30 +127,43 @@ Types
 Sql Model
 +++++++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.materialize
     DataFrame.get_sample
     DataFrame.get_unsampled
     DataFrame.view_sql
 
+Variables
++++++++++
+.. autosummary::
+    :toctree: DataFrame
+
+    DataFrame.create_variable
+    DataFrame.set_variable
+    DataFrame.get_all_variable_usage
+
 
 Reshaping, indexing, sorting & merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
+    DataFrame.sort_index
     DataFrame.sort_values
     DataFrame.rename
     DataFrame.drop
+    DataFrame.drop_duplicates
+    DataFrame.dropna
     DataFrame.reset_index
     DataFrame.set_index
     DataFrame.merge
+    DataFrame.append
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.agg
     DataFrame.aggregate
@@ -161,7 +174,7 @@ Aggregation & windowing
     DataFrame.rolling
     DataFrame.expanding
 
-.. _dataframe.stats:
+.. _DataFrame.stats:
 
 Computations & descriptive stats
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -169,21 +182,24 @@ Computations & descriptive stats
 All types
 +++++++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
+    DataFrame.describe
     DataFrame.count
     DataFrame.min
     DataFrame.max
     DataFrame.median
     DataFrame.mode
     DataFrame.nunique
+    DataFrame.value_counts
 
 Numeric
 +++++++
 .. autosummary::
-    :toctree: dataframe
+    :toctree: DataFrame
 
     DataFrame.mean
+    DataFrame.quantile
     DataFrame.sem
     DataFrame.sum
     DataFrame.std

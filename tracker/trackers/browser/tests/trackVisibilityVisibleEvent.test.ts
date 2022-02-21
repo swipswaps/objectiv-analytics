@@ -1,12 +1,12 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { matchUUID } from '@objectiv/testing-tools';
 import { generateUUID } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackVisibilityVisibleEvent } from '../src/mutationObserver/trackVisibilityVisibleEvent';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
-import { matchUUID } from './mocks/matchUUID';
 
 describe('trackVisibilityVisibleEvent', () => {
   beforeEach(() => {
@@ -50,7 +50,7 @@ describe('trackVisibilityVisibleEvent', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionVisibleEvent',
+        _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [],
@@ -68,7 +68,7 @@ describe('trackVisibilityVisibleEvent', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'SectionVisibleEvent',
+        _type: 'VisibleEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [],

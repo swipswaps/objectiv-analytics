@@ -1,8 +1,8 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, TrackerEvent, TrackerPlugins } from '../src';
+import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, TrackerEvent } from '../src';
 
 const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
 
@@ -18,8 +18,7 @@ describe('ApplicationContextPlugin', () => {
 
   it('should add the ApplicationContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
     const plugins = new ApplicationContextPlugin(trackerConfig);
-    const trackerPlugins = new TrackerPlugins({ plugins: [plugins] });
-    const testTracker = new Tracker({ ...trackerConfig, plugins: trackerPlugins });
+    const testTracker = new Tracker({ ...trackerConfig, plugins: [plugins] });
     const eventContexts: ContextsConfig = {
       global_contexts: [
         { __global_context: true, _type: 'section', id: 'X' },

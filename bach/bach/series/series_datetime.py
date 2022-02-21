@@ -3,14 +3,27 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 from abc import ABC
-from typing import Union, cast
+from enum import Enum
+from typing import Union, cast, List
 
 import numpy
 from sqlalchemy.engine import Engine
 
-from bach.series import Series, SeriesString, SeriesBoolean
+from bach import DataFrame
+from bach.series import Series, SeriesString, SeriesBoolean, SeriesFloat64, SeriesInt64
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
+
+_SECONDS_IN_DAY = 24 * 60 * 60
+
+
+class DatePartFormats(Enum):
+    DAYS = 'DD'
+    HOURS = 'HH24'
+    MINUTES = 'MI'
+    SECONDS = 'SS'
+    MILLISECONDS = 'MS'
+    MICROSECONDS = 'US'
 
 
 class DateTimeOperation:
@@ -34,7 +47,69 @@ class DateTimeOperation:
         """
         expression = Expression.construct('to_char({}, {})',
                                           self._series, Expression.string_value(format_str))
-        return self._series.copy_override(dtype='string', expression=expression)
+        str_series = self._series.copy_override_type(SeriesString).copy_override(expression=expression)
+        return str_series
+
+
+class TimedeltaOperation(DateTimeOperation):
+    @property
+    def components(self) -> DataFrame:
+        """
+        :returns: a DataFrame containing all date parts from the timedelta.
+
+        .. note::
+            The dataframe contains only the displayed values of the timedelta.
+        """
+        component_series = {}
+        for date_part in DatePartFormats:
+            component_name = date_part.name.lower()
+            component_series[component_name] = (
+                self.sql_format(date_part.value).astype('int64').copy_override(name=component_name)
+            )
+        return self._series.to_frame().copy_override(series=component_series)
+
+    @property
+    def days(self) -> SeriesInt64:
+        """
+        converts total seconds into days and returns only the integral part of the result
+        """
+        day_series = self.total_seconds // _SECONDS_IN_DAY
+
+        day_series = day_series.astype('int64')
+        return cast(SeriesInt64, day_series.copy_override(name='days'))
+
+    @property
+    def seconds(self) -> SeriesInt64:
+        """
+        removes days from total seconds (self.total_seconds % _SECONDS_IN_DAY)
+        and returns only the integral part of the result
+        """
+        seconds_series = (self.total_seconds % _SECONDS_IN_DAY) // 1
+
+        seconds_series = seconds_series.astype('int64')
+        return cast(SeriesInt64, seconds_series.copy_override(name='seconds'))
+
+    @property
+    def microseconds(self) -> SeriesInt64:
+        """
+        considers only the fractional part of the total seconds and converts it into microseconds
+        """
+        microseconds_series = (self.total_seconds % 1) * 10 ** 6
+        microseconds_series //= 1
+
+        microseconds_series = microseconds_series.astype('int64')
+        return cast(SeriesInt64, microseconds_series.copy_override(name='microseconds'))
+
+    @property
+    def total_seconds(self) -> SeriesFloat64:
+        """
+        returns the total amount of seconds in the interval
+        """
+        # extract(epoch from source) returns the total number of seconds in the interval
+        expression = Expression.construct(f'extract(epoch from {{}})', self._series)
+        return self._series\
+            .copy_override_type(SeriesFloat64)\
+            .copy_override(name='total_seconds', expression=expression)
 
 
 class SeriesAbstractDateTime(Series, ABC):
@@ -87,12 +162,14 @@ class SeriesTimestamp(SeriesAbstractDateTime):
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
-    def supported_value_to_expression(cls, engine: Engine, value: Union[str, datetime.datetime]) -> Expression:
-        value = str(value)
+    def supported_literal_to_expression(cls, engine: Engine, literal: Expression) -> Expression:
+        return Expression.construct('cast({} as timestamp without time zone)', literal)
+
+    @classmethod
+    def supported_value_to_literal(cls, engine: Engine, value: Union[str, datetime.datetime]) -> Expression:
         # TODO: check here already that the string has the correct format
-        return Expression.construct(
-            'cast({} as timestamp without time zone)', Expression.string_value(value)
-        )
+        str_value = str(value)
+        return Expression.string_value(str_value)
 
     @classmethod
     def dtype_to_expression(cls, engine: Engine, source_dtype: str, expression: Expression) -> Expression:
@@ -129,11 +206,15 @@ class SeriesDate(SeriesAbstractDateTime):
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
-    def supported_value_to_expression(cls, value: Union[str, datetime.date]) -> Expression:
+    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+        return Expression.construct(f'cast({{}} as date)', literal)
+
+    @classmethod
+    def supported_value_to_literal(cls, value: Union[str, datetime.date]) -> Expression:
         if isinstance(value, datetime.date):
             value = str(value)
         # TODO: check here already that the string has the correct format
-        return Expression.construct(f'cast({{}} as date)', Expression.string_value(value))
+        return Expression.string_value(value)
 
     @classmethod
     def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
@@ -185,13 +266,17 @@ class SeriesTime(SeriesAbstractDateTime):
     supported_value_types = (datetime.time, str)
 
     @classmethod
-    def supported_value_to_expression(cls, value: Union[str, datetime.time]) -> Expression:
-        value = str(value)
-        # TODO: check here already that the string has the correct format
-        return Expression.construct('cast({} as time without time zone)', Expression.string_value(value))
+    def supported_literal_to_expression(cls, engine: Engine, literal: Expression) -> Expression:
+        return Expression.construct('cast({} as time without time zone)', literal)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def supported_value_to_literal(cls, engine: Engine,value: Union[str, datetime.time]) -> Expression:
+        value = str(value)
+        # TODO: check here already that the string has the correct format
+        return Expression.string_value(value)
+
+    @classmethod
+    def dtype_to_expression(cls, engine: Engine, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'time':
             return expression
         else:
@@ -213,16 +298,21 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
 
     @classmethod
-    def supported_value_to_expression(
+    def supported_literal_to_expression(cls, engine: Engine, literal: Expression) -> Expression:
+        return Expression.construct('cast({} as interval)', literal)
+
+    @classmethod
+    def supported_value_to_literal(
             cls,
+            engine: Engine,
             value: Union[str, numpy.timedelta64, datetime.timedelta]
     ) -> Expression:
         value = str(value)
         # TODO: check here already that the string has the correct format
-        return Expression.construct('cast({} as interval)', Expression.string_value(value))
+        return Expression.string_value(value)
 
     @classmethod
-    def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
+    def dtype_to_expression(cls, engine: Engine, source_dtype: str, expression: Expression) -> Expression:
         if source_dtype == 'timedelta':
             return expression
         else:
@@ -259,6 +349,17 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     def __truediv__(self, other) -> 'Series':
         return self._arithmetic_operation(other, 'div', '({}) / ({})', other_dtypes=('int64', 'float64'))
 
+    @property
+    def dt(self) -> DateTimeOperation:
+        """
+        Get access to date operations.
+
+        .. autoclass:: bach.series.series_datetime.DateTimeOperation
+            :members:
+
+        """
+        return TimedeltaOperation(self)
+
     def sum(self, partition: WrappedPartition = None,
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':
         """
@@ -281,4 +382,16 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             expression='avg',
             skipna=skipna
         )
+        return cast('SeriesTimedelta', result)
+
+    def quantile(
+        self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5,
+    ) -> 'SeriesTimedelta':
+        """
+        When q is a float or len(q) == 1, the resultant series index will remain
+        In case multiple quantiles are calculated, the resultant series index will have all calculated
+        quantiles as index values.
+        """
+        from bach.quantile import calculate_quantiles
+        result = calculate_quantiles(series=self.copy(), partition=partition, q=q)
         return cast('SeriesTimedelta', result)

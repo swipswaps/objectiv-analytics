@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 module.exports = {
@@ -8,8 +8,11 @@ module.exports = {
   reporters: ['jest-standard-reporter'],
   collectCoverageFrom: ['src/**/*.ts'],
   moduleNameMapper: {
-    '@objectiv/tracker-core': '<rootDir>/../../core/tracker/src',
     '@objectiv/plugin-(.*)': '<rootDir>/../../plugins/$1/src',
+    '@objectiv/queue-(.*)': '<rootDir>/../../queues/$1/src',
+    '@objectiv/testing-tools': '<rootDir>../../core/testing-tools/src',
+    '@objectiv/tracker-core': '<rootDir>/../../core/tracker/src',
+    '@objectiv/transport-(.*)': '<rootDir>/../../transports/$1/src',
   },
   setupFilesAfterEnv: ['jest-extended/all'],
 };

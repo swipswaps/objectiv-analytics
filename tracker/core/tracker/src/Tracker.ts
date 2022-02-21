@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
@@ -9,6 +9,7 @@ import { waitForPromise } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
 import { getLocationPath } from './TrackerElementLocations';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
+import { TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPlugins } from './TrackerPlugins';
 import { TrackerQueueInterface } from './TrackerQueueInterface';
 import { TrackerTransportInterface } from './TrackerTransportInterface';
@@ -40,7 +41,7 @@ export type TrackerConfig = ContextsConfig & {
   /**
    * Optional. Plugins that will be executed when the Tracker initializes and before the Event is sent.
    */
-  plugins?: TrackerPlugins;
+  plugins?: TrackerPlugins | TrackerPluginInterface[];
 
   /**
    * Optional. A TrackerConsole instance for logging.
@@ -56,14 +57,48 @@ export type TrackerConfig = ContextsConfig & {
 /**
  * The default list of Plugins of Web Tracker
  */
-export const makeTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
+export const makeCoreTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
   new ApplicationContextPlugin({ applicationId: trackerConfig.applicationId, console: trackerConfig.console }),
 ];
 
 /**
+ * A type guard to determine if trackerConfig plugins is an array of plugins
+ */
+export const isPluginsArray = (
+  plugins?: TrackerPlugins | TrackerPluginInterface[]
+): plugins is TrackerPluginInterface[] => {
+  return Array.isArray(plugins);
+};
+
+/**
+ * The parameters object of Tracker.waitForQueue(parameters?: WaitForQueueParameters).
+ */
+export type WaitForQueueParameters = {
+  intervalMs?: number;
+  timeoutMs?: number;
+};
+
+/**
+ * The `options` parameter of Tracker.trackEvent(event: TrackerEventConfig, options?: TrackEventOptions).
+ */
+export type TrackEventOptions = {
+  waitForQueue?: true | WaitForQueueParameters;
+  flushQueue?: true | 'onTimeout';
+};
+
+/**
+ * TrackerInterface implements Contexts and TrackerConfig, with the exception that plugins are not just an array of
+ * Plugin instances, but they are wrapped in a TrackerPlugins instance.
+ */
+export type TrackerInterface = Contexts &
+  Omit<TrackerConfig, 'plugins'> & {
+    plugins: TrackerPlugins;
+  };
+
+/**
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
-export class Tracker implements Contexts, TrackerConfig {
+export class Tracker implements TrackerInterface {
   readonly console?: TrackerConsole;
   readonly applicationId: string;
   readonly trackerId: string;
@@ -71,7 +106,7 @@ export class Tracker implements Contexts, TrackerConfig {
   readonly transport?: TrackerTransportInterface;
   readonly plugins: TrackerPlugins;
 
-  // By default trackers are active
+  // By default, trackers are active
   active: boolean = false;
 
   // Contexts interface
@@ -92,9 +127,6 @@ export class Tracker implements Contexts, TrackerConfig {
     this.trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
     this.queue = trackerConfig.queue;
     this.transport = trackerConfig.transport;
-    this.plugins =
-      trackerConfig.plugins ??
-      new TrackerPlugins({ console: trackerConfig.console, plugins: makeTrackerDefaultPluginsList(trackerConfig) });
 
     // Process ContextConfigs
     let new_location_stack: AbstractLocationContext[] = trackerConfig.location_stack ?? [];
@@ -105,6 +137,16 @@ export class Tracker implements Contexts, TrackerConfig {
     });
     this.location_stack = new_location_stack;
     this.global_contexts = new_global_contexts;
+
+    // Process plugins
+    if (isPluginsArray(trackerConfig.plugins) || trackerConfig.plugins === undefined) {
+      this.plugins = new TrackerPlugins({
+        tracker: this,
+        plugins: trackerConfig.plugins ?? makeCoreTrackerDefaultPluginsList(trackerConfig),
+      });
+    } else {
+      this.plugins = trackerConfig.plugins;
+    }
 
     // Change tracker state. If active it will initialize Plugins and start the Queue runner.
     this.setActive(trackerConfig.active ?? true);
@@ -149,12 +191,9 @@ export class Tracker implements Contexts, TrackerConfig {
           // Set the queue processFunction to transport.handle method: the queue will run Transport.handle for each batch
           this.queue.setProcessFunction(processFunction);
 
-          // And start the Queue runner
-          this.queue.startRunner();
-
           if (this.console) {
             this.console.log(
-              `%c｢objectiv:Tracker:${this.trackerId}｣ ${this.queue.queueName} runner for ${this.transport.transportName} started`,
+              `%c｢objectiv:Tracker:${this.trackerId}｣ ${this.queue.queueName} is ready to run ${this.transport.transportName}`,
               'font-weight:bold'
             );
           }
@@ -183,7 +222,7 @@ export class Tracker implements Contexts, TrackerConfig {
    * Waits for Queue `isIdle` in an attempt to wait for it to finish its job.
    * Resolves regardless if the Queue reaches an idle state or timeout is reached.
    */
-  async waitForQueue(parameters?: { intervalMs?: number; timeoutMs?: number }): Promise<boolean> {
+  async waitForQueue(parameters?: WaitForQueueParameters): Promise<boolean> {
     if (this.queue) {
       // Some - hopefully - sensible defaults. 100ms for polling and double the Queue's batch delay as timeout.
       const intervalMs = parameters?.intervalMs ?? 100;
@@ -200,7 +239,7 @@ export class Tracker implements Contexts, TrackerConfig {
   /**
    * Merges Tracker Location and Global contexts, runs all Plugins and sends the Event via the TrackerTransport.
    */
-  async trackEvent(event: TrackerEventConfig): Promise<TrackerEvent> {
+  async trackEvent(event: TrackerEventConfig, options?: TrackEventOptions): Promise<TrackerEvent> {
     // TrackerEvent and Tracker share the ContextsConfig interface. We can combine them by creating a new TrackerEvent.
     const trackedEvent = new TrackerEvent(event, this);
 
@@ -238,6 +277,22 @@ export class Tracker implements Contexts, TrackerConfig {
         await this.queue.push(trackedEvent);
       } else {
         await this.transport.handle(trackedEvent);
+      }
+    }
+
+    // Check whether we need to wait for the Tracker to wait for its Queue and/or whether we should flush it afterwards
+    if (options) {
+      const { waitForQueue, flushQueue } = options;
+
+      let isQueueEmpty = true;
+      if (waitForQueue) {
+        // Attempt to wait for the Tracker to finish up its work - this is best-effort: may or may not time out
+        isQueueEmpty = await this.waitForQueue(waitForQueue === true ? {} : waitForQueue);
+      }
+
+      // Flush the Queue - unless specifically configured not to do so
+      if (flushQueue === true || (flushQueue === 'onTimeout' && !isQueueEmpty)) {
+        this.flushQueue();
       }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { NonEmptyArray } from './helpers';
@@ -55,11 +55,6 @@ export interface TrackerQueueInterface {
    * Sets the processFunction to execute whenever run is called
    */
   setProcessFunction(processFunction: TrackerQueueProcessFunction): void;
-
-  /**
-   * Starts the runner process
-   */
-  startRunner(): void;
 
   /**
    * Adds one or more TrackerEvents to the Queue

@@ -1,14 +1,14 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
 import {
+  isTransportSendError,
   TrackerTransportConfig,
   TrackerTransportInterface,
   TransportableEvent,
-  TransportSendError,
 } from './TrackerTransportInterface';
 import { TrackerTransportRetry, TrackerTransportRetryConfig } from './TrackerTransportRetry';
 
@@ -136,7 +136,7 @@ export class TrackerTransportRetryAttempt implements TrackerTransportRetryAttemp
         }
 
         // Retry TransportSendErrors
-        if (error instanceof TransportSendError) {
+        if (isTransportSendError(error)) {
           return this.retry(error);
         }
         // And ignore any other errors

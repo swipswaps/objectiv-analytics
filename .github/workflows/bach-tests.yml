@@ -56,7 +56,7 @@ jobs:
       - name: Typecheck with mypy
         run: |
           cd bach
-          mypy bach sql_models
+          mypy --check-untyped-defs bach sql_models
       - name: Stylecheck with pycodestyle
         run: |
           cd bach
@@ -64,8 +64,8 @@ jobs:
       - name: Unit tests
         run: |
           cd bach
-          pytest tests/unit/
+          pytest tests/unit/ -W error::DeprecationWarning
       - name: Functional tests
         run: |
           cd bach
-          pytest tests/functional/
+          pytest tests/functional/ -W error::DeprecationWarning

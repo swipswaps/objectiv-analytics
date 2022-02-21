@@ -1,53 +1,25 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { ContextsConfig } from './Context';
-import { TrackerConsole } from './TrackerConsole';
-import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
+import { isValidIndex } from './helpers';
+import { Tracker } from './Tracker';
+import { TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
 
 /**
- * TrackerPlugins can be specified by instance, name or even on the fly as Objects.
- *
- * @example
- *
- *  Given a hypothetical PluginA:
- *
- *    class PluginA implements TrackerPlugin {
- *      readonly pluginName = 'pluginA';
- *      readonly parameter?: string;
- *
- *      constructor(args?: { parameter?: string }) {
- *        this.parameter = args?.parameter;
- *      }
- *
- *      isUsable() {
- *        return true;
- *      }
- *    }
- *
- *  And its factory:
- *
- *    const PluginAFactory = (parameter: string) => new PluginA({ parameter });
- *
- *  These would be all valid ways of adding it to the Plugins list:
- *
- *    PluginA
- *    new PluginA()
- *    new PluginA({ parameter: 'parameterValue' })
- *    PluginAFactory('parameterValue')
- *
- *  And it's also possible to define a Plugin on the fly as an Object:
- *
- *    {
- *      pluginName: 'pluginA',
- *      parameter: 'parameterValue',
- *      isUsable: () => true
- *    } as TrackerPlugin
- *
+ * The configuration object of TrackerPlugins. It accepts a list of plugins and, optionally, a Tracker Console.
  */
-export type TrackerPluginsConfiguration = TrackerPluginConfig & {
+export type TrackerPluginsConfiguration = {
+  /**
+   * The Tracker instance this TrackerPlugins is bound to.
+   */
+  tracker: Tracker;
+
+  /**
+   * An array of Plugins.
+   */
   plugins: TrackerPluginInterface[];
 };
 
@@ -60,23 +32,104 @@ export type TrackerPluginsConfiguration = TrackerPluginConfig & {
  * at the bottom of the list.
  */
 export class TrackerPlugins implements TrackerPluginLifecycleInterface {
-  readonly console?: TrackerConsole;
-  readonly plugins: TrackerPluginInterface[];
+  readonly tracker: Tracker;
+  plugins: TrackerPluginInterface[] = [];
 
   /**
    * Plugins can be lazy. Map through them to instantiate them.
    */
   constructor(trackerPluginsConfig: TrackerPluginsConfiguration) {
-    this.console = trackerPluginsConfig.console;
-    this.plugins = trackerPluginsConfig.plugins;
+    this.tracker = trackerPluginsConfig.tracker;
 
-    if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
-      this.console.group(`Plugins:`);
-      this.console.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
-      this.console.groupEnd();
-      this.console.groupEnd();
+    trackerPluginsConfig.plugins.map((plugin) => {
+      if (this.has(plugin.pluginName)) {
+        throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: duplicated`);
+      }
+
+      this.plugins.push(plugin);
+    });
+
+    if (this.tracker.console) {
+      this.tracker.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
+      this.tracker.console.group(`Plugins:`);
+      this.tracker.console.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
+      this.tracker.console.groupEnd();
+      this.tracker.console.groupEnd();
     }
+  }
+
+  /**
+   * Checks whether a Plugin instance exists by its name.
+   */
+  has(pluginName: string): boolean {
+    return this.plugins.find((plugin) => plugin.pluginName === pluginName) !== undefined;
+  }
+
+  /**
+   * Gets a Plugin instance by its name. Returns null if the plugin is not found.
+   */
+  get(pluginName: string): TrackerPluginInterface {
+    const plugin = this.plugins.find((plugin) => plugin.pluginName === pluginName);
+
+    if (!plugin) {
+      throw new Error(`｢objectiv:TrackerPlugins｣ ${pluginName}: not found`);
+    }
+
+    return plugin;
+  }
+
+  /**
+   * Adds a new Plugin at the end of the plugins list, or at the specified index, and initializes it.
+   */
+  add(plugin: TrackerPluginInterface, index?: number) {
+    if (index !== undefined && !isValidIndex(index)) {
+      throw new Error(`｢objectiv:TrackerPlugins｣ invalid index`);
+    }
+
+    if (this.has(plugin.pluginName)) {
+      throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: already exists. Use "replace" instead`);
+    }
+
+    const spliceIndex = index ?? this.plugins.length;
+    this.plugins.splice(spliceIndex, 0, plugin);
+
+    if (this.tracker.console) {
+      this.tracker.console.log(
+        `%c｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}`,
+        'font-weight: bold'
+      );
+    }
+
+    const pluginInstance = this.get(plugin.pluginName);
+    pluginInstance.initialize && pluginInstance.initialize(this.tracker);
+  }
+
+  /**
+   * Removes a Plugin by its name.
+   */
+  remove(pluginName: string) {
+    const pluginInstance = this.get(pluginName);
+
+    this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== pluginInstance.pluginName);
+
+    if (this.tracker.console) {
+      this.tracker.console.log(`%c｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed`, 'font-weight: bold');
+    }
+  }
+
+  /**
+   * Replaces a plugin with a new one of the same type at the same index, unless a new index has been specified.
+   */
+  replace(plugin: TrackerPluginInterface, index?: number) {
+    if (index !== undefined && !isValidIndex(index)) {
+      throw new Error(`｢objectiv:TrackerPlugins｣ invalid index`);
+    }
+
+    const originalIndex = this.plugins.findIndex(({ pluginName }) => pluginName === plugin.pluginName);
+
+    this.remove(plugin.pluginName);
+
+    this.add(plugin, index ?? originalIndex);
   }
 
   /**

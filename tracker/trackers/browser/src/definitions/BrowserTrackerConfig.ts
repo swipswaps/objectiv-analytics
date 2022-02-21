@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { TrackerConfig } from '@objectiv/tracker-core';
@@ -18,10 +18,15 @@ export type BrowserTrackerConfig = TrackerConfig & {
   /**
    * Optional. Whether to track application loaded events automatically. Enabled by default.
    */
-  trackApplicationLoaded?: boolean;
+  trackApplicationLoadedEvent?: boolean;
 
   /**
-   * Optional. Whether to track URL change events automatically. Enabled by default.
+   * Optional. Whether to automatically create PathContext based on URLs. Enabled by default.
    */
-  trackURLChanges?: boolean;
+  trackPathContextFromURL?: boolean;
+
+  /**
+   * Optional. Whether to automatically create RootLocationContext based on URLs first slugs. Enabled by default.
+   */
+  trackRootLocationContextFromURL?: boolean;
 };

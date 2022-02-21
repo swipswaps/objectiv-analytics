@@ -93,6 +93,19 @@ def test_sample_operations_filter():
     )
 
 
+def test_combine_unsampled_with_before_data():
+    # Test that the get_unsampled() df has a base_node and state that is compatible with the base_node and
+    # state of the original df
+    dff = get_bt_with_test_data(True)
+    dff_s = dff[['municipality', 'city']].get_sample(
+        'sample_example_table', overwrite=True, sample_percentage=50
+    )
+    dff_s['e'] = dff_s.city + '_extended'
+    new_dff = dff_s.get_unsampled()
+    assert new_dff.all_series.keys() == dff_s.all_series.keys()
+    dff['e'] = new_dff.e
+
+
 def test_get_unsampled_multiple_nodes():
     # 1. Start with dataframe with multiple nodes in graph
     # 2. Create sampled dataframe
@@ -103,30 +116,22 @@ def test_get_unsampled_multiple_nodes():
     bt['inhabitants_more'] = bt['inhabitants'] + 1000
     bt = bt.materialize()
     bt['inhabitants_more'] = bt['inhabitants_more'] + 1000
-
-    node_count_bt = len(get_graph_nodes_info(bt.base_node))
-    assert node_count_bt == 2
+    assert len(get_graph_nodes_info(bt.base_node)) == 2  # assert graph contains multiple nodes
 
     bt_sample = bt.get_sample(table_name='test_data_sample',
                               sample_percentage=50,
                               seed=200,
                               overwrite=True)
+    # bt_sample is based on newly created table, so there will only be a single node in the graph
+    assert len(get_graph_nodes_info(bt_sample.base_node)) == 1
     bt_sample = bt_sample[['municipality', 'inhabitants_more', 'founding']]
     bt_sample['inhabitants_plus_3000'] = bt_sample['inhabitants_more'] + 1000
     del bt_sample['inhabitants_more']
-    bt_sample = bt_sample.materialize()
     bt_sample = bt_sample.groupby('municipality').sum(numeric_only=True)
     bt_sample['inhabitants_plus_3000_sum'] -= 3000
 
-    node_count_bt_sample = len(get_graph_nodes_info(bt_sample.base_node))
-    assert node_count_bt_sample == 2
-
     bt2 = bt_sample.get_unsampled()
     bt2['extra_ppl'] = bt2.inhabitants_plus_3000_sum + 5
-
-    node_count_bt2 = len(get_graph_nodes_info(bt2.base_node))
-    # since sample was grouped, it needs to materialize internally, we expect one more node
-    assert node_count_bt2 == (node_count_bt + node_count_bt_sample + 1) == 5
 
     with pytest.raises(ValueError, match='has not been sampled'):
         bt2.get_unsampled()
@@ -142,3 +147,90 @@ def test_get_unsampled_multiple_nodes():
             ['Súdwest-Fryslân', 5, 2724, 39575, 39580]
         ]
     )
+
+
+def test_sample_grouped():
+    bt = get_bt_with_test_data(True)
+    bt = bt[['municipality', 'inhabitants', 'founding']]
+    bt['founding_century'] = (bt['founding'] // 100) + 1
+    btg = bt.groupby('municipality').sort_values('municipality')
+    btg_min = btg.min()
+
+    btg_sample = btg.get_sample(table_name='test_data_sample',
+                                sample_percentage=50,
+                                seed=200,
+                                overwrite=True)
+    btg_sample_max = btg_sample.max()
+    btg_sample_max = btg_sample_max[['founding_century_max']]
+    btg_sample_max['founding_century_max_plus_10'] = btg_sample_max['founding_century_max'] + 10
+    del btg_sample_max['founding_century_max']
+
+    btg_unsampled_max = btg_sample_max.get_unsampled()
+    # btg_sample_max was grouped at the moment that we unsample it. Make sure that the unsampled df
+    # is grouped in the same way
+    assert btg_unsampled_max.group_by.index.keys() == btg_sample_max.group_by.index.keys()
+
+    btg_unsampled_max['after_unsample_plus_20'] = btg_unsampled_max.founding_century_max_plus_10 + 10
+    btg_unsampled_max['founding_century_min'] = btg_min['founding_century_min']
+
+    with pytest.raises(ValueError, match='has not been sampled'):
+        btg_unsampled_max.get_unsampled()
+
+    # Assert sampled data first.
+    # We expect less rows than in the unsampled data. Which rows are returned should be deterministic
+    # given the seed and sample_percentage.
+    assert_equals_data(
+        btg_sample_max,
+        expected_columns=['municipality', 'founding_century_max_plus_10'],
+        expected_data=[
+            ['De Friese Meren', 25.0],
+            ['Súdwest-Fryslân', 23.0]
+        ]
+    )
+
+    # Assert unsampled data.
+    # Should have all rows, and a few more columns as we added those after unsampling.
+    assert_equals_data(
+        btg_unsampled_max,
+        expected_columns=[
+            'municipality', 'founding_century_max_plus_10', 'after_unsample_plus_20', 'founding_century_min'
+        ],
+        expected_data=[
+            ['De Friese Meren', 25.0, 35.0, 15.0],
+            ['Harlingen', 23.0, 33.0, 13.0],
+            ['Leeuwarden', 23.0, 33.0, 13.0],
+            ['Noardeast-Fryslân', 23.0, 33.0, 13.0],
+            ['Súdwest-Fryslân', 25.0, 35.0, 11.0],
+            ['Waadhoeke', 24.0, 34.0, 14.0]
+        ]
+    )
+
+
+def test_sample_operations_variable():
+    # Test to prevent regression: using variables and materializing them should not change the SqlModel type
+    # and then break when calling `is_materialized` after unsample()
+    bt = get_bt_with_test_data(True)
+    bt_sample = bt.get_sample(table_name='test_data_sample',
+                              sample_percentage=50,
+                              seed=200,
+                              overwrite=True)
+
+    bt_sample, var = bt_sample.create_variable('var', 10)
+    bt_sample['better_city'] = bt_sample.city + '_better'
+    bt_sample['a'] = bt_sample.city.str[:2] + bt_sample.municipality.str[:2]
+    bt_sample['big_city'] = bt_sample.inhabitants + var
+    bt_sample['b'] = bt_sample.inhabitants + bt_sample.founding
+    bt_sample = bt_sample.materialize()
+    assert bt_sample.skating_order.nunique().value == 3
+
+    all_data_bt = bt_sample.get_unsampled()
+    all_data_bt['extra_ppl'] = all_data_bt.inhabitants + 5
+
+    assert_equals_data(
+        all_data_bt,
+        expected_columns=_EXPECTED_COLUMNS_OPERATIONS,
+        expected_data=_EXPECTED_DATA_OPERATIONS
+    )
+    assert not all_data_bt.is_materialized  # this used to raise an exception
+    all_data_bt = all_data_bt.materialize()
+    assert all_data_bt.is_materialized

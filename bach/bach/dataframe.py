@@ -1,23 +1,32 @@
+"""
+Copyright 2021 Objectiv B.V.
+"""
+import warnings
 from copy import copy
-from typing import List, Set, Union, Dict, Any, Optional, Tuple, cast, NamedTuple, \
-    TYPE_CHECKING, Callable
+
+from typing import (
+    List, Set, Union, Dict, Any, Optional, Tuple,
+    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
+)
 from uuid import UUID
 
+import numpy
 import pandas
 from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
-from bach.expression import Expression, SingleValueExpression
-from bach.sql_model import BachSqlModel, SampleSqlModel
+from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
+from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_engine_dtype
-from sql_models.graph_operations import replace_node_in_graph, find_node
-from sql_models.model import SqlModel
+from sql_models.constants import NotSet, not_set
+from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
+from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 from sql_models.sql_generator import to_sql
-from sql_models.util import quote_identifier
 
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
-    from bach.series import Series, SeriesBoolean, SeriesAbstractNumeric
+    from bach.savepoints import Savepoints
+    from bach.series import Series, SeriesBoolean
 
 # TODO exclude from docs
 DataFrameOrSeries = Union['DataFrame', 'Series']
@@ -34,10 +43,25 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - list of functions and/or function names, e.g. [SeriesInt64.sum, 'mean']
 #     - dict of axis labels -> functions, function names or list of such.
 
+Level = Union[int, List[int], str, List[str]]
+
 
 class SortColumn(NamedTuple):
     expression: Expression
     asc: bool
+
+
+class DtypeNamePair(NamedTuple):
+    dtype: str  # TODO: make 'dtype' a type instead of using str
+    name: str
+
+
+class DefinedVariable(NamedTuple):
+    name: str
+    dtype: str
+    value: Optional[Hashable]
+    ref_path: Optional[RefPath]
+    old_value: Optional[Hashable]
 
 
 class DataFrame:
@@ -74,9 +98,12 @@ class DataFrame:
     **Moving Series around**
 
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
-    DataFrame is possible if they share the same base node. This means that they originate from the same data
-    source. In most cases this means that the series that is to be set to the DataFrame is a result of
-    operations on the DataFrame that is started with.
+    DataFrame is possible if they share the same base node or index dtype. DataFrames and Series share the
+    same base node if they originate from the same data source. In most cases this means that the series
+    that is to be set to the DataFrame is a result of operations on the DataFrame that is started with.
+    If a Series or DataFrame do not share the same base node, the new column is or columns are set using a
+    merge on the index. This works for one level indexes where the dtype of the series is the same as the
+    DataFrame's index dtype.
 
     **Examples**
 
@@ -84,9 +111,6 @@ class DataFrame:
 
         df['a'] = df.column_name + 5
         df['b'] = ''
-
-    If a Series of DataFrames do not share the same base node, it is possible to combine the data using
-    :py:meth:`merge`.
 
 
     **Database access**
@@ -97,6 +121,7 @@ class DataFrame:
 
     * :py:meth:`head`
     * :py:meth:`to_pandas`
+    * :py:meth:`to_numpy`
     * :py:meth:`get_sample`
     * The property accessors :py:attr:`Series.value` (Series only), :py:attr:`values`
 
@@ -134,11 +159,13 @@ class DataFrame:
     def __init__(
             self,
             engine: Engine,
-            base_node: SqlModel[BachSqlModel],
+            base_node: BachSqlModel,
             index: Dict[str, 'Series'],
             series: Dict[str, 'Series'],
             group_by: Optional['GroupBy'],
-            order_by: List[SortColumn] = None
+            order_by: List[SortColumn],
+            savepoints: 'Savepoints',
+            variables: Dict['DtypeNamePair', Hashable] = None
     ):
         """
         Instantiate a new DataFrame.
@@ -161,6 +188,8 @@ class DataFrame:
         self._data: Dict[str, Series] = {}
         self._group_by = group_by
         self._order_by = order_by if order_by is not None else []
+        self._savepoints = savepoints
+        self._variables = variables if variables else {}
         for key, value in series.items():
             if key != value.name:
                 raise ValueError(f'Keys in `series` should match the name of series. '
@@ -170,7 +199,11 @@ class DataFrame:
                                  f'df: {value.index}, series.index: {index}')
             if value.group_by != group_by:
                 raise ValueError(f'Group_by in `series` should match dataframe. '
-                                 f'df: {value.group_by}, series.index: {group_by}')
+                                 f'df: {group_by}, series.group_by: {value.group_by}')
+            if value.base_node != base_node:
+                raise ValueError(f'Base_node in `series` should match dataframe. '
+                                 f'df: {base_node}, series.base_node: {value.base_node}')
+
             self._data[key] = value
 
         for value in index.values():
@@ -186,77 +219,6 @@ class DataFrame:
             raise ValueError(f"The names of the index series and data series should not intersect. "
                              f"Index series: {sorted(index.keys())} data series: {sorted(series.keys())}")
 
-    def copy_override(
-            self,
-            engine: Engine = None,
-            base_node: SqlModel[BachSqlModel] = None,
-            index: Dict[str, 'Series'] = None,
-            series: Dict[str, 'Series'] = None,
-            group_by: List[Union['GroupBy', None]] = None,  # List so [None] != None
-            order_by: List[SortColumn] = None,
-            index_dtypes: Dict[str, str] = None,
-            series_dtypes: Dict[str, str] = None,
-            single_value: bool = False,
-            **kwargs
-    ) -> 'DataFrame':
-        """
-        INTERNAL
-
-        Create a copy of self, with the given arguments overridden
-
-        Big fat warning: group_by can legally be None, but if you want to set that,
-        set the param in a list: [None], or [someitem]. If you set None, it will be left alone.
-
-        There are three special parameters: index_dtypes, series_dtypes and single_value. These are used to
-        create new index and data series iff index and/or series are not given. `single_value` determines
-        whether the Expressions for those newly created series should be SingleValueExpressions or not.
-        All other arguments are passed through to `__init__`, filled with current instance values if None is
-        given in the parameters.
-        """
-
-        if index_dtypes and index:
-            raise ValueError("Can not set both index and index_dtypes")
-
-        if series_dtypes and series:
-            raise ValueError("Can not set both series and series_dtypes")
-
-        args = {
-            'engine': engine if engine is not None else self.engine,
-            'base_node': base_node if base_node is not None else self._base_node,
-            'index': index if index is not None else self._index,
-            'series': series if series is not None else self._data,
-            'group_by': self._group_by if group_by is None else group_by[0],
-            'order_by': order_by if order_by is not None else self._order_by
-        }
-
-        expression_class = SingleValueExpression if single_value else Expression
-
-        if index_dtypes:
-            new_index: Dict[str, Series] = {}
-            for key, value in index_dtypes.items():
-                index_type = get_series_type_from_dtype(value)
-                new_index[key] = index_type(
-                    engine=args['engine'], base_node=args['base_node'],
-                    index={},  # Empty index for index series
-                    name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by']
-                )
-            args['index'] = new_index
-
-        if series_dtypes:
-            new_series: Dict[str, Series] = {}
-            for key, value in series_dtypes.items():
-                series_type = get_series_type_from_dtype(value)
-                new_series[key] = series_type(
-                    engine=args['engine'], base_node=args['base_node'],
-                    index=args['index'],
-                    name=key, expression=expression_class.column_reference(key),
-                    group_by=args['group_by']
-                )
-                args['series'] = new_series
-
-        return self.__class__(**args, **kwargs)
-
     @property
     def engine(self):
         """
@@ -265,7 +227,7 @@ class DataFrame:
         return self._engine
 
     @property
-    def base_node(self) -> SqlModel[BachSqlModel]:
+    def base_node(self) -> BachSqlModel:
         """
         INTERNAL: Get the current base node
         """
@@ -291,6 +253,21 @@ class DataFrame:
         Get the current sort order, if any.
         """
         return copy(self._order_by)
+
+    @property
+    def savepoints(self) -> 'Savepoints':
+        return self._savepoints
+
+    @property
+    def variables(self) -> Dict[DtypeNamePair, Hashable]:
+        """
+        Get all variables for which values are set, which will be used when querying the database.
+
+        Note that there might also be variables defined earlier in self.base_node, that already have a value.
+        Those variables values will not be changed, unless they are listed here. To get an overview of all
+        variables on which the values in this DataFrame depend use :meth:`get_all_defined_variables()`
+        """
+        return copy(self._variables)
 
     @property
     def all_series(self) -> Dict[str, 'Series']:
@@ -328,7 +305,7 @@ class DataFrame:
         return {column: data.dtype for column, data in self.data.items()}
 
     @property
-    def group_by(self):
+    def group_by(self) -> Optional['GroupBy']:
         """
         Get this DataFrame's grouping, if any.
 
@@ -336,7 +313,37 @@ class DataFrame:
         """
         return copy(self._group_by)
 
+    @property
+    def is_materialized(self) -> bool:
+        """
+        Return true if this DataFrame is in a materialized state, i.e. all information about the
+        DataFrame's values is encoded in self.base_node.
+
+        A DataFrame that's freshly constructed with :py:meth:`from_table`,
+        :py:meth:`from_model`, or :py:meth:`from_pandas` will be in a materialized state. Operations on such
+        a DataFrame will change it to be not materialized. Calling :py:meth:`materialize` on a
+        non-materialized DataFrame will return a new DataFrame that is materialized.
+
+        TODO: a known problem is that DataFrames with 'json' columns are never in a materialized state, and
+         cannot be materialized with materialize()
+
+        :returns: True if this DataFrame is in a materialized state, False otherwise
+        """
+        if self.group_by or self.order_by:
+            return False
+        if tuple(self.all_series.keys()) != self.base_node.columns:
+            return False
+        for name, series in self.all_series.items():
+            if series.expression != Expression.column_reference(name):
+                return False
+        return True
+
     def __eq__(self, other: Any) -> bool:
+        """
+        Compares two DataFrames for equality.
+        Compares all fields that (potentially) influence the values of the data represented by the DataFrame,
+        i.e. all fields except for self.savepoints
+        """
         if not isinstance(other, DataFrame):
             return False
         # We cannot just compare the data and index properties, because the Series objects have
@@ -348,11 +355,12 @@ class DataFrame:
             self.engine == other.engine and \
             self.base_node == other.base_node and \
             self._group_by == other._group_by and \
-            self._order_by == other._order_by
+            self._order_by == other._order_by and \
+            self._variables == other._variables
 
     @classmethod
-    def _get_dtypes(cls, engine: Engine, node: SqlModel[BachSqlModel]) -> Dict[str, str]:
-        new_node = BachSqlModel(sql='select * from {{previous}} limit 0')(previous=node)
+    def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
+        new_node = CustomSqlModelBuilder(sql='select * from {{previous}} limit 0')(previous=node)
         select_statement = to_sql(engine, new_node)
         sql = f"""
             create temporary table tmp_table_name on commit drop as
@@ -363,7 +371,7 @@ class DataFrame:
             order by ordinal_position;
         """
         with engine.connect() as conn:
-            sql = _escape_parameter_characters(conn, sql)
+            sql = escape_parameter_characters(conn, sql)
             res = conn.execute(sql)
         return {x[0]: get_dtype_from_db_engine_dtype(engine, x[1]) for x in res.fetchall()}
 
@@ -394,7 +402,7 @@ class DataFrame:
         print(sql)
 
         with engine.connect() as conn:
-            sql = _escape_parameter_characters(conn, sql)
+            sql = escape_parameter_characters(conn, sql)
             res = conn.execute(sql)
             rows = res.fetchall()
             print()
@@ -430,23 +438,35 @@ class DataFrame:
         """
         # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
         # select expressions, where clauses, or limits
-        wrapped_model = BachSqlModel(sql='SELECT * FROM {{model}}')(model=model)
+        wrapped_model = CustomSqlModelBuilder(sql='SELECT * FROM {{model}}')(model=model)
         return cls._from_node(engine, wrapped_model, index)
 
     @classmethod
-    def _from_node(cls, engine, model: SqlModel[BachSqlModel], index: List[str]) -> 'DataFrame':
+    def _from_node(cls, engine, model: SqlModel, index: List[str]) -> 'DataFrame':
         dtypes = cls._get_dtypes(engine, model)
 
         index_dtypes = {k: dtypes[k] for k in index}
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
 
+        columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
+        bach_model = BachSqlModel(
+            model_spec=model.model_spec,
+            placeholders=model.placeholders,
+            references=model.references,
+            materialization=model.materialization,
+            materialization_name=model.materialization_name,
+            columns=columns
+        )
+        from bach.savepoints import Savepoints
         return cls.get_instance(
             engine=engine,
-            base_node=model,
+            base_node=bach_model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             group_by=None,
-            order_by=[]
+            order_by=[],
+            savepoints=Savepoints(),
+            variables={}
         )
 
     @classmethod
@@ -463,8 +483,8 @@ class DataFrame:
         Instantiate a new DataFrame based on the content of a Pandas DataFrame.
 
         The index of the Pandas DataFrame is set to the index of the DataFrame. Only single level index is
-        supported. Supported dtypes are 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'. The 'object'
-        dtype is supported if the column contains string values and convert_objects is set to True.
+        supported. Supported dtypes are 'int32', 'int64', 'float64', 'string', 'datetime64[ns]', 'bool'. If
+        convert_objects is set to True, other columns are converted to supported data types if possible.
 
         How the data is loaded depends on the chosen materialization:
 
@@ -483,8 +503,10 @@ class DataFrame:
 
         :param engine: an sqlalchemy engine for the database.
         :param df: Pandas DataFrame to instantiate as DataFrame.
-        :param convert_objects: If True, columns of type 'object' are converted to 'string' using the
-            :py:meth:`pandas.DataFrame.convert_dtypes` method where possible.
+        :param convert_objects: If True, the data in the columns with dtypes not in the list of supported
+            dtypes are checked they contain supported data types. 'Object' columns that contain strings are
+            converted to the 'string' dtype and loaded accordingly. Other types can only be loaded if
+            materialization is 'cte' and the type is supported as Bach Series.
         :param name:
             * For 'table' materialization: name of the table that Pandas will write the data to.
             * For 'cte' materialization: name of the node in the underlying SqlModel graph.
@@ -516,11 +538,13 @@ class DataFrame:
     def get_instance(
             cls,
             engine,
-            base_node: SqlModel[BachSqlModel],
+            base_node: BachSqlModel,
             index_dtypes: Dict[str, str],
             dtypes: Dict[str, str],
             group_by: Optional['GroupBy'],
-            order_by: List[SortColumn] = None,
+            order_by: List[SortColumn],
+            savepoints: 'Savepoints',
+            variables: Dict['DtypeNamePair', Hashable]
     ) -> 'DataFrame':
         """
         INTERNAL: Get an instance with the right series instantiated based on the dtypes array.
@@ -537,7 +561,9 @@ class DataFrame:
                 index={},  # Empty index for index series
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by
+                group_by=group_by,
+                sorted_ascending=None,
+                index_sorting=[]
             )
         series: Dict[str, Series] = {}
         for key, value in dtypes.items():
@@ -548,7 +574,9 @@ class DataFrame:
                 index=index,
                 name=key,
                 expression=Expression.column_reference(key),
-                group_by=group_by
+                group_by=group_by,
+                sorted_ascending=None,
+                index_sorting=[]
             )
         return cls(
             engine=engine,
@@ -556,8 +584,115 @@ class DataFrame:
             index=index,
             series=series,
             group_by=group_by,
-            order_by=order_by
+            order_by=order_by,
+            savepoints=savepoints,
+            variables=variables
         )
+
+    def copy_override(
+        self,
+        engine: Optional[Engine] = None,
+        base_node: Optional[BachSqlModel] = None,
+        index: Optional[Dict[str, 'Series']] = None,
+        series: Optional[Dict[str, 'Series']] = None,
+        group_by: Optional[Union['GroupBy', NotSet]] = not_set,
+        order_by: Optional[List[SortColumn]] = None,
+        variables: Optional[Dict[DtypeNamePair, Hashable]] = None,
+        index_dtypes: Optional[Dict[str, str]] = None,
+        series_dtypes: Optional[Dict[str, str]] = None,
+        single_value: bool = False,
+        savepoints: Optional['Savepoints'] = None,
+        **kwargs
+    ) -> 'DataFrame':
+        """
+        INTERNAL
+
+        Create a copy of self, with the given arguments overridden
+
+        There are three special parameters: index_dtypes, series_dtypes and single_value. These are used to
+        create new index and data series iff index and/or series are not given. `single_value` determines
+        whether the Expressions for those newly created series should be SingleValueExpressions or not.
+        All other arguments are passed through to `__init__`, filled with current instance values if None is
+        given in the parameters.
+        """
+
+        if index_dtypes and index:
+            raise ValueError("Can not set both index and index_dtypes")
+
+        if series_dtypes and series:
+            raise ValueError("Can not set both series and series_dtypes")
+
+        args = {
+            'engine': engine if engine is not None else self.engine,
+            'base_node': base_node if base_node is not None else self._base_node,
+            'index': index if index is not None else self._index,
+            'series': series if series is not None else self._data,
+            'group_by': self._group_by if group_by is not_set else group_by,
+            'order_by': order_by if order_by is not None else self._order_by,
+            'savepoints': savepoints if savepoints is not None else self.savepoints,
+            'variables': variables if variables is not None else self.variables
+        }
+
+        expression_class = SingleValueExpression if single_value else Expression
+
+        if index_dtypes:
+            new_index: Dict[str, Series] = {}
+            for key, value in index_dtypes.items():
+                index_type = get_series_type_from_dtype(value)
+                new_index[key] = index_type(
+                    engine=args['engine'], base_node=args['base_node'],
+                    index={},  # Empty index for index series
+                    name=key, expression=expression_class.column_reference(key),
+                    group_by=args['group_by'],
+                    sorted_ascending=None,
+                    index_sorting=[]
+                )
+            args['index'] = new_index
+
+        if series_dtypes:
+            new_series: Dict[str, Series] = {}
+            for key, value in series_dtypes.items():
+                series_type = get_series_type_from_dtype(value)
+                new_series[key] = series_type(
+                    engine=args['engine'], base_node=args['base_node'],
+                    index=args['index'],
+                    name=key, expression=expression_class.column_reference(key),
+                    group_by=args['group_by'],
+                    sorted_ascending=None,
+                    index_sorting=[]
+                )
+                args['series'] = new_series
+
+        return self.__class__(**args, **kwargs)
+
+    def copy_override_base_node(self, base_node: BachSqlModel) -> 'DataFrame':
+        """
+        INTERNAL
+
+        Create a copy of self, with the base_node overridden in both the returned DataFrame and the Series
+        that are part of that DataFrame. If self.group_by is not None, then it's base_node is updated as
+        well.
+        This is different from :py:meth:`copy_override()`, which when provided with a new base_node only
+        overrides the base_node of the DataFrame and not of the Series that make up the DataFrame nor of
+        the GroupBy.
+        """
+        index = {name: series.copy_override(base_node=base_node) for name, series in self.index.items()}
+
+        group_by = self.group_by
+        if group_by is not None:
+            group_by = group_by.copy_override_base_node(base_node=base_node)
+
+        series = {
+            name: series.copy_override(
+                base_node=base_node,
+                group_by=group_by,
+                index=index,
+                index_sorting=[]
+            )
+            for name, series in self.data.items()
+        }
+
+        return self.copy_override(base_node=base_node, index=index, series=series, group_by=group_by)
 
     def copy(self):
         """
@@ -567,14 +702,40 @@ class DataFrame:
         this is a metadata copy only, no actual data is duplicated and changes to the underlying data
         will represented in both copy and original.
         Changes to data, index, sorting, grouping etc. on the copy will not affect the original.
+        The savepoints on the other hand will be shared by the original and the copy.
 
         If you want to create a snapshot of the data, have a look at :py:meth:`get_sample()`
+
+        Calling `copy(df)` will invoke this copy function, i.e. `copy(df)` is implemented as df.copy()
 
         :returns: a copy of the dataframe
         """
         return self.copy_override()
 
-    def materialize(self, node_name='manual_materialize', inplace=False, limit: Any = None) -> 'DataFrame':
+    def __copy__(self):
+        return self.copy()
+
+    def _update_self_from_df(self, df: 'DataFrame') -> 'DataFrame':
+        """
+        INTERNAL: Modify self by copying all properties of 'df' to self. Returns self.
+        """
+        self._engine = df.engine
+        self._base_node = df.base_node
+        self._index = df.index
+        self._data = df.data
+        self._group_by = df.group_by
+        self._order_by = df.order_by
+        self._savepoints = df.savepoints
+        self._variables = df.variables
+        return self
+
+    def materialize(
+        self,
+        node_name='manual_materialize',
+        inplace=False,
+        limit: Any = None,
+        distinct: bool = False,
+    ) -> 'DataFrame':
         """
         Create a copy of this DataFrame with as base_node the current DataFrame's state.
 
@@ -584,31 +745,53 @@ class DataFrame:
         make sense for very large expressions, or for non-deterministic expressions (e.g. see
         :py:meth:`SeriesUuid.sql_gen_random_uuid`).
 
+        TODO: a known problem is that DataFrames with 'json' columns cannot be fully materialized.
+
         :param node_name: The name of the node that's going to be created
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy. Not supported yet.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param limit: The limit (slice, int) to apply.
-        :returns: New DataFrame with the current DataFrame's state as base_node
+        :param distinct: Apply distinct statement if ``distinct=True``
+        :returns: DataFrame with the current DataFrame's state as base_node
 
         .. note::
             Calling materialize() resets the order of the dataframe. Call :py:meth:`sort_values()` again on
             the result if order is important.
         """
-        if inplace:
-            raise NotImplementedError("inplace materialization is not supported")
-
         index_dtypes = {k: v.dtype for k, v in self._index.items()}
         series_dtypes = {k: v.dtype for k, v in self._data.items()}
+        node = self.get_current_node(name=node_name, limit=limit, distinct=distinct)
 
-        node = self.get_current_node(name=node_name, limit=limit)
-        return self.copy_override(
+        df = self.get_instance(
+            engine=self.engine,
             base_node=node,
             index_dtypes=index_dtypes,
-            series_dtypes=series_dtypes,
-            group_by=[None],
-            # materializing resets any sorting as we don't have a way to translate the sorting expressions
-            # to new columns reliably. This needs attention # TODO
-            order_by=[]
+            dtypes=series_dtypes,
+            group_by=None,
+            order_by=[],
+            savepoints=self.savepoints,
+            variables=self.variables
         )
+
+        if not inplace:
+            return df
+        return self._update_self_from_df(df)
+
+    def set_savepoint(self, name: str, materialization: Union[Materialization, str] = Materialization.CTE):
+        """
+        Set the current state as a savepoint in `self.savepoints`.
+
+        :param save_points: Savepoints object that's responsible for tracking all savepoints.
+        :param name: Name for the savepoint. This will be the name of the table or view if that's set as
+            materialization. Must be unique both within the Savepoints and within the base_node.
+        :param materialization: Optional materialization of the savepoint in the database. This doesn't do
+            anything unless self.savepoints.write_to_db() gets called and the savepoints are actually
+            materialized into the database.
+        """
+        if not self.is_materialized:
+            self.materialize(node_name=name, inplace=True, limit=None)
+        materialization = Materialization.normalize(materialization)
+        self.savepoints.add_savepoint(name=name, df=self, materialization=materialization)
+        return self
 
     def get_sample(self,
                    table_name: str,
@@ -639,54 +822,14 @@ class DataFrame:
             All data in the DataFrame to be sampled is queried to create the sample.
         """
         # todo if_exists and overwrite are two different syntax for the same thing. should we align?
-        if sample_percentage is None and filter is None:
-            raise ValueError('Either sample_percentage or filter must be set')
-
-        original_node = self.get_current_node(name='before_sampling')
-        df = self
-        if filter is not None:
-            sample_percentage = None
-            from bach.series import SeriesBoolean
-            if not isinstance(filter, SeriesBoolean):
-                raise TypeError('Filter parameter needs to be a SeriesBoolean instance.')
-            # Boolean argument implies return type of self[filter], help mypy a bit
-            df = cast('DataFrame', self[filter])
-
-        if df._group_by is not None:
-            raise NotImplementedError('Dataframes that have an active grouping can currently not be sampled. '
-                                      'Call df.materialize() first.')
-
-        with df.engine.connect() as conn:
-            if overwrite:
-                sql = f'DROP TABLE IF EXISTS {quote_identifier(df.engine, table_name)}'
-                sql = _escape_parameter_characters(conn, sql)
-                conn.execute(sql)
-
-            if sample_percentage:
-                repeatable = f'repeatable ({seed})' if seed else ''
-
-                sql = f'''
-                    create temporary table tmp_table_name on commit drop as
-                    ({df.view_sql()});
-                    create temporary table {quote_identifier(df.engine, table_name)} as
-                    (select * from tmp_table_name
-                    tablesample bernoulli({sample_percentage}) {repeatable})
-                '''
-            else:
-                sql = f'create temporary table {quote_identifier(df.engine, table_name)} as ({df.view_sql()})'
-            sql = _escape_parameter_characters(df.engine, sql)
-            conn.execute(sql)
-
-        # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
-        # in get_unsampled() by switching this new node for the old node again.
-        new_base_node = SampleSqlModel(engine=df.engine, table_name=table_name, previous=original_node)
-
-        return DataFrame.get_instance(
-            engine=df.engine,
-            base_node=new_base_node,
-            index_dtypes=df.index_dtypes,
-            dtypes=df.dtypes,
-            group_by=None
+        from bach.sample import get_sample
+        return get_sample(
+            df=self,
+            table_name=table_name,
+            filter=filter,
+            sample_percentage=sample_percentage,
+            overwrite=overwrite,
+            seed=seed
         )
 
     def get_unsampled(self) -> 'DataFrame':
@@ -702,29 +845,8 @@ class DataFrame:
 
         :returns: an unsampled copy of the current sampled DataFrame.
         """
-        df = self
-        if df._group_by:
-            df = df.materialize(node_name='get_unsampled')
-
-        # The returned DataFrame has a modified base_node graph, in which the node that introduced the
-        # sampling is removed.
-        sampled_node_tuple = find_node(
-            start_node=df.base_node,
-            function=lambda node: isinstance(node, SampleSqlModel)
-        )
-        if sampled_node_tuple is None:
-            raise ValueError('No sampled node found. Cannot un-sample data that has not been sampled.')
-
-        assert isinstance(sampled_node_tuple.model, SampleSqlModel)  # help mypy
-        updated_graph = replace_node_in_graph(
-            start_node=df.base_node,
-            reference_path=sampled_node_tuple.reference_path,
-            replacement_model=sampled_node_tuple.model.previous
-        )
-
-        index = {s.name: s.copy_override(base_node=updated_graph) for s in df._index.values()}
-        series = {s.name: s.copy_override(base_node=updated_graph, index=index) for s in df._data.values()}
-        return df.copy_override(base_node=updated_graph, index=index, series=series)
+        from bach.sample import get_unsampled
+        return get_unsampled(df=self)
 
     def __getitem__(self,
                     key: Union[str, List[str], Set[str], slice, 'SeriesBoolean']) -> DataFrameOrSeries:
@@ -799,7 +921,7 @@ class DataFrame:
 
             return self.copy_override(
                 base_node=node,
-                group_by=[None],
+                group_by=None,
                 index_dtypes={name: series.dtype for name, series in self.index.items()},
                 series_dtypes={name: series.dtype for name, series in self.data.items()},
                 single_value=single_value
@@ -816,7 +938,7 @@ class DataFrame:
 
     def __setitem__(self,
                     key: Union[str, List[str]],
-                    value: Union['Series', int, str, float, UUID]):
+                    value: Union['DataFrame', 'Series', int, str, float, UUID, pandas.Series]):
         """
         For usage see general introduction DataFrame class.
         """
@@ -826,6 +948,15 @@ class DataFrame:
             if key in self.index:
                 # Cannot set an index column, and cannot have a column name both in self.index and self.data
                 raise ValueError(f'Column name "{key}" already exists as index.')
+            if isinstance(value, DataFrame):
+                raise ValueError("Can't set a DataFrame as a single column")
+            if isinstance(value, pandas.Series):
+                df = pandas.DataFrame(value)
+                df.columns = [key]
+                bt = DataFrame.from_pandas(self.engine,
+                                           df,
+                                           convert_objects=True)
+                value = bt[key]
             if not isinstance(value, Series):
                 series = const_to_series(base=self, value=value, name=key)
                 self._data[key] = series
@@ -833,24 +964,28 @@ class DataFrame:
                 if value.base_node == self.base_node and self._group_by == value.group_by:
                     self._data[key] = value.copy_override(name=key, index=self._index)
                 elif value.expression.is_constant:
-                    self._data[key] = value.copy_override(name=key, index=self._index,
-                                                          group_by=[self._group_by])
+                    self._data[key] = value.copy_override(
+                        name=key, index=self._index, group_by=self._group_by,
+                    )
                 elif value.expression.is_independent_subquery:
-                    self._data[key] = value.copy_override(name=key, index=self._index,
-                                                          group_by=[self._group_by])
+                    self._data[key] = value.copy_override(
+                        name=key, index=self._index, group_by=self._group_by,
+                    )
                 elif value.expression.is_single_value:
                     self._data[key] = Series.as_independent_subquery(value).copy_override(
-                        name=key, index=self._index, group_by=[self._group_by])
+                        name=key, index=self._index, group_by=self._group_by,
+                    )
                 else:
-                    if value.group_by != self._group_by:
-                        raise ValueError(f'GroupBy of assigned value does not match DataFrame and the '
-                                         f'given series was not single value or an independent subquery. '
-                                         f'GroupBy Value: {value.group_by}, df: {self._group_by}')
-                    elif value.base_node != self.base_node:
-                        raise ValueError('Base node of assigned value does not match DataFrame and the '
-                                         'given series was not single value or an independent subquery.')
-                    else:
-                        raise NotImplementedError('Incompatible series can not be added to the dataframe.')
+                    if value.group_by and not value.expression.has_aggregate_function:
+                        raise ValueError('Setting a grouped Series to a DataFrame is only supported if '
+                                         'the Series is aggregated.')
+                    if (
+                        self.group_by
+                        and not all(_s.expression.has_aggregate_function for _s in self.data.values())
+                    ):
+                        raise ValueError('Setting new columns to grouped DataFrame is only supported if '
+                                         'the DataFrame has aggregated columns.')
+                    self._index_merge(key=key, value=value)
 
         elif isinstance(key, list):
             if len(key) == 0:
@@ -868,6 +1003,56 @@ class DataFrame:
                 self.__setitem__(sub_key, series_list[i])
         else:
             raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
+
+    def _index_merge(
+        self, key: str, value: 'Series', how: str = 'left',
+    ):
+        """"
+        Internal method used by __setitem__ to set a series using a merge on index. Modifies the DataFrame
+        with the added column. The DataFrames index name is the same as the original DataFrame's.
+
+        :param key: name of the column to set.
+        :param value: Series that is set.
+        :param how: 'left' or 'outer'.
+        """
+
+        # todo This method's functionality will be implementd in merge()
+        if not (len(value.index) == 1 and len(self.index) == 1):
+
+            raise ValueError('setting with different base nodes only supported for one level'
+                             ' index')
+        index_name = self.index_columns[0]
+        value_index_name = list(value.index.keys())[0]
+        if self.index[index_name].dtype != value.index[value_index_name].dtype:
+            raise ValueError('dtypes of indexes should be the same')
+
+        # FIXME We're assiging mixed types to this var.
+        renamed_value: DataFrameOrSeries = value.copy_override(name=key)
+
+        if how == 'outer':
+            renamed_value = renamed_value.to_frame().materialize()
+            renamed_value[value_index_name + '__index'] = renamed_value.index[value_index_name]
+
+        df = self.merge(renamed_value,
+                        left_index=True,
+                        right_index=True,
+                        how=how,
+                        suffixes=('', '__remove'))
+
+        if how == 'outer':
+            new_index = df.index[index_name].fillna(df[value_index_name + '__index'])
+        elif how == 'left':
+            new_index = df.index[index_name]
+        else:
+            raise NotImplementedError(f'how "{how}" not supported')
+
+        df.set_index(new_index, inplace=True)
+        if key in self.data_columns:
+            df[key] = df[key + '__remove']
+            df.drop(columns=[key + '__remove'], inplace=True)
+        df.drop(columns=[value_index_name + '__index'], inplace=True, errors='ignore')
+
+        self._update_self_from_df(df)
 
     def rename(self, mapper: Union[Dict[str, str], Callable[[str], str]] = None,
                index: Union[Dict[str, str], Callable[[str], str]] = None,
@@ -939,14 +1124,20 @@ class DataFrame:
         df._data = new_data
         return None if inplace else df
 
-    def reset_index(self, drop: bool = False, inplace: bool = False) -> Optional['DataFrame']:
+    def reset_index(
+        self,
+        level: Optional[Union[str, Sequence[str]]] = None,
+        drop: bool = False,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
         """
         Drops the current index.
 
         With reset_index, all indexes are removed from the DataFrame, so that the DataFrame does not have any
         index Series. A new index can be set with :py:meth:`set_index`.
 
-        :param drop: if True, the dropped index is added to the data columns of the DataFrame. If False it
+        :param level: Removes given levels from index. Removes all levels by default
+        :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
             is removed.
         :param inplace: update the current DataFrame or return a new DataFrame.
         :returns: DataFrame with the index dropped or None if ``inplace=True``.
@@ -956,20 +1147,39 @@ class DataFrame:
             # materialize, but raise if inplace is required.
             df = df.materialize(node_name='reset_index', inplace=inplace)
 
+        new_index = {}
         series = df._data if drop else df.all_series
-        df._data = {n: s.copy_override(index={}) for n, s in series.items()}
-        df._index = {}
+        if level is not None:
+            series = df._data
+            levels_to_remove = [level] if isinstance(level, str) else level
+
+            for lvl in levels_to_remove:
+                if lvl not in df._index:
+                    raise ValueError(f'\'{lvl}\' level not found in index')
+
+                if not drop:
+                    series[lvl] = df.index[lvl]
+
+            new_index = {idx: series for idx, series in df.index.items() if idx not in levels_to_remove}
+
+        df._data = {n: s.copy_override(index={}, index_sorting=[]) for n, s in series.items()}
+        df._index = new_index
         return None if inplace else df
 
-    def set_index(self, keys: Union[str, 'Series', List[Union[str, 'Series']]],
-                  append: bool = False, drop: bool = True, inplace: bool = False) -> Optional['DataFrame']:
+    def set_index(
+        self,
+        keys: Union[str, 'Series', List[Union[str, 'Series']]],
+        drop: bool = True,
+        append: bool = False,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
         """
         Set this dataframe's index to the the index given in keys
 
         :param keys: the keys of the new index. Can be a column name str, a Series, or a list of those. If
             Series are passed, they should have the same base node as the DataFrame they are set on.
-        :param append: whether to append to the existing index or replace.
         :param drop: delete columns to be used as the new index.
+        :param append: whether to append to the existing index or replace.
         :param inplace: update the current DataFrame or return a new DataFrame. This is not always supported
             and will raise if it is not.
         :returns: a DataFrame with the new index or None if ``inplace=True``.
@@ -993,14 +1203,16 @@ class DataFrame:
                     raise ValueError(f'series \'{k}\' not found')
                 idx_series = df.all_series[k]
 
-            new_index[idx_series.name] = idx_series.copy_override(index={})
+            new_index[idx_series.name] = idx_series.copy_override(index={}, index_sorting=[])
 
             if not drop and idx_series.name not in df._index and idx_series.name in df._data:
                 raise ValueError('When adding existing series to the index, drop must be True'
                                  ' because duplicate column names are not supported.')
 
-        new_series = {n: s.copy_override(index=new_index) for n, s in df._data.items()
-                      if n not in new_index}
+        new_series = {
+            n: s.copy_override(index=new_index, index_sorting=[]) for n, s in df._data.items()
+            if n not in new_index
+        }
 
         df._index = new_index
         df._data = new_series
@@ -1127,25 +1339,24 @@ class DataFrame:
         Given a group_by, and a df create a new DataFrame that has all the right stuff set.
         It will not materialize, just prepared for more operations
         """
-        # update the series to also contain our group_by and group_by index
-        # (behold ugly syntax on group_by=[]. See Series.copy_override() docs for explanation)
-        new_series = {s.name: s.copy_override(group_by=[group_by], index=group_by.index)
+        new_series = {s.name: s.copy_override(group_by=group_by, index=group_by.index, index_sorting=[])
                       for n, s in df.all_series.items() if n not in group_by.index.keys()}
         return df.copy_override(
             engine=df.engine,
             base_node=df.base_node,
             index=group_by.index,
             series=new_series,
-            group_by=[group_by])
+            group_by=group_by,
+        )
 
     def groupby(
             self,
             by: Union[_GroupBySingleType,  # single series group_by
                       # for GroupingSets
                       Tuple[Union[_GroupBySingleType, Tuple[_GroupBySingleType, ...]], ...],
-                      List[Union[_GroupBySingleType,  # multi series
-                                 List[_GroupBySingleType],  # for grouping lists
-                                 Tuple[_GroupBySingleType, ...]]],  # for grouping lists
+                      Sequence[Union[_GroupBySingleType,  # multi series
+                                     List[_GroupBySingleType],  # for grouping lists
+                                     Tuple[_GroupBySingleType, ...]]],  # for grouping lists
                       None] = None) -> 'DataFrame':
         """
         Group by any of the series currently in this DataDrame, both from index as well as data.
@@ -1368,6 +1579,48 @@ class DataFrame:
                     for by_series, asc_item in zip(by_series_list, ascending)]
         return self.copy_override(order_by=order_by)
 
+    def sort_index(
+        self,
+        level: Optional[Level] = None,
+        ascending: Union[bool, List[bool]] = True,
+        inplace: bool = False,
+    ) -> Optional['DataFrame']:
+        """
+        Sort dataframe by index levels.
+
+        :param level: int or level name or list of ints or level names.
+            If not specified, all index series are used
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `level` must also be a list and ``len(ascending) == len(level)``.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+        :returns: a new DataFrame with the specified ordering if ``inplace=False``,
+         otherwise it updates the original and returns None.
+        """
+        sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
+        df = self.sort_values(by=sort_by, ascending=ascending)
+
+        if inplace:
+            self._update_self_from_df(df)
+            return None
+
+        return df
+
+    def _get_indexes_by_level(self, level: Level) -> List[str]:
+        selected_indexes = []
+        nlevels = len(self.index_columns)
+
+        for idx_l in level if isinstance(level, list) else [level]:
+            if isinstance(idx_l, int) and nlevels < idx_l:
+                raise ValueError(f'dataframe has only {nlevels} levels.')
+
+            if isinstance(idx_l, str) and idx_l not in self.index_columns:
+                raise ValueError(f'dataframe has no {idx_l} index level.')
+
+            level_name = idx_l if isinstance(idx_l, str) else self.index_columns[idx_l]
+            selected_indexes.append(level_name)
+
+        return selected_indexes
+
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.DataFrame:
         """
         Run a SQL query representing the current state of this DataFrame against the database and return the
@@ -1385,7 +1638,7 @@ class DataFrame:
                      if series.dtype_to_pandas is not None}
 
             # read_sql_query expects a parameterized query, so we need to escape the parameter characters
-            sql = _escape_parameter_characters(conn, sql)
+            sql = escape_parameter_characters(conn, sql)
             pandas_df = pandas.read_sql_query(sql, conn).astype(dtype)
 
             if len(self._index):
@@ -1405,17 +1658,34 @@ class DataFrame:
         return self.to_pandas(limit=n)
 
     @property
-    def values(self):
+    def values(self) -> numpy.ndarray:
         """
         Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.values`
+
+        .. warning::
+           We recommend using :meth:`DataFrame.to_numpy` instead.
 
         :returns: Returns the values of the DataFrame as numpy.ndarray.
 
         .. note::
             This function queries the database.
         """
-        # todo function is not recommended by pandas, change?
-        return self.to_pandas().values
+        warnings.warn(
+            'Call to deprecated property, we recommend to use DataFrame.to_numpy() instead',
+            category=DeprecationWarning,
+        )
+        return self.to_numpy()
+
+    def to_numpy(self) -> numpy.ndarray:
+        """
+        Return a Numpy representation of the DataFrame akin :py:attr:`pandas.Dataframe.to_numpy`
+
+        :returns: Returns the values of the DataFrame as numpy.ndarray.
+
+        .. note::
+            This function queries the database.
+        """
+        return self.to_pandas().to_numpy()
 
     def _get_order_by_clause(self) -> Expression:
         """
@@ -1429,19 +1699,25 @@ class DataFrame:
         else:
             return Expression.construct('')
 
-    def get_current_node(self, name: str,
-                         limit: Union[int, slice] = None,
-                         where_clause: Expression = None,
-                         having_clause: Expression = None) -> SqlModel[BachSqlModel]:
+    def get_current_node(
+        self,
+        name: str,
+        limit: Union[int, slice] = None,
+        distinct: bool = False,
+        where_clause: Expression = None,
+        having_clause: Expression = None,
+    ) -> BachSqlModel:
         """
         INTERNAL: Translate the current state of this DataFrame into a SqlModel.
 
         :param name: The name of the new node
         :param limit: The limit to use
+        :param distinct: if distinct statement needs to be applied
         :param where_clause: The where-clause to apply, if any
         :param having_clause: The having-clause to apply in case group_by is set, if any
         :returns: SQL query as a SqlModel that represents the current state of this DataFrame.
         """
+        self._assert_all_variables_set()
 
         if isinstance(limit, int):
             limit = slice(0, limit)
@@ -1467,7 +1743,8 @@ class DataFrame:
 
         limit_clause = Expression.construct('' if limit_str is None else f'{limit_str}')
         where_clause = where_clause if where_clause else Expression.construct('')
-        if self._group_by:
+        group_by_clause = None
+        if self.group_by:
 
             not_aggregated = [s.name for s in self._data.values()
                               if not s.expression.has_aggregate_function]
@@ -1479,61 +1756,48 @@ class DataFrame:
 
             group_by_column_expr = self.group_by.get_group_by_column_expression()
             if group_by_column_expr:
-                columns = self.group_by.get_index_column_expressions()
+                column_exprs = self.group_by.get_index_column_expressions()
+                column_names = tuple(self.group_by.index.keys())
                 group_by_clause = Expression.construct('group by {}', group_by_column_expr)
             else:
-                columns = []
+                column_exprs = []
+                column_names = tuple()
                 group_by_clause = Expression.construct('')
             having_clause = having_clause if having_clause else Expression.construct('')
 
-            columns += [s.get_column_expression() for s in self._data.values()]
-
-            model_builder = BachSqlModel(
-                name=name,
-                sql="""
-                    select {columns}
-                    from {{prev}}
-                    {where}
-                    {group_by}
-                    {having}
-                    {order_by} {limit}
-                    """
-            )
-            return model_builder(
-                columns=columns,
-                where=where_clause,
-                group_by=group_by_clause,
-                having=having_clause,
-                order_by=self._get_order_by_clause(),
-                limit=limit_clause,
-                prev=self.base_node
-            )
+            column_exprs += [s.get_column_expression() for s in self._data.values()]
+            column_names += tuple(self._data.keys())
         else:
-            model_builder = BachSqlModel(
-                name=name,
-                sql='select {columns} from {{_last_node}} {where} {order} {limit}'
-            )
-            return model_builder(
-                columns=self._get_all_column_expressions(),
-                _last_node=self.base_node,
-                where=where_clause,
-                order=self._get_order_by_clause(),
-                limit=limit_clause
-            )
+            column_exprs = [s.get_column_expression() for s in self.all_series.values()]
+            column_names = tuple(self.all_series.keys())
+
+        return CurrentNodeSqlModel.get_instance(
+            name=name,
+            column_names=column_names,
+            column_exprs=column_exprs,
+            distinct=distinct,
+            where_clause=where_clause,
+            group_by_clause=group_by_clause,
+            having_clause=having_clause,
+            order_by_clause=self._get_order_by_clause(),
+            limit_clause=limit_clause,
+            previous_node=self.base_node,
+            variables=self.variables
+        )
 
     def view_sql(self, limit: Union[int, slice] = None) -> str:
         """
         Translate the current state of this DataFrame into a SQL query.
 
+        This includes setting all variable values that are in self.variables.
+
         :param limit: the limit to apply, either as a max amount of rows or a slice of the data.
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
+        placeholder_values = get_variable_values_sql(variable_values=self.variables)
+        model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)
         return to_sql(self.engine, model)
-
-    def _get_all_column_expressions(self) -> List[Expression]:
-        """ Get a list of Expression for every column including indices in this df """
-        return [series.get_column_expression() for series in self.all_series.values()]
 
     def merge(
             self,
@@ -1551,11 +1815,25 @@ class DataFrame:
         combined columns of both dataframes, and the rows that result from joining on the specified columns.
         The columns that are joined on can consist (partially or fully) out of index columns.
 
-        See :py:meth:`bach.merge.merge` for more information.
         The interface of this function is similar to pandas' merge, but the following parameters are not
         supported: `sort`, `copy`, `indicator`, and `validate`.
-        Additionally when merging two frames that have conflicting columns names, and joining on indices,
+        Additionally, when merging two frames that have conflicting columns names, and joining on indices,
         then the resulting columns/column names can differ slightly from Pandas.
+
+        If variables are set (see :meth:`DataFrame.variables`), then values from self will be used in cases
+        where a variable name/dtype combination has been defined in both the `self` and `right`
+        DataFramesOrSeries.
+
+        :param right: DataFrame or Series to join on self
+        :param how: supported values: {‘left’, ‘right’, ‘outer’, ‘inner’, ‘cross’}
+        :param on: optional, column(s) to join left and right on.
+        :param left_on: optional, column(s) from the left df to join on
+        :param right_on: optional, column(s) from the right df/series to join on
+        :param left_index: If true uses the index of the left df as columns to join on
+        :param right_index: If true uses the index of the right df/series as columns to join on
+        :param suffixes: Tuple of two strings. Will be used to suffix duplicate column names. Must make
+            column names unique
+        :return: A new Dataframe. The original frames are not modified.
         """
         from bach.merge import merge
         return merge(
@@ -1570,12 +1848,15 @@ class DataFrame:
             suffixes=suffixes
         )
 
-    def _apply_func_to_series(self,
-                              func: Union[ColumnFunction, Dict[str, ColumnFunction]],
-                              axis: int = 1,
-                              numeric_only: bool = False,
-                              exclude_non_applied: bool = False,
-                              *args, **kwargs) -> List['Series']:
+    def _apply_func_to_series(
+        self,
+        func: Union[ColumnFunction, Dict[str, ColumnFunction]],
+        axis: int = 1,
+        numeric_only: bool = False,
+        exclude_non_applied: bool = False,
+        *args,
+        **kwargs,
+    ) -> List['Series']:
         """
         :param func: function, str, list or dict to apply to all series
             Function to use on the data. If a function, must work when passed a
@@ -1625,17 +1906,20 @@ class DataFrame:
             raise TypeError(f'Unsupported type for func: {type(func)}')
 
         new_series = {}
-        for name, series in self._data.items():
-            if name not in apply_dict:
-                if not exclude_non_applied:
-                    new_series[name] = series.copy_override()
-                continue
-            for applied in series.apply_func(apply_dict[name], *args, **kwargs):
+        for name, apply_func in apply_dict.items():
+            for applied in self._data[name].apply_func(apply_func, *args, **kwargs):
                 if applied.name in new_series:
                     raise ValueError(f'duplicate result series: {applied.name}')
                 new_series[applied.name] = applied
 
-        return list(new_series.values())
+        applied_series = list(new_series.values())
+        if exclude_non_applied:
+            return applied_series
+
+        non_applied_series = [
+            series.copy_override() for name, series in self._data.items() if name not in apply_dict
+        ]
+        return applied_series + non_applied_series
 
     def aggregate(self,
                   func: Union[ColumnFunction, Dict[str, ColumnFunction]],
@@ -1647,12 +1931,14 @@ class DataFrame:
         """
         return self.agg(func, axis, numeric_only, *args, **kwargs)
 
-    def agg(self,
-            func: Union[ColumnFunction, Dict[str, ColumnFunction]],
-            axis: int = 1,
-            numeric_only: bool = False,
-            *args,
-            **kwargs) -> 'DataFrame':
+    def agg(
+        self,
+        func: Union[ColumnFunction, Dict[str, ColumnFunction]],
+        axis: int = 1,
+        numeric_only: bool = False,
+        *args,
+        **kwargs,
+    ) -> 'DataFrame':
         """
         Aggregate using one or more operations over the specified axis.
 
@@ -1686,7 +1972,7 @@ class DataFrame:
                                               df.group_by, *args, **kwargs)
 
         # If the new series have a different group_by or index, we need to copy that
-        if len(new_series):
+        if new_series:
             new_index = new_series[0].index
             new_group_by = new_series[0].group_by
 
@@ -1695,8 +1981,11 @@ class DataFrame:
                    for s in new_series):
             raise ValueError("series do not agree on new index / group_by")
 
-        return df.copy_override(index=new_index, group_by=[new_group_by],
-                                series={s.name: s for s in new_series})
+        return df.copy_override(
+            index=new_index,
+            group_by=new_group_by,
+            series={s.name: s for s in new_series},
+        )
 
     def _aggregate_func(self, func: str, axis, level, numeric_only, *args, **kwargs) -> 'DataFrame':
         """
@@ -1811,6 +2100,69 @@ class DataFrame:
         return self._aggregate_func('mode', axis, level, numeric_only,
                                     skipna=skipna, **kwargs)
 
+    def quantile(
+        self,
+        q: Union[float, List[float]] = 0.5,
+        axis=1,
+        **kwargs,
+    ):
+        """
+        Returns the quantile per numeric/timedelta column.
+
+        :param q: value or list of values between 0 and 1.
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
+        valid_index = (
+            {s.name: s for s in self._index.values() if hasattr(s, 'quantile')}
+            if self.group_by is None else {}
+        )
+        valid_series = {
+            s.name: s.copy_override(index=valid_index) for s in self._data.values() if hasattr(s, 'quantile')
+        }
+        if not valid_series and not valid_index:
+            raise ValueError('DataFrame has no series supporting "quantile" operation.')
+
+        df = self.copy_override(series=valid_series, index=valid_index)
+        if df.group_by is None:
+            df = df.groupby()
+
+        quantiles = [q] if isinstance(q, float) else q
+
+        all_quantile_dfs = []
+        for qt in quantiles:
+            new_series = df._apply_func_to_series(
+                func='quantile',
+                axis=axis,
+                numeric_only=False,
+                exclude_non_applied=True,
+                partition=df.group_by,
+                q=qt,
+                **kwargs,
+            )
+            initial_series = new_series[0]
+            quantile_df = df.copy_override(
+                base_node=initial_series.base_node,
+                series={s.name: s for s in new_series},
+                index={},
+                group_by=initial_series.group_by,
+            )
+            if len(quantiles) == 1:
+                return quantile_df
+
+            # a hack in order to avoid calling quantile_df.materialized().
+            # Currently doing quantile['q'] = qt
+            # will raise some errors since the expression is not an instance of AggregateFunctionExpression
+            quantile_df['q'] = initial_series\
+                .copy_override_dtype(dtype='float64')\
+                .copy_override(expression=AggregateFunctionExpression.construct(fmt=f'{qt}'))
+            all_quantile_dfs.append(quantile_df)
+
+        from bach.operations.concat import DataFrameConcatOperation
+        result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
+        # q column should be in the index when calculating multiple quantiles
+        return result.set_index('q')
+
     def nunique(self, axis=1, skipna=True, **kwargs):
         """
         Returns the number of unique values in each column.
@@ -1822,6 +2174,23 @@ class DataFrame:
         # deviation from horrible pd.nunique(axis=0, dropna=True)
         return self._aggregate_func('nunique', axis=axis,
                                     level=None, numeric_only=False, skipna=skipna, **kwargs)
+
+    def round(self, decimals: int = 0):
+        """
+        Returns a DataFrame with rounded numerical values
+
+        :param decimals: number of decimal places to round each numeric column
+        :returns: a new DataFrame with rounded numerical columns
+        """
+        from bach.series import SeriesAbstractNumeric
+
+        df = self.copy_override()
+        for col in df.data.values():
+            if not isinstance(col, SeriesAbstractNumeric):
+                continue
+            df._data[col.name] = col.round(decimals)
+
+        return df
 
     # def skew(self, axis=None, skipna=True, level=None, numeric_only=False, **kwargs):
     #     return self._aggregate_func('skew', axis, level, numeric_only,
@@ -1891,6 +2260,405 @@ class DataFrame:
         return self._aggregate_func('var', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
+    def describe(
+        self,
+        percentiles: Optional[Sequence[float]] = None,
+        include: Optional[Union[str, Sequence[str]]] = None,
+        exclude: Optional[Union[str, Sequence[str]]] = None,
+        datetime_is_numeric: bool = False,
+    ) -> 'DataFrame':
+        """
+        Returns descriptive statistics.
+        The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
+
+        :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
+        :param include: dtypes to be included.
+            Either a sequence of dtypes, a single dtype, or the special value 'all'.
+            By default calculations will be based on numerical columns, if there are any
+            numerical columns and on all columns if there are no numerical columns.
+        :param exclude: dtypes to be excluded. Either a sequence of dtypes, a single dtype, or None.
+        :param datetime_is_numeric: not supported
+        :returns: a new DataFrame with the descriptive statistics
+        """
+        from bach.operations.describe import DescribeOperation
+        return DescribeOperation(
+            obj=self,
+            include=include,
+            exclude=exclude,
+            datetime_is_numeric=datetime_is_numeric,
+            percentiles=percentiles,
+        )()
+
+    def create_variable(
+        self,
+        name: str,
+        value: Any,
+        *,
+        dtype: Optional[str] = None,
+    ) -> Tuple['DataFrame', 'Series']:
+        """
+        Create a Series object that can be used as a variable, within the returned DataFrame. The
+        DataFrame will have the variable with the given values set in :meth:`DataFrame.variables`.
+
+        The variable value can later be changed using :meth:`DataFrame.set_variable`
+
+        **Multiple variables with the same name**
+
+        For variables the combination (name, dtype) uniquely identifies a variable. That means that there
+        can be multiple variables with the same name, if they are of different types. This is counter to
+        how a lot of programming languages handle variables. But it prevents a lot of error conditions and
+        edge cases around merging DataFrames and Series with the same variables, and building on top of
+        SqlModels that already have variables.
+
+        :param name: name of variable to update
+        :param value: value of variable
+        :param dtype: optional. If not set it will be derived from the value, if set we check that it
+            matches the value. If dtype doesn't match the value's dtype, then an Exception is raised.
+        :return: Tuple with DataFrame and the Series object that can be used as a variable.
+        """
+        from bach.series.series import variable_series
+        series = variable_series(base=self, value=value, name=name)
+        if dtype is not None and dtype != series.dtype:
+            raise ValueError(f"Dtype of value ({series.dtype}) and provided dtype ({dtype}) don't match.")
+        variables = self.variables
+        variables[DtypeNamePair(dtype=series.dtype, name=name)] = value
+        df = self.copy_override(variables=variables)
+        return df, series
+
+    def set_variable(self, name: str, value: Any, *, dtype: Optional[str] = None) -> 'DataFrame':
+        """
+        Return a copy of this DataFrame with the variable value updated.
+
+        :param name: name of variable to update
+        :param value: new value of variable
+        :param dtype: optional. If not set it will be derived from the value, if set we check that it
+            matches the value. If dtype doesn't match the value's dtype, then an Exception is raised.
+        :return: copy of this DataFrame, with the value updated.
+        """
+        df, _ = self.create_variable(name, value, dtype=dtype)
+        return df
+
+    def get_all_variable_usage(self) -> List[DefinedVariable]:
+        """
+        Get all variables that influence the values of this DataFrame.
+        This includes both variables that are used in the current `self.series`, but also variables that
+        were used in earlier steps, i.e. in the SqlModels of `self.base_node`.
+
+        The output of this method can be useful for diagnosing issues with variables. If a variable is used
+        multiple times, then it will appear here multiple times. If a variable has conflicting definitions
+        then the conflicting dtypes and/or values are all returned.
+
+        **Returned data**
+
+        This method returns a list of DefinedVariable tuples, the fields in the tuples:
+
+        * name: name of the variable
+        * dtype: dtype
+        * value: value that is currently set in `self.variables`, or None if there is no value
+        * ref_path: If the variable is used in an already materialized part of the DataFrame, i.e.
+          the usage is in self.base_node, then this is the reference path from self.base_node to the
+          SqlModel in which the variable usage occurs. If the variable is used in self.series instead,
+          then this is None
+        * old_value: If the variable is used in an already materialized part of the DataFrame, then it
+          also has a value already. That is this value. Will be None if this variable usage is not in
+          self.base_node.
+
+        :return: List with all usages of variables in this DataFrame.
+        """
+        return self._get_all_used_variables_series() + self._get_all_used_variables_base_node()
+
+    def _get_all_used_variables_series(self) -> List[DefinedVariable]:
+        all_tokens = []
+        for series in self.all_series.values():
+            all_tokens.extend(series.expression.get_all_tokens())
+        variable_tokens = [token for token in all_tokens if isinstance(token, VariableToken)]
+
+        result = []
+        for vt in variable_tokens:
+            dtype_name = DtypeNamePair(dtype=vt.dtype, name=vt.name)
+            value = None if dtype_name not in self.variables else self.variables[dtype_name]
+            result.append(
+                DefinedVariable(name=vt.name, dtype=vt.dtype, value=value, ref_path=None, old_value=None)
+            )
+        return result
+
+    def _get_all_used_variables_base_node(self) -> List[DefinedVariable]:
+        result = []
+        all_placeholders = get_all_placeholders(self.base_node)
+        for placeholder_name, values_dict in all_placeholders.items():
+            token = VariableToken.placeholder_name_to_token(placeholder_name)
+            if token is None:
+                continue
+            for ref_path, old_value in values_dict.items():
+                dtype_name = token.dtype_name
+                value = None if dtype_name not in self.variables else self.variables[dtype_name]
+                result.append(
+                    DefinedVariable(
+                        name=dtype_name.name, dtype=dtype_name.dtype,
+                        value=value, ref_path=ref_path, old_value=old_value)
+                )
+        return result
+
+    def _assert_all_variables_set(self):
+        """
+        Asserts that all variables used in the series are set. Raises an Exception if a variable is not set.
+        """
+        used_variables = self._get_all_used_variables_series()
+        for var in used_variables:
+            dtype_name = DtypeNamePair(dtype=var.dtype, name=var.name)
+            if dtype_name not in self.variables:
+                raise Exception(f'Variable {dtype_name.name}, with dtype {dtype_name.dtype} is used, '
+                                f'but not set. Use create_variable() to assign a value')
+
+    def append(
+        self,
+        other: Union['DataFrame', List['DataFrame']],
+        ignore_index: bool = False,
+        sort: bool = False,
+    ) -> 'DataFrame':
+        """
+        Append rows of other dataframes to the the caller dataframe.
+        Non-shared columns between dataframes are added to the caller.
+
+        :param other: objects to be added
+        :param ignore_index: if true, drops indexes of all object to be appended
+        :param sort: if true, columns are sorted alphanumerically
+
+        :return: a new dataframe with all rows from appended Dataframes.
+        """
+        from bach.operations.concat import DataFrameConcatOperation
+        if isinstance(other, list) and not other:
+            raise ValueError('no dataframe or series to append.')
+
+        other_dfs = other if isinstance(other, list) else [other]
+        concatenated_df = DataFrameConcatOperation(
+            objects=[self] + other_dfs,
+            ignore_index=ignore_index,
+            sort=sort,
+        )()
+        return concatenated_df
+
+    def drop_duplicates(
+        self,
+        subset: Optional[Union[str, Sequence[str]]] = None,
+        keep: Union[str, bool] = 'first',
+        inplace: bool = False,
+        ignore_index: bool = False,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> Optional['DataFrame']:
+        """
+        Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
+
+        :param subset: series label or sequence of labels.
+            Duplications to be dropped are based on the combination of the subset of series.
+            If not provided, all series labels will be used by default.
+        :param keep: Supported values: "first", "last" and False. Determines which duplicates to keep:
+
+            * `first`: drop all occurrences except the first one
+            * `last`:  drop all occurrences except the last one
+            * False: drops all duplicates
+
+            If no value is provided, first occurrences will be kept by default.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+        :param ignore_index: if true, drops indexes of the result
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic
+            when keep == "first" or keep == "last". If not provided:
+            1. If dataframe has already an order_by, first and last values will be performed based on it
+            2. Else all series not considered in duplication will be used instead.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `by` must also be a list and ``len(ascending) == len(by)``.
+
+        :return: a new dataframe with dropped duplicates if inplace = False, otherwise None.
+        """
+        if keep not in ('first', 'last', False):
+            raise ValueError('keep must be either "first", "last" or False.')
+
+        subset = self._get_parsed_subset_of_data_columns(subset)
+        sort_by = self._get_parsed_subset_of_data_columns(sort_by)
+
+        df = self.copy()
+        if ignore_index:
+            df.reset_index(drop=True, inplace=True)
+
+        dedup_on = list(subset or self.data_columns)
+        dedup_data = [name for name in df.all_series if name not in dedup_on]
+
+        # in case df has no order_by and no sort_by was provided
+        # it will use the series that are not included in dedup_on
+        dedup_sort = list(sort_by or dedup_data) if sort_by or not self.order_by else []
+
+        # dedup_data contains index series if ignore_index = False
+        # in this case we should append those as data_columns
+        if dedup_data and not ignore_index:
+            df.reset_index(drop=False, inplace=True)
+
+        # drop all duplicates
+        if keep is False:
+            freq_df = df[dedup_on]
+            freq_df['freq'] = 1
+            freq_df = freq_df.groupby(by=dedup_on).sum()
+            freq_df.reset_index(drop=False, inplace=True)
+
+            df = df.merge(freq_df, on=dedup_on)
+            df = df[df.freq_sum == 1][dedup_on + dedup_data]
+        elif dedup_data:
+            from bach.partitioning import WindowFrameBoundary
+            if keep == 'last':
+                func_to_apply = 'window_last_value'
+                # unbounded following is required only when last value is needed
+                end_boundary = WindowFrameBoundary.FOLLOWING
+            else:
+                func_to_apply = 'window_first_value'
+                end_boundary = WindowFrameBoundary.CURRENT_ROW
+
+            if dedup_sort:
+                df = df.sort_values(by=dedup_sort, ascending=ascending)
+            window = df.groupby(by=dedup_on).window(end_boundary=end_boundary, end_value=None)
+            agg_series = df[dedup_data]._apply_func_to_series(func=func_to_apply, window=window)
+
+            for name, new_series in zip(dedup_data, agg_series):
+                df._data[name] = new_series.copy_override(name=name)
+
+        # we need to just apply distinct for 'first' and 'last'.
+        if keep:
+            df.materialize(distinct=True, inplace=True)
+
+        df = df if ignore_index else df.set_index(keys=self.index_columns)
+        if not inplace:
+            return df
+
+        self._update_self_from_df(df)
+        return None
+
+    def value_counts(
+        self,
+        subset: Optional[List[str]] = None,
+        normalize: bool = False,
+        sort: bool = True,
+        ascending: bool = False,
+    ) -> 'Series':
+        """
+        Returns a series containing counts of each unique row in the DataFrame
+
+        :param subset: a list of series labels to be used when counting. If subset is not provided and
+            dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
+            series in group_by will be added to subset.
+        :param normalize: returns proportions instead of frequencies
+        :param sort: sorts result by frequencies
+        :param ascending: sorts values in ascending order if true.
+
+        :return: a series containing all counts per unique row.
+        """
+        if not subset:
+            subset = self.data_columns
+        elif any(s not in self.data_columns for s in subset):
+            raise ValueError('subset contains invalid series.')
+
+        if self.group_by:
+            # consider groupby series in subset
+            subset = list(self.group_by.index.keys()) + subset
+
+        df = self.copy_override(
+            series={
+                s: self.all_series[s].copy_override(index={}, group_by=None) for s in subset
+            },
+            index={},
+            group_by=None,
+        )
+        df['value_counts'] = 1
+        df = df.groupby(by=list(subset)).sum()
+
+        if normalize:
+            df.materialize(inplace=True)
+            df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
+
+        df.rename(columns={'value_counts_sum': 'value_counts'}, inplace=True)
+
+        if sort:
+            return df._data['value_counts'].sort_values(ascending=ascending)
+
+        return df._data['value_counts']
+
+    def dropna(
+        self,
+        *,
+        axis: int = 0,
+        how: str = 'any',
+        thresh: Optional[int] = None,
+        subset: Optional[Union[str, Sequence[str]]] = None,
+        inplace: bool = False
+    ) -> Optional['DataFrame']:
+        """
+        Removes rows with missing values (NaN, None and SQL NULL).
+
+        :param axis: only ``axis=0`` is supported. This means rows that contain missing values are dropped.
+        :param how: determines when a row is removed. Supported values:
+           - 'any': rows with at least one missing value are removed
+           - 'all': rows with all missing values are removed
+        :param thresh: determines the least amount of non-missing values a row needs to have
+            in order to be kept
+        :param subset: series label or sequence of labels to be considered for missing values.
+            If subset is None, all DataFrame's series labels will be used.
+            In case subset is an empty list, a copy from the DataFrame will
+            be returned.
+        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
+
+        :return: a new dataframe with dropped rows if inplace = False, otherwise None.
+        """
+        if axis:
+            raise ValueError('only axis = 0 is supported.')
+
+        if how not in ('any', 'all'):
+            raise ValueError(f'{how} is not a valid value for "how" parameter.')
+
+        subset = self._get_parsed_subset_of_data_columns(subset)
+        dropna_series = self.data_columns if subset is None else subset
+
+        if not dropna_series:
+            return self.copy()
+
+        logical_operator = 'or' if how == 'any' else 'and'
+
+        conditions = []
+        for ds in dropna_series:
+            main_condition = self.all_series[ds].isnull()
+            if self.all_series[ds].dtype in ['float64', 'int64']:
+                main_condition = main_condition | (self.all_series[ds] == float('nan'))
+
+            conditions.append(main_condition)
+
+        if not thresh:
+            expression_fmt = f' {logical_operator} '.join([f'{{}}'] * len(dropna_series))
+        else:
+            # we need to add the amount of nullables in the row and compare it to the thresh
+            cases_fmt = f' + '.join([f'case when {{}} then 1 else 0 end'] * len(dropna_series))
+            expression_fmt = f'{len(self.data_columns)} - ({cases_fmt}) < {thresh}'
+
+        drop_row_series = conditions[0].copy_override(
+            expression=Expression.construct(expression_fmt, *conditions),
+        )
+
+        dropna_df = self[~drop_row_series]
+        assert isinstance(dropna_df, DataFrame)
+
+        if inplace:
+            self._update_self_from_df(dropna_df)
+            return None
+
+        return dropna_df
+
+    def _get_parsed_subset_of_data_columns(
+        self, subset: Optional[Union[str, Sequence[str]]],
+    ) -> Optional[Sequence[str]]:
+        subset = [subset] if isinstance(subset, str) else subset
+        if subset and any(s not in self.data_columns for s in subset):
+            raise ValueError(
+                f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
+            )
+        return subset
+
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     """
@@ -1904,7 +2672,7 @@ def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     )
 
 
-def _escape_parameter_characters(engine: Engine, raw_sql: str) -> str:
+def escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
     """
     Return a modified copy of the given sql with the query-parameter special characters escaped.
     e.g. if the connection uses '%' to mark a parameter, then all occurrences of '%' will be replaced by '%%'

@@ -3,8 +3,11 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 
+import numpy as np
+import pandas as pd
+
 from tests.functional.bach.test_data_and_utils import get_bt_with_food_data, assert_equals_data, \
-    get_bt_with_test_data
+    get_bt_with_test_data, get_from_df
 from tests.functional.bach.test_series_timestamp import types_plus_min
 
 
@@ -43,6 +46,7 @@ def test_timedelta_arithmetic2():
             [1, 93485, *expected],
         ]
     )
+
 
 def test_timedelta():
     mt = get_bt_with_food_data()[['skating_order', 'moment']]
@@ -84,4 +88,100 @@ def test_to_pandas():
     bt[['td']].to_pandas()
     # TODO, this is not great, but at least it does not error when imported into pandas,
     # and it looks good over there
-    assert bt[['td']].values[0] == [27744277000000000]
+    assert bt[['td']].to_numpy()[0] == [27744277000000000]
+
+
+def test_timedelta_operations():
+    pdf = pd.DataFrame(
+        data={
+            'start_date': [
+                datetime.datetime(year=2022, month=1, day=d) for d in range(1, 17)
+            ],
+            'end_date': [
+                datetime.datetime(year=2022, month=m, day=d) for m in range(2, 4) for d in range(1, 9)
+            ]
+        }
+    )
+    df = get_from_df('test_datetime_df', pdf)
+
+    pdf['diff'] = pdf['end_date'] - pdf['start_date']
+    df['diff'] = df['end_date'] - df['start_date']
+
+    result = df['diff'].quantile(q=[0.25, 0.5, .75])
+    expected = pdf['diff'].quantile(q=[0.25, 0.5, .75])
+    np.testing.assert_equal(expected.to_numpy(), result.sort_index().to_numpy())
+
+
+def test_timedelta_dt_properties() -> None:
+    pdf = pd.DataFrame(
+        data={
+            'start_date': [
+                np.datetime64("2022-01-01 12:34:56.7800"),
+                np.datetime64("2022-01-05 01:23:45.6700"),
+                np.datetime64("2022-01-10 02:34:56.7800"),
+            ],
+            'end_date': [
+                np.datetime64("2022-01-03"),
+                np.datetime64("2022-01-06"),
+                np.datetime64("2022-01-10"),
+            ]
+        }
+    )
+    df = get_from_df('test_datetime_df', pdf)
+
+    pdf['diff'] = pdf['end_date'] - pdf['start_date']
+    df['diff'] = df['end_date'] - df['start_date']
+
+    dt_properties = ['days', 'seconds', 'microseconds']
+    properties_df = df.copy_override(
+        series={
+            p: getattr(df['diff'].dt, p)
+            for p in dt_properties
+        }
+    )
+    properties_pdf = pd.DataFrame(data={p: getattr(pdf['diff'].dt, p) for p in dt_properties})
+
+    pd.testing.assert_frame_equal(
+        properties_pdf,
+        properties_df.sort_index().to_pandas(),
+        check_dtype=False,
+        check_names=False,
+    )
+
+    properties_df['total_seconds'] = df['diff'].dt.total_seconds
+
+    expected_data = [
+        [1., 41103., 220000., 127503.22],
+        [0., 81374., 330000., 81374.33],
+        [-1., 77103., 220000., -9296.78],
+    ]
+    np.testing.assert_equal(
+        expected_data, properties_df.sort_index().to_numpy()
+    )
+
+
+def test_timedelta_dt_components() -> None:
+    pdf = pd.DataFrame(
+        data={
+            'start_date': [
+                np.datetime64("2022-01-01 12:34:56.7800"),
+                np.datetime64("2022-01-05 01:23:45.6700"),
+            ],
+            'end_date': [
+                np.datetime64("2022-01-03"),
+                np.datetime64("2022-01-06"),
+            ]
+        }
+    )
+    df = get_from_df('test_datetime_df', pdf)
+
+    pdf['diff'] = pdf['end_date'] - pdf['start_date']
+    df['diff'] = df['end_date'] - df['start_date']
+
+    components = ['days', 'hours', 'minutes', 'seconds', 'milliseconds']
+    result = df['diff'].dt.components.sort_index().to_pandas()[components]
+    expected = pdf['diff'].dt.components[components]
+
+    pd.testing.assert_frame_equal(expected, result, check_names=False)
+
+

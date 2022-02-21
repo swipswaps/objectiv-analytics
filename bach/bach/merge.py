@@ -1,14 +1,16 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, TYPE_CHECKING
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
-from bach.expression import Expression
-from sql_models.util import quote_identifier
-from bach.sql_model import BachSqlModel
-from sql_models.model import SqlModel
+from bach.dataframe import DtypeNamePair
+from bach.expression import Expression, join_expressions
+from bach.utils import ResultSeries, get_result_series_dtype_mapping
+from sql_models.model import Materialization, CustomSqlModelBuilder
+from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
 
 
 class How(Enum):
@@ -113,19 +115,13 @@ def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> Li
     raise ValueError(f'Type of {var_name} is not supported. Type: {type(x_on)}')
 
 
-class ResultColumn(NamedTuple):
-    name: str
-    expression: 'Expression'
-    dtype: str
-
-
 def _determine_result_columns(
-        left: DataFrame,
-        right: DataFrameOrSeries,
-        left_on: List[str],
-        right_on: List[str],
-        suffixes: Tuple[str, str]
-) -> Tuple[List[ResultColumn], List[ResultColumn]]:
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    left_on: List[str],
+    right_on: List[str],
+    suffixes: Tuple[str, str],
+) -> Tuple[List[ResultSeries], List[ResultSeries]]:
     """
     Determine which columns should be in the DataFrame after merging left and right, with the given
     left_on and right_on values.
@@ -161,7 +157,7 @@ def _determine_result_columns(
     return new_index_list, new_data_list
 
 
-def _check_no_column_name_conflicts(result_columns: List[ResultColumn]):
+def _check_no_column_name_conflicts(result_columns: List[ResultSeries]):
     """ Helper of _determine_result_columns, checks that there are no duplicate names in the list.  """
     seen = set()
     for rc in result_columns:
@@ -191,17 +187,17 @@ def _get_column_name_expr_dtype(
         conflicting_names: Set[str],
         suffix: str,
         table_alias: str
-) -> List[ResultColumn]:
+) -> List[ResultSeries]:
     """ Helper of _determine_result_columns. """
-    new_index_list: List[ResultColumn] = []
+    new_index_list: List[ResultSeries] = []
     for index_name, series in source_series.items():
         new_name = index_name
         if index_name in conflicting_names:
             new_name = index_name + suffix
         new_index_list.append(
-                ResultColumn(
+                ResultSeries(
                     name=new_name,
-                    expression=series.expression.resolve_column_references(series.engine, table_alias),
+                    expression=series.expression.resolve_column_references(table_alias),
                     dtype=series.dtype
                 )
         )
@@ -220,26 +216,7 @@ def merge(
         suffixes: Tuple[str, str]
 ) -> DataFrame:
     """
-    Join the left and right Dataframes, or a DataFrame (left) and a Series (right). This will return a new
-    DataFrame that contains the combined columns of both dataframes, and the rows that result from joining
-    on the specified columns. The columns that are joined on can consists (partially or fully) out of index
-    columns.
-
-    If the column names on the left and right conflict, then the suffixes are used to distinguish them in the
-    resulting DataFrame. The algorithm for determining the resulting columns and their names is similar to
-    Pandas, but has slight differences when joining on indices and column names conflict.
-
-    :param left: left DataFrame
-    :param right: DataFrame or Series to join on left
-    :param how: supported values: {‘left’, ‘right’, ‘outer’, ‘inner’, ‘cross’}
-    :param on: optional, column(s) to join left and right on.
-    :param left_on: optional, column(s) from the left df to join on
-    :param right_on: optional, column(s) from the right df/series to join on
-    :param left_index: If true uses the index of the left df as columns to join on
-    :param right_index: If true uses the index of the right df/series as columns to join on
-    :param suffixes: Tuple of two strings. Will be used to suffix duplicate column names. Must make column
-        names unique
-    :return: A new Dataframe. The original frames are not modified.
+    See :py:meth:`bach.DataFrame.merge` for more information.
     """
     if how not in ('left', 'right', 'outer', 'inner', 'cross'):
         raise ValueError(f"how must be one of ('left', 'right', 'outer', 'inner', 'cross'), value: {how}")
@@ -267,22 +244,37 @@ def merge(
         left=left, right=right, left_on=real_left_on, right_on=real_right_on, suffixes=suffixes
     )
 
+    if isinstance(right, Series):
+        from bach.savepoints import Savepoints
+        right_savepoints = Savepoints()
+        right_variables = {}
+    else:
+        right_savepoints = right.savepoints
+        right_variables = right.variables
+    # copy right_variables, and then overwrite with left. This means that the left variables 'win' in case
+    # where the same variable name/dtype exist in both left and right
+    variables = copy(right_variables)
+    variables.update(left.variables)
+
     model = _get_merge_sql_model(
         left=left,
         right=right,
         how=real_how,
         real_left_on=real_left_on,
         real_right_on=real_right_on,
-        new_column_list=new_index_list + new_data_list
+        new_column_list=new_index_list + new_data_list,
+        variables=variables
     )
 
     return left.copy_override(
         engine=left.engine,
         base_node=model,
-        index_dtypes={rc.name: rc.dtype for rc in new_index_list},
-        series_dtypes={rc.name: rc.dtype for rc in new_data_list},
+        index_dtypes=get_result_series_dtype_mapping(new_index_list),
+        series_dtypes=get_result_series_dtype_mapping(new_data_list),
         group_by=None,
-        order_by=[]  # merging resets any sorting
+        order_by=[],  # merging resets any sorting
+        savepoints=left.savepoints.merge(right_savepoints),
+        variables=variables
     )
 
 
@@ -292,8 +284,9 @@ def _get_merge_sql_model(
         how: How,
         real_left_on: List[str],
         real_right_on: List[str],
-        new_column_list: List[ResultColumn],
-) -> SqlModel[BachSqlModel]:
+        new_column_list: List[ResultSeries],
+        variables: Dict['DtypeNamePair', Hashable]
+) -> BachSqlModel:
     """
     Give the SqlModel to join left and right and select the new_column_list. This model also uses the
     join-type of how, matching rows on real_left_on and real_right_on.
@@ -311,24 +304,20 @@ def _get_merge_sql_model(
     else:
         on_clause = Expression.construct('')
 
-    columns_fmt_str = ", ".join(f'{{}} as {quote_identifier(left.engine, rc.name)}' for rc in new_column_list)
-    columns_expr = Expression.construct(columns_fmt_str, *[rc.expression for rc in new_column_list])
+    columns_expr = join_expressions(
+        [Expression.construct_expr_as_name(rc.expression, rc.name) for rc in new_column_list]
+    )
     join_type_expr = Expression.construct('full outer' if how == How.outer else how.value)
 
-    sql = '''
-        select {columns}
-        from {{left_node}} as l {join_type}
-        join {{right_node}} as r {on}
-        '''
-    model_builder = BachSqlModel(name='merge_sql', sql=sql)
-    model = model_builder(
-        columns=columns_expr,
-        join_type=join_type_expr,
-        on=on_clause,
+    return MergeSqlModel.get_instance(
+        column_names=tuple(rc.name for rc in new_column_list),
+        columns_expr=columns_expr,
+        join_type_expr=join_type_expr,
+        on_clause=on_clause,
         left_node=left.base_node,
-        right_node=right.base_node
+        right_node=right.base_node,
+        variables=variables
     )
-    return model
 
 
 def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
@@ -340,3 +329,53 @@ def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
     if isinstance(df_series, Series):
         return df_series.expression
     raise TypeError(f'df_series should be DataFrameOrSeries. type: {type(df_series)}')
+
+
+class MergeSqlModel(BachSqlModel):
+    @classmethod
+    def get_instance(cls,
+                     *,
+                     column_names: Tuple[str, ...],
+                     columns_expr: Expression,
+                     join_type_expr: Expression,
+                     on_clause: Expression,
+                     left_node: BachSqlModel,
+                     right_node: BachSqlModel,
+                     variables: Dict['DtypeNamePair', Hashable]) -> 'MergeSqlModel':
+        """
+        :param column_names: tuple with the column_names in order
+        :param columns_expr: A single expression that expresses projecting all needed columns from either
+            left or right
+        :param join_type_expr: expression expressing the join type, e.g. an expression that represents
+            the string 'inner', 'cross', or similar
+        :param on_clause: single expression that expresses the on clause
+        :param left_node, sql-model of the materialized left side of the join
+        :param right_node, sql-model of the materialized right side of the join
+        :param variables: Dictionary of all variable values
+        """
+        columns_str = columns_expr.to_sql()
+        join_type_str = join_type_expr.to_sql()
+        on_str = on_clause.to_sql()
+
+        sql = f'''
+            select {columns_str}
+            from {{{{left_node}}}} as l {join_type_str}
+            join {{{{right_node}}}} as r {on_str}
+            '''
+        name = 'merge_sql'
+
+        # Add all references found in the Expressions to self.references
+        all_expressions = [columns_expr, join_type_expr, on_clause]
+        references = construct_references(
+            base_references={'left_node': left_node, 'right_node': right_node},
+            expressions=all_expressions
+        )
+
+        return MergeSqlModel(
+            model_spec=CustomSqlModelBuilder(sql=sql, name=name),
+            placeholders=cls._get_placeholders(variables, all_expressions),
+            references=references,
+            materialization=Materialization.CTE,
+            materialization_name=None,
+            columns=column_names
+        )

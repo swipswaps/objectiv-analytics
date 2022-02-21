@@ -1,150 +1,38 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import {
-  makeActionContext,
-  makeButtonContext,
+  makeApplicationContext,
+  makeContentContext,
   makeCookieIdContext,
-  makeErrorContext,
-  makeExpandableSectionContext,
+  makeExpandableContext,
   makeHttpContext,
   makeInputContext,
-  makeItemContext,
   makeLinkContext,
   makeMediaPlayerContext,
   makeNavigationContext,
   makeOverlayContext,
-  makeScreenContext,
-  makeSectionContext,
+  makePathContext,
+  makePressableContext,
+  makeRootLocationContext,
   makeSessionContext,
-  makeWebDocumentContext,
 } from '../src';
 
 describe('Context Factories', () => {
-  it('SectionContext', () => {
-    expect(makeSectionContext({ id: 'section-A' })).toStrictEqual({
-      __location_context: true,
-      __section_context: true,
-      _type: 'SectionContext',
-      id: 'section-A',
-    });
-  });
-
-  it('WebDocumentContext', () => {
-    expect(makeWebDocumentContext({ id: '#document-a', url: '/test' })).toStrictEqual({
-      __location_context: true,
-      __section_context: true,
-      _type: 'WebDocumentContext',
-      id: '#document-a',
-      url: '/test',
-    });
-  });
-
-  it('ScreenContext', () => {
-    expect(makeScreenContext({ id: 'home-screen', screen: 'home-screen' })).toStrictEqual({
-      __location_context: true,
-      __section_context: true,
-      _type: 'ScreenContext',
-      id: 'home-screen',
-      screen: 'home-screen',
-    });
-  });
-
-  it('ExpandableSectionContext', () => {
-    expect(makeExpandableSectionContext({ id: 'accordion-a' })).toStrictEqual({
-      __location_context: true,
-      __section_context: true,
-      _type: 'ExpandableSectionContext',
-      id: 'accordion-a',
-    });
-  });
-
-  it('MediaPlayerContext', () => {
-    expect(makeMediaPlayerContext({ id: 'player-1' })).toStrictEqual({
-      __location_context: true,
-      __section_context: true,
-      _type: 'MediaPlayerContext',
-      id: 'player-1',
-    });
-  });
-
-  it('NavigationContext', () => {
-    expect(makeNavigationContext({ id: 'top-nav' })).toStrictEqual({
-      __location_context: true,
-      __section_context: true,
-      _type: 'NavigationContext',
-      id: 'top-nav',
-    });
-  });
-
-  it('OverlayContext', () => {
-    expect(makeOverlayContext({ id: 'top-menu' })).toStrictEqual({
-      __location_context: true,
-      __section_context: true,
-      _type: 'OverlayContext',
-      id: 'top-menu',
-    });
-  });
-
-  it('ItemContext', () => {
-    expect(makeItemContext({ id: 'item-1' })).toStrictEqual({
-      __location_context: true,
-      __item_context: true,
-      _type: 'ItemContext',
-      id: 'item-1',
-    });
-  });
-
-  it('InputContext', () => {
-    expect(makeInputContext({ id: 'input-1' })).toStrictEqual({
-      __location_context: true,
-      __item_context: true,
-      _type: 'InputContext',
-      id: 'input-1',
-    });
-  });
-
-  it('ActionContext', () => {
-    expect(makeActionContext({ id: 'chevron-right', text: 'Next Slide' })).toStrictEqual({
-      __location_context: true,
-      __item_context: true,
-      __action_context: true,
-      _type: 'ActionContext',
-      id: 'chevron-right',
-      text: 'Next Slide',
-    });
-  });
-
-  it('ButtonContext', () => {
-    expect(makeButtonContext({ id: 'confirm-data', text: 'Confirm' })).toStrictEqual({
-      __location_context: true,
-      __item_context: true,
-      __action_context: true,
-      _type: 'ButtonContext',
-      id: 'confirm-data',
-      text: 'Confirm',
-    });
-  });
-
-  it('LinkContext', () => {
-    expect(makeLinkContext({ id: 'confirm-data', href: '/some/url', text: 'Click for Details' })).toStrictEqual({
-      __location_context: true,
-      __item_context: true,
-      __action_context: true,
-      _type: 'LinkContext',
-      id: 'confirm-data',
-      href: '/some/url',
-      text: 'Click for Details',
-    });
-  });
-
-  it('ErrorContext', () => {
-    expect(makeErrorContext({ id: 'error-id', message: 'error description' })).toStrictEqual({
+  it('ApplicationContext', () => {
+    expect(makeApplicationContext({ id: 'app' })).toStrictEqual({
       __global_context: true,
-      _type: 'ErrorContext',
-      id: 'error-id',
-      message: 'error description',
+      _type: 'ApplicationContext',
+      id: 'app',
+    });
+  });
+
+  it('ContentContext', () => {
+    expect(makeContentContext({ id: 'content-A' })).toStrictEqual({
+      __location_context: true,
+      _type: 'ContentContext',
+      id: 'content-A',
     });
   });
 
@@ -157,25 +45,100 @@ describe('Context Factories', () => {
     });
   });
 
+  it('ExpandableContext', () => {
+    expect(makeExpandableContext({ id: 'accordion-a' })).toStrictEqual({
+      __location_context: true,
+      _type: 'ExpandableContext',
+      id: 'accordion-a',
+    });
+  });
+
+  it('HttpContext', () => {
+    expect(
+      makeHttpContext({ id: 'http', referrer: 'referrer', user_agent: 'ua', remote_address: '0.0.0.0' })
+    ).toStrictEqual({
+      __global_context: true,
+      _type: 'HttpContext',
+      id: 'http',
+      referrer: 'referrer',
+      user_agent: 'ua',
+      remote_address: '0.0.0.0',
+    });
+  });
+
+  it('InputContext', () => {
+    expect(makeInputContext({ id: 'input-1' })).toStrictEqual({
+      __location_context: true,
+      _type: 'InputContext',
+      id: 'input-1',
+    });
+  });
+
+  it('LinkContext', () => {
+    expect(makeLinkContext({ id: 'confirm-data', href: '/some/url' })).toStrictEqual({
+      __location_context: true,
+      __pressable_context: true,
+      _type: 'LinkContext',
+      id: 'confirm-data',
+      href: '/some/url',
+    });
+  });
+
+  it('MediaPlayerContext', () => {
+    expect(makeMediaPlayerContext({ id: 'player-1' })).toStrictEqual({
+      __location_context: true,
+      _type: 'MediaPlayerContext',
+      id: 'player-1',
+    });
+  });
+
+  it('NavigationContext', () => {
+    expect(makeNavigationContext({ id: 'top-nav' })).toStrictEqual({
+      __location_context: true,
+      _type: 'NavigationContext',
+      id: 'top-nav',
+    });
+  });
+
+  it('OverlayContext', () => {
+    expect(makeOverlayContext({ id: 'top-menu' })).toStrictEqual({
+      __location_context: true,
+      _type: 'OverlayContext',
+      id: 'top-menu',
+    });
+  });
+
+  it('PathContext', () => {
+    expect(makePathContext({ id: '/some/path' })).toStrictEqual({
+      __global_context: true,
+      _type: 'PathContext',
+      id: '/some/path',
+    });
+  });
+
+  it('PressableContext', () => {
+    expect(makePressableContext({ id: 'confirm-data' })).toStrictEqual({
+      __location_context: true,
+      __pressable_context: true,
+      _type: 'PressableContext',
+      id: 'confirm-data',
+    });
+  });
+
+  it('RootLocationContext', () => {
+    expect(makeRootLocationContext({ id: 'page-A' })).toStrictEqual({
+      __location_context: true,
+      _type: 'RootLocationContext',
+      id: 'page-A',
+    });
+  });
+
   it('SessionContext', () => {
     expect(makeSessionContext({ id: 'session-id', hit_number: 123 })).toStrictEqual({
       __global_context: true,
       _type: 'SessionContext',
       id: 'session-id',
       hit_number: 123,
-    });
-  });
-
-  it('HttpContext', () => {
-    expect(
-      makeHttpContext({ id: 'http', referer: 'referer', user_agent: 'ua', remote_address: '0.0.0.0' })
-    ).toStrictEqual({
-      __global_context: true,
-      _type: 'HttpContext',
-      id: 'http',
-      referer: 'referer',
-      user_agent: 'ua',
-      remote_address: '0.0.0.0',
     });
   });
 });

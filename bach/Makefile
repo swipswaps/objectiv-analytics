@@ -1,6 +1,6 @@
 .PHONY: tests
 
 tests:
-	mypy bach sql_models
+	mypy --check-untyped-defs bach sql_models
 	pycodestyle bach sql_models
-	pytest tests/
+	pytest tests/ -W error::DeprecationWarning

@@ -6,9 +6,9 @@ from typing import List
 import pytest
 
 from sql_models.graph_operations import get_graph_nodes_info, get_node, get_node_info_selected_node, \
-    find_nodes, find_node, FoundNode
+    find_nodes, find_node, FoundNode, get_all_placeholders, update_placeholders_in_graph
 from sql_models.model import RefPath, SqlModel
-from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel
+from tests.unit.sql_models.util import ValueModel, RefModel, JoinModel, RefValueModel
 
 
 def get_simple_test_graph():
@@ -48,7 +48,7 @@ def test_get_graph_nodes_info():
     val_nodes = [node_info for node_info in info if node_info.reference_path == ('ref_left', 'ref')]
     assert len(val_nodes) == 1
     val_node = val_nodes[0]
-    assert val_node.model.properties == {'key': 'a', 'val': 1}
+    assert val_node.model.placeholders == {'key': 'a', 'val': 1}
     assert val_node.model.generic_name == 'ValueModel'
     assert val_node.in_edges == []
     assert len(val_node.out_edges) == 1
@@ -146,7 +146,7 @@ def test_find_nodes():
     assert find_node(graph, lambda node: False) is None
     assert find_nodes(graph, lambda node: False) == []
 
-    # fine all
+    # find all
     assert find_node(graph, lambda node: True) == FoundNode(model=graph, reference_path=tuple())
     expected_result = [
         FoundNode(model=graph, reference_path=tuple()),
@@ -157,20 +157,138 @@ def test_find_nodes():
     ]
     assert find_nodes(graph, lambda node: True) == expected_result
 
-    # fine one
+    # find one
     assert find_node(graph, lambda node: node.generic_name == 'RefModel') == \
            FoundNode(model=rm, reference_path=('ref_left', 'ref_left'))
     assert find_nodes(graph, lambda node: node.generic_name == 'RefModel') == [
         FoundNode(model=rm, reference_path=('ref_left', 'ref_left'))
     ]
 
-    # fine some
+    # find some
     assert find_node(graph, lambda node: node.generic_name == 'ValueModel') == \
            FoundNode(model=vm1, reference_path=('ref_right',))
     assert find_nodes(graph, lambda node: node.generic_name == 'ValueModel') == [
         FoundNode(model=vm1, reference_path=('ref_right',)),
         FoundNode(model=vm2, reference_path=('ref_left', 'ref_right'))
     ]
+
+
+def test_find_nodes_duplicates():
+    vm1 = ValueModel.build(key='a', val=1)
+    vm2 = ValueModel.build(key='a', val=1)
+    graph = JoinModel.build(ref_left=vm1, ref_right=vm2)
+    result = find_nodes(graph, lambda node: node.generic_name == 'ValueModel')
+    assert len(result) == 2
+    assert result == [
+        FoundNode(model=vm1, reference_path=('ref_left',)),
+        FoundNode(model=vm2, reference_path=('ref_right',))
+    ]
+
+
+def test_find_nodes_path_length():
+    # Test for nodes that can be found through multiple paths.
+    # The order of the returned nodes from find_nodes() depends on the length of the reference path. For
+    # nodes with multiple paths either the longest or the shortest path is taken into account based on
+    # the value of use_last_found_instance
+
+    # Graph:
+
+    #
+    #                /--- rm1 <-+---------------------------\
+    #               /            \                           +-- graph
+    #   vm1 <------+              +-- jm2 <----\            /
+    #               \            /              +-- jm4 <--/
+    #                +-- jm1 <--+              /
+    #               /            \            /
+    #              /              +-- jm3 <--/
+    #   vm2 <-----+              /
+    #              \------------/
+
+    vm1 = ValueModel.build(key='a', val=1)
+    vm2 = ValueModel.build(key='a', val=2)
+    rm1 = RefModel.build(ref=vm1)
+    jm1 = JoinModel.build(ref_left=vm2, ref_right=vm1)
+    jm2 = JoinModel.build(ref_left=jm1, ref_right=rm1)
+    jm3 = JoinModel.build(ref_left=vm2, ref_right=jm1)
+    jm4 = JoinModel.build(ref_left=jm3, ref_right=jm2)
+    graph = JoinModel.build(ref_left=jm4, ref_right=rm1)
+
+    # find vm1 from graph, both with longest and shortest path
+    result = find_nodes(graph, function=lambda n: n is vm1, first_instance=True)
+    assert result == [FoundNode(model=vm1, reference_path=('ref_right', 'ref'))]
+    result = find_nodes(graph, function=lambda n: n is vm1, first_instance=False)
+    assert result == [FoundNode(model=vm1, reference_path=('ref_left', 'ref_right', 'ref_right', 'ref'))]
+
+    # find vm1 from jm4, both with longest and shortest path
+    result = find_nodes(jm4, function=lambda n: n is vm1, first_instance=True)
+    assert result == [FoundNode(model=vm1, reference_path=('ref_left', 'ref_right', 'ref_right'))]
+    result = find_nodes(jm4, function=lambda n: n is vm1, first_instance=False)
+    assert result == [FoundNode(model=vm1, reference_path=('ref_right', 'ref_right', 'ref'))]
+
+    # find vm2 from graph, both with longest and shortest path
+    result = find_nodes(graph, function=lambda n: n is vm2)
+    assert result == [FoundNode(model=vm2, reference_path=('ref_left', 'ref_left', 'ref_left'))]
+    result = find_nodes(graph, function=lambda n: n is vm2, first_instance=False)
+    assert result == [FoundNode(model=vm2, reference_path=('ref_left', 'ref_right', 'ref_left', 'ref_left'))]
+
+
+def test_get_all_placeholders():
+    graph = JoinModel.build(
+        ref_left=RefValueModel(
+            val=3,
+            ref=ValueModel(key='a', val=1)
+        ),
+        ref_right=ValueModel(key='a', val=2)
+    )
+    result = get_all_placeholders(graph)
+    assert result == {
+        'key': {
+            ('ref_right',): 'a',
+            ('ref_left', 'ref'): 'a'
+        }
+        ,
+        'val': {
+            ('ref_left', ): 3,
+            ('ref_right',): 2,
+            ('ref_left', 'ref'): 1
+        }
+    }
+
+
+def test_update_placeholders_in_graph():
+    graph = JoinModel.build(
+        ref_left=RefValueModel(
+            val=3,
+            ref=ValueModel(key='a', val=1)
+        ),
+        ref_right=ValueModel(key='a', val=2)
+    )
+
+    # Updating non existing placeholders doesn't do anything
+    assert graph is update_placeholders_in_graph(graph, {'x': 'X'})
+
+    # Assert current state
+    assert get_node(graph, ('ref_left',)).placeholders == {'val': 3}
+    assert get_node(graph, ('ref_right',)).placeholders == {'val': 2, 'key': 'a'}
+    assert get_node(graph, ('ref_left', 'ref')).placeholders == {'val': 1, 'key': 'a'}
+
+    # Update one property
+    graph = update_placeholders_in_graph(graph, {'val': 5})
+    assert get_node(graph, ('ref_left',)).placeholders == {'val': 5}
+    assert get_node(graph, ('ref_right',)).placeholders == {'val': 5, 'key': 'a'}
+    assert get_node(graph, ('ref_left', 'ref')).placeholders == {'val': 5, 'key': 'a'}
+
+    # Update two placeholders
+    graph = update_placeholders_in_graph(graph, {'val': 1234, 'key': 'b'})
+    assert get_node(graph, ('ref_left',)).placeholders == {'val': 1234}
+    assert get_node(graph, ('ref_right',)).placeholders == {'val': 1234, 'key': 'b'}
+    assert get_node(graph, ('ref_left', 'ref')).placeholders == {'val': 1234, 'key': 'b'}
+
+    # Update property to value it already has, nothing changes
+    graph = update_placeholders_in_graph(graph, {'val': 1234})
+    assert get_node(graph, ('ref_left',)).placeholders == {'val': 1234}
+    assert get_node(graph, ('ref_right',)).placeholders == {'val': 1234, 'key': 'b'}
+    assert get_node(graph, ('ref_left', 'ref')).placeholders == {'val': 1234, 'key': 'b'}
 
 
 def _assert_graph_difference(graph: SqlModel,
@@ -182,13 +300,3 @@ def _assert_graph_difference(graph: SqlModel,
     for path in changed_paths:
         assert get_node(new_graph, path) is not get_node(graph, path)
         assert get_node(new_graph, path).hash != get_node(graph, path).hash
-
-
-def test_update_node_materialization():
-    # TODO
-    pass
-
-
-def test_update_node_reference():
-    # TODO: test and implementation
-    pass

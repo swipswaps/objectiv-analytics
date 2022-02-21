@@ -1,115 +1,14 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { AbstractSectionContext, AbstractItemContext, AbstractActionContext } from './abstracts';
+import { AbstractLocationContext, AbstractPressableContext } from './abstracts';
 
 /**
- * SectionContexts are special LocationContexts representing a logical area of the UI or the system.
- * They can be often reasoned about as being containers of other LocationContexts but not the direct targets of
- * Events.
- * Inheritance: SectionContext -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
+ * A Location Context that describes an element that accepts user input, i.e. a form field.
+ * Inheritance: InputContext -> AbstractLocationContext -> AbstractContext
  */
-export interface SectionContext extends AbstractSectionContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'SectionContext';
-}
-
-/**
- * global context about a web document. Should at least contain the current URL.
- * Inheritance: WebDocumentContext -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
- */
-export interface WebDocumentContext extends AbstractSectionContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'WebDocumentContext';
-
-  /**
-   * Property containing a (valid) URL
-   */
-  url: string;
-}
-
-/**
- * SectionContext for a screen
- * Inheritance: ScreenContext -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
- */
-export interface ScreenContext extends AbstractSectionContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'ScreenContext';
-
-  /**
-   * name of the screen
-   */
-  screen: string;
-}
-
-/**
- * A `SectionContext` that is expandable.
- * Inheritance: ExpandableSectionContext -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
- */
-export interface ExpandableSectionContext extends AbstractSectionContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'ExpandableSectionContext';
-}
-
-/**
- * A `SectionContext` containing a media player.
- * Inheritance: MediaPlayerContext -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
- */
-export interface MediaPlayerContext extends AbstractSectionContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'MediaPlayerContext';
-}
-
-/**
- * A `SectionContext` containing navigational elements, for example a menu.
- * Inheritance: NavigationContext -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
- */
-export interface NavigationContext extends AbstractSectionContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'NavigationContext';
-}
-
-/**
- * A `SectionContext` that is an overlay
- * Inheritance: OverlayContext -> AbstractSectionContext -> AbstractLocationContext -> AbstractContext
- */
-export interface OverlayContext extends AbstractSectionContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'OverlayContext';
-}
-
-/**
- * ItemContexts are special LocationContexts representing interactive elements of the UI or targets in a system.
- * These elements may trigger both Interactive and Non-Interactive Events. Eg. an Input field or a Button.
- * Inheritance: ItemContext -> AbstractItemContext -> AbstractLocationContext -> AbstractContext
- */
-export interface ItemContext extends AbstractItemContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'ItemContext';
-}
-
-/**
- * A location context, representing user input. For example, a form field, like input.
- * Inheritance: InputContext -> AbstractItemContext -> AbstractLocationContext -> AbstractContext
- */
-export interface InputContext extends AbstractItemContext {
+export interface InputContext extends AbstractLocationContext {
   /**
    * Typescript discriminator
    */
@@ -117,40 +16,96 @@ export interface InputContext extends AbstractItemContext {
 }
 
 /**
- * ActionContexts are a more specific version of ItemContext specifically meant to describe actionable Items.
- * These represent interactive elements that will trigger an Interactive Event. Eg. A Button or Link.
- * Inheritance: ActionContext -> AbstractActionContext -> AbstractItemContext -> AbstractLocationContext -> AbstractContext
+ * An Location Context that describes an interactive element (like a link, button, icon),
+ * that the user can press and will trigger an Interactive Event.
+ * Inheritance: PressableContext -> AbstractPressableContext -> AbstractLocationContext -> AbstractContext
  */
-export interface ActionContext extends AbstractActionContext {
+export interface PressableContext extends AbstractPressableContext {
   /**
    * Typescript discriminator
    */
-  readonly _type: 'ActionContext';
+  readonly _type: 'PressableContext';
 }
 
 /**
- * interactive element, representing a button.
- * Inheritance: ButtonContext -> AbstractActionContext -> AbstractItemContext -> AbstractLocationContext -> AbstractContext
+ * A PressableContext that contains an href.
+ * Inheritance: LinkContext -> AbstractPressableContext -> AbstractLocationContext -> AbstractContext
  */
-export interface ButtonContext extends AbstractActionContext {
-  /**
-   * Typescript discriminator
-   */
-  readonly _type: 'ButtonContext';
-}
-
-/**
- * interactive element, representing a (hyper) link.
- * Inheritance: LinkContext -> AbstractActionContext -> AbstractItemContext -> AbstractLocationContext -> AbstractContext
- */
-export interface LinkContext extends AbstractActionContext {
+export interface LinkContext extends AbstractPressableContext {
   /**
    * Typescript discriminator
    */
   readonly _type: 'LinkContext';
 
   /**
-   * URL (href) the link points to
+   * URL (href) the link points to.
    */
   href: string;
+}
+
+/**
+ * A Location Context that uniquely represents the top-level UI location of the user.
+ * Inheritance: RootLocationContext -> AbstractLocationContext -> AbstractContext
+ */
+export interface RootLocationContext extends AbstractLocationContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'RootLocationContext';
+}
+
+/**
+ * A Location Context that describes a section of the UI that can expand & collapse.
+ * Inheritance: ExpandableContext -> AbstractLocationContext -> AbstractContext
+ */
+export interface ExpandableContext extends AbstractLocationContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'ExpandableContext';
+}
+
+/**
+ * A Location Context that describes a section of the UI containing a media player.
+ * Inheritance: MediaPlayerContext -> AbstractLocationContext -> AbstractContext
+ */
+export interface MediaPlayerContext extends AbstractLocationContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'MediaPlayerContext';
+}
+
+/**
+ * A Location Context that describes a section of the UI containing navigational elements, for example a menu.
+ * Inheritance: NavigationContext -> AbstractLocationContext -> AbstractContext
+ */
+export interface NavigationContext extends AbstractLocationContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'NavigationContext';
+}
+
+/**
+ * A Location Context that describes a section of the UI that represents an overlay, i.e. a Modal.
+ * .
+ * Inheritance: OverlayContext -> AbstractLocationContext -> AbstractContext
+ */
+export interface OverlayContext extends AbstractLocationContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'OverlayContext';
+}
+
+/**
+ * A Location Context that describes a logical section of the UI that contains other Location Contexts. Enabling Data Science to analyze this section specifically.
+ * Inheritance: ContentContext -> AbstractLocationContext -> AbstractContext
+ */
+export interface ContentContext extends AbstractLocationContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'ContentContext';
 }

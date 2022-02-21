@@ -1,12 +1,12 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { generateUUID, makeClickEvent, TrackerQueue, TrackerQueueMemoryStore } from '@objectiv/tracker-core';
-import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, trackClick } from '../src/';
+import { matchUUID } from '@objectiv/testing-tools';
+import { generateUUID, makePressEvent, TrackerQueue, TrackerQueueMemoryStore } from '@objectiv/tracker-core';
+import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, trackPressEvent } from '../src/';
 import { makeClickEventHandler } from '../src/mutationObserver/makeClickEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
-import { matchUUID } from './mocks/matchUUID';
 
 describe('makeClickEventHandler', () => {
   beforeEach(() => {
@@ -36,7 +36,7 @@ describe('makeClickEventHandler', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
-        _type: 'ClickEvent',
+        _type: 'PressEvent',
         id: matchUUID,
         global_contexts: [],
         location_stack: [],
@@ -83,8 +83,8 @@ describe('makeClickEventHandler', () => {
     expect(getTracker().trackEvent).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining(
-        makeClickEvent({
-          location_stack: [expect.objectContaining({ _type: 'ButtonContext', id: 'button', text: 'button' })],
+        makePressEvent({
+          location_stack: [expect.objectContaining({ _type: 'PressableContext', id: 'button' })],
         })
       )
     );
@@ -145,7 +145,7 @@ describe('makeClickEventHandler', () => {
     };
     mockEvent.constructor = Event;
 
-    trackClick({ element: trackedButton, tracker: getTracker() });
+    trackPressEvent({ element: trackedButton, tracker: getTracker() });
     await clickEventListener({ ...mockEvent, target: trackedButton });
     // FIXME This cannot be tested: JSDOM crashes. Seems to be a problem with timers in promises and Jest.
   });

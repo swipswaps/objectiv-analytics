@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    /* Enable Node module resolution, needed for resolveJsonModule */
+    "moduleResolution": "node",
+
     /* Enable importing .json files as modules */
     "resolveJsonModule": true,
 
@@ -32,10 +35,13 @@
 
     /* Tell the compiler how to resolve our own modules relatively to `baseUrl` */
     "paths": {
+      "@objectiv/testing-tools": ["core/testing-tools/src"],
       "@objectiv/schema": ["core/schema/src"],
       "@objectiv/plugin-*": ["plugins/*/src"],
+      "@objectiv/queue-*": ["queues/*/src"],
       "@objectiv/tracker-core": ["core/tracker/src"],
       "@objectiv/tracker-*": ["trackers/*/src"],
+      "@objectiv/transport-*": ["transports/*/src"]
     }
   },
   "exclude": [

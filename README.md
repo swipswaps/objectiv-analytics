@@ -1,30 +1,24 @@
 ![Objectiv Logo](https://objectiv.io/docs/img/logo-objectiv-large.svg "Objectiv Logo")
 
-Objectiv is a data collection & modeling library that puts the data scientist first. It is built around 
-[the open taxonomy of analytics](https://objectiv.io/docs/taxonomy), which is our proposal for a common way to collect, 
-structure and validate data. With Objectiv, you create a 
-[contextual layer for your application](https://objectiv.io/docs/tracking/core-concepts/tagging) by mapping it to the taxonomy, 
-with the goal of collecting better data and more effective modeling.
+**Objectiv** enables you to collect model-ready data and run your entire product analytics workflow straight from your notebook. It's designed to skip the typical grunt work: no tracking plans, data cleaning and transformations are required. Just open your notebook and start modeling right away with pandas-like operations that run on the full SQL dataset.
 
-![Objectiv Pipeline](https://www.objectiv.io/docs/img/objectiv-pipeline.svg "Objectiv Pipeline")
+![Objectiv Stack](https://www.objectiv.io/docs/img/objectiv-stack.svg "Objectiv Stack")
 
-With [Objectiv Bach](https://www.objectiv.io/docs/modeling/) (our data modeling library), you can use familiar Pandas-like DataFrame operations on your full SQL dataset. It includes extensions for effective feature creation for datasets that embrace [the open taxonomy of analytics](https://objectiv.io/docs/taxonomy).
+It includes what you need to answer common product analytics questions with speed and precision, while
+providing a solid foundation for advanced modeling. You can output models to SQL queries with a single
+command, and Pandas compatability means you can tap into its rich machine learning ecosystem.
 
 Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
-- - -
-
 ## Getting Started
 
-1. [Play with Objectiv](https://notebook.objectiv.io/lab?path=product_analytics.ipynb) in our Live Demo Notebook
-2. [Test drive Objectiv locally](https://www.objectiv.io/docs/quickstart-guide) with a fully functional demo pipeline
+Follow the easy steps in our [Quickstart Guide](https://www.objectiv.io/docs/quickstart-guide) to locally run the full Objectiv pipeline dockerized.
 
 ## Useful Resources
 
 * [Objectiv Docs](https://www.objectiv.io/docs) - Objectiv's official documentation.
 * [Objectiv on Slack](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) - Get help & join the discussion on where to take Objectiv next.
-* [Contribution Guide](https://www.objectiv.io/docs/the-project/contribute) - Report bugs, request features and contribution information.
-* [Github Roadmap](https://github.com/objectiv/objectiv-analytics/projects/2) - Learn about Objectiv's future plans.
+* [Contribution Guide](https://www.objectiv.io/docs/home/the-project/contribute) - Report bugs, request features and contribution information.
 
 
 This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](LICENSE.md) for details. Unless otherwise noted, all files © 2021 Objectiv B.V.

@@ -5,11 +5,21 @@ from typing import List, Dict, Union, cast
 
 from bach import get_series_type_from_dtype, DataFrame
 from bach.expression import Expression
+from bach.savepoints import Savepoints
+from bach.sql_model import BachSqlModel
+from sql_models.model import CustomSqlModelBuilder
 
 
-def get_fake_df(index_names: List[str], data_names: List[str], dtype: Union[str, Dict[str, str]] = 'int64'):
-    engine = None,
-    base_node = None,
+def get_fake_df(
+        index_names: List[str],
+        data_names: List[str],
+        dtype: Union[str, Dict[str, str]] = 'int64'
+) -> DataFrame:
+    engine = None
+    base_node = BachSqlModel.from_sql_model(
+        sql_model=CustomSqlModelBuilder('select * from x', name='base')(),
+        columns=('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+    )
     if isinstance(dtype, str):
         dtype = {
             col_name: dtype
@@ -25,7 +35,9 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype: Union[str,
             index={},
             name=name,
             expression=Expression.column_reference(name),
-            group_by=cast('GroupBy', None)
+            group_by=cast('GroupBy', None),
+            sorted_ascending=None,
+            index_sorting=[]
         )
 
     data: Dict[str, 'Series'] = {}
@@ -37,10 +49,13 @@ def get_fake_df(index_names: List[str], data_names: List[str], dtype: Union[str,
             index=index,
             name=name,
             expression=Expression.column_reference(name),
-            group_by=cast('GroupBy', None))
+            group_by=cast('GroupBy', None),
+            sorted_ascending=None,
+            index_sorting=[]
+        )
 
     return DataFrame(engine=engine, base_node=base_node,
-                     index=index, series=data, group_by=None)
+                     index=index, series=data, group_by=None, order_by=[], savepoints=Savepoints())
 
 
 def get_fake_df_test_data() -> DataFrame:

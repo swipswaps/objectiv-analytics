@@ -59,7 +59,7 @@ patterns = [
 # list of special cases, where we have a subdir, with an introduction at toplevel
 # eg /dataframe.html and /dataframe/
 for fn in glob.glob(f'{html_dir}/*'):
-    dn = fn.replace('.html', '').lower()
+    dn = fn.replace('.html', '')
     if path.isfile(fn) and path.isdir(dn):
         patterns.extend([f'{path.basename(dn)}.*', f'{path.basename(fn).replace(".html", "")}.*'])
 
@@ -286,10 +286,14 @@ for url in urls:
     if len(description_elements) > 0:
         description_element = description_elements[0].text
         words = description_element.replace('\n', ' ').split(' ')
+
         description = ''
         # let's put whole words in the description, with a max length of 500 chars
         for word in words:
-            description += f' {word}'
+            if description == '':
+                description = word
+            else:
+                description += f' {word}'
             if len(description) > 500:
                 break
     else:
@@ -321,7 +325,7 @@ for url in urls:
 
     if page == index_page:
         # special case where we map the index to Introduction
-        slug = f'/{module}'
+        slug = f'/{module}/'
         sidebar_label = 'Introduction'
 
     else:

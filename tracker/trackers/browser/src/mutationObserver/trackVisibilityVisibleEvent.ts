@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import { BrowserTracker } from '../BrowserTracker';
@@ -7,7 +7,7 @@ import { parseTrackVisibility } from '../common/parsers/parseTrackVisibility';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggedElement } from '../definitions/TaggedElement';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
-import { trackSectionVisible } from '../eventTrackers/trackSectionVisible';
+import { trackVisibleEvent } from '../eventTrackers/trackVisibleEvent';
 
 /**
  * Checks whether to trigger a visibility: visible event for the given TaggedElement.
@@ -19,8 +19,11 @@ export const trackVisibilityVisibleEvent = (element: TaggedElement, tracker: Bro
       return;
     }
     const trackVisibility = parseTrackVisibility(element.getAttribute(TaggingAttribute.trackVisibility));
-    if (trackVisibility.mode === 'auto' || (trackVisibility.mode === 'manual' && trackVisibility.isVisible)) {
-      trackSectionVisible({ element, tracker });
+    if (
+      trackVisibility &&
+      (trackVisibility.mode === 'auto' || (trackVisibility.mode === 'manual' && trackVisibility.isVisible))
+    ) {
+      trackVisibleEvent({ element, tracker });
     }
   } catch (error) {
     trackerErrorHandler(error);

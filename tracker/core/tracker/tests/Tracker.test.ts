@@ -1,7 +1,8 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-tools';
 import {
   ApplicationContextPlugin,
   ContextsConfig,
@@ -9,13 +10,9 @@ import {
   TrackerConfig,
   TrackerEvent,
   TrackerPluginInterface,
-  TrackerPlugins,
   TrackerQueue,
   TrackerQueueMemoryStore,
 } from '../src';
-import { LogTransport } from './mocks/LogTransport';
-import { mockConsole } from './mocks/MockConsole';
-import { UnusableTransport } from './mocks/UnusableTransport';
 
 describe('Tracker', () => {
   it('should instantiate with just applicationId', () => {
@@ -26,6 +23,7 @@ describe('Tracker', () => {
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toBe(undefined);
     expect(testTracker.plugins).toEqual({
+      tracker: testTracker,
       plugins: [
         {
           applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
@@ -48,8 +46,8 @@ describe('Tracker', () => {
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
     expect(testTracker.plugins).toEqual({
+      tracker: testTracker,
       plugins: [new ApplicationContextPlugin(trackerConfig)],
-      console: mockConsole,
     });
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
@@ -206,8 +204,7 @@ describe('Tracker', () => {
     it('should execute all plugins implementing the initialize callback', () => {
       const pluginC: TrackerPluginInterface = { pluginName: 'pC', isUsable: () => true, initialize: jest.fn() };
       const pluginD: TrackerPluginInterface = { pluginName: 'pD', isUsable: () => true, initialize: jest.fn() };
-      const trackerPlugins = new TrackerPlugins({ plugins: [pluginC, pluginD] });
-      const testTracker = new Tracker({ ...trackerConfig, plugins: trackerPlugins, console: mockConsole });
+      const testTracker = new Tracker({ ...trackerConfig, plugins: [pluginC, pluginD], console: mockConsole });
       expect(pluginC.initialize).toHaveBeenCalledWith(testTracker);
       expect(pluginD.initialize).toHaveBeenCalledWith(testTracker);
     });
@@ -223,8 +220,7 @@ describe('Tracker', () => {
         isUsable: () => true,
         beforeTransport: jest.fn(),
       };
-      const trackerPlugins = new TrackerPlugins({ plugins: [pluginE, pluginF] });
-      const testTracker = new Tracker({ applicationId: 'app-id', plugins: trackerPlugins });
+      const testTracker = new Tracker({ applicationId: 'app-id', plugins: [pluginE, pluginF] });
       testTracker.trackEvent(testEvent);
       expect(pluginE.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
       expect(pluginF.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
@@ -288,6 +284,74 @@ describe('Tracker', () => {
         'font-weight: bold'
       );
     });
+
+    it('should wait and/or flush the queue according to the given options', async () => {
+      const testTracker = new Tracker({ applicationId: 'app-id' });
+
+      // Default > no waiting and no flush
+      jest.spyOn(testTracker, 'flushQueue');
+      jest.spyOn(testTracker, 'waitForQueue').mockResolvedValue(true);
+      expect(testTracker.flushQueue).not.toHaveBeenCalled();
+      expect(testTracker.waitForQueue).not.toHaveBeenCalled();
+      await testTracker.trackEvent(testEvent);
+      expect(testTracker.waitForQueue).not.toHaveBeenCalled();
+      expect(testTracker.flushQueue).not.toHaveBeenCalled();
+
+      jest.resetAllMocks();
+
+      // FlushQueue `true` > no waiting and flush
+      jest.spyOn(testTracker, 'flushQueue');
+      jest.spyOn(testTracker, 'waitForQueue').mockResolvedValue(true);
+      expect(testTracker.flushQueue).not.toHaveBeenCalled();
+      expect(testTracker.waitForQueue).not.toHaveBeenCalled();
+      await testTracker.trackEvent(testEvent, { flushQueue: true });
+      expect(testTracker.waitForQueue).not.toHaveBeenCalled();
+      expect(testTracker.flushQueue).toHaveBeenCalledTimes(1);
+
+      jest.resetAllMocks();
+
+      // FlushQueue `onTimeout` and waitForQueue not configured > no waiting and no flush
+      jest.spyOn(testTracker, 'flushQueue');
+      jest.spyOn(testTracker, 'waitForQueue').mockResolvedValue(true);
+      expect(testTracker.flushQueue).not.toHaveBeenCalled();
+      expect(testTracker.waitForQueue).not.toHaveBeenCalled();
+      await testTracker.trackEvent(testEvent, { flushQueue: 'onTimeout' });
+      expect(testTracker.waitForQueue).not.toHaveBeenCalled();
+      expect(testTracker.flushQueue).not.toHaveBeenCalled();
+
+      jest.resetAllMocks();
+
+      // FlushQueue: `onTimeout` and waitForQueue `true` and not timed out > waiting and no flush
+      jest.spyOn(testTracker, 'flushQueue');
+      jest.spyOn(testTracker, 'waitForQueue').mockResolvedValue(true);
+      expect(testTracker.flushQueue).not.toHaveBeenCalled();
+      expect(testTracker.waitForQueue).not.toHaveBeenCalled();
+      await testTracker.trackEvent(testEvent, { waitForQueue: true, flushQueue: 'onTimeout' });
+      expect(testTracker.waitForQueue).toHaveBeenCalledTimes(1);
+      expect(testTracker.flushQueue).not.toHaveBeenCalled();
+
+      jest.resetAllMocks();
+
+      // FlushQueue: `onTimeout` and waitForQueue `true` and timed out > waiting and flush
+      jest.spyOn(testTracker, 'flushQueue');
+      jest.spyOn(testTracker, 'waitForQueue').mockResolvedValue(true);
+      expect(testTracker.flushQueue).not.toHaveBeenCalled();
+      expect(testTracker.waitForQueue).not.toHaveBeenCalled();
+      await testTracker.trackEvent(testEvent, { waitForQueue: true, flushQueue: true });
+      expect(testTracker.waitForQueue).toHaveBeenCalledTimes(1);
+      expect(testTracker.flushQueue).toHaveBeenCalledTimes(1);
+
+      jest.resetAllMocks();
+
+      // FlushQueue: `onTimeout` and waitForQueue `{ intervalMs: 100 }` and timed out > waiting and flush
+      jest.spyOn(testTracker, 'flushQueue');
+      jest.spyOn(testTracker, 'waitForQueue').mockResolvedValue(true);
+      expect(testTracker.flushQueue).not.toHaveBeenCalled();
+      expect(testTracker.waitForQueue).not.toHaveBeenCalled();
+      await testTracker.trackEvent(testEvent, { waitForQueue: { intervalMs: 100 }, flushQueue: true });
+      expect(testTracker.waitForQueue).toHaveBeenCalledTimes(1);
+      expect(testTracker.flushQueue).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('TrackerQueue', () => {
@@ -296,7 +360,9 @@ describe('Tracker', () => {
       location_stack: [{ __location_context: true, _type: 'section', id: 'test' }],
       global_contexts: [{ __global_context: true, _type: 'global', id: 'test' }],
     };
-    const testEvent = new TrackerEvent({ _type: testEventName, ...testContexts });
+    const testEvent1 = new TrackerEvent({ _type: testEventName, ...testContexts });
+    const testEvent2 = new TrackerEvent({ _type: testEventName, ...testContexts });
+    const processFunctionSpy = jest.fn(() => Promise.resolve());
 
     beforeEach(() => {
       jest.useFakeTimers();
@@ -311,13 +377,13 @@ describe('Tracker', () => {
       const logTransport = new UnusableTransport();
       jest.spyOn(logTransport, 'handle');
       const trackerQueue = new TrackerQueue();
+      trackerQueue.setProcessFunction(processFunctionSpy);
 
       const testTracker = new Tracker({
         applicationId: 'app-id',
         transport: logTransport,
         queue: trackerQueue,
       });
-      jest.runAllTimers();
 
       expect(testTracker.transport?.isUsable()).toBe(false);
       expect(trackerQueue.store.length).toBe(0);
@@ -327,50 +393,56 @@ describe('Tracker', () => {
 
     it('should queue events in the TrackerQueue and send them in batches via the LogTransport', async () => {
       const logTransport = new LogTransport();
-      const queueStore = new TrackerQueueMemoryStore();
-      const trackerQueue = new TrackerQueue({ store: queueStore });
+      const queueStore1 = new TrackerQueueMemoryStore();
+      const queueStore2 = new TrackerQueueMemoryStore();
+      const trackerQueue1 = new TrackerQueue({ store: queueStore1, batchDelayMs: 1 });
+      const trackerQueue2 = new TrackerQueue({ store: queueStore2, batchDelayMs: 1 });
+      trackerQueue1.setProcessFunction(processFunctionSpy);
+      trackerQueue2.setProcessFunction(processFunctionSpy);
 
       const testTracker = new Tracker({
         applicationId: 'app-id',
-        queue: trackerQueue,
+        queue: trackerQueue1,
         transport: logTransport,
       });
       await expect(testTracker.waitForQueue()).resolves.toBe(true);
 
       const testTrackerWithConsole = new Tracker({
         applicationId: 'app-id',
-        queue: trackerQueue,
+        queue: trackerQueue2,
         transport: logTransport,
         console: mockConsole,
       });
       await expect(testTracker.waitForQueue({ timeoutMs: 1, intervalMs: 1 })).resolves.toBe(true);
 
-      jest.spyOn(trackerQueue, 'processFunction');
+      jest.spyOn(trackerQueue1, 'processFunction');
+      jest.spyOn(trackerQueue2, 'processFunction');
 
       expect(testTracker.transport?.isUsable()).toBe(true);
       expect(testTrackerWithConsole.transport?.isUsable()).toBe(true);
 
-      expect(trackerQueue.processFunction).not.toBeUndefined();
-      expect(trackerQueue.processFunction).not.toHaveBeenCalled();
-      expect(setInterval).toHaveBeenCalledTimes(2);
+      expect(trackerQueue1.processFunction).not.toBeUndefined();
+      expect(trackerQueue1.processFunction).not.toHaveBeenCalled();
+      expect(trackerQueue2.processFunction).not.toBeUndefined();
+      expect(trackerQueue2.processFunction).not.toHaveBeenCalled();
 
-      await testTracker.trackEvent(testEvent);
-      await testTrackerWithConsole.trackEvent(testEvent);
-
-      expect(queueStore.length).toBe(2);
-      expect(trackerQueue.processFunction).not.toHaveBeenCalled();
-
-      await trackerQueue.run();
-
-      expect(trackerQueue.processingEventIds).toHaveLength(0);
-      expect(trackerQueue.processFunction).toHaveBeenCalledTimes(1);
-      expect(trackerQueue.processFunction).toHaveBeenNthCalledWith(
+      await testTracker.trackEvent(testEvent1);
+      expect(trackerQueue1.processingEventIds).toHaveLength(0);
+      expect(trackerQueue1.processFunction).toHaveBeenCalledTimes(1);
+      expect(trackerQueue1.processFunction).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({
-          id: testEvent.id,
-        }),
+          id: testEvent1.id,
+        })
+      );
+
+      await testTrackerWithConsole.trackEvent(testEvent2);
+      expect(trackerQueue2.processingEventIds).toHaveLength(0);
+      expect(trackerQueue2.processFunction).toHaveBeenCalledTimes(1);
+      expect(trackerQueue2.processFunction).toHaveBeenNthCalledWith(
+        1,
         expect.objectContaining({
-          id: testEvent.id,
+          id: testEvent2.id,
         })
       );
     });
@@ -379,6 +451,7 @@ describe('Tracker', () => {
       const logTransport = new LogTransport();
       const queueStore = new TrackerQueueMemoryStore();
       const trackerQueue = new TrackerQueue({ store: queueStore, concurrency: 1, batchSize: 1, batchDelayMs: 1 });
+      trackerQueue.setProcessFunction(processFunctionSpy);
 
       const trackerWithoutQueue = new Tracker({
         applicationId: 'app-id',
@@ -399,12 +472,10 @@ describe('Tracker', () => {
 
       expect(trackerQueue.processFunction).not.toBeUndefined();
       expect(trackerQueue.processFunction).not.toHaveBeenCalled();
-      expect(setInterval).toHaveBeenCalledTimes(1);
 
-      await testTracker.trackEvent(testEvent);
-      await testTracker.trackEvent(testEvent);
-      await testTracker.trackEvent(testEvent);
-      await testTracker.trackEvent(testEvent);
+      await testTracker.queue?.store.write(testEvent1, testEvent2);
+
+      expect(queueStore.length).toBe(2);
 
       testTracker.flushQueue();
 

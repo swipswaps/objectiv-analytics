@@ -1,11 +1,12 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import List, NamedTuple, Dict
+from typing import List, NamedTuple, Dict, Set, Iterable
 
-from sqlalchemy.engine import Engine
+from sqlalchemy.future import Engine
 
-from sql_models.model import SqlModel, REFERENCE_UNIQUE_FIELD
+from sql_models.graph_operations import find_nodes, FoundNode
+from sql_models.model import SqlModel, REFERENCE_UNIQUE_FIELD, Materialization
 from sql_models.sql_query_parser import raw_sql_to_selects
 from sql_models.util import quote_identifier
 
@@ -13,10 +14,60 @@ from sql_models.util import quote_identifier
 def to_sql(engine: Engine, model: SqlModel) -> str:
     """
     Give the sql to query the given model
+    :param engine: TODO
     :param model: model to convert to sql
     :return: executable select query
     """
-    compiler_cache: Dict[str, List[SemiCompiledTuple]] = {}
+    compiler_cache: Dict[str, List['SemiCompiledTuple']] = {}
+    return _to_sql_materialized_node(engine=engine, model=model, compiler_cache=compiler_cache)
+
+
+def to_sql_materialized_nodes(
+        engine: Engine,
+        start_node: SqlModel,
+        include_start_node=True
+) -> Dict[str, str]:
+    """
+    Give list of sql statements:
+        * The sql to query the given model
+        * The sql to create all views and tables that the given model depends upon
+    :param start_node: model to convert to sql
+    :return: A dict of sql statements. The order of the items in the dict is significant: earlier statements
+        will create views and/or tables that might be used by later statements.
+    """
+    result: Dict[str, str] = {}
+    compiler_cache: Dict[str, List['SemiCompiledTuple']] = {}
+    # find all nodes that are materialized as view or table, and the start_node if needed
+    # make sure we get the longest possible path to a node (use_last_found_instance=True). That way we can
+    # reverse the list and we'll get the nodes that are a dependency for other nodes before the node that
+    # depends on them.
+
+    materialized_found_nodes: List[FoundNode] = find_nodes(
+        start_node=start_node,
+        function=lambda node: (
+            (node is start_node and include_start_node) or node.materialization.is_statement
+        ),
+        first_instance=False
+    )
+    _check_names_unique(found_node.model for found_node in materialized_found_nodes)
+    for found_node in reversed(materialized_found_nodes):
+        model = found_node.model
+        result[model_to_name(model)] = \
+            _to_sql_materialized_node(engine=engine, model=model, compiler_cache=compiler_cache)
+    return result
+
+
+def _to_sql_materialized_node(
+        engine: Engine,
+        model: SqlModel,
+        compiler_cache: Dict[str, List['SemiCompiledTuple']]
+) -> str:
+    """
+    Give the sql to query the given model
+    :param model: model to convert to sql
+    :param compiler_cache: Dictionary mapping model hashes to already compiled results
+    :return: executable select query
+    """
     queries = _to_cte_sql(engine=engine, compiler_cache=compiler_cache, model=model)
     queries = _filter_duplicate_ctes(queries)
     if len(queries) == 0:
@@ -24,13 +75,39 @@ def to_sql(engine: Engine, model: SqlModel) -> str:
         raise Exception('Internal error. No models to compile')
 
     if len(queries) == 1:
-        return queries[0].sql
+        return _materialize(queries[0].sql, model)
 
     # case: len(result) > 1
     sql = 'with '
     sql += ',\n'.join(f'{row.quoted_cte_name} as ({row.sql})' for row in queries[:-1])
     sql += '\n' + queries[-1].sql
-    return sql
+    return _materialize(sql, model)
+
+
+def _materialize(sql_query: str, model: SqlModel) -> str:
+    """
+    Generate sql that wraps the sql_query with the materialization indicated by model.
+    :param sql_query: raw sql query
+    :param model: model that indicates the materialization and name of the resulting view or table
+        (if applicable).
+    :return: raw sql
+    """
+
+    materialization = model.materialization
+    quoted_name = model_to_quoted_name(model)
+    if materialization == Materialization.CTE:
+        return sql_query
+    if materialization == Materialization.QUERY:
+        return sql_query
+    if materialization == Materialization.VIEW:
+        return f'create view {quoted_name} as {sql_query}'
+    if materialization == Materialization.TABLE:
+        return f'create table {quoted_name} as {sql_query}'
+    if materialization == Materialization.TEMP_TABLE:
+        return f'create temporary table {quoted_name} on commit drop as {sql_query}'
+    if materialization == Materialization.VIRTUAL_NODE:
+        return ''
+    raise Exception(f'Unsupported Materialization value: {materialization}')
 
 
 class SemiCompiledTuple(NamedTuple):
@@ -42,6 +119,19 @@ class SemiCompiledTuple(NamedTuple):
     # quoted and escaped.
     quoted_cte_name: str
     sql: str
+
+
+def _check_names_unique(models: Iterable[SqlModel]):
+    """
+    Check that there are no duplicate names in the list of models. Raises an error if duplicates are found.
+    """
+    seen: Set[str] = set()
+    for model in models:
+        name = model_to_name(model)
+        if name in seen:
+            raise ValueError(f'Names of SqlModels need to be unique throughout the graph.'
+                             f'Duplicate found: "{name}"')
+        seen.add(name)
 
 
 def _filter_duplicate_ctes(queries: List[SemiCompiledTuple]) -> List[SemiCompiledTuple]:
@@ -67,11 +157,15 @@ def _filter_duplicate_ctes(queries: List[SemiCompiledTuple]) -> List[SemiCompile
     return result
 
 
-def _to_cte_sql(engine: Engine, compiler_cache: Dict[str, List[SemiCompiledTuple]],
-                model: SqlModel) -> List[SemiCompiledTuple]:
+def _to_cte_sql(
+        engine: Engine,
+        compiler_cache: Dict[str, List[SemiCompiledTuple]],
+        model: SqlModel
+) -> List[SemiCompiledTuple]:
     """
     Recursively build the list of all common table expressions that are needed to generate the sql for
     the given model
+    :param engine: TODO
     :param compiler_cache: Dictionary mapping model hashes to already compiled results
     :param model: model to convert to a list of SemiCompiledTuple
     :return:
@@ -79,36 +173,54 @@ def _to_cte_sql(engine: Engine, compiler_cache: Dict[str, List[SemiCompiledTuple
     if model.hash in compiler_cache:
         return compiler_cache[model.hash]
 
-    if not model.references:
-        return _single_model_to_sql(engine=engine, compiler_cache=compiler_cache, model=model, reference_names={})
+    # First recursively compile all CTEs that we depend on
     result = []
     reference_names = {
-        name: model_to_quoted_cte_name(engine, reference) for name, reference in model.references.items()
+        name: model_to_quoted_name(engine, reference) for name, reference in model.references.items()
     }
     for ref_name, reference in model.references.items():
-        result.extend(_to_cte_sql(engine=engine, compiler_cache=compiler_cache, model=reference))
+        if reference.materialization.is_cte:
+            result.extend(_to_cte_sql(engine=engine, compiler_cache=compiler_cache, model=reference))
+
+    # Compile the actual model
     result.extend(
-        _single_model_to_sql(engine=engine, compiler_cache=compiler_cache, model=model, reference_names=reference_names))
+        _single_model_to_sql(
+            engine=engine,
+            compiler_cache=compiler_cache,
+            model=model,
+            reference_names=reference_names
+        )
+    )
 
     compiler_cache[model.hash] = result
     return result
 
 
-def model_to_quoted_cte_name(engine: Engine, model: SqlModel):
-    """ Get the name for the cte that will be generated from this model, quoted and escaped. """
+def model_to_name(model: SqlModel):
+    """
+    Get the name for the cte/table/view that will be generated from this model, quoted and escaped.
+    """
     # max length of an identifier name in Postgres is normally 63 characters. We'll use that as a cutoff
     # here.
-    # TODO: two compilation phases:
-    #  1) get all cte names
-    #  2) generate actual sql. Only for CTEs with conflicting names add the hash
+    if model.materialization_name is not None:
+        return model.materialization_name[0:63]
     name = f'{model.generic_name[0:28]}___{model.hash}'
-    return quote_identifier(engine, name)
+    return name
 
 
-def _single_model_to_sql(engine: Engine,
-                         compiler_cache: Dict[str, List[SemiCompiledTuple]],
-                         model: SqlModel,
-                         reference_names: Dict[str, str]) -> List[SemiCompiledTuple]:
+def model_to_quoted_name(engine: Engine, model: SqlModel):
+    """
+    Get the name for the cte/table/view that will be generated from this model, quoted and escaped.
+    """
+    return quote_identifier(engine, model_to_name(model))
+
+
+def _single_model_to_sql(
+        engine: Engine,
+        compiler_cache: Dict[str, List[SemiCompiledTuple]],
+        model: SqlModel,
+        reference_names: Dict[str, str]
+) -> List[SemiCompiledTuple]:
     """
     Split the sql for a given model into a list of separate CTEs.
     :param compiler_cache: Dictionary mapping model hashes to already compiled results
@@ -119,9 +231,10 @@ def _single_model_to_sql(engine: Engine,
     if model.hash in compiler_cache:
         return compiler_cache[model.hash]
     sql = model.sql
-    # If there are any format strings in the properties that need escaping, they should have been by now.
-    # Otherwise this would cause trouble the next time we call format() below for the references
-    sql = _format_sql(sql=sql, values=model.properties_formatted(engine), model=model)
+    # If there are any format strings in the placeholder values that need escaping, they should have been
+    # escaped by now.
+    # Otherwise this will cause trouble the next time we call format() below for the references
+    sql = _format_sql(sql=sql, values=model.placeholders_formatted, model=model)
     # {{id}} (==REFERENCE_UNIQUE_FIELD) is a special placeholder that gets the unique model identifier,
     # which can be used in templates to make sure that if a model gets used multiple times,
     # the cte-names are still unique.
@@ -135,7 +248,7 @@ def _single_model_to_sql(engine: Engine,
         assert cte.name is not None
         result.append(SemiCompiledTuple(quoted_cte_name=quote_identifier(engine, cte.name), sql=cte.select_sql))
     result.append(
-        SemiCompiledTuple(quoted_cte_name=model_to_quoted_cte_name(engine, model), sql=ctes[-1].select_sql)
+        SemiCompiledTuple(quoted_cte_name=model_to_quoted_name(engine, model), sql=ctes[-1].select_sql)
     )
 
     compiler_cache[model.hash] = result

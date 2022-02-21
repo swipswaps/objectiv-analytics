@@ -2,9 +2,10 @@
 Copyright 2021 Objectiv B.V.
 """
 from abc import ABC
-from typing import cast, Union, TYPE_CHECKING, Optional
+from typing import cast, Union, TYPE_CHECKING, Optional, List
 
 import numpy
+from sqlalchemy.future import Engine
 
 from bach.series import Series
 from bach.expression import Expression, AggregateFunctionExpression
@@ -43,11 +44,33 @@ class SeriesAbstractNumeric(Series, ABC):
     def round(self, decimals: int = 0) -> 'SeriesAbstractNumeric':
         """
         Round the value of this series to the given amount of decimals.
+
         :param decimals: The amount of decimals to round to
         """
         return self.copy_override(
             expression=Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
+
+    def cut(self, bins: int, right: bool = True) -> 'SeriesAbstractNumeric':
+        """
+        Segments values into bins.
+
+        :param bins: The amount of bins to segment data into
+        :param right: If true (by default), each bin will include the rightmost edge. (e.g (x,y]).
+        """
+        from bach.operations.cut import CutOperation
+        return CutOperation(series=self, bins=bins, right=right)()
+
+    def qcut(self, q: Union[int, List[float]]) -> 'SeriesAbstractNumeric':
+        """
+        Segments values into equal-sized buckets based on rank or sample quantiles.
+
+        :param q: Number of quantiles or list of quantiles to consider.
+
+        :return: series containing each quantile range/interval per value. Original series is set as index.
+        """
+        from bach.operations.cut import QCutOperation
+        return QCutOperation(series=self, q=q)()
 
     def _ddof_unsupported(self, ddof: Optional[int]):
         if ddof is not None and ddof != 1:
@@ -120,8 +143,25 @@ class SeriesAbstractNumeric(Series, ABC):
         :param partition: The partition or window to apply
         :param skipna: Exclude NA/NULL values
         """
-        return cast('SeriesFloat64',  # for the mypies
-                    self._derived_agg_func(partition, 'avg', 'double precision', skipna=skipna))
+        return cast(
+            'SeriesFloat64',  # for the mypies
+            self._derived_agg_func(partition, 'avg', 'double precision', skipna=skipna),
+        )
+
+    def quantile(
+        self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5,
+    ) -> 'SeriesFloat64':
+        """
+        When q is a float or len(q) == 1, the resultant series index will remain
+        In case multiple quantiles are calculated, the resultant series index will have all calculated
+        quantiles as index values.
+
+        :param partition: The partition or window to apply
+        :param q: A quantile or list of quantiles to be calculated
+        """
+        from bach.quantile import calculate_quantiles
+        result = calculate_quantiles(self, partition=partition, q=q)
+        return cast('SeriesFloat64', result)
 
     def var(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
         """
@@ -139,18 +179,24 @@ class SeriesAbstractNumeric(Series, ABC):
 
 class SeriesInt64(SeriesAbstractNumeric):
     dtype = 'int64'
-    dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64)
+    dtype_aliases = ('integer', 'bigint', 'i8', int, numpy.int64, 'int32')
     db_engine_dtypes = {'postgresql': 'bigint',
                         'bigquery': 'INT64'}
-    supported_value_types = (int, numpy.int64)
+    supported_value_types = (int, numpy.int64, numpy.int32)
+
+    # Notes for supported_value_to_literal() and supported_literal_to_expression():
+    # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
+    # consistently get bigints, so always cast the result
+    # See the section on numeric constants in the Postgres documentation
+    # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
 
     @classmethod
-    def supported_value_to_expression(cls, value: int) -> Expression:
-        # A stringified integer is a valid integer or bigint literal, depending on the size. We want to
-        # consistently get bigints, so always cast the result
-        # See the section on numeric constants in the Postgres documentation
-        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
-        return Expression.construct('cast({} as bigint)', Expression.raw(str(value)))
+    def supported_literal_to_expression(cls, engine: Engine, literal: Expression) -> Expression:
+        return Expression.construct('cast({} as bigint)', literal)
+
+    @classmethod
+    def supported_value_to_literal(cls, engine: Engine, value: int) -> Expression:
+        return Expression.raw(str(value))
 
     @classmethod
     def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
@@ -185,6 +231,10 @@ class SeriesInt64(SeriesAbstractNumeric):
         return series.copy_override(
             expression=Expression.construct('cast({} as bigint)', series.expression))
 
+    def round(self, decimals: int = 0) -> 'SeriesAbstractNumeric':
+        # round() should not affect int dtype series.
+        return self
+
 
 class SeriesFloat64(SeriesAbstractNumeric):
     dtype = 'float64'
@@ -193,17 +243,22 @@ class SeriesFloat64(SeriesAbstractNumeric):
                         'bigquery': 'FLOAT64'}
     supported_value_types = (float, numpy.float64)
 
+    # Notes for supported_value_to_literal() and supported_literal_to_expression():
+    # Postgres will automatically parse any number with a decimal point as a number of type `numeric`,
+    # which could be casted to float. However we specify the value always as a string, as there are some
+    # values that cannot be expressed as a numeric literal directly (NaN, infinity, and -infinity), and
+    # a value that cannot be represented as numeric (-0.0).
+    # See the sections on numeric constants, and on fLoating-point types in the Postgres documentation
+    # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
+    # https://www.postgresql.org/docs/14/datatype-numeric.html#DATATYPE-FLOAT
+
     @classmethod
-    def supported_value_to_expression(cls, value: Union[float, numpy.float64]) -> Expression:
-        # Postgres will automatically parse any number with a decimal point as a number of type `numeric`,
-        # which could be casted to float. However we specify the value always as a string, as there are some
-        # values that cannot be expressed as a numeric literal directly (NaN, infinity, and -infinity), and
-        # a value that cannot be represented as numeric (-0.0).
-        # See the sections on numeric constants, and on fLoating-point types in the Postgres documentation
-        # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-CONSTANTS
-        # https://www.postgresql.org/docs/14/datatype-numeric.html#DATATYPE-FLOAT
-        str_value = str(value)
-        return Expression.construct("cast({} as float)", Expression.string_value(str_value))
+    def supported_literal_to_expression(cls, engine: Engine, literal: Expression) -> Expression:
+        return Expression.construct("cast({} as float)", literal)
+
+    @classmethod
+    def supported_value_to_literal(cls, engine: Engine, value: Union[float, numpy.float64]) -> Expression:
+        return Expression.string_value(str(value))
 
     @classmethod
     def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:

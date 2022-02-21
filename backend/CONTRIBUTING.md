@@ -1,7 +1,7 @@
 
 # Objectiv Backend - Development
 
-Here you'll find instructions for development on the Objectiv Backend. If you want to contribute (Thank you!), please take a look at the [Contribution Guide](https://www.objectiv.io/docs/the-project/contribute) in our Docs. It contains information about our contribution process and where you can fit in.
+Here you'll find instructions for development on the Objectiv Backend. If you want to contribute (Thank you!), please take a look at the [Contribution Guide](https://www.objectiv.io/docs/home/the-project/contribute) in our Docs. It contains information about our contribution process and where you can fit in.
 
 ## Setup
 ```bash
@@ -17,7 +17,7 @@ pip install -r requirements-dev.txt
 
 ## Start DB
 ```bash
-cd ..; docker-compose up --detach postgres
+cd ..; docker-compose up --detach objectiv_postgres
 cd backend; python objectiv_backend/tools/db_init/db_init.py
 ```
 SECURITY WARNING: The above docker-compose command starts a postgres container that allows connections

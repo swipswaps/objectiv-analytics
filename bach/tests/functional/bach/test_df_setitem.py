@@ -3,6 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 from typing import Type
+import pytest
 
 import numpy as np
 
@@ -10,7 +11,7 @@ from bach import SeriesInt64, SeriesString, SeriesFloat64, SeriesDate, SeriesTim
     SeriesTime, SeriesTimedelta, Series, \
     SeriesJsonb, SeriesBoolean
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_db_type, \
-    assert_equals_data, CITIES_INDEX_AND_COLUMNS
+    assert_equals_data, CITIES_INDEX_AND_COLUMNS, get_bt_with_railway_data
 
 
 def check_set_const(constant, db_type: str, expected_series: Type[Series]):
@@ -150,7 +151,6 @@ def test_set_series_column():
     )
     assert filtered_bt.town == filtered_bt['town']
 
-
 def test_set_multiple():
     bt = get_bt_with_test_data()
     bt['duplicated_column'] = bt['founding']
@@ -184,6 +184,86 @@ def test_set_existing():
         ]
     )
     assert bt.city == bt['city']
+
+def test_set_different_base_node():
+    # set different shape series / different index name
+    bt = get_bt_with_test_data(full_data_set=True)
+    bt = bt[bt.skating_order>7]
+    filtered_bt = bt[bt.skating_order<9]
+
+    bt['a'] = filtered_bt['city']
+
+    assert_equals_data(
+        bt,
+        expected_columns=CITIES_INDEX_AND_COLUMNS + ['a'],
+        expected_data=[
+            [8, 8, 'Boalsert', 'Súdwest-Fryslân', 10120, 1455, 'Boalsert'],
+            [9, 9, 'Harns', 'Harlingen', 14740, 1234, None],
+            [10, 10, 'Frjentsjer', 'Waadhoeke', 12760, 1374, None],
+            [11, 11, 'Dokkum', 'Noardeast-Fryslân', 12675, 1298, None]
+        ]
+    )
+
+    # set existing column
+    bt = get_bt_with_test_data()
+    mt = get_bt_with_railway_data()
+    bt['skating_order'] = mt['station']
+    assert_db_type(bt['skating_order'], 'text', SeriesString)
+    assert_equals_data(
+        bt,
+        expected_columns=CITIES_INDEX_AND_COLUMNS,
+        expected_data=[
+            [1, 'IJlst', 'Ljouwert', 'Leeuwarden', 93485, 1285],
+            [2, 'Heerenveen', 'Snits', 'Súdwest-Fryslân', 33520, 1456],
+            [3, 'Heerenveen IJsstadion', 'Drylts', 'Súdwest-Fryslân', 3055, 1268]
+        ]
+    )
+
+    # set dataframe
+    bt = get_bt_with_test_data()
+    mt = get_bt_with_railway_data()
+    bt[['a','city']] = mt[['town','station']]
+    assert_equals_data(
+        bt,
+        expected_columns=CITIES_INDEX_AND_COLUMNS + ['a'],
+        expected_data=[
+            [1, 1, 'IJlst', 'Leeuwarden', 93485, 1285, 'Drylts'],
+            [2, 2, 'Heerenveen', 'Súdwest-Fryslân', 33520, 1456, 'It Hearrenfean'],
+            [3, 3, 'Heerenveen IJsstadion', 'Súdwest-Fryslân', 3055, 1268, 'It Hearrenfean']
+        ]
+    )
+
+
+def test_set_different_group_by():
+    bt = get_bt_with_test_data(full_data_set=True)
+    mt = get_bt_with_railway_data()
+    bt_g = bt.groupby('city')[['inhabitants', 'founding']]
+    mt_g = mt.groupby('town').station_id.count()
+
+    with pytest.raises(ValueError, match="Setting new columns to grouped DataFrame is only supported if the"
+                                         " DataFrame has aggregated columns"):
+        bt_g['a'] = mt_g
+
+    bt_g = bt_g.max()
+    bt_g['a'] = mt_g
+
+    assert_equals_data(
+        bt_g,
+        expected_columns=['city', 'inhabitants_max', 'founding_max', 'a'],
+        expected_data=[
+            ['Harns', 14740, 1234, None],
+            ['Dokkum', 12675, 1298, None],
+            ['Snits', 33520, 1456, 2],
+            ['Boalsert', 10120, 1455, None],
+            ['Starum', 960, 1061, None],
+            ['Warkum', 4440, 1399, None],
+            ['Sleat', 700, 1426, None],
+            ['Ljouwert', 93485, 1285, 2],
+            ['Frjentsjer', 12760, 1374, None],
+            ['Drylts', 3055, 1268, 1],
+            ['Hylpen', 870, 1225, None]
+        ]
+    )
 
 
 def test_set_existing_referencing_other_column_experience():
@@ -294,5 +374,63 @@ def test_set_series_single_value():
             [1, 93485, 3, 93485, 93485, 93490, 93488, 93491, 93492],
             [2, 33520, 3, 93485, 93485, 93490, 93488, 93491, 93492],
             [3, 3055, 3, 93485, 93485, 93490, 93488, 93491, 93492]
+        ]
+    )
+
+
+def test_set_pandas_series():
+    bt = get_bt_with_test_data()
+    pandas_series = bt['founding'].to_pandas()
+    bt['duplicated_column'] = pandas_series
+    assert_db_type(bt['duplicated_column'], 'bigint', SeriesInt64)
+    assert_equals_data(
+        bt,
+        expected_columns=[
+            '_index_skating_order',  # index
+            'skating_order', 'city', 'municipality', 'inhabitants', 'founding', 'duplicated_column'
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 1285],
+            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 1456],
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 1268],
+        ]
+    )
+
+
+def test_set_pandas_series_different_shape():
+    bt = get_bt_with_test_data()
+    pandas_series = bt['founding'].to_pandas()[1:]
+    bt['duplicated_column'] = pandas_series
+    assert_db_type(bt['duplicated_column'], 'bigint', SeriesInt64)
+    assert_equals_data(
+        bt,
+        expected_columns=[
+            '_index_skating_order',  # index
+            'skating_order', 'city', 'municipality', 'inhabitants', 'founding', 'duplicated_column'
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, None],
+            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 1456],
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 1268],
+        ]
+    )
+
+
+def test_set_pandas_series_different_shape_and_name():
+    bt = get_bt_with_test_data()
+    bt2 = get_bt_with_railway_data()  # has more rows and different name index
+    pandas_series = bt2['town'].to_pandas()
+    bt['the_town'] = pandas_series
+    assert_db_type(bt['the_town'], 'text', SeriesString)
+    assert_equals_data(
+        bt,
+        expected_columns=[
+            '_index_skating_order',  # index
+            'skating_order', 'city', 'municipality', 'inhabitants', 'founding', 'the_town'
+        ],
+        expected_data=[
+            [1, 1, 'Ljouwert', 'Leeuwarden', 93485, 1285, 'Drylts'],
+            [2, 2, 'Snits', 'Súdwest-Fryslân', 33520, 1456, 'It Hearrenfean'],
+            [3, 3, 'Drylts', 'Súdwest-Fryslân', 3055, 1268, 'It Hearrenfean'],
         ]
     )

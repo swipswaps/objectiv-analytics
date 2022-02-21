@@ -2,12 +2,13 @@
 Copyright 2021 Objectiv B.V.
 """
 import json
-from typing import Optional, Dict, Union, TYPE_CHECKING, Any
+from typing import Optional, Dict, Union, TYPE_CHECKING, List
 
-from bach.series import Series, const_to_series
+from bach.series import Series
 from bach.expression import Expression
-from sql_models.util import quote_string, quote_identifier
-from sql_models.model import SqlModel
+from bach.series.series import WrappedPartition
+from bach.sql_model import BachSqlModel
+from sql_models.util import quote_string
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
@@ -98,7 +99,7 @@ class SeriesJsonb(Series):
         """
         class with accessor methods to json(b) type data columns.
         """
-        def __init__(self, series_object):
+        def __init__(self, series_object: 'SeriesJsonb'):
             self._series_object = series_object
 
         def __getitem__(self, key: Union[str, int, slice]):
@@ -151,10 +152,9 @@ class SeriesJsonb(Series):
             Name: jsonb_column, dtype: object
             """
             if isinstance(key, int):
-                return self._series_object.copy_override(
-                    dtype=self._series_object.return_dtype,
-                    expression=Expression.construct(f'{{}}->{key}', self._series_object)
-                )
+                return self._series_object\
+                    .copy_override_dtype(dtype=self._series_object.return_dtype)\
+                    .copy_override(expression=Expression.construct(f'{{}}->{key}', self._series_object))
             elif isinstance(key, str):
                 return self.get_value(key)
             elif isinstance(key, slice):
@@ -195,12 +195,14 @@ class SeriesJsonb(Series):
                 from jsonb_array_elements({{}}) with ordinality x
                 where ordinality - 1 {where})"""
                 expression_references += 1
-                return self._series_object.copy_override(
-                    dtype=self._series_object.return_dtype,
-                    expression=Expression.construct(
-                        combined_expression,
-                        *([self._series_object] * expression_references)
-                    ))
+                return self._series_object\
+                    .copy_override_dtype(dtype=self._series_object.return_dtype)\
+                    .copy_override(
+                        expression=Expression.construct(
+                            combined_expression,
+                            *([self._series_object] * expression_references)
+                        )
+                    )
             raise TypeError(f'key should be int or slice, actual type: {type(key)}')
 
         def _find_in_json_list(self, key: Union[str, Dict[str, str]]):
@@ -229,7 +231,9 @@ class SeriesJsonb(Series):
             expression = Expression.construct(f"{{}}->{return_as_string_operator}{{}}",
                                               self._series_object,
                                               Expression.string_value(key))
-            return self._series_object.copy_override(dtype=return_dtype, expression=expression)
+            return self._series_object\
+                .copy_override_dtype(dtype=return_dtype)\
+                .copy_override(expression=expression)
 
     @property
     def json(self):
@@ -245,9 +249,13 @@ class SeriesJsonb(Series):
         return self.Json(self)
 
     @classmethod
-    def supported_value_to_expression(cls, value: Union[dict, list]) -> Expression:
+    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+        return Expression.construct('cast({} as jsonb)', literal)
+
+    @classmethod
+    def supported_value_to_literal(cls, value: Union[dict, list]) -> Expression:
         json_value = json.dumps(value)
-        return Expression.construct('cast({} as jsonb)', Expression.string_value(json_value))
+        return Expression.string_value(json_value)
 
     @classmethod
     def dtype_to_expression(cls, source_dtype: str, expression: Expression) -> Expression:
@@ -270,6 +278,12 @@ class SeriesJsonb(Series):
     def __ge__(self, other) -> 'SeriesBoolean':
         return self._comparator_operation(other, "@>")
 
+    def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        raise NotImplementedError()
+
+    def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        raise NotImplementedError()
+
 
 class SeriesJson(SeriesJsonb):
     """
@@ -287,12 +301,13 @@ class SeriesJson(SeriesJsonb):
 
     def __init__(self,
                  engine,
-                 base_node: SqlModel,
+                 base_node: BachSqlModel,
                  index: Dict[str, 'Series'],
                  name: str,
                  expression: Expression,
                  group_by: 'GroupBy',
-                 sorted_ascending: Optional[bool] = None):
+                 sorted_ascending: Optional[bool],
+                 index_sorting: List[bool]):
 
         super().__init__(engine=engine,
                          base_node=base_node,
@@ -300,4 +315,5 @@ class SeriesJson(SeriesJsonb):
                          name=name,
                          expression=Expression.construct(f'cast({{}} as jsonb)', expression),
                          group_by=group_by,
-                         sorted_ascending=sorted_ascending)
+                         sorted_ascending=sorted_ascending,
+                         index_sorting=index_sorting)

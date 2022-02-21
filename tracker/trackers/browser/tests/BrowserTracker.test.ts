@@ -1,14 +1,24 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackerEvent, TrackerPlugins, TrackerQueue, TrackerTransportRetry } from '@objectiv/tracker-core';
+import { mockConsole } from '@objectiv/testing-tools';
+import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore, TrackerTransportRetry } from '@objectiv/tracker-core';
+import { DebugTransport } from '@objectiv/transport-debug';
+import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
-import { BrowserTracker, defaultFetchFunction, FetchAPITransport } from '../src/';
-import { mockConsole } from './mocks/MockConsole';
+import { BrowserTracker } from '../src/';
 
 describe('BrowserTracker', () => {
+  beforeEach(() => {
+    fetchMock.enableMocks();
+  });
+
+  afterEach(() => {
+    fetchMock.resetMocks();
+  });
+
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'group').mockImplementation(() => {});
@@ -34,7 +44,7 @@ describe('BrowserTracker', () => {
         new BrowserTracker({
           applicationId: 'app-id',
           endpoint: 'localhost',
-          transport: new FetchAPITransport({
+          transport: new FetchTransport({
             endpoint: 'localhost',
           }),
         })
@@ -56,7 +66,7 @@ describe('BrowserTracker', () => {
       transport: {
         transportName: 'TrackerTransportSwitch',
         firstUsableTransport: {
-          transportName: 'FetchAPITransport',
+          transportName: 'FetchTransport',
           endpoint: 'localhost',
           fetchFunction: defaultFetchFunction,
         },
@@ -68,22 +78,34 @@ describe('BrowserTracker', () => {
       batchDelayMs: 1000,
       batchSize: 10,
       concurrency: 4,
+      lastRunTimestamp: 0,
+      running: false,
       processFunction: expect.any(Function),
       processingEventIds: [],
       store: {
-        queueStoreName: 'TrackerQueueLocalStorage',
+        queueStoreName: 'LocalStorageQueueStore',
         localStorageKey: 'objectiv-events-queue-app-id',
       },
     });
   });
 
-  it('should instantiate with `transport`', () => {
+  it('should instantiate with given `transport`', () => {
     const testTracker = new BrowserTracker({
       applicationId: 'app-id',
-      transport: new FetchAPITransport({ endpoint: 'localhost' }),
+      transport: new FetchTransport({ endpoint: 'localhost' }),
     });
     expect(testTracker).toBeInstanceOf(BrowserTracker);
-    expect(testTracker.transport).toBeInstanceOf(FetchAPITransport);
+    expect(testTracker.transport).toBeInstanceOf(FetchTransport);
+  });
+
+  it('should instantiate with given `queue`', () => {
+    const testTracker = new BrowserTracker({
+      applicationId: 'app-id',
+      endpoint: 'localhost',
+      queue: new TrackerQueue({ store: new TrackerQueueMemoryStore() }),
+    });
+    expect(testTracker).toBeInstanceOf(BrowserTracker);
+    expect(testTracker.queue?.store).toBeInstanceOf(TrackerQueueMemoryStore);
   });
 
   describe('env sensitive logic', () => {
@@ -102,7 +124,7 @@ describe('BrowserTracker', () => {
 
       const testTracker = new BrowserTracker({
         applicationId: 'app-id',
-        transport: new FetchAPITransport({ endpoint: 'localhost' }),
+        transport: new FetchTransport({ endpoint: 'localhost' }),
       });
 
       expect(testTracker.console).toEqual(console);
@@ -113,7 +135,7 @@ describe('BrowserTracker', () => {
 
       const testTracker = new BrowserTracker({
         applicationId: 'app-id',
-        transport: new FetchAPITransport({ endpoint: 'localhost' }),
+        transport: new FetchTransport({ endpoint: 'localhost' }),
       });
 
       expect(testTracker.console).toEqual(undefined);
@@ -124,7 +146,7 @@ describe('BrowserTracker', () => {
 
       const testTracker = new BrowserTracker({
         applicationId: 'app-id',
-        transport: new FetchAPITransport({ endpoint: 'localhost' }),
+        transport: new FetchTransport({ endpoint: 'localhost' }),
         console: mockConsole,
       });
 
@@ -136,7 +158,7 @@ describe('BrowserTracker', () => {
 
       const testTracker = new BrowserTracker({
         applicationId: 'app-id',
-        transport: new FetchAPITransport({ endpoint: 'localhost' }),
+        transport: new FetchTransport({ endpoint: 'localhost' }),
         console: mockConsole,
       });
 
@@ -149,7 +171,32 @@ describe('BrowserTracker', () => {
       const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testTracker.plugins?.plugins).toEqual(
-        expect.arrayContaining([expect.objectContaining({ pluginName: 'WebDocumentContextPlugin' })])
+        expect.arrayContaining([
+          expect.objectContaining({ pluginName: 'ApplicationContextPlugin' }),
+          expect.objectContaining({ pluginName: 'HttpContextPlugin' }),
+          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
+          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
+        ])
+      );
+    });
+
+    it('should allow disabling PathContextFromURLPlugin and RootLocationContextFromURLPlugin', () => {
+      const testTracker = new BrowserTracker({
+        applicationId: 'app-id',
+        endpoint: 'localhost',
+        trackPathContextFromURL: false,
+        trackRootLocationContextFromURL: false,
+      });
+      expect(testTracker).toBeInstanceOf(BrowserTracker);
+      expect(testTracker.plugins?.plugins).toEqual(
+        expect.arrayContaining([expect.objectContaining({ pluginName: 'ApplicationContextPlugin' })])
+      );
+      expect(testTracker.plugins?.plugins).toEqual(
+        expect.not.arrayContaining([
+          expect.objectContaining({ pluginName: 'HttpContextPlugin' }),
+          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
+          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
+        ])
       );
     });
 
@@ -157,7 +204,7 @@ describe('BrowserTracker', () => {
       const testTracker = new BrowserTracker({
         applicationId: 'app-id',
         endpoint: 'localhost',
-        plugins: new TrackerPlugins({ plugins: [] }),
+        plugins: [],
       });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testTracker.plugins?.plugins).toStrictEqual([]);
@@ -177,8 +224,8 @@ describe('BrowserTracker', () => {
       clear();
     });
 
-    it('should auto-track Application and WebDocument Contexts by default', async () => {
-      const testTracker = new BrowserTracker({ applicationId: 'app-id', endpoint: 'localhost' });
+    it('should auto-track Application and Path Contexts by default', async () => {
+      const testTracker = new BrowserTracker({ applicationId: 'app-id', transport: new DebugTransport() });
       const testEvent = new TrackerEvent({ _type: 'test-event' });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
       expect(testEvent.global_contexts).toHaveLength(0);
@@ -186,23 +233,20 @@ describe('BrowserTracker', () => {
 
       const trackedEvent = await testTracker.trackEvent(testEvent);
 
-      expect(trackedEvent.location_stack).toHaveLength(1);
-      expect(trackedEvent.location_stack).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({
-            _type: 'WebDocumentContext',
-            id: '#document',
-            url: 'http://localhost/',
-          }),
-        ])
-      );
-
-      expect(trackedEvent.global_contexts).toHaveLength(1);
+      expect(trackedEvent.global_contexts).toHaveLength(3);
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
+            _type: 'HttpContext',
+            id: 'http_context',
+          }),
+          expect.objectContaining({
             _type: 'ApplicationContext',
             id: 'app-id',
+          }),
+          expect.objectContaining({
+            _type: 'PathContext',
+            id: 'http://localhost/',
           }),
         ])
       );

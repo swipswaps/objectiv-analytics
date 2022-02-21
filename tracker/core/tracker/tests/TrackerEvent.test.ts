@@ -1,9 +1,9 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
 import MockDate from 'mockdate';
-import { ContextsConfig, makeApplicationContext, makeOverlayContext, makeVideoLoadEvent, TrackerEvent } from '../src';
+import { ContextsConfig, makeApplicationContext, makeMediaLoadEvent, makeOverlayContext, TrackerEvent } from '../src';
 
 const mockedMs = 1434319925275;
 
@@ -89,16 +89,16 @@ describe('TrackerEvent', () => {
     ]);
   });
 
-  it('should serialize to JSON without discriminating properties', () => {
+  it('should serialize to JSON without internal properties', () => {
     const testEvent = new TrackerEvent(
-      makeVideoLoadEvent({
+      makeMediaLoadEvent({
         location_stack: [makeOverlayContext({ id: 'player' })],
         global_contexts: [makeApplicationContext({ id: 'test-app' })],
       })
     );
     const jsonStringEvent = JSON.stringify(testEvent, null, 2);
     expect(jsonStringEvent).toEqual(`{
-  "_type": "VideoLoadEvent",
+  "_type": "MediaLoadEvent",
   "location_stack": [
     {
       "_type": "OverlayContext",

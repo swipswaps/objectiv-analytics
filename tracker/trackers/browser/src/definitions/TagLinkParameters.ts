@@ -1,12 +1,10 @@
 /*
- * Copyright 2021 Objectiv B.V.
+ * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { assign, object, string } from 'superstruct';
 import { LocationTaggerParameters } from './LocationTaggerParameters';
 
 /**
- * tagLink has two extra attributes, `text` and `href`, as mandatory parameters.
+ * tagLink has one extra attribute, `href`, as mandatory parameter.
  */
-export const TagLinkParameters = assign(LocationTaggerParameters, object({ text: string(), href: string() }));
-export type TagLinkParameters = LocationTaggerParameters & { text: string; href: string };
+export type TagLinkParameters = LocationTaggerParameters & { href: string };
