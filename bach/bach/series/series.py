@@ -462,14 +462,13 @@ class Series(ABC):
         df.reset_index(inplace=True)
         df = df.groupby(remaining_indexes)
 
-        series_dict = {}
         for column in values:
             new_column_name = str(column)
             new_const_series = const_to_series(self, column, new_column_name)
             new_series = df.all_series[name_series].copy_override(
                 name=new_column_name,
                 expression=Expression.construct(f'case when {{}} = {{}} then {name_series} end',
-                                                series_last,
+                                                df[name_index_last],
                                                 new_const_series)
             )
             new_series_aggregated = cast(
@@ -477,10 +476,10 @@ class Series(ABC):
             )
             if fill_value is not None:
                 new_series_aggregated = new_series_aggregated.fillna(fill_value)
-            series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
+            df[new_column_name] = new_series_aggregated
 
-        unstacked_df = df.copy_override(series=series_dict)
-        return unstacked_df
+        df = df.drop(columns = [name_index_last, name_series])
+        return df
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
