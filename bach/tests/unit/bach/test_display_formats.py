@@ -1,10 +1,12 @@
 import builtins
 from IPython import display
+from _pytest.monkeypatch import MonkeyPatch
+
 from bach.display_formats import display_sql_as_markdown
 from tests.unit.bach.util import get_fake_df
 
 
-def test_display_sql_as_markdown(monkeypatch) -> None:
+def test_display_sql_as_markdown(monkeypatch: MonkeyPatch) -> None:
     df = get_fake_df(['a'], ['b', 'c'])
     expected_sql = 'select * from fake_table'
     displayed_calls = 0
@@ -28,13 +30,11 @@ def test_display_sql_as_markdown(monkeypatch) -> None:
     display_sql_as_markdown(df)
     assert displayed_calls == 2
 
-    # create another context, just to avoid messing up with other tests
-    with monkeypatch.context() as m:
-        # mock ipython import and verify mocked_display is not called
-        def mocked_import_ipython(name, *args, **kwargs) -> None:
-            if name == 'IPython.display':
-                raise ModuleNotFoundError
+    # mock ipython import and verify mocked_display is not called
+    def mocked_import_ipython(name, *args, **kwargs) -> None:
+        if name == 'IPython.display':
+            raise ModuleNotFoundError
 
-        m.setattr(builtins, '__import__', mocked_import_ipython)
-        display_sql_as_markdown(df)
-        assert displayed_calls == 2
+    monkeypatch.setattr(builtins, '__import__', mocked_import_ipython)
+    display_sql_as_markdown(df)
+    assert displayed_calls == 2
