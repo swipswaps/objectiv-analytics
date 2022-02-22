@@ -1774,20 +1774,6 @@ class DataFrame:
         model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)
         return to_sql(model)
 
-    def display_sql(self) -> None:
-        """
-        Displays in the frontend (notebook) the result from :py:meth:`view_sql` into Markdown-friendly format.
-
-        .. note::
-            Requires the IPython package.
-        """
-        df_sql = self.view_sql()
-        try:
-            from IPython.display import display, Markdown
-            display(Markdown(f'```sql\n{df_sql}'))
-        except ModuleNotFoundError:
-            print(df_sql)
-
     def merge(
             self,
             right: DataFrameOrSeries,
