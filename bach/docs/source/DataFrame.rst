@@ -133,6 +133,7 @@ Sql Model
     DataFrame.get_sample
     DataFrame.get_unsampled
     DataFrame.view_sql
+    DataFrame.display_sql_markdown
 
 Variables
 +++++++++
