@@ -2126,9 +2126,9 @@ class DataFrame:
                 return quantile_df
 
             # a hack in order to avoid calling quantile_df.materialized().
-            # Currently doing quantile['q'] = qt
+            # Currently doing quantile['quantile'] = qt
             # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-            quantile_df['q'] = initial_series\
+            quantile_df['quantile'] = initial_series\
                 .copy_override_dtype(dtype='float64')\
                 .copy_override(expression=AggregateFunctionExpression.construct(fmt=f'{qt}'))
             all_quantile_dfs.append(quantile_df)
@@ -2136,7 +2136,7 @@ class DataFrame:
         from bach.operations.concat import DataFrameConcatOperation
         result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
         # q column should be in the index when calculating multiple quantiles
-        return result.set_index('q')
+        return result.set_index('quantile')
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """
