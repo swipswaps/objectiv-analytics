@@ -70,6 +70,7 @@ class VariableToken(ExpressionToken):
             return None
         return cls(match.group(1), match.group(2))
 
+
 @dataclass(frozen=True)
 class ColumnReferenceToken(ExpressionToken):
     column_name: str
@@ -191,9 +192,10 @@ class Expression:
         Construct an expression that represents the sql: {expr} as "name"
         """
         ident_expr = Expression.identifier(name)
-        if expr.to_sql() == ident_expr.to_sql():
-            # this is to prevent generating sql of the form `x as x`, we'll just return `x` in that case
-            return expr
+        # TODO: enable this again
+        # if expr.to_sql() == ident_expr.to_sql():
+        #     # this is to prevent generating sql of the form `x as x`, we'll just return `x` in that case
+        #     return expr
         return cls.construct('{} as {}', expr, ident_expr)
 
     @classmethod

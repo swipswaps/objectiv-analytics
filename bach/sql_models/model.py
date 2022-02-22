@@ -467,8 +467,8 @@ class SqlModel(Generic[T]):
         return self._hash
 
     @property
-    def placeholders_formatted(self, engine: Engine) -> Dict[str, str]:
-        return self._placeholder_formatter(engine, self._placeholders)
+    def placeholders_formatted(self) -> Dict[str, str]:
+        return self._placeholder_formatter(self._placeholders)
 
     def copy_override(
         self: TSqlModel,

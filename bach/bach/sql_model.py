@@ -93,11 +93,12 @@ class BachSqlModel(SqlModel[T]):
     @classmethod
     def _get_placeholders(
         cls,
+        engine: Engine,
         variables: Dict['DtypeNamePair', Hashable],
         expressions: List[Expression],
     ) -> Dict[str, str]:
         filtered_variables = filter_variables(variables, expressions)
-        return get_variable_values_sql(filtered_variables)
+        return get_variable_values_sql(engine=engine, variable_values=filtered_variables)
 
 
 class SampleSqlModel(BachSqlModel):
@@ -219,7 +220,7 @@ class CurrentNodeSqlModel(BachSqlModel):
 
         return CurrentNodeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=BachSqlModel._get_placeholders(variables, all_expressions),
+            placeholders=BachSqlModel._get_placeholders(engine, variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
@@ -273,7 +274,7 @@ def filter_variables(
     return {dtype_name: value for dtype_name, value in variable_values.items() if dtype_name in dtype_names}
 
 
-def get_variable_values_sql(engine=engine, variable_values: Dict['DtypeNamePair', Hashable]) -> Dict[str, str]:
+def get_variable_values_sql(engine: Engine, variable_values: Dict['DtypeNamePair', Hashable]) -> Dict[str, str]:
     """
     Take a dictionary with variable_values and return a dict with the full variable names and the values
     as sql.

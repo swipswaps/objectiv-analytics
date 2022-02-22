@@ -413,13 +413,21 @@ class DataFrame:
         index_dtypes = {k: dtypes[k] for k in index}
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
 
+        model_builder = CustomSqlModelBuilder(sql=f'SELECT * FROM {table_name}', name='from_table')
+        sql_model = model_builder()
+        column_names = list(index_dtypes.keys()) + list(series_dtypes.keys())
+        bach_model = BachSqlModel.from_sql_model(sql_model, columns=tuple(column_names))
+
+        from bach.savepoints import Savepoints
         return cls.get_instance(
             engine=engine,
-            base_node=BachSqlModel(sql=f'SELECT * FROM {table_name}').instantiate(),
+            base_node=bach_model,
             index_dtypes=index_dtypes,
             dtypes=series_dtypes,
             group_by=None,
-            order_by=[]
+            order_by=[],
+            savepoints=Savepoints(),
+            variables={}
         )
 
     @classmethod
@@ -449,6 +457,7 @@ class DataFrame:
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
 
         columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
+
         bach_model = BachSqlModel(
             model_spec=model.model_spec,
             placeholders=model.placeholders,
@@ -1796,7 +1805,7 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        placeholder_values = get_variable_values_sql(variable_values=self.variables)
+        placeholder_values = get_variable_values_sql(engine=self.engine, variable_values=self.variables)
         model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)
         return to_sql(self.engine, model)
 

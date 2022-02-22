@@ -81,12 +81,13 @@ def _to_sql_materialized_node(
     sql = 'with '
     sql += ',\n'.join(f'{row.quoted_cte_name} as ({row.sql})' for row in queries[:-1])
     sql += '\n' + queries[-1].sql
-    return _materialize(sql, model)
+    return _materialize(engine, sql, model)
 
 
-def _materialize(sql_query: str, model: SqlModel) -> str:
+def _materialize(engine: Engine, sql_query: str, model: SqlModel) -> str:
     """
     Generate sql that wraps the sql_query with the materialization indicated by model.
+    :param engine: TODO
     :param sql_query: raw sql query
     :param model: model that indicates the materialization and name of the resulting view or table
         (if applicable).
@@ -94,7 +95,7 @@ def _materialize(sql_query: str, model: SqlModel) -> str:
     """
 
     materialization = model.materialization
-    quoted_name = model_to_quoted_name(model)
+    quoted_name = model_to_quoted_name(engine=engine, model=model)
     if materialization == Materialization.CTE:
         return sql_query
     if materialization == Materialization.QUERY:
