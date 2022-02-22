@@ -6,9 +6,11 @@ from bach.dataframe import DataFrameOrSeries
 
 def display_sql_as_markdown(obj: DataFrameOrSeries) -> None:
     """
-    Displays in the frontend (notebook) the result from :py:meth:`DataFrame.view_sql` into Markdown-friendly format.
+    Displays in the frontend (notebook) the result from :py:meth:`DataFrame.view_sql`
+    into Markdown-friendly format.
 
     :param obj: DataFrame or Series from where to obtain the generated sql.
+
     .. note::
         Requires the IPython package, if it is not installed the query will be printed instead
     """
