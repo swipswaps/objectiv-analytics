@@ -278,10 +278,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         """
         dtypes: Set[str] = set(series.dtype for series in self.objects)
 
-        main_series = (
-            self.objects[0]
-            .copy_override_dtype(dtype=_get_merged_series_dtype(dtypes))
-        )
+        main_series = self.objects[0].copy_override_dtype(dtype=_get_merged_series_dtype(dtypes))
         return self._get_result_series([main_series])
 
     def _join_series_expressions(self, obj: Series) -> Expression:
