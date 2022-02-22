@@ -3,6 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import warnings
 from copy import copy
+from datetime import date, datetime, time
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
@@ -45,7 +46,7 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - dict of axis labels -> functions, function names or list of such.
 
 Level = Union[int, List[int], str, List[str]]
-Scalar = Optional[Union[int, float, str, UUID]]
+Scalar = Union[int, float, str, bool, date, datetime, time, UUID]
 
 
 class SortColumn(NamedTuple):
