@@ -207,6 +207,8 @@ def assert_equals_data(
 
     if order_by:
         bt = bt.sort_values(order_by)
+    elif not bt.order_by:
+        bt = bt.sort_index()
 
     if not use_to_pandas:
         column_names, db_values = _get_view_sql_data(bt)

@@ -1099,7 +1099,8 @@ class DataFrame:
         if level is not None or \
                 index is not None or \
                 (mapper is not None and axis == 0):
-            raise NotImplementedError("index renames not supported")
+            raise NotImplementedError("index renames not supported. "
+                                      "Hint: use 'columns' parameter and/or 'axis=1'")
 
         if mapper is not None:
             columns = mapper

@@ -6,11 +6,12 @@ from unittest.mock import ANY
 import pytest
 from bach import DataFrame, SeriesUuid, SeriesBoolean
 from sql_models.graph_operations import get_graph_nodes_info
+from tests.big_query.test_bq_basic import get_df_with_test_data
 from tests.functional.bach.test_data_and_utils import assert_equals_data
 
 
 def test_basic():
-    bt = get_bt_with_test_data()
+    bt = get_df_with_test_data()
     assert_equals_data(
         bt,
         expected_columns=[
@@ -26,7 +27,7 @@ def test_basic():
 
 
 def test_del_item():
-    bt = get_bt_with_test_data()
+    bt = get_df_with_test_data()
 
     del(bt['founding'])
     assert 'founding' not in bt.data.keys()
@@ -38,7 +39,7 @@ def test_del_item():
 
 
 def test_drop_items():
-    bt = get_bt_with_test_data()
+    bt = get_df_with_test_data()
 
     nbt = bt.drop(columns=['founding'])
     assert 'founding' not in nbt.data.keys()
@@ -63,7 +64,7 @@ def test_drop_items():
 
 
 def test_combined_operations1():
-    bt = get_bt_with_test_data(full_data_set=True)
+    bt = get_df_with_test_data(full_data_set=True)
     bt['x'] = bt['municipality'] + ' some string'
     bt['y'] = bt['skating_order'] + bt['skating_order']
     result_bt = bt.groupby('x')[['y']].count()
@@ -100,7 +101,7 @@ def test_combined_operations1():
 
 
 def test_boolean_indexing_same_node():
-    bt = get_bt_with_test_data(full_data_set=True)
+    bt = get_df_with_test_data(full_data_set=True)
     bti = bt['founding'] < 1300
     assert isinstance(bti, SeriesBoolean)
     result_bt = bt[bti]
@@ -121,7 +122,7 @@ def test_boolean_indexing_same_node():
 
 
 def test_materialize():
-    bt = get_bt_with_test_data()[['city', 'founding']]
+    bt = get_df_with_test_data()[['city', 'founding']]
     bt['city'] = bt['city'] + ' '
     bt['uuid'] = SeriesUuid.sql_gen_random_uuid(bt)
     bt['founding_str'] = bt['founding'].astype('string')
@@ -158,7 +159,7 @@ def test_materialize():
 
 def test_materialize_with_non_aggregation_series():
     # A dataframe with a groupby set, but without all columns setup for aggregation should raise
-    bt = get_bt_with_test_data()[['municipality', 'founding', 'inhabitants']]
+    bt = get_df_with_test_data()[['municipality', 'founding', 'inhabitants']]
     btg = bt.groupby('municipality')
     assert btg.group_by is not None
     with pytest.raises(ValueError, match="groupby set, but contains Series that have no aggregation func.*"
@@ -192,7 +193,7 @@ def test_materialize_with_non_aggregation_series():
 
 
 def test_materialize_non_deterministic_expressions():
-    bt = get_bt_with_test_data()[['city']]
+    bt = get_df_with_test_data()[['city']]
     bt['uuid1'] = SeriesUuid.sql_gen_random_uuid(bt)
     # now bt['uuid1'] has not been evaluated, so copying the column should copy the unevaluated expression
     bt['uuid2'] = bt['uuid1']
