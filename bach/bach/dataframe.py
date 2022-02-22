@@ -758,7 +758,6 @@ class DataFrame:
 
         :param save_points: Savepoints object that's responsible for tracking all savepoints.
         :param name: Name for the savepoint. This will be the name of the table or view if that's set as
-        :param name: Name for the savepoint. This will be the name of the table or view if that's set as
             materialization. Must be unique both within the Savepoints and within the base_node.
         :param materialization: Optional materialization of the savepoint in the database. This doesn't do
             anything unless self.savepoints.write_to_db() gets called and the savepoints are actually
@@ -2648,12 +2647,12 @@ class DataFrame:
             Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
             yield different results affecting the values to be propagated when using a filling method.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
-            `by` must also be a list and ``len(ascending) == len(by)``.
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
 
         :return: a new dataframe with filled missing values.
 
         .. note::
-            sort_by is required if DataFrame has no order_by.
+            sort_by is required if method is specified and the DataFrame has no order_by.
         """
         df = self.copy()
         if method and value is not None:
@@ -2688,7 +2687,7 @@ class DataFrame:
             Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
             yield different results affecting the values to be propagated when using a filling method.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
-            `by` must also be a list and ``len(ascending) == len(by)``.
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
 
         :return: a new dataframe with filled missing values.
 
@@ -2704,7 +2703,7 @@ class DataFrame:
             df = df.sort_values(by=sort_by, ascending=ascending)
 
         if not sort_by and not df.order_by:
-            raise Exception('dataframe must be sorted in order to apply forward fill.')
+            raise Exception('dataframe must be sorted in order to apply forward or backward fill.')
 
         # create a partition column for each series to be filled
         # this column contains the cumulative sum of the total amount of observed non-nullable values
@@ -2722,14 +2721,12 @@ class DataFrame:
         for series_name, series in self._data.items():
             partition_name = f'__partition_{series.name}'
             partition_expr = Expression.construct(f'case when {{}} is null then 0 else 1 end', series)
-            partition_series = cast(
-                SeriesInt64,
-                series.copy_override(expression=partition_expr, name=partition_name).astype('int64'),
-            )
-            df[partition_name] = partition_series.sum(
-                partition=Window([], mode=WindowFrameMode.ROWS, order_by=df.order_by),
-            )
 
+            df[partition_name] = (
+                series.copy_override(expression=partition_expr, name=partition_name)
+                .copy_override_type(SeriesInt64)
+                .sum(partition=Window([], mode=WindowFrameMode.ROWS, order_by=df.order_by))
+            )
         df.materialize(node_name='fillna_partitioning', inplace=True)
 
         # fill gaps with the first_value per partition
@@ -2752,7 +2749,7 @@ class DataFrame:
             Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
             yield different results affecting the values to be propagated when using a filling method.
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
-            `by` must also be a list and ``len(ascending) == len(by)``.
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
 
         :return: a new dataframe with filled missing values.
 
@@ -2766,14 +2763,11 @@ class DataFrame:
 
         main_order_by = copy(df._order_by)
         # bfill is similar to ffill, the difference is that the order is reversed.
-        df._order_by = [
+        reverse_order_by = [
             SortColumn(expression=ob.expression, asc=not ob.asc)
             for ob in main_order_by
         ]
-        df = df.ffill()
-        df._order_by = main_order_by
-
-        return df
+        return df.copy_override(order_by=reverse_order_by).ffill().copy_override(order_by=main_order_by)
 
     def _get_parsed_subset_of_data_columns(
         self, subset: Optional[Union[str, Sequence[str]]],
