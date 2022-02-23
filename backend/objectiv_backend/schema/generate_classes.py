@@ -152,9 +152,10 @@ def get_args_string(property_meta: Dict[str, dict]) -> str:
     :return: formatted string of joined arguments,  or empty string if none
     """
 
+    # for the constructor properties, we need to make sure to first put the required arguments,
+    # followed by the optional ones, that have a default.
     sorted_property_names = [p for p, m in property_meta.items() if not m['optional']] + \
                             [p for p, m in property_meta.items() if m['optional']]
-
     params = []
     for property_name in sorted_property_names:
         meta = property_meta[property_name]
@@ -163,6 +164,7 @@ def get_args_string(property_meta: Dict[str, dict]) -> str:
         if 'optional' in meta and meta['optional'] is True:
             param += f' = None'
         params.append(param)
+    # at the end we add a catch-all to propagate additional args to the parent constructor
     params.append('**kwargs: Optional[Any]')
 
     if len(params) > 3:
