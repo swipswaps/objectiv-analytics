@@ -164,6 +164,8 @@ def get_config_postgres() -> Optional[PostgresConfig]:
 def get_config_output_snowplow() -> Optional[SnowplowConfig]:
     if _SP_GCP_PROJECT is None:
         return None
+
+    print('Snowplow config enabled')
     return SnowplowConfig(
         schema_collector_payload=_SP_SCHEMA_COLLECTOR_PAYLOAD,
         schema_contexts=_SP_SCHEMA_CONTEXTS,
