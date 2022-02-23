@@ -152,9 +152,8 @@ def get_args_string(property_meta: Dict[str, dict]) -> str:
     :return: formatted string of joined arguments,  or empty string if none
     """
 
-    property_names = {p: m['optional'] for p, m in property_meta.items()}
-    # first add required properties (without defaults), followed by optionals
-    sorted_property_names = [p for p, o in property_names.items() if not o] + [p for p, o in property_names.items() if o]
+    sorted_property_names = [p for p, m in property_meta.items() if not m['optional']] + \
+                            [p for p, m in property_meta.items() if m['optional']]
 
     params = []
     for property_name in sorted_property_names:
