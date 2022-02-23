@@ -211,7 +211,7 @@ class DescribeOperation:
         percentile_df = percentile_df.reset_index(drop=True)
 
         percentile_df = percentile_df.quantile(q=list(self.percentiles))
-        has_q_index = 'q' in percentile_df.all_series
+        has_q_index = 'quantile' in percentile_df.all_series
 
         columns_rename = {
             col: col.replace('_quantile', '')
@@ -220,10 +220,10 @@ class DescribeOperation:
         percentile_df = percentile_df.reset_index(drop=not has_q_index)
 
         if not has_q_index:
-            percentile_df['q'] = self.percentiles[0]
+            percentile_df['quantile'] = self.percentiles[0]
 
         # original column names should remain
-        columns_rename['q'] = self.STAT_SERIES_NAME
+        columns_rename['quantile'] = self.STAT_SERIES_NAME
         percentile_df = percentile_df.rename(columns=columns_rename)
         current_position = len(SupportedStats)
 
