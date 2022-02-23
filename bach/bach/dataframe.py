@@ -10,6 +10,7 @@ from typing import (
     cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
 )
 from uuid import UUID
+from uuid import UUID
 
 import numpy
 import pandas
@@ -2653,9 +2654,11 @@ class DataFrame:
         :return: a new dataframe with filled missing values.
 
         .. note::
-            sort_by is required if method is specified and the DataFrame has no order_by. If sort_by is
-            non-deterministic, this operation might yield different results after performing other operations
-            over the resultant dataframe.
+            sort_by is required if method is specified and the DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
         """
         df = self.copy()
         if method and value is not None:
