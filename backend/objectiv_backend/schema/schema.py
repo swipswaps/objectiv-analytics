@@ -175,6 +175,61 @@ class SessionContext(AbstractGlobalContext):
             self, hit_number=hit_number, id=id, **kwargs)
 
 
+class MarketingContext(AbstractGlobalContext):
+    """
+        a context that captures marketing channel info, so users can do attribution, campaign
+    effectiveness and other models
+
+        Attributes:
+        source (str):
+                Identifies the advertiser, site, publication, etc
+        medium (str):
+                Advertising or marketing medium: cpc, banner, email newsletter, etc
+        campaign (str):
+                Individual campaign name, slogan, promo code, etc
+        term (str):
+                Search keywords
+        content (str):
+                Used to differentiate similar content, or links within the same ad
+        id (str):
+                A unique string identifier to be combined with the Context Type (`_type`)
+                for Context instance uniqueness.
+    """
+    _type = 'MarketingContext'
+
+    def __init__(self,
+                 source: str,
+                 medium: str,
+                 campaign: str,
+                 id: str,
+                 term: str = None,
+                 content: str = None,
+                 **kwargs: Optional[Any]):
+        """
+        :param source: 
+            Identifies the advertiser, site, publication, etc
+        :param medium: 
+            Advertising or marketing medium: cpc, banner, email newsletter, etc
+        :param campaign: 
+            Individual campaign name, slogan, promo code, etc
+        :param term: 
+            Search keywords
+        :param content: 
+            Used to differentiate similar content, or links within the same ad
+        :param id: 
+            A unique string identifier to be combined with the Context Type (`_type`)
+            for Context instance uniqueness.
+        """
+        AbstractGlobalContext.__init__(self,
+                                       source=source,
+                                       medium=medium,
+                                       campaign=campaign,
+                                       term=term,
+                                       content=content,
+                                       id=id,
+                                       **kwargs)
+
+
 class AbstractLocationContext(AbstractContext, ABC):
     """
         AbstractLocationContext are the abstract parents of all Location Contexts. Location Contexts are meant to describe where an event originated from in the visual UI.
@@ -1213,6 +1268,8 @@ def make_context(_type: str, **kwargs) -> AbstractContext:
         return PathContext(**kwargs)
     if _type == "SessionContext":
         return SessionContext(**kwargs)
+    if _type == "MarketingContext":
+        return MarketingContext(**kwargs)
     if _type == "AbstractLocationContext":
         return AbstractLocationContext(**kwargs)
     if _type == "InputContext":
