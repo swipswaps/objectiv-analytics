@@ -376,39 +376,57 @@ class DataFrame:
         return {x[0]: get_dtype_from_db_engine_dtype(engine, x[1]) for x in res.fetchall()}
 
     @classmethod
-    def from_table(cls, engine: Engine, table_name: str, index: List[str]) -> 'DataFrame':
-        """
-        Instantiate a new DataFrame based on the content of an existing table in the database.
-
-        This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
-
-        :param engine: an sqlalchemy engine for the database.
-        :param table_name: the table name that contains the data to instantiate as DataFrame.
-        :param index: list of column names that make up the index. At least one column needs to be
-            selected for the index.
-        :returns: A DataFrame based on a sql table.
-
-        .. note::
-            In order to create this temporary table the source data is queried.
-        """
-        # todo: why is an index mandatory if you can reset it later?
-        from bach.dialect_bq import dtype_structure
+    def _get_dtypes_from_table(cls, engine: Engine, table_name: str) -> Dict[str, str]:
         sql = f"""
             select column_name, data_type
             from INFORMATION_SCHEMA.COLUMNS
             where table_name = '{table_name}'
             order by ordinal_position;
         """
-        print(sql)
-
         with engine.connect() as conn:
             sql = escape_parameter_characters(conn, sql)
             res = conn.execute(sql)
             rows = res.fetchall()
-            print()
-            print(rows)
-            print()
-            dtypes = {x[0]: get_dtype_from_db_engine_dtype(engine, dtype_structure(x[1])) for x in rows}
+        # todo: do this nicely
+        if engine.name == 'postgresql':
+            return {x[0]: get_dtype_from_db_engine_dtype(engine, x[1]) for x in res.fetchall()}
+        if engine.name == 'bigquery':
+            from bach.dialect_bq import dtype_structure
+            return {x[0]: get_dtype_from_db_engine_dtype(engine, dtype_structure(x[1])) for x in rows}
+        raise ValueError(f'engine "{engine.name}" not supported.')
+
+
+    @classmethod
+    def from_table(
+            cls,
+            engine: Engine,
+            table_name: str,
+            index: List[str],
+            all_dtypes: Optional[Dict[str, str]] = None
+    ) -> 'DataFrame':
+        """
+        Instantiate a new DataFrame based on the content of an existing table in the database.
+
+        If all_dtypes is not specified, the column dtypes are queried from the databases's information
+        schema.
+
+        :param engine: an sqlalchemy engine for the database.
+        :param table_name: the table name that contains the data to instantiate as DataFrame.
+        :param index: list of column names that make up the index. At least one column needs to be
+            selected for the index.
+        :param all_dtypes: Optional. Mapping from column name to dtype. Must contain all columns, including
+            index columns.
+        :returns: A DataFrame based on a sql table.
+
+        .. note::
+            If all_dtypes is not set, then this will query the database.
+        """
+        # todo: why is an index mandatory if you can reset it later?
+        if all_dtypes is not None:
+            # todo: normalize dtypes, e.g. 'float' -> 'float64'
+            dtypes = all_dtypes
+        else:
+            dtypes = cls._get_dtypes_from_table(engine=engine, table_name=table_name)
 
         index_dtypes = {k: dtypes[k] for k in index}
         series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}

@@ -66,23 +66,9 @@ def from_pandas_store_table(engine: Engine,
     conn.close()
 
     # Todo, this should use from_table from here on.
-    columns = tuple(index_dtypes.keys()) + tuple(dtypes.keys())
-    model_builder = CustomSqlModelBuilder(sql='select * from {table_name}', name=table_name)
-    sql_model = model_builder(table_name=quote_identifier(engine, table_name))
-    bach_model = BachSqlModel.from_sql_model(sql_model, columns=columns)
-
-    # Should this also use _df_or_series?
-    from bach.savepoints import Savepoints
-    return DataFrame.get_instance(
-        engine=engine,
-        base_node=bach_model,
-        index_dtypes=index_dtypes,
-        dtypes=dtypes,
-        group_by=None,
-        order_by=[],
-        savepoints=Savepoints(),
-        variables={}
-    )
+    index = list(index_dtypes.keys())
+    all_dtypes = {**index_dtypes, **dtypes}
+    return DataFrame.from_table(engine=engine, table_name=table_name, index=index, all_dtypes=all_dtypes)
 
 
 def from_pandas_ephemeral(
