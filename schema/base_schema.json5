@@ -217,12 +217,12 @@
           "type": "string"
         },
         "term": {
-          "description": "Search keywords",
+          "description": "[Optional] Search keywords",
           "type": "string",
           "optional": true
         },
         "content": {
-          "description": "Used to differentiate similar content, or links within the same ad",
+          "description": "[Optional] Used to differentiate similar content, or links within the same ad",
           "type": "string",
           "optional": true
         }

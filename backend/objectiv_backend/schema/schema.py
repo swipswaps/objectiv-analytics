@@ -188,9 +188,9 @@ class MarketingContext(AbstractGlobalContext):
         campaign (str):
                 Individual campaign name, slogan, promo code, etc
         term (str):
-                Search keywords
+                [Optional] Search keywords
         content (str):
-                Used to differentiate similar content, or links within the same ad
+                [Optional] Used to differentiate similar content, or links within the same ad
         id (str):
                 A unique string identifier to be combined with the Context Type (`_type`)
                 for Context instance uniqueness.
@@ -213,9 +213,9 @@ class MarketingContext(AbstractGlobalContext):
         :param campaign: 
             Individual campaign name, slogan, promo code, etc
         :param term: 
-            Search keywords
+            [Optional] Search keywords
         :param content: 
-            Used to differentiate similar content, or links within the same ad
+            [Optional] Used to differentiate similar content, or links within the same ad
         :param id: 
             A unique string identifier to be combined with the Context Type (`_type`)
             for Context instance uniqueness.

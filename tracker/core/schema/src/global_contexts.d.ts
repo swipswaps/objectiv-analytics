@@ -111,12 +111,12 @@ export interface MarketingContext extends AbstractGlobalContext {
   campaign: string;
 
   /**
-   * Search keywords
+   * [Optional] Search keywords
    */
   term: string | null;
 
   /**
-   * Used to differentiate similar content, or links within the same ad
+   * [Optional] Used to differentiate similar content, or links within the same ad
    */
   content: string | null;
 }
