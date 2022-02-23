@@ -10,7 +10,6 @@ from typing import (
     cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
 )
 from uuid import UUID
-from uuid import UUID
 
 import numpy
 import pandas
@@ -2699,6 +2698,10 @@ class DataFrame:
 
         .. note::
             sort_by is required if DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
         """
         from bach.partitioning import Window, WindowFrameMode
         from bach.series.series_numeric import SeriesInt64
@@ -2761,6 +2764,10 @@ class DataFrame:
 
         .. note::
             sort_by is required if DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
         """
         df = self.copy()
 
