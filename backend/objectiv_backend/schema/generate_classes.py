@@ -152,12 +152,25 @@ def get_args_string(property_meta: Dict[str, dict]) -> str:
     :return: formatted string of joined arguments,  or empty string if none
     """
 
-    # add **kwargs to parameters, to allow for "Extra parameters" in call to constructor
-    args = {p: m['type'] for p, m in property_meta.items()}
-    args['**kwargs'] = 'Optional[Any]'
-    params = [f'{p}: {t}' for p, t in args.items()]
+    #args = {p: m['type'] for p, m in property_meta.items()}
 
-    if len(args) > 3:
+    # add **kwargs to parameters, to allow for "Extra parameters" in call to constructor
+    #args['**kwargs'] = 'Optional[Any]'
+    #params = [f'{p}: {t}' for p, t in args.items()]
+
+    property_names = {p: m['optional'] for p, m in property_meta.items()}
+    sorted_property_names = [p for p, o in property_names.items() if not o] + [p for p, o in property_names.items() if o]
+
+    params = []
+    for property_name in sorted_property_names:
+        meta = property_meta[property_name]
+        param = f"{property_name}: {meta['type']}"
+        if 'optional' in meta and meta['optional'] is True:
+            param += f' = None'
+        params.append(param)
+    params.append('**kwargs: Optional[Any]')
+
+    if len(params) > 3:
         # if the args don't fit on 1 line, we break them over multiple lines with 17 spaces of indentation
         # so the line up nicely in the constructor
         args_string = ',\n' + \
@@ -251,7 +264,8 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
         # be sure to strip the description strings, as they mess with alignment otherwise
         property_meta[property_name] = {
             'type': get_type(property_description),
-            'description': '\n'.join([line.strip() for line in property_description["description"].split('\n')])
+            'description': '\n'.join([line.strip() for line in property_description["description"].split('\n')]),
+            'optional': property_description.get('optional', False)
         }
 
     # get object/class description from schema, and clean up some white space
