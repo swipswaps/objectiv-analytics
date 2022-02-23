@@ -1,5 +1,7 @@
+"""
+Copyright 2022 Objectiv B.V.
+"""
 import datetime
-
 import numpy as np
 import pandas as pd
 
@@ -100,7 +102,7 @@ def test_describe_datetime() -> None:
         data=[
             [np.datetime64("2000-01-01")], [np.datetime64("2010-01-01")], [np.datetime64("2010-01-01")],
         ],
-        columns=['dt_column'],
+        columns=['column'],
     )
     df = get_from_df(table='describe_table', df=pdf)
 
@@ -115,7 +117,59 @@ def test_describe_datetime() -> None:
             ['nunique', '2'],
             ['mode', '2010-01-01 00:00:00'],
         ],
-        columns=['__stat', 'dt_column'],
+        columns=['__stat', 'column'],
+    )
+    pd.testing.assert_frame_equal(expected_df, result.to_pandas())
+
+
+def test_describe_date() -> None:
+    pdf = pd.DataFrame(
+        data=[
+            [np.datetime64("2000-01-01")], [np.datetime64("2010-01-01")], [np.datetime64("2010-01-01")],
+        ],
+        columns=['column'],
+    )
+    df = get_from_df(table='describe_table', df=pdf)
+    df['column'] = df['column'].astype('date')
+
+    result = df.describe()
+    result = result.reset_index(drop=False)
+
+    expected_df = pd.DataFrame(
+        data=[
+            ['count', '3'],
+            ['min', '2000-01-01'],
+            ['max', '2010-01-01'],
+            ['nunique', '2'],
+            ['mode', '2010-01-01'],
+        ],
+        columns=['__stat', 'column'],
+    )
+    pd.testing.assert_frame_equal(expected_df, result.to_pandas())
+
+
+def test_describe_time() -> None:
+    pdf = pd.DataFrame(
+        data=[
+            ["11:00:01"], ["11:00:01"], ["13:37"],
+        ],
+        columns=['column'],
+    )
+    df = get_from_df(table='describe_table', df=pdf)
+    df['column'] = df['column'].astype('time')
+
+    result = df.describe()
+    result = result.reset_index(drop=False)
+
+    expected_df = pd.DataFrame(
+        data=[
+            ['count', '3'],
+            ['min', '11:00:01'],
+            ['max', '13:37:00'],
+            ['nunique', '2'],
+            ['mode', '11:00:01'],
+        ],
+        columns=['__stat', 'column'],
     )
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())
 
@@ -125,7 +179,7 @@ def test_describe_boolean() -> None:
         data=[
             [True], [False], [True],
         ],
-        columns=['dt_column'],
+        columns=['column'],
     )
     df = get_from_df(table='describe_table', df=pdf)
 
@@ -140,6 +194,33 @@ def test_describe_boolean() -> None:
             ['nunique', '2'],
             ['mode', 'true'],
         ],
-        columns=['__stat', 'dt_column'],
+        columns=['__stat', 'column'],
+    )
+    pd.testing.assert_frame_equal(expected_df, result.to_pandas())
+
+
+def test_describe_json() -> None:
+    pdf = pd.DataFrame(
+        data=[
+            ['"a string"'],
+            ['"other string"'],
+            ['{"key": "value", "another key": "value"}'],
+            ['"a string"'],
+        ],
+        columns=['column'],
+    )
+    df = get_from_df(table='describe_table', df=pdf)
+    df['column'] = df['column'].astype('json')
+
+    result = df.describe()
+    result = result.reset_index(drop=False)
+
+    expected_df = pd.DataFrame(
+        data=[
+            ['count', '4'],
+            ['nunique', '3'],
+            ['mode', '"a string"'],
+        ],
+        columns=['__stat', 'column'],
     )
     pd.testing.assert_frame_equal(expected_df, result.to_pandas())

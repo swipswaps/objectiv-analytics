@@ -12,13 +12,13 @@ Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
 ## Getting Started
 
-Follow the easy steps in our [Quickstart Guide](https://www.objectiv.io/docs/quickstart-guide) to locally run the full Objectiv pipeline dockerized.
+Follow the easy steps in our [Quickstart Guide](https://objectiv.io/docs/home/quickstart-guide) to locally run the full Objectiv pipeline dockerized.
 
 ## Useful Resources
 
 * [Objectiv Docs](https://www.objectiv.io/docs) - Objectiv's official documentation.
 * [Objectiv on Slack](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) - Get help & join the discussion on where to take Objectiv next.
-* [Contribution Guide](https://www.objectiv.io/docs/the-project/contribute) - Report bugs, request features and contribution information.
+* [Contribution Guide](https://www.objectiv.io/docs/home/the-project/contribute) - Report bugs, request features and contribution information.
 
 
 This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](LICENSE.md) for details. Unless otherwise noted, all files © 2021 Objectiv B.V.
