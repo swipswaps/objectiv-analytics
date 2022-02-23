@@ -3,11 +3,12 @@ Copyright 2021 Objectiv B.V.
 """
 from decimal import Decimal
 
+import pandas as pd
 import pytest
 
 from bach import DataFrame
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_bt_with_food_data, \
-    assert_equals_data, get_bt_with_railway_data
+    assert_equals_data, get_bt_with_railway_data, get_from_df
 
 
 def test_merge_basic():

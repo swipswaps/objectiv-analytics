@@ -487,10 +487,10 @@ class Series(ABC):
         return Expression.construct_expr_as_name(expression, self.name)
 
     def _get_supported(
-            self,
-            operation_name: str,
-            supported_dtypes: Tuple[str, ...],
-            other: 'Series'
+        self,
+        operation_name: str,
+        supported_dtypes: Tuple[str, ...],
+        other: 'Series'
     ) -> Tuple['Series', 'Series']:
         """
         Check whether `other` is supported for this operation, and if not, possibly do something
@@ -506,12 +506,22 @@ class Series(ABC):
                 else:
                     # align base nodes and group by
                     df = self.to_frame()
-                    # todo now using private method from DataFrame. This will change to use merge, once this
-                    #  type of 'index merge' works with that method.
-                    df._index_merge(key='__other', value=other, how='outer')
-                    return cast('Series', df[self.name]), cast('Series', df['__other'])
+                    df = df.merge(
+                        other,
+                        left_index=True,
+                        right_index=True,
+                        how='outer',
+                        suffixes=('', '__other'),
+                    )
                     # todo pandas: if name of both series are same, use that name of result. we always use
                     #  name of self
+                    caller_series = df.all_series[self.name]
+                    other_series = (
+                        df.all_series[other.name]
+                        if self.name != other.name else df.all_series[f'{self.name}__other']
+                    )
+
+                    return caller_series, other_series
 
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
