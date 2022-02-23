@@ -276,18 +276,9 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         """
         gets the final data series result
         """
-        all_names = []
-        dtypes: Set[str] = set()
+        dtypes: Set[str] = set(series.dtype for series in self.objects)
 
-        for series in self.objects:
-            if not isinstance(series, Series):
-                continue
-            all_names.append(series.name)
-            dtypes.add(series.dtype)
-
-        main_series = self.objects[0]\
-            .copy_override_dtype(dtype=_get_merged_series_dtype(dtypes))\
-            .copy_override(name='_'.join(all_names))
+        main_series = self.objects[0].copy_override_dtype(dtype=_get_merged_series_dtype(dtypes))
         return self._get_result_series([main_series])
 
     def _join_series_expressions(self, obj: Series) -> Expression:
