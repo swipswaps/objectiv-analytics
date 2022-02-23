@@ -142,13 +142,10 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
             if isinstance(obj, Series):
                 raise Exception('Cannot concat Series to DataFrame')
 
-            df = obj.copy()
-            if self.ignore_index:
-                df.reset_index(drop=True, inplace=True)
-
+            df = obj.copy() if not self.ignore_index else obj.reset_index(drop=True)
             # need to materialize in order to avoid further problems
             if df.group_by:
-                df.materialize(inplace=True)
+                df = df.materialize()
 
             dfs.append(df)
 
@@ -267,7 +264,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
 
             df = obj.to_frame()
             if df.group_by:
-                df.materialize(inplace=True)
+                df = df.materialize()
             series.append(df.all_series[obj.name])
 
         return series

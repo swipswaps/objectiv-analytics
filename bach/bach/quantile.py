@@ -43,7 +43,7 @@ def calculate_quantiles(
         quantile_df['quantile'] = agg_result.copy_override(
             expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
         )
-        quantile_df.set_index('quantile', inplace=True)
+        quantile_df = quantile_df.set_index('quantile')
         quantile_results.append(quantile_df.all_series[series.name])
 
     return SeriesConcatOperation(

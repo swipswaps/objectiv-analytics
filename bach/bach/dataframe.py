@@ -1021,21 +1021,23 @@ class DataFrame:
         else:
             raise NotImplementedError(f'how "{how}" not supported')
 
-        df.set_index(new_index, inplace=True)
+        df = df.set_index(new_index)
         if key in self.data_columns:
             df[key] = df[key + '__remove']
-            df.drop(columns=[key + '__remove'], inplace=True)
-        df.drop(columns=[value_index_name + '__index'], inplace=True, errors='ignore')
+            df = df.drop(columns=[key + '__remove'])
+        df = df.drop(columns=[value_index_name + '__index'], errors='ignore')
 
         self._update_self_from_df(df)
 
-    def rename(self, mapper: Union[Dict[str, str], Callable[[str], str]] = None,
-               index: Union[Dict[str, str], Callable[[str], str]] = None,
-               columns: Union[Dict[str, str], Callable[[str], str]] = None,
-               axis: int = 0,
-               inplace: bool = False,
-               level: int = None,
-               errors: str = 'ignore') -> Optional['DataFrame']:
+    def rename(
+        self,
+        mapper: Union[Dict[str, str], Callable[[str], str]] = None,
+        index: Union[Dict[str, str], Callable[[str], str]] = None,
+        columns: Union[Dict[str, str], Callable[[str], str]] = None,
+        axis: int = 0,
+        level: int = None,
+        errors: str = 'ignore',
+    ) -> 'DataFrame':
         """
         Rename columns.
 
@@ -1050,12 +1052,11 @@ class DataFrame:
             and returns the new one. The new column names must not clash with other column names in either
             `self.`:py:attr:`data` or `self.`:py:attr:`index`, after renaming is complete.
         :param axis: ``axis=1`` is supported, rest is not.
-        :param inplace: update the current DataFrame or return a new DataFrame.
         :param level: not supported
         :param errors: Either 'ignore' or 'raise'. When set to 'ignore' KeyErrors about non-existing
             column names in `columns` or `mapper` are ignored. Errors thrown in the mapper function or
             about invalid target column names are not suppressed.
-        :returns: DataFrame with the renamed axis labels or None if ``inplace=True``.
+        :returns: DataFrame with the renamed axis labels.
 
         .. note::
             The copy parameter is not supported since it makes very little sense for db backed series.
@@ -1070,10 +1071,7 @@ class DataFrame:
         if mapper is not None:
             columns = mapper
 
-        if inplace:
-            df = self
-        else:
-            df = self.copy_override()
+        df = self.copy_override()
 
         if callable(columns):
             columns = {source: columns(source) for source in df.data_columns}
@@ -1097,14 +1095,13 @@ class DataFrame:
                 series = series.copy_override(name=new_name)
             new_data[new_name] = series
         df._data = new_data
-        return None if inplace else df
+        return df
 
     def reset_index(
         self,
         level: Optional[Union[str, Sequence[str]]] = None,
         drop: bool = False,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Drops the current index.
 
@@ -1114,13 +1111,11 @@ class DataFrame:
         :param level: Removes given levels from index. Removes all levels by default
         :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
             is removed.
-        :param inplace: update the current DataFrame or return a new DataFrame.
-        :returns: DataFrame with the index dropped or None if ``inplace=True``.
+        :returns: DataFrame with the index dropped.
         """
-        df = self if inplace else self.copy_override()
+        df = self.copy()
         if self._group_by:
-            # materialize, but raise if inplace is required.
-            df = df.materialize(node_name='reset_index', inplace=inplace)
+            df = df.materialize(node_name='reset_index')
 
         new_index = {}
         series = df._data if drop else df.all_series
@@ -1139,15 +1134,14 @@ class DataFrame:
 
         df._data = {n: s.copy_override(index={}, index_sorting=[]) for n, s in series.items()}
         df._index = new_index
-        return None if inplace else df
+        return df
 
     def set_index(
         self,
         keys: Union[str, 'Series', List[Union[str, 'Series']]],
         drop: bool = True,
         append: bool = False,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Set this dataframe's index to the the index given in keys
 
@@ -1155,15 +1149,13 @@ class DataFrame:
             Series are passed, they should have the same base node as the DataFrame they are set on.
         :param drop: delete columns to be used as the new index.
         :param append: whether to append to the existing index or replace.
-        :param inplace: update the current DataFrame or return a new DataFrame. This is not always supported
-            and will raise if it is not.
-        :returns: a DataFrame with the new index or None if ``inplace=True``.
+        :returns: a DataFrame with the new index.
         """
         from bach.series import Series
 
-        df = self if inplace else self.copy_override()
+        df = self.copy()
         if self._group_by:
-            df = df.materialize(node_name='groupby_setindex', inplace=inplace)
+            df = df.materialize(node_name='groupby_setindex')
 
         # build the new index, appending if necessary
         new_index = {} if not append else copy(df._index)
@@ -1191,7 +1183,7 @@ class DataFrame:
 
         df._index = new_index
         df._data = new_series
-        return None if inplace else df
+        return df
 
     def __delitem__(self, key: str):
         """
@@ -1203,13 +1195,14 @@ class DataFrame:
         else:
             raise TypeError(f'Unsupported type {type(key)}')
 
-    def drop(self,
-             labels: List[str] = None,
-             index: List[str] = None,
-             columns: List[str] = None,
-             level: int = None,
-             inplace: bool = False,
-             errors: str = 'raise') -> Optional['DataFrame']:
+    def drop(
+        self,
+        labels: List[str] = None,
+        index: List[str] = None,
+        columns: List[str] = None,
+        level: int = None,
+        errors: str = 'raise',
+    ) -> 'DataFrame':
         """
         Drop columns from the DataFrame
 
@@ -1217,9 +1210,8 @@ class DataFrame:
         :param index: not supported
         :param columns: the list of columns to drop.
         :param level: not supported
-        :param inplace: update the current DataFrame or return a new DataFrame.
         :param errors: 'raise' or 'ignore' missing key errors.
-        :returns: DataFrame without the removed columns or None if ``inplace=True``.
+        :returns: DataFrame without the removed columns.
 
         """
         if labels or index is not None:
@@ -1232,10 +1224,7 @@ class DataFrame:
         if columns is None:
             raise ValueError("columns needs to be a list of strings.")
 
-        if inplace:
-            df = self
-        else:
-            df = self.copy_override()
+        df = self.copy_override()
 
         try:
             for key in columns:
@@ -1244,7 +1233,7 @@ class DataFrame:
             if errors == "raise":
                 raise e
 
-        return None if inplace else df
+        return df
 
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'DataFrame':
         """
@@ -1558,8 +1547,7 @@ class DataFrame:
         self,
         level: Optional[Level] = None,
         ascending: Union[bool, List[bool]] = True,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Sort dataframe by index levels.
 
@@ -1567,17 +1555,11 @@ class DataFrame:
             If not specified, all index series are used
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `level` must also be a list and ``len(ascending) == len(level)``.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
-        :returns: a new DataFrame with the specified ordering if ``inplace=False``,
+        :returns: a new DataFrame with the specified ordering,
          otherwise it updates the original and returns None.
         """
         sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
         df = self.sort_values(by=sort_by, ascending=ascending)
-
-        if inplace:
-            self._update_self_from_df(df)
-            return None
-
         return df
 
     def _get_indexes_by_level(self, level: Level) -> List[str]:
@@ -2417,11 +2399,10 @@ class DataFrame:
         self,
         subset: Optional[Union[str, Sequence[str]]] = None,
         keep: Union[str, bool] = 'first',
-        inplace: bool = False,
         ignore_index: bool = False,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
         ascending: Union[bool, List[bool]] = True,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
 
@@ -2435,7 +2416,6 @@ class DataFrame:
             * False: drops all duplicates
 
             If no value is provided, first occurrences will be kept by default.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param ignore_index: if true, drops indexes of the result
         :param sort_by: series label or sequence of labels used to sort values.
             Sorting of values is needed since result might be non-deterministic
@@ -2445,7 +2425,7 @@ class DataFrame:
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `by` must also be a list and ``len(ascending) == len(by)``.
 
-        :return: a new dataframe with dropped duplicates if inplace = False, otherwise None.
+        :return: a new dataframe with dropped duplicates.
         """
         if keep not in ('first', 'last', False):
             raise ValueError('keep must be either "first", "last" or False.')
@@ -2453,9 +2433,7 @@ class DataFrame:
         subset = self._get_parsed_subset_of_data_columns(subset)
         sort_by = self._get_parsed_subset_of_data_columns(sort_by)
 
-        df = self.copy()
-        if ignore_index:
-            df.reset_index(drop=True, inplace=True)
+        df = self.copy() if not ignore_index else self.reset_index(drop=True)
 
         dedup_on = list(subset or self.data_columns)
         dedup_data = [name for name in df.all_series if name not in dedup_on]
@@ -2467,14 +2445,14 @@ class DataFrame:
         # dedup_data contains index series if ignore_index = False
         # in this case we should append those as data_columns
         if dedup_data and not ignore_index:
-            df.reset_index(drop=False, inplace=True)
+            df = df.reset_index(drop=False)
 
         # drop all duplicates
         if keep is False:
             freq_df = df[dedup_on]
             freq_df['freq'] = 1
             freq_df = freq_df.groupby(by=dedup_on).sum()
-            freq_df.reset_index(drop=False, inplace=True)
+            freq_df = freq_df.reset_index(drop=False)
 
             df = df.merge(freq_df, on=dedup_on)
             df = df[df.freq_sum == 1][dedup_on + dedup_data]
@@ -2498,14 +2476,10 @@ class DataFrame:
 
         # we need to just apply distinct for 'first' and 'last'.
         if keep:
-            df.materialize(distinct=True, inplace=True)
+            df = df.materialize(distinct=True,)
 
         df = df if ignore_index else df.set_index(keys=self.index_columns)
-        if not inplace:
-            return df
-
-        self._update_self_from_df(df)
-        return None
+        return df
 
     def value_counts(
         self,
@@ -2546,10 +2520,10 @@ class DataFrame:
         df = df.groupby(by=list(subset)).sum()
 
         if normalize:
-            df.materialize(inplace=True)
+            df = df.materialize()
             df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
 
-        df.rename(columns={'value_counts_sum': 'value_counts'}, inplace=True)
+        df = df.rename(columns={'value_counts_sum': 'value_counts'})
 
         if sort:
             return df._data['value_counts'].sort_values(ascending=ascending)
@@ -2563,8 +2537,7 @@ class DataFrame:
         how: str = 'any',
         thresh: Optional[int] = None,
         subset: Optional[Union[str, Sequence[str]]] = None,
-        inplace: bool = False
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Removes rows with missing values (NaN, None and SQL NULL).
 
@@ -2578,9 +2551,8 @@ class DataFrame:
             If subset is None, all DataFrame's series labels will be used.
             In case subset is an empty list, a copy from the DataFrame will
             be returned.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
-        :return: a new dataframe with dropped rows if inplace = False, otherwise None.
+        :return: a new dataframe with dropped rows.
         """
         if axis:
             raise ValueError('only axis = 0 is supported.')
@@ -2617,10 +2589,6 @@ class DataFrame:
 
         dropna_df = self[~drop_row_series]
         assert isinstance(dropna_df, DataFrame)
-
-        if inplace:
-            self._update_self_from_df(dropna_df)
-            return None
 
         return dropna_df
 
