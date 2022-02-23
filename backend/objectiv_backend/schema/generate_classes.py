@@ -152,19 +152,15 @@ def get_args_string(property_meta: Dict[str, dict]) -> str:
     :return: formatted string of joined arguments,  or empty string if none
     """
 
-    #args = {p: m['type'] for p, m in property_meta.items()}
-
-    # add **kwargs to parameters, to allow for "Extra parameters" in call to constructor
-    #args['**kwargs'] = 'Optional[Any]'
-    #params = [f'{p}: {t}' for p, t in args.items()]
-
     property_names = {p: m['optional'] for p, m in property_meta.items()}
+    # first add required properties (without defaults), followed by optionals
     sorted_property_names = [p for p, o in property_names.items() if not o] + [p for p, o in property_names.items() if o]
 
     params = []
     for property_name in sorted_property_names:
         meta = property_meta[property_name]
         param = f"{property_name}: {meta['type']}"
+        # optionals get a default of None, this translates to null in json
         if 'optional' in meta and meta['optional'] is True:
             param += f' = None'
         params.append(param)
