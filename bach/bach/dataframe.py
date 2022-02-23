@@ -3,6 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import warnings
 from copy import copy
+from datetime import date, datetime, time
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
@@ -45,6 +46,7 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - dict of axis labels -> functions, function names or list of such.
 
 Level = Union[int, List[int], str, List[str]]
+Scalar = Union[int, float, str, bool, date, datetime, time, UUID]
 
 
 class SortColumn(NamedTuple):
@@ -2591,6 +2593,162 @@ class DataFrame:
         assert isinstance(dropna_df, DataFrame)
 
         return dropna_df
+
+    def fillna(
+        self,
+        *,
+        value: Union[Union['Series', Scalar], Dict[str, Union[Scalar, 'Series']]] = None,
+        method: Optional[str] = None,
+        axis: int = 0,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> Optional['DataFrame']:
+        """
+        Fill any NULL value using a method or with a given value.
+
+        :param value: A scalar/series to fill all NULL values on each series
+            or a dictionary specifying which scalar/series to use for each series.
+        :param method: Method to use for filling NULL values on all DataFrame series. Supported values:
+           - "ffill"/"pad": Fill missing values by propagating the last non-nullable value in the series.
+           - "bfill"/"backfill": Fill missing values with the next non-nullable value in the series.
+        :param axis: only ``axis=0`` is supported.
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
+
+        :return: a new dataframe with filled missing values.
+
+        .. note::
+            sort_by is required if method is specified and the DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
+        """
+        df = self.copy()
+        if method and value is not None:
+            raise ValueError('cannot specify both "method" and "value".')
+
+        if method and method not in ('ffill', 'pad', 'bfill', 'backfill'):
+            raise ValueError(f'"{method}" is not a valid method.')
+
+        if method in ('ffill', 'pad'):
+            df = df.ffill(sort_by=sort_by, ascending=ascending)
+
+        elif method in ('bfill', 'backfill'):
+            df = df.bfill(sort_by=sort_by, ascending=ascending)
+
+        if value is not None:
+            series_to_fill = list(value.keys()) if isinstance(value, dict) else self.data_columns
+            for s in series_to_fill:
+                fill_with = value[s] if isinstance(value, dict) else value
+                df[s] = df.all_series[s].fillna(fill_with)
+
+        return df
+
+    def ffill(
+        self,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> 'DataFrame':
+        """
+        Fill missing values by propagating the last non-nullable value in each series.
+
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
+
+        :return: a new dataframe with filled missing values.
+
+        .. note::
+            sort_by is required if DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
+        """
+        from bach.partitioning import Window, WindowFrameMode
+        from bach.series.series_numeric import SeriesInt64
+
+        df = self.copy()
+
+        if sort_by:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        if not sort_by and not df.order_by:
+            raise Exception('dataframe must be sorted in order to apply forward or backward fill.')
+
+        # create a partition column for each series to be filled
+        # this column contains the cumulative sum of the total amount of observed non-nullable values
+        # till the current row. Based on these values, NULL records can be grouped by the partition and
+        # be filled with the non-nullable value respective to the partition
+        # Example:
+        # |   A  | __partition_A | filled_A |
+        # |:----:|:-------------:|:--------:|
+        # |   1  |       1       |     1    |
+        # | NULL |       1       |     1    |
+        # | NULL |       1       |     1    |
+        # |   3  |       2       |     3    |
+        # | NULL |       2       |     3    |
+        # |   4  |       3       |     4    |
+        for series_name, series in self._data.items():
+            partition_name = f'__partition_{series.name}'
+            partition_expr = Expression.construct(f'case when {{}} is null then 0 else 1 end', series)
+
+            df[partition_name] = (
+                series.copy_override(expression=partition_expr, name=partition_name)
+                .copy_override_type(SeriesInt64)
+                .sum(partition=Window([], mode=WindowFrameMode.ROWS, order_by=df.order_by))
+            )
+        df.materialize(node_name='fillna_partitioning', inplace=True)
+
+        # fill gaps with the first_value per partition
+        for series_name in self.data_columns:
+            df[series_name] = df.all_series[series_name].window_first_value(
+                window=Window([df.all_series[f'__partition_{series_name}']], order_by=df.order_by),
+            )
+
+        return df.copy_override(series={s: df.all_series[s] for s in self.data_columns})
+
+    def bfill(
+        self,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> 'DataFrame':
+        """
+        Fill missing values by using the next non-nullable value in each series.
+
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
+
+        :return: a new dataframe with filled missing values.
+
+        .. note::
+            sort_by is required if DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
+        """
+        df = self.copy()
+
+        if sort_by:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        main_order_by = copy(df._order_by)
+        # bfill is similar to ffill, the difference is that the order is reversed.
+        reverse_order_by = [
+            SortColumn(expression=ob.expression, asc=not ob.asc)
+            for ob in main_order_by
+        ]
+        return df.copy_override(order_by=reverse_order_by).ffill().copy_override(order_by=main_order_by)
 
     def _get_parsed_subset_of_data_columns(
         self, subset: Optional[Union[str, Sequence[str]]],
