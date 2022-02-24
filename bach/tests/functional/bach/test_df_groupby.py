@@ -594,7 +594,7 @@ def test_groupby_frame_split_recombine():
     assert btg1 == btg2
 
     # recombine from different parent with same grouping
-    btg2.drop(columns=['founding'], inplace=True)
+    btg2 = btg2.drop(columns=['founding'])
     btg2['founding'] = btg1b
     r2 = btg1a.sum()
     assert btg2 == btg1
@@ -632,7 +632,7 @@ def test_groupby_frame_split_recombine_aggregation_applied():
     r1 = inhabitants_sum.to_frame()
     r1['founding_sum'] = group1['founding'].sum()
     r1['founding_mean'] = founding_mean
-    r1.rename(columns={'inhabitants': 'inhabitants_sum'}, inplace=True)
+    r1 = r1.rename(columns={'inhabitants': 'inhabitants_sum'})
     assert r1.base_node == bt.base_node
 
     for r in [founding_inhabitants_sum, r1]:

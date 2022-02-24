@@ -480,8 +480,7 @@ class Series(ABC):
             raise ValueError("index contains empty values, cannot be unstacked")
         name_series = self.name
         remaining_indexes = list(index_dict.keys())
-        df = self.to_frame()
-        df.reset_index(inplace=True)
+        df = self.to_frame().reset_index()
         df = df.groupby(remaining_indexes)
 
         series_dict = {}
@@ -1434,8 +1433,7 @@ class Series(ABC):
         :return: a new series with dropped duplicates
         """
         df = self.to_frame().drop_duplicates(keep=keep)
-        assert isinstance(df, DataFrame)
-        df.materialize(inplace=True)
+        df = df.materialize()
 
         result = df.all_series[self.name]
         return cast(T, result)
@@ -1444,7 +1442,7 @@ class Series(ABC):
         """
         Removes rows with missing values.
 
-        :return: a new series with dropped rows if inplace = False, otherwise None.
+        :return: a new series with dropped rows.
         """
         df = self.to_frame().dropna()
         assert isinstance(df, DataFrame)
@@ -1489,7 +1487,7 @@ class Series(ABC):
 
         assert isinstance(empty_bins_df, DataFrame)
         empty_bins_df['value_counts'] = 0
-        empty_bins_df.set_index(CutOperation.RANGE_SERIES_NAME, inplace=True)
+        empty_bins_df = empty_bins_df.set_index(CutOperation.RANGE_SERIES_NAME)
 
         # append empty bins with count 0, final result must show those ranges
         result = value_counts_result.append(empty_bins_df.all_series['value_counts'])
