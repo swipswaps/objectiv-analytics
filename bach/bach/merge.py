@@ -137,7 +137,7 @@ def _determine_result_columns(
     conflicting = (
         (set(left_df.index) | set(left_df.data)) & (set(right_df.index) | set(right_df.data))
     )
-    # don't add suffixes to on columns
+    # don't add suffixes to conflicted on columns
     # need to consider values from both objects (important when how = How.outer)
     conflicting -= conflicting_on
 
