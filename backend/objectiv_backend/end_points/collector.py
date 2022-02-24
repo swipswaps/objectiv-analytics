@@ -1,10 +1,11 @@
 import json
+import urllib.parse
 from datetime import datetime
 
 import flask
 import time
-
-from typing import List, Dict
+from urllib.parse import urlparse, parse_qs
+from typing import List
 
 from flask import Response, Request
 
@@ -21,7 +22,7 @@ from objectiv_backend.workers.pg_storage import insert_events_into_nok_data
 from objectiv_backend.workers.worker_entry import process_events_entry
 from objectiv_backend.workers.worker_finalize import insert_events_into_data
 
-from objectiv_backend.schema.schema import HttpContext, CookieIdContext
+from objectiv_backend.schema.schema import HttpContext, CookieIdContext, MarketingContext
 
 # Some limits on the inputs we accept
 DATA_MAX_SIZE_BYTES = 1_000_000
@@ -42,8 +43,7 @@ def collect() -> Response:
         return _get_collector_response(error_count=1, event_count=-1, data_error=exc.__str__())
 
     # Do all the enrichment steps that can only be done in this phase
-    add_http_contexts(events)
-    add_cookie_id_contexts(events)
+    add_enriched_contexts(events)
 
     set_time_in_events(events, current_millis, transport_time)
 
@@ -119,12 +119,15 @@ def _get_collector_response(
     return get_json_response(status=200, msg=msg)
 
 
-def add_http_contexts(events: EventDataList):
+def add_enriched_contexts(events: EventDataList):
     """
-    Modify the given list of events: Add or enrich the HttpContext to each event
+    Enrich the list of events
     """
+
+    add_cookie_id_contexts(events)
     for event in events:
         add_http_context_to_event(event=event, request=flask.request)
+        add_marketing_context_to_event(event=event)
 
 
 def add_cookie_id_contexts(events: EventDataList):
@@ -221,6 +224,43 @@ def add_http_context_to_event(event: EventData, request: Request):
         }
 
         add_global_context_to_event(event, HttpContext(**http_context))
+
+
+def add_marketing_context_to_event(event: EventData) -> None:
+
+    path_contexts = get_contexts(event, 'PathContext')
+
+    if not path_contexts:
+        # without a PathContext, we have no query_string
+        return
+    else:
+        path_context = path_contexts[0]
+
+    query_string = urlparse(str(path_context.get('id', ''))).query
+    parsed_qs = parse_qs(query_string)
+
+    # for now we only support utm, but other mappings are possible
+    # all mappings that result in a valid MarketingContext will be added
+    mappings = {
+        'utm': {
+            'source': 'utm_source',
+            'medium': 'utm_medium',
+            'campaign': 'utm_campaign',
+            'term': 'utm_term',
+            'content': 'utm_content'
+        }
+    }
+
+    for mapping_type in mappings:
+        mapping = mappings[mapping_type]
+        marketing_context_fields = {f: str(parsed_qs.get(mf, [''])[0]) for f, mf in mapping.items()}
+        marketing_context_fields['id'] = mapping_type
+
+        try:
+            add_global_context_to_event(event, MarketingContext(**marketing_context_fields))
+        except ValueError:
+            # couldn't create a marketing context for this mapping, no biggie
+            pass
 
 
 def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):
