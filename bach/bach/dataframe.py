@@ -1002,7 +1002,8 @@ class DataFrame:
             raise ValueError('dtypes of indexes should be the same')
 
         # align index names, this way we have all matched indexes in a single series after merge
-        # TODO: replace with value.rename(index={value_index_name: index_name}) when index renaming is supported
+        # TODO: replace with value.rename(index={value_index_name: index_name})
+        #  when index renaming is supported
         aligned_index = {index_name: value.index[value_index_name].copy_override(name=index_name)}
         other = value.copy_override(
             index=aligned_index,
