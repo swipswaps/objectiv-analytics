@@ -362,7 +362,8 @@ class DataFrame:
             self._variables == other._variables
 
     @classmethod
-    def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
+    def _get_dtypes_from_model(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
+        """ Create a temporary database table from model and use it to deduce the model's dtypes. """
         new_node = CustomSqlModelBuilder(sql='select * from {{previous}} limit 0')(previous=node)
         select_statement = to_sql(new_node)
         sql = f"""
@@ -373,69 +374,132 @@ class DataFrame:
             where table_name = 'tmp_table_name'
             order by ordinal_position;
         """
-        with engine.connect() as conn:
-            sql = escape_parameter_characters(conn, sql)
-            res = conn.execute(sql)
-        return {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
+        return cls._get_dtypes_from_information_schema_query(engine=engine, query=sql)
 
     @classmethod
-    def from_table(cls, engine: Engine, table_name: str, index: List[str]) -> 'DataFrame':
+    def _get_dtypes_from_table(cls, engine: Engine, table_name: str) -> Dict[str, str]:
+        """ Query database to get dtypes of the given table. """
+        sql = f"""
+            select column_name, data_type
+            from information_schema.columns
+            where table_name = '{table_name}'
+            order by ordinal_position;
+        """
+        return cls._get_dtypes_from_information_schema_query(engine=engine, query=sql)
+
+    @classmethod
+    def _get_dtypes_from_information_schema_query(cls, engine: Engine, query: str) -> Dict[str, str]:
+        """ Parse information_schema.columns to dtypes. """
+        with engine.connect() as conn:
+            sql = escape_parameter_characters(conn, query)
+            res = conn.execute(sql)
+            rows = res.fetchall()
+        return {x[0]: get_dtype_from_db_dtype(x[1]) for x in rows}
+
+    @classmethod
+    def from_table(
+            cls,
+            engine: Engine,
+            table_name: str,
+            index: List[str],
+            all_dtypes: Optional[Dict[str, str]] = None
+    ) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the content of an existing table in the database.
 
-        This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
+        If all_dtypes is not specified, the column dtypes are queried from the databases's information
+        schema.
 
         :param engine: an sqlalchemy engine for the database.
         :param table_name: the table name that contains the data to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
+        :param all_dtypes: Optional. Mapping from column name to dtype.
+            Must contain all index and data columns.
+            Must be in same order as the columns appear in the the sql-model.
         :returns: A DataFrame based on a sql table.
 
         .. note::
-            In order to create this temporary table the source data is queried.
+            If all_dtypes is not set, then this will query the database.
         """
-        # todo: why is an index mandatory if you can reset it later?
-        # todo: don't create a temporary table, the real table (and its meta data) already exists
-        model = CustomSqlModelBuilder(sql=f'SELECT * FROM {table_name}').instantiate()
-        return cls._from_node(engine, model, index)
+        if all_dtypes is not None:
+            dtypes = all_dtypes
+        else:
+            dtypes = cls._get_dtypes_from_table(engine=engine, table_name=table_name)
+
+        model_builder = CustomSqlModelBuilder(sql=f'SELECT * FROM {table_name}', name='from_table')
+        sql_model = model_builder()
+        return cls._from_node(
+            engine=engine,
+            model=sql_model,
+            index=index,
+            all_dtypes=dtypes
+        )
 
     @classmethod
-    def from_model(cls, engine: Engine, model: SqlModel, index: List[str]) -> 'DataFrame':
+    def from_model(
+            cls,
+            engine: Engine,
+            model: SqlModel,
+            index: List[str],
+            all_dtypes: Optional[Dict[str, str]] = None
+    ) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the result of the query defined in `model`.
 
-        This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
-        In order to create this temporary table the query in `model` executed.
+        If all_dtypes is not specified, then a transaction scoped temporary table with will be created with
+        0 result rows from the model. The meta data of this table will be used to deduce the dtypes.
 
         :param engine: an sqlalchemy engine for the database.
         :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
+        :param all_dtypes: Optional. Mapping from column name to dtype.
+            Must contain all index and data columns.
+            Must be in same order as the columns appear in the the sql-model.
         :returns: A DataFrame based on an SqlModel
+
+        .. note::
+            If all_dtypes is not set, then this will query the database and create and remove a temporary
+            table.
         """
-        # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
-        # select expressions, where clauses, or limits
-        wrapped_model = CustomSqlModelBuilder(sql='SELECT * FROM {{model}}')(model=model)
-        return cls._from_node(engine, wrapped_model, index)
+        if all_dtypes is not None:
+            dtypes = all_dtypes
+        else:
+            dtypes = cls._get_dtypes_from_model(engine=engine, node=model)
+        return cls._from_node(
+            engine=engine,
+            model=model,
+            index=index,
+            all_dtypes=dtypes
+        )
 
     @classmethod
-    def _from_node(cls, engine, model: SqlModel, index: List[str]) -> 'DataFrame':
-        dtypes = cls._get_dtypes(engine, model)
+    def _from_node(
+            cls,
+            engine,
+            model: SqlModel,
+            index: List[str],
+            all_dtypes: Dict[str, str]
+    ) -> 'DataFrame':
+        """
+        INTERNAL: Instantiate a new DataFrame based on the result of the query defined in `model`.
+        :param engine: an sqlalchemy engine for the database.
+        :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
+        :param index: list of column names that make up the index. At least one column needs to be
+            selected for the index.
+        :param all_dtypes: Dictionary mapping column name to dtype.
+            Must contain all index and data columns.
+            Must be in same order as the columns appear in the the sql-model.
+        :returns: A DataFrame based on an SqlModel
 
-        index_dtypes = {k: dtypes[k] for k in index}
-        series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
+        """
+        index_dtypes = {k: all_dtypes[k] for k in index}
+        series_dtypes = {k: all_dtypes[k] for k in all_dtypes.keys() if k not in index}
+        bach_model = BachSqlModel.from_sql_model(sql_model=model, columns=tuple(all_dtypes.keys()))
 
-        columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
-        bach_model = BachSqlModel(
-            model_spec=model.model_spec,
-            placeholders=model.placeholders,
-            references=model.references,
-            materialization=model.materialization,
-            materialization_name=model.materialization_name,
-            columns=columns
-        )
         from bach.savepoints import Savepoints
-        return cls.get_instance(
+        df = cls.get_instance(
             engine=engine,
             base_node=bach_model,
             index_dtypes=index_dtypes,
@@ -445,6 +509,11 @@ class DataFrame:
             savepoints=Savepoints(),
             variables={}
         )
+        if not df.is_materialized:
+            # This happens when the columns in the model are in a different order than the columns in the
+            # dataframe.
+            df = df.materialize(node_name='column_reorder')
+        return df
 
     @classmethod
     def from_pandas(
