@@ -30,15 +30,38 @@ and iglu repository. Enabling Objectiv involves two steps:
 ### Add the Objectiv schema to the iglu repo
 This explains how to get the Objectiv schema into iglu. This is necessary, so the Snowplow pipeline (enrichment) can 
 validate the incoming custom contexts.
+#### Preparation
 
-`TODO`
+- copy the Objectiv iglu schema into `schemas/io.objectiv/taxonomy/jsonschema/1-0-0` in your local repo
+- get the address / URL of your iglu repository
+- get the uuid of the repo
+
+#### Pushing the schema
+```shell
+java -jar igluctl static push --public <path to schemas> <url to repo> <uuid>
+
+## example:
+java -jar igluctl static push --public ./schemas https://iglu.example.com myuuid-abcd-abcd-abcd-abcdef12345
+``` 
+
 
 ### Enabling the collector output
+Before starting up the collector, some preparation is required.
+
+#### Preparation
+To be able to push events into the message queue the following needs to be set up:
+- A GCP service account (`json`) with permission to write to PubSub
+- The `id` of the GCP project that holds the PubSub topic
+- The `id` of the PubSub topic (message queue)
+
+These will be used to configure the collector in the next step.
+
+#### Starting the collector
 The configuration for the collector is controlled through environment variables. They allow you to configure which outputs
 will be used. Settings specific to the PubSub sin are:
 
 - `SP_GCP_PROJECT` This is the id of the project on GCP where the PubSub topic is located
-- `SP_GCP_PUBSUB_TOPIC_RAW` This is the id of the raw topic to publish events to
+- `SP_GCP_PUBSUB_TOPIC_RAW` This is the id of the PubSub topic to publish events to
 - `GOOGLE_APPLICATION_CREDENTIALS` This is the path to a `json` containing a service account on GCP that allows publishing
  to the PubSub topic.
 
