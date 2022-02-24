@@ -36,7 +36,7 @@ class ModelHub:
         # init metabase
         self._metabase = None
 
-    def time_agg(self, time_aggregation: Union[str, NotSet] = not_set) -> SeriesString:
+    def time_agg(self, time_aggregation: Union[str, NotSet] = not_set) -> 'SeriesString':
         """
         Formats the moment column in the ObjectivFrame, returns a SeriesString.
 
