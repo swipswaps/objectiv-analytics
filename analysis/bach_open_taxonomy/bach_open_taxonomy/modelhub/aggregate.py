@@ -124,7 +124,9 @@ class Aggregate:
         new_groupby = [] if groupby is None else groupby
         new_groupby = new_groupby if isinstance(groupby, list) else [groupby]
 
-        new_groupby = new_groupby + ['session_id']  # type: ignore
+        new_groupby = new_groupby + [self._df.session_id.copy_override(name='_session_id')]  # type: ignore
+
+        # todo fix if grouping is session_id
 
         gdf = self._check_groupby(groupby=new_groupby)
         session_duration = gdf.aggregate({'moment': ['min', 'max']})
