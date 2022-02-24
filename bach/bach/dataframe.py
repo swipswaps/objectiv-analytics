@@ -981,16 +981,13 @@ class DataFrame:
         else:
             raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
 
-    def _index_merge(
-        self, key: str, value: 'Series', how: str = 'left',
-    ):
+    def _index_merge(self, key: str, value: 'Series'):
         """"
         Internal method used by __setitem__ to set a series using a merge on index. Modifies the DataFrame
         with the added column. The DataFrames index name is the same as the original DataFrame's.
 
         :param key: name of the column to set.
         :param value: Series that is set.
-        :param how: 'left' or 'outer'.
         """
         # todo This method's functionality will be implemented in merge()
         if not (len(value.index) == 1 and len(self.index) == 1):
@@ -1017,7 +1014,7 @@ class DataFrame:
             other,
             left_index=True,
             right_index=True,
-            how=how,
+            how='left',
             suffixes=('', '__remove'),
         )
 
