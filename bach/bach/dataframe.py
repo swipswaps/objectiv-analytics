@@ -24,6 +24,7 @@ from sql_models.graph_operations import update_placeholders_in_graph, get_all_pl
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
 from sql_models.sql_generator import to_sql
+from sql_models.util import quote_identifier
 
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
@@ -427,8 +428,8 @@ class DataFrame:
         else:
             dtypes = cls._get_dtypes_from_table(engine=engine, table_name=table_name)
 
-        model_builder = CustomSqlModelBuilder(sql=f'SELECT * FROM {table_name}', name='from_table')
-        sql_model = model_builder()
+        model_builder = CustomSqlModelBuilder(sql='SELECT * FROM {table_name}', name='from_table')
+        sql_model = model_builder(table_name=quote_identifier(table_name))
         return cls._from_node(
             engine=engine,
             model=sql_model,

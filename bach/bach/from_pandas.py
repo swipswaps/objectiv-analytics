@@ -65,23 +65,11 @@ def from_pandas_store_table(engine: Engine,
     df_copy.to_sql(name=table_name, con=conn, if_exists=if_exists, index=False)
     conn.close()
 
-    # Todo, this should use from_table from here on.
-    columns = tuple(index_dtypes.keys()) + tuple(dtypes.keys())
-    model_builder = CustomSqlModelBuilder(sql='select * from {table_name}', name=table_name)
-    sql_model = model_builder(table_name=quote_identifier(table_name))
-    bach_model = BachSqlModel.from_sql_model(sql_model, columns=columns)
-
-    # Should this also use _df_or_series?
-    from bach.savepoints import Savepoints
-    return DataFrame.get_instance(
+    return DataFrame.from_table(
         engine=engine,
-        base_node=bach_model,
-        index_dtypes=index_dtypes,
-        dtypes=dtypes,
-        group_by=None,
-        order_by=[],
-        savepoints=Savepoints(),
-        variables={}
+        table_name=table_name,
+        index=list(index_dtypes.keys()),
+        all_dtypes={**index_dtypes, **dtypes}
     )
 
 
@@ -141,18 +129,11 @@ def from_pandas_ephemeral(
 
     model_builder = CustomSqlModelBuilder(sql=sql, name=name)
     sql_model = model_builder()
-    bach_model = BachSqlModel.from_sql_model(sql_model, columns=tuple(column_names))
-
-    from bach.savepoints import Savepoints
-    return DataFrame.get_instance(
+    return DataFrame.from_model(
         engine=engine,
-        base_node=bach_model,
-        index_dtypes=index_dtypes,
-        dtypes=dtypes,
-        group_by=None,
-        order_by=[],
-        savepoints=Savepoints(),
-        variables={}
+        model=sql_model,
+        index=list(index_dtypes.keys()),
+        all_dtypes={**index_dtypes, **dtypes}
     )
 
 
