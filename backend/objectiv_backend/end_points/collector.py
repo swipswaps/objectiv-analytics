@@ -255,9 +255,12 @@ def add_marketing_context_to_event(event: EventData) -> None:
         mapping = mappings[mapping_type]
         marketing_context_fields = {}
         for field, mapped_field in mapping.items():
-            value = parsed_qs.get(mapped_field, [None])[0]
-            if value:
-                # only set the value if it is not None, and make sure to properly set it to string
+
+            # only add the field, if it is present in the query string
+            # we don't set default values for missing fields here. If the fields are optional
+            # the MarketingContext class will handle this, or simply fail, which is also OK.
+            if mapped_field in parsed_qs:
+                value = parsed_qs[mapped_field][0]
                 marketing_context_fields[field] = str(value)
 
         marketing_context_fields['id'] = mapping_type
