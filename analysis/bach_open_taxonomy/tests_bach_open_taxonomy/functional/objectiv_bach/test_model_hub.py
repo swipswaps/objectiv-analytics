@@ -3,6 +3,8 @@ Copyright 2021 Objectiv B.V.
 """
 
 # Any import from from bach_open_taxonomy initializes all the types, do not remove
+import pytest
+
 from bach_open_taxonomy import __version__
 from tests_bach_open_taxonomy.functional.objectiv_bach.data_and_utils import get_objectiv_frame
 from tests.functional.bach.test_data_and_utils import assert_equals_data
@@ -156,8 +158,31 @@ def test_pre_conversion_hit_number():
 
 # aggregate
 def test_unique_users():
+    # setting nothing, thus using all defaults (which is just moment without formatting)
     df = get_objectiv_frame()
     s = df.model_hub.aggregate.unique_users()
+
+    assert_equals_data(
+        s,
+        expected_columns=['moment', 'unique_users'],
+        expected_data=[
+            ['2021-11-29 10:23:36.286', 1],
+            ['2021-11-29 10:23:36.287', 1],
+            ['2021-11-30 10:23:36.267', 1],
+            ['2021-11-30 10:23:36.287', 1],
+            ['2021-11-30 10:23:36.290', 1],
+            ['2021-11-30 10:23:36.291', 1],
+            ['2021-12-01 10:23:36.276', 1],
+            ['2021-12-01 10:23:36.279', 1],
+            ['2021-12-02 10:23:36.281', 1],
+            ['2021-12-02 14:23:36.282', 1],
+            ['2021-12-03 10:23:36.283', 1]
+        ]
+    )
+
+    # not grouping to anything
+    df = get_objectiv_frame()
+    s = df.model_hub.aggregate.unique_users(groupby=None)
 
     assert_equals_data(
         s,
@@ -166,7 +191,8 @@ def test_unique_users():
             [4]
         ]
     )
-    # using time_aggregation
+
+    # using time_aggregation (and default groupby: 'moment')
     df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
     s = df.model_hub.aggregate.unique_users()
 
@@ -182,10 +208,35 @@ def test_unique_users():
         ]
     )
 
+    # overriding time_aggregation
+    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    s = df.model_hub.aggregate.unique_users(time_aggregation='YYYY-MM')
+
+    assert_equals_data(
+        s,
+        expected_columns=['moment', 'unique_users'],
+        expected_data=[['2021-11', 2], ['2021-12', 3]]
+    )
+
+    # trying to override time_aggregation, but not including moment column
+    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    with pytest.raises(KeyError, match="'moment' column should be in group by if time_aggregation is set"):
+        df.model_hub.aggregate.unique_users(time_aggregation='YYYY-MM', groupby=None)
+
+    # group by other columns
+    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    s = df.model_hub.aggregate.unique_users(groupby='event_type')
+
+    assert_equals_data(
+        s,
+        expected_columns=['event_type', 'unique_users'],
+        expected_data=[['ClickEvent', 4]]
+    )
+
 
 def test_unique_sessions():
     df = get_objectiv_frame()
-    s = df.model_hub.aggregate.unique_sessions()
+    s = df.model_hub.aggregate.unique_sessions(groupby=None)
 
     assert_equals_data(
         s,
@@ -210,7 +261,7 @@ def test_unique_sessions():
 
 def test_session_duration():
     df = get_objectiv_frame()
-    s = df.model_hub.aggregate.session_duration()
+    s = df.model_hub.aggregate.session_duration(groupby=None)
 
     assert_equals_data(
         s,

@@ -95,7 +95,7 @@ class ObjectivFrame(DataFrame):
                            db_url: str = None,
                            start_date=None,
                            end_date=None,
-                           time_aggregation: str = None,
+                           time_aggregation: str = 'YYYY-MM-DD HH24:MI:SS.MS',
                            table_name: str = 'data') -> 'ObjectivFrame':
         """
         Loads data from table into an ObjectivFrame object.
@@ -107,9 +107,10 @@ class ObjectivFrame(DataFrame):
             the first date in the sql table.
         :param end_date: last date for which data is loaded to the DataFrame. If None, data is loaded up to
             and including the last date in the sql table.
-        :param time_aggregation: can be used to set a default aggregation timeframe interval that is used for
-            models that use aggregation. Ie. YYYY-MM-DD aggregates to days (dates). Setting it to None
-            aggregates over the entire selected dataset.
+        :param time_aggregation: sets the default time_aggregation that can be used with the `time_aggregated`
+            property as a normal series. This means for example that the `time_aggregated` can be used as
+            to group by. Ie. YYYY-MM-DD groups the `time_aggregated` property to days (dates). The default
+            sets it to the date time on miliseconds.
         :param table_name: the name of the sql table where the data is stored.
         """
         import sqlalchemy
@@ -160,7 +161,7 @@ class ObjectivFrame(DataFrame):
                               savepoints=Savepoints(),
                               variables={}
                               )
-
+        # todo should be a string
         df._time_aggregation = time_aggregation  # type: ignore
         df._start_date = start_date  # type: ignore
         df._end_date = end_date  # type: ignore
@@ -168,6 +169,10 @@ class ObjectivFrame(DataFrame):
 
         df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
         df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
+
+        # todo: change this to using variables, if variables work with grouping
+        # df, time_aggregation_series = df.create_variable(name='time_aggregation', value=time_aggregation)
+        # df['time_aggregation'] = df.moment.dt.sql_format(time_aggregation_series)
 
         return df  # type: ignore
 
