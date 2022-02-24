@@ -504,28 +504,52 @@ class Series(ABC):
                 if other.expression.is_single_value:
                     other = self.as_independent_subquery(other)
                 else:
-                    # align base nodes and group by
-                    df = self.to_frame()
-                    df = df.merge(
-                        other,
-                        left_index=True,
-                        right_index=True,
-                        how='outer',
-                        suffixes=('', '__other'),
-                    )
-                    # todo pandas: if name of both series are same, use that name of result. we always use
-                    #  name of self
-                    caller_series = df.all_series[self.name]
-                    other_series = (
-                        df.all_series[other.name]
-                        if self.name != other.name else df.all_series[f'{self.name}__other']
-                    )
-
-                    return caller_series, other_series
+                    return self._index_merge(other)
 
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
         return self, other
+
+    def _index_merge(self, other: 'Series') -> Tuple['Series', 'Series']:
+        """
+        Aligns caller series and other series base nodes by using a merge based on their indexes.
+
+        :returns: the (modified) series and (modified) other.
+
+        .. note::
+            If both caller and other series have the same name, (modified) other will be renamed as:
+            `f"{other.name}__other"`
+        """
+        if not self.index or not other.index:
+            raise ValueError('both series must have at least one index level')
+
+        if any(
+            caller_idx.dtype != other_idx.dtype
+            for caller_idx, other_idx in zip(self.index.values(), other.index.values())
+        ):
+            raise ValueError('dtypes of indexes to be merged should be the same')
+
+        # align index names, this way we have all matched indexes in a single series
+        other_cp = other.copy_override(
+            index={
+                caller_idx.name: other_idx.copy_override(name=caller_idx.name)
+                for caller_idx, other_idx in zip(self.index.values(), other.index.values())
+            }
+        )
+        df = self.to_frame()
+        df = df.merge(
+            other_cp, left_index=True, right_index=True, how='outer', suffixes=('', '__other'),
+        )
+
+        # consider only the caller's indexes, drop the non-shared ones
+        df = df.set_index(list(self.index.keys()), drop=True)
+        caller_series = df.all_series[self.name]
+        other_series = (
+            df.all_series[other.name]
+            if self.name != other.name else df.all_series[f'{self.name}__other']
+        )
+
+        return caller_series, other_series
 
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.Series:
         """

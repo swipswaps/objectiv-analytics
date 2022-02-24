@@ -440,8 +440,7 @@ def test_series_different_aggregations():
                        ['Súdwest-Fryslân', 0.5454545454545454], ['Waadhoeke', 0.09090909090909091]]
     )
 
-    with pytest.raises(Exception, match='setting with different base nodes only supported for one level'
-                                        ' index'):
+    with pytest.raises(Exception, match='both series must have at least one index level'):
         # todo give a better error: bt.skating_order.nunique() is a single value
         bt.skating_order.nunique() / bt.groupby('municipality').skating_order.nunique()
 

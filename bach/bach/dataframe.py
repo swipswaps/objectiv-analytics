@@ -992,43 +992,38 @@ class DataFrame:
         :param value: Series that is set.
         :param how: 'left' or 'outer'.
         """
-
-        # todo This method's functionality will be implementd in merge()
+        # todo This method's functionality will be implemented in merge()
         if not (len(value.index) == 1 and len(self.index) == 1):
+            raise ValueError(
+                'setting with different base nodes only supported for one level index'
+            )
 
-            raise ValueError('setting with different base nodes only supported for one level'
-                             ' index')
+        from bach.partitioning import GroupBy
         index_name = self.index_columns[0]
         value_index_name = list(value.index.keys())[0]
         if self.index[index_name].dtype != value.index[value_index_name].dtype:
             raise ValueError('dtypes of indexes should be the same')
 
-        # FIXME We're assiging mixed types to this var.
-        renamed_value: DataFrameOrSeries = value.copy_override(name=key)
+        # align index names, this way we have all matched indexes in a single series after merge
+        aligned_index = {index_name: value.index[value_index_name].copy_override(name=index_name)}
+        other = value.copy_override(
+            index=aligned_index,
+            name=key,
+            group_by=GroupBy(list(aligned_index.values())) if value.group_by else None,
+        )
 
-        if how == 'outer':
-            renamed_value = renamed_value.to_frame().materialize()
-            renamed_value[value_index_name + '__index'] = renamed_value.index[value_index_name]
+        df = self.merge(
+            other,
+            left_index=True,
+            right_index=True,
+            how=how,
+            suffixes=('', '__remove'),
+        )
 
-        df = self.merge(renamed_value,
-                        left_index=True,
-                        right_index=True,
-                        how=how,
-                        suffixes=('', '__remove'))
-
-        if how == 'outer':
-            new_index = df.index[index_name].fillna(df[value_index_name + '__index'])
-        elif how == 'left':
-            new_index = df.index[index_name]
-        else:
-            raise NotImplementedError(f'how "{how}" not supported')
-
-        df = df.set_index(new_index)
+        # remove conflicts in case self already has a value for series key
         if key in self.data_columns:
             df[key] = df[key + '__remove']
             df = df.drop(columns=[key + '__remove'])
-        df = df.drop(columns=[value_index_name + '__index'], errors='ignore')
-
         self._update_self_from_df(df)
 
     def rename(
