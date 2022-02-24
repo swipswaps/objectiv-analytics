@@ -99,7 +99,7 @@ def test_enrich_marketing_context():
     path_context = path_contexts[0]
 
     path_context['id'] = 'http://localhost:3000?' \
-                         'utm_source=test-source&utm_medium=test-medium&utm_campaign=test-campaign'
+                         'utm_source=test-source&utm_medium=test-medium&utm_campaign=test-campaign&utm_term=test-term'
 
     # call enrichment
     add_marketing_context_to_event(event=event)
@@ -107,3 +107,30 @@ def test_enrich_marketing_context():
     # there should now be exactly one marketing context
     generated_marketing_contexts = get_contexts(event=event, context_type='MarketingContext')
     assert len(generated_marketing_contexts) == 1
+
+    generated_marketing_context = generated_marketing_contexts[0]
+
+    # check optional is properly set
+    assert generated_marketing_context['term'] == 'test-term'
+
+    # check that missing optional is not there
+    assert not generated_marketing_context['content']
+
+    # dictionary representation of context
+    marketing_context = {
+        '_type': 'MarketingContext',
+        'id': 'utm',
+        'source': 'test-source',
+        'medium': 'test-medium',
+        'campaign': 'test-campaign',
+        'term': 'test-term',
+        'content': None
+    }
+
+    # (ordered) json representation of dict
+    marketing_context_json = '{"_type": "MarketingContext", "campaign": "test-campaign", "content": null, "id": ' \
+                             '"utm", "medium": "test-medium", "source": "test-source", "term": "test-term"}'
+    assert(json.dumps(order_dict(marketing_context))) == marketing_context_json
+
+    # check serialized jsons match for set and unset optionals
+    assert json.dumps(order_dict(generated_marketing_context)) == marketing_context_json
