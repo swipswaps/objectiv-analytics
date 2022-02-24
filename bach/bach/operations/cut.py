@@ -53,8 +53,7 @@ class CutOperation:
         bucket_properties_df = self._calculate_bucket_properties()
         range_series = self._calculate_bucket_ranges(bucket_properties_df)
 
-        df = self.series.to_frame()
-        df.reset_index(drop=True, inplace=True)
+        df = self.series.to_frame().reset_index(drop=True)
         df[self.RANGE_SERIES_NAME] = df.all_series[self.series.name].copy_override(
             expression=Expression.construct(
                 (
@@ -72,7 +71,7 @@ class CutOperation:
         else:
             df = df.merge(range_series, how='inner')
 
-        df.set_index(keys=self.series.name, inplace=True)
+        df = df.set_index(keys=self.series.name)
         return cast(SeriesFloat64, df.all_series[self.RANGE_SERIES_NAME])
 
     @property
@@ -111,8 +110,7 @@ class CutOperation:
 
         ** Adjustments are needed in order to have similar bin intervals as in Pandas
         """
-        df = self.series.to_frame()
-        df.reset_index(drop=True, inplace=True)
+        df = self.series.to_frame().reset_index(drop=True)
 
         properties_df = df.agg(['min', 'max'])
         min_name = f'{self.series.name}_min'
@@ -191,9 +189,7 @@ class CutOperation:
             sorted_ascending=None,
             index_sorting=[],
         )
-        range_df = buckets.to_frame()
-        range_df.reset_index(drop=True, inplace=True)
-        range_df.drop_duplicates(ignore_index=True, inplace=True)
+        range_df = buckets.to_frame().reset_index(drop=True).drop_duplicates(ignore_index=True)
 
         # lower_bound = (bucket - 1) *  step + min
         range_df['lower_bound'] = (range_df.bucket - 1) * step_series + min_series
@@ -226,7 +222,7 @@ class CutOperation:
                 range_df.all_series['upper_bound'],
             ),
         )
-        range_df.materialize(node_name='bin_ranges', inplace=True)
+        range_df = range_df.materialize(node_name='bin_ranges')
         return range_df.all_series[self.RANGE_SERIES_NAME]
 
 
@@ -258,8 +254,7 @@ class QCutOperation:
         Gets the quantile range per bucket and assigns the correct range to each value. If the value
         is not contained in any range, then it will be null.
         """
-        df = self.series.to_frame()
-        df.reset_index(drop=True, inplace=True)
+        df = self.series.to_frame().reset_index(drop=True)
 
         if len(self.quantiles) == 1:
             # need at least 2 quantiles for a range
@@ -310,7 +305,7 @@ class QCutOperation:
         quantile_ranges_df = q_result.to_frame()
 
         # some quantiles might have the same result, we need to avoid having overlapped ranges
-        quantile_ranges_df.drop_duplicates(inplace=True, ignore_index=True)
+        quantile_ranges_df = quantile_ranges_df.drop_duplicates(ignore_index=True)
 
         # lowest calculated quantile might be also be in the dataset, therefore
         # we need to extend the lowest bound
@@ -351,5 +346,5 @@ class QCutOperation:
         # times in the expression for the range column. By materializing the dataframe first, we prevent the
         # generated sql from containing duplicated code. Additionally, the generated sql becomes more
         # readable too.
-        quantile_ranges_df.materialize(inplace=True)
+        quantile_ranges_df = quantile_ranges_df.materialize()
         return quantile_ranges_df.all_series[self.RANGE_SERIES_NAME]

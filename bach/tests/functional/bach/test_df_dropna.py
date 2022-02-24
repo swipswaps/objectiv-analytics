@@ -56,15 +56,6 @@ def test_basic_dropna() -> None:
         check_names=False,
     )
 
-    df_inplace = df.copy()
-    result_inplace = df_inplace.dropna(inplace=True)
-    assert result_inplace is None
-    assert_equals_data(
-        df_inplace,
-        expected_columns=['_index_0', 'name', 'toy', 'born'],
-        expected_data=[[1, 'Batman', 'Batmobile', pd.Timestamp("1940-04-25")]],
-    )
-
 
 def test_dropna_all() -> None:
     pdf = pd.DataFrame(DATA)
@@ -77,19 +68,6 @@ def test_dropna_all() -> None:
         check_names=False,
     )
 
-    df_inplace = df.copy()
-    result_inplace = df_inplace.dropna(how='all', inplace=True)
-    assert result_inplace is None
-    assert_equals_data(
-        df_inplace,
-        expected_columns=['_index_0', 'name', 'toy', 'born'],
-        expected_data=[
-            [0, 'Alfred', None, None],
-            [1, 'Batman', 'Batmobile', pd.Timestamp("1940-04-25")],
-            [2, 'Catwoman', 'Bullwhip', None],
-        ],
-    )
-
 
 def test_dropna_thresh() -> None:
     pdf = pd.DataFrame(DATA)
@@ -100,16 +78,4 @@ def test_dropna_thresh() -> None:
         pdf.dropna(thresh=2),
         result.to_pandas(),
         check_names=False,
-    )
-
-    df_inplace = df.copy()
-    result_inplace = df_inplace.dropna(thresh=2, inplace=True)
-    assert result_inplace is None
-    assert_equals_data(
-        df_inplace,
-        expected_columns=['_index_0', 'name', 'toy', 'born'],
-        expected_data=[
-            [1, 'Batman', 'Batmobile', pd.Timestamp("1940-04-25")],
-            [2, 'Catwoman', 'Bullwhip', None],
-        ],
     )

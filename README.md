@@ -12,7 +12,7 @@ Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
 ## Getting Started
 
-Follow the easy steps in our [Quickstart Guide](https://www.objectiv.io/docs/quickstart-guide) to locally run the full Objectiv pipeline dockerized.
+Follow the easy steps in our [Quickstart Guide](https://objectiv.io/docs/home/quickstart-guide) to locally run the full Objectiv pipeline dockerized.
 
 ## Useful Resources
 
