@@ -164,7 +164,7 @@ def test_unique_users():
 
     assert_equals_data(
         s,
-        expected_columns=['moment', 'unique_users'],
+        expected_columns=['time_aggregation', 'unique_users'],
         expected_data=[
             ['2021-11-29 10:23:36.286', 1],
             ['2021-11-29 10:23:36.287', 1],
@@ -198,7 +198,7 @@ def test_unique_users():
 
     assert_equals_data(
         s,
-        expected_columns=['moment', 'unique_users'],
+        expected_columns=['time_aggregation', 'unique_users'],
         expected_data=[
             ['2021-11-29', 1],
             ['2021-11-30', 2],
@@ -210,18 +210,13 @@ def test_unique_users():
 
     # overriding time_aggregation
     df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
-    s = df.model_hub.aggregate.unique_users(time_aggregation='YYYY-MM')
+    s = df.model_hub.aggregate.unique_users(groupby=df.mh.time_agg('YYYY-MM'))
 
     assert_equals_data(
         s,
-        expected_columns=['moment', 'unique_users'],
+        expected_columns=['time_aggregation', 'unique_users'],
         expected_data=[['2021-11', 2], ['2021-12', 3]]
     )
-
-    # trying to override time_aggregation, but not including moment column
-    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
-    with pytest.raises(KeyError, match="'moment' column should be in group by if time_aggregation is set"):
-        df.model_hub.aggregate.unique_users(time_aggregation='YYYY-MM', groupby=None)
 
     # group by other columns
     df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
@@ -251,7 +246,7 @@ def test_unique_sessions():
 
     assert_equals_data(
         s,
-        expected_columns=['moment', 'unique_sessions'],
+        expected_columns=['time_aggregation', 'unique_sessions'],
         expected_data=[
             ['2021-11', 3],
             ['2021-12', 4]
@@ -272,11 +267,11 @@ def test_session_duration():
     )
     # using time_aggregation
     df = get_objectiv_frame()
-    bts = df.model_hub.aggregate.session_duration(time_aggregation='YYYY-MM-DD')
+    bts = df.model_hub.aggregate.session_duration(groupby=df.mh.time_agg('YYYY-MM-DD'))
 
     assert_equals_data(
         bts,
-        expected_columns=['moment', 'session_duration'],
+        expected_columns=['time_aggregation', 'session_duration'],
         expected_data=[
             ['2021-11-29', datetime.timedelta(microseconds=1000)],
             ['2021-11-30', datetime.timedelta(microseconds=4000)],
