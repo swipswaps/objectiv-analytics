@@ -65,21 +65,3 @@ def test_index_sort_w_ascending():
             [1268, 'Drylts'],
         ],
     )
-
-
-def test_index_sort_w_inplace():
-    bt = get_bt_with_test_data()[['founding', 'city']]
-    bt = bt.set_index(['founding'], drop=True)
-
-    result = bt.sort_index(inplace=True, ascending=False)
-    assert result is None
-
-    assert_equals_data(
-        bt,
-        expected_columns=['founding', 'city'],
-        expected_data=[
-            [1456, 'Snits'],
-            [1285, 'Ljouwert'],
-            [1268, 'Drylts'],
-        ],
-    )
