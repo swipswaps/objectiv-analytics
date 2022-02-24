@@ -253,13 +253,20 @@ def add_marketing_context_to_event(event: EventData) -> None:
 
     for mapping_type in mappings:
         mapping = mappings[mapping_type]
-        marketing_context_fields = {f: str(parsed_qs.get(mf, [''])[0]) for f, mf in mapping.items()}
+        marketing_context_fields = {}
+        for field, mapped_field in mapping.items():
+            value = parsed_qs.get(mapped_field, [None])[0]
+            if value:
+                # only set the value if it is not None, and make sure to properly set it to string
+                marketing_context_fields[field] = str(value)
+
         marketing_context_fields['id'] = mapping_type
 
         try:
             add_global_context_to_event(event, MarketingContext(**marketing_context_fields))
-        except ValueError:
-            # couldn't create a marketing context for this mapping, no biggie
+        except TypeError as e:
+            # couldn't create a marketing context for this mapping, no problem, as this is not a mandatory context
+            print(f'error creating marketing context: {e} / {marketing_context_fields}')
             pass
 
 
