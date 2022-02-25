@@ -37,6 +37,10 @@ describe('ObjectivProvider', () => {
             console: undefined,
             pluginName: 'ApplicationContextPlugin',
           },
+          {
+            console: undefined,
+            pluginName: 'OpenTaxonomyValidationPlugin',
+          },
         ],
       },
       queue: undefined,

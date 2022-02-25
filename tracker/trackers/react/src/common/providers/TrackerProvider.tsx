@@ -2,8 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { isBrowser, isDevMode } from '@objectiv/tracker-core';
 import React, { ReactNode } from 'react';
-import { isDevMode } from '../isDevMode';
 import { LocationTree } from '../LocationTree';
 import { TrackerProviderContext } from './TrackerProviderContext';
 
@@ -27,7 +27,7 @@ export type TrackerProviderProps = TrackerProviderContext & {
  * @see ObjectivProvider
  */
 export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => {
-  if (isDevMode()) {
+  if (isDevMode() && isBrowser()) {
     LocationTree.initialize(tracker);
   }
 

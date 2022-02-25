@@ -16,7 +16,7 @@ describe('ApplicationContextPlugin', () => {
     });
   });
 
-  it('should add the ApplicationContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
+  it('should add the ApplicationContext to the Event when `enrich` is executed by the Tracker', async () => {
     const plugins = new ApplicationContextPlugin(trackerConfig);
     const testTracker = new Tracker({ ...trackerConfig, plugins: [plugins] });
     const eventContexts: ContextsConfig = {

@@ -17,7 +17,7 @@ import { trackerErrorHandler } from './trackerErrorHandler';
  * 1. Traverses the DOM to reconstruct the component stack
  * 2. If a Tracker instance is provided, retrieves the Tracker's Location Stack
  * 3. Merges the two Location Stacks to reconstruct the full Location
- * 4. If a Tracker instance is provided, runs the Tracker's plugins `beforeTransport` lifecycle on the locationStack
+ * 4. If a Tracker instance is provided, runs the Tracker's plugins `enrich` lifecycle on the locationStack
  */
 export const getElementLocationStack = (parameters: { element: TrackedElement; tracker?: BrowserTracker }) => {
   const locationStack: LocationStack = [];
@@ -44,7 +44,7 @@ export const getElementLocationStack = (parameters: { element: TrackedElement; t
 
     // Add Plugins mutations to the locationStack - global_contexts are not a concern, so we pass an empty array
     if (tracker) {
-      tracker.plugins.beforeTransport({ location_stack: locationStack, global_contexts: [] });
+      tracker.plugins.enrich({ location_stack: locationStack, global_contexts: [] });
     }
   } catch (error) {
     trackerErrorHandler(error, parameters);

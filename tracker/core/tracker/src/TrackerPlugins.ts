@@ -5,11 +5,13 @@
 import { ContextsConfig } from './Context';
 import { isValidIndex } from './helpers';
 import { Tracker } from './Tracker';
+import { TrackerEvent } from './TrackerEvent';
 import { TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
+import { TrackerValidationRuleLifecycleInterface } from './TrackerValidationRuleLifecycleInterface';
 
 /**
- * The configuration object of TrackerPlugins. It accepts a list of plugins and, optionally, a Tracker Console.
+ * The configuration object of TrackerPlugins. It requires a Tracker instance and a list of plugins.
  */
 export type TrackerPluginsConfiguration = {
   /**
@@ -31,7 +33,7 @@ export type TrackerPluginsConfiguration = {
  * Plugins mutations. For example a plugin meant to access the finalized version of the TrackerEvent should be placed
  * at the bottom of the list.
  */
-export class TrackerPlugins implements TrackerPluginLifecycleInterface {
+export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerValidationRuleLifecycleInterface {
   readonly tracker: Tracker;
   plugins: TrackerPluginInterface[] = [];
 
@@ -133,16 +135,23 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
   }
 
   /**
-   * Calls each Plugin's `initialize` callback function, if defined
+   * Calls each Plugin's `initialize` callback function, if defined.
    */
   initialize(contexts: Required<ContextsConfig>): void {
     this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(contexts));
   }
 
   /**
-   * Calls each Plugin's `beforeTransport` callback function, if defined
+   * Calls each Plugin's `enrich` callback function, if defined.
    */
-  beforeTransport(contexts: Required<ContextsConfig>): void {
-    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.beforeTransport && plugin.beforeTransport(contexts));
+  enrich(contexts: Required<ContextsConfig>): void {
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.enrich && plugin.enrich(contexts));
+  }
+
+  /**
+   * Calls each Plugin's `validate` callback function, if defined.
+   */
+  validate(event: TrackerEvent): void {
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.validate && plugin.validate(event));
   }
 }

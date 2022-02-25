@@ -37,7 +37,7 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
   /**
    * Generate a fresh RootLocationContext before each TrackerEvent is handed over to the TrackerTransport.
    */
-  beforeTransport(contexts: Required<ContextsConfig>): void {
+  enrich(contexts: Required<ContextsConfig>): void {
     const rootLocationContextId = this.idFactoryFunction();
 
     if (rootLocationContextId) {

@@ -2,11 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContextsConfig, Tracker, TrackerConfig } from '@objectiv/tracker-core';
+import { ContextsConfig, isBrowser, isDevMode, Tracker, TrackerConfig } from '@objectiv/tracker-core';
 import { makeDefaultPluginsList } from './common/factories/makeDefaultPluginsList';
 import { makeDefaultQueue } from './common/factories/makeDefaultQueue';
 import { makeDefaultTransport } from './common/factories/makeDefaultTransport';
-import { isDevMode } from './common/isDevMode';
 
 /**
  * React Tracker can be configured in an easier way, as opposed to the core tracker.
@@ -86,7 +85,7 @@ export class ReactTracker extends Tracker {
     }
 
     // If node is in `development` on web and console has not been configured, automatically use the browser's console
-    if (config.console === undefined && isDevMode()) {
+    if (config.console === undefined && isDevMode() && isBrowser()) {
       config.console = console;
     }
 

@@ -12,7 +12,7 @@ import {
 
 /**
  * The PathContextFromURL Plugin gathers the current URL using the Location API.
- * It implements the `beforeTransport` lifecycle method. This ensures the URL is retrieved before each Event is sent.
+ * It implements the `enrich` lifecycle method. This ensures the URL is retrieved before each Event is sent.
  */
 export class PathContextFromURLPlugin implements TrackerPluginInterface {
   readonly console?: TrackerConsole;
@@ -32,7 +32,7 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
   /**
    * Generate a fresh PathContext before each TrackerEvent is handed over to the TrackerTransport.
    */
-  beforeTransport(contexts: Required<ContextsConfig>): void {
+  enrich(contexts: Required<ContextsConfig>): void {
     const pathContext = makePathContext({
       id: document.location.href,
     });

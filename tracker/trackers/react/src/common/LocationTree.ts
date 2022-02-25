@@ -91,7 +91,7 @@ export const LocationTree = {
     // Clone the given Tracker into a new one with only plugins configured and run their lifecycles
     const trackerClone = new Tracker({ applicationId: tracker.applicationId, plugins: tracker.plugins });
     trackerClone.plugins.initialize(trackerClone);
-    trackerClone.plugins.beforeTransport(trackerClone);
+    trackerClone.plugins.enrich(trackerClone);
 
     // Convert AbstractLocationContext[] to LocationContext<AbstractLocationContext>[]
     const locationStack: LocationContext<AbstractLocationContext>[] = trackerClone.location_stack.map(

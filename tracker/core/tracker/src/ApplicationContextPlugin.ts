@@ -7,6 +7,7 @@ import { ContextsConfig } from './Context';
 import { makeApplicationContext } from './ContextFactories';
 import { TrackerConfig } from './Tracker';
 import { TrackerConsole } from './TrackerConsole';
+import { TrackerEvent } from './TrackerEvent';
 import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
 
 /**
@@ -15,7 +16,7 @@ import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInte
 export type ApplicationContextPluginConfig = TrackerPluginConfig & Pick<TrackerConfig, 'applicationId'>;
 
 /**
- * The ApplicationContext Plugin adds an ApplicationContext as GlobalContext before events are transported.
+ * The ApplicationContextPlugin adds an ApplicationContext as GlobalContext before events are transported.
  */
 export class ApplicationContextPlugin implements TrackerPluginInterface {
   readonly console?: TrackerConsole;
@@ -42,14 +43,48 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
   }
 
   /**
-   * Add the the ApplicationContext to the Event's Global Contexts
+   * Add the ApplicationContext to the Event's Global Contexts
    */
-  beforeTransport(contexts: Required<ContextsConfig>): void {
+  enrich(contexts: Required<ContextsConfig>): void {
     contexts.global_contexts.push(this.applicationContext);
   }
 
   /**
-   * Make this plugin usable only if the Navigator API is available
+   * Verifies whether ApplicationContext
+   * - is present in Global Contexts
+   * - is not present multiple times
+   */
+  validate(event: TrackerEvent): void {
+    // TODO Make these into generic validation rule since we can reuse them for RootLocationContext
+    const contexts = event.global_contexts.filter((globalContext) => globalContext._type === 'ApplicationContext');
+
+    if (this.console) {
+      if (!contexts.length) {
+        this.console.groupCollapsed(
+          `%c｢objectiv:${this.pluginName}｣ Error: ApplicationContext is missing from Global Contexts.`,
+          'color:red'
+        );
+        this.console.group(`Event:`);
+        this.console.log(event);
+        this.console.groupEnd();
+        this.console.groupEnd();
+      }
+
+      if (contexts.length > 1) {
+        this.console.groupCollapsed(
+          `%c｢objectiv:${this.pluginName}｣ Error: Only one ApplicationContext should be in Global Contexts.`,
+          'color:red'
+        );
+        this.console.group(`Event:`);
+        this.console.log(event);
+        this.console.groupEnd();
+        this.console.groupEnd();
+      }
+    }
+  }
+
+  /**
+   * Make this plugin always usable
    */
   isUsable(): boolean {
     return true;

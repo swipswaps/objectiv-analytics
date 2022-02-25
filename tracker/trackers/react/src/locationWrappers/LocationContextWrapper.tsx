@@ -3,8 +3,8 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
+import { isBrowser, isDevMode } from '@objectiv/tracker-core';
 import React, { ReactNode } from 'react';
-import { isDevMode } from '../common/isDevMode';
 import { LocationTree } from '../common/LocationTree';
 import { LocationProvider } from '../common/providers/LocationProvider';
 import { TrackingContext } from '../common/providers/TrackingContext';
@@ -39,19 +39,19 @@ export const LocationContextWrapper = ({ children, locationContext }: LocationCo
   const parentLocationContext = useParentLocationContext();
 
   useOnMount(() => {
-    if (isDevMode()) {
+    if (isDevMode() && isBrowser()) {
       LocationTree.add(locationContext, parentLocationContext);
     }
   });
 
   useOnUnmount(() => {
-    if (isDevMode()) {
+    if (isDevMode() && isBrowser()) {
       LocationTree.remove(locationContext);
     }
   });
 
   useOnChange<LocationContext<AbstractLocationContext>>(locationContext, (previousLocationContext) => {
-    if (isDevMode()) {
+    if (isDevMode() && isBrowser()) {
       LocationTree.remove(previousLocationContext);
       LocationTree.add(locationContext, parentLocationContext);
     }
