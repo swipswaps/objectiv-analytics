@@ -467,7 +467,7 @@ class Series(ABC):
             new_series = df.all_series[name_series].copy_override(
                 name=new_column_name,
                 expression=Expression.construct(f'case when {{}} = {{}} then {name_series} end',
-                                                cast(Series, df[name_index_last]),
+                                                df.all_series[name_index_last],
                                                 new_const_series)
             )
             new_series_aggregated = cast(
