@@ -227,7 +227,12 @@ def add_http_context_to_event(event: EventData, request: Request):
 
 
 def add_marketing_context_to_event(event: EventData) -> None:
-
+    """
+    Tries to generate MarketingContext(s) based on parameters in the query string, and add to global contexts
+    in the provided event.
+    :param event: EventData
+    :return:
+    """
     path_contexts = get_contexts(event, 'PathContext')
 
     if not path_contexts:
@@ -239,7 +244,7 @@ def add_marketing_context_to_event(event: EventData) -> None:
     query_string = urlparse(str(path_context.get('id', ''))).query
     parsed_qs = parse_qs(query_string)
 
-    # for now we only support utm, but other mappings are possible
+    # for now, we only support utm, but other mappings are possible
     # all mappings that result in a valid MarketingContext will be added
     mappings = {
         'utm': {
@@ -265,12 +270,16 @@ def add_marketing_context_to_event(event: EventData) -> None:
 
         marketing_context_fields['id'] = mapping_type
 
-        try:
-            add_global_context_to_event(event, MarketingContext(**marketing_context_fields))
-        except TypeError as e:
-            # couldn't create a marketing context for this mapping, no problem, as this is not a mandatory context
-            print(f'error creating marketing context: {e} / {marketing_context_fields}')
-            pass
+        if len(marketing_context_fields) > 1:
+            # if no fields are set (other than id), no point in trying
+            try:
+                add_global_context_to_event(event, MarketingContext(**marketing_context_fields))
+            except TypeError as e:
+                # couldn't create a marketing context for this mapping, no problem, as this is not a mandatory context
+                #
+                # This way, the MarketingContext class decides whether sufficient / appropriate arguments are supplied
+                # to create a valid instance (that adheres to the schema), no need to implement that logic here.
+                pass
 
 
 def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):
