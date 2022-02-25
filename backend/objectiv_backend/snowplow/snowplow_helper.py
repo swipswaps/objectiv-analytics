@@ -18,11 +18,11 @@ from objectiv_backend.common.event_utils import get_context
 from objectiv_backend.common.types import EventDataList, EventData
 
 
-def make_snowplow_custom_context(event: Dict, config: SnowplowConfig) -> str:
+def make_snowplow_custom_context(snowplow_event: Dict, config: SnowplowConfig) -> str:
     snowplow_contexts_schema = config.schema_contexts
     outer_event = {
         'schema': snowplow_contexts_schema,
-        'data': [event]
+        'data': [snowplow_event]
     }
     outer_event_json = json.dumps(outer_event)
     return str(base64.b64encode(outer_event_json.encode('UTF-8')), 'UTF-8')
@@ -62,7 +62,7 @@ def objectiv_event_to_snowplow_payload(event: EventData, config: SnowplowConfig)
     rich_event['cookie_id'] = cookie_context.get('id', '')
 
     snowplow_event = objectiv_event_to_snowplow(event=rich_event, config=config)
-    snowplow_custom_context = make_snowplow_custom_context(event=snowplow_event, config=config)
+    snowplow_custom_context = make_snowplow_custom_context(snowplow_event=snowplow_event, config=config)
     payload = {
         "schema": snowplow_payload_data_schema,
         "data": [{
