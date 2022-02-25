@@ -43,11 +43,33 @@ class SeriesAbstractNumeric(Series, ABC):
     def round(self, decimals: int = 0) -> 'SeriesAbstractNumeric':
         """
         Round the value of this series to the given amount of decimals.
+
         :param decimals: The amount of decimals to round to
         """
         return self.copy_override(
             expression=Expression.construct(f'round(cast({{}} as numeric), {decimals})', self)
         )
+
+    def cut(self, bins: int, right: bool = True) -> 'SeriesAbstractNumeric':
+        """
+        Segments values into bins.
+
+        :param bins: The amount of bins to segment data into
+        :param right: If true (by default), each bin will include the rightmost edge. (e.g (x,y]).
+        """
+        from bach.operations.cut import CutOperation
+        return CutOperation(series=self, bins=bins, right=right)()
+
+    def qcut(self, q: Union[int, List[float]]) -> 'SeriesAbstractNumeric':
+        """
+        Segments values into equal-sized buckets based on rank or sample quantiles.
+
+        :param q: Number of quantiles or list of quantiles to consider.
+
+        :return: series containing each quantile range/interval per value. Original series is set as index.
+        """
+        from bach.operations.cut import QCutOperation
+        return QCutOperation(series=self, q=q)()
 
     def _ddof_unsupported(self, ddof: Optional[int]):
         if ddof is not None and ddof != 1:
@@ -132,44 +154,13 @@ class SeriesAbstractNumeric(Series, ABC):
         When q is a float or len(q) == 1, the resultant series index will remain
         In case multiple quantiles are calculated, the resultant series index will have all calculated
         quantiles as index values.
+
+        :param partition: The partition or window to apply
+        :param q: A quantile or list of quantiles to be calculated
         """
-        quantiles = [q] if isinstance(q, float) else q
-        quantile_results = []
-        for qt in quantiles:
-            if qt < 0 or qt > 1:
-                raise ValueError(f'value {qt} should be between 0 and 1.')
-
-            agg_result = cast(
-                'SeriesFloat64',
-                self._derived_agg_func(
-                    partition=partition,
-                    expression=AggregateFunctionExpression.construct(
-                        f'percentile_cont({qt}) within group (order by {{}})',
-                        self,
-                    ),
-                ),
-            )
-            if len(quantiles) == 1:
-                return agg_result
-
-            quantile_df = agg_result.to_frame()
-            # maps the resultant quantile
-            # a hack in order to avoid calling quantile_df.materialized().
-            # Currently doing quantile['q'] = qt
-            # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-            quantile_df['q'] = agg_result.copy_override(
-                dtype='float64',
-                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
-            )
-            quantile_df.set_index('q', inplace=True)
-            quantile_results.append(quantile_df.all_series[self.name])
-
-        from bach.concat import SeriesConcatOperation
-        final_agg_result = SeriesConcatOperation(
-            objects=quantile_results,
-            ignore_index=False,  # should keep q index since multiple quantiles were calculated
-        )()
-        return cast('SeriesFloat64', final_agg_result)
+        from bach.quantile import calculate_quantiles
+        result = calculate_quantiles(self, partition=partition, q=q)
+        return cast('SeriesFloat64', result)
 
     def var(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
         """

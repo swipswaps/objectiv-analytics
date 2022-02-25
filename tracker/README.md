@@ -19,7 +19,7 @@ For detailed installation & usage instructions, visit [Objectiv Docs](https://ww
 If you need help using or installing Objectiv's tracker, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
 
 ## Bug Reports & Feature Requests
-If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing.md).
+If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://objectiv.io/docs/home/the-project/contribute/).
 
 ## Security Disclosure
 Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](../SECURITY.md) for details.
@@ -30,4 +30,4 @@ If you want to contribute to Objectiv or use it as a base for custom development
 ## License
 This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](../LICENSE.md) for details.
 
-Unless otherwise noted, all files © 2021 Objectiv B.V.
+Unless otherwise noted, all files © 2021-2022 Objectiv B.V.

@@ -3,13 +3,26 @@ Copyright 2021 Objectiv B.V.
 """
 import datetime
 from abc import ABC
-from typing import Union, cast
+from enum import Enum
+from typing import Union, cast, List
 
 import numpy
 
-from bach.series import Series, SeriesString, SeriesBoolean
+from bach import DataFrame
+from bach.series import Series, SeriesString, SeriesBoolean, SeriesFloat64, SeriesInt64
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
+
+_SECONDS_IN_DAY = 24 * 60 * 60
+
+
+class DatePartFormats(Enum):
+    DAYS = 'DD'
+    HOURS = 'HH24'
+    MINUTES = 'MI'
+    SECONDS = 'SS'
+    MILLISECONDS = 'MS'
+    MICROSECONDS = 'US'
 
 
 class DateTimeOperation:
@@ -33,10 +46,69 @@ class DateTimeOperation:
         """
         expression = Expression.construct('to_char({}, {})',
                                           self._series, Expression.string_value(format_str))
-        str_series = self._series.copy_override(dtype='string', expression=expression)
-        # mypy assumes `self._series.copy_override` returns a SeriesAbstractDateTime
-        assert isinstance(str_series, SeriesString)
+        str_series = self._series.copy_override_type(SeriesString).copy_override(expression=expression)
         return str_series
+
+
+class TimedeltaOperation(DateTimeOperation):
+    @property
+    def components(self) -> DataFrame:
+        """
+        :returns: a DataFrame containing all date parts from the timedelta.
+
+        .. note::
+            The dataframe contains only the displayed values of the timedelta.
+        """
+        component_series = {}
+        for date_part in DatePartFormats:
+            component_name = date_part.name.lower()
+            component_series[component_name] = (
+                self.sql_format(date_part.value).astype('int64').copy_override(name=component_name)
+            )
+        return self._series.to_frame().copy_override(series=component_series)
+
+    @property
+    def days(self) -> SeriesInt64:
+        """
+        converts total seconds into days and returns only the integral part of the result
+        """
+        day_series = self.total_seconds // _SECONDS_IN_DAY
+
+        day_series = day_series.astype('int64')
+        return cast(SeriesInt64, day_series.copy_override(name='days'))
+
+    @property
+    def seconds(self) -> SeriesInt64:
+        """
+        removes days from total seconds (self.total_seconds % _SECONDS_IN_DAY)
+        and returns only the integral part of the result
+        """
+        seconds_series = (self.total_seconds % _SECONDS_IN_DAY) // 1
+
+        seconds_series = seconds_series.astype('int64')
+        return cast(SeriesInt64, seconds_series.copy_override(name='seconds'))
+
+    @property
+    def microseconds(self) -> SeriesInt64:
+        """
+        considers only the fractional part of the total seconds and converts it into microseconds
+        """
+        microseconds_series = (self.total_seconds % 1) * 10 ** 6
+        microseconds_series //= 1
+
+        microseconds_series = microseconds_series.astype('int64')
+        return cast(SeriesInt64, microseconds_series.copy_override(name='microseconds'))
+
+    @property
+    def total_seconds(self) -> SeriesFloat64:
+        """
+        returns the total amount of seconds in the interval
+        """
+        # extract(epoch from source) returns the total number of seconds in the interval
+        expression = Expression.construct(f'extract(epoch from {{}})', self._series)
+        return self._series\
+            .copy_override_type(SeriesFloat64)\
+            .copy_override(name='total_seconds', expression=expression)
 
 
 class SeriesAbstractDateTime(Series, ABC):
@@ -275,6 +347,17 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     def __truediv__(self, other) -> 'Series':
         return self._arithmetic_operation(other, 'div', '({}) / ({})', other_dtypes=('int64', 'float64'))
 
+    @property
+    def dt(self) -> DateTimeOperation:
+        """
+        Get access to date operations.
+
+        .. autoclass:: bach.series.series_datetime.DateTimeOperation
+            :members:
+
+        """
+        return TimedeltaOperation(self)
+
     def sum(self, partition: WrappedPartition = None,
             skipna: bool = True, min_count: int = None) -> 'SeriesTimedelta':
         """
@@ -297,4 +380,16 @@ class SeriesTimedelta(SeriesAbstractDateTime):
             expression='avg',
             skipna=skipna
         )
+        return cast('SeriesTimedelta', result)
+
+    def quantile(
+        self, partition: WrappedPartition = None, q: Union[float, List[float]] = 0.5,
+    ) -> 'SeriesTimedelta':
+        """
+        When q is a float or len(q) == 1, the resultant series index will remain
+        In case multiple quantiles are calculated, the resultant series index will have all calculated
+        quantiles as index values.
+        """
+        from bach.quantile import calculate_quantiles
+        result = calculate_quantiles(series=self.copy(), partition=partition, q=q)
         return cast('SeriesTimedelta', result)

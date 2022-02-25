@@ -1,6 +1,5 @@
 import numpy
 
-from bach import SeriesBoolean
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
@@ -22,7 +21,7 @@ def test_to_pandas():
     bt['t'] = True
     bt['f'] = False
     bt[['t', 'f']].to_pandas()
-    numpy.testing.assert_array_equal(bt[['t', 'f']].to_numpy()[0] , [True, False])
+    numpy.testing.assert_array_equal(bt[['t', 'f']].to_numpy()[0], [True, False])
 
     
 def test_operations():
@@ -71,3 +70,28 @@ def test_operations():
         ]
     )
 
+
+def test_min_max():
+    df = get_bt_with_test_data()[['founding']]
+    df['mixed'] = df['founding'] < 1400
+    df['yes'] = True
+    df['no'] = False
+    assert_equals_data(
+        df,
+        expected_columns=['_index_skating_order', 'founding', 'mixed', 'yes', 'no'],
+        expected_data=[
+            [1, 1285, True, True, False],
+            [2, 1456, False, True, False],
+            [3, 1268, True, True, False]
+        ]
+    )
+    assert_equals_data(
+        df.min(),
+        expected_columns=['_index_skating_order_min', 'founding_min', 'mixed_min', 'yes_min', 'no_min'],
+        expected_data=[[1, 1268, False, True, False]]
+    )
+    assert_equals_data(
+        df.max(),
+        expected_columns=['_index_skating_order_max', 'founding_max', 'mixed_max', 'yes_max', 'no_max'],
+        expected_data=[[3, 1456, True, True, False]]
+    )

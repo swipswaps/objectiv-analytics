@@ -240,7 +240,7 @@ class ObjectivFrame(DataFrame):
             Expression.string_value('{}'),
             self.event_type
         )
-        return self[location_stack_column].copy_override(dtype='string', expression=expression)
+        return self[location_stack_column].copy_override_dtype('string').copy_override(expression=expression)
 
     def _prepare_sample(self, location_stack_column='location_stack'):
         """

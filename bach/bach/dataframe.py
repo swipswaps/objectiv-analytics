@@ -1,5 +1,10 @@
+"""
+Copyright 2021 Objectiv B.V.
+"""
 import warnings
 from copy import copy
+from datetime import date, datetime, time
+
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
     cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
@@ -41,6 +46,7 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - dict of axis labels -> functions, function names or list of such.
 
 Level = Union[int, List[int], str, List[str]]
+Scalar = Union[int, float, str, bool, date, datetime, time, UUID]
 
 
 class SortColumn(NamedTuple):
@@ -196,7 +202,11 @@ class DataFrame:
                                  f'df: {value.index}, series.index: {index}')
             if value.group_by != group_by:
                 raise ValueError(f'Group_by in `series` should match dataframe. '
-                                 f'df: {value.group_by}, series.index: {group_by}')
+                                 f'df: {group_by}, series.group_by: {value.group_by}')
+            if value.base_node != base_node:
+                raise ValueError(f'Base_node in `series` should match dataframe. '
+                                 f'df: {base_node}, series.base_node: {value.base_node}')
+
             self._data[key] = value
 
         for value in index.values():
@@ -1013,21 +1023,23 @@ class DataFrame:
         else:
             raise NotImplementedError(f'how "{how}" not supported')
 
-        df.set_index(new_index, inplace=True)
+        df = df.set_index(new_index)
         if key in self.data_columns:
             df[key] = df[key + '__remove']
-            df.drop(columns=[key + '__remove'], inplace=True)
-        df.drop(columns=[value_index_name + '__index'], inplace=True, errors='ignore')
+            df = df.drop(columns=[key + '__remove'])
+        df = df.drop(columns=[value_index_name + '__index'], errors='ignore')
 
         self._update_self_from_df(df)
 
-    def rename(self, mapper: Union[Dict[str, str], Callable[[str], str]] = None,
-               index: Union[Dict[str, str], Callable[[str], str]] = None,
-               columns: Union[Dict[str, str], Callable[[str], str]] = None,
-               axis: int = 0,
-               inplace: bool = False,
-               level: int = None,
-               errors: str = 'ignore') -> Optional['DataFrame']:
+    def rename(
+        self,
+        mapper: Union[Dict[str, str], Callable[[str], str]] = None,
+        index: Union[Dict[str, str], Callable[[str], str]] = None,
+        columns: Union[Dict[str, str], Callable[[str], str]] = None,
+        axis: int = 0,
+        level: int = None,
+        errors: str = 'ignore',
+    ) -> 'DataFrame':
         """
         Rename columns.
 
@@ -1042,12 +1054,11 @@ class DataFrame:
             and returns the new one. The new column names must not clash with other column names in either
             `self.`:py:attr:`data` or `self.`:py:attr:`index`, after renaming is complete.
         :param axis: ``axis=1`` is supported, rest is not.
-        :param inplace: update the current DataFrame or return a new DataFrame.
         :param level: not supported
         :param errors: Either 'ignore' or 'raise'. When set to 'ignore' KeyErrors about non-existing
             column names in `columns` or `mapper` are ignored. Errors thrown in the mapper function or
             about invalid target column names are not suppressed.
-        :returns: DataFrame with the renamed axis labels or None if ``inplace=True``.
+        :returns: DataFrame with the renamed axis labels.
 
         .. note::
             The copy parameter is not supported since it makes very little sense for db backed series.
@@ -1062,10 +1073,7 @@ class DataFrame:
         if mapper is not None:
             columns = mapper
 
-        if inplace:
-            df = self
-        else:
-            df = self.copy_override()
+        df = self.copy_override()
 
         if callable(columns):
             columns = {source: columns(source) for source in df.data_columns}
@@ -1089,14 +1097,13 @@ class DataFrame:
                 series = series.copy_override(name=new_name)
             new_data[new_name] = series
         df._data = new_data
-        return None if inplace else df
+        return df
 
     def reset_index(
         self,
         level: Optional[Union[str, Sequence[str]]] = None,
         drop: bool = False,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Drops the current index.
 
@@ -1106,13 +1113,11 @@ class DataFrame:
         :param level: Removes given levels from index. Removes all levels by default
         :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
             is removed.
-        :param inplace: update the current DataFrame or return a new DataFrame.
-        :returns: DataFrame with the index dropped or None if ``inplace=True``.
+        :returns: DataFrame with the index dropped.
         """
-        df = self if inplace else self.copy_override()
+        df = self.copy()
         if self._group_by:
-            # materialize, but raise if inplace is required.
-            df = df.materialize(node_name='reset_index', inplace=inplace)
+            df = df.materialize(node_name='reset_index')
 
         new_index = {}
         series = df._data if drop else df.all_series
@@ -1131,15 +1136,14 @@ class DataFrame:
 
         df._data = {n: s.copy_override(index={}, index_sorting=[]) for n, s in series.items()}
         df._index = new_index
-        return None if inplace else df
+        return df
 
     def set_index(
         self,
         keys: Union[str, 'Series', List[Union[str, 'Series']]],
         drop: bool = True,
         append: bool = False,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Set this dataframe's index to the the index given in keys
 
@@ -1147,15 +1151,13 @@ class DataFrame:
             Series are passed, they should have the same base node as the DataFrame they are set on.
         :param drop: delete columns to be used as the new index.
         :param append: whether to append to the existing index or replace.
-        :param inplace: update the current DataFrame or return a new DataFrame. This is not always supported
-            and will raise if it is not.
-        :returns: a DataFrame with the new index or None if ``inplace=True``.
+        :returns: a DataFrame with the new index.
         """
         from bach.series import Series
 
-        df = self if inplace else self.copy_override()
+        df = self.copy()
         if self._group_by:
-            df = df.materialize(node_name='groupby_setindex', inplace=inplace)
+            df = df.materialize(node_name='groupby_setindex')
 
         # build the new index, appending if necessary
         new_index = {} if not append else copy(df._index)
@@ -1183,7 +1185,7 @@ class DataFrame:
 
         df._index = new_index
         df._data = new_series
-        return None if inplace else df
+        return df
 
     def __delitem__(self, key: str):
         """
@@ -1195,13 +1197,14 @@ class DataFrame:
         else:
             raise TypeError(f'Unsupported type {type(key)}')
 
-    def drop(self,
-             labels: List[str] = None,
-             index: List[str] = None,
-             columns: List[str] = None,
-             level: int = None,
-             inplace: bool = False,
-             errors: str = 'raise') -> Optional['DataFrame']:
+    def drop(
+        self,
+        labels: List[str] = None,
+        index: List[str] = None,
+        columns: List[str] = None,
+        level: int = None,
+        errors: str = 'raise',
+    ) -> 'DataFrame':
         """
         Drop columns from the DataFrame
 
@@ -1209,9 +1212,8 @@ class DataFrame:
         :param index: not supported
         :param columns: the list of columns to drop.
         :param level: not supported
-        :param inplace: update the current DataFrame or return a new DataFrame.
         :param errors: 'raise' or 'ignore' missing key errors.
-        :returns: DataFrame without the removed columns or None if ``inplace=True``.
+        :returns: DataFrame without the removed columns.
 
         """
         if labels or index is not None:
@@ -1224,10 +1226,7 @@ class DataFrame:
         if columns is None:
             raise ValueError("columns needs to be a list of strings.")
 
-        if inplace:
-            df = self
-        else:
-            df = self.copy_override()
+        df = self.copy_override()
 
         try:
             for key in columns:
@@ -1236,7 +1235,7 @@ class DataFrame:
             if errors == "raise":
                 raise e
 
-        return None if inplace else df
+        return df
 
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'DataFrame':
         """
@@ -1550,8 +1549,7 @@ class DataFrame:
         self,
         level: Optional[Level] = None,
         ascending: Union[bool, List[bool]] = True,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Sort dataframe by index levels.
 
@@ -1559,17 +1557,11 @@ class DataFrame:
             If not specified, all index series are used
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `level` must also be a list and ``len(ascending) == len(level)``.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
-        :returns: a new DataFrame with the specified ordering if ``inplace=False``,
+        :returns: a new DataFrame with the specified ordering,
          otherwise it updates the original and returns None.
         """
         sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
         df = self.sort_values(by=sort_by, ascending=ascending)
-
-        if inplace:
-            self._update_self_from_df(df)
-            return None
-
         return df
 
     def _get_indexes_by_level(self, level: Level) -> List[str]:
@@ -2074,17 +2066,23 @@ class DataFrame:
         **kwargs,
     ):
         """
-        Returns the quantile of all numeric columns.
+        Returns the quantile per numeric/timedelta column.
 
         :param q: value or list of values between 0 and 1.
         :param axis: only ``axis=1`` is supported. This means columns are aggregated.
         :returns: a new DataFrame with the aggregation applied to all selected columns.
         """
-        from bach.series.series_numeric import SeriesAbstractNumeric
-        df = self
-        if all(not isinstance(s, SeriesAbstractNumeric) for s in df.all_series.values()):
-            raise ValueError('Cannot calculate quantiles for dataframe with no numeric columns.')
+        valid_index = (
+            {s.name: s for s in self._index.values() if hasattr(s, 'quantile')}
+            if self.group_by is None else {}
+        )
+        valid_series = {
+            s.name: s.copy_override(index=valid_index) for s in self._data.values() if hasattr(s, 'quantile')
+        }
+        if not valid_series and not valid_index:
+            raise ValueError('DataFrame has no series supporting "quantile" operation.')
 
+        df = self.copy_override(series=valid_series, index=valid_index)
         if df.group_by is None:
             df = df.groupby()
 
@@ -2095,7 +2093,7 @@ class DataFrame:
             new_series = df._apply_func_to_series(
                 func='quantile',
                 axis=axis,
-                numeric_only=True,
+                numeric_only=False,
                 exclude_non_applied=True,
                 partition=df.group_by,
                 q=qt,
@@ -2112,18 +2110,17 @@ class DataFrame:
                 return quantile_df
 
             # a hack in order to avoid calling quantile_df.materialized().
-            # Currently doing quantile['q'] = qt
+            # Currently doing quantile['quantile'] = qt
             # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-            quantile_df['q'] = initial_series.copy_override(
-                dtype='float64',
-                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
-            )
+            quantile_df['quantile'] = initial_series\
+                .copy_override_dtype(dtype='float64')\
+                .copy_override(expression=AggregateFunctionExpression.construct(fmt=f'{qt}'))
             all_quantile_dfs.append(quantile_df)
 
-        from bach.concat import DataFrameConcatOperation
+        from bach.operations.concat import DataFrameConcatOperation
         result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
         # q column should be in the index when calculating multiple quantiles
-        return result.set_index('q')
+        return result.set_index('quantile')
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """
@@ -2234,12 +2231,15 @@ class DataFrame:
         The following statistics are considered: `count`, `mean`, `std`, `min`, `max`, `nunique` and `mode`
 
         :param percentiles: list of percentiles to be calculated. Values must be between 0 and 1.
-        :param include: dtypes to be included, if not provided calculations will be based on numerical columns
-        :param exclude: dtypes to be excluded
+        :param include: dtypes to be included.
+            Either a sequence of dtypes, a single dtype, or the special value 'all'.
+            By default calculations will be based on numerical columns, if there are any
+            numerical columns and on all columns if there are no numerical columns.
+        :param exclude: dtypes to be excluded. Either a sequence of dtypes, a single dtype, or None.
         :param datetime_is_numeric: not supported
         :returns: a new DataFrame with the descriptive statistics
         """
-        from bach.describe import DescribeOperation
+        from bach.operations.describe import DescribeOperation
         return DescribeOperation(
             obj=self,
             include=include,
@@ -2385,7 +2385,7 @@ class DataFrame:
 
         :return: a new dataframe with all rows from appended Dataframes.
         """
-        from bach.concat import DataFrameConcatOperation
+        from bach.operations.concat import DataFrameConcatOperation
         if isinstance(other, list) and not other:
             raise ValueError('no dataframe or series to append.')
 
@@ -2401,9 +2401,10 @@ class DataFrame:
         self,
         subset: Optional[Union[str, Sequence[str]]] = None,
         keep: Union[str, bool] = 'first',
-        inplace: bool = False,
         ignore_index: bool = False,
-    ) -> Optional['DataFrame']:
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> 'DataFrame':
         """
         Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
 
@@ -2417,38 +2418,43 @@ class DataFrame:
             * False: drops all duplicates
 
             If no value is provided, first occurrences will be kept by default.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param ignore_index: if true, drops indexes of the result
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic
+            when keep == "first" or keep == "last". If not provided:
+            1. If dataframe has already an order_by, first and last values will be performed based on it
+            2. Else all series not considered in duplication will be used instead.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `by` must also be a list and ``len(ascending) == len(by)``.
 
-        :return: a new dataframe with dropped duplicates if inplace = False, otherwise None.
+        :return: a new dataframe with dropped duplicates.
         """
         if keep not in ('first', 'last', False):
             raise ValueError('keep must be either "first", "last" or False.')
 
-        subset = [subset] if isinstance(subset, str) else subset
-        if subset and any(s not in self.data_columns for s in subset):
-            raise ValueError(
-                f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
-            )
+        subset = self._get_parsed_subset_of_data_columns(subset)
+        sort_by = self._get_parsed_subset_of_data_columns(sort_by)
 
-        df = self.copy()
-        if ignore_index:
-            df.reset_index(drop=True, inplace=True)
+        df = self.copy() if not ignore_index else self.reset_index(drop=True)
 
         dedup_on = list(subset or self.data_columns)
         dedup_data = [name for name in df.all_series if name not in dedup_on]
 
+        # in case df has no order_by and no sort_by was provided
+        # it will use the series that are not included in dedup_on
+        dedup_sort = list(sort_by or dedup_data) if sort_by or not self.order_by else []
+
         # dedup_data contains index series if ignore_index = False
         # in this case we should append those as data_columns
         if dedup_data and not ignore_index:
-            df.reset_index(drop=False, inplace=True)
+            df = df.reset_index(drop=False)
 
         # drop all duplicates
         if keep is False:
             freq_df = df[dedup_on]
             freq_df['freq'] = 1
             freq_df = freq_df.groupby(by=dedup_on).sum()
-            freq_df.reset_index(drop=False, inplace=True)
+            freq_df = freq_df.reset_index(drop=False)
 
             df = df.merge(freq_df, on=dedup_on)
             df = df[df.freq_sum == 1][dedup_on + dedup_data]
@@ -2462,6 +2468,8 @@ class DataFrame:
                 func_to_apply = 'window_first_value'
                 end_boundary = WindowFrameBoundary.CURRENT_ROW
 
+            if dedup_sort:
+                df = df.sort_values(by=dedup_sort, ascending=ascending)
             window = df.groupby(by=dedup_on).window(end_boundary=end_boundary, end_value=None)
             agg_series = df[dedup_data]._apply_func_to_series(func=func_to_apply, window=window)
 
@@ -2470,14 +2478,287 @@ class DataFrame:
 
         # we need to just apply distinct for 'first' and 'last'.
         if keep:
-            df.materialize(distinct=True, inplace=True)
+            df = df.materialize(distinct=True,)
 
         df = df if ignore_index else df.set_index(keys=self.index_columns)
-        if not inplace:
-            return df
+        return df
 
-        self._update_self_from_df(df)
-        return None
+    def value_counts(
+        self,
+        subset: Optional[List[str]] = None,
+        normalize: bool = False,
+        sort: bool = True,
+        ascending: bool = False,
+    ) -> 'Series':
+        """
+        Returns a series containing counts of each unique row in the DataFrame
+
+        :param subset: a list of series labels to be used when counting. If subset is not provided and
+            dataframe has no group_by, all data columns will be used. In case the DataFrame has a group_by,
+            series in group_by will be added to subset.
+        :param normalize: returns proportions instead of frequencies
+        :param sort: sorts result by frequencies
+        :param ascending: sorts values in ascending order if true.
+
+        :return: a series containing all counts per unique row.
+        """
+        if not subset:
+            subset = self.data_columns
+        elif any(s not in self.data_columns for s in subset):
+            raise ValueError('subset contains invalid series.')
+
+        if self.group_by:
+            # consider groupby series in subset
+            subset = list(self.group_by.index.keys()) + subset
+
+        df = self.copy_override(
+            series={
+                s: self.all_series[s].copy_override(index={}, group_by=None) for s in subset
+            },
+            index={},
+            group_by=None,
+        )
+        df['value_counts'] = 1
+        df = df.groupby(by=list(subset)).sum()
+
+        if normalize:
+            df = df.materialize()
+            df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
+
+        df = df.rename(columns={'value_counts_sum': 'value_counts'})
+
+        if sort:
+            return df._data['value_counts'].sort_values(ascending=ascending)
+
+        return df._data['value_counts']
+
+    def dropna(
+        self,
+        *,
+        axis: int = 0,
+        how: str = 'any',
+        thresh: Optional[int] = None,
+        subset: Optional[Union[str, Sequence[str]]] = None,
+    ) -> 'DataFrame':
+        """
+        Removes rows with missing values (NaN, None and SQL NULL).
+
+        :param axis: only ``axis=0`` is supported. This means rows that contain missing values are dropped.
+        :param how: determines when a row is removed. Supported values:
+           - 'any': rows with at least one missing value are removed
+           - 'all': rows with all missing values are removed
+        :param thresh: determines the least amount of non-missing values a row needs to have
+            in order to be kept
+        :param subset: series label or sequence of labels to be considered for missing values.
+            If subset is None, all DataFrame's series labels will be used.
+            In case subset is an empty list, a copy from the DataFrame will
+            be returned.
+
+        :return: a new dataframe with dropped rows.
+        """
+        if axis:
+            raise ValueError('only axis = 0 is supported.')
+
+        if how not in ('any', 'all'):
+            raise ValueError(f'{how} is not a valid value for "how" parameter.')
+
+        subset = self._get_parsed_subset_of_data_columns(subset)
+        dropna_series = self.data_columns if subset is None else subset
+
+        if not dropna_series:
+            return self.copy()
+
+        logical_operator = 'or' if how == 'any' else 'and'
+
+        conditions = []
+        for ds in dropna_series:
+            main_condition = self.all_series[ds].isnull()
+            if self.all_series[ds].dtype in ['float64', 'int64']:
+                main_condition = main_condition | (self.all_series[ds] == float('nan'))
+
+            conditions.append(main_condition)
+
+        if not thresh:
+            expression_fmt = f' {logical_operator} '.join([f'{{}}'] * len(dropna_series))
+        else:
+            # we need to add the amount of nullables in the row and compare it to the thresh
+            cases_fmt = f' + '.join([f'case when {{}} then 1 else 0 end'] * len(dropna_series))
+            expression_fmt = f'{len(self.data_columns)} - ({cases_fmt}) < {thresh}'
+
+        drop_row_series = conditions[0].copy_override(
+            expression=Expression.construct(expression_fmt, *conditions),
+        )
+
+        dropna_df = self[~drop_row_series]
+        assert isinstance(dropna_df, DataFrame)
+
+        return dropna_df
+
+    def fillna(
+        self,
+        *,
+        value: Union[Union['Series', Scalar], Dict[str, Union[Scalar, 'Series']]] = None,
+        method: Optional[str] = None,
+        axis: int = 0,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> Optional['DataFrame']:
+        """
+        Fill any NULL value using a method or with a given value.
+
+        :param value: A scalar/series to fill all NULL values on each series
+            or a dictionary specifying which scalar/series to use for each series.
+        :param method: Method to use for filling NULL values on all DataFrame series. Supported values:
+           - "ffill"/"pad": Fill missing values by propagating the last non-nullable value in the series.
+           - "bfill"/"backfill": Fill missing values with the next non-nullable value in the series.
+        :param axis: only ``axis=0`` is supported.
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
+
+        :return: a new dataframe with filled missing values.
+
+        .. note::
+            sort_by is required if method is specified and the DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
+        """
+        df = self.copy()
+        if method and value is not None:
+            raise ValueError('cannot specify both "method" and "value".')
+
+        if method and method not in ('ffill', 'pad', 'bfill', 'backfill'):
+            raise ValueError(f'"{method}" is not a valid method.')
+
+        if method in ('ffill', 'pad'):
+            df = df.ffill(sort_by=sort_by, ascending=ascending)
+
+        elif method in ('bfill', 'backfill'):
+            df = df.bfill(sort_by=sort_by, ascending=ascending)
+
+        if value is not None:
+            series_to_fill = list(value.keys()) if isinstance(value, dict) else self.data_columns
+            for s in series_to_fill:
+                fill_with = value[s] if isinstance(value, dict) else value
+                df[s] = df.all_series[s].fillna(fill_with)
+
+        return df
+
+    def ffill(
+        self,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> 'DataFrame':
+        """
+        Fill missing values by propagating the last non-nullable value in each series.
+
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
+
+        :return: a new dataframe with filled missing values.
+
+        .. note::
+            sort_by is required if DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
+        """
+        from bach.partitioning import Window, WindowFrameMode
+        from bach.series.series_numeric import SeriesInt64
+
+        df = self.copy()
+
+        if sort_by:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        if not sort_by and not df.order_by:
+            raise Exception('dataframe must be sorted in order to apply forward or backward fill.')
+
+        # create a partition column for each series to be filled
+        # this column contains the cumulative sum of the total amount of observed non-nullable values
+        # till the current row. Based on these values, NULL records can be grouped by the partition and
+        # be filled with the non-nullable value respective to the partition
+        # Example:
+        # |   A  | __partition_A | filled_A |
+        # |:----:|:-------------:|:--------:|
+        # |   1  |       1       |     1    |
+        # | NULL |       1       |     1    |
+        # | NULL |       1       |     1    |
+        # |   3  |       2       |     3    |
+        # | NULL |       2       |     3    |
+        # |   4  |       3       |     4    |
+        for series_name, series in self._data.items():
+            partition_name = f'__partition_{series.name}'
+            partition_expr = Expression.construct(f'case when {{}} is null then 0 else 1 end', series)
+
+            df[partition_name] = (
+                series.copy_override(expression=partition_expr, name=partition_name)
+                .copy_override_type(SeriesInt64)
+                .sum(partition=Window([], mode=WindowFrameMode.ROWS, order_by=df.order_by))
+            )
+        df.materialize(node_name='fillna_partitioning', inplace=True)
+
+        # fill gaps with the first_value per partition
+        for series_name in self.data_columns:
+            df[series_name] = df.all_series[series_name].window_first_value(
+                window=Window([df.all_series[f'__partition_{series_name}']], order_by=df.order_by),
+            )
+
+        return df.copy_override(series={s: df.all_series[s] for s in self.data_columns})
+
+    def bfill(
+        self,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> 'DataFrame':
+        """
+        Fill missing values by using the next non-nullable value in each series.
+
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
+
+        :return: a new dataframe with filled missing values.
+
+        .. note::
+            sort_by is required if DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
+        """
+        df = self.copy()
+
+        if sort_by:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        main_order_by = copy(df._order_by)
+        # bfill is similar to ffill, the difference is that the order is reversed.
+        reverse_order_by = [
+            SortColumn(expression=ob.expression, asc=not ob.asc)
+            for ob in main_order_by
+        ]
+        return df.copy_override(order_by=reverse_order_by).ffill().copy_override(order_by=main_order_by)
+
+    def _get_parsed_subset_of_data_columns(
+        self, subset: Optional[Union[str, Sequence[str]]],
+    ) -> Optional[Sequence[str]]:
+        subset = [subset] if isinstance(subset, str) else subset
+        if subset and any(s not in self.data_columns for s in subset):
+            raise ValueError(
+                f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
+            )
+        return subset
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

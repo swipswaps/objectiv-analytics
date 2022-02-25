@@ -47,14 +47,6 @@ def test_drop_items():
     with pytest.raises(KeyError):
         nbt.founding
 
-    nbt = bt.drop(columns=['founding'], inplace=True)
-    assert nbt is None
-    assert 'founding' not in bt.data.keys()
-
-    bt.drop(columns=['inhabitants', 'city'], inplace=True)
-    assert 'inhabitants' not in bt.data.keys()
-    assert 'city' not in bt.data.keys()
-
     with pytest.raises(KeyError):
         bt.drop(columns=['non existing column'])
 
@@ -168,7 +160,7 @@ def test_quantile_no_numeric_columns() -> None:
         },
     )
     bt = get_from_df('test_quantile', pdf)
-    bt.reset_index(drop=True, inplace=True)
+    bt = bt.reset_index(drop=True)
 
-    with pytest.raises(ValueError, match=r'Cannot calculate quantiles'):
+    with pytest.raises(ValueError, match=r'DataFrame has no series supporting'):
         bt.quantile()
