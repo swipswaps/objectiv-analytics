@@ -477,8 +477,7 @@ class Series(ABC):
                 new_series_aggregated = new_series_aggregated.fillna(fill_value)
             df[new_column_name] = new_series_aggregated
 
-        df.drop(columns=[name_index_last, name_series], inplace=True)
-        return df
+        return df.drop(columns=[name_index_last, name_series])
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
