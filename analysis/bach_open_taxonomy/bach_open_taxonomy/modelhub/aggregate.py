@@ -39,7 +39,7 @@ class Aggregate:
                 key = self._df[key] if isinstance(key, str) else key
                 if key.equals(self._df[illegal_groupby]):
                     raise KeyError(f'"{illegal_groupby}" is in groupby but is needed for aggregation: not '
-                                     f'allowed to group on that')
+                                   f'allowed to group on that')
 
         grouped_df = self._df.groupby(groupby_list)
         return grouped_df

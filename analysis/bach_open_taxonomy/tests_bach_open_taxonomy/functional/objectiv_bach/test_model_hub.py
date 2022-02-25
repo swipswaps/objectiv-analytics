@@ -151,3 +151,95 @@ def test_pre_conversion_hit_number():
         ],
         order_by='event_id'
     )
+
+
+def test_time_agg():
+    df = get_objectiv_frame()
+    s = df.mh.time_agg()
+
+    assert_equals_data(
+        s,
+        expected_columns=['event_id', 'time_aggregation'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), '2021-11-30 10:23:36.287'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), '2021-11-30 10:23:36.290'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), '2021-11-30 10:23:36.291'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), '2021-11-30 10:23:36.267'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), '2021-12-01 10:23:36.276'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), '2021-12-01 10:23:36.279'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), '2021-12-02 10:23:36.281'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), '2021-12-02 10:23:36.281'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), '2021-12-02 14:23:36.282'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), '2021-12-03 10:23:36.283'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), '2021-11-29 10:23:36.286'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), '2021-11-29 10:23:36.287']
+        ],
+        order_by='event_id'
+    )
+
+    df = get_objectiv_frame(time_aggregation='YYYY-MM')
+    s = df.mh.time_agg()
+
+    assert_equals_data(
+        s,
+        expected_columns=['event_id', 'time_aggregation'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), '2021-11']
+        ],
+        order_by='event_id'
+    )
+
+    df = get_objectiv_frame()
+    s = df.mh.time_agg(time_aggregation='YYYY-MM-DD')
+
+    assert_equals_data(
+        s,
+        expected_columns=['event_id', 'time_aggregation'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), '2021-11-30'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), '2021-11-30'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), '2021-11-30'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), '2021-11-30'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), '2021-12-01'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), '2021-12-01'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), '2021-12-02'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), '2021-12-02'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), '2021-12-02'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), '2021-12-03'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), '2021-11-29'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), '2021-11-29']],
+        order_by='event_id'
+    )
+
+    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    s = df.mh.time_agg(time_aggregation='YYYY')
+
+    assert_equals_data(
+        s,
+        expected_columns=['event_id', 'time_aggregation'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), '2021']],
+        order_by='event_id'
+    )
