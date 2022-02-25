@@ -34,18 +34,6 @@ def test_df_basic_drop_duplicates() -> None:
     )
     pd.testing.assert_frame_equal(pdf.drop_duplicates(), result.to_pandas(), check_names=False)
 
-    df_inplace = df.copy()
-    result_inplace = df_inplace.drop_duplicates(inplace=True)
-    assert result_inplace is None
-
-    df_inplace = df_inplace.sort_index()
-    assert_equals_data(
-        df_inplace,
-        expected_columns=expected_pdf.columns.tolist(),
-        expected_data=expected_pdf.to_numpy().tolist(),
-    )
-    pd.testing.assert_frame_equal(pdf.drop_duplicates(), df_inplace.to_pandas(), check_names=False)
-
     result_w_ignore_index = df.drop_duplicates(ignore_index=True).sort_values(by='a')
     assert_equals_data(
         result_w_ignore_index,
@@ -90,18 +78,6 @@ def test_df_basic_w_subset_drop_duplicates() -> None:
     )
     pd.testing.assert_frame_equal(pdf.drop_duplicates(subset), result.to_pandas(), check_names=False)
 
-    df_inplace = df.copy()
-    result_inplace = df_inplace.drop_duplicates(subset=subset, inplace=True)
-    assert result_inplace is None
-
-    df_inplace = df_inplace.sort_index()
-    assert_equals_data(
-        df_inplace,
-        expected_columns=expected_pdf.columns.tolist(),
-        expected_data=expected_pdf.to_numpy().tolist(),
-    )
-    pd.testing.assert_frame_equal(pdf.drop_duplicates(subset), df_inplace.to_pandas(), check_names=False)
-
     result_w_ignore_index = df.drop_duplicates(subset=subset, ignore_index=True).sort_values(by='c')
     assert_equals_data(
         result_w_ignore_index,
@@ -144,18 +120,6 @@ def test_df_keep_last_drop_duplicates() -> None:
         result.to_pandas(),
         check_names=False,
     )
-
-    df_inplace = df.copy()
-    result_inplace = df_inplace.drop_duplicates(keep='last', inplace=True)
-    assert result_inplace is None
-
-    df_inplace = df_inplace.sort_index()
-    assert_equals_data(
-        df_inplace,
-        expected_columns=expected_df.columns.tolist(),
-        expected_data=expected_df.to_numpy().tolist(),
-    )
-    pd.testing.assert_frame_equal(pdf.drop_duplicates(keep='last'), df_inplace.to_pandas(), check_names=False)
 
     subset = ['a', 'b']
     result_w_ignore_index = df.drop_duplicates(keep='last', ignore_index=True).sort_values(by=subset)

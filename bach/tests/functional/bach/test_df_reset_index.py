@@ -16,18 +16,12 @@ def test_reset_index_to_empty():
     assert list(rbt.index.keys()) == []
     assert '_index_skating_order' in rbt.data
 
-    # inplace
-    ipbt = get_bt_with_test_data()
-    ipbt.reset_index(inplace=True)
-    assert list(ipbt.index.keys()) == []
-    assert '_index_skating_order' in ipbt.data
-
     # drop
     dbt = bt.reset_index(drop=True)
     assert list(dbt.index.keys()) == []
     assert '_index_skating_order' not in bt.data
 
-    for r in [bt, rbt, ipbt, dbt]:
+    for r in [bt, rbt, dbt]:
         for s in r.index.values():
             assert(s.index == {})
         for s in r.data.values():
@@ -73,8 +67,6 @@ def test_set_index():
     assert '_index_skating_order' not in rbt.data
     sbt.head()  # check valid sql /df conversion
     rbt.head()
-
-    # we won't test inplace here, as that's done in test_reset_index_to_empty().
 
     # regular set
     with pytest.raises(ValueError,
@@ -167,20 +159,19 @@ def test_reset_index_materialize():
     assert list(bt.index.keys()) == ['municipality']
     assert list(rbt.index.keys()) == []
 
-
-    bt_copy = bt.copy()
-    bt_copy.reset_index(inplace=True)
-
-    for r in [bt, rbt, bt_copy]:
+    for r in [bt, rbt]:
         for s in r.index.values():
             assert(s.index == {})
         for s in r.data.values():
             assert(s.index == r.index)
 
-        assert_equals_data(r,
-                           expected_columns=['municipality', '_index_skating_order_sum',
-                                             'inhabitants_sum'],
-                           expected_data=[
-                               ['Leeuwarden', 1, 93485],
-                               ['Súdwest-Fryslân', 5, 36575]
-                           ])
+        assert_equals_data(
+            r,
+            expected_columns=[
+                'municipality', '_index_skating_order_sum', 'inhabitants_sum'
+            ],
+            expected_data=[
+                ['Leeuwarden', 1, 93485],
+                ['Súdwest-Fryslân', 5, 36575],
+            ],
+        )
