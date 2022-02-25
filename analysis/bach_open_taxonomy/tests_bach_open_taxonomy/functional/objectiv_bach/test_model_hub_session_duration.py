@@ -15,7 +15,7 @@ def test_defaults():
     s = df.model_hub.aggregate.session_duration()
 
     # with standard time_aggregation, all sessions are bounces
-    assert len(s.values) == 0
+    assert len(s.to_numpy()) == 0
 
 def test_no_grouping():
     # not grouping to anything
