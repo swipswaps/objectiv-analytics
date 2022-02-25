@@ -36,8 +36,9 @@ database. This also results in a few differences in how DataFrames form both lib
 situations:
 
 * The order of rows in a Bach DataFrame can be non-deterministic. If there is not a deterministic
-  :py:meth:`DataFrame.sort_values()` call, then the order of the rows that the data-transfer
-  functions return can be unpredictable.
+  :py:meth:`DataFrame.sort_values()` or :py:meth:`DataFrame.fillna()` call, then the order of the rows that the data-transfer
+  functions return can be unpredictable. In case for :py:meth:`DataFrame.fillna()`, methods `ffill` and `bfill` might fill gaps
+  with different values since rows containing `NULL`/`None` can yield a different order of rows.
 * Bach DataFrames can distinguish between `NULL`/`None` and Not-a-Number (`NaN`). Pandas generally doesn't
   and mainly uses NaN. When outputting data from a Bach DataFrame to a pandas DataFrame, most of this
   distinction is lost again.
