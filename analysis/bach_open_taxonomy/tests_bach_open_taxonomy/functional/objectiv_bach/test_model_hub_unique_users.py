@@ -110,6 +110,6 @@ def test_groupby_incl_time_agg():
 def test_groupby_illegal_column():
     # include column that is used for grouping in groupby
     df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
-    with pytest.raises(ValueError, match='is in groupby but is needed for aggregation: not allowed to '
+    with pytest.raises(KeyError, match='is in groupby but is needed for aggregation: not allowed to '
                                          'group on that'):
         df.model_hub.aggregate.unique_users(groupby=[df.mh.time_agg('YYYY-MM'), df.user_id])

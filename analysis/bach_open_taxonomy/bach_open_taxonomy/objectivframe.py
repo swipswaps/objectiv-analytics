@@ -161,7 +161,7 @@ class ObjectivFrame(DataFrame):
                               savepoints=Savepoints(),
                               variables={}
                               )
-        # todo should be a string
+
         df._time_aggregation = time_aggregation  # type: ignore
         df._start_date = start_date  # type: ignore
         df._end_date = end_date  # type: ignore
@@ -169,10 +169,6 @@ class ObjectivFrame(DataFrame):
 
         df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
         df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
-
-        # todo: change this to using variables, if variables work with grouping
-        # df, time_aggregation_series = df.create_variable(name='time_aggregation', value=time_aggregation)
-        # df['time_aggregation'] = df.moment.dt.sql_format(time_aggregation_series)
 
         return df  # type: ignore
 

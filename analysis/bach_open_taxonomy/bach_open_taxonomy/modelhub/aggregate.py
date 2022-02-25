@@ -4,14 +4,10 @@ Copyright 2021 Objectiv B.V.
 from typing import TYPE_CHECKING
 from sql_models.constants import NotSet, not_set
 from bach.series import Series
+from typing import List, Union
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean, SeriesInt64
-
-from typing import (
-    List, Union
-)
-from bach.series import SeriesTimestamp
 
 
 class Aggregate:
@@ -42,7 +38,7 @@ class Aggregate:
             for key in groupby_list:
                 key = self._df[key] if isinstance(key, str) else key
                 if key.equals(self._df[illegal_groupby]):
-                    raise ValueError(f'"{illegal_groupby}" is in groupby but is needed for aggregation: not '
+                    raise KeyError(f'"{illegal_groupby}" is in groupby but is needed for aggregation: not '
                                      f'allowed to group on that')
 
         grouped_df = self._df.groupby(groupby_list)
