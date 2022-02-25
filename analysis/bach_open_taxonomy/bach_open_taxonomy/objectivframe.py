@@ -14,6 +14,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from bach_open_taxonomy.series import SeriesLocationStack
 
+TIME_DEFAULT_FORMAT = 'YYYY-MM-DD HH24:MI:SS.MS'
+
 
 class ObjectivFrame(DataFrame):
     """
@@ -95,7 +97,7 @@ class ObjectivFrame(DataFrame):
                            db_url: str = None,
                            start_date=None,
                            end_date=None,
-                           time_aggregation: str = 'YYYY-MM-DD HH24:MI:SS.MS',
+                           time_aggregation: str = TIME_DEFAULT_FORMAT,
                            table_name: str = 'data') -> 'ObjectivFrame':
         """
         Loads data from table into an ObjectivFrame object.
