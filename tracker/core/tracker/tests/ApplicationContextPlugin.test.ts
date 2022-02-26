@@ -2,9 +2,17 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, TrackerEvent } from '../src';
+import { mockConsole } from '@objectiv/testing-tools';
+import {
+  ApplicationContextPlugin,
+  ContextsConfig,
+  makeApplicationContext,
+  Tracker,
+  TrackerConfig,
+  TrackerEvent,
+} from '../src';
 
-const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
+const trackerConfig: TrackerConfig = { applicationId: 'app-id', console: mockConsole };
 
 describe('ApplicationContextPlugin', () => {
   it('should generate an ApplicationContext when constructed', () => {
@@ -37,6 +45,41 @@ describe('ApplicationContextPlugin', () => {
           id: 'app-id',
         },
       ])
+    );
+  });
+
+  it('should fail validation when given TrackerEvent does not have ApplicationContext', () => {
+    const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+    const eventWithoutApplicationContext = new TrackerEvent({ _type: 'test' });
+
+    jest.resetAllMocks();
+
+    testApplicationContextPlugin.validate(eventWithoutApplicationContext);
+
+    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      1,
+      `%c｢objectiv:${testApplicationContextPlugin.pluginName}｣ Error: ApplicationContext is missing from Global Contexts.`,
+      'color:red'
+    );
+  });
+
+  it('should fail validation when given TrackerEvent has multiple ApplicationContexts', () => {
+    const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+    const eventWithoutApplicationContext = new TrackerEvent({
+      _type: 'test',
+      global_contexts: [makeApplicationContext({ id: 'test' }), makeApplicationContext({ id: 'test' })],
+    });
+
+    jest.resetAllMocks();
+
+    testApplicationContextPlugin.validate(eventWithoutApplicationContext);
+
+    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      1,
+      `%c｢objectiv:${testApplicationContextPlugin.pluginName}｣ Error: Only one ApplicationContext should be in Global Contexts.`,
+      'color:red'
     );
   });
 });
