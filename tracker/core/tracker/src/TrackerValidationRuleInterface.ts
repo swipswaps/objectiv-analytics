@@ -3,7 +3,7 @@
  */
 
 import { TrackerConsole } from './TrackerConsole';
-import { TrackerValidationLifecycleInterface } from "./TrackerValidationLifecycleInterface";
+import { TrackerValidationLifecycleInterface } from './TrackerValidationLifecycleInterface';
 
 /**
  * The TrackerValidationRuleConfig.

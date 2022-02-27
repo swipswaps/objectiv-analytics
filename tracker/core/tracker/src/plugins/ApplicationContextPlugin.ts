@@ -1,16 +1,16 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
 import { ApplicationContext } from '@objectiv/schema';
-import { ContextsConfig } from './Context';
-import { makeApplicationContext } from './ContextFactories';
-import { RequiresContextValidationRule } from "./RequiresContextValidationRule";
-import { TrackerConfig } from './Tracker';
-import { TrackerConsole } from './TrackerConsole';
-import { TrackerEvent } from './TrackerEvent';
-import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
-import { UniqueContextValidationRule } from "./UniqueContextValidationRule";
+import { ContextsConfig } from '../Context';
+import { makeApplicationContext } from '../ContextFactories';
+import { TrackerConfig } from '../Tracker';
+import { TrackerConsole } from '../TrackerConsole';
+import { TrackerEvent } from '../TrackerEvent';
+import { TrackerPluginConfig, TrackerPluginInterface } from '../TrackerPluginInterface';
+import { RequiresContextValidationRule } from '../validationRules/RequiresContextValidationRule';
+import { UniqueContextValidationRule } from '../validationRules/UniqueContextValidationRule';
 
 /**
  * The ApplicationContextPlugin Config object.

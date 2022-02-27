@@ -1,30 +1,30 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
-import { TrackerConsole } from './TrackerConsole';
-import { TrackerEvent } from './TrackerEvent';
-import { TrackerValidationRuleConfig, TrackerValidationRuleInterface } from "./TrackerValidationRuleInterface";
+import { TrackerConsole } from '../TrackerConsole';
+import { TrackerEvent } from '../TrackerEvent';
+import { TrackerValidationRuleConfig, TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
 
 /**
- * The UniqueContextValidationRule Config object.
+ * The RequiresContextValidationRule Config object.
  */
-type UniqueContextValidationRuleConfig = TrackerValidationRuleConfig & {
+type RequiresContextValidationRuleConfig = TrackerValidationRuleConfig & {
   contextType: string;
-}
+};
 
 /**
- * A generic Rule to verify and console error when the required Context is present multiple times.
+ * A generic Rule to verify and console error when the required Context is not present.
  */
-export class UniqueContextValidationRule implements TrackerValidationRuleInterface {
+export class RequiresContextValidationRule implements TrackerValidationRuleInterface {
   readonly console?: TrackerConsole;
-  readonly validationRuleName = `UniqueContextValidationRule`;
+  readonly validationRuleName = `RequiresContextValidationRule`;
   readonly contextType;
 
   /**
    * Set console and contextType in state.
    */
-  constructor(config: UniqueContextValidationRuleConfig) {
+  constructor(config: RequiresContextValidationRuleConfig) {
     this.console = config.console;
     this.contextType = config.contextType;
 
@@ -37,16 +37,16 @@ export class UniqueContextValidationRule implements TrackerValidationRuleInterfa
   }
 
   /**
-   * Verifies whether the given Context is not present multiple times in the given TrackerEvent
+   * Verifies whether the given Context is present in the given TrackerEvent
    */
   validate(event: TrackerEvent): void {
     const locationStack = event.location_stack.filter((locationContext) => locationContext._type === this.contextType);
     const globalContexts = event.global_contexts.filter((globalContext) => globalContext._type === this.contextType);
 
     if (this.console) {
-      if (locationStack.length > 1 || globalContexts.length > 1) {
+      if (!locationStack.length && !globalContexts.length) {
         this.console.groupCollapsed(
-          `%c｢objectiv:${this.validationRuleName}｣ Error: Only one ${this.contextType} should be present.`,
+          `%c｢objectiv:${this.validationRuleName}｣ Error: ${this.contextType} is missing.`,
           'color:red'
         );
         this.console.group(`Event:`);

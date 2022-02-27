@@ -2,7 +2,12 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-export * from './ApplicationContextPlugin';
+export * from './plugins/ApplicationContextPlugin';
+export * from './plugins/OpenTaxonomyValidationPlugin';
+
+export * from './validationRules/RequiresContextValidationRule';
+export * from './validationRules/UniqueContextValidationRule';
+
 export * from './cleanObjectFromInternalProperties';
 export * from './Context';
 export * from './ContextFactories';

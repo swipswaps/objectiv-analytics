@@ -4,7 +4,7 @@
 
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
-import { TrackerValidationLifecycleInterface } from "./TrackerValidationLifecycleInterface";
+import { TrackerValidationLifecycleInterface } from './TrackerValidationLifecycleInterface';
 
 /**
  * The TrackerPluginConfig.

@@ -6,6 +6,7 @@ import { LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-
 import {
   ApplicationContextPlugin,
   ContextsConfig,
+  OpenTaxonomyValidationPlugin,
   Tracker,
   TrackerConfig,
   TrackerEvent,
@@ -13,7 +14,6 @@ import {
   TrackerQueue,
   TrackerQueueMemoryStore,
 } from '../src';
-import { OpenTaxonomyValidationPlugin } from '../src/OpenTaxonomyValidationPlugin';
 
 describe('Tracker', () => {
   it('should instantiate with just applicationId', () => {

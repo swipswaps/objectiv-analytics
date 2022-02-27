@@ -1,11 +1,11 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
-import { isDevMode } from './helpers';
-import { TrackerConsole } from './TrackerConsole';
-// import { TrackerEvent } from './TrackerEvent';
-import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
+import { isDevMode } from '../helpers';
+import { TrackerConsole } from '../TrackerConsole';
+// import { TrackerEvent } from '../TrackerEvent';
+import { TrackerPluginConfig, TrackerPluginInterface } from '../TrackerPluginInterface';
 
 /**
  * Validates a number of rules related to the Open Taxonomy
