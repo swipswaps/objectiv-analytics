@@ -1,17 +1,17 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from collections import defaultdict
+import itertools
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
+from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, NamedTuple, Sequence
 
-from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
+from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series, SeriesBoolean
 from bach.dataframe import DtypeNamePair
-from bach.expression import Expression, join_expressions
+from bach.expression import Expression, join_expressions, ColumnReferenceToken
 from bach.utils import ResultSeries, get_result_series_dtype_mapping
 from sql_models.model import Materialization, CustomSqlModelBuilder
-from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
+from bach.sql_model import BachSqlModel, construct_references
 
 
 class How(Enum):
@@ -23,60 +23,122 @@ class How(Enum):
     cross = 'cross'
 
 
-def _determine_left_on_right_on(
-        left: DataFrame,
-        right: DataFrameOrSeries,
-        how: How,
-        on: Optional[ColumnNames],
-        left_on: Optional[ColumnNames],
-        right_on: Optional[ColumnNames],
-        left_index: bool,
-        right_index: bool) -> Tuple[List[str], List[str]]:
+class MergeOn(NamedTuple):
+    left: List[str]
+    right: List[str]
+    conditional: List[SeriesBoolean]
+
+    @property
+    def is_empty(self) -> bool:
+        return not (self.left or self.right or self.conditional)
+
+
+def _verify_on_conflicts(
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    how: How,
+    on: Optional[Union[ColumnNames, List[Union[str, SeriesBoolean]]]],
+    left_on: Optional[ColumnNames],
+    right_on: Optional[ColumnNames],
+    left_index: bool,
+    right_index: bool,
+) -> None:
     """
-    Determine the columns that should be equal for the merge. Both for the left and the right
-    dataframse/series a list of strings is returned indicating the names of the columns that should be
-    matched.
-    :return: tuple with left_on and right_on
+    Verifies that all boolean series to be used in merge on make reference to both left and right base_nodes.
     """
-    if how == How.cross:
-        if on or left_on or right_on or left_index or right_index:
-            raise ValueError('Cannot specify on, left_on, right_on, left_index, or right_index'
-                             'if how == "cross"')
-        return [], []
+    if how == How.cross and (on or left_on or right_on or left_index or right_index):
+        raise ValueError(
+            'Cannot specify on, left_on, right_on, left_index, or right_index if how == "cross"'
+        )
 
     if (left_on is not None) and left_index:
         raise ValueError('Cannot specify both left_on and left_index.')
+
     if (right_on is not None) and right_index:
         raise ValueError('Cannot specify both right_on and right_index.')
 
-    if left_index:
-        left_on = list(_get_index_names(left))
-    if right_index:
-        right_on = list(_get_index_names(right))
-
-    if (left_on is None) is not (right_on is None):
+    if bool(left_on or left_index) ^ bool(right_on or right_index):
         raise ValueError('Either both left_on and right_on should be specified, or both should be None.')
-    if on is not None and left_on is not None and right_on is not None:
+
+    on_conditions = [o for o in on or [] if isinstance(o, SeriesBoolean)] if on else []
+    on_columns = [o for o in on or [] if not isinstance(o, SeriesBoolean)] if on else None
+
+    if on_columns and (left_on or left_index) and (right_on or right_index):
         raise ValueError('Either specify on or, left_on and right_on, but not all three')
 
-    left_cols = _get_data_columns(left)
-    right_cols = _get_data_columns(right)
-    intersection_columns = list(left_cols.intersection(right_cols))
-    final_on = on if on is not None else intersection_columns
+    if not on_conditions:
+        return None
+
+    for col in on_conditions:
+        if {'left_node', 'right_node'} - set(col.base_node.references):
+            raise ValueError('Cannot merge on boolean series without both left/right node references')
+
+        if not (
+            any(left.base_node == node for node in col.base_node.references.values())
+            and
+            any(right.base_node == node for node in col.base_node.references.values())
+        ):
+            raise ValueError('BooleanSeries must have both base_nodes to be merged as references.')
+
+
+def _determine_merge_on(
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    how: How,
+    on: Optional[Union[ColumnNames, List[Union[str, SeriesBoolean]]]],
+    left_on: Optional[ColumnNames],
+    right_on: Optional[ColumnNames],
+    left_index: bool,
+    right_index: bool,
+) -> MergeOn:
+    """
+    Determine the columns that should be equal for the merge. Both for the left and the right
+    dataframe/series a list of strings is returned indicating the names of the columns that should be
+    matched.
+    :return: tuple with left_on and right_on
+    """
+    _verify_on_conflicts(
+        left=left,
+        right=right,
+        how=how,
+        on=on,
+        left_on=left_on,
+        right_on=right_on,
+        left_index=left_index,
+        right_index=right_index,
+    )
+    if how == How.cross:
+        return MergeOn(left=[], right=[], conditional=[])
+
+    left_on = left_on or list(_get_index_names(left)) if left_on or left_index else None
+    right_on = right_on or list(_get_index_names(right)) if right_on or right_index else None
+
+    if on is not None:
+        final_on = [o for o in on or [] if not isinstance(o, SeriesBoolean)]
+    else:
+        final_on = list(_get_data_columns(left) & _get_data_columns(right))
+
     final_left_on = _get_x_on(final_on, left_on, 'left_on')
     final_right_on = _get_x_on(final_on, right_on, 'right_on')
+
     if len(final_left_on) != len(final_right_on):
         raise ValueError(
             f'Len of left_on ({final_left_on}) does not match that of right_on ({final_right_on}).')
-    if len(final_left_on) == 0:
+
+    on_conditions = [o for o in on or [] if isinstance(o, SeriesBoolean)] if on else []
+
+    if not final_left_on and not on_conditions:
         raise ValueError('No columns to perform merge on')
+
     missing_left = set(final_left_on) - _get_all_series_names(left)
     missing_right = set(final_right_on) - _get_all_series_names(right)
+
     if missing_left:
         raise ValueError(f'Specified column(s) do not exist. left_on: {left_on}. missing: {missing_left}')
     if missing_right:
         raise ValueError(f'Specified column(s) do not exist. right_on: {right_on}. missing: {missing_right}')
-    return final_left_on, final_right_on
+
+    return MergeOn(left=final_left_on, right=final_right_on, conditional=on_conditions)
 
 
 def _get_data_columns(df_series: DataFrameOrSeries) -> Set[str]:
@@ -119,8 +181,7 @@ def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> Li
 def _determine_result_columns(
     left: DataFrame,
     right: DataFrameOrSeries,
-    left_on: List[str],
-    right_on: List[str],
+    merge_on: MergeOn,
     suffixes: Tuple[str, str],
 ) -> Tuple[List[ResultSeries], List[ResultSeries]]:
     """
@@ -133,7 +194,7 @@ def _determine_result_columns(
     left_df = left.copy()
     right_df = right.copy() if isinstance(right, DataFrame) else right.to_frame()
 
-    conflicting_on = {l_on for l_on, r_on in zip(left_on, right_on) if l_on == r_on}
+    conflicting_on = {l_on for l_on, r_on in zip(merge_on.left, merge_on.right) if l_on == r_on}
     conflicting = (
         (set(left_df.index) | set(left_df.data)) & (set(right_df.index) | set(right_df.data))
     )
@@ -207,7 +268,7 @@ def merge(
     left: DataFrame,
     right: DataFrameOrSeries,
     how: str,
-    on: Union[str, List[str], None],
+    on: Union[str, List[Union[str, SeriesBoolean]], None],
     left_on: Union[str, List[str],  None],  # todo: also support array-like arguments?
     right_on: Union[str, List[str], None],
     left_index: bool,
@@ -229,7 +290,7 @@ def merge(
         right = right.materialize(node_name='merge_right')
 
     real_how = How(how)
-    real_left_on, real_right_on = _determine_left_on_right_on(
+    merge_on = _determine_merge_on(
         left=left,
         right=right,
         how=real_how,
@@ -239,11 +300,11 @@ def merge(
         left_index=left_index,
         right_index=right_index
     )
+
     new_index_list, new_data_list = _determine_result_columns(
         left=left,
         right=right,
-        left_on=real_left_on,
-        right_on=real_right_on,
+        merge_on=merge_on,
         suffixes=suffixes,
     )
 
@@ -263,8 +324,7 @@ def merge(
         left=left,
         right=right,
         how=real_how,
-        real_left_on=real_left_on,
-        real_right_on=real_right_on,
+        merge_on=merge_on,
         new_column_list=new_index_list + new_data_list,
         variables=variables
     )
@@ -282,30 +342,21 @@ def merge(
 
 
 def _get_merge_sql_model(
-        left: DataFrame,
-        right: DataFrameOrSeries,
-        how: How,
-        real_left_on: List[str],
-        real_right_on: List[str],
-        new_column_list: List[ResultSeries],
-        variables: Dict['DtypeNamePair', Hashable]
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    how: How,
+    merge_on: MergeOn,
+    new_column_list: List[ResultSeries],
+    variables: Dict['DtypeNamePair', Hashable]
 ) -> BachSqlModel:
     """
     Give the SqlModel to join left and right and select the new_column_list. This model also uses the
     join-type of how, matching rows on real_left_on and real_right_on.
     """
-    merge_conditions = []
-    for l_label, r_label in zip(real_left_on, real_right_on):
-        l_expr = _get_expression(df_series=left, label=l_label)
-        r_expr = _get_expression(df_series=right, label=r_label)
-        merge_conditions.append(l_expr.resolve_column_references("l"))
-        merge_conditions.append(r_expr.resolve_column_references("r"))
-
-    if merge_conditions:
-        fmt_str = 'on ' + 'and '.join(['({} = {})'] * (len(merge_conditions)//2))
-        on_clause = Expression.construct(fmt_str, *merge_conditions)
-    else:
+    if merge_on.is_empty:
         on_clause = Expression.construct('')
+    else:
+        on_clause = _get_merge_on_clause(left, right, merge_on)
 
     columns_expr = join_expressions(
         [Expression.construct_expr_as_name(rc.expression, rc.name) for rc in new_column_list]
@@ -320,6 +371,70 @@ def _get_merge_sql_model(
         left_node=left.base_node,
         right_node=right.base_node,
         variables=variables
+    )
+
+
+def _get_conditional_on_expressions(
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    on_conditions: List[SeriesBoolean],
+) -> Sequence[Expression]:
+    on_merge_conditions = []
+
+    if not on_conditions:
+        return []
+
+    left_df = left.copy()
+    right_df = right.copy() if isinstance(right, DataFrame) else right.to_frame()
+    for conditional_series in on_conditions:
+        new_expr_tokens = []
+        for token in conditional_series.expression.get_all_tokens():
+            if not isinstance(token, ColumnReferenceToken):
+                new_expr_tokens.append(token)
+                continue
+
+            # Series._index_merge always add `__other` postfix when caller and other series share names
+            if '__other' in token.column_name:
+                token_base_node = conditional_series.base_node.references['right_node']
+            else:
+                token_base_node = [
+                    base_node
+                    for base_node in conditional_series.base_node.references.values()
+                    if token.column_name in getattr(base_node, 'columns')
+                ][0]
+
+            series_name = token.column_name.replace('__other', '')
+
+            if token_base_node == left.base_node:
+                new_token_ref = left_df.all_series[series_name].expression.resolve_column_references('l')
+            else:
+                new_token_ref = right_df.all_series[series_name].expression.resolve_column_references('r')
+
+            new_expr_tokens.append(new_token_ref)
+
+        on_merge_conditions.append(Expression(data=new_expr_tokens))
+
+    return on_merge_conditions
+
+
+def _get_merge_on_clause(
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    merge_on: MergeOn,
+) -> Expression:
+    on_merge_expressions = list(itertools.chain.from_iterable(
+        [
+            _get_expression(df_series=left, label=l_label).resolve_column_references("l"),
+            _get_expression(df_series=right, label=r_label).resolve_column_references("r"),
+        ]
+        for l_label, r_label in zip(merge_on.left, merge_on.right)
+    ))
+    conditional_merge_expressions = _get_conditional_on_expressions(left, right, merge_on.conditional)
+    all_conditions = ['({} = {})'] * (len(on_merge_expressions) // 2) + ['{}'] * len(conditional_merge_expressions)
+    fmt_str = 'on ' + ' and '.join(all_conditions)
+
+    return Expression.construct(
+        fmt_str, *on_merge_expressions, *conditional_merge_expressions,
     )
 
 

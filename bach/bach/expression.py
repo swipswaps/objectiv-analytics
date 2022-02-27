@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import re
 from dataclasses import dataclass
-from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set
+from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set, Sequence
 
 from sql_models.model import escape_raw_sql
 from sql_models.util import quote_string, quote_identifier
@@ -128,7 +128,7 @@ class Expression:
     For special type Expressions, this class is subclassed to assign special properties to a subexpression.
     """
 
-    def __init__(self, data: Union['Expression', List[Union[ExpressionToken, 'Expression']]] = None):
+    def __init__(self, data: Union['Expression', Sequence[Union[ExpressionToken, 'Expression']]] = None):
         if not data:
             data = []
         if isinstance(data, Expression):

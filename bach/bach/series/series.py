@@ -529,12 +529,15 @@ class Series(ABC):
         ):
             raise ValueError('dtypes of indexes to be merged should be the same')
 
+        from bach.partitioning import GroupBy
         # align index names, this way we have all matched indexes in a single series
+        new_index = {
+            caller_idx.name: other_idx.copy_override(name=caller_idx.name)
+            for caller_idx, other_idx in zip(self.index.values(), other.index.values())
+        }
         other_cp = other.copy_override(
-            index={
-                caller_idx.name: other_idx.copy_override(name=caller_idx.name)
-                for caller_idx, other_idx in zip(self.index.values(), other.index.values())
-            }
+            index=new_index,
+            group_by=GroupBy(group_by_columns=list(new_index.values())) if other.group_by else None,
         )
         df = self.to_frame()
         df = df.merge(

@@ -7,7 +7,7 @@ import pytest
 
 from bach import DataFrame, get_series_type_from_dtype
 from bach.expression import Expression
-from bach.merge import _determine_left_on_right_on, _determine_result_columns, ResultSeries, merge, How
+from bach.merge import _determine_merge_on, _determine_result_columns, ResultSeries, merge, How
 from tests.unit.bach.util import get_fake_df
 
 
@@ -173,7 +173,7 @@ def call__determine_left_on_right_on(
         left, right,
         how=How.inner, on=None, left_on=None, right_on=None, left_index=False, right_index=False):
     """ Wrapper around _determine_left_on_right_on that fills in the default arguments"""
-    return _determine_left_on_right_on(
+    return _determine_merge_on(
         left=left,
         right=right,
         how=how,
