@@ -27,4 +27,4 @@ export * from './TrackerTransportRetry';
 export * from './TrackerTransportRetryAttempt';
 export * from './TrackerTransportSwitch';
 export * from './TrackerValidationRuleInterface';
-export * from './TrackerValidationRuleLifecycleInterface';
+export * from './TrackerValidationLifecycleInterface';

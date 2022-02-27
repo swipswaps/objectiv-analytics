@@ -4,7 +4,7 @@
 
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
-import { TrackerValidationRuleInterface } from './TrackerValidationRuleInterface';
+import { TrackerValidationLifecycleInterface } from "./TrackerValidationLifecycleInterface";
 
 /**
  * The TrackerPluginConfig.
@@ -21,9 +21,7 @@ export type TrackerPluginConfig = {
  * It also defines a method to determine if the plugin can be used. Similarly to the Transport interface, this can
  * be used to check environment requirements, APIs availability, etc.
  */
-export interface TrackerPluginInterface
-  extends TrackerPluginLifecycleInterface,
-    Partial<TrackerValidationRuleInterface> {
+export interface TrackerPluginInterface extends TrackerPluginLifecycleInterface, TrackerValidationLifecycleInterface {
   readonly console?: TrackerConsole;
   readonly pluginName: string;
 

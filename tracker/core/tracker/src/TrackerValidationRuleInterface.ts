@@ -3,8 +3,7 @@
  */
 
 import { TrackerConsole } from './TrackerConsole';
-import { TrackerEvent } from './TrackerEvent';
-import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
+import { TrackerValidationLifecycleInterface } from "./TrackerValidationLifecycleInterface";
 
 /**
  * The TrackerValidationRuleConfig.
@@ -19,14 +18,9 @@ export type TrackerValidationRuleConfig = {
 /**
  * A ValidationRule must define its own `validationRuleName` and must define a `validate` callback.
  */
-export interface TrackerValidationRuleInterface extends TrackerPluginLifecycleInterface {
+export interface TrackerValidationRuleInterface extends Required<TrackerValidationLifecycleInterface> {
   readonly console?: TrackerConsole;
   readonly validationRuleName: string;
-
-  /**
-   * Validation logic may be implemented via this method and may log issues to the console.
-   */
-  validate: (event: TrackerEvent) => void;
 }
 
 /**

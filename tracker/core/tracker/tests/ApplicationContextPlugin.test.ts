@@ -59,7 +59,7 @@ describe('ApplicationContextPlugin', () => {
     expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
     expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
       1,
-      `%c｢objectiv:${testApplicationContextPlugin.pluginName}｣ Error: ApplicationContext is missing from Global Contexts.`,
+      `%c｢objectiv:RequiresContextValidationRule｣ Error: ApplicationContext is missing.`,
       'color:red'
     );
   });
@@ -78,7 +78,7 @@ describe('ApplicationContextPlugin', () => {
     expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
     expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
       1,
-      `%c｢objectiv:${testApplicationContextPlugin.pluginName}｣ Error: Only one ApplicationContext should be in Global Contexts.`,
+      `%c｢objectiv:UniqueContextValidationRule｣ Error: Only one ApplicationContext should be present.`,
       'color:red'
     );
   });

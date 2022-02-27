@@ -8,7 +8,7 @@ import { Tracker } from './Tracker';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
-import { TrackerValidationRuleLifecycleInterface } from './TrackerValidationRuleLifecycleInterface';
+import { TrackerValidationLifecycleInterface } from './TrackerValidationLifecycleInterface';
 
 /**
  * The configuration object of TrackerPlugins. It requires a Tracker instance and a list of plugins.
@@ -33,7 +33,7 @@ export type TrackerPluginsConfiguration = {
  * Plugins mutations. For example a plugin meant to access the finalized version of the TrackerEvent should be placed
  * at the bottom of the list.
  */
-export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerValidationRuleLifecycleInterface {
+export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerValidationLifecycleInterface {
   readonly tracker: Tracker;
   plugins: TrackerPluginInterface[] = [];
 

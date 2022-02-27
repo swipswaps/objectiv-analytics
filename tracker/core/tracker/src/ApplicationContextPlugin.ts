@@ -5,10 +5,12 @@
 import { ApplicationContext } from '@objectiv/schema';
 import { ContextsConfig } from './Context';
 import { makeApplicationContext } from './ContextFactories';
+import { RequiresContextValidationRule } from "./RequiresContextValidationRule";
 import { TrackerConfig } from './Tracker';
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerPluginConfig, TrackerPluginInterface } from './TrackerPluginInterface';
+import { UniqueContextValidationRule } from "./UniqueContextValidationRule";
 
 /**
  * The ApplicationContextPlugin Config object.
@@ -55,32 +57,8 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
    * - is not present multiple times
    */
   validate(event: TrackerEvent): void {
-    // TODO Make these into generic validation rule since we can reuse them for RootLocationContext
-    const contexts = event.global_contexts.filter((globalContext) => globalContext._type === 'ApplicationContext');
-
-    if (this.console) {
-      if (!contexts.length) {
-        this.console.groupCollapsed(
-          `%c｢objectiv:${this.pluginName}｣ Error: ApplicationContext is missing from Global Contexts.`,
-          'color:red'
-        );
-        this.console.group(`Event:`);
-        this.console.log(event);
-        this.console.groupEnd();
-        this.console.groupEnd();
-      }
-
-      if (contexts.length > 1) {
-        this.console.groupCollapsed(
-          `%c｢objectiv:${this.pluginName}｣ Error: Only one ApplicationContext should be in Global Contexts.`,
-          'color:red'
-        );
-        this.console.group(`Event:`);
-        this.console.log(event);
-        this.console.groupEnd();
-        this.console.groupEnd();
-      }
-    }
+    new RequiresContextValidationRule({ contextType: 'ApplicationContext', console: this.console }).validate(event);
+    new UniqueContextValidationRule({ contextType: 'ApplicationContext', console: this.console }).validate(event);
   }
 
   /**
