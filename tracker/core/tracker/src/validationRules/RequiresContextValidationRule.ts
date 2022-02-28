@@ -15,6 +15,7 @@ type RequiresContextValidationRuleConfig = TrackerValidationRuleConfig & {
 
 /**
  * A generic Rule to verify and console error when the required Context is not present.
+ * TODO allow validation of context position in either global or location contexts
  */
 export class RequiresContextValidationRule implements TrackerValidationRuleInterface {
   readonly console?: TrackerConsole;
