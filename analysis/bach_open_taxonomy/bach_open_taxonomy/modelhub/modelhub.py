@@ -63,14 +63,14 @@ class ModelHub:
             df = self._df.copy_override()
             df['__filter'] = filter
             filter = df['__filter']
-            df.drop(columns=['__filter'], inplace=True)
+            df = df.drop(columns=['__filter'])
 
         if filter.expression.has_windowed_aggregate_function:
             df = self._df.copy_override()
             df['__filter'] = filter
             df = df.materialize()
             filter = df['__filter']
-            df.drop(columns=['__filter'], inplace=True)
+            df = df.drop(columns=['__filter'])
 
         return df[filter]
 
