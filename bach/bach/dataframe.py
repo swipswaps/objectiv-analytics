@@ -13,11 +13,12 @@ from uuid import UUID
 import numpy
 import pandas
 from sqlalchemy.engine import Engine
-from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
+from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
-from bach.types import get_series_type_from_dtype, get_dtype_from_db_engine_dtype
+from bach.types import get_series_type_from_dtype
+from bach.utils import escape_parameter_characters
 from sql_models.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
@@ -29,7 +30,7 @@ if TYPE_CHECKING:
     from bach.savepoints import Savepoints
     from bach.series import Series, SeriesBoolean
 
-# TODO exclude from docs
+    # TODO exclude from docs
 DataFrameOrSeries = Union['DataFrame', 'Series']
 # ColumnNames: a single column name, or a list of column names
 # TODO exclude from docs
@@ -360,46 +361,6 @@ class DataFrame:
             self._variables == other._variables
 
     @classmethod
-    def _get_dtypes_from_model(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
-        """ Create a temporary database table from model and use it to deduce the model's dtypes. """
-        new_node = CustomSqlModelBuilder(sql='select * from {{previous}} limit 0')(previous=node)
-        select_statement = to_sql(engine, new_node)
-        sql = f"""
-            create temporary table tmp_table_name on commit drop as
-            ({select_statement});
-            select column_name, data_type
-            from information_schema.columns
-            where table_name = 'tmp_table_name'
-            order by ordinal_position;
-        """
-        return cls._get_dtypes_from_information_schema_query(engine=engine, query=sql)
-
-    @classmethod
-    def _get_dtypes_from_table(cls, engine: Engine, table_name: str) -> Dict[str, str]:
-        """ Query database to get dtypes of the given table. """
-        sql = f"""
-            select column_name, data_type
-            from information_schema.columns
-            where table_name = '{table_name}'
-            order by ordinal_position;
-        """
-        return cls._get_dtypes_from_information_schema_query(engine=engine, query=sql)
-
-    @classmethod
-    def _get_dtypes_from_information_schema_query(cls, engine: Engine, query: str) -> Dict[str, str]:
-        """ Parse information_schema.columns to dtypes. """
-        with engine.connect() as conn:
-            sql = escape_parameter_characters(conn, query)
-            res = conn.execute(sql)
-            rows = res.fetchall()
-        if engine.name == 'postgresql':
-            return {row[0]: get_dtype_from_db_engine_dtype(engine, row[1]) for row in rows}
-        if engine.name == 'bigquery':
-            from bach.dialect_bq import dtype_structure
-            return {row[0]: get_dtype_from_db_engine_dtype(engine, dtype_structure(row[1])) for row in rows}
-        raise ValueError(f'engine "{engine.name}" not supported.')
-
-    @classmethod
     def from_table(
             cls,
             engine: Engine,
@@ -428,7 +389,7 @@ class DataFrame:
         if all_dtypes is not None:
             dtypes = all_dtypes
         else:
-            dtypes = cls._get_dtypes_from_table(engine=engine, table_name=table_name)
+            dtypes = get_dtypes_from_table(engine=engine, table_name=table_name)
 
         model_builder = CustomSqlModelBuilder(sql='SELECT * FROM {table_name}', name='from_table')
         sql_model = model_builder(table_name=quote_identifier(engine, table_name))
@@ -469,7 +430,7 @@ class DataFrame:
         if all_dtypes is not None:
             dtypes = all_dtypes
         else:
-            dtypes = cls._get_dtypes_from_model(engine=engine, node=model)
+            dtypes = get_dtypes_from_model(engine=engine, node=model)
         return cls._from_node(
             engine=engine,
             model=model,
@@ -2729,14 +2690,3 @@ def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
             len(a) == len(b) and list(a.keys()) == list(b.keys())
             and all(ai.equals(bi) for (ai, bi) in zip(a.values(), b.values()))
     )
-
-
-def escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
-    """
-    Return a modified copy of the given sql with the query-parameter special characters escaped.
-    e.g. if the connection uses '%' to mark a parameter, then all occurrences of '%' will be replaced by '%%'
-    """
-    # for now we'll just assume Postgres and assume the pyformat parameter style is used.
-    # When we support more databases we'll need to do something smarter, see
-    # https://www.python.org/dev/peps/pep-0249/#paramstyle
-    return raw_sql.replace('%', '%%')
