@@ -5,6 +5,7 @@
 import {
   ContextsConfig,
   ContextType,
+  ContextValidationRuleConfig,
   makePathContext,
   RequiresContextValidationRule,
   TrackerConsole,
@@ -14,7 +15,6 @@ import {
   TrackerValidationRuleInterface,
   UniqueContextValidationRule,
 } from '@objectiv/tracker-core';
-import { ContextValidationRuleConfig } from '@objectiv/tracker-core/src/validationRules/ContextValidationRuleConfig';
 
 /**
  * The PathContextFromURL Plugin gathers the current URL using the Location API.

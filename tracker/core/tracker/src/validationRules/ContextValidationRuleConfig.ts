@@ -17,5 +17,6 @@ export type ContextValidationRuleConfig = TrackerValidationRuleConfig & {
   /**
    * Optional. Restricts whether the specified contextName is checked against `location_stack` or `global_contexts`.
    */
+
   contextType?: ContextType;
 };
