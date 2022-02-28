@@ -18,7 +18,7 @@ export class UniqueContextValidationRule implements TrackerValidationRuleInterfa
   readonly contextType;
 
   /**
-   * Set console and contextName in state.
+   * Process config onto state.
    */
   constructor(config: ContextValidationRuleConfig) {
     this.console = config.console;
@@ -35,7 +35,7 @@ export class UniqueContextValidationRule implements TrackerValidationRuleInterfa
   }
 
   /**
-   * Verifies whether the given Context is not present multiple times in the given TrackerEvent
+   * Verifies whether the given Context is not present multiple times in the given TrackerEvent.
    */
   validate(event: TrackerEvent): void {
     const locationStackMatches = event.location_stack.filter((context) => context._type === this.contextName);

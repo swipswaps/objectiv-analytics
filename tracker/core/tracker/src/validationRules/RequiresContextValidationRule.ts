@@ -36,7 +36,7 @@ export class RequiresContextValidationRule implements TrackerValidationRuleInter
   }
 
   /**
-   * Verifies whether the given Context is present in the given TrackerEvent
+   * Verifies whether the given Context is present in the given TrackerEvent.
    */
   validate(event: TrackerEvent): void {
     const locationStackIndex = event.location_stack.findIndex((context) => context._type === this.contextName);
