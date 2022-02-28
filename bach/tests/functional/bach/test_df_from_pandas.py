@@ -10,6 +10,7 @@ from tests.functional.bach.test_data_and_utils import get_pandas_df, TEST_DATA_C
 import datetime
 from uuid import UUID
 import pandas as pd
+import numpy as np
 
 EXPECTED_COLUMNS = [
     '_index_skating_order', 'skating_order', 'city', 'municipality', 'inhabitants', 'founding'
@@ -32,20 +33,20 @@ EXPECTED_DATA_INJECTION = [[row[0]] + row for row in TEST_DATA_INJECTION]
 get_pandas_df(TEST_DATA_INJECTION, COLUMNS_INJECTION)
 
 TYPES_DATA = [
-            [1, 1.324, True, datetime.datetime(2021, 5, 3, 11, 28, 36, 388), 'Ljouwert', datetime.date(2021, 5, 3),
-             ['Sûkerbôlle'], UUID('36ca4c0b-804d-48ff-809f-28cf9afd078a'), {'a': 'b'},
-             datetime.timedelta(days=1, seconds=7583, microseconds=100), datetime.date(2021, 5, 3)],
-            [2, 2.734, True, datetime.datetime(2021, 5, 4, 23, 28, 36, 388), 'Snits', datetime.date(2021, 5, 4),
-             ['Dúmkes'], UUID('81a8ace2-273b-4b95-b6a6-0fba33858a22'), {'c': ['d', 'e']},
-             datetime.timedelta(days=5, seconds=583, microseconds=100), ['Dúmkes']],
-            [3, 3.52, False, datetime.datetime(2022, 5, 3, 14, 13, 13, 388), 'Drylts', datetime.date(2022, 5, 3),
-             ['Grutte Pier Bier'], UUID('8a70b3d3-33ec-4300-859a-bb2efcf0b188'), {'f': 'g', 'h': 'i'},
-             datetime.timedelta(days=4, seconds=8583, microseconds=100), ['Grutte Pier Bier']
-             ]
-        ]
+    [1, 1.324, True, datetime.datetime(2021, 5, 3, 11, 28, 36, 388), 'Ljouwert', datetime.date(2021, 5, 3),
+     ['Sûkerbôlle'], UUID('36ca4c0b-804d-48ff-809f-28cf9afd078a'), {'a': 'b'},
+     datetime.timedelta(days=1, seconds=7583, microseconds=100), datetime.date(2021, 5, 3)],
+    [2, 2.734, True, datetime.datetime(2021, 5, 4, 23, 28, 36, 388), 'Snits', datetime.date(2021, 5, 4),
+     ['Dúmkes'], UUID('81a8ace2-273b-4b95-b6a6-0fba33858a22'), {'c': ['d', 'e']},
+     datetime.timedelta(days=5, seconds=583, microseconds=100), ['Dúmkes']],
+    [3, 3.52, False, datetime.datetime(2022, 5, 3, 14, 13, 13, 388), 'Drylts', datetime.date(2022, 5, 3),
+     ['Grutte Pier Bier'], UUID('8a70b3d3-33ec-4300-859a-bb2efcf0b188'), {'f': 'g', 'h': 'i'},
+     datetime.timedelta(days=4, seconds=8583, microseconds=100), ['Grutte Pier Bier']
+     ]
+]
 TYPES_COLUMNS = ['int_column', 'float_column', 'bool_column', 'datetime_column',
-       'string_column', 'date_column', 'list_column', 'uuid_column',
-       'dict_column', 'timedelta_column', 'mixed_column']
+                 'string_column', 'date_column', 'list_column', 'uuid_column',
+                 'dict_column', 'timedelta_column', 'mixed_column']
 
 
 def test_from_pandas_table():
@@ -136,6 +137,52 @@ def test_from_pandas_non_happy_path():
 
 
 @pytest.mark.parametrize("materialization", ['cte', 'table'])
+def test_from_pandas_index(materialization: str):
+    # test multilevel index
+    pdf = get_pandas_df(TEST_DATA_CITIES, CITIES_COLUMNS).set_index(['skating_order', 'city'])
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    bt = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf,
+        convert_objects=True,
+        name='test_from_pd_table',
+        materialization=materialization,
+        if_exists='replace'
+    )
+
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_skating_order',
+                          '_index_city',
+                          'municipality',
+                          'inhabitants',
+                          'founding'],
+        expected_data=[x[1:] for x in EXPECTED_DATA])
+
+    # test nameless index
+    pdf.reset_index(inplace=True)
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+    bt = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf,
+        convert_objects=True,
+        name='test_from_pd_table',
+        materialization=materialization,
+        if_exists='replace'
+    )
+
+    assert_equals_data(
+        bt,
+        expected_columns=['_index_0',
+                          'skating_order',
+                          'city',
+                          'municipality',
+                          'inhabitants',
+                          'founding'],
+        expected_data=[[idx] + x[1:] for idx, x in enumerate(EXPECTED_DATA)])
+
+
+@pytest.mark.parametrize("materialization", ['cte', 'table'])
 def test_from_pandas_types(materialization: str):
     pdf = pd.DataFrame.from_records(TYPES_DATA, columns=TYPES_COLUMNS)
     pdf.set_index(pdf.columns[0], drop=True, inplace=True)
@@ -163,6 +210,30 @@ def test_from_pandas_types(materialization: str):
             'string_column'
         ],
         expected_data=[x[:5] for x in TYPES_DATA]
+    )
+
+    pdf = pd.DataFrame.from_records(TYPES_DATA, columns=TYPES_COLUMNS)
+    pdf.set_index(pdf.columns[0], drop=False, inplace=True)
+    pdf['int32_column'] = pdf.int_column.astype(np.int32)
+    df = DataFrame.from_pandas(
+        engine=engine,
+        df=pdf[['int32_column']],
+        convert_objects=True,
+        name='test_from_pd_table',
+        materialization=materialization,
+        if_exists='replace'
+    )
+
+    assert df.index_dtypes == {'_index_int_column': 'int64'}
+    assert df.dtypes == {'int32_column': 'int64'}
+
+    assert_equals_data(
+        df,
+        expected_columns=[
+            '_index_int_column',
+            'int32_column'
+        ],
+        expected_data=[[x[0], x[0]] for x in TYPES_DATA]
     )
 
 

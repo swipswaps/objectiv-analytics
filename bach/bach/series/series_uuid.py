@@ -76,4 +76,5 @@ class SeriesUuid(Series):
                                               self_modified,
                                               other)
 
-        return self_modified.copy_override(dtype='bool', expression=expression)
+        from bach import SeriesBoolean
+        return self_modified.copy_override_type(SeriesBoolean).copy_override(expression=expression)

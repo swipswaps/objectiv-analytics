@@ -88,18 +88,20 @@ class Map:
         df = self._df.copy_override()
         df['__conversion'] = df.mh.map.is_conversion_event(name)
         exp = f"case when {{}} then row_number() over (partition by {{}}, {{}}) end"
-        df['__conversion_counter'] = df['__conversion'].copy_override(
-            dtype='int64',
-            expression=Expression.construct(exp, df['__conversion'], df[partition], df['__conversion']))
+        expression = Expression.construct(exp, df['__conversion'], df[partition], df['__conversion'])
+        df['__conversion_counter'] = df['__conversion']\
+            .copy_override_dtype(dtype='int64')\
+            .copy_override(expression=expression)
         df = df.materialize()
         exp = f"count({{}}) over (partition by {{}} order by {{}}, {{}})"
-        df['conversion_count'] = df['__conversion_counter'].copy_override(
-            dtype='int64',
-            expression=Expression.construct(exp,
-                                            df['__conversion_counter'],
-                                            df[partition],
-                                            df[partition],
-                                            df['moment']))
+        expression = Expression.construct(exp,
+                                          df['__conversion_counter'],
+                                          df[partition],
+                                          df[partition],
+                                          df['moment'])
+        df['conversion_count'] = df['__conversion_counter']\
+            .copy_override_dtype('int64')\
+            .copy_override(expression=expression)
 
         return df.conversion_count
 

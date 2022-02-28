@@ -159,6 +159,9 @@ Reshaping, indexing, sorting & merging
     DataFrame.set_index
     DataFrame.merge
     DataFrame.append
+    DataFrame.fillna
+    DataFrame.ffill
+    DataFrame.bfill
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -191,6 +194,7 @@ All types
     DataFrame.median
     DataFrame.mode
     DataFrame.nunique
+    DataFrame.value_counts
 
 Numeric
 +++++++

@@ -72,7 +72,7 @@ class StringOperation:
                     else:
                         expression = Expression.construct("''")
 
-        return self._base.copy_override(dtype='string', expression=expression)
+        return self._base.copy_override(expression=expression)
 
     def slice(self, start=None, stop=None) -> 'SeriesString':
         """

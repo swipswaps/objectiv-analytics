@@ -121,11 +121,6 @@ export type TrackedPressableContextProps = Omit<TrackedContextProps, 'id'> & {
    * Whether to forward the given title to the given Component.
    */
   forwardTitle?: boolean;
-
-  /**
-   * Whether to block and wait for the Tracker having sent the event. Eg: a button redirecting to a new location.
-   */
-  waitUntilTracked?: boolean;
 };
 
 /**
@@ -136,4 +131,32 @@ export type SingletonTrackedElementProps = Omit<TrackedContextProps, 'Component'
    * Optional identifier to be provided only in case of uniqueness collisions, defaults to 'footer'
    */
   id?: string;
+};
+
+/**
+ * Some extra options that may be useful for special cases, e.g. anchors without texts or external hrefs.
+ * This is mainly used for TrackedContexts and Custom Components.
+ *
+ * TODO switch to this way of setting options, as opposed to the current prop merging
+ */
+export type ObjectivTrackingOptions = {
+  /**
+   * Whether to block and wait for the Tracker having sent the event, e.g. an external or a full page refresh link.
+   */
+  waitUntilTracked?: boolean;
+
+  /**
+   * The unique id of the LinkContext. Required for links without any title nor text.
+   */
+  contextId?: string;
+};
+
+/**
+ * The prop containing Objectiv Tracking Options.
+ */
+export type TrackingOptionsProp = {
+  /**
+   * All Objectiv tracking related options reside under this prop.
+   */
+  objectiv?: ObjectivTrackingOptions;
 };
