@@ -962,7 +962,7 @@ class DataFrame:
                     ):
                         raise ValueError('Setting new columns to grouped DataFrame is only supported if '
                                          'the DataFrame has aggregated columns.')
-                    self._index_merge(key=key, value=value)
+                    self.__set_item_with_merge(key=key, value=value)
 
         elif isinstance(key, list):
             if len(key) == 0:
@@ -981,7 +981,7 @@ class DataFrame:
         else:
             raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
 
-    def _index_merge(self, key: str, value: 'Series'):
+    def __set_item_with_merge(self, key: str, value: 'Series'):
         """"
         Internal method used by __setitem__ to set a series using a merge on index. Modifies the DataFrame
         with the added column. The DataFrames index name is the same as the original DataFrame's.
@@ -989,7 +989,7 @@ class DataFrame:
         :param key: name of the column to set.
         :param value: Series that is set.
         """
-        # todo This method's functionality will be implemented in merge()
+
         if not (len(value.index) == 1 and len(self.index) == 1):
             raise ValueError(
                 'setting with different base nodes only supported for one level index'

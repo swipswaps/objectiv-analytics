@@ -141,9 +141,20 @@ def _determine_result_columns(
     # need to consider values from both objects (important when how = How.outer)
     conflicting -= conflicting_on
 
+    # left dataframe has priority over index and data columns
+    # final shared index and data series are based on left dataframe structure
+    right_index = {}
+    right_data = {}
+    for series_name, series in right_df.all_series.items():
+        data_columns = left_df.data_columns if series_name in conflicting_on else right_df.data_columns
+        if series_name in data_columns:
+            right_data[series_name] = series
+        else:
+            right_index[series_name] = series
+
     new_index_list = _get_merged_result_series(
         left_series=left_df.index,
-        right_series=right_df.index,
+        right_series=right_index,
         suffixes=suffixes,
         conflicting_names=conflicting,
         conflicting_on=conflicting_on,
@@ -151,7 +162,7 @@ def _determine_result_columns(
 
     new_data_list = _get_merged_result_series(
         left_series=left_df.data,
-        right_series=right_df.data,
+        right_series=right_data,
         suffixes=suffixes,
         conflicting_names=conflicting,
         conflicting_on=conflicting_on,

@@ -468,3 +468,22 @@ def test_merge_non_materialized():
                 ['Súdwest-Fryslân', Decimal('36575'), Decimal('18287.500000000000')]
             ]
         )
+
+
+def test_merge_on_index_x_column() -> None:
+    bt = get_bt_with_test_data(False)[['city', 'inhabitants']]
+    expected = {
+        'expected_columns': ['_index_skating_order', 'city_x', 'inhabitants', 'city_y'],
+        'expected_data': [
+            [1, 'Ljouwert', 93485, 'Ljouwert'],
+            [2, 'Snits', 33520, 'Snits'],
+            [3, 'Drylts', 3055, 'Drylts'],
+        ],
+    }
+    result_left_col_x_right_index = bt.reset_index().merge(bt.city, on='_index_skating_order')
+    assert_equals_data(result_left_col_x_right_index, **expected)
+
+    result_left_index_x_right_col = bt.merge(
+        bt.reset_index()[['city', '_index_skating_order']], on='_index_skating_order',
+    )
+    assert_equals_data(result_left_index_x_right_col, **expected)

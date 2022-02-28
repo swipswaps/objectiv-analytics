@@ -504,13 +504,13 @@ class Series(ABC):
                 if other.expression.is_single_value:
                     other = self.as_independent_subquery(other)
                 else:
-                    return self._index_merge(other)
+                    return self.__set_item_with_merge(other)
 
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
         return self, other
 
-    def _index_merge(self, other: 'Series') -> Tuple['Series', 'Series']:
+    def __set_item_with_merge(self, other: 'Series') -> Tuple['Series', 'Series']:
         """
         Aligns caller series and other series base nodes by using a merge based on their indexes.
 
@@ -529,24 +529,29 @@ class Series(ABC):
         ):
             raise ValueError('dtypes of indexes to be merged should be the same')
 
+        from bach.partitioning import GroupBy
         # align index names, this way we have all matched indexes in a single series
+        new_index = {
+            caller_idx.name: other_idx.copy_override(name=caller_idx.name)
+            for caller_idx, other_idx in zip(self.index.values(), other.index.values())
+        }
+        new_name = other.name if other.name not in new_index else f'{other.name}__data_column'
         other_cp = other.copy_override(
-            index={
-                caller_idx.name: other_idx.copy_override(name=caller_idx.name)
-                for caller_idx, other_idx in zip(self.index.values(), other.index.values())
-            }
+            index=new_index,
+            group_by=GroupBy(group_by_columns=list(new_index.values())) if other.group_by else None,
+            name=new_name,
         )
         df = self.to_frame()
         df = df.merge(
-            other_cp, left_index=True, right_index=True, how='outer', suffixes=('', '__other'),
+            other_cp, on=list(new_index.keys()), how='outer', suffixes=('', '__other'),
         )
 
         # consider only the caller's indexes, drop the non-shared ones
         df = df.set_index(list(self.index.keys()), drop=True)
         caller_series = df.all_series[self.name]
         other_series = (
-            df.all_series[other.name]
-            if self.name != other.name else df.all_series[f'{self.name}__other']
+            df.all_series[new_name]
+            if self.name != new_name else df.all_series[f'{self.name}__other']
         )
 
         return caller_series, other_series
