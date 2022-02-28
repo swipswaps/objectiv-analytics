@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict
 
 import pandas
 from sqlalchemy.engine import Engine
@@ -11,7 +11,6 @@ from bach.types import value_to_dtype
 from bach.expression import Expression, join_expressions
 from sql_models.model import CustomSqlModelBuilder
 from sql_models.util import quote_identifier
-from bach.sql_model import BachSqlModel
 
 
 def from_pandas(engine: Engine,
