@@ -21,6 +21,10 @@ export type ApplicationContextPluginConfig = TrackerPluginConfig & Pick<TrackerC
 
 /**
  * The ApplicationContextPlugin adds an ApplicationContext as GlobalContext before events are transported.
+ *
+ * Event Validation:
+ *  - Must be present in Global Contexts
+ *  - Must not be present multiple times
  */
 export class ApplicationContextPlugin implements TrackerPluginInterface {
   readonly console?: TrackerConsole;
@@ -64,12 +68,12 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
   }
 
   /**
-   * Verifies whether ApplicationContext
-   * - is present in Global Contexts
-   * - is not present multiple times
+   * If the Plugin is usable runs all validation rules.
    */
   validate(event: TrackerEvent): void {
-    this.validationRules.forEach((validationRule) => validationRule.validate(event));
+    if (this.isUsable()) {
+      this.validationRules.forEach((validationRule) => validationRule.validate(event));
+    }
   }
 
   /**
