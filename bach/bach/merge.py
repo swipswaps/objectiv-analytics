@@ -44,7 +44,16 @@ def _verify_on_conflicts(
     right_index: bool,
 ) -> None:
     """
-    Verifies that all boolean series to be used in merge on make reference to both left and right base_nodes.
+    Verifies that provided on parameters are valid for merge operation.
+    Rules for valid merge:
+        1. Any of "on", "left_on", "left_index", "right_on", "right_index"  should be provided if how != 'cross'
+        2. Both "left_on" and "left_index" must not be specified at the same time.
+        3. Both "right_on" and "right_index" must not be specified at the same time.
+        4. If "left_on"/"left_index" is specified, "right_on"/"right_index" must be specified as well.
+        5. If "on" is specified (ignoring SeriesBoolean):
+            "left_on", "left_index", "right_on", "right_index" must be None
+        6. If "on" contains SeriesBoolean, each series should make reference to both left and right objects to
+           be merged.
     """
     if how == How.cross and (on or left_on or right_on or left_index or right_index):
         raise ValueError(
@@ -95,7 +104,7 @@ def _determine_merge_on(
     Determine the columns that should be equal for the merge. Both for the left and the right
     dataframe/series a list of strings is returned indicating the names of the columns that should be
     matched.
-    :return: tuple with left_on and right_on
+    :return: Tuple containing left, right and conditional on
     """
     _verify_on_conflicts(
         left=left,
