@@ -476,6 +476,57 @@ def test_merge_on_conditions() -> None:
         'B': [100, 25, 250, 500],
     })
     pdf2 = pd.DataFrame({
+        'A': ['e', 'f', 'g', 'h', 'i'],
+        'B': [20, 5, 10, 20, 100],
+    })
+
+    df1 = get_from_df('merge_on_condition1', pdf1)
+    df2 = get_from_df('merge_on_condition2', pdf2)
+
+    on_condition = [df1['A'] + df2['A'] == 'cg', df1['B'] / df2['B'] > 10]
+    result = df1.merge(df2, on=on_condition)
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0_x', '_index_0_y', 'A_x', 'B_x', 'A_y', 'B_y'],
+        expected_data=[
+            [2, 2, 'c', 250, 'g', 10],
+        ],
+    )
+
+
+def test_merge_on_conditions_w_on_data_columns() -> None:
+    pdf1 = pd.DataFrame({
+        'A': ['b', 'a', 'c', 'd'],
+        'B': [100, 25, 250, 500],
+    })
+    pdf2 = pd.DataFrame({
+        'A': ['a', 'a', 'c', 'c', 'c'],
+        'B': [20, 5, 50, 20, 100],
+    })
+
+    df1 = get_from_df('merge_on_condition1', pdf1)
+    df2 = get_from_df('merge_on_condition2', pdf2)
+
+    on_condition = df1['B'] / df2['B'] == 5
+    result = df1.merge(df2, on=['A', on_condition])
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0_x', '_index_0_y', 'A', 'B_x', 'B_y'],
+        expected_data=[
+            [1, 1, 'a', 25, 5],
+            [2, 2, 'c', 250, 50],
+        ],
+    )
+
+
+def test_merge_on_conditions_w_index() -> None:
+    pdf1 = pd.DataFrame({
+        'A': ['a', 'b', 'c', 'd'],
+        'B': [100, 25, 250, 500],
+    })
+    pdf2 = pd.DataFrame({
         'A': ['a', 'b', 'c', 'd', 'e'],
         'B': [20, 5, 10, 20, 100],
     })
@@ -484,32 +535,32 @@ def test_merge_on_conditions() -> None:
     df2 = get_from_df('merge_on_condition2', pdf2)
 
     on_condition = df1['B'] / df2['B'] > 10
-    df1.merge(df2, on=[on_condition], left_index=True, right_index=True)
-    condition2 = df1['B'] > df2['C']
-    print('hola')
+    result = df1.merge(df2, on=on_condition, left_index=True, right_index=True)
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0', 'A_x', 'B_x', 'A_y', 'B_y'],
+        expected_data=[
+            [2, 'c', 250, 'c', 10],
+            [3, 'd', 500, 'd', 20]
+        ],
+    )
 
 
-def test_x() -> None:
-    # Setup
-    from bach import DataFrame
-    from tests.functional.bach.test_data_and_utils import DB_TEST_URL
-    import sqlalchemy
-    import pandas as pd
-    import numpy as np
+def test_merge_on_index_x_column() -> None:
+    bt = get_bt_with_test_data(False)[['city', 'inhabitants']]
+    expected = {
+        'expected_columns': ['_index_skating_order', 'city_x', 'inhabitants', 'city_y'],
+        'expected_data': [
+            [1, 'Ljouwert', 93485, 'Ljouwert'],
+            [2, 'Snits', 33520, 'Snits'],
+            [3, 'Drylts', 3055, 'Drylts'],
+        ],
+    }
+    result_left_col_x_right_index = bt.reset_index().merge(bt.city, on='_index_skating_order')
+    assert_equals_data(result_left_col_x_right_index, **expected)
 
-    engine = sqlalchemy.create_engine(DB_TEST_URL)
-    pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
-    pdf1 = pdf1.set_index('a')
-    pdf2 = pd.DataFrame(data={'x': [1, 2, 3, 4], 'y': [2, 2, 4, 4], 'z': [1, 2, 3, 4]}, )
-    pdf2 = pdf2.set_index('x')
-    df1 = DataFrame.from_pandas(engine=engine, df=pdf1.reset_index(drop=False), convert_objects=True,
-                                materialization='table', if_exists='replace', name='test_table1')
-    df2 = DataFrame.from_pandas(engine=engine, df=pdf2.reset_index(drop=False), convert_objects=True,
-                                materialization='table', if_exists='replace', name='test_table2')
-    df1 = df1.reset_index(drop=True)
-    df1 = df1.set_index('a')
-    df2 = df2.reset_index(drop=True)
-    df2 = df2.set_index('x')
-
-    # works on main, not on current branch
-    xx = df1.c + df2.groupby('y')['z'].sum()
+    result_left_index_x_right_col = bt.merge(
+        bt.reset_index()[['city', '_index_skating_order']], on='_index_skating_order',
+    )
+    assert_equals_data(result_left_index_x_right_col, **expected)

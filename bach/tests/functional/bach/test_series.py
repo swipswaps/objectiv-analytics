@@ -541,3 +541,134 @@ def test_series_unstack():
         ],
         order_by='municipality'
     )
+
+    # test with column that references another column and grouping on that column
+    bt = get_bt_with_test_data(full_data_set=False)
+    bt['village'] = bt.city + ' village'
+    unstacked_bt = bt.groupby(['skating_order', 'village']).inhabitants.sum().unstack()
+    # unstacked_bt = bt.set_index(['skating_order', 'village']).inhabitants.unstack()
+
+    expected_columns = ['Drylts village', 'Ljouwert village', 'Snits village']
+    assert sorted(unstacked_bt.data_columns) == expected_columns
+    unstacked_bt_sorted = unstacked_bt.copy_override(series={x: unstacked_bt[x] for x in expected_columns})
+
+    assert_equals_data(
+        unstacked_bt_sorted,
+        expected_columns=['skating_order'] + expected_columns,
+        expected_data=[
+            [1, None, 93485., None],
+            [2, None, None, 33520.],
+            [3, 3055., None, None]
+        ],
+        order_by='skating_order'
+    )
+
+
+def test__set_item_with_merge_aggregated_series() -> None:
+    pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
+    pdf2 = pd.DataFrame(data={'x': [1, 2, 3, 4], 'y': [2, 2, 4, 4], 'z': [1, 2, 3, 4]}, )
+
+    df1 = get_from_df('_set_item_1', pdf1)
+    df2 = get_from_df('_set_item_2', pdf2)
+
+    df1 = df1.set_index('a')
+    df2 = df2.set_index('x')
+
+    pdf1 = pdf1.set_index('a')
+    pdf2 = pdf2.set_index('x')
+
+    expected = pdf1.c + pdf2.groupby('y')['z'].sum()
+    result = df1.c + df2.groupby('y')['z'].sum()
+
+    pd.testing.assert_series_equal(
+        expected,
+        result.sort_index().to_pandas(),
+        check_names=False,
+    )
+
+
+def test__set_item_with_merge_index_data_column_name_conflict() -> None:
+    pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'c': [3, 3, 3]})
+    pdf2 = pd.DataFrame(data={'x': [1, 2, 3, 4], 'a': [2, 2, 4, 4]})
+
+    df1 = get_from_df('_set_item_1', pdf1)
+    df2 = get_from_df('_set_item_2', pdf2)
+
+    df1 = df1.set_index('a')
+    df2 = df2.set_index('x')
+    pdf1 = pdf1.set_index('a')
+    pdf2 = pdf2.set_index('x')
+
+    expected = pdf1['c'] + pdf2['a']
+    result = df1['c'] + df2['a']
+    pd.testing.assert_series_equal(
+        expected,
+        result.sort_index().to_pandas(),
+        check_names=False,
+    )
+
+
+def test__set_item_with_merge_index_multi_level() -> None:
+    pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
+    pdf2 = pd.DataFrame(data={'a': [1, 2, 3, 4], 'b': [2, 2, 4, 4], 'z': [1, 2, 3, 4]})
+
+    df1 = get_from_df('_set_item_1', pdf1)
+    df2 = get_from_df('_set_item_2', pdf2)
+
+    df1 = df1.set_index(['a', 'b'])
+    df2 = df2.set_index(['a', 'b'])
+
+    pdf1 = pdf1.set_index(['a', 'b'])
+    pdf2 = pdf2.set_index(['a', 'b'])
+
+    expected = pdf1['c'] + pdf2['z']
+    result = df1['c'] + df2['z']
+    pd.testing.assert_series_equal(
+        expected,
+        result.sort_index().to_pandas(),
+        check_names=False,
+    )
+
+
+def test__set_item_with_merge_index_uneven_multi_level() -> None:
+    pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
+    pdf2 = pd.DataFrame(data={'x': [1, 2, 3, 4], 'a': [2, 2, 4, 4], 'z': [1, 2, 3, 4]})
+
+    df1 = get_from_df('_set_item_1', pdf1)
+    df2 = get_from_df('_set_item_2', pdf2)
+
+    df1 = df1.set_index(['a', 'b'])
+    df2 = df2.set_index(['x'])
+
+    result = df1['c'] + df2['a']
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['a', 'b', 'c'],
+        expected_data=[
+            [1, 2, 5],
+            [2, 2, 5],
+            [3, 2, 7],
+            [4, None, None],
+        ],
+    )
+
+
+def test__set_item_with_merge_index_level_error() -> None:
+    bt = get_bt_with_test_data(full_data_set=False)
+    bt2 = bt.groupby(bt.index_columns)['inhabitants'].sum().to_frame()
+
+    bt = bt.reset_index(drop=True)
+    bt2 = bt2.reset_index(drop=True)
+    with pytest.raises(ValueError, match=r'both series must have at least one index level'):
+        bt['inhabitants'] + bt2['inhabitants']
+
+
+def test__set_item_with_merge_different_dtypes() -> None:
+    bt = get_bt_with_test_data(full_data_set=False)
+
+    bt2 = bt.copy()
+    bt2._index[bt2.index_columns[0]] = bt2.index[bt2.index_columns[0]].astype(str)
+    bt2 = bt2.groupby(bt2.index_columns)['inhabitants'].sum().to_frame()
+
+    with pytest.raises(ValueError, match=r'dtypes of indexes to be merged'):
+        bt['inhabitants'] + bt2['inhabitants']

@@ -7,14 +7,14 @@ import pytest
 
 from bach import DataFrame, get_series_type_from_dtype
 from bach.expression import Expression
-from bach.merge import _determine_merge_on, _determine_result_columns, ResultSeries, merge, How
+from bach.merge import _determine_merge_on, _determine_result_columns, ResultSeries, merge, How, MergeOn
 from tests.unit.bach.util import get_fake_df
 
 
 def test__determine_left_on_right_on_simple_df_df_happy():
     left = get_fake_df(['a'], ['b', 'c'])
     right = get_fake_df(['a'], ['c', 'd'])
-    assert call__determine_left_on_right_on(left, right) == (['c'], ['c'])
+    assert call__determine_left_on_right_on(left, right) == MergeOn(['c'], ['c'], [])
 
 
 def test__determine_left_on_right_on_simple_df_df_non_happy():
@@ -29,11 +29,11 @@ def test__determine_left_on_right_on_simple_df_df_non_happy():
 def test__determine_left_on_right_on_on_df_df_happy():
     left = get_fake_df(['a'], ['b', 'c'])
     right = get_fake_df(['a'], ['c', 'd'])
-    assert call__determine_left_on_right_on(left, right, on='c') == (['c'], ['c'])
-    assert call__determine_left_on_right_on(left, right, on=['c']) == (['c'], ['c'])
-    assert call__determine_left_on_right_on(left, right, on='a') == (['a'], ['a'])
-    assert call__determine_left_on_right_on(left, right, on=['a']) == (['a'], ['a'])
-    assert call__determine_left_on_right_on(left, right, on=['a', 'c']) == (['a', 'c'], ['a', 'c'])
+    assert call__determine_left_on_right_on(left, right, on='c') == MergeOn(['c'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, on=['c']) == MergeOn(['c'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, on='a') == MergeOn(['a'], ['a'], [])
+    assert call__determine_left_on_right_on(left, right, on=['a']) == MergeOn(['a'], ['a'], [])
+    assert call__determine_left_on_right_on(left, right, on=['a', 'c']) == MergeOn(['a', 'c'], ['a', 'c'], [])
 
 
 def test__determine_left_on_right_on_on_df_df_non_happy():
@@ -56,16 +56,16 @@ def test__determine_left_on_right_on_on_df_df_non_happy():
 def test__determine_left_on_right_on_left_on_right_on_df_df_happy():
     left = get_fake_df(['a'], ['b', 'c'])
     right = get_fake_df(['a'], ['c', 'd'])
-    assert call__determine_left_on_right_on(left, right, left_on='c', right_on='c') == (['c'], ['c'])
-    assert call__determine_left_on_right_on(left, right, left_on=['c'], right_on='c') == (['c'], ['c'])
-    assert call__determine_left_on_right_on(left, right, left_on='c', right_on=['c']) == (['c'], ['c'])
-    assert call__determine_left_on_right_on(left, right, left_on='a', right_on='a') == (['a'], ['a'])
-    assert call__determine_left_on_right_on(left, right, left_on=['a'], right_on=['a']) == (['a'], ['a'])
+    assert call__determine_left_on_right_on(left, right, left_on='c', right_on='c') == MergeOn(['c'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, left_on=['c'], right_on='c') == MergeOn(['c'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, left_on='c', right_on=['c']) == MergeOn(['c'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, left_on='a', right_on='a') == MergeOn(['a'], ['a'], [])
+    assert call__determine_left_on_right_on(left, right, left_on=['a'], right_on=['a']) == MergeOn(['a'], ['a'], [])
     assert call__determine_left_on_right_on(left, right, left_on=['a', 'c'], right_on=['a', 'c']) \
-           == (['a', 'c'], ['a', 'c'])
-    assert call__determine_left_on_right_on(left, right, left_on=['a'], right_on=['c']) == (['a'], ['c'])
+           == MergeOn(['a', 'c'], ['a', 'c'], [])
+    assert call__determine_left_on_right_on(left, right, left_on=['a'], right_on=['c']) == MergeOn(['a'], ['c'], [])
     assert call__determine_left_on_right_on(left, right, left_on=['a', 'b'], right_on=['a', 'd']) \
-           == (['a', 'b'], ['a', 'd'])
+           == MergeOn(['a', 'b'], ['a', 'd'], [])
 
 
 def test__determine_left_on_right_on_left_on_right_on_df_df_non_happy():
@@ -97,27 +97,29 @@ def test__determine_left_on_right_on_left_on_right_on_df_df_non_happy():
 def test__determine_left_on_right_index_on_df_df_happy():
     left = get_fake_df(['a'], ['b', 'c'])
     right = get_fake_df(['a'], ['c', 'd'])
-    assert call__determine_left_on_right_on(left, right, left_on='c', right_index=True) == (['c'], ['a'])
-    assert call__determine_left_on_right_on(left, right, left_index=True, right_on='c') == (['a'], ['c'])
-    assert call__determine_left_on_right_on(left, right, left_index=True, right_index=True) == (['a'], ['a'])
+    assert call__determine_left_on_right_on(left, right, left_on='c', right_index=True) == MergeOn(['c'], ['a'], [])
+    assert call__determine_left_on_right_on(left, right, left_index=True, right_on='c') == MergeOn(['a'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, left_index=True, right_index=True) == \
+           MergeOn(['a'], ['a'], [])
 
 
 def test__determine_left_on_right_df_serie_happy():
     left = get_fake_df(['a'], ['b', 'c'])
     right = get_fake_df(['a'], ['c', 'd'])['c']
-    assert call__determine_left_on_right_on(left, right) == (['c'], ['c'])
-    assert call__determine_left_on_right_on(left, right, on='c') == (['c'], ['c'])
-    assert call__determine_left_on_right_on(left, right, left_on='c', right_on='c') == (['c'], ['c'])
-    assert call__determine_left_on_right_on(left, right, left_on='c', right_on='a') == (['c'], ['a'])
-    assert call__determine_left_on_right_on(left, right, left_on='c', right_index=True) == (['c'], ['a'])
-    assert call__determine_left_on_right_on(left, right, left_index=True, right_on='c') == (['a'], ['c'])
-    assert call__determine_left_on_right_on(left, right, left_index=True, right_index=True) == (['a'], ['a'])
+    assert call__determine_left_on_right_on(left, right) == MergeOn(['c'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, on='c') == MergeOn(['c'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, left_on='c', right_on='c') == MergeOn(['c'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, left_on='c', right_on='a') == MergeOn(['c'], ['a'], [])
+    assert call__determine_left_on_right_on(left, right, left_on='c', right_index=True) == MergeOn(['c'], ['a'], [])
+    assert call__determine_left_on_right_on(left, right, left_index=True, right_on='c') == MergeOn(['a'], ['c'], [])
+    assert call__determine_left_on_right_on(left, right, left_index=True, right_index=True) == \
+           MergeOn(['a'], ['a'], [])
 
 
 def test__determine_result_columns():
     left = get_fake_df(['a'], ['b', 'c'], 'int64')
     right = get_fake_df(['a'], ['c', 'd'], 'float64')
-    result = _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
+    result = _determine_result_columns(left, right, MergeOn(['a'], ['a'], []), ('_x', '_y'))
     assert result == (
         [
             ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
@@ -128,7 +130,7 @@ def test__determine_result_columns():
             ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
-    result = _determine_result_columns(left, right, ['c'], ['c'], ('_x', '_y'))
+    result = _determine_result_columns(left, right, MergeOn(['c'], ['c'], []), ('_x', '_y'))
     assert result == (
         [
             ResultSeries(name='a_x', expression=Expression.construct('"l"."a"'), dtype='int64'),
@@ -139,7 +141,7 @@ def test__determine_result_columns():
             ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
-    result = _determine_result_columns(left, right, ['a', 'c'], ['a', 'c'], ('_x', '_y'))
+    result = _determine_result_columns(left, right, MergeOn(['a', 'c'], ['a', 'c'], []), ('_x', '_y'))
     assert result == (
         [
             ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
@@ -157,7 +159,7 @@ def test__determine_result_columns_non_happy_path():
     left = get_fake_df(['a'], ['b', 'b_x'], 'int64')
     right = get_fake_df(['a'], ['b', 'b_y'], 'float64')
     with pytest.raises(ValueError):
-        _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
+        _determine_result_columns(left, right, MergeOn(['a'], ['a'], []), ('_x', '_y'))
 
 
 def test_merge_non_happy_path_how():

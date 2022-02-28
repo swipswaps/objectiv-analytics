@@ -37,7 +37,7 @@ def _verify_on_conflicts(
     left: DataFrame,
     right: DataFrameOrSeries,
     how: How,
-    on: Optional[Union[ColumnNames, List[Union[str, SeriesBoolean]]]],
+    on: Optional[List[Union[str, SeriesBoolean]]],
     left_on: Optional[ColumnNames],
     right_on: Optional[ColumnNames],
     left_index: bool,
@@ -85,7 +85,7 @@ def _determine_merge_on(
     left: DataFrame,
     right: DataFrameOrSeries,
     how: How,
-    on: Optional[Union[ColumnNames, List[Union[str, SeriesBoolean]]]],
+    on: Optional[List[Union[str, SeriesBoolean]]],
     left_on: Optional[ColumnNames],
     right_on: Optional[ColumnNames],
     left_index: bool,
@@ -202,9 +202,20 @@ def _determine_result_columns(
     # need to consider values from both objects (important when how = How.outer)
     conflicting -= conflicting_on
 
+    # left dataframe has priority over index and data columns
+    # final shared index and data series are based on left dataframe structure
+    right_index = {}
+    right_data = {}
+    for series_name, series in right_df.all_series.items():
+        data_columns = left_df.data_columns if series_name in conflicting_on else right_df.data_columns
+        if series_name in data_columns:
+            right_data[series_name] = series
+        else:
+            right_index[series_name] = series
+
     new_index_list = _get_merged_result_series(
         left_series=left_df.index,
-        right_series=right_df.index,
+        right_series=right_index,
         suffixes=suffixes,
         conflicting_names=conflicting,
         conflicting_on=conflicting_on,
@@ -212,7 +223,7 @@ def _determine_result_columns(
 
     new_data_list = _get_merged_result_series(
         left_series=left_df.data,
-        right_series=right_df.data,
+        right_series=right_data,
         suffixes=suffixes,
         conflicting_names=conflicting,
         conflicting_on=conflicting_on,
@@ -268,7 +279,7 @@ def merge(
     left: DataFrame,
     right: DataFrameOrSeries,
     how: str,
-    on: Union[str, List[Union[str, SeriesBoolean]], None],
+    on: Union[str, 'SeriesBoolean', List[Union[str, 'SeriesBoolean']], None],
     left_on: Union[str, List[str],  None],  # todo: also support array-like arguments?
     right_on: Union[str, List[str], None],
     left_index: bool,
@@ -294,7 +305,7 @@ def merge(
         left=left,
         right=right,
         how=real_how,
-        on=on,
+        on=[on] if on is not None and not isinstance(on, list) else on,
         left_on=left_on,
         right_on=right_on,
         left_index=left_index,
@@ -374,11 +385,58 @@ def _get_merge_sql_model(
     )
 
 
+def _get_merge_on_clause(
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    merge_on: MergeOn,
+) -> Expression:
+    """
+    Generates the expression used as criteria to match rows when merging.
+    """
+    left_x_right_on_merge_expressions = list(itertools.chain.from_iterable(
+        [
+            _get_expression(df_series=left, label=l_label).resolve_column_references("l"),
+            _get_expression(df_series=right, label=r_label).resolve_column_references("r"),
+        ]
+        for l_label, r_label in zip(merge_on.left, merge_on.right)
+    ))
+    conditional_merge_expressions = _get_conditional_on_expressions(left, right, merge_on.conditional)
+    all_conditions = (
+        ['({} = {})'] * (len(left_x_right_on_merge_expressions) // 2)
+        + ['{}'] * len(conditional_merge_expressions)
+    )
+    fmt_str = 'on ' + ' and '.join(all_conditions)
+
+    return Expression.construct(
+        fmt_str, *left_x_right_on_merge_expressions, *conditional_merge_expressions,
+    )
+
+
 def _get_conditional_on_expressions(
     left: DataFrame,
     right: DataFrameOrSeries,
     on_conditions: List[SeriesBoolean],
 ) -> Sequence[Expression]:
+    """
+    Gets all conditional expressions with resolved column references.
+
+    In order to add the correct table reference, the function identifies the source (node) of each
+    column involved in all conditions. Since SeriesBoolean expressions are actually generated
+    using the merge operation, it's easy to do this task by going through the following steps:
+        For each SeriesBoolean:
+        1. Identify all ColumnReferenceTokens involved in the expression
+        2. Determine each token's base node:
+           A) If it has the postfix '__other', it clearly references to the right_node,
+                since it's a column name shared by both nodes and left node has priority over shared names.
+                Please see :py:meth:`bach.Series.__set_item_with_merge` for more information.
+           B) Find which node has the column referenced in the ColumnReferenceToken.
+        3. Compare the node from the previous step with the left and right nodes to be merged.
+           All SeriesBoolean should be validated at this point of the merge,
+           so no errors must be raised when performing this step.
+        4. Get the series from the correct object to be merged and resolved the column references with the
+           respective table alias.
+        5. Create a new expression with the replaced ColumnReferenceTokens
+    """
     on_merge_conditions = []
 
     if not on_conditions:
@@ -415,27 +473,6 @@ def _get_conditional_on_expressions(
         on_merge_conditions.append(Expression(data=new_expr_tokens))
 
     return on_merge_conditions
-
-
-def _get_merge_on_clause(
-    left: DataFrame,
-    right: DataFrameOrSeries,
-    merge_on: MergeOn,
-) -> Expression:
-    on_merge_expressions = list(itertools.chain.from_iterable(
-        [
-            _get_expression(df_series=left, label=l_label).resolve_column_references("l"),
-            _get_expression(df_series=right, label=r_label).resolve_column_references("r"),
-        ]
-        for l_label, r_label in zip(merge_on.left, merge_on.right)
-    ))
-    conditional_merge_expressions = _get_conditional_on_expressions(left, right, merge_on.conditional)
-    all_conditions = ['({} = {})'] * (len(on_merge_expressions) // 2) + ['{}'] * len(conditional_merge_expressions)
-    fmt_str = 'on ' + ' and '.join(all_conditions)
-
-    return Expression.construct(
-        fmt_str, *on_merge_expressions, *conditional_merge_expressions,
-    )
 
 
 def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
