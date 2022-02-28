@@ -46,7 +46,8 @@ def _verify_on_conflicts(
     """
     Verifies that provided on parameters are valid for merge operation.
     Rules for valid merge:
-        1. Any of "on", "left_on", "left_index", "right_on", "right_index"  should be provided if how != 'cross'
+        1. Any of "on", "left_on", "left_index", "right_on", "right_index"
+            should be provided if how != 'cross'
         2. Both "left_on" and "left_index" must not be specified at the same time.
         3. Both "right_on" and "right_index" must not be specified at the same time.
         4. If "left_on"/"left_index" is specified, "right_on"/"right_index" must be specified as well.
