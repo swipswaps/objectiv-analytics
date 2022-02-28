@@ -26,6 +26,6 @@ export type ContextsConfig = {
  * Enum to map which attribute of a TrackerEvent carries which contextName.
  */
 export enum ContextType {
-  LocationContexts = 'location_stack',
+  LocationStack = 'location_stack',
   GlobalContexts = 'global_contexts',
 }

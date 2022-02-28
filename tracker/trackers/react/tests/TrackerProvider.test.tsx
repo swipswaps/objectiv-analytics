@@ -2,7 +2,12 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Tracker } from '@objectiv/tracker-core';
+import {
+  ContextType,
+  RequiresContextValidationRule,
+  Tracker,
+  UniqueContextValidationRule,
+} from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { TrackerProvider, useTracker } from '../src';
@@ -34,6 +39,16 @@ describe('TrackerProvider', () => {
             applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
             console: undefined,
             pluginName: 'ApplicationContextPlugin',
+            validationRules: [
+              new RequiresContextValidationRule({
+                contextName: 'ApplicationContext',
+                contextType: ContextType.GlobalContexts,
+              }),
+              new UniqueContextValidationRule({
+                contextName: 'ApplicationContext',
+                contextType: ContextType.GlobalContexts,
+              }),
+            ],
           },
           {
             console: undefined,

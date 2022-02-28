@@ -44,7 +44,7 @@ export class RequiresContextValidationRule implements TrackerValidationRuleInter
 
     let isContextMissing;
     switch (this.contextType) {
-      case ContextType.LocationContexts:
+      case ContextType.LocationStack:
         isContextMissing = locationStackIndex < 0;
         break;
       case ContextType.GlobalContexts:

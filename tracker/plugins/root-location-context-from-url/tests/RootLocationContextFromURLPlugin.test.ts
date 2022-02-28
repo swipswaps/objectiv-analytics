@@ -3,7 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { ContextsConfig, Tracker, TrackerEvent } from '@objectiv/tracker-core';
+import { ContextsConfig, makeRootLocationContext, Tracker, TrackerEvent } from '@objectiv/tracker-core';
 import { RootLocationContextFromURLPlugin } from '../src';
 
 describe('RootLocationContextFromURLPlugin', () => {
@@ -162,6 +162,59 @@ describe('RootLocationContextFromURLPlugin', () => {
       __location_context: true,
       _type: 'RootLocationContext',
       id: 'welcome',
+    });
+  });
+
+  describe('Validation', () => {
+    it('should succeed', () => {
+      const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin({ console: mockConsole });
+      const validEvent = new TrackerEvent({
+        _type: 'test',
+        location_stack: [makeRootLocationContext({ id: '/test' })],
+      });
+
+      jest.resetAllMocks();
+
+      testRootLocationContextPlugin.validate(validEvent);
+
+      expect(mockConsole.groupCollapsed).not.toHaveBeenCalled();
+    });
+
+    it('should fail when given TrackerEvent does not have RootLocationContext', () => {
+      const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin({ console: mockConsole });
+      const eventWithoutRootLocationContext = new TrackerEvent({ _type: 'test' });
+
+      jest.resetAllMocks();
+
+      testRootLocationContextPlugin.validate(eventWithoutRootLocationContext);
+
+      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:RequiresContextValidationRule｣ Error: RootLocationContext is missing.`,
+        'color:red'
+      );
+    });
+
+    // TODO test RootLocationContext not being the first when the validator supports it
+
+    it('should fail when given TrackerEvent has multiple RootLocationContexts', () => {
+      const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin({ console: mockConsole });
+      const eventWithDuplicatedRootLocationContext = new TrackerEvent({
+        _type: 'test',
+        location_stack: [makeRootLocationContext({ id: '/test' }), makeRootLocationContext({ id: '/test' })],
+      });
+
+      jest.resetAllMocks();
+
+      testRootLocationContextPlugin.validate(eventWithDuplicatedRootLocationContext);
+
+      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:UniqueContextValidationRule｣ Error: Only one RootLocationContext should be present.`,
+        'color:red'
+      );
     });
   });
 });

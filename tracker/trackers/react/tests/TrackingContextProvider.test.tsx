@@ -3,7 +3,12 @@
  */
 
 import { expectToThrow } from '@objectiv/testing-tools';
-import { Tracker } from '@objectiv/tracker-core';
+import {
+  ContextType,
+  RequiresContextValidationRule,
+  Tracker,
+  UniqueContextValidationRule,
+} from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import {
@@ -44,6 +49,16 @@ describe('TrackingContextProvider', () => {
             applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
             console: undefined,
             pluginName: 'ApplicationContextPlugin',
+            validationRules: [
+              new RequiresContextValidationRule({
+                contextName: 'ApplicationContext',
+                contextType: ContextType.GlobalContexts,
+              }),
+              new UniqueContextValidationRule({
+                contextName: 'ApplicationContext',
+                contextType: ContextType.GlobalContexts,
+              }),
+            ],
           },
           {
             console: undefined,

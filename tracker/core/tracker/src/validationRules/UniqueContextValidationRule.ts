@@ -43,7 +43,7 @@ export class UniqueContextValidationRule implements TrackerValidationRuleInterfa
 
     let isContextDuplicated;
     switch (this.contextType) {
-      case ContextType.LocationContexts:
+      case ContextType.LocationStack:
         isContextDuplicated = locationStackMatches.length > 1;
         break;
       case ContextType.GlobalContexts:
