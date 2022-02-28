@@ -9,6 +9,8 @@ import { TrackerConfig } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerPluginConfig, TrackerPluginInterface } from '../TrackerPluginInterface';
+import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
+import { ContextValidationRuleConfig } from '../validationRules/ContextValidationRuleConfig';
 import { RequiresContextValidationRule } from '../validationRules/RequiresContextValidationRule';
 import { UniqueContextValidationRule } from '../validationRules/UniqueContextValidationRule';
 
@@ -24,6 +26,7 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
   readonly console?: TrackerConsole;
   readonly pluginName = `ApplicationContextPlugin`;
   readonly applicationContext: ApplicationContext;
+  readonly validationRules: TrackerValidationRuleInterface[];
 
   /**
    * Generates a ApplicationContext from the given config applicationId.
@@ -33,6 +36,15 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
     this.applicationContext = makeApplicationContext({
       id: config.applicationId,
     });
+    const validationRuleConfig: ContextValidationRuleConfig = {
+      console: this.console,
+      contextName: 'ApplicationContext',
+      contextType: ContextType.GlobalContexts,
+    };
+    this.validationRules = [
+      new RequiresContextValidationRule(validationRuleConfig),
+      new UniqueContextValidationRule(validationRuleConfig),
+    ];
 
     if (this.console) {
       this.console.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
@@ -57,12 +69,7 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
    * - is not present multiple times
    */
   validate(event: TrackerEvent): void {
-    new RequiresContextValidationRule({
-      contextName: 'ApplicationContext',
-      contextType: ContextType.GlobalContexts,
-      console: this.console,
-    }).validate(event);
-    new UniqueContextValidationRule({ contextName: 'ApplicationContext', console: this.console }).validate(event);
+    this.validationRules.forEach((validationRule) => validationRule.validate(event));
   }
 
   /**

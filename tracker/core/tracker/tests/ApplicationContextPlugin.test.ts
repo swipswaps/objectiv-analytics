@@ -59,15 +59,7 @@ describe('ApplicationContextPlugin', () => {
 
     testApplicationContextPlugin.validate(eventWithDuplicatedApplicationContext);
 
-    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(2);
-    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
-      1,
-      `｢objectiv:RequiresContextValidationRule｣ Initialized. Context: ApplicationContext.`
-    );
-    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
-      2,
-      `｢objectiv:UniqueContextValidationRule｣ Initialized. Context: ApplicationContext.`
-    );
+    expect(mockConsole.groupCollapsed).not.toHaveBeenCalled();
   });
 
   it('should fail validation when given TrackerEvent does not have ApplicationContext', () => {
@@ -78,19 +70,11 @@ describe('ApplicationContextPlugin', () => {
 
     testApplicationContextPlugin.validate(eventWithoutApplicationContext);
 
-    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(3);
+    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
     expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
       1,
-      `｢objectiv:RequiresContextValidationRule｣ Initialized. Context: ApplicationContext.`
-    );
-    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
-      2,
       `%c｢objectiv:RequiresContextValidationRule｣ Error: ApplicationContext is missing.`,
       'color:red'
-    );
-    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
-      3,
-      `｢objectiv:UniqueContextValidationRule｣ Initialized. Context: ApplicationContext.`
     );
   });
 
@@ -105,17 +89,9 @@ describe('ApplicationContextPlugin', () => {
 
     testApplicationContextPlugin.validate(eventWithDuplicatedApplicationContext);
 
-    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(3);
+    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
     expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
       1,
-      `｢objectiv:RequiresContextValidationRule｣ Initialized. Context: ApplicationContext.`
-    );
-    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
-      2,
-      `｢objectiv:UniqueContextValidationRule｣ Initialized. Context: ApplicationContext.`
-    );
-    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
-      3,
       `%c｢objectiv:UniqueContextValidationRule｣ Error: Only one ApplicationContext should be present.`,
       'color:red'
     );

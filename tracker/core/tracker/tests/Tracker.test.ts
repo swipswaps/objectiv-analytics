@@ -6,13 +6,16 @@ import { LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-
 import {
   ApplicationContextPlugin,
   ContextsConfig,
+  ContextType,
   OpenTaxonomyValidationPlugin,
+  RequiresContextValidationRule,
   Tracker,
   TrackerConfig,
   TrackerEvent,
   TrackerPluginInterface,
   TrackerQueue,
   TrackerQueueMemoryStore,
+  UniqueContextValidationRule,
 } from '../src';
 
 describe('Tracker', () => {
@@ -27,8 +30,18 @@ describe('Tracker', () => {
       tracker: testTracker,
       plugins: [
         {
-          applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
           pluginName: 'ApplicationContextPlugin',
+          applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+          validationRules: [
+            new RequiresContextValidationRule({
+              contextName: 'ApplicationContext',
+              contextType: ContextType.GlobalContexts,
+            }),
+            new UniqueContextValidationRule({
+              contextName: 'ApplicationContext',
+              contextType: ContextType.GlobalContexts,
+            }),
+          ],
         },
         {
           pluginName: 'OpenTaxonomyValidationPlugin',
@@ -55,7 +68,7 @@ describe('Tracker', () => {
     });
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
-    expect(mockConsole.log).toHaveBeenNthCalledWith(1, 'Application ID: app-id');
+    expect(mockConsole.log).toHaveBeenCalledWith('Application ID: app-id');
   });
 
   it('should instantiate with another Tracker, inheriting its state, yet being independent instances', () => {
