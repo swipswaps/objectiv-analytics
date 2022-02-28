@@ -16,14 +16,14 @@ For detailed installation & usage instructions, visit [Objectiv Docs](https://ww
 ## See Also
 * [Pandas](https://github.com/pandas-dev/pandas): the inspiration for the API.
    Pandas has excellent [documentation](https://pandas.pydata.org/docs/) for its API.
-* [SQL-models]((./sql_models/)): Sub-project that is used for generating the underlying sql-queries. Can be 
+* [SQL-models](./sql_models/): Sub-project that is used for generating the underlying sql-queries. Can be 
   found in the [`sql_models`](./sql_models/) package
 
 ## Support & Troubleshooting
 If you need help using or installing Bach, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
 
 ## Bug Reports & Feature Requests
-If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://www.objectiv.io/docs/the-project/contributing.md).
+If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://objectiv.io/docs/home/the-project/contribute/).
 
 ## Security Disclosure
 Found a security issue? Please don’t use the issue tracker but contact us directly. See [SECURITY.md](../SECURITY.md) for details.

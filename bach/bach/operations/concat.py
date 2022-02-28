@@ -142,13 +142,10 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
             if isinstance(obj, Series):
                 raise Exception('Cannot concat Series to DataFrame')
 
-            df = obj.copy()
-            if self.ignore_index:
-                df.reset_index(drop=True, inplace=True)
-
+            df = obj.copy() if not self.ignore_index else obj.reset_index(drop=True)
             # need to materialize in order to avoid further problems
             if df.group_by:
-                df.materialize(inplace=True)
+                df = df.materialize()
 
             dfs.append(df)
 
@@ -267,7 +264,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
 
             df = obj.to_frame()
             if df.group_by:
-                df.materialize(inplace=True)
+                df = df.materialize()
             series.append(df.all_series[obj.name])
 
         return series
@@ -276,19 +273,9 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         """
         gets the final data series result
         """
-        all_names = []
-        dtypes: Set[str] = set()
+        dtypes: Set[str] = set(series.dtype for series in self.objects)
 
-        for series in self.objects:
-            if not isinstance(series, Series):
-                continue
-            all_names.append(series.name)
-            dtypes.add(series.dtype)
-
-        main_series = self.objects[0].copy_override(
-            name='_'.join(all_names),
-            dtype=_get_merged_series_dtype(dtypes),
-        )
+        main_series = self.objects[0].copy_override_dtype(dtype=_get_merged_series_dtype(dtypes))
         return self._get_result_series([main_series])
 
     def _join_series_expressions(self, obj: Series) -> Expression:
