@@ -172,6 +172,7 @@ def _from_pd_shared(
         * dtypes dict
     """
     index = []
+
     for idx, name in enumerate(df.index.names):
         if name is None:
             name = f'_index_{idx}'
@@ -179,6 +180,9 @@ def _from_pd_shared(
             name = f'_index_{name}'
 
         index.append(name)
+
+    if len(set(index)) != len(index):
+        raise KeyError("index with duplicate names not supported")
 
     df_copy = df.copy()
     df_copy.index.set_names(index, inplace=True)
