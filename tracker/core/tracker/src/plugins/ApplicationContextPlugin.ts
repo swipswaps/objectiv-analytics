@@ -3,7 +3,7 @@
  */
 
 import { ApplicationContext } from '@objectiv/schema';
-import { ContextsConfig } from '../Context';
+import { ContextsConfig, ContextType } from '../Context';
 import { makeApplicationContext } from '../ContextFactories';
 import { TrackerConfig } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
@@ -57,8 +57,12 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
    * - is not present multiple times
    */
   validate(event: TrackerEvent): void {
-    new RequiresContextValidationRule({ contextType: 'ApplicationContext', console: this.console }).validate(event);
-    new UniqueContextValidationRule({ contextType: 'ApplicationContext', console: this.console }).validate(event);
+    new RequiresContextValidationRule({
+      contextName: 'ApplicationContext',
+      contextType: ContextType.GlobalContexts,
+      console: this.console,
+    }).validate(event);
+    new UniqueContextValidationRule({ contextName: 'ApplicationContext', console: this.console }).validate(event);
   }
 
   /**

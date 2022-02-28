@@ -48,6 +48,28 @@ describe('ApplicationContextPlugin', () => {
     );
   });
 
+  it('should succeed validation', () => {
+    const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+    const eventWithDuplicatedApplicationContext = new TrackerEvent({
+      _type: 'test',
+      global_contexts: [makeApplicationContext({ id: 'test' })],
+    });
+
+    jest.resetAllMocks();
+
+    testApplicationContextPlugin.validate(eventWithDuplicatedApplicationContext);
+
+    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(2);
+    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      1,
+      `｢objectiv:RequiresContextValidationRule｣ Initialized. Context: ApplicationContext.`
+    );
+    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      2,
+      `｢objectiv:UniqueContextValidationRule｣ Initialized. Context: ApplicationContext.`
+    );
+  });
+
   it('should fail validation when given TrackerEvent does not have ApplicationContext', () => {
     const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
     const eventWithoutApplicationContext = new TrackerEvent({ _type: 'test' });
@@ -56,28 +78,44 @@ describe('ApplicationContextPlugin', () => {
 
     testApplicationContextPlugin.validate(eventWithoutApplicationContext);
 
-    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(3);
     expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
       1,
+      `｢objectiv:RequiresContextValidationRule｣ Initialized. Context: ApplicationContext.`
+    );
+    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      2,
       `%c｢objectiv:RequiresContextValidationRule｣ Error: ApplicationContext is missing.`,
       'color:red'
+    );
+    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      3,
+      `｢objectiv:UniqueContextValidationRule｣ Initialized. Context: ApplicationContext.`
     );
   });
 
   it('should fail validation when given TrackerEvent has multiple ApplicationContexts', () => {
     const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
-    const eventWithoutApplicationContext = new TrackerEvent({
+    const eventWithDuplicatedApplicationContext = new TrackerEvent({
       _type: 'test',
       global_contexts: [makeApplicationContext({ id: 'test' }), makeApplicationContext({ id: 'test' })],
     });
 
     jest.resetAllMocks();
 
-    testApplicationContextPlugin.validate(eventWithoutApplicationContext);
+    testApplicationContextPlugin.validate(eventWithDuplicatedApplicationContext);
 
-    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+    expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(3);
     expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
       1,
+      `｢objectiv:RequiresContextValidationRule｣ Initialized. Context: ApplicationContext.`
+    );
+    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      2,
+      `｢objectiv:UniqueContextValidationRule｣ Initialized. Context: ApplicationContext.`
+    );
+    expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      3,
       `%c｢objectiv:UniqueContextValidationRule｣ Error: Only one ApplicationContext should be present.`,
       'color:red'
     );

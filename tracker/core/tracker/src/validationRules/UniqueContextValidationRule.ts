@@ -2,16 +2,11 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import { ContextType } from '../Context';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
-import { TrackerValidationRuleConfig, TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
-
-/**
- * The UniqueContextValidationRule Config object.
- */
-type UniqueContextValidationRuleConfig = TrackerValidationRuleConfig & {
-  contextType: string;
-};
+import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
+import { ContextValidationRuleConfig } from './ContextValidationRuleConfig';
 
 /**
  * A generic Rule to verify and console error when the required Context is present multiple times.
@@ -19,20 +14,23 @@ type UniqueContextValidationRuleConfig = TrackerValidationRuleConfig & {
 export class UniqueContextValidationRule implements TrackerValidationRuleInterface {
   readonly console?: TrackerConsole;
   readonly validationRuleName = `UniqueContextValidationRule`;
+  readonly contextName;
   readonly contextType;
 
   /**
-   * Set console and contextType in state.
+   * Set console and contextName in state.
    */
-  constructor(config: UniqueContextValidationRuleConfig) {
+  constructor(config: ContextValidationRuleConfig) {
     this.console = config.console;
+    this.contextName = config.contextName;
     this.contextType = config.contextType;
 
     if (this.console) {
-      this.console.log(
-        `%c｢objectiv:${this.validationRuleName}｣ Initialized. Context: ${config.contextType}.`,
-        'font-weight:bold'
-      );
+      this.console.groupCollapsed(`｢objectiv:${this.validationRuleName}｣ Initialized. Context: ${config.contextName}.`);
+      this.console.group(`Configuration:`);
+      this.console.log(config);
+      this.console.groupEnd();
+      this.console.groupEnd();
     }
   }
 
@@ -40,20 +38,30 @@ export class UniqueContextValidationRule implements TrackerValidationRuleInterfa
    * Verifies whether the given Context is not present multiple times in the given TrackerEvent
    */
   validate(event: TrackerEvent): void {
-    const locationStack = event.location_stack.filter((locationContext) => locationContext._type === this.contextType);
-    const globalContexts = event.global_contexts.filter((globalContext) => globalContext._type === this.contextType);
+    const locationStackMatches = event.location_stack.filter((context) => context._type === this.contextName);
+    const globalContextMatches = event.global_contexts.filter((context) => context._type === this.contextName);
 
-    if (this.console) {
-      if (locationStack.length > 1 || globalContexts.length > 1) {
-        this.console.groupCollapsed(
-          `%c｢objectiv:${this.validationRuleName}｣ Error: Only one ${this.contextType} should be present.`,
-          'color:red'
-        );
-        this.console.group(`Event:`);
-        this.console.log(event);
-        this.console.groupEnd();
-        this.console.groupEnd();
-      }
+    let isContextDuplicated;
+    switch (this.contextType) {
+      case ContextType.LocationContexts:
+        isContextDuplicated = locationStackMatches.length > 1;
+        break;
+      case ContextType.GlobalContexts:
+        isContextDuplicated = globalContextMatches.length > 1;
+        break;
+      default:
+        isContextDuplicated = locationStackMatches.length > 1 || globalContextMatches.length > 1;
+    }
+
+    if (this.console && isContextDuplicated) {
+      this.console.groupCollapsed(
+        `%c｢objectiv:${this.validationRuleName}｣ Error: Only one ${this.contextName} should be present.`,
+        'color:red'
+      );
+      this.console.group(`Event:`);
+      this.console.log(event);
+      this.console.groupEnd();
+      this.console.groupEnd();
     }
   }
 }
