@@ -15,8 +15,8 @@ import { ContextValidationRuleConfig } from './ContextValidationRuleConfig';
 export class RequiresContextValidationRule implements TrackerValidationRuleInterface {
   readonly console?: TrackerConsole;
   readonly validationRuleName = `RequiresContextValidationRule`;
-  readonly contextName;
-  readonly contextType;
+  readonly contextName: string;
+  readonly contextType?: ContextType;
 
   /**
    * Process config onto state.

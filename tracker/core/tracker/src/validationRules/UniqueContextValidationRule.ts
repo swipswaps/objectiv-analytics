@@ -14,8 +14,8 @@ import { ContextValidationRuleConfig } from './ContextValidationRuleConfig';
 export class UniqueContextValidationRule implements TrackerValidationRuleInterface {
   readonly console?: TrackerConsole;
   readonly validationRuleName = `UniqueContextValidationRule`;
-  readonly contextName;
-  readonly contextType;
+  readonly contextName: string;
+  readonly contextType?: ContextType;
 
   /**
    * Process config onto state.
