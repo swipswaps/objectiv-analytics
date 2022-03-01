@@ -4,9 +4,10 @@ Copyright 2022 Objectiv B.V.
 from typing import Dict
 
 from sqlalchemy.engine import Engine
+from sqlalchemy_bigquery import BigQueryDialect
 
+from bach.databases import DatabaseNotSupportedException, escape_parameter_characters, is_postgres
 from bach.types import get_dtype_from_db_dtype
-from bach.utils import escape_parameter_characters
 from sql_models.model import SqlModel, CustomSqlModelBuilder
 from sql_models.sql_generator import to_sql
 
@@ -43,4 +44,9 @@ def _get_dtypes_from_information_schema_query(engine: Engine, query: str) -> Dic
         sql = escape_parameter_characters(conn, query)
         res = conn.execute(sql)
         rows = res.fetchall()
-    return {x[0]: get_dtype_from_db_dtype(x[1]) for x in rows}
+    if is_postgres(engine):
+        return {row[0]: get_dtype_from_db_dtype(row[1]) for row in rows}
+    # if is_bigquery(engine):
+    #     from bach.dialect_bq import dtype_structure
+    #     return {row[0]: get_dtype_from_db_engine_dtype(engine, dtype_structure(row[1])) for row in rows}
+    raise DatabaseNotSupportedException(engine)
