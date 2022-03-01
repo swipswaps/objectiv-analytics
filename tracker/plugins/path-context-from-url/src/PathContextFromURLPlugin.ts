@@ -4,16 +4,13 @@
 
 import {
   ContextsConfig,
-  ContextType,
-  ContextValidationRuleConfig,
+  GlobalContextValidationRule,
   makePathContext,
-  RequiresContextValidationRule,
   TrackerConsole,
   TrackerEvent,
   TrackerPluginConfig,
   TrackerPluginInterface,
   TrackerValidationRuleInterface,
-  UniqueContextValidationRule,
 } from '@objectiv/tracker-core';
 
 /**
@@ -34,14 +31,12 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
    */
   constructor(config?: TrackerPluginConfig) {
     this.console = config?.console;
-    const validationRuleConfig: ContextValidationRuleConfig = {
-      console: this.console,
-      contextName: 'PathContext',
-      contextType: ContextType.GlobalContexts,
-    };
     this.validationRules = [
-      new RequiresContextValidationRule(validationRuleConfig),
-      new UniqueContextValidationRule(validationRuleConfig),
+      new GlobalContextValidationRule({
+        console: this.console,
+        contextName: 'PathContext',
+        once: true,
+      }),
     ];
 
     if (this.console) {

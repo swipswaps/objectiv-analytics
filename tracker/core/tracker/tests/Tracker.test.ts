@@ -6,16 +6,14 @@ import { LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-
 import {
   ApplicationContextPlugin,
   ContextsConfig,
-  ContextType,
+  GlobalContextValidationRule,
   OpenTaxonomyValidationPlugin,
-  RequiresContextValidationRule,
   Tracker,
   TrackerConfig,
   TrackerEvent,
   TrackerPluginInterface,
   TrackerQueue,
   TrackerQueueMemoryStore,
-  UniqueContextValidationRule,
 } from '../src';
 
 describe('Tracker', () => {
@@ -33,13 +31,9 @@ describe('Tracker', () => {
           pluginName: 'ApplicationContextPlugin',
           applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
           validationRules: [
-            new RequiresContextValidationRule({
+            new GlobalContextValidationRule({
               contextName: 'ApplicationContext',
-              contextType: ContextType.GlobalContexts,
-            }),
-            new UniqueContextValidationRule({
-              contextName: 'ApplicationContext',
-              contextType: ContextType.GlobalContexts,
+              once: true,
             }),
           ],
         },

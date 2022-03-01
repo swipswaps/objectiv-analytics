@@ -3,16 +3,14 @@
  */
 
 import { ApplicationContext } from '@objectiv/schema';
-import { ContextsConfig, ContextType } from '../Context';
+import { ContextsConfig } from '../Context';
 import { makeApplicationContext } from '../ContextFactories';
 import { TrackerConfig } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerPluginConfig, TrackerPluginInterface } from '../TrackerPluginInterface';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
-import { ContextValidationRuleConfig } from '../validationRules/ContextValidationRuleConfig';
-import { RequiresContextValidationRule } from '../validationRules/RequiresContextValidationRule';
-import { UniqueContextValidationRule } from '../validationRules/UniqueContextValidationRule';
+import { GlobalContextValidationRule } from '../validationRules/GlobalContextValidationRule';
 
 /**
  * The ApplicationContextPlugin Config object.
@@ -40,14 +38,12 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
     this.applicationContext = makeApplicationContext({
       id: config.applicationId,
     });
-    const validationRuleConfig: ContextValidationRuleConfig = {
-      console: this.console,
-      contextName: 'ApplicationContext',
-      contextType: ContextType.GlobalContexts,
-    };
     this.validationRules = [
-      new RequiresContextValidationRule(validationRuleConfig),
-      new UniqueContextValidationRule(validationRuleConfig),
+      new GlobalContextValidationRule({
+        console: this.console,
+        contextName: 'ApplicationContext',
+        once: true,
+      }),
     ];
 
     if (this.console) {

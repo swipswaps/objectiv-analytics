@@ -1,15 +1,12 @@
 import {
   ContextsConfig,
-  ContextType,
-  ContextValidationRuleConfig,
+  LocationContextValidationRule,
   makeRootLocationContext,
-  RequiresContextValidationRule,
   TrackerConsole,
   TrackerEvent,
   TrackerPluginConfig,
   TrackerPluginInterface,
   TrackerValidationRuleInterface,
-  UniqueContextValidationRule,
 } from '@objectiv/tracker-core';
 import { makeRootLocationId } from './makeRootLocationId';
 
@@ -22,11 +19,7 @@ export type RootLocationContextFromURLPluginConfig = TrackerPluginConfig & {
 
 /**
  * The RootLocationContextFromURL Plugin factors a RootLocationContext out of the first slug of the current URL.
- *
- * Event Validation:
- *  - Must be present in Location Stack
- *  - TODO: Must be present at position 0
- *  - Must not be present multiple times
+ * Event Validation: Must be present in Location Stack once at position 0.
  */
 export class RootLocationContextFromURLPlugin implements TrackerPluginInterface {
   readonly console?: TrackerConsole;
@@ -40,15 +33,13 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
   constructor(config?: RootLocationContextFromURLPluginConfig) {
     this.console = config?.console;
     this.idFactoryFunction = config?.idFactoryFunction ?? makeRootLocationId;
-    const validationRuleConfig: ContextValidationRuleConfig = {
-      console: this.console,
-      contextName: 'RootLocationContext',
-      contextType: ContextType.LocationStack,
-    };
     this.validationRules = [
-      // TODO: Must be present at position 0
-      new RequiresContextValidationRule(validationRuleConfig),
-      new UniqueContextValidationRule(validationRuleConfig),
+      new LocationContextValidationRule({
+        console: this.console,
+        contextName: 'RootLocationContext',
+        once: true,
+        position: 0,
+      }),
     ];
 
     if (this.console) {

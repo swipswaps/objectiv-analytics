@@ -2,7 +2,6 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { ContextType } from '@objectiv/tracker-core';
 import { TrackerValidationRuleConfig } from '../TrackerValidationRuleInterface';
 
 /**
@@ -10,13 +9,12 @@ import { TrackerValidationRuleConfig } from '../TrackerValidationRuleInterface';
  */
 export type ContextValidationRuleConfig = TrackerValidationRuleConfig & {
   /**
-   * The name of the Context to validate, e.g. `ApplicationContext`.
+   * The name of the Context to validate, e.g. `RootLocationContext`, `ApplicationContext, etc.
    */
   contextName: string;
 
   /**
-   * Optional. Restricts whether the specified contextName is checked against `location_stack` or `global_contexts`.
+   * Optional. Restricts whether the specified LocationContext may be present multiple times.
    */
-
-  contextType?: ContextType;
+  once?: boolean;
 };

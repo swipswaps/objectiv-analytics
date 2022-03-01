@@ -2,13 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import {
-  ContextType,
-  makeApplicationLoadedEvent,
-  RequiresContextValidationRule,
-  Tracker,
-  UniqueContextValidationRule,
-} from '@objectiv/tracker-core';
+import { GlobalContextValidationRule, makeApplicationLoadedEvent, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { ObjectivProvider, useTrackingContext } from '../src';
@@ -43,13 +37,9 @@ describe('ObjectivProvider', () => {
             console: undefined,
             pluginName: 'ApplicationContextPlugin',
             validationRules: [
-              new RequiresContextValidationRule({
+              new GlobalContextValidationRule({
                 contextName: 'ApplicationContext',
-                contextType: ContextType.GlobalContexts,
-              }),
-              new UniqueContextValidationRule({
-                contextName: 'ApplicationContext',
-                contextType: ContextType.GlobalContexts,
+                once: true,
               }),
             ],
           },
