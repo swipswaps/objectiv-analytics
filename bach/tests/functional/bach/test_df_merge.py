@@ -7,6 +7,7 @@ import pandas as pd
 import pytest
 
 from bach import DataFrame
+from bach.expression import Expression
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_bt_with_food_data, \
     assert_equals_data, get_bt_with_railway_data, get_from_df
 
@@ -529,10 +530,15 @@ def test_merge_on_conditions_w_index() -> None:
     pdf2 = pd.DataFrame({
         'A': ['a', 'b', 'c', 'd', 'e'],
         'B': [20, 5, 10, 20, 100],
+        'C': [1, 2, 3, 4, 5]
     })
+    pdf3 = pd.DataFrame({'A': ['a', 'b', 'c', 'd', 'e'], 'D': [6, 7, 8, 9, 10]})
 
     df1 = get_from_df('merge_on_condition1', pdf1)
     df2 = get_from_df('merge_on_condition2', pdf2)
+    df3 = get_from_df('merge_on_condition3', pdf3)
+
+    df4 = df2.merge(df3, on='A')
 
     on_condition = df1['B'] / df2['B'] > 10
     result = df1.merge(df2, on=on_condition, left_index=True, right_index=True)

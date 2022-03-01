@@ -33,6 +33,36 @@ class MergeOn(NamedTuple):
         return not (self.left or self.right or self.conditional)
 
 
+def _is_valid_boolean_series(
+    left: DataFrame, right: DataFrameOrSeries, series: SeriesBoolean,
+) -> None:
+    """
+    Verifies boolean series is referencing to both objects to be merged. Boolean series must make reference
+    only to left and right base nodes.
+    """
+    found_nodes = {left.base_node: False, right.base_node: False}
+    merge_nodes = series.base_node.references.values()
+    extra_bach_nodes = []
+    while merge_nodes:
+        new_merge_nodes = []
+        for m in merge_nodes:
+            if m in found_nodes:
+                found_nodes[m] = True
+            elif isinstance(m, MergeSqlModel):
+                new_merge_nodes.extend(m.references.values())
+            else:
+                extra_bach_nodes.append(m)
+        merge_nodes = new_merge_nodes
+
+    if all(not found for found in found_nodes.values()):
+        raise ValueError('BooleanSeries must have both base_nodes to be merged as references.')
+
+    if extra_bach_nodes:
+        raise ValueError('BooleanSeries has reference to more than 2 nodes.')
+
+    return None
+
+
 def _verify_on_conflicts(
     left: DataFrame,
     right: DataFrameOrSeries,
@@ -83,12 +113,7 @@ def _verify_on_conflicts(
         if {'left_node', 'right_node'} - set(col.base_node.references):
             raise ValueError('Cannot merge on boolean series without both left/right node references')
 
-        if not (
-            any(left.base_node == node for node in col.base_node.references.values())
-            and
-            any(right.base_node == node for node in col.base_node.references.values())
-        ):
-            raise ValueError('BooleanSeries must have both base_nodes to be merged as references.')
+        _is_valid_boolean_series(left, right, col)
 
 
 def _determine_merge_on(
@@ -497,6 +522,12 @@ def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
 
 
 class MergeSqlModel(BachSqlModel):
+    column_expressions: Dict[str, Expression]
+
+    def __init__(self, column_expressions: Dict[str, Expression], *args, **kwargs):
+        self.column_expressions = column_expressions
+        super().__init__(*args,  **kwargs)
+
     @classmethod
     def get_instance(cls,
                      *,
@@ -536,11 +567,16 @@ class MergeSqlModel(BachSqlModel):
             expressions=all_expressions
         )
 
+        columns_x_expressions = {
+            c: columns_expr.data[idx * 2]
+            for idx, c in enumerate(column_names)
+        }
         return MergeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
             placeholders=cls._get_placeholders(variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
-            columns=column_names
+            columns=column_names,
+            column_expressions=columns_x_expressions,
         )
