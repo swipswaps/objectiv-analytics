@@ -17,7 +17,10 @@ export const logEventValidationRuleError = (
     return;
   }
 
-  rule.console.groupCollapsed(`%c｢objectiv:${rule.validationRuleName}｣ Error: ${message}`, 'color:red');
+  rule.console.groupCollapsed(
+    `%c｢objectiv:${rule.logPrefix?.concat(':')}${rule.validationRuleName}｣ Error: ${message}`,
+    'color:red'
+  );
   rule.console.group(`Event:`);
   rule.console.log(event);
   rule.console.groupEnd();

@@ -13,6 +13,11 @@ export type TrackerValidationRuleConfig = {
    * Optional. A TrackerConsole instance for logging.
    */
   console?: TrackerConsole;
+
+  /**
+   * Optional. Allows adding further information to the logging prefix, e.g. ｢objectiv:<logPrefix><ruleName>｣<message>
+   */
+  logPrefix?: string;
 };
 
 /**
@@ -21,6 +26,7 @@ export type TrackerValidationRuleConfig = {
 export interface TrackerValidationRuleInterface extends Required<TrackerValidationLifecycleInterface> {
   readonly console?: TrackerConsole;
   readonly validationRuleName: string;
+  readonly logPrefix?: string;
 }
 
 /**

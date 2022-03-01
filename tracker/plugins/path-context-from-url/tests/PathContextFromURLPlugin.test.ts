@@ -76,7 +76,7 @@ describe('PathContextFromURLPlugin', () => {
       expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:GlobalContextValidationRule｣ Error: PathContext is missing from Global Contexts.`,
+        `%c｢objectiv:PathContextFromURLPlugin:GlobalContextValidationRule｣ Error: PathContext is missing from Global Contexts.`,
         'color:red'
       );
     });
@@ -95,7 +95,7 @@ describe('PathContextFromURLPlugin', () => {
       expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:GlobalContextValidationRule｣ Error: Only one PathContext should be present in Global Contexts.`,
+        `%c｢objectiv:PathContextFromURLPlugin:GlobalContextValidationRule｣ Error: Only one PathContext should be present in Global Contexts.`,
         'color:red'
       );
     });

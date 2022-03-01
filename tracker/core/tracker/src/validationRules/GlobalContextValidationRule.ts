@@ -18,6 +18,7 @@ export class GlobalContextValidationRule implements TrackerValidationRuleInterfa
   readonly validationRuleName = `GlobalContextValidationRule`;
   readonly contextName: string;
   readonly once?: boolean;
+  readonly logPrefix?: string;
 
   /**
    * Process config onto state.
@@ -26,9 +27,14 @@ export class GlobalContextValidationRule implements TrackerValidationRuleInterfa
     this.console = config.console;
     this.contextName = config.contextName;
     this.once = config.once;
+    this.logPrefix = config.logPrefix;
 
     if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:${this.validationRuleName}｣ Initialized. Context: ${config.contextName}.`);
+      this.console.groupCollapsed(
+        `｢objectiv:${this.logPrefix?.concat(':')}${this.validationRuleName}｣ Initialized. Context: ${
+          config.contextName
+        }.`
+      );
       this.console.group(`Configuration:`);
       this.console.log(config);
       this.console.groupEnd();

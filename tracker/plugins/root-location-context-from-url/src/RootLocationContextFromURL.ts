@@ -36,6 +36,7 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
     this.validationRules = [
       new LocationContextValidationRule({
         console: this.console,
+        logPrefix: this.pluginName,
         contextName: 'RootLocationContext',
         once: true,
         position: 0,

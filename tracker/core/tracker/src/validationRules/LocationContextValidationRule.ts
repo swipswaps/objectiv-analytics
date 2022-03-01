@@ -32,6 +32,7 @@ export class LocationContextValidationRule
   readonly contextName: string;
   readonly once?: boolean;
   readonly position?: number;
+  readonly logPrefix?: string;
 
   /**
    * Process config onto state.
@@ -41,6 +42,7 @@ export class LocationContextValidationRule
     this.contextName = config.contextName;
     this.once = config.once;
     this.position = config.position;
+    this.logPrefix = config.logPrefix;
 
     if (this.console) {
       this.console.groupCollapsed(`｢objectiv:${this.validationRuleName}｣ Initialized. Context: ${config.contextName}.`);

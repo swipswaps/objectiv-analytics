@@ -34,6 +34,7 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
     this.validationRules = [
       new GlobalContextValidationRule({
         console: this.console,
+        logPrefix: this.pluginName,
         contextName: 'PathContext',
         once: true,
       }),

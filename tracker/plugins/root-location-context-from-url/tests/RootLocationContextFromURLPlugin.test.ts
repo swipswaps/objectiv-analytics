@@ -197,7 +197,7 @@ describe('RootLocationContextFromURLPlugin', () => {
       expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:LocationContextValidationRule｣ Error: RootLocationContext is missing from Location Stack.`,
+        `%c｢objectiv:RootLocationContextFromURLPlugin:LocationContextValidationRule｣ Error: RootLocationContext is missing from Location Stack.`,
         'color:red'
       );
     });
@@ -216,7 +216,7 @@ describe('RootLocationContextFromURLPlugin', () => {
       expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:LocationContextValidationRule｣ Error: Only one RootLocationContext should be present in Location Stack.`,
+        `%c｢objectiv:RootLocationContextFromURLPlugin:LocationContextValidationRule｣ Error: Only one RootLocationContext should be present in Location Stack.`,
         'color:red'
       );
     });
@@ -235,7 +235,7 @@ describe('RootLocationContextFromURLPlugin', () => {
       expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:LocationContextValidationRule｣ Error: RootLocationContext is in the wrong position of the Location Stack.`,
+        `%c｢objectiv:RootLocationContextFromURLPlugin:LocationContextValidationRule｣ Error: RootLocationContext is in the wrong position of the Location Stack.`,
         'color:red'
       );
     });

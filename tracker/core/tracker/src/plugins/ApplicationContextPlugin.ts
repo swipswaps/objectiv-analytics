@@ -41,6 +41,7 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
     this.validationRules = [
       new GlobalContextValidationRule({
         console: this.console,
+        logPrefix: this.pluginName,
         contextName: 'ApplicationContext',
         once: true,
       }),

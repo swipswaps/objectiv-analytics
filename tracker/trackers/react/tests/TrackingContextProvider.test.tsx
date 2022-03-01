@@ -48,6 +48,7 @@ describe('TrackingContextProvider', () => {
               new GlobalContextValidationRule({
                 contextName: 'ApplicationContext',
                 once: true,
+                logPrefix: 'ApplicationContextPlugin',
               }),
             ],
           },
