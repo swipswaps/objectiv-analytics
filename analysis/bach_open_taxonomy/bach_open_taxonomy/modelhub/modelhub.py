@@ -1,13 +1,14 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 from bach_open_taxonomy.modelhub.aggregate import Aggregate
 from bach_open_taxonomy.modelhub.map import Map
 from bach_open_taxonomy.series.series_objectiv import MetaBase
+from sql_models.constants import NotSet, not_set
 
 if TYPE_CHECKING:
-    from bach.series import SeriesBoolean
+    from bach.series import SeriesBoolean, SeriesString
 
 
 class ModelHub:
@@ -34,6 +35,22 @@ class ModelHub:
 
         # init metabase
         self._metabase = None
+
+    def time_agg(self, time_aggregation: Union[str, NotSet] = not_set) -> 'SeriesString':
+        """
+        Formats the moment column in the ObjectivFrame, returns a SeriesString.
+
+        By default it uses the time_aggregation as set in the ObjectivFrame, unless overriden by the
+        `time_aggregation` parameter.
+
+        Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
+        ie. ``time_aggregation=='YYYY-MM-DD'`` aggregates by date.
+
+        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+        :returns: SeriesString.
+        """
+        time_aggregation = self._df.time_aggregation if time_aggregation is not_set else time_aggregation
+        return self._df.moment.dt.sql_format(time_aggregation).copy_override(name='time_aggregation')
 
     def to_metabase(self, df, model_type: str = None, config: dict = None):
         """
