@@ -37,7 +37,7 @@ def get_sample(df: DataFrame,
 
     with df.engine.connect() as conn:
         if overwrite:
-            sql = f'DROP TABLE IF EXISTS {quote_identifier(table_name)}'
+            sql = f'DROP TABLE IF EXISTS {quote_identifier(df.engine.dialect, table_name)}'
             sql = escape_parameter_characters(conn, sql)
             conn.execute(sql)
 
@@ -47,12 +47,12 @@ def get_sample(df: DataFrame,
             sql = f'''
                 create temporary table tmp_table_name on commit drop as
                 ({to_sql(df.base_node)});
-                create temporary table {quote_identifier(table_name)} as
+                create temporary table {quote_identifier(df.engine.dialect, table_name)} as
                 (select * from tmp_table_name
                 tablesample bernoulli({sample_percentage}) {repeatable})
             '''
         else:
-            sql = f'create temporary table {quote_identifier(table_name)} as ({df.view_sql()})'
+            sql = f'create temporary table {df.engine.dialect, quote_identifier(table_name)} as ({df.view_sql()})'
         sql = escape_parameter_characters(conn, sql)
         conn.execute(sql)
 

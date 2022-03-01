@@ -395,7 +395,7 @@ class DataFrame:
             dtypes = get_dtypes_from_table(engine=engine, table_name=table_name)
 
         model_builder = CustomSqlModelBuilder(sql='SELECT * FROM {table_name}', name='from_table')
-        sql_model = model_builder(table_name=quote_identifier(table_name))
+        sql_model = model_builder(table_name=quote_identifier(engine.dialect, table_name))
         return cls._from_node(
             engine=engine,
             model=sql_model,
@@ -1767,6 +1767,7 @@ class DataFrame:
             column_names = tuple(self.all_series.keys())
 
         return CurrentNodeSqlModel.get_instance(
+            dialect=self.engine.dialect,
             name=name,
             column_names=column_names,
             column_exprs=column_exprs,
@@ -1790,9 +1791,12 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        placeholder_values = get_variable_values_sql(variable_values=self.variables)
+        placeholder_values = get_variable_values_sql(
+            dialect=self.engine.dialect,
+            variable_values=self.variables
+        )
         model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)
-        return to_sql(model)
+        return to_sql(dialect=self.engine.dialect, model=model)
 
     def merge(
             self,

@@ -481,7 +481,7 @@ class Series(ABC):
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
-        expression = self.expression.resolve_column_references(table_alias)
+        expression = self.expression.resolve_column_references(self.engine.dialect, table_alias)
         return Expression.construct_expr_as_name(expression, self.name)
 
     def _get_supported(

@@ -2,6 +2,9 @@
 Copyright 2022 Objectiv B.V.
 """
 from abc import abstractmethod
+
+from sqlalchemy.engine import Dialect
+
 from bach.dataframe import DataFrameOrSeries
 import itertools
 from collections import defaultdict
@@ -338,6 +341,7 @@ class ConcatSqlModel(BachSqlModel):
     def get_instance(
         cls,
         *,
+        dialect: Dialect,
         columns: Tuple[str, ...],
         all_series_expressions: List[Expression],
         all_nodes: List[BachSqlModel],
@@ -346,7 +350,7 @@ class ConcatSqlModel(BachSqlModel):
         name = 'concat_sql'
         base_sql = 'select {serie_expr} from {node}'
         sql = ' union all '.join(
-            base_sql.format(serie_expr=col_expr.to_sql(), node=f"{{{{node_{idx}}}}}")
+            base_sql.format(serie_expr=col_expr.to_sql(dialect), node=f"{{{{node_{idx}}}}}")
             for idx, col_expr in enumerate(all_series_expressions)
         )
 
@@ -357,7 +361,7 @@ class ConcatSqlModel(BachSqlModel):
 
         return ConcatSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=cls._get_placeholders(variables, all_series_expressions),
+            placeholders=cls._get_placeholders(dialect, variables, all_series_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

@@ -4,18 +4,20 @@ Copyright 2022 Objectiv B.V.
 from typing import Dict
 
 from sqlalchemy.engine import Engine
-from sqlalchemy_bigquery import BigQueryDialect
 
-from bach.databases import DatabaseNotSupportedException, escape_parameter_characters, is_postgres
+from bach.databases import escape_parameter_characters
 from bach.types import get_dtype_from_db_dtype
 from sql_models.model import SqlModel, CustomSqlModelBuilder
 from sql_models.sql_generator import to_sql
+from sql_models.util import is_postgres, DatabaseNotSupportedException
 
 
 def get_dtypes_from_model(engine: Engine, node: SqlModel) -> Dict[str, str]:
     """ Create a temporary database table from model and use it to deduce the model's dtypes. """
+    if not is_postgres(engine):
+        raise DatabaseNotSupportedException(engine)
     new_node = CustomSqlModelBuilder(sql='select * from {{previous}} limit 0')(previous=node)
-    select_statement = to_sql(new_node)
+    select_statement = to_sql(dialect=engine.dialect, model=new_node)
     sql = f"""
         create temporary table tmp_table_name on commit drop as
         ({select_statement});

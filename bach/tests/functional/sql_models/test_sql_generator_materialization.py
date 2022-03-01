@@ -44,7 +44,7 @@ def test_execute_multi_statement_sql_materialization():
     expected_values = [['a', 40]]
     expected = expected_columns, expected_values
     # Verify that the model's query gives the expected output
-    sql_statements = to_sql_materialized_nodes(graph)
+    sql_statements = to_sql_materialized_nodes(graph, include_start_node=True, dialect=None)
     assert len(sql_statements) == 1
     result = run_queries(sql_statements)
     assert result['graph'] == expected
