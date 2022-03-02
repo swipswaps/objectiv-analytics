@@ -278,9 +278,12 @@ def test_unique():
         uq,
         expected_columns=['municipality', 'municipality_unique'],
         expected_data=[
-            ['Noardeast-Fryslân', 'Noardeast-Fryslân'], ['Leeuwarden', 'Leeuwarden'],
-            ['Súdwest-Fryslân', 'Súdwest-Fryslân'], ['Harlingen', 'Harlingen'], ['Waadhoeke', 'Waadhoeke'],
-            ['De Friese Meren', 'De Friese Meren']
+            ['De Friese Meren', 'De Friese Meren'],
+            ['Harlingen', 'Harlingen'],
+            ['Leeuwarden', 'Leeuwarden'],
+            ['Noardeast-Fryslân', 'Noardeast-Fryslân'],
+            ['Súdwest-Fryslân', 'Súdwest-Fryslân'],
+            ['Waadhoeke', 'Waadhoeke'],
         ]
     )
 

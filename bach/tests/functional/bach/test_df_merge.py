@@ -347,12 +347,12 @@ def test_merge_outer_join():
         expected_data=[
             [1, 1, 1, 'Ljouwert', 'IJlst', 1],
             [1, 2, 1, 'Ljouwert', 'Heerenveen', 1],
-            [2, 3, 2, 'Snits', 'Heerenveen IJsstadion', 2],
-            [None, 4, None, None, 'Leeuwarden', 4],
             [1, 5, 1, 'Ljouwert', 'Camminghaburen', 1],
+            [2, 3, 2, 'Snits', 'Heerenveen IJsstadion', 2],
             [2, 6, 2, 'Snits', 'Sneek', 2],
             [2, 7, 2, 'Snits', 'Sneek Noord', 2],
             [3, None, 3, 'Drylts', None, None],
+            [None, 4, None, None, 'Leeuwarden', 4],
         ],
     )
 
@@ -371,8 +371,8 @@ def test_merge_outer_join_shared_on() -> None:
             'city',
         ],
         expected_data=[
-            [None, 1, 1, 'Ljouwert'],
             [2, 2, 2, 'Snits'],
+            [None, 1, 1, 'Ljouwert'],
             [None, 3, 3, 'Drylts'],
         ],
     )
