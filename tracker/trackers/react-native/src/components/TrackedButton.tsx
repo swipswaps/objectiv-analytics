@@ -5,9 +5,21 @@
 import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
 import { PressableContextWrapper, trackPressEvent, useLocationStack } from '@objectiv/tracker-react';
 import React from 'react';
-import { Button } from 'react-native';
-import { TrackedButtonProps } from '../types';
+import { Button, ButtonProps } from 'react-native';
 
+/**
+ * TrackedButton has the same props of React Native Button with the addition of an optional `id` prop
+ */
+export type TrackedButtonProps = ButtonProps & {
+  /**
+   * Optional. Identifiers are automatically generated from the `title`. This prop can override the auto-detected id.
+   */
+  id?: string
+};
+
+/**
+ * TrackedButton is a React Native Button that automatically tracks PressEvents.
+ */
 export const TrackedButton = (props: TrackedButtonProps) => {
   const { id, ...buttonProps } = props;
 
