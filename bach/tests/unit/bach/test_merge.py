@@ -120,7 +120,7 @@ def test__determine_result_columns():
     result = _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
     assert result == (
         [
-            ResultSeries(name='a', expression=Expression.construct('"l"."a"'), dtype='int64'),
+            ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
         ], [
             ResultSeries(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
             ResultSeries(name='c_x', expression=Expression.construct('"l"."c"'), dtype='int64'),
@@ -135,17 +135,17 @@ def test__determine_result_columns():
             ResultSeries(name='a_y', expression=Expression.construct('"r"."a"'), dtype='float64'),
         ], [
             ResultSeries(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
-            ResultSeries(name='c', expression=Expression.construct('"l"."c"'), dtype='int64'),
+            ResultSeries(name='c', expression=Expression.construct('COALESCE("l"."c", "r"."c")'), dtype='int64'),
             ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
     result = _determine_result_columns(left, right, ['a', 'c'], ['a', 'c'], ('_x', '_y'))
     assert result == (
         [
-            ResultSeries(name='a', expression=Expression.construct('"l"."a"'), dtype='int64'),
+            ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
         ], [
             ResultSeries(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
-            ResultSeries(name='c', expression=Expression.construct('"l"."c"'), dtype='int64'),
+            ResultSeries(name='c', expression=Expression.construct('COALESCE("l"."c", "r"."c")'), dtype='int64'),
             ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
