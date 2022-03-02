@@ -298,6 +298,35 @@ def test_merge_right_join():
     )
 
 
+def test_merge_right_join_shared_on() -> None:
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    bt['station'] = None
+    bt = bt.reset_index(drop=True)
+
+    mt = get_bt_with_railway_data()[['station', 'platforms']]
+    mt = mt.reset_index(drop=True)
+
+    result = bt.merge(mt, how='right', on='station')
+    assert_equals_data(
+        result,
+        expected_columns=[
+            'skating_order',
+            'city',
+            'station',
+            'platforms',
+        ],
+        expected_data=[
+            [None, None, 'IJlst', 1],
+            [None, None, 'Heerenveen', 1],
+            [None, None, 'Heerenveen IJsstadion', 2],
+            [None, None, 'Leeuwarden', 4],
+            [None, None, 'Camminghaburen', 1],
+            [None, None, 'Sneek', 2],
+            [None, None, 'Sneek Noord', 2],
+        ],
+    )
+
+
 def test_merge_outer_join():
     bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
     mt = get_bt_with_railway_data()[['station', 'platforms']]
