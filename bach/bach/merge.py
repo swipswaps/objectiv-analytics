@@ -2,13 +2,14 @@
 Copyright 2021 Objectiv B.V.
 """
 import itertools
+import re
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, NamedTuple, Sequence
+from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, NamedTuple, Sequence, cast
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series, SeriesBoolean
 from bach.dataframe import DtypeNamePair
-from bach.expression import Expression, join_expressions, ColumnReferenceToken
+from bach.expression import Expression, join_expressions, ColumnReferenceToken, RawToken, ExpressionToken
 from bach.utils import ResultSeries, get_result_series_dtype_mapping
 from sql_models.model import Materialization, CustomSqlModelBuilder
 from bach.sql_model import BachSqlModel, construct_references
@@ -33,32 +34,47 @@ class MergeOn(NamedTuple):
         return not (self.left or self.right or self.conditional)
 
 
+_COLUMN_REFERENCE_REGEX = re.compile(
+    r'(\"(?P<table_name>.*)\"\.)(\"(?P<field_name>.*)\")'
+)
+
+
 def _is_valid_boolean_series(
     left: DataFrame, right: DataFrameOrSeries, series: SeriesBoolean,
 ) -> None:
     """
-    Verifies boolean series is referencing to both objects to be merged. Boolean series must make reference
+    Verifies boolean series is referencing to both nodes to be merged. Boolean series must make reference
     only to left and right base nodes.
     """
+    if (
+        not isinstance(series.base_node, MergeSqlModel)
+        and set(series.base_node.references.keys()) - {'left_node', 'right_node'}
+    ):
+        raise ValueError('Cannot merge on boolean series without both left/right node references')
+
     found_nodes = {left.base_node: False, right.base_node: False}
-    merge_nodes = series.base_node.references.values()
-    extra_bach_nodes = []
+    merge_nodes: List[BachSqlModel] = [
+        node
+        for node in series.base_node.references.values()
+        if isinstance(node, BachSqlModel)
+    ]
+
     while merge_nodes:
-        new_merge_nodes = []
+        new_merge_nodes: List[BachSqlModel] = []
         for m in merge_nodes:
             if m in found_nodes:
                 found_nodes[m] = True
-            elif isinstance(m, MergeSqlModel):
-                new_merge_nodes.extend(m.references.values())
-            else:
-                extra_bach_nodes.append(m)
+                continue
+
+            if not isinstance(m, MergeSqlModel):
+                raise ValueError('BooleanSeries has reference to more than 2 nodes.')
+
+            new_merge_nodes.extend([node for node in m.references.values() if isinstance(node, BachSqlModel)])
+
         merge_nodes = new_merge_nodes
 
-    if all(not found for found in found_nodes.values()):
+    if any(not found for found in found_nodes.values()):
         raise ValueError('BooleanSeries must have both base_nodes to be merged as references.')
-
-    if extra_bach_nodes:
-        raise ValueError('BooleanSeries has reference to more than 2 nodes.')
 
     return None
 
@@ -109,10 +125,10 @@ def _verify_on_conflicts(
     if not on_conditions:
         return None
 
-    for col in on_conditions:
-        if {'left_node', 'right_node'} - set(col.base_node.references):
-            raise ValueError('Cannot merge on boolean series without both left/right node references')
+    if on_conditions and left.base_node == right.base_node:
+        raise ValueError('"on" based SeriesBooleans is valid only when left.base_node != right.base_node. ')
 
+    for col in on_conditions:
         _is_valid_boolean_series(left, right, col)
 
 
@@ -411,6 +427,7 @@ def _get_merge_sql_model(
 
     return MergeSqlModel.get_instance(
         column_names=tuple(rc.name for rc in new_column_list),
+        column_expressions={rc.name: rc.expression for rc in new_column_list},
         columns_expr=columns_expr,
         join_type_expr=join_type_expr,
         on_clause=on_clause,
@@ -435,10 +452,12 @@ def _get_merge_on_clause(
         ]
         for l_label, r_label in zip(merge_on.left, merge_on.right)
     ))
-    conditional_merge_expressions = _get_conditional_on_expressions(left, right, merge_on.conditional)
+    conditional_merge_expressions = _resolve_conditional_expression_references(
+        left, right, merge_on.conditional,
+    )
     all_conditions = (
         ['({} = {})'] * (len(left_x_right_on_merge_expressions) // 2)
-        + ['{}'] * len(conditional_merge_expressions)
+        + ['({})'] * len(conditional_merge_expressions)
     )
     fmt_str = 'on ' + ' and '.join(all_conditions)
 
@@ -447,67 +466,110 @@ def _get_merge_on_clause(
     )
 
 
-def _get_conditional_on_expressions(
+def _resolve_conditional_expression_references(
     left: DataFrame,
     right: DataFrameOrSeries,
     on_conditions: List[SeriesBoolean],
-) -> Sequence[Expression]:
+) -> List[Expression]:
     """
     Gets all conditional expressions with resolved column references.
-
-    In order to add the correct table reference, the function identifies the source (node) of each
-    column involved in all conditions. Since SeriesBoolean expressions are actually generated
-    using the merge operation, it's easy to do this task by going through the following steps:
-        For each SeriesBoolean:
-        1. Identify all ColumnReferenceTokens involved in the expression
-        2. Determine each token's base node:
-           A) If it has the postfix '__other', it clearly references to the right_node,
-                since it's a column name shared by both nodes and left node has priority over shared names.
-                Please see :py:meth:`bach.Series.__set_item_with_merge` for more information.
-           B) Find which node has the column referenced in the ColumnReferenceToken.
-        3. Compare the node from the previous step with the left and right nodes to be merged.
-           All SeriesBoolean should be validated at this point of the merge,
-           so no errors must be raised when performing this step.
-        4. Get the series from the correct object to be merged and resolved the column references with the
-           respective table alias.
-        5. Create a new expression with the replaced ColumnReferenceTokens
     """
     on_merge_conditions = []
 
     if not on_conditions:
         return []
 
-    left_df = left.copy()
-    right_df = right.copy() if isinstance(right, DataFrame) else right.to_frame()
     for conditional_series in on_conditions:
-        new_expr_tokens = []
+        new_expr_tokens: List[Union[ExpressionToken, Expression]] = []
         for token in conditional_series.expression.get_all_tokens():
             if not isinstance(token, ColumnReferenceToken):
                 new_expr_tokens.append(token)
                 continue
 
-            # Series._index_merge always add `__other` postfix when caller and other series share names
-            if '__other' in token.column_name:
-                token_base_node = conditional_series.base_node.references['right_node']
-            else:
-                token_base_node = [
-                    base_node
-                    for base_node in conditional_series.base_node.references.values()
-                    if token.column_name in getattr(base_node, 'columns')
-                ][0]
-
-            series_name = token.column_name.replace('__other', '')
-
-            if token_base_node == left.base_node:
-                new_token_ref = left_df.all_series[series_name].expression.resolve_column_references('l')
-            else:
-                new_token_ref = right_df.all_series[series_name].expression.resolve_column_references('r')
-
-            new_expr_tokens.append(new_token_ref)
+            resolved_nested_series_expr = _resolve_nested_expression_references(
+                left=left,
+                right=right,
+                conditional_series=conditional_series,
+                sub_series_name=token.column_name,
+            )
+            new_expr_tokens.extend(resolved_nested_series_expr)
 
         on_merge_conditions.append(Expression(data=new_expr_tokens))
 
     return on_merge_conditions
+
+
+def _resolve_nested_expression_references(
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    conditional_series: SeriesBoolean,
+    sub_series_name: str,
+) -> Sequence[Expression]:
+    """
+    Replaces old node table references from each nested expression in the original boolean series by
+    performing an in-order search till both left and right nodes are found.
+
+    For example:
+        ( series_right_1 + series_left_1 ) / series_left_2 > series_right_2
+        Generates the following "expression tree"
+
+                        "l".series_right_1   >  "r".series_right_2
+                            ^
+            "l".series_right_1 / "r".series_left_2
+                      ^
+          "l".series_right_1 + "r".series_left_1
+
+        When traversing the tree, each nested expression will replace its node parent expression
+        with its own expression including the correct references, result with:
+            ("r".series_right1 + "l".series_left_1) / "l".series_left_2 > "r.series_right_2
+
+    .. note::
+        To have a better idea of how the tree is generated,
+        please see :py:meth:`bach.Series.__set_item_with_merge`
+    """
+    new_tokens = []
+    sub_base_node = None
+    node_aliases = {left.base_node.hash: 'l', right.base_node.hash: 'r'}
+
+    for token in conditional_series.base_node.column_expressions[sub_series_name].data:
+        raw_token = cast(RawToken, token.data[0] if isinstance(token, Expression) else token)
+        match = _COLUMN_REFERENCE_REGEX.match(raw_token.raw)
+        if not match:
+            new_tokens.append(token)
+            continue
+
+        table_alias = match.group('table_name')
+        field_name = match.group('field_name')
+        new_expr = Expression.column_reference(field_name)
+
+        if table_alias == 'l':
+            sub_base_node = conditional_series.base_node.references['left_node']
+        else:
+            sub_base_node = conditional_series.base_node.references['right_node']
+
+        if sub_base_node.hash in node_aliases:
+            new_expr = new_expr.resolve_column_references(node_aliases[sub_base_node.hash])
+
+        new_tokens.append(new_expr)
+
+    resolved_expression = Expression(new_tokens)
+    if not sub_base_node:
+        raise Exception('nested expression has no valid column reference')
+
+    if sub_base_node in node_aliases or not isinstance(sub_base_node, MergeSqlModel):
+        return [resolved_expression]
+
+    nested_series = SeriesBoolean(
+        engine=left.engine,
+        base_node=sub_base_node,
+        expression=resolved_expression,
+        name=sub_series_name,
+        index={},
+        group_by=None,
+        sorted_ascending=None,
+        index_sorting=[],
+    )
+    return _resolve_conditional_expression_references(left, right, [nested_series])
 
 
 def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
@@ -522,22 +584,22 @@ def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
 
 
 class MergeSqlModel(BachSqlModel):
-    column_expressions: Dict[str, Expression]
-
-    def __init__(self, column_expressions: Dict[str, Expression], *args, **kwargs):
-        self.column_expressions = column_expressions
+    def __init__(self, *args, **kwargs):
         super().__init__(*args,  **kwargs)
 
     @classmethod
-    def get_instance(cls,
-                     *,
-                     column_names: Tuple[str, ...],
-                     columns_expr: Expression,
-                     join_type_expr: Expression,
-                     on_clause: Expression,
-                     left_node: BachSqlModel,
-                     right_node: BachSqlModel,
-                     variables: Dict['DtypeNamePair', Hashable]) -> 'MergeSqlModel':
+    def get_instance(
+        cls,
+        *,
+        column_names: Tuple[str, ...],
+        column_expressions: Dict[str, Expression],
+        columns_expr: Expression,
+        join_type_expr: Expression,
+        on_clause: Expression,
+        left_node: BachSqlModel,
+        right_node: BachSqlModel,
+        variables: Dict['DtypeNamePair', Hashable],
+    ) -> 'MergeSqlModel':
         """
         :param column_names: tuple with the column_names in order
         :param columns_expr: A single expression that expresses projecting all needed columns from either
@@ -567,10 +629,6 @@ class MergeSqlModel(BachSqlModel):
             expressions=all_expressions
         )
 
-        columns_x_expressions = {
-            c: columns_expr.data[idx * 2]
-            for idx, c in enumerate(column_names)
-        }
         return MergeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
             placeholders=cls._get_placeholders(variables, all_expressions),
@@ -578,5 +636,5 @@ class MergeSqlModel(BachSqlModel):
             materialization=Materialization.CTE,
             materialization_name=None,
             columns=column_names,
-            column_expressions=columns_x_expressions,
+            column_expressions=column_expressions,
         )

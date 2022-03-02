@@ -6,9 +6,9 @@ from typing import List
 import pytest
 
 from bach import DataFrame, get_series_type_from_dtype
-from bach.expression import Expression
+from bach.expression import Expression, RawToken
 from bach.merge import _determine_merge_on, _determine_result_columns, ResultSeries, merge, How, MergeOn, \
-    _verify_on_conflicts
+    _verify_on_conflicts, _resolve_conditional_expression_references, _resolve_nested_expression_references
 from tests.unit.bach.util import get_fake_df
 
 
@@ -245,11 +245,11 @@ def test_verify_on_conflicts() -> None:
 
 
 def test_verify_on_conflicts_conditional() -> None:
-    left = get_fake_df(['a'], ['b'], 'int64')
+    left = get_fake_df(['a'], ['b'], 'float64')
     right = get_fake_df(['a'], ['b'], 'float64')
     bool_series = left['b'] == left['b']
 
-    with pytest.raises(ValueError, match=r'without both left/right node references'):
+    with pytest.raises(ValueError, match=r'valid only when left.base_node != right.base_node.'):
         _verify_on_conflicts(
             left,
             right,
@@ -279,13 +279,54 @@ def test_verify_on_conflicts_conditional() -> None:
             right_index=False,
         )
 
+    other_df = get_fake_df(['a'], ['b'], 'float64')
+    other_df = other_df.materialize(node_name='other')
+    bool_series = left['b'] > right['b'] + other_df['b']
 
-def test_get_conditional_on_expressions() -> None:
+    with pytest.raises(ValueError, match=r'BooleanSeries has reference to more than 2 nodes.'):
+        _verify_on_conflicts(
+            left,
+            right,
+            How.left,
+            on=[bool_series],
+            left_on=None,
+            right_on=None,
+            left_index=False,
+            right_index=False,
+        )
+
+
+def test_resolve_conditional_expression_references() -> None:
     left = get_fake_df(['a'], ['b', 'd'], 'float64')
     right = get_fake_df(['a'], ['c', 'd'], 'float64').materialize()
     bool_series = left['b'] / right['c'] * left['d'] > right['d']
 
-    print('hola')
+    expected = '"l"."b" / "r"."c" * "l"."d" > "r"."d"'
+    result = _resolve_conditional_expression_references(left, right, [bool_series])[0].to_sql()
+    assert expected == result
+
+    bool_series = left['b'] / right['c'] * left['d'] > 10
+    expected = '("l"."b" / "r"."c" * "l"."d") > cast(10 as bigint)'
+    result = _resolve_conditional_expression_references(left, right, [bool_series])[0].to_sql()
+    assert expected == result
+
+    bool_series = (left['b'] > right['c']) | (left['d'] < right['d'])
+    expected = '("l"."b" > "r"."c") OR ("l"."d" < "r"."d")'
+    result = _resolve_conditional_expression_references(left, right, [bool_series])[0].to_sql()
+    assert expected == result
+
+    bool_series = (right['d'] + right['d']) / left['d'] > right['d'] / right['d']
+    expected = '"r"."d" + "r"."d" / "l"."d" > "r"."d" / "r"."d"'
+    result = _resolve_conditional_expression_references(left, right, [bool_series])[0].to_sql()
+    assert expected == result
+
+
+def test_resolve_nested_expression_references_error() -> None:
+    left = get_fake_df(['a'], ['b', 'd'], 'float64')
+    right = get_fake_df(['a'], ['c', 'd'], 'float64').materialize()
+    bool_series = right['c'].copy_override_dtype(dtype=bool)
+    with pytest.raises(Exception, match=r'has no valid column reference'):
+        _resolve_nested_expression_references(left, right, bool_series, 'a')
 
 
 def call__determine_merge_on(

@@ -67,9 +67,15 @@ def from_pandas_store_table(engine: Engine,
 
     # Todo, this should use from_table from here on.
     columns = tuple(index_dtypes.keys()) + tuple(dtypes.keys())
+    column_expressions = {
+        col: Expression.column_reference(col)
+        for col in columns
+    }
     model_builder = CustomSqlModelBuilder(sql='select * from {table_name}', name=table_name)
     sql_model = model_builder(table_name=quote_identifier(table_name))
-    bach_model = BachSqlModel.from_sql_model(sql_model, columns=columns)
+    bach_model = BachSqlModel.from_sql_model(
+        sql_model, columns=columns, column_expressions=column_expressions,
+    )
 
     # Should this also use _df_or_series?
     from bach.savepoints import Savepoints
@@ -133,15 +139,18 @@ def from_pandas_ephemeral(
     all_values_str = join_expressions(per_row_expr, join_str=',\n').to_sql()
 
     column_names = list(index_dtypes.keys()) + list(dtypes.keys())
-    column_names_str = join_expressions(
-        [Expression.raw(quote_identifier(column_name)) for column_name in column_names]
-    ).to_sql()
+    column_expressions = {
+        column_name: Expression.raw(quote_identifier(column_name)) for column_name in column_names
+    }
+    column_names_str = join_expressions(list(column_expressions.values())).to_sql()
 
     sql = f'select * from (values \n{all_values_str}\n) as t({column_names_str})\n'
 
     model_builder = CustomSqlModelBuilder(sql=sql, name=name)
     sql_model = model_builder()
-    bach_model = BachSqlModel.from_sql_model(sql_model, columns=tuple(column_names))
+    bach_model = BachSqlModel.from_sql_model(
+        sql_model, columns=tuple(column_names), column_expressions=column_expressions,
+    )
 
     from bach.savepoints import Savepoints
     return DataFrame.get_instance(

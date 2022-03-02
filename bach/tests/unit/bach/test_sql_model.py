@@ -1,6 +1,7 @@
 """
 Copyright 2022 Objectiv B.V.
 """
+from bach.expression import Expression
 from bach.sql_model import BachSqlModel
 from sql_models.model import CustomSqlModelBuilder, Materialization
 
@@ -15,6 +16,10 @@ def test_bach_sql_model_copy():
         materialization=Materialization.CTE,
         materialization_name=None,
         columns=('a', 'b'),
+        column_expressions={
+            'a': Expression.column_reference('a'),
+            'b': Expression.column_reference('b'),
+        }
     )
     assert model.placeholders == {'val': 123}
     assert model.__class__ == BachSqlModel

@@ -432,7 +432,8 @@ class DataFrame:
             references=model.references,
             materialization=model.materialization,
             materialization_name=model.materialization_name,
-            columns=columns
+            columns=columns,
+            column_expressions={c: Expression.column_reference(c) for c in columns},
         )
         from bach.savepoints import Savepoints
         return cls.get_instance(
