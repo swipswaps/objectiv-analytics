@@ -14,8 +14,8 @@ import sqlalchemy
 from sqlalchemy.engine import ResultProxy, Engine
 
 from bach import DataFrame, Series
-from bach.databases import is_bigquery, is_postgres
 from bach.types import get_series_type_from_db_dtype
+from sql_models.util import is_bigquery, is_postgres
 
 DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
 

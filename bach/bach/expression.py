@@ -80,7 +80,7 @@ class ColumnReferenceToken(ExpressionToken):
         raise ValueError('ColumnReferenceTokens should be resolved first using '
                          'Expression.resolve_column_references')
 
-    def resolve(self, table_name: Optional[str], dialect: Dialect) -> RawToken:
+    def resolve(self, dialect: Dialect, table_name: Optional[str]) -> RawToken:
         t = f'{quote_identifier(dialect, table_name)}.' if table_name else ''
         return RawToken(f'{t}{quote_identifier(dialect, self.column_name)}')
 
@@ -282,14 +282,14 @@ class Expression:
             d.has_windowed_aggregate_function for d in self.data if isinstance(d, Expression)
         )
 
-    def resolve_column_references(self, table_name: Optional[str], dialect: Dialect) -> 'Expression':
+    def resolve_column_references(self, dialect: Dialect, table_name: Optional[str]) -> 'Expression':
         """ resolve the table name aliases for all columns in this expression """
         result: List[Union[ExpressionToken, Expression]] = []
         for data_item in self.data:
             if isinstance(data_item, Expression):
-                result.append(data_item.resolve_column_references(table_name, dialect))
+                result.append(data_item.resolve_column_references(dialect, table_name))
             elif isinstance(data_item, ColumnReferenceToken):
-                result.append(data_item.resolve(table_name, dialect))
+                result.append(data_item.resolve(dialect, table_name))
             else:
                 result.append(data_item)
         return self.__class__(result)
@@ -319,7 +319,7 @@ class Expression:
             '"{table_name}"."{column_name}"' instead of just '"{column_name}"'.
         :return SQL representation of the expression.
         """
-        resolved_tables_expression = self.resolve_column_references(table_name, dialect)
+        resolved_tables_expression = self.resolve_column_references(dialect, table_name)
         return ''.join(
             d.to_sql(dialect=dialect) for d in resolved_tables_expression.data
         )

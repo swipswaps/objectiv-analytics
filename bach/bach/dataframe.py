@@ -374,7 +374,7 @@ class DataFrame:
         """
         Instantiate a new DataFrame based on the content of an existing table in the database.
 
-        If all_dtypes is not specified, the column dtypes are queried from the databases's information
+        If all_dtypes is not specified, the column dtypes are queried from the database's information
         schema.
 
         :param engine: an sqlalchemy engine for the database.
@@ -414,10 +414,10 @@ class DataFrame:
         """
         Instantiate a new DataFrame based on the result of the query defined in `model`.
 
-        If all_dtypes is not specified, then a transaction scoped temporary table with will be created with
+        If all_dtypes is not specified, then a transaction scoped temporary table will be created with
         0 result rows from the model. The meta data of this table will be used to deduce the dtypes.
 
-        :param engine: an sqlalchemy engine for the database.
+        :param engine: a sqlalchemy engine for the database.
         :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
