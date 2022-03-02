@@ -5,8 +5,8 @@ from typing import Dict
 
 from sqlalchemy.engine import Engine
 
-from bach.databases import escape_parameter_characters
 from bach.types import get_dtype_from_db_dtype
+from bach.utils import escape_parameter_characters
 from sql_models.model import SqlModel, CustomSqlModelBuilder
 from sql_models.sql_generator import to_sql
 from sql_models.util import is_postgres, DatabaseNotSupportedException
