@@ -325,7 +325,27 @@ def test_merge_outer_join():
             [2, 7, 2, 'Snits', 'Sneek Noord', 2],
             [3, None, 3, 'Drylts', None, None],
         ],
-        order_by=['_index_station_id']
+    )
+
+
+def test_merge_outer_join_shared_on() -> None:
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    bt2 = bt[bt.city == 'Snits']
+
+    result = bt2.merge(bt, how='outer', on=['skating_order', 'city'])
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order_x',
+            '_index_skating_order_y',
+            'skating_order',
+            'city',
+        ],
+        expected_data=[
+            [None, 1, 1, 'Ljouwert'],
+            [2, 2, 2, 'Snits'],
+            [None, 3, 3, 'Drylts'],
+        ],
     )
 
 
