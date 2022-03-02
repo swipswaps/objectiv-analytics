@@ -32,6 +32,7 @@ This is a complete list of the currently available packages.
 | @objectiv/tracker-angular                        | tracker   | /trackers/angular                        | [README](/tracker/trackers/angular/README.md)                        |
 | @objectiv/tracker-browser                        | tracker   | /trackers/browser                        | [README](/tracker/trackers/browser/README.md)                        |
 | @objectiv/tracker-react                          | tracker   | /trackers/react                          | [README](/tracker/trackers/react/README.md)                          |
+| @objectiv/tracker-react-native                   | tracker   | /trackers/react-native                   | [README](/tracker/trackers/react-native/README.md)                   |
 | @objectiv/transport-debug                        | transport | /transports/browser                      | [README](/tracker/transports/debug/README.md)                        |
 | @objectiv/transport-fetch                        | transport | /transports/browser                      | [README](/tracker/transports/fetch/README.md)                        |
 | @objectiv/transport-xhr                          | transport | /transports/browser                      | [README](/tracker/transports/xhr/README.md)                          |

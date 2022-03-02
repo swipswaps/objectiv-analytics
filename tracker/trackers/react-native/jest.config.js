@@ -3,8 +3,7 @@
  */
 
 module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'jsdom',
+  preset: 'react-native',
   reporters: ['jest-standard-reporter'],
   collectCoverageFrom: ['src/**/*.{ts,tsx}'],
   moduleNameMapper: {
@@ -12,6 +11,7 @@ module.exports = {
     '@objectiv/queue-(.*)': '<rootDir>/../../queues/$1/src',
     '@objectiv/testing-tools': '<rootDir>../../core/testing-tools/src',
     '@objectiv/tracker-core': '<rootDir>/../../core/tracker/src',
+    '@objectiv/tracker-react': '<rootDir>/../../trackers/react/src',
     '@objectiv/transport-(.*)': '<rootDir>/../../transports/$1/src',
   },
-};
+}
