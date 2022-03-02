@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import pytest
 from bach import DataFrame, SeriesBoolean
+from tests.conftest import get_postgres_engine_dialect
 from tests.functional.bach.test_data_and_utils import assert_equals_data, get_from_df, get_df_with_test_data
 
 
@@ -53,7 +54,8 @@ def test_drop_items(engine):
     bt.drop(columns=['non existing column'], errors='ignore')
 
 
-def test_combined_operations1(engine):
+def test_combined_operations1():
+    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
     bt = get_df_with_test_data(engine, full_data_set=True)
     bt['x'] = bt['municipality'] + ' some string'
     bt['y'] = bt['skating_order'] + bt['skating_order']

@@ -112,7 +112,6 @@ def get_bt(
     # in the same table, then tests will be confused anyway
     lookup_key = table
     if lookup_key not in _TABLE_DATAFRAME_CACHE:
-        import pandas as pd
         df = get_pandas_df(dataset, columns)
         _TABLE_DATAFRAME_CACHE[lookup_key] = get_from_df(table, df, convert_objects)
     # We don't even renew the `engine`, as creating the database connection takes a bit of time too. If

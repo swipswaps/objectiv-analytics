@@ -312,7 +312,7 @@ class Expression:
                 result.append(data_item)
         return result
 
-    def to_sql(self, dialect: Dialect, table_name: Optional[str] = None ) -> str:
+    def to_sql(self, dialect: Dialect, table_name: Optional[str] = None) -> str:
         """
         Compile the expression to a SQL fragment by calling to_sql() on every token or expression in data
         :param table_name: Optional table name, if set all column-references will be compiled as

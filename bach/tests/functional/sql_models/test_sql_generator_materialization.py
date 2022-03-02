@@ -5,6 +5,7 @@ import os
 from typing import List, Any, Tuple, Dict, Optional
 
 import sqlalchemy
+from sqlalchemy.dialects.postgresql.base import PGDialect
 
 from sql_models.graph_operations import find_node, replace_node_in_graph
 from sql_models.model import Materialization
@@ -28,6 +29,7 @@ def test_execute_multi_statement_sql_materialization():
     #            vm2 <---/
     #
 
+    dialect = PGDialect()  # TODO: BigQuery
     # Create original graph, with all materializations as CTE
     vm1 = ValueModel.build(key='a', val=1)
     rvm1 = RefValueModel.build(ref=vm1, val=5)
@@ -44,7 +46,7 @@ def test_execute_multi_statement_sql_materialization():
     expected_values = [['a', 40]]
     expected = expected_columns, expected_values
     # Verify that the model's query gives the expected output
-    sql_statements = to_sql_materialized_nodes(graph, include_start_node=True, dialect=None)
+    sql_statements = to_sql_materialized_nodes(dialect=dialect, start_node=graph, include_start_node=True)
     assert len(sql_statements) == 1
     result = run_queries(sql_statements)
     assert result['graph'] == expected
@@ -58,7 +60,7 @@ def test_execute_multi_statement_sql_materialization():
         replacement_model=jm2_replacement
     )
     # Verify that the model's query gives the expected output
-    sql_statements = to_sql_materialized_nodes(graph)
+    sql_statements = to_sql_materialized_nodes(dialect, graph)
     assert len(sql_statements) == 2
     result = run_queries(sql_statements)
     assert result['graph'] == expected
@@ -75,7 +77,7 @@ def test_execute_multi_statement_sql_materialization():
         replacement_model=rvm2.copy_set_materialization(Materialization.TABLE)
     )
     # Verify that the model's query gives the expected output
-    sql_statements = to_sql_materialized_nodes(graph)
+    sql_statements = to_sql_materialized_nodes(dialect, graph)
     assert len(sql_statements) == 4
     result = run_queries(sql_statements)
     assert result['graph'] == expected
@@ -88,7 +90,7 @@ def test_execute_multi_statement_sql_materialization():
         replacement_model=rvm1.copy_set_materialization(Materialization.QUERY)
     )
     # Verify that the model's query gives the expected output
-    sql_statements = to_sql_materialized_nodes(graph)
+    sql_statements = to_sql_materialized_nodes(dialect, graph)
     assert len(sql_statements) == 5
     result = run_queries(sql_statements)
     assert result == {
@@ -117,7 +119,7 @@ def test_materialized_shared_ctes():
     #     3       +-- jm2* <--/
     #   vm3 <---/
 
-
+    dialect = PGDialect()  # TODO: BigQuery
     # Create original graph, with all materializations as CTE
     vm1 = ValueModel.build(key='a', val=1)
     vm2 = ValueModel.build(key='a', val=2)
@@ -131,7 +133,7 @@ def test_materialized_shared_ctes():
     graph = JoinModel.build(ref_left=jm2, ref_right=jm1).copy_set_materialization_name('graph')
 
     # Verify that the model's query gives the expected output
-    sql_statements = to_sql_materialized_nodes(graph)
+    sql_statements = to_sql_materialized_nodes(dialect, graph)
     assert len(sql_statements) == 3
     result = run_queries(sql_statements)
     assert result == {

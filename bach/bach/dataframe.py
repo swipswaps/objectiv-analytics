@@ -1711,7 +1711,7 @@ class DataFrame:
         if isinstance(limit, int):
             limit = slice(0, limit)
 
-        limit_str = 'limit all'
+        limit_str: Optional[str] = None
         if limit is not None:
             if limit.step is not None:
                 raise NotImplementedError("Step size not supported in slice")

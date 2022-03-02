@@ -22,13 +22,13 @@ def test_extract_format_fields_nested():
 
 
 def test_quote_identifier(dialect):
-    # TODO: move this import
     if is_postgres(dialect):
         # https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
         assert quote_identifier(dialect, 'test') == '"test"'
         assert quote_identifier(dialect, 'te"st') == '"te""st"'
         assert quote_identifier(dialect, '"te""st"') == '"""te""""st"""'
         assert quote_identifier(dialect, '`te`st`') == '"`te`st`"'
+        assert quote_identifier(dialect, 'te%st') == '"te%st"'
     elif is_bigquery(dialect):
         # https://cloud.google.com/bigquery/docs/reference/standard-sql/lexical#identifiers
         assert quote_identifier(dialect, 'test') == '`test`'
@@ -36,8 +36,10 @@ def test_quote_identifier(dialect):
         assert quote_identifier(dialect, '"te""st"') == r'`""te""""st""`'
         # TODO: CHECK, is the implementation of BigQueryDialect correct?? Seems odd
         #assert quote_identifier(dialect, '`te`st`') == r'`\`te\`st\``'
+        #assert quote_identifier(dialect, 'te%st') == '`te%st`'
     else:
-        raise DatabaseNotSupportedException(dialect)
+        # if we add more dialects, we should not forget to extend this test
+        raise Exception()
 
 
 def test_quote_string():

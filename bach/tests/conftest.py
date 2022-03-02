@@ -30,16 +30,16 @@ def pytest_generate_tests(metafunc):
     need_engine = 'engine' in metafunc.fixturenames
     if metafunc.config.getoption("all"):
         engine_dialects = [
-            _get_postgres(need_engine),
-            _get_bigquery(need_engine)
+            get_postgres_engine_dialect(need_engine),
+            get_bigquery_engine_dialect(need_engine)
         ]
     elif metafunc.config.getoption("big_query"):
         engine_dialects = [
-            _get_bigquery(need_engine)
+            get_bigquery_engine_dialect(need_engine)
         ]
     else:  # default option, don't even check if --postgres is set
         engine_dialects = [
-            _get_postgres(need_engine)
+            get_postgres_engine_dialect(need_engine)
         ]
 
     if 'dialect' in metafunc.fixturenames:
@@ -58,7 +58,7 @@ class EngineDialect(NamedTuple):
     dialect: Optional[Dialect]
 
 
-def _get_postgres(need_engine: bool) -> EngineDialect:
+def get_postgres_engine_dialect(need_engine: bool = True) -> EngineDialect:
     if need_engine:
         engine = create_engine(DB_PG_TEST_URL)
         return EngineDialect(engine, engine.dialect)
@@ -67,7 +67,7 @@ def _get_postgres(need_engine: bool) -> EngineDialect:
     return EngineDialect(None, PGDialect())
 
 
-def _get_bigquery(need_engine: bool) -> EngineDialect:
+def get_bigquery_engine_dialect(need_engine: bool = True) -> EngineDialect:
     if need_engine:
         engine = create_engine(DB_BQ_TEST_URL, credentials_path=DB_BQ_CREDENTIALS_PATH)
         return EngineDialect(engine, engine.dialect)
