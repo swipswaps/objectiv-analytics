@@ -15,7 +15,7 @@ docker-compose up    # spin up Objective pipeline
 SECURITY WARNING: The above docker-compose commands start a postgres container that allows connections
 without verifying passwords. Do not use this in production or on a shared system!
 
-For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs/tracking/core-concepts/collector).
+For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs/tracking/collector).
 
 ## Support & Troubleshooting
 If you need help using or installing Objectiv, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
