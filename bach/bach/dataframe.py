@@ -2760,6 +2760,41 @@ class DataFrame:
             )
         return subset
 
+    def stack(self, *, level: int = -1, dropna: bool = True) -> 'Series':
+        """
+        Stacks all data_columns into a single index series.
+
+        :param level: only ``level=-1`` is supported, column axis supports only single levels.
+        :param dropna: Whether to drop rows that contain missing values. If the caller has
+            at least an index series, this might generate different combinations between
+            the index and the stacked values.
+
+        :return: a reshaped series that includes a new index containing the caller's column labels as values.
+        """
+        if level != -1:
+            raise NotImplementedError('column axis supports only one level.')
+
+        df = self.copy()
+        if df.group_by:
+            df = df.materialize()
+
+        dc_dfs = []
+        # convert each data column series to DataFrame and use series name as new index value
+        for dc in df.data_columns:
+            dc_df = df.all_series[dc].copy_override(name='__stacked').to_frame()
+            dc_df[f'__stacked_index'] = dc
+            dc_dfs.append(dc_df)
+
+        # concat all dataframes to get new_index and stacked values in two single series
+        from bach.operations.concat import DataFrameConcatOperation
+        stacked_df = DataFrameConcatOperation(dc_dfs)()
+
+        # append the stacked index to the initial indexes
+        stacked_df = stacked_df.set_index(list(self.index_columns + ['__stacked_index']))
+        stacked_df = stacked_df.dropna() if dropna else stacked_df
+
+        return stacked_df.all_series['__stacked']
+
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     """

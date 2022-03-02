@@ -491,7 +491,7 @@ def test_series_dropna() -> None:
 def test_series_unstack():
     bt = get_bt_with_test_data(full_data_set=True)
     bt['municipality_none'] = bt[bt.skating_order < 10].municipality
-    stacked_bt = bt.groupby(['city','municipality_none']).inhabitants.sum()
+    stacked_bt = bt.groupby(['city', 'municipality_none']).inhabitants.sum()
 
     with pytest.raises(Exception, match='index contains empty values, cannot be unstacked'):
         stacked_bt.unstack()
