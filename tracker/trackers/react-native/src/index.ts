@@ -80,6 +80,7 @@ export {
   ReactTracker,
 } from '@objectiv/tracker-react';
 
+export * from './trackedComponents/TrackedActivityIndicator';
 export * from './trackedComponents/TrackedButton';
 export * from './trackedComponents/TrackedFlatList';
 export * from './trackedComponents/TrackedModal';
