@@ -29,12 +29,12 @@ export const TrackedPressable = (props: TrackedPressableProps) => {
   const { id, ...pressableProps } = props;
 
   // Either use the given id or attempt to auto-detect `id` for LinkContext by looking at the `children` prop.
-  const pressableTitle = makeTitleFromChildren(props.children);
-  const pressableContextId = id ?? makeIdFromString(pressableTitle);
+  const title = makeTitleFromChildren(props.children);
+  const contextId = id ?? makeIdFromString(title);
 
   // If we couldn't generate an `id`, log the issue and return an untracked Component.
   const locationPath = getLocationPath(useLocationStack());
-  if (!pressableContextId) {
+  if (!contextId) {
     console.error(
       `｢objectiv｣ Could not generate a valid id for PressableContext @ ${locationPath}. Please provide the \`id\` property manually.`
     );
@@ -42,7 +42,7 @@ export const TrackedPressable = (props: TrackedPressableProps) => {
   }
 
   return (
-    <PressableContextWrapper id={pressableContextId}>
+    <PressableContextWrapper id={contextId}>
       {(trackingContext) => (
         <Pressable
           {...pressableProps}

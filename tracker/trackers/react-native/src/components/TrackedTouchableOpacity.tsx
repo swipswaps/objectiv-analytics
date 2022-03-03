@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Objectiv B.V.
+ * Copyright 2021 Objectiv B.V.
  */
 
 import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
@@ -10,12 +10,12 @@ import {
   useLocationStack,
 } from '@objectiv/tracker-react';
 import React from 'react';
-import { Text, TextProps } from 'react-native';
+import { TouchableOpacity, TouchableOpacityProps } from 'react-native';
 
 /**
- * TrackedText has the same props of Text with the addition of an optional `id` prop.
+ * TrackedTouchableOpacity has the same props of TouchableOpacity with the addition of an obligatory `id` prop.
  */
-export type TrackedTextProps = TextProps & {
+export type TrackedTouchableOpacityProps = TouchableOpacityProps & {
   /**
    * Optional. Auto-generated from `children`. Used to set a PressableContext `id` manually.
    */
@@ -23,10 +23,10 @@ export type TrackedTextProps = TextProps & {
 };
 
 /**
- * A Text already wrapped in PressableContext automatically tracking PressEvent.
+ * A TouchableOpacity already wrapped in PressableContext automatically tracking PressEvent.
  */
-export const TrackedText = (props: TrackedTextProps) => {
-  const { id, ...textProps } = props;
+export const TrackedTouchableOpacity = (props: TrackedTouchableOpacityProps) => {
+  const { id, ...trackedTouchableOpacityProps } = props;
 
   // Either use the given id or attempt to auto-detect `id` for LinkContext by looking at the `children` prop.
   const title = makeTitleFromChildren(props.children);
@@ -38,17 +38,17 @@ export const TrackedText = (props: TrackedTextProps) => {
     console.error(
       `｢objectiv｣ Could not generate a valid id for PressableContext @ ${locationPath}. Please provide the \`id\` property manually.`
     );
-    return <Text {...textProps} />;
+    return <TouchableOpacity {...trackedTouchableOpacityProps} />;
   }
 
   return (
     <PressableContextWrapper id={contextId}>
       {(trackingContext) => (
-        <Text
-          {...textProps}
+        <TouchableOpacity
+          {...trackedTouchableOpacityProps}
           onPress={(event) => {
+            trackedTouchableOpacityProps.onPress && trackedTouchableOpacityProps.onPress(event);
             trackPressEvent(trackingContext);
-            props.onPress && props.onPress(event);
           }}
         />
       )}
