@@ -11,7 +11,7 @@ import {
   RootLocationContextWrapper,
   TrackedPressable,
   TrackedPressableProps,
-  TrackingContextProvider
+  TrackingContextProvider,
 } from '../src';
 
 describe('TrackedPressable', () => {

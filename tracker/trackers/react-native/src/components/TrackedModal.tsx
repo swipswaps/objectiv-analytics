@@ -3,7 +3,7 @@
  */
 
 import { OverlayContextWrapper, useHiddenEventTracker, useVisibleEventTracker } from '@objectiv/tracker-react';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Modal, ModalProps } from 'react-native';
 
 /**
@@ -21,32 +21,32 @@ export type TrackedModalProps = ModalProps & {
  */
 export function TrackedModal(props: TrackedModalProps) {
   const { id, ...modalProps } = props;
-  const [previousVisibleState, setPreviousVisibleState] = React.useState(props.visible);
+  const [previousVisibleState, setPreviousVisibleState] = useState(props.visible);
 
   const WrappedModal = (props: ModalProps) => {
     const trackVisibleEvent = useVisibleEventTracker();
     const trackHiddenEvent = useHiddenEventTracker();
 
     useEffect(() => {
-      if(props.visible === undefined || previousVisibleState === undefined) {
+      if (props.visible === undefined || previousVisibleState === undefined) {
         return;
       }
 
-      if(props.visible === previousVisibleState) {
+      if (props.visible === previousVisibleState) {
         return;
       }
 
-      if(props.visible) {
-        trackVisibleEvent()
+      if (props.visible) {
+        trackVisibleEvent();
       } else {
         trackHiddenEvent();
       }
 
       setPreviousVisibleState(props.visible);
-    }, [props.visible])
+    }, [props.visible]);
 
-    return <Modal {...props} />
-  }
+    return <Modal {...props} />;
+  };
 
   return (
     <OverlayContextWrapper id={id}>

@@ -11,14 +11,13 @@ import {
   RootLocationContextWrapper,
   TrackedModal,
   TrackedModalProps,
-  TrackingContextProvider
+  TrackingContextProvider,
 } from '../src';
 
 describe('TrackedModal', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
   const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
-  jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
   const TestTrackedModal = (props: TrackedModalProps & { testID?: string }) => (
     <TrackingContextProvider tracker={tracker}>
@@ -36,90 +35,90 @@ describe('TrackedModal', () => {
   it('should not track VisibleEvent or HiddenEvent when visible is undefined', () => {
     const { rerender } = render(<TestTrackedModal id={'test-modal'} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
 
-    rerender(<TestTrackedModal id={'test-modal'} />)
-    rerender(<TestTrackedModal id={'test-modal'} />)
-    rerender(<TestTrackedModal id={'test-modal'} />)
+    rerender(<TestTrackedModal id={'test-modal'} />);
+    rerender(<TestTrackedModal id={'test-modal'} />);
+    rerender(<TestTrackedModal id={'test-modal'} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 
   it('should not track VisibleEvent when visible toggles from undefined to true', () => {
     const { rerender } = render(<TestTrackedModal id={'test-modal'} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
 
-    rerender(<TestTrackedModal id={'test-modal'} visible={true} />)
+    rerender(<TestTrackedModal id={'test-modal'} visible={true} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 
   it('should not track HiddenEvent when visible toggles from true to undefined', () => {
     const { rerender } = render(<TestTrackedModal id={'test-modal'} visible={true} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
 
-    rerender(<TestTrackedModal id={'test-modal'} visible={undefined} />)
+    rerender(<TestTrackedModal id={'test-modal'} visible={undefined} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 
   it('should not track VisibleEvent when visible did not change', () => {
     const { rerender } = render(<TestTrackedModal id={'test-modal'} visible={true} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
 
-    rerender(<TestTrackedModal id={'test-modal'} visible={true} />)
-    rerender(<TestTrackedModal id={'test-modal'} visible={true} />)
-    rerender(<TestTrackedModal id={'test-modal'} visible={true} />)
+    rerender(<TestTrackedModal id={'test-modal'} visible={true} />);
+    rerender(<TestTrackedModal id={'test-modal'} visible={true} />);
+    rerender(<TestTrackedModal id={'test-modal'} visible={true} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 
   it('should not track HiddenEvent when visible did not change', () => {
     const { rerender } = render(<TestTrackedModal id={'test-modal'} visible={false} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
 
-    rerender(<TestTrackedModal id={'test-modal'} visible={false} />)
-    rerender(<TestTrackedModal id={'test-modal'} visible={false} />)
-    rerender(<TestTrackedModal id={'test-modal'} visible={false} />)
+    rerender(<TestTrackedModal id={'test-modal'} visible={false} />);
+    rerender(<TestTrackedModal id={'test-modal'} visible={false} />);
+    rerender(<TestTrackedModal id={'test-modal'} visible={false} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 
   it('should track VisibleEvent when visible toggles from false to true', () => {
     const { rerender } = render(<TestTrackedModal id={'test-modal'} visible={false} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
 
-    rerender(<TestTrackedModal id={'test-modal'} visible={true} />)
+    rerender(<TestTrackedModal id={'test-modal'} visible={true} />);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({_type: 'VisibleEvent'}));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'VisibleEvent' }));
   });
 
   it('should track HiddenEvent when visible toggles from true to false', () => {
     const { rerender } = render(<TestTrackedModal id={'test-modal'} visible={true} />);
 
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'VisibleEvent'}));
-    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
+    expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'HiddenEvent' }));
 
-    rerender(<TestTrackedModal id={'test-modal'} visible={false} />)
+    rerender(<TestTrackedModal id={'test-modal'} visible={false} />);
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({_type: 'HiddenEvent'}));
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(1, expect.objectContaining({ _type: 'HiddenEvent' }));
   });
 });

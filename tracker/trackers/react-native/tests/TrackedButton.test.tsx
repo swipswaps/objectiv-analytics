@@ -11,7 +11,7 @@ import {
   RootLocationContextWrapper,
   TrackedButton,
   TrackedButtonProps,
-  TrackingContextProvider
+  TrackingContextProvider,
 } from '../src';
 
 describe('TrackedButton', () => {

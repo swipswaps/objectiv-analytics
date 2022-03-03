@@ -22,7 +22,6 @@ describe('TrackedFlatList', () => {
   jest.spyOn(spyTransport, 'handle');
   const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
   jest.spyOn(console, 'debug').mockImplementation(jest.fn);
-  jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
   type ListItemType = {
     id: string;
