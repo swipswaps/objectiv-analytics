@@ -43,17 +43,17 @@ def quote_identifier(dialect: Dialect, name: str) -> str:
     SqlAlchemy Dialect.
 
 
-    Examples (assume Postgres):
-    >>> quote_identifier('test')
+    Examples
+    >>> from sqlalchemy.dialects.postgresql.base import PGDialect
+    >>> quote_identifier(PGDialect(), 'test')
     '"test"'
-    >>> quote_identifier('te"st')
+    >>> quote_identifier(PGDialect(), 'te"st')
     '"te""st"'
-    >>> quote_identifier('"te""st"')
+    >>> quote_identifier(PGDialect(), '"te""st"')
     '\"\"\"te\"\"\"\"st\"\"\"'
     """
-    # TODO: see if we can make this function nicer
     if is_postgres(dialect):
-        # 'logical' would be: dialect.preparer(dialect).quote_identifier(value=name)
+        # more 'logical' would be: dialect.preparer(dialect).quote_identifier(value=name)
         # But it seems that goes wrong in case there is a `%` in the value. Which sort of makes sense, as
         # sqlalchemy already escapes that for later on.
 
@@ -62,7 +62,7 @@ def quote_identifier(dialect: Dialect, name: str) -> str:
         return f'"{replaced_chars}"'
 
     if is_bigquery(dialect):
-        # todo: check whether this is efficient?
+        # todo: check whether this is efficient and correct
         result = dialect.preparer(dialect).quote_identifier(value=name)
         return result
     raise DatabaseNotSupportedException(dialect)
