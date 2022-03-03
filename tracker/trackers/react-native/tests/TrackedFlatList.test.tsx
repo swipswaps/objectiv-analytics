@@ -42,7 +42,7 @@ describe('TrackedFlatList', () => {
     },
   ];
 
-  const TestTrackedFlatList = (props: TrackedFlatListProps<ListItemType> & { testID: string }) => (
+  const TestTrackedFlatList = (props: TrackedFlatListProps<ListItemType> & { testID?: string }) => (
     <TrackingContextProvider tracker={tracker}>
       <RootLocationContextWrapper id={'test'}>
         <TrackedFlatList {...props} />

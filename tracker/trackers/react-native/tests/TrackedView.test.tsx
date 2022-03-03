@@ -11,22 +11,22 @@ import {
   LocationTree,
   ReactTracker,
   RootLocationContextWrapper,
-  TrackedScrollView,
-  TrackedScrollViewProps,
+  TrackedView,
+  TrackedViewProps,
   TrackingContextProvider,
   useLocationStack,
 } from '../src';
 
-describe('TrackedScrollView', () => {
+describe('TrackedView', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
   const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
   jest.spyOn(console, 'debug').mockImplementation(jest.fn);
 
-  const TestTrackedScrollView = (props: TrackedScrollViewProps & { testID?: string }) => (
+  const TestTrackedView = (props: TrackedViewProps & { testID?: string }) => (
     <TrackingContextProvider tracker={tracker}>
       <RootLocationContextWrapper id={'test'}>
-        <TrackedScrollView {...props} />
+        <TrackedView {...props} />
       </RootLocationContextWrapper>
     </TrackingContextProvider>
   );
@@ -36,7 +36,7 @@ describe('TrackedScrollView', () => {
     LocationTree.clear();
   });
 
-  const ScrollViewChild = (props: { title: string }) => {
+  const ViewChild = (props: { title: string }) => {
     const locationPath = getLocationPath(useLocationStack());
 
     console.debug(locationPath);
@@ -48,14 +48,14 @@ describe('TrackedScrollView', () => {
     );
   };
 
-  it('should wrap ScrollView in ContentContext', () => {
+  it('should wrap View in ContentContext', () => {
     render(
-      <TestTrackedScrollView id={'test-scroll-view'}>
-        <ScrollViewChild title={'Child'} />
-      </TestTrackedScrollView>
+      <TestTrackedView id={'test-view'}>
+        <ViewChild title={'Child'} />
+      </TestTrackedView>
     );
 
     expect(console.debug).toHaveBeenCalledTimes(1);
-    expect(console.debug).toHaveBeenNthCalledWith(1, 'RootLocation:test / Content:test-scroll-view');
+    expect(console.debug).toHaveBeenNthCalledWith(1, 'RootLocation:test / Content:test-view');
   });
 });

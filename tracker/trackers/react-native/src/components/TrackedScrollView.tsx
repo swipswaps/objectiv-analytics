@@ -20,11 +20,11 @@ export type TrackedScrollViewProps = ScrollViewProps & {
  * TrackedScrollView is an automatically tracked ScrollView. Wraps ScrollView in ContentContext.
  */
 export function TrackedScrollView(props: TrackedScrollViewProps) {
-  const { id, ...flatListProps } = props;
+  const { id, ...scrollViewProps } = props;
 
   return (
     <ContentContextWrapper id={id}>
-      <ScrollView {...flatListProps} />
+      <ScrollView {...scrollViewProps} />
     </ContentContextWrapper>
   );
 }
