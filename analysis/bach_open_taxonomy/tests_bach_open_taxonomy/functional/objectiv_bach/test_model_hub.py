@@ -120,7 +120,7 @@ def test_conversion_count():
     df.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
                             event_type='ClickEvent',
                             name='github_clicks')
-    s = df.mh.map.conversion_count('github_clicks')
+    s = df.mh.map.conversions_in_time('github_clicks')
 
     assert_equals_data(
         s,
@@ -142,6 +142,34 @@ def test_conversion_count():
         order_by='event_id'
     )
 
+
+def test_conversions_counter():
+    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    # add conversion event
+    df.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
+                            event_type='ClickEvent',
+                            name='github_clicks')
+    s = df.mh.map.conversions_counter('github_clicks')
+
+    assert_equals_data(
+        s,
+        expected_columns=['event_id', 'conversions_counter'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), 1],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), 1],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), 1],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), 0],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), 0],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), 0],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), 0],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), 0],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), 0],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), 0],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), 0],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), 0]
+        ],
+        order_by='event_id'
+    )
 
 def test_pre_conversion_hit_number():
     df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
