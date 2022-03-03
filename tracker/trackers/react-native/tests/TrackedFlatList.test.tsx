@@ -2,25 +2,25 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { SpyTransport } from '@objectiv/testing-tools';
+import { mockConsole, SpyTransport } from '@objectiv/testing-tools';
 import { getLocationPath } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
 import {
   LocationTree,
-  ObjectivProvider,
   ReactTracker,
   RootLocationContextWrapper,
   TrackedFlatList,
   TrackedFlatListProps,
+  TrackingContextProvider,
   useLocationStack,
 } from '../src';
 
 describe('TrackedFlatList', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
-  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
+  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
   jest.spyOn(console, 'debug').mockImplementation(jest.fn);
   jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
@@ -44,11 +44,11 @@ describe('TrackedFlatList', () => {
   ];
 
   const TestTrackedFlatList = (props: TrackedFlatListProps<ListItemType> & { testID: string }) => (
-    <ObjectivProvider tracker={tracker}>
+    <TrackingContextProvider tracker={tracker}>
       <RootLocationContextWrapper id={'test'}>
         <TrackedFlatList {...props} />
       </RootLocationContextWrapper>
-    </ObjectivProvider>
+    </TrackingContextProvider>
   );
 
   beforeEach(() => {

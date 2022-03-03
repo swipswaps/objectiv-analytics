@@ -2,24 +2,30 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { SpyTransport } from '@objectiv/testing-tools';
+import { mockConsole, SpyTransport } from '@objectiv/testing-tools';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { ButtonProps } from 'react-native';
-import { LocationTree, ObjectivProvider, ReactTracker, RootLocationContextWrapper, TrackedButton } from '../src';
+import {
+  LocationTree,
+  ReactTracker,
+  RootLocationContextWrapper,
+  TrackedButton,
+  TrackedButtonProps,
+  TrackingContextProvider
+} from '../src';
 
 describe('TrackedButton', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
-  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
+  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
   jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
-  const TestTrackedButton = (props: ButtonProps & { testID: string }) => (
-    <ObjectivProvider tracker={tracker}>
+  const TestTrackedButton = (props: TrackedButtonProps & { testID?: string }) => (
+    <TrackingContextProvider tracker={tracker}>
       <RootLocationContextWrapper id={'test'}>
         <TrackedButton {...props} />
       </RootLocationContextWrapper>
-    </ObjectivProvider>
+    </TrackingContextProvider>
   );
 
   beforeEach(() => {
