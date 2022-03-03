@@ -81,4 +81,5 @@ export {
 } from '@objectiv/tracker-react';
 
 export * from './components/TrackedButton';
+export * from './components/TrackedFlatList';
 export * from './components/TrackedPressable';

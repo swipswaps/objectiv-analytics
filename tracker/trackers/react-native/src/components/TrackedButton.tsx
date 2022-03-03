@@ -8,7 +8,7 @@ import React from 'react';
 import { Button, ButtonProps } from 'react-native';
 
 /**
- * TrackedButton has the same props of React Native Button with the addition of an optional `id` prop
+ * TrackedButton has the same props of React Native Button with the addition of an optional `id` prop.
  */
 export type TrackedButtonProps = ButtonProps & {
   /**

@@ -1,0 +1,30 @@
+/*
+ * Copyright 2022 Objectiv B.V.
+ */
+
+import { ContentContextWrapper } from '@objectiv/tracker-react';
+import React from 'react';
+import { FlatList, FlatListProps } from 'react-native';
+
+/**
+ * TrackedFlatList has the same props of React Native FlatList with the addition of a required `id` prop.
+ */
+export type TrackedFlatListProps<ItemT> = FlatListProps<ItemT> & {
+  /**
+   * The ContentContext `id`.
+   */
+  id: string;
+};
+
+/**
+ * TrackedFlatList is an automatically tracked FlatList. Wraps FlatList in ContentContext.
+ */
+export function TrackedFlatList<ItemT>(props: TrackedFlatListProps<ItemT>) {
+  const { id, ...flatListProps } = props;
+
+  return (
+    <ContentContextWrapper id={id}>
+      <FlatList {...flatListProps} />
+    </ContentContextWrapper>
+  );
+}

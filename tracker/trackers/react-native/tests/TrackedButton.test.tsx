@@ -5,7 +5,7 @@
 import { SpyTransport } from '@objectiv/testing-tools';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { ButtonProps } from "react-native";
+import { ButtonProps } from 'react-native';
 import { LocationTree, ObjectivProvider, ReactTracker, RootLocationContextWrapper, TrackedButton } from '../src';
 
 describe('TrackedButton', () => {
@@ -14,7 +14,7 @@ describe('TrackedButton', () => {
   const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
   jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
-  const TestTrackedButton = (props: ButtonProps & { testID: string  }) => (
+  const TestTrackedButton = (props: ButtonProps & { testID: string }) => (
     <ObjectivProvider tracker={tracker}>
       <RootLocationContextWrapper id={'test'}>
         <TrackedButton {...props} />

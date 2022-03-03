@@ -13,7 +13,7 @@ import React from 'react';
 import { PressableProps, Pressable } from 'react-native';
 
 /**
- * TrackedPressable has the same props of React Native Pressable with the addition of an obligatory `id` prop
+ * TrackedPressable has the same props of React Native Pressable with the addition of an obligatory `id` prop.
  */
 export type TrackedPressableProps = PressableProps & {
   /**
