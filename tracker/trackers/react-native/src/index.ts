@@ -85,6 +85,7 @@ export * from './trackedComponents/TrackedFlatList';
 export * from './trackedComponents/TrackedModal';
 export * from './trackedComponents/TrackedPressable';
 export * from './trackedComponents/TrackedScrollView';
+export * from './trackedComponents/TrackedSwitch';
 export * from './trackedComponents/TrackedText';
 export * from './trackedComponents/TrackedTouchableHighlight';
 export * from './trackedComponents/TrackedTouchableOpacity';
