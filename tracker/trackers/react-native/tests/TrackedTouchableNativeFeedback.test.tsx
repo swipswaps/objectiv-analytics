@@ -10,21 +10,21 @@ import {
   LocationTree,
   ReactTracker,
   RootLocationContextWrapper,
-  TrackedTouchableWithoutFeedback,
-  TrackedTouchableWithoutFeedbackProps,
+  TrackedTouchableNativeFeedback,
+  TrackedTouchableNativeFeedbackProps,
   TrackingContextProvider,
 } from '../src';
 
-describe('TrackedTouchableWithoutFeedback', () => {
+describe('TrackedTouchableNativeFeedback', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
   const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
   jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
-  const TestTrackedTouchableWithoutFeedback = (props: TrackedTouchableWithoutFeedbackProps & { testID?: string }) => (
+  const TestTrackedTouchableNativeFeedback = (props: TrackedTouchableNativeFeedbackProps & { testID?: string }) => (
     <TrackingContextProvider tracker={tracker}>
       <RootLocationContextWrapper id={'test'}>
-        <TrackedTouchableWithoutFeedback {...props} />
+        <TrackedTouchableNativeFeedback {...props} />
       </RootLocationContextWrapper>
     </TrackingContextProvider>
   );
@@ -36,14 +36,14 @@ describe('TrackedTouchableWithoutFeedback', () => {
 
   it('should track PressEvent on press with a PressableContext in the LocationStack', () => {
     const { getByTestId } = render(
-      <TestTrackedTouchableWithoutFeedback testID="test-touchable-without-feedback">
+      <TestTrackedTouchableNativeFeedback testID="test-touchable-native-feedback">
         <Text>Trigger Event</Text>
-      </TestTrackedTouchableWithoutFeedback>
+      </TestTrackedTouchableNativeFeedback>
     );
 
     jest.resetAllMocks();
 
-    fireEvent.press(getByTestId('test-touchable-without-feedback'));
+    fireEvent.press(getByTestId('test-touchable-native-feedback'));
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(1);
     expect(spyTransport.handle).toHaveBeenCalledWith(
@@ -62,9 +62,9 @@ describe('TrackedTouchableWithoutFeedback', () => {
 
   it('should not track Button if PressableContext id cannot be auto-detected', () => {
     const { getByTestId } = render(
-      <TestTrackedTouchableWithoutFeedback testID="test-touchable-highlight">
+      <TestTrackedTouchableNativeFeedback testID="test-touchable-highlight">
         <Text>☹️</Text>
-      </TestTrackedTouchableWithoutFeedback>
+      </TestTrackedTouchableNativeFeedback>
     );
 
     jest.resetAllMocks();
@@ -76,9 +76,9 @@ describe('TrackedTouchableWithoutFeedback', () => {
 
   it('should console.error if PressableContext id cannot be auto-detected', () => {
     render(
-      <TestTrackedTouchableWithoutFeedback testID="test-touchable-highlight">
+      <TestTrackedTouchableNativeFeedback testID="test-touchable-highlight">
         <Text>☹️</Text>
-      </TestTrackedTouchableWithoutFeedback>
+      </TestTrackedTouchableNativeFeedback>
     );
 
     expect(console.error).toHaveBeenCalledTimes(1);
@@ -90,9 +90,9 @@ describe('TrackedTouchableWithoutFeedback', () => {
   it('should execute onPress handler if specified', () => {
     const onPressSpy = jest.fn();
     const { getByTestId } = render(
-      <TestTrackedTouchableWithoutFeedback testID="test-touchable-highlight" onPress={onPressSpy}>
+      <TestTrackedTouchableNativeFeedback testID="test-touchable-highlight" onPress={onPressSpy}>
         <Text>touchable highlight</Text>
-      </TestTrackedTouchableWithoutFeedback>
+      </TestTrackedTouchableNativeFeedback>
     );
 
     fireEvent.press(getByTestId('test-touchable-highlight'));

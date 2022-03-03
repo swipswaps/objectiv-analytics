@@ -90,12 +90,12 @@ describe('TrackedTouchableOpacity', () => {
   it('should execute onPress handler if specified', () => {
     const onPressSpy = jest.fn();
     const { getByTestId } = render(
-      <TestTrackedTouchableOpacity testID="test-touchable-highlight" onPress={onPressSpy}>
+      <TestTrackedTouchableOpacity testID="test-touchable-opacity" onPress={onPressSpy}>
         <Text>touchable highlight</Text>
       </TestTrackedTouchableOpacity>
     );
 
-    fireEvent.press(getByTestId('test-touchable-highlight'));
+    fireEvent.press(getByTestId('test-touchable-opacity'));
 
     expect(onPressSpy).toHaveBeenCalledTimes(1);
   });
