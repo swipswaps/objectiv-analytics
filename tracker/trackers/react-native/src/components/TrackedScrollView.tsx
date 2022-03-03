@@ -7,7 +7,7 @@ import React from 'react';
 import { ScrollView, ScrollViewProps } from 'react-native';
 
 /**
- * TrackedScrollView has the same props of React Native ScrollView with the addition of a required `id` prop.
+ * TrackedScrollView has the same props of ScrollView with the addition of a required `id` prop.
  */
 export type TrackedScrollViewProps = ScrollViewProps & {
   /**
@@ -17,7 +17,7 @@ export type TrackedScrollViewProps = ScrollViewProps & {
 };
 
 /**
- * TrackedScrollView is an automatically tracked ScrollView. Wraps ScrollView in ContentContext.
+ * A ScrollView already wrapped in ContentContext.
  */
 export function TrackedScrollView(props: TrackedScrollViewProps) {
   const { id, ...scrollViewProps } = props;

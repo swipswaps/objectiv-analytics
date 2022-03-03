@@ -13,17 +13,17 @@ import React from 'react';
 import { Text, TextProps } from 'react-native';
 
 /**
- * TrackedText has the same props of React Native Text with the addition of an optional `id` prop.
+ * TrackedText has the same props of Text with the addition of an optional `id` prop.
  */
 export type TrackedTextProps = TextProps & {
   /**
-   * Optional. Auto-generated from `children`. This can be used to set a PressableContext `id` manually.
+   * Optional. Auto-generated from `children`. Used to set a PressableContext `id` manually.
    */
   id?: string;
 };
 
 /**
- * TrackedText is an automatically tracked Text. Wraps Text in PressableContext and tracks PressEvent.
+ * A Text already wrapped in PressableContext automatically tracking PressEvent.
  */
 export const TrackedText = (props: TrackedTextProps) => {
   const { id, ...textProps } = props;

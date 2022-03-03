@@ -8,17 +8,17 @@ import React from 'react';
 import { Button, ButtonProps } from 'react-native';
 
 /**
- * TrackedButton has the same props of React Native Button with the addition of an optional `id` prop.
+ * TrackedButton has the same props of Button with the addition of an optional `id` prop.
  */
 export type TrackedButtonProps = ButtonProps & {
   /**
-   * Optional. Auto-generated from `title`. This can be used to set a PressableContext `id` manually.
+   * Optional. Auto-generated from `title`. Used to set a PressableContext `id` manually.
    */
   id?: string;
 };
 
 /**
- * TrackedButton is an automatically tracked Button. Wraps Button in PressableContext and tracks PressEvent.
+ * A Button already wrapped in PressableContext automatically tracking PressEvent.
  */
 export const TrackedButton = (props: TrackedButtonProps) => {
   const { id, ...buttonProps } = props;

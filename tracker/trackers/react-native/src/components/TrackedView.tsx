@@ -7,7 +7,7 @@ import React from 'react';
 import { View, ViewProps } from 'react-native';
 
 /**
- * TrackedView has the same props of React Native View with the addition of a required `id` prop.
+ * TrackedView has the same props of View with the addition of a required `id` prop.
  */
 export type TrackedViewProps = ViewProps & {
   /**
@@ -17,7 +17,7 @@ export type TrackedViewProps = ViewProps & {
 };
 
 /**
- * TrackedView is an automatically tracked View. Wraps View in ContentContext.
+ * A View already wrapped in ContentContext.
  */
 export function TrackedView(props: TrackedViewProps) {
   const { id, ...viewProps } = props;

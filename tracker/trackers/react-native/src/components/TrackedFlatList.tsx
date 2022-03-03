@@ -7,7 +7,7 @@ import React from 'react';
 import { FlatList, FlatListProps } from 'react-native';
 
 /**
- * TrackedFlatList has the same props of React Native FlatList with the addition of a required `id` prop.
+ * TrackedFlatList has the same props of FlatList with the addition of a required `id` prop.
  */
 export type TrackedFlatListProps<ItemT> = FlatListProps<ItemT> & {
   /**
@@ -17,7 +17,7 @@ export type TrackedFlatListProps<ItemT> = FlatListProps<ItemT> & {
 };
 
 /**
- * TrackedFlatList is an automatically tracked FlatList. Wraps FlatList in ContentContext.
+ * A FlatList already wrapped in ContentContext.
  */
 export function TrackedFlatList<ItemT>(props: TrackedFlatListProps<ItemT>) {
   const { id, ...flatListProps } = props;

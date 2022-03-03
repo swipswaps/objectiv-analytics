@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 import { Modal, ModalProps } from 'react-native';
 
 /**
- * TrackedModal has the same props of React Native Modal with the addition of a required `id` prop.
+ * TrackedModal has the same props of Modal with the addition of a required `id` prop.
  */
 export type TrackedModalProps = ModalProps & {
   /**
@@ -17,7 +17,7 @@ export type TrackedModalProps = ModalProps & {
 };
 
 /**
- * TrackedModal is an automatically tracked Modal. Wraps Modal in OverlayContext and tracks visibility Events.
+ * A Modal already wrapped in OverlayContext automatically tracking VisibleEvent and HiddenEvent.
  */
 export function TrackedModal(props: TrackedModalProps) {
   const { id, ...modalProps } = props;

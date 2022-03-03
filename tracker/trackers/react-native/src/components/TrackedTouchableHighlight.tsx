@@ -10,12 +10,12 @@ import {
   useLocationStack,
 } from '@objectiv/tracker-react';
 import React from 'react';
-import { PressableProps, Pressable } from 'react-native';
+import { TouchableHighlight, TouchableHighlightProps } from 'react-native';
 
 /**
- * TrackedPressable has the same props of Pressable with the addition of an obligatory `id` prop.
+ * TrackedTouchableHighlight has the same props of TouchableHighlight with the addition of an obligatory `id` prop.
  */
-export type TrackedPressableProps = PressableProps & {
+export type TrackedTouchableHighlightProps = TouchableHighlightProps & {
   /**
    * Optional. Auto-generated from `children`. Used to set a PressableContext `id` manually.
    */
@@ -23,10 +23,10 @@ export type TrackedPressableProps = PressableProps & {
 };
 
 /**
- * A Pressable already wrapped in PressableContext automatically tracking PressEvent.
+ * A TouchableHighlight already wrapped in PressableContext automatically tracking PressEvent.
  */
-export const TrackedPressable = (props: TrackedPressableProps) => {
-  const { id, ...pressableProps } = props;
+export const TrackedTouchableHighlight = (props: TrackedTouchableHighlightProps) => {
+  const { id, ...trackedTouchableHighlightProps } = props;
 
   // Either use the given id or attempt to auto-detect `id` for LinkContext by looking at the `children` prop.
   const pressableTitle = makeTitleFromChildren(props.children);
@@ -38,16 +38,16 @@ export const TrackedPressable = (props: TrackedPressableProps) => {
     console.error(
       `｢objectiv｣ Could not generate a valid id for PressableContext @ ${locationPath}. Please provide the \`id\` property manually.`
     );
-    return <Pressable {...pressableProps} />;
+    return <TouchableHighlight {...trackedTouchableHighlightProps} />;
   }
 
   return (
     <PressableContextWrapper id={pressableContextId}>
       {(trackingContext) => (
-        <Pressable
-          {...pressableProps}
+        <TouchableHighlight
+          {...trackedTouchableHighlightProps}
           onPress={(event) => {
-            pressableProps.onPress && pressableProps.onPress(event);
+            trackedTouchableHighlightProps.onPress && trackedTouchableHighlightProps.onPress(event);
             trackPressEvent(trackingContext);
           }}
         />
