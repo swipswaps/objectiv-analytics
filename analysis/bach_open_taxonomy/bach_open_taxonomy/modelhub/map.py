@@ -93,6 +93,7 @@ class Map:
 
         self._df = self._df.drop(columns=['__conversions'])
 
+        # todo give series correct index and name. like .copy_override(name='...', index=self._df.index)
         return converted
 
 
