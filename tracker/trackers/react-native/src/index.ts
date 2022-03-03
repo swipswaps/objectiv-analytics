@@ -80,13 +80,13 @@ export {
   ReactTracker,
 } from '@objectiv/tracker-react';
 
-export * from './components/TrackedButton';
-export * from './components/TrackedFlatList';
-export * from './components/TrackedModal';
-export * from './components/TrackedPressable';
-export * from './components/TrackedScrollView';
-export * from './components/TrackedText';
-export * from './components/TrackedTouchableHighlight';
-export * from './components/TrackedTouchableOpacity';
-export * from './components/TrackedTouchableWithoutFeedback';
-export * from './components/TrackedView';
+export * from './trackedComponents/TrackedButton';
+export * from './trackedComponents/TrackedFlatList';
+export * from './trackedComponents/TrackedModal';
+export * from './trackedComponents/TrackedPressable';
+export * from './trackedComponents/TrackedScrollView';
+export * from './trackedComponents/TrackedText';
+export * from './trackedComponents/TrackedTouchableHighlight';
+export * from './trackedComponents/TrackedTouchableOpacity';
+export * from './trackedComponents/TrackedTouchableWithoutFeedback';
+export * from './trackedComponents/TrackedView';
