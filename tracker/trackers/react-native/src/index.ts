@@ -88,4 +88,5 @@ export * from './components/TrackedScrollView';
 export * from './components/TrackedText';
 export * from './components/TrackedTouchableHighlight';
 export * from './components/TrackedTouchableOpacity';
+export * from './components/TrackedTouchableWithoutFeedback';
 export * from './components/TrackedView';

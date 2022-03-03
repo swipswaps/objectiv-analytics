@@ -13,7 +13,7 @@ import React from 'react';
 import { TouchableOpacity, TouchableOpacityProps } from 'react-native';
 
 /**
- * TrackedTouchableOpacity has the same props of TouchableOpacity with the addition of an obligatory `id` prop.
+ * TrackedTouchableOpacity has the same props of TouchableOpacity with and additional required `id` prop.
  */
 export type TrackedTouchableOpacityProps = TouchableOpacityProps & {
   /**

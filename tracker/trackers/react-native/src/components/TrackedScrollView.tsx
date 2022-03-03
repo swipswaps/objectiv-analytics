@@ -7,7 +7,7 @@ import React from 'react';
 import { ScrollView, ScrollViewProps } from 'react-native';
 
 /**
- * TrackedScrollView has the same props of ScrollView with the addition of a required `id` prop.
+ * TrackedScrollView has the same props of ScrollView with an additional required `id` prop.
  */
 export type TrackedScrollViewProps = ScrollViewProps & {
   /**

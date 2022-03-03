@@ -7,7 +7,7 @@ import React from 'react';
 import { FlatList, FlatListProps } from 'react-native';
 
 /**
- * TrackedFlatList has the same props of FlatList with the addition of a required `id` prop.
+ * TrackedFlatList has the same props of FlatList with an additional required `id` prop.
  */
 export type TrackedFlatListProps<ItemT> = FlatListProps<ItemT> & {
   /**

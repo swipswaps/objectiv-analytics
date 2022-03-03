@@ -10,12 +10,12 @@ import {
   useLocationStack,
 } from '@objectiv/tracker-react';
 import React from 'react';
-import { PressableProps, Pressable } from 'react-native';
+import { TouchableWithoutFeedback, TouchableWithoutFeedbackProps } from 'react-native';
 
 /**
- * TrackedPressable has the same props of Pressable with and additional required `id` prop.
+ * TrackedTouchableWithoutFeedback has the same props of TouchableWithoutFeedback with an additional required `id` prop.
  */
-export type TrackedPressableProps = PressableProps & {
+export type TrackedTouchableWithoutFeedbackProps = TouchableWithoutFeedbackProps & {
   /**
    * Optional. Auto-generated from `children`. Used to set a PressableContext `id` manually.
    */
@@ -23,10 +23,10 @@ export type TrackedPressableProps = PressableProps & {
 };
 
 /**
- * A Pressable already wrapped in PressableContext automatically tracking PressEvent.
+ * A TouchableWithoutFeedback already wrapped in PressableContext automatically tracking PressEvent.
  */
-export const TrackedPressable = (props: TrackedPressableProps) => {
-  const { id, ...pressableProps } = props;
+export const TrackedTouchableWithoutFeedback = (props: TrackedTouchableWithoutFeedbackProps) => {
+  const { id, ...trackedTouchableWithoutFeedbackProps } = props;
 
   // Either use the given id or attempt to auto-detect `id` for LinkContext by looking at the `children` prop.
   const title = makeTitleFromChildren(props.children);
@@ -38,16 +38,16 @@ export const TrackedPressable = (props: TrackedPressableProps) => {
     console.error(
       `｢objectiv｣ Could not generate a valid id for PressableContext @ ${locationPath}. Please provide the \`id\` property manually.`
     );
-    return <Pressable {...pressableProps} />;
+    return <TouchableWithoutFeedback {...trackedTouchableWithoutFeedbackProps} />;
   }
 
   return (
     <PressableContextWrapper id={contextId}>
       {(trackingContext) => (
-        <Pressable
-          {...pressableProps}
+        <TouchableWithoutFeedback
+          {...trackedTouchableWithoutFeedbackProps}
           onPress={(event) => {
-            pressableProps.onPress && pressableProps.onPress(event);
+            trackedTouchableWithoutFeedbackProps.onPress && trackedTouchableWithoutFeedbackProps.onPress(event);
             trackPressEvent(trackingContext);
           }}
         />

@@ -13,7 +13,7 @@ import React from 'react';
 import { TouchableHighlight, TouchableHighlightProps } from 'react-native';
 
 /**
- * TrackedTouchableHighlight has the same props of TouchableHighlight with the addition of an obligatory `id` prop.
+ * TrackedTouchableHighlight has the same props of TouchableHighlight with an additional required `id` prop.
  */
 export type TrackedTouchableHighlightProps = TouchableHighlightProps & {
   /**

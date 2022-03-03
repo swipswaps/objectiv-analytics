@@ -13,7 +13,7 @@ import React from 'react';
 import { Text, TextProps } from 'react-native';
 
 /**
- * TrackedText has the same props of Text with the addition of an optional `id` prop.
+ * TrackedText has the same props of Text with an additional optional `id` prop.
  */
 export type TrackedTextProps = TextProps & {
   /**
