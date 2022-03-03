@@ -20,11 +20,11 @@ export type TrackedSectionListProps<ItemT, SectionT = DefaultSectionT> = Section
  * A SectionList already wrapped in ContentContext.
  */
 export function TrackedSectionList<ItemT, SectionT = DefaultSectionT>(props: TrackedSectionListProps<ItemT, SectionT>) {
-  const { id, ...flatListProps } = props;
+  const { id, ...sectionListProps } = props;
 
   return (
     <ContentContextWrapper id={id}>
-      <SectionList {...flatListProps} />
+      <SectionList {...sectionListProps} />
     </ContentContextWrapper>
   );
 }

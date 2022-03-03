@@ -30,21 +30,21 @@ describe('TrackedSectionList', () => {
   };
   const sections: SectionType[] = [
     {
-      title: "Main dishes",
-      data: ["Pizza", "Burger", "Risotto"]
+      title: 'Main dishes',
+      data: ['Pizza', 'Burger', 'Risotto'],
     },
     {
-      title: "Sides",
-      data: ["French Fries", "Onion Rings", "Fried Shrimps"]
+      title: 'Sides',
+      data: ['French Fries', 'Onion Rings', 'Fried Shrimps'],
     },
     {
-      title: "Drinks",
-      data: ["Water", "Coke", "Beer"]
+      title: 'Drinks',
+      data: ['Water', 'Coke', 'Beer'],
     },
     {
-      title: "Desserts",
-      data: ["Cheese Cake", "Ice Cream"]
-    }
+      title: 'Desserts',
+      data: ['Cheese Cake', 'Ice Cream'],
+    },
   ];
 
   const TestTrackedSectionList = (props: TrackedSectionListProps<ListItemType> & { testID?: string }) => (
@@ -60,7 +60,7 @@ describe('TrackedSectionList', () => {
     LocationTree.clear();
   });
 
-  const ListItem = (props: {text: ListItemType}) => {
+  const ListItem = (props: { text: ListItemType }) => {
     const locationPath = getLocationPath(useLocationStack());
 
     console.debug(locationPath);
@@ -78,7 +78,7 @@ describe('TrackedSectionList', () => {
         id={'test-section-list'}
         sections={sections}
         renderItem={({ item }) => <ListItem text={item} />}
-        renderSectionHeader={({ section: { title } }) => (<Text>{title}</Text>)}
+        renderSectionHeader={({ section: { title } }) => <Text>{title}</Text>}
         keyExtractor={(item, index) => item + index}
         testID="test-section-list"
         initialNumToRender={2}

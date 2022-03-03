@@ -96,3 +96,4 @@ export * from './trackedComponents/TrackedTouchableHighlight';
 export * from './trackedComponents/TrackedTouchableOpacity';
 export * from './trackedComponents/TrackedTouchableWithoutFeedback';
 export * from './trackedComponents/TrackedView';
+export * from './trackedComponents/TrackedVirtualizedList';
