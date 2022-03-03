@@ -77,7 +77,8 @@ export {
   OverlayContextWrapper,
   PressableContextWrapper,
   RootLocationContextWrapper,
-  ReactTracker
+  ReactTracker,
 } from '@objectiv/tracker-react';
 
 export * from './components/TrackedButton';
+export * from './components/TrackedPressable';

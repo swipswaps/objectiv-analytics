@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
 module.exports = {
@@ -14,4 +14,4 @@ module.exports = {
     '@objectiv/tracker-react': '<rootDir>/../../trackers/react/src',
     '@objectiv/transport-(.*)': '<rootDir>/../../transports/$1/src',
   },
-}
+};

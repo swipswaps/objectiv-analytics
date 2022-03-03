@@ -12,23 +12,23 @@ import { Button, ButtonProps } from 'react-native';
  */
 export type TrackedButtonProps = ButtonProps & {
   /**
-   * Optional. Identifiers are automatically generated from the `title`. This prop can override the auto-detected id.
+   * Optional. Auto-generated from `title`. This can be used to set a PressableContext `id` manually.
    */
-  id?: string
+  id?: string;
 };
 
 /**
- * TrackedButton is a React Native Button that automatically tracks PressEvents.
+ * TrackedButton is an automatically tracked Button. Wraps Button in PressableContext and tracks PressEvent.
  */
 export const TrackedButton = (props: TrackedButtonProps) => {
   const { id, ...buttonProps } = props;
 
   // Either use the given id or attempt to auto-detect `id` for LinkContext by looking at the `title` prop.
-  const pressableId = id ?? makeIdFromString(props.title);
+  const pressableContextId = id ?? makeIdFromString(props.title);
 
   // If we couldn't generate an `id`, log the issue and return an untracked Component.
   const locationPath = getLocationPath(useLocationStack());
-  if (!pressableId) {
+  if (!pressableContextId) {
     console.error(
       `｢objectiv｣ Could not generate a valid id for PressableContext @ ${locationPath}. Please provide the \`id\` property manually.`
     );
@@ -36,7 +36,7 @@ export const TrackedButton = (props: TrackedButtonProps) => {
   }
 
   return (
-    <PressableContextWrapper id={pressableId}>
+    <PressableContextWrapper id={pressableContextId}>
       {(trackingContext) => (
         <Button
           {...buttonProps}
