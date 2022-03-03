@@ -102,7 +102,7 @@ def test_conversion_count():
     df.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
                             event_type='ClickEvent',
                             name='github_clicks')
-    s = df.mh.map.conversion_count('github_clicks')
+    s = df.mh.map.conversions_in_time('github_clicks')
 
     assert_equals_data(
         s,

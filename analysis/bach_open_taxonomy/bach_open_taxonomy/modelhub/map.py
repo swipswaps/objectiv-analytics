@@ -91,7 +91,7 @@ class Map:
         window = self._df.groupby(partition).window(end_boundary=WindowFrameBoundary.FOLLOWING)
         converted = window['__conversions'].max()
 
-        self._df.drop(columns=['__conversions'], inplace = True)
+        self._df = self._df.drop(columns=['__conversions'])
 
         return converted
 
