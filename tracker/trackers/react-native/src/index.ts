@@ -88,6 +88,7 @@ export * from './trackedComponents/TrackedModal';
 export * from './trackedComponents/TrackedPressable';
 export * from './trackedComponents/TrackedSafeAreaView';
 export * from './trackedComponents/TrackedScrollView';
+export * from './trackedComponents/TrackedSectionList';
 export * from './trackedComponents/TrackedSwitch';
 export * from './trackedComponents/TrackedText';
 export * from './trackedComponents/TrackedTextInput';
