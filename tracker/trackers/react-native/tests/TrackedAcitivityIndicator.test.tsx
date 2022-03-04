@@ -32,7 +32,7 @@ describe('TrackedActivityIndicator', () => {
     LocationTree.clear();
   });
 
-  it('should not track VisibleEvent or HiddenEvent when visible is undefined', () => {
+  it('should not track VisibleEvent nor HiddenEvent when visible is undefined', () => {
     const { rerender } = render(<TestTrackedActivityIndicator id={'test-activity-indicator'} />);
 
     expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));

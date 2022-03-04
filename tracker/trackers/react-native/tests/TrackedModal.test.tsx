@@ -32,7 +32,7 @@ describe('TrackedModal', () => {
     LocationTree.clear();
   });
 
-  it('should not track VisibleEvent or HiddenEvent when visible is undefined', () => {
+  it('should not track VisibleEvent nor HiddenEvent when visible is undefined', () => {
     const { rerender } = render(<TestTrackedModal id={'test-modal'} />);
 
     expect(spyTransport.handle).not.toHaveBeenCalledWith(expect.objectContaining({ _type: 'VisibleEvent' }));
