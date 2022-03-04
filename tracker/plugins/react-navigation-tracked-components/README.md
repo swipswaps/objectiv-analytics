@@ -1,7 +1,6 @@
 # Objectiv React Navigation Native Tracked Components
 
-# TODO
-This package contains automatically tracked `Link`, `TODO` native components from React Navigation v6.
+This package contains an automatically tracked `Link` native component from React Navigation v6.
 
 ---
 ## Package Installation

@@ -56,6 +56,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "dependencies": {
+    "@objectiv/tracker-core": "^0.0.13",
     "@objectiv/tracker-react-native": "^0.0.13"
   },
   "devDependencies": {
@@ -77,6 +78,7 @@
   },
   "peerDependencies": {
     "@react-navigation/native": ">=6",
+    "react": ">=16.8",
     "react-native": ">=0.66"
   }
 }
