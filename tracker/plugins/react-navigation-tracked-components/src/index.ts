@@ -3,3 +3,4 @@
  */
 
 export * from './TrackedLink';
+export * from './TrackedNavigationContainer';
