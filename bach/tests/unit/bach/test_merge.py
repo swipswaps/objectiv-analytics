@@ -1,14 +1,13 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import List
-
 import pytest
 
-from bach import DataFrame, get_series_type_from_dtype
-from bach.expression import Expression, RawToken
-from bach.merge import _determine_merge_on, _determine_result_columns, ResultSeries, merge, How, MergeOn, \
-    _verify_on_conflicts, _resolve_conditional_expression_references, _resolve_nested_expression_references
+from bach.expression import Expression
+from bach.merge import (
+    _determine_merge_on, _determine_result_columns, ResultSeries, merge, How, MergeOn,
+    _verify_on_conflicts, _resolve_merge_expression_references
+)
 from tests.unit.bach.util import get_fake_df
 
 
@@ -126,6 +125,7 @@ def test__determine_merge_on_w_conditional() -> None:
     assert call__determine_merge_on(left, right, on=[series_bool], left_index=True, right_index=True) == \
            MergeOn(['a'], ['a'], [series_bool])
 
+
 def test__determine_result_columns():
     left = get_fake_df(['a'], ['b', 'c'], 'int64')
     right = get_fake_df(['a'], ['c', 'd'], 'float64')
@@ -134,21 +134,21 @@ def test__determine_result_columns():
         [
             ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
         ], [
-            ResultSeries(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
-            ResultSeries(name='c_x', expression=Expression.construct('"l"."c"'), dtype='int64'),
-            ResultSeries(name='c_y', expression=Expression.construct('"r"."c"'), dtype='float64'),
-            ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
+            ResultSeries(name='b', expression=Expression.table_column_reference('l', 'b'), dtype='int64'),
+            ResultSeries(name='c_x', expression=Expression.table_column_reference('l', 'c'), dtype='int64'),
+            ResultSeries(name='c_y', expression=Expression.table_column_reference('r', 'c'), dtype='float64'),
+            ResultSeries(name='d', expression=Expression.table_column_reference('r', 'd'), dtype='float64')
         ]
     )
     result = _determine_result_columns(left, right, MergeOn(['c'], ['c'], []), ('_x', '_y'))
     assert result == (
         [
-            ResultSeries(name='a_x', expression=Expression.construct('"l"."a"'), dtype='int64'),
-            ResultSeries(name='a_y', expression=Expression.construct('"r"."a"'), dtype='float64'),
+            ResultSeries(name='a_x', expression=Expression.table_column_reference('l', 'a'), dtype='int64'),
+            ResultSeries(name='a_y', expression=Expression.table_column_reference('r', 'a'), dtype='float64'),
         ], [
-            ResultSeries(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
+            ResultSeries(name='b', expression=Expression.table_column_reference('l', 'b'), dtype='int64'),
             ResultSeries(name='c', expression=Expression.construct('COALESCE("l"."c", "r"."c")'), dtype='int64'),
-            ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
+            ResultSeries(name='d', expression=Expression.table_column_reference('r', 'd'), dtype='float64')
         ]
     )
     result = _determine_result_columns(left, right, MergeOn(['a', 'c'], ['a', 'c'], []), ('_x', '_y'))
@@ -156,9 +156,9 @@ def test__determine_result_columns():
         [
             ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
         ], [
-            ResultSeries(name='b', expression=Expression.construct('"l"."b"'), dtype='int64'),
+            ResultSeries(name='b', expression=Expression.table_column_reference('l', 'b'), dtype='int64'),
             ResultSeries(name='c', expression=Expression.construct('COALESCE("l"."c", "r"."c")'), dtype='int64'),
-            ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
+            ResultSeries(name='d', expression=Expression.table_column_reference('r', 'd'), dtype='float64')
         ]
     )
 
@@ -296,28 +296,58 @@ def test_verify_on_conflicts_conditional() -> None:
         )
 
 
-def test_resolve_conditional_expression_references() -> None:
+def test_resolve_merge_expression_references() -> None:
     left = get_fake_df(['a'], ['b', 'd'], 'float64')
     right = get_fake_df(['a'], ['c', 'd'], 'float64').materialize()
-    bool_series = left['b'] / right['c'] * left['d'] > right['d']
 
+    bool_series = left['d'] > right['d']
+    expected = '"l"."d" > "r"."d"'
+    result = _resolve_merge_expression_references(
+        left_node=left.base_node,
+        right_node=right.base_node,
+        node=bool_series.base_node,
+        expr=bool_series.expression,
+    ).to_sql()
+    assert expected == result
+
+    bool_series = left['b'] / right['c'] * left['d'] > right['d']
     expected = '"l"."b" / "r"."c" * "l"."d" > "r"."d"'
-    result = _resolve_conditional_expression_references(left, right, [bool_series])[0].to_sql()
+    result = _resolve_merge_expression_references(
+        left_node=left.base_node,
+        right_node=right.base_node,
+        node=bool_series.base_node,
+        expr=bool_series.expression,
+    ).to_sql()
     assert expected == result
 
     bool_series = left['b'] / right['c'] * left['d'] > 10
     expected = '("l"."b" / "r"."c" * "l"."d") > cast(10 as bigint)'
-    result = _resolve_conditional_expression_references(left, right, [bool_series])[0].to_sql()
+    result = _resolve_merge_expression_references(
+        left_node=left.base_node,
+        right_node=right.base_node,
+        node=bool_series.base_node,
+        expr=bool_series.expression,
+    ).to_sql()
     assert expected == result
 
     bool_series = (left['b'] > right['c']) | (left['d'] < right['d'])
     expected = '("l"."b" > "r"."c") OR ("l"."d" < "r"."d")'
-    result = _resolve_conditional_expression_references(left, right, [bool_series])[0].to_sql()
+    result = _resolve_merge_expression_references(
+        left_node=left.base_node,
+        right_node=right.base_node,
+        node=bool_series.base_node,
+        expr=bool_series.expression,
+    ).to_sql()
     assert expected == result
 
     bool_series = (right['d'] + right['d']) / left['d'] > right['d'] / right['d']
     expected = '"r"."d" + "r"."d" / "l"."d" > "r"."d" / "r"."d"'
-    result = _resolve_conditional_expression_references(left, right, [bool_series])[0].to_sql()
+    result = _resolve_merge_expression_references(
+        left_node=left.base_node,
+        right_node=right.base_node,
+        node=bool_series.base_node,
+        expr=bool_series.expression,
+    ).to_sql()
     assert expected == result
 
 
@@ -326,7 +356,12 @@ def test_resolve_nested_expression_references_error() -> None:
     right = get_fake_df(['a'], ['c', 'd'], 'float64').materialize()
     bool_series = right['c'].copy_override_dtype(dtype=bool)
     with pytest.raises(Exception, match=r'has no valid column reference'):
-        _resolve_nested_expression_references(left, right, bool_series, 'a')
+        _resolve_merge_expression_references(
+            left_node=left.base_node,
+            right_node=left.base_node,
+            node=bool_series.base_node,
+            expr=bool_series.expression,
+        )
 
 
 def call__determine_merge_on(

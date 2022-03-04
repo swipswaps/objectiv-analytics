@@ -35,14 +35,12 @@ class BachSqlModel(SqlModel[T]):
         references: Mapping[str, 'SqlModel'],
         materialization: Materialization,
         materialization_name: Optional[str],
-        columns: Tuple[str, ...],
         column_expressions: Dict[str, Expression],
     ):
         """
         Similar to :py:meth:`SqlModel.__init__()`. With one additional parameter: columns, the names of the
         columns that this model's query will return in the correct order.
         """
-        self._columns = columns
         self._column_expressions = column_expressions
         super().__init__(
             model_spec=model_spec,
@@ -55,7 +53,7 @@ class BachSqlModel(SqlModel[T]):
     @property
     def columns(self) -> Tuple[str, ...]:
         """ Columns returned by the query of this model, in order."""
-        return self._columns
+        return tuple(self.column_expressions.keys())
 
     @property
     def column_expressions(self) -> Dict[str, Expression]:
@@ -84,13 +82,12 @@ class BachSqlModel(SqlModel[T]):
             references=self.references if references is None else references,
             materialization=self.materialization if materialization is None else materialization,
             materialization_name=materialization_name_value,
-            columns=self.columns if columns is None else columns,
             column_expressions=self.column_expressions if column_expressions is None else column_expressions,
         )
 
     @classmethod
     def from_sql_model(
-        cls, sql_model: SqlModel, columns: Tuple[str, ...], column_expressions: Dict[str, Expression],
+        cls, sql_model: SqlModel, column_expressions: Dict[str, Expression],
     ) -> 'BachSqlModel':
         """ From any SqlModel create a BachSqlModel with the given column definitions. """
         return cls(
@@ -99,7 +96,6 @@ class BachSqlModel(SqlModel[T]):
             references=sql_model.references,
             materialization=sql_model.materialization,
             materialization_name=sql_model.materialization_name,
-            columns=columns,
             column_expressions=column_expressions,
         )
 
@@ -132,7 +128,6 @@ class SampleSqlModel(BachSqlModel):
         references: Mapping[str, 'SqlModel'],
         materialization: Materialization,
         materialization_name: Optional[str],
-        columns: Tuple[str, ...],
         column_expressions: Dict[str, Expression],
         previous: BachSqlModel,
     ) -> None:
@@ -143,7 +138,6 @@ class SampleSqlModel(BachSqlModel):
             references=references,
             materialization=materialization,
             materialization_name=materialization_name,
-            columns=columns,
             column_expressions=column_expressions,
         )
 
@@ -170,7 +164,6 @@ class SampleSqlModel(BachSqlModel):
             references=self.references if references is None else references,
             materialization=self.materialization if materialization is None else materialization,
             materialization_name=materialization_name_value,
-            columns=self.columns if columns is None else columns,
             column_expressions=self.column_expressions if column_expressions is None else column_expressions,
             previous=self.previous if previous is None else previous
         )
@@ -180,7 +173,6 @@ class SampleSqlModel(BachSqlModel):
         *,
         table_name: str,
         previous: BachSqlModel,
-        columns: Tuple[str, ...],
         column_expressions: Dict[str, Expression],
         name: str = 'sample_node',
     ) -> 'SampleSqlModel':
@@ -192,7 +184,6 @@ class SampleSqlModel(BachSqlModel):
             references={},
             materialization=Materialization.CTE,
             materialization_name=None,
-            columns=columns,
             column_expressions=column_expressions,
             previous=previous
         )
@@ -244,7 +235,6 @@ class CurrentNodeSqlModel(BachSqlModel):
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
-            columns=column_names,
             column_expressions={name: expr for name, expr in zip(column_names, column_exprs)}
         )
 

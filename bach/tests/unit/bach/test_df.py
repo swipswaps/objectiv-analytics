@@ -67,7 +67,6 @@ def test_init_conditions():
     columns = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
     other_base_node = BachSqlModel.from_sql_model(
         sql_model=CustomSqlModelBuilder('select * from y', name='base')(),
-        columns=columns,
         column_expressions={c: Expression.column_reference(c) for c in columns}
     )
 

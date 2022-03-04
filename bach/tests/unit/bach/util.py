@@ -19,7 +19,6 @@ def get_fake_df(
     columns = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
     base_node = BachSqlModel.from_sql_model(
         sql_model=CustomSqlModelBuilder('select * from x', name='base')(),
-        columns=columns,
         column_expressions={c: Expression.column_reference(c) for c in columns}
     )
     if isinstance(dtype, str):

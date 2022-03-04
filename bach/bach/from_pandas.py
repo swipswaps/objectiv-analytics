@@ -73,10 +73,7 @@ def from_pandas_store_table(engine: Engine,
     }
     model_builder = CustomSqlModelBuilder(sql='select * from {table_name}', name=table_name)
     sql_model = model_builder(table_name=quote_identifier(table_name))
-    bach_model = BachSqlModel.from_sql_model(
-        sql_model, columns=columns, column_expressions=column_expressions,
-    )
-
+    bach_model = BachSqlModel.from_sql_model(sql_model, column_expressions=column_expressions)
     # Should this also use _df_or_series?
     from bach.savepoints import Savepoints
     return DataFrame.get_instance(
@@ -148,9 +145,7 @@ def from_pandas_ephemeral(
 
     model_builder = CustomSqlModelBuilder(sql=sql, name=name)
     sql_model = model_builder()
-    bach_model = BachSqlModel.from_sql_model(
-        sql_model, columns=tuple(column_names), column_expressions=column_expressions,
-    )
+    bach_model = BachSqlModel.from_sql_model(sql_model, column_expressions=column_expressions)
 
     from bach.savepoints import Savepoints
     return DataFrame.get_instance(

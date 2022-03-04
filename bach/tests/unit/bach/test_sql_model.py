@@ -15,7 +15,6 @@ def test_bach_sql_model_copy():
         references={},
         materialization=Materialization.CTE,
         materialization_name=None,
-        columns=('a', 'b'),
         column_expressions={
             'a': Expression.column_reference('a'),
             'b': Expression.column_reference('b'),
