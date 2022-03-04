@@ -25,13 +25,13 @@ export type Props<ParamList extends ReactNavigation.RootParamList> = {
  */
 export type TrackedLinkProps<ParamList extends ReactNavigation.RootParamList> = Props<ParamList> & {
   /**
-   * Optional. Auto-generated from `title`. Used to set a PressableContext `id` manually.
+   * Optional. Auto-generated from `title`. Used to set a LinkContext `id` manually.
    */
   id?: string;
 };
 
 /**
- * A Link already wrapped in PressableContext automatically tracking PressEvent.
+ * A Link already wrapped in LinkContext automatically tracking PressEvent.
  */
 export function TrackedLink<ParamList extends ReactNavigation.RootParamList>(props: TrackedLinkProps<ParamList>) {
   const { id, ...linkProps } = props;
