@@ -22,7 +22,6 @@ export const useOnToggle = (
   latestFalseEffectRef.current = falseEffect;
 
   useEffect(() => {
-    console.log(previousStateRef.current, state)
     if (!previousStateRef.current && state) {
       trueEffect(previousStateRef.current, state);
       previousStateRef.current = state;
