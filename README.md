@@ -1,8 +1,10 @@
-![Objectiv Logo](https://objectiv.io/docs/img/logo-objectiv-large.svg "Objectiv Logo")
+![Objectiv Logo](./assets/img/logo-objectiv-large.svg#gh-light-mode-only "Objectiv Logo")
+![Objectiv Logo](./assets/img/logo-objectiv-large.svg#gh-dark-mode-only "Objectiv Logo")
 
 **Objectiv** enables you to collect model-ready data and run your entire product analytics workflow straight from your notebook. It's designed to skip the typical grunt work: no tracking plans, data cleaning and transformations are required. Just open your notebook and start modeling right away with pandas-like operations that run on the full SQL dataset.
 
-![Objectiv Stack](https://www.objectiv.io/docs/img/objectiv-stack.svg "Objectiv Stack")
+![Objectiv Stack](./assets/img/objectiv-stack.svg#gh-light-mode-only "Objectiv Stack")
+![Objectiv Stack](./assets/img/objectiv-stack.svg#gh-dark-mode-only "Objectiv Stack")
 
 It includes what you need to answer common product analytics questions with speed and precision, while
 providing a solid foundation for advanced modeling. You can output models to SQL queries with a single
