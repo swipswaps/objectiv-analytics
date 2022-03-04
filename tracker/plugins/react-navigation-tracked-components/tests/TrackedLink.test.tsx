@@ -1,8 +1,7 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
-//import { SpyTransport } from '@objectiv/testing-tools';
 import { Tracker } from '@objectiv/tracker-core';
 import {
   ContentContextWrapper,
