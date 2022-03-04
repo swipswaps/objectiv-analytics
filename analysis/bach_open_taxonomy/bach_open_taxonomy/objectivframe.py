@@ -150,7 +150,6 @@ class ObjectivFrame(DataFrame):
         model_columns = tuple(index_dtype.keys()) + tuple(dtypes.keys())
         bach_model = BachSqlModel.from_sql_model(
             sql_model=model,
-            columns=model_columns,
             column_expressions={c: Expression.column_reference(c) for c in model_columns},
         )
 
