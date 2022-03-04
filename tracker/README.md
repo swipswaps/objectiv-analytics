@@ -8,14 +8,24 @@ Platform-specific tracker packages are available for popular frameworks such as 
 
 For installation instructions for your preferred platform, please choose a tracker package:
 
-| Name                           | Type    | Path              | Links                                              |
-|--------------------------------|---------|-------------------|----------------------------------------------------|
-| @objectiv/tracker-angular      | tracker | /trackers/angular | [README](/tracker/trackers/angular/README.md)      |
-| @objectiv/tracker-browser      | tracker | /trackers/browser | [README](/tracker/trackers/browser/README.md)      |
-| @objectiv/tracker-react        | tracker | /trackers/browser | [README](/tracker/trackers/react/README.md)        |
-| @objectiv/tracker-react-native | tracker | /trackers/browser | [README](/tracker/trackers/react-native/README.md) |
+| Name                           | Type    | Path                   | Links                                              |
+|--------------------------------|---------|------------------------|----------------------------------------------------|
+| @objectiv/tracker-angular      | tracker | /trackers/angular      | [README](/tracker/trackers/angular/README.md)      |
+| @objectiv/tracker-browser      | tracker | /trackers/browser      | [README](/tracker/trackers/browser/README.md)      |
+| @objectiv/tracker-react        | tracker | /trackers/react        | [README](/tracker/trackers/react/README.md)        |
+| @objectiv/tracker-react-native | tracker | /trackers/react-native | [README](/tracker/trackers/react-native/README.md) |
 
 For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs/tracking).
+
+### Optional Plugins
+While all trackers come preconfigured with a sensible set of plugins, some are optional:
+
+| Name                                                 | Type      | Path                                         | Links                                                                    |
+|------------------------------------------------------|-----------|----------------------------------------------|--------------------------------------------------------------------------|
+| @objectiv/plugin-react-navigation-tracked-components | plugin    | /plugins/react-navigation-tracked-components | [README](/tracker/plugins/react-navigation-tracked-components/README.md) |
+| @objectiv/plugin-react-router-tracked-components     | plugin    | /plugins/react-router-tracked-components     | [README](/tracker/plugins/react-router-tracked-components/README.md)     |
+
+These packages contain tracked components for popular third party libraries.  
 
 ## Support & Troubleshooting
 If you need help using or installing Objectiv's tracker, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
