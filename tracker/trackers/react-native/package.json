@@ -69,6 +69,7 @@
     "@objectiv/tracker-react": "^0.0.13"
   },
   "peerDependencies": {
+    "react": ">=16.8",
     "react-native": ">=0.66"
   }
 }
