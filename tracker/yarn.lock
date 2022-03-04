@@ -1819,6 +1819,7 @@ __metadata:
   resolution: "@objectiv/plugin-react-navigation-tracked-components@workspace:plugins/react-navigation-tracked-components"
   dependencies:
     "@objectiv/testing-tools": ^0.0.13
+    "@objectiv/tracker-core": ^0.0.13
     "@objectiv/tracker-react-native": ^0.0.13
     "@react-navigation/native": ^6.0.8
     "@testing-library/react-native": ^9.0.0
@@ -1836,6 +1837,7 @@ __metadata:
     typescript: ^4.5.5
   peerDependencies:
     "@react-navigation/native": ">=6"
+    react: ">=16.8"
     react-native: ">=0.66"
   languageName: unknown
   linkType: soft
