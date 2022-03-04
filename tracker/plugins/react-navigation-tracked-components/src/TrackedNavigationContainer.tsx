@@ -16,6 +16,7 @@ export function TrackedNavigationContainer(props: NavigationContainerProps) {
     const navigation = useNavigation();
     const navigationState = navigation.getState();
 
+    // TODO Remove: for debugging
     console.log(navigation, navigationState);
 
     return <RootLocationContextWrapper id={'test'}>{children}</RootLocationContextWrapper>;

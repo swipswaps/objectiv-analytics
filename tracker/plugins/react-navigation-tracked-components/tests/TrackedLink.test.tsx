@@ -4,12 +4,12 @@
 
 import { Tracker } from '@objectiv/tracker-core';
 import {
-  //ContentContextWrapper,
-  //RootLocationContextWrapper,
+  ContentContextWrapper,
+  RootLocationContextWrapper,
   TrackingContextProvider,
 } from '@objectiv/tracker-react-native';
 import { NavigationContainer } from '@react-navigation/native';
-import { createStackNavigator } from "@react-navigation/stack";
+import { createStackNavigator } from '@react-navigation/stack';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { TrackedLink, TrackedLinkProps } from '../src';
@@ -81,42 +81,58 @@ describe('TrackedLink', () => {
     });
   });
 
-  // it('should console.error if an id cannot be automatically generated', () => {
-  //   jest.spyOn(console, 'error').mockImplementation(() => {});
-  //
-  //   render(
-  //     <TrackingContextProvider tracker={tracker}>
-  //       <NavigationContainer>
-  //         <RootLocationContextWrapper id="root">
-  //           <ContentContextWrapper id="content">
-  //             <TrackedLink to="/HomeScreen">🏡</TrackedLink>
-  //           </ContentContextWrapper>
-  //         </RootLocationContextWrapper>
-  //       </NavigationContainer>
-  //     </TrackingContextProvider>
-  //   );
-  //
-  //   expect(console.error).toHaveBeenCalledTimes(1);
-  //   expect(console.error).toHaveBeenCalledWith(
-  //     '｢objectiv｣ Could not generate a valid id for PressableContext @ RootLocation:root / Content:content. Please provide the `id` property manually.'
-  //   );
-  // });
-  //
-  // it('should execute the given onPress as well', async () => {
-  //   const onPressSpy = jest.fn();
-  //
-  //   const { getByTestId } = render(
-  //     <TrackingContextProvider tracker={tracker}>
-  //       <NavigationContainer>
-  //         <TrackedLink testID="test" to="/HomeScreen" onPress={onPressSpy}>
-  //           Press me!
-  //         </TrackedLink>
-  //       </NavigationContainer>
-  //     </TrackingContextProvider>
-  //   );
-  //
-  //   fireEvent.press(getByTestId('test'));
-  //
-  //   expect(onPressSpy).toHaveBeenCalledTimes(1);
-  // });
+  it('should console.error if an id cannot be automatically generated', () => {
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    const Stack = createStackNavigator();
+    const HomeScreen = () => (
+      <ContentContextWrapper id="content">
+        <TrackedLink to="/HomeScreen">🏡</TrackedLink>
+      </ContentContextWrapper>
+    );
+    const DestinationScreen = () => <>yup</>;
+    render(
+      <TrackingContextProvider tracker={tracker}>
+        <NavigationContainer>
+          <RootLocationContextWrapper id="root">
+            <Stack.Navigator>
+              <Stack.Screen name="HomeScreen" component={HomeScreen} />
+              <Stack.Screen name="DestinationScreen" component={DestinationScreen} />
+            </Stack.Navigator>
+          </RootLocationContextWrapper>
+        </NavigationContainer>
+      </TrackingContextProvider>
+    );
+
+    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(console.error).toHaveBeenCalledWith(
+      '｢objectiv｣ Could not generate a valid id for PressableContext @ RootLocation:root / Content:content. Please provide the `id` property manually.'
+    );
+  });
+
+  it('should execute the given onPress as well', async () => {
+    const onPressSpy = jest.fn();
+
+    const Stack = createStackNavigator();
+    const HomeScreen = () => (
+      <TrackedLink testID="test" to="/HomeScreen" onPress={onPressSpy}>
+        Press me!
+      </TrackedLink>
+    );
+    const DestinationScreen = () => <>yup</>;
+    const { getByTestId } = render(
+      <TrackingContextProvider tracker={tracker}>
+        <NavigationContainer>
+          <Stack.Navigator>
+            <Stack.Screen name="HomeScreen" component={HomeScreen} />
+            <Stack.Screen name="DestinationScreen" component={DestinationScreen} />
+          </Stack.Navigator>
+        </NavigationContainer>
+      </TrackingContextProvider>
+    );
+
+    fireEvent.press(getByTestId('test'));
+
+    expect(onPressSpy).toHaveBeenCalledTimes(1);
+  });
 });
