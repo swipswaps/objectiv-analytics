@@ -38,19 +38,27 @@ def test_stack() -> None:
         ],
     )
 
-    expected_w_na = pbt.stack(dropna=False)
-    result_w_na = unstacked_bt.stack(dropna=False)
+    stacked_bt_w_na = unstacked_bt['Snits'].to_frame()
+    expected_w_na = pbt[['Snits']].stack(dropna=False)
+    result_w_na = stacked_bt_w_na.stack(dropna=False)
     pd.testing.assert_series_equal(
         expected_w_na.sort_index(),
-        result_w_na.sort_index().to_pandas(),
+        # TODO: fix sorting with a constant
+        result_w_na.to_frame().sort_index(level=0).to_pandas()['__stacked'],
         check_names=False,
         check_dtype=False,
     )
 
+    assert_equals_data(
+        result_w_na.to_frame().sort_index(level=0),
+        expected_columns=['municipality', '__stacked_index', '__stacked'],
+        expected_data=[
+            ['De Friese Meren', 'Snits', None],
+            ['Harlingen', 'Snits', None],
+            ['Leeuwarden', 'Snits', None],
+            ['Noardeast-Fryslân', 'Snits', None],
+            ['Súdwest-Fryslân', 'Snits', 33520],
+            ['Waadhoeke', 'Snits', None],
+        ],
+    )
 
-def test_stack_error() -> None:
-    bt = get_bt_with_test_data(full_data_set=True)[['city', 'municipality', 'inhabitants']]
-    bt = bt.set_index(['city', 'municipality'])['inhabitants'].unstack()
-
-    with pytest.raises(NotImplementedError, match='column axis supports only one level.'):
-        bt.stack(level=0)

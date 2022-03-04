@@ -1560,7 +1560,7 @@ class DataFrame:
         :returns: a new DataFrame with the specified ordering,
          otherwise it updates the original and returns None.
         """
-        sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
+        sort_by = self.index_columns if level is None else self._get_indexes_by_level(level)
         df = self.sort_values(by=sort_by, ascending=ascending)
         return df
 
@@ -2760,29 +2760,28 @@ class DataFrame:
             )
         return subset
 
-    def stack(self, *, level: int = -1, dropna: bool = True) -> 'Series':
+    def stack(self, dropna: bool = True) -> 'Series':
         """
         Stacks all data_columns into a single index series.
 
-        :param level: only ``level=-1`` is supported, column axis supports only single levels.
         :param dropna: Whether to drop rows that contain missing values. If the caller has
             at least an index series, this might generate different combinations between
             the index and the stacked values.
 
         :return: a reshaped series that includes a new index containing the caller's column labels as values.
-        """
-        if level != -1:
-            raise NotImplementedError('column axis supports only one level.')
 
+        .. note::
+            ``level`` parameter is not supported since multilevel columns are not allowed.
+        """
         df = self.copy()
         if df.group_by:
             df = df.materialize()
 
         dc_dfs = []
         # convert each data column series to DataFrame and use series name as new index value
-        for dc in df.data_columns:
-            dc_df = df.all_series[dc].copy_override(name='__stacked').to_frame()
-            dc_df[f'__stacked_index'] = dc
+        for series_name, series in df._data.items():
+            dc_df = df.all_series[series_name].copy_override(name='__stacked').to_frame()
+            dc_df['__stacked_index'] = series_name
             dc_dfs.append(dc_df)
 
         # concat all dataframes to get new_index and stacked values in two single series
