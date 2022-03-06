@@ -28,31 +28,46 @@ describe('TrackedLink', () => {
   const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
   const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
 
-  const cases: [TrackedLinkProps<TestParamList>, { id: string; href: string }][] = [
+  const cases: [
+    TrackedLinkProps<TestParamList>,
+    { id: string; href: string }, // LinkContext
+    { id: string }, // RootLocationContext
+    { id: string } // PathContext
+  ][] = [
     [
       { to: '/DestinationScreen', children: 'test' },
       { id: 'test', href: '/DestinationScreen' },
+      { id: 'HomeScreen' },
+      { id: '/' },
     ],
     [
       { to: '/DestinationScreen', children: 'test', id: 'custom-id' },
       { id: 'custom-id', href: '/DestinationScreen' },
+      { id: 'HomeScreen' },
+      { id: '/' },
     ],
     [
       { to: '/DestinationScreen', children: '', id: 'custom-id' },
       { id: 'custom-id', href: '/DestinationScreen' },
+      { id: 'HomeScreen' },
+      { id: '/' },
     ],
     [
       { to: { screen: 'DestinationScreen' }, children: 'test' },
       { id: 'test', href: '/DestinationScreen' },
+      { id: 'HomeScreen' },
+      { id: '/' },
     ],
     [
       { to: { screen: 'DestinationScreen', params: { parameter: 123 } }, children: 'test' },
       { id: 'test', href: '/DestinationScreen?parameter=123' },
+      { id: 'HomeScreen' },
+      { id: '/' },
     ],
   ];
 
-  cases.forEach(([linkProps, expectedAttributes]) => {
-    it(`props: ${JSON.stringify(linkProps)} > LinkContext: ${JSON.stringify(expectedAttributes)}`, () => {
+  cases.forEach(([linkProps, linkContext, rootLocationContext, pathContext]) => {
+    it(`props: ${JSON.stringify(linkProps)} > LinkContext: ${JSON.stringify(linkContext)}`, () => {
       const Stack = createStackNavigator();
       const HomeScreen = () => <TrackedLink {...linkProps} testID="test" />;
       const DestinationScreen = () => <>yup</>;
@@ -76,11 +91,21 @@ describe('TrackedLink', () => {
           location_stack: [
             expect.objectContaining({
               _type: 'RootLocationContext',
-              id: 'HomeScreen',
+              ...rootLocationContext,
             }),
             expect.objectContaining({
               _type: 'LinkContext',
-              ...expectedAttributes,
+              ...linkContext,
+            }),
+          ],
+          global_contexts: [
+            expect.objectContaining({
+              _type: 'PathContext',
+              ...pathContext,
+            }),
+            expect.objectContaining({
+              _type: 'ApplicationContext',
+              id: 'app-id',
             }),
           ],
         })

@@ -8,7 +8,7 @@ import { findFocusedRoute, useNavigation } from '@react-navigation/native';
 /**
  * This hook uses React Navigation APIs to factor a RootLocationContext.
  */
-export const useRootLocationContextFromNavigation = () => {
+export const useRootLocationContextFromNavigationState = () => {
   const navigationState = useNavigation().getState();
   const currentRoute = findFocusedRoute(navigationState);
 

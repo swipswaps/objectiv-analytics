@@ -9,7 +9,8 @@ import { getPathFromState, Link } from '@react-navigation/native';
 import { To } from '@react-navigation/native/lib/typescript/src/useLinkTo';
 import React from 'react';
 import { GestureResponderEvent, TextProps } from 'react-native';
-import { useRootLocationContextFromNavigation } from './useRootLocationContextFromNavigationState';
+import { usePathContextFromNavigationState } from './usePathContextFromNavigationState';
+import { useRootLocationContextFromNavigationState } from './useRootLocationContextFromNavigationState';
 
 /**
  * The original Props type definition of React Navigation Link.
@@ -37,8 +38,9 @@ export type TrackedLinkProps<ParamList extends ReactNavigation.RootParamList> = 
 export function TrackedLink<ParamList extends ReactNavigation.RootParamList>(props: TrackedLinkProps<ParamList>) {
   const { id, ...linkProps } = props;
 
-  // Generate a RootLocationContext from React Navigation state
-  const rootLocationContext = useRootLocationContextFromNavigation();
+  // Generate RootLocationContext and PathContext from React Navigation state
+  const rootLocationContext = useRootLocationContextFromNavigationState();
+  const pathContext = usePathContextFromNavigationState();
 
   // Either use the given id or attempt to auto-detect `id` for LinkContext by looking at the `children` prop.
   const title = makeTitleFromChildren(props.children);
@@ -77,6 +79,7 @@ export function TrackedLink<ParamList extends ReactNavigation.RootParamList>(pro
             trackPressEvent({
               tracker,
               locationStack: [rootLocationContext, ...locationStack],
+              globalContexts: [pathContext],
             });
             props.onPress && props.onPress(event);
           }}

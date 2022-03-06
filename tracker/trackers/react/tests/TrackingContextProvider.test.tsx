@@ -63,6 +63,12 @@ describe('TrackingContextProvider', () => {
                 once: true,
                 position: 0,
               }),
+              new GlobalContextValidationRule({
+                console: undefined,
+                logPrefix: 'OpenTaxonomyValidationPlugin',
+                contextName: 'PathContext',
+                once: true,
+              }),
             ],
           },
         ],

@@ -7,6 +7,7 @@ import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerPluginConfig, TrackerPluginInterface } from '../TrackerPluginInterface';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
+import { GlobalContextValidationRule } from '../validationRules/GlobalContextValidationRule';
 import { LocationContextValidationRule } from '../validationRules/LocationContextValidationRule';
 
 /**
@@ -29,6 +30,12 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
         contextName: 'RootLocationContext',
         once: true,
         position: 0,
+      }),
+      new GlobalContextValidationRule({
+        console: this.console,
+        logPrefix: this.pluginName,
+        contextName: 'PathContext',
+        once: true,
       }),
     ];
 

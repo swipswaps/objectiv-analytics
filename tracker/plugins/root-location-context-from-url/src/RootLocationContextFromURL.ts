@@ -16,7 +16,6 @@ export type RootLocationContextFromURLPluginConfig = TrackerPluginConfig & {
 
 /**
  * The RootLocationContextFromURL Plugin factors a RootLocationContext out of the first slug of the current URL.
- * Event Validation: Must be present in Location Stack once at position 0.
  */
 export class RootLocationContextFromURLPlugin implements TrackerPluginInterface {
   readonly console?: TrackerConsole;
