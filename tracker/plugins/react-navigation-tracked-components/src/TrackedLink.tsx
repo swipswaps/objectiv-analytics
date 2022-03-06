@@ -2,15 +2,19 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
-import { LinkContextWrapper, makeTitleFromChildren, trackPressEvent, useLocationStack } from '@objectiv/tracker-react';
+import { getLocationPath, makeIdFromString, makePathContext } from '@objectiv/tracker-core';
+import {
+  LinkContextWrapper,
+  makeRootLocationContext,
+  makeTitleFromChildren,
+  trackPressEvent,
+  useLocationStack,
+} from '@objectiv/tracker-react';
 import { NavigationAction } from '@react-navigation/core';
-import { getPathFromState, Link } from '@react-navigation/native';
+import { findFocusedRoute, getPathFromState, Link, useNavigation } from '@react-navigation/native';
 import { To } from '@react-navigation/native/lib/typescript/src/useLinkTo';
 import React from 'react';
 import { GestureResponderEvent, TextProps } from 'react-native';
-import { usePathContextFromNavigationState } from './usePathContextFromNavigationState';
-import { useRootLocationContextFromNavigationState } from './useRootLocationContextFromNavigationState';
 
 /**
  * The original Props type definition of React Navigation Link.
@@ -39,8 +43,10 @@ export function TrackedLink<ParamList extends ReactNavigation.RootParamList>(pro
   const { id, ...linkProps } = props;
 
   // Generate RootLocationContext and PathContext from React Navigation state
-  const rootLocationContext = useRootLocationContextFromNavigationState();
-  const pathContext = usePathContextFromNavigationState();
+  const navigationState = useNavigation().getState();
+  const currentRoute = findFocusedRoute(navigationState);
+  const pathContext = makePathContext({ id: currentRoute?.path ?? '/' });
+  const rootLocationContext = makeRootLocationContext({ id: currentRoute?.name ?? 'home' });
 
   // Either use the given id or attempt to auto-detect `id` for LinkContext by looking at the `children` prop.
   const title = makeTitleFromChildren(props.children);

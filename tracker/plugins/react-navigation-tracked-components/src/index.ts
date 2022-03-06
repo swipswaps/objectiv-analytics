@@ -3,4 +3,3 @@
  */
 
 export * from './TrackedLink';
-export * from './useRootLocationContextFromNavigationState';
