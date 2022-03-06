@@ -1,12 +1,9 @@
 import {
   ContextsConfig,
-  LocationContextValidationRule,
   makeRootLocationContext,
   TrackerConsole,
-  TrackerEvent,
   TrackerPluginConfig,
   TrackerPluginInterface,
-  TrackerValidationRuleInterface,
 } from '@objectiv/tracker-core';
 import { makeRootLocationId } from './makeRootLocationId';
 
@@ -25,23 +22,13 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
   readonly console?: TrackerConsole;
   readonly pluginName = `RootLocationContextFromURLPlugin`;
   readonly idFactoryFunction: typeof makeRootLocationId;
-  readonly validationRules: TrackerValidationRuleInterface[];
 
   /**
-   * The constructor is merely responsible for processing the given TrackerPluginConfiguration `console` parameter.
+   * The constructor is responsible for processing the given TrackerPluginConfiguration and initializing validation.
    */
   constructor(config?: RootLocationContextFromURLPluginConfig) {
     this.console = config?.console;
     this.idFactoryFunction = config?.idFactoryFunction ?? makeRootLocationId;
-    this.validationRules = [
-      new LocationContextValidationRule({
-        console: this.console,
-        logPrefix: this.pluginName,
-        contextName: 'RootLocationContext',
-        once: true,
-        position: 0,
-      }),
-    ];
 
     if (this.console) {
       this.console.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
@@ -61,15 +48,6 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
         `%c｢objectiv:${this.pluginName}｣ Could not generate a RootLocationContext from "${location.pathname}"`,
         'font-weight: bold'
       );
-    }
-  }
-
-  /**
-   * If the Plugin is usable runs all validation rules.
-   */
-  validate(event: TrackerEvent): void {
-    if (this.isUsable()) {
-      this.validationRules.forEach((validationRule) => validationRule.validate(event));
     }
   }
 

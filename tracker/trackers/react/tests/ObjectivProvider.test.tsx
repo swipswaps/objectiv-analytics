@@ -2,7 +2,12 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { GlobalContextValidationRule, makeApplicationLoadedEvent, Tracker } from '@objectiv/tracker-core';
+import {
+  GlobalContextValidationRule,
+  LocationContextValidationRule,
+  makeApplicationLoadedEvent,
+  Tracker,
+} from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { ObjectivProvider, useTrackingContext } from '../src';
@@ -47,6 +52,15 @@ describe('ObjectivProvider', () => {
           {
             console: undefined,
             pluginName: 'OpenTaxonomyValidationPlugin',
+            validationRules: [
+              new LocationContextValidationRule({
+                console: undefined,
+                logPrefix: 'OpenTaxonomyValidationPlugin',
+                contextName: 'RootLocationContext',
+                once: true,
+                position: 0,
+              }),
+            ],
           },
         ],
       },
