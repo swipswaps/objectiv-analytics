@@ -3,4 +3,4 @@
  */
 
 export * from './TrackedLink';
-export * from './TrackedNavigationContainer';
+export * from './useRootLocationContextFromNavigationState';

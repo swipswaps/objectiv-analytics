@@ -2,9 +2,10 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { Tracker } from '@objectiv/tracker-core';
+import { mockConsole } from '@objectiv/testing-tools';
 import {
   ContentContextWrapper,
+  ReactTracker,
   RootLocationContextWrapper,
   TrackingContextProvider,
 } from '@objectiv/tracker-react-native';
@@ -20,8 +21,12 @@ type TestParamList = {
 };
 
 describe('TrackedLink', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
-  const tracker = new Tracker({ applicationId: 'app-id', transport: spyTransport });
+  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
 
   const cases: [TrackedLinkProps<TestParamList>, { id: string; href: string }][] = [
     [
@@ -48,8 +53,6 @@ describe('TrackedLink', () => {
 
   cases.forEach(([linkProps, expectedAttributes]) => {
     it(`props: ${JSON.stringify(linkProps)} > LinkContext: ${JSON.stringify(expectedAttributes)}`, () => {
-      jest.resetAllMocks();
-
       const Stack = createStackNavigator();
       const HomeScreen = () => <TrackedLink {...linkProps} testID="test" />;
       const DestinationScreen = () => <>yup</>;
@@ -71,6 +74,10 @@ describe('TrackedLink', () => {
         expect.objectContaining({
           _type: 'PressEvent',
           location_stack: [
+            expect.objectContaining({
+              _type: 'RootLocationContext',
+              id: 'HomeScreen',
+            }),
             expect.objectContaining({
               _type: 'LinkContext',
               ...expectedAttributes,
@@ -134,5 +141,37 @@ describe('TrackedLink', () => {
     fireEvent.press(getByTestId('test'));
 
     expect(onPressSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('should fallback to RootLocationContext:home when a route cannot be detected', async () => {
+    const { getByTestId } = render(
+      <TrackingContextProvider tracker={tracker}>
+        <NavigationContainer>
+          <TrackedLink testID="test" to="/HomeScreen">
+            Press me!
+          </TrackedLink>
+        </NavigationContainer>
+      </TrackingContextProvider>
+    );
+
+    fireEvent.press(getByTestId('test'));
+
+    expect(spyTransport.handle).toHaveBeenCalledTimes(1);
+    expect(spyTransport.handle).toHaveBeenCalledWith(
+      expect.objectContaining({
+        _type: 'PressEvent',
+        location_stack: [
+          expect.objectContaining({
+            _type: 'RootLocationContext',
+            id: 'home',
+          }),
+          expect.objectContaining({
+            _type: 'LinkContext',
+            id: 'press-me',
+            href: '/HomeScreen',
+          }),
+        ],
+      })
+    );
   });
 });
