@@ -62,3 +62,27 @@ def test_stack() -> None:
         ],
     )
 
+
+def test_stack_diff_types() -> None:
+    bt = get_bt_with_test_data(full_data_set=False)[['city', 'inhabitants']]
+    pbt = bt.to_pandas()
+
+    result = bt.stack().sort_index()
+    pd.testing.assert_series_equal(
+        pbt.stack().sort_index().astype(str),
+        result.to_pandas(),
+        check_names=False,
+    )
+
+    assert_equals_data(
+        result,
+        expected_columns=['_index_skating_order', '__stacked_index', '__stacked'],
+        expected_data=[
+            [1, 'city', 'Ljouwert'],
+            [1, 'inhabitants', '93485'],
+            [2, 'city', 'Snits'],
+            [2, 'inhabitants', '33520'],
+            [3, 'city', 'Drylts'],
+            [3, 'inhabitants', '3055'],
+        ],
+    )

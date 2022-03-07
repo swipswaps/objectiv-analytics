@@ -2775,12 +2775,12 @@ class DataFrame:
         """
         df = self.copy()
         if df.group_by:
-            df = df.materialize()
+            df = df.materialize('stack')
 
         dc_dfs = []
         # convert each data column series to DataFrame and use series name as new index value
-        for series_name, series in df._data.items():
-            dc_df = df.all_series[series_name].copy_override(name='__stacked').to_frame()
+        for series_name, series in df.data.items():
+            dc_df = series.copy_override(name='__stacked').to_frame()
             dc_df['__stacked_index'] = series_name
             dc_dfs.append(dc_df)
 
