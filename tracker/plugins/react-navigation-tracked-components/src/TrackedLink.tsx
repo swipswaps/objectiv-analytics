@@ -2,19 +2,15 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { getLocationPath, makeIdFromString, makePathContext } from '@objectiv/tracker-core';
-import {
-  LinkContextWrapper,
-  makeRootLocationContext,
-  makeTitleFromChildren,
-  trackPressEvent,
-  useLocationStack,
-} from '@objectiv/tracker-react';
+import { getLocationPath } from '@objectiv/tracker-core';
+import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react';
 import { NavigationAction } from '@react-navigation/core';
-import { findFocusedRoute, getPathFromState, Link, useNavigation } from '@react-navigation/native';
+import { Link } from '@react-navigation/native';
 import { To } from '@react-navigation/native/lib/typescript/src/useLinkTo';
 import React from 'react';
 import { GestureResponderEvent, TextProps } from 'react-native';
+import { makeLinkContextProps } from "./makeLinkContextProps";
+import { usePressEventTracker } from './usePressEventTracker';
 
 /**
  * The original Props type definition of React Navigation Link.
@@ -42,30 +38,11 @@ export type TrackedLinkProps<ParamList extends ReactNavigation.RootParamList> = 
 export function TrackedLink<ParamList extends ReactNavigation.RootParamList>(props: TrackedLinkProps<ParamList>) {
   const { id, ...linkProps } = props;
 
-  // Generate RootLocationContext and PathContext from React Navigation state
-  const navigationState = useNavigation().getState();
-  const currentRoute = findFocusedRoute(navigationState);
-  const pathContext = makePathContext({ id: currentRoute?.path ?? '/' });
-  const rootLocationContext = makeRootLocationContext({ id: currentRoute?.name ?? 'home' });
+  // Generate onPress event handler automatically generating RootLocationContext and PathContext for us.
+  const trackPressEvent = usePressEventTracker();
 
-  // Either use the given id or attempt to auto-detect `id` for LinkContext by looking at the `children` prop.
-  const title = makeTitleFromChildren(props.children);
-  const contextId = id ?? makeIdFromString(title);
-
-  // Use React Navigation `getPathFromState` to generate the `href` prop. Unless it was already a string.
-  let contextHref: string;
-  if (typeof linkProps.to === 'string') {
-    contextHref = props.to as string;
-  } else {
-    contextHref = getPathFromState({
-      routes: [
-        {
-          name: linkProps.to.screen,
-          params: linkProps.to.params as {},
-        },
-      ],
-    });
-  }
+  // Generate LinkContext props from props.
+  const { contextId, contextHref } = makeLinkContextProps(props);
 
   // If we couldn't generate an `id`, log the issue and return an untracked Component.
   const locationPath = getLocationPath(useLocationStack());
@@ -78,15 +55,11 @@ export function TrackedLink<ParamList extends ReactNavigation.RootParamList>(pro
 
   return (
     <LinkContextWrapper id={contextId} href={contextHref}>
-      {({ tracker, locationStack }) => (
+      {(trackingContext) => (
         <Link<ParamList>
           {...linkProps}
           onPress={(event) => {
-            trackPressEvent({
-              tracker,
-              locationStack: [rootLocationContext, ...locationStack],
-              globalContexts: [pathContext],
-            });
+            trackPressEvent(trackingContext);
             props.onPress && props.onPress(event);
           }}
         />
