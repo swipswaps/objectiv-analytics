@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 import pytest
 
 from bach.dataframe import DtypeNamePair, DefinedVariable, DataFrame
+from sql_models.model import CustomSqlModelBuilder
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
     get_bt_with_food_data
 
@@ -224,7 +225,8 @@ def test_get_all_variable_usage():
         DefinedVariable(name='first', dtype='int64', value=1234, ref_path=('prev',), old_value='1234')
     ]
 
-    df2 = DataFrame.from_model(engine=df1.engine, model=df1.base_node, index=list(df1.index.keys()))
+    sql_model = CustomSqlModelBuilder(sql='select * from {{model}}')(model=df1.base_node)
+    df2 = DataFrame.from_model(engine=df1.engine, model=sql_model, index=list(df1.index.keys()))
     # df2 a base_node that has one SqlModel after the df1.base_node.
     # df2 has the same variables in the base_node as df1, but it doesn't actually have the values defined.
     assert df2.get_all_variable_usage() == [
