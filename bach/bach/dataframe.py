@@ -1590,7 +1590,7 @@ class DataFrame:
         :returns: a new DataFrame with the specified ordering,
          otherwise it updates the original and returns None.
         """
-        sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
+        sort_by = self.index_columns if level is None else self._get_indexes_by_level(level)
         df = self.sort_values(by=sort_by, ascending=ascending)
         return df
 
@@ -2789,6 +2789,40 @@ class DataFrame:
                 f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
             )
         return subset
+
+    def stack(self, dropna: bool = True) -> 'Series':
+        """
+        Stacks all data_columns into a single index series.
+
+        :param dropna: Whether to drop rows that contain missing values. If the caller has
+            at least an index series, this might generate different combinations between
+            the index and the stacked values.
+
+        :return: a reshaped series that includes a new index (named "__stacked_index")
+            containing the caller's column labels as values.
+        .. note::
+            ``level`` parameter is not supported since multilevel columns are not allowed.
+        """
+        df = self.copy()
+        if df.group_by:
+            df = df.materialize('stack')
+
+        dc_dfs = []
+        # convert each data column series to DataFrame and use series name as new index value
+        for series_name, series in df.data.items():
+            dc_df = series.copy_override(name='__stacked').to_frame()
+            dc_df['__stacked_index'] = series_name
+            dc_dfs.append(dc_df)
+
+        # concat all dataframes to get new_index and stacked values in two single series
+        from bach.operations.concat import DataFrameConcatOperation
+        stacked_df = DataFrameConcatOperation(dc_dfs)()
+
+        # append the stacked index to the initial indexes
+        stacked_df = stacked_df.set_index(list(self.index_columns + ['__stacked_index']))
+        stacked_df = stacked_df.dropna() if dropna else stacked_df
+
+        return stacked_df.all_series['__stacked']
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
