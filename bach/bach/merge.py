@@ -1,6 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+from collections import defaultdict
 from copy import copy
 from enum import Enum
 from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
@@ -126,33 +127,47 @@ def _determine_result_columns(
     Determine which columns should be in the DataFrame after merging left and right, with the given
     left_on and right_on values.
     """
-    filter_columns_from_right = _get_filter_columns_from_right(left_on, right_on)
-    left_index = left.index
-    if right.index:
-        right_index = {
-            label: series for label, series in right.index.items()
-            if label not in filter_columns_from_right
-        }
-    else:
-        right_index = {}
-
-    left_data = left.data
-    if isinstance(right, DataFrame):
-        right_data = right.data
-    elif isinstance(right, Series):
-        right_data = {right.name: right}
-    else:
+    if not isinstance(right, (DataFrame, Series)):
         raise TypeError(f'Right should be DataFrameOrSeries type: {type(right)}')
-    right_data = {
-        label: series for label, series in right_data.items()
-        if label not in filter_columns_from_right
-    }
 
-    conflicting = set({**left_index, **left_data}.keys()).intersection(set({**right_index, **right_data}))
-    new_index_list = _get_column_name_expr_dtype(left_index, conflicting, suffixes[0], 'l')
-    new_index_list += _get_column_name_expr_dtype(right_index, conflicting, suffixes[1], 'r')
-    new_data_list = _get_column_name_expr_dtype(left_data, conflicting, suffixes[0], 'l')
-    new_data_list += _get_column_name_expr_dtype(right_data, conflicting, suffixes[1], 'r')
+    left_df = left.copy()
+    right_df = right.copy() if isinstance(right, DataFrame) else right.to_frame()
+
+    conflicting_on = {l_on for l_on, r_on in zip(left_on, right_on) if l_on == r_on}
+    conflicting = (
+        (set(left_df.index) | set(left_df.data)) & (set(right_df.index) | set(right_df.data))
+    )
+    # don't add suffixes to conflicted on columns
+    # need to consider values from both objects (important when how = How.outer)
+    conflicting -= conflicting_on
+
+    # left dataframe has priority over index and data columns
+    # final shared index and data series are based on left dataframe structure
+    right_index = {}
+    right_data = {}
+    for series_name, series in right_df.all_series.items():
+        data_columns = left_df.data_columns if series_name in conflicting_on else right_df.data_columns
+        if series_name in data_columns:
+            right_data[series_name] = series
+        else:
+            right_index[series_name] = series
+
+    new_index_list = _get_merged_result_series(
+        left_series=left_df.index,
+        right_series=right_index,
+        suffixes=suffixes,
+        conflicting_names=conflicting,
+        conflicting_on=conflicting_on,
+    )
+
+    new_data_list = _get_merged_result_series(
+        left_series=left_df.data,
+        right_series=right_data,
+        suffixes=suffixes,
+        conflicting_names=conflicting,
+        conflicting_on=conflicting_on,
+    )
+
     _check_no_column_name_conflicts(new_index_list + new_data_list)
     return new_index_list, new_data_list
 
@@ -166,54 +181,49 @@ def _check_no_column_name_conflicts(result_columns: List[ResultSeries]):
         seen.add(rc.name)
 
 
-def _get_filter_columns_from_right(left_on, right_on) -> Set[str]:
-    """
-    Helper of _determine_result_columns: get all columns that should not be included from the right df,
-    as they are matched on the same column on the left.
-    """
-    left_on_pos = {label: i for i, label in enumerate(left_on)}
-    right_on_pos = {label: i for i, label in enumerate(right_on)}
-    # don't add a column from the right to the result if we are joining on that column and the column in
-    # left has the same name
-    filter_column_from_right = {
-        label for label in right_on_pos.keys()
-        if right_on_pos[label] == left_on_pos.get(label)
-    }
-    return filter_column_from_right
-
-
-def _get_column_name_expr_dtype(
-        source_series: Dict[str, Series],
-        conflicting_names: Set[str],
-        suffix: str,
-        table_alias: str
+def _get_merged_result_series(
+    left_series: Dict[str, Series],
+    right_series: Dict[str, Series],
+    conflicting_names: Set[str],
+    conflicting_on: Set[str],
+    suffixes: Tuple[str, str],
 ) -> List[ResultSeries]:
     """ Helper of _determine_result_columns. """
-    new_index_list: List[ResultSeries] = []
-    for index_name, series in source_series.items():
-        new_name = index_name
-        if index_name in conflicting_names:
-            new_name = index_name + suffix
-        new_index_list.append(
+    new_column_results: List[ResultSeries] = []
+    for suffix, source_series in zip(suffixes, (left_series, right_series)):
+        table_alias = 'l' if suffix == suffixes[0] else 'r'
+        for series_name, series in source_series.items():
+            new_name = series_name
+            expr = series.expression.resolve_column_references(table_alias)
+
+            if series_name in conflicting_on:
+                if table_alias == 'r':
+                    continue
+                r_expr = right_series[series_name].expression.resolve_column_references('r')
+                expr = Expression.construct(f'COALESCE({expr.to_sql()}, {r_expr.to_sql()})')
+            elif series_name in conflicting_names:
+                new_name = series_name + suffix
+
+            new_column_results.append(
                 ResultSeries(
                     name=new_name,
-                    expression=series.expression.resolve_column_references(table_alias),
-                    dtype=series.dtype
+                    expression=expr,
+                    dtype=series.dtype,
                 )
-        )
-    return new_index_list
+            )
+    return new_column_results
 
 
 def merge(
-        left: DataFrame,
-        right: DataFrameOrSeries,
-        how: str,
-        on: Union[str, List[str], None],
-        left_on: Union[str, List[str],  None],  # todo: also support array-like arguments?
-        right_on: Union[str, List[str], None],
-        left_index: bool,
-        right_index: bool,
-        suffixes: Tuple[str, str]
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    how: str,
+    on: Union[str, List[str], None],
+    left_on: Union[str, List[str],  None],  # todo: also support array-like arguments?
+    right_on: Union[str, List[str], None],
+    left_index: bool,
+    right_index: bool,
+    suffixes: Tuple[str, str]
 ) -> DataFrame:
     """
     See :py:meth:`bach.DataFrame.merge` for more information.
@@ -241,7 +251,11 @@ def merge(
         right_index=right_index
     )
     new_index_list, new_data_list = _determine_result_columns(
-        left=left, right=right, left_on=real_left_on, right_on=real_right_on, suffixes=suffixes
+        left=left,
+        right=right,
+        left_on=real_left_on,
+        right_on=real_right_on,
+        suffixes=suffixes,
     )
 
     if isinstance(right, Series):
