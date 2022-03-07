@@ -13,18 +13,16 @@ Objectiv is open-source product analytics, **designed for effective data science
 
 Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
+## Objectiv in 2 minutes
+
+[![Objectiv in 2 minutes](./assets/img/objectiv-bach-2min.jpg)](https://www.youtube.com/watch?v=msY-hFUpI3A "Objectiv in 2 minutes")
+
 ## What's in the box?
 ![Objectiv Stack](./assets/img/objectiv-stack.svg#gh-light-mode-only "Objectiv Stack")
 ![Objectiv Stack](./assets/img/objectiv-stack-dark.svg#gh-dark-mode-only "Objectiv Stack")
 
 Objectiv is self-hosted. It includes what you need to answer common product analytics questions with speed and precision, while
 providing a solid foundation for advanced modeling. 
-
-## Objectiv in 2 minutes
-
-Click the thumbnail to open the video in Youtube:
-
-[![Objectiv in 2 minutes](./assets/img/objectiv-bach-2mins.jpg)](https://www.youtube.com/watch?v=msY-hFUpI3A "Objectiv in 2 minutes")
 
 ## Getting Started
 
