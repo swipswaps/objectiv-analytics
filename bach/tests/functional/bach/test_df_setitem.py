@@ -185,11 +185,12 @@ def test_set_existing():
     )
     assert bt.city == bt['city']
 
+
 def test_set_different_base_node():
     # set different shape series / different index name
     bt = get_bt_with_test_data(full_data_set=True)
-    bt = bt[bt.skating_order>7]
-    filtered_bt = bt[bt.skating_order<9]
+    bt = bt[bt.skating_order > 7]
+    filtered_bt = bt[bt.skating_order < 9]
 
     bt['a'] = filtered_bt['city']
 

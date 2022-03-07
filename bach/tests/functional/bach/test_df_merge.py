@@ -3,11 +3,12 @@ Copyright 2021 Objectiv B.V.
 """
 from decimal import Decimal
 
+import pandas as pd
 import pytest
 
 from bach import DataFrame
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_bt_with_food_data, \
-    assert_equals_data, get_bt_with_railway_data
+    assert_equals_data, get_bt_with_railway_data, get_from_df
 
 
 def test_merge_basic():
@@ -297,6 +298,35 @@ def test_merge_right_join():
     )
 
 
+def test_merge_right_join_shared_on() -> None:
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    bt['station'] = None
+    bt = bt.reset_index(drop=True)
+
+    mt = get_bt_with_railway_data()[['station', 'platforms']]
+    mt = mt.reset_index(drop=True)
+
+    result = bt.merge(mt, how='right', on='station')
+    assert_equals_data(
+        result,
+        expected_columns=[
+            'skating_order',
+            'city',
+            'station',
+            'platforms',
+        ],
+        expected_data=[
+            [None, None, 'IJlst', 1],
+            [None, None, 'Heerenveen', 1],
+            [None, None, 'Heerenveen IJsstadion', 2],
+            [None, None, 'Leeuwarden', 4],
+            [None, None, 'Camminghaburen', 1],
+            [None, None, 'Sneek', 2],
+            [None, None, 'Sneek Noord', 2],
+        ],
+    )
+
+
 def test_merge_outer_join():
     bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
     mt = get_bt_with_railway_data()[['station', 'platforms']]
@@ -324,7 +354,27 @@ def test_merge_outer_join():
             [2, 7, 2, 'Snits', 'Sneek Noord', 2],
             [3, None, 3, 'Drylts', None, None],
         ],
-        order_by=['_index_station_id']
+    )
+
+
+def test_merge_outer_join_shared_on() -> None:
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city']]
+    bt2 = bt[bt.city == 'Snits']
+
+    result = bt2.merge(bt, how='outer', on=['skating_order', 'city'])
+    assert_equals_data(
+        result,
+        expected_columns=[
+            '_index_skating_order_x',
+            '_index_skating_order_y',
+            'skating_order',
+            'city',
+        ],
+        expected_data=[
+            [None, 1, 1, 'Ljouwert'],
+            [2, 2, 2, 'Snits'],
+            [None, 3, 3, 'Drylts'],
+        ],
     )
 
 
@@ -467,3 +517,99 @@ def test_merge_non_materialized():
                 ['Súdwest-Fryslân', Decimal('36575'), Decimal('18287.500000000000')]
             ]
         )
+
+
+def test_merge_on_conditions() -> None:
+    pdf1 = pd.DataFrame({
+        'A': ['a', 'b', 'c', 'd'],
+        'B': [100, 25, 250, 500],
+    })
+    pdf2 = pd.DataFrame({
+        'A': ['e', 'f', 'g', 'h', 'i'],
+        'B': [20, 5, 10, 20, 100],
+    })
+
+    df1 = get_from_df('merge_on_condition1', pdf1)
+    df2 = get_from_df('merge_on_condition2', pdf2)
+
+    on_condition = [df1['A'] + df2['A'] == 'cg', df1['B'] / df2['B'] > 10]
+    result = df1.merge(df2, on=on_condition)
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0_x', '_index_0_y', 'A_x', 'B_x', 'A_y', 'B_y'],
+        expected_data=[
+            [2, 2, 'c', 250, 'g', 10],
+        ],
+    )
+
+
+def test_merge_on_conditions_w_on_data_columns() -> None:
+    pdf1 = pd.DataFrame({
+        'A': ['b', 'a', 'c', 'd'],
+        'B': [100, 25, 250, 500],
+    })
+    pdf2 = pd.DataFrame({
+        'A': ['a', 'a', 'c', 'c', 'c'],
+        'B': [20, 5, 50, 20, 100],
+    })
+
+    df1 = get_from_df('merge_on_condition1', pdf1)
+    df2 = get_from_df('merge_on_condition2', pdf2)
+
+    on_condition = df1['B'] / df2['B'] == 5
+    result = df1.merge(df2, on=['A', on_condition])
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0_x', '_index_0_y', 'A', 'B_x', 'B_y'],
+        expected_data=[
+            [1, 1, 'a', 25, 5],
+            [2, 2, 'c', 250, 50],
+        ],
+    )
+
+
+def test_merge_on_conditions_w_index() -> None:
+    pdf1 = pd.DataFrame({
+        'A': ['a', 'b', 'c', 'd'],
+        'B': [100, 25, 250, 500],
+    })
+    pdf2 = pd.DataFrame({
+        'A': ['e', 'f', 'g', 'h', 'i'],
+        'B': [20, 5, 10, 20, 100],
+    })
+
+    df1 = get_from_df('merge_on_condition1', pdf1)
+    df2 = get_from_df('merge_on_condition2', pdf2)
+
+    on_condition = df1['B'] / df2['B'] > 10
+    result = df1.merge(df2, on=on_condition, left_index=True, right_index=True)
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0', 'A_x', 'B_x', 'A_y', 'B_y'],
+        expected_data=[
+            [2, 'c', 250, 'g', 10],
+            [3, 'd', 500, 'h', 20]
+        ],
+    )
+
+
+def test_merge_on_index_x_column() -> None:
+    bt = get_bt_with_test_data(False)[['city', 'inhabitants']]
+    expected = {
+        'expected_columns': ['_index_skating_order', 'city_x', 'inhabitants', 'city_y'],
+        'expected_data': [
+            [1, 'Ljouwert', 93485, 'Ljouwert'],
+            [2, 'Snits', 33520, 'Snits'],
+            [3, 'Drylts', 3055, 'Drylts'],
+        ],
+    }
+    result_left_col_x_right_index = bt.reset_index().merge(bt.city, on='_index_skating_order')
+    assert_equals_data(result_left_col_x_right_index, **expected)
+
+    result_left_index_x_right_col = bt.merge(
+        bt.reset_index()[['city', '_index_skating_order']], on='_index_skating_order',
+    )
+    assert_equals_data(result_left_index_x_right_col, **expected)

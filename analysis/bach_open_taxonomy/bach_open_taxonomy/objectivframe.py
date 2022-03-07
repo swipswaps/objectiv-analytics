@@ -151,7 +151,10 @@ class ObjectivFrame(DataFrame):
             'session_hit_number': 'int64'
         }
         model_columns = tuple(index_dtype.keys()) + tuple(dtypes.keys())
-        bach_model = BachSqlModel.from_sql_model(sql_model=model, columns=model_columns)
+        bach_model = BachSqlModel.from_sql_model(
+            sql_model=model,
+            column_expressions={c: Expression.column_reference(c) for c in model_columns},
+        )
 
         from bach.savepoints import Savepoints
         df = cls.get_instance(engine=engine,

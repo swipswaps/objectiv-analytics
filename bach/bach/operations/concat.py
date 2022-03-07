@@ -361,5 +361,5 @@ class ConcatSqlModel(BachSqlModel):
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
-            columns=columns
+            column_expressions={c: Expression.column_reference(c) for c in columns},
         )

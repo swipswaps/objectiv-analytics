@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import re
 from dataclasses import dataclass
-from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set
+from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set, Sequence
 
 from sql_models.model import escape_raw_sql
 from sql_models.util import quote_string, quote_identifier
@@ -71,6 +71,16 @@ class VariableToken(ExpressionToken):
 
 
 @dataclass(frozen=True)
+class TableColumnReferenceToken(ExpressionToken):
+    table_name: str
+    column_name: str
+
+    def to_sql(self):
+        t = f'{quote_identifier(self.table_name)}.' if self.table_name else ''
+        return escape_raw_sql(f'{t}{quote_identifier(self.column_name)}')
+
+
+@dataclass(frozen=True)
 class ColumnReferenceToken(ExpressionToken):
     column_name: str
 
@@ -78,9 +88,10 @@ class ColumnReferenceToken(ExpressionToken):
         raise ValueError('ColumnReferenceTokens should be resolved first using '
                          'Expression.resolve_column_references')
 
-    def resolve(self, table_name: Optional[str]) -> RawToken:
-        t = f'{quote_identifier(table_name)}.' if table_name else ''
-        return RawToken(f'{t}{quote_identifier(self.column_name)}')
+    def resolve(self, table_name: Optional[str]) -> TableColumnReferenceToken:
+        return TableColumnReferenceToken(
+            table_name=table_name or '', column_name=self.column_name,
+        )
 
 
 @dataclass(frozen=True)
@@ -128,7 +139,7 @@ class Expression:
     For special type Expressions, this class is subclassed to assign special properties to a subexpression.
     """
 
-    def __init__(self, data: Union['Expression', List[Union[ExpressionToken, 'Expression']]] = None):
+    def __init__(self, data: Union['Expression', Sequence[Union[ExpressionToken, 'Expression']]] = None):
         if not data:
             data = []
         if isinstance(data, Expression):
@@ -222,6 +233,12 @@ class Expression:
     def column_reference(cls, field_name: str) -> 'Expression':
         """ Construct an expression for field-name, where field-name is a column in a table or CTE. """
         return cls([ColumnReferenceToken(field_name)])
+
+    @classmethod
+    def table_column_reference(cls, table_name: str, field_name: str) -> 'Expression':
+        """ Construct an expression for table referenced field,
+         where table_name is a reference of a table or CTE from which field_name is a column """
+        return cls([TableColumnReferenceToken(table_name, field_name)])
 
     @classmethod
     def model_reference(cls, model: 'BachSqlModel') -> 'Expression':
