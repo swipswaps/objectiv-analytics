@@ -184,7 +184,7 @@ def test_get_context_schema():
                 'description': 'test other property'
             },
             'optional_property': {
-                'type': 'string',
+                'type': ['string', 'null'],
                 'description': 'this property is optional',
                 'optional': True
             }

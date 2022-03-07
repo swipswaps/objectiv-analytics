@@ -162,6 +162,7 @@ Reshaping, indexing, sorting & merging
     DataFrame.fillna
     DataFrame.ffill
     DataFrame.bfill
+    DataFrame.stack
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
