@@ -109,7 +109,10 @@ def _verify_on_conflicts(
         raise ValueError('Cannot specify both right_on and right_index.')
 
     if bool(left_on or left_index) ^ bool(right_on or right_index):
-        raise ValueError('Either both left_on and right_on should be specified, or both should be None.')
+        raise ValueError(
+            'Either both left_on/left_index and right_on/right_index should be specified, '
+            'or both should be None.'
+        )
 
     on_conditions = [o for o in on or [] if isinstance(o, SeriesBoolean)] if on else []
     on_columns = [o for o in on or [] if not isinstance(o, SeriesBoolean)] if on else None

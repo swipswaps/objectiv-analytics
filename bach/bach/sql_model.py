@@ -68,7 +68,6 @@ class BachSqlModel(SqlModel[T]):
         references: Mapping[str, 'SqlModel'] = None,
         materialization: Materialization = None,
         materialization_name: Union[Optional[str], NotSet] = not_set,
-        columns: Tuple[str, ...] = None,
         column_expressions: Dict[str, Expression] = None,
     ) -> TBachSqlModel:
         """
@@ -149,7 +148,6 @@ class SampleSqlModel(BachSqlModel):
         references: Mapping[str, 'SqlModel'] = None,
         materialization: Materialization = None,
         materialization_name: Union[Optional[str], NotSet] = not_set,
-        columns: Tuple[str, ...] = None,
         column_expressions: Dict[str, Expression] = None,
         previous: BachSqlModel = None
     ) -> 'SampleSqlModel':

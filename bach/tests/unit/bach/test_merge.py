@@ -219,7 +219,9 @@ def test_verify_on_conflicts() -> None:
             right_index=True,
         )
 
-    with pytest.raises(ValueError, match=r'Either both left_on and right_on should be specified'):
+    with pytest.raises(
+        ValueError, match=r'Either both left_on/left_index and right_on/right_index should be specified',
+    ):
         _verify_on_conflicts(
             left,
             right,
