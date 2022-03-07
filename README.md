@@ -1,16 +1,30 @@
 ![Objectiv Logo](./assets/img/logo-objectiv-large.svg#gh-light-mode-only "Objectiv Logo")
 ![Objectiv Logo](./assets/img/logo-objectiv-large-dark.svg#gh-dark-mode-only "Objectiv Logo")
 
-**Objectiv** enables you to collect model-ready data and run your entire product analytics workflow straight from your notebook. It's designed to skip the typical grunt work: no tracking plans, data cleaning and transformations are required. Just open your notebook and start modeling right away with pandas-like operations that run on the full SQL dataset.
+Objectiv is open-source product analytics, **designed for effective data science.**
 
+## Highlights
+* Run your entire product analytics workflow straight from your notebook
+* Collect model-ready data without tracking plans, data cleaning or transformations
+* Take pre-built models off the shelf to build in-depth analyses in minutes
+* Get granular slicing control with data that carries the structure of your product's UI
+* Build models on the full SQL dataset with dataframes and pandas-like operations
+* Output models to SQL with one command and feed it into your tools and products
+
+Check out [objectiv.io](https://www.objectiv.io) to learn more.
+
+## What's in the box?
 ![Objectiv Stack](./assets/img/objectiv-stack.svg#gh-light-mode-only "Objectiv Stack")
 ![Objectiv Stack](./assets/img/objectiv-stack-dark.svg#gh-dark-mode-only "Objectiv Stack")
 
-It includes what you need to answer common product analytics questions with speed and precision, while
-providing a solid foundation for advanced modeling. You can output models to SQL queries with a single
-command, and Pandas compatability means you can tap into its rich machine learning ecosystem.
+Objectiv is self-hosted. It includes what you need to answer common product analytics questions with speed and precision, while
+providing a solid foundation for advanced modeling. 
 
-Check out [objectiv.io](https://www.objectiv.io) to learn more.
+## Objectiv in 2 minutes
+
+Click the thumbnail to open the video in Youtube:
+
+[![Objectiv in 2 minutes](https://youtu.be/msY-hFUpI3A/0.jpg)](https://www.youtube.com/watch?v=msY-hFUpI3A "Objectiv in 2 minutes")
 
 ## Getting Started
 
