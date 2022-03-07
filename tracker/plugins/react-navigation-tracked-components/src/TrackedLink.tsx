@@ -9,7 +9,7 @@ import { Link } from '@react-navigation/native';
 import { To } from '@react-navigation/native/lib/typescript/src/useLinkTo';
 import React from 'react';
 import { GestureResponderEvent, TextProps } from 'react-native';
-import { makeLinkContextProps } from "./makeLinkContextProps";
+import { makeLinkContextProps } from './makeLinkContextProps';
 import { usePressEventTracker } from './usePressEventTracker';
 
 /**

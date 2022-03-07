@@ -1830,6 +1830,7 @@ __metadata:
     "@objectiv/testing-tools": ^0.0.13
     "@objectiv/tracker-core": ^0.0.13
     "@objectiv/tracker-react-native": ^0.0.13
+    "@react-navigation/bottom-tabs": ^6.2.0
     "@react-navigation/native": ^6.0.8
     "@react-navigation/stack": ^6.1.1
     "@testing-library/react-native": ^9.0.0
@@ -2301,6 +2302,23 @@ __metadata:
   version: 2.0.0
   resolution: "@react-native/polyfills@npm:2.0.0"
   checksum: 6f2a0d1c8c4df4f20e8adac92fcfaec0fb536d097f96fbfd56bdb21b0a3afc4157f82d084b6851093255f58d350818f7ad28098818d584f654533eeb9cba2656
+  languageName: node
+  linkType: hard
+
+"@react-navigation/bottom-tabs@npm:^6.2.0":
+  version: 6.2.0
+  resolution: "@react-navigation/bottom-tabs@npm:6.2.0"
+  dependencies:
+    "@react-navigation/elements": ^1.3.1
+    color: ^3.1.3
+    warn-once: ^0.1.0
+  peerDependencies:
+    "@react-navigation/native": ^6.0.0
+    react: "*"
+    react-native: "*"
+    react-native-safe-area-context: ">= 3.0.0"
+    react-native-screens: ">= 3.0.0"
+  checksum: 8f576e254916ddef9bcbcc2ffea80f861854e2679b208504d5bf8202dd28fe008832bf882d7d47d36bfedb092bef3e500e5fe0a81cd2cdaf7891bd237e4b7063
   languageName: node
   linkType: hard
 

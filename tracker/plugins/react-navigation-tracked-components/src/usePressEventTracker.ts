@@ -5,14 +5,16 @@
 import { makePathContext } from '@objectiv/tracker-core';
 import { makeRootLocationContext, TrackingContext, trackPressEvent } from '@objectiv/tracker-react';
 import { findFocusedRoute, useNavigation } from '@react-navigation/native';
+import { makeNavigationPath } from './makeNavigationPath';
 
 /**
  * Returns a press event handler for React Navigation Link that automatically factors Path and RootLocation Contexts.
  */
 export const usePressEventTracker = () => {
-  const navigationState = useNavigation().getState();
+  const navigation = useNavigation();
+  const navigationState = navigation.getState();
   const currentRoute = findFocusedRoute(navigationState);
-  const pathContext = makePathContext({ id: currentRoute?.path ?? '/' });
+  const pathContext = makePathContext({ id: makeNavigationPath(navigation) });
   const rootLocationContext = makeRootLocationContext({ id: currentRoute?.name ?? 'home' });
 
   return ({ tracker, locationStack }: TrackingContext) =>
