@@ -24,7 +24,7 @@ providing a solid foundation for advanced modeling.
 
 Click the thumbnail to open the video in Youtube:
 
-[![Objectiv in 2 minutes](https://youtu.be/msY-hFUpI3A/0.jpg)](https://www.youtube.com/watch?v=msY-hFUpI3A "Objectiv in 2 minutes")
+[![Objectiv in 2 minutes](./assets/img/objectiv-bach-2mins.jpg)](https://www.youtube.com/watch?v=msY-hFUpI3A "Objectiv in 2 minutes")
 
 ## Getting Started
 
