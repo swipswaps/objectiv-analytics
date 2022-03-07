@@ -109,7 +109,8 @@ class Aggregate:
                                          name='unique_sessions')
 
     def session_duration(self,
-                         groupby: GroupByType = not_set) -> 'SeriesInt64':
+                         groupby: GroupByType = not_set,
+                         exclude_bounces: bool = True) -> 'SeriesInt64':
         """
         Calculate the average duration of sessions.
 
@@ -132,8 +133,9 @@ class Aggregate:
         gdf = self._check_groupby(groupby=new_groupby)
         session_duration = gdf.aggregate({'moment': ['min', 'max']})
         session_duration['session_duration'] = session_duration['moment_max']-session_duration['moment_min']
-        # remove "bounces"
-        session_duration = session_duration[(session_duration['session_duration'] > '0')]
+
+        if exclude_bounces:
+            session_duration = session_duration[(session_duration['session_duration'] > '0')]
 
         return session_duration.groupby(session_duration.index_columns[:-1]).session_duration.mean()
 

@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 
 # Any import from from bach_open_taxonomy initializes all the types, do not remove
 from bach_open_taxonomy import __version__
+import pytest
 from tests_bach_open_taxonomy.functional.objectiv_bach.data_and_utils import get_objectiv_frame
 from tests.functional.bach.test_data_and_utils import assert_equals_data
 import datetime
@@ -17,17 +18,19 @@ def test_defaults():
     # with standard time_aggregation, all sessions are bounces
     assert len(s.to_numpy()) == 0
 
-def test_no_grouping():
+@pytest.mark.parametrize("exclude_bounces,expected_data", [
+    (True, [[datetime.timedelta(microseconds=2667)]]),
+    (False, [[datetime.timedelta(microseconds=1143)]])
+])
+def test_no_grouping(exclude_bounces, expected_data):
     # not grouping to anything
     df = get_objectiv_frame()
-    s = df.model_hub.aggregate.session_duration(groupby=None)
+    s = df.model_hub.aggregate.session_duration(groupby=None, exclude_bounces=exclude_bounces)
 
     assert_equals_data(
         s,
         expected_columns=['session_duration'],
-        expected_data=[
-            [datetime.timedelta(microseconds=2667)]
-        ]
+        expected_data=expected_data
     )
 
 def test_time_aggregation_in_df():
