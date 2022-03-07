@@ -17,6 +17,7 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
+from bach.indexing import LocIndexer
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
 from sql_models.constants import NotSet, not_set
@@ -2794,6 +2795,11 @@ class DataFrame:
         stacked_df = stacked_df.dropna() if dropna else stacked_df
 
         return stacked_df.all_series['__stacked']
+
+    @property
+    def loc(self):
+        from bach.indexing import LocIndexer
+        return LocIndexer(self)
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
