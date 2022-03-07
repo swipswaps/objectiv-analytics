@@ -17,10 +17,10 @@ def test_categorical_describe() -> None:
         ],
         expected_data=[
             ['count', '3'],
-            ['min', 'Drylts'],
             ['max', 'Snits'],
-            ['nunique', '3'],
+            ['min', 'Drylts'],
             ['mode', 'Drylts'],
+            ['nunique', '3'],
         ],
     )
 

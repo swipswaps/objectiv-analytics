@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict
 
 import pandas
 from sqlalchemy.engine import Engine
@@ -11,7 +11,6 @@ from bach.types import value_to_dtype
 from bach.expression import Expression, join_expressions
 from sql_models.model import CustomSqlModelBuilder
 from sql_models.util import quote_identifier
-from bach.sql_model import BachSqlModel
 
 
 def from_pandas(engine: Engine,
@@ -59,30 +58,14 @@ def from_pandas_store_table(engine: Engine,
         * append: Insert new values to the existing table.
     """
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-    df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects, cte=False)
+    df_copy, index_dtypes, all_dtypes = _from_pd_shared(df, convert_objects, cte=False)
 
     conn = engine.connect()
     df_copy.to_sql(name=table_name, con=conn, if_exists=if_exists, index=False)
     conn.close()
 
-    # Todo, this should use from_table from here on.
-    columns = tuple(index_dtypes.keys()) + tuple(dtypes.keys())
-    model_builder = CustomSqlModelBuilder(sql='select * from {table_name}', name=table_name)
-    sql_model = model_builder(table_name=quote_identifier(table_name))
-    bach_model = BachSqlModel.from_sql_model(sql_model, columns=columns)
-
-    # Should this also use _df_or_series?
-    from bach.savepoints import Savepoints
-    return DataFrame.get_instance(
-        engine=engine,
-        base_node=bach_model,
-        index_dtypes=index_dtypes,
-        dtypes=dtypes,
-        group_by=None,
-        order_by=[],
-        savepoints=Savepoints(),
-        variables={}
-    )
+    index = list(index_dtypes.keys())
+    return DataFrame.from_table(engine=engine, table_name=table_name, index=index, all_dtypes=all_dtypes)
 
 
 def from_pandas_ephemeral(
@@ -107,16 +90,9 @@ def from_pandas_ephemeral(
         pd.convert_dtypes() method where possible.
     """
     # todo add dtypes argument that explicitly let's you set the supported dtypes for pandas columns
-    df_copy, index_dtypes, dtypes = _from_pd_shared(df, convert_objects, cte=True)
+    df_copy, index_dtypes, all_dtypes = _from_pd_shared(df, convert_objects, cte=True)
 
-    # Only support case where we have a single index column for now
-    if len(index_dtypes) != 1:
-        raise NotImplementedError("We only support dataframes with a single column index.")  # for now
-
-    column_series_type = [
-        get_series_type_from_dtype(dtype)
-        for dtype in list(index_dtypes.values()) + list(dtypes.values())
-    ]
+    column_series_type = [get_series_type_from_dtype(dtype) for dtype in all_dtypes.values()]
 
     per_row_expr = []
     for row in df_copy.itertuples():
@@ -132,28 +108,16 @@ def from_pandas_ephemeral(
         per_row_expr.append(row_expr)
     all_values_str = join_expressions(per_row_expr, join_str=',\n').to_sql()
 
-    column_names = list(index_dtypes.keys()) + list(dtypes.keys())
     column_names_str = join_expressions(
-        [Expression.raw(quote_identifier(column_name)) for column_name in column_names]
+        [Expression.raw(quote_identifier(column_name)) for column_name in all_dtypes.keys()]
     ).to_sql()
 
     sql = f'select * from (values \n{all_values_str}\n) as t({column_names_str})\n'
 
     model_builder = CustomSqlModelBuilder(sql=sql, name=name)
     sql_model = model_builder()
-    bach_model = BachSqlModel.from_sql_model(sql_model, columns=tuple(column_names))
-
-    from bach.savepoints import Savepoints
-    return DataFrame.get_instance(
-        engine=engine,
-        base_node=bach_model,
-        index_dtypes=index_dtypes,
-        dtypes=dtypes,
-        group_by=None,
-        order_by=[],
-        savepoints=Savepoints(),
-        variables={}
-    )
+    index = list(index_dtypes.keys())
+    return DataFrame.from_model(engine=engine, model=sql_model, index=index, all_dtypes=all_dtypes)
 
 
 def _from_pd_shared(
@@ -173,28 +137,33 @@ def _from_pd_shared(
     :return: Tuple:
         * Modified copy of Pandas DataFrame
         * index_dtypes dict
-        * dtypes dict
+        * all_dtypes dict. containing index dtypes and data dtypes
     """
-    if isinstance(df.index, pandas.MultiIndex):
-        raise ValueError("pandas.MultiIndex not supported")
+    index = []
 
-    if df.index.name is None:
-        index = '_index_0'
-    else:
-        index = f'_index_{df.index.name}'
-    # set the index as a normal column, this makes it easier to convert the dtype
-    df_copy = df.rename_axis(index).reset_index()
+    for idx, name in enumerate(df.index.names):
+        if name is None:
+            name = f'_index_{idx}'
+        else:
+            name = f'_index_{name}'
 
-    index_dtypes = {}
-    dtypes = {}
+        index.append(name)
+
+    if len(set(index)) != len(index):
+        raise KeyError("index with duplicate names not supported")
+
+    df_copy = df.copy()
+    df_copy.index.set_names(index, inplace=True)
+    # set the index as normal columns, this makes it easier to convert the dtype
+    df_copy.reset_index(inplace=True)
 
     supported_pandas_dtypes = ['int64', 'float64', 'string', 'datetime64[ns]', 'bool', 'int32']
-
+    all_dtypes = {}
     for column in df_copy.columns:
         dtype = df_copy[column].dtype.name
 
         if dtype in supported_pandas_dtypes:
-            dtypes[str(column)] = dtype
+            all_dtypes[str(column)] = dtype
             continue
 
         if convert_objects:
@@ -212,7 +181,7 @@ def _from_pd_shared(
                 raise TypeError(f'multiple types found in column {column}: {types}')
             dtype = value_to_dtype(df_copy[column][0])
 
-        dtypes[str(column)] = dtype
+        all_dtypes[str(column)] = dtype
 
-    index_dtypes[index] = dtypes.pop(index)
-    return df_copy, index_dtypes, dtypes
+    index_dtypes = {index_name: all_dtypes[index_name] for index_name in index}
+    return df_copy, index_dtypes, all_dtypes

@@ -678,10 +678,10 @@ def test_unmaterializable_groupby_boolean_functions():
     assert btg_min_fnd.group_by != bt.group_by
     assert not btg_min_fnd.expression.is_single_value
 
-    with pytest.raises(ValueError, match='dtypes of indexes should be the same'):
+    with pytest.raises(ValueError, match=r'dtypes of indexes to be merged should be the same'):
         # todo pandas: Can only compare identically-labeled Series objects
         bt[btg_min_fnd == bt.founding]
 
-    with pytest.raises(ValueError, match='dtypes of indexes should be the same'):
+    with pytest.raises(ValueError, match=r'dtypes of indexes to be merged should be the same'):
         # todo pandas: Can only compare identically-labeled Series objects
         bt[bt.founding == btg_min_fnd]
