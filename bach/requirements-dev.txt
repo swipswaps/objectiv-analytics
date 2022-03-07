@@ -2,12 +2,3 @@ pytest==6.2.5
 mypy==0.910
 pycodestyle==2.7.0
 ipython==7.31.1
-
-# BigQuery development packages
-
-# Later on we'll create a separate packages `bach` and `bach[bigquery]`. `bach[bigquery]` will then have
-# these packages as requirement
-sqlalchemy-bigquery
-psycopg2-binary
-google-cloud-bigquery-storage
-pyarrow
