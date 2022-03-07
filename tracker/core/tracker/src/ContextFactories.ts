@@ -10,6 +10,7 @@ import {
   HttpContext,
   InputContext,
   LinkContext,
+  MarketingContext,
   MediaPlayerContext,
   NavigationContext,
   OverlayContext,
@@ -117,6 +118,36 @@ export const makeLinkContext = (props: { id: string; href: string }): LinkContex
   _type: 'LinkContext',
   id: props.id,
   href: props.href,
+});
+
+/** Creates instance of MarketingContext
+ * @param {Object} props - factory properties
+ * @param {string} props.id - A unique string identifier to be combined with the Context Type (`_type`)
+ *         for Context instance uniqueness.
+ * @param {string} props.source - Identifies the advertiser, site, publication, etc
+ * @param {string} props.medium - Advertising or marketing medium: cpc, banner, email newsletter, etc
+ * @param {string} props.campaign - Individual campaign name, slogan, promo code, etc
+ * @param {string | null} props.term - [Optional] Search keywords
+ * @param {string | null} props.content - [Optional] Used to differentiate similar content, or links within the same ad
+ * @returns {MarketingContext} - MarketingContext: a context that captures marketing channel info, so users can do attribution, campaign
+ * 	effectiveness and other models
+ */
+export const makeMarketingContext = (props: {
+  id: string;
+  source: string;
+  medium: string;
+  campaign: string;
+  term?: string | null;
+  content?: string | null;
+}): MarketingContext => ({
+  __global_context: true,
+  _type: 'MarketingContext',
+  id: props.id,
+  source: props.source,
+  medium: props.medium,
+  campaign: props.campaign,
+  term: props.term ?? null,
+  content: props.content ?? null,
 });
 
 /** Creates instance of MediaPlayerContext
