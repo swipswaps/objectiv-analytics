@@ -10,7 +10,7 @@ import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
 /**
  * A factory to create the default Transport of Browser Tracker.
  */
-export const makeDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransportInterface =>
+export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransportInterface =>
   new TrackerTransportRetry({
     console: trackerConfig.console,
     transport: new TrackerTransportSwitch({
