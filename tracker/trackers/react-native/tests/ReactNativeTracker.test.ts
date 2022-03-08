@@ -3,14 +3,13 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore, TrackerTransportRetry } from '@objectiv/tracker-core';
+import { TrackerEvent, TrackerQueue, TrackerTransportRetry } from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
-import { clear, mockUserAgent } from 'jest-useragent-mock';
-import { ReactTracker } from '../src/';
+import { ReactNativeTracker } from '../src/';
 
-describe('ReactTracker', () => {
+describe('ReactNativeTracker', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'group').mockImplementation(() => {});
@@ -24,7 +23,7 @@ describe('ReactTracker', () => {
   it('should not instantiate without either `transport` or `endpoint`', () => {
     expect(
       () =>
-        new ReactTracker({
+        new ReactNativeTracker({
           applicationId: 'app-id',
         })
     ).toThrow();
@@ -33,7 +32,7 @@ describe('ReactTracker', () => {
   it('should not instantiate with both `endpoint` and `transport`', () => {
     expect(
       () =>
-        new ReactTracker({
+        new ReactNativeTracker({
           applicationId: 'app-id',
           endpoint: 'localhost',
           transport: new FetchTransport({
@@ -44,8 +43,8 @@ describe('ReactTracker', () => {
   });
 
   it('should instantiate with `applicationId` and `endpoint`', () => {
-    const testTracker = new ReactTracker({ applicationId: 'app-id', trackerId: 'app-id', endpoint: 'localhost' });
-    expect(testTracker).toBeInstanceOf(ReactTracker);
+    const testTracker = new ReactNativeTracker({ applicationId: 'app-id', trackerId: 'app-id', endpoint: 'localhost' });
+    expect(testTracker).toBeInstanceOf(ReactNativeTracker);
     expect(testTracker.transport).toBeInstanceOf(TrackerTransportRetry);
     expect(testTracker.transport).toEqual({
       transportName: 'TrackerTransportRetry',
@@ -57,14 +56,10 @@ describe('ReactTracker', () => {
       retryFactor: 2,
       attempts: [],
       transport: {
-        transportName: 'TrackerTransportSwitch',
+        transportName: 'FetchTransport',
         console,
-        firstUsableTransport: {
-          transportName: 'FetchTransport',
-          console,
-          endpoint: 'localhost',
-          fetchFunction: defaultFetchFunction,
-        },
+        endpoint: 'localhost',
+        fetchFunction: defaultFetchFunction,
       },
     });
     expect(testTracker.queue).toBeInstanceOf(TrackerQueue);
@@ -79,30 +74,20 @@ describe('ReactTracker', () => {
       processFunction: expect.any(Function),
       processingEventIds: [],
       store: {
-        queueStoreName: 'LocalStorageQueueStore',
+        queueStoreName: 'TrackerQueueMemoryStore',
+        events: [],
         console,
-        localStorageKey: 'objectiv-events-queue-app-id',
       },
     });
   });
 
   it('should instantiate with given `transport`', () => {
-    const testTracker = new ReactTracker({
+    const testTracker = new ReactNativeTracker({
       applicationId: 'app-id',
       transport: new FetchTransport({ endpoint: 'localhost' }),
     });
-    expect(testTracker).toBeInstanceOf(ReactTracker);
+    expect(testTracker).toBeInstanceOf(ReactNativeTracker);
     expect(testTracker.transport).toBeInstanceOf(FetchTransport);
-  });
-
-  it('should instantiate with given `queue`', () => {
-    const testTracker = new ReactTracker({
-      applicationId: 'app-id',
-      endpoint: 'localhost',
-      queue: new TrackerQueue({ store: new TrackerQueueMemoryStore() }),
-    });
-    expect(testTracker).toBeInstanceOf(ReactTracker);
-    expect(testTracker.queue?.store).toBeInstanceOf(TrackerQueueMemoryStore);
   });
 
   describe('env sensitive logic', () => {
@@ -119,7 +104,7 @@ describe('ReactTracker', () => {
     it('Tracker instance should automatically bind to global console', () => {
       process.env.NODE_ENV = 'dev';
 
-      const testTracker = new ReactTracker({
+      const testTracker = new ReactNativeTracker({
         applicationId: 'app-id',
         transport: new FetchTransport({ endpoint: 'localhost' }),
       });
@@ -130,7 +115,7 @@ describe('ReactTracker', () => {
     it('should not crash if NODE_ENV is undefined', () => {
       process.env.NODE_ENV = undefined;
 
-      const testTracker = new ReactTracker({
+      const testTracker = new ReactNativeTracker({
         applicationId: 'app-id',
         transport: new FetchTransport({ endpoint: 'localhost' }),
       });
@@ -141,7 +126,7 @@ describe('ReactTracker', () => {
     it('Should not automatically bind to global console if we are in dev mode and console has been specified', () => {
       process.env.NODE_ENV = 'dev';
 
-      const testTracker = new ReactTracker({
+      const testTracker = new ReactNativeTracker({
         applicationId: 'app-id',
         transport: new FetchTransport({ endpoint: 'localhost' }),
         console: mockConsole,
@@ -153,7 +138,7 @@ describe('ReactTracker', () => {
     it('Should not automatically bind to global console if `null` has been specified ', () => {
       process.env.NODE_ENV = 'dev';
 
-      const testTracker = new ReactTracker({
+      const testTracker = new ReactNativeTracker({
         applicationId: 'app-id',
         transport: new FetchTransport({ endpoint: 'localhost' }),
         console: mockConsole,
@@ -165,85 +150,72 @@ describe('ReactTracker', () => {
 
   describe('Default Plugins', () => {
     it('should have some Web Plugins configured by default when no `plugins` have been specified', () => {
-      const testTracker = new ReactTracker({ applicationId: 'app-id', endpoint: 'localhost' });
-      expect(testTracker).toBeInstanceOf(ReactTracker);
+      const testTracker = new ReactNativeTracker({ applicationId: 'app-id', endpoint: 'localhost' });
+      expect(testTracker).toBeInstanceOf(ReactNativeTracker);
       expect(testTracker.plugins?.plugins).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ pluginName: 'ApplicationContextPlugin' }),
-          expect.objectContaining({ pluginName: 'HttpContextPlugin' }),
-          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
-          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
+          // TODO Native Plugins
         ])
       );
     });
 
-    it('should allow disabling default plugins', () => {
-      const testTracker = new ReactTracker({
-        applicationId: 'app-id',
-        endpoint: 'localhost',
-        trackHttpContext: false,
-        trackPathContextFromURL: false,
-        trackRootLocationContextFromURL: false,
-      });
-      expect(testTracker).toBeInstanceOf(ReactTracker);
-      expect(testTracker.plugins?.plugins).toEqual(
-        expect.arrayContaining([expect.objectContaining({ pluginName: 'ApplicationContextPlugin' })])
-      );
-      expect(testTracker.plugins?.plugins).toEqual(
-        expect.not.arrayContaining([
-          expect.objectContaining({ pluginName: 'HttpContextPlugin' }),
-          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
-          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
-        ])
-      );
-    });
+    // TODO uncomment when we have native plugins
+    // it('should allow disabling default plugins', () => {
+    //   const testTracker = new ReactNativeTracker({
+    //     applicationId: 'app-id',
+    //     endpoint: 'localhost',
+    //     trackHttpContext: false,
+    //     trackPathContextFromURL: false,
+    //     trackRootLocationContextFromURL: false,
+    //   });
+    //   expect(testTracker).toBeInstanceOf(ReactNativeTracker);
+    //   expect(testTracker.plugins?.plugins).toEqual(
+    //     expect.arrayContaining([expect.objectContaining({ pluginName: 'ApplicationContextPlugin' })])
+    //   );
+    //   expect(testTracker.plugins?.plugins).toEqual(
+    //     expect.not.arrayContaining([
+    //       expect.objectContaining({ pluginName: 'HttpContextPlugin' }),
+    //       expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
+    //       expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
+    //     ])
+    //   );
+    // });
 
     it('should not have any default Plugin configured when `plugins` have been overridden', () => {
-      const testTracker = new ReactTracker({
+      const testTracker = new ReactNativeTracker({
         applicationId: 'app-id',
         endpoint: 'localhost',
         plugins: [],
       });
-      expect(testTracker).toBeInstanceOf(ReactTracker);
+      expect(testTracker).toBeInstanceOf(ReactNativeTracker);
       expect(testTracker.plugins?.plugins).toStrictEqual([]);
     });
   });
 
   describe('trackEvent', () => {
-    const USER_AGENT_MOCK_VALUE = 'Mocked User Agent';
-
     beforeEach(() => {
       fetchMock.enableMocks();
-      mockUserAgent(USER_AGENT_MOCK_VALUE);
     });
 
     afterEach(() => {
       fetchMock.resetMocks();
-      clear();
     });
 
     it('should auto-track Application Context by default', async () => {
-      const testTracker = new ReactTracker({ applicationId: 'app-id', transport: new DebugTransport() });
+      const testTracker = new ReactNativeTracker({ applicationId: 'app-id', transport: new DebugTransport() });
       const testEvent = new TrackerEvent({ _type: 'test-event' });
-      expect(testTracker).toBeInstanceOf(ReactTracker);
+      expect(testTracker).toBeInstanceOf(ReactNativeTracker);
       expect(testEvent.global_contexts).toHaveLength(0);
 
       const trackedEvent = await testTracker.trackEvent(testEvent);
 
-      expect(trackedEvent.global_contexts).toHaveLength(3);
+      expect(trackedEvent.global_contexts).toHaveLength(1);
       expect(trackedEvent.global_contexts).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            _type: 'HttpContext',
-            id: 'http_context',
-          }),
-          expect.objectContaining({
             _type: 'ApplicationContext',
             id: 'app-id',
-          }),
-          expect.objectContaining({
-            _type: 'PathContext',
-            id: 'http://localhost/',
           }),
         ])
       );
