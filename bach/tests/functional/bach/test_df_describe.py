@@ -2,6 +2,8 @@
 Copyright 2022 Objectiv B.V.
 """
 import datetime
+import uuid
+
 import numpy as np
 import pandas as pd
 
@@ -220,6 +222,31 @@ def test_describe_json() -> None:
             ['count', '4'],
             ['nunique', '3'],
             ['mode', '"a string"'],
+        ],
+        columns=['__stat', 'column'],
+    )
+    pd.testing.assert_frame_equal(expected_df, result.to_pandas())
+
+
+def test_describe_uuid() -> None:
+    pdf = pd.DataFrame(
+        data=[
+            ['0022c7dd-074b-4a44-a7cb-b7716b668264'],
+            ['0022c7dd-074b-4a44-a7cb-b7716b668265'],
+            ['0022c7dd-074b-4a44-a7cb-b7716b668266'],
+        ],
+        columns=['column'],
+    )
+    df = get_from_df(table='describe_table', df=pdf)
+    df['column'] = df['column'].astype('uuid')
+    result = df.describe()
+    result = result.reset_index(drop=False)
+
+    expected_df = pd.DataFrame(
+        data=[
+            ['count', '3'],
+            ['nunique', '3'],
+            ['mode', '0022c7dd-074b-4a44-a7cb-b7716b668264'],
         ],
         columns=['__stat', 'column'],
     )

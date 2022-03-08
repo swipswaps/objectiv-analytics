@@ -9,7 +9,7 @@ import {
   makeExpandableContext,
   makeHttpContext,
   makeInputContext,
-  makeLinkContext,
+  makeLinkContext, makeMarketingContext,
   makeMediaPlayerContext,
   makeNavigationContext,
   makeOverlayContext,
@@ -81,6 +81,41 @@ describe('Context Factories', () => {
       _type: 'LinkContext',
       id: 'confirm-data',
       href: '/some/url',
+    });
+  });
+
+  it('MarketingContext', () => {
+    expect(makeMarketingContext({
+      id: 'utm',
+      campaign: 'test-campaign',
+      medium: 'test-medium',
+      source: 'test-source'
+    })).toStrictEqual({
+      __global_context: true,
+      _type: 'MarketingContext',
+      id: 'utm',
+      campaign: 'test-campaign',
+      medium: 'test-medium',
+      source: 'test-source',
+      term: null,
+      content: null
+    });
+    expect(makeMarketingContext({
+      id: 'utm',
+      campaign: 'test-campaign',
+      medium: 'test-medium',
+      source: 'test-source',
+      term: 'test-term',
+      content: 'test-content'
+    })).toStrictEqual({
+      __global_context: true,
+      _type: 'MarketingContext',
+      id: 'utm',
+      campaign: 'test-campaign',
+      medium: 'test-medium',
+      source: 'test-source',
+      term: 'test-term',
+      content: 'test-content'
     });
   });
 

@@ -83,3 +83,40 @@ export interface SessionContext extends AbstractGlobalContext {
    */
   hit_number: number;
 }
+
+/**
+ * a context that captures marketing channel info, so users can do attribution, campaign
+ * effectiveness and other models
+ * Inheritance: MarketingContext -> AbstractGlobalContext -> AbstractContext
+ */
+export interface MarketingContext extends AbstractGlobalContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'MarketingContext';
+
+  /**
+   * Identifies the advertiser, site, publication, etc
+   */
+  source: string;
+
+  /**
+   * Advertising or marketing medium: cpc, banner, email newsletter, etc
+   */
+  medium: string;
+
+  /**
+   * Individual campaign name, slogan, promo code, etc
+   */
+  campaign: string;
+
+  /**
+   * [Optional] Search keywords
+   */
+  term: string | null;
+
+  /**
+   * [Optional] Used to differentiate similar content, or links within the same ad
+   */
+  content: string | null;
+}
