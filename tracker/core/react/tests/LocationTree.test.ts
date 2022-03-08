@@ -2,7 +2,6 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { RootLocationContextFromURLPlugin } from '@objectiv/plugin-root-location-context-from-url';
 import { Tracker } from '@objectiv/tracker-core';
 import {
   locationNodes,
@@ -291,7 +290,24 @@ describe('LocationTree', () => {
   });
 
   it('should initialize the LocationTree with the Location Contexts originating from Plugins', () => {
-    const tracker = new Tracker({ applicationId: 'app-id', plugins: [new RootLocationContextFromURLPlugin()] });
+    const tracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: [
+        {
+          pluginName: 'TestPlugin',
+          enrich: ({ location_stack }) => {
+            location_stack.push({
+              __location_context: true,
+              _type: 'LocationContext',
+              id: 'test',
+            });
+          },
+          isUsable() {
+            return true;
+          },
+        },
+      ],
+    });
 
     jest.spyOn(LocationTree, 'add');
 
@@ -300,7 +316,8 @@ describe('LocationTree', () => {
     expect(LocationTree.add).toHaveBeenCalledTimes(1);
     expect(LocationTree.add).toHaveBeenCalledWith(
       expect.objectContaining({
-        _type: 'RootLocationContext',
+        _type: 'LocationContext',
+        id: 'test',
       }),
       null
     );
