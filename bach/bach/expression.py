@@ -5,6 +5,8 @@ import re
 from dataclasses import dataclass
 from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set
 
+from sqlalchemy.engine import Dialect
+
 from sql_models.model import escape_raw_sql
 from sql_models.util import quote_string, quote_identifier
 
@@ -22,7 +24,7 @@ class ExpressionToken:
         if self.__class__ == ExpressionToken:
             raise TypeError("Cannot instantiate ExpressionToken directly. Instantiate a subclass.")
 
-    def to_sql(self):
+    def to_sql(self, dialect: Dialect):
         """
         Must be implemented by subclasses. Generated SQL must be assumed to be used as raw sql in
         SqlModel.sql, therefore unknown/untrusted/etc. values should be properly escaped:
@@ -37,7 +39,7 @@ class ExpressionToken:
 class RawToken(ExpressionToken):
     raw: str
 
-    def to_sql(self) -> str:
+    def to_sql(self, dialect: Dialect) -> str:
         return escape_raw_sql(self.raw)
 
 
@@ -46,7 +48,7 @@ class VariableToken(ExpressionToken):
     dtype: str
     name: str
 
-    def to_sql(self) -> str:
+    def to_sql(self, dialect: Dialect) -> str:
         return '{' + self.dtype_name_to_placeholder_name(self.dtype, self.name) + '}'
 
     @property
@@ -74,13 +76,13 @@ class VariableToken(ExpressionToken):
 class ColumnReferenceToken(ExpressionToken):
     column_name: str
 
-    def to_sql(self):
+    def to_sql(self, dialect: Dialect):
         raise ValueError('ColumnReferenceTokens should be resolved first using '
                          'Expression.resolve_column_references')
 
-    def resolve(self, table_name: Optional[str]) -> RawToken:
-        t = f'{quote_identifier(table_name)}.' if table_name else ''
-        return RawToken(f'{t}{quote_identifier(self.column_name)}')
+    def resolve(self, dialect: Dialect, table_name: Optional[str]) -> RawToken:
+        t = f'{quote_identifier(dialect, table_name)}.' if table_name else ''
+        return RawToken(f'{t}{quote_identifier(dialect, self.column_name)}')
 
 
 @dataclass(frozen=True)
@@ -90,7 +92,7 @@ class ModelReferenceToken(ExpressionToken):
     def refname(self) -> str:
         return f'reference{self.model.hash}'
 
-    def to_sql(self) -> str:
+    def to_sql(self, dialect: Dialect) -> str:
         return f'{{{{{self.refname()}}}}}'
 
 
@@ -99,7 +101,7 @@ class StringValueToken(ExpressionToken):
     """ Wraps a string value. The value in this object is unescaped and unquoted. """
     value: str
 
-    def to_sql(self) -> str:
+    def to_sql(self, dialect: Dialect) -> str:
         return escape_raw_sql(quote_string(self.value))
 
 
@@ -107,8 +109,8 @@ class StringValueToken(ExpressionToken):
 class IdentifierToken(ExpressionToken):
     name: str
 
-    def to_sql(self) -> str:
-        return escape_raw_sql(quote_identifier(self.name))
+    def to_sql(self, dialect: Dialect) -> str:
+        return escape_raw_sql(quote_identifier(dialect, self.name))
 
 
 class Expression:
@@ -191,9 +193,10 @@ class Expression:
         Construct an expression that represents the sql: {expr} as "name"
         """
         ident_expr = Expression.identifier(name)
-        if expr.to_sql() == ident_expr.to_sql():
-            # this is to prevent generating sql of the form `x as x`, we'll just return `x` in that case
-            return expr
+        # TODO: enable this optimisation again
+        # if expr.to_sql() == ident_expr.to_sql():
+        #     # this is to prevent generating sql of the form `x as x`, we'll just return `x` in that case
+        #     return expr
         return cls.construct('{} as {}', expr, ident_expr)
 
     @classmethod
@@ -279,14 +282,14 @@ class Expression:
             d.has_windowed_aggregate_function for d in self.data if isinstance(d, Expression)
         )
 
-    def resolve_column_references(self, table_name: str = None) -> 'Expression':
+    def resolve_column_references(self, dialect: Dialect, table_name: Optional[str]) -> 'Expression':
         """ resolve the table name aliases for all columns in this expression """
         result: List[Union[ExpressionToken, Expression]] = []
         for data_item in self.data:
             if isinstance(data_item, Expression):
-                result.append(data_item.resolve_column_references(table_name))
+                result.append(data_item.resolve_column_references(dialect, table_name))
             elif isinstance(data_item, ColumnReferenceToken):
-                result.append(data_item.resolve(table_name))
+                result.append(data_item.resolve(dialect, table_name))
             else:
                 result.append(data_item)
         return self.__class__(result)
@@ -309,14 +312,17 @@ class Expression:
                 result.append(data_item)
         return result
 
-    def to_sql(self, table_name: Optional[str] = None) -> str:
+    def to_sql(self, dialect: Dialect, table_name: Optional[str] = None) -> str:
         """
         Compile the expression to a SQL fragment by calling to_sql() on every token or expression in data
         :param table_name: Optional table name, if set all column-references will be compiled as
             '"{table_name}"."{column_name}"' instead of just '"{column_name}"'.
         :return SQL representation of the expression.
         """
-        return ''.join([d.to_sql() for d in self.resolve_column_references(table_name).data])
+        resolved_tables_expression = self.resolve_column_references(dialect, table_name)
+        return ''.join(
+            d.to_sql(dialect=dialect) for d in resolved_tables_expression.data
+        )
 
 
 class NonAtomicExpression(Expression):

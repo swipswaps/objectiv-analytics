@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 from typing import List
 
 import pytest
+from sqlalchemy.dialects.postgresql.base import PGDialect
 
 from bach import DataFrame, get_series_type_from_dtype
 from bach.expression import Expression
@@ -114,10 +115,11 @@ def test__determine_left_on_right_df_serie_happy():
     assert call__determine_left_on_right_on(left, right, left_index=True, right_index=True) == (['a'], ['a'])
 
 
-def test__determine_result_columns():
+def test__determine_result_columns(dialect):
+    dialect = PGDialect()  # TODO: BigQuery
     left = get_fake_df(['a'], ['b', 'c'], 'int64')
     right = get_fake_df(['a'], ['c', 'd'], 'float64')
-    result = _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
+    result = _determine_result_columns(dialect, left, right, ['a'], ['a'], ('_x', '_y'))
     assert result == (
         [
             ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
@@ -128,7 +130,7 @@ def test__determine_result_columns():
             ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
-    result = _determine_result_columns(left, right, ['c'], ['c'], ('_x', '_y'))
+    result = _determine_result_columns(dialect, left, right, ['c'], ['c'], ('_x', '_y'))
     assert result == (
         [
             ResultSeries(name='a_x', expression=Expression.construct('"l"."a"'), dtype='int64'),
@@ -139,7 +141,7 @@ def test__determine_result_columns():
             ResultSeries(name='d', expression=Expression.construct('"r"."d"'), dtype='float64')
         ]
     )
-    result = _determine_result_columns(left, right, ['a', 'c'], ['a', 'c'], ('_x', '_y'))
+    result = _determine_result_columns(dialect, left, right, ['a', 'c'], ['a', 'c'], ('_x', '_y'))
     assert result == (
         [
             ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
@@ -151,13 +153,13 @@ def test__determine_result_columns():
     )
 
 
-def test__determine_result_columns_non_happy_path():
+def test__determine_result_columns_non_happy_path(dialect):
     # With pandas the following works, there will just be two b_x and two b_y columns, but we cannot
     # generate sql that has the same column name multiple times, so we raise an error
     left = get_fake_df(['a'], ['b', 'b_x'], 'int64')
     right = get_fake_df(['a'], ['b', 'b_y'], 'float64')
     with pytest.raises(ValueError):
-        _determine_result_columns(left, right, ['a'], ['a'], ('_x', '_y'))
+        _determine_result_columns(dialect, left, right, ['a'], ['a'], ('_x', '_y'))
 
 
 def test_merge_non_happy_path_how():

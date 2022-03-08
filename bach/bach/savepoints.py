@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import re
 from typing import NamedTuple, Dict, List, Union, cast
 
-from sqlalchemy.engine import Engine
+from sqlalchemy.engine import Engine, Dialect
 
 from bach import DataFrame
 from bach.sql_model import BachSqlModel
@@ -178,8 +178,8 @@ class Savepoints:
                                  "share the same engine.")
             engine = list(engines)[0]
         result_created = []
-        drop_statements = self.get_drop_statements()
-        create_statements = self.get_create_statements()
+        drop_statements = self.get_drop_statements(dialect=engine.dialect)
+        create_statements = self.get_create_statements(dialect=engine.dialect)
 
         with engine.connect() as conn:
             with conn.begin() as transaction:
@@ -198,42 +198,45 @@ class Savepoints:
                 transaction.commit()
         return result_created
 
-    def get_drop_statements(self) -> Dict[str, str]:
+    def get_drop_statements(self, dialect: Dialect) -> Dict[str, str]:
         """
         Get the drop statements to remove all savepoints that are marked as table or view.
         The returned dictionary is sorted, such that depending tables/views are deleted before dependencies.
+        :param dialect: SQL Dialect
         :return: dict with as key the savepoint name, and as value the drop statement for that table/view
         """
-        sql_statements = self.to_sql()
+        sql_statements = self.to_sql(dialect)
         drop_statements = {}
         for name in reversed(list(sql_statements.keys())):
             info = self._entries[name]
             if info.materialization == Materialization.TABLE:
-                drop_statements[name] = f'drop table if exists {quote_identifier(name)}'
+                drop_statements[name] = f'drop table if exists {quote_identifier(dialect, name)}'
             elif info.materialization == Materialization.VIEW:
-                drop_statements[name] = f'drop view if exists {quote_identifier(name)}'
+                drop_statements[name] = f'drop view if exists {quote_identifier(dialect, name)}'
         return drop_statements
 
-    def get_create_statements(self) -> Dict[str, str]:
+    def get_create_statements(self, dialect: Dialect) -> Dict[str, str]:
         """
         Get the create statements to create savepoints that are marked as table or view.
         The returned dictionary is sorted, such that dependencies are created before tables/views that
         depend on them.
+        :param dialect: SQL Dialect
         :return: dict with as key the savepoint name, and as value the create statement for that table/view
         """
-        sql_statements = self.to_sql()
+        sql_statements = self.to_sql(dialect)
         return {
             name: statement for name, statement in sql_statements.items()
             if self._entries[name].materialization in (Materialization.TABLE, Materialization.VIEW)
         }
 
-    def to_sql(self) -> Dict[str, str]:
+    def to_sql(self, dialect: Dialect) -> Dict[str, str]:
         """
         Generate the sql for all save-points
+        :param dialect: SQL Dialect
         :return: dictionary mapping the name of each savepoint to the sql for that savepoint.
         """
         graph = self._get_combined_graph()
-        sqls = to_sql_materialized_nodes(start_node=graph, include_start_node=False)
+        sqls = to_sql_materialized_nodes(dialect=dialect, start_node=graph, include_start_node=False)
         return sqls
 
     def _get_combined_graph(self) -> SqlModel:

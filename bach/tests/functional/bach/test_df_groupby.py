@@ -379,12 +379,13 @@ def test_dataframe_agg_numeric_only():
 
 def test_cube_basics():
     bt = get_bt_with_test_data(full_data_set=False)
+    engine = bt.engine
 
     # instant stonks through variable naming
     btc = bt.cube(['municipality','city'])
 
     assert(isinstance(btc.group_by, Cube))
-    assert(btc.group_by.get_group_by_column_expression().to_sql()
+    assert(btc.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'cube ("municipality", "city")')
 
     result_bt = btc[['inhabitants']].sum()
@@ -411,10 +412,11 @@ def test_cube_basics():
 
 def test_rollup_basics():
     bt = get_bt_with_test_data(full_data_set=False)
+    engine = bt.engine
 
     btr = bt.rollup(['municipality','city'])
     assert(isinstance(btr.group_by, Rollup))
-    assert(btr.group_by.get_group_by_column_expression().to_sql()
+    assert(btr.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'rollup ("municipality", "city")')
 
     result_bt = btr[['inhabitants']].sum()
@@ -439,6 +441,7 @@ def test_rollup_basics():
 def test_grouping_list_basics():
     # This is not the greatest test, but at least it tests the interface.
     bt = get_bt_with_test_data(full_data_set=False)
+    engine = bt.engine
     btl1 = bt.groupby([['municipality'], ['city']])
     btl2 = bt.groupby([['municipality'], 'city'])
     btl3 = bt.groupby(['municipality', ['city']])
@@ -448,7 +451,7 @@ def test_grouping_list_basics():
 
     # This is not the greatest test, but at least it tests the interface.
     assert(isinstance(btl1.group_by, GroupingList))
-    assert(btl1.group_by.get_group_by_column_expression().to_sql()
+    assert(btl1.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == '("municipality"), ("city")')
 
     result_bt = btl1[['inhabitants']].sum()
@@ -470,6 +473,7 @@ def test_grouping_list_basics():
 def test_grouping_set_basics():
     # This is not the greatest test, but at least it tests the interface.
     bt = get_bt_with_test_data(full_data_set=False)
+    engine = bt.engine
     bts1 = bt.groupby((('municipality'), ('city')))
     bts2 = bt.groupby((('municipality'), 'city'))
     bts3 = bt.groupby(('municipality', ('city')))
@@ -478,7 +482,7 @@ def test_grouping_set_basics():
     assert(bts1 == bts3)
 
     assert(isinstance(bts1.group_by, GroupingSet))
-    assert(bts1.group_by.get_group_by_column_expression().to_sql()
+    assert(bts1.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'grouping sets (("municipality"), ("city"))')
 
     result_bt = bts1[['inhabitants']].sum()
@@ -505,7 +509,7 @@ def test_grouping_set_basics():
     assert(bts1 == bts3)
 
     assert(isinstance(bts1.group_by, GroupingSet))
-    assert(bts1.group_by.get_group_by_column_expression().to_sql()
+    assert(bts1.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'grouping sets (("municipality"), ())')
 
 
