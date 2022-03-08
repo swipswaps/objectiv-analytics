@@ -11,7 +11,7 @@ def test_series_append_same_dtype() -> None:
 
     assert_equals_data(
         result.sort_values(),
-        expected_columns=['_index_skating_order', 'city_skating_order'],
+        expected_columns=['_index_skating_order', 'city'],
         expected_data=[
             [1, '1'],
             [2, '2'],
@@ -32,7 +32,7 @@ def test_series_append_different_dtype() -> None:
 
     assert_equals_data(
         result.sort_values(),
-        expected_columns=['_index_skating_order', 'city_founding'],
+        expected_columns=['_index_skating_order', 'city'],
         expected_data=[
             [3, '1268'],
             [1, '1285'],
@@ -48,7 +48,7 @@ def test_series_append_different_dtype() -> None:
 
     assert_equals_data(
         result2.sort_values(ascending=False),
-        expected_columns=['_index_skating_order', 'inhabitants_founding'],
+        expected_columns=['_index_skating_order', 'inhabitants'],
         expected_data=[
             [1, 93485.],
             [2, 33520.],
@@ -62,7 +62,7 @@ def test_series_append_different_dtype() -> None:
     result3 = bt.city.append([bt.founding, bt.inhabitants])
     assert_equals_data(
         result3.sort_values(),
-        expected_columns=['_index_skating_order', 'city_founding_inhabitants'],
+        expected_columns=['_index_skating_order', 'city'],
         expected_data=[
             [3, '1268'],
             [1, '1285'],
@@ -86,7 +86,7 @@ def test_series_ignore_index() -> None:
 
     assert_equals_data(
         result.sort_values(),
-        expected_columns=['city_skating_order'],
+        expected_columns=['city'],
         expected_data=[
             ['1'],
             ['2'],
@@ -108,7 +108,7 @@ def test_append_w_non_materialized_series() -> None:
 
     assert_equals_data(
         result.sort_values(),
-        expected_columns=['city', 'city_unique_skating_order'],
+        expected_columns=['city', 'city_unique'],
         expected_data=[
             ['Ljouwert', '1'],
             ['Snits', '2'],

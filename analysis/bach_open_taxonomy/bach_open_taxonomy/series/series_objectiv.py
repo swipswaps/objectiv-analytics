@@ -25,16 +25,17 @@ class ObjectivStack(SeriesJsonb.Json):
         :param dtype: the dtype of the series to return.
         :returns: a series of type `dtype`
         """
+        dialect = self._series_object.engine.dialect
         expression_str = f'''
         jsonb_path_query_first({{}},
         \'$[*] ? (@._type == $type)\',
-        \'{{"type":{quote_identifier(type)}}}\') ->> {{}}'''
+        \'{{"type":{quote_identifier(dialect, type)}}}\') ->> {{}}'''
         expression = Expression.construct(
             expression_str,
             self._series_object,
             Expression.string_value(key)
         )
-        return self._series_object.copy_override(dtype=dtype, expression=expression)
+        return self._series_object.copy_override_dtype(dtype).copy_override(expression=expression)
 
 
 @register_dtype(value_types=[], override_registered_types=True)
@@ -156,7 +157,9 @@ class SeriesLocationStack(SeriesJsonb):
                 expression_str,
                 self._series_object
             )
-            return self._series_object.copy_override(dtype='objectiv_location_stack', expression=expression)
+            return self._series_object\
+                .copy_override_dtype('objectiv_location_stack')\
+                .copy_override(expression=expression)
 
         @property
         def nice_name(self):
@@ -192,7 +195,7 @@ class SeriesLocationStack(SeriesJsonb):
                 self._series_object,
                 self._series_object
             )
-            return self._series_object.copy_override(dtype='string', expression=expression)
+            return self._series_object.copy_override_dtype('string').copy_override(expression=expression)
 
     @property
     def objectiv(self):

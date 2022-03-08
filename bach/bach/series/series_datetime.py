@@ -46,9 +46,7 @@ class DateTimeOperation:
         """
         expression = Expression.construct('to_char({}, {})',
                                           self._series, Expression.string_value(format_str))
-        str_series = self._series.copy_override(dtype='string', expression=expression)
-        # mypy assumes `self._series.copy_override` returns a SeriesAbstractDateTime
-        assert isinstance(str_series, SeriesString)
+        str_series = self._series.copy_override_type(SeriesString).copy_override(expression=expression)
         return str_series
 
 
@@ -108,10 +106,9 @@ class TimedeltaOperation(DateTimeOperation):
         """
         # extract(epoch from source) returns the total number of seconds in the interval
         expression = Expression.construct(f'extract(epoch from {{}})', self._series)
-        return cast(
-            SeriesFloat64,
-            self._series.copy_override(name='total_seconds', expression=expression, dtype='float64'),
-        )
+        return self._series\
+            .copy_override_type(SeriesFloat64)\
+            .copy_override(name='total_seconds', expression=expression)
 
 
 class SeriesAbstractDateTime(Series, ABC):

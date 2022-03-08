@@ -159,6 +159,10 @@ Reshaping, indexing, sorting & merging
     DataFrame.set_index
     DataFrame.merge
     DataFrame.append
+    DataFrame.fillna
+    DataFrame.ffill
+    DataFrame.bfill
+    DataFrame.stack
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~

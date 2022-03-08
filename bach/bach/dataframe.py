@@ -3,6 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import warnings
 from copy import copy
+from datetime import date, datetime, time
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
@@ -13,16 +14,18 @@ from uuid import UUID
 import numpy
 import pandas
 from sqlalchemy.engine import Engine
-from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
+from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
-from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
+from bach.types import get_series_type_from_dtype
+from bach.utils import escape_parameter_characters
 from sql_models.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
 from sql_models.sql_generator import to_sql
+from sql_models.util import quote_identifier
 
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
@@ -45,6 +48,7 @@ ColumnFunction = Union[str, Callable, List[Union[str, Callable]]]
 #     - dict of axis labels -> functions, function names or list of such.
 
 Level = Union[int, List[int], str, List[str]]
+Scalar = Union[int, float, str, bool, date, datetime, time, UUID]
 
 
 class SortColumn(NamedTuple):
@@ -360,80 +364,109 @@ class DataFrame:
             self._variables == other._variables
 
     @classmethod
-    def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
-        new_node = CustomSqlModelBuilder(sql='select * from {{previous}} limit 0')(previous=node)
-        select_statement = to_sql(new_node)
-        sql = f"""
-            create temporary table tmp_table_name on commit drop as
-            ({select_statement});
-            select column_name, data_type
-            from information_schema.columns
-            where table_name = 'tmp_table_name'
-            order by ordinal_position;
-        """
-        with engine.connect() as conn:
-            sql = escape_parameter_characters(conn, sql)
-            res = conn.execute(sql)
-        return {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
-
-    @classmethod
-    def from_table(cls, engine: Engine, table_name: str, index: List[str]) -> 'DataFrame':
+    def from_table(
+            cls,
+            engine: Engine,
+            table_name: str,
+            index: List[str],
+            all_dtypes: Optional[Dict[str, str]] = None
+    ) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the content of an existing table in the database.
 
-        This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
+        If all_dtypes is not specified, the column dtypes are queried from the database's information
+        schema.
 
         :param engine: an sqlalchemy engine for the database.
         :param table_name: the table name that contains the data to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
+        :param all_dtypes: Optional. Mapping from column name to dtype.
+            Must contain all index and data columns.
+            Must be in same order as the columns appear in the the sql-model.
         :returns: A DataFrame based on a sql table.
 
         .. note::
-            In order to create this temporary table the source data is queried.
+            If all_dtypes is not set, then this will query the database.
         """
-        # todo: why is an index mandatory if you can reset it later?
-        # todo: don't create a temporary table, the real table (and its meta data) already exists
-        model = CustomSqlModelBuilder(sql=f'SELECT * FROM {table_name}').instantiate()
-        return cls._from_node(engine, model, index)
+        if all_dtypes is not None:
+            dtypes = all_dtypes
+        else:
+            dtypes = get_dtypes_from_table(engine=engine, table_name=table_name)
+
+        model_builder = CustomSqlModelBuilder(sql='SELECT * FROM {table_name}', name='from_table')
+        sql_model = model_builder(table_name=quote_identifier(engine.dialect, table_name))
+        return cls._from_node(
+            engine=engine,
+            model=sql_model,
+            index=index,
+            all_dtypes=dtypes
+        )
 
     @classmethod
-    def from_model(cls, engine: Engine, model: SqlModel, index: List[str]) -> 'DataFrame':
+    def from_model(
+            cls,
+            engine: Engine,
+            model: SqlModel,
+            index: List[str],
+            all_dtypes: Optional[Dict[str, str]] = None
+    ) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the result of the query defined in `model`.
 
-        This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
-        In order to create this temporary table the query in `model` executed.
+        If all_dtypes is not specified, then a transaction scoped temporary table will be created with
+        0 result rows from the model. The meta data of this table will be used to deduce the dtypes.
 
+        :param engine: a sqlalchemy engine for the database.
+        :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
+        :param index: list of column names that make up the index. At least one column needs to be
+            selected for the index.
+        :param all_dtypes: Optional. Mapping from column name to dtype.
+            Must contain all index and data columns.
+            Must be in same order as the columns appear in the the sql-model.
+        :returns: A DataFrame based on an SqlModel
+
+        .. note::
+            If all_dtypes is not set, then this will query the database and create and remove a temporary
+            table.
+        """
+        if all_dtypes is not None:
+            dtypes = all_dtypes
+        else:
+            dtypes = get_dtypes_from_model(engine=engine, node=model)
+        return cls._from_node(
+            engine=engine,
+            model=model,
+            index=index,
+            all_dtypes=dtypes
+        )
+
+    @classmethod
+    def _from_node(
+            cls,
+            engine,
+            model: SqlModel,
+            index: List[str],
+            all_dtypes: Dict[str, str]
+    ) -> 'DataFrame':
+        """
+        INTERNAL: Instantiate a new DataFrame based on the result of the query defined in `model`.
         :param engine: an sqlalchemy engine for the database.
         :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
+        :param all_dtypes: Dictionary mapping column name to dtype.
+            Must contain all index and data columns.
+            Must be in same order as the columns appear in the the sql-model.
         :returns: A DataFrame based on an SqlModel
+
         """
-        # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
-        # select expressions, where clauses, or limits
-        wrapped_model = CustomSqlModelBuilder(sql='SELECT * FROM {{model}}')(model=model)
-        return cls._from_node(engine, wrapped_model, index)
+        index_dtypes = {k: all_dtypes[k] for k in index}
+        series_dtypes = {k: all_dtypes[k] for k in all_dtypes.keys() if k not in index}
+        bach_model = BachSqlModel.from_sql_model(sql_model=model, columns=tuple(all_dtypes.keys()))
 
-    @classmethod
-    def _from_node(cls, engine, model: SqlModel, index: List[str]) -> 'DataFrame':
-        dtypes = cls._get_dtypes(engine, model)
-
-        index_dtypes = {k: dtypes[k] for k in index}
-        series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
-
-        columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
-        bach_model = BachSqlModel(
-            model_spec=model.model_spec,
-            placeholders=model.placeholders,
-            references=model.references,
-            materialization=model.materialization,
-            materialization_name=model.materialization_name,
-            columns=columns
-        )
         from bach.savepoints import Savepoints
-        return cls.get_instance(
+        df = cls.get_instance(
             engine=engine,
             base_node=bach_model,
             index_dtypes=index_dtypes,
@@ -443,6 +476,11 @@ class DataFrame:
             savepoints=Savepoints(),
             variables={}
         )
+        if not df.is_materialized:
+            # This happens when the columns in the model are in a different order than the columns in the
+            # dataframe.
+            df = df.materialize(node_name='column_reorder')
+        return df
 
     @classmethod
     def from_pandas(
@@ -960,7 +998,7 @@ class DataFrame:
                     ):
                         raise ValueError('Setting new columns to grouped DataFrame is only supported if '
                                          'the DataFrame has aggregated columns.')
-                    self._index_merge(key=key, value=value)
+                    self.__set_item_with_merge(key=key, value=value)
 
         elif isinstance(key, list):
             if len(key) == 0:
@@ -979,63 +1017,59 @@ class DataFrame:
         else:
             raise ValueError(f'Key should be either a string or a list of strings, value: {key}')
 
-    def _index_merge(
-        self, key: str, value: 'Series', how: str = 'left',
-    ):
+    def __set_item_with_merge(self, key: str, value: 'Series'):
         """"
         Internal method used by __setitem__ to set a series using a merge on index. Modifies the DataFrame
         with the added column. The DataFrames index name is the same as the original DataFrame's.
 
         :param key: name of the column to set.
         :param value: Series that is set.
-        :param how: 'left' or 'outer'.
         """
 
-        # todo This method's functionality will be implementd in merge()
         if not (len(value.index) == 1 and len(self.index) == 1):
+            raise ValueError(
+                'setting with different base nodes only supported for one level index'
+            )
 
-            raise ValueError('setting with different base nodes only supported for one level'
-                             ' index')
+        from bach.partitioning import GroupBy
         index_name = self.index_columns[0]
         value_index_name = list(value.index.keys())[0]
         if self.index[index_name].dtype != value.index[value_index_name].dtype:
             raise ValueError('dtypes of indexes should be the same')
 
-        # FIXME We're assiging mixed types to this var.
-        renamed_value: DataFrameOrSeries = value.copy_override(name=key)
+        # align index names, this way we have all matched indexes in a single series after merge
+        # TODO: replace with value.rename(index={value_index_name: index_name})
+        #  when index renaming is supported
+        aligned_index = {index_name: value.index[value_index_name].copy_override(name=index_name)}
+        other = value.copy_override(
+            index=aligned_index,
+            name=key,
+            group_by=GroupBy(list(aligned_index.values())) if value.group_by else None,
+        )
 
-        if how == 'outer':
-            renamed_value = renamed_value.to_frame().materialize()
-            renamed_value[value_index_name + '__index'] = renamed_value.index[value_index_name]
+        df = self.merge(
+            other,
+            left_index=True,
+            right_index=True,
+            how='left',
+            suffixes=('', '__remove'),
+        )
 
-        df = self.merge(renamed_value,
-                        left_index=True,
-                        right_index=True,
-                        how=how,
-                        suffixes=('', '__remove'))
-
-        if how == 'outer':
-            new_index = df.index[index_name].fillna(df[value_index_name + '__index'])
-        elif how == 'left':
-            new_index = df.index[index_name]
-        else:
-            raise NotImplementedError(f'how "{how}" not supported')
-
-        df.set_index(new_index, inplace=True)
+        # remove conflicts in case self already has a value for series key
         if key in self.data_columns:
             df[key] = df[key + '__remove']
-            df.drop(columns=[key + '__remove'], inplace=True)
-        df.drop(columns=[value_index_name + '__index'], inplace=True, errors='ignore')
-
+            df = df.drop(columns=[key + '__remove'])
         self._update_self_from_df(df)
 
-    def rename(self, mapper: Union[Dict[str, str], Callable[[str], str]] = None,
-               index: Union[Dict[str, str], Callable[[str], str]] = None,
-               columns: Union[Dict[str, str], Callable[[str], str]] = None,
-               axis: int = 0,
-               inplace: bool = False,
-               level: int = None,
-               errors: str = 'ignore') -> Optional['DataFrame']:
+    def rename(
+        self,
+        mapper: Union[Dict[str, str], Callable[[str], str]] = None,
+        index: Union[Dict[str, str], Callable[[str], str]] = None,
+        columns: Union[Dict[str, str], Callable[[str], str]] = None,
+        axis: int = 0,
+        level: int = None,
+        errors: str = 'ignore',
+    ) -> 'DataFrame':
         """
         Rename columns.
 
@@ -1050,12 +1084,11 @@ class DataFrame:
             and returns the new one. The new column names must not clash with other column names in either
             `self.`:py:attr:`data` or `self.`:py:attr:`index`, after renaming is complete.
         :param axis: ``axis=1`` is supported, rest is not.
-        :param inplace: update the current DataFrame or return a new DataFrame.
         :param level: not supported
         :param errors: Either 'ignore' or 'raise'. When set to 'ignore' KeyErrors about non-existing
             column names in `columns` or `mapper` are ignored. Errors thrown in the mapper function or
             about invalid target column names are not suppressed.
-        :returns: DataFrame with the renamed axis labels or None if ``inplace=True``.
+        :returns: DataFrame with the renamed axis labels.
 
         .. note::
             The copy parameter is not supported since it makes very little sense for db backed series.
@@ -1070,10 +1103,7 @@ class DataFrame:
         if mapper is not None:
             columns = mapper
 
-        if inplace:
-            df = self
-        else:
-            df = self.copy_override()
+        df = self.copy_override()
 
         if callable(columns):
             columns = {source: columns(source) for source in df.data_columns}
@@ -1097,14 +1127,13 @@ class DataFrame:
                 series = series.copy_override(name=new_name)
             new_data[new_name] = series
         df._data = new_data
-        return None if inplace else df
+        return df
 
     def reset_index(
         self,
         level: Optional[Union[str, Sequence[str]]] = None,
         drop: bool = False,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Drops the current index.
 
@@ -1114,13 +1143,11 @@ class DataFrame:
         :param level: Removes given levels from index. Removes all levels by default
         :param drop: if False, the dropped index is added to the data columns of the DataFrame. If True it
             is removed.
-        :param inplace: update the current DataFrame or return a new DataFrame.
-        :returns: DataFrame with the index dropped or None if ``inplace=True``.
+        :returns: DataFrame with the index dropped.
         """
-        df = self if inplace else self.copy_override()
+        df = self.copy()
         if self._group_by:
-            # materialize, but raise if inplace is required.
-            df = df.materialize(node_name='reset_index', inplace=inplace)
+            df = df.materialize(node_name='reset_index')
 
         new_index = {}
         series = df._data if drop else df.all_series
@@ -1139,15 +1166,14 @@ class DataFrame:
 
         df._data = {n: s.copy_override(index={}, index_sorting=[]) for n, s in series.items()}
         df._index = new_index
-        return None if inplace else df
+        return df
 
     def set_index(
         self,
         keys: Union[str, 'Series', List[Union[str, 'Series']]],
         drop: bool = True,
         append: bool = False,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Set this dataframe's index to the the index given in keys
 
@@ -1155,15 +1181,13 @@ class DataFrame:
             Series are passed, they should have the same base node as the DataFrame they are set on.
         :param drop: delete columns to be used as the new index.
         :param append: whether to append to the existing index or replace.
-        :param inplace: update the current DataFrame or return a new DataFrame. This is not always supported
-            and will raise if it is not.
-        :returns: a DataFrame with the new index or None if ``inplace=True``.
+        :returns: a DataFrame with the new index.
         """
         from bach.series import Series
 
-        df = self if inplace else self.copy_override()
+        df = self.copy()
         if self._group_by:
-            df = df.materialize(node_name='groupby_setindex', inplace=inplace)
+            df = df.materialize(node_name='groupby_setindex')
 
         # build the new index, appending if necessary
         new_index = {} if not append else copy(df._index)
@@ -1191,7 +1215,7 @@ class DataFrame:
 
         df._index = new_index
         df._data = new_series
-        return None if inplace else df
+        return df
 
     def __delitem__(self, key: str):
         """
@@ -1203,13 +1227,14 @@ class DataFrame:
         else:
             raise TypeError(f'Unsupported type {type(key)}')
 
-    def drop(self,
-             labels: List[str] = None,
-             index: List[str] = None,
-             columns: List[str] = None,
-             level: int = None,
-             inplace: bool = False,
-             errors: str = 'raise') -> Optional['DataFrame']:
+    def drop(
+        self,
+        labels: List[str] = None,
+        index: List[str] = None,
+        columns: List[str] = None,
+        level: int = None,
+        errors: str = 'raise',
+    ) -> 'DataFrame':
         """
         Drop columns from the DataFrame
 
@@ -1217,9 +1242,8 @@ class DataFrame:
         :param index: not supported
         :param columns: the list of columns to drop.
         :param level: not supported
-        :param inplace: update the current DataFrame or return a new DataFrame.
         :param errors: 'raise' or 'ignore' missing key errors.
-        :returns: DataFrame without the removed columns or None if ``inplace=True``.
+        :returns: DataFrame without the removed columns.
 
         """
         if labels or index is not None:
@@ -1232,10 +1256,7 @@ class DataFrame:
         if columns is None:
             raise ValueError("columns needs to be a list of strings.")
 
-        if inplace:
-            df = self
-        else:
-            df = self.copy_override()
+        df = self.copy_override()
 
         try:
             for key in columns:
@@ -1244,7 +1265,7 @@ class DataFrame:
             if errors == "raise":
                 raise e
 
-        return None if inplace else df
+        return df
 
     def astype(self, dtype: Union[str, Dict[str, str]]) -> 'DataFrame':
         """
@@ -1558,8 +1579,7 @@ class DataFrame:
         self,
         level: Optional[Level] = None,
         ascending: Union[bool, List[bool]] = True,
-        inplace: bool = False,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Sort dataframe by index levels.
 
@@ -1567,17 +1587,11 @@ class DataFrame:
             If not specified, all index series are used
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `level` must also be a list and ``len(ascending) == len(level)``.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
-        :returns: a new DataFrame with the specified ordering if ``inplace=False``,
+        :returns: a new DataFrame with the specified ordering,
          otherwise it updates the original and returns None.
         """
-        sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
+        sort_by = self.index_columns if level is None else self._get_indexes_by_level(level)
         df = self.sort_values(by=sort_by, ascending=ascending)
-
-        if inplace:
-            self._update_self_from_df(df)
-            return None
-
         return df
 
     def _get_indexes_by_level(self, level: Level) -> List[str]:
@@ -1697,7 +1711,7 @@ class DataFrame:
         if isinstance(limit, int):
             limit = slice(0, limit)
 
-        limit_str = 'limit all'
+        limit_str: Optional[str] = None
         if limit is not None:
             if limit.step is not None:
                 raise NotImplementedError("Step size not supported in slice")
@@ -1747,6 +1761,7 @@ class DataFrame:
             column_names = tuple(self.all_series.keys())
 
         return CurrentNodeSqlModel.get_instance(
+            dialect=self.engine.dialect,
             name=name,
             column_names=column_names,
             column_exprs=column_exprs,
@@ -1770,9 +1785,12 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        placeholder_values = get_variable_values_sql(variable_values=self.variables)
+        placeholder_values = get_variable_values_sql(
+            dialect=self.engine.dialect,
+            variable_values=self.variables
+        )
         model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)
-        return to_sql(model)
+        return to_sql(dialect=self.engine.dialect, model=model)
 
     def merge(
             self,
@@ -2126,18 +2144,17 @@ class DataFrame:
                 return quantile_df
 
             # a hack in order to avoid calling quantile_df.materialized().
-            # Currently doing quantile['q'] = qt
+            # Currently doing quantile['quantile'] = qt
             # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-            quantile_df['q'] = initial_series.copy_override(
-                dtype='float64',
-                expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
-            )
+            quantile_df['quantile'] = initial_series\
+                .copy_override_dtype(dtype='float64')\
+                .copy_override(expression=AggregateFunctionExpression.construct(fmt=f'{qt}'))
             all_quantile_dfs.append(quantile_df)
 
         from bach.operations.concat import DataFrameConcatOperation
         result = DataFrameConcatOperation(objects=all_quantile_dfs, ignore_index=True)()
         # q column should be in the index when calculating multiple quantiles
-        return result.set_index('q')
+        return result.set_index('quantile')
 
     def nunique(self, axis=1, skipna=True, **kwargs):
         """
@@ -2418,11 +2435,10 @@ class DataFrame:
         self,
         subset: Optional[Union[str, Sequence[str]]] = None,
         keep: Union[str, bool] = 'first',
-        inplace: bool = False,
         ignore_index: bool = False,
         sort_by: Optional[Union[str, Sequence[str]]] = None,
         ascending: Union[bool, List[bool]] = True,
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Return a dataframe with duplicated rows removed based on all series labels or a subset of labels.
 
@@ -2436,7 +2452,6 @@ class DataFrame:
             * False: drops all duplicates
 
             If no value is provided, first occurrences will be kept by default.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
         :param ignore_index: if true, drops indexes of the result
         :param sort_by: series label or sequence of labels used to sort values.
             Sorting of values is needed since result might be non-deterministic
@@ -2446,7 +2461,7 @@ class DataFrame:
         :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
             `by` must also be a list and ``len(ascending) == len(by)``.
 
-        :return: a new dataframe with dropped duplicates if inplace = False, otherwise None.
+        :return: a new dataframe with dropped duplicates.
         """
         if keep not in ('first', 'last', False):
             raise ValueError('keep must be either "first", "last" or False.')
@@ -2454,9 +2469,7 @@ class DataFrame:
         subset = self._get_parsed_subset_of_data_columns(subset)
         sort_by = self._get_parsed_subset_of_data_columns(sort_by)
 
-        df = self.copy()
-        if ignore_index:
-            df.reset_index(drop=True, inplace=True)
+        df = self.copy() if not ignore_index else self.reset_index(drop=True)
 
         dedup_on = list(subset or self.data_columns)
         dedup_data = [name for name in df.all_series if name not in dedup_on]
@@ -2468,14 +2481,14 @@ class DataFrame:
         # dedup_data contains index series if ignore_index = False
         # in this case we should append those as data_columns
         if dedup_data and not ignore_index:
-            df.reset_index(drop=False, inplace=True)
+            df = df.reset_index(drop=False)
 
         # drop all duplicates
         if keep is False:
             freq_df = df[dedup_on]
             freq_df['freq'] = 1
             freq_df = freq_df.groupby(by=dedup_on).sum()
-            freq_df.reset_index(drop=False, inplace=True)
+            freq_df = freq_df.reset_index(drop=False)
 
             df = df.merge(freq_df, on=dedup_on)
             df = df[df.freq_sum == 1][dedup_on + dedup_data]
@@ -2499,14 +2512,10 @@ class DataFrame:
 
         # we need to just apply distinct for 'first' and 'last'.
         if keep:
-            df.materialize(distinct=True, inplace=True)
+            df = df.materialize(distinct=True,)
 
         df = df if ignore_index else df.set_index(keys=self.index_columns)
-        if not inplace:
-            return df
-
-        self._update_self_from_df(df)
-        return None
+        return df
 
     def value_counts(
         self,
@@ -2547,10 +2556,10 @@ class DataFrame:
         df = df.groupby(by=list(subset)).sum()
 
         if normalize:
-            df.materialize(inplace=True)
+            df = df.materialize()
             df._data['value_counts_sum'] /= df['value_counts_sum'].sum()  # type: ignore
 
-        df.rename(columns={'value_counts_sum': 'value_counts'}, inplace=True)
+        df = df.rename(columns={'value_counts_sum': 'value_counts'})
 
         if sort:
             return df._data['value_counts'].sort_values(ascending=ascending)
@@ -2564,8 +2573,7 @@ class DataFrame:
         how: str = 'any',
         thresh: Optional[int] = None,
         subset: Optional[Union[str, Sequence[str]]] = None,
-        inplace: bool = False
-    ) -> Optional['DataFrame']:
+    ) -> 'DataFrame':
         """
         Removes rows with missing values (NaN, None and SQL NULL).
 
@@ -2579,9 +2587,8 @@ class DataFrame:
             If subset is None, all DataFrame's series labels will be used.
             In case subset is an empty list, a copy from the DataFrame will
             be returned.
-        :param inplace: Perform operation on self if ``inplace=True``, or create a copy.
 
-        :return: a new dataframe with dropped rows if inplace = False, otherwise None.
+        :return: a new dataframe with dropped rows.
         """
         if axis:
             raise ValueError('only axis = 0 is supported.')
@@ -2619,11 +2626,163 @@ class DataFrame:
         dropna_df = self[~drop_row_series]
         assert isinstance(dropna_df, DataFrame)
 
-        if inplace:
-            self._update_self_from_df(dropna_df)
-            return None
-
         return dropna_df
+
+    def fillna(
+        self,
+        *,
+        value: Union[Union['Series', Scalar], Dict[str, Union[Scalar, 'Series']]] = None,
+        method: Optional[str] = None,
+        axis: int = 0,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> Optional['DataFrame']:
+        """
+        Fill any NULL value using a method or with a given value.
+
+        :param value: A scalar/series to fill all NULL values on each series
+            or a dictionary specifying which scalar/series to use for each series.
+        :param method: Method to use for filling NULL values on all DataFrame series. Supported values:
+           - "ffill"/"pad": Fill missing values by propagating the last non-nullable value in the series.
+           - "bfill"/"backfill": Fill missing values with the next non-nullable value in the series.
+        :param axis: only ``axis=0`` is supported.
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
+
+        :return: a new dataframe with filled missing values.
+
+        .. note::
+            sort_by is required if method is specified and the DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
+        """
+        df = self.copy()
+        if method and value is not None:
+            raise ValueError('cannot specify both "method" and "value".')
+
+        if method and method not in ('ffill', 'pad', 'bfill', 'backfill'):
+            raise ValueError(f'"{method}" is not a valid method.')
+
+        if method in ('ffill', 'pad'):
+            df = df.ffill(sort_by=sort_by, ascending=ascending)
+
+        elif method in ('bfill', 'backfill'):
+            df = df.bfill(sort_by=sort_by, ascending=ascending)
+
+        if value is not None:
+            series_to_fill = list(value.keys()) if isinstance(value, dict) else self.data_columns
+            for s in series_to_fill:
+                fill_with = value[s] if isinstance(value, dict) else value
+                df[s] = df.all_series[s].fillna(fill_with)
+
+        return df
+
+    def ffill(
+        self,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> 'DataFrame':
+        """
+        Fill missing values by propagating the last non-nullable value in each series.
+
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
+
+        :return: a new dataframe with filled missing values.
+
+        .. note::
+            sort_by is required if DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
+        """
+        from bach.partitioning import Window, WindowFrameMode
+        from bach.series.series_numeric import SeriesInt64
+
+        df = self.copy()
+
+        if sort_by:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        if not sort_by and not df.order_by:
+            raise Exception('dataframe must be sorted in order to apply forward or backward fill.')
+
+        # create a partition column for each series to be filled
+        # this column contains the cumulative sum of the total amount of observed non-nullable values
+        # till the current row. Based on these values, NULL records can be grouped by the partition and
+        # be filled with the non-nullable value respective to the partition
+        # Example:
+        # |   A  | __partition_A | filled_A |
+        # |:----:|:-------------:|:--------:|
+        # |   1  |       1       |     1    |
+        # | NULL |       1       |     1    |
+        # | NULL |       1       |     1    |
+        # |   3  |       2       |     3    |
+        # | NULL |       2       |     3    |
+        # |   4  |       3       |     4    |
+        for series_name, series in self._data.items():
+            partition_name = f'__partition_{series.name}'
+            partition_expr = Expression.construct(f'case when {{}} is null then 0 else 1 end', series)
+
+            df[partition_name] = (
+                series.copy_override(expression=partition_expr, name=partition_name)
+                .copy_override_type(SeriesInt64)
+                .sum(partition=Window([], mode=WindowFrameMode.ROWS, order_by=df.order_by))
+            )
+        df.materialize(node_name='fillna_partitioning', inplace=True)
+
+        # fill gaps with the first_value per partition
+        for series_name in self.data_columns:
+            df[series_name] = df.all_series[series_name].window_first_value(
+                window=Window([df.all_series[f'__partition_{series_name}']], order_by=df.order_by),
+            )
+
+        return df.copy_override(series={s: df.all_series[s] for s in self.data_columns})
+
+    def bfill(
+        self,
+        sort_by: Optional[Union[str, Sequence[str]]] = None,
+        ascending: Union[bool, List[bool]] = True,
+    ) -> 'DataFrame':
+        """
+        Fill missing values by using the next non-nullable value in each series.
+
+        :param sort_by: series label or sequence of labels used to sort values.
+            Sorting of values is needed since result might be non-deterministic, as rows with NULLs might
+            yield different results affecting the values to be propagated when using a filling method.
+        :param ascending: Whether to sort ascending (True) or descending (False). If this is a list, then the
+            `sort_by` must also be a list and ``len(ascending) == len(sort_by)``.
+
+        :return: a new dataframe with filled missing values.
+
+        .. note::
+            sort_by is required if DataFrame has no order_by.
+
+        .. warning::
+            If sort_by is non-deterministic, this operation might yield different results after
+            performing other operations over the resultant dataframe.
+        """
+        df = self.copy()
+
+        if sort_by:
+            df = df.sort_values(by=sort_by, ascending=ascending)
+
+        main_order_by = copy(df._order_by)
+        # bfill is similar to ffill, the difference is that the order is reversed.
+        reverse_order_by = [
+            SortColumn(expression=ob.expression, asc=not ob.asc)
+            for ob in main_order_by
+        ]
+        return df.copy_override(order_by=reverse_order_by).ffill().copy_override(order_by=main_order_by)
 
     def _get_parsed_subset_of_data_columns(
         self, subset: Optional[Union[str, Sequence[str]]],
@@ -2634,6 +2793,40 @@ class DataFrame:
                 f'subset param contains invalid series: {sorted(set(subset) - set(self.data_columns))}'
             )
         return subset
+
+    def stack(self, dropna: bool = True) -> 'Series':
+        """
+        Stacks all data_columns into a single index series.
+
+        :param dropna: Whether to drop rows that contain missing values. If the caller has
+            at least an index series, this might generate different combinations between
+            the index and the stacked values.
+
+        :return: a reshaped series that includes a new index (named "__stacked_index")
+            containing the caller's column labels as values.
+        .. note::
+            ``level`` parameter is not supported since multilevel columns are not allowed.
+        """
+        df = self.copy()
+        if df.group_by:
+            df = df.materialize('stack')
+
+        dc_dfs = []
+        # convert each data column series to DataFrame and use series name as new index value
+        for series_name, series in df.data.items():
+            dc_df = series.copy_override(name='__stacked').to_frame()
+            dc_df['__stacked_index'] = series_name
+            dc_dfs.append(dc_df)
+
+        # concat all dataframes to get new_index and stacked values in two single series
+        from bach.operations.concat import DataFrameConcatOperation
+        stacked_df = DataFrameConcatOperation(dc_dfs)()
+
+        # append the stacked index to the initial indexes
+        stacked_df = stacked_df.set_index(list(self.index_columns + ['__stacked_index']))
+        stacked_df = stacked_df.dropna() if dropna else stacked_df
+
+        return stacked_df.all_series['__stacked']
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
@@ -2646,14 +2839,3 @@ def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
             len(a) == len(b) and list(a.keys()) == list(b.keys())
             and all(ai.equals(bi) for (ai, bi) in zip(a.values(), b.values()))
     )
-
-
-def escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
-    """
-    Return a modified copy of the given sql with the query-parameter special characters escaped.
-    e.g. if the connection uses '%' to mark a parameter, then all occurrences of '%' will be replaced by '%%'
-    """
-    # for now we'll just assume Postgres and assume the pyformat parameter style is used.
-    # When we support more databases we'll need to do something smarter, see
-    # https://www.python.org/dev/peps/pep-0249/#paramstyle
-    return raw_sql.replace('%', '%%')

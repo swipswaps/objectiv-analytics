@@ -40,11 +40,10 @@ def calculate_quantiles(
         # a hack in order to avoid calling quantile_df.materialized().
         # Currently doing quantile['q'] = qt
         # will raise some errors since the expression is not an instance of AggregateFunctionExpression
-        quantile_df['q'] = agg_result.copy_override(
-            dtype='float64',
+        quantile_df['quantile'] = agg_result.copy_override(
             expression=AggregateFunctionExpression.construct(fmt=f'{qt}'),
         )
-        quantile_df.set_index('q', inplace=True)
+        quantile_df = quantile_df.set_index('quantile')
         quantile_results.append(quantile_df.all_series[series.name])
 
     return SeriesConcatOperation(

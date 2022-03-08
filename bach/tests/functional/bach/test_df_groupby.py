@@ -379,12 +379,13 @@ def test_dataframe_agg_numeric_only():
 
 def test_cube_basics():
     bt = get_bt_with_test_data(full_data_set=False)
+    engine = bt.engine
 
     # instant stonks through variable naming
     btc = bt.cube(['municipality','city'])
 
     assert(isinstance(btc.group_by, Cube))
-    assert(btc.group_by.get_group_by_column_expression().to_sql()
+    assert(btc.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'cube ("municipality", "city")')
 
     result_bt = btc[['inhabitants']].sum()
@@ -411,10 +412,11 @@ def test_cube_basics():
 
 def test_rollup_basics():
     bt = get_bt_with_test_data(full_data_set=False)
+    engine = bt.engine
 
     btr = bt.rollup(['municipality','city'])
     assert(isinstance(btr.group_by, Rollup))
-    assert(btr.group_by.get_group_by_column_expression().to_sql()
+    assert(btr.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'rollup ("municipality", "city")')
 
     result_bt = btr[['inhabitants']].sum()
@@ -439,6 +441,7 @@ def test_rollup_basics():
 def test_grouping_list_basics():
     # This is not the greatest test, but at least it tests the interface.
     bt = get_bt_with_test_data(full_data_set=False)
+    engine = bt.engine
     btl1 = bt.groupby([['municipality'], ['city']])
     btl2 = bt.groupby([['municipality'], 'city'])
     btl3 = bt.groupby(['municipality', ['city']])
@@ -448,7 +451,7 @@ def test_grouping_list_basics():
 
     # This is not the greatest test, but at least it tests the interface.
     assert(isinstance(btl1.group_by, GroupingList))
-    assert(btl1.group_by.get_group_by_column_expression().to_sql()
+    assert(btl1.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == '("municipality"), ("city")')
 
     result_bt = btl1[['inhabitants']].sum()
@@ -470,6 +473,7 @@ def test_grouping_list_basics():
 def test_grouping_set_basics():
     # This is not the greatest test, but at least it tests the interface.
     bt = get_bt_with_test_data(full_data_set=False)
+    engine = bt.engine
     bts1 = bt.groupby((('municipality'), ('city')))
     bts2 = bt.groupby((('municipality'), 'city'))
     bts3 = bt.groupby(('municipality', ('city')))
@@ -478,7 +482,7 @@ def test_grouping_set_basics():
     assert(bts1 == bts3)
 
     assert(isinstance(bts1.group_by, GroupingSet))
-    assert(bts1.group_by.get_group_by_column_expression().to_sql()
+    assert(bts1.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'grouping sets (("municipality"), ("city"))')
 
     result_bt = bts1[['inhabitants']].sum()
@@ -505,7 +509,7 @@ def test_grouping_set_basics():
     assert(bts1 == bts3)
 
     assert(isinstance(bts1.group_by, GroupingSet))
-    assert(bts1.group_by.get_group_by_column_expression().to_sql()
+    assert(bts1.group_by.get_group_by_column_expression().to_sql(engine.dialect)
            == 'grouping sets (("municipality"), ())')
 
 
@@ -594,7 +598,7 @@ def test_groupby_frame_split_recombine():
     assert btg1 == btg2
 
     # recombine from different parent with same grouping
-    btg2.drop(columns=['founding'], inplace=True)
+    btg2 = btg2.drop(columns=['founding'])
     btg2['founding'] = btg1b
     r2 = btg1a.sum()
     assert btg2 == btg1
@@ -632,7 +636,7 @@ def test_groupby_frame_split_recombine_aggregation_applied():
     r1 = inhabitants_sum.to_frame()
     r1['founding_sum'] = group1['founding'].sum()
     r1['founding_mean'] = founding_mean
-    r1.rename(columns={'inhabitants': 'inhabitants_sum'}, inplace=True)
+    r1 = r1.rename(columns={'inhabitants': 'inhabitants_sum'})
     assert r1.base_node == bt.base_node
 
     for r in [founding_inhabitants_sum, r1]:
@@ -678,10 +682,10 @@ def test_unmaterializable_groupby_boolean_functions():
     assert btg_min_fnd.group_by != bt.group_by
     assert not btg_min_fnd.expression.is_single_value
 
-    with pytest.raises(ValueError, match='dtypes of indexes should be the same'):
+    with pytest.raises(ValueError, match=r'dtypes of indexes to be merged should be the same'):
         # todo pandas: Can only compare identically-labeled Series objects
         bt[btg_min_fnd == bt.founding]
 
-    with pytest.raises(ValueError, match='dtypes of indexes should be the same'):
+    with pytest.raises(ValueError, match=r'dtypes of indexes to be merged should be the same'):
         # todo pandas: Can only compare identically-labeled Series objects
         bt[bt.founding == btg_min_fnd]

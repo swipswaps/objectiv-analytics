@@ -7,6 +7,7 @@ from uuid import UUID
 from bach import DataFrameOrSeries
 from bach.series import Series, const_to_series
 from bach.expression import Expression
+from bach.series.series import WrappedPartition
 
 
 class SeriesUuid(Series):
@@ -76,4 +77,11 @@ class SeriesUuid(Series):
                                               self_modified,
                                               other)
 
-        return self_modified.copy_override(dtype='bool', expression=expression)
+        from bach import SeriesBoolean
+        return self_modified.copy_override_type(SeriesBoolean).copy_override(expression=expression)
+
+    def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        raise NotImplementedError()
+
+    def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        raise NotImplementedError()

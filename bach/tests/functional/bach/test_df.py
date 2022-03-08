@@ -5,11 +5,12 @@ import numpy as np
 import pandas as pd
 import pytest
 from bach import DataFrame, SeriesBoolean
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, get_from_df
+from tests.conftest import get_postgres_engine_dialect
+from tests.functional.bach.test_data_and_utils import assert_equals_data, get_from_df, get_df_with_test_data
 
 
-def test_basic():
-    bt = get_bt_with_test_data()
+def test_basic(engine):
+    bt = get_df_with_test_data(engine)
     assert_equals_data(
         bt,
         expected_columns=[
@@ -24,8 +25,8 @@ def test_basic():
     )
 
 
-def test_del_item():
-    bt = get_bt_with_test_data()
+def test_del_item(engine):
+    bt = get_df_with_test_data(engine)
 
     del(bt['founding'])
     assert 'founding' not in bt.data.keys()
@@ -36,8 +37,8 @@ def test_del_item():
         del(bt['non existing column'])
 
 
-def test_drop_items():
-    bt = get_bt_with_test_data()
+def test_drop_items(engine):
+    bt = get_df_with_test_data(engine)
 
     nbt = bt.drop(columns=['founding'])
     assert 'founding' not in nbt.data.keys()
@@ -47,14 +48,6 @@ def test_drop_items():
     with pytest.raises(KeyError):
         nbt.founding
 
-    nbt = bt.drop(columns=['founding'], inplace=True)
-    assert nbt is None
-    assert 'founding' not in bt.data.keys()
-
-    bt.drop(columns=['inhabitants', 'city'], inplace=True)
-    assert 'inhabitants' not in bt.data.keys()
-    assert 'city' not in bt.data.keys()
-
     with pytest.raises(KeyError):
         bt.drop(columns=['non existing column'])
 
@@ -62,7 +55,8 @@ def test_drop_items():
 
 
 def test_combined_operations1():
-    bt = get_bt_with_test_data(full_data_set=True)
+    engine = get_postgres_engine_dialect().engine  # TODO: BigQuery
+    bt = get_df_with_test_data(engine, full_data_set=True)
     bt['x'] = bt['municipality'] + ' some string'
     bt['y'] = bt['skating_order'] + bt['skating_order']
     result_bt = bt.groupby('x')[['y']].count()
@@ -98,8 +92,8 @@ def test_combined_operations1():
     assert result_bt.y_count == result_bt['y_count']
 
 
-def test_boolean_indexing_same_node():
-    bt = get_bt_with_test_data(full_data_set=True)
+def test_boolean_indexing_same_node(engine):
+    bt = get_df_with_test_data(engine, full_data_set=True)
     bti = bt['founding'] < 1300
     assert isinstance(bti, SeriesBoolean)
     result_bt = bt[bti]
@@ -168,7 +162,7 @@ def test_quantile_no_numeric_columns() -> None:
         },
     )
     bt = get_from_df('test_quantile', pdf)
-    bt.reset_index(drop=True, inplace=True)
+    bt = bt.reset_index(drop=True)
 
     with pytest.raises(ValueError, match=r'DataFrame has no series supporting'):
         bt.quantile()

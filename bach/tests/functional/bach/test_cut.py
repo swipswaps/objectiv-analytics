@@ -125,7 +125,7 @@ def test_cut_calculate_adjustments() -> None:
     result = CutOperation(series=df['min'], bins=1)._calculate_adjustments(to_adjust, to_compare)
     assert isinstance(result, Series)
 
-    result_case_sql = result.expression.to_sql()
+    result_case_sql = result.expression.to_sql(df.engine.dialect)
     expected_case_sql = (
         'case when "max" = "min" then\n'
         'case when "min" != 0 then 0.001 * abs("min") else 0.001 end\n'

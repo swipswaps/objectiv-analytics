@@ -185,11 +185,12 @@ def test_set_existing():
     )
     assert bt.city == bt['city']
 
+
 def test_set_different_base_node():
     # set different shape series / different index name
     bt = get_bt_with_test_data(full_data_set=True)
-    bt = bt[bt.skating_order>7]
-    filtered_bt = bt[bt.skating_order<9]
+    bt = bt[bt.skating_order > 7]
+    filtered_bt = bt[bt.skating_order < 9]
 
     bt['a'] = filtered_bt['city']
 
@@ -251,17 +252,18 @@ def test_set_different_group_by():
         bt_g,
         expected_columns=['city', 'inhabitants_max', 'founding_max', 'a'],
         expected_data=[
-            ['Harns', 14740, 1234, None],
-            ['Dokkum', 12675, 1298, None],
-            ['Snits', 33520, 1456, 2],
             ['Boalsert', 10120, 1455, None],
+            ['Dokkum', 12675, 1298, None],
+            ['Drylts', 3055, 1268, 1],
+            ['Frjentsjer', 12760, 1374, None],
+            ['Harns', 14740, 1234, None],
+            ['Hylpen', 870, 1225, None],
+            ['Ljouwert', 93485, 1285, 2],
+            ['Sleat', 700, 1426, None],
+            ['Snits', 33520, 1456, 2],
             ['Starum', 960, 1061, None],
             ['Warkum', 4440, 1399, None],
-            ['Sleat', 700, 1426, None],
-            ['Ljouwert', 93485, 1285, 2],
-            ['Frjentsjer', 12760, 1374, None],
-            ['Drylts', 3055, 1268, 1],
-            ['Hylpen', 870, 1225, None]
+
         ]
     )
 
