@@ -6,15 +6,18 @@ Bach and sklearn
 
 With Objectiv you can do all your analysis and Machine Learning directly on the raw data in your sql store.
 This example shows in the simplest way possible how you can use Objectiv to create a basic feature set and use
-sklearn to do machine learning on this data set.
+sklearn to do machine learning on this data set. We also have an example that goes deeper into
+feature engineering `here
+<feature_engineering.html>`_.
 
-At first we have to instantiate the 'Objectiv Frame' object. This points to the data and all operations are
-done on this object.
+This example is also available in a `notebook
+<https://github.com/objectiv/objectiv-analytics/blob/main/analysis/notebooks/sklearn-example.ipynb>`_
+to run on your own data or use our
+`quickstart
+<https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
-.. code-block:: python
-
-    from bach_open_taxonomy import ObjectivFrame
-    of = ObjectivFrame.from_objectiv_data(start_date='2022-01-04',time_aggregation='YYYY-MM-DD')
+At first we have to instantiate the 'Objectiv Frame' object. See `Getting started with Objectiv
+<getting_started.html>`_ for more info on how to instantiate the object.
 
 This object points to all data in the data set. Too large to run in pandas and therefore sklearn. For the
 data set that we need, we aggregate to user level, at which point it is small enough to fit in memory.
