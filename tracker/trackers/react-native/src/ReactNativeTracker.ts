@@ -16,26 +16,11 @@ export type ReactNativeTrackerConfig = TrackerConfig & {
    * The collector endpoint URL.
    */
   endpoint?: string;
-
-  /**
-   * Optional. Whether to automatically create HttpContext based on Document and Navigation APIs. Enabled by default.
-   */
-  trackHttpContext?: boolean;
-
-  /**
-   * Optional. Whether to automatically create PathContext based on URLs. Enabled by default.
-   */
-  trackPathContextFromURL?: boolean;
-
-  /**
-   * Optional. Whether to automatically create RootLocationContext based on URLs first slugs. Enabled by default.
-   */
-  trackRootLocationContextFromURL?: boolean;
 };
 
 /**
  * React Native Tracker simplifies Tracker construction and adds some preconfigured Transport, Queue and Plugins.
- * It initializes with a Queued Fetch|XMLHttpRequest Transport Switch wrapped in a Retry Transport.
+ * It initializes with a Queued Fetch Transport wrapped in a Retry Transport.
  *
  * The resulting Queue has some sensible defaults (10 events every 100ms) for sending events in batches.
  * The Retry logic is configured for 10 retries with exponential backoff starting at 1000ms.
@@ -53,15 +38,10 @@ export type ReactNativeTrackerConfig = TrackerConfig & {
  *  const queueStorage = new TrackerQueueMemoryStorage({ trackerId, console })
  *  const trackerQueue = new TrackerQueue({ storage: queueStorage, console });
  *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
- *  // TODO replace with React Native implementation
- *  const httpContextPlugin = new HttpContextPlugin({ console });
- *  const pathContextFromURLPlugin = new PathContextFromURLPlugin({ console });
- *  const rootLocationContextFromURLPlugin = new RootLocationContextFromURLPlugin({ console });
+ *  TODO const httpContextPlugin = new HttpContextPlugin({ console });
  *  const plugins = [
  *    applicationContextPlugin,
  *    httpContextPlugin,
- *    pathContextFromURLPlugin,
- *    rootLocationContextFromURLPlugin
  *  ];
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
