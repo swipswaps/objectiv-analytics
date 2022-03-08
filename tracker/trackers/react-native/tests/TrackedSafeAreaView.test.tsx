@@ -9,7 +9,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import {
   LocationTree,
-  ReactTracker,
+  ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedSafeAreaView,
   TrackedSafeAreaViewProps,
@@ -20,7 +20,7 @@ import {
 describe('TrackedSafeAreaView', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
-  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
   jest.spyOn(console, 'debug').mockImplementation(jest.fn);
 
   const TestTrackedSafeAreaView = (props: TrackedSafeAreaViewProps & { testID?: string }) => (

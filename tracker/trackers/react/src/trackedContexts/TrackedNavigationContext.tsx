@@ -2,8 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { NavigationContextWrapper } from '@objectiv/tracker-core-react';
 import React from 'react';
-import { NavigationContextWrapper } from '../locationWrappers/NavigationContextWrapper';
 import { TrackedContextProps } from '../types';
 
 /**

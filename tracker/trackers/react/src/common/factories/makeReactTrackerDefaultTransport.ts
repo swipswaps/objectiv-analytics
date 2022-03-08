@@ -8,9 +8,9 @@ import { XHRTransport } from '@objectiv/transport-xhr';
 import { ReactTrackerConfig } from '../../ReactTracker';
 
 /**
- * A factory to create the default Transport of Browser Tracker.
+ * A factory to create the default Transport of React Tracker.
  */
-export const makeDefaultTransport = (trackerConfig: ReactTrackerConfig): TrackerTransportInterface =>
+export const makeReactTrackerDefaultTransport = (trackerConfig: ReactTrackerConfig): TrackerTransportInterface =>
   new TrackerTransportRetry({
     console: trackerConfig.console,
     transport: new TrackerTransportSwitch({

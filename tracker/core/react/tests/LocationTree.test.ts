@@ -2,6 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { RootLocationContextFromURLPlugin } from '@objectiv/plugin-root-location-context-from-url';
+import { Tracker } from '@objectiv/tracker-core';
 import {
   locationNodes,
   LocationTree,
@@ -286,5 +288,21 @@ describe('LocationTree', () => {
     expect(console.log).toHaveBeenNthCalledWith(7, '    ContentContext:3a');
     expect(console.log).toHaveBeenNthCalledWith(8, '  ContentContext:footer');
     expect(console.log).toHaveBeenNthCalledWith(9, '    ContentContext:4');
+  });
+
+  it('should initialize the LocationTree with the Location Contexts originating from Plugins', () => {
+    const tracker = new Tracker({ applicationId: 'app-id', plugins: [new RootLocationContextFromURLPlugin()] });
+
+    jest.spyOn(LocationTree, 'add');
+
+    LocationTree.initialize(tracker);
+
+    expect(LocationTree.add).toHaveBeenCalledTimes(1);
+    expect(LocationTree.add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        _type: 'RootLocationContext',
+      }),
+      null
+    );
   });
 });

@@ -8,7 +8,7 @@ import React from 'react';
 import { Text } from 'react-native';
 import {
   LocationTree,
-  ReactTracker,
+  ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedTouchableWithoutFeedback,
   TrackedTouchableWithoutFeedbackProps,
@@ -18,7 +18,7 @@ import {
 describe('TrackedTouchableWithoutFeedback', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
-  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
   jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
   const TestTrackedTouchableWithoutFeedback = (props: TrackedTouchableWithoutFeedbackProps & { testID?: string }) => (

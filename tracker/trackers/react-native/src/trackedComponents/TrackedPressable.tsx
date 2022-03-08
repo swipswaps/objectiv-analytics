@@ -8,7 +8,7 @@ import {
   PressableContextWrapper,
   trackPressEvent,
   useLocationStack,
-} from '@objectiv/tracker-react';
+} from '@objectiv/tracker-core-react';
 import React from 'react';
 import { PressableProps, Pressable } from 'react-native';
 

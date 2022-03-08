@@ -2,8 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { MediaPlayerContextWrapper } from '@objectiv/tracker-core-react';
 import React from 'react';
-import { MediaPlayerContextWrapper } from '../locationWrappers/MediaPlayerContextWrapper';
 import { TrackedContextProps } from '../types';
 
 /**

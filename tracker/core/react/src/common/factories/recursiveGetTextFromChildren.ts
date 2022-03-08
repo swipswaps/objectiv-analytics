@@ -9,7 +9,7 @@ import { isValidElement, ReactNode } from 'react';
  *
  * String Nodes are returned as is, Number nodes are converted to strings and Array children are recursively processed.
  */
-export const recursiveGetTextFromChildrenNode = (children: ReactNode): string | undefined => {
+export const recursiveGetTextFromChildren = (children: ReactNode): string | undefined => {
   let text;
 
   // Return strings as they are
@@ -24,12 +24,12 @@ export const recursiveGetTextFromChildrenNode = (children: ReactNode): string | 
 
   // If it's an array, parse each child and then compose a string with all of their texts
   else if (children instanceof Array) {
-    text = children.map(recursiveGetTextFromChildrenNode).join(' ');
+    text = children.map(recursiveGetTextFromChildren).join(' ');
   }
 
   // If it's a valid React element, parse its children prop
   else if (isValidElement(children)) {
-    text = recursiveGetTextFromChildrenNode(children.props.children);
+    text = recursiveGetTextFromChildren(children.props.children);
   }
 
   return text;
