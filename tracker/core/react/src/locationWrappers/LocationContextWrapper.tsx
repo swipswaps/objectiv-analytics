@@ -3,7 +3,7 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import { isBrowser, isDevMode } from '@objectiv/tracker-core';
+import { isDevMode } from '@objectiv/tracker-core';
 import React, { ReactNode } from 'react';
 import { LocationTree } from '../common/LocationTree';
 import { LocationProvider } from '../common/providers/LocationProvider';

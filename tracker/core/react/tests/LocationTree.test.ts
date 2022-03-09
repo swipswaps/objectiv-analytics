@@ -11,6 +11,7 @@ import {
   makeNavigationContext,
   makePressableContext,
   makeRootLocationContext,
+  rootNode,
 } from '../src';
 
 describe('LocationTree', () => {
@@ -32,37 +33,30 @@ describe('LocationTree', () => {
     expect(console.log).not.toHaveBeenCalled();
   });
 
-  it('should console.error multiple roots', () => {
-    const root1 = makeContentContext({ id: 'root1' });
-    const root2 = makeContentContext({ id: 'root2' });
-
-    LocationTree.add(root1, null);
-    LocationTree.add(root2, null);
-
-    expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(`｢objectiv｣ Multiple root locations detected: ${root2.id}`);
-  });
-
   it('should add nodes', () => {
     const root = makeRootLocationContext({ id: 'root' });
     const nav = makeNavigationContext({ id: 'nav' });
     const button = makePressableContext({ id: 'button' });
     const footer = makeNavigationContext({ id: 'footer' });
 
-    expect(locationNodes).toHaveLength(0);
+    expect(locationNodes).toHaveLength(1);
 
     LocationTree.add(root, null);
     LocationTree.add(nav, root);
     LocationTree.add(button, nav);
     LocationTree.add(footer, root);
 
-    expect(locationNodes).toHaveLength(4);
+    expect(locationNodes).toHaveLength(5);
     expect(locationNodes).toStrictEqual([
+      expect.objectContaining({
+        _type: 'LocationTreeRoot',
+        id: 'location-tree-root',
+      }),
       expect.objectContaining({
         __location_id: root.__location_id,
         _type: 'RootLocationContext',
         id: 'root',
-        parentLocationId: null,
+        parentLocationId: rootNode.__location_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',
@@ -88,24 +82,28 @@ describe('LocationTree', () => {
     const button = makePressableContext({ id: 'button' });
     const footer = makeNavigationContext({ id: 'footer' });
 
-    expect(locationNodes).toHaveLength(0);
+    expect(locationNodes).toHaveLength(1);
 
     LocationTree.add(root, null);
     LocationTree.add(nav, root);
     LocationTree.add(button, nav);
     LocationTree.add(footer, root);
 
-    expect(locationNodes).toHaveLength(4);
+    expect(locationNodes).toHaveLength(5);
 
     LocationTree.remove(button);
 
-    expect(locationNodes).toHaveLength(3);
+    expect(locationNodes).toHaveLength(4);
     expect(locationNodes).toStrictEqual([
+      expect.objectContaining({
+        _type: 'LocationTreeRoot',
+        id: 'location-tree-root',
+      }),
       expect.objectContaining({
         __location_id: root.__location_id,
         _type: 'RootLocationContext',
         id: 'root',
-        parentLocationId: null,
+        parentLocationId: rootNode.__location_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',
@@ -126,24 +124,28 @@ describe('LocationTree', () => {
     const button = makePressableContext({ id: 'button' });
     const footer = makeNavigationContext({ id: 'footer' });
 
-    expect(locationNodes).toHaveLength(0);
+    expect(locationNodes).toHaveLength(1);
 
     LocationTree.add(root, null);
     LocationTree.add(nav, root);
     LocationTree.add(button, nav);
     LocationTree.add(footer, root);
 
-    expect(locationNodes).toHaveLength(4);
+    expect(locationNodes).toHaveLength(5);
 
     LocationTree.remove(nav);
 
-    expect(locationNodes).toHaveLength(2);
+    expect(locationNodes).toHaveLength(3);
     expect(locationNodes).toStrictEqual([
+      expect.objectContaining({
+        _type: 'LocationTreeRoot',
+        id: 'location-tree-root',
+      }),
       expect.objectContaining({
         __location_id: root.__location_id,
         _type: 'RootLocationContext',
         id: 'root',
-        parentLocationId: null,
+        parentLocationId: rootNode.__location_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',
@@ -163,7 +165,7 @@ describe('LocationTree', () => {
     const link2 = makeLinkContext({ id: 'link', href: '/link2' });
     const footer = makeNavigationContext({ id: 'footer' });
 
-    expect(locationNodes).toHaveLength(0);
+    expect(locationNodes).toHaveLength(1);
 
     LocationTree.add(root, null);
     LocationTree.add(nav, root);
@@ -174,18 +176,22 @@ describe('LocationTree', () => {
     LocationTree.add(footer, root);
     LocationTree.add(link2, footer);
 
-    expect(locationNodes).toHaveLength(8);
+    expect(locationNodes).toHaveLength(9);
 
     LocationTree.remove(footer);
     LocationTree.remove(main);
 
-    expect(locationNodes).toHaveLength(3);
+    expect(locationNodes).toHaveLength(4);
     expect(locationNodes).toStrictEqual([
+      expect.objectContaining({
+        _type: 'LocationTreeRoot',
+        id: 'location-tree-root',
+      }),
       expect.objectContaining({
         __location_id: root.__location_id,
         _type: 'RootLocationContext',
         id: 'root',
-        parentLocationId: null,
+        parentLocationId: rootNode.__location_id,
       }),
       expect.objectContaining({
         _type: 'NavigationContext',

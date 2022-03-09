@@ -17,16 +17,22 @@ export type LocationNode = LocationContext<AbstractLocationContext> & {
 };
 
 /**
- * Holds which node id is the root one. Trackers may carry plugins that enrich LocationStacks before sending events.
+ * The Root LocationNode of LocationTree
  */
-export let rootId: string | null = null;
+export const rootNode: LocationNode = {
+  __location_context: true,
+  __location_id: generateUUID(),
+  _type: 'LocationTreeRoot',
+  id: 'location-tree-root',
+  parentLocationId: null,
+};
 
 /**
  * Internal state to hold a complete list of all known LocationNodes.
  * Each node, exception made for the root one, is a uniquely identifiable Location Context.
  * All nodes, except the root ine, have a parent LocationNode.
  */
-export let locationNodes: LocationNode[] = [];
+export let locationNodes: LocationNode[] = [rootNode];
 
 /**
  * Internal state to keep track of which identifiers are already known for a certain issue. This is used to prevent
@@ -45,7 +51,7 @@ export const LocationTree = {
    * Completely resets LocationTree state. Mainly useful while testing.
    */
   clear: () => {
-    locationNodes = [];
+    locationNodes = [rootNode];
     errorCache.clear();
   },
 
@@ -54,13 +60,6 @@ export const LocationTree = {
    */
   children: ({ __location_id }: LocationNode): LocationNode[] => {
     return locationNodes.filter(({ parentLocationId }) => parentLocationId === __location_id);
-  },
-
-  /**
-   * Helper method to return the rootNode from the list of locationNodes
-   */
-  rootNode: (): LocationNode | null => {
-    return locationNodes.find(({ parentLocationId }) => parentLocationId === null) ?? null;
   },
 
   /**
@@ -108,8 +107,6 @@ export const LocationTree = {
         locationContext: LocationContext<AbstractLocationContext>
       ) => {
         LocationTree.add(locationContext, parentLocationContext);
-        // Update the rootId to the last LocationContext we add this way. This effectively updates the root node.
-        rootId = locationContext.__location_id;
         return locationContext;
       },
       null
@@ -120,15 +117,17 @@ export const LocationTree = {
    * Logs a readable version of the `locationNodes` state to the console
    */
   log: (locationNode?: LocationNode, depth = 0) => {
-    const nodeToLog = locationNode ?? LocationTree.rootNode();
-    if (!nodeToLog) {
-      return;
-    }
-    // Log the given node
-    console.log('  '.repeat(depth) + nodeToLog._type + ':' + nodeToLog.id);
+    let nodeToLog = locationNode;
 
-    // Increase depth
-    depth++;
+    if (!nodeToLog) {
+      nodeToLog = rootNode;
+    } else {
+      // Log the given node
+      console.log('  '.repeat(depth) + nodeToLog._type + ':' + nodeToLog.id);
+
+      // Increase depth
+      depth++;
+    }
 
     // Recursively log children, if any
     LocationTree.children(nodeToLog).forEach((childLocationNode: LocationNode) =>
@@ -147,23 +146,24 @@ export const LocationTree = {
     locationStack: AbstractLocationContext[] = [],
     locationPaths: Set<string> = new Set()
   ) => {
-    const nodeToValidate = locationNode ?? LocationTree.rootNode();
+    let nodeToValidate = locationNode;
+
     if (!nodeToValidate) {
-      return;
-    }
+      nodeToValidate = rootNode;
+    } else {
+      locationStack.push(nodeToValidate);
 
-    locationStack.push(nodeToValidate);
+      // Collision detection
+      const locationId = nodeToValidate.__location_id;
+      const locationPath = getLocationPath(locationStack);
+      const locationPathsSize = locationPaths.size;
+      locationPaths.add(locationPath);
 
-    // Collision detection
-    const locationId = nodeToValidate.__location_id;
-    const locationPath = getLocationPath(locationStack);
-    const locationPathsSize = locationPaths.size;
-    locationPaths.add(locationPath);
-
-    if (locationPathsSize === locationPaths.size) {
-      LocationTree.error(locationId, `Location collision detected: ${locationPath}`);
-      // No point in continuing to validate this node children, exit early
-      return;
+      if (locationPathsSize === locationPaths.size) {
+        LocationTree.error(locationId, `Location collision detected: ${locationPath}`);
+        // No point in continuing to validate this node children, exit early
+        return;
+      }
     }
 
     // Rerun validation for each child
@@ -181,12 +181,7 @@ export const LocationTree = {
     locationContext: LocationContext<AbstractLocationContext>,
     parentLocationContext: LocationContext<AbstractLocationContext> | null
   ) => {
-    const parentLocationId = parentLocationContext?.__location_id ?? rootId;
-
-    // Forbid adding multiple roots
-    if (parentLocationId === null && LocationTree.rootNode()) {
-      LocationTree.error(locationContext.__location_id, `Multiple root locations detected: ${locationContext.id}`);
-    }
+    const parentLocationId = (parentLocationContext ?? rootNode).__location_id;
 
     // Create and push the new LocationNode into the LocationTree
     locationNodes.push({ ...locationContext, parentLocationId });
@@ -218,7 +213,7 @@ export const LocationTree = {
       return accumulator;
     }, [] as LocationNode[]);
 
-    // Keep running until the cleaned up tree stop changing in size
+    // Keep running until the cleaned up tree stops changing in size
     if (sizeBeforeCleanup !== locationNodes.length) {
       LocationTree.remove(locationContext);
     }

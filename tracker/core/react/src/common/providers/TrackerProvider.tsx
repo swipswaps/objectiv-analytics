@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { isBrowser, isDevMode } from '@objectiv/tracker-core';
+import { isDevMode } from '@objectiv/tracker-core';
 import React, { ReactNode } from 'react';
 import { LocationTree } from '../LocationTree';
 import { TrackerProviderContext } from './TrackerProviderContext';

@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContextsConfig, isBrowser, isDevMode, Tracker, TrackerConfig } from '@objectiv/tracker-core';
+import { ContextsConfig, isDevMode, Tracker, TrackerConfig } from '@objectiv/tracker-core';
 import { makeReactNativeTrackerDefaultPluginsList } from './common/factories/makeReactNativeTrackerDefaultPluginsList';
 import { makeReactNativeTrackerDefaultQueue } from './common/factories/makeReactNativeTrackerDefaultQueue';
 import { makeReactNativeTrackerDefaultTransport } from './common/factories/makeReactNativeTrackerDefaultTransport';
@@ -64,7 +64,7 @@ export class ReactNativeTracker extends Tracker {
     }
 
     // If node is in `development` on web and console has not been configured, automatically use the browser's console
-    if (config.console === undefined && isDevMode() && isBrowser()) {
+    if (config.console === undefined && isDevMode()) {
       config.console = console;
     }
 
