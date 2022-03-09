@@ -1536,7 +1536,7 @@ __metadata:
   resolution: "@objectiv/plugin-react-navigation-tracked-components@workspace:plugins/react-navigation-tracked-components"
   dependencies:
     "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ^0.0.15
+    "@objectiv/tracker-react-core": ^0.0.15
     "@objectiv/tracker-react-native": ^0.0.15
     "@react-navigation/bottom-tabs": ^6.2.0
     "@react-navigation/native": ^6.0.8
@@ -1713,7 +1713,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-react-core@workspace:core/react, @objectiv/tracker-react-core@~0.0.15":
+"@objectiv/tracker-react-core@^0.0.15, @objectiv/tracker-react-core@workspace:core/react, @objectiv/tracker-react-core@~0.0.15":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react-core@workspace:core/react"
   dependencies:
