@@ -16,7 +16,7 @@ DB_PG_TEST_URL = os.environ.get('OBJ_DB_PG_TEST_URL', 'postgresql://objectiv:@lo
 DB_BQ_TEST_URL = os.environ.get('OBJ_DB_BQ_TEST_URL', 'bigquery://objectiv-snowplow-test-2/bach_test')
 DB_BQ_CREDENTIALS_PATH = os.environ.get(
     'OBJ_DB_BQ_CREDENTIALS_PATH',
-    '/home/thijs/.work_secret/objectiv-snowplow-test-2_bach-big-query-testing.json'
+    os.path.dirname(os.path.dirname(os.path.realpath(__file__))) + '/.secrets/bach-big-query-testing.json'
 )
 
 
