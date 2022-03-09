@@ -1,7 +1,6 @@
 /*
  * Copyright 2021-2022 Objectiv B.V.
  */
-
 import { v4 as uuid } from 'uuid';
 
 /**

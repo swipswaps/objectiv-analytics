@@ -7,6 +7,7 @@ import {
   ApplicationContextPlugin,
   ContextsConfig,
   GlobalContextValidationRule,
+  LocationContextValidationRule,
   OpenTaxonomyValidationPlugin,
   Tracker,
   TrackerConfig,
@@ -40,6 +41,14 @@ describe('Tracker', () => {
         },
         {
           pluginName: 'OpenTaxonomyValidationPlugin',
+          validationRules: [
+            new LocationContextValidationRule({
+              logPrefix: 'OpenTaxonomyValidationPlugin',
+              contextName: 'RootLocationContext',
+              once: true,
+              position: 0,
+            }),
+          ],
         },
       ],
     });

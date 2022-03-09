@@ -3,11 +3,13 @@
  */
 
 import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
+import {
+  makeTitleFromChildren,
+  PressableContextWrapper,
+  trackPressEvent,
+  useLocationStack,
+} from '@objectiv/tracker-react-core';
 import React from 'react';
-import { makeTitleFromChildren } from '../common/factories/makeTitleFromChildren';
-import { trackPressEvent } from '../eventTrackers/trackPressEvent';
-import { useLocationStack } from '../hooks/consumers/useLocationStack';
-import { PressableContextWrapper } from '../locationWrappers/PressableContextWrapper';
 import { TrackedPressableContextProps } from '../types';
 
 /**
