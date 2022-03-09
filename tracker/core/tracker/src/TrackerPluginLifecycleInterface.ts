@@ -15,8 +15,8 @@ export interface TrackerPluginLifecycleInterface {
   initialize?: (contexts: Required<ContextsConfig>) => void;
 
   /**
-   * Executed before the TrackerEvent is handed over to the TrackerTransport.
+   * Executed before the TrackerEvent is validated and handed over to the TrackerTransport.
    * Useful to factor Contexts that may have changed from the last TrackerEvent tracking. Eg: URL, Time, User, etc
    */
-  beforeTransport?: (contexts: Required<ContextsConfig>) => void;
+  enrich?: (contexts: Required<ContextsConfig>) => void;
 }

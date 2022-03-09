@@ -2,9 +2,17 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, TrackerEvent } from '../src';
+import { mockConsole } from '@objectiv/testing-tools';
+import {
+  ApplicationContextPlugin,
+  ContextsConfig,
+  makeApplicationContext,
+  Tracker,
+  TrackerConfig,
+  TrackerEvent,
+} from '../src';
 
-const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
+const trackerConfig: TrackerConfig = { applicationId: 'app-id', console: mockConsole };
 
 describe('ApplicationContextPlugin', () => {
   it('should generate an ApplicationContext when constructed', () => {
@@ -16,7 +24,7 @@ describe('ApplicationContextPlugin', () => {
     });
   });
 
-  it('should add the ApplicationContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
+  it('should add the ApplicationContext to the Event when `enrich` is executed by the Tracker', async () => {
     const plugins = new ApplicationContextPlugin(trackerConfig);
     const testTracker = new Tracker({ ...trackerConfig, plugins: [plugins] });
     const eventContexts: ContextsConfig = {
@@ -38,5 +46,56 @@ describe('ApplicationContextPlugin', () => {
         },
       ])
     );
+  });
+
+  describe('Validation', () => {
+    it('should succeed', () => {
+      const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+      const validEvent = new TrackerEvent({
+        _type: 'test',
+        global_contexts: [makeApplicationContext({ id: 'test' })],
+      });
+
+      jest.resetAllMocks();
+
+      testApplicationContextPlugin.validate(validEvent);
+
+      expect(mockConsole.groupCollapsed).not.toHaveBeenCalled();
+    });
+
+    it('should fail when given TrackerEvent does not have ApplicationContext', () => {
+      const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+      const eventWithoutApplicationContext = new TrackerEvent({ _type: 'test' });
+
+      jest.resetAllMocks();
+
+      testApplicationContextPlugin.validate(eventWithoutApplicationContext);
+
+      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:ApplicationContextPlugin:GlobalContextValidationRule｣ Error: ApplicationContext is missing from Global Contexts.`,
+        'color:red'
+      );
+    });
+
+    it('should fail when given TrackerEvent has multiple ApplicationContexts', () => {
+      const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+      const eventWithDuplicatedApplicationContext = new TrackerEvent({
+        _type: 'test',
+        global_contexts: [makeApplicationContext({ id: 'test' }), makeApplicationContext({ id: 'test' })],
+      });
+
+      jest.resetAllMocks();
+
+      testApplicationContextPlugin.validate(eventWithDuplicatedApplicationContext);
+
+      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:ApplicationContextPlugin:GlobalContextValidationRule｣ Error: Only one ApplicationContext should be present in Global Contexts.`,
+        'color:red'
+      );
+    });
   });
 });

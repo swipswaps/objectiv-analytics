@@ -3,7 +3,13 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import { ContextsConfig, Tracker, TrackerEvent } from '@objectiv/tracker-core';
+import {
+  ContextsConfig,
+  makeContentContext,
+  makeRootLocationContext,
+  Tracker,
+  TrackerEvent,
+} from '@objectiv/tracker-core';
 import { RootLocationContextFromURLPlugin } from '../src';
 
 describe('RootLocationContextFromURLPlugin', () => {
@@ -19,7 +25,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     expect(testRootLocationContextPlugin.console).toBe(mockConsole);
   });
 
-  it('should add the RootLocationContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
+  it('should add the RootLocationContext to the Event when `enrich` is executed by the Tracker', async () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
@@ -162,6 +168,76 @@ describe('RootLocationContextFromURLPlugin', () => {
       __location_context: true,
       _type: 'RootLocationContext',
       id: 'welcome',
+    });
+  });
+
+  describe('Validation', () => {
+    it('should succeed', () => {
+      const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin({ console: mockConsole });
+      const validEvent = new TrackerEvent({
+        _type: 'test',
+        location_stack: [makeRootLocationContext({ id: '/test' })],
+      });
+
+      jest.resetAllMocks();
+
+      testRootLocationContextPlugin.validate(validEvent);
+
+      expect(mockConsole.groupCollapsed).not.toHaveBeenCalled();
+    });
+
+    it('should fail when given TrackerEvent does not have RootLocationContext', () => {
+      const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin({ console: mockConsole });
+      const eventWithoutRootLocationContext = new TrackerEvent({ _type: 'test' });
+
+      jest.resetAllMocks();
+
+      testRootLocationContextPlugin.validate(eventWithoutRootLocationContext);
+
+      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:RootLocationContextFromURLPlugin:LocationContextValidationRule｣ Error: RootLocationContext is missing from Location Stack.`,
+        'color:red'
+      );
+    });
+
+    it('should fail when given TrackerEvent has multiple RootLocationContexts', () => {
+      const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin({ console: mockConsole });
+      const eventWithDuplicatedRootLocationContext = new TrackerEvent({
+        _type: 'test',
+        location_stack: [makeRootLocationContext({ id: '/test' }), makeRootLocationContext({ id: '/test' })],
+      });
+
+      jest.resetAllMocks();
+
+      testRootLocationContextPlugin.validate(eventWithDuplicatedRootLocationContext);
+
+      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:RootLocationContextFromURLPlugin:LocationContextValidationRule｣ Error: Only one RootLocationContext should be present in Location Stack.`,
+        'color:red'
+      );
+    });
+
+    it('should fail when given TrackerEvent has a RootLocationContext in the wrong position', () => {
+      const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin({ console: mockConsole });
+      const eventWithRootLocationContextInWrongPosition = new TrackerEvent({
+        _type: 'test',
+        location_stack: [makeContentContext({ id: 'content-id' }), makeRootLocationContext({ id: '/test' })],
+      });
+
+      jest.resetAllMocks();
+
+      testRootLocationContextPlugin.validate(eventWithRootLocationContextInWrongPosition);
+
+      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:RootLocationContextFromURLPlugin:LocationContextValidationRule｣ Error: RootLocationContext is in the wrong position of the Location Stack.`,
+        'color:red'
+      );
     });
   });
 });

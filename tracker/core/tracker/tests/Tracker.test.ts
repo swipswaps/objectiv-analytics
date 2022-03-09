@@ -6,6 +6,8 @@ import { LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-
 import {
   ApplicationContextPlugin,
   ContextsConfig,
+  GlobalContextValidationRule,
+  OpenTaxonomyValidationPlugin,
   Tracker,
   TrackerConfig,
   TrackerEvent,
@@ -26,8 +28,18 @@ describe('Tracker', () => {
       tracker: testTracker,
       plugins: [
         {
-          applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
           pluginName: 'ApplicationContextPlugin',
+          applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+          validationRules: [
+            new GlobalContextValidationRule({
+              contextName: 'ApplicationContext',
+              once: true,
+              logPrefix: 'ApplicationContextPlugin',
+            }),
+          ],
+        },
+        {
+          pluginName: 'OpenTaxonomyValidationPlugin',
         },
       ],
     });
@@ -47,11 +59,11 @@ describe('Tracker', () => {
     expect(testTracker.transport).toStrictEqual(testTransport);
     expect(testTracker.plugins).toEqual({
       tracker: testTracker,
-      plugins: [new ApplicationContextPlugin(trackerConfig)],
+      plugins: [new ApplicationContextPlugin(trackerConfig), new OpenTaxonomyValidationPlugin(trackerConfig)],
     });
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
-    expect(mockConsole.log).toHaveBeenNthCalledWith(1, 'Application ID: app-id');
+    expect(mockConsole.log).toHaveBeenCalledWith('Application ID: app-id');
   });
 
   it('should instantiate with another Tracker, inheriting its state, yet being independent instances', () => {
@@ -209,21 +221,38 @@ describe('Tracker', () => {
       expect(pluginD.initialize).toHaveBeenCalledWith(testTracker);
     });
 
-    it('should execute all plugins implementing the beforeTransport callback', () => {
+    it('should execute all plugins implementing the enrich callback', () => {
       const pluginE: TrackerPluginInterface = {
         pluginName: 'pE',
         isUsable: () => true,
-        beforeTransport: jest.fn(),
+        enrich: jest.fn(),
       };
       const pluginF: TrackerPluginInterface = {
         pluginName: 'pF',
         isUsable: () => true,
-        beforeTransport: jest.fn(),
+        enrich: jest.fn(),
       };
       const testTracker = new Tracker({ applicationId: 'app-id', plugins: [pluginE, pluginF] });
       testTracker.trackEvent(testEvent);
-      expect(pluginE.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
-      expect(pluginF.beforeTransport).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+      expect(pluginE.enrich).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+      expect(pluginF.enrich).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+    });
+
+    it('should execute all plugins implementing the validate callback', () => {
+      const pluginE: TrackerPluginInterface = {
+        pluginName: 'pE',
+        isUsable: () => true,
+        validate: jest.fn(),
+      };
+      const pluginF: TrackerPluginInterface = {
+        pluginName: 'pF',
+        isUsable: () => true,
+        validate: jest.fn(),
+      };
+      const testTracker = new Tracker({ applicationId: 'app-id', plugins: [pluginE, pluginF] });
+      testTracker.trackEvent(testEvent);
+      expect(pluginE.validate).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+      expect(pluginF.validate).toHaveBeenCalledWith(expect.objectContaining(testEvent));
     });
 
     it('should send the Event via the given TrackerTransport', () => {

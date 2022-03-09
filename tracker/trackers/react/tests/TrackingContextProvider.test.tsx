@@ -3,7 +3,7 @@
  */
 
 import { expectToThrow } from '@objectiv/testing-tools';
-import { Tracker } from '@objectiv/tracker-core';
+import { GlobalContextValidationRule, Tracker } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import {
@@ -44,6 +44,17 @@ describe('TrackingContextProvider', () => {
             applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
             console: undefined,
             pluginName: 'ApplicationContextPlugin',
+            validationRules: [
+              new GlobalContextValidationRule({
+                contextName: 'ApplicationContext',
+                once: true,
+                logPrefix: 'ApplicationContextPlugin',
+              }),
+            ],
+          },
+          {
+            console: undefined,
+            pluginName: 'OpenTaxonomyValidationPlugin',
           },
         ],
       },
