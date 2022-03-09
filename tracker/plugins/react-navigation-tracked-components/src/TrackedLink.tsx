@@ -3,7 +3,7 @@
  */
 
 import { getLocationPath } from '@objectiv/tracker-core';
-import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react';
+import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react-core';
 import { NavigationAction } from '@react-navigation/core';
 import { Link } from '@react-navigation/native';
 import { To } from '@react-navigation/native/lib/typescript/src/useLinkTo';
@@ -44,7 +44,7 @@ export function TrackedLink<ParamList extends ReactNavigation.RootParamList>(pro
   // Generate LinkContext props from props.
   const { contextId, contextHref } = makeLinkContextProps(props);
 
-  // If we couldn't generate an `id`, log the issue and return an untracked Component.
+  // If we couldn't generate an `id`, log the issue and return an untracked Link.
   const locationPath = getLocationPath(useLocationStack());
   if (!contextId) {
     console.error(

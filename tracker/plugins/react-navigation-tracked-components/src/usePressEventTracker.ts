@@ -3,7 +3,7 @@
  */
 
 import { makePathContext } from '@objectiv/tracker-core';
-import { makeRootLocationContext, TrackingContext, trackPressEvent } from '@objectiv/tracker-react';
+import { makeRootLocationContext, TrackingContext, trackPressEvent } from '@objectiv/tracker-react-core';
 import { findFocusedRoute, useNavigation } from '@react-navigation/native';
 import { makeNavigationPath } from './makeNavigationPath';
 

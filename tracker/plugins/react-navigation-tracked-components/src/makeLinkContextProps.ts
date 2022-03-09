@@ -3,7 +3,7 @@
  */
 
 import { makeIdFromString } from '@objectiv/tracker-core';
-import { makeTitleFromChildren } from '@objectiv/tracker-react';
+import { makeTitleFromChildren } from '@objectiv/tracker-react-core';
 import { getPathFromState } from '@react-navigation/native';
 import { TrackedLinkProps } from './TrackedLink';
 
