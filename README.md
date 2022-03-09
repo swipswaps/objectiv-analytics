@@ -15,7 +15,7 @@ Check out [objectiv.io](https://www.objectiv.io) to learn more.
 
 ## Objectiv in 2 minutes
 
-[![Objectiv in 2 minutes](./assets/img/objectiv-bach-2min.jpg)](https://www.youtube.com/watch?v=DxTksurp4ec "Objectiv in 2 minutes")
+https://user-images.githubusercontent.com/82152911/157474269-c901730f-f9b1-49ba-87e8-d31517960b0f.mp4
 
 ## What's in the box?
 ![Objectiv Stack](./assets/img/objectiv-stack.svg#gh-light-mode-only "Objectiv Stack")
