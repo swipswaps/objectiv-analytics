@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/testing-tools",
-  "version": "0.0.14",
+  "version": "0.0.15",
   "private": true,
   "license": "Apache-2.0",
   "description": "Mocks and other testing utilities shared across Objectiv Trackers",

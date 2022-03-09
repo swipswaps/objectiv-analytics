@@ -2,7 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { InputContextWrapper, trackInputChangeEvent } from '@objectiv/tracker-core-react';
+import { InputContextWrapper, trackInputChangeEvent } from '@objectiv/tracker-react-core';
 import React from 'react';
 import { TextInput, TextInputProps } from 'react-native';
 

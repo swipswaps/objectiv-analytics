@@ -3,7 +3,7 @@
  */
 
 import { getLocationPath, makeIdFromString } from '@objectiv/tracker-core';
-import { PressableContextWrapper, trackPressEvent, useLocationStack } from '@objectiv/tracker-core-react';
+import { PressableContextWrapper, trackPressEvent, useLocationStack } from '@objectiv/tracker-react-core';
 import React from 'react';
 import { Button, ButtonProps } from 'react-native';
 

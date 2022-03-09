@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ExpandableContextWrapper, trackVisibility, useOnChange } from '@objectiv/tracker-core-react';
+import { ExpandableContextWrapper, trackVisibility, useOnChange } from '@objectiv/tracker-react-core';
 import React, { useState } from 'react';
 import { TrackedShowableContextProps } from '../types';
 

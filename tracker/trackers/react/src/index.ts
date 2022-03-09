@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-export * from '@objectiv/tracker-core-react';
+export * from '@objectiv/tracker-react-core';
 
 export * from './common/factories/makeAnchorClickHandler';
 export * from './common/factories/makeIdFromTrackedAnchorProps';

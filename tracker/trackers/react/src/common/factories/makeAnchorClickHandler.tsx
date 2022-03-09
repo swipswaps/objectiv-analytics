@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackingContext, trackPressEvent } from '@objectiv/tracker-core-react';
+import { TrackingContext, trackPressEvent } from '@objectiv/tracker-react-core';
 import React from 'react';
 
 /**

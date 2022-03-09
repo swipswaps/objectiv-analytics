@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "clear": "yarn exec make clean && yarn test --clearCache && yarn cache clean",
-    "build-core": "yarn workspaces foreach --include @objectiv/tracker-core --include @objectiv/tracker-core-react --verbose run build",
+    "build-core": "yarn workspaces foreach --include @objectiv/tracker-core --include @objectiv/tracker-react-core --verbose run build",
     "build-plugins": "yarn workspaces foreach -p --include '@objectiv/plugin**' --verbose run build",
     "build-queues": "yarn workspaces foreach -p --include '@objectiv/queue**' --verbose run build",
     "build-transports": "yarn workspaces foreach -p --include '@objectiv/transport**' --verbose run build",

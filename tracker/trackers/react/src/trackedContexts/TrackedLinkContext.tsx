@@ -3,7 +3,7 @@
  */
 
 import { getLocationPath } from '@objectiv/tracker-core';
-import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-core-react';
+import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react-core';
 import React from 'react';
 import { makeAnchorClickHandler } from '../common/factories/makeAnchorClickHandler';
 import { makeIdFromTrackedAnchorProps } from '../common/factories/makeIdFromTrackedAnchorProps';

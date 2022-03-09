@@ -3,7 +3,7 @@
  */
 
 import { makeIdFromString } from '@objectiv/tracker-core';
-import { makeTitleFromChildren } from '@objectiv/tracker-core-react';
+import { makeTitleFromChildren } from '@objectiv/tracker-react-core';
 import React from 'react';
 import { TrackingOptionsProp } from '../../types';
 

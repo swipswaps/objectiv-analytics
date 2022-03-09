@@ -6,12 +6,12 @@ Objectiv shared core module for React and React native trackers.
 To install the most recent stable version:
 
 ```sh
-yarn add @objectiv/tracker-core-react
+yarn add @objectiv/tracker-react-core
 ```
 
 ### or
 ```sh
-npm install @objectiv/tracker-core-react
+npm install @objectiv/tracker-react-core
 ```
 
 ## Usage

@@ -2,7 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { OverlayContextWrapper, useHiddenEventTracker, useVisibleEventTracker } from '@objectiv/tracker-core-react';
+import { OverlayContextWrapper, useHiddenEventTracker, useVisibleEventTracker } from '@objectiv/tracker-react-core';
 import React, { useEffect, useState } from 'react';
 import { Modal, ModalProps } from 'react-native';
 

@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { InputContextWrapper, TrackingContext, trackInputChangeEvent } from '@objectiv/tracker-core-react';
+import { InputContextWrapper, TrackingContext, trackInputChangeEvent } from '@objectiv/tracker-react-core';
 import React, { FocusEvent, useState } from 'react';
 import { TrackedContextProps } from '../types';
 

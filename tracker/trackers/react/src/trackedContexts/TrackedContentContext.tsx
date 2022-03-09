@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContentContextWrapper } from '@objectiv/tracker-core-react';
+import { ContentContextWrapper } from '@objectiv/tracker-react-core';
 import React from 'react';
 import { TrackedContextProps } from '../types';
 
