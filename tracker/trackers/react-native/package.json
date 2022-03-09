@@ -50,6 +50,7 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
+    "@babel/core": "^7.1.6",
     "@objectiv/testing-tools": "^0.0.13",
     "@testing-library/react-native": "^9.0.0",
     "@types/jest": "^27.0.3",
