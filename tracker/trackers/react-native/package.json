@@ -50,21 +50,21 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "devDependencies": {
-    "@babel/core": "^7.1.6",
+    "@babel/core": "^7.17.5",
     "@objectiv/testing-tools": "^0.0.15",
     "@testing-library/react-native": "^9.0.0",
-    "@types/jest": "^27.0.3",
-    "@types/react-native": "^0.67.1",
+    "@types/jest": "^27.4.1",
+    "@types/react-native": "^0.67.2",
     "babel-jest": "^27.5.1",
-    "jest": "^27.4.5",
+    "jest": "^27.5.1",
     "jest-react-native": "^18.0.0",
     "jest-standard-reporter": "^2.0.0",
     "prettier": "^2.5.1",
     "react-native": "^0.67.3",
     "react-test-renderer": "^17.0.2",
-    "shx": "^0.3.3",
-    "tsup": "^5.11.13",
-    "typescript": "^4.5.5"
+    "shx": "^0.3.4",
+    "tsup": "^5.12.0",
+    "typescript": "^4.6.2"
   },
   "dependencies": {
     "@objectiv/tracker-core": "~0.0.15",
