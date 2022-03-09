@@ -56,11 +56,11 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "dependencies": {
-    "@objectiv/tracker-core": "^0.0.13",
-    "@objectiv/tracker-react-native": "^0.0.13"
+    "@objectiv/tracker-core": "^0.0.15",
+    "@objectiv/tracker-react-native": "^0.0.15"
   },
   "devDependencies": {
-    "@objectiv/testing-tools": "^0.0.13",
+    "@objectiv/testing-tools": "^0.0.15",
     "@react-navigation/bottom-tabs": "^6.2.0",
     "@react-navigation/native": "^6.0.8",
     "@react-navigation/stack": "^6.1.1",

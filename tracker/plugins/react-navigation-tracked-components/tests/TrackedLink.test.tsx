@@ -5,7 +5,7 @@
 import { mockConsole } from '@objectiv/testing-tools';
 import {
   ContentContextWrapper,
-  ReactTracker,
+  ReactNativeTracker,
   RootLocationContextWrapper,
   TrackingContextProvider,
 } from '@objectiv/tracker-react-native';
@@ -27,7 +27,7 @@ describe('TrackedLink', () => {
   });
 
   const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
-  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
 
   const cases: [
     TrackedLinkProps<TestParamList>,
