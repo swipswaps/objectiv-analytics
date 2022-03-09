@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/tracker-react-native",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Objectiv React Native application analytics tracker for the open taxonomy for analytics",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -51,7 +51,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.1.6",
-    "@objectiv/testing-tools": "^0.0.13",
+    "@objectiv/testing-tools": "^0.0.14",
     "@testing-library/react-native": "^9.0.0",
     "@types/jest": "^27.0.3",
     "@types/react-native": "^0.67.1",
@@ -67,9 +67,9 @@
     "typescript": "^4.5.5"
   },
   "dependencies": {
-    "@objectiv/tracker-core": "~0.0.13",
-    "@objectiv/tracker-core-react": "~0.0.13",
-    "@objectiv/transport-fetch": "^0.0.13"
+    "@objectiv/tracker-core": "~0.0.14",
+    "@objectiv/tracker-core-react": "~0.0.14",
+    "@objectiv/transport-fetch": "^0.0.14"
   },
   "peerDependencies": {
     "react": ">=16.8",
