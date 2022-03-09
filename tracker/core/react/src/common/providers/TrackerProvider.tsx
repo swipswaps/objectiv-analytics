@@ -27,7 +27,7 @@ export type TrackerProviderProps = TrackerProviderContext & {
  * @see ObjectivProvider
  */
 export const TrackerProvider = ({ children, tracker }: TrackerProviderProps) => {
-  if (isDevMode() && isBrowser()) {
+  if (isDevMode()) {
     LocationTree.initialize(tracker);
   }
 

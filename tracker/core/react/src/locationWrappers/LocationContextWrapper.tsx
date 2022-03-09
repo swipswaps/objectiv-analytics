@@ -39,19 +39,19 @@ export const LocationContextWrapper = ({ children, locationContext }: LocationCo
   const parentLocationContext = useParentLocationContext();
 
   useOnMount(() => {
-    if (isDevMode() && isBrowser()) {
+    if (isDevMode()) {
       LocationTree.add(locationContext, parentLocationContext);
     }
   });
 
   useOnUnmount(() => {
-    if (isDevMode() && isBrowser()) {
+    if (isDevMode()) {
       LocationTree.remove(locationContext);
     }
   });
 
   useOnChange<LocationContext<AbstractLocationContext>>(locationContext, (previousLocationContext) => {
-    if (isDevMode() && isBrowser()) {
+    if (isDevMode()) {
       LocationTree.remove(previousLocationContext);
       LocationTree.add(locationContext, parentLocationContext);
     }
