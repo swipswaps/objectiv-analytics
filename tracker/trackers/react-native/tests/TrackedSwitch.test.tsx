@@ -7,7 +7,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import {
   LocationTree,
-  ReactTracker,
+  ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedSwitch,
   TrackedSwitchProps,
@@ -17,7 +17,7 @@ import {
 describe('TrackedSwitch', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
-  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
   jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
   const TestTrackedSwitch = (props: TrackedSwitchProps & { testID?: string }) => (

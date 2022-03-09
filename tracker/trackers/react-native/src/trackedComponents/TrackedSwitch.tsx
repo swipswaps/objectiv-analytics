@@ -2,7 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { InputContextWrapper, trackInputChangeEvent } from '@objectiv/tracker-react';
+import { InputContextWrapper, trackInputChangeEvent } from '@objectiv/tracker-react-core';
 import React from 'react';
 import { Switch, SwitchProps } from 'react-native';
 

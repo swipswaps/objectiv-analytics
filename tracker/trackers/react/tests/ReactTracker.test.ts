@@ -10,7 +10,7 @@ import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 import { ReactTracker } from '../src/';
 
-describe('BrowserTracker', () => {
+describe('ReactTracker', () => {
   beforeEach(() => {
     jest.spyOn(console, 'error').mockImplementation(() => {});
     jest.spyOn(console, 'group').mockImplementation(() => {});

@@ -2,7 +2,9 @@
 Copyright 2021 Objectiv B.V.
 """
 import string
-from typing import Set
+from typing import Set, Union
+
+from sqlalchemy.engine import Dialect, Engine
 
 
 def extract_format_fields(format_string: str, nested=1) -> Set[str]:
@@ -33,23 +35,37 @@ def extract_format_fields(format_string: str, nested=1) -> Set[str]:
     return extract_format_fields(new_format_string, nested=nested-1)
 
 
-def quote_identifier(name: str) -> str:
+def quote_identifier(dialect: Dialect, name: str) -> str:
     """
     Add quotes around an identifier (e.g. a table or column name), and escape special characters in the name.
 
-    This is in accordance with the Postgres string notation format, no guarantees for other databses.
-    See https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+    By default this assumes Postgres identifier notation format, but this can be overridden by specifying a
+    SqlAlchemy Dialect.
 
-    Examples:
-    >>> quote_identifier('test')
+
+    Examples
+    >>> from sqlalchemy.dialects.postgresql.base import PGDialect
+    >>> quote_identifier(PGDialect(), 'test')
     '"test"'
-    >>> quote_identifier('te"st')
+    >>> quote_identifier(PGDialect(), 'te"st')
     '"te""st"'
-    >>> quote_identifier('"te""st"')
+    >>> quote_identifier(PGDialect(), '"te""st"')
     '\"\"\"te\"\"\"\"st\"\"\"'
     """
-    replaced_chars = name.replace('"', '""')
-    return f'"{replaced_chars}"'
+    if is_postgres(dialect):
+        # more 'logical' would be: dialect.preparer(dialect).quote_identifier(value=name)
+        # But it seems that goes wrong in case there is a `%` in the value. Which sort of makes sense, as
+        # sqlalchemy already escapes that for later on.
+
+        # postgres spec: https://www.postgresql.org/docs/14/sql-syntax-lexical.html#SQL-SYNTAX-IDENTIFIERS
+        replaced_chars = name.replace('"', '""')
+        return f'"{replaced_chars}"'
+
+    if is_bigquery(dialect):
+        # todo: check whether this is efficient and correct
+        result = dialect.preparer(dialect).quote_identifier(value=name)
+        return result
+    raise DatabaseNotSupportedException(dialect)
 
 
 def quote_string(value: str) -> str:
@@ -69,3 +85,18 @@ def quote_string(value: str) -> str:
     """
     replaced_chars = value.replace("'", "''")
     return f"'{replaced_chars}'"
+
+
+def is_postgres(dialect_engine: Union[Dialect, Engine]) -> bool:
+    return dialect_engine.name == 'postgresql'  # value of PGDialect.name
+
+
+def is_bigquery(dialect_engine: Union[Dialect, Engine]) -> bool:
+    # We hardcode the string value here instead of comparing against BigQueryDialect.name
+    # This way this code path will work, even if the BigQuery python package is not installed
+    return dialect_engine.name == 'bigquery'
+
+
+class DatabaseNotSupportedException(Exception):
+    def __init__(self, dialect_engine: Union[Dialect, Engine]):
+        super().__init__(f'This function is not supported for database dialect "{dialect_engine.name}".')

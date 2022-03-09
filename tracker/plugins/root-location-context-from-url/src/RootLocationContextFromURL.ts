@@ -16,6 +16,7 @@ export type RootLocationContextFromURLPluginConfig = TrackerPluginConfig & {
 
 /**
  * The RootLocationContextFromURL Plugin factors a RootLocationContext out of the first slug of the current URL.
+ * RootLocationContext is validated by OpenTaxonomyValidationPlugin in Core Tracker.
  */
 export class RootLocationContextFromURLPlugin implements TrackerPluginInterface {
   readonly console?: TrackerConsole;
@@ -23,7 +24,7 @@ export class RootLocationContextFromURLPlugin implements TrackerPluginInterface 
   readonly idFactoryFunction: typeof makeRootLocationId;
 
   /**
-   * The constructor is responsible for processing the given TrackerPluginConfiguration and initializing validation.
+   * The constructor is merely responsible for processing the given TrackerPluginConfiguration.
    */
   constructor(config?: RootLocationContextFromURLPluginConfig) {
     this.console = config?.console;

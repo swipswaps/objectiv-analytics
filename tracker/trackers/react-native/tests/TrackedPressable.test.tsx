@@ -7,7 +7,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import {
   LocationTree,
-  ReactTracker,
+  ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedPressable,
   TrackedPressableProps,
@@ -17,7 +17,7 @@ import {
 describe('TrackedPressable', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
-  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
   jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
   const TestTrackedPressable = (props: TrackedPressableProps & { testID?: string }) => (

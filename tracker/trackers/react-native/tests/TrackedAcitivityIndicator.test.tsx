@@ -7,7 +7,7 @@ import { render } from '@testing-library/react-native';
 import React from 'react';
 import {
   LocationTree,
-  ReactTracker,
+  ReactNativeTracker,
   RootLocationContextWrapper,
   TrackedActivityIndicator,
   TrackedActivityIndicatorProps,
@@ -17,7 +17,7 @@ import {
 describe('TrackedActivityIndicator', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
-  const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
 
   const TestTrackedActivityIndicator = (props: TrackedActivityIndicatorProps & { testID?: string }) => (
     <TrackingContextProvider tracker={tracker}>

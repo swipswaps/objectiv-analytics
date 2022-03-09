@@ -23,9 +23,10 @@ This is a complete list of the currently available packages.
 |------------------------------------------------------|-----------|----------------------------------------------|--------------------------------------------------------------------------|
 | @objectiv/schema                                     | core      | /core/schema                                 | [README](/tracker/core/schema/README.md)                                 |
 | @objectiv/tracker-core                               | core      | /core/tracker                                | [README](/tracker/core/tracker/README.md)                                |
+| @objectiv/tracker-react-core                         | core      | /core/react                                  | [README](/tracker/core/react/README.md)                                  |
 | @objectiv/testing-tools                              | core      | /core/testing-tools                          | [README](/tracker/core/testing-tools/README.md)                          |
 | @objectiv/utilities                                  | core      | /core/utilities                              | [README](/tracker/core/utilities/README.md)                              |
-| @objectiv/plugin-http-context                        | plugin    | /plugins/http-context                        | [README](/tracker/plugins/http-context/README.md)                        | 
+| @objectiv/http-context                               | plugin    | /plugins/http-context                        | [README](/tracker/plugins/http-context/README.md)                        | 
 | @objectiv/plugin-path-context-from-url               | plugin    | /plugins/path-context-from-url               | [README](/tracker/plugins/path-context-from-url/README.md)               |
 | @objectiv/plugin-react-navigation-tracked-components | plugin    | /plugins/react-navigation-tracked-components | [README](/tracker/plugins/react-navigation-tracked-components/README.md) |
 | @objectiv/plugin-root-location-context-from-url      | plugin    | /plugins/root-location-context-from-url      | [README](/tracker/plugins/root-location-context-from-url/README.md)      |

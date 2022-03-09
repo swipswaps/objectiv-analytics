@@ -39,6 +39,7 @@
       "@objectiv/schema": ["core/schema/src"],
       "@objectiv/plugin-*": ["plugins/*/src"],
       "@objectiv/queue-*": ["queues/*/src"],
+      "@objectiv/tracker-react-core": ["core/react/src"],
       "@objectiv/tracker-core": ["core/tracker/src"],
       "@objectiv/tracker-*": ["trackers/*/src"],
       "@objectiv/transport-*": ["transports/*/src"]

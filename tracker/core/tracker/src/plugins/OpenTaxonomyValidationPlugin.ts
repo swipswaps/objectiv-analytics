@@ -7,7 +7,6 @@ import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerPluginConfig, TrackerPluginInterface } from '../TrackerPluginInterface';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
-import { GlobalContextValidationRule } from '../validationRules/GlobalContextValidationRule';
 import { LocationContextValidationRule } from '../validationRules/LocationContextValidationRule';
 
 /**
@@ -31,12 +30,6 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
         once: true,
         position: 0,
       }),
-      new GlobalContextValidationRule({
-        console: this.console,
-        logPrefix: this.pluginName,
-        contextName: 'PathContext',
-        once: true,
-      }),
     ];
 
     if (this.console) {
@@ -48,7 +41,12 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    * Performs Open Taxonomy related validation checks
    */
   validate(event: TrackerEvent): void {
-    this.validationRules.forEach((validationRule) => validationRule.validate(event));
+    if (this.isUsable()) {
+      this.validationRules.forEach((validationRule) => validationRule.validate(event));
+    }
+    // TODO error: `requiresContext` check for every context in LocationStack or GlobalContext
+    // TODO warning: navigationContext missing around LinkContext
+    // TODO warning: LocationContext missing around PressableContext
   }
 
   /**

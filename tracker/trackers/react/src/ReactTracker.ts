@@ -3,9 +3,9 @@
  */
 
 import { ContextsConfig, isBrowser, isDevMode, Tracker, TrackerConfig } from '@objectiv/tracker-core';
-import { makeDefaultPluginsList } from './common/factories/makeDefaultPluginsList';
-import { makeDefaultQueue } from './common/factories/makeDefaultQueue';
-import { makeDefaultTransport } from './common/factories/makeDefaultTransport';
+import { makeReactTrackerDefaultPluginsList } from './common/factories/makeReactTrackerDefaultPluginsList';
+import { makeReactTrackerDefaultQueue } from './common/factories/makeReactTrackerDefaultQueue';
+import { makeReactTrackerDefaultTransport } from './common/factories/makeReactTrackerDefaultTransport';
 
 /**
  * React Tracker can be configured in an easier way, as opposed to the core tracker.
@@ -66,9 +66,9 @@ export type ReactTrackerConfig = TrackerConfig & {
  *  ];
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
- *  @see makeDefaultTransport
- *  @see makeDefaultQueue
- *  @see makeDefaultPluginsList
+ *  @see makeReactTrackerDefaultTransport
+ *  @see makeReactTrackerDefaultQueue
+ *  @see makeReactTrackerDefaultPluginsList
  */
 export class ReactTracker extends Tracker {
   constructor(trackerConfig: ReactTrackerConfig, ...contextConfigs: ContextsConfig[]) {
@@ -93,8 +93,8 @@ export class ReactTracker extends Tracker {
     if (config.endpoint) {
       config = {
         ...config,
-        transport: makeDefaultTransport(config),
-        queue: config.queue ?? makeDefaultQueue(config),
+        transport: makeReactTrackerDefaultTransport(config),
+        queue: config.queue ?? makeReactTrackerDefaultQueue(config),
       };
     }
 
@@ -102,7 +102,7 @@ export class ReactTracker extends Tracker {
     if (!config.plugins) {
       config = {
         ...config,
-        plugins: makeDefaultPluginsList(config),
+        plugins: makeReactTrackerDefaultPluginsList(config),
       };
     }
 

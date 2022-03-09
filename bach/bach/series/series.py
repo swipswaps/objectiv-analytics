@@ -461,14 +461,13 @@ class Series(ABC):
         df = self.to_frame().reset_index()
         df = df.groupby(remaining_indexes)
 
-        series_dict = {}
         for column in values:
             new_column_name = str(column)
             new_const_series = const_to_series(self, column, new_column_name)
             new_series = df.all_series[name_series].copy_override(
                 name=new_column_name,
                 expression=Expression.construct(f'case when {{}} = {{}} then {name_series} end',
-                                                series_last,
+                                                df.all_series[name_index_last],
                                                 new_const_series)
             )
             new_series_aggregated = cast(
@@ -476,21 +475,20 @@ class Series(ABC):
             )
             if fill_value is not None:
                 new_series_aggregated = new_series_aggregated.fillna(fill_value)
-            series_dict[new_column_name] = new_series_aggregated.copy_override(name=new_column_name)
+            df[new_column_name] = new_series_aggregated
 
-        unstacked_df = df.copy_override(series=series_dict)
-        return unstacked_df
+        return df.drop(columns=[name_index_last, name_series])
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
-        expression = self.expression.resolve_column_references(table_alias)
+        expression = self.expression.resolve_column_references(self.engine.dialect, table_alias)
         return Expression.construct_expr_as_name(expression, self.name)
 
     def _get_supported(
-            self,
-            operation_name: str,
-            supported_dtypes: Tuple[str, ...],
-            other: 'Series'
+        self,
+        operation_name: str,
+        supported_dtypes: Tuple[str, ...],
+        other: 'Series'
     ) -> Tuple['Series', 'Series']:
         """
         Check whether `other` is supported for this operation, and if not, possibly do something
@@ -504,18 +502,57 @@ class Series(ABC):
                 if other.expression.is_single_value:
                     other = self.as_independent_subquery(other)
                 else:
-                    # align base nodes and group by
-                    df = self.to_frame()
-                    # todo now using private method from DataFrame. This will change to use merge, once this
-                    #  type of 'index merge' works with that method.
-                    df._index_merge(key='__other', value=other, how='outer')
-                    return cast('Series', df[self.name]), cast('Series', df['__other'])
-                    # todo pandas: if name of both series are same, use that name of result. we always use
-                    #  name of self
+                    return self.__set_item_with_merge(other)
 
         if other.dtype.lower() not in supported_dtypes:
             raise TypeError(f'{operation_name} not supported between {self.dtype} and {other.dtype}.')
         return self, other
+
+    def __set_item_with_merge(self, other: 'Series') -> Tuple['Series', 'Series']:
+        """
+        Aligns caller series and other series base nodes by using a merge based on their indexes.
+
+        :returns: the (modified) series and (modified) other.
+
+        .. note::
+            If both caller and other series have the same name, (modified) other will be renamed as:
+            `f"{other.name}__other"`
+        """
+        if not self.index or not other.index:
+            raise ValueError('both series must have at least one index level')
+
+        if any(
+            caller_idx.dtype != other_idx.dtype
+            for caller_idx, other_idx in zip(self.index.values(), other.index.values())
+        ):
+            raise ValueError('dtypes of indexes to be merged should be the same')
+
+        from bach.partitioning import GroupBy
+        # align index names, this way we have all matched indexes in a single series
+        new_index = {
+            caller_idx.name: other_idx.copy_override(name=caller_idx.name)
+            for caller_idx, other_idx in zip(self.index.values(), other.index.values())
+        }
+        new_name = other.name if other.name not in new_index else f'{other.name}__data_column'
+        other_cp = other.copy_override(
+            index=new_index,
+            group_by=GroupBy(group_by_columns=list(new_index.values())) if other.group_by else None,
+            name=new_name,
+        )
+        df = self.to_frame()
+        df = df.merge(
+            other_cp, on=list(new_index.keys()), how='outer', suffixes=('', '__other'),
+        )
+
+        # consider only the caller's indexes, drop the non-shared ones
+        df = df.set_index(list(self.index.keys()), drop=True)
+        caller_series = df.all_series[self.name]
+        other_series = (
+            df.all_series[new_name]
+            if self.name != new_name else df.all_series[f'{self.name}__other']
+        )
+
+        return caller_series, other_series
 
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.Series:
         """
