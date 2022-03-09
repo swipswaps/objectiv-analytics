@@ -45,7 +45,11 @@ export class LocationContextValidationRule
     this.logPrefix = config.logPrefix;
 
     if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:${this.logPrefix?.concat(':')}${this.validationRuleName}｣ Initialized. Context: ${config.contextName}.`);
+      this.console.groupCollapsed(
+        `｢objectiv:${this.logPrefix?.concat(':')}${this.validationRuleName}｣ Initialized. Context: ${
+          config.contextName
+        }.`
+      );
       this.console.group(`Configuration:`);
       this.console.log(config);
       this.console.groupEnd();

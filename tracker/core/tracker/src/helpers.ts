@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import uuid from 'uuid-random';
+import { v4 as uuid } from 'uuid';
 
 /**
  * A TypeScript friendly Object.keys
