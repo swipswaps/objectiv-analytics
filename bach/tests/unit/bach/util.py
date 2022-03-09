@@ -1,7 +1,11 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import List, Dict, Union, cast
+from typing import List, Dict, Union, cast, NamedTuple
+from unittest.mock import Mock
+
+from sqlalchemy.dialects.postgresql.base import PGDialect
+from sqlalchemy.engine import Dialect, Engine
 
 from bach import get_series_type_from_dtype, DataFrame
 from bach.expression import Expression
@@ -10,12 +14,17 @@ from bach.sql_model import BachSqlModel
 from sql_models.model import CustomSqlModelBuilder
 
 
+class FakeEngine(NamedTuple):
+    dialect: Dialect
+
+
 def get_fake_df(
         index_names: List[str],
         data_names: List[str],
-        dtype: Union[str, Dict[str, str]] = 'int64'
+        dtype: Union[str, Dict[str, str]] = 'int64',
+        dialect: Dialect = PGDialect()
 ) -> DataFrame:
-    engine = None
+    engine = FakeEngine(dialect=dialect)
     base_node = BachSqlModel.from_sql_model(
         sql_model=CustomSqlModelBuilder('select * from x', name='base')(),
         columns=('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
@@ -58,7 +67,7 @@ def get_fake_df(
                      index=index, series=data, group_by=None, order_by=[], savepoints=Savepoints())
 
 
-def get_fake_df_test_data() -> DataFrame:
+def get_fake_df_test_data(dialect: Dialect) -> DataFrame:
     return get_fake_df(
         index_names=['_index_skating_order'],
         data_names=['skating_order', 'city', 'municipality', 'inhabitants', 'founding'],
@@ -69,5 +78,6 @@ def get_fake_df_test_data() -> DataFrame:
             'municipality': 'string',
             'inhabitants': 'int64',
             'founding': 'int64'
-        }
+        },
+        dialect=dialect
     )

@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-from tests.functional.bach.test_data_and_utils import get_from_df, assert_equals_data
+from tests.functional.bach.test_data_and_utils import get_from_df
 
 DATA = {
     "name": ['Alfred', 'Batman', 'Catwoman'],
