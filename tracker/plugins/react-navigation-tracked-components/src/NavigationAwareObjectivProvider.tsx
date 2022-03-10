@@ -2,50 +2,77 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { makePathContext } from "@objectiv/tracker-core";
-import { makeRootLocationContext, ObjectivProvider, ObjectivProviderProps } from '@objectiv/tracker-react-core';
-import { ReactNativeTracker } from "@objectiv/tracker-react-native";
-import { getPathFromState, NavigationContainerRefWithCurrent } from "@react-navigation/native";
-import React, { useEffect } from 'react';
+import { makePathContext } from '@objectiv/tracker-core';
+import {
+  makeRootLocationContext,
+  ObjectivProviderContext,
+  objectivProviderDefaultOptions,
+  ObjectivProviderProps,
+  trackApplicationLoadedEvent,
+  TrackingContextProvider,
+  useOnMount,
+} from '@objectiv/tracker-react-core';
+import { getPathFromState, NavigationContainerRefWithCurrent } from '@react-navigation/native';
+import React, { useContext } from 'react';
 
 /**
  * NavigationAwareObjectivProvider requires an extra `navigationContainerRef` prop.
  */
-export type NavigationAwareObjectivProviderProps<ParamList extends ReactNavigation.RootParamList> = ObjectivProviderProps & {
-  navigationContainerRef: NavigationContainerRefWithCurrent<ParamList>
-}
+export type NavigationAwareObjectivProviderProps<ParamList extends ReactNavigation.RootParamList> =
+  ObjectivProviderProps & {
+    navigationContainerRef: NavigationContainerRefWithCurrent<ParamList>;
+  };
 
 /**
  * An ObjectivProvider variant able to automatically infer RootLocationContext and PathContext from React Navigation.
+ * Additionally, it will wait until React Navigation is ready, before triggering ApplicationLoadedEvent.
+ * This ensures the RootLocationContext and PathContext are up-to-date.
  */
-export function NavigationAwareObjectivProvider<ParamList extends ReactNavigation.RootParamList>({ children, tracker, navigationContainerRef, ...props }: NavigationAwareObjectivProviderProps<ParamList>) {
-  const originalLocationStack = React.useRef(tracker.location_stack);
-  const originalGlobalContexts = React.useRef(tracker.global_contexts);
-  const [rootLocationContext, setRootLocationContext] = React.useState(makeRootLocationContext({ id: 'home' }));
-  const [pathContext, setPathContext] = React.useState(makePathContext({ id: '/' }));
+export function NavigationAwareObjectivProvider<ParamList extends ReactNavigation.RootParamList>({
+  children,
+  tracker,
+  navigationContainerRef,
+  options,
+}: NavigationAwareObjectivProviderProps<ParamList>) {
+  const { trackApplicationLoaded } = { ...objectivProviderDefaultOptions, ...options };
+  const objectivProviderPresent = useContext(ObjectivProviderContext);
 
-  const updateTrackerContexts = () => {
-    if(navigationContainerRef.isReady()) {
-      const currentRouteName = navigationContainerRef.getCurrentRoute()?.name;
-      setRootLocationContext(makeRootLocationContext({ id: currentRouteName ?? 'home' }));
-      setPathContext(makePathContext({id: getPathFromState(navigationContainerRef.getRootState())}));
-    }
+  if (objectivProviderPresent) {
+    console.error(`
+      ｢objectiv｣ NavigationAwareObjectivProvider should not be nested and should be placed as high as possible in the Application. 
+      To override Tracker and/or LocationStack, use TrackingContextProvider instead.
+    `);
   }
 
-  useEffect(() => {
-    updateTrackerContexts();
-    return navigationContainerRef.addListener('state', updateTrackerContexts);
-  }, [])
+  // TODO move to an actual plugin module
+  tracker.plugins.plugins.push({
+    console: tracker.console,
+    pluginName: 'RootLocationAndPathContextsFromNavigation',
+    enrich: (contexts) => {
+      let rootLocationContextId = 'home';
+      let pathContextId = '/';
+      if (navigationContainerRef.isReady()) {
+        const currentRouteName = navigationContainerRef.getCurrentRoute()?.name;
+        rootLocationContextId = currentRouteName ?? 'home';
+        pathContextId = getPathFromState(navigationContainerRef.getRootState());
+      }
+      contexts.location_stack.unshift(makeRootLocationContext({ id: rootLocationContextId }));
+      contexts.global_contexts.push(makePathContext({ id: pathContextId }));
+    },
+    isUsable: () => true,
+  });
 
-  const enrichedTracker = new ReactNativeTracker(tracker, {
-    location_stack: [rootLocationContext, ...originalLocationStack.current],
-    global_contexts: [...originalGlobalContexts.current, pathContext]
-  })
+  useOnMount(() => {
+    if (trackApplicationLoaded && navigationContainerRef.isReady()) {
+      trackApplicationLoadedEvent({ tracker });
+    }
+  });
 
   return (
-    <ObjectivProvider tracker={enrichedTracker} {...props}>
-      {children}
-    </ObjectivProvider>
+    <ObjectivProviderContext.Provider value={true}>
+      <TrackingContextProvider tracker={tracker}>
+        {(trackingContext) => (typeof children === 'function' ? children(trackingContext) : children)}
+      </TrackingContextProvider>
+    </ObjectivProviderContext.Provider>
   );
 }
-

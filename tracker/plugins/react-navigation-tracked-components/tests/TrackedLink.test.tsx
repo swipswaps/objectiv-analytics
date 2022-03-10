@@ -3,11 +3,7 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
-import {
-  ContentContextWrapper,
-  ReactNativeTracker,
-  RootLocationContextWrapper
-} from '@objectiv/tracker-react-native';
+import { ContentContextWrapper, ReactNativeTracker, RootLocationContextWrapper } from '@objectiv/tracker-react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -26,7 +22,6 @@ describe('TrackedLink', () => {
   });
 
   const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
-  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
 
   const cases: [
     TrackedLinkProps<TestParamList>,
@@ -68,12 +63,17 @@ describe('TrackedLink', () => {
 
   cases.forEach(([linkProps, linkContext, rootLocationContext, pathContext]) => {
     it(`props: ${JSON.stringify(linkProps)} > LinkContext: ${JSON.stringify(linkContext)}`, () => {
+      const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
       const Stack = createStackNavigator();
       const HomeScreen = () => <TrackedLink {...linkProps} testID="test" />;
       const DestinationScreen = () => <>yup</>;
       const navigationContainerRef = createNavigationContainerRef();
       const { getByTestId } = render(
-        <NavigationAwareObjectivProvider tracker={tracker} navigationContainerRef={navigationContainerRef} options={{trackApplicationLoaded: false}}>
+        <NavigationAwareObjectivProvider
+          tracker={tracker}
+          navigationContainerRef={navigationContainerRef}
+          options={{ trackApplicationLoaded: false }}
+        >
           <NavigationContainer ref={navigationContainerRef}>
             <Stack.Navigator>
               <Stack.Screen name="HomeScreen" component={HomeScreen} />
@@ -101,12 +101,12 @@ describe('TrackedLink', () => {
           ],
           global_contexts: [
             expect.objectContaining({
-              _type: 'PathContext',
-              ...pathContext,
-            }),
-            expect.objectContaining({
               _type: 'ApplicationContext',
               id: 'app-id',
+            }),
+            expect.objectContaining({
+              _type: 'PathContext',
+              ...pathContext,
             }),
           ],
         })
@@ -115,6 +115,7 @@ describe('TrackedLink', () => {
   });
 
   it('should console.error if an id cannot be automatically generated', () => {
+    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
     jest.spyOn(console, 'error').mockImplementation(() => {});
 
     const Stack = createStackNavigator();
@@ -145,6 +146,7 @@ describe('TrackedLink', () => {
   });
 
   it('should execute the given onPress as well', async () => {
+    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
     const onPressSpy = jest.fn();
 
     const Stack = createStackNavigator();
@@ -156,7 +158,11 @@ describe('TrackedLink', () => {
     const DestinationScreen = () => <>yup</>;
     const navigationContainerRef = createNavigationContainerRef();
     const { getByTestId } = render(
-      <NavigationAwareObjectivProvider tracker={tracker} navigationContainerRef={navigationContainerRef} options={{trackApplicationLoaded: false}}>
+      <NavigationAwareObjectivProvider
+        tracker={tracker}
+        navigationContainerRef={navigationContainerRef}
+        options={{ trackApplicationLoaded: false }}
+      >
         <NavigationContainer ref={navigationContainerRef}>
           <Stack.Navigator>
             <Stack.Screen name="HomeScreen" component={HomeScreen} />
@@ -172,9 +178,14 @@ describe('TrackedLink', () => {
   });
 
   it('should fallback to RootLocationContext:home when a route cannot be detected', async () => {
+    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
     const navigationContainerRef = createNavigationContainerRef();
     const { getByTestId } = render(
-      <NavigationAwareObjectivProvider tracker={tracker} navigationContainerRef={navigationContainerRef} options={{trackApplicationLoaded: false}}>
+      <NavigationAwareObjectivProvider
+        tracker={tracker}
+        navigationContainerRef={navigationContainerRef}
+        options={{ trackApplicationLoaded: false }}
+      >
         <NavigationContainer ref={navigationContainerRef}>
           <TrackedLink testID="test" to="/HomeScreen">
             Press me!
@@ -205,6 +216,7 @@ describe('TrackedLink', () => {
   });
 
   it('should correctly generate RootLocation and Path Contexts with nested navigators', async () => {
+    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
     const Tab = createBottomTabNavigator();
     const Stack = createStackNavigator();
 
@@ -251,7 +263,11 @@ describe('TrackedLink', () => {
 
     const navigationContainerRef = createNavigationContainerRef();
     const { getByTestId } = render(
-      <NavigationAwareObjectivProvider tracker={tracker} navigationContainerRef={navigationContainerRef} options={{trackApplicationLoaded: false}}>
+      <NavigationAwareObjectivProvider
+        tracker={tracker}
+        navigationContainerRef={navigationContainerRef}
+        options={{ trackApplicationLoaded: false }}
+      >
         <NavigationContainer ref={navigationContainerRef}>
           <Stack.Navigator initialRouteName={'Home'}>
             <Stack.Screen name="Home" component={Home} />
@@ -268,13 +284,13 @@ describe('TrackedLink', () => {
     expect(spyTransport.handle).toHaveBeenCalledWith(
       expect.objectContaining({
         _type: 'PressEvent',
+        global_contexts: [
+          expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
+          expect.objectContaining({ _type: 'PathContext', id: '/Home/Messages' }),
+        ],
         location_stack: [
           expect.objectContaining({ _type: 'RootLocationContext', id: 'Messages' }),
           expect.objectContaining({ _type: 'LinkContext', id: 'go-to-home', href: '/Home' }),
-        ],
-        global_contexts: [
-          expect.objectContaining({ _type: 'PathContext', id: '/Home/Messages' }),
-          expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
         ],
       })
     );
