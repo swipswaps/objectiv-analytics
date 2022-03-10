@@ -1,42 +1,178 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 from bach_open_taxonomy.modelhub.aggregate import Aggregate
 from bach_open_taxonomy.modelhub.map import Map
+from bach.sql_model import BachSqlModel
+from bach import DataFrame
+from bach.types import get_dtype_from_db_dtype
+from bach_open_taxonomy.stack.util import sessionized_data_model
+from sql_models.constants import NotSet
+from bach.series import Series
+from typing import List, Union
 from bach_open_taxonomy.series.series_objectiv import MetaBase
-from sql_models.constants import NotSet, not_set
 
 if TYPE_CHECKING:
-    from bach.series import SeriesBoolean, SeriesString
+    from bach.series import SeriesString, SeriesBoolean
+    from bach_open_taxonomy.series import SeriesLocationStack
+
+GroupByType = Union[List[Union[str, Series]], str, Series, NotSet]
 
 
-class ModelHub:
-    """
-    Class for the open model hub. Used in ObjectivFrame.
+TIME_DEFAULT_FORMAT = 'YYYY-MM-DD HH24:MI:SS.MS'
 
-    The ModelHub contains a growing collection of open-source, free to use data models
-    that you can take, chain and run to quickly build highly specific model stacks for product analysis and
-    exploration. It includes models for a wide range of typical product analytics use cases.
 
-    The model hub has two main type of functions: :py:attr:`map` and :py:attr:`aggregate`.
+class ModelHub():
+    def __init__(self,
+                 start_date: str = None,
+                 end_date: str = None,
+                 time_aggregation: str = TIME_DEFAULT_FORMAT):
+        self._time_aggregation = time_aggregation
+        self._start_date = start_date
+        self._end_date = end_date
+        self._conversion_events = {}  # type: ignore
 
-    1. :py:attr:`map` functions are models that always return a series with the same shape and index as the
-       ObjectivFrame they originate from.
-    2. :py:attr:`aggregate` fuctions are models that return aggregated data in some form from the
-       ObjectivFrame.
+    @property
+    def time_aggregation(self):
+        """
+        Time aggregation used for aggregation models as set with :py:meth:`from_objectiv_data`
+        """
+        return self._time_aggregation
 
-    All models are compatible with datasets that have been validated against the open analytics taxonomy. The
-    source is available for all models and you’re free to make any changes. You can use the included
-    pandas-compatible Bach modeling library to customize them, or even add in advanced ML models.
-    """
-    def __init__(self, df):
-        self._df = df
+    @property
+    def start_date(self):
+        """
+        Start date as set with :py:meth:`from_objectiv_data`
+        """
+        return self._start_date
 
-        # init metabase
-        self._metabase = None
+    @property
+    def end_date(self):
+        """
+        End date as set with :py:meth:`from_objectiv_data`
+        """
+        return self._end_date
 
-    def time_agg(self, time_aggregation: Union[str, NotSet] = not_set) -> 'SeriesString':
+    @property
+    def conversion_events(self):
+        """
+        Dictionary of all events that are labeled as conversion.
+
+        Set with :py:meth:`add_conversion_event`
+        """
+        return self._conversion_events
+
+    def _check_data_is_objectiv_data(self, df):
+        if df.index_dtypes != {'event_id': 'uuid'}:
+            raise ValueError(f"not right index {df.index_dtypes}")
+
+        required_columns = {
+            'day': 'date',
+            'moment': 'timestamp',
+            'user_id': 'uuid',
+            'global_contexts': 'objectiv_global_context',
+            'location_stack': 'objectiv_location_stack',
+            'event_type': 'string',
+            'stack_event_types': 'jsonb',
+            'session_id': 'int64',
+            'session_hit_number': 'int64'
+        }
+
+        if not (required_columns.items() <= df.dtypes.items()):
+            raise ValueError(f"not right columns in DataFrame {df.dtypes.items()}"
+                             f"should be {required_columns.items()}")
+
+    def from_objectiv_data(self,
+                           db_url: str = None,
+                           table_name: str = 'data'):
+
+        import sqlalchemy
+        if db_url is None:
+            import os
+            db_url = os.environ.get('DSN', 'postgresql://objectiv:@localhost:5432/objectiv')
+        engine = sqlalchemy.create_engine(db_url, pool_size=1, max_overflow=0)
+
+        sql = f"""
+            select column_name, data_type
+            from information_schema.columns
+            where table_name = '{table_name}'
+            order by ordinal_position
+        """
+
+        with engine.connect() as conn:
+            res = conn.execute(sql)
+        dtypes = {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
+
+        expected_columns = {'event_id': 'uuid',
+                            'day': 'date',
+                            'moment': 'timestamp',
+                            'cookie_id': 'uuid',
+                            'value': 'json'}
+        if dtypes != expected_columns:
+            raise KeyError(f'Expected columns not in table {table_name}. Found: {dtypes}')
+
+        model = sessionized_data_model(start_date=self.start_date,
+                                       end_date=self.end_date,
+                                       table_name=table_name)
+        # The model returned by `sessionized_data_model()` has different columns than the underlying table.
+        # Note that the order of index_dtype and dtypes matters, as we use it below to get the model_columns
+        index_dtype = {'event_id': 'uuid'}
+        dtypes = {
+            'day': 'date',
+            'moment': 'timestamp',
+            'user_id': 'uuid',
+            'global_contexts': 'jsonb',
+            'location_stack': 'jsonb',
+            'event_type': 'string',
+            'stack_event_types': 'jsonb',
+            'session_id': 'int64',
+            'session_hit_number': 'int64'
+        }
+        model_columns = tuple(index_dtype.keys()) + tuple(dtypes.keys())
+        bach_model = BachSqlModel.from_sql_model(sql_model=model, columns=model_columns)
+
+        from bach.savepoints import Savepoints
+        df = DataFrame.get_instance(engine=engine,
+                                    base_node=bach_model,
+                                    index_dtypes=index_dtype,
+                                    dtypes=dtypes,
+                                    group_by=None,
+                                    order_by=[],
+                                    savepoints=Savepoints(),
+                                    variables={}
+                                    )
+
+        df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
+        df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
+
+        return df
+
+    def add_conversion_event(self,
+                             location_stack: 'SeriesLocationStack' = None,
+                             event_type: str = None,
+                             name: str = None):
+        """
+        Label events that are used as conversions. All labeled conversion events are set in
+        :py:attr:`conversion_events`.
+
+        :param location_stack: the location stack that is labeled as conversion. Can be any slice in of a
+            objectiv_location_stack type column. Optionally use in conjunction with event_type to label a
+            conversion.
+        :param event_type: the event type that is labeled as conversion. Optionally use in conjunction with
+            objectiv_location_stack to label a conversion.
+        :param name: the name to use for the labeled conversion event. If None it will use 'conversion_#',
+            where # is the number of the added conversion.
+        """
+        if location_stack is None and event_type is None:
+            raise ValueError('At least one of conversion_stack or conversion_event should be set.')
+
+        if not name:
+            name = f'conversion_{len(self._conversion_events) + 1}'
+
+        self._conversion_events[name] = location_stack, event_type
+
+    def time_agg(self, df, time_aggregation: str = None) -> 'SeriesString':
         """
         Formats the moment column in the ObjectivFrame, returns a SeriesString.
 
@@ -49,8 +185,8 @@ class ModelHub:
         :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
         :returns: SeriesString.
         """
-        time_aggregation = self._df.time_aggregation if time_aggregation is not_set else time_aggregation
-        return self._df.moment.dt.sql_format(time_aggregation).copy_override(name='time_aggregation')
+        time_aggregation = self.time_aggregation if time_aggregation is None else time_aggregation
+        return df.moment.dt.sql_format(time_aggregation).copy_override(name='time_aggregation')
 
     def to_metabase(self, df, model_type: str = None, config: dict = None):
         """
@@ -63,27 +199,25 @@ class ModelHub:
         :param model_type: Preset output to Metabase for a specific model. eg, 'unique_users'
         :param config: Override default config options for the graph to be added/updated in Metabase.
         """
-        if not self._metabase:
-            self._metabase = MetaBase()
-        return self._metabase.to_metabase(df, model_type, config)
+        metabase = MetaBase()
+        return metabase.to_metabase(df, model_type, config)
 
-    def filter(self, filter: 'SeriesBoolean'):
+    def filter(self, df, filter: 'SeriesBoolean'):
         """
         Filters the ObjectivFrame for all hits where the filter is True.
 
         :param filter: SeriesBoolean, where hits are True for those returned.
         :returns: A filtered ObjectivFrame
         """
-        df = self._df
 
-        if self._df.base_node != filter.base_node:
-            df = self._df.copy_override()
+        if df.base_node != filter.base_node:
+            df = df.copy_override()
             df['__filter'] = filter
             filter = df['__filter']
             df = df.drop(columns=['__filter'])
 
         if filter.expression.has_windowed_aggregate_function:
-            df = self._df.copy_override()
+            df = df.copy_override()
             df['__filter'] = filter
             df = df.materialize()
             filter = df['__filter']
@@ -102,7 +236,7 @@ class ModelHub:
 
         """
 
-        return Map(self._df)
+        return Map(self)
 
     @property
     def agg(self):
@@ -115,7 +249,7 @@ class ModelHub:
 
         """
 
-        return Aggregate(self._df)
+        return Aggregate(self)
 
     @property
     def aggregate(self):
@@ -127,4 +261,4 @@ class ModelHub:
             :noindex:
 
         """
-        return Aggregate(self._df)
+        return Aggregate(self)

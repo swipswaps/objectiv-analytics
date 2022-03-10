@@ -17,22 +17,24 @@ class Map:
     as columns to that ObjectivFrame
     """
 
-    def __init__(self, df):
-        self._df = df
+    def __init__(self, mh):
+        self._mh = mh
 
-    def is_first_session(self) -> 'SeriesBoolean':
+    def is_first_session(self, df) -> 'SeriesBoolean':
         """
         Labels all hits in a session True if that session is the first session of that user in the data.
 
         :returns: SeriesBoolean with the same index as the ObjectivFrame this method is applied to.
         """
 
-        window = self._df.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
-        first_session = window['session_id'].min()
-        series = first_session == self._df.session_id
-        return series.copy_override(name='is_first_session', index=self._df.index)
+        self._mh._check_data_is_objectiv_data(df)
 
-    def is_new_user(self, time_aggregation=None) -> 'SeriesBoolean':
+        window = df.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
+        first_session = window['session_id'].min()
+        series = first_session == df.session_id
+        return series.copy_override(name='is_first_session', index=df.index)
+
+    def is_new_user(self, df, time_aggregation=None) -> 'SeriesBoolean':
         """
         Labels all hits True if the user is first seen in the period given time_aggregation.
 
@@ -40,21 +42,23 @@ class Map:
         :returns: SeriesBoolean with the same index as the ObjectivFrame this method is applied to.
         """
 
-        if not time_aggregation:
-            time_aggregation = self._df._time_aggregation
+        self._mh._check_data_is_objectiv_data(df)
 
-        window = self._df.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
+        if not time_aggregation:
+            time_aggregation = self._mh._time_aggregation
+
+        window = df.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
         is_first_session = window['session_id'].min()
 
-        window = self._df.groupby([self._df.moment.dt.sql_format(time_aggregation),
-                                   'user_id']).window(end_boundary=WindowFrameBoundary.FOLLOWING)
+        window = df.groupby([df.moment.dt.sql_format(time_aggregation),
+                             'user_id']).window(end_boundary=WindowFrameBoundary.FOLLOWING)
         is_first_session_time_aggregation = window['session_id'].min()
 
         series = is_first_session_time_aggregation == is_first_session
 
-        return series.copy_override(name='is_new_user', index=self._df.index)
+        return series.copy_override(name='is_new_user', index=df.index)
 
-    def is_conversion_event(self, name: str):
+    def is_conversion_event(self, df, name: str):
         """
         Labels a hit True if it is a conversion event, all other hits are labeled False.
 
@@ -63,17 +67,19 @@ class Map:
         :returns: SeriesBoolean with same index as the ObjectivFrame this method is applied to.
         """
 
-        conversion_stack, conversion_event = self._df._conversion_events[name]
+        self._mh._check_data_is_objectiv_data(df)
+
+        conversion_stack, conversion_event = self._mh._conversion_events[name]
 
         if conversion_stack is None:
-            series = self._df.event_type == conversion_event
+            series = df.event_type == conversion_event
         elif conversion_event is None:
             series = conversion_stack.notnull()
         else:
-            series = ((conversion_stack.notnull()) & (self._df.event_type == conversion_event))
+            series = ((conversion_stack.notnull()) & (df.event_type == conversion_event))
         return series.copy_override(name='is_conversion_event')
 
-    def conversion_count(self, name: str, partition='session_id'):
+    def conversion_count(self, df, name: str, partition='session_id'):
         """
         Counts the number of time a user is converted at a moment in time given a partition (ie session_id
         or user_id).
@@ -85,8 +91,10 @@ class Map:
         :returns: SeriesInt64 with same index as the ObjectivFrame this method is applied to.
         """
 
-        df = self._df.copy_override()
-        df['__conversion'] = df.mh.map.is_conversion_event(name)
+        self._mh._check_data_is_objectiv_data(df)
+
+        df = df.copy_override()
+        df['__conversion'] = self._mh.map.is_conversion_event(df, name)
         exp = f"case when {{}} then row_number() over (partition by {{}}, {{}}) end"
         expression = Expression.construct(exp, df['__conversion'], df[partition], df['__conversion'])
         df['__conversion_counter'] = df['__conversion']\
@@ -106,6 +114,7 @@ class Map:
         return df.conversion_count
 
     def pre_conversion_hit_number(self,
+                                  df,
                                   name: str,
                                   filter: 'SeriesBoolean' = None,
                                   partition: str = 'session_id'):
@@ -121,13 +130,16 @@ class Map:
             of the ObjectivFrame
         :returns: SeriesInt64 with same index as the ObjectivFrame this method is applied to.
         """
-        df = self._df.copy_override()
+
+        self._mh._check_data_is_objectiv_data(df)
+
+        df = df.copy_override()
         if filter:
             # todo when bach supports boolean indexing with series with the same index but different base
             #  nodes, this is not longer necessary
             df['__filter'] = filter
 
-        df['__conversions'] = df.mh.map.conversion_count(name=name)
+        df['__conversions'] = self._mh.map.conversion_count(df, name=name)
 
         window = df.groupby(partition).window()
         converted = window['__conversions'].max()

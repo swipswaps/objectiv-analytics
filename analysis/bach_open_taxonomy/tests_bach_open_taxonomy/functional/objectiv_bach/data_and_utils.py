@@ -5,7 +5,7 @@ Utilities and a dataset for testing Bach Open Taxonomy.
 """
 
 from tests.functional.bach.test_data_and_utils import get_bt, run_query
-from bach_open_taxonomy import ObjectivFrame
+from bach_open_taxonomy.modelhub.modelhub import ModelHub
 from bach import DataFrame
 import sqlalchemy
 import os
@@ -56,7 +56,7 @@ def get_bt_with_json_data_real() -> DataFrame:
     return bt
 
 
-def get_objectiv_frame(time_aggregation=None):
+def get_objectiv_dataframe(time_aggregation=None):
     sql = """
     drop table if exists objectiv_data;
 
@@ -76,9 +76,9 @@ def get_objectiv_frame(time_aggregation=None):
     run_query(sqlalchemy.create_engine(DB_TEST_URL), sql)
     run_query(sqlalchemy.create_engine(DB_TEST_URL), TEST_DATA_OBJECTIV)
 
-    kwargs = {'table_name':'objectiv_data'}
-    if time_aggregation is not None:
-        kwargs['time_aggregation'] = time_aggregation
+    kwargs = {}
+    if time_aggregation:
+        kwargs = {'time_aggregation':time_aggregation}
+    modelhub = ModelHub(**kwargs)
 
-
-    return ObjectivFrame.from_objectiv_data(DB_TEST_URL, **kwargs)
+    return modelhub.from_objectiv_data(DB_TEST_URL, table_name='objectiv_data'), modelhub

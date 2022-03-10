@@ -4,18 +4,20 @@ Copyright 2021 Objectiv B.V.
 
 # Any import from from bach_open_taxonomy initializes all the types, do not remove
 from bach_open_taxonomy import __version__
-from tests_bach_open_taxonomy.functional.objectiv_bach.data_and_utils import get_objectiv_frame
+from bach_open_taxonomy.modelhub.modelhub import ModelHub
+from tests_bach_open_taxonomy.functional.objectiv_bach.data_and_utils import get_objectiv_dataframe
 from tests.functional.bach.test_data_and_utils import assert_equals_data
 from uuid import UUID
 
 
 def test_get_objectiv_stack():
-    get_objectiv_frame()
+    get_objectiv_dataframe()
 
 
 def test_filter():
-    df = get_objectiv_frame()
-    fdf = df.mh.filter(df.session_id == df[df.session_id<=4].session_id).session_id
+    df, modelhub = get_objectiv_dataframe()
+
+    fdf = modelhub.filter(df, df.session_id == df[df.session_id<=4].session_id).session_id
     assert_equals_data(
         fdf,
         expected_columns=['event_id', 'session_id'],
@@ -34,9 +36,9 @@ def test_filter():
 
 # map
 def test_is_first_session():
-    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
 
-    s = df.mh.map.is_first_session()
+    s = modelhub.map.is_first_session(df)
 
     assert_equals_data(
         s,
@@ -60,9 +62,9 @@ def test_is_first_session():
 
 
 def test_is_new_user():
-    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
 
-    s = df.mh.map.is_new_user()
+    s = modelhub.map.is_new_user(df)
 
     assert_equals_data(
         s,
@@ -86,12 +88,13 @@ def test_is_new_user():
 
 
 def test_is_conversion_event():
-    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+
     # add conversion event
-    df.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
+    modelhub.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
                             event_type='ClickEvent',
                             name='github_clicks')
-    s = df.mh.map.is_conversion_event('github_clicks')
+    s = modelhub.map.is_conversion_event(df, 'github_clicks')
 
     assert_equals_data(
         s,
@@ -115,12 +118,13 @@ def test_is_conversion_event():
 
 
 def test_conversion_count():
-    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+
     # add conversion event
-    df.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
+    modelhub.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
                             event_type='ClickEvent',
                             name='github_clicks')
-    s = df.mh.map.conversion_count('github_clicks')
+    s = modelhub.map.conversion_count(df, 'github_clicks')
 
     assert_equals_data(
         s,
@@ -144,12 +148,13 @@ def test_conversion_count():
 
 
 def test_pre_conversion_hit_number():
-    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+
     # add conversion event
-    df.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
+    modelhub.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
                             event_type='ClickEvent',
                             name='github_clicks')
-    s = df.mh.map.pre_conversion_hit_number('github_clicks')
+    s = modelhub.map.pre_conversion_hit_number(df, 'github_clicks')
 
     assert_equals_data(
         s,
@@ -173,8 +178,8 @@ def test_pre_conversion_hit_number():
 
 
 def test_time_agg():
-    df = get_objectiv_frame()
-    s = df.mh.time_agg()
+    df, modelhub = get_objectiv_dataframe()
+    s = modelhub.time_agg(df)
 
     assert_equals_data(
         s,
@@ -196,8 +201,8 @@ def test_time_agg():
         order_by='event_id'
     )
 
-    df = get_objectiv_frame(time_aggregation='YYYY-MM')
-    s = df.mh.time_agg()
+    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM')
+    s = modelhub.time_agg(df)
 
     assert_equals_data(
         s,
@@ -219,8 +224,8 @@ def test_time_agg():
         order_by='event_id'
     )
 
-    df = get_objectiv_frame()
-    s = df.mh.time_agg(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe()
+    s = modelhub.time_agg(df, time_aggregation='YYYY-MM-DD')
 
     assert_equals_data(
         s,
@@ -241,8 +246,8 @@ def test_time_agg():
         order_by='event_id'
     )
 
-    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
-    s = df.mh.time_agg(time_aggregation='YYYY')
+    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+    s = modelhub.time_agg(df, time_aggregation='YYYY')
 
     assert_equals_data(
         s,
