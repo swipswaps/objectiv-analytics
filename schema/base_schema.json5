@@ -199,6 +199,35 @@
         }
       }
     },
+    "MarketingContext": {
+      "description": "a context that captures marketing channel info, so users can do attribution, campaign \n\
+        effectiveness and other models",
+      "parents": ["AbstractGlobalContext"],
+      "properties": {
+        "source": {
+          "description": "Identifies the advertiser, site, publication, etc",
+          "type": "string"
+        },
+        "medium": {
+          "description": "Advertising or marketing medium: cpc, banner, email newsletter, etc",
+          "type": "string"
+        },
+        "campaign": {
+          "description": "Individual campaign name, slogan, promo code, etc",
+          "type": "string"
+        },
+        "term": {
+          "description": "[Optional] Search keywords",
+          "type": "string",
+          "optional": true
+        },
+        "content": {
+          "description": "[Optional] Used to differentiate similar content, or links within the same ad",
+          "type": "string",
+          "optional": true
+        }
+      }
+    },
     "AbstractLocationContext": {
       "description": "AbstractLocationContext are the abstract parents of all Location Contexts. Location Contexts are meant to describe where an event originated from in the visual UI.",
       "parents": ["AbstractContext"]

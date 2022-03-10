@@ -26,6 +26,7 @@ def get_sample(df: DataFrame,
     if sample_percentage is None and filter is None:
         raise ValueError('Either sample_percentage or filter must be set')
 
+    dialect = df.engine.dialect
     original_node = df.base_node
     if filter is not None:
         sample_percentage = None
@@ -37,7 +38,7 @@ def get_sample(df: DataFrame,
 
     with df.engine.connect() as conn:
         if overwrite:
-            sql = f'DROP TABLE IF EXISTS {quote_identifier(table_name)}'
+            sql = f'DROP TABLE IF EXISTS {quote_identifier(dialect, table_name)}'
             sql = escape_parameter_characters(conn, sql)
             conn.execute(sql)
 
@@ -46,19 +47,20 @@ def get_sample(df: DataFrame,
 
             sql = f'''
                 create temporary table tmp_table_name on commit drop as
-                ({to_sql(df.base_node)});
-                create temporary table {quote_identifier(table_name)} as
+                ({to_sql(dialect, df.base_node)});
+                create temporary table {quote_identifier(dialect, table_name)} as
                 (select * from tmp_table_name
                 tablesample bernoulli({sample_percentage}) {repeatable})
             '''
         else:
-            sql = f'create temporary table {quote_identifier(table_name)} as ({df.view_sql()})'
+            sql = f'create temporary table {quote_identifier(dialect, table_name)} as ({df.view_sql()})'
         sql = escape_parameter_characters(conn, sql)
         conn.execute(sql)
 
     # Use SampleSqlModel, that way we can keep track of the current_node and undo this sampling
     # in get_unsampled() by switching this new node for the old node again.
     new_base_node = SampleSqlModel.get_instance(
+        dialect=dialect,
         table_name=table_name,
         previous=original_node,
         columns=original_node.columns

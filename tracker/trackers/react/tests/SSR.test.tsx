@@ -3,9 +3,10 @@
  */
 
 import { mockConsole, SpyTransport } from '@objectiv/testing-tools';
+import { isDevMode } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import { isDevMode, LocationTree, ObjectivProvider, ReactTracker, TrackedMain } from '../src';
+import { LocationTree, ObjectivProvider, ReactTracker, TrackedMain } from '../src';
 
 describe('Browser / SSR', () => {
   const OLD_ENV = process.env;

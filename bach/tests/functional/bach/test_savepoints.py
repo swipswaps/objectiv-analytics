@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 from typing import List
 
 import pytest
+from sqlalchemy.dialects.postgresql.base import PGDialect
 from sqlalchemy.future import Engine
 
 from bach.savepoints import Savepoints, CreatedObject
@@ -66,6 +67,7 @@ def test_write_to_db_queries_only():
 
 
 def test_write_to_db_create_objects():
+    dialect = PGDialect()  # TODO: BigQuery
     df = get_bt_with_test_data()
     engine = df.engine
     sps = Savepoints()
@@ -91,9 +93,15 @@ def test_write_to_db_create_objects():
     expected_columns = ['_index_skating_order', 'skating_order', 'city', 'founding', 'x']
     expected_data = [[1, 1, 'Ljouwert', 1285, 12345]]
 
-    assert sps.to_sql()['sp_final_point'].replace('\n', '') == \
-           'select "_index_skating_order", "skating_order", "city", "founding", "x" from ' \
-           '"sp_third_point"     limit all '
+    assert sps.to_sql(dialect)['sp_final_point'].replace('\n', '') == \
+           'select ' \
+           '"_index_skating_order" as "_index_skating_order", ' \
+           '"skating_order" as "skating_order", ' \
+           '"city" as "city", ' \
+           '"founding" as "founding", ' \
+           '"x" as "x" ' \
+           'from ' \
+           '"sp_third_point"      '
 
     # get_materialized_df assumes that all tables and views have been created, so this will not yet work
     df_use_materialized = sps.get_materialized_df('sp_final_point')

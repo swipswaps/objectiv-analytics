@@ -2,7 +2,6 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackedNavLink, TrackedNavLinkProps } from '@objectiv/plugin-react-router-tracked-components';
 import { SpyTransport } from '@objectiv/testing-tools';
 import { Tracker } from '@objectiv/tracker-core';
 import {
@@ -14,6 +13,7 @@ import {
 import { fireEvent, getByTestId, render, waitFor } from '@testing-library/react';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import { TrackedNavLink, TrackedNavLinkProps } from '../src/TrackedNavLink';
 
 describe('TrackedNavLink', () => {
   const spyTransport = { transportName: 'SpyTransport', handle: jest.fn(), isUsable: () => true };
