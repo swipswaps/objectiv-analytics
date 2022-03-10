@@ -3,6 +3,5 @@
  */
 
 export * from './makeLinkContextProps';
-export * from './makeNavigationPath';
+export * from './NavigationAwareObjectivProvider';
 export * from './TrackedLink';
-export * from './usePressEventTracker';

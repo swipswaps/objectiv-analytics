@@ -3,14 +3,13 @@
  */
 
 import { getLocationPath } from '@objectiv/tracker-core';
-import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react-core';
+import { LinkContextWrapper, trackPressEvent, useLocationStack } from '@objectiv/tracker-react-core';
 import { NavigationAction } from '@react-navigation/core';
 import { Link } from '@react-navigation/native';
 import { To } from '@react-navigation/native/lib/typescript/src/useLinkTo';
 import React from 'react';
 import { GestureResponderEvent, TextProps } from 'react-native';
 import { makeLinkContextProps } from './makeLinkContextProps';
-import { usePressEventTracker } from './usePressEventTracker';
 
 /**
  * The original Props type definition of React Navigation Link.
@@ -37,9 +36,6 @@ export type TrackedLinkProps<ParamList extends ReactNavigation.RootParamList> = 
  */
 export function TrackedLink<ParamList extends ReactNavigation.RootParamList>(props: TrackedLinkProps<ParamList>) {
   const { id, ...linkProps } = props;
-
-  // Generate onPress event handler automatically generating RootLocationContext and PathContext for us.
-  const trackPressEvent = usePressEventTracker();
 
   // Generate LinkContext props from props.
   const { contextId, contextHref } = makeLinkContextProps(props);
