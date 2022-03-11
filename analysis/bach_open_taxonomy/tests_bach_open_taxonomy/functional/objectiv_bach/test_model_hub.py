@@ -99,6 +99,27 @@ def test_is_new_user():
         order_by='event_id'
     )
 
+    s = modelhub.map.is_new_user(df, time_aggregation='YYYY-MM')
+
+    assert_equals_data(
+        s,
+        expected_columns=['event_id', 'is_new_user'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), False],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), False],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), True]
+        ],
+        order_by='event_id'
+    )
 
 def test_is_conversion_event():
     df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
@@ -225,6 +246,27 @@ def test_pre_conversion_hit_number():
         order_by='event_id'
     )
 
+    s = modelhub.map.pre_conversion_hit_number(df, 'github_clicks', partition='user_id')
+
+    assert_equals_data(
+        s,
+        expected_columns=['event_id', 'pre_conversion_hit_number'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), 2],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), 1],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), None],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), None],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), None],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), None],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), None],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), None],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), None],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), None],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), 4],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), 3]
+        ],
+        order_by='event_id'
+    )
 
 def test_time_agg():
     df, modelhub = get_objectiv_dataframe()

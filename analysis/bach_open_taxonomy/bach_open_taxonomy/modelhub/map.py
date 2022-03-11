@@ -120,7 +120,6 @@ class Map:
     def pre_conversion_hit_number(self,
                                   df,
                                   name: str,
-                                  filter: 'SeriesBoolean' = None,
                                   partition: str = 'session_id'):
         """
         Returns a count backwards from the first conversion, given the partition. I.e. first hit before
@@ -129,7 +128,6 @@ class Map:
 
         :param name: the name of the conversion to label as set in
             :py:attr:`ObjectivFrame.conversion_events`.
-        :param filter: filters hits from being counted. Returns None for filtered hits.
         :param partition: the partition over which the number of conversions are counted. Can be any column
             of the ObjectivFrame
         :returns: SeriesInt64 with same index as the ObjectivFrame this method is applied to.
@@ -138,11 +136,6 @@ class Map:
         self._mh._check_data_is_objectiv_data(df)
 
         df = df.copy_override()
-        if filter:
-            # todo when bach supports boolean indexing with series with the same index but different base
-            #  nodes, this is not longer necessary
-            df['__filter'] = filter
-
         df['__conversions'] = self._mh.map.conversion_count(df, name=name)
 
         window = df.groupby(partition).window()
@@ -153,13 +146,9 @@ class Map:
         pre_conversion_hits = df[df['__is_converted']]
         pre_conversion_hits = pre_conversion_hits[pre_conversion_hits['__conversions'] == 0]
 
-        if filter:
-            pre_conversion_hits = pre_conversion_hits[pre_conversion_hits['__filter']]
-
         window = pre_conversion_hits.sort_values(['session_id',
                                                   'session_hit_number'],
-                                                 ascending=[True,
-                                                            False]).groupby('session_id').window()
+                                                 ascending=False).groupby(partition).window()
         pre_conversion_hits['pre_conversion_hit_number'] = pre_conversion_hits.session_hit_number.\
             window_row_number(window)
 
