@@ -4,11 +4,12 @@
 
 import { mockConsole } from '@objectiv/testing-tools';
 import {
+  ContentContextWrapper,
   makeReactNativeTrackerDefaultPluginsList,
   ObjectivProvider,
-  trackApplicationLoadedEvent,
+  ReactNativeTracker,
+  RootLocationContextWrapper,
 } from '@objectiv/tracker-react-native';
-import { ContentContextWrapper, ReactNativeTracker, RootLocationContextWrapper } from '@objectiv/tracker-react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
@@ -87,19 +88,14 @@ describe('TrackedLink', () => {
       const HomeScreen = () => <TrackedLink {...linkProps} testID="test" />;
       const DestinationScreen = () => <>yup</>;
       const { getByTestId } = render(
-        <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
-          <NavigationContainer
-            ref={navigationContainerRef}
-            onReady={() => {
-              trackApplicationLoadedEvent({ tracker });
-            }}
-          >
+        <NavigationContainer ref={navigationContainerRef}>
+          <ObjectivProvider tracker={tracker}>
             <Stack.Navigator>
               <Stack.Screen name="HomeScreen" component={HomeScreen} />
               <Stack.Screen name="DestinationScreen" component={DestinationScreen} />
             </Stack.Navigator>
-          </NavigationContainer>
-        </ObjectivProvider>
+          </ObjectivProvider>
+        </NavigationContainer>
       );
 
       fireEvent.press(getByTestId('test'));
@@ -146,21 +142,16 @@ describe('TrackedLink', () => {
     const DestinationScreen = () => <>yup</>;
     const navigationContainerRef = createNavigationContainerRef();
     render(
-      <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
-        <NavigationContainer
-          ref={navigationContainerRef}
-          onReady={() => {
-            trackApplicationLoadedEvent({ tracker });
-          }}
-        >
+      <NavigationContainer ref={navigationContainerRef}>
+        <ObjectivProvider tracker={tracker}>
           <RootLocationContextWrapper id="root">
             <Stack.Navigator>
               <Stack.Screen name="HomeScreen" component={HomeScreen} />
               <Stack.Screen name="DestinationScreen" component={DestinationScreen} />
             </Stack.Navigator>
           </RootLocationContextWrapper>
-        </NavigationContainer>
-      </ObjectivProvider>
+        </ObjectivProvider>
+      </NavigationContainer>
     );
 
     expect(console.error).toHaveBeenCalledTimes(1);
@@ -182,19 +173,14 @@ describe('TrackedLink', () => {
     const DestinationScreen = () => <>yup</>;
     const navigationContainerRef = createNavigationContainerRef();
     const { getByTestId } = render(
-      <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
-        <NavigationContainer
-          ref={navigationContainerRef}
-          onReady={() => {
-            trackApplicationLoadedEvent({ tracker });
-          }}
-        >
+      <NavigationContainer ref={navigationContainerRef}>
+        <ObjectivProvider tracker={tracker}>
           <Stack.Navigator>
             <Stack.Screen name="HomeScreen" component={HomeScreen} />
             <Stack.Screen name="DestinationScreen" component={DestinationScreen} />
           </Stack.Navigator>
-        </NavigationContainer>
-      </ObjectivProvider>
+        </ObjectivProvider>
+      </NavigationContainer>
     );
 
     fireEvent.press(getByTestId('test'));
@@ -219,18 +205,13 @@ describe('TrackedLink', () => {
       ],
     });
     const { getByTestId } = render(
-      <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
-        <NavigationContainer
-          ref={navigationContainerRef}
-          onReady={() => {
-            trackApplicationLoadedEvent({ tracker });
-          }}
-        >
+      <NavigationContainer ref={navigationContainerRef}>
+        <ObjectivProvider tracker={tracker}>
           <TrackedLink testID="test" to="/HomeScreen">
             Press me!
           </TrackedLink>
-        </NavigationContainer>
-      </ObjectivProvider>
+        </ObjectivProvider>
+      </NavigationContainer>
     );
 
     fireEvent.press(getByTestId('test'));
@@ -320,20 +301,15 @@ describe('TrackedLink', () => {
     );
 
     const { getByTestId } = render(
-      <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
-        <NavigationContainer
-          ref={navigationContainerRef}
-          onReady={() => {
-            trackApplicationLoadedEvent({ tracker });
-          }}
-        >
+      <NavigationContainer ref={navigationContainerRef}>
+        <ObjectivProvider tracker={tracker}>
           <Stack.Navigator initialRouteName={'Home'}>
             <Stack.Screen name="Home" component={Home} />
             <Stack.Screen name="Profile" component={Profile} />
             <Stack.Screen name="Settings" component={Settings} />
           </Stack.Navigator>
-        </NavigationContainer>
-      </ObjectivProvider>
+        </ObjectivProvider>
+      </NavigationContainer>
     );
 
     fireEvent.press(getByTestId('go-to-home-from-messages'));
