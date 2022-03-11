@@ -2,6 +2,9 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { isDevMode } from "./helpers";
+import { NoopConsoleImplementation } from "./NoopConsoleImplementation";
+
 /**
  * A subset of the Console interface methods.
  */
@@ -22,7 +25,7 @@ export type TrackerConsole = TrackerConsoleImplementation & {
  * The default implementation of TrackerConsole. A singleton used pretty much by all other interfaces.
  */
 export const TrackerConsole: TrackerConsole = {
-  implementation: console,
+  implementation: isDevMode() ? console : NoopConsoleImplementation,
   setImplementation: (implementation: TrackerConsoleImplementation) => (TrackerConsole.implementation = implementation),
   debug: (...args: any[]) => TrackerConsole.implementation.debug(...args),
   error: (...args: any[]) => TrackerConsole.implementation.error(...args),
