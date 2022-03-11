@@ -4,10 +4,10 @@
 
 import { mockConsole } from '@objectiv/testing-tools';
 import {
-  makeReactTrackerDefaultPluginsList,
+  makeReactNativeTrackerDefaultPluginsList,
   ObjectivProvider,
   trackApplicationLoadedEvent,
-} from '@objectiv/tracker-react';
+} from '@objectiv/tracker-react-native';
 import { ContentContextWrapper, ReactNativeTracker, RootLocationContextWrapper } from '@objectiv/tracker-react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
@@ -79,7 +79,7 @@ describe('TrackedLink', () => {
         transport: spyTransport,
         console: mockConsole,
         plugins: [
-          ...makeReactTrackerDefaultPluginsList(trackerConfig),
+          ...makeReactNativeTrackerDefaultPluginsList(trackerConfig),
           new ContextsFromReactNavigationPlugin({ ...trackerConfig, navigationContainerRef }),
         ],
       });
@@ -214,7 +214,7 @@ describe('TrackedLink', () => {
       transport: spyTransport,
       console: mockConsole,
       plugins: [
-        ...makeReactTrackerDefaultPluginsList(trackerConfig),
+        ...makeReactNativeTrackerDefaultPluginsList(trackerConfig),
         new ContextsFromReactNavigationPlugin({ ...trackerConfig, navigationContainerRef }),
       ],
     });
@@ -271,7 +271,7 @@ describe('TrackedLink', () => {
       transport: spyTransport,
       console: mockConsole,
       plugins: [
-        ...makeReactTrackerDefaultPluginsList(trackerConfig),
+        ...makeReactNativeTrackerDefaultPluginsList(trackerConfig),
         new ContextsFromReactNavigationPlugin({ ...trackerConfig, navigationContainerRef }),
       ],
     });
