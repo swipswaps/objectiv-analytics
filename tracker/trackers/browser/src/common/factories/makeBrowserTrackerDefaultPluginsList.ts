@@ -16,15 +16,15 @@ export const makeBrowserTrackerDefaultPluginsList = (trackerConfig: BrowserTrack
 
   const plugins: TrackerPluginInterface[] = [
     ...makeCoreTrackerDefaultPluginsList(trackerConfig),
-    new HttpContextPlugin(trackerConfig),
+    new HttpContextPlugin(),
   ];
 
   if (trackPathContextFromURL) {
-    plugins.push(new PathContextFromURLPlugin(trackerConfig));
+    plugins.push(new PathContextFromURLPlugin());
   }
 
   if (trackRootLocationContextFromURL) {
-    plugins.push(new RootLocationContextFromURLPlugin(trackerConfig));
+    plugins.push(new RootLocationContextFromURLPlugin());
   }
 
   return plugins;

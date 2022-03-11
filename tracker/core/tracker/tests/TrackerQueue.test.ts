@@ -2,16 +2,22 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
-import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore } from '../src';
+import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { TrackerConsole, TrackerEvent, TrackerQueue, TrackerQueueMemoryStore } from '../src';
+
+TrackerConsole.setImplementation(mockConsoleImplementation);
 
 describe('TrackerQueueMemoryStore', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   const TrackerEvent1 = new TrackerEvent({ id: 'a', _type: 'a' });
   const TrackerEvent2 = new TrackerEvent({ id: 'b', _type: 'b' });
   const TrackerEvent3 = new TrackerEvent({ id: 'c', _type: 'c' });
 
   it('should read all Events', async () => {
-    const trackerQueueStore = new TrackerQueueMemoryStore({ console: mockConsole });
+    const trackerQueueStore = new TrackerQueueMemoryStore();
     await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(trackerQueueStore.length).toBe(3);
 
@@ -21,7 +27,7 @@ describe('TrackerQueueMemoryStore', () => {
   });
 
   it('should read 2 Events', async () => {
-    const trackerQueueStore = new TrackerQueueMemoryStore({ console: mockConsole });
+    const trackerQueueStore = new TrackerQueueMemoryStore();
     await trackerQueueStore.write(TrackerEvent1, TrackerEvent2, TrackerEvent3);
     expect(trackerQueueStore.length).toBe(3);
 
@@ -64,12 +70,16 @@ describe('TrackerQueueMemoryStore', () => {
 });
 
 describe('TrackerQueue', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   const TrackerEvent1 = new TrackerEvent({ _type: 'a' });
   const TrackerEvent2 = new TrackerEvent({ _type: 'b' });
   const TrackerEvent3 = new TrackerEvent({ _type: 'c' });
 
   it('should instantiate to a 0 length Queue', () => {
-    const testQueue = new TrackerQueue({ console: mockConsole, batchDelayMs: 1 });
+    const testQueue = new TrackerQueue({ batchDelayMs: 1 });
     expect(testQueue.store.length).toBe(0);
   });
 
@@ -101,7 +111,6 @@ describe('TrackerQueue', () => {
       concurrency: 1,
       store: memoryStore,
       batchDelayMs: 1,
-      console: mockConsole,
     });
     const processFunctionSpy = jest.fn(() => Promise.resolve());
     testQueue.setProcessFunction(processFunctionSpy);

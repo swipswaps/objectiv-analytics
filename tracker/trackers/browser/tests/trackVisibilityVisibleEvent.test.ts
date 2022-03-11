@@ -2,26 +2,25 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID } from '@objectiv/testing-tools';
-import { generateUUID } from '@objectiv/tracker-core';
+import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { generateUUID, TrackerConsole } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackVisibilityVisibleEvent } from '../src/mutationObserver/trackVisibilityVisibleEvent';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
+TrackerConsole.setImplementation(mockConsoleImplementation);
+
 describe('trackVisibilityVisibleEvent', () => {
   beforeEach(() => {
+    getTrackerRepository().trackersMap = new Map();
+    getTrackerRepository().defaultTracker = undefined;
     jest.resetAllMocks();
-    jest.spyOn(console, 'error').mockImplementation(() => {});
     makeTracker({ applicationId: generateUUID(), endpoint: 'test' });
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
     jest.spyOn(getTracker(), 'trackEvent');
   });
 
-  afterEach(() => {
-    getTrackerRepository().trackersMap = new Map();
-    getTrackerRepository().defaultTracker = undefined;
-    jest.resetAllMocks();
-  });
+  afterEach(() => {});
 
   it('should not track elements without visibility tagging attributes', async () => {
     const trackedDiv = makeTaggedElement('div-id', null, 'div');

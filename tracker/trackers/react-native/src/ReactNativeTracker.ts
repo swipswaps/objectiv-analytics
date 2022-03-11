@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContextsConfig, isDevMode, Tracker, TrackerConfig } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerConfig } from '@objectiv/tracker-core';
 import { makeReactNativeTrackerDefaultPluginsList } from './common/factories/makeReactNativeTrackerDefaultPluginsList';
 import { makeReactNativeTrackerDefaultQueue } from './common/factories/makeReactNativeTrackerDefaultQueue';
 import { makeReactNativeTrackerDefaultTransport } from './common/factories/makeReactNativeTrackerDefaultTransport';
@@ -27,23 +27,20 @@ export type ReactNativeTrackerConfig = TrackerConfig & {
  *
  * This statement:
  *
- *  const tracker = new ReactTracker({ applicationId: 'app-id', endpoint: '/endpoint', console: console });
+ *  const tracker = new ReactTracker({ applicationId: 'app-id', endpoint: '/endpoint' });
  *
  * is equivalent to:
  *
  *  const trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
- *  const console = trackerConfig.console;
- *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint', console });
- *  const transport = new RetryTransport({ transport: transportSwitch, console });
- *  const queueStorage = new TrackerQueueMemoryStorage({ trackerId, console })
- *  const trackerQueue = new TrackerQueue({ storage: queueStorage, console });
- *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
- *  TODO const httpContextPlugin = new HttpContextPlugin({ console });
+ *  const fetchTransport = new FetchAPITransport({ endpoint: '/endpoint' });
+ *  const transport = new RetryTransport({ transport: transportSwitch });
+ *  const queueStorage = new TrackerQueueMemoryStorage({ trackerId })
+ *  const trackerQueue = new TrackerQueue({ storage: queueStorage });
+ *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id' });
  *  const plugins = [
  *    applicationContextPlugin,
- *    httpContextPlugin,
  *  ];
- *  const tracker = new Tracker({ transport, queue, plugins, console });
+ *  const tracker = new Tracker({ transport, queue, plugins });
  *
  *  @see makeReactNativeTrackerDefaultTransport
  *  @see makeReactNativeTrackerDefaultQueue
@@ -63,17 +60,12 @@ export class ReactNativeTracker extends Tracker {
       throw new Error('Please provider either `transport` or `endpoint`, not both at same time');
     }
 
-    // If node is in `development` on web and console has not been configured, automatically use the browser's console
-    if (config.console === undefined && isDevMode()) {
-      config.console = console;
-    }
-
     // Automatically create a default Transport for the given `endpoint` with a sensible setup
     if (config.endpoint) {
       config = {
         ...config,
         transport: makeReactNativeTrackerDefaultTransport(config),
-        queue: config.queue ?? makeReactNativeTrackerDefaultQueue(config),
+        queue: config.queue ?? makeReactNativeTrackerDefaultQueue(),
       };
     }
 

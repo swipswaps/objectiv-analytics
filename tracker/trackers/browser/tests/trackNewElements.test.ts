@@ -2,8 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsole } from '@objectiv/testing-tools';
-import { generateUUID, makeOverlayContext } from '@objectiv/tracker-core';
+import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { generateUUID, makeOverlayContext, TrackerConsole } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
   getTracker,
@@ -15,6 +15,8 @@ import {
 } from '../src';
 import { trackNewElements } from '../src/mutationObserver/trackNewElements';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+
+TrackerConsole.setImplementation(mockConsoleImplementation);
 
 describe('trackNewElements', () => {
   beforeEach(() => {
@@ -70,18 +72,16 @@ describe('trackNewElements', () => {
     );
   });
 
-  it('should console error', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('should TrackerConsole.error', async () => {
     // @ts-ignore
     trackNewElements(null, getTracker());
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   describe('collisions', () => {
-    it('should console.error if a collision occurs and both elements still exist', async () => {
+    it('should TrackerConsole.error if a collision occurs and both elements still exist', async () => {
       const wrapper = document.createElement('div');
       const div1 = makeTaggedElement('div1', 'div', 'div');
       const div2 = makeTaggedElement('div2', 'div', 'div');
@@ -91,17 +91,17 @@ describe('trackNewElements', () => {
       jest.spyOn(document, 'querySelector').mockReturnValueOnce(div1);
       jest.spyOn(document, 'querySelector').mockReturnValueOnce(div2);
 
-      trackNewElements(wrapper, getTracker(), mockConsole);
+      trackNewElements(wrapper, getTracker());
 
       expect(document.querySelector).toHaveBeenCalledTimes(2);
       expect(document.querySelector).toHaveBeenNthCalledWith(1, `[${TaggingAttribute.elementId}='div1']`);
       expect(document.querySelector).toHaveBeenNthCalledWith(2, `[${TaggingAttribute.elementId}='div2']`);
-      expect(mockConsole.error).toHaveBeenCalledTimes(2);
-      expect(mockConsole.error).toHaveBeenNthCalledWith(1, `Existing Element:`, div1);
-      expect(mockConsole.error).toHaveBeenNthCalledWith(2, `Colliding Element:`, div2);
+      expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+      expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(1, `Existing Element:`, div1);
+      expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(2, `Colliding Element:`, div2);
     });
 
-    it('should not console.error if a collision occurs and ExistingElement does not exist', async () => {
+    it('should not TrackerConsole.error if a collision occurs and ExistingElement does not exist', async () => {
       const wrapper = document.createElement('div');
       const div1 = makeTaggedElement('div1', 'div', 'div');
       const div2 = makeTaggedElement('div2', 'div', 'div');
@@ -111,15 +111,15 @@ describe('trackNewElements', () => {
       jest.spyOn(document, 'querySelector').mockReturnValueOnce(null);
       jest.spyOn(document, 'querySelector').mockReturnValueOnce(div2);
 
-      trackNewElements(wrapper, getTracker(), mockConsole);
+      trackNewElements(wrapper, getTracker());
 
       expect(document.querySelector).toHaveBeenCalledTimes(2);
       expect(document.querySelector).toHaveBeenNthCalledWith(1, `[${TaggingAttribute.elementId}='div1']`);
       expect(document.querySelector).toHaveBeenNthCalledWith(2, `[${TaggingAttribute.elementId}='div2']`);
-      expect(mockConsole.error).not.toHaveBeenCalled();
+      expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
     });
 
-    it('should not console.error if a collision occurs and CollidingElement does not exist', async () => {
+    it('should not TrackerConsole.error if a collision occurs and CollidingElement does not exist', async () => {
       const wrapper = document.createElement('div');
       const div1 = makeTaggedElement('div1', 'div', 'div');
       const div2 = makeTaggedElement('div2', 'div', 'div');
@@ -129,12 +129,12 @@ describe('trackNewElements', () => {
       jest.spyOn(document, 'querySelector').mockReturnValueOnce(div1);
       jest.spyOn(document, 'querySelector').mockReturnValueOnce(null);
 
-      trackNewElements(wrapper, getTracker(), mockConsole);
+      trackNewElements(wrapper, getTracker());
 
       expect(document.querySelector).toHaveBeenCalledTimes(2);
       expect(document.querySelector).toHaveBeenNthCalledWith(1, `[${TaggingAttribute.elementId}='div1']`);
       expect(document.querySelector).toHaveBeenNthCalledWith(2, `[${TaggingAttribute.elementId}='div2']`);
-      expect(mockConsole.error).not.toHaveBeenCalled();
+      expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
     });
   });
 });

@@ -15,8 +15,6 @@ export const makeReactTrackerDefaultQueue = (trackerConfig: ReactTrackerConfig):
   return new TrackerQueue({
     store: new Store({
       trackerId: trackerConfig.trackerId ?? trackerConfig.applicationId,
-      console: trackerConfig.console,
     }),
-    console: trackerConfig.console,
   });
 };

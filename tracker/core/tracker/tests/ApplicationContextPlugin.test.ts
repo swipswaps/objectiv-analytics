@@ -2,19 +2,26 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
+import { mockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   ApplicationContextPlugin,
   ContextsConfig,
   makeApplicationContext,
   Tracker,
   TrackerConfig,
+  TrackerConsole,
   TrackerEvent,
 } from '../src';
 
-const trackerConfig: TrackerConfig = { applicationId: 'app-id', console: mockConsole };
+TrackerConsole.setImplementation(mockConsoleImplementation);
+
+const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
 
 describe('ApplicationContextPlugin', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should generate an ApplicationContext when constructed', () => {
     const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
     expect(testApplicationContextPlugin.applicationContext).toEqual({
@@ -60,7 +67,7 @@ describe('ApplicationContextPlugin', () => {
 
       testApplicationContextPlugin.validate(validEvent);
 
-      expect(mockConsole.groupCollapsed).not.toHaveBeenCalled();
+      expect(mockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
 
     it('should fail when given TrackerEvent does not have ApplicationContext', () => {
@@ -71,8 +78,8 @@ describe('ApplicationContextPlugin', () => {
 
       testApplicationContextPlugin.validate(eventWithoutApplicationContext);
 
-      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:ApplicationContextPlugin:GlobalContextValidationRule｣ Error: ApplicationContext is missing from Global Contexts.`,
         'color:red'
@@ -90,8 +97,8 @@ describe('ApplicationContextPlugin', () => {
 
       testApplicationContextPlugin.validate(eventWithDuplicatedApplicationContext);
 
-      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:ApplicationContextPlugin:GlobalContextValidationRule｣ Error: Only one ApplicationContext should be present in Global Contexts.`,
         'color:red'

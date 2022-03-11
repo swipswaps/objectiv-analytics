@@ -2,21 +2,15 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
-import { ContextsConfig, makeHttpContext, Tracker, TrackerEvent } from '@objectiv/tracker-core';
+import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { ContextsConfig, makeHttpContext, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { HttpContextPlugin } from '../src';
 
-describe('HttpContextPlugin', () => {
-  it('should instantiate without a console', () => {
-    const testHttpContextPlugin = new HttpContextPlugin();
-    expect(testHttpContextPlugin).toBeInstanceOf(HttpContextPlugin);
-    expect(testHttpContextPlugin.console).toBeUndefined();
-  });
+TrackerConsole.setImplementation(mockConsoleImplementation);
 
-  it('should instantiate with the given console', () => {
-    const testHttpContextPlugin = new HttpContextPlugin({ console: mockConsole });
-    expect(testHttpContextPlugin).toBeInstanceOf(HttpContextPlugin);
-    expect(testHttpContextPlugin.console).toBe(mockConsole);
+describe('HttpContextPlugin', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should add the HttpContext to the Event when `initialize` is executed by the Tracker', async () => {
@@ -95,7 +89,7 @@ describe('HttpContextPlugin', () => {
 
   describe('Validation', () => {
     it('should succeed', () => {
-      const testHttpContextPlugin = new HttpContextPlugin({ console: mockConsole });
+      const testHttpContextPlugin = new HttpContextPlugin();
       const validEvent = new TrackerEvent({
         _type: 'test',
         global_contexts: [
@@ -112,19 +106,19 @@ describe('HttpContextPlugin', () => {
 
       testHttpContextPlugin.validate(validEvent);
 
-      expect(mockConsole.groupCollapsed).not.toHaveBeenCalled();
+      expect(mockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
 
     it('should fail when given TrackerEvent does not have HttpContext', () => {
-      const testHttpContextPlugin = new HttpContextPlugin({ console: mockConsole });
+      const testHttpContextPlugin = new HttpContextPlugin();
       const eventWithoutHttpContext = new TrackerEvent({ _type: 'test' });
 
       jest.resetAllMocks();
 
       testHttpContextPlugin.validate(eventWithoutHttpContext);
 
-      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:HttpContextPlugin:GlobalContextValidationRule｣ Error: HttpContext is missing from Global Contexts.`,
         'color:red'
@@ -132,7 +126,7 @@ describe('HttpContextPlugin', () => {
     });
 
     it('should fail when given TrackerEvent has multiple HttpContexts', () => {
-      const testHttpContextPlugin = new HttpContextPlugin({ console: mockConsole });
+      const testHttpContextPlugin = new HttpContextPlugin();
       const eventWithDuplicatedHttpContext = new TrackerEvent({
         _type: 'test',
         global_contexts: [
@@ -155,8 +149,8 @@ describe('HttpContextPlugin', () => {
 
       testHttpContextPlugin.validate(eventWithDuplicatedHttpContext);
 
-      expect(mockConsole.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsole.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:HttpContextPlugin:GlobalContextValidationRule｣ Error: Only one HttpContext should be present in Global Contexts.`,
         'color:red'

@@ -1,11 +1,14 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
-import { SpyTransport } from '@objectiv/testing-tools';
+import { mockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
+import { TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { LocationTree, ObjectivProvider, ReactTracker, TrackedInput } from '../src';
+
+TrackerConsole.setImplementation(mockConsoleImplementation);
 
 describe('TrackedInputContext', () => {
   beforeEach(() => {

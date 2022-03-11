@@ -2,10 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { Tracker } from '@objectiv/tracker-core';
+import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { Tracker, TrackerConsole } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { ContentContextWrapper, ObjectivProvider, useParentLocationContext } from '../src/';
+
+TrackerConsole.setImplementation(mockConsoleImplementation);
 
 describe('useParentLocationContext', () => {
   beforeEach(() => {

@@ -2,11 +2,19 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID } from '@objectiv/testing-tools';
-import { generateUUID, makePressEvent, TrackerQueue, TrackerQueueMemoryStore } from '@objectiv/tracker-core';
+import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import {
+  generateUUID,
+  makePressEvent,
+  TrackerConsole,
+  TrackerQueue,
+  TrackerQueueMemoryStore,
+} from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, trackPressEvent } from '../src/';
 import { makeClickEventHandler } from '../src/mutationObserver/makeClickEventHandler';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+
+TrackerConsole.setImplementation(mockConsoleImplementation);
 
 describe('makeClickEventHandler', () => {
   beforeEach(() => {

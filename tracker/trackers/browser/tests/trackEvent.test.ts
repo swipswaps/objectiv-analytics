@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID } from '@objectiv/testing-tools';
+import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   generateUUID,
   makeFailureEvent,
@@ -21,6 +21,7 @@ import {
   makeMediaStartEvent,
   makeMediaStopEvent,
   makeNonInteractiveEvent,
+  TrackerConsole,
 } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
@@ -46,6 +47,8 @@ import {
   trackVisibility,
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+
+TrackerConsole.setImplementation(mockConsoleImplementation);
 
 describe('trackEvent', () => {
   const testElement = document.createElement('div');
@@ -383,28 +386,33 @@ describe('trackEvent', () => {
 });
 
 describe('trackEvent', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   const testElement = document.createElement('div');
 
   getTrackerRepository().trackersMap = new Map();
   getTrackerRepository().defaultTracker = undefined;
 
-  it('should console.error if a Tracker instance cannot be retrieved and was not provided either', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('should TrackerConsole.error if a Tracker instance cannot be retrieved and was not provided either', () => {
     const parameters = { event: makePressEvent(), element: testElement };
     trackEvent(parameters);
 
-    expect(console.error).toHaveBeenCalledTimes(2);
-    expect(console.error).toHaveBeenNthCalledWith(1, '｢objectiv:TrackerRepository｣ There are no Trackers.');
-    expect(console.error).toHaveBeenNthCalledWith(
+    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+      1,
+      '｢objectiv:TrackerRepository｣ There are no Trackers.'
+    );
+    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
       2,
       new Error('No Tracker found. Please create one via `makeTracker`.'),
       parameters
     );
 
-    trackEvent({ ...parameters, onError: console.error });
-    expect(console.error).toHaveBeenCalledTimes(4);
-    expect(console.error).toHaveBeenNthCalledWith(
+    trackEvent({ ...parameters, onError: TrackerConsole.error });
+    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(4);
+    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
       4,
       new Error('No Tracker found. Please create one via `makeTracker`.')
     );

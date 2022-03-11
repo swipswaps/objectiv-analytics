@@ -10,19 +10,15 @@ import { makeTransportSendError, TrackerConsole, TrackerEvent } from '@objectiv/
 export const defaultXHRFunction = ({
   endpoint,
   events,
-  console,
 }: {
   endpoint: string;
   events: [TrackerEvent, ...TrackerEvent[]];
-  console?: TrackerConsole;
 }): Promise<unknown> => {
   return new Promise(function (resolve, reject) {
-    if (console) {
-      console.groupCollapsed(`｢objectiv:XHRTransport｣ Sending`);
-      console.log(`Events:`);
-      console.log(events);
-      console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:XHRTransport｣ Sending`);
+    TrackerConsole.log(`Events:`);
+    TrackerConsole.log(events);
+    TrackerConsole.groupEnd();
 
     const xhr = new XMLHttpRequest();
     const async = true;
@@ -31,33 +27,27 @@ export const defaultXHRFunction = ({
     xhr.withCredentials = true;
     xhr.onload = () => {
       if (xhr.status === 200) {
-        if (console) {
-          console.groupCollapsed(`｢objectiv:XHRTransport｣ Succeeded`);
-          console.log(`Events:`);
-          console.log(events);
-          console.groupEnd();
-        }
+        TrackerConsole.groupCollapsed(`｢objectiv:XHRTransport｣ Succeeded`);
+        TrackerConsole.log(`Events:`);
+        TrackerConsole.log(events);
+        TrackerConsole.groupEnd();
 
         resolve(xhr.response);
       } else {
-        if (console) {
-          console.groupCollapsed(`｢objectiv:XHRTransport｣ Failed`);
-          console.log(`Events:`);
-          console.log(events);
-          console.log(`Response: ${xhr}`);
-          console.groupEnd();
-        }
+        TrackerConsole.groupCollapsed(`｢objectiv:XHRTransport｣ Failed`);
+        TrackerConsole.log(`Events:`);
+        TrackerConsole.log(events);
+        TrackerConsole.log(`Response: ${xhr}`);
+        TrackerConsole.groupEnd();
 
         reject(makeTransportSendError());
       }
     };
     xhr.onerror = () => {
-      if (console) {
-        console.groupCollapsed(`｢objectiv:XHRTransport｣ Error`);
-        console.log(`Events:`);
-        console.log(events);
-        console.groupEnd();
-      }
+      TrackerConsole.groupCollapsed(`｢objectiv:XHRTransport｣ Error`);
+      TrackerConsole.log(`Events:`);
+      TrackerConsole.log(events);
+      TrackerConsole.groupEnd();
 
       reject(makeTransportSendError());
     };

@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID } from '@objectiv/testing-tools';
+import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   makePressableContext,
   makeExpandableContext,
@@ -12,14 +12,14 @@ import {
   makeNavigationContext,
   makeOverlayContext,
   makeContentContext,
+  TrackerConsole,
 } from '@objectiv/tracker-core';
 import { tagContent, TaggingAttribute, tagLocation, tagOverlay } from '../src';
 
+TrackerConsole.setImplementation(mockConsoleImplementation);
+
 describe('tagLocation', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-  afterEach(() => {
     jest.resetAllMocks();
   });
 
@@ -105,13 +105,11 @@ describe('tagLocation', () => {
     expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(Error);
   });
 
-  it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
-    const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('should call `TrackerConsole.error` when an error occurs and `onError` has not been provided', () => {
     // @ts-ignore
     tagLocation({ instance: {} });
 
-    expect(consoleErrorMock).toHaveBeenCalledTimes(1);
+    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   it('should allow overriding whether to track click, blur and visibility events via options', () => {

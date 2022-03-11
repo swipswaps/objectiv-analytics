@@ -14,7 +14,6 @@ import { logEventValidationRuleError } from './logEventValidationRuleError';
  * - optionally, present only once
  */
 export class GlobalContextValidationRule implements TrackerValidationRuleInterface, ContextValidationRuleConfig {
-  readonly console?: TrackerConsole;
   readonly validationRuleName = `GlobalContextValidationRule`;
   readonly contextName: string;
   readonly once?: boolean;
@@ -24,22 +23,17 @@ export class GlobalContextValidationRule implements TrackerValidationRuleInterfa
    * Process config onto state.
    */
   constructor(config: ContextValidationRuleConfig) {
-    this.console = config.console;
     this.contextName = config.contextName;
     this.once = config.once;
     this.logPrefix = config.logPrefix;
 
-    if (this.console) {
-      this.console.groupCollapsed(
-        `｢objectiv:${this.logPrefix?.concat(':')}${this.validationRuleName}｣ Initialized. Context: ${
-          config.contextName
-        }.`
-      );
-      this.console.group(`Configuration:`);
-      this.console.log(config);
-      this.console.groupEnd();
-      this.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(
+      `｢objectiv:${this.logPrefix?.concat(':')}${this.validationRuleName}｣ Initialized. Context: ${config.contextName}.`
+    );
+    TrackerConsole.group(`Configuration:`);
+    TrackerConsole.log(config);
+    TrackerConsole.groupEnd();
+    TrackerConsole.groupEnd();
   }
 
   /**
@@ -48,12 +42,10 @@ export class GlobalContextValidationRule implements TrackerValidationRuleInterfa
   validate(event: TrackerEvent): void {
     const matches = event.global_contexts.filter((context) => context._type === this.contextName);
 
-    if (this.console) {
-      if (!matches.length) {
-        logEventValidationRuleError(this, event, `${this.contextName} is missing from Global Contexts.`);
-      } else if (this.once && matches.length > 1) {
-        logEventValidationRuleError(this, event, `Only one ${this.contextName} should be present in Global Contexts.`);
-      }
+    if (!matches.length) {
+      logEventValidationRuleError(this, event, `${this.contextName} is missing from Global Contexts.`);
+    } else if (this.once && matches.length > 1) {
+      logEventValidationRuleError(this, event, `Only one ${this.contextName} should be present in Global Contexts.`);
     }
   }
 }

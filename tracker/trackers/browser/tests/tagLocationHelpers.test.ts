@@ -2,9 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID } from '@objectiv/testing-tools';
+import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
 import {
-  tagPressable,
   tagContent,
   tagExpandable,
   TaggingAttribute,
@@ -13,14 +12,15 @@ import {
   tagMediaPlayer,
   tagNavigation,
   tagOverlay,
+  tagPressable,
   tagRootLocation,
+  TrackerConsole,
 } from '../src';
+
+TrackerConsole.setImplementation(mockConsoleImplementation);
 
 describe('tagLocationHelpers', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-  afterEach(() => {
     jest.resetAllMocks();
   });
 

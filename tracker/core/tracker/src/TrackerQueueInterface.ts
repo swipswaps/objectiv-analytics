@@ -3,7 +3,6 @@
  */
 
 import { NonEmptyArray } from './helpers';
-import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerQueueStoreInterface } from './TrackerQueueStoreInterface';
 
@@ -16,11 +15,6 @@ export type TrackerQueueProcessFunction = (...args: NonEmptyArray<TrackerEvent>)
  * Our Tracker Events Queue generic interface.
  */
 export interface TrackerQueueInterface {
-  /**
-   * Optional. A TrackerConsole instance for logging.
-   */
-  readonly console?: TrackerConsole;
-
   /**
    * The TrackerQueueStore to use. Defaults to TrackerQueueMemoryStore
    */

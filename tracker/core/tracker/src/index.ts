@@ -15,6 +15,7 @@ export * from './Context';
 export * from './ContextFactories';
 export * from './EventFactories';
 export * from './helpers';
+export * from './NoopConsoleImplementation';
 export * from './Tracker';
 export * from './TrackerConsole';
 export * from './TrackerElementLocations';

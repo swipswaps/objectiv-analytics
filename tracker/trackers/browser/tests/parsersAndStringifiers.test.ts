@@ -2,7 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeContentContext } from '@objectiv/tracker-core';
+import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { makeContentContext, TrackerConsole } from '@objectiv/tracker-core';
 import {
   ChildrenTaggingQueries,
   parseJson,
@@ -22,7 +23,13 @@ import {
   ValidateAttribute,
 } from '../src';
 
+TrackerConsole.setImplementation(mockConsoleImplementation);
+
 describe('parsersAndStringifiers', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   describe('Location Contexts', () => {
     it('Should stringify and parse Section Context', () => {
       const context = makeContentContext({ id: 'test' });
@@ -332,6 +339,12 @@ describe('parsersAndStringifiers', () => {
 
         expect(trackClickOptions).toStrictEqual(testCase.options);
       });
+    });
+
+    it(`should throw`, () => {
+      const stringifiedTrackClicks = JSON.stringify('{not: "valid"}');
+
+      expect(() => parseTrackClicks(stringifiedTrackClicks)).toThrow();
     });
   });
 

@@ -2,19 +2,17 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
-import { Tracker, TrackerEvent, TrackerPluginInterface, TrackerPlugins } from '../src';
+import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { Tracker, TrackerConsole, TrackerEvent, TrackerPluginInterface, TrackerPlugins } from '../src';
+
+TrackerConsole.setImplementation(mockConsoleImplementation);
 
 describe('Plugin', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
 
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
-  const tracker = new Tracker({ applicationId: 'test-tracker', console: mockConsole });
+  const tracker = new Tracker({ applicationId: 'test-tracker' });
 
   it('should instantiate when specifying an empty list of Plugins', () => {
     const testPlugins = new TrackerPlugins({ tracker, plugins: [] });
@@ -81,13 +79,13 @@ describe('Plugin', () => {
     testPlugins.add(pluginA);
     expect(pluginA.initialize).toHaveBeenCalledTimes(1);
     testPlugins.add(pluginB);
-    expect(mockConsole.log).toHaveBeenCalledTimes(2);
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(mockConsoleImplementation.log).toHaveBeenCalledTimes(2);
+    expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
       1,
       '%c｢objectiv:TrackerPlugins｣ test-pluginA added at index 0',
       'font-weight: bold'
     );
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
       2,
       '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1',
       'font-weight: bold'
@@ -135,8 +133,8 @@ describe('Plugin', () => {
     const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB, pluginC] });
     jest.resetAllMocks();
     testPlugins.remove('test-pluginB');
-    expect(mockConsole.log).toHaveBeenCalledTimes(1);
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(mockConsoleImplementation.log).toHaveBeenCalledTimes(1);
+    expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
       1,
       '%c｢objectiv:TrackerPlugins｣ test-pluginB removed',
       'font-weight: bold'
@@ -184,13 +182,13 @@ describe('Plugin', () => {
     jest.resetAllMocks();
     testPlugins.replace(newPluginB1);
     expect(newPluginB1.initialize).toHaveBeenCalledTimes(1);
-    expect(mockConsole.log).toHaveBeenCalledTimes(2);
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(mockConsoleImplementation.log).toHaveBeenCalledTimes(2);
+    expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
       1,
       '%c｢objectiv:TrackerPlugins｣ test-pluginB removed',
       'font-weight: bold'
     );
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
       2,
       '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1',
       'font-weight: bold'

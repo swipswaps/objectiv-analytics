@@ -2,17 +2,18 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { NoopConsole } from '../src';
+import { NoopConsoleImplementation, TrackerConsole } from '../src';
 
 describe('TrackerConsole', () => {
   it('should return undefined', () => {
-    expect(NoopConsole.debug()).toBe(undefined);
-    expect(NoopConsole.error()).toBe(undefined);
-    expect(NoopConsole.group()).toBe(undefined);
-    expect(NoopConsole.groupCollapsed()).toBe(undefined);
-    expect(NoopConsole.groupEnd()).toBe(undefined);
-    expect(NoopConsole.info()).toBe(undefined);
-    expect(NoopConsole.log()).toBe(undefined);
-    expect(NoopConsole.warn()).toBe(undefined);
+    TrackerConsole.setImplementation(NoopConsoleImplementation);
+    expect(TrackerConsole.debug()).toBe(undefined);
+    expect(TrackerConsole.error()).toBe(undefined);
+    expect(TrackerConsole.group()).toBe(undefined);
+    expect(TrackerConsole.groupCollapsed()).toBe(undefined);
+    expect(TrackerConsole.groupEnd()).toBe(undefined);
+    expect(TrackerConsole.info()).toBe(undefined);
+    expect(TrackerConsole.log()).toBe(undefined);
+    expect(TrackerConsole.warn()).toBe(undefined);
   });
 });
