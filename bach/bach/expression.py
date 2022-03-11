@@ -74,11 +74,13 @@ class VariableToken(ExpressionToken):
 
 @dataclass(frozen=True)
 class TableColumnReferenceToken(ExpressionToken):
-    table_name: str
+    table_name: Optional[str]
     column_name: str
 
-    def to_sql(self):
-        return escape_raw_sql(f'{self.table_name}{self.column_name}')
+    def to_sql(self, dialect: Dialect):
+        t = f'{quote_identifier(dialect, self.table_name)}.' if self.table_name else ''
+        col_name = quote_identifier(dialect, self.column_name)
+        return escape_raw_sql(f'{t}{col_name}')
 
 
 @dataclass(frozen=True)
@@ -89,10 +91,8 @@ class ColumnReferenceToken(ExpressionToken):
         raise ValueError('ColumnReferenceTokens should be resolved first using '
                          'Expression.resolve_column_references')
 
-    def resolve(self, dialect: Dialect, table_name: Optional[str]) -> TableColumnReferenceToken:
-        t = f'{quote_identifier(dialect, table_name)}.' if table_name else ''
-        col_name = quote_identifier(dialect, self.column_name)
-        return TableColumnReferenceToken(table_name=t, column_name=col_name)
+    def resolve(self, table_name: Optional[str]) -> TableColumnReferenceToken:
+        return TableColumnReferenceToken(table_name=table_name, column_name=self.column_name)
 
 
 @dataclass(frozen=True)
@@ -305,7 +305,7 @@ class Expression:
             if isinstance(data_item, Expression):
                 result.append(data_item.resolve_column_references(dialect, table_name))
             elif isinstance(data_item, ColumnReferenceToken):
-                result.append(data_item.resolve(dialect, table_name))
+                result.append(data_item.resolve(table_name))
             else:
                 result.append(data_item)
         return self.__class__(result)
