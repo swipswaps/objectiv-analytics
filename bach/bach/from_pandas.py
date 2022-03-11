@@ -106,11 +106,12 @@ def from_pandas_ephemeral(
             per_column_expr.append(series_type.value_to_expression(val))
         row_expr = Expression.construct('({})', join_expressions(per_column_expr))
         per_row_expr.append(row_expr)
-    all_values_str = join_expressions(per_row_expr, join_str=',\n').to_sql()
+    all_values_str = join_expressions(per_row_expr, join_str=',\n').to_sql(engine.dialect)
 
-    column_names_str = join_expressions(
-        [Expression.raw(quote_identifier(column_name)) for column_name in all_dtypes.keys()]
-    ).to_sql()
+    column_names_expr = join_expressions(
+        [Expression.raw(quote_identifier(engine.dialect, column_name)) for column_name in all_dtypes.keys()]
+    )
+    column_names_str = column_names_expr.to_sql(engine.dialect)
 
     sql = f'select * from (values \n{all_values_str}\n) as t({column_names_str})\n'
 

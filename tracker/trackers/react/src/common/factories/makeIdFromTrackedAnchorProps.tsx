@@ -3,9 +3,9 @@
  */
 
 import { makeIdFromString } from '@objectiv/tracker-core';
+import { makeTitleFromChildren } from '@objectiv/tracker-react-core';
 import React from 'react';
 import { TrackingOptionsProp } from '../../types';
-import { makeTitleFromChildren } from './makeTitleFromChildren';
 
 /**
  * Attempts to generate an id by looking at `id`, `title`, `children` and `objectiv.contextId` props.

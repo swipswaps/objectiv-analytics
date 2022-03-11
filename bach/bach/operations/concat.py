@@ -2,6 +2,9 @@
 Copyright 2022 Objectiv B.V.
 """
 from abc import abstractmethod
+
+from sqlalchemy.engine import Dialect
+
 from bach.dataframe import DataFrameOrSeries
 import itertools
 from collections import defaultdict
@@ -40,7 +43,7 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
     """
     Abstract class that specifies the list of objects to be concatenated.
 
-    Child classes are in charged of specifying the correct type (DataFrame/Series) of all objects.
+    Child classes are in charge of specifying the correct type (DataFrame/Series) of all objects.
     All classes should implement _get_concatenated_object method that returns a single object with the correct
     instantiated type.
     """
@@ -64,6 +67,10 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
             return self.objects[0].copy_override(index=index)  # type: ignore
 
         return self._get_concatenated_object()
+
+    @property
+    def dialect(self) -> Dialect:
+        return self.objects[0].engine.dialect
 
     def _get_indexes(self) -> Dict[str, ResultSeries]:
         """
@@ -235,6 +242,7 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
         series_expressions = [self._join_series_expressions(df) for df in objects]
 
         return ConcatSqlModel.get_instance(
+            dialect=self.dialect,
             columns=tuple(new_index_names + new_data_series_names),
             all_series_expressions=series_expressions,
             all_nodes=[df.base_node for df in objects],
@@ -326,6 +334,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         series_expressions = [self._join_series_expressions(obj) for obj in objects]
 
         return ConcatSqlModel.get_instance(
+            dialect=self.dialect,
             columns=tuple('concatenated_series'),
             all_series_expressions=series_expressions,
             all_nodes=[series.base_node for series in objects],
@@ -338,6 +347,7 @@ class ConcatSqlModel(BachSqlModel):
     def get_instance(
         cls,
         *,
+        dialect: Dialect,
         columns: Tuple[str, ...],
         all_series_expressions: List[Expression],
         all_nodes: List[BachSqlModel],
@@ -346,7 +356,7 @@ class ConcatSqlModel(BachSqlModel):
         name = 'concat_sql'
         base_sql = 'select {serie_expr} from {node}'
         sql = ' union all '.join(
-            base_sql.format(serie_expr=col_expr.to_sql(), node=f"{{{{node_{idx}}}}}")
+            base_sql.format(serie_expr=col_expr.to_sql(dialect), node=f"{{{{node_{idx}}}}}")
             for idx, col_expr in enumerate(all_series_expressions)
         )
 
@@ -357,7 +367,7 @@ class ConcatSqlModel(BachSqlModel):
 
         return ConcatSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=cls._get_placeholders(variables, all_series_expressions),
+            placeholders=cls._get_placeholders(dialect, variables, all_series_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

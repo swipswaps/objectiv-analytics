@@ -2,9 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { TrackingContext, trackPressEvent } from '@objectiv/tracker-react-core';
 import React from 'react';
-import { trackPressEvent } from '../../eventTrackers/trackPressEvent';
-import { TrackingContext } from '../providers/TrackingContext';
 
 /**
  * Anchor click handler factory parameters

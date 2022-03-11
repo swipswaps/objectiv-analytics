@@ -3,9 +3,10 @@
  */
 
 import { AbstractGlobalContext, AbstractLocationContext, Contexts } from '@objectiv/schema';
-import { ApplicationContextPlugin } from './ApplicationContextPlugin';
 import { ContextsConfig } from './Context';
 import { waitForPromise } from './helpers';
+import { ApplicationContextPlugin } from './plugins/ApplicationContextPlugin';
+import { OpenTaxonomyValidationPlugin } from './plugins/OpenTaxonomyValidationPlugin';
 import { TrackerConsole } from './TrackerConsole';
 import { getLocationPath } from './TrackerElementLocations';
 import { TrackerEvent, TrackerEventConfig } from './TrackerEvent';
@@ -59,6 +60,7 @@ export type TrackerConfig = ContextsConfig & {
  */
 export const makeCoreTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
   new ApplicationContextPlugin({ applicationId: trackerConfig.applicationId, console: trackerConfig.console }),
+  new OpenTaxonomyValidationPlugin({ console: trackerConfig.console }),
 ];
 
 /**
@@ -251,8 +253,11 @@ export class Tracker implements TrackerInterface {
     // Set tracking time
     trackedEvent.setTime();
 
-    // Execute all plugins `beforeTransport` callback. Plugins may enrich or add Contexts to the TrackerEvent
-    this.plugins.beforeTransport(trackedEvent);
+    // Execute all plugins `enrich` callback. Plugins may enrich or add Contexts to the TrackerEvent
+    this.plugins.enrich(trackedEvent);
+
+    // Execute all plugins `validate` callback. In dev mode this will log to the console any issues.
+    this.plugins.validate(trackedEvent);
 
     // Hand over TrackerEvent to TrackerTransport or TrackerQueue, if enabled and usable.
     if (this.transport && this.transport.isUsable()) {
