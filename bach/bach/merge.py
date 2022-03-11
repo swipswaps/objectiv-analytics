@@ -324,7 +324,7 @@ def _get_merge_sql_model(
     join_type_expr = Expression.construct('full outer' if how == How.outer else how.value)
 
     return MergeSqlModel.get_instance(
-        column_names=tuple(rc.name for rc in new_column_list),
+        column_expressions={rc.name: rc.expression for rc in new_column_list},
         columns_expr=columns_expr,
         join_type_expr=join_type_expr,
         on_clause=on_clause,
@@ -347,17 +347,19 @@ def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
 
 class MergeSqlModel(BachSqlModel):
     @classmethod
-    def get_instance(cls,
-                     *,
-                     column_names: Tuple[str, ...],
-                     columns_expr: Expression,
-                     join_type_expr: Expression,
-                     on_clause: Expression,
-                     left_node: BachSqlModel,
-                     right_node: BachSqlModel,
-                     variables: Dict['DtypeNamePair', Hashable]) -> 'MergeSqlModel':
+    def get_instance(
+        cls,
+        *,
+        column_expressions: Dict[str, Expression],
+        columns_expr: Expression,
+        join_type_expr: Expression,
+        on_clause: Expression,
+        left_node: BachSqlModel,
+        right_node: BachSqlModel,
+        variables: Dict['DtypeNamePair', Hashable],
+    ) -> 'MergeSqlModel':
         """
-        :param column_names: tuple with the column_names in order
+        :param column_expressions: mapping between column_names and their expressions (in order)
         :param columns_expr: A single expression that expresses projecting all needed columns from either
             left or right
         :param join_type_expr: expression expressing the join type, e.g. an expression that represents
@@ -391,5 +393,5 @@ class MergeSqlModel(BachSqlModel):
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
-            columns=column_names
+            column_expressions=column_expressions,
         )

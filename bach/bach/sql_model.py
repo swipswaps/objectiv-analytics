@@ -28,57 +28,66 @@ class BachSqlModel(SqlModel[T]):
     interacting with the models. The information is not reflected in the `hash`, as it doesn't matter for
     the purpose of sql generation.
     """
-    def __init__(self,
-                 model_spec: T,
-                 placeholders: Mapping[str, Hashable],
-                 references: Mapping[str, 'SqlModel'],
-                 materialization: Materialization,
-                 materialization_name: Optional[str],
-                 columns: Tuple[str, ...]
-                 ):
+    def __init__(
+        self,
+        model_spec: T,
+        placeholders: Mapping[str, Hashable],
+        references: Mapping[str, 'SqlModel'],
+        materialization: Materialization,
+        materialization_name: Optional[str],
+        column_expressions: Dict[str, Expression],
+    ) -> None:
         """
-        Similar to :py:meth:`SqlModel.__init__()`. With one additional parameter: columns, the names of the
-        columns that this model's query will return in the correct order.
+        Similar to :py:meth:`SqlModel.__init__()`. With one additional parameter: column_expressions,
+        a mapping between the names of the columns and expressions
+        that this model's query will return in the correct order.
         """
-        self._columns = columns
+        self._column_expressions = column_expressions
         super().__init__(
             model_spec=model_spec,
             placeholders=placeholders,
             references=references,
             materialization=materialization,
-            materialization_name=materialization_name)
+            materialization_name=materialization_name,
+        )
 
     @property
     def columns(self) -> Tuple[str, ...]:
         """ Columns returned by the query of this model, in order."""
-        return self._columns
+        return tuple(self._column_expressions.keys())
+
+    @property
+    def column_expressions(self) -> Dict[str, Expression]:
+        """ Mapping containing the expression used per column."""
+        return self._column_expressions
 
     def copy_override(
-            self: TBachSqlModel,
-            *,
-            model_spec: T = None,
-            placeholders: Mapping[str, Hashable] = None,
-            references: Mapping[str, 'SqlModel'] = None,
-            materialization: Materialization = None,
-            materialization_name: Union[Optional[str], NotSet] = not_set,
-            columns: Tuple[str, ...] = None
+        self: TBachSqlModel,
+        *,
+        model_spec: T = None,
+        placeholders: Mapping[str, Hashable] = None,
+        references: Mapping[str, 'SqlModel'] = None,
+        materialization: Materialization = None,
+        materialization_name: Union[Optional[str], NotSet] = not_set,
+        column_expressions: Dict[str, Expression] = None
     ) -> TBachSqlModel:
         """
         Similar to super class's implementation, but adds optional 'columns' parameter
         """
-        materialization_name_value = \
+        materialization_name_value = (
             self.materialization_name if materialization_name is not_set else materialization_name
+        )
         return self.__class__(
             model_spec=self.model_spec if model_spec is None else model_spec,
             placeholders=self.placeholders if placeholders is None else placeholders,
             references=self.references if references is None else references,
             materialization=self.materialization if materialization is None else materialization,
             materialization_name=materialization_name_value,
-            columns=self.columns if columns is None else columns
+            column_expressions=self.column_expressions if column_expressions is None else column_expressions
         )
 
     @classmethod
-    def from_sql_model(cls, sql_model: SqlModel, columns: Tuple[str, ...]) -> 'BachSqlModel':
+    def from_sql_model(cls, sql_model: SqlModel, column_expressions: Dict[str, Expression]) -> 'BachSqlModel':
         """ From any SqlModel create a BachSqlModel with the given column definitions. """
         return cls(
             model_spec=sql_model.model_spec,
@@ -86,7 +95,7 @@ class BachSqlModel(SqlModel[T]):
             references=sql_model.references,
             materialization=sql_model.materialization,
             materialization_name=sql_model.materialization_name,
-            columns=columns
+            column_expressions=column_expressions,
         )
 
     @classmethod
@@ -111,15 +120,16 @@ class SampleSqlModel(BachSqlModel):
 
     See the DataFrame.sample() implementation for more information
     """
-    def __init__(self,
-                 model_spec: T,
-                 placeholders: Mapping[str, Hashable],
-                 references: Mapping[str, 'SqlModel'],
-                 materialization: Materialization,
-                 materialization_name: Optional[str],
-                 columns: Tuple[str, ...],
-                 previous: BachSqlModel
-                 ):
+    def __init__(
+        self,
+        model_spec: T,
+        placeholders: Mapping[str, Hashable],
+        references: Mapping[str, 'SqlModel'],
+        materialization: Materialization,
+        materialization_name: Optional[str],
+        column_expressions: Dict[str, Expression],
+        previous: BachSqlModel,
+    ) -> None:
         self.previous = previous
         super().__init__(
             model_spec=model_spec,
@@ -127,19 +137,19 @@ class SampleSqlModel(BachSqlModel):
             references=references,
             materialization=materialization,
             materialization_name=materialization_name,
-            columns=columns
+            column_expressions=column_expressions,
         )
 
     def copy_override(
-            self: 'SampleSqlModel',
-            *,
-            model_spec: T = None,
-            placeholders: Mapping[str, Hashable] = None,
-            references: Mapping[str, 'SqlModel'] = None,
-            materialization: Materialization = None,
-            materialization_name: Union[Optional[str], NotSet] = not_set,
-            columns: Tuple[str, ...] = None,
-            previous: BachSqlModel = None
+        self: 'SampleSqlModel',
+        *,
+        model_spec: T = None,
+        placeholders: Mapping[str, Hashable] = None,
+        references: Mapping[str, 'SqlModel'] = None,
+        materialization: Materialization = None,
+        materialization_name: Union[Optional[str], NotSet] = not_set,
+        column_expressions: Dict[str, Expression] = None,
+        previous: BachSqlModel = None
     ) -> 'SampleSqlModel':
         """
         Similar to super class's implementation, but adds optional 'previous' parameter
@@ -152,16 +162,18 @@ class SampleSqlModel(BachSqlModel):
             references=self.references if references is None else references,
             materialization=self.materialization if materialization is None else materialization,
             materialization_name=materialization_name_value,
-            columns=self.columns if columns is None else columns,
+            column_expressions=self.column_expressions if column_expressions is None else column_expressions,
             previous=self.previous if previous is None else previous
         )
 
     @staticmethod
-    def get_instance(*,
-                     table_name: str,
-                     previous: BachSqlModel,
-                     columns: Tuple[str, ...],
-                     name: str = 'sample_node') -> 'SampleSqlModel':
+    def get_instance(
+        *,
+        table_name: str,
+        previous: BachSqlModel,
+        column_expressions: Dict[str, Expression],
+        name: str = 'sample_node',
+    ) -> 'SampleSqlModel':
         """ Helper function to instantiate a SampleSqlModel """
         sql = 'SELECT * FROM {table_name}'
         return SampleSqlModel(
@@ -170,7 +182,7 @@ class SampleSqlModel(BachSqlModel):
             references={},
             materialization=Materialization.CTE,
             materialization_name=None,
-            columns=columns,
+            column_expressions=column_expressions,
             previous=previous
         )
 
@@ -221,7 +233,7 @@ class CurrentNodeSqlModel(BachSqlModel):
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
-            columns=column_names
+            column_expressions={name: expr for name, expr in zip(column_names, column_exprs)},
         )
 
 

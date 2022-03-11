@@ -463,7 +463,11 @@ class DataFrame:
         """
         index_dtypes = {k: all_dtypes[k] for k in index}
         series_dtypes = {k: all_dtypes[k] for k in all_dtypes.keys() if k not in index}
-        bach_model = BachSqlModel.from_sql_model(sql_model=model, columns=tuple(all_dtypes.keys()))
+
+        bach_model = BachSqlModel.from_sql_model(
+            sql_model=model,
+            column_expressions={c: Expression.column_reference(c) for c in all_dtypes.keys()},
+        )
 
         from bach.savepoints import Savepoints
         df = cls.get_instance(
