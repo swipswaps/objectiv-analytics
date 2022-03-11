@@ -3,13 +3,18 @@
  */
 
 import { mockConsole } from '@objectiv/testing-tools';
+import {
+  makeReactTrackerDefaultPluginsList,
+  ObjectivProvider,
+  trackApplicationLoadedEvent,
+} from '@objectiv/tracker-react';
 import { ContentContextWrapper, ReactNativeTracker, RootLocationContextWrapper } from '@objectiv/tracker-react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNavigationContainerRef, NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
-import { NavigationAwareObjectivProvider, TrackedLink, TrackedLinkProps } from '../src';
+import { ContextsFromReactNavigationPlugin, TrackedLink, TrackedLinkProps } from '../src';
 
 type TestParamList = {
   HomeScreen: undefined;
@@ -63,51 +68,65 @@ describe('TrackedLink', () => {
 
   cases.forEach(([linkProps, linkContext, rootLocationContext, pathContext]) => {
     it(`props: ${JSON.stringify(linkProps)} > LinkContext: ${JSON.stringify(linkContext)}`, () => {
-      const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+      const navigationContainerRef = createNavigationContainerRef();
+      const trackerConfig = {
+        applicationId: 'app-id',
+        transport: spyTransport,
+        console: mockConsole,
+      };
+      const tracker = new ReactNativeTracker({
+        applicationId: 'app-id',
+        transport: spyTransport,
+        console: mockConsole,
+        plugins: [
+          ...makeReactTrackerDefaultPluginsList(trackerConfig),
+          new ContextsFromReactNavigationPlugin({ ...trackerConfig, navigationContainerRef }),
+        ],
+      });
       const Stack = createStackNavigator();
       const HomeScreen = () => <TrackedLink {...linkProps} testID="test" />;
       const DestinationScreen = () => <>yup</>;
-      const navigationContainerRef = createNavigationContainerRef();
       const { getByTestId } = render(
-        <NavigationAwareObjectivProvider
-          tracker={tracker}
-          navigationContainerRef={navigationContainerRef}
-          options={{ trackApplicationLoaded: false }}
-        >
-          <NavigationContainer ref={navigationContainerRef}>
+        <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
+          <NavigationContainer
+            ref={navigationContainerRef}
+            onReady={() => {
+              trackApplicationLoadedEvent({ tracker });
+            }}
+          >
             <Stack.Navigator>
               <Stack.Screen name="HomeScreen" component={HomeScreen} />
               <Stack.Screen name="DestinationScreen" component={DestinationScreen} />
             </Stack.Navigator>
           </NavigationContainer>
-        </NavigationAwareObjectivProvider>
+        </ObjectivProvider>
       );
 
       fireEvent.press(getByTestId('test'));
 
-      expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-      expect(spyTransport.handle).toHaveBeenCalledWith(
+      expect(spyTransport.handle).toHaveBeenCalledTimes(2);
+      expect(spyTransport.handle).toHaveBeenNthCalledWith(
+        1,
+        expect.objectContaining({
+          _type: 'ApplicationLoadedEvent',
+          global_contexts: [
+            expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
+            expect.objectContaining({ _type: 'PathContext', ...pathContext }),
+          ],
+          location_stack: [expect.objectContaining({ _type: 'RootLocationContext', ...rootLocationContext })],
+        })
+      );
+      expect(spyTransport.handle).toHaveBeenNthCalledWith(
+        2,
         expect.objectContaining({
           _type: 'PressEvent',
-          location_stack: [
-            expect.objectContaining({
-              _type: 'RootLocationContext',
-              ...rootLocationContext,
-            }),
-            expect.objectContaining({
-              _type: 'LinkContext',
-              ...linkContext,
-            }),
-          ],
           global_contexts: [
-            expect.objectContaining({
-              _type: 'ApplicationContext',
-              id: 'app-id',
-            }),
-            expect.objectContaining({
-              _type: 'PathContext',
-              ...pathContext,
-            }),
+            expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
+            expect.objectContaining({ _type: 'PathContext', ...pathContext }),
+          ],
+          location_stack: [
+            expect.objectContaining({ _type: 'RootLocationContext', ...rootLocationContext }),
+            expect.objectContaining({ _type: 'LinkContext', ...linkContext }),
           ],
         })
       );
@@ -127,8 +146,13 @@ describe('TrackedLink', () => {
     const DestinationScreen = () => <>yup</>;
     const navigationContainerRef = createNavigationContainerRef();
     render(
-      <NavigationAwareObjectivProvider tracker={tracker} navigationContainerRef={navigationContainerRef}>
-        <NavigationContainer ref={navigationContainerRef}>
+      <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
+        <NavigationContainer
+          ref={navigationContainerRef}
+          onReady={() => {
+            trackApplicationLoadedEvent({ tracker });
+          }}
+        >
           <RootLocationContextWrapper id="root">
             <Stack.Navigator>
               <Stack.Screen name="HomeScreen" component={HomeScreen} />
@@ -136,7 +160,7 @@ describe('TrackedLink', () => {
             </Stack.Navigator>
           </RootLocationContextWrapper>
         </NavigationContainer>
-      </NavigationAwareObjectivProvider>
+      </ObjectivProvider>
     );
 
     expect(console.error).toHaveBeenCalledTimes(1);
@@ -158,18 +182,19 @@ describe('TrackedLink', () => {
     const DestinationScreen = () => <>yup</>;
     const navigationContainerRef = createNavigationContainerRef();
     const { getByTestId } = render(
-      <NavigationAwareObjectivProvider
-        tracker={tracker}
-        navigationContainerRef={navigationContainerRef}
-        options={{ trackApplicationLoaded: false }}
-      >
-        <NavigationContainer ref={navigationContainerRef}>
+      <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
+        <NavigationContainer
+          ref={navigationContainerRef}
+          onReady={() => {
+            trackApplicationLoadedEvent({ tracker });
+          }}
+        >
           <Stack.Navigator>
             <Stack.Screen name="HomeScreen" component={HomeScreen} />
             <Stack.Screen name="DestinationScreen" component={DestinationScreen} />
           </Stack.Navigator>
         </NavigationContainer>
-      </NavigationAwareObjectivProvider>
+      </ObjectivProvider>
     );
 
     fireEvent.press(getByTestId('test'));
@@ -178,45 +203,78 @@ describe('TrackedLink', () => {
   });
 
   it('should fallback to RootLocationContext:home when a route cannot be detected', async () => {
-    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
     const navigationContainerRef = createNavigationContainerRef();
+    const trackerConfig = {
+      applicationId: 'app-id',
+      transport: spyTransport,
+      console: mockConsole,
+    };
+    const tracker = new ReactNativeTracker({
+      applicationId: 'app-id',
+      transport: spyTransport,
+      console: mockConsole,
+      plugins: [
+        ...makeReactTrackerDefaultPluginsList(trackerConfig),
+        new ContextsFromReactNavigationPlugin({ ...trackerConfig, navigationContainerRef }),
+      ],
+    });
     const { getByTestId } = render(
-      <NavigationAwareObjectivProvider
-        tracker={tracker}
-        navigationContainerRef={navigationContainerRef}
-        options={{ trackApplicationLoaded: false }}
-      >
-        <NavigationContainer ref={navigationContainerRef}>
+      <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
+        <NavigationContainer
+          ref={navigationContainerRef}
+          onReady={() => {
+            trackApplicationLoadedEvent({ tracker });
+          }}
+        >
           <TrackedLink testID="test" to="/HomeScreen">
             Press me!
           </TrackedLink>
         </NavigationContainer>
-      </NavigationAwareObjectivProvider>
+      </ObjectivProvider>
     );
 
     fireEvent.press(getByTestId('test'));
 
-    expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(
+    expect(spyTransport.handle).toHaveBeenCalledTimes(2);
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'ApplicationLoadedEvent',
+        global_contexts: [
+          expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
+          expect.objectContaining({ _type: 'PathContext', id: '/' }),
+        ],
+        location_stack: [expect.objectContaining({ _type: 'RootLocationContext', id: 'home' })],
+      })
+    );
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(
+      2,
       expect.objectContaining({
         _type: 'PressEvent',
         location_stack: [
-          expect.objectContaining({
-            _type: 'RootLocationContext',
-            id: 'home',
-          }),
-          expect.objectContaining({
-            _type: 'LinkContext',
-            id: 'press-me',
-            href: '/HomeScreen',
-          }),
+          expect.objectContaining({ _type: 'RootLocationContext', id: 'home' }),
+          expect.objectContaining({ _type: 'LinkContext', id: 'press-me', href: '/HomeScreen' }),
         ],
       })
     );
   });
 
   it('should correctly generate RootLocation and Path Contexts with nested navigators', async () => {
-    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+    const navigationContainerRef = createNavigationContainerRef();
+    const trackerConfig = {
+      applicationId: 'app-id',
+      transport: spyTransport,
+      console: mockConsole,
+    };
+    const tracker = new ReactNativeTracker({
+      applicationId: 'app-id',
+      transport: spyTransport,
+      console: mockConsole,
+      plugins: [
+        ...makeReactTrackerDefaultPluginsList(trackerConfig),
+        new ContextsFromReactNavigationPlugin({ ...trackerConfig, navigationContainerRef }),
+      ],
+    });
     const Tab = createBottomTabNavigator();
     const Stack = createStackNavigator();
 
@@ -261,27 +319,40 @@ describe('TrackedLink', () => {
       </Tab.Navigator>
     );
 
-    const navigationContainerRef = createNavigationContainerRef();
     const { getByTestId } = render(
-      <NavigationAwareObjectivProvider
-        tracker={tracker}
-        navigationContainerRef={navigationContainerRef}
-        options={{ trackApplicationLoaded: false }}
-      >
-        <NavigationContainer ref={navigationContainerRef}>
+      <ObjectivProvider tracker={tracker} options={{ trackApplicationLoaded: false }}>
+        <NavigationContainer
+          ref={navigationContainerRef}
+          onReady={() => {
+            trackApplicationLoadedEvent({ tracker });
+          }}
+        >
           <Stack.Navigator initialRouteName={'Home'}>
             <Stack.Screen name="Home" component={Home} />
             <Stack.Screen name="Profile" component={Profile} />
             <Stack.Screen name="Settings" component={Settings} />
           </Stack.Navigator>
         </NavigationContainer>
-      </NavigationAwareObjectivProvider>
+      </ObjectivProvider>
     );
 
     fireEvent.press(getByTestId('go-to-home-from-messages'));
 
-    expect(spyTransport.handle).toHaveBeenCalledTimes(1);
-    expect(spyTransport.handle).toHaveBeenCalledWith(
+    expect(spyTransport.handle).toHaveBeenCalledTimes(2);
+    expect(spyTransport.handle).toHaveBeenCalledTimes(2);
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        _type: 'ApplicationLoadedEvent',
+        global_contexts: [
+          expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
+          expect.objectContaining({ _type: 'PathContext', id: '/Home/Messages' }),
+        ],
+        location_stack: [expect.objectContaining({ _type: 'RootLocationContext', id: 'Messages' })],
+      })
+    );
+    expect(spyTransport.handle).toHaveBeenNthCalledWith(
+      2,
       expect.objectContaining({
         _type: 'PressEvent',
         global_contexts: [
