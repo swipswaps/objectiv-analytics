@@ -11,10 +11,11 @@ from typing import List, Union, Type, Dict, Any
 
 import pandas
 import sqlalchemy
-from sqlalchemy.engine import ResultProxy
+from sqlalchemy.engine import ResultProxy, Engine
 
 from bach import DataFrame, Series
 from bach.types import get_series_type_from_db_dtype
+from sql_models.util import is_bigquery, is_postgres
 
 DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
 
@@ -111,7 +112,6 @@ def get_bt(
     # in the same table, then tests will be confused anyway
     lookup_key = table
     if lookup_key not in _TABLE_DATAFRAME_CACHE:
-        import pandas as pd
         df = get_pandas_df(dataset, columns)
         _TABLE_DATAFRAME_CACHE[lookup_key] = get_from_df(table, df, convert_objects)
     # We don't even renew the `engine`, as creating the database connection takes a bit of time too. If
@@ -145,6 +145,37 @@ def get_from_df(table: str, df: pandas.DataFrame, convert_objects=True) -> DataF
         if_exists='replace'
     )
     return buh_tuh
+
+
+def get_df_with_test_data(engine: Engine, full_data_set: bool = False) -> DataFrame:
+    if is_postgres(engine):
+        if full_data_set:
+            return get_bt('test_table_full', TEST_DATA_CITIES_FULL, CITIES_COLUMNS, True)
+        return get_bt('test_table_partial', TEST_DATA_CITIES, CITIES_COLUMNS, True)
+    if is_bigquery(engine):
+        # todo: move this somewhere
+        all_dtypes = {
+            'skating_order': 'int64',
+            'city': 'string',
+            'municipality': 'string',
+            'inhabitants': 'int64',
+            'founding': 'int64'
+        }
+        df = DataFrame.from_table(
+            engine=engine,
+            table_name="cities",
+            index=['skating_order'],
+            all_dtypes=all_dtypes
+        )
+        # todo: update actual table to match the postgres test data. so we don't need this magic here
+        df = df.reset_index()
+        if not full_data_set:
+            df = df[df.skating_order <= 3]
+        df['_index_skating_order'] = df.skating_order
+        df = df.set_index('_index_skating_order')
+        df = df.materialize()
+        return df
+    raise ValueError(f'engine of type {engine.name} is not supported.')
 
 
 def get_bt_with_test_data(full_data_set: bool = False) -> DataFrame:

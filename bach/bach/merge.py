@@ -6,6 +6,8 @@ from copy import copy
 from enum import Enum
 from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
 
+from sqlalchemy.engine import Dialect
+
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeNamePair
 from bach.expression import Expression, join_expressions
@@ -117,6 +119,7 @@ def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> Li
 
 
 def _determine_result_columns(
+    dialect: Dialect,
     left: DataFrame,
     right: DataFrameOrSeries,
     left_on: List[str],
@@ -153,6 +156,7 @@ def _determine_result_columns(
             right_index[series_name] = series
 
     new_index_list = _get_merged_result_series(
+        dialect=dialect,
         left_series=left_df.index,
         right_series=right_index,
         suffixes=suffixes,
@@ -161,6 +165,7 @@ def _determine_result_columns(
     )
 
     new_data_list = _get_merged_result_series(
+        dialect=dialect,
         left_series=left_df.data,
         right_series=right_data,
         suffixes=suffixes,
@@ -182,6 +187,7 @@ def _check_no_column_name_conflicts(result_columns: List[ResultSeries]):
 
 
 def _get_merged_result_series(
+    dialect: Dialect,
     left_series: Dict[str, Series],
     right_series: Dict[str, Series],
     conflicting_names: Set[str],
@@ -194,13 +200,13 @@ def _get_merged_result_series(
         table_alias = 'l' if suffix == suffixes[0] else 'r'
         for series_name, series in source_series.items():
             new_name = series_name
-            expr = series.expression.resolve_column_references(table_alias)
+            expr = series.expression.resolve_column_references(dialect, table_alias)
 
             if series_name in conflicting_on:
                 if table_alias == 'r':
                     continue
-                r_expr = right_series[series_name].expression.resolve_column_references('r')
-                expr = Expression.construct(f'COALESCE({expr.to_sql()}, {r_expr.to_sql()})')
+                r_expr = right_series[series_name].expression.resolve_column_references(dialect, 'r')
+                expr = Expression.construct(f'COALESCE({expr.to_sql(dialect)}, {r_expr.to_sql(dialect)})')
             elif series_name in conflicting_names:
                 new_name = series_name + suffix
 
@@ -239,6 +245,8 @@ def merge(
             right = right.to_frame()
         right = right.materialize(node_name='merge_right')
 
+    dialect = left.engine.dialect
+
     real_how = How(how)
     real_left_on, real_right_on = _determine_left_on_right_on(
         left=left,
@@ -251,6 +259,7 @@ def merge(
         right_index=right_index
     )
     new_index_list, new_data_list = _determine_result_columns(
+        dialect=dialect,
         left=left,
         right=right,
         left_on=real_left_on,
@@ -271,6 +280,7 @@ def merge(
     variables.update(left.variables)
 
     model = _get_merge_sql_model(
+        dialect=dialect,
         left=left,
         right=right,
         how=real_how,
@@ -293,6 +303,7 @@ def merge(
 
 
 def _get_merge_sql_model(
+        dialect: Dialect,
         left: DataFrame,
         right: DataFrameOrSeries,
         how: How,
@@ -309,8 +320,8 @@ def _get_merge_sql_model(
     for l_label, r_label in zip(real_left_on, real_right_on):
         l_expr = _get_expression(df_series=left, label=l_label)
         r_expr = _get_expression(df_series=right, label=r_label)
-        merge_conditions.append(l_expr.resolve_column_references("l"))
-        merge_conditions.append(r_expr.resolve_column_references("r"))
+        merge_conditions.append(l_expr.resolve_column_references(dialect, "l"))
+        merge_conditions.append(r_expr.resolve_column_references(dialect, "r"))
 
     if merge_conditions:
         fmt_str = 'on ' + 'and '.join(['({} = {})'] * (len(merge_conditions)//2))
@@ -325,6 +336,7 @@ def _get_merge_sql_model(
 
     return MergeSqlModel.get_instance(
         column_expressions={rc.name: rc.expression for rc in new_column_list},
+        dialect=dialect,
         columns_expr=columns_expr,
         join_type_expr=join_type_expr,
         on_clause=on_clause,
@@ -350,6 +362,7 @@ class MergeSqlModel(BachSqlModel):
     def get_instance(
         cls,
         *,
+        dialect: Dialect,
         column_expressions: Dict[str, Expression],
         columns_expr: Expression,
         join_type_expr: Expression,
@@ -369,9 +382,9 @@ class MergeSqlModel(BachSqlModel):
         :param right_node, sql-model of the materialized right side of the join
         :param variables: Dictionary of all variable values
         """
-        columns_str = columns_expr.to_sql()
-        join_type_str = join_type_expr.to_sql()
-        on_str = on_clause.to_sql()
+        columns_str = columns_expr.to_sql(dialect)
+        join_type_str = join_type_expr.to_sql(dialect)
+        on_str = on_clause.to_sql(dialect)
 
         sql = f'''
             select {columns_str}
@@ -389,7 +402,7 @@ class MergeSqlModel(BachSqlModel):
 
         return MergeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=cls._get_placeholders(variables, all_expressions),
+            placeholders=cls._get_placeholders(dialect, variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

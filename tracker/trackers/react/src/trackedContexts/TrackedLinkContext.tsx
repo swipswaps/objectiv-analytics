@@ -3,11 +3,10 @@
  */
 
 import { getLocationPath } from '@objectiv/tracker-core';
+import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react-core';
 import React from 'react';
 import { makeAnchorClickHandler } from '../common/factories/makeAnchorClickHandler';
 import { makeIdFromTrackedAnchorProps } from '../common/factories/makeIdFromTrackedAnchorProps';
-import { useLocationStack } from '../hooks/consumers/useLocationStack';
-import { LinkContextWrapper } from '../locationWrappers/LinkContextWrapper';
 import { TrackedPressableContextProps } from '../types';
 
 /**

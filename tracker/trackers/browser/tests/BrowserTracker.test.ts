@@ -57,6 +57,7 @@ describe('BrowserTracker', () => {
     expect(testTracker.transport).toBeInstanceOf(TrackerTransportRetry);
     expect(testTracker.transport).toEqual({
       transportName: 'TrackerTransportRetry',
+      console,
       maxAttempts: 10,
       maxRetryMs: Infinity,
       maxTimeoutMs: Infinity,
@@ -65,8 +66,10 @@ describe('BrowserTracker', () => {
       attempts: [],
       transport: {
         transportName: 'TrackerTransportSwitch',
+        console,
         firstUsableTransport: {
           transportName: 'FetchTransport',
+          console,
           endpoint: 'localhost',
           fetchFunction: defaultFetchFunction,
         },
@@ -75,6 +78,7 @@ describe('BrowserTracker', () => {
     expect(testTracker.queue).toBeInstanceOf(TrackerQueue);
     expect(testTracker.queue).toEqual({
       queueName: 'TrackerQueue',
+      console,
       batchDelayMs: 1000,
       batchSize: 10,
       concurrency: 4,
@@ -84,6 +88,7 @@ describe('BrowserTracker', () => {
       processingEventIds: [],
       store: {
         queueStoreName: 'LocalStorageQueueStore',
+        console,
         localStorageKey: 'objectiv-events-queue-app-id',
       },
     });

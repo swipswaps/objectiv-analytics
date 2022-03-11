@@ -4,6 +4,8 @@ Copyright 2021 Objectiv B.V.
 import typing
 from typing import Dict, TypeVar, Tuple, List, Optional, Mapping, Hashable, Union
 
+from sqlalchemy.engine import Dialect
+
 from bach.expression import Expression, get_variable_tokens, VariableToken
 from bach.types import value_to_dtype, get_series_type_from_dtype
 from sql_models.util import quote_identifier
@@ -101,11 +103,12 @@ class BachSqlModel(SqlModel[T]):
     @classmethod
     def _get_placeholders(
         cls,
+        dialect: Dialect,
         variables: Dict['DtypeNamePair', Hashable],
         expressions: List[Expression],
     ) -> Dict[str, str]:
         filtered_variables = filter_variables(variables, expressions)
-        return get_variable_values_sql(filtered_variables)
+        return get_variable_values_sql(dialect, filtered_variables)
 
 
 class SampleSqlModel(BachSqlModel):
@@ -169,6 +172,7 @@ class SampleSqlModel(BachSqlModel):
     @staticmethod
     def get_instance(
         *,
+        dialect: Dialect,
         table_name: str,
         previous: BachSqlModel,
         column_expressions: Dict[str, Expression],
@@ -178,7 +182,7 @@ class SampleSqlModel(BachSqlModel):
         sql = 'SELECT * FROM {table_name}'
         return SampleSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders={'table_name': quote_identifier(table_name)},
+            placeholders={'table_name': quote_identifier(dialect, table_name)},
             references={},
             materialization=Materialization.CTE,
             materialization_name=None,
@@ -191,6 +195,7 @@ class CurrentNodeSqlModel(BachSqlModel):
     @staticmethod
     def get_instance(
         *,
+        dialect: Dialect,
         name: str,
         column_names: Tuple[str, ...],
         column_exprs: List[Expression],
@@ -204,13 +209,13 @@ class CurrentNodeSqlModel(BachSqlModel):
         variables: Dict['DtypeNamePair', Hashable],
     ) -> 'CurrentNodeSqlModel':
 
-        columns_str = ', '.join(expr.to_sql() for expr in column_exprs)
+        columns_str = ', '.join(expr.to_sql(dialect) for expr in column_exprs)
         distinct_stmt = ' distinct ' if distinct else ''
-        where_str = where_clause.to_sql() if where_clause else ''
-        group_by_str = group_by_clause.to_sql() if group_by_clause else ''
-        having_str = having_clause.to_sql() if having_clause else ''
-        order_by_str = order_by_clause.to_sql() if order_by_clause else ''
-        limit_str = limit_clause.to_sql() if limit_clause else ''
+        where_str = where_clause.to_sql(dialect) if where_clause else ''
+        group_by_str = group_by_clause.to_sql(dialect) if group_by_clause else ''
+        having_str = having_clause.to_sql(dialect) if having_clause else ''
+        order_by_str = order_by_clause.to_sql(dialect) if order_by_clause else ''
+        limit_str = limit_clause.to_sql(dialect) if limit_clause else ''
 
         sql = (
             f"select {distinct_stmt}{columns_str} \n"
@@ -229,7 +234,7 @@ class CurrentNodeSqlModel(BachSqlModel):
 
         return CurrentNodeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=BachSqlModel._get_placeholders(variables, all_expressions),
+            placeholders=BachSqlModel._get_placeholders(dialect, variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
@@ -283,12 +288,16 @@ def filter_variables(
     return {dtype_name: value for dtype_name, value in variable_values.items() if dtype_name in dtype_names}
 
 
-def get_variable_values_sql(variable_values: Dict['DtypeNamePair', Hashable]) -> Dict[str, str]:
+def get_variable_values_sql(
+        dialect: Dialect,
+        variable_values: Dict['DtypeNamePair', Hashable]
+) -> Dict[str, str]:
     """
     Take a dictionary with variable_values and return a dict with the full variable names and the values
     as sql.
     The sql assumes it will be used as values for SqlModels's placeholders. i.e. It will not be format
     escaped, unlike if it would be used directly into SqlModel.sql in which case it would be escaped twice.
+    The sql will be proper sql tho, with identifier, strings, etc. properly quoted and escaped.
 
     :param variable_values: Mapping of variable to value.
     :return: Dictionary mapping full variable name to sql literal
@@ -302,7 +311,7 @@ def get_variable_values_sql(variable_values: Dict['DtypeNamePair', Hashable]) ->
         placeholder_name = VariableToken.dtype_name_to_placeholder_name(dtype=dtype, name=name)
         series_type = get_series_type_from_dtype(dtype)
         expr = series_type.supported_value_to_literal(value)
-        double_escaped_sql = expr.to_sql()
+        double_escaped_sql = expr.to_sql(dialect)
         sql = double_escaped_sql.format().format()
         result[placeholder_name] = sql
     return result
