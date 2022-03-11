@@ -1560,7 +1560,7 @@ __metadata:
   peerDependencies:
     "@react-navigation/native": ">=6"
     react: ">=16.8"
-    react-native: ">=0.66"
+    react-native: ">=0.6"
   languageName: unknown
   linkType: soft
 
@@ -1763,7 +1763,7 @@ __metadata:
     typescript: ^4.6.2
   peerDependencies:
     react: ">=16.8"
-    react-native: ">=0.66"
+    react-native: ">=0.6"
   languageName: unknown
   linkType: soft
 
