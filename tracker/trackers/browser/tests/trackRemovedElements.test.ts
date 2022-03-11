@@ -2,13 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import { generateUUID, makeContentContext, TrackerConsole } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackRemovedElements } from '../src/mutationObserver/trackRemovedElements';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('trackRemovedElements', () => {
   beforeEach(() => {
@@ -99,7 +99,7 @@ describe('trackRemovedElements', () => {
     trackRemovedElements(div, getTracker());
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   it('should TrackerConsole.error', async () => {
@@ -111,6 +111,6 @@ describe('trackRemovedElements', () => {
     trackRemovedElements(div, getTracker());
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 });

@@ -2,13 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import { generateUUID, TrackerConsole } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackVisibilityVisibleEvent } from '../src/mutationObserver/trackVisibilityVisibleEvent';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('trackVisibilityVisibleEvent', () => {
   beforeEach(() => {

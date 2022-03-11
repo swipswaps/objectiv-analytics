@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   makePressableContext,
   makeExpandableContext,
@@ -16,7 +16,7 @@ import {
 } from '@objectiv/tracker-core';
 import { tagContent, TaggingAttribute, tagLocation, tagOverlay } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('tagLocation', () => {
   beforeEach(() => {
@@ -109,7 +109,7 @@ describe('tagLocation', () => {
     // @ts-ignore
     tagLocation({ instance: {} });
 
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   it('should allow overriding whether to track click, blur and visibility events via options', () => {

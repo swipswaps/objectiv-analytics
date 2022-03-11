@@ -2,13 +2,13 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { makeSuccessEvent, Tracker, TrackerConsole } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { makeContentContext, trackSuccessEvent, TrackingContextProvider, useSuccessEventTracker } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('SuccessEvent', () => {
   beforeEach(() => {

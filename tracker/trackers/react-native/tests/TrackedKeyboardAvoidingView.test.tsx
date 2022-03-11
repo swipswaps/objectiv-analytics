@@ -2,7 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
+import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
 import { getLocationPath, TrackerConsole } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react-native';
 import React from 'react';
@@ -17,7 +17,7 @@ import {
   useLocationStack,
 } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedKeyboardAvoidingView', () => {
   const spyTransport = new SpyTransport();

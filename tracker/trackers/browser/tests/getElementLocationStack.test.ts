@@ -3,7 +3,7 @@
  */
 
 import { PathContextFromURLPlugin } from '@objectiv/plugin-path-context-from-url';
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   generateUUID,
   getLocationPath,
@@ -15,7 +15,7 @@ import {
 import { BrowserTracker, getElementLocationStack, TaggableElement } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('getElementLocationStack', () => {
   const mainSection = makeTaggedElement(generateUUID(), 'main', 'section');
@@ -39,7 +39,7 @@ describe('getElementLocationStack', () => {
     it('should TrackerConsole.error when invoked with `null`', () => {
       // @ts-ignore
       expect(getElementLocationStack(null)).toHaveLength(0);
-      expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
     });
   });
 

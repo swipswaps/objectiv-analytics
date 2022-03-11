@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { LogTransport, mockConsoleImplementation, UnusableTransport } from '@objectiv/testing-tools';
+import { LogTransport, MockConsoleImplementation, UnusableTransport } from '@objectiv/testing-tools';
 import {
   ApplicationContextPlugin,
   ContextsConfig,
@@ -18,7 +18,7 @@ import {
   TrackerQueueMemoryStore,
 } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Tracker', () => {
   beforeEach(() => {
@@ -66,7 +66,7 @@ describe('Tracker', () => {
   });
 
   it('should instantiate with tracker config', async () => {
-    expect(mockConsoleImplementation.log).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.log).not.toHaveBeenCalled();
     const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
     const testTransport = new LogTransport();
     const testTracker = new Tracker({ ...trackerConfig, transport: testTransport });
@@ -79,7 +79,7 @@ describe('Tracker', () => {
     });
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
-    expect(mockConsoleImplementation.log).toHaveBeenCalledWith('Application ID: app-id');
+    expect(MockConsoleImplementation.log).toHaveBeenCalledWith('Application ID: app-id');
   });
 
   it('should instantiate with another Tracker, inheriting its state, yet being independent instances', () => {
@@ -311,18 +311,18 @@ describe('Tracker', () => {
       testTracker.setActive(false);
       testTracker.trackEvent(testEvent);
       expect(testTransport.handle).not.toHaveBeenCalled();
-      expect(mockConsoleImplementation.log).toHaveBeenCalledTimes(3);
-      expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.log).toHaveBeenCalledTimes(3);
+      expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:Tracker:app-id｣ New state: inactive`,
         'font-weight: bold'
       );
-      expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
         2,
         `%c｢objectiv:Tracker:app-id｣ New state: active`,
         'font-weight: bold'
       );
-      expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
         3,
         `%c｢objectiv:Tracker:app-id｣ New state: inactive`,
         'font-weight: bold'

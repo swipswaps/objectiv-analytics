@@ -2,11 +2,11 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { localStorageMock, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { localStorageMock, MockConsoleImplementation } from '@objectiv/testing-tools';
 import { TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { LocalStorageQueueStore } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('LocalStorageQueueStore', () => {
   beforeEach(() => {
@@ -126,13 +126,13 @@ describe('LocalStorageQueueStore', () => {
       const events = await trackerQueueStore.read();
       expect(events).toStrictEqual([]);
       // Once for the length getter, once for the read method
-      expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
-      expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+      expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:LocalStorageQueueStore｣ Failed to parse Events from localStorage: SyntaxError: Unexpected token o in JSON at position 1',
         'font-weight: bold'
       );
-      expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
         2,
         '%c｢objectiv:LocalStorageQueueStore｣ Failed to parse Events from localStorage: SyntaxError: Unexpected token o in JSON at position 1',
         'font-weight: bold'
@@ -157,8 +157,8 @@ describe('LocalStorageQueueStore', () => {
       const trackerQueueStore = new LocalStorageQueueStore({ trackerId: 'app-id' });
       expect(trackerQueueStore.length).toBe(0);
       await trackerQueueStore.write(TrackerEvent1);
-      expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:LocalStorageQueueStore｣ Failed to write Events to localStorage: Error: nope',
         'font-weight: bold'

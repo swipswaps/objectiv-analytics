@@ -2,11 +2,11 @@
  * Copyright 2021-2022 Objectiv B.V.
  * @jest-environment node
  */
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { makePathContext, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { PathContextFromURLPlugin } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('PathContextFromURLPlugin - node', () => {
   beforeEach(() => {
@@ -27,7 +27,7 @@ describe('PathContextFromURLPlugin - node', () => {
 
       testPathContextPlugin.validate(eventWithoutPathContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
 
     it('should not fail when given TrackerEvent has multiple PathContexts', () => {
@@ -41,7 +41,7 @@ describe('PathContextFromURLPlugin - node', () => {
 
       testPathContextPlugin.validate(eventWithDuplicatedPathContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
   });
 });

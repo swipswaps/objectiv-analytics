@@ -3,7 +3,7 @@
  * @jest-environment node
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { generateUUID, makePressEvent, TrackerConsole } from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import {
@@ -19,7 +19,7 @@ import {
   trackEvent,
 } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Without DOM', () => {
   beforeEach(() => {
@@ -39,8 +39,8 @@ describe('Without DOM', () => {
     // @ts-ignore
     trackEvent(parameters);
 
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       1,
       Error('Cannot access the Window interface.'),
       parameters
@@ -50,42 +50,42 @@ describe('Without DOM', () => {
   it('should TrackerConsole.error id Application Loaded Event fails at retrieving the document element', () => {
     trackApplicationLoadedEvent();
 
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       1,
       new ReferenceError('document is not defined'),
       {}
     );
 
     trackApplicationLoadedEvent({ onError: TrackerConsole.error });
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });
 
   it('should TrackerConsole.error id Completed Event fails at retrieving the document element', () => {
     trackSuccessEvent({ message: 'ok' });
 
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {
       message: 'ok',
     });
 
     trackSuccessEvent({ message: 'ok', onError: TrackerConsole.error });
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });
 
   it('should TrackerConsole.error id Aborted Event fails at retrieving the document element', () => {
     trackFailureEvent({ message: 'ko' });
 
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(1, new ReferenceError('document is not defined'), {
       message: 'ko',
     });
 
     trackFailureEvent({ message: 'ko', onError: TrackerConsole.error });
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(2, new ReferenceError('document is not defined'));
   });
 
   it('should return undefined', () => {
@@ -99,7 +99,7 @@ describe('Without DOM', () => {
     startAutoTracking();
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   it('should TrackerConsole.error when mutationCallback receives garbled data', async () => {
@@ -111,6 +111,6 @@ describe('Without DOM', () => {
     mutationCallback('not a list');
 
     expect(tracker.trackEvent).not.toHaveBeenCalled();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 });

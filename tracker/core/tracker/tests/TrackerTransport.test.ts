@@ -5,7 +5,7 @@
 import {
   ConfigurableMockTransport,
   LogTransport,
-  mockConsoleImplementation,
+  MockConsoleImplementation,
   UnusableTransport,
 } from '@objectiv/testing-tools';
 import {
@@ -27,7 +27,7 @@ const testContexts: ContextsConfig = {
 };
 const testEvent = new TrackerEvent({ _type: testEventName, ...testContexts });
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackerTransportSwitch', () => {
   beforeEach(() => {

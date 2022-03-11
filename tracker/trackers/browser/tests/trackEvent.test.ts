@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   generateUUID,
   makeFailureEvent,
@@ -48,7 +48,7 @@ import {
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('trackEvent', () => {
   const testElement = document.createElement('div');
@@ -399,20 +399,20 @@ describe('trackEvent', () => {
     const parameters = { event: makePressEvent(), element: testElement };
     trackEvent(parameters);
 
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       1,
       '｢objectiv:TrackerRepository｣ There are no Trackers.'
     );
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       2,
       new Error('No Tracker found. Please create one via `makeTracker`.'),
       parameters
     );
 
     trackEvent({ ...parameters, onError: TrackerConsole.error });
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(4);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(4);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       4,
       new Error('No Tracker found. Please create one via `makeTracker`.')
     );

@@ -2,12 +2,12 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { makeTransportSendError, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import xhrMock from 'xhr-mock';
 import { XHRTransport } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 beforeEach(() => {
   jest.spyOn(console, 'error').mockImplementation(() => {});

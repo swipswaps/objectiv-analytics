@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { expectToThrow, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { expectToThrow, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   GlobalContextValidationRule,
   LocationContextValidationRule,
@@ -20,7 +20,7 @@ import {
   useTrackingContext,
 } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackingContextProvider', () => {
   beforeEach(() => {

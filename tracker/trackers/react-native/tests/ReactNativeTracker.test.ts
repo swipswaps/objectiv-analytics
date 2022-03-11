@@ -2,14 +2,14 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { TrackerConsole, TrackerEvent, TrackerQueue, TrackerTransportRetry } from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
 import { ReactNativeTracker } from '../src/';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('ReactNativeTracker', () => {
   beforeEach(() => {

@@ -2,11 +2,11 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { ContextsConfig, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { RootLocationContextFromURLPlugin } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('RootLocationContextFromURLPlugin', () => {
   beforeEach(() => {
@@ -126,8 +126,8 @@ describe('RootLocationContextFromURLPlugin', () => {
     expect(testEvent.location_stack).toHaveLength(0);
     const trackedEvent = await testTracker.trackEvent(testEvent);
     expect(trackedEvent.location_stack).toHaveLength(0);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       1,
       `%c｢objectiv:RootLocationContextFromURLPlugin｣ Could not generate a RootLocationContext from "null"`,
       `font-weight: bold`

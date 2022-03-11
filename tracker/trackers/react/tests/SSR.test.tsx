@@ -2,13 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
+import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
 import { isDevMode, TrackerConsole } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { LocationTree, ObjectivProvider, ReactTracker, TrackedMain } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Browser / SSR', () => {
   const OLD_ENV = process.env;

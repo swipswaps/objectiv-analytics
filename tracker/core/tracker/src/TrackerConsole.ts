@@ -2,8 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { isDevMode } from "./helpers";
-import { NoopConsoleImplementation } from "./NoopConsoleImplementation";
+import { isDevMode } from './helpers';
+import { NoopConsoleImplementation } from './NoopConsoleImplementation';
 
 /**
  * A subset of the Console interface methods.

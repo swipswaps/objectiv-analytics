@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   generateUUID,
   makeContentContext,
@@ -15,7 +15,7 @@ import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingA
 import { trackNewElement } from '../src/mutationObserver/trackNewElement';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('trackNewElement', () => {
   beforeEach(() => {
@@ -168,7 +168,7 @@ describe('trackNewElement', () => {
 
     expect(trackedButton.addEventListener).not.toHaveBeenCalled();
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   it('should attach blur event listener', async () => {
@@ -196,6 +196,6 @@ describe('trackNewElement', () => {
     trackNewElement(trackedInput, getTracker());
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 });

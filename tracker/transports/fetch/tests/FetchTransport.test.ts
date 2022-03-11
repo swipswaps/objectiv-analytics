@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { isTransportSendError, makeTransportSendError, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchOptions, FetchTransport } from '../src';
@@ -13,7 +13,7 @@ const testEvent = new TrackerEvent({
   _type: 'test-event',
 });
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('FetchTransport', () => {
   beforeAll(() => {

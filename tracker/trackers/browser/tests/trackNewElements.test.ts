@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import { generateUUID, makeOverlayContext, TrackerConsole } from '@objectiv/tracker-core';
 import {
   BrowserTracker,
@@ -16,7 +16,7 @@ import {
 import { trackNewElements } from '../src/mutationObserver/trackNewElements';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('trackNewElements', () => {
   beforeEach(() => {
@@ -77,7 +77,7 @@ describe('trackNewElements', () => {
     trackNewElements(null, getTracker());
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   describe('collisions', () => {
@@ -96,9 +96,9 @@ describe('trackNewElements', () => {
       expect(document.querySelector).toHaveBeenCalledTimes(2);
       expect(document.querySelector).toHaveBeenNthCalledWith(1, `[${TaggingAttribute.elementId}='div1']`);
       expect(document.querySelector).toHaveBeenNthCalledWith(2, `[${TaggingAttribute.elementId}='div2']`);
-      expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
-      expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(1, `Existing Element:`, div1);
-      expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(2, `Colliding Element:`, div2);
+      expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+      expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(1, `Existing Element:`, div1);
+      expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(2, `Colliding Element:`, div2);
     });
 
     it('should not TrackerConsole.error if a collision occurs and ExistingElement does not exist', async () => {
@@ -116,7 +116,7 @@ describe('trackNewElements', () => {
       expect(document.querySelector).toHaveBeenCalledTimes(2);
       expect(document.querySelector).toHaveBeenNthCalledWith(1, `[${TaggingAttribute.elementId}='div1']`);
       expect(document.querySelector).toHaveBeenNthCalledWith(2, `[${TaggingAttribute.elementId}='div2']`);
-      expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     });
 
     it('should not TrackerConsole.error if a collision occurs and CollidingElement does not exist', async () => {
@@ -134,7 +134,7 @@ describe('trackNewElements', () => {
       expect(document.querySelector).toHaveBeenCalledTimes(2);
       expect(document.querySelector).toHaveBeenNthCalledWith(1, `[${TaggingAttribute.elementId}='div1']`);
       expect(document.querySelector).toHaveBeenNthCalledWith(2, `[${TaggingAttribute.elementId}='div2']`);
-      expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     });
   });
 });

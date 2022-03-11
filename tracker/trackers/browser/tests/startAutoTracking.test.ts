@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID, mockConsoleImplementation } from '@objectiv/testing-tools';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
 import { generateUUID, makeContentContext, TrackerConsole } from '@objectiv/tracker-core';
 import {
   AutoTrackingState,
@@ -17,7 +17,7 @@ import {
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('startAutoTracking', () => {
   beforeEach(() => {
@@ -43,7 +43,7 @@ describe('startAutoTracking', () => {
 
   it('should TrackerConsole.error', () => {
     startAutoTracking();
-    expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     // @ts-ignore
     AutoTrackingState.observerInstance = {
       disconnect: () => {
@@ -51,7 +51,7 @@ describe('startAutoTracking', () => {
       },
     };
     stopAutoTracking();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   it('should not track application loaded event', () => {
@@ -125,14 +125,14 @@ describe('makeMutationCallback - new nodes', () => {
       target: trackedDiv,
     };
     jest.clearAllMocks();
-    expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     mutationCallback([mockedMutationRecord], mutationObserver);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       1,
       `｢objectiv:TrackerRepository｣ There are no Trackers.`
     );
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       2,
       new Error(`No Tracker found. Please create one via \`makeTracker\`.`),
       undefined

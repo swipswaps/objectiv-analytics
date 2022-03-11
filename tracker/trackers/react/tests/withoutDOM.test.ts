@@ -3,11 +3,11 @@
  * @jest-environment node
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { TrackerConsole } from '@objectiv/tracker-core';
 import { ReactTracker } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Without DOM', () => {
   it('ReactTracker: should not instantiate LocalStorage but MemoryQueue instead', () => {

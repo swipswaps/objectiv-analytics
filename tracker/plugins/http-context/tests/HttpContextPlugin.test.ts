@@ -2,11 +2,11 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { ContextsConfig, makeHttpContext, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { HttpContextPlugin } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('HttpContextPlugin', () => {
   beforeEach(() => {
@@ -106,7 +106,7 @@ describe('HttpContextPlugin', () => {
 
       testHttpContextPlugin.validate(validEvent);
 
-      expect(mockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
 
     it('should fail when given TrackerEvent does not have HttpContext', () => {
@@ -117,8 +117,8 @@ describe('HttpContextPlugin', () => {
 
       testHttpContextPlugin.validate(eventWithoutHttpContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:HttpContextPlugin:GlobalContextValidationRule｣ Error: HttpContext is missing from Global Contexts.`,
         'color:red'
@@ -149,8 +149,8 @@ describe('HttpContextPlugin', () => {
 
       testHttpContextPlugin.validate(eventWithDuplicatedHttpContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:HttpContextPlugin:GlobalContextValidationRule｣ Error: Only one HttpContext should be present in Global Contexts.`,
         'color:red'

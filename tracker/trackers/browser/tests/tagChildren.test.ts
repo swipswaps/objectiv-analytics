@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   parseTagChildren,
   stringifyTagChildren,
@@ -13,7 +13,7 @@ import {
   TrackerConsole,
 } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('tagChild and tagChildren', () => {
   beforeEach(() => {
@@ -71,7 +71,7 @@ describe('tagChild and tagChildren', () => {
     // @ts-ignore
     tagChild({ queryAll: {} });
 
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   it('should return query and tagAs attributes', () => {
@@ -80,7 +80,7 @@ describe('tagChild and tagChildren', () => {
     const attributes1 = tagChild(parameters);
     const attributes2 = tagChildren([parameters]);
 
-    expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     expect(attributes1).toStrictEqual({
       [TaggingAttribute.tagChildren]: JSON.stringify([parameters]),
     });

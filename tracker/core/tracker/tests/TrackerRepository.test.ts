@@ -2,10 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { Tracker, TrackerConsole, TrackerRepository } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackerRepository', () => {
   beforeEach(() => {
@@ -16,7 +16,7 @@ describe('TrackerRepository', () => {
     const trackerRepository = new TrackerRepository();
     expect(trackerRepository.trackersMap.size).toBe(0);
     expect(trackerRepository.get()).toBeUndefined();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledWith('｢objectiv:TrackerRepository｣ There are no Trackers.');
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith('｢objectiv:TrackerRepository｣ There are no Trackers.');
   });
 
   it('should console.error when attempting to set a default Tracker that does not exist', () => {
@@ -25,7 +25,7 @@ describe('TrackerRepository', () => {
     trackerRepository.add(new Tracker({ applicationId: 'app-id-2' }));
     expect(trackerRepository.trackersMap.size).toBe(2);
     trackerRepository.setDefault('app-id-3');
-    expect(mockConsoleImplementation.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv:TrackerRepository｣ Tracker `app-id-3` not found.'
     );
   });
@@ -45,8 +45,8 @@ describe('TrackerRepository', () => {
     expect(trackerRepository.trackersMap.size).toBe(2);
     expect(trackerRepository.defaultTracker?.applicationId).toBe('app-id-1');
     trackerRepository.delete('app-id-1');
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv:TrackerRepository｣ `app-id-1` is the default Tracker. Please set another as default before deleting it.'
     );
     expect(trackerRepository.trackersMap.size).toBe(2);
@@ -63,7 +63,7 @@ describe('TrackerRepository', () => {
     expect(trackerRepository.trackersMap.size).toBe(1);
     expect(trackerRepository.get()).toBeInstanceOf(Tracker);
     expect(trackerRepository.get()?.applicationId).toBe('app-id');
-    expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
   });
 
   it('should delete an existing Tracker from the trackersMap', () => {
@@ -72,10 +72,10 @@ describe('TrackerRepository', () => {
     expect(trackerRepository.trackersMap.size).toBe(1);
     expect(trackerRepository.get()).toBeInstanceOf(Tracker);
     expect(trackerRepository.get()?.applicationId).toBe('app-id');
-    expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     trackerRepository.delete('app-id');
     expect(trackerRepository.trackersMap.size).toBe(0);
-    expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
   });
 
   it('should create three new Trackers and get should return the first one', () => {
@@ -97,8 +97,8 @@ describe('TrackerRepository', () => {
     trackerRepository.add(new Tracker({ applicationId: 'app-id', trackerId: 'tracker-3' }));
     expect(trackerRepository.trackersMap.size).toBe(3);
     expect(trackerRepository.get('app-id-1')).toBeUndefined();
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv:TrackerRepository｣ Tracker `app-id-1` not found.'
     );
     expect(trackerRepository.get('tracker-1')?.applicationId).toBe('app-id');
@@ -111,14 +111,14 @@ describe('TrackerRepository', () => {
     trackerRepository.add(new Tracker({ applicationId: 'app-id', trackerId: 'tracker-1' }));
     trackerRepository.add(new Tracker({ applicationId: 'tracker-1' }));
     expect(trackerRepository.trackersMap.size).toBe(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv:TrackerRepository｣ Tracker `tracker-1` already exists.'
     );
     trackerRepository.add(new Tracker({ applicationId: 'app-id', trackerId: 'tracker-1' }));
     expect(trackerRepository.trackersMap.size).toBe(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       2,
       '｢objectiv:TrackerRepository｣ Tracker `tracker-1` already exists.'
     );
@@ -131,13 +131,13 @@ describe('TrackerRepository', () => {
     trackerRepository.add(new Tracker({ applicationId: 'app-id-3', active: false }));
     jest.resetAllMocks();
     trackerRepository.activateAll();
-    expect(mockConsoleImplementation.log).toHaveBeenCalledTimes(2);
-    expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.log).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
       1,
       '%c｢objectiv:Tracker:app-id-1｣ New state: active',
       'font-weight: bold'
     );
-    expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
       2,
       '%c｢objectiv:Tracker:app-id-3｣ New state: active',
       'font-weight: bold'
@@ -151,13 +151,13 @@ describe('TrackerRepository', () => {
     trackerRepository.add(new Tracker({ applicationId: 'app-id-3' }));
     jest.resetAllMocks();
     trackerRepository.deactivateAll();
-    expect(mockConsoleImplementation.log).toHaveBeenCalledTimes(2);
-    expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.log).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
       1,
       '%c｢objectiv:Tracker:app-id-1｣ New state: inactive',
       'font-weight: bold'
     );
-    expect(mockConsoleImplementation.log).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
       2,
       '%c｢objectiv:Tracker:app-id-3｣ New state: inactive',
       'font-weight: bold'

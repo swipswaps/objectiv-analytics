@@ -2,7 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   makeContentContext,
   makePathContext,
@@ -12,7 +12,7 @@ import {
   TrackerEvent,
 } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('OpenTaxonomyValidationPlugin', () => {
   beforeEach(() => {
@@ -32,7 +32,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
 
       testOpenTaxonomyValidationPlugin.validate(validEvent);
 
-      expect(mockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
 
     it('should fail when given TrackerEvent does not have RootLocationContext', () => {
@@ -46,8 +46,8 @@ describe('OpenTaxonomyValidationPlugin', () => {
 
       testOpenTaxonomyValidationPlugin.validate(eventWithoutRootLocationContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:OpenTaxonomyValidationPlugin:LocationContextValidationRule｣ Error: RootLocationContext is missing from Location Stack.`,
         'color:red'
@@ -66,8 +66,8 @@ describe('OpenTaxonomyValidationPlugin', () => {
 
       testOpenTaxonomyValidationPlugin.validate(eventWithDuplicatedRootLocationContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:OpenTaxonomyValidationPlugin:LocationContextValidationRule｣ Error: Only one RootLocationContext should be present in Location Stack.`,
         'color:red'
@@ -86,8 +86,8 @@ describe('OpenTaxonomyValidationPlugin', () => {
 
       testOpenTaxonomyValidationPlugin.validate(eventWithRootLocationContextInWrongPosition);
 
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:OpenTaxonomyValidationPlugin:LocationContextValidationRule｣ Error: RootLocationContext is in the wrong position of the Location Stack.`,
         'color:red'

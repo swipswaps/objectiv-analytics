@@ -2,11 +2,11 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { makePressableContext, TrackerConsole } from '@objectiv/tracker-core';
 import { isTaggedElement, processTagChildrenElement, tagPressable, tagContent, TaggingAttribute } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('processChildrenTrackingElement', () => {
   beforeEach(() => {

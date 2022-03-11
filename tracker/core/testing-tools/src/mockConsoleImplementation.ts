@@ -4,7 +4,7 @@
 
 import { TrackerConsoleImplementation } from '@objectiv/tracker-core';
 
-export const mockConsoleImplementation: TrackerConsoleImplementation = {
+export const MockConsoleImplementation: TrackerConsoleImplementation = {
   debug: jest.fn(),
   error: jest.fn(),
   group: jest.fn(),

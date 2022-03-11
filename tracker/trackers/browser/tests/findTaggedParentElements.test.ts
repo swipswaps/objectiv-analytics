@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   findParentTaggedElements,
   isParentTaggedElement,
@@ -11,7 +11,7 @@ import {
   TrackerConsole,
 } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('findTaggedParentElements', () => {
   afterEach(() => {
@@ -134,8 +134,8 @@ describe('findTaggedParentElements', () => {
     const trackedParentElements = findParentTaggedElements(div);
     expect(trackedParentElements).toHaveLength(1);
     expect(trackedParentElements).toStrictEqual([div]);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       `findParentTaggedElements: missing or invalid Parent Element 'top'`
     );
   });

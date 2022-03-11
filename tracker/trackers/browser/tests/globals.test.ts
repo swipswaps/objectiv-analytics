@@ -2,10 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { BrowserTracker, getOrMakeTracker, getTracker, makeTracker, setDefaultTracker, TrackerConsole } from '../src/';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('globals', () => {
   afterEach(() => {
@@ -21,7 +21,7 @@ describe('globals', () => {
     makeTracker({ applicationId: 'app-id', endpoint: 'localhost' });
     expect(window.objectiv.trackers.trackersMap.size).toBe(1);
     expect(getTracker()).toBeInstanceOf(BrowserTracker);
-    expect(mockConsoleImplementation.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
   });
 
   it('should create three new Browser Trackers and getTracker should return the first one', () => {
@@ -76,8 +76,8 @@ describe('globals', () => {
     makeTracker({ applicationId: 'app-id', trackerId: 'tracker-3', endpoint: 'localhost' });
     expect(window.objectiv.trackers.trackersMap.size).toBe(3);
     expect(() => getTracker('app-id-1')).toThrow('No Tracker found. Please create one via `makeTracker`.');
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv:TrackerRepository｣ Tracker `app-id-1` not found.'
     );
     expect(getTracker('tracker-1').applicationId).toBe('app-id');
@@ -89,14 +89,14 @@ describe('globals', () => {
     makeTracker({ applicationId: 'app-id', trackerId: 'tracker-1', endpoint: 'localhost' });
     makeTracker({ applicationId: 'tracker-1', endpoint: 'localhost' });
     expect(window.objectiv.trackers.trackersMap.size).toBe(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv:TrackerRepository｣ Tracker `tracker-1` already exists.'
     );
     makeTracker({ applicationId: 'app-id', trackerId: 'tracker-1', endpoint: 'localhost' });
     expect(window.objectiv.trackers.trackersMap.size).toBe(1);
-    expect(mockConsoleImplementation.error).toHaveBeenCalledTimes(2);
-    expect(mockConsoleImplementation.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       2,
       '｢objectiv:TrackerRepository｣ Tracker `tracker-1` already exists.'
     );

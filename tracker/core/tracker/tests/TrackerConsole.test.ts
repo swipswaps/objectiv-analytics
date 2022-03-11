@@ -4,6 +4,16 @@
 
 import { NoopConsoleImplementation, TrackerConsole } from '../src';
 
+jest.mock('../src/helpers', () => {
+  const originalModule = jest.requireActual('../src/helpers');
+
+  return {
+    __esModule: true,
+    ...originalModule,
+    isDevMode: () => false,
+  };
+});
+
 describe('TrackerConsole', () => {
   it('should return undefined', () => {
     TrackerConsole.setImplementation(NoopConsoleImplementation);
@@ -15,5 +25,22 @@ describe('TrackerConsole', () => {
     expect(TrackerConsole.info()).toBe(undefined);
     expect(TrackerConsole.log()).toBe(undefined);
     expect(TrackerConsole.warn()).toBe(undefined);
+  });
+
+  describe('env sensitive logic', () => {
+    beforeEach(() => {
+      jest.resetModules();
+      jest.resetAllMocks();
+      jest.spyOn(NoopConsoleImplementation, 'log');
+      jest.spyOn(console, 'log');
+    });
+
+    it('TrackerConsole should automatically use NoopConsole when not in development', () => {
+      TrackerConsole.log('should log to NoopConsole');
+
+      expect(NoopConsoleImplementation.log).toHaveBeenCalledTimes(1);
+      expect(NoopConsoleImplementation.log).toHaveBeenCalledWith('should log to NoopConsole');
+      expect(console.log).not.toHaveBeenCalled();
+    });
   });
 });

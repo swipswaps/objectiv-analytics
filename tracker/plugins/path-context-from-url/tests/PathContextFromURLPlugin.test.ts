@@ -2,11 +2,11 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import { ContextsConfig, makePathContext, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { PathContextFromURLPlugin } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('PathContextFromURLPlugin', () => {
   beforeEach(() => {
@@ -56,7 +56,7 @@ describe('PathContextFromURLPlugin', () => {
 
       testPathContextPlugin.validate(validEvent);
 
-      expect(mockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
 
     it('should fail when given TrackerEvent does not have PathContext', () => {
@@ -67,8 +67,8 @@ describe('PathContextFromURLPlugin', () => {
 
       testPathContextPlugin.validate(eventWithoutPathContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:PathContextFromURLPlugin:GlobalContextValidationRule｣ Error: PathContext is missing from Global Contexts.`,
         'color:red'
@@ -86,8 +86,8 @@ describe('PathContextFromURLPlugin', () => {
 
       testPathContextPlugin.validate(eventWithDuplicatedPathContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:PathContextFromURLPlugin:GlobalContextValidationRule｣ Error: Only one PathContext should be present in Global Contexts.`,
         'color:red'

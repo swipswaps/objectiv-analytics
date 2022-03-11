@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsoleImplementation } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   ApplicationContextPlugin,
   ContextsConfig,
@@ -13,7 +13,7 @@ import {
   TrackerEvent,
 } from '../src';
 
-TrackerConsole.setImplementation(mockConsoleImplementation);
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
 
@@ -67,7 +67,7 @@ describe('ApplicationContextPlugin', () => {
 
       testApplicationContextPlugin.validate(validEvent);
 
-      expect(mockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
 
     it('should fail when given TrackerEvent does not have ApplicationContext', () => {
@@ -78,8 +78,8 @@ describe('ApplicationContextPlugin', () => {
 
       testApplicationContextPlugin.validate(eventWithoutApplicationContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:ApplicationContextPlugin:GlobalContextValidationRule｣ Error: ApplicationContext is missing from Global Contexts.`,
         'color:red'
@@ -97,8 +97,8 @@ describe('ApplicationContextPlugin', () => {
 
       testApplicationContextPlugin.validate(eventWithDuplicatedApplicationContext);
 
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(mockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:ApplicationContextPlugin:GlobalContextValidationRule｣ Error: Only one ApplicationContext should be present in Global Contexts.`,
         'color:red'
