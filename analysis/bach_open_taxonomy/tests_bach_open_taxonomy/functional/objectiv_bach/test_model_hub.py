@@ -4,7 +4,6 @@ Copyright 2021 Objectiv B.V.
 
 # Any import from from bach_open_taxonomy initializes all the types, do not remove
 from bach_open_taxonomy import __version__
-from bach_open_taxonomy.modelhub.modelhub import ModelHub
 from tests_bach_open_taxonomy.functional.objectiv_bach.data_and_utils import get_objectiv_dataframe
 from tests.functional.bach.test_data_and_utils import assert_equals_data
 from uuid import UUID
@@ -12,26 +11,6 @@ from uuid import UUID
 
 def test_get_objectiv_stack():
     get_objectiv_dataframe()
-
-
-def test_filter():
-    df, modelhub = get_objectiv_dataframe()
-
-    fdf = modelhub.filter(df, df.session_id == df[df.session_id<=4].session_id).session_id
-    assert_equals_data(
-        fdf,
-        expected_columns=['event_id', 'session_id'],
-        expected_data=[
-            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), 3],
-            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), 3],
-            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), 3],
-            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), 2],
-            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), 4],
-            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), 4],
-            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), 1],
-            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), 1]
-        ]
-    )
 
 
 # map
@@ -60,6 +39,22 @@ def test_is_first_session():
         order_by='event_id'
     )
 
+    # use created series to filter dataframe
+    df['s'] = s
+
+    assert_equals_data(
+        df[df.s].s,
+        expected_columns=['event_id', 's'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), True]
+        ],
+        order_by='event_id'
+    )
 
 def test_is_new_user():
     df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
@@ -76,6 +71,24 @@ def test_is_new_user():
             [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), True],
             [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), False],
             [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), False],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), True],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), True]
+        ],
+        order_by='event_id'
+    )
+
+    # use created series to filter dataframe
+    df['s'] = s
+
+    assert_equals_data(
+        df[df.s].s,
+        expected_columns=['event_id', 's'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), True],
             [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), True],
             [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), True],
             [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), True],
@@ -116,6 +129,18 @@ def test_is_conversion_event():
         order_by='event_id'
     )
 
+    # use created series to filter dataframe
+    df['s'] = s
+
+    assert_equals_data(
+        df[df.s].s,
+        expected_columns=['event_id', 's'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), True]
+        ],
+        order_by='event_id'
+    )
+
 
 def test_conversion_count():
     df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
@@ -146,6 +171,18 @@ def test_conversion_count():
         order_by='event_id'
     )
 
+    # use created series to filter dataframe
+    df['s'] = s == 1
+
+    assert_equals_data(
+        df[df.s].s,
+        expected_columns=['event_id', 's'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), True]
+        ],
+        order_by='event_id'
+    )
+
 
 def test_pre_conversion_hit_number():
     df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
@@ -172,6 +209,18 @@ def test_pre_conversion_hit_number():
             [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), None],
             [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), None],
             [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), None]
+        ],
+        order_by='event_id'
+    )
+
+    # use created series to filter dataframe
+    df['s'] = s == 2
+
+    assert_equals_data(
+        df[df.s].s,
+        expected_columns=['event_id', 's'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), True],
         ],
         order_by='event_id'
     )

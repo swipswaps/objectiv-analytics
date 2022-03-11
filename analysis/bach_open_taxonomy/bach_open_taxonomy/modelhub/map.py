@@ -32,7 +32,11 @@ class Map:
         window = df.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
         first_session = window['session_id'].min()
         series = first_session == df.session_id
-        return series.copy_override(name='is_first_session', index=df.index)
+
+        new_series = series.copy_override(name='is_first_session',
+                                          index=df.index).to_frame().materialize().is_first_session
+
+        return new_series
 
     def is_new_user(self, df, time_aggregation=None) -> 'SeriesBoolean':
         """
@@ -44,19 +48,19 @@ class Map:
 
         self._mh._check_data_is_objectiv_data(df)
 
-        if not time_aggregation:
-            time_aggregation = self._mh._time_aggregation
-
         window = df.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
         is_first_session = window['session_id'].min()
 
-        window = df.groupby([df.moment.dt.sql_format(time_aggregation),
+        window = df.groupby([self._mh.time_agg(df, time_aggregation),
                              'user_id']).window(end_boundary=WindowFrameBoundary.FOLLOWING)
         is_first_session_time_aggregation = window['session_id'].min()
 
         series = is_first_session_time_aggregation == is_first_session
 
-        return series.copy_override(name='is_new_user', index=df.index)
+        new_series = series.copy_override(name='is_new_user',
+                                          index=df.index).to_frame().materialize().is_new_user
+
+        return new_series
 
     def is_conversion_event(self, df, name: str):
         """

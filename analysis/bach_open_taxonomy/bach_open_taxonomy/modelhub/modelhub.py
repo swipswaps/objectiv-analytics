@@ -202,29 +202,6 @@ class ModelHub():
         metabase = MetaBase()
         return metabase.to_metabase(df, model_type, config)
 
-    def filter(self, df, filter: 'SeriesBoolean'):
-        """
-        Filters the ObjectivFrame for all hits where the filter is True.
-
-        :param filter: SeriesBoolean, where hits are True for those returned.
-        :returns: A filtered ObjectivFrame
-        """
-
-        if df.base_node != filter.base_node:
-            df = df.copy_override()
-            df['__filter'] = filter
-            filter = df['__filter']
-            df = df.drop(columns=['__filter'])
-
-        if filter.expression.has_windowed_aggregate_function:
-            df = df.copy_override()
-            df['__filter'] = filter
-            df = df.materialize()
-            filter = df['__filter']
-            df = df.drop(columns=['__filter'])
-
-        return df[filter]
-
     @property
     def map(self):
         """
