@@ -25,10 +25,11 @@ class ObjectivStack(SeriesJsonb.Json):
         :param dtype: the dtype of the series to return.
         :returns: a series of type `dtype`
         """
+        dialect = self._series_object.engine.dialect
         expression_str = f'''
         jsonb_path_query_first({{}},
         \'$[*] ? (@._type == $type)\',
-        \'{{"type":{quote_identifier(type)}}}\') ->> {{}}'''
+        \'{{"type":{quote_identifier(dialect, type)}}}\') ->> {{}}'''
         expression = Expression.construct(
             expression_str,
             self._series_object,

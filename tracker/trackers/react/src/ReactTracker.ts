@@ -2,11 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContextsConfig, Tracker, TrackerConfig } from '@objectiv/tracker-core';
-import { makeDefaultPluginsList } from './common/factories/makeDefaultPluginsList';
-import { makeDefaultQueue } from './common/factories/makeDefaultQueue';
-import { makeDefaultTransport } from './common/factories/makeDefaultTransport';
-import { isDevMode } from './common/isDevMode';
+import { ContextsConfig, isBrowser, isDevMode, Tracker, TrackerConfig } from '@objectiv/tracker-core';
+import { makeReactTrackerDefaultPluginsList } from './common/factories/makeReactTrackerDefaultPluginsList';
+import { makeReactTrackerDefaultQueue } from './common/factories/makeReactTrackerDefaultQueue';
+import { makeReactTrackerDefaultTransport } from './common/factories/makeReactTrackerDefaultTransport';
 
 /**
  * React Tracker can be configured in an easier way, as opposed to the core tracker.
@@ -67,9 +66,9 @@ export type ReactTrackerConfig = TrackerConfig & {
  *  ];
  *  const tracker = new Tracker({ transport, queue, plugins, console });
  *
- *  @see makeDefaultTransport
- *  @see makeDefaultQueue
- *  @see makeDefaultPluginsList
+ *  @see makeReactTrackerDefaultTransport
+ *  @see makeReactTrackerDefaultQueue
+ *  @see makeReactTrackerDefaultPluginsList
  */
 export class ReactTracker extends Tracker {
   constructor(trackerConfig: ReactTrackerConfig, ...contextConfigs: ContextsConfig[]) {
@@ -86,7 +85,7 @@ export class ReactTracker extends Tracker {
     }
 
     // If node is in `development` on web and console has not been configured, automatically use the browser's console
-    if (config.console === undefined && isDevMode()) {
+    if (config.console === undefined && isDevMode() && isBrowser()) {
       config.console = console;
     }
 
@@ -94,8 +93,8 @@ export class ReactTracker extends Tracker {
     if (config.endpoint) {
       config = {
         ...config,
-        transport: makeDefaultTransport(config),
-        queue: config.queue ?? makeDefaultQueue(config),
+        transport: makeReactTrackerDefaultTransport(config),
+        queue: config.queue ?? makeReactTrackerDefaultQueue(config),
       };
     }
 
@@ -103,7 +102,7 @@ export class ReactTracker extends Tracker {
     if (!config.plugins) {
       config = {
         ...config,
-        plugins: makeDefaultPluginsList(config),
+        plugins: makeReactTrackerDefaultPluginsList(config),
       };
     }
 

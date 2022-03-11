@@ -3,27 +3,35 @@ Copyright 2021 Objectiv B.V.
 """
 from typing import List, NamedTuple, Dict, Set, Iterable
 
+from sqlalchemy.engine import Dialect
+
 from sql_models.graph_operations import find_nodes, FoundNode
 from sql_models.model import SqlModel, REFERENCE_UNIQUE_FIELD, Materialization
 from sql_models.sql_query_parser import raw_sql_to_selects
 from sql_models.util import quote_identifier
 
 
-def to_sql(model: SqlModel) -> str:
+def to_sql(dialect: Dialect, model: SqlModel) -> str:
     """
     Give the sql to query the given model
+    :param dialect: SQL Dialect
     :param model: model to convert to sql
     :return: executable select query
     """
     compiler_cache: Dict[str, List['SemiCompiledTuple']] = {}
-    return _to_sql_materialized_node(model=model, compiler_cache=compiler_cache)
+    return _to_sql_materialized_node(dialect=dialect, model=model, compiler_cache=compiler_cache)
 
 
-def to_sql_materialized_nodes(start_node: SqlModel, include_start_node=True) -> Dict[str, str]:
+def to_sql_materialized_nodes(
+        dialect: Dialect,
+        start_node: SqlModel,
+        include_start_node=True,
+) -> Dict[str, str]:
     """
     Give list of sql statements:
         * The sql to query the given model
         * The sql to create all views and tables that the given model depends upon
+    :param dialect: SQL Dialect
     :param start_node: model to convert to sql
     :return: A dict of sql statements. The order of the items in the dict is significant: earlier statements
         will create views and/or tables that might be used by later statements.
@@ -45,39 +53,46 @@ def to_sql_materialized_nodes(start_node: SqlModel, include_start_node=True) -> 
     _check_names_unique(found_node.model for found_node in materialized_found_nodes)
     for found_node in reversed(materialized_found_nodes):
         model = found_node.model
-        result[model_to_name(model)] = _to_sql_materialized_node(model=model, compiler_cache=compiler_cache)
+        result[model_to_name(model)] = _to_sql_materialized_node(
+            dialect=dialect,
+            model=model,
+            compiler_cache=compiler_cache,
+        )
     return result
 
 
 def _to_sql_materialized_node(
+        dialect: Dialect,
         model: SqlModel,
-        compiler_cache: Dict[str, List['SemiCompiledTuple']]
+        compiler_cache: Dict[str, List['SemiCompiledTuple']],
 ) -> str:
     """
     Give the sql to query the given model
+    :param dialect: SQL Dialect
     :param model: model to convert to sql
     :param compiler_cache: Dictionary mapping model hashes to already compiled results
     :return: executable select query
     """
-    queries = _to_cte_sql(compiler_cache=compiler_cache, model=model)
+    queries = _to_cte_sql(dialect=dialect, compiler_cache=compiler_cache, model=model)
     queries = _filter_duplicate_ctes(queries)
     if len(queries) == 0:
         # _to_cte_sql should never return an empty list, but this make it clear we have a len > 0 below.
         raise Exception('Internal error. No models to compile')
 
     if len(queries) == 1:
-        return _materialize(queries[0].sql, model)
+        return _materialize(dialect=dialect, sql_query=queries[0].sql, model=model)
 
     # case: len(result) > 1
     sql = 'with '
     sql += ',\n'.join(f'{row.quoted_cte_name} as ({row.sql})' for row in queries[:-1])
     sql += '\n' + queries[-1].sql
-    return _materialize(sql, model)
+    return _materialize(dialect=dialect, sql_query=sql, model=model)
 
 
-def _materialize(sql_query: str, model: SqlModel) -> str:
+def _materialize(dialect: Dialect, sql_query: str, model: SqlModel) -> str:
     """
     Generate sql that wraps the sql_query with the materialization indicated by model.
+    :param dialect: SQL Dialect
     :param sql_query: raw sql query
     :param model: model that indicates the materialization and name of the resulting view or table
         (if applicable).
@@ -85,7 +100,7 @@ def _materialize(sql_query: str, model: SqlModel) -> str:
     """
 
     materialization = model.materialization
-    quoted_name = model_to_quoted_name(model)
+    quoted_name = model_to_quoted_name(dialect, model)
     if materialization == Materialization.CTE:
         return sql_query
     if materialization == Materialization.QUERY:
@@ -148,11 +163,14 @@ def _filter_duplicate_ctes(queries: List[SemiCompiledTuple]) -> List[SemiCompile
     return result
 
 
-def _to_cte_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
-                model: SqlModel) -> List[SemiCompiledTuple]:
+def _to_cte_sql(dialect: Dialect,
+                compiler_cache: Dict[str, List[SemiCompiledTuple]],
+                model: SqlModel
+                ) -> List[SemiCompiledTuple]:
     """
     Recursively build the list of all common table expressions that are needed to generate the sql for
     the given model
+    :param dialect: SQL Dialect
     :param compiler_cache: Dictionary mapping model hashes to already compiled results
     :param model: model to convert to a list of SemiCompiledTuple
     :return:
@@ -163,15 +181,21 @@ def _to_cte_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     # First recursively compile all CTEs that we depend on
     result = []
     reference_names = {
-        name: model_to_quoted_name(reference) for name, reference in model.references.items()
+        name: model_to_quoted_name(dialect=dialect, model=reference)
+        for name, reference in model.references.items()
     }
     for ref_name, reference in model.references.items():
         if reference.materialization.is_cte:
-            result.extend(_to_cte_sql(compiler_cache=compiler_cache, model=reference))
+            result.extend(_to_cte_sql(dialect=dialect, compiler_cache=compiler_cache, model=reference))
 
     # Compile the actual model
     result.extend(
-        _single_model_to_sql(compiler_cache=compiler_cache, model=model, reference_names=reference_names)
+        _single_model_to_sql(
+            dialect=dialect,
+            compiler_cache=compiler_cache,
+            model=model,
+            reference_names=reference_names
+        )
     )
 
     compiler_cache[model.hash] = result
@@ -190,18 +214,21 @@ def model_to_name(model: SqlModel):
     return name
 
 
-def model_to_quoted_name(model: SqlModel):
+def model_to_quoted_name(dialect: Dialect, model: SqlModel):
     """
     Get the name for the cte/table/view that will be generated from this model, quoted and escaped.
     """
-    return quote_identifier(model_to_name(model))
+    return quote_identifier(dialect, model_to_name(model))
 
 
-def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
+def _single_model_to_sql(dialect: Dialect,
+                         compiler_cache: Dict[str, List[SemiCompiledTuple]],
                          model: SqlModel,
-                         reference_names: Dict[str, str]) -> List[SemiCompiledTuple]:
+                         reference_names: Dict[str, str]
+                         ) -> List[SemiCompiledTuple]:
     """
     Split the sql for a given model into a list of separate CTEs.
+    :param dialect: SQL Dialect
     :param compiler_cache: Dictionary mapping model hashes to already compiled results
     :param model:
     :param reference_names: mapping of references in the raw sql, to the names of the CTEs that they refer
@@ -225,9 +252,11 @@ def _single_model_to_sql(compiler_cache: Dict[str, List[SemiCompiledTuple]],
     for cte in ctes[:-1]:
         # For all CTEs the name should be set. Only for the final select (== cte[-1]) it will be None.
         assert cte.name is not None
-        result.append(SemiCompiledTuple(quoted_cte_name=quote_identifier(cte.name), sql=cte.select_sql))
+        result.append(
+            SemiCompiledTuple(quoted_cte_name=quote_identifier(dialect, cte.name), sql=cte.select_sql)
+        )
     result.append(
-        SemiCompiledTuple(quoted_cte_name=model_to_quoted_name(model), sql=ctes[-1].select_sql)
+        SemiCompiledTuple(quoted_cte_name=model_to_quoted_name(dialect, model), sql=ctes[-1].select_sql)
     )
 
     compiler_cache[model.hash] = result

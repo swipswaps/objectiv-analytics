@@ -1,8 +1,7 @@
 /*
  * Copyright 2021-2022 Objectiv B.V.
  */
-
-import uuid from 'uuid-random';
+import { v4 as uuid } from 'uuid';
 
 /**
  * A TypeScript friendly Object.keys
@@ -111,3 +110,14 @@ export const makeIdFromString = (sourceString: string): string | null => {
   // Return processed id
   return id;
 };
+
+/**
+ * Helper function to determine if we are in development mode by checking the Node environment.
+ */
+export const isDevMode = () =>
+  (process.env.NODE_ENV?.startsWith('dev') || process.env.NODE_ENV?.startsWith('test')) ?? false;
+
+/**
+ * Helper function to determine if we are in a browser - quite simplistically by checking the window object.
+ */
+export const isBrowser = () => typeof window !== 'undefined';

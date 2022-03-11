@@ -2,10 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { OverlayContextWrapper, trackVisibility, useOnChange } from '@objectiv/tracker-react-core';
 import React, { useState } from 'react';
-import { trackVisibility } from '../eventTrackers/trackVisibility';
-import { useOnChange } from '../hooks/useOnChange';
-import { OverlayContextWrapper } from '../locationWrappers/OverlayContextWrapper';
 import { TrackedShowableContextProps } from '../types';
 
 /**

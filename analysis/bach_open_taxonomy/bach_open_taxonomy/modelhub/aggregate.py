@@ -2,9 +2,14 @@
 Copyright 2021 Objectiv B.V.
 """
 from typing import TYPE_CHECKING
+from sql_models.constants import NotSet, not_set
+from bach.series import Series
+from typing import List, Union, Optional
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean, SeriesInt64
+
+GroupByType = Union[List[Union[str, Series]], str, Series, NotSet]
 
 
 class Aggregate:
@@ -19,11 +24,39 @@ class Aggregate:
     def __init__(self, df):
         self._df = df
 
-    def _generic_aggregation(self, time_aggregation, column, filter, name):
-        if not time_aggregation:
-            time_aggregation = self._df._time_aggregation
-        gb = self._df.moment.dt.sql_format(time_aggregation) if time_aggregation else None
-        df = self._df.copy_override()
+    def _check_groupby(self,
+                       groupby: Union[List[Union[str, Series]], str, Series],
+                       not_allowed_in_groupby: str = None
+                       ):
+
+        if self._df.group_by:
+            raise ValueError("can't run model hub models on a grouped DataFrame, please use parameters "
+                             "(ie groupby of the model")
+
+        groupby_list = groupby if isinstance(groupby, list) else [groupby]
+        groupby_list = [] if groupby is None else groupby_list
+
+        if not_allowed_in_groupby is not None and not_allowed_in_groupby not in self._df.data_columns:
+            raise ValueError(f'{not_allowed_in_groupby} column is required for this model but it is not in '
+                             f'the ObjectivFrame')
+
+        if not_allowed_in_groupby:
+            for key in groupby_list:
+                key = self._df[key] if isinstance(key, str) else key
+                if key.equals(self._df[not_allowed_in_groupby]):
+                    raise KeyError(f'"{not_allowed_in_groupby}" is in groupby but is needed for aggregation: '
+                                   f'not allowed to group on that')
+
+        grouped_df = self._df.groupby(groupby_list)
+        return grouped_df
+
+    def _generic_aggregation(self,
+                             groupby: Union[List[Union[str, Series]], str, Series],
+                             column: str,
+                             filter: Optional['SeriesBoolean'],
+                             name: str):
+        df = self._check_groupby(groupby=groupby,
+                                 not_allowed_in_groupby=column)
         if filter:
             df['_filter'] = filter
             if filter.expression.has_windowed_aggregate_function:
@@ -32,66 +65,77 @@ class Aggregate:
 
             name += '_' + filter.name
 
-        series = df.groupby(gb)[column].nunique()
+        series = df[column].nunique()
         return series.copy_override(name=name)
 
-    def unique_users(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None) -> 'SeriesInt64':
+    def unique_users(self,
+                     filter: 'SeriesBoolean' = None,
+                     groupby: GroupByType = not_set) -> 'SeriesInt64':
         """
         Calculate the unique users in the ObjectivFrame.
 
-        Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-        ie. ``time_aggregation=='YYYY-MM-DD'`` aggregates by date.
-
-        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
         :param filter: the output of this model is only based on the rows for which the filter is True.
+        :param groupby: sets the column(s) to group by.
+            - if `not_set` it defaults to using :py:attr:`ObjectivFrame.model_hub.time_agg`.
+            - if None it aggregates over all data.
         :returns: series with results.
         """
 
-        return self._generic_aggregation(time_aggregation=time_aggregation,
+        groupby = [self._df.mh.time_agg()] if groupby is not_set else groupby
+
+        return self._generic_aggregation(groupby=groupby,
                                          column='user_id',
                                          filter=filter,
                                          name='unique_users')
 
-    def unique_sessions(self, time_aggregation: str = None, filter: 'SeriesBoolean' = None) -> 'SeriesInt64':
+    def unique_sessions(self,
+                        filter: 'SeriesBoolean' = None,
+                        groupby: GroupByType = not_set) -> 'SeriesInt64':
         """
         Calculate the unique sessions in the ObjectivFrame.
 
-        Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-        ie. ``time_aggregation=='YYYY-MM-DD'`` aggregates by date.
-
-        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
         :param filter: the output of this model is only based on the rows for which the filter is True.
+        :param groupby: sets the column(s) to group by.
+            - if `not_set` it defaults to using :py:attr:`ObjectivFrame.model_hub.time_agg`.
+            - if None it aggregates over all data.
         :returns: series with results.
         """
 
-        return self._generic_aggregation(time_aggregation=time_aggregation,
+        groupby = [self._df.mh.time_agg()] if groupby is not_set else groupby
+
+        return self._generic_aggregation(groupby=groupby,
                                          column='session_id',
                                          filter=filter,
                                          name='unique_sessions')
 
-    def session_duration(self, time_aggregation: str = None):
+    def session_duration(self,
+                         groupby: GroupByType = not_set) -> 'SeriesInt64':
         """
-        Calculate the average duration of sessions per time interval as set with ``time_aggregation``.
+        Calculate the average duration of sessions.
 
-        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+        :param groupby: sets the column(s) to group by.
+            - if `not_set` it defaults to using :py:attr:`ObjectivFrame.model_hub.time_agg`.
+            - if None it aggregates over all data.
         :returns: series with results.
         """
-        df = self._df.copy_override()
-        df['moment2'] = df.moment
-        if not time_aggregation:
-            time_aggregation = self._df._time_aggregation
-        gb = ['session_id']
-        if time_aggregation:
-            gb = ['session_id', df.moment.dt.sql_format(time_aggregation)]
 
-        session_duration = df.groupby(gb).aggregate({'moment2': ['min', 'max']})
-        session_duration['session_duration'] = session_duration['moment2_max']-session_duration['moment2_min']
+        if groupby is not_set:
+            new_groupby = [self._df.mh.time_agg()]
+        elif groupby is None:
+            new_groupby = []
+        elif not isinstance(groupby, list):
+            new_groupby = [groupby]
+        else:
+            new_groupby = groupby
+        new_groupby.append(self._df.session_id.copy_override(name='_session_id'))
+
+        gdf = self._check_groupby(groupby=new_groupby)
+        session_duration = gdf.aggregate({'moment': ['min', 'max']})
+        session_duration['session_duration'] = session_duration['moment_max']-session_duration['moment_min']
         # remove "bounces"
         session_duration = session_duration[(session_duration['session_duration'] > '0')]
-        if time_aggregation:
-            return session_duration.groupby('moment').session_duration.mean()
-        else:
-            return session_duration.session_duration.mean()
+
+        return session_duration.groupby(session_duration.index_columns[:-1]).session_duration.mean()
 
     def frequency(self):
         """

@@ -152,12 +152,22 @@ def get_args_string(property_meta: Dict[str, dict]) -> str:
     :return: formatted string of joined arguments,  or empty string if none
     """
 
-    # add **kwargs to parameters, to allow for "Extra parameters" in call to constructor
-    args = {p: m['type'] for p, m in property_meta.items()}
-    args['**kwargs'] = 'Optional[Any]'
-    params = [f'{p}: {t}' for p, t in args.items()]
+    # for the constructor properties, we need to make sure to first put the required arguments,
+    # followed by the optional ones, that have a default.
+    sorted_property_names = [p for p, m in property_meta.items() if not m['optional']] + \
+                            [p for p, m in property_meta.items() if m['optional']]
+    params = []
+    for property_name in sorted_property_names:
+        meta = property_meta[property_name]
+        param = f"{property_name}: {meta['type']}"
+        # optionals get a default of None, this translates to null in json
+        if 'optional' in meta and meta['optional'] is True:
+            param += f' = None'
+        params.append(param)
+    # at the end we add a catch-all to propagate additional args to the parent constructor
+    params.append('**kwargs: Optional[Any]')
 
-    if len(args) > 3:
+    if len(params) > 3:
         # if the args don't fit on 1 line, we break them over multiple lines with 17 spaces of indentation
         # so the line up nicely in the constructor
         args_string = ',\n' + \
@@ -251,7 +261,8 @@ def get_class(obj_name: str, obj: Dict[str, Any], all_properties: Dict[str, Any]
         # be sure to strip the description strings, as they mess with alignment otherwise
         property_meta[property_name] = {
             'type': get_type(property_description),
-            'description': '\n'.join([line.strip() for line in property_description["description"].split('\n')])
+            'description': '\n'.join([line.strip() for line in property_description["description"].split('\n')]),
+            'optional': property_description.get('optional', False)
         }
 
     # get object/class description from schema, and clean up some white space

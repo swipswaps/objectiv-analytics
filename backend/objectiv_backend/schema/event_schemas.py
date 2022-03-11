@@ -299,6 +299,12 @@ class ContextSubSchema:
             for key, value in class_properties.items():
                 properties[key] = deepcopy(value)
 
+        # fix type for optionals, we allow them to be `None`, which is not a valid string
+        # so we allow the type to also be null (which is the json representation of the python None)
+        for property_name, property in properties.items():
+            if property.get('optional', False):
+                property['type'] = [property['type'], 'null']
+
         required_properties = [p for p, v in properties.items() if not v.get('optional', False)]
         schema = {
             "type": "object",

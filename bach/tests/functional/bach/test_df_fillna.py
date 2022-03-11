@@ -56,6 +56,7 @@ def test_fillna_w_methods() -> None:
     result_ffill = df.fillna(
         method='ffill', sort_by=['A', 'B', 'C'], ascending=[False, True, False],
     )
+    result_ffill = result_ffill.sort_values(['A', 'B', 'C'], ascending=[False, True, False])
     assert_equals_data(
         result_ffill,
         expected_columns=['_index_0', 'A', 'B', 'C', 'D', 'E', 'F', 'G'],

@@ -7,11 +7,29 @@ from bach_open_taxonomy import __version__
 from tests_bach_open_taxonomy.functional.objectiv_bach.data_and_utils import get_objectiv_frame
 from tests.functional.bach.test_data_and_utils import assert_equals_data
 from uuid import UUID
-import datetime
 
 
 def test_get_objectiv_stack():
     get_objectiv_frame()
+
+
+def test_filter():
+    df = get_objectiv_frame()
+    fdf = df.mh.filter(df.session_id == df[df.session_id<=4].session_id).session_id
+    assert_equals_data(
+        fdf,
+        expected_columns=['event_id', 'session_id'],
+        expected_data=[
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), 3],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), 3],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), 3],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), 2],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), 4],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), 4],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), 1],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), 1]
+        ]
+    )
 
 
 # map
@@ -182,95 +200,93 @@ def test_pre_conversion_hit_number():
     )
 
 
-# aggregate
-def test_unique_users():
+def test_time_agg():
     df = get_objectiv_frame()
-    s = df.model_hub.aggregate.unique_users()
+    s = df.mh.time_agg()
 
     assert_equals_data(
         s,
-        expected_columns=['unique_users'],
+        expected_columns=['event_id', 'time_aggregation'],
         expected_data=[
-            [4]
-        ]
-    )
-    # using time_aggregation
-    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
-    s = df.model_hub.aggregate.unique_users()
-
-    assert_equals_data(
-        s,
-        expected_columns=['moment', 'unique_users'],
-        expected_data=[
-            ['2021-11-29', 1],
-            ['2021-11-30', 2],
-            ['2021-12-01', 1],
-            ['2021-12-02', 1],
-            ['2021-12-03', 1]
-        ]
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), '2021-11-30 10:23:36.287'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), '2021-11-30 10:23:36.290'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), '2021-11-30 10:23:36.291'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), '2021-11-30 10:23:36.267'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), '2021-12-01 10:23:36.276'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), '2021-12-01 10:23:36.279'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), '2021-12-02 10:23:36.281'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), '2021-12-02 10:23:36.281'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), '2021-12-02 14:23:36.282'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), '2021-12-03 10:23:36.283'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), '2021-11-29 10:23:36.286'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), '2021-11-29 10:23:36.287']
+        ],
+        order_by='event_id'
     )
 
-
-def test_unique_sessions():
-    df = get_objectiv_frame()
-    s = df.model_hub.aggregate.unique_sessions()
-
-    assert_equals_data(
-        s,
-        expected_columns=['unique_sessions'],
-        expected_data=[
-            [7]
-        ]
-    )
-    # using time_aggregation
     df = get_objectiv_frame(time_aggregation='YYYY-MM')
-    s = df.model_hub.aggregate.unique_sessions()
+    s = df.mh.time_agg()
 
     assert_equals_data(
         s,
-        expected_columns=['moment', 'unique_sessions'],
+        expected_columns=['event_id', 'time_aggregation'],
         expected_data=[
-            ['2021-11', 3],
-            ['2021-12', 4]
-        ]
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), '2021-12'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), '2021-11'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), '2021-11']
+        ],
+        order_by='event_id'
     )
 
-
-def test_session_duration():
     df = get_objectiv_frame()
-    s = df.model_hub.aggregate.session_duration()
+    s = df.mh.time_agg(time_aggregation='YYYY-MM-DD')
 
     assert_equals_data(
         s,
-        expected_columns=['session_duration'],
+        expected_columns=['event_id', 'time_aggregation'],
         expected_data=[
-            [datetime.timedelta(microseconds=2667)]
-        ]
-    )
-    # using time_aggregation
-    df = get_objectiv_frame()
-    bts = df.model_hub.aggregate.session_duration(time_aggregation='YYYY-MM-DD')
-
-    assert_equals_data(
-        bts,
-        expected_columns=['moment', 'session_duration'],
-        expected_data=[
-            ['2021-11-29', datetime.timedelta(microseconds=1000)],
-            ['2021-11-30', datetime.timedelta(microseconds=4000)],
-            ['2021-12-01', datetime.timedelta(microseconds=3000)]
-        ]
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), '2021-11-30'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), '2021-11-30'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), '2021-11-30'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), '2021-11-30'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), '2021-12-01'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), '2021-12-01'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), '2021-12-02'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), '2021-12-02'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), '2021-12-02'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), '2021-12-03'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), '2021-11-29'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), '2021-11-29']],
+        order_by='event_id'
     )
 
-
-def test_frequency():
-    df = get_objectiv_frame()
-    s = df.model_hub.aggregate.frequency()
+    df = get_objectiv_frame(time_aggregation='YYYY-MM-DD')
+    s = df.mh.time_agg(time_aggregation='YYYY')
 
     assert_equals_data(
         s,
-        expected_columns=['session_id_nunique', 'user_id_nunique'],
+        expected_columns=['event_id', 'time_aggregation'],
         expected_data=[
-            [1, 1],
-            [2, 3]
-        ]
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac301'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac302'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac303'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac304'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac305'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac306'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac307'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac308'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac309'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac310'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac311'), '2021'],
+            [UUID('12b55ed5-4295-4fc1-bf1f-88d64d1ac312'), '2021']],
+        order_by='event_id'
     )

@@ -4,9 +4,9 @@
 
 export * from '@objectiv/tracker-core';
 
-export * from './common/factories/makeDefaultPluginsList';
-export * from './common/factories/makeDefaultQueue';
-export * from './common/factories/makeDefaultTransport';
+export * from './common/factories/makeBrowserTrackerDefaultPluginsList';
+export * from './common/factories/makeBrowserTrackerDefaultQueue';
+export * from './common/factories/makeBrowserTrackerDefaultTransport';
 export * from './common/guards/isFlushQueueOptions';
 export * from './common/guards/isLocationContext';
 export * from './common/guards/isLocationTaggerParameters';

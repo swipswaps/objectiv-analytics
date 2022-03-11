@@ -5,6 +5,7 @@ import re
 from typing import List
 
 import pytest
+from sqlalchemy.dialects.postgresql.base import PGDialect
 
 from sql_models.graph_operations import get_node, get_graph_nodes_info
 from sql_models.model import SqlModel, RefPath, CustomSqlModelBuilder, Materialization
@@ -90,6 +91,7 @@ def test_equality_different_property_formatters():
 
 
 def test_set():
+    dialect = PGDialect()
     # Build a simple graph
     vm1 = ValueModel.build(key='X', val=1)
     vm2 = ValueModel.build(key='X', val=2)
@@ -99,7 +101,7 @@ def test_set():
     # Get some base information about the constructed graph
     selected_model = get_node(graph, ('ref_right',))
     assert selected_model.placeholders == {'key': 'X', 'val': 2}
-    sql = to_sql(graph)
+    sql = to_sql(dialect, graph)
     hash_original = graph.hash
     node_info = get_graph_nodes_info(graph)
 
@@ -108,7 +110,7 @@ def test_set():
 
     # Assert that the original graph is unchanged
     assert selected_model.placeholders == {'key': 'X', 'val': 2}
-    assert to_sql(graph) == sql
+    assert to_sql(dialect, graph) == sql
     assert graph.hash == hash_original
     reselected_original_selected_model = get_node(graph, ('ref_right',))
     assert reselected_original_selected_model.placeholders == {'key': 'X', 'val': 2}
@@ -125,7 +127,7 @@ def test_set():
     # 1. The length should be the same
     # 2. The md5 hashes used in the CTE-names should be different
     # 3. In one position 'X' should have changed in 'Y'
-    updated_sql = to_sql(updated_graph)
+    updated_sql = to_sql(dialect, updated_graph)
     assert updated_sql != sql
     assert len(updated_sql) == len(sql)
     # Get a list with all characters that have changed in the updated_sql. But ignore all changes in the
