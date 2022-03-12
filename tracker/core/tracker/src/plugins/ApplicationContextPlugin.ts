@@ -5,7 +5,7 @@
 import { ApplicationContext } from '@objectiv/schema';
 import { ContextsConfig } from '../Context';
 import { makeApplicationContext } from '../ContextFactories';
-import { TrackerConfig } from '../Tracker';
+import { TrackerConfig, TrackerInterface } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerPluginInterface } from '../TrackerPluginInterface';
@@ -26,26 +26,25 @@ export type ApplicationContextPluginConfig = Pick<TrackerConfig, 'applicationId'
  */
 export class ApplicationContextPlugin implements TrackerPluginInterface {
   readonly pluginName = `ApplicationContextPlugin`;
-  readonly applicationContext: ApplicationContext;
-  readonly validationRules: TrackerValidationRuleInterface[];
+  applicationContext?: ApplicationContext;
+  readonly validationRules: TrackerValidationRuleInterface[] = [
+    new GlobalContextValidationRule({
+      logPrefix: this.pluginName,
+      contextName: 'ApplicationContext',
+      once: true,
+    }),
+  ];
 
   /**
-   * Generates a ApplicationContext from the given config applicationId.
+   * Generates a ApplicationContext with the Tracker's applicationId.
    */
-  constructor(config: ApplicationContextPluginConfig) {
+  initialize(tracker: TrackerInterface) {
     this.applicationContext = makeApplicationContext({
-      id: config.applicationId,
+      id: tracker.applicationId,
     });
-    this.validationRules = [
-      new GlobalContextValidationRule({
-        logPrefix: this.pluginName,
-        contextName: 'ApplicationContext',
-        once: true,
-      }),
-    ];
 
     TrackerConsole.groupCollapsed(`｢objectiv:${this.pluginName}｣ Initialized`);
-    TrackerConsole.log(`Application ID: ${config.applicationId}`);
+    TrackerConsole.log(`Application ID: ${tracker.applicationId}`);
     TrackerConsole.group(`Application Context:`);
     TrackerConsole.log(this.applicationContext);
     TrackerConsole.groupEnd();
@@ -56,6 +55,10 @@ export class ApplicationContextPlugin implements TrackerPluginInterface {
    * Add the ApplicationContext to the Event's Global Contexts
    */
   enrich(contexts: Required<ContextsConfig>): void {
+    if (!this.applicationContext) {
+      TrackerConsole.error(`｢objectiv:${this.pluginName}｣ Cannot enrich. Make sure to initialize the plugin first.`);
+      return;
+    }
     contexts.global_contexts.push(this.applicationContext);
   }
 

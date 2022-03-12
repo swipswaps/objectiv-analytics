@@ -4,11 +4,9 @@
 
 import { LogTransport, MockConsoleImplementation, UnusableTransport } from '@objectiv/testing-tools';
 import {
-  ApplicationContextPlugin,
   ContextsConfig,
   GlobalContextValidationRule,
   LocationContextValidationRule,
-  OpenTaxonomyValidationPlugin,
   Tracker,
   TrackerConfig,
   TrackerConsole,
@@ -67,15 +65,37 @@ describe('Tracker', () => {
 
   it('should instantiate with tracker config', async () => {
     expect(MockConsoleImplementation.log).not.toHaveBeenCalled();
-    const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
     const testTransport = new LogTransport();
-    const testTracker = new Tracker({ ...trackerConfig, transport: testTransport });
+    const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport });
     await expect(testTracker.waitForQueue()).resolves.toBe(true);
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
     expect(testTracker.plugins).toEqual({
       tracker: testTracker,
-      plugins: [new ApplicationContextPlugin(trackerConfig), new OpenTaxonomyValidationPlugin()],
+      plugins: [
+        {
+          pluginName: 'ApplicationContextPlugin',
+          applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+          validationRules: [
+            new GlobalContextValidationRule({
+              contextName: 'ApplicationContext',
+              once: true,
+              logPrefix: 'ApplicationContextPlugin',
+            }),
+          ],
+        },
+        {
+          pluginName: 'OpenTaxonomyValidationPlugin',
+          validationRules: [
+            new LocationContextValidationRule({
+              logPrefix: 'OpenTaxonomyValidationPlugin',
+              contextName: 'RootLocationContext',
+              once: true,
+              position: 0,
+            }),
+          ],
+        },
+      ],
     });
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
@@ -304,7 +324,7 @@ describe('Tracker', () => {
     it('should console.log when Tracker changes active state', () => {
       const testTransport = new LogTransport();
       jest.spyOn(testTransport, 'handle');
-      const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport });
+      const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport, plugins: [] });
       jest.resetAllMocks();
       testTracker.setActive(false);
       testTracker.setActive(true);

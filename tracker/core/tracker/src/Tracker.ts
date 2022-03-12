@@ -53,8 +53,8 @@ export type TrackerConfig = ContextsConfig & {
 /**
  * The default list of Plugins of Web Tracker
  */
-export const makeCoreTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => [
-  new ApplicationContextPlugin({ applicationId: trackerConfig.applicationId }),
+export const makeCoreTrackerDefaultPluginsList = () => [
+  new ApplicationContextPlugin(),
   new OpenTaxonomyValidationPlugin(),
 ];
 
@@ -137,7 +137,7 @@ export class Tracker implements TrackerInterface {
     if (isPluginsArray(trackerConfig.plugins) || trackerConfig.plugins === undefined) {
       this.plugins = new TrackerPlugins({
         tracker: this,
-        plugins: trackerConfig.plugins ?? makeCoreTrackerDefaultPluginsList(trackerConfig),
+        plugins: trackerConfig.plugins ?? makeCoreTrackerDefaultPluginsList(),
       });
     } else {
       this.plugins = trackerConfig.plugins;

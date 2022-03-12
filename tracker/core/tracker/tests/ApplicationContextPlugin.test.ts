@@ -22,8 +22,9 @@ describe('ApplicationContextPlugin', () => {
     jest.resetAllMocks();
   });
 
-  it('should generate an ApplicationContext when constructed', () => {
-    const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+  it('should generate an ApplicationContext when initialized', () => {
+    const testApplicationContextPlugin = new ApplicationContextPlugin();
+    new Tracker({ ...trackerConfig, plugins: [testApplicationContextPlugin] });
     expect(testApplicationContextPlugin.applicationContext).toEqual({
       __global_context: true,
       _type: 'ApplicationContext',
@@ -31,8 +32,17 @@ describe('ApplicationContextPlugin', () => {
     });
   });
 
+  it('should TrackerConsole.error when calling `enrich` before `initialize`', () => {
+    const testApplicationContextPlugin = new ApplicationContextPlugin();
+    const tracker = new Tracker({ ...trackerConfig });
+    testApplicationContextPlugin.enrich(tracker);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
+      '｢objectiv:ApplicationContextPlugin｣ Cannot enrich. Make sure to initialize the plugin first.'
+    );
+  });
+
   it('should add the ApplicationContext to the Event when `enrich` is executed by the Tracker', async () => {
-    const plugins = new ApplicationContextPlugin(trackerConfig);
+    const plugins = new ApplicationContextPlugin();
     const testTracker = new Tracker({ ...trackerConfig, plugins: [plugins] });
     const eventContexts: ContextsConfig = {
       global_contexts: [
@@ -57,7 +67,7 @@ describe('ApplicationContextPlugin', () => {
 
   describe('Validation', () => {
     it('should succeed', () => {
-      const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+      const testApplicationContextPlugin = new ApplicationContextPlugin();
       const validEvent = new TrackerEvent({
         _type: 'test',
         global_contexts: [makeApplicationContext({ id: 'test' })],
@@ -71,7 +81,7 @@ describe('ApplicationContextPlugin', () => {
     });
 
     it('should fail when given TrackerEvent does not have ApplicationContext', () => {
-      const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+      const testApplicationContextPlugin = new ApplicationContextPlugin();
       const eventWithoutApplicationContext = new TrackerEvent({ _type: 'test' });
 
       jest.resetAllMocks();
@@ -87,7 +97,7 @@ describe('ApplicationContextPlugin', () => {
     });
 
     it('should fail when given TrackerEvent has multiple ApplicationContexts', () => {
-      const testApplicationContextPlugin = new ApplicationContextPlugin(trackerConfig);
+      const testApplicationContextPlugin = new ApplicationContextPlugin();
       const eventWithDuplicatedApplicationContext = new TrackerEvent({
         _type: 'test',
         global_contexts: [makeApplicationContext({ id: 'test' }), makeApplicationContext({ id: 'test' })],

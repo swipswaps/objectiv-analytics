@@ -4,7 +4,7 @@
 
 import { ContextsConfig } from './Context';
 import { isValidIndex } from './helpers';
-import { Tracker } from './Tracker';
+import { Tracker, TrackerInterface } from './Tracker';
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerPluginInterface } from './TrackerPluginInterface';
@@ -132,8 +132,8 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerV
   /**
    * Calls each Plugin's `initialize` callback function, if defined.
    */
-  initialize(contexts: Required<ContextsConfig>): void {
-    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(contexts));
+  initialize(tracker: TrackerInterface): void {
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(tracker));
   }
 
   /**

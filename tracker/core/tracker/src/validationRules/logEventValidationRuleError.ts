@@ -15,7 +15,7 @@ export const logEventValidationRuleError = (
   message: string
 ) => {
   TrackerConsole.groupCollapsed(
-    `%c｢objectiv:${rule.logPrefix?.concat(':')}${rule.validationRuleName}｣ Error: ${message}`,
+    `%c｢objectiv:${rule.logPrefix ? rule.logPrefix.concat(':') : ''}${rule.validationRuleName}｣ Error: ${message}`,
     'color:red'
   );
   TrackerConsole.group(`Event:`);
