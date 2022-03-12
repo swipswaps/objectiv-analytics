@@ -48,15 +48,27 @@ export type TrackerConfig = ContextsConfig & {
    * Optional. Determines if the TrackerInstance.trackEvent will process Events or not.
    */
   active?: boolean;
+
+  /**
+   * Optional. Whether to track ApplicationContext automatically. Enabled by default.
+   */
+  trackApplicationContext?: boolean;
 };
 
 /**
- * The default list of Plugins of Web Tracker
+ * The default list of Plugins of Core Tracker
  */
-export const makeCoreTrackerDefaultPluginsList = () => [
-  new ApplicationContextPlugin(),
-  new OpenTaxonomyValidationPlugin(),
-];
+export const makeCoreTrackerDefaultPluginsList = (trackerConfig: TrackerConfig) => {
+  const { trackApplicationContext = true } = trackerConfig;
+
+  const plugins: TrackerPluginInterface[] = [new OpenTaxonomyValidationPlugin()];
+
+  if (trackApplicationContext) {
+    plugins.push(new ApplicationContextPlugin());
+  }
+
+  return plugins;
+};
 
 /**
  * A type guard to determine if trackerConfig plugins is an array of plugins
@@ -137,7 +149,7 @@ export class Tracker implements TrackerInterface {
     if (isPluginsArray(trackerConfig.plugins) || trackerConfig.plugins === undefined) {
       this.plugins = new TrackerPlugins({
         tracker: this,
-        plugins: trackerConfig.plugins ?? makeCoreTrackerDefaultPluginsList(),
+        plugins: trackerConfig.plugins ?? makeCoreTrackerDefaultPluginsList(trackerConfig),
       });
     } else {
       this.plugins = trackerConfig.plugins;

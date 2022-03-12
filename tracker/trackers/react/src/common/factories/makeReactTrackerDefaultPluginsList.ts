@@ -18,7 +18,7 @@ export const makeReactTrackerDefaultPluginsList = (trackerConfig: ReactTrackerCo
     trackRootLocationContextFromURL = true,
   } = trackerConfig;
 
-  const plugins: TrackerPluginInterface[] = makeCoreTrackerDefaultPluginsList();
+  const plugins: TrackerPluginInterface[] = makeCoreTrackerDefaultPluginsList(trackerConfig);
 
   if (trackHttpContext) {
     plugins.push(new HttpContextPlugin());

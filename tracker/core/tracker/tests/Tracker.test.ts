@@ -30,31 +30,28 @@ describe('Tracker', () => {
     const testTracker = new Tracker(trackerConfig);
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toBe(undefined);
-    expect(testTracker.plugins).toEqual({
-      tracker: testTracker,
-      plugins: [
-        {
-          pluginName: 'ApplicationContextPlugin',
-          applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
-        },
-        {
-          pluginName: 'OpenTaxonomyValidationPlugin',
-          validationRules: [
-            new GlobalContextValidationRule({
-              logPrefix: 'OpenTaxonomyValidationPlugin',
-              contextName: 'ApplicationContext',
-              once: true,
-            }),
-            new LocationContextValidationRule({
-              logPrefix: 'OpenTaxonomyValidationPlugin',
-              contextName: 'RootLocationContext',
-              once: true,
-              position: 0,
-            }),
-          ],
-        },
-      ],
-    });
+    expect(testTracker.plugins.plugins).toEqual([
+      {
+        pluginName: 'OpenTaxonomyValidationPlugin',
+        validationRules: [
+          new GlobalContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'ApplicationContext',
+            once: true,
+          }),
+          new LocationContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'RootLocationContext',
+            once: true,
+            position: 0,
+          }),
+        ],
+      },
+      {
+        pluginName: 'ApplicationContextPlugin',
+        applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+      },
+    ]);
     expect(testTracker.applicationId).toBe('app-id');
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
@@ -68,31 +65,62 @@ describe('Tracker', () => {
     await expect(testTracker.waitForQueue()).resolves.toBe(true);
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
-    expect(testTracker.plugins).toEqual({
-      tracker: testTracker,
-      plugins: [
-        {
-          pluginName: 'ApplicationContextPlugin',
-          applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
-        },
-        {
-          pluginName: 'OpenTaxonomyValidationPlugin',
-          validationRules: [
-            new GlobalContextValidationRule({
-              logPrefix: 'OpenTaxonomyValidationPlugin',
-              contextName: 'ApplicationContext',
-              once: true,
-            }),
-            new LocationContextValidationRule({
-              logPrefix: 'OpenTaxonomyValidationPlugin',
-              contextName: 'RootLocationContext',
-              once: true,
-              position: 0,
-            }),
-          ],
-        },
-      ],
+    expect(testTracker.plugins.plugins).toEqual([
+      {
+        pluginName: 'OpenTaxonomyValidationPlugin',
+        validationRules: [
+          new GlobalContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'ApplicationContext',
+            once: true,
+          }),
+          new LocationContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'RootLocationContext',
+            once: true,
+            position: 0,
+          }),
+        ],
+      },
+      {
+        pluginName: 'ApplicationContextPlugin',
+        applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+      },
+    ]);
+    expect(testTracker.location_stack).toStrictEqual([]);
+    expect(testTracker.global_contexts).toStrictEqual([]);
+    expect(MockConsoleImplementation.log).toHaveBeenCalledWith('Application ID: app-id');
+  });
+
+  it('should instantiate without the ApplicationContext plugin', async () => {
+    expect(MockConsoleImplementation.log).not.toHaveBeenCalled();
+    const testTransport = new LogTransport();
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      transport: testTransport,
+      trackApplicationContext: false,
     });
+    await expect(testTracker.waitForQueue()).resolves.toBe(true);
+    expect(testTracker).toBeInstanceOf(Tracker);
+    expect(testTracker.transport).toStrictEqual(testTransport);
+    expect(testTracker.plugins.plugins).toEqual([
+      {
+        pluginName: 'OpenTaxonomyValidationPlugin',
+        validationRules: [
+          new GlobalContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'ApplicationContext',
+            once: true,
+          }),
+          new LocationContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'RootLocationContext',
+            once: true,
+            position: 0,
+          }),
+        ],
+      },
+    ]);
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
     expect(MockConsoleImplementation.log).toHaveBeenCalledWith('Application ID: app-id');

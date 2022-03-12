@@ -3,10 +3,11 @@
  */
 
 import { makeCoreTrackerDefaultPluginsList } from '@objectiv/tracker-core';
+import { ReactNativeTrackerConfig } from '@objectiv/tracker-react-native';
 
 /**
  * The default list of Plugins of React Native Tracker
  */
-export const makeReactNativeTrackerDefaultPluginsList = () => {
-  return makeCoreTrackerDefaultPluginsList();
+export const makeReactNativeTrackerDefaultPluginsList = (trackerConfig: ReactNativeTrackerConfig) => {
+  return makeCoreTrackerDefaultPluginsList(trackerConfig);
 };

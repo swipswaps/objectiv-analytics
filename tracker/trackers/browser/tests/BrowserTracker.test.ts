@@ -124,24 +124,19 @@ describe('BrowserTracker', () => {
       );
     });
 
-    it('should allow disabling PathContextFromURLPlugin and RootLocationContextFromURLPlugin', () => {
+    it('should allow disabling all plugins, exception made for OpenTaxonomyValidationPlugin ', () => {
       const testTracker = new BrowserTracker({
         applicationId: 'app-id',
         endpoint: 'localhost',
+        trackApplicationContext: false,
+        trackHttpContext: false,
         trackPathContextFromURL: false,
         trackRootLocationContextFromURL: false,
       });
       expect(testTracker).toBeInstanceOf(BrowserTracker);
-      expect(testTracker.plugins?.plugins).toEqual(
-        expect.arrayContaining([expect.objectContaining({ pluginName: 'ApplicationContextPlugin' })])
-      );
-      expect(testTracker.plugins?.plugins).toEqual(
-        expect.not.arrayContaining([
-          expect.objectContaining({ pluginName: 'HttpContextPlugin' }),
-          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
-          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
-        ])
-      );
+      expect(testTracker.plugins?.plugins).toEqual([
+        expect.objectContaining({ pluginName: 'OpenTaxonomyValidationPlugin' }),
+      ]);
     });
 
     it('should not have any default Plugin configured when `plugins` have been overridden', () => {

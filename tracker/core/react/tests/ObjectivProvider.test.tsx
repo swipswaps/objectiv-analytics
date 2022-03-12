@@ -36,13 +36,8 @@ describe('ObjectivProvider', () => {
       applicationId: 'app-id',
       global_contexts: [],
       location_stack: [],
-      plugins: {
-        tracker,
+      plugins: expect.objectContaining({
         plugins: [
-          {
-            applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
-            pluginName: 'ApplicationContextPlugin',
-          },
           {
             pluginName: 'OpenTaxonomyValidationPlugin',
             validationRules: [
@@ -59,8 +54,12 @@ describe('ObjectivProvider', () => {
               }),
             ],
           },
+          {
+            applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+            pluginName: 'ApplicationContextPlugin',
+          },
         ],
-      },
+      }),
       queue: undefined,
       trackerId: 'app-id',
       transport: undefined,
