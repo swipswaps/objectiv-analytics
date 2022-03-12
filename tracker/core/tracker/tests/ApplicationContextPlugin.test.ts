@@ -3,15 +3,7 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import {
-  ApplicationContextPlugin,
-  ContextsConfig,
-  makeApplicationContext,
-  Tracker,
-  TrackerConfig,
-  TrackerConsole,
-  TrackerEvent,
-} from '../src';
+import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, TrackerConsole, TrackerEvent } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -63,56 +55,5 @@ describe('ApplicationContextPlugin', () => {
         },
       ])
     );
-  });
-
-  describe('Validation', () => {
-    it('should succeed', () => {
-      const testApplicationContextPlugin = new ApplicationContextPlugin();
-      const validEvent = new TrackerEvent({
-        _type: 'test',
-        global_contexts: [makeApplicationContext({ id: 'test' })],
-      });
-
-      jest.resetAllMocks();
-
-      testApplicationContextPlugin.validate(validEvent);
-
-      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
-    });
-
-    it('should fail when given TrackerEvent does not have ApplicationContext', () => {
-      const testApplicationContextPlugin = new ApplicationContextPlugin();
-      const eventWithoutApplicationContext = new TrackerEvent({ _type: 'test' });
-
-      jest.resetAllMocks();
-
-      testApplicationContextPlugin.validate(eventWithoutApplicationContext);
-
-      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
-        1,
-        `%c｢objectiv:ApplicationContextPlugin:GlobalContextValidationRule｣ Error: ApplicationContext is missing from Global Contexts.`,
-        'color:red'
-      );
-    });
-
-    it('should fail when given TrackerEvent has multiple ApplicationContexts', () => {
-      const testApplicationContextPlugin = new ApplicationContextPlugin();
-      const eventWithDuplicatedApplicationContext = new TrackerEvent({
-        _type: 'test',
-        global_contexts: [makeApplicationContext({ id: 'test' }), makeApplicationContext({ id: 'test' })],
-      });
-
-      jest.resetAllMocks();
-
-      testApplicationContextPlugin.validate(eventWithDuplicatedApplicationContext);
-
-      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
-      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
-        1,
-        `%c｢objectiv:ApplicationContextPlugin:GlobalContextValidationRule｣ Error: Only one ApplicationContext should be present in Global Contexts.`,
-        'color:red'
-      );
-    });
   });
 });

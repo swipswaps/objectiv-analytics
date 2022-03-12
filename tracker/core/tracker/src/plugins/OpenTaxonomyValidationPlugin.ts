@@ -7,10 +7,13 @@ import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerPluginInterface } from '../TrackerPluginInterface';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
+import { GlobalContextValidationRule } from '../validationRules/GlobalContextValidationRule';
 import { LocationContextValidationRule } from '../validationRules/LocationContextValidationRule';
 
 /**
- * Validates a number of rules related to the Open Taxonomy.
+ * Validates a number of rules related to the Open Taxonomy:
+ * - ApplicationContext must be present once in Global Contexts.
+ * - RootLocationContext must be present once, in position 0, of the Location Stack.
  */
 export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
   readonly pluginName = `OpenTaxonomyValidationPlugin`;
@@ -21,6 +24,11 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    */
   constructor() {
     this.validationRules = [
+      new GlobalContextValidationRule({
+        logPrefix: this.pluginName,
+        contextName: 'ApplicationContext',
+        once: true,
+      }),
       new LocationContextValidationRule({
         logPrefix: this.pluginName,
         contextName: 'RootLocationContext',

@@ -39,17 +39,15 @@ describe('TrackerProvider', () => {
           {
             applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
             pluginName: 'ApplicationContextPlugin',
-            validationRules: [
-              new GlobalContextValidationRule({
-                contextName: 'ApplicationContext',
-                once: true,
-                logPrefix: 'ApplicationContextPlugin',
-              }),
-            ],
           },
           {
             pluginName: 'OpenTaxonomyValidationPlugin',
             validationRules: [
+              new GlobalContextValidationRule({
+                logPrefix: 'OpenTaxonomyValidationPlugin',
+                contextName: 'ApplicationContext',
+                once: true,
+              }),
               new LocationContextValidationRule({
                 logPrefix: 'OpenTaxonomyValidationPlugin',
                 contextName: 'RootLocationContext',

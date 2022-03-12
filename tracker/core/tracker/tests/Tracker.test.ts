@@ -36,17 +36,15 @@ describe('Tracker', () => {
         {
           pluginName: 'ApplicationContextPlugin',
           applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
-          validationRules: [
-            new GlobalContextValidationRule({
-              contextName: 'ApplicationContext',
-              once: true,
-              logPrefix: 'ApplicationContextPlugin',
-            }),
-          ],
         },
         {
           pluginName: 'OpenTaxonomyValidationPlugin',
           validationRules: [
+            new GlobalContextValidationRule({
+              logPrefix: 'OpenTaxonomyValidationPlugin',
+              contextName: 'ApplicationContext',
+              once: true,
+            }),
             new LocationContextValidationRule({
               logPrefix: 'OpenTaxonomyValidationPlugin',
               contextName: 'RootLocationContext',
@@ -76,17 +74,15 @@ describe('Tracker', () => {
         {
           pluginName: 'ApplicationContextPlugin',
           applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
-          validationRules: [
-            new GlobalContextValidationRule({
-              contextName: 'ApplicationContext',
-              once: true,
-              logPrefix: 'ApplicationContextPlugin',
-            }),
-          ],
         },
         {
           pluginName: 'OpenTaxonomyValidationPlugin',
           validationRules: [
+            new GlobalContextValidationRule({
+              logPrefix: 'OpenTaxonomyValidationPlugin',
+              contextName: 'ApplicationContext',
+              once: true,
+            }),
             new LocationContextValidationRule({
               logPrefix: 'OpenTaxonomyValidationPlugin',
               contextName: 'RootLocationContext',
