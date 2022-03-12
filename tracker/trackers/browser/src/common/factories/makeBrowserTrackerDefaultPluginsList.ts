@@ -14,10 +14,7 @@ import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
 export const makeBrowserTrackerDefaultPluginsList = (trackerConfig: BrowserTrackerConfig) => {
   const { trackPathContextFromURL = true, trackRootLocationContextFromURL = true } = trackerConfig;
 
-  const plugins: TrackerPluginInterface[] = [
-    ...makeCoreTrackerDefaultPluginsList(trackerConfig),
-    new HttpContextPlugin(),
-  ];
+  const plugins: TrackerPluginInterface[] = [...makeCoreTrackerDefaultPluginsList(), new HttpContextPlugin()];
 
   if (trackPathContextFromURL) {
     plugins.push(new PathContextFromURLPlugin());

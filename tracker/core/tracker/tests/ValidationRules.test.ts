@@ -28,7 +28,7 @@ describe('Validation Rules', () => {
     it('Should prefix TrackerConsole.error messages with logPrefix', () => {
       const testGlobalContextValidationRule = new GlobalContextValidationRule({
         contextName: 'Context',
-        logPrefix: 'TestPrefix'
+        logPrefix: 'TestPrefix',
       });
 
       jest.resetAllMocks();
@@ -88,7 +88,7 @@ describe('Validation Rules', () => {
     it('Should prefix TrackerConsole.error messages with logPrefix', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
         contextName: 'Context',
-        logPrefix: 'TestPrefix'
+        logPrefix: 'TestPrefix',
       });
 
       jest.resetAllMocks();
@@ -131,7 +131,7 @@ describe('Validation Rules', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
         contextName: 'Context',
         once: true,
-        position: 0
+        position: 0,
       });
 
       jest.resetAllMocks();

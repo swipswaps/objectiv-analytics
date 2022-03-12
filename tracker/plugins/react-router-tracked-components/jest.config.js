@@ -6,7 +6,7 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'jsdom',
   reporters: ['jest-standard-reporter'],
-  collectCoverageFrom: ['src/**.ts'],
+  collectCoverageFrom: ['src/**/*.{ts,tsx}'],
   moduleNameMapper: {
     '@objectiv/plugin-(.*)': '<rootDir>/../../plugins/$1/src',
     '@objectiv/queue-(.*)': '<rootDir>/../../queues/$1/src',
