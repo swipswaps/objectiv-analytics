@@ -293,8 +293,8 @@ describe('Tracker', () => {
       };
       const testTracker = new Tracker({ applicationId: 'app-id', plugins: [pluginE, pluginF] });
       testTracker.trackEvent(testEvent);
-      expect(pluginE.enrich).toHaveBeenCalledWith(expect.objectContaining(testEvent));
-      expect(pluginF.enrich).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+      expect(pluginE.enrich).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
+      expect(pluginF.enrich).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
     });
 
     it('should execute all plugins implementing the validate callback', () => {
@@ -310,8 +310,8 @@ describe('Tracker', () => {
       };
       const testTracker = new Tracker({ applicationId: 'app-id', plugins: [pluginE, pluginF] });
       testTracker.trackEvent(testEvent);
-      expect(pluginE.validate).toHaveBeenCalledWith(expect.objectContaining(testEvent));
-      expect(pluginF.validate).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+      expect(pluginE.validate).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
+      expect(pluginF.validate).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
     });
 
     it('should send the Event via the given TrackerTransport', () => {
@@ -348,7 +348,12 @@ describe('Tracker', () => {
     it('should console.log when Tracker changes active state', () => {
       const testTransport = new LogTransport();
       jest.spyOn(testTransport, 'handle');
-      const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport, plugins: [] });
+      const testTracker = new Tracker({
+        applicationId: 'app-id',
+        transport: testTransport,
+        plugins: [],
+        trackApplicationContext: false,
+      });
       jest.resetAllMocks();
       testTracker.setActive(false);
       testTracker.setActive(true);

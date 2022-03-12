@@ -17,6 +17,7 @@ describe('PathContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new PathContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const eventContexts: ContextsConfig = {
       location_stack: [

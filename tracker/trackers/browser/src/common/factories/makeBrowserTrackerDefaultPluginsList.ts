@@ -5,7 +5,7 @@
 import { HttpContextPlugin } from '@objectiv/plugin-http-context';
 import { PathContextFromURLPlugin } from '@objectiv/plugin-path-context-from-url';
 import { RootLocationContextFromURLPlugin } from '@objectiv/plugin-root-location-context-from-url';
-import { makeCoreTrackerDefaultPluginsList, TrackerPluginInterface } from '@objectiv/tracker-core';
+import { TrackerPluginInterface } from '@objectiv/tracker-core';
 import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
 
 /**
@@ -18,7 +18,7 @@ export const makeBrowserTrackerDefaultPluginsList = (trackerConfig: BrowserTrack
     trackRootLocationContextFromURL = true,
   } = trackerConfig;
 
-  const plugins: TrackerPluginInterface[] = makeCoreTrackerDefaultPluginsList(trackerConfig);
+  const plugins: TrackerPluginInterface[] = [];
 
   if (trackHttpContext) {
     plugins.push(new HttpContextPlugin());

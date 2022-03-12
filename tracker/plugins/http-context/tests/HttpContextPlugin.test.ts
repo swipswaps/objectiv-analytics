@@ -22,6 +22,7 @@ describe('HttpContextPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new HttpContextPlugin()],
+      trackApplicationContext: false,
     });
     const eventContexts: ContextsConfig = {
       location_stack: [
@@ -64,6 +65,7 @@ describe('HttpContextPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new HttpContextPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);

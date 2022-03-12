@@ -91,14 +91,26 @@ describe('ReactNativeTracker', () => {
       );
     });
 
-    it('should not have any default Plugin configured when `plugins` have been overridden', () => {
+    it('should add Plugins `plugins` has been specified', () => {
       const testTracker = new ReactNativeTracker({
         applicationId: 'app-id',
         endpoint: 'localhost',
-        plugins: [],
+        plugins: [
+          {
+            pluginName: 'TestPlugin',
+            isUsable() {
+              return true;
+            },
+          },
+        ],
       });
       expect(testTracker).toBeInstanceOf(ReactNativeTracker);
-      expect(testTracker.plugins?.plugins).toStrictEqual([]);
+      expect(testTracker.plugins?.plugins).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ pluginName: 'ApplicationContextPlugin' }),
+          expect.objectContaining({ pluginName: 'TestPlugin' }),
+        ])
+      );
     });
   });
 

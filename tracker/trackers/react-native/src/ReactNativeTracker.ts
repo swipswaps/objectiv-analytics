@@ -73,7 +73,7 @@ export class ReactNativeTracker extends Tracker {
     if (!config.plugins) {
       config = {
         ...config,
-        plugins: makeReactNativeTrackerDefaultPluginsList(config),
+        plugins: makeReactNativeTrackerDefaultPluginsList(),
       };
     }
 

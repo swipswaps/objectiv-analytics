@@ -130,16 +130,6 @@ describe('ReactTracker', () => {
         expect.objectContaining({ pluginName: 'OpenTaxonomyValidationPlugin' }),
       ]);
     });
-
-    it('should not have any default Plugin configured when `plugins` have been overridden', () => {
-      const testTracker = new ReactTracker({
-        applicationId: 'app-id',
-        endpoint: 'localhost',
-        plugins: [],
-      });
-      expect(testTracker).toBeInstanceOf(ReactTracker);
-      expect(testTracker.plugins?.plugins).toStrictEqual([]);
-    });
   });
 
   describe('trackEvent', () => {

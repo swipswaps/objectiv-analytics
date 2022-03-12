@@ -17,6 +17,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const eventContexts: ContextsConfig = {
       location_stack: [
@@ -51,6 +52,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -74,6 +76,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -97,6 +100,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -121,6 +125,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -147,6 +152,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin({ idFactoryFunction: makeRootLocationIdFromHash })],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);

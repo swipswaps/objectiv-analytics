@@ -15,27 +15,28 @@ describe('ApplicationContextPlugin', () => {
   });
 
   it('should generate an ApplicationContext when initialized', () => {
-    const testApplicationContextPlugin = new ApplicationContextPlugin();
-    new Tracker({ ...trackerConfig, plugins: [testApplicationContextPlugin] });
-    expect(testApplicationContextPlugin.applicationContext).toEqual({
-      __global_context: true,
-      _type: 'ApplicationContext',
-      id: 'app-id',
-    });
+    const tracker = new Tracker({ ...trackerConfig });
+    expect(tracker.plugins.get('ApplicationContextPlugin')).toEqual(
+      expect.objectContaining({
+        applicationContext: {
+          __global_context: true,
+          _type: 'ApplicationContext',
+          id: 'app-id',
+        },
+      })
+    );
   });
 
   it('should TrackerConsole.error when calling `enrich` before `initialize`', () => {
     const testApplicationContextPlugin = new ApplicationContextPlugin();
-    const tracker = new Tracker({ ...trackerConfig });
-    testApplicationContextPlugin.enrich(tracker);
+    testApplicationContextPlugin.enrich({ location_stack: [], global_contexts: [] });
     expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv:ApplicationContextPlugin｣ Cannot enrich. Make sure to initialize the plugin first.'
     );
   });
 
   it('should add the ApplicationContext to the Event when `enrich` is executed by the Tracker', async () => {
-    const plugins = new ApplicationContextPlugin();
-    const testTracker = new Tracker({ ...trackerConfig, plugins: [plugins] });
+    const testTracker = new Tracker({ ...trackerConfig });
     const eventContexts: ContextsConfig = {
       global_contexts: [
         { __global_context: true, _type: 'section', id: 'X' },

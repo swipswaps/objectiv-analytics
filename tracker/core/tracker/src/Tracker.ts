@@ -149,7 +149,7 @@ export class Tracker implements TrackerInterface {
     if (isPluginsArray(trackerConfig.plugins) || trackerConfig.plugins === undefined) {
       this.plugins = new TrackerPlugins({
         tracker: this,
-        plugins: trackerConfig.plugins ?? makeCoreTrackerDefaultPluginsList(trackerConfig),
+        plugins: [...makeCoreTrackerDefaultPluginsList(trackerConfig), ...(trackerConfig.plugins ?? [])],
       });
     } else {
       this.plugins = trackerConfig.plugins;
