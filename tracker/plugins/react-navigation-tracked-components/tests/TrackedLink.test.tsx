@@ -2,10 +2,10 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { TrackerConsole } from '@objectiv/tracker-core';
 import {
   ContentContextWrapper,
-  makeReactNativeTrackerDefaultPluginsList,
   ObjectivProvider,
   ReactNativeTracker,
   RootLocationContextWrapper,
@@ -21,6 +21,8 @@ type TestParamList = {
   HomeScreen: undefined;
   DestinationScreen: { parameter: number };
 };
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedLink', () => {
   beforeEach(() => {
@@ -70,19 +72,10 @@ describe('TrackedLink', () => {
   cases.forEach(([linkProps, linkContext, rootLocationContext, pathContext]) => {
     it(`props: ${JSON.stringify(linkProps)} > LinkContext: ${JSON.stringify(linkContext)}`, () => {
       const navigationContainerRef = createNavigationContainerRef();
-      const trackerConfig = {
-        applicationId: 'app-id',
-        transport: spyTransport,
-        console: mockConsole,
-      };
       const tracker = new ReactNativeTracker({
         applicationId: 'app-id',
         transport: spyTransport,
-        console: mockConsole,
-        plugins: [
-          ...makeReactNativeTrackerDefaultPluginsList(trackerConfig),
-          new ContextsFromReactNavigationPlugin({ ...trackerConfig, navigationContainerRef }),
-        ],
+        plugins: [new ContextsFromReactNavigationPlugin({ navigationContainerRef })],
       });
       const Stack = createStackNavigator();
       const HomeScreen = () => <TrackedLink {...linkProps} testID="test" />;
@@ -130,8 +123,7 @@ describe('TrackedLink', () => {
   });
 
   it('should console.error if an id cannot be automatically generated', () => {
-    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport });
 
     const Stack = createStackNavigator();
     const HomeScreen = () => (
@@ -154,14 +146,14 @@ describe('TrackedLink', () => {
       </NavigationContainer>
     );
 
-    expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv｣ Could not generate a valid id for PressableContext @ RootLocation:root / Content:content. Please provide the `id` property manually.'
     );
   });
 
   it('should execute the given onPress as well', async () => {
-    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+    const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport });
     const onPressSpy = jest.fn();
 
     const Stack = createStackNavigator();
@@ -190,19 +182,10 @@ describe('TrackedLink', () => {
 
   it('should fallback to RootLocationContext:home when a route cannot be detected', async () => {
     const navigationContainerRef = createNavigationContainerRef();
-    const trackerConfig = {
-      applicationId: 'app-id',
-      transport: spyTransport,
-      console: mockConsole,
-    };
     const tracker = new ReactNativeTracker({
       applicationId: 'app-id',
       transport: spyTransport,
-      console: mockConsole,
-      plugins: [
-        ...makeReactNativeTrackerDefaultPluginsList(trackerConfig),
-        new ContextsFromReactNavigationPlugin({ ...trackerConfig, navigationContainerRef }),
-      ],
+      plugins: [new ContextsFromReactNavigationPlugin({ navigationContainerRef })],
     });
     const { getByTestId } = render(
       <NavigationContainer ref={navigationContainerRef}>
@@ -242,19 +225,10 @@ describe('TrackedLink', () => {
 
   it('should correctly generate RootLocation and Path Contexts with nested navigators', async () => {
     const navigationContainerRef = createNavigationContainerRef();
-    const trackerConfig = {
-      applicationId: 'app-id',
-      transport: spyTransport,
-      console: mockConsole,
-    };
     const tracker = new ReactNativeTracker({
       applicationId: 'app-id',
       transport: spyTransport,
-      console: mockConsole,
-      plugins: [
-        ...makeReactNativeTrackerDefaultPluginsList(trackerConfig),
-        new ContextsFromReactNavigationPlugin({ ...trackerConfig, navigationContainerRef }),
-      ],
+      plugins: [new ContextsFromReactNavigationPlugin({ navigationContainerRef })],
     });
     const Tab = createBottomTabNavigator();
     const Stack = createStackNavigator();
