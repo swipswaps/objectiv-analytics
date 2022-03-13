@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackerConsole, TrackerElementLocations } from '@objectiv/tracker-core';
+import { TrackerElementLocations } from '@objectiv/tracker-core';
 import { isTaggedElement } from '../common/guards/isTaggedElement';
 import { trackerErrorHandler } from '../common/trackerErrorHandler';
 import { TaggingAttribute } from '../definitions/TaggingAttribute';
@@ -31,7 +31,7 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * we will trigger visibility: hidden events for them.
  * We also clean them up from TrackerElementLocations.
  */
-export const makeMutationCallback = (console?: TrackerConsole): MutationCallback => {
+export const makeMutationCallback = (): MutationCallback => {
   return (mutationsList) => {
     try {
       const tracker = getTracker();
@@ -46,7 +46,7 @@ export const makeMutationCallback = (console?: TrackerConsole): MutationCallback
         // New DOM nodes mutation: attach event listeners to all Tagged Elements and track visibility:visible events
         addedNodes.forEach((addedNode) => {
           if (addedNode instanceof Element) {
-            trackNewElements(addedNode, tracker, console);
+            trackNewElements(addedNode, tracker);
           }
         });
 

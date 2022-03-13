@@ -2,9 +2,9 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackerConsole } from '@objectiv/tracker-core';
+import { TrackerConsoleImplementation } from '@objectiv/tracker-core';
 
-export const mockConsole: TrackerConsole = {
+export const MockConsoleImplementation: TrackerConsoleImplementation = {
   debug: jest.fn(),
   error: jest.fn(),
   group: jest.fn(),

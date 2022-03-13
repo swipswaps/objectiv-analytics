@@ -2,11 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID } from '@objectiv/testing-tools';
-import { generateUUID, makeContentContext } from '@objectiv/tracker-core';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
+import { generateUUID, makeContentContext, TrackerConsole } from '@objectiv/tracker-core';
 import { BrowserTracker, getTracker, getTrackerRepository, makeTracker, TaggingAttribute } from '../src';
 import { trackRemovedElements } from '../src/mutationObserver/trackRemovedElements';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('trackRemovedElements', () => {
   beforeEach(() => {
@@ -85,8 +87,7 @@ describe('trackRemovedElements', () => {
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
   });
 
-  it('should console error', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('should TrackerConsole.error', async () => {
     const div = document.createElement('div');
     const trackedDiv = makeTaggedElement('div', 'div', 'div');
     trackedDiv.setAttribute(TaggingAttribute.trackVisibility, '{"mode":"broken"}');
@@ -98,11 +99,10 @@ describe('trackRemovedElements', () => {
     trackRemovedElements(div, getTracker());
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
-  it('should console error', async () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('should TrackerConsole.error', async () => {
     const div = document.createElement('div');
     jest.spyOn(div, 'querySelectorAll').mockImplementation(() => {
       throw new Error();
@@ -111,6 +111,6 @@ describe('trackRemovedElements', () => {
     trackRemovedElements(div, getTracker());
 
     expect(getTracker().trackEvent).not.toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 });

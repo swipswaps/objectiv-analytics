@@ -2,7 +2,16 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { findParentTaggedElements, isParentTaggedElement, isTaggedElement, TaggingAttribute } from '../src';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import {
+  findParentTaggedElements,
+  isParentTaggedElement,
+  isTaggedElement,
+  TaggingAttribute,
+  TrackerConsole,
+} from '../src';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('findTaggedParentElements', () => {
   afterEach(() => {
@@ -100,9 +109,7 @@ describe('findTaggedParentElements', () => {
     expect(trackedParentElements).toStrictEqual([div, topSection]);
   });
 
-  it('should console.error and exit early if parentElementId is not a Tagged Element', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('should TrackerConsole.error and exit early if parentElementId is not a Tagged Element', () => {
     const div = document.createElement('div');
     div.setAttribute(TaggingAttribute.context, 'div');
     div.setAttribute(TaggingAttribute.parentElementId, 'top');
@@ -127,7 +134,9 @@ describe('findTaggedParentElements', () => {
     const trackedParentElements = findParentTaggedElements(div);
     expect(trackedParentElements).toHaveLength(1);
     expect(trackedParentElements).toStrictEqual([div]);
-    expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(`findParentTaggedElements: missing or invalid Parent Element 'top'`);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
+      `findParentTaggedElements: missing or invalid Parent Element 'top'`
+    );
   });
 });

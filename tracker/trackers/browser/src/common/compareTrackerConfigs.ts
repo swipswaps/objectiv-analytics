@@ -13,11 +13,9 @@ export const compareTrackerConfigs = (trackerConfigA: TrackerConfig, trackerConf
   let trackerConfigAClone = { ...trackerConfigA };
   let trackerConfigBClone = { ...trackerConfigB };
 
-  // Get rid of mutable attributes, e.g. active, or attributes that may diverge, e.g. console.
+  // Get rid of mutable attributes, e.g. active.
   delete trackerConfigAClone.active;
   delete trackerConfigBClone.active;
-  delete trackerConfigAClone.console;
-  delete trackerConfigBClone.console;
 
   // Compare resulting objects by stringify them
   return JSON.stringify(trackerConfigAClone) === JSON.stringify(trackerConfigBClone);

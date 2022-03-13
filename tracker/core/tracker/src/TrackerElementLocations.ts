@@ -25,7 +25,7 @@ export type LocationCollision = {
  */
 export const TrackerElementLocations = {
   /**
-   * An Map of Locations by Elements
+   * A Map of Locations by Elements
    */
   elementLocations: new Map<string, string[]>(),
 
