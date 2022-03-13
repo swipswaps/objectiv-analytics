@@ -35,5 +35,4 @@ Follow the easy steps in our [Quickstart Guide](https://objectiv.io/docs/home/qu
 * [Contribution Guide](https://www.objectiv.io/docs/home/the-project/contribute) - Report bugs, request features and contribution information.
 
 
-This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](LICENSE.md) for details. Unless otherwise noted, all files © 2021 Objectiv B.V.
-
+This repository is part of the source code for Objectiv, which is released under the Apache 2.0 License. Please refer to [LICENSE.md](LICENSE.md) for details. 
