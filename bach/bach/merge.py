@@ -4,13 +4,14 @@ Copyright 2021 Objectiv B.V.
 from collections import defaultdict
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable, cast
 
 from sqlalchemy.engine import Dialect
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeNamePair
-from bach.expression import Expression, join_expressions
+from bach.expression import Expression, join_expressions, ColumnReferenceToken, TableColumnReferenceToken, \
+    NonAtomicExpression
 from bach.utils import ResultSeries, get_result_series_dtype_mapping
 from sql_models.model import Materialization, CustomSqlModelBuilder
 from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
@@ -206,7 +207,7 @@ def _get_merged_result_series(
                 if table_alias == 'r':
                     continue
                 r_expr = right_series[series_name].expression.resolve_column_references(dialect, 'r')
-                expr = Expression.construct(f'COALESCE({expr.to_sql(dialect)}, {r_expr.to_sql(dialect)})')
+                expr = Expression.construct(f'COALESCE({{}}, {{}})', expr, r_expr)
             elif series_name in conflicting_names:
                 new_name = series_name + suffix
 
@@ -300,6 +301,86 @@ def merge(
         savepoints=left.savepoints.merge(right_savepoints),
         variables=variables
     )
+
+
+def revert_merge(base: DataFrame) -> Tuple[DataFrame, DataFrame]:
+    """
+    Splits a merged dataframe into two new frames that have the same structure as the original frames
+    that were combined.
+    """
+    if not isinstance(base.base_node, MergeSqlModel):
+        raise Exception('can only revert merge if DataFrame base_node is MergeSqlModel instance.')
+
+    left_node = cast(BachSqlModel, base.base_node.references['left_node'])
+    right_node = cast(BachSqlModel, base.base_node.references['right_node'])
+
+    left_index, right_index = _determine_series_per_source(
+        base=base, series_to_unmerge=base.index_columns, left_index={}, right_index={},
+    )
+
+    left_series, right_series = _determine_series_per_source(
+        base=base, series_to_unmerge=base.data_columns, left_index=left_index, right_index=right_index,
+    )
+    left = base.copy_override(base_node=left_node, series=left_series, index=left_index)
+    right = base.copy_override(base_node=right_node, series=right_series, index=right_index)
+
+    return left, right
+
+
+def _determine_series_per_source(
+    base: 'DataFrame',
+    series_to_unmerge: List[str],
+    left_index: Dict[str, 'Series'],
+    right_index: Dict[str, 'Series'],
+) -> Tuple[Dict[str, 'Series'], Dict[str, 'Series']]:
+    """
+    Determine which series are on each original dataframe based on the node references
+    from current MergeSqlModel. When identifying each column original source, a new series
+    will be created and replicate the original structure.
+    """
+
+    left_series = {}
+    right_series = {}
+
+    left_node = cast(BachSqlModel, base.base_node.references['left_node'])
+    right_node = cast(BachSqlModel, base.base_node.references['right_node'])
+
+    expressions_to_parse: Dict[str, List[Expression]] = {}
+    for series_name, original_expr in base.base_node.column_expressions.items():
+        if series_name not in series_to_unmerge or not original_expr.has_table_column_references:
+            continue
+
+        if isinstance(original_expr, NonAtomicExpression):
+            expressions_to_parse[series_name] = [original_expr]
+            continue
+
+        expressions_to_parse[series_name] = [
+            sub_expr if isinstance(sub_expr, Expression) else Expression([sub_expr])
+            for sub_expr in original_expr.data
+            if isinstance(sub_expr, (Expression, TableColumnReferenceToken))
+        ]
+
+    for series_name, expressions in expressions_to_parse.items():
+        series = base.all_series[series_name]
+        for sub_expr in expressions:
+            table_name, column_name, expr = sub_expr.remove_table_column_references()
+
+            if table_name == 'l':
+                left_series[column_name] = series.copy_override(
+                    base_node=left_node,
+                    index=left_index,
+                    name=column_name,
+                    expression=expr,
+                )
+            else:
+                right_series[column_name] = series.copy_override(
+                    base_node=right_node,
+                    index=right_index,
+                    name=column_name,
+                    expression=expr,
+                )
+
+    return left_series, right_series
 
 
 def _get_merge_sql_model(
