@@ -2,6 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 import re
+from collections import defaultdict
 from dataclasses import dataclass
 from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set
 
@@ -298,6 +299,15 @@ class Expression:
             d.has_windowed_aggregate_function for d in self.data if isinstance(d, Expression)
         )
 
+    @property
+    def has_table_column_references(self) -> bool:
+        """
+        True iff we are a TableColumnReference, or there is at least one in this Expression.
+        """
+        return any(
+            isinstance(token, TableColumnReferenceToken) for token in self.get_all_tokens()
+        )
+
     def resolve_column_references(self, dialect: Dialect, table_name: Optional[str]) -> 'Expression':
         """ resolve the table name aliases for all columns in this expression """
         result: List[Union[ExpressionToken, Expression]] = []
@@ -309,6 +319,28 @@ class Expression:
             else:
                 result.append(data_item)
         return self.__class__(result)
+
+    def remove_table_column_references(self) -> Tuple[str, str, 'Expression']:
+        """
+        removes all table references from this expression.
+        Returns first table_name and column_name found and a new expression without table column references
+        """
+        table_name = ''
+        column_name = ''
+        if not self.has_table_column_references:
+            return table_name, column_name, self
+
+        new_tokens: List[Union[ExpressionToken, Expression]] = []
+        for token in self.get_all_tokens():
+            if not isinstance(token, TableColumnReferenceToken):
+                new_tokens.append(token)
+                continue
+
+            table_name = token.table_name if token.table_name and not table_name else table_name
+            column_name = column_name or token.column_name
+            new_tokens.extend(Expression.column_reference(token.column_name).data)
+
+        return table_name, column_name, Expression(new_tokens)
 
     def get_references(self) -> Dict[str, 'BachSqlModel']:
         rv = {}
