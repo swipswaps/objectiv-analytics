@@ -13,9 +13,9 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
-	rm -rf source/DataFrame/
-	rm -rf source/Objectiv/
-	rm -rf source/Series/
+	rm -rf "$(SOURCEDIR)/DataFrame/"
+	rm -rf "$(SOURCEDIR)/Objectiv/"
+	rm -rf "$(SOURCEDIR)/Series/"
 
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) 0$(O)
 
