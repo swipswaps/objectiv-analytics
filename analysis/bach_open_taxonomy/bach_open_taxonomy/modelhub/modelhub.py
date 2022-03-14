@@ -72,7 +72,7 @@ class ModelHub:
         """
         Filters the ObjectivFrame for all hits where the filter is ``True``.
 
-        :param filter: SeriesBoolean, where hits are True for those returned.
+        :param filter: SeriesBoolean, where hits are ``True`` for those returned.
         :returns: A filtered ObjectivFrame
         """
         df = self._df

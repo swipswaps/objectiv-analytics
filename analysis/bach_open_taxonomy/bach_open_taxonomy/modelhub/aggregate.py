@@ -74,7 +74,7 @@ class Aggregate:
         """
         Calculate the unique users in the ObjectivFrame.
 
-        :param filter: the output of this model is only based on the rows for which the filter is True.
+        :param filter: the output of this model is only based on the rows for which the filter is ``True``.
         :param groupby: sets the column(s) to group by.
 
             - if ``not_set`` it defaults to using :py:attr:`ModelHub.time_agg`.
@@ -95,7 +95,7 @@ class Aggregate:
         """
         Calculate the unique sessions in the ObjectivFrame.
 
-        :param filter: the output of this model is only based on the rows for which the filter is True.
+        :param filter: the output of this model is only based on the rows for which the filter is ``True``.
         :param groupby: sets the column(s) to group by.
 
             - if ``not_set`` it defaults to using :py:attr:`ModelHub.time_agg`.
