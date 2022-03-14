@@ -675,3 +675,17 @@ def test__set_item_with_merge_different_dtypes() -> None:
 
     with pytest.raises(ValueError, match=r'dtypes of indexes to be merged'):
         bt['inhabitants'] + bt2['inhabitants']
+
+
+def test_binary_operation() -> None:
+    pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
+    pdf2 = pd.DataFrame(data={'a': [1, 2, 3, 4], 'b': [1, 1, 1, 1], 'd': [1, 2, 3, 4], 'e': [1, 2, 3, 4]})
+
+    df1 = get_from_df('binary_operation1', pdf1)
+    df2 = get_from_df('binary_operation2', pdf2)
+    df1 = df1.set_index(['a'])
+    df2 = df2.set_index(['a'])
+
+    result = (df1['b'] + df2['d'] - df1['c']) / df2['e'] + df2['b']
+
+    print('hola')

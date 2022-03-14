@@ -16,7 +16,9 @@ from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_
 
 from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
-    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
+    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression, ColumnReferenceToken, \
+    TableColumnReferenceToken
+
 from bach.sql_model import BachSqlModel
 
 from bach.types import value_to_dtype
@@ -496,11 +498,17 @@ class Series(ABC):
 
         :returns: the (modified) series and (modified) other.
         """
+        from bach.merge import MergeSqlModel
         if not (other.expression.is_constant or other.expression.is_independent_subquery):
             # we should maybe create a subquery
             if self.base_node != other.base_node or self.group_by != other.group_by:
                 if other.expression.is_single_value:
                     other = self.as_independent_subquery(other)
+                elif (
+                    isinstance(self.base_node, MergeSqlModel)
+                    and other.base_node in self.base_node.references.values()
+                ):
+                    return self.__set_item_with_updated_merge(other)
                 else:
                     return self.__set_item_with_merge(other)
 
@@ -552,6 +560,46 @@ class Series(ABC):
             if self.name != new_name else df.all_series[f'{self.name}__other']
         )
 
+        return caller_series, other_series
+
+    def __set_item_with_updated_merge(self, other: 'Series') -> Tuple['Series', 'Series']:
+        """
+        Updates current MergeSqlModel node of previous binary operations in order to avoid
+        nested join sub-queries.
+
+        :returns: the (modified) series and (modified) other.
+
+        .. note::
+            If both caller and other series have the same name, (modified) other will be renamed as:
+            `f"{other.name}__other"`
+        """
+        from bach.merge import MergeSqlModel, unmerge
+        if not (
+            isinstance(self.base_node, MergeSqlModel)
+            and other.base_node in self.base_node.references.values()
+        ):
+            raise Exception('wtf')
+
+        prev_left, prev_right = unmerge(self.to_frame())
+        if prev_left.base_node == other.base_node:
+            prev_left[other.name] = other.copy_override(index=prev_left.index)
+        else:
+            prev_right[other.name] = other.copy_override(index=prev_right.index)
+
+        updated_merged = prev_left.merge(
+            prev_right,
+            how='outer',
+            left_index=True,
+            right_index=True,
+            suffixes=('', '__other'),
+        )
+
+        caller_series = self.copy_override(base_node=updated_merged.base_node)
+        other_series = (
+            updated_merged.all_series[other.name]
+            if f'{other.name}__other' not in updated_merged.all_series
+            else updated_merged.all_series[f'{other.name}__other']
+        )
         return caller_series, other_series
 
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.Series:
@@ -897,8 +945,7 @@ class Series(ABC):
         other = const_to_series(base=self, value=other)
         self_modified, other = self._get_supported(operation, other_dtypes, other)
         expression = NonAtomicExpression.construct(fmt_str, self_modified, other)
-        # if dtype is None or isinstance(dtype, str):
-        #
+
         new_dtype: Optional[str]
         if dtype is None or isinstance(dtype, str):
             new_dtype = dtype

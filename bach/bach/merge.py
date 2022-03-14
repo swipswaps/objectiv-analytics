@@ -4,13 +4,13 @@ Copyright 2021 Objectiv B.V.
 from collections import defaultdict
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
+from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable, cast
 
 from sqlalchemy.engine import Dialect
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeNamePair
-from bach.expression import Expression, join_expressions
+from bach.expression import Expression, join_expressions, RawToken, TableColumnReferenceToken, ColumnReferenceToken
 from bach.utils import ResultSeries, get_result_series_dtype_mapping
 from sql_models.model import Materialization, CustomSqlModelBuilder
 from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
@@ -300,6 +300,56 @@ def merge(
         savepoints=left.savepoints.merge(right_savepoints),
         variables=variables
     )
+
+
+def unmerge(base: DataFrame) -> Tuple[DataFrame, DataFrame]:
+    if not isinstance(base.base_node, MergeSqlModel):
+        return tuple()
+    
+    left_node = cast(BachSqlModel, base.base_node.references['left_node'])
+    right_node = cast(BachSqlModel, base.base_node.references['right_node'])
+
+    left_series = {}
+    right_series = {}
+
+    left_index = {
+        idx.name: idx.copy_override(base_node=left_node) for idx in base.index.values()
+        if idx.name in left_node.columns
+    }
+    right_index = {
+        idx.name: idx.copy_override(base_node=right_node) for idx in base.index.values()
+        if idx.name in right_node.columns
+    }
+
+    for series_name, series in base.data.items():
+        for token in series.expression.get_all_tokens():
+            if not isinstance(token, ColumnReferenceToken):
+                continue
+
+            original_expr = base.base_node.column_expressions[token.column_name]
+            for sub_token in original_expr.get_all_tokens():
+                if not isinstance(sub_token, TableColumnReferenceToken):
+                    continue
+
+                if sub_token.table_name == 'l':
+                    left_series[sub_token.column_name] = series.copy_override(
+                        base_node=left_node,
+                        name=token.column_name,
+                        index=left_index,
+                        expression=Expression.column_reference(sub_token.column_name),
+                    )
+                else:
+                    right_series[sub_token.column_name] = series.copy_override(
+                        base_node=right_node,
+                        name=token.column_name,
+                        index=right_index,
+                        expression=Expression.column_reference(sub_token.column_name),
+                    )
+
+    left = base.copy_override(base_node=left_node, series=left_series, index=left_index)
+    right = base.copy_override(base_node=right_node, series=right_series, index=right_index)
+
+    return left, right
 
 
 def _get_merge_sql_model(
