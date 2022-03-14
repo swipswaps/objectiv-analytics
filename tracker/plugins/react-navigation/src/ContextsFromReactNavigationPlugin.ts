@@ -27,7 +27,7 @@ export class ContextsFromReactNavigationPlugin<ParamList extends ReactNavigation
    * The constructor is responsible for processing the given configuration.
    */
   constructor(config: ContextsFromReactNavigationPluginConfig<ParamList>) {
-    this.navigationContainerRef = config?.navigationContainerRef;
+    this.navigationContainerRef = config.navigationContainerRef;
 
     TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
@@ -36,19 +36,19 @@ export class ContextsFromReactNavigationPlugin<ParamList extends ReactNavigation
    * Generate RootLocationContext and PathContext from React Navigation Container ref state.
    */
   enrich(contexts: Required<ContextsConfig>) {
-    // RootLocationContext
-    const currentRouteName = this.navigationContainerRef.getCurrentRoute()?.name;
-    const rootLocationContextId = currentRouteName ?? 'home';
+    let rootLocationContextId;
+    let pathContextId;
 
-    // PathContext
-    let pathContextId = '/';
     if (this.navigationContainerRef.isReady()) {
+      const currentRoute = this.navigationContainerRef.getCurrentRoute();
+      if (currentRoute && currentRoute.name) {
+        rootLocationContextId = currentRoute.name;
+      }
       pathContextId = getPathFromState(this.navigationContainerRef.getRootState());
     }
 
-    // Enrich
-    contexts.location_stack.unshift(makeRootLocationContext({ id: rootLocationContextId }));
-    contexts.global_contexts.push(makePathContext({ id: pathContextId }));
+    contexts.location_stack.unshift(makeRootLocationContext({ id: rootLocationContextId ?? 'home' }));
+    contexts.global_contexts.push(makePathContext({ id: pathContextId ?? '/' }));
   }
 
   /**

@@ -180,47 +180,40 @@ describe('TrackedLink', () => {
     expect(onPressSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('should fallback to RootLocationContext:home when a route cannot be detected', async () => {
+  it('should fallback to RootLocationContext:home when there is no current route', async () => {
     const navigationContainerRef = createNavigationContainerRef();
-    const tracker = new ReactNativeTracker({
-      applicationId: 'app-id',
-      transport: spyTransport,
-      plugins: [new ContextsFromReactNavigationPlugin({ navigationContainerRef })],
+    jest.spyOn(navigationContainerRef, 'isReady').mockImplementation(() => true);
+    jest.spyOn(navigationContainerRef, 'getCurrentRoute').mockImplementation(() => ({ key: '', name: '' }));
+    jest.spyOn(navigationContainerRef, 'getRootState').mockReturnValue({
+      stale: false,
+      type: 'stack',
+      key: 'stack-G-JBZpD12CtdWhBvSopmt',
+      index: 0,
+      routeNames: ['Home', 'Profile', 'Settings'],
+      routes: [
+        {
+          key: 'Home-uxvCOehGcN7D7h6kyuoS6',
+          name: 'Home',
+          state: {
+            stale: false,
+            type: 'tab',
+            key: 'tab-DdYflY-1psGAlBpwT8DUu',
+            index: 1,
+            routeNames: ['Feed', 'Messages'],
+            routes: [
+              { name: 'Feed', key: 'Feed-nvDuU_obRSW5XMiF-EtBd' },
+              { name: 'Messages', key: 'Messages-Qi2b8Z05GhfRVY7mf8Ei9' },
+            ],
+          },
+        },
+      ],
     });
-    const { getByTestId } = render(
-      <NavigationContainer ref={navigationContainerRef}>
-        <ObjectivProvider tracker={tracker}>
-          <TrackedLink testID="test" to="/HomeScreen">
-            Press me!
-          </TrackedLink>
-        </ObjectivProvider>
-      </NavigationContainer>
-    );
+    const testContextsFromReactNavigationPlugin = new ContextsFromReactNavigationPlugin({ navigationContainerRef });
 
-    fireEvent.press(getByTestId('test'));
+    const contexts = { location_stack: [], global_contexts: [] };
+    testContextsFromReactNavigationPlugin.enrich(contexts);
 
-    expect(spyTransport.handle).toHaveBeenCalledTimes(2);
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(
-      1,
-      expect.objectContaining({
-        _type: 'ApplicationLoadedEvent',
-        global_contexts: [
-          expect.objectContaining({ _type: 'ApplicationContext', id: 'app-id' }),
-          expect.objectContaining({ _type: 'PathContext', id: '/' }),
-        ],
-        location_stack: [expect.objectContaining({ _type: 'RootLocationContext', id: 'home' })],
-      })
-    );
-    expect(spyTransport.handle).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        _type: 'PressEvent',
-        location_stack: [
-          expect.objectContaining({ _type: 'RootLocationContext', id: 'home' }),
-          expect.objectContaining({ _type: 'LinkContext', id: 'press-me', href: '/HomeScreen' }),
-        ],
-      })
-    );
+    expect(contexts.location_stack).toEqual([expect.objectContaining({ _type: 'RootLocationContext', id: 'home' })]);
   });
 
   it('should correctly generate RootLocation and Path Contexts with nested navigators', async () => {
