@@ -5,7 +5,7 @@ set -e
 
 # wait a bit to give PG a chance to start up
 until PGPASSWORD=$POSTGRES_PASSWORD psql -h "${POSTGRES_HOSTNAME}" -U "${POSTGRES_USER}" -c '\q'; do
-  >&2 echo "Postgres is unavailable - sleeping"
+  >&2 echo "Postgres is not yet available - sleeping 1s"
   sleep 1
 done
   
