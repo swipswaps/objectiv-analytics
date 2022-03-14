@@ -2804,6 +2804,7 @@ class DataFrame:
 
         :return: a reshaped series that includes a new index (named "__stacked_index")
             containing the caller's column labels as values.
+
         .. note::
             ``level`` parameter is not supported since multilevel columns are not allowed.
         """
