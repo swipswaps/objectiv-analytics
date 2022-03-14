@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/plugin-react-navigation",
-  "version": "0.0.13",
+  "version": "0.0.15",
   "description": "Automatically tracked React Navigation 6+ Link Component, RootLocation and Path Contexts for Objectiv React Native Tracker",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",

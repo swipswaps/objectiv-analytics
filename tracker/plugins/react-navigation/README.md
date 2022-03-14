@@ -1,4 +1,4 @@
-# Objectiv React Navigation Native Tracked Components
+# Objectiv React Navigation Plugin and Tracked Components
 
 This package aims at automatically tracking React Navigation v6+ components and state. In includes: 
 - `ContextsFromReactNavigationPlugin` to automatically infer RootLocation and Path Context from navigation root state.
