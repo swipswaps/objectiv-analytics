@@ -1,7 +1,7 @@
 {
-  "name": "@objectiv/plugin-react-navigation-tracked-components",
+  "name": "@objectiv/plugin-react-navigation",
   "version": "0.0.13",
-  "description": "React Navigation 6 automatically tracked Components for Objectiv React Native Tracker",
+  "description": "Automatically tracked React Navigation 6+ Link Component, RootLocation and Path Contexts for Objectiv React Native Tracker",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
   "keywords": [
@@ -14,14 +14,12 @@
     "plugin",
     "react native",
     "react navigation",
-    "link",
-    "navlink",
-    "TODO"
+    "link"
   ],
   "repository": {
     "type": "git",
     "url": "https://github.com/objectiv/objectiv-analytics.git",
-    "directory": "tracker/plugins/react-navigation-tracked-components"
+    "directory": "tracker/plugins/react-navigation"
   },
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
   "contributors": [
@@ -82,6 +80,7 @@
     "typescript": "^4.6.2"
   },
   "peerDependencies": {
+    "@objectiv/tracker-core": "^0.0.15",
     "@react-navigation/native": ">=6",
     "react": ">=16.8",
     "react-native": ">=0.6"

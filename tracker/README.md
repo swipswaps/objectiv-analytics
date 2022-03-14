@@ -20,10 +20,10 @@ For detailed installation & usage instructions, visit [Objectiv Docs](https://ww
 ### Optional Plugins
 While all trackers come preconfigured with a sensible set of plugins, some are optional:
 
-| Name                                                 | Type      | Path                                         | Links                                                                    |
-|------------------------------------------------------|-----------|----------------------------------------------|--------------------------------------------------------------------------|
-| @objectiv/plugin-react-navigation-tracked-components | plugin    | /plugins/react-navigation-tracked-components | [README](/tracker/plugins/react-navigation-tracked-components/README.md) |
-| @objectiv/plugin-react-router-tracked-components     | plugin    | /plugins/react-router-tracked-components     | [README](/tracker/plugins/react-router-tracked-components/README.md)     |
+| Name                                             | Type      | Path                                     | Links                                                                |
+|--------------------------------------------------|-----------|------------------------------------------|----------------------------------------------------------------------|
+| @objectiv/plugin-react-navigation                | plugin    | /plugins/react-navigation                | [README](/tracker/plugins/react-navigation/README.md)                |
+| @objectiv/plugin-react-router-tracked-components | plugin    | /plugins/react-router-tracked-components | [README](/tracker/plugins/react-router-tracked-components/README.md) |
 
 These packages contain tracked components for popular third party libraries.  
 
