@@ -17,10 +17,10 @@ Basically, generating and publishing the api docs for `bach` involve a few steps
 
 2. Generate HTML fragments:
 ```bash
-  make html
+  make clean html
 ```
 3. Push generated docs to docusaurus:
-   1. Make sure to have a checkout of objectiv/objectiv.io
+   1. Make sure to have a checkout of objectiv/objectiv.io, on the correct branch.
    2. Run:
 ```bash
    python generate.py
