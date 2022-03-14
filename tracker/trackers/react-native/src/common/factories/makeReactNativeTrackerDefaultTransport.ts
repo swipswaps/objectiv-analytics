@@ -13,6 +13,5 @@ export const makeReactNativeTrackerDefaultTransport = (
   trackerConfig: ReactNativeTrackerConfig
 ): TrackerTransportInterface =>
   new TrackerTransportRetry({
-    console: trackerConfig.console,
-    transport: new FetchTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+    transport: new FetchTransport({ endpoint: trackerConfig.endpoint }),
   });

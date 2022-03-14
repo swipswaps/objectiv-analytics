@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { getLocationPath } from '@objectiv/tracker-core';
+import { getLocationPath, TrackerConsole } from '@objectiv/tracker-core';
 import { LinkContextWrapper, useLocationStack } from '@objectiv/tracker-react-core';
 import React from 'react';
 import { makeAnchorClickHandler } from '../common/factories/makeAnchorClickHandler';
@@ -58,7 +58,7 @@ export const TrackedLinkContext = React.forwardRef<HTMLElement, TrackedLinkConte
 
   const locationPath = getLocationPath(useLocationStack());
   if (!linkId) {
-    console.error(
+    TrackerConsole.error(
       `｢objectiv｣ Could not generate a valid id for LinkContext @ ${locationPath}. Please provide either the \`title\` or the \`id\` property manually.`
     );
     return React.createElement(Component, componentProps);

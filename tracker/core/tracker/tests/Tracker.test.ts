@@ -2,22 +2,27 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-tools';
+import { LogTransport, MockConsoleImplementation, UnusableTransport } from '@objectiv/testing-tools';
 import {
-  ApplicationContextPlugin,
   ContextsConfig,
   GlobalContextValidationRule,
   LocationContextValidationRule,
-  OpenTaxonomyValidationPlugin,
   Tracker,
   TrackerConfig,
+  TrackerConsole,
   TrackerEvent,
   TrackerPluginInterface,
   TrackerQueue,
   TrackerQueueMemoryStore,
 } from '../src';
 
+TrackerConsole.setImplementation(MockConsoleImplementation);
+
 describe('Tracker', () => {
+  beforeEach(() => {
+    jest.resetAllMocks();
+  });
+
   it('should instantiate with just applicationId', () => {
     jest.spyOn(console, 'log');
     expect(console.log).not.toHaveBeenCalled();
@@ -25,33 +30,28 @@ describe('Tracker', () => {
     const testTracker = new Tracker(trackerConfig);
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toBe(undefined);
-    expect(testTracker.plugins).toEqual({
-      tracker: testTracker,
-      plugins: [
-        {
-          pluginName: 'ApplicationContextPlugin',
-          applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
-          validationRules: [
-            new GlobalContextValidationRule({
-              contextName: 'ApplicationContext',
-              once: true,
-              logPrefix: 'ApplicationContextPlugin',
-            }),
-          ],
-        },
-        {
-          pluginName: 'OpenTaxonomyValidationPlugin',
-          validationRules: [
-            new LocationContextValidationRule({
-              logPrefix: 'OpenTaxonomyValidationPlugin',
-              contextName: 'RootLocationContext',
-              once: true,
-              position: 0,
-            }),
-          ],
-        },
-      ],
-    });
+    expect(testTracker.plugins.plugins).toEqual([
+      {
+        pluginName: 'OpenTaxonomyValidationPlugin',
+        validationRules: [
+          new GlobalContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'ApplicationContext',
+            once: true,
+          }),
+          new LocationContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'RootLocationContext',
+            once: true,
+            position: 0,
+          }),
+        ],
+      },
+      {
+        pluginName: 'ApplicationContextPlugin',
+        applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+      },
+    ]);
     expect(testTracker.applicationId).toBe('app-id');
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
@@ -59,20 +59,71 @@ describe('Tracker', () => {
   });
 
   it('should instantiate with tracker config', async () => {
-    expect(mockConsole.log).not.toHaveBeenCalled();
-    const trackerConfig: TrackerConfig = { applicationId: 'app-id', console: mockConsole };
+    expect(MockConsoleImplementation.log).not.toHaveBeenCalled();
     const testTransport = new LogTransport();
-    const testTracker = new Tracker({ ...trackerConfig, transport: testTransport });
+    const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport });
     await expect(testTracker.waitForQueue()).resolves.toBe(true);
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
-    expect(testTracker.plugins).toEqual({
-      tracker: testTracker,
-      plugins: [new ApplicationContextPlugin(trackerConfig), new OpenTaxonomyValidationPlugin(trackerConfig)],
-    });
+    expect(testTracker.plugins.plugins).toEqual([
+      {
+        pluginName: 'OpenTaxonomyValidationPlugin',
+        validationRules: [
+          new GlobalContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'ApplicationContext',
+            once: true,
+          }),
+          new LocationContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'RootLocationContext',
+            once: true,
+            position: 0,
+          }),
+        ],
+      },
+      {
+        pluginName: 'ApplicationContextPlugin',
+        applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+      },
+    ]);
     expect(testTracker.location_stack).toStrictEqual([]);
     expect(testTracker.global_contexts).toStrictEqual([]);
-    expect(mockConsole.log).toHaveBeenCalledWith('Application ID: app-id');
+    expect(MockConsoleImplementation.log).toHaveBeenCalledWith('Application ID: app-id');
+  });
+
+  it('should instantiate without the ApplicationContext plugin', async () => {
+    expect(MockConsoleImplementation.log).not.toHaveBeenCalled();
+    const testTransport = new LogTransport();
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      transport: testTransport,
+      trackApplicationContext: false,
+    });
+    await expect(testTracker.waitForQueue()).resolves.toBe(true);
+    expect(testTracker).toBeInstanceOf(Tracker);
+    expect(testTracker.transport).toStrictEqual(testTransport);
+    expect(testTracker.plugins.plugins).toEqual([
+      {
+        pluginName: 'OpenTaxonomyValidationPlugin',
+        validationRules: [
+          new GlobalContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'ApplicationContext',
+            once: true,
+          }),
+          new LocationContextValidationRule({
+            logPrefix: 'OpenTaxonomyValidationPlugin',
+            contextName: 'RootLocationContext',
+            once: true,
+            position: 0,
+          }),
+        ],
+      },
+    ]);
+    expect(testTracker.location_stack).toStrictEqual([]);
+    expect(testTracker.global_contexts).toStrictEqual([]);
+    expect(MockConsoleImplementation.log).toHaveBeenCalledWith('Application ID: app-id');
   });
 
   it('should instantiate with another Tracker, inheriting its state, yet being independent instances', () => {
@@ -187,8 +238,7 @@ describe('Tracker', () => {
 
     it('should merge Tracker Location Stack and Global Contexts with the Event ones', async () => {
       const trackerContexts: TrackerConfig = {
-        console: mockConsole,
-        transport: new LogTransport({ console: mockConsole }),
+        transport: new LogTransport(),
         applicationId: 'app-id',
         location_stack: [
           { __location_context: true, _type: 'section', id: 'root' },
@@ -225,7 +275,7 @@ describe('Tracker', () => {
     it('should execute all plugins implementing the initialize callback', () => {
       const pluginC: TrackerPluginInterface = { pluginName: 'pC', isUsable: () => true, initialize: jest.fn() };
       const pluginD: TrackerPluginInterface = { pluginName: 'pD', isUsable: () => true, initialize: jest.fn() };
-      const testTracker = new Tracker({ ...trackerConfig, plugins: [pluginC, pluginD], console: mockConsole });
+      const testTracker = new Tracker({ ...trackerConfig, plugins: [pluginC, pluginD] });
       expect(pluginC.initialize).toHaveBeenCalledWith(testTracker);
       expect(pluginD.initialize).toHaveBeenCalledWith(testTracker);
     });
@@ -243,8 +293,8 @@ describe('Tracker', () => {
       };
       const testTracker = new Tracker({ applicationId: 'app-id', plugins: [pluginE, pluginF] });
       testTracker.trackEvent(testEvent);
-      expect(pluginE.enrich).toHaveBeenCalledWith(expect.objectContaining(testEvent));
-      expect(pluginF.enrich).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+      expect(pluginE.enrich).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
+      expect(pluginF.enrich).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
     });
 
     it('should execute all plugins implementing the validate callback', () => {
@@ -260,8 +310,8 @@ describe('Tracker', () => {
       };
       const testTracker = new Tracker({ applicationId: 'app-id', plugins: [pluginE, pluginF] });
       testTracker.trackEvent(testEvent);
-      expect(pluginE.validate).toHaveBeenCalledWith(expect.objectContaining(testEvent));
-      expect(pluginF.validate).toHaveBeenCalledWith(expect.objectContaining(testEvent));
+      expect(pluginE.validate).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
+      expect(pluginF.validate).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
     });
 
     it('should send the Event via the given TrackerTransport', () => {
@@ -276,7 +326,7 @@ describe('Tracker', () => {
       const unusableTransport = new UnusableTransport();
       expect(unusableTransport.isUsable()).toEqual(false);
       jest.spyOn(unusableTransport, 'handle');
-      const testTracker = new Tracker({ applicationId: 'app-id', transport: unusableTransport, console: mockConsole });
+      const testTracker = new Tracker({ applicationId: 'app-id', transport: unusableTransport });
       testTracker.trackEvent(testEvent);
       expect(unusableTransport.handle).not.toHaveBeenCalled();
     });
@@ -298,25 +348,30 @@ describe('Tracker', () => {
     it('should console.log when Tracker changes active state', () => {
       const testTransport = new LogTransport();
       jest.spyOn(testTransport, 'handle');
-      const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport, console: mockConsole });
+      const testTracker = new Tracker({
+        applicationId: 'app-id',
+        transport: testTransport,
+        plugins: [],
+        trackApplicationContext: false,
+      });
       jest.resetAllMocks();
       testTracker.setActive(false);
       testTracker.setActive(true);
       testTracker.setActive(false);
       testTracker.trackEvent(testEvent);
       expect(testTransport.handle).not.toHaveBeenCalled();
-      expect(mockConsole.log).toHaveBeenCalledTimes(3);
-      expect(mockConsole.log).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.log).toHaveBeenCalledTimes(3);
+      expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
         1,
         `%c｢objectiv:Tracker:app-id｣ New state: inactive`,
         'font-weight: bold'
       );
-      expect(mockConsole.log).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
         2,
         `%c｢objectiv:Tracker:app-id｣ New state: active`,
         'font-weight: bold'
       );
-      expect(mockConsole.log).toHaveBeenNthCalledWith(
+      expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
         3,
         `%c｢objectiv:Tracker:app-id｣ New state: inactive`,
         'font-weight: bold'
@@ -449,7 +504,6 @@ describe('Tracker', () => {
         applicationId: 'app-id',
         queue: trackerQueue2,
         transport: logTransport,
-        console: mockConsole,
       });
       await expect(testTracker.waitForQueue({ timeoutMs: 1, intervalMs: 1 })).resolves.toBe(true);
 

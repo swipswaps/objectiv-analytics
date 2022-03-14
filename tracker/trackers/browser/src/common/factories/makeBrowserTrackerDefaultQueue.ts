@@ -13,7 +13,5 @@ export const makeBrowserTrackerDefaultQueue = (trackerConfig: BrowserTrackerConf
   new TrackerQueue({
     store: new LocalStorageQueueStore({
       trackerId: trackerConfig.trackerId ?? trackerConfig.applicationId,
-      console: trackerConfig.console,
     }),
-    console: trackerConfig.console,
   });

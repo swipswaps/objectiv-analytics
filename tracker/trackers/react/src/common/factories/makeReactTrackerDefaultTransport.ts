@@ -12,12 +12,10 @@ import { ReactTrackerConfig } from '../../ReactTracker';
  */
 export const makeReactTrackerDefaultTransport = (trackerConfig: ReactTrackerConfig): TrackerTransportInterface =>
   new TrackerTransportRetry({
-    console: trackerConfig.console,
     transport: new TrackerTransportSwitch({
-      console: trackerConfig.console,
       transports: [
-        new FetchTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
-        new XHRTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+        new FetchTransport({ endpoint: trackerConfig.endpoint }),
+        new XHRTransport({ endpoint: trackerConfig.endpoint }),
       ],
     }),
   });

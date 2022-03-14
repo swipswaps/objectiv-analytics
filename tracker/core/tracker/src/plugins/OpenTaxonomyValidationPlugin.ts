@@ -5,26 +5,31 @@
 import { isDevMode } from '../helpers';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
-import { TrackerPluginConfig, TrackerPluginInterface } from '../TrackerPluginInterface';
+import { TrackerPluginInterface } from '../TrackerPluginInterface';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
+import { GlobalContextValidationRule } from '../validationRules/GlobalContextValidationRule';
 import { LocationContextValidationRule } from '../validationRules/LocationContextValidationRule';
 
 /**
- * Validates a number of rules related to the Open Taxonomy.
+ * Validates a number of rules related to the Open Taxonomy:
+ * - ApplicationContext must be present once in Global Contexts.
+ * - RootLocationContext must be present once, in position 0, of the Location Stack.
  */
 export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
-  readonly console?: TrackerConsole;
   readonly pluginName = `OpenTaxonomyValidationPlugin`;
   readonly validationRules: TrackerValidationRuleInterface[];
 
   /**
    * Initializes console and all Validation Rules.
    */
-  constructor(config: TrackerPluginConfig) {
-    this.console = config.console;
+  constructor() {
     this.validationRules = [
+      new GlobalContextValidationRule({
+        logPrefix: this.pluginName,
+        contextName: 'ApplicationContext',
+        once: true,
+      }),
       new LocationContextValidationRule({
-        console: this.console,
         logPrefix: this.pluginName,
         contextName: 'RootLocationContext',
         once: true,
@@ -32,9 +37,7 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
       }),
     ];
 
-    if (this.console) {
-      this.console.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
-    }
+    TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
 
   /**

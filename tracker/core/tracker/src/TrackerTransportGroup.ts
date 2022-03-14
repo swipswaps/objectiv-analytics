@@ -4,12 +4,12 @@
 
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
-import { TrackerTransportConfig, TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
+import { TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
 
 /**
  * The configuration of TrackerTransportGroup.
  */
-export type TransportGroupConfig = TrackerTransportConfig & {
+export type TransportGroupConfig = {
   transports: NonEmptyArray<TrackerTransportInterface>;
 };
 
@@ -20,7 +20,6 @@ export type TransportGroupConfig = TrackerTransportConfig & {
  * This can be used when having multiple Collectors but also for simpler development needs, such as handling & logging
  */
 export class TrackerTransportGroup implements TrackerTransportInterface {
-  readonly console?: TrackerConsole;
   readonly transportName = 'TrackerTransportGroup';
   readonly usableTransports: TrackerTransportInterface[];
 
@@ -28,17 +27,13 @@ export class TrackerTransportGroup implements TrackerTransportInterface {
    * Filter and store the list of usable transports, received as construction parameters, in state
    */
   constructor(config: TransportGroupConfig) {
-    this.console = config.console;
     this.usableTransports = config.transports.filter((transport) => transport.isUsable());
 
-    if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
-      this.console.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
-      this.console.log(
-        `Usable Transports: ${this.usableTransports.map((transport) => transport.transportName).join(', ')}`
-      );
-      this.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
+    TrackerConsole.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
+    TrackerConsole.log(
+      `Usable Transports: ${this.usableTransports.map((transport) => transport.transportName).join(', ')}`
+    );
   }
 
   /**
