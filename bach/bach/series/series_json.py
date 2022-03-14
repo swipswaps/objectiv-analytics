@@ -279,9 +279,11 @@ class SeriesJsonb(Series):
         return self._comparator_operation(other, "@>")
 
     def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        """ INTERNAL: Only here to not trigger errors from describe """
         raise NotImplementedError()
 
     def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        """ INTERNAL: Only here to not trigger errors from describe """
         raise NotImplementedError()
 
 
