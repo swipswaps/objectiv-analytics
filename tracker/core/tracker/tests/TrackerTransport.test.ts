@@ -2,11 +2,17 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ConfigurableMockTransport, LogTransport, mockConsole, UnusableTransport } from '@objectiv/testing-tools';
+import {
+  ConfigurableMockTransport,
+  LogTransport,
+  MockConsoleImplementation,
+  UnusableTransport,
+} from '@objectiv/testing-tools';
 import {
   ContextsConfig,
   makeTransportSendError,
   Tracker,
+  TrackerConsole,
   TrackerEvent,
   TrackerTransportGroup,
   TrackerTransportRetry,
@@ -21,8 +27,11 @@ const testContexts: ContextsConfig = {
 };
 const testEvent = new TrackerEvent({ _type: testEventName, ...testContexts });
 
+TrackerConsole.setImplementation(MockConsoleImplementation);
+
 describe('TrackerTransportSwitch', () => {
   beforeEach(() => {
+    jest.resetAllMocks();
     jest.useFakeTimers();
   });
 
@@ -41,7 +50,7 @@ describe('TrackerTransportSwitch', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TrackerTransportSwitch({ transports: [transport1, transport2], console: mockConsole });
+    const transports = new TrackerTransportSwitch({ transports: [transport1, transport2] });
     expect(transports.firstUsableTransport).toBe(undefined);
     expect(transports.isUsable()).toBe(false);
 
@@ -63,7 +72,7 @@ describe('TrackerTransportSwitch', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TrackerTransportSwitch({ transports: [transport1, transport2], console: mockConsole });
+    const transports = new TrackerTransportSwitch({ transports: [transport1, transport2] });
     expect(transports.firstUsableTransport).toBe(transport2);
     expect(transports.isUsable()).toBe(true);
 
@@ -88,7 +97,7 @@ describe('TrackerTransportGroup', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TrackerTransportGroup({ transports: [transport1, transport2], console: mockConsole });
+    const transports = new TrackerTransportGroup({ transports: [transport1, transport2] });
     expect(transports.usableTransports).toStrictEqual([]);
     expect(transports.isUsable()).toBe(false);
 
@@ -110,7 +119,7 @@ describe('TrackerTransportGroup', () => {
     jest.spyOn(transport1, 'handle');
     jest.spyOn(transport2, 'handle');
 
-    const transports = new TrackerTransportGroup({ transports: [transport1, transport2], console: mockConsole });
+    const transports = new TrackerTransportGroup({ transports: [transport1, transport2] });
     expect(transports.usableTransports).toStrictEqual([transport1, transport2]);
     expect(transports.isUsable()).toBe(true);
 
@@ -218,7 +227,7 @@ describe('TrackerTransport complex configurations', () => {
 
 describe('TrackerTransportRetry', () => {
   it('should generate exponential timeouts', () => {
-    const retryTransport = new TrackerTransportRetry({ transport: new UnusableTransport(), console: mockConsole });
+    const retryTransport = new TrackerTransportRetry({ transport: new UnusableTransport() });
     const retryTransportAttempt = new TrackerTransportRetryAttempt(retryTransport, [testEvent]);
     const timeouts = Array.from(Array(10).keys()).map(
       retryTransportAttempt.calculateNextTimeoutMs.bind(retryTransport)
@@ -261,7 +270,7 @@ describe('TrackerTransportRetry', () => {
     const logTransport = new LogTransport();
     jest.spyOn(logTransport, 'handle');
 
-    const retryTransport = new TrackerTransportRetry({ transport: logTransport, console: mockConsole });
+    const retryTransport = new TrackerTransportRetry({ transport: logTransport });
     // @ts-ignore
     jest.spyOn(retryTransport.attempts, 'push');
     // @ts-ignore
@@ -324,7 +333,6 @@ describe('TrackerTransportRetry', () => {
       minTimeoutMs: 1,
       maxTimeoutMs: 1,
       retryFactor: 1,
-      console: mockConsole,
     });
     const retryTransportAttempt = new TrackerTransportRetryAttempt(retryTransport, [testEvent]);
     jest.spyOn(retryTransportAttempt, 'retry');

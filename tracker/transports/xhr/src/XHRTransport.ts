@@ -2,20 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import {
-  isNonEmptyArray,
-  NonEmptyArray,
-  TrackerConsole,
-  TrackerTransportConfig,
-  TrackerTransportInterface,
-  TransportableEvent,
-} from '@objectiv/tracker-core';
+import { isNonEmptyArray, NonEmptyArray, TrackerTransportInterface, TransportableEvent } from '@objectiv/tracker-core';
 import { defaultXHRFunction } from './defaultXHRFunction';
 
 /**
  * The configuration of the XHRTransport class
  */
-export type XHRTransportConfig = TrackerTransportConfig & {
+export type XHRTransportConfig = {
   /**
    * The collector endpoint URL.
    */
@@ -32,13 +25,11 @@ export type XHRTransportConfig = TrackerTransportConfig & {
  * Optionally supports specifying a custom `xmlHttpRequestFunction`.
  */
 export class XHRTransport implements TrackerTransportInterface {
-  readonly console?: TrackerConsole;
   readonly endpoint?: string;
   readonly transportName = 'XHRTransport';
   readonly xmlHttpRequestFunction: typeof defaultXHRFunction;
 
   constructor(config: XHRTransportConfig) {
-    this.console = config.console;
     this.endpoint = config.endpoint;
     this.xmlHttpRequestFunction = config.xmlHttpRequestFunction ?? defaultXHRFunction;
   }
@@ -47,7 +38,7 @@ export class XHRTransport implements TrackerTransportInterface {
     const events = await Promise.all(args);
 
     if (this.endpoint && isNonEmptyArray(events)) {
-      return this.xmlHttpRequestFunction({ endpoint: this.endpoint, console: this.console, events });
+      return this.xmlHttpRequestFunction({ endpoint: this.endpoint, events });
     }
   }
 

@@ -5,7 +5,7 @@
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent } from './TrackerEvent';
-import { TrackerQueueStoreConfig, TrackerQueueStoreInterface } from './TrackerQueueStoreInterface';
+import { TrackerQueueStoreInterface } from './TrackerQueueStoreInterface';
 
 /**
  * An in-memory implementation of a TrackerQueueStore.
@@ -13,16 +13,11 @@ import { TrackerQueueStoreConfig, TrackerQueueStoreInterface } from './TrackerQu
  * TODO: move this to its own package: MemoryQueueStore
  */
 export class TrackerQueueMemoryStore implements TrackerQueueStoreInterface {
-  readonly console?: TrackerConsole;
   queueStoreName = `TrackerQueueMemoryStore`;
   events: TrackerEvent[] = [];
 
-  constructor(config?: TrackerQueueStoreConfig) {
-    this.console = config?.console;
-
-    if (this.console) {
-      this.console.log(`%c｢objectiv:${this.queueStoreName}｣ Initialized`, 'font-weight: bold');
-    }
+  constructor() {
+    TrackerConsole.log(`%c｢objectiv:${this.queueStoreName}｣ Initialized`, 'font-weight: bold');
   }
 
   async read(size?: number, filterPredicate?: (event: TrackerEvent) => boolean): Promise<TrackerEvent[]> {

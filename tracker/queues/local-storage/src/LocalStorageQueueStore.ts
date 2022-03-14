@@ -2,53 +2,43 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import {
-  NonEmptyArray,
-  TrackerConsole,
-  TrackerEvent,
-  TrackerQueueStoreConfig,
-  TrackerQueueStoreInterface,
-} from '@objectiv/tracker-core';
+import { NonEmptyArray, TrackerConsole, TrackerEvent, TrackerQueueStoreInterface } from '@objectiv/tracker-core';
+
+/**
+ * The configuration of LocalStorageQueueStore requires a `trackerId` to be specified.
+ */
+export type LocalStorageQueueStoreConfig = {
+  /**
+   * Used to bind this queue to a specific tracker instance. This allows queues to persist across sessions.
+   */
+  trackerId: string;
+};
 
 /**
  * A Local Storage implementation of a TrackerQueueStore.
  */
 export class LocalStorageQueueStore implements TrackerQueueStoreInterface {
-  readonly console?: TrackerConsole;
   queueStoreName = `LocalStorageQueueStore`;
   readonly localStorageKey: string;
 
-  constructor(
-    config: TrackerQueueStoreConfig & {
-      /**
-       * Used to bind this queue to a specific tracker instance. This allows queues to persists across sessions.
-       */
-      trackerId: string;
-    }
-  ) {
-    this.console = config.console;
-
+  constructor(config: LocalStorageQueueStoreConfig) {
     if (typeof localStorage === 'undefined') {
-      throw new Error(`${this.queueStoreName}: failed to initialize: window.localStorage is not available.`);
+      throw new Error(`${this.queueStoreName}: failed to initialize: localStorage is not available.`);
     }
 
     this.localStorageKey = `objectiv-events-queue-${config.trackerId}`;
 
-    if (this.console) {
-      this.console.log(`%c｢objectiv:${this.queueStoreName}｣ Initialized`, 'font-weight: bold');
-    }
+    TrackerConsole.log(`%c｢objectiv:${this.queueStoreName}｣ Initialized`, 'font-weight: bold');
   }
 
   getEventsFromLocalStorage(): TrackerEvent[] {
     try {
       return JSON.parse(localStorage.getItem(this.localStorageKey) ?? '[]');
     } catch (error) {
-      if (this.console) {
-        this.console.error(
-          `%c｢objectiv:${this.queueStoreName}｣ Failed to parse Events from localStorage: ${error}`,
-          'font-weight: bold'
-        );
-      }
+      TrackerConsole.error(
+        `%c｢objectiv:${this.queueStoreName}｣ Failed to parse Events from localStorage: ${error}`,
+        'font-weight: bold'
+      );
     }
     return [];
   }
@@ -57,12 +47,10 @@ export class LocalStorageQueueStore implements TrackerQueueStoreInterface {
     try {
       localStorage.setItem(this.localStorageKey, JSON.stringify(events));
     } catch (error) {
-      if (this.console) {
-        this.console.error(
-          `%c｢objectiv:${this.queueStoreName}｣ Failed to write Events to localStorage: ${error}`,
-          'font-weight: bold'
-        );
-      }
+      TrackerConsole.error(
+        `%c｢objectiv:${this.queueStoreName}｣ Failed to write Events to localStorage: ${error}`,
+        'font-weight: bold'
+      );
     }
   }
 

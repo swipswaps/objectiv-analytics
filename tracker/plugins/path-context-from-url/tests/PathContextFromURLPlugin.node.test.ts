@@ -2,11 +2,17 @@
  * Copyright 2021-2022 Objectiv B.V.
  * @jest-environment node
  */
-import { mockConsole } from '@objectiv/testing-tools';
-import { makePathContext, TrackerEvent } from '@objectiv/tracker-core';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { makePathContext, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { PathContextFromURLPlugin } from '../src';
 
+TrackerConsole.setImplementation(MockConsoleImplementation);
+
 describe('PathContextFromURLPlugin - node', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
+  });
+
   it('should instantiate as unusable', () => {
     const testPathContextFromURLPlugin = new PathContextFromURLPlugin();
     expect(testPathContextFromURLPlugin.isUsable()).toBe(false);
@@ -14,18 +20,18 @@ describe('PathContextFromURLPlugin - node', () => {
 
   describe('Validation', () => {
     it('should not fail when given TrackerEvent does not have PathContext but plugin is not usable', () => {
-      const testPathContextPlugin = new PathContextFromURLPlugin({ console: mockConsole });
+      const testPathContextPlugin = new PathContextFromURLPlugin();
       const eventWithoutPathContext = new TrackerEvent({ _type: 'test' });
 
       jest.resetAllMocks();
 
       testPathContextPlugin.validate(eventWithoutPathContext);
 
-      expect(mockConsole.groupCollapsed).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
 
     it('should not fail when given TrackerEvent has multiple PathContexts', () => {
-      const testPathContextPlugin = new PathContextFromURLPlugin({ console: mockConsole });
+      const testPathContextPlugin = new PathContextFromURLPlugin();
       const eventWithDuplicatedPathContext = new TrackerEvent({
         _type: 'test',
         global_contexts: [makePathContext({ id: '/test' }), makePathContext({ id: '/test' })],
@@ -35,7 +41,7 @@ describe('PathContextFromURLPlugin - node', () => {
 
       testPathContextPlugin.validate(eventWithDuplicatedPathContext);
 
-      expect(mockConsole.groupCollapsed).not.toHaveBeenCalled();
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
     });
   });
 });

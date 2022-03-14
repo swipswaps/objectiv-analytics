@@ -22,7 +22,7 @@ class Map:
 
     def is_first_session(self) -> 'SeriesBoolean':
         """
-        Labels all hits in a session True if that session is the first session of that user in the data.
+        Labels all hits in a session ``True`` if that session is the first session of that user in the data.
 
         :returns: SeriesBoolean with the same index as the ObjectivFrame this method is applied to.
         """
@@ -34,9 +34,9 @@ class Map:
 
     def is_new_user(self, time_aggregation=None) -> 'SeriesBoolean':
         """
-        Labels all hits True if the user is first seen in the period given time_aggregation.
+        Labels all hits ``True`` if the user is first seen in the period given time_aggregation.
 
-        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+        :param time_aggregation: if ``None``, it uses the time_aggregation set in ObjectivFrame.
         :returns: SeriesBoolean with the same index as the ObjectivFrame this method is applied to.
         """
 
@@ -56,7 +56,7 @@ class Map:
 
     def is_conversion_event(self, name: str):
         """
-        Labels a hit True if it is a conversion event, all other hits are labeled False.
+        Labels a hit ``True`` if it is a conversion event, all other hits are labeled False.
 
         :param name: the name of the conversion to label as set in
             :py:attr:`ObjectivFrame.conversion_events`.
@@ -137,12 +137,12 @@ class Map:
                                   partition: str = 'session_id'):
         """
         Returns a count backwards from the first conversion, given the partition. I.e. first hit before
-        converting is 1, second hit before converting 2, etc. Returns None if there are no conversions in the
-        partition or after the first conversion.
+        converting is 1, second hit before converting 2, etc. Returns ``None`` if there are no conversions
+        in the partition or after the first conversion.
 
         :param name: the name of the conversion to label as set in
             :py:attr:`ObjectivFrame.conversion_events`.
-        :param filter: filters hits from being counted. Returns None for filtered hits.
+        :param filter: filters hits from being counted. Returns ``None`` for filtered hits.
         :param partition: the partition over which the number of conversions are counted. Can be any column
             of the ObjectivFrame
         :returns: SeriesInt64 with same index as the ObjectivFrame this method is applied to.

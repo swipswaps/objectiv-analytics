@@ -2,15 +2,19 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
 import {
   GlobalContextValidationRule,
   LocationContextValidationRule,
   makeApplicationLoadedEvent,
   Tracker,
+  TrackerConsole,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { ObjectivProvider, useTrackingContext } from '../src';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('ObjectivProvider', () => {
   beforeEach(() => {
@@ -30,31 +34,19 @@ describe('ObjectivProvider', () => {
     tracker: {
       active: true,
       applicationId: 'app-id',
-      console: undefined,
       global_contexts: [],
       location_stack: [],
-      plugins: {
-        tracker,
-        console: undefined,
+      plugins: expect.objectContaining({
         plugins: [
           {
-            applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
-            console: undefined,
-            pluginName: 'ApplicationContextPlugin',
-            validationRules: [
-              new GlobalContextValidationRule({
-                contextName: 'ApplicationContext',
-                once: true,
-                logPrefix: 'ApplicationContextPlugin',
-              }),
-            ],
-          },
-          {
-            console: undefined,
             pluginName: 'OpenTaxonomyValidationPlugin',
             validationRules: [
+              new GlobalContextValidationRule({
+                logPrefix: 'OpenTaxonomyValidationPlugin',
+                contextName: 'ApplicationContext',
+                once: true,
+              }),
               new LocationContextValidationRule({
-                console: undefined,
                 logPrefix: 'OpenTaxonomyValidationPlugin',
                 contextName: 'RootLocationContext',
                 once: true,
@@ -62,8 +54,12 @@ describe('ObjectivProvider', () => {
               }),
             ],
           },
+          {
+            applicationContext: { __global_context: true, _type: 'ApplicationContext', id: 'app-id' },
+            pluginName: 'ApplicationContextPlugin',
+          },
         ],
-      },
+      }),
       queue: undefined,
       trackerId: 'app-id',
       transport: undefined,
