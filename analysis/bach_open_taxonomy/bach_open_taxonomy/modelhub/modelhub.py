@@ -36,7 +36,7 @@ class ModelHub:
         # init metabase
         self._metabase = None
 
-    def time_agg(self, time_aggregation: Union[str, NotSet] = not_set) -> 'SeriesString':
+    def time_agg(self, time_aggregation: str = None) -> 'SeriesString':
         """
         Formats the moment column in the ObjectivFrame, returns a SeriesString.
 
@@ -46,10 +46,11 @@ class ModelHub:
         Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
         ie. ``time_aggregation=='YYYY-MM-DD'`` aggregates by date.
 
-        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+        :param time_aggregation: if ``None``, it uses :py:attr:`ObjectivFrame.time_aggregation` set from the
+            ObjectivFrame.
         :returns: SeriesString.
         """
-        time_aggregation = self._df.time_aggregation if time_aggregation is not_set else time_aggregation
+        time_aggregation = self._df.time_aggregation if time_aggregation is None else time_aggregation
         return self._df.moment.dt.sql_format(time_aggregation).copy_override(name='time_aggregation')
 
     def to_metabase(self, df, model_type: str = None, config: dict = None):
@@ -69,7 +70,7 @@ class ModelHub:
 
     def filter(self, filter: 'SeriesBoolean'):
         """
-        Filters the ObjectivFrame for all hits where the filter is True.
+        Filters the ObjectivFrame for all hits where the filter is ``True``.
 
         :param filter: SeriesBoolean, where hits are True for those returned.
         :returns: A filtered ObjectivFrame
