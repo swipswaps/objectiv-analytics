@@ -4,12 +4,12 @@
 
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
-import { TrackerTransportConfig, TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
+import { TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
 
 /**
  * The configuration of TrackerTransportSwitch.
  */
-export type TrackerTransportSwitchConfig = TrackerTransportConfig & {
+export type TrackerTransportSwitchConfig = {
   transports: NonEmptyArray<TrackerTransportInterface>;
 };
 
@@ -21,7 +21,6 @@ export type TrackerTransportSwitchConfig = TrackerTransportConfig & {
  * have TransportSwitch test each of them via the `isUsable` method to determine the topmost usable one.
  */
 export class TrackerTransportSwitch implements TrackerTransportInterface {
-  readonly console?: TrackerConsole;
   readonly transportName = 'TrackerTransportSwitch';
   readonly firstUsableTransport?: TrackerTransportInterface;
 
@@ -29,15 +28,12 @@ export class TrackerTransportSwitch implements TrackerTransportInterface {
    * Finds the first TrackerTransport which `isUsable()`.
    */
   constructor(config: TrackerTransportSwitchConfig) {
-    this.console = config.console;
     this.firstUsableTransport = config.transports.find((trackerTransport) => trackerTransport.isUsable());
 
-    if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
-      this.console.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
-      this.console.log(`First usable Transport: ${this.firstUsableTransport?.transportName ?? 'none'}`);
-      this.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
+    TrackerConsole.log(`Transports: ${config.transports.map((transport) => transport.transportName).join(', ')}`);
+    TrackerConsole.log(`First usable Transport: ${this.firstUsableTransport?.transportName ?? 'none'}`);
+    TrackerConsole.groupEnd();
   }
 
   /**

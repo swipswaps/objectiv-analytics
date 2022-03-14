@@ -27,7 +27,6 @@ export type LocationContextValidationRuleConfig = ContextValidationRuleConfig & 
 export class LocationContextValidationRule
   implements TrackerValidationRuleInterface, LocationContextValidationRuleConfig
 {
-  readonly console?: TrackerConsole;
   readonly validationRuleName = `LocationContextValidationRule`;
   readonly contextName: string;
   readonly once?: boolean;
@@ -38,23 +37,18 @@ export class LocationContextValidationRule
    * Process config onto state.
    */
   constructor(config: LocationContextValidationRuleConfig) {
-    this.console = config.console;
     this.contextName = config.contextName;
     this.once = config.once;
     this.position = config.position;
     this.logPrefix = config.logPrefix;
 
-    if (this.console) {
-      this.console.groupCollapsed(
-        `｢objectiv:${this.logPrefix?.concat(':')}${this.validationRuleName}｣ Initialized. Context: ${
-          config.contextName
-        }.`
-      );
-      this.console.group(`Configuration:`);
-      this.console.log(config);
-      this.console.groupEnd();
-      this.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(
+      `｢objectiv:${this.logPrefix?.concat(':')}${this.validationRuleName}｣ Initialized. Context: ${config.contextName}.`
+    );
+    TrackerConsole.group(`Configuration:`);
+    TrackerConsole.log(config);
+    TrackerConsole.groupEnd();
+    TrackerConsole.groupEnd();
   }
 
   /**
@@ -64,14 +58,12 @@ export class LocationContextValidationRule
     const index = event.location_stack.findIndex((context) => context._type === this.contextName);
     const matches = event.location_stack.filter((context) => context._type === this.contextName);
 
-    if (this.console) {
-      if (!matches.length) {
-        logEventValidationRuleError(this, event, `${this.contextName} is missing from Location Stack.`);
-      } else if (this.once && matches.length > 1) {
-        logEventValidationRuleError(this, event, `Only one ${this.contextName} should be present in Location Stack.`);
-      } else if (typeof this.position === 'number' && index !== this.position) {
-        logEventValidationRuleError(this, event, `${this.contextName} is in the wrong position of the Location Stack.`);
-      }
+    if (!matches.length) {
+      logEventValidationRuleError(this, event, `${this.contextName} is missing from Location Stack.`);
+    } else if (this.once && matches.length > 1) {
+      logEventValidationRuleError(this, event, `Only one ${this.contextName} should be present in Location Stack.`);
+    } else if (typeof this.position === 'number' && index !== this.position) {
+      logEventValidationRuleError(this, event, `${this.contextName} is in the wrong position of the Location Stack.`);
     }
   }
 }

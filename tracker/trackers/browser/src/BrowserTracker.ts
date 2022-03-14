@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContextsConfig, isBrowser, isDevMode, Tracker, TrackerConfig } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerConfig } from '@objectiv/tracker-core';
 import { makeBrowserTrackerDefaultPluginsList } from './common/factories/makeBrowserTrackerDefaultPluginsList';
 import { makeBrowserTrackerDefaultQueue } from './common/factories/makeBrowserTrackerDefaultQueue';
 import { makeBrowserTrackerDefaultTransport } from './common/factories/makeBrowserTrackerDefaultTransport';
@@ -16,33 +16,32 @@ import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
  *
  * This statement:
  *
- *  const tracker = new BrowserTracker({ applicationId: 'app-id', endpoint: '/endpoint', console: console });
+ *  const tracker = new BrowserTracker({ applicationId: 'app-id', endpoint: '/endpoint' });
  *
  * is equivalent to:
  *
  *  const trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
- *  const console = trackerConfig.console;
- *  const fetchTransport = new FetchTransport({ endpoint: '/endpoint', console });
- *  const xhrTransport = new XHRTransport({ endpoint: '/endpoint', console });
- *  const transportSwitch = new TransportSwitch({ transports: [fetchTransport, xhrTransport], console });
- *  const transport = new RetryTransport({ transport: transportSwitch, console });
- *  const queueStorage = new LocalStorageQueueStore({ trackerId, console })
- *  const trackerQueue = new TrackerQueue({ storage: trackerStorage, console });
- *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id', console });
- *  const httpContextPlugin = new HttpContextPlugin({ console });
- *  const pathContextFromURLPlugin = new PathContextFromURLPlugin({ console });
- *  const rootLocationContextFromURLPlugin = new RootLocationContextFromURLPlugin({ console });
+ *  const fetchTransport = new FetchTransport({ endpoint: '/endpoint' });
+ *  const xhrTransport = new XHRTransport({ endpoint: '/endpoint' });
+ *  const transportSwitch = new TransportSwitch({ transports: [fetchTransport, xhrTransport] });
+ *  const transport = new RetryTransport({ transport: transportSwitch });
+ *  const queueStorage = new LocalStorageQueueStore({ trackerId })
+ *  const trackerQueue = new TrackerQueue({ storage: trackerStorage });
+ *  const applicationContextPlugin = new ApplicationContextPlugin({ applicationId: 'app-id' });
+ *  const httpContextPlugin = new HttpContextPlugin();
+ *  const pathContextFromURLPlugin = new PathContextFromURLPlugin();
+ *  const rootLocationContextFromURLPlugin = new RootLocationContextFromURLPlugin();
  *  const plugins = [
  *    applicationContextPlugin,
  *    httpContextPlugin,
  *    pathContextFromURLPlugin,
  *    rootLocationContextFromURLPlugin
  *  ];
- *  const tracker = new Tracker({ transport, queue, plugins, console });
+ *  const tracker = new Tracker({ transport, queue, plugins });
  *
- *  See also `makeDefaultTransport`, `makeDefaultQueue` and
- *  `makeBrowserTrackerDefaultPluginList` for the actual implementation.
- *
+ *  @see makeBrowserTrackerDefaultPluginsList
+ *  @see makeBrowserTrackerDefaultQueue
+ *  @see makeBrowserTrackerDefaultTransport
  */
 export class BrowserTracker extends Tracker {
   // A copy of the original configuration
@@ -59,11 +58,6 @@ export class BrowserTracker extends Tracker {
     // `transport` and `endpoint` must not be provided together
     if (config.transport && config.endpoint) {
       throw new Error('Please provider either `transport` or `endpoint`, not both at same time');
-    }
-
-    // If node is in `development` mode and console has not been configured, automatically use the browser's console
-    if (config.console === undefined && isDevMode() && isBrowser()) {
-      config.console = console;
     }
 
     // Automatically create a default Transport for the given `endpoint` with a sensible setup

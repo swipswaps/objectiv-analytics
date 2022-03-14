@@ -2,20 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import {
-  isNonEmptyArray,
-  NonEmptyArray,
-  TrackerConsole,
-  TrackerTransportConfig,
-  TrackerTransportInterface,
-  TransportableEvent,
-} from '@objectiv/tracker-core';
+import { isNonEmptyArray, NonEmptyArray, TrackerTransportInterface, TransportableEvent } from '@objectiv/tracker-core';
 import { defaultFetchFunction } from './defaultFetchFunction';
 
 /**
  * The configuration of the FetchTransport class
  */
-export type FetchTransportConfig = TrackerTransportConfig & {
+export type FetchTransportConfig = {
   /**
    * The collector endpoint URL.
    */
@@ -32,13 +25,11 @@ export type FetchTransportConfig = TrackerTransportConfig & {
  * Optionally supports specifying a custom `fetchFunction`.
  */
 export class FetchTransport implements TrackerTransportInterface {
-  readonly console?: TrackerConsole;
   readonly endpoint?: string;
   readonly transportName = 'FetchTransport';
   readonly fetchFunction: typeof defaultFetchFunction;
 
   constructor(config: FetchTransportConfig) {
-    this.console = config.console;
     this.endpoint = config.endpoint;
     this.fetchFunction = config.fetchFunction ?? defaultFetchFunction;
   }
@@ -47,7 +38,7 @@ export class FetchTransport implements TrackerTransportInterface {
     const events = await Promise.all(args);
 
     if (this.endpoint && isNonEmptyArray(events)) {
-      return this.fetchFunction({ endpoint: this.endpoint, console: this.console, events });
+      return this.fetchFunction({ endpoint: this.endpoint, events });
     }
   }
 

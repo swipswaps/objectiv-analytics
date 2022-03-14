@@ -3,6 +3,7 @@
  */
 
 import { Tracker } from './Tracker';
+import { TrackerConsole } from './TrackerConsole';
 import { TrackerRepositoryInterface } from './TrackerRepositoryInterface';
 
 /**
@@ -14,7 +15,7 @@ export class TrackerRepository<T extends Tracker> implements TrackerRepositoryIn
 
   add(newInstance: T) {
     if (this.trackersMap.has(newInstance.trackerId)) {
-      console.error(`｢objectiv:TrackerRepository｣ Tracker \`${newInstance.trackerId}\` already exists.`);
+      TrackerConsole.error(`｢objectiv:TrackerRepository｣ Tracker \`${newInstance.trackerId}\` already exists.`);
       return;
     }
     this.trackersMap.set(newInstance.trackerId, newInstance);
@@ -26,7 +27,7 @@ export class TrackerRepository<T extends Tracker> implements TrackerRepositoryIn
   delete(trackerId: string) {
     if (this.defaultTracker && this.defaultTracker.trackerId === trackerId) {
       if (this.trackersMap.size > 1) {
-        console.error(
+        TrackerConsole.error(
           `｢objectiv:TrackerRepository｣ \`${trackerId}\` is the default Tracker. Please set another as default before deleting it.`
         );
         return;
@@ -40,7 +41,7 @@ export class TrackerRepository<T extends Tracker> implements TrackerRepositoryIn
 
   get(trackerId?: string) {
     if (this.trackersMap.size === 0) {
-      console.error(`｢objectiv:TrackerRepository｣ There are no Trackers.`);
+      TrackerConsole.error(`｢objectiv:TrackerRepository｣ There are no Trackers.`);
       return;
     }
 
@@ -48,7 +49,7 @@ export class TrackerRepository<T extends Tracker> implements TrackerRepositoryIn
       const trackerInstance = this.trackersMap.get(trackerId);
 
       if (!trackerInstance) {
-        console.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
+        TrackerConsole.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
         return;
       }
 
@@ -60,7 +61,7 @@ export class TrackerRepository<T extends Tracker> implements TrackerRepositoryIn
 
   setDefault(trackerId: string) {
     if (!this.trackersMap.has(trackerId)) {
-      console.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
+      TrackerConsole.error(`｢objectiv:TrackerRepository｣ Tracker \`${trackerId}\` not found.`);
       return;
     }
 

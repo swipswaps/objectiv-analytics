@@ -4,7 +4,7 @@
 
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
-import { TrackerTransportConfig, TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
+import { TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
 import { TrackerTransportRetryAttempt } from './TrackerTransportRetryAttempt';
 
 /**
@@ -42,7 +42,6 @@ export type TrackerTransportRetryConfig = {
  * It allows to also specify maximum retry time and number of attempts.
  */
 export class TrackerTransportRetry implements TrackerTransportInterface {
-  readonly console?: TrackerConsole;
   readonly transportName = 'TrackerTransportRetry';
 
   // RetryTransportConfig
@@ -56,8 +55,7 @@ export class TrackerTransportRetry implements TrackerTransportInterface {
   // A list of attempts that are currently running
   attempts: TrackerTransportRetryAttempt[] = [];
 
-  constructor(config: TrackerTransportConfig & TrackerTransportRetryConfig) {
-    this.console = config.console;
+  constructor(config: TrackerTransportRetryConfig) {
     this.transport = config.transport;
 
     /**
@@ -78,16 +76,14 @@ export class TrackerTransportRetry implements TrackerTransportInterface {
       throw new Error('minTimeoutMs cannot be bigger than maxTimeoutMs');
     }
 
-    if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
-      this.console.log(`Transport: ${this.transport.transportName}`);
-      this.console.log(`Max Attempts: ${this.maxAttempts}`);
-      this.console.log(`Max Retry (ms): ${this.maxRetryMs}`);
-      this.console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
-      this.console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
-      this.console.log(`Retry Factor: ${this.retryFactor}`);
-      this.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:${this.transportName}｣ Initialized`);
+    TrackerConsole.log(`Transport: ${this.transport.transportName}`);
+    TrackerConsole.log(`Max Attempts: ${this.maxAttempts}`);
+    TrackerConsole.log(`Max Retry (ms): ${this.maxRetryMs}`);
+    TrackerConsole.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
+    TrackerConsole.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
+    TrackerConsole.log(`Retry Factor: ${this.retryFactor}`);
+    TrackerConsole.groupEnd();
   }
 
   /**
