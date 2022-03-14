@@ -50,7 +50,7 @@ def collect() -> Response:
     if not get_collector_config().async_mode:
         ok_events, nok_events, event_errors = process_events_entry(events=events, current_millis=current_millis)
         print(f'ok_events: {len(ok_events)}, nok_events: {len(nok_events)}')
-        write_sync_events(ok_events=ok_events, nok_events=nok_events)
+        write_sync_events(ok_events=ok_events, nok_events=nok_events, event_errors=event_errors)
         return _get_collector_response(error_count=len(nok_events), event_count=len(events), event_errors=event_errors)
     else:
         write_async_events(events=events)
@@ -282,7 +282,7 @@ def add_marketing_context_to_event(event: EventData) -> None:
                 pass
 
 
-def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):
+def write_sync_events(ok_events: EventDataList, nok_events: EventDataList, event_errors: List[EventError] = None):
     """
     Write the events to the following sinks, if configured:
         * postgres
@@ -300,7 +300,8 @@ def write_sync_events(ok_events: EventDataList, nok_events: EventDataList):
         finally:
             connection.close()
 
-    write_data_to_snowplow_if_configured(events=ok_events)
+    write_data_to_snowplow_if_configured(events=ok_events, channel='good')
+    write_data_to_snowplow_if_configured(events=nok_events, channel='bad', event_errors=event_errors)
 
     if not output_config.file_system and not output_config.aws:
         return

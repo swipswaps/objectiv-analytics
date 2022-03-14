@@ -54,6 +54,7 @@ _SP_SCHEMA_OBJECTIV_TAXONOMY = 'iglu:io.objectiv/taxonomy/jsonschema/2-0-1'
 
 _SP_GCP_PROJECT = os.environ.get('SP_GCP_PROJECT', None)
 _SP_GCP_PUBSUB_TOPIC_RAW = os.environ.get('SP_GCP_PUBSUB_TOPIC_RAW', '')
+_SP_GCP_PUBSUB_TOPIC_BAD = os.environ.get('SP_GCP_PUBSUB_TOPIC_BAD', '')
 
 # Cookie settings
 _OBJ_COOKIE = 'obj_user_id'
@@ -89,6 +90,7 @@ class PostgresConfig(NamedTuple):
 class SnowplowConfig(NamedTuple):
     gcp_project: str
     gcp_pubsub_topic_raw: str
+    gcp_pubsub_topic_bad: str
 
     schema_collector_payload: str
     schema_contexts: str
@@ -172,7 +174,8 @@ def get_config_output_snowplow() -> Optional[SnowplowConfig]:
         schema_payload_data=_SP_SCHEMA_PAYLOAD_DATA,
         schema_objectiv_taxonomy=_SP_SCHEMA_OBJECTIV_TAXONOMY,
         gcp_project=_SP_GCP_PROJECT,
-        gcp_pubsub_topic_raw=_SP_GCP_PUBSUB_TOPIC_RAW
+        gcp_pubsub_topic_raw=_SP_GCP_PUBSUB_TOPIC_RAW,
+        gcp_pubsub_topic_bad=_SP_GCP_PUBSUB_TOPIC_BAD
     )
 
 
