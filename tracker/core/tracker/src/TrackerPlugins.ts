@@ -46,7 +46,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerV
 
     trackerPluginsConfig.plugins.map((plugin) => {
       if (this.has(plugin.pluginName)) {
-        throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: duplicated`);
+        this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== plugin.pluginName);
       }
 
       this.plugins.push(plugin);

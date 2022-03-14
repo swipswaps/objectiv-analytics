@@ -30,7 +30,7 @@ describe('Plugin', () => {
     expect(testPlugins).toEqual({ tracker, plugins });
   });
 
-  it('should not allow Plugins with the same name', () => {
+  it('should replace Plugins with the same name and use the last instance in the plugin list', () => {
     class TestPluginA implements TrackerPluginInterface {
       readonly pluginName = 'pluginA';
       readonly parameter?: string;
@@ -43,13 +43,15 @@ describe('Plugin', () => {
         return true;
       }
     }
-    expect(
-      () =>
-        new TrackerPlugins({
-          tracker,
-          plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue1' })],
-        })
-    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated');
+    const trackerPlugins = new TrackerPlugins({
+      tracker,
+      plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue1' })],
+    });
+
+    expect(trackerPlugins.get('pluginA')).toEqual({
+      pluginName: 'pluginA',
+      parameter: 'parameterValue1',
+    });
   });
 
   it('should return false if a plugin does not exist', () => {
@@ -251,13 +253,15 @@ describe('Plugin', () => {
         return true;
       }
     }
-    expect(
-      () =>
-        new TrackerPlugins({
-          tracker,
-          plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue' })],
-        })
-    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated');
+    const trackerPlugins = new TrackerPlugins({
+      tracker,
+      plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue1' })],
+    });
+
+    expect(trackerPlugins.get('pluginA')).toEqual({
+      pluginName: 'pluginA',
+      parameter: 'parameterValue1',
+    });
   });
 
   it('should execute all Plugins implementing the `enrich` callback', () => {
