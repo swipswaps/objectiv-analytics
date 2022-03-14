@@ -1,7 +1,5 @@
 from typing import Dict, List
 
-import datetime
-
 import base64
 import json
 from datetime import datetime
@@ -34,11 +32,9 @@ def make_snowplow_custom_context(snowplow_event: Dict, config: SnowplowConfig) -
 def objectiv_event_to_snowplow(event: EventData, config: SnowplowConfig) -> Dict:
     objectiv_schema = config.schema_objectiv_taxonomy
 
-    _event = {k: v for k, v in event.items() if k != '_type'}
-
     return {
         'schema': objectiv_schema,
-        'data': _event
+        'data': event
     }
 
 
@@ -78,7 +74,6 @@ def objectiv_event_to_snowplow_payload(event: EventData, config: SnowplowConfig)
             "cx": snowplow_custom_context
         }]
     }
-
     return CollectorPayload(
         schema=snowplow_collector_payload_schema,
         ipAddress=http_context.get('remote_address', ''),
@@ -97,7 +92,7 @@ def objectiv_event_to_snowplow_payload(event: EventData, config: SnowplowConfig)
     )
 
 
-def payload_to_thrift(payload: CollectorPayload) -> str:
+def payload_to_thrift(payload: CollectorPayload) -> bytes:
     """
     Generate Thrift message for payload, based on Thrift schema here:
         https://github.com/snowplow/snowplow/blob/master/2-collectors/thrift-schemas/collector-payload-1/src/main/thrift/collector-payload.thrift
@@ -117,13 +112,15 @@ def sp_schema_violation(payload: CollectorPayload, event_error: EventError = Non
     #   "required": [ "failure", "payload", "processor" ],
 
     data_reports = []
-    for ei in event_error.error_info:
-        data_reports.append({
-            "message": ei.info,
-            "path": '$',
-            "keyword": "required",
-            "targets": ["_type"]
-        })
+
+    if event_error and event_error.error_info:
+        for ei in event_error.error_info:
+            data_reports.append({
+                "message": ei.info,
+                "path": '$',
+                "keyword": "required",
+                "targets": ["_type"]
+            })
 
     parameters = []
     data = json.loads(payload.body)['data'][0]
@@ -210,15 +207,16 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
             data = payload_to_thrift(payload)
         else:
             event_error = None
-            for ee in event_errors:
-                if ee.event_id == event['id']:
-                    event_error = ee
+            if event_errors:
+                for ee in event_errors:
+                    if ee.event_id == event['id']:
+                        event_error = ee
             failed_event = sp_schema_violation(payload=payload, event_error=event_error)
 
             # serialize (json) and encode to bytestring for publishing
             data = json.dumps(failed_event, separators=(',', ':')).encode('utf-8')
 
-        print(f'sp: writing event {event["id"]} to {channel} @ {topic_path} --> {data}')
+        # print(f'sp: writing event {event["id"]} to {channel} @ {topic_path} --> {data}')
 
         publisher.publish(topic_path, data)
 

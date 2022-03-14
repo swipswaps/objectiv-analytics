@@ -13,7 +13,8 @@ config = SnowplowConfig(
     schema_objectiv_taxonomy='test-schema-objectiv-taxonomy',
     schema_collector_payload='',
     gcp_project='',
-    gcp_pubsub_topic_raw=''
+    gcp_pubsub_topic_raw='',
+    gcp_pubsub_topic_bad=''
 )
 
 event_list = json.loads(CLICK_EVENT_JSON)
