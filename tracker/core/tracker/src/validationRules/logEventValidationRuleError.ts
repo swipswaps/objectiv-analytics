@@ -2,6 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
 
@@ -13,16 +14,12 @@ export const logEventValidationRuleError = (
   event: TrackerEvent,
   message: string
 ) => {
-  if (!rule.console) {
-    return;
-  }
-
-  rule.console.groupCollapsed(
-    `%c｢objectiv:${rule.logPrefix?.concat(':')}${rule.validationRuleName}｣ Error: ${message}`,
+  TrackerConsole.groupCollapsed(
+    `%c｢objectiv:${rule.logPrefix ? rule.logPrefix.concat(':') : ''}${rule.validationRuleName}｣ Error: ${message}`,
     'color:red'
   );
-  rule.console.group(`Event:`);
-  rule.console.log(event);
-  rule.console.groupEnd();
-  rule.console.groupEnd();
+  TrackerConsole.group(`Event:`);
+  TrackerConsole.log(event);
+  TrackerConsole.groupEnd();
+  TrackerConsole.groupEnd();
 };

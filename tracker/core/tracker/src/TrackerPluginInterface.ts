@@ -2,19 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackerConsole } from './TrackerConsole';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
 import { TrackerValidationLifecycleInterface } from './TrackerValidationLifecycleInterface';
-
-/**
- * The TrackerPluginConfig.
- */
-export type TrackerPluginConfig = {
-  /**
-   * Optional. A TrackerConsole instance for logging.
-   */
-  console?: TrackerConsole;
-};
 
 /**
  * A TrackerPlugin must define its own `pluginName` and may define TrackerPluginLifecycle callbacks.
@@ -22,7 +11,6 @@ export type TrackerPluginConfig = {
  * be used to check environment requirements, APIs availability, etc.
  */
 export interface TrackerPluginInterface extends TrackerPluginLifecycleInterface, TrackerValidationLifecycleInterface {
-  readonly console?: TrackerConsole;
   readonly pluginName: string;
 
   /**
@@ -35,5 +23,5 @@ export interface TrackerPluginInterface extends TrackerPluginLifecycleInterface,
  * The TrackerPlugin constructor interface.
  */
 export interface TrackerPluginConstructor {
-  new (pluginConfig: TrackerPluginConfig): TrackerPluginInterface;
+  new (): TrackerPluginInterface;
 }

@@ -21,7 +21,7 @@ import { trackVisibilityVisibleEvent } from './trackVisibilityVisibleEvent';
  * - Elements with the Objectiv Track Blur attribute are bound to EventListener for Inputs.
  * - All processed Elements are decorated with the `tracked` Tagging Attribute so we won't process them again.
  */
-export const trackNewElement = (element: Element, tracker: BrowserTracker, console?: TrackerConsole) => {
+export const trackNewElement = (element: Element, tracker: BrowserTracker) => {
   try {
     if (isTaggedElement(element)) {
       // Prevent Elements from being tracked multiple times
@@ -41,16 +41,16 @@ export const trackNewElement = (element: Element, tracker: BrowserTracker, conso
         const locationAddResult = TrackerElementLocations.add({ elementId, locationPath });
 
         // If location was not unique, log the issue
-        if (console && locationAddResult !== true) {
+        if (locationAddResult !== true) {
           const { existingElementId, collidingElementId } = locationAddResult;
           const existingElement = document.querySelector(`[${TaggingAttribute.elementId}='${existingElementId}']`);
           const collidingElement = document.querySelector(`[${TaggingAttribute.elementId}='${collidingElementId}']`);
           // Sanity check, in case elements have been removed while we were performing this check
           if (existingElement && collidingElement) {
-            console.group(`｢objectiv:trackNewElement｣ Location collision detected: ${locationPath}`);
-            console.error(`Existing Element:`, existingElement);
-            console.error(`Colliding Element:`, collidingElement);
-            console.groupEnd();
+            TrackerConsole.group(`｢objectiv:trackNewElement｣ Location collision detected: ${locationPath}`);
+            TrackerConsole.error(`Existing Element:`, existingElement);
+            TrackerConsole.error(`Colliding Element:`, collidingElement);
+            TrackerConsole.groupEnd();
           } else {
             // Cleanup elements that are gone
             if (!existingElement) {

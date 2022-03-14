@@ -70,8 +70,9 @@ class Aggregate:
         Calculate the unique users in the ObjectivFrame.
 
         :param groupby: sets the column(s) to group by.
-            - if `not_set` it defaults to using :py:attr:`ObjectivFrame.model_hub.time_agg`.
-            - if None it aggregates over all data.
+
+            - if ``not_set`` it defaults to using :py:attr:`ModelHub.time_agg`.
+            - if ``None`` it aggregates over all data.
         :returns: series with results.
         """
 
@@ -89,8 +90,9 @@ class Aggregate:
         Calculate the unique sessions in the ObjectivFrame.
 
         :param groupby: sets the column(s) to group by.
-            - if `not_set` it defaults to using :py:attr:`ObjectivFrame.model_hub.time_agg`.
-            - if None it aggregates over all data.
+
+            - if ``not_set`` it defaults to using :py:attr:`ModelHub.time_agg`.
+            - if ``None`` it aggregates over all data.
         :returns: series with results.
         """
 
@@ -108,8 +110,9 @@ class Aggregate:
         Calculate the average duration of sessions.
 
         :param groupby: sets the column(s) to group by.
-            - if `not_set` it defaults to using :py:attr:`ObjectivFrame.model_hub.time_agg`.
-            - if None it aggregates over all data.
+
+            - if ``not_set`` it defaults to using :py:attr:`ModelHub.time_agg`.
+            - if ``None`` it aggregates over all data.
         :returns: series with results.
         """
 

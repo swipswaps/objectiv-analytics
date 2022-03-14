@@ -4,26 +4,19 @@
 
 import { NonEmptyArray } from './helpers';
 import { TrackerConsole } from './TrackerConsole';
-import {
-  isTransportSendError,
-  TrackerTransportConfig,
-  TrackerTransportInterface,
-  TransportableEvent,
-} from './TrackerTransportInterface';
+import { isTransportSendError, TrackerTransportInterface, TransportableEvent } from './TrackerTransportInterface';
 import { TrackerTransportRetry, TrackerTransportRetryConfig } from './TrackerTransportRetry';
 
 /**
  * The Interface of RetryTransportAttempts
  */
-type TrackerTransportRetryAttemptInterface = TrackerTransportConfig & Required<TrackerTransportRetryConfig>;
+type TrackerTransportRetryAttemptInterface = Required<TrackerTransportRetryConfig>;
 
 /**
  * A RetryTransportAttempt is a TransportRetry worker.
  * TransportRetry creates a RetryTransportAttempt instance whenever its `handle` method is invoked.
  */
 export class TrackerTransportRetryAttempt implements TrackerTransportRetryAttemptInterface {
-  readonly console?: TrackerConsole;
-
   // RetryTransport State
   readonly transport: TrackerTransportInterface;
   readonly maxAttempts: number;
@@ -53,7 +46,6 @@ export class TrackerTransportRetryAttempt implements TrackerTransportRetryAttemp
   startTime: number;
 
   constructor(retryTransportInstance: TrackerTransportRetry, events: NonEmptyArray<TransportableEvent>) {
-    this.console = retryTransportInstance.console;
     this.transport = retryTransportInstance.transport;
     this.maxAttempts = retryTransportInstance.maxAttempts;
     this.maxRetryMs = retryTransportInstance.maxRetryMs;
@@ -65,19 +57,17 @@ export class TrackerTransportRetryAttempt implements TrackerTransportRetryAttemp
     this.attemptCount = 1;
     this.startTime = Date.now();
 
-    if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Created`);
-      this.console.log(`Transport: ${this.transport.transportName}`);
-      this.console.log(`Max Attempts: ${this.maxAttempts}`);
-      this.console.log(`Max Retry (ms): ${this.maxRetryMs}`);
-      this.console.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
-      this.console.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
-      this.console.log(`Retry Factor: ${this.retryFactor}`);
-      this.console.group(`Events:`);
-      this.console.log(this.events);
-      this.console.groupEnd();
-      this.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Created`);
+    TrackerConsole.log(`Transport: ${this.transport.transportName}`);
+    TrackerConsole.log(`Max Attempts: ${this.maxAttempts}`);
+    TrackerConsole.log(`Max Retry (ms): ${this.maxRetryMs}`);
+    TrackerConsole.log(`Min Timeout (ms): ${this.minTimeoutMs}`);
+    TrackerConsole.log(`Max Timeout (ms): ${this.maxTimeoutMs}`);
+    TrackerConsole.log(`Retry Factor: ${this.retryFactor}`);
+    TrackerConsole.group(`Events:`);
+    TrackerConsole.log(this.events);
+    TrackerConsole.groupEnd();
+    TrackerConsole.groupEnd();
   }
 
   /**
@@ -104,36 +94,30 @@ export class TrackerTransportRetryAttempt implements TrackerTransportRetryAttemp
       return Promise.reject(this.errors);
     }
 
-    if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Running`);
-      this.console.log(`Attempt Count: ${this.attemptCount}`);
-      this.console.log(`Events:`);
-      this.console.log(this.events);
-      this.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Running`);
+    TrackerConsole.log(`Attempt Count: ${this.attemptCount}`);
+    TrackerConsole.log(`Events:`);
+    TrackerConsole.log(this.events);
+    TrackerConsole.groupEnd();
 
     // Attempt to transport the given Events. Catch any rejections and have `retry` handle them.
     return this.transport
       .handle(...this.events)
       .then((response) => {
-        if (this.console) {
-          this.console.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Succeeded`);
-          this.console.log(`Response:`);
-          this.console.log(response);
-          this.console.groupEnd();
-        }
+        TrackerConsole.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Succeeded`);
+        TrackerConsole.log(`Response:`);
+        TrackerConsole.log(response);
+        TrackerConsole.groupEnd();
 
         return response;
       })
       .catch((error) => {
-        if (this.console) {
-          this.console.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Failed`);
-          this.console.log(`Error:`);
-          this.console.log(error);
-          this.console.log(`Events:`);
-          this.console.log(this.events);
-          this.console.groupEnd();
-        }
+        TrackerConsole.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Failed`);
+        TrackerConsole.log(`Error:`);
+        TrackerConsole.log(error);
+        TrackerConsole.log(`Events:`);
+        TrackerConsole.log(this.events);
+        TrackerConsole.groupEnd();
 
         // Retry TransportSendErrors
         if (isTransportSendError(error)) {
@@ -158,16 +142,14 @@ export class TrackerTransportRetryAttempt implements TrackerTransportRetryAttemp
     // Increment number of attempts
     this.attemptCount++;
 
-    if (this.console) {
-      this.console.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Retrying`);
-      this.console.log(`Attempt Count: ${this.attemptCount}`);
-      this.console.log(`Waited: ${nextTimeoutMs}`);
-      this.console.log(`Error:`);
-      this.console.log(error);
-      this.console.log(`Events:`);
-      this.console.log(this.events);
-      this.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:TrackerTransportRetryAttempt｣ Retrying`);
+    TrackerConsole.log(`Attempt Count: ${this.attemptCount}`);
+    TrackerConsole.log(`Waited: ${nextTimeoutMs}`);
+    TrackerConsole.log(`Error:`);
+    TrackerConsole.log(error);
+    TrackerConsole.log(`Events:`);
+    TrackerConsole.log(this.events);
+    TrackerConsole.groupEnd();
 
     // Run again
     return this.run();

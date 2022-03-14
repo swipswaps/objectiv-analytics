@@ -9,7 +9,8 @@ import {
   makeExpandableContext,
   makeHttpContext,
   makeInputContext,
-  makeLinkContext, makeMarketingContext,
+  makeLinkContext,
+  makeMarketingContext,
   makeMediaPlayerContext,
   makeNavigationContext,
   makeOverlayContext,
@@ -85,12 +86,14 @@ describe('Context Factories', () => {
   });
 
   it('MarketingContext', () => {
-    expect(makeMarketingContext({
-      id: 'utm',
-      campaign: 'test-campaign',
-      medium: 'test-medium',
-      source: 'test-source'
-    })).toStrictEqual({
+    expect(
+      makeMarketingContext({
+        id: 'utm',
+        campaign: 'test-campaign',
+        medium: 'test-medium',
+        source: 'test-source',
+      })
+    ).toStrictEqual({
       __global_context: true,
       _type: 'MarketingContext',
       id: 'utm',
@@ -98,16 +101,18 @@ describe('Context Factories', () => {
       medium: 'test-medium',
       source: 'test-source',
       term: null,
-      content: null
+      content: null,
     });
-    expect(makeMarketingContext({
-      id: 'utm',
-      campaign: 'test-campaign',
-      medium: 'test-medium',
-      source: 'test-source',
-      term: 'test-term',
-      content: 'test-content'
-    })).toStrictEqual({
+    expect(
+      makeMarketingContext({
+        id: 'utm',
+        campaign: 'test-campaign',
+        medium: 'test-medium',
+        source: 'test-source',
+        term: 'test-term',
+        content: 'test-content',
+      })
+    ).toStrictEqual({
       __global_context: true,
       _type: 'MarketingContext',
       id: 'utm',
@@ -115,7 +120,7 @@ describe('Context Factories', () => {
       medium: 'test-medium',
       source: 'test-source',
       term: 'test-term',
-      content: 'test-content'
+      content: 'test-content',
     });
   });
 

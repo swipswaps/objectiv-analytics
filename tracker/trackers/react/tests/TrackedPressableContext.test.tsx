@@ -1,8 +1,9 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
-import { SpyTransport } from '@objectiv/testing-tools';
+import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
+import { TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render, screen, waitFor } from '@testing-library/react';
 import React, { createRef } from 'react';
 import {
@@ -13,6 +14,8 @@ import {
   TrackedPressableContext,
   TrackedRootLocationContext,
 } from '../src';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedPressableContext', () => {
   beforeEach(() => {
@@ -98,8 +101,8 @@ describe('TrackedPressableContext', () => {
       </ObjectivProvider>
     );
 
-    expect(console.error).toHaveBeenCalledTimes(1);
-    expect(console.error).toHaveBeenCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
       '｢objectiv｣ Could not generate a valid id for PressableContext @ RootLocation:root / Content:content. Please provide either the `title` or the `id` property manually.'
     );
   });

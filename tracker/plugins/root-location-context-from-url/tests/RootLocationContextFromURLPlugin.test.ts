@@ -2,27 +2,22 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
-import { ContextsConfig, Tracker, TrackerEvent } from '@objectiv/tracker-core';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { ContextsConfig, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { RootLocationContextFromURLPlugin } from '../src';
 
-describe('RootLocationContextFromURLPlugin', () => {
-  it('should instantiate without a console', () => {
-    const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin();
-    expect(testRootLocationContextPlugin).toBeInstanceOf(RootLocationContextFromURLPlugin);
-    expect(testRootLocationContextPlugin.console).toBeUndefined();
-  });
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
-  it('should instantiate with the given console', () => {
-    const testRootLocationContextPlugin = new RootLocationContextFromURLPlugin({ console: mockConsole });
-    expect(testRootLocationContextPlugin).toBeInstanceOf(RootLocationContextFromURLPlugin);
-    expect(testRootLocationContextPlugin.console).toBe(mockConsole);
+describe('RootLocationContextFromURLPlugin', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should add the RootLocationContext to the Event when `enrich` is executed by the Tracker', async () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const eventContexts: ContextsConfig = {
       location_stack: [
@@ -57,6 +52,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -80,6 +76,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -103,6 +100,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -126,14 +124,15 @@ describe('RootLocationContextFromURLPlugin', () => {
 
     const testTracker = new Tracker({
       applicationId: 'app-id',
-      plugins: [new RootLocationContextFromURLPlugin({ console: mockConsole })],
+      plugins: [new RootLocationContextFromURLPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
     const trackedEvent = await testTracker.trackEvent(testEvent);
     expect(trackedEvent.location_stack).toHaveLength(0);
-    expect(mockConsole.error).toHaveBeenCalledTimes(1);
-    expect(mockConsole.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       1,
       `%c｢objectiv:RootLocationContextFromURLPlugin｣ Could not generate a RootLocationContext from "null"`,
       `font-weight: bold`
@@ -153,6 +152,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin({ idFactoryFunction: makeRootLocationIdFromHash })],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);

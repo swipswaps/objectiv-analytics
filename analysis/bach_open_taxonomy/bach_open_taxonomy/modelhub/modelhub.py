@@ -172,7 +172,7 @@ class ModelHub():
 
         self._conversion_events[name] = location_stack, event_type
 
-    def time_agg(self, df, time_aggregation: str = None) -> 'SeriesString':
+    def time_agg(self, time_aggregation: str = None) -> 'SeriesString':
         """
         Formats the moment column in the ObjectivFrame, returns a SeriesString.
 
@@ -182,9 +182,11 @@ class ModelHub():
         Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
         ie. ``time_aggregation=='YYYY-MM-DD'`` aggregates by date.
 
-        :param time_aggregation: if None, it uses the time_aggregation set in ObjectivFrame.
+        :param time_aggregation: if ``None``, it uses :py:attr:`ObjectivFrame.time_aggregation` set from the
+            ObjectivFrame.
         :returns: SeriesString.
         """
+
         time_aggregation = self.time_aggregation if time_aggregation is None else time_aggregation
         return df.moment.dt.sql_format(time_aggregation).copy_override(name='time_aggregation')
 
@@ -199,6 +201,7 @@ class ModelHub():
         :param model_type: Preset output to Metabase for a specific model. eg, 'unique_users'
         :param config: Override default config options for the graph to be added/updated in Metabase.
         """
+
         metabase = MetaBase()
         return metabase.to_metabase(df, model_type, config)
 

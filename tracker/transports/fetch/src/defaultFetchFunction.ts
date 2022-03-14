@@ -12,20 +12,16 @@ export const defaultFetchFunction = async ({
   endpoint,
   events,
   options = defaultFetchOptions,
-  console,
 }: {
   endpoint: string;
   events: [TrackerEvent, ...TrackerEvent[]];
   options?: typeof defaultFetchOptions;
-  console?: TrackerConsole;
 }): Promise<Response> => {
   return new Promise(function (resolve, reject) {
-    if (console) {
-      console.groupCollapsed(`｢objectiv:FetchTransport｣ Sending`);
-      console.log(`Events:`);
-      console.log(events);
-      console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:FetchTransport｣ Sending`);
+    TrackerConsole.log(`Events:`);
+    TrackerConsole.log(events);
+    TrackerConsole.groupEnd();
 
     fetch(endpoint, {
       ...options,
@@ -38,33 +34,27 @@ export const defaultFetchFunction = async ({
     })
       .then((response) => {
         if (response.status === 200) {
-          if (console) {
-            console.groupCollapsed(`｢objectiv:FetchTransport｣ Succeeded`);
-            console.log(`Events:`);
-            console.log(events);
-            console.groupEnd();
-          }
+          TrackerConsole.groupCollapsed(`｢objectiv:FetchTransport｣ Succeeded`);
+          TrackerConsole.log(`Events:`);
+          TrackerConsole.log(events);
+          TrackerConsole.groupEnd();
 
           resolve(response);
         } else {
-          if (console) {
-            console.groupCollapsed(`｢objectiv:FetchTransport｣ Failed`);
-            console.log(`Events:`);
-            console.log(events);
-            console.log(`Response: ${response}`);
-            console.groupEnd();
-          }
+          TrackerConsole.groupCollapsed(`｢objectiv:FetchTransport｣ Failed`);
+          TrackerConsole.log(`Events:`);
+          TrackerConsole.log(events);
+          TrackerConsole.log(`Response: ${response}`);
+          TrackerConsole.groupEnd();
 
           reject(makeTransportSendError());
         }
       })
       .catch(() => {
-        if (console) {
-          console.groupCollapsed(`｢objectiv:FetchTransport｣ Error`);
-          console.log(`Events:`);
-          console.log(events);
-          console.groupEnd();
-        }
+        TrackerConsole.groupCollapsed(`｢objectiv:FetchTransport｣ Error`);
+        TrackerConsole.log(`Events:`);
+        TrackerConsole.log(events);
+        TrackerConsole.groupEnd();
 
         reject(makeTransportSendError());
       });

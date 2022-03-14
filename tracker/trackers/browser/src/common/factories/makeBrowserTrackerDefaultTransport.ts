@@ -12,12 +12,10 @@ import { BrowserTrackerConfig } from '../../definitions/BrowserTrackerConfig';
  */
 export const makeBrowserTrackerDefaultTransport = (trackerConfig: BrowserTrackerConfig): TrackerTransportInterface =>
   new TrackerTransportRetry({
-    console: trackerConfig.console,
     transport: new TrackerTransportSwitch({
-      console: trackerConfig.console,
       transports: [
-        new FetchTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
-        new XHRTransport({ endpoint: trackerConfig.endpoint, console: trackerConfig.console }),
+        new FetchTransport({ endpoint: trackerConfig.endpoint }),
+        new XHRTransport({ endpoint: trackerConfig.endpoint }),
       ],
     }),
   });

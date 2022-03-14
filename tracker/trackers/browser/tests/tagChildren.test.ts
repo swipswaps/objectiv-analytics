@@ -2,13 +2,21 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { parseTagChildren, stringifyTagChildren, tagChild, tagChildren, tagContent, TaggingAttribute } from '../src';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import {
+  parseTagChildren,
+  stringifyTagChildren,
+  tagChild,
+  tagChildren,
+  tagContent,
+  TaggingAttribute,
+  TrackerConsole,
+} from '../src';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('tagChild and tagChildren', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-  afterEach(() => {
     jest.resetAllMocks();
   });
 
@@ -59,23 +67,20 @@ describe('tagChild and tagChildren', () => {
     expect(errorCallback.mock.calls[0][0]).toBeInstanceOf(Error);
   });
 
-  it('should call `console.error` when an error occurs and `onError` has not been provided', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-
+  it('should call `TrackerConsole.error` when an error occurs and `onError` has not been provided', () => {
     // @ts-ignore
     tagChild({ queryAll: {} });
 
-    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   it('should return query and tagAs attributes', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
     const parameters = { queryAll: '#two', tagAs: tagContent({ id: 'element-two' }) };
 
     const attributes1 = tagChild(parameters);
     const attributes2 = tagChildren([parameters]);
 
-    expect(console.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     expect(attributes1).toStrictEqual({
       [TaggingAttribute.tagChildren]: JSON.stringify([parameters]),
     });
