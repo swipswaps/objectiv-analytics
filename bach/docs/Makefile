@@ -13,7 +13,10 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 clean:
-	rm -f source/*/bach.*.rst
+	rm -rf source/DataFrame/
+	rm -rf source/Objectiv/
+	rm -rf source/Series/
+
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) 0$(O)
 
 .PHONY: help Makefile
