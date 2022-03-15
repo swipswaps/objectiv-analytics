@@ -226,7 +226,7 @@ class ModelHub():
         """
         if not self._metabase:
             self._metabase = MetaBase()
-        return self._metabase.to_metabase(df, model_type, config)
+        return self._metabase.to_metabase(data, model_type, config)
 
     @property
     def map(self):
