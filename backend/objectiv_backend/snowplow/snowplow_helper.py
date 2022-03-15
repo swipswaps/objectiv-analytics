@@ -106,7 +106,8 @@ def payload_to_thrift(payload: CollectorPayload) -> bytes:
     return transport.getvalue()
 
 
-def sp_schema_violation(payload: CollectorPayload, event_error: EventError = None) -> dict:
+def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
+                              event_error: EventError = None) -> dict:
 
     # for the schema see:
     #   "required": [ "failure", "payload", "processor" ],
@@ -133,7 +134,7 @@ def sp_schema_violation(payload: CollectorPayload, event_error: EventError = Non
 
     ts_format = '%Y-%m-%dT%H:%M:%S.%fZ'
     return {
-        "schema": "iglu:com.snowplowanalytics.snowplow.badrows/schema_violations/jsonschema/2-0-0",
+        "schema": config.schema_schema_violations,
         # Information regarding the schema violations
         "data": {
             "failure": {
@@ -211,7 +212,7 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
                 for ee in event_errors:
                     if ee.event_id == event['id']:
                         event_error = ee
-            failed_event = sp_schema_violation(payload=payload, event_error=event_error)
+            failed_event = snowplow_schema_violation(payload=payload, config=config, event_error=event_error)
 
             # serialize (json) and encode to bytestring for publishing
             data = json.dumps(failed_event, separators=(',', ':')).encode('utf-8')

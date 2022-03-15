@@ -1,10 +1,12 @@
 import json
+import jsonschema
 import base64
 from objectiv_backend.snowplow.schema.ttypes import CollectorPayload
 from objectiv_backend.snowplow.snowplow_helper import make_snowplow_custom_context, \
-    objectiv_event_to_snowplow, objectiv_event_to_snowplow_payload
+    objectiv_event_to_snowplow, objectiv_event_to_snowplow_payload, snowplow_schema_violation
 from tests.schema.test_schema import CLICK_EVENT_JSON, make_event_from_dict
 from objectiv_backend.common.config import SnowplowConfig
+from objectiv_backend.schema.validate_events import EventError, ErrorInfo
 
 
 config = SnowplowConfig(
@@ -12,6 +14,7 @@ config = SnowplowConfig(
     schema_payload_data='test-schema-payload-data',
     schema_objectiv_taxonomy='test-schema-objectiv-taxonomy',
     schema_collector_payload='',
+    schema_schema_violations='https://raw.githubusercontent.com/snowplow/iglu-central/master/schemas/com.snowplowanalytics.snowplow.badrows/schema_violations/jsonschema/2-0-0',
     gcp_project='',
     gcp_pubsub_topic_raw='',
     gcp_pubsub_topic_bad=''
@@ -64,3 +67,29 @@ def test_objectiv_event_to_snowplow_payload():
 
     # check if we can deserialize the encoded custom context properly
     assert json.loads(base64.b64decode(body['data'][0]['cx']))
+
+
+def test_snowplow_failed_event():
+    invalid_event = {k: v for k, v in event.items()}
+    invalid_event['_type'] = 'InvalidEvent'
+
+    event_error = EventError(
+        event_id=event['id'],
+        error_info=[
+            ErrorInfo(
+                data=[],
+                info='test')
+        ])
+    payload = objectiv_event_to_snowplow_payload(event=invalid_event, config=config)
+    violation = snowplow_schema_violation(payload=payload, config=config, event_error=event_error)
+
+    # local copy of https://raw.githubusercontent.com/snowplow/iglu-central/master/schemas/com.snowplowanalytics.snowplow.badrows/schema_violations/jsonschema/2-0-0
+    with open('tests/collector/schema_violations.json') as fp:
+        schema = json.load(fp)
+
+        # somehow doesn't like the self-describing schema schema from Snowplow
+        # so remove it, so we fall back to a generic schema (which is used to validate the schema, not the event)
+        del schema['$schema']
+        instance = violation['data']
+
+        jsonschema.validate(instance=instance, schema=schema,)

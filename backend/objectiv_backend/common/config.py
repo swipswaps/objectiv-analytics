@@ -49,8 +49,9 @@ _FILESYSTEM_OUTPUT_DIR = os.environ.get('FILESYSTEM_OUTPUT_DIR')
 # ### Snowplow settings
 _SP_SCHEMA_COLLECTOR_PAYLOAD = 'iglu:com.snowplowanalytics.snowplow/CollectorPayload/thrift/1-0-0'
 _SP_SCHEMA_CONTEXTS = 'iglu:com.snowplowanalytics.snowplow/contexts/jsonschema/1-0-0'
-_SP_SCHEMA_PAYLOAD_DATA = 'iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4'
 _SP_SCHEMA_OBJECTIV_TAXONOMY = 'iglu:io.objectiv/taxonomy/jsonschema/2-0-1'
+_SP_SCHEMA_PAYLOAD_DATA = 'iglu:com.snowplowanalytics.snowplow/payload_data/jsonschema/1-0-4'
+_SP_SCHEMA_SCHEMA_VIOLATIONS = 'iglu:com.snowplowanalytics.snowplow.badrows/schema_violations/jsonschema/2-0-0'
 
 _SP_GCP_PROJECT = os.environ.get('SP_GCP_PROJECT', None)
 _SP_GCP_PUBSUB_TOPIC_RAW = os.environ.get('SP_GCP_PUBSUB_TOPIC_RAW', '')
@@ -96,6 +97,7 @@ class SnowplowConfig(NamedTuple):
     schema_contexts: str
     schema_objectiv_taxonomy: str
     schema_payload_data: str
+    schema_schema_violations: str
 
 
 class OutputConfig(NamedTuple):
@@ -171,8 +173,9 @@ def get_config_output_snowplow() -> Optional[SnowplowConfig]:
     return SnowplowConfig(
         schema_collector_payload=_SP_SCHEMA_COLLECTOR_PAYLOAD,
         schema_contexts=_SP_SCHEMA_CONTEXTS,
-        schema_payload_data=_SP_SCHEMA_PAYLOAD_DATA,
         schema_objectiv_taxonomy=_SP_SCHEMA_OBJECTIV_TAXONOMY,
+        schema_payload_data=_SP_SCHEMA_PAYLOAD_DATA,
+        schema_schema_violations=_SP_SCHEMA_SCHEMA_VIOLATIONS,
         gcp_project=_SP_GCP_PROJECT,
         gcp_pubsub_topic_raw=_SP_GCP_PUBSUB_TOPIC_RAW,
         gcp_pubsub_topic_bad=_SP_GCP_PUBSUB_TOPIC_BAD
