@@ -504,11 +504,6 @@ class Series(ABC):
             if self.base_node != other.base_node or self.group_by != other.group_by:
                 if other.expression.is_single_value:
                     other = self.as_independent_subquery(other)
-                elif (
-                    isinstance(self.base_node, MergeSqlModel)
-                    and other.base_node in self.base_node.references.values()
-                ):
-                    return self.__set_item_with_updated_merge(other)
                 else:
                     return self.__set_item_with_merge(other)
 
@@ -526,6 +521,17 @@ class Series(ABC):
             If both caller and other series have the same name, (modified) other will be renamed as:
             `f"{other.name}__other"`
         """
+        if self.expression.has_aggregate_function:
+            raise ValueError(
+                f'Cannot perform operation if series has aggregated function '
+                f'`{self.name}` Try calling materialize() on the DataFrame'
+            )
+        if other.expression.has_aggregate_function:
+            raise ValueError(
+                f'Cannot perform operation if series has aggregated function '
+                f'`{other.name}` Try calling materialize() on the DataFrame'
+            )
+
         if not self.index or not other.index:
             raise ValueError('both series must have at least one index level')
 
@@ -535,71 +541,47 @@ class Series(ABC):
         ):
             raise ValueError('dtypes of indexes to be merged should be the same')
 
-        from bach.partitioning import GroupBy
+        from bach.merge import MergeSqlModel, revert_merge
+
+        # node to be merged was already used in previous operation, therefore we just
+        # need to update MergeSqlModel referenced columns
+        if isinstance(self.base_node, MergeSqlModel) and other.base_node in self.base_node.references.values():
+            left, right = revert_merge(self.to_frame())
+            if left.base_node == other.base_node:
+                left[other.name] = other.copy_override(index=left.index)
+            else:
+                right[other.name] = other.copy_override(index=right.index)
+        else:
+            left = self.to_frame()
+            right = other.to_frame()
+
         # align index names, this way we have all matched indexes in a single series
         new_index = {
-            caller_idx.name: other_idx.copy_override(name=caller_idx.name)
-            for caller_idx, other_idx in zip(self.index.values(), other.index.values())
+            left_idx.name: right_idx.copy_override(name=left_idx.name)
+            for left_idx, right_idx in zip(left.index.values(), right.index.values())
         }
-        new_name = other.name if other.name not in new_index else f'{other.name}__data_column'
-        other_cp = other.copy_override(
-            index=new_index,
-            group_by=GroupBy(group_by_columns=list(new_index.values())) if other.group_by else None,
-            name=new_name,
-        )
-        df = self.to_frame()
-        df = df.merge(
-            other_cp, on=list(new_index.keys()), how='outer', suffixes=('', '__other'),
-        )
+        right_series = {}
+        for r_series in right.data.values():
+            new_name = r_series.name if r_series.name not in new_index else f'{r_series.name}__data_column'
+            right_series[new_name] = r_series.copy_override(index=new_index, name=new_name)
 
+        right = right.copy_override(series=right_series, index=new_index)
+
+        df = left.merge(
+            right, on=list(new_index.keys()), how='outer', suffixes=('', '__other'),
+        )
         # consider only the caller's indexes, drop the non-shared ones
         df = df.set_index(list(self.index.keys()), drop=True)
-        caller_series = df.all_series[self.name]
-        other_series = (
-            df.all_series[new_name]
-            if self.name != new_name else df.all_series[f'{self.name}__other']
-        )
 
-        return caller_series, other_series
+        caller_series = self.copy_override(base_node=df.base_node)
 
-    def __set_item_with_updated_merge(self, other: 'Series') -> Tuple['Series', 'Series']:
-        """
-        Updates current MergeSqlModel node of previous binary operations in order to avoid
-        nested join sub-queries.
+        other_series_name = other.name
+        if other_series_name in new_index:
+            other_series_name = f'{other_series_name}__data_column'
+        elif f'{other.name}__other' in df.all_series:
+            other_series_name = f'{other_series_name}__other'
+        other_series = df.all_series[other_series_name]
 
-        :returns: the (modified) series and (modified) other.
-
-        .. note::
-            If both caller and other series have the same name, (modified) other will be renamed as:
-            `f"{other.name}__other"`
-        """
-        from bach.merge import MergeSqlModel, unmerge
-        if not (
-            isinstance(self.base_node, MergeSqlModel)
-            and other.base_node in self.base_node.references.values()
-        ):
-            raise Exception('wtf')
-
-        prev_left, prev_right = unmerge(self.to_frame())
-        if prev_left.base_node == other.base_node:
-            prev_left[other.name] = other.copy_override(index=prev_left.index)
-        else:
-            prev_right[other.name] = other.copy_override(index=prev_right.index)
-
-        updated_merged = prev_left.merge(
-            prev_right,
-            how='outer',
-            left_index=True,
-            right_index=True,
-            suffixes=('', '__other'),
-        )
-
-        caller_series = self.copy_override(base_node=updated_merged.base_node)
-        other_series = (
-            updated_merged.all_series[other.name]
-            if f'{other.name}__other' not in updated_merged.all_series
-            else updated_merged.all_series[f'{other.name}__other']
-        )
         return caller_series, other_series
 
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.Series:

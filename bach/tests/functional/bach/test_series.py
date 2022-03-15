@@ -569,7 +569,9 @@ def test_series_unstack():
 
 def test__set_item_with_merge_aggregated_series() -> None:
     pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
-    pdf2 = pd.DataFrame(data={'x': [1, 2, 3, 4], 'y': [2, 2, 4, 4], 'z': [1, 2, 3, 4]}, )
+    pdf2 = pd.DataFrame(
+        data={'w': [1, 1, 1, 1], 'x': [1, 2, 3, 4], 'y': [2, 2, 4, 4], 'z': [1, 2, 3, 4]},
+    )
 
     df1 = get_from_df('_set_item_1', pdf1)
     df2 = get_from_df('_set_item_2', pdf2)
@@ -580,8 +582,10 @@ def test__set_item_with_merge_aggregated_series() -> None:
     pdf1 = pdf1.set_index('a')
     pdf2 = pdf2.set_index('x')
 
-    expected = pdf1.c + pdf2.groupby('y')['z'].sum()
-    result = df1.c + df2.groupby('y')['z'].sum()
+    grouped_pdf2 = pdf2.groupby('y').sum()
+    grouped_df2 = df2.groupby('y').sum().materialize()
+    expected = pdf1.c + grouped_pdf2['z'] - grouped_pdf2['w']
+    result = df1.c + grouped_df2['z_sum'] - grouped_df2['w_sum']
 
     pd.testing.assert_series_equal(
         expected,
@@ -643,17 +647,19 @@ def test__set_item_with_merge_index_uneven_multi_level() -> None:
     df1 = df1.set_index(['a', 'b'])
     df2 = df2.set_index(['x'])
 
-    result = df1['c'] + df2['a']
+    result = df1['c'] + df2['a'] + df2['z']
     assert_equals_data(
         result.sort_index(),
         expected_columns=['a', 'b', 'c'],
         expected_data=[
-            [1, 2, 5],
-            [2, 2, 5],
-            [3, 2, 7],
+            [1, 2, 6],
+            [2, 2, 7],
+            [3, 2, 10],
             [4, None, None],
         ],
     )
+    assert df1.base_node == result.base_node.references['left_node']
+    assert df2.base_node == result.base_node.references['right_node']
 
 
 def test__set_item_with_merge_index_level_error() -> None:
@@ -675,17 +681,3 @@ def test__set_item_with_merge_different_dtypes() -> None:
 
     with pytest.raises(ValueError, match=r'dtypes of indexes to be merged'):
         bt['inhabitants'] + bt2['inhabitants']
-
-
-def test_binary_operation() -> None:
-    pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]}, )
-    pdf2 = pd.DataFrame(data={'a': [1, 2, 3, 4], 'b': [1, 1, 1, 1], 'd': [1, 2, 3, 4], 'e': [1, 2, 3, 4]})
-
-    df1 = get_from_df('binary_operation1', pdf1)
-    df2 = get_from_df('binary_operation2', pdf2)
-    df1 = df1.set_index(['a'])
-    df2 = df2.set_index(['a'])
-
-    result = (df1['b'] + df2['d'] - df1['c']) / df2['e'] + df2['b']
-
-    print('hola')

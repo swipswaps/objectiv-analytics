@@ -5,7 +5,7 @@ import pytest
 
 from bach.expression import RawToken, ColumnReferenceToken, StringValueToken, Expression, \
     ConstValueExpression, AggregateFunctionExpression, WindowFunctionExpression, SingleValueExpression, \
-    NonAtomicExpression
+    NonAtomicExpression, TableColumnReferenceToken
 from sql_models.util import is_bigquery
 from tests.unit.bach.util import get_fake_df
 
@@ -207,3 +207,37 @@ def test_is_single_value():
                                                      notsingle1, notsingle2, notsingle3).is_single_value
 
 
+def test_table_column_reference(dialect) -> None:
+    expr = Expression.table_column_reference('random', 'city')
+    assert expr == Expression([TableColumnReferenceToken('random', 'city')])
+    if not is_bigquery(dialect):  # 'normal' path
+        assert expr.to_sql(dialect) == '"random"."city"'
+        assert expr.to_sql(dialect, '') == '"random"."city"'
+        assert expr.to_sql(dialect, 'tab') == '"random"."city"'
+    else:
+        assert expr.to_sql(dialect) == '`random`.`city`'
+        assert expr.to_sql(dialect, '') == '`random`.`city`'
+        assert expr.to_sql(dialect, 'tab') == '`random`.`city`'
+
+
+def test_remove_table_column_references() -> None:
+    expr = Expression.table_column_reference('random', 'city')
+
+    result_table_name, result_column_name, result_expr = expr.remove_table_column_references()
+    assert result_table_name == 'random'
+    assert result_column_name == 'city'
+    assert result_expr == Expression.column_reference('city')
+
+    expr2 = Expression.column_reference('city')
+    result_table_name, result_column_name, result_expr = expr2.remove_table_column_references()
+    assert result_table_name == ''
+    assert result_column_name == ''
+    assert result_expr == Expression.column_reference('city')
+
+
+def test_has_table_column_reference() -> None:
+    expr = Expression.table_column_reference('random', 'city')
+    assert expr.has_table_column_references
+
+    expr2 = Expression.column_reference('city')
+    assert not expr2.has_table_column_references
