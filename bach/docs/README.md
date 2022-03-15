@@ -1,7 +1,7 @@
-#Generating docs
+# Generating docs
 
-Basically, generating and publishing the api docs for `bach` involve a few steps:
-1. Configure environment for Sphinx: setup Python environment:
+Basically, generating and publishing the API docs for `Bach` involve a few steps:
+1. Configure environment for Sphinx:
 ```bash
   virtualenv -p python3 venv
   . venv/bin/activate
@@ -20,11 +20,20 @@ Basically, generating and publishing the api docs for `bach` involve a few steps
   make clean html
 ```
 3. Push generated docs to docusaurus:
-   1. Make sure to have a checkout of objectiv/objectiv.io, on the correct branch.
+   1. Make sure to have a checkout of objectiv/objectiv.io.
    2. Run:
 ```bash
    python generate.py
 ```
 
-This process will generate and push the html files to docusaurus. How to run / publish the website is detailed in the 
-respective readme 
+This process will generate and push the html files to docusaurus. How to run / publish the website is 
+detailed in the respective readme.
+
+---
+**NOTE**
+
+The generation script does not remove any files that were previously generated. If you rerun the script, 
+either make sure you manually delete any removed files from your branch manually, or start on a clean 
+branch/PR.
+
+---
