@@ -45,9 +45,9 @@ Basic operations
     # Add a column 'concat', with the result of concatenating strings
     df['concat'] = df['city'] + ' is located in ' + df['municipality']
     # remove the city column
-    df.drop(columns=['city'], inplace=True)
+    df = df.drop(columns=['city'])
     # rename the 'another column' column to 'city'
-    df.rename(columns={'another column': 'city'}, inplace=True)
+    df = df.rename(columns={'another column': 'city'})
 
     # Convert the Bach DataFrame to a pandas DataFrame.
     # When executing in a notebook this will print the dataframe.

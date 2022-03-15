@@ -1,58 +1,62 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import bach
 from typing import TYPE_CHECKING
 from bach_open_taxonomy.modelhub.aggregate import Aggregate
 from bach_open_taxonomy.modelhub.map import Map
-from bach.sql_model import BachSqlModel
-from bach import DataFrame
-from bach.types import get_dtype_from_db_dtype
 from bach_open_taxonomy.stack.util import sessionized_data_model
-from sql_models.constants import NotSet
-from bach.series import Series
-from typing import List, Union
 from bach_open_taxonomy.series.series_objectiv import MetaBase
+from sql_models.constants import NotSet
+from typing import List, Union
 
 if TYPE_CHECKING:
-    from bach.series import SeriesString, SeriesBoolean
     from bach_open_taxonomy.series import SeriesLocationStack
 
-GroupByType = Union[List[Union[str, Series]], str, Series, NotSet]
+GroupByType = Union[List[Union[str, bach.Series]], str, bach.Series, NotSet]
 
 
 TIME_DEFAULT_FORMAT = 'YYYY-MM-DD HH24:MI:SS.MS'
 
 
 class ModelHub():
+    """
+    The model hub contains collection of data models and convenience functions that you can take, combine and
+    run on Bach data frames to quickly build highly specific model stacks for product analysis and
+    exploration.
+    It includes models for a wide range of typical product analytics use cases.
+
+    All models from the model hub can run on Bach DataFrames that contain data collected by the Objectiv
+    tracker. To instantiate a DataFrame with Objectiv data use :py:meth:`ModelHub.from_objectiv_data`. Models
+    from the model hub assume that at least the columns of a DataFrame instantiated with this method are
+    available in order to run properly. These columns are:
+
+    The model hub has two main type of functions: `map` and `aggregate`.
+    * `map` functions always return a series with the same shape and index as the DataFrame they originate
+    from. This ensures they can be added as a column to that DataFrame.
+    * `aggregate` fuctions return aggregated data in some form from the DataFrame. Can also be accessed with
+    `agg`.
+    """
     def __init__(self,
-                 start_date: str = None,
-                 end_date: str = None,
                  time_aggregation: str = TIME_DEFAULT_FORMAT):
+        """
+        Constructor
+
+        :param time_aggregation: Time aggregation used for aggregation models.
+        """
+
         self._time_aggregation = time_aggregation
-        self._start_date = start_date
-        self._end_date = end_date
         self._conversion_events = {}  # type: ignore
+
+        # init metabase
+        self._metabase = None
 
     @property
     def time_aggregation(self):
         """
-        Time aggregation used for aggregation models as set with :py:meth:`from_objectiv_data`
+        Time aggregation used for aggregation models, set when object is instantiated.
         """
         return self._time_aggregation
-
-    @property
-    def start_date(self):
-        """
-        Start date as set with :py:meth:`from_objectiv_data`
-        """
-        return self._start_date
-
-    @property
-    def end_date(self):
-        """
-        End date as set with :py:meth:`from_objectiv_data`
-        """
-        return self._end_date
 
     @property
     def conversion_events(self):
@@ -63,9 +67,9 @@ class ModelHub():
         """
         return self._conversion_events
 
-    def _check_data_is_objectiv_data(self, df):
-        if df.index_dtypes != {'event_id': 'uuid'}:
-            raise ValueError(f"not right index {df.index_dtypes}")
+    def _check_data_is_objectiv_data(self, data):
+        if data.index_dtypes != {'event_id': 'uuid'}:
+            raise ValueError(f"not right index {data.index_dtypes}")
 
         required_columns = {
             'day': 'date',
@@ -79,14 +83,32 @@ class ModelHub():
             'session_hit_number': 'int64'
         }
 
-        if not (required_columns.items() <= df.dtypes.items()):
-            raise ValueError(f"not right columns in DataFrame {df.dtypes.items()}"
+        if not (required_columns.items() <= data.dtypes.items()):
+            raise ValueError(f"not right columns in DataFrame {data.dtypes.items()}"
                              f"should be {required_columns.items()}")
 
     def from_objectiv_data(self,
                            db_url: str = None,
-                           table_name: str = 'data'):
+                           table_name: str = 'data',
+                           start_date: str = None,
+                           end_date: str = None):
+        """
+        Sets data from sql table into an :py:class:`bach.DataFrame` object.
 
+        The created DataFrame points to where the data is stored in the sql database, makes several
+        transformations and sets the right data types for all columns. As such, the models from the model hub
+        can be applied to a DataFrame created with this method.
+
+        :param db_url: the url that indicate database dialect and connection arguments. If not given, env DSN
+            is used to create one. If that's not there, the default of
+            'postgresql://objectiv:@localhost:5432/objectiv' will be used.
+        :param table_name: the name of the sql table where the data is stored.
+        :param start_date: first date for which data is loaded to the DataFrame. If None, data is loaded from
+            the first date in the sql table. Format as 'YYYY-MM-DD'.
+        :param end_date: last date for which data is loaded to the DataFrame. If None, data is loaded up to
+            and including the last date in the sql table. Format as 'YYYY-MM-DD'.
+        :returns: :py:class:`bach.DataFrame` with Objectiv data.
+        """
         import sqlalchemy
         if db_url is None:
             import os
@@ -102,7 +124,7 @@ class ModelHub():
 
         with engine.connect() as conn:
             res = conn.execute(sql)
-        dtypes = {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
+        dtypes = {x[0]: bach.types.get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
 
         expected_columns = {'event_id': 'uuid',
                             'day': 'date',
@@ -112,8 +134,8 @@ class ModelHub():
         if dtypes != expected_columns:
             raise KeyError(f'Expected columns not in table {table_name}. Found: {dtypes}')
 
-        model = sessionized_data_model(start_date=self.start_date,
-                                       end_date=self.end_date,
+        model = sessionized_data_model(start_date=start_date,
+                                       end_date=end_date,
                                        table_name=table_name)
         # The model returned by `sessionized_data_model()` has different columns than the underlying table.
         # Note that the order of index_dtype and dtypes matters, as we use it below to get the model_columns
@@ -130,23 +152,23 @@ class ModelHub():
             'session_hit_number': 'int64'
         }
         model_columns = tuple(index_dtype.keys()) + tuple(dtypes.keys())
-        bach_model = BachSqlModel.from_sql_model(sql_model=model, columns=model_columns)
+        bach_model = bach.sql_model.BachSqlModel.from_sql_model(sql_model=model, columns=model_columns)
 
         from bach.savepoints import Savepoints
-        df = DataFrame.get_instance(engine=engine,
-                                    base_node=bach_model,
-                                    index_dtypes=index_dtype,
-                                    dtypes=dtypes,
-                                    group_by=None,
-                                    order_by=[],
-                                    savepoints=Savepoints(),
-                                    variables={}
-                                    )
+        data = bach.DataFrame.get_instance(engine=engine,
+                                           base_node=bach_model,
+                                           index_dtypes=index_dtype,
+                                           dtypes=dtypes,
+                                           group_by=None,
+                                           order_by=[],
+                                           savepoints=Savepoints(),
+                                           variables={}
+                                           )
 
-        df['global_contexts'] = df.global_contexts.astype('objectiv_global_context')
-        df['location_stack'] = df.location_stack.astype('objectiv_location_stack')
+        data['global_contexts'] = data.global_contexts.astype('objectiv_global_context')
+        data['location_stack'] = data.location_stack.astype('objectiv_location_stack')
 
-        return df
+        return data
 
     def add_conversion_event(self,
                              location_stack: 'SeriesLocationStack' = None,
@@ -157,13 +179,14 @@ class ModelHub():
         :py:attr:`conversion_events`.
 
         :param location_stack: the location stack that is labeled as conversion. Can be any slice in of a
-            objectiv_location_stack type column. Optionally use in conjunction with event_type to label a
-            conversion.
+            :py:class:`bach_open_taxonomy.SeriesLocationStack` type column. Optionally use in conjunction with
+            ``event_type`` to label a conversion.
         :param event_type: the event type that is labeled as conversion. Optionally use in conjunction with
-            objectiv_location_stack to label a conversion.
+            ``objectiv_location_stack`` to label a conversion.
         :param name: the name to use for the labeled conversion event. If None it will use 'conversion_#',
             where # is the number of the added conversion.
         """
+
         if location_stack is None and event_type is None:
             raise ValueError('At least one of conversion_stack or conversion_event should be set.')
 
@@ -172,38 +195,37 @@ class ModelHub():
 
         self._conversion_events[name] = location_stack, event_type
 
-    def time_agg(self, time_aggregation: str = None) -> 'SeriesString':
+    def time_agg(self, data: bach.DataFrame, time_aggregation: str = None) -> bach.SeriesString:
         """
-        Formats the moment column in the ObjectivFrame, returns a SeriesString.
+        Formats the moment column in the DataFrame, returns a SeriesString.
 
-        By default it uses the time_aggregation as set in the ObjectivFrame, unless overriden by the
-        `time_aggregation` parameter.
+        Can be used to aggregate to different time intervals, ie day, month etc.
 
-        Use any template for aggreation from: https://www.postgresql.org/docs/14/functions-formatting.html
-        ie. ``time_aggregation=='YYYY-MM-DD'`` aggregates by date.
-
-        :param time_aggregation: if ``None``, it uses :py:attr:`ObjectivFrame.time_aggregation` set from the
-            ObjectivFrame.
+        :param data: :py:class:`bach.DataFrame` to apply the method on.
+        :param time_aggregation: if None, it uses :py:attr:`time_aggregation` set from the
+            ModelHub. Use any template for aggregation from:
+            https://www.postgresql.org/docs/14/functions-formatting.html
+            ie. ``time_aggregation=='YYYY-MM-DD'`` aggregates by date.
         :returns: SeriesString.
         """
 
         time_aggregation = self.time_aggregation if time_aggregation is None else time_aggregation
-        return df.moment.dt.sql_format(time_aggregation).copy_override(name='time_aggregation')
+        return data.moment.dt.sql_format(time_aggregation).copy_override(name='time_aggregation')
 
-    def to_metabase(self, df, model_type: str = None, config: dict = None):
+    def to_metabase(self, data, model_type: str = None, config: dict = None):
         """
-        Plot data in `df` to Metabase. If a card already exists, it will be updated. If `df` is a
+        Plot data in ``data`` to Metabase. If a card already exists, it will be updated. If ``data`` is a
         :py:class:`bach.Series`, it will call :py:meth:`bach.Series.to_frame`.
 
         Default options can be overridden using the config dictionary.
 
-        :param df: :py:meth:`bach.DataFrame` or :py:meth:`bach.Series` to push to MetaBase.
+        :param data: :py:class:`bach.DataFrame` or :py:class:`bach.Series` to push to MetaBase.
         :param model_type: Preset output to Metabase for a specific model. eg, 'unique_users'
         :param config: Override default config options for the graph to be added/updated in Metabase.
         """
-
-        metabase = MetaBase()
-        return metabase.to_metabase(df, model_type, config)
+        if not self._metabase:
+            self._metabase = MetaBase()
+        return self._metabase.to_metabase(df, model_type, config)
 
     @property
     def map(self):
