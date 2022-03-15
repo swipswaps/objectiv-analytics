@@ -14,16 +14,18 @@ from uuid import UUID
 import numpy
 import pandas
 from sqlalchemy.engine import Engine
-from sqlalchemy.future import Connection
 
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
-from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
-from bach.types import get_series_type_from_dtype, get_dtype_from_db_dtype
+from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
+from bach.sql_model import BachSqlModel, CurrentNodeSqlModel
+from bach.types import get_series_type_from_dtype
+from bach.utils import escape_parameter_characters
 from sql_models.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
 
 from sql_models.sql_generator import to_sql
+from sql_models.util import quote_identifier
 
 if TYPE_CHECKING:
     from bach.partitioning import Window, GroupBy
@@ -362,80 +364,113 @@ class DataFrame:
             self._variables == other._variables
 
     @classmethod
-    def _get_dtypes(cls, engine: Engine, node: SqlModel) -> Dict[str, str]:
-        new_node = CustomSqlModelBuilder(sql='select * from {{previous}} limit 0')(previous=node)
-        select_statement = to_sql(new_node)
-        sql = f"""
-            create temporary table tmp_table_name on commit drop as
-            ({select_statement});
-            select column_name, data_type
-            from information_schema.columns
-            where table_name = 'tmp_table_name'
-            order by ordinal_position;
-        """
-        with engine.connect() as conn:
-            sql = escape_parameter_characters(conn, sql)
-            res = conn.execute(sql)
-        return {x[0]: get_dtype_from_db_dtype(x[1]) for x in res.fetchall()}
-
-    @classmethod
-    def from_table(cls, engine: Engine, table_name: str, index: List[str]) -> 'DataFrame':
+    def from_table(
+            cls,
+            engine: Engine,
+            table_name: str,
+            index: List[str],
+            all_dtypes: Optional[Dict[str, str]] = None
+    ) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the content of an existing table in the database.
 
-        This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
+        If all_dtypes is not specified, the column dtypes are queried from the database's information
+        schema.
 
         :param engine: an sqlalchemy engine for the database.
         :param table_name: the table name that contains the data to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
+        :param all_dtypes: Optional. Mapping from column name to dtype.
+            Must contain all index and data columns.
+            Must be in same order as the columns appear in the the sql-model.
         :returns: A DataFrame based on a sql table.
 
         .. note::
-            In order to create this temporary table the source data is queried.
+            If all_dtypes is not set, then this will query the database.
         """
-        # todo: why is an index mandatory if you can reset it later?
-        # todo: don't create a temporary table, the real table (and its meta data) already exists
-        model = CustomSqlModelBuilder(sql=f'SELECT * FROM {table_name}').instantiate()
-        return cls._from_node(engine, model, index)
+        if all_dtypes is not None:
+            dtypes = all_dtypes
+        else:
+            dtypes = get_dtypes_from_table(engine=engine, table_name=table_name)
+
+        model_builder = CustomSqlModelBuilder(sql='SELECT * FROM {table_name}', name='from_table')
+        sql_model = model_builder(table_name=quote_identifier(engine.dialect, table_name))
+        return cls._from_node(
+            engine=engine,
+            model=sql_model,
+            index=index,
+            all_dtypes=dtypes
+        )
 
     @classmethod
-    def from_model(cls, engine: Engine, model: SqlModel, index: List[str]) -> 'DataFrame':
+    def from_model(
+            cls,
+            engine: Engine,
+            model: SqlModel,
+            index: List[str],
+            all_dtypes: Optional[Dict[str, str]] = None
+    ) -> 'DataFrame':
         """
         Instantiate a new DataFrame based on the result of the query defined in `model`.
 
-        This will create and remove a temporary table to asses meta data for the setting the correct dtypes.
-        In order to create this temporary table the query in `model` executed.
+        If all_dtypes is not specified, then a transaction scoped temporary table will be created with
+        0 result rows from the model. The meta data of this table will be used to deduce the dtypes.
 
+        :param engine: a sqlalchemy engine for the database.
+        :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
+        :param index: list of column names that make up the index. At least one column needs to be
+            selected for the index.
+        :param all_dtypes: Optional. Mapping from column name to dtype.
+            Must contain all index and data columns.
+            Must be in same order as the columns appear in the the sql-model.
+        :returns: A DataFrame based on an SqlModel
+
+        .. note::
+            If all_dtypes is not set, then this will query the database and create and remove a temporary
+            table.
+        """
+        if all_dtypes is not None:
+            dtypes = all_dtypes
+        else:
+            dtypes = get_dtypes_from_model(engine=engine, node=model)
+        return cls._from_node(
+            engine=engine,
+            model=model,
+            index=index,
+            all_dtypes=dtypes
+        )
+
+    @classmethod
+    def _from_node(
+            cls,
+            engine,
+            model: SqlModel,
+            index: List[str],
+            all_dtypes: Dict[str, str]
+    ) -> 'DataFrame':
+        """
+        INTERNAL: Instantiate a new DataFrame based on the result of the query defined in `model`.
         :param engine: an sqlalchemy engine for the database.
         :param model: an SqlModel that specifies the queries to instantiate as DataFrame.
         :param index: list of column names that make up the index. At least one column needs to be
             selected for the index.
+        :param all_dtypes: Dictionary mapping column name to dtype.
+            Must contain all index and data columns.
+            Must be in same order as the columns appear in the the sql-model.
         :returns: A DataFrame based on an SqlModel
+
         """
-        # Wrap the model in a simple select, so we know for sure that the top-level model has no unexpected
-        # select expressions, where clauses, or limits
-        wrapped_model = CustomSqlModelBuilder(sql='SELECT * FROM {{model}}')(model=model)
-        return cls._from_node(engine, wrapped_model, index)
+        index_dtypes = {k: all_dtypes[k] for k in index}
+        series_dtypes = {k: all_dtypes[k] for k in all_dtypes.keys() if k not in index}
 
-    @classmethod
-    def _from_node(cls, engine, model: SqlModel, index: List[str]) -> 'DataFrame':
-        dtypes = cls._get_dtypes(engine, model)
-
-        index_dtypes = {k: dtypes[k] for k in index}
-        series_dtypes = {k: dtypes[k] for k in dtypes.keys() if k not in index}
-
-        columns = tuple(index_dtypes.keys()) + tuple(series_dtypes.keys())
-        bach_model = BachSqlModel(
-            model_spec=model.model_spec,
-            placeholders=model.placeholders,
-            references=model.references,
-            materialization=model.materialization,
-            materialization_name=model.materialization_name,
-            column_expressions={c: Expression.column_reference(c) for c in columns},
+        bach_model = BachSqlModel.from_sql_model(
+            sql_model=model,
+            column_expressions={c: Expression.column_reference(c) for c in all_dtypes.keys()},
         )
+
         from bach.savepoints import Savepoints
-        return cls.get_instance(
+        df = cls.get_instance(
             engine=engine,
             base_node=bach_model,
             index_dtypes=index_dtypes,
@@ -445,6 +480,11 @@ class DataFrame:
             savepoints=Savepoints(),
             variables={}
         )
+        if not df.is_materialized:
+            # This happens when the columns in the model are in a different order than the columns in the
+            # dataframe.
+            df = df.materialize(node_name='column_reorder')
+        return df
 
     @classmethod
     def from_pandas(
@@ -1134,7 +1174,7 @@ class DataFrame:
 
     def set_index(
         self,
-        keys: Union[str, 'Series', List[Union[str, 'Series']]],
+        keys: Union[str, 'Series', Sequence[Union[str, 'Series']]],
         drop: bool = True,
         append: bool = False,
     ) -> 'DataFrame':
@@ -1554,7 +1594,7 @@ class DataFrame:
         :returns: a new DataFrame with the specified ordering,
          otherwise it updates the original and returns None.
         """
-        sort_by = self.index_columns if not level else self._get_indexes_by_level(level)
+        sort_by = self.index_columns if level is None else self._get_indexes_by_level(level)
         df = self.sort_values(by=sort_by, ascending=ascending)
         return df
 
@@ -1675,7 +1715,7 @@ class DataFrame:
         if isinstance(limit, int):
             limit = slice(0, limit)
 
-        limit_str = 'limit all'
+        limit_str: Optional[str] = None
         if limit is not None:
             if limit.step is not None:
                 raise NotImplementedError("Step size not supported in slice")
@@ -1725,6 +1765,7 @@ class DataFrame:
             column_names = tuple(self.all_series.keys())
 
         return CurrentNodeSqlModel.get_instance(
+            dialect=self.engine.dialect,
             name=name,
             column_names=column_names,
             column_exprs=column_exprs,
@@ -1748,9 +1789,12 @@ class DataFrame:
         :returns: SQL query
         """
         model = self.get_current_node('view_sql', limit=limit)
-        placeholder_values = get_variable_values_sql(variable_values=self.variables)
+        placeholder_values = get_variable_values_sql(
+            dialect=self.engine.dialect,
+            variable_values=self.variables
+        )
         model = update_placeholders_in_graph(start_node=model, placeholder_values=placeholder_values)
-        return to_sql(model)
+        return to_sql(dialect=self.engine.dialect, model=model)
 
     def merge(
         self,
@@ -2754,6 +2798,40 @@ class DataFrame:
             )
         return subset
 
+    def stack(self, dropna: bool = True) -> 'Series':
+        """
+        Stacks all data_columns into a single index series.
+
+        :param dropna: Whether to drop rows that contain missing values. If the caller has
+            at least an index series, this might generate different combinations between
+            the index and the stacked values.
+
+        :return: a reshaped series that includes a new index (named "__stacked_index")
+            containing the caller's column labels as values.
+        .. note::
+            ``level`` parameter is not supported since multilevel columns are not allowed.
+        """
+        df = self.copy()
+        if df.group_by:
+            df = df.materialize('stack')
+
+        dc_dfs = []
+        # convert each data column series to DataFrame and use series name as new index value
+        for series_name, series in df.data.items():
+            dc_df = series.copy_override(name='__stacked').to_frame()
+            dc_df['__stacked_index'] = series_name
+            dc_dfs.append(dc_df)
+
+        # concat all dataframes to get new_index and stacked values in two single series
+        from bach.operations.concat import DataFrameConcatOperation
+        stacked_df = DataFrameConcatOperation(dc_dfs)()
+
+        # append the stacked index to the initial indexes
+        stacked_df = stacked_df.set_index(list(self.index_columns + ['__stacked_index']))
+        stacked_df = stacked_df.dropna() if dropna else stacked_df
+
+        return stacked_df.all_series['__stacked']
+
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     """
@@ -2765,14 +2843,3 @@ def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
             len(a) == len(b) and list(a.keys()) == list(b.keys())
             and all(ai.equals(bi) for (ai, bi) in zip(a.values(), b.values()))
     )
-
-
-def escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
-    """
-    Return a modified copy of the given sql with the query-parameter special characters escaped.
-    e.g. if the connection uses '%' to mark a parameter, then all occurrences of '%' will be replaced by '%%'
-    """
-    # for now we'll just assume Postgres and assume the pyformat parameter style is used.
-    # When we support more databases we'll need to do something smarter, see
-    # https://www.python.org/dev/peps/pep-0249/#paramstyle
-    return raw_sql.replace('%', '%%')

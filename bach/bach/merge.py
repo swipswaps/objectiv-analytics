@@ -4,12 +4,15 @@ Copyright 2021 Objectiv B.V.
 import itertools
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, NamedTuple, Sequence, cast
+from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, cast, NamedTuple
+
+from sqlalchemy.engine import Dialect
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series, SeriesBoolean
 from bach.dataframe import DtypeNamePair
-from bach.expression import Expression, join_expressions, ColumnReferenceToken, ExpressionToken, \
-    TableColumnReferenceToken, NonAtomicExpression
+
+from bach.expression import Expression, join_expressions, TableColumnReferenceToken, \
+    NonAtomicExpression, ExpressionToken, ColumnReferenceToken
 from bach.utils import ResultSeries, get_result_series_dtype_mapping
 from sql_models.model import Materialization, CustomSqlModelBuilder, SqlModel
 from bach.sql_model import BachSqlModel, construct_references
@@ -32,46 +35,6 @@ class MergeOn(NamedTuple):
     @property
     def is_empty(self) -> bool:
         return not (self.left or self.right or self.conditional)
-
-
-def _is_valid_boolean_series(
-    left: DataFrame, right: DataFrameOrSeries, series: SeriesBoolean,
-) -> None:
-    """
-    Verifies boolean series is referencing to both nodes to be merged. Boolean series must make reference
-    only to left and right base nodes.
-    """
-    if (
-        not isinstance(series.base_node, MergeSqlModel)
-        and set(series.base_node.references.keys()) - {'left_node', 'right_node'}
-    ):
-        raise ValueError('Cannot merge on boolean series without both left/right node references')
-
-    found_nodes = {left.base_node: False, right.base_node: False}
-    merge_nodes: List[BachSqlModel] = [
-        node
-        for node in series.base_node.references.values()
-        if isinstance(node, BachSqlModel)
-    ]
-
-    while merge_nodes:
-        new_merge_nodes: List[BachSqlModel] = []
-        for m in merge_nodes:
-            if m in found_nodes:
-                found_nodes[m] = True
-                continue
-
-            if not isinstance(m, MergeSqlModel):
-                raise ValueError('BooleanSeries has reference to more than 2 nodes.')
-
-            new_merge_nodes.extend([node for node in m.references.values() if isinstance(node, BachSqlModel)])
-
-        merge_nodes = new_merge_nodes
-
-    if any(not found for found in found_nodes.values()):
-        raise ValueError('BooleanSeries must have both base_nodes to be merged as references.')
-
-    return None
 
 
 def _verify_on_conflicts(
@@ -127,7 +90,11 @@ def _verify_on_conflicts(
         raise ValueError('"on" based SeriesBooleans is valid only when left.base_node != right.base_node. ')
 
     for col in on_conditions:
-        _is_valid_boolean_series(left, right, col)
+        if isinstance(col.base_node, MergeSqlModel):
+            raise ValueError('boolean series base node should be an instance of MergeSqlModel')
+
+        if not all(ref in {left.base_node, right.base_node} for ref in col.base_node.references.values()):
+            raise ValueError('boolean series must have both base_nodes to be merged as references.')
 
 
 def _determine_merge_on(
@@ -228,6 +195,7 @@ def _get_x_on(on: ColumnNames, x_on: Optional[ColumnNames], var_name: str) -> Li
 
 
 def _determine_result_columns(
+    dialect: Dialect,
     left: DataFrame,
     right: DataFrameOrSeries,
     merge_on: MergeOn,
@@ -263,6 +231,7 @@ def _determine_result_columns(
             right_index[series_name] = series
 
     new_index_list = _get_merged_result_series(
+        dialect=dialect,
         left_series=left_df.index,
         right_series=right_index,
         suffixes=suffixes,
@@ -271,6 +240,7 @@ def _determine_result_columns(
     )
 
     new_data_list = _get_merged_result_series(
+        dialect=dialect,
         left_series=left_df.data,
         right_series=right_data,
         suffixes=suffixes,
@@ -292,6 +262,7 @@ def _check_no_column_name_conflicts(result_columns: List[ResultSeries]):
 
 
 def _get_merged_result_series(
+    dialect: Dialect,
     left_series: Dict[str, Series],
     right_series: Dict[str, Series],
     conflicting_names: Set[str],
@@ -304,13 +275,13 @@ def _get_merged_result_series(
         table_alias = 'l' if suffix == suffixes[0] else 'r'
         for series_name, series in source_series.items():
             new_name = series_name
-            expr = series.expression.resolve_column_references(table_alias)
+            expr = series.expression.resolve_column_references(dialect, table_alias)
 
             if series_name in conflicting_on:
                 if table_alias == 'r':
                     continue
-                r_expr = right_series[series_name].expression.resolve_column_references('r')
-                expr = Expression.construct(f'COALESCE({expr.to_sql()}, {r_expr.to_sql()})')
+                r_expr = right_series[series_name].expression.resolve_column_references(dialect, 'r')
+                expr = Expression.construct(f'COALESCE({{}}, {{}})', expr, r_expr)
             elif series_name in conflicting_names:
                 new_name = series_name + suffix
 
@@ -349,6 +320,8 @@ def merge(
             right = right.to_frame()
         right = right.materialize(node_name='merge_right')
 
+    dialect = left.engine.dialect
+
     real_how = How(how)
     merge_on = _determine_merge_on(
         left=left,
@@ -362,6 +335,7 @@ def merge(
     )
 
     new_index_list, new_data_list = _determine_result_columns(
+        dialect=dialect,
         left=left,
         right=right,
         merge_on=merge_on,
@@ -381,6 +355,7 @@ def merge(
     variables.update(left.variables)
 
     model = _get_merge_sql_model(
+        dialect=dialect,
         left=left,
         right=right,
         how=real_how,
@@ -401,7 +376,119 @@ def merge(
     )
 
 
+def revert_merge(base: DataFrame) -> Tuple[DataFrame, DataFrame]:
+    """
+    Splits a merged dataframe into two new frames that have the same structure as the original frames
+    that were combined. Base dataframe should not be aggregated since original indexes can be lost.
+    """
+    if not isinstance(base.base_node, MergeSqlModel):
+        raise Exception('can only revert merge if DataFrame base_node is MergeSqlModel instance.')
+
+    if base.group_by:
+        raise Exception('cannot revert merge on aggregated frame.')
+
+    left_node = cast(BachSqlModel, base.base_node.references['left_node'])
+    right_node = cast(BachSqlModel, base.base_node.references['right_node'])
+
+    left_index, right_index = _determine_series_per_source(
+        base=base, series_to_unmerge=base.index_columns, left_index={}, right_index={},
+    )
+
+    left_series, right_series = _determine_series_per_source(
+        base=base,
+        series_to_unmerge=list(set(base.base_node.columns) - set(base.index_columns)),
+        left_index=left_index,
+        right_index=right_index,
+    )
+
+    left = base.copy_override(base_node=left_node, series=left_series, index=left_index)
+    right = base.copy_override(base_node=right_node, series=right_series, index=right_index)
+
+    return left, right
+
+
+def _determine_series_per_source(
+    base: 'DataFrame',
+    series_to_unmerge: List[str],
+    left_index: Dict[str, 'Series'],
+    right_index: Dict[str, 'Series'],
+) -> Tuple[Dict[str, 'Series'], Dict[str, 'Series']]:
+    """
+    Determine which series are on each original dataframe based on the node references
+    from current MergeSqlModel. When identifying each column original source, a new series
+    will be created and replicate the original structure.
+
+    .. note::
+    Series without table column references are added to both final results.
+    """
+
+    left_series = {}
+    right_series = {}
+
+    left_node = cast(BachSqlModel, base.base_node.references['left_node'])
+    right_node = cast(BachSqlModel, base.base_node.references['right_node'])
+
+    expressions_to_parse: Dict[str, List[Expression]] = {}
+    for series_name, original_expr in base.base_node.column_expressions.items():
+        if series_name not in series_to_unmerge:
+            continue
+
+        if isinstance(original_expr, NonAtomicExpression) or not original_expr.has_table_column_references:
+            expressions_to_parse[series_name] = [original_expr]
+            continue
+
+        expressions_to_parse[series_name] = [
+            sub_expr if isinstance(sub_expr, Expression) else Expression([sub_expr])
+            for sub_expr in original_expr.data
+            if isinstance(sub_expr, (Expression, TableColumnReferenceToken))
+        ]
+
+    default_series = base.all_series[base.data_columns[0]]
+    for series_name, expressions in expressions_to_parse.items():
+        if series_name in base.all_series:
+            series = base.all_series[series_name]
+        else:
+            series = default_series.copy()
+
+        for sub_expr in expressions:
+            table_name, column_name, expr = sub_expr.remove_table_column_references()
+
+            column_name = column_name if sub_expr.has_table_column_references else series_name
+            if table_name == 'l' or not sub_expr.has_table_column_references:
+                left_series[column_name] = series.copy_override(
+                    base_node=left_node,
+                    index=left_index,
+                    name=column_name,
+                    expression=expr,
+                )
+            if table_name == 'r' or not sub_expr.has_table_column_references:
+                right_series[column_name] = series.copy_override(
+                    base_node=right_node,
+                    index=right_index,
+                    name=column_name,
+                    expression=expr,
+                )
+
+    # sort mapping based in order from node's columns
+    ordered_left_series = {
+        **{col: left_series[col] for col in left_node.columns if col in left_series},
+        **{
+            series_name: series for series_name, series in left_series.items()
+            if series_name not in left_node.columns
+        },
+    }
+    ordered_right_series = {
+        **{col: right_series[col] for col in right_node.columns if col in right_series},
+        **{
+            series_name: series for series_name, series in right_series.items()
+            if series_name not in right_node.columns
+        },
+    }
+    return ordered_left_series, ordered_right_series
+
+
 def _get_merge_sql_model(
+    dialect: Dialect,
     left: DataFrame,
     right: DataFrameOrSeries,
     how: How,
@@ -425,6 +512,7 @@ def _get_merge_sql_model(
 
     return MergeSqlModel.get_instance(
         column_expressions={rc.name: rc.expression for rc in new_column_list},
+        dialect=dialect,
         columns_expr=columns_expr,
         join_type_expr=join_type_expr,
         on_clause=on_clause,
@@ -563,6 +651,7 @@ class MergeSqlModel(BachSqlModel):
     def get_instance(
         cls,
         *,
+        dialect: Dialect,
         column_expressions: Dict[str, Expression],
         columns_expr: Expression,
         join_type_expr: Expression,
@@ -572,7 +661,7 @@ class MergeSqlModel(BachSqlModel):
         variables: Dict['DtypeNamePair', Hashable],
     ) -> 'MergeSqlModel':
         """
-        :param column_names: tuple with the column_names in order
+        :param column_expressions: mapping between column_names and their expressions (in order)
         :param columns_expr: A single expression that expresses projecting all needed columns from either
             left or right
         :param join_type_expr: expression expressing the join type, e.g. an expression that represents
@@ -582,9 +671,9 @@ class MergeSqlModel(BachSqlModel):
         :param right_node, sql-model of the materialized right side of the join
         :param variables: Dictionary of all variable values
         """
-        columns_str = columns_expr.to_sql()
-        join_type_str = join_type_expr.to_sql()
-        on_str = on_clause.to_sql()
+        columns_str = columns_expr.to_sql(dialect)
+        join_type_str = join_type_expr.to_sql(dialect)
+        on_str = on_clause.to_sql(dialect)
 
         sql = f'''
             select {columns_str}
@@ -602,7 +691,7 @@ class MergeSqlModel(BachSqlModel):
 
         return MergeSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=cls._get_placeholders(variables, all_expressions),
+            placeholders=cls._get_placeholders(dialect, variables, all_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,

@@ -18,7 +18,7 @@ def test_bach_sql_model_copy():
         column_expressions={
             'a': Expression.column_reference('a'),
             'b': Expression.column_reference('b'),
-        }
+        },
     )
     assert model.placeholders == {'val': 123}
     assert model.__class__ == BachSqlModel
