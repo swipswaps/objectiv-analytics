@@ -1174,7 +1174,7 @@ class DataFrame:
 
     def set_index(
         self,
-        keys: Union[str, 'Series', List[Union[str, 'Series']]],
+        keys: Union[str, 'Series', Sequence[Union[str, 'Series']]],
         drop: bool = True,
         append: bool = False,
     ) -> 'DataFrame':

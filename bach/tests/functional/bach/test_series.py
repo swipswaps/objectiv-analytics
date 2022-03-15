@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from bach import DataFrame, SeriesString, SeriesInt64, Series
+from bach.expression import Expression
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, df_to_list, \
     get_from_df, get_bt_with_railway_data
 
@@ -583,7 +584,7 @@ def test__set_item_with_merge_aggregated_series() -> None:
     pdf2 = pdf2.set_index('x')
 
     grouped_pdf2 = pdf2.groupby('y').sum()
-    grouped_df2 = df2.groupby('y').sum().materialize()
+    grouped_df2 = df2.groupby('y').sum()
     expected = pdf1.c + grouped_pdf2['z'] - grouped_pdf2['w']
     result = df1.c + grouped_df2['z_sum'] - grouped_df2['w_sum']
 
@@ -592,6 +593,10 @@ def test__set_item_with_merge_aggregated_series() -> None:
         result.sort_index().to_pandas(),
         check_names=False,
     )
+
+    # aggregated series are materialized, original references are not kept as leaves
+    assert result.base_node.references['left_node'] != df1.base_node
+    assert result.base_node.references['right_node'] != df2.base_node
 
 
 def test__set_item_with_merge_index_data_column_name_conflict() -> None:
@@ -660,6 +665,35 @@ def test__set_item_with_merge_index_uneven_multi_level() -> None:
     )
     assert df1.base_node == result.base_node.references['left_node']
     assert df2.base_node == result.base_node.references['right_node']
+
+
+def test__set_item_with_merge_w_conflict_names() -> None:
+    pdf1 = pd.DataFrame(data={'a': [1, 2, 3], 'b': [2, 2, 2], 'c': [3, 3, 3]})
+    pdf2 = pd.DataFrame(data={'x': [1, 2, 3, 4], 'a': [2, 2, 4, 4], 'c': [1, 2, 3, 4]})
+
+    df1 = get_from_df('_set_item_1', pdf1)
+    df2 = get_from_df('_set_item_2', pdf2)
+
+    df1 = df1.set_index('a')
+    df2 = df2.set_index('x')
+    dialect = df1.engine.dialect
+
+    # data column name is in the resultant index
+    result = df1['b'] - df2['a'] - df2['c']
+    assert result.base_node.references['left_node'] == df1.base_node
+    assert result.base_node.references['right_node'] == df2.base_node
+    assert '("b" - "a__data_column") - "c"' == result.expression.to_sql(dialect)
+    assert {'a', 'b', 'a__data_column', 'c'} == set(result.base_node.columns)
+    assert Expression.table_column_reference('r', 'a') == result.base_node.column_expressions['a__data_column']
+
+    # data column is already referenced on previous node
+    result2 = (result + df1['c']) * df1['c'] - df2['c']
+    assert result2.base_node.references['left_node'] == df1.base_node
+    assert result2.base_node.references['right_node'] == df2.base_node
+    assert '(((("b" - "a__data_column") - "c__other") + "c") * "c") - "c"' == result2.expression.to_sql(dialect)
+    assert {'a', 'b', 'a__data_column', 'c', 'c__other'} == set(result2.base_node.columns)
+    assert Expression.table_column_reference('l', 'c') == result2.base_node.column_expressions['c']
+    assert Expression.table_column_reference('r', 'c') == result2.base_node.column_expressions['c__other']
 
 
 def test__set_item_with_merge_index_level_error() -> None:

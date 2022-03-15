@@ -514,24 +514,19 @@ class Series(ABC):
     def __set_item_with_merge(self, other: 'Series') -> Tuple['Series', 'Series']:
         """
         Aligns caller series and other series base nodes by using a merge based on their indexes.
+        If caller's base node makes reference to the other's base node, caller's node should be
+        updated in order to include other's column reference.
 
         :returns: the (modified) series and (modified) other.
 
         .. note::
             If both caller and other series have the same name, (modified) other will be renamed as:
-            `f"{other.name}__other"`
-        """
-        if self.expression.has_aggregate_function:
-            raise ValueError(
-                f'Cannot perform operation if series has aggregated function '
-                f'`{self.name}` Try calling materialize() on the DataFrame'
-            )
-        if other.expression.has_aggregate_function:
-            raise ValueError(
-                f'Cannot perform operation if series has aggregated function '
-                f'`{other.name}` Try calling materialize() on the DataFrame'
-            )
+            `f"{other.name}__other"`.
 
+            If other series has the same name as any one of caller's index series,
+            (modified) other will be renamed as:
+            `f"{other.name}__data_column"`.
+        """
         if not self.index or not other.index:
             raise ValueError('both series must have at least one index level')
 
@@ -543,45 +538,64 @@ class Series(ABC):
 
         from bach.merge import MergeSqlModel, revert_merge
 
-        # node to be merged was already used in previous operation, therefore we just
-        # need to update MergeSqlModel referenced columns
-        if isinstance(self.base_node, MergeSqlModel) and other.base_node in self.base_node.references.values():
+        update_column_references = (
+            isinstance(self.base_node, MergeSqlModel)
+            and other.base_node in self.base_node.references.values()
+        )
+        if not update_column_references:
+            left = self.to_frame()
+            right = other.to_frame()
+        else:
+            # other's base node is already referenced on the caller's base node
+            # revert the merge from previous __set_item_with_merge and include other
+            # this way we can reference all needed columns for the operation
             left, right = revert_merge(self.to_frame())
             if left.base_node == other.base_node:
                 left[other.name] = other.copy_override(index=left.index)
             else:
                 right[other.name] = other.copy_override(index=right.index)
-        else:
-            left = self.to_frame()
-            right = other.to_frame()
 
-        # align index names, this way we have all matched indexes in a single series
-        new_index = {
-            left_idx.name: right_idx.copy_override(name=left_idx.name)
-            for left_idx, right_idx in zip(left.index.values(), right.index.values())
-        }
-        right_series = {}
-        for r_series in right.data.values():
-            new_name = r_series.name if r_series.name not in new_index else f'{r_series.name}__data_column'
-            right_series[new_name] = r_series.copy_override(index=new_index, name=new_name)
-
-        right = right.copy_override(series=right_series, index=new_index)
-
-        df = left.merge(
-            right, on=list(new_index.keys()), how='outer', suffixes=('', '__other'),
+        # rename conflicted right data columns with left index names, and align left <> right indexes
+        right = right.materialize() if right.group_by else right
+        right = right.rename(
+            columns={col: f'{col}__data_column' for col in right.data_columns if col in self.index}
         )
-        # consider only the caller's indexes, drop the non-shared ones
-        df = df.set_index(list(self.index.keys()), drop=True)
+        # TODO: replace this with right.rename(index={...})
+        aligned_right_indexes = [
+            right_idx.copy_override(name=left_idx.name)
+            for left_idx, right_idx in zip(left.index.values(), right.index.values())
+        ]
+        right = right.set_index(aligned_right_indexes, drop=True)
 
-        caller_series = self.copy_override(base_node=df.base_node)
+        df = left.merge(right, on=right.index_columns, how='outer', suffixes=('', '__other'))
 
-        other_series_name = other.name
-        if other_series_name in new_index:
-            other_series_name = f'{other_series_name}__data_column'
-        elif f'{other.name}__other' in df.all_series:
-            other_series_name = f'{other_series_name}__other'
-        other_series = df.all_series[other_series_name]
+        mod_other_name = other.name
+        if other.base_node == right.base_node and other.name == self.name or other.name in self.index:
+            post_fix = '__other' if other.name == self.name else '__data_column'
+            mod_other_name = f'{other.name}{post_fix}'
 
+        if not update_column_references:
+            caller_series = df.all_series[self.name]
+            other_series = df.all_series[mod_other_name]
+            return caller_series, other_series
+
+        if (
+            other.base_node == left.base_node
+            and not set(self.base_node.columns) >= {other.name, f'{other.name}__other'}
+            and f'{other.name}__other' in df.all_series
+        ):
+            # column was referenced before from right node
+            # check if other.name has conflict with other referenced columns
+            # example: left.a + right.b - left.b
+            # first expression = a + b
+            # incorrect second expression = a + b - b
+            # correct second expression = a + b__other - b
+            caller_expr = self.expression.replace_column_references(other.name, f'{other.name}__other')
+            caller_series = self.copy_override(base_node=df.base_node, expression=caller_expr)
+        else:
+            # just update base node
+            caller_series = self.copy_override(base_node=df.base_node)
+        other_series = df.all_series[mod_other_name]
         return caller_series, other_series
 
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.Series:
