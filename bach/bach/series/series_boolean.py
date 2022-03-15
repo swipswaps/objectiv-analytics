@@ -84,7 +84,21 @@ class SeriesBoolean(Series, ABC):
         return self._boolean_operator(other, '!=')
 
     def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the minimum value in the partition.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(partition, 'bool_and', skipna=skipna)
 
     def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the maximum value in the partition.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(partition, 'bool_or', skipna=skipna)

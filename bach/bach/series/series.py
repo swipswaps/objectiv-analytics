@@ -1216,14 +1216,35 @@ class Series(ABC):
                 )
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the amount of rows in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         # count is not constant because it depends on the number of rows in the selection.
         # See the comment in Expression.AggregationFunctionExpression
         return self._derived_agg_func(partition, 'count', 'int64', skipna=skipna)
 
     def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the maximum value in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(partition, 'max', skipna=skipna)
 
     def median(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the median in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(
             partition=partition,
             expression=AggregateFunctionExpression.construct(
@@ -1232,9 +1253,23 @@ class Series(ABC):
         )
 
     def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the minimum value in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(partition, 'min', skipna=skipna)
 
     def mode(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the mode in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(
             partition=partition,
             expression=AggregateFunctionExpression.construct(f'mode() within group (order by {{}})', self),
@@ -1242,6 +1277,13 @@ class Series(ABC):
         )
 
     def nunique(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the amount of unique values in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         from bach.partitioning import Window
         partition = self._check_unwrap_groupby(partition, notin=Window)
         return self._derived_agg_func(
@@ -1250,7 +1292,13 @@ class Series(ABC):
             skipna=skipna)
 
     def unique(self, partition: WrappedPartition = None, skipna: bool = True):
-        """ Get the unique values in this series, currently by grouping the series involved. """
+        """
+        Return all unique values in this Series.
+
+        :param partition: The partition or window to apply.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         from bach.partitioning import GroupBy
         if partition:
             raise ValueError('Can not use group_by in combination with unique(). Materialize() first.')

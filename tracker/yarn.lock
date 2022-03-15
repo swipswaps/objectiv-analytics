@@ -1758,6 +1758,7 @@ __metadata:
     jest-standard-reporter: ^2.0.0
     prettier: ^2.5.1
     react-native: ^0.67.3
+    react-native-get-random-values: ^1.7.2
     react-test-renderer: ^17.0.2
     shx: ^0.3.4
     tsup: ^5.12.0
@@ -4309,9 +4310,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.4.76":
-  version: 1.4.79
-  resolution: "electron-to-chromium@npm:1.4.79"
-  checksum: 0d312fc3a347d384d4c7d52fab353eca29827076faec515d2156a681b210d68d1eded416b74b41512337ca264649e7d4a11ae0bd97742b5c21ff9c2869657ed3
+  version: 1.4.78
+  resolution: "electron-to-chromium@npm:1.4.78"
+  checksum: 3a579fe3c6626dc3a311566cd41ee6cbf2dc2666285c5e329784f4a9329a572b9b5f73c717db4466fdc8d295e0b7a6ee23ad1b5160771979c4a9fd9f8667c681
   languageName: node
   linkType: hard
 
@@ -4838,6 +4839,13 @@ __metadata:
     snapdragon: ^0.8.1
     to-regex: ^3.0.1
   checksum: a41531b8934735b684cef5e8c5a01d0f298d7d384500ceca38793a9ce098125aab04ee73e2d75d5b2901bc5dddd2b64e1b5e3bf19139ea48bac52af4a92f1d00
+  languageName: node
+  linkType: hard
+
+"fast-base64-decode@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "fast-base64-decode@npm:1.0.0"
+  checksum: 4c59eb1775a7f132333f296c5082476fdcc8f58d023c42ed6d378d2e2da4c328c7a71562f271181a725dd17cdaa8f2805346cc330cdbad3b8e4b9751508bd0a3
   languageName: node
   linkType: hard
 
@@ -7199,9 +7207,9 @@ fsevents@~2.1.2:
   linkType: hard
 
 "lru-cache@npm:^7.4.1":
-  version: 7.4.2
-  resolution: "lru-cache@npm:7.4.2"
-  checksum: 389b3b13b3a0406087b5ff3a913358161aa0b17e55e5a2626c343fa701026ce176483043ed6062ea188edbcd9ffab47a136a0f6e6d9b42b4236c8c49523a6ac5
+  version: 7.4.1
+  resolution: "lru-cache@npm:7.4.1"
+  checksum: de6d8aa83b0a304943a1e1ec2a982d9b44ef36963c20bd01950f13dcb3eb482c57bfa15ab49b1baa15c682d6d33a10842bb7b33d8a449845009ffab6a2faec3c
   languageName: node
   linkType: hard
 
@@ -8888,8 +8896,8 @@ fsevents@~2.1.2:
   linkType: hard
 
 "react-native-gesture-handler@npm:^2.3.1":
-  version: 2.3.1
-  resolution: "react-native-gesture-handler@npm:2.3.1"
+  version: 2.3.2
+  resolution: "react-native-gesture-handler@npm:2.3.2"
   dependencies:
     "@egjs/hammerjs": ^2.0.17
     hoist-non-react-statics: ^3.3.0
@@ -8899,17 +8907,28 @@ fsevents@~2.1.2:
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 0e65a4de5170cfaf6bcada19301ac5e2d80fc29eeb97c27ad122c463f23d52eff88a4cec32d56e83bb8cc79813e12bc594699a46d4b5e03ee3cc4549308b4957
+  checksum: d0d3cc4047036296dc3c2322fdba543a39cfa0662dd7bb5e334b2984ee342e6428c3c93521c22b16e74182ebfc39d1e89c0b8c9aff3caea47aa7af5fb7ba95a9
+  languageName: node
+  linkType: hard
+
+"react-native-get-random-values@npm:^1.7.2":
+  version: 1.7.2
+  resolution: "react-native-get-random-values@npm:1.7.2"
+  dependencies:
+    fast-base64-decode: ^1.0.0
+  peerDependencies:
+    react-native: ">=0.56"
+  checksum: 45782003973b2ceca90b1f73462021e1aa2fc7e00c830ccafbb6f8a6ef7de34989cfc05d49b0f670b399ba1ead5de117a9c69d250fdc0390ca54e38b9f828385
   languageName: node
   linkType: hard
 
 "react-native-safe-area-context@npm:^4.1.2":
-  version: 4.1.2
-  resolution: "react-native-safe-area-context@npm:4.1.2"
+  version: 4.1.4
+  resolution: "react-native-safe-area-context@npm:4.1.4"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 3a19a9753730c84af5f907e0b74f2b42d73ce038642ab2a76462c92747f0f5fbe4727ae8809240cb8d7d3f57d5935204db104cd1b5763a836296ea15904d7931
+  checksum: 4cdc25f6ad2a7723ce856896f642e3b794611bae5d5e3199554b76fecfd2a6c9dfe371103fb064d7e4b42b7b9fe6a96734316405345ed790c8e7ff08244c1b01
   languageName: node
   linkType: hard
 
