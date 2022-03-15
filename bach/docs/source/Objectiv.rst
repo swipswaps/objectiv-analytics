@@ -4,10 +4,13 @@ Objectiv Bach Open Taxonomy
 
 .. currentmodule:: bach_open_taxonomy
 
-Objectiv Bach Open Taxonomy is an extension to the DataFrame and Series used in Bach. An ObjectivFrame loads
-data as stored by the Objectiv Tracker and the Open Taxonomy. An ObjectivFrame makes data transformations on
-this kind of data very easy. It is gives access to methods specific to the stacks global contexts and location
-stack, and also models from the open model hub.
+Objectiv data as it's stored in an sql data base can be analyzed in a python environment using the libraries
+specifically created for these purpose: the Bach and the model hub.
+
+- With Bach, the data can be analyzed using a pandas inspired interface.
+- With the model hub, most standard product analytics models can be performed on the data without much
+  configuration. In the background it runs on Bach, but in most cases models can be run with just a single line
+  of code.
 
 Reference
 ---------
@@ -15,7 +18,6 @@ Reference
     :template: autosummary/class_short.rst
     :toctree: Objectiv
 
-    ObjectivFrame
     ModelHub
     SeriesGlobalContexts
     SeriesLocationStack

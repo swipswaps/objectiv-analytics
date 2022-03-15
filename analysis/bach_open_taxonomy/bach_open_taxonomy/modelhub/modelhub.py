@@ -31,11 +31,12 @@ class ModelHub():
     from the model hub assume that at least the columns of a DataFrame instantiated with this method are
     available in order to run properly. These columns are:
 
-    The model hub has two main type of functions: `map` and `aggregate`.
+    The model hub has two main type of functions: :py:attr:`map` and :py:attr:`aggregate`.
+
     * `map` functions always return a series with the same shape and index as the DataFrame they originate
-    from. This ensures they can be added as a column to that DataFrame.
+      from. This ensures they can be added as a column to that DataFrame.
     * `aggregate` fuctions return aggregated data in some form from the DataFrame. Can also be accessed with
-    `agg`.
+      `agg`.
     """
     def __init__(self,
                  time_aggregation: str = TIME_DEFAULT_FORMAT):
@@ -243,7 +244,7 @@ class ModelHub():
     @property
     def agg(self):
         """
-        Access aggregation methods from the model hub. Same as :py:meth:`aggregate`.
+        Access aggregation methods from the model hub. Same as :py:attr:`aggregate`.
 
         .. autoclass:: Aggregate
             :members:
@@ -256,7 +257,7 @@ class ModelHub():
     @property
     def aggregate(self):
         """
-        Access aggregation methods from the model hub. Same as :py:meth:`agg`.
+        Access aggregation methods from the model hub. Same as :py:attr:`agg`.
 
         .. autoclass:: Aggregate
             :members:
