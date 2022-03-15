@@ -570,8 +570,11 @@ class Series(ABC):
         df = left.merge(right, on=right.index_columns, how='outer', suffixes=('', '__other'))
 
         mod_other_name = other.name
-        if other.base_node == right.base_node and other.name == self.name or other.name in self.index:
-            post_fix = '__other' if other.name == self.name else '__data_column'
+        if (
+            other.base_node == right.base_node
+            and set(df.all_series) & {f'{other.name}__other', f'{other.name}__data_column'}
+        ):
+            post_fix = '__other' if other.name not in self.index else '__data_column'
             mod_other_name = f'{other.name}{post_fix}'
 
         if not update_column_references:

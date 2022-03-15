@@ -690,7 +690,7 @@ def test__set_item_with_merge_w_conflict_names() -> None:
     result2 = (result + df1['c']) * df1['c'] - df2['c']
     assert result2.base_node.references['left_node'] == df1.base_node
     assert result2.base_node.references['right_node'] == df2.base_node
-    assert '(((("b" - "a__data_column") - "c__other") + "c") * "c") - "c"' == result2.expression.to_sql(dialect)
+    assert '(((("b" - "a__data_column") - "c__other") + "c") * "c") - "c__other"' == result2.expression.to_sql(dialect)
     assert {'a', 'b', 'a__data_column', 'c', 'c__other'} == set(result2.base_node.columns)
     assert Expression.table_column_reference('l', 'c') == result2.base_node.column_expressions['c']
     assert Expression.table_column_reference('r', 'c') == result2.base_node.column_expressions['c__other']
