@@ -8,7 +8,7 @@ import {
   getLocationPath,
   NoopConsoleImplementation,
   Tracker,
-  TrackerConsole
+  TrackerConsole,
 } from '@objectiv/tracker-core';
 import { LocationContext } from '../types';
 
@@ -96,7 +96,7 @@ export const LocationTree = {
     // Clone the given Tracker into a new one with only plugins configured
     const trackerClone = new Tracker({
       applicationId: tracker.applicationId,
-      plugins: tracker.plugins
+      plugins: tracker.plugins,
     });
 
     // Disable Console while we replay `initialize` and `enrich` lifecycle methods
