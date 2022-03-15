@@ -1,3 +1,5 @@
+import pytest
+
 from bach import DataFrame
 from bach.merge import revert_merge
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, get_bt_with_food_data, \
@@ -108,7 +110,7 @@ def test_revert_merge_preselection():
         _compare_source_with_replicate(expected, result)
 
 
-def test_merge_expression_columns():
+def test_revert_merge_expression_columns():
     bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
     mt = get_bt_with_food_data()[['skating_order', 'food']]
     bt['skating_order'] += 2
@@ -119,6 +121,29 @@ def test_merge_expression_columns():
     result_bt, result_mt = revert_merge(merged)
     for expected, result in zip([bt, mt], [result_bt, result_mt]):
         _compare_source_with_replicate(expected, result)
+
+
+def test_revert_merge_w_constant():
+    bt = get_bt_with_test_data(full_data_set=False)[['skating_order', 'city', 'inhabitants']]
+    mt = get_bt_with_food_data()[['skating_order', 'food']]
+    bt['constant'] = 1
+
+    merged = bt.merge(mt, on=['skating_order'])
+    result_bt, result_mt = revert_merge(merged)
+    _compare_source_with_replicate(bt, result_bt)
+
+    assert 'constant' in result_mt.all_series
+    _compare_source_with_replicate(mt, result_mt[['skating_order', 'food']])
+
+
+def test_revert_merge_grouped():
+    bt1 = get_bt_with_test_data(full_data_set=False)[['city']]
+    bt2 = get_bt_with_test_data(full_data_set=False)[['inhabitants']]
+    merged = bt1.merge(bt2, on='_index_skating_order')
+    merged = merged.groupby('city').sum()
+
+    with pytest.raises(Exception, match=r'aggregated frame'):
+        revert_merge(merged)
 
 
 def _compare_source_with_replicate(original_source: DataFrame, replicate: DataFrame) -> None:

@@ -306,10 +306,13 @@ def merge(
 def revert_merge(base: DataFrame) -> Tuple[DataFrame, DataFrame]:
     """
     Splits a merged dataframe into two new frames that have the same structure as the original frames
-    that were combined.
+    that were combined. Base dataframe should not be aggregated since original indexes can be lost.
     """
     if not isinstance(base.base_node, MergeSqlModel):
         raise Exception('can only revert merge if DataFrame base_node is MergeSqlModel instance.')
+
+    if base.group_by:
+        raise Exception('cannot revert merge on aggregated frame.')
 
     left_node = cast(BachSqlModel, base.base_node.references['left_node'])
     right_node = cast(BachSqlModel, base.base_node.references['right_node'])
@@ -341,6 +344,9 @@ def _determine_series_per_source(
     Determine which series are on each original dataframe based on the node references
     from current MergeSqlModel. When identifying each column original source, a new series
     will be created and replicate the original structure.
+
+    .. note::
+    Series without table column references are added to both final results.
     """
 
     left_series = {}
@@ -351,10 +357,10 @@ def _determine_series_per_source(
 
     expressions_to_parse: Dict[str, List[Expression]] = {}
     for series_name, original_expr in base.base_node.column_expressions.items():
-        if series_name not in series_to_unmerge or not original_expr.has_table_column_references:
+        if series_name not in series_to_unmerge:
             continue
 
-        if isinstance(original_expr, NonAtomicExpression):
+        if isinstance(original_expr, NonAtomicExpression) or not original_expr.has_table_column_references:
             expressions_to_parse[series_name] = [original_expr]
             continue
 
@@ -374,14 +380,15 @@ def _determine_series_per_source(
         for sub_expr in expressions:
             table_name, column_name, expr = sub_expr.remove_table_column_references()
 
-            if table_name == 'l':
+            column_name = column_name if sub_expr.has_table_column_references else series_name
+            if table_name == 'l' or not sub_expr.has_table_column_references:
                 left_series[column_name] = series.copy_override(
                     base_node=left_node,
                     index=left_index,
                     name=column_name,
                     expression=expr,
                 )
-            else:
+            if table_name == 'r' or not sub_expr.has_table_column_references:
                 right_series[column_name] = series.copy_override(
                     base_node=right_node,
                     index=right_index,
@@ -389,7 +396,22 @@ def _determine_series_per_source(
                     expression=expr,
                 )
 
-    return left_series, right_series
+    # sort mapping based in order from node's columns
+    ordered_left_series = {
+        **{col: left_series[col] for col in left_node.columns if col in left_series},
+        **{
+            series_name: series for series_name, series in left_series.items()
+            if series_name not in left_node.columns
+        },
+    }
+    ordered_right_series = {
+        **{col: right_series[col] for col in right_node.columns if col in right_series},
+        **{
+            series_name: series for series_name, series in right_series.items()
+            if series_name not in right_node.columns
+        },
+    }
+    return ordered_left_series, ordered_right_series
 
 
 def _get_merge_sql_model(
