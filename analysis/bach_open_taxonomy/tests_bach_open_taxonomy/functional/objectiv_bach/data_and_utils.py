@@ -56,7 +56,7 @@ def get_bt_with_json_data_real() -> DataFrame:
     return bt
 
 
-def get_objectiv_dataframe(time_aggregation=None):
+def get_objectiv_dataframe_test(time_aggregation=None):
     sql = """
     drop table if exists objectiv_data;
 
@@ -81,4 +81,4 @@ def get_objectiv_dataframe(time_aggregation=None):
         kwargs = {'time_aggregation':time_aggregation}
     modelhub = ModelHub(**kwargs)
 
-    return modelhub.from_objectiv_data(DB_TEST_URL, table_name='objectiv_data'), modelhub
+    return modelhub.get_objectiv_dataframe(DB_TEST_URL, table_name='objectiv_data'), modelhub

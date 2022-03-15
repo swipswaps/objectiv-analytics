@@ -88,11 +88,11 @@ class ModelHub():
             raise ValueError(f"not right columns in DataFrame {data.dtypes.items()}"
                              f"should be {required_columns.items()}")
 
-    def from_objectiv_data(self,
-                           db_url: str = None,
-                           table_name: str = 'data',
-                           start_date: str = None,
-                           end_date: str = None):
+    def get_objectiv_dataframe(self,
+                               db_url: str = None,
+                               table_name: str = 'data',
+                               start_date: str = None,
+                               end_date: str = None):
         """
         Sets data from sql table into an :py:class:`bach.DataFrame` object.
 

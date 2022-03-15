@@ -4,18 +4,18 @@ Copyright 2021 Objectiv B.V.
 
 # Any import from from bach_open_taxonomy initializes all the types, do not remove
 from bach_open_taxonomy import __version__
-from tests_bach_open_taxonomy.functional.objectiv_bach.data_and_utils import get_objectiv_dataframe
+from tests_bach_open_taxonomy.functional.objectiv_bach.data_and_utils import get_objectiv_dataframe_test
 from tests.functional.bach.test_data_and_utils import assert_equals_data
 from uuid import UUID
 
 
 def test_get_objectiv_stack():
-    get_objectiv_dataframe()
+    get_objectiv_dataframe_test()
 
 
 # map
 def test_is_first_session():
-    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe_test(time_aggregation='YYYY-MM-DD')
 
     s = modelhub.map.is_first_session(df)
 
@@ -57,7 +57,7 @@ def test_is_first_session():
     )
 
 def test_is_new_user():
-    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe_test(time_aggregation='YYYY-MM-DD')
 
     s = modelhub.map.is_new_user(df)
 
@@ -122,7 +122,7 @@ def test_is_new_user():
     )
 
 def test_is_conversion_event():
-    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe_test(time_aggregation='YYYY-MM-DD')
 
     # add conversion event
     modelhub.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
@@ -164,7 +164,7 @@ def test_is_conversion_event():
 
 
 def test_conversion_count():
-    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe_test(time_aggregation='YYYY-MM-DD')
 
     # add conversion event
     modelhub.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
@@ -206,7 +206,7 @@ def test_conversion_count():
 
 
 def test_pre_conversion_hit_number():
-    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe_test(time_aggregation='YYYY-MM-DD')
 
     # add conversion event
     modelhub.add_conversion_event(location_stack=df.location_stack.json[{'_type': 'LinkContext', 'id': 'cta-repo-button'}:],
@@ -269,7 +269,7 @@ def test_pre_conversion_hit_number():
     )
 
 def test_time_agg():
-    df, modelhub = get_objectiv_dataframe()
+    df, modelhub = get_objectiv_dataframe_test()
     s = modelhub.time_agg(df)
 
     assert_equals_data(
@@ -292,7 +292,7 @@ def test_time_agg():
         order_by='event_id'
     )
 
-    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM')
+    df, modelhub = get_objectiv_dataframe_test(time_aggregation='YYYY-MM')
     s = modelhub.time_agg(df)
 
     assert_equals_data(
@@ -315,7 +315,7 @@ def test_time_agg():
         order_by='event_id'
     )
 
-    df, modelhub = get_objectiv_dataframe()
+    df, modelhub = get_objectiv_dataframe_test()
     s = modelhub.time_agg(df, time_aggregation='YYYY-MM-DD')
 
     assert_equals_data(
@@ -337,7 +337,7 @@ def test_time_agg():
         order_by='event_id'
     )
 
-    df, modelhub = get_objectiv_dataframe(time_aggregation='YYYY-MM-DD')
+    df, modelhub = get_objectiv_dataframe_test(time_aggregation='YYYY-MM-DD')
     s = modelhub.time_agg(df, time_aggregation='YYYY')
 
     assert_equals_data(
