@@ -36,8 +36,8 @@ class Aggregate:
 
         if not_allowed_in_groupby:
             for key in groupby_list:
-                key = data[key] if isinstance(key, str) else key
-                if key.equals(data[not_allowed_in_groupby]):
+                new_key = data[key] if isinstance(key, str) else key
+                if new_key.equals(data[not_allowed_in_groupby]):
                     raise KeyError(f'"{not_allowed_in_groupby}" is in groupby but is needed for aggregation: '
                                    f'not allowed to group on that')
 

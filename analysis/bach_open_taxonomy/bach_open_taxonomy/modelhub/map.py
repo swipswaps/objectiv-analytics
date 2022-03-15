@@ -84,7 +84,10 @@ class Map:
             series = ((conversion_stack.notnull()) & (data.event_type == conversion_event))
         return series.copy_override(name='is_conversion_event')
 
-    def conversion_count(self, data: bach.DataFrame, name: str, partition='session_id') -> bach.SeriesInt64:
+    def conversion_count(self,
+                         data: bach.DataFrame,
+                         name: str,
+                         partition: str = 'session_id') -> bach.SeriesInt64:
         """
         Counts the number of time a user is converted at a moment in time given a partition (ie 'session_id'
         or 'user_id').
@@ -102,17 +105,20 @@ class Map:
         data = data.copy_override()
         data['__conversion'] = self._mh.map.is_conversion_event(data, name)
         exp = f"case when {{}} then row_number() over (partition by {{}}, {{}}) end"
-        expression = Expression.construct(exp, data['__conversion'], data[partition], data['__conversion'])
+        expression = Expression.construct(exp,
+                                          data.all_series['__conversion'],
+                                          data.all_series[partition],
+                                          data.all_series['__conversion'])
         data['__conversion_counter'] = data['__conversion']\
             .copy_override_dtype(dtype='int64')\
             .copy_override(expression=expression)
         data = data.materialize()
         exp = f"count({{}}) over (partition by {{}} order by {{}}, {{}})"
         expression = Expression.construct(exp,
-                                          data['__conversion_counter'],
-                                          data[partition],
-                                          data[partition],
-                                          data['moment'])
+                                          data.all_series['__conversion_counter'],
+                                          data.all_series[partition],
+                                          data.all_series[partition],
+                                          data.all_series['moment'])
         data['conversion_count'] = data['__conversion_counter']\
             .copy_override_dtype('int64')\
             .copy_override(expression=expression)
@@ -146,7 +152,7 @@ class Map:
 
         data['__is_converted'] = converted != 0
         data = data.materialize()
-        pre_conversion_hits = data[data['__is_converted']]
+        pre_conversion_hits = data[data.all_series['__is_converted'] == True]
         pre_conversion_hits = pre_conversion_hits[pre_conversion_hits['__conversions'] == 0]
 
         window = pre_conversion_hits.sort_values(['session_id',
@@ -158,4 +164,4 @@ class Map:
         pre_conversion_hits = pre_conversion_hits.materialize()
         data['pre_conversion_hit_number'] = pre_conversion_hits['pre_conversion_hit_number']
 
-        return data['pre_conversion_hit_number']
+        return data.pre_conversion_hit_number
