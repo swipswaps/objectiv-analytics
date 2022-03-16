@@ -9,12 +9,74 @@ IndexLabel = Union['SeriesBoolean', List[str], List[int]]
 LocKey = Union[IndexLabel, Tuple[Union[IndexLabel, slice], Union[str, int, slice]]]
 
 
-class LocIndexer(object):
+class BaseLocIndex(object):
     obj: 'DataFrame'
 
     def __init__(self, obj: 'DataFrame'):
         self.obj = obj
 
+    def _get_data_columns_subset(self, labels: Union[slice, str, List[str]]) -> List[str]:
+        if isinstance(labels, list):
+            return labels
+        if isinstance(labels, str):
+            return [labels]
+
+        return self._parse_column_slicing(labels)
+
+    def _parse_column_slicing(self, label_slicing: slice) -> List[str]:
+        data_columns = self.obj.data_columns
+        if label_slicing.start is None and label_slicing.stop is None:
+            return data_columns
+
+        index_start = self._get_label_index(label_slicing.start) if label_slicing.start else None
+        index_stop = self._get_label_index(label_slicing.stop) + 1 if label_slicing.start else None
+
+        if index_start is not None and index_stop is not None:
+            return data_columns[index_start:index_stop]
+
+        if index_start is not None:
+            return data_columns[index_start:]
+
+        return data_columns[:index_stop]
+
+    def _get_label_index(self, label: str) -> int:
+        if label not in self.obj.data_columns:
+            raise ValueError(f'{label} does not exists in data columns')
+
+        return self.obj.data_columns.index(label)
+
+    def _get_index_label_mask(self, labels: Union[int, str, IndexLabel]) -> 'SeriesBoolean':
+        if not self.obj:
+            raise ValueError('Cannot access rows by label if DataFrame/Series has no index.')
+
+        level_0_index = self.obj.index_columns[0]
+
+        if isinstance(labels, (str, int)):
+            return self.obj.index[level_0_index] == labels
+
+        if isinstance(labels, list):
+            loc_conditions = [self.obj.index[level_0_index] == label for label in labels]
+            return reduce(lambda cond1, cond2: cond1 | cond2, loc_conditions)
+
+        return labels
+
+    def _get_numbered_rows(self) -> 'DataFrame':
+        if not self.obj.order_by:
+            raise ValueError('Can only apply index slicing if DataFrame/Series is sorted.')
+
+        from bach.partitioning import Window, WindowFrameMode
+
+        level_0_index = self.obj.index_columns[0]
+
+        numbered_df = self.obj.copy()
+        numbered_df['position'] = numbered_df.all_series[level_0_index].window_row_number(
+            window=Window([], mode=WindowFrameMode.ROWS, order_by=self.obj.order_by),
+        )
+
+        return numbered_df.materialize('numbered_index')
+
+
+class LocIndexer(BaseLocIndex):
     @overload
     def __getitem__(cls, key: Union[str, int]) -> 'Series':
         ...
@@ -36,7 +98,7 @@ class LocIndexer(object):
             filtered_index_df = cls._get_item_by_labels(index_labels)
 
         if column_labels:
-            filtered_index_df = filtered_index_df[cls._parse_column_labels(column_labels)]
+            filtered_index_df = filtered_index_df[cls._get_data_columns_subset(column_labels)]
 
         # if index_accessor is a single label, it returns a series
         if isinstance(index_labels, (str, int)):
@@ -44,51 +106,8 @@ class LocIndexer(object):
 
         return filtered_index_df
 
-    def _parse_column_labels(self, labels: Union[slice, str, List[str]]) -> List[str]:
-        if isinstance(labels, list):
-            return labels
-        if isinstance(labels, str):
-            return [labels]
-
-        if labels.start is None and labels.stop is None:
-            return self.obj.data_columns
-
-        index_start = None
-        index_stop = None
-        if labels.start is not None:
-            if labels.start not in self.obj.data_columns:
-                raise ValueError(f'{labels.start} does not exists in DataFrame')
-            else:
-                index_start = self.obj.data_columns.index(labels.start)
-
-        if labels.stop is not None:
-            if labels.stop not in self.obj.data_columns:
-                raise ValueError(f'{labels.stop} does not exists in DataFrame')
-            else:
-                index_stop = self.obj.data_columns.index(labels.stop) + 1
-
-        if index_start is not None and index_stop is not None:
-            return self.obj.data_columns[index_start:index_stop]
-
-        if index_start is not None:
-            return self.obj.data_columns[index_start:]
-        return self.obj.data_columns[:index_stop]
-
     def _get_item_by_labels(self, labels: IndexLabel) -> 'DataFrame':
-        if not self.obj:
-            raise ValueError('Cannot access rows by label if DataFrame/Series has no index.')
-
-        level_0_index = self.obj.index_columns[0]
-
-        if isinstance(labels, (str, int)):
-            mask = self.obj.index[level_0_index] == labels
-        elif isinstance(labels, list):
-            loc_conditions = [self.obj.index[level_0_index] == label for label in labels]
-            mask = reduce(lambda cond1, cond2: cond1 | cond2, loc_conditions)
-        else:
-            mask = labels
-
-        return self.obj[mask]
+        return self.obj[self._get_index_label_mask(labels)]
 
     def _get_item_by_slicing(
         self,
