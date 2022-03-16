@@ -1,4 +1,4 @@
-# install bach and bach_open_taxonomy in edit mode, so local changes are immediately usable
+# install bach and modelhub in edit mode, so local changes are immediately usable
 -e ../bach
 -e ../modelhub
 
