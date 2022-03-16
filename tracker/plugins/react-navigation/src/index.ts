@@ -4,4 +4,5 @@
 
 export * from './ContextsFromReactNavigationPlugin';
 export * from './makeLinkContextProps';
+export * from './makeLinkPressListener';
 export * from './TrackedLink';

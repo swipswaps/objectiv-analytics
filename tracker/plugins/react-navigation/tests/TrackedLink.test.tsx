@@ -282,7 +282,6 @@ describe('TrackedLink', () => {
     fireEvent.press(getByTestId('go-to-home-from-messages'));
 
     expect(spyTransport.handle).toHaveBeenCalledTimes(2);
-    expect(spyTransport.handle).toHaveBeenCalledTimes(2);
     expect(spyTransport.handle).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
