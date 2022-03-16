@@ -113,3 +113,33 @@ def test_index_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
         pdf.loc[:, :'C'],
         result_column_no_start_slicing.to_pandas(),
     )
+
+
+def test_basic_set_item_by_label(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
+    pdf, df = indexing_dfs
+
+    df_cp1 = df.copy()
+    pdf_cp1 = pdf.copy()
+    df_cp1.loc['b'] = 1
+    pdf_cp1.loc['b'] = 1
+    pdf_cp1['D'] = pdf_cp1['D'].astype(str)
+    pd.testing.assert_frame_equal(pdf_cp1, df_cp1.to_pandas())
+
+    df_cp2 = df.copy()
+    df_cp2.loc['b', 'B'] = df_cp2['C']
+
+
+
+    extra_pdf = pd.DataFrame(
+        {
+            'A': ['a', 'b'],
+            'B': [7, 8],
+            'C': [11, 12],
+        },
+    )
+    extra_df = get_from_df('extra_df', pdf)
+
+    df_cp3 = df.copy()
+    pdf_cp3 = pdf.copy()
+    df_cp3.loc['b', 'B'] = extra_df['C']
+    print('hola')

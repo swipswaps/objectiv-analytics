@@ -1,8 +1,10 @@
 from functools import reduce
 from typing import Union, List, Optional, Tuple, TYPE_CHECKING, overload
 
+from bach.expression import Expression
+
 if TYPE_CHECKING:
-    from bach.dataframe import DataFrame
+    from bach.dataframe import DataFrame, Scalar
     from bach.series.series import Series, SeriesBoolean
 
 IndexLabel = Union['SeriesBoolean', List[str], List[int]]
@@ -139,3 +141,45 @@ class LocIndexer(BaseLocIndex):
             return filtered_index_df.reset_index(drop=True).stack()
 
         return filtered_index_df
+
+    def __setitem__(self, key: LocKey, value: 'Scalar') -> None:
+        from bach.series.series import Series, const_to_series
+        if isinstance(key, tuple):
+            index_labels, column_labels = key
+        else:
+            index_labels = key
+            column_labels = self.obj.data_columns
+
+        parsed_column_labels = self._get_data_columns_subset(column_labels)
+        series_value = value if isinstance(value, Series) else const_to_series(self.obj, value)
+
+        if not isinstance(index_labels, slice):
+            self._set_item_by_labels(index_labels, parsed_column_labels, series_value)
+            return None
+
+        df = self._set_item_by_slicing(index_labels.start, index_labels.stop, parsed_column_labels, series_value)
+        # TODO: remove call to private method
+        self.obj._update_self_from_df(df)
+
+    def _set_item_by_labels(
+        self, labels: IndexLabel, col_labels: List[str], value: 'Series',
+    ) -> None:
+        from bach.utils import get_merged_series_dtype
+
+        mask = self._get_index_label_mask(labels)
+        base_expr = f'CASE WHEN {{}} THEN {{}} ELSE {{}} END'
+
+        obj_copy = self.obj.copy()
+        # add series, this way we avoid duplicating checks
+        obj_copy[f'__{value.name}'] = value
+
+        for series_name in col_labels:
+            dtype = get_merged_series_dtype({value.dtype, self.obj[series_name].dtype})
+            new_expr = Expression.construct(
+                base_expr,
+                *[mask, obj_copy[f'__{value.name}'].astype(dtype), self.obj[series_name].astype(dtype)],
+            )
+            obj_copy[series_name] = obj_copy[series_name].copy_override(expression=new_expr)
+            obj_copy[series_name] = obj_copy[series_name].copy_override_dtype(dtype)
+
+        self.obj._update_self_from_df(obj_copy[self.obj.data_columns])
