@@ -74,7 +74,7 @@ class SeriesGlobalContexts(SeriesJsonb):
         Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
         accessor. Same as :py:attr:`obj`
 
-        .. autoclass:: bach_open_taxonomy.series.ObjectivStack
+        .. autoclass:: modelhub.series.ObjectivStack
             :members:
             :noindex:
 
@@ -87,7 +87,7 @@ class SeriesGlobalContexts(SeriesJsonb):
         Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
         accessor. Same as :py:attr:`objectiv`
 
-        .. autoclass:: bach_open_taxonomy.series.ObjectivStack
+        .. autoclass:: modelhub.series.ObjectivStack
             :members:
             :noindex:
 
@@ -100,7 +100,7 @@ class SeriesGlobalContexts(SeriesJsonb):
         Accessor for Objectiv global context data. All methods of :py:attr:`json` and :py:attr:`objectiv` can
         also be accessed with this accessor. Same as :py:attr:`gc`
 
-        .. autoclass:: bach_open_taxonomy.series.SeriesGlobalContexts.GlobalContexts
+        .. autoclass:: modelhub.series.SeriesGlobalContexts.GlobalContexts
             :members:
 
         """
@@ -112,7 +112,7 @@ class SeriesGlobalContexts(SeriesJsonb):
         Accessor for Objectiv global context data. All methods of :py:attr:`json` and :py:attr:`objectiv` can
         also be accessed with this accessor. Same as :py:attr:`global_contexts`
 
-        .. autoclass:: bach_open_taxonomy.series.SeriesGlobalContexts.GlobalContexts
+        .. autoclass:: modelhub.series.SeriesGlobalContexts.GlobalContexts
             :members:
             :noindex:
 
@@ -202,7 +202,7 @@ class SeriesLocationStack(SeriesJsonb):
         Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
         accessor. Same as :py:attr:`obj`
 
-        .. autoclass:: bach_open_taxonomy.series.ObjectivStack
+        .. autoclass:: modelhub.series.ObjectivStack
             :members:
             :noindex:
 
@@ -215,7 +215,7 @@ class SeriesLocationStack(SeriesJsonb):
         Accessor for Objectiv stack data. All methods of :py:attr:`json` can also be accessed with this
         accessor. Same as :py:attr:`objectiv`
 
-        .. autoclass:: bach_open_taxonomy.series.ObjectivStack
+        .. autoclass:: modelhub.series.ObjectivStack
             :members:
             :noindex:
 
@@ -228,7 +228,7 @@ class SeriesLocationStack(SeriesJsonb):
         Accessor for Objectiv location stack data. All methods of :py:attr:`json` and :py:attr:`objectiv`
         can also be accessed with this accessor. Same as :py:attr:`ls`
 
-        .. autoclass:: bach_open_taxonomy.series.SeriesLocationStack.LocationStack
+        .. autoclass:: modelhub.series.SeriesLocationStack.LocationStack
             :members:
 
         """
@@ -240,7 +240,7 @@ class SeriesLocationStack(SeriesJsonb):
         Accessor for Objectiv location stack data. All methods of :py:attr:`json` and :py:attr:`objectiv` can
         also be accessed with this accessor. Same as :py:attr:`location_stack`
 
-        .. autoclass:: bach_open_taxonomy.series.SeriesLocationStack.LocationStack
+        .. autoclass:: modelhub.series.SeriesLocationStack.LocationStack
             :members:
             :noindex:
 

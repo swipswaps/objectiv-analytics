@@ -33,7 +33,7 @@ database. The full reference of Bach is found [here](https://objectiv.io/docs/mo
 This notebook shows how you can work with the data using standard models from the model hub. For the
 conversion models to give sensible results the `add_conversion_event` paramaters need to be adjusted to your
 own data. The full model hub reference is found
-[here](https://objectiv.io/docs/modeling/Objectiv/bach_open_taxonomy.ModelHub/). The Metabase example is made
+[here](https://objectiv.io/docs/modeling/Objectiv/modelhub.ModelHub/). The Metabase example is made
 to work with our [quickstart demo](https://objectiv.io/docs/home/quickstart-guide/), in which Metabase is included.
 See the section at the end of this readme for how to set up Metabaser integration for your data.
 

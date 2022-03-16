@@ -181,7 +181,7 @@ class ModelHub():
         :py:attr:`conversion_events`.
 
         :param location_stack: the location stack that is labeled as conversion. Can be any slice in of a
-            :py:class:`bach_open_taxonomy.SeriesLocationStack` type column. Optionally use in conjunction with
+            :py:class:`modelhub.SeriesLocationStack` type column. Optionally use in conjunction with
             ``event_type`` to label a conversion.
         :param event_type: the event type that is labeled as conversion. Optionally use in conjunction with
             ``objectiv_location_stack`` to label a conversion.
