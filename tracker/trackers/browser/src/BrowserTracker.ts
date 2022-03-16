@@ -2,10 +2,10 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContextsConfig, Tracker, TrackerConfig } from '@objectiv/tracker-core';
-import { makeDefaultPluginsList } from './common/factories/makeDefaultPluginsList';
-import { makeDefaultQueue } from './common/factories/makeDefaultQueue';
-import { makeDefaultTransport } from './common/factories/makeDefaultTransport';
+import { ContextsConfig, isBrowser, isDevMode, Tracker, TrackerConfig } from '@objectiv/tracker-core';
+import { makeBrowserTrackerDefaultPluginsList } from './common/factories/makeBrowserTrackerDefaultPluginsList';
+import { makeBrowserTrackerDefaultQueue } from './common/factories/makeBrowserTrackerDefaultQueue';
+import { makeBrowserTrackerDefaultTransport } from './common/factories/makeBrowserTrackerDefaultTransport';
 import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
 
 /**
@@ -62,7 +62,7 @@ export class BrowserTracker extends Tracker {
     }
 
     // If node is in `development` mode and console has not been configured, automatically use the browser's console
-    if (config.console === undefined && process.env.NODE_ENV?.startsWith('dev')) {
+    if (config.console === undefined && isDevMode() && isBrowser()) {
       config.console = console;
     }
 
@@ -70,8 +70,8 @@ export class BrowserTracker extends Tracker {
     if (config.endpoint) {
       config = {
         ...config,
-        transport: makeDefaultTransport(config),
-        queue: config.queue ?? makeDefaultQueue(config),
+        transport: makeBrowserTrackerDefaultTransport(config),
+        queue: config.queue ?? makeBrowserTrackerDefaultQueue(config),
       };
     }
 
@@ -79,7 +79,7 @@ export class BrowserTracker extends Tracker {
     if (!config.plugins) {
       config = {
         ...config,
-        plugins: makeDefaultPluginsList(config),
+        plugins: makeBrowserTrackerDefaultPluginsList(config),
       };
     }
 

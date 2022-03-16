@@ -1,6 +1,7 @@
-from typing import NamedTuple, Dict, List, Set
-
 from bach import get_series_type_from_dtype, SeriesAbstractNumeric
+from typing import NamedTuple, Dict, List, Set
+from sqlalchemy.engine import Connection
+
 from bach.expression import Expression
 
 
@@ -32,3 +33,14 @@ def get_merged_series_dtype(dtypes: Set[str]) -> str:
     # default casting will be as text, this way we avoid any SQL errors
     # when merging different db types into a column
     return 'string'
+
+
+def escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
+    """
+    Return a modified copy of the given sql with the query-parameter special characters escaped.
+    e.g. if the connection uses '%' to mark a parameter, then all occurrences of '%' will be replaced by '%%'
+    """
+    # for now we'll just assume Postgres and assume the pyformat parameter style is used.
+    # When we support more databases we'll need to do something smarter, see
+    # https://www.python.org/dev/peps/pep-0249/#paramstyle
+    return raw_sql.replace('%', '%%')
