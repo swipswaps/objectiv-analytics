@@ -3,4 +3,4 @@
 tests:
 	mypy modelhub
 	pycodestyle modelhub
-	pytest modelhub -W error::DeprecationWarning
+	pytest tests_modelhub -W error::DeprecationWarning

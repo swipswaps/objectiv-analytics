@@ -214,6 +214,8 @@ class ModelHub():
         time_aggregation = self.time_aggregation if time_aggregation is None else time_aggregation
         return data.moment.dt.sql_format(time_aggregation).copy_override(name='time_aggregation')
 
+    _metabase: Union[None, MetaBase] = None
+
     def to_metabase(self, data, model_type: str = None, config: dict = None):
         """
         Plot data in ``data`` to Metabase. If a card already exists, it will be updated. If ``data`` is a
