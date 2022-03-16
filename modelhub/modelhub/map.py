@@ -1,6 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
+import typing
+
 import bach
 from bach.expression import Expression
 from bach.partitioning import WindowFrameBoundary
@@ -125,6 +127,7 @@ class Map:
 
         return data.conversion_count
 
+    @typing.no_type_check
     def pre_conversion_hit_number(self,
                                   data: bach.DataFrame,
                                   name: str,
@@ -152,7 +155,7 @@ class Map:
 
         data['__is_converted'] = converted != 0
         data = data.materialize()
-        pre_conversion_hits = data[data.all_series['__is_converted'] == True]
+        pre_conversion_hits = data[data.all_series['__is_converted']]
         pre_conversion_hits = pre_conversion_hits[pre_conversion_hits['__conversions'] == 0]
 
         window = pre_conversion_hits.sort_values(['session_id',
