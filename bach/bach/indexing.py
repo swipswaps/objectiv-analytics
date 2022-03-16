@@ -16,14 +16,22 @@ class BaseLocIndex(object):
         self.obj = obj
 
     def _get_data_columns_subset(self, labels: Union[slice, str, List[str]]) -> List[str]:
-        if isinstance(labels, list):
-            return labels
-        if isinstance(labels, str):
-            return [labels]
+        """
+        returns a list of column labels
+        """
+        if isinstance(labels, slice):
+            return self._parse_column_slicing(labels)
 
-        return self._parse_column_slicing(labels)
+        return [
+            label
+            for label in (labels if isinstance(labels, list) else [labels])
+            if self._get_label_index(label) is not None
+        ]
 
     def _parse_column_slicing(self, label_slicing: slice) -> List[str]:
+        """
+        returns a subset of labels based on a slice
+        """
         data_columns = self.obj.data_columns
         if label_slicing.start is None and label_slicing.stop is None:
             return data_columns
@@ -40,12 +48,18 @@ class BaseLocIndex(object):
         return data_columns[:index_stop]
 
     def _get_label_index(self, label: str) -> int:
+        """
+        returns the position of the label in the dataframe
+        """
         if label not in self.obj.data_columns:
             raise ValueError(f'{label} does not exists in data columns')
 
         return self.obj.data_columns.index(label)
 
     def _get_index_label_mask(self, labels: Union[int, str, IndexLabel]) -> 'SeriesBoolean':
+        """
+        returns a boolean series representing the subset to get
+        """
         if not self.obj:
             raise ValueError('Cannot access rows by label if DataFrame/Series has no index.')
 
@@ -64,8 +78,18 @@ class BaseLocIndex(object):
         self,
         start: Optional[Union[str, int]],
         stop: Optional[Union[str, int]],
-        how: str = 'inner',
     ) -> 'DataFrame':
+        """
+        returns a subset from the caller based on the slicing filters.
+
+        In order to identify the subset, the following steps are performed:
+        1. Number each row based on the index
+        2. Identify the position of the start and stop labels.
+        3. Get the rows which row numbers are between start and stop positions (stop is inclusive).
+            start_row_number <= current_row_number <= stop_row_number
+        .. note::
+          caller should be sorted in order to perform slicing operations.
+        """
         start_stop_labels = [lbl for lbl in [start, stop] if lbl is not None]
         if not start_stop_labels:
             return self.obj.copy()
@@ -92,12 +116,15 @@ class BaseLocIndex(object):
         if stop:
             mask.append(numbered_df['position'] <= start_stop_df['position_max'])
 
-        sliced_df = numbered_df.merge(start_stop_df, how=how, on=mask)
+        sliced_df = numbered_df.merge(start_stop_df, on=mask)
         sliced_df = sliced_df.set_index(list(self.obj.index_columns), drop=True)
         sliced_df = sliced_df[self.obj.data_columns]
         return sliced_df
 
     def __get_numbered_df_by_index(self) -> 'DataFrame':
+        """
+        Returns the number of the current row within the index
+        """
         from bach.partitioning import Window, WindowFrameMode
 
         level_0_index = self.obj.index_columns[0]
@@ -120,6 +147,9 @@ class LocIndexer(BaseLocIndex):
         ...
 
     def __getitem__(self, key):
+        """
+        returns a dataframe or series based on the key to be found.
+        """
         if isinstance(key, tuple):
             index_labels, column_labels = key
         else:
@@ -127,7 +157,7 @@ class LocIndexer(BaseLocIndex):
             column_labels = None
 
         if isinstance(index_labels, slice):
-            filtered_index_df = self._get_sliced_subset(index_labels.start, index_labels.stop, how='inner')
+            filtered_index_df = self._get_sliced_subset(index_labels.start, index_labels.stop)
         else:
             filtered_index_df = self.obj[self._get_index_label_mask(index_labels)]
 
