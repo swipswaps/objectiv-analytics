@@ -1,10 +1,12 @@
 from functools import reduce
-from typing import Union, List, Optional, Tuple, TYPE_CHECKING
+from typing import Union, List, Optional, Tuple, TYPE_CHECKING, overload
 
-IndexLabel = Union[str, int, 'SeriesBoolean', List[str], List[int]]
-LocKey = Union[IndexLabel, Tuple[Union[IndexLabel, slice], Union[str, int, slice]]]
 if TYPE_CHECKING:
-    from bach.dataframe import DataFrameOrSeries, DataFrame, Scalar
+    from bach.dataframe import DataFrame
+    from bach.series.series import Series, SeriesBoolean
+
+IndexLabel = Union['SeriesBoolean', List[str], List[int]]
+LocKey = Union[IndexLabel, Tuple[Union[IndexLabel, slice], Union[str, int, slice]]]
 
 
 class LocIndexer(object):
@@ -13,7 +15,15 @@ class LocIndexer(object):
     def __init__(self, obj: 'DataFrame'):
         self.obj = obj
 
-    def __getitem__(cls, key: LocKey) -> 'DataFrameOrSeries':
+    @overload
+    def __getitem__(cls, key: Union[str, int]) -> 'Series':
+        ...
+
+    @overload
+    def __getitem__(cls, key: LocKey) -> 'DataFrame':
+        ...
+
+    def __getitem__(cls, key):
         if isinstance(key, tuple):
             index_labels, column_labels = key
         else:
@@ -33,9 +43,6 @@ class LocIndexer(object):
             return filtered_index_df.reset_index(drop=True).stack()
 
         return filtered_index_df
-
-    def __setitem__(self, key: LocKey, value: 'Scalar') -> None:
-        ...
 
     def _parse_column_labels(self, labels: Union[slice, str, List[str]]) -> List[str]:
         if isinstance(labels, list):
@@ -76,7 +83,7 @@ class LocIndexer(object):
         if isinstance(labels, (str, int)):
             mask = self.obj.index[level_0_index] == labels
         elif isinstance(labels, list):
-            loc_conditions = [self.obj.index[level_0_index] == l for l in labels]
+            loc_conditions = [self.obj.index[level_0_index] == label for label in labels]
             mask = reduce(lambda cond1, cond2: cond1 | cond2, loc_conditions)
         else:
             mask = labels

@@ -7,7 +7,7 @@ from datetime import date, datetime, time
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
-    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
+    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload,
 )
 from uuid import UUID
 
@@ -826,8 +826,15 @@ class DataFrame:
         from bach.sample import get_unsampled
         return get_unsampled(df=self)
 
-    def __getitem__(self,
-                    key: Union[str, List[str], Set[str], slice, 'SeriesBoolean']) -> DataFrameOrSeries:
+    @overload
+    def __getitem__(self, key: str) -> 'Series':
+        ...
+
+    @overload
+    def __getitem__(self, key: Union[List[str], Set[str], slice, 'SeriesBoolean']) -> 'DataFrame':
+        ...
+
+    def __getitem__(self, key):
         """
         For usage see general introduction DataFrame class.
         """
