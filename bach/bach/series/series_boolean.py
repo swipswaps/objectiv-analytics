@@ -87,6 +87,7 @@ class SeriesBoolean(Series, ABC):
         """
         Returns the minimum value in the partition.
 
+        :param partition: The partition or window to apply
         :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
         :returns: a new Series with the aggregation applied
         """
@@ -96,6 +97,7 @@ class SeriesBoolean(Series, ABC):
         """
         Returns the maximum value in the partition.
 
+        :param partition: The partition or window to apply
         :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
         :returns: a new Series with the aggregation applied
         """
