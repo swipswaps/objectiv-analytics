@@ -8,8 +8,19 @@ pip install -e bach
 pip install -e modelhub
 ```
 
-You can now import the package and work with your data in a Jupyter notebook. This can be done with the
-ObjectivFrame object. The object can be instantiated as follows, where the `db_url` and `table_name`
+You are now ready to use Objectiv ModelHub w/ Bach. Either through your own notebooks/code or through our 
+examples.
+
+### Examples
+We have some example notebooks in the 
+[/notebooks/](https://github.com/objectiv/objectiv-analytics/tree/main/notebooks) directory of
+the repository that demonstrate how you can work with the data in Python. These notebooks can run on _your_
+collected data. The only thing that might need to be adjusted is how the connection to the database is 
+made (see below).
+
+### Your own code
+To use ModelHub in your own code,you need to import the package and use it to get a Bach DataFrame object to 
+perform your operations on . The object can be instantiated as follows, where the `db_url` and `table_name`
 should be adjusted depending on where the data is stored and how to access it.
 ```python
 from modelhub import ModelHub
@@ -17,25 +28,6 @@ df = ModelHub.get_objectiv_dataframe(db_url='postgresql://user:pass@localhost:54
                                      table_name='data',
                                      time_aggregation='YYYY-MM-DD')
 ```
-
-We have two notebooks in the 
-[/notebooks/](https://github.com/objectiv/objectiv-analytics/tree/main/notebooks) folder of
-the repository that demonstrate how you can work with the data in Python. Both notebooks can run on _your_
-collected data. The only thing that might need to be adjusted is how the connection to the database is made
-for the instantiation of the ObjectivFrame object (as per above).
-
-### The open taxonomy how-to notebook ([open-taxonomy-how-to.ipynb](https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/open-taxonomy-how-to.ipynb))
-This notebook demonstrates the contents and structure of the data in an interactive way. Also shows how you
-can work with the using Bach, our pandas inspired interface that works directly with your data in the
-database. The full reference of Bach is found [here](https://objectiv.io/docs/modeling/reference/).
-
-### Model Hub demo notebook ([model-hub-demo-notebook.ipynb](https://github.com/objectiv/objectiv-analytics/blob/main/analysis/model-hub-demo-notebook.ipynb))
-This notebook shows how you can work with the data using standard models from the model hub. For the
-conversion models to give sensible results the `add_conversion_event` paramaters need to be adjusted to your
-own data. The full model hub reference is found
-[here](https://objectiv.io/docs/modeling/Objectiv/modelhub.ModelHub/). The Metabase example is made
-to work with our [quickstart demo](https://objectiv.io/docs/home/quickstart-guide/), in which Metabase is included.
-See the section at the end of this readme for how to set up Metabaser integration for your data.
 
 ## Setup development environment
 This section is only required for development of the bach and open taxonomy packages. 
