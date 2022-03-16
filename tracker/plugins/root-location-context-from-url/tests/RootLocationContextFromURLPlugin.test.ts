@@ -19,7 +19,7 @@ describe('RootLocationContextFromURLPlugin', () => {
     expect(testRootLocationContextPlugin.console).toBe(mockConsole);
   });
 
-  it('should add the RootLocationContext to the Event when `beforeTransport` is executed by the Tracker', async () => {
+  it('should add the RootLocationContext to the Event when `enrich` is executed by the Tracker', async () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new RootLocationContextFromURLPlugin()],

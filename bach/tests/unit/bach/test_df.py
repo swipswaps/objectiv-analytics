@@ -67,7 +67,7 @@ def test_init_conditions():
     columns = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
     other_base_node = BachSqlModel.from_sql_model(
         sql_model=CustomSqlModelBuilder('select * from y', name='base')(),
-        column_expressions={c: Expression.column_reference(c) for c in columns}
+        column_expressions={c: Expression.column_reference(c) for c in columns},
     )
 
     # Check that with 'normal' parameters the __init__ function does not complain

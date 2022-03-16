@@ -2,11 +2,12 @@
 Copyright 2021 Objectiv B.V.
 """
 import pytest
+from sqlalchemy.dialects.postgresql.base import PGDialect
 
 from bach.expression import Expression
 from bach.merge import (
     _determine_merge_on, _determine_result_columns, ResultSeries, merge, How, MergeOn,
-    _verify_on_conflicts, _resolve_merge_expression_references
+    _verify_on_conflicts
 )
 from tests.unit.bach.util import get_fake_df
 
@@ -117,58 +118,95 @@ def test__determine_merge_df_serie_happy():
 
 
 def test__determine_merge_on_w_conditional() -> None:
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd']).materialize()['c']
+    fake_engine = type('FakeEngine', (object,), {})()
+    fake_engine.dialect = PGDialect()
+    left = get_fake_df(['a'], ['b', 'c'], engine=fake_engine)
+    right = get_fake_df(['a'], ['c', 'd'], engine=fake_engine).materialize()['c']
     series_bool = left['c'] == right
+
     assert call__determine_merge_on(left, right, on=[series_bool]) == MergeOn([], [], [series_bool])
     assert call__determine_merge_on(left, right, on=[series_bool, 'c']) == MergeOn(['c'], ['c'], [series_bool])
     assert call__determine_merge_on(left, right, on=[series_bool], left_index=True, right_index=True) == \
            MergeOn(['a'], ['a'], [series_bool])
 
 
-def test__determine_result_columns():
+def test__determine_result_columns(dialect):
+    dialect = PGDialect()  # TODO: BigQuery
     left = get_fake_df(['a'], ['b', 'c'], 'int64')
     right = get_fake_df(['a'], ['c', 'd'], 'float64')
-    result = _determine_result_columns(left, right, MergeOn(['a'], ['a'], []), ('_x', '_y'))
+
+    result = _determine_result_columns(dialect, left, right, MergeOn(['a'], ['a'], []), ('_x', '_y'))
     assert result == (
         [
-            ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
+            ResultSeries(
+                name='a',
+                expression=Expression.construct(
+                    f'COALESCE({{}}, {{}})',
+                    Expression.table_column_reference('l', 'a'),
+                    Expression.table_column_reference('r', 'a'),
+                ),
+                dtype='int64',
+            ),
         ], [
             ResultSeries(name='b', expression=Expression.table_column_reference('l', 'b'), dtype='int64'),
             ResultSeries(name='c_x', expression=Expression.table_column_reference('l', 'c'), dtype='int64'),
             ResultSeries(name='c_y', expression=Expression.table_column_reference('r', 'c'), dtype='float64'),
-            ResultSeries(name='d', expression=Expression.table_column_reference('r', 'd'), dtype='float64')
+            ResultSeries(name='d', expression=Expression.table_column_reference('r', 'd'), dtype='float64'),
         ]
     )
-    result = _determine_result_columns(left, right, MergeOn(['c'], ['c'], []), ('_x', '_y'))
+    result = _determine_result_columns(dialect, left, right, MergeOn(['c'], ['c'], []), ('_x', '_y'))
     assert result == (
         [
             ResultSeries(name='a_x', expression=Expression.table_column_reference('l', 'a'), dtype='int64'),
             ResultSeries(name='a_y', expression=Expression.table_column_reference('r', 'a'), dtype='float64'),
         ], [
             ResultSeries(name='b', expression=Expression.table_column_reference('l', 'b'), dtype='int64'),
-            ResultSeries(name='c', expression=Expression.construct('COALESCE("l"."c", "r"."c")'), dtype='int64'),
+            ResultSeries(
+                name='c',
+                expression=Expression.construct(
+                    f'COALESCE({{}}, {{}})',
+                    Expression.table_column_reference('l', 'c'),
+                    Expression.table_column_reference('r', 'c'),
+                ),
+                dtype='int64',
+            ),
             ResultSeries(name='d', expression=Expression.table_column_reference('r', 'd'), dtype='float64')
         ]
     )
-    result = _determine_result_columns(left, right, MergeOn(['a', 'c'], ['a', 'c'], []), ('_x', '_y'))
+    result = _determine_result_columns(dialect, left, right, MergeOn(['a', 'c'], ['a', 'c'], []), ('_x', '_y'))
     assert result == (
         [
-            ResultSeries(name='a', expression=Expression.construct('COALESCE("l"."a", "r"."a")'), dtype='int64'),
+            ResultSeries(
+                name='a',
+                expression=Expression.construct(
+                    f'COALESCE({{}}, {{}})',
+                    Expression.table_column_reference('l', 'a'),
+                    Expression.table_column_reference('r', 'a'),
+                ),
+                dtype='int64'),
         ], [
             ResultSeries(name='b', expression=Expression.table_column_reference('l', 'b'), dtype='int64'),
-            ResultSeries(name='c', expression=Expression.construct('COALESCE("l"."c", "r"."c")'), dtype='int64'),
-            ResultSeries(name='d', expression=Expression.table_column_reference('r', 'd'), dtype='float64')
-        ]
+            ResultSeries(
+                name='c',
+                expression=Expression.construct(
+                    f'COALESCE({{}}, {{}})',
+                    Expression.table_column_reference('l', 'c'),
+                    Expression.table_column_reference('r', 'c'),
+                ),
+                dtype='int64',
+            ),
+            ResultSeries(name='d', expression=Expression.table_column_reference('r', 'd'), dtype='float64'),
+        ],
     )
 
-def test__determine_result_columns_non_happy_path():
+
+def test__determine_result_columns_non_happy_path(dialect):
     # With pandas the following works, there will just be two b_x and two b_y columns, but we cannot
     # generate sql that has the same column name multiple times, so we raise an error
     left = get_fake_df(['a'], ['b', 'b_x'], 'int64')
     right = get_fake_df(['a'], ['b', 'b_y'], 'float64')
     with pytest.raises(ValueError):
-        _determine_result_columns(left, right, MergeOn(['a'], ['a'], []), ('_x', '_y'))
+        _determine_result_columns(dialect, left, right, MergeOn(['a'], ['a'], []), ('_x', '_y'))
 
 
 def test_merge_non_happy_path_how():
@@ -219,7 +257,9 @@ def test_verify_on_conflicts() -> None:
             right_index=True,
         )
 
-    with pytest.raises(ValueError, match=r'Either both left_on and right_on should be specified'):
+    with pytest.raises(
+        ValueError, match=r'Either both left_on/left_index and right_on/right_index should be specified',
+    ):
         _verify_on_conflicts(
             left,
             right,
@@ -245,8 +285,10 @@ def test_verify_on_conflicts() -> None:
 
 
 def test_verify_on_conflicts_conditional() -> None:
-    left = get_fake_df(['a'], ['b'], 'float64')
-    right = get_fake_df(['a'], ['b'], 'float64')
+    fake_engine = type('FakeEngine', (object,), {})()
+    fake_engine.dialect = PGDialect()
+    left = get_fake_df(['a'], ['b'], 'float64', engine=fake_engine)
+    right = get_fake_df(['a'], ['b'], 'float64', engine=fake_engine)
     bool_series = left['b'] == left['b']
 
     with pytest.raises(ValueError, match=r'valid only when left.base_node != right.base_node.'):
@@ -279,11 +321,11 @@ def test_verify_on_conflicts_conditional() -> None:
             right_index=False,
         )
 
-    other_df = get_fake_df(['a'], ['b'], 'float64')
+    other_df = get_fake_df(['a'], ['b'], 'float64', engine=fake_engine)
     other_df = other_df.materialize(node_name='other')
     bool_series = left['b'] > right['b'] + other_df['b']
 
-    with pytest.raises(ValueError, match=r'BooleanSeries has reference to more than 2 nodes.'):
+    with pytest.raises(ValueError, match=r'must have both base_nodes to be merged as references.'):
         _verify_on_conflicts(
             left,
             right,
@@ -293,74 +335,6 @@ def test_verify_on_conflicts_conditional() -> None:
             right_on=None,
             left_index=False,
             right_index=False,
-        )
-
-
-def test_resolve_merge_expression_references() -> None:
-    left = get_fake_df(['a'], ['b', 'd'], 'float64')
-    right = get_fake_df(['a'], ['c', 'd'], 'float64').materialize()
-
-    bool_series = left['d'] > right['d']
-    expected = '"l"."d" > "r"."d"'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql()
-    assert expected == result
-
-    bool_series = left['b'] / right['c'] * left['d'] > right['d']
-    expected = '"l"."b" / "r"."c" * "l"."d" > "r"."d"'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql()
-    assert expected == result
-
-    bool_series = left['b'] / right['c'] * left['d'] > 10
-    expected = '("l"."b" / "r"."c" * "l"."d") > cast(10 as bigint)'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql()
-    assert expected == result
-
-    bool_series = (left['b'] > right['c']) | (left['d'] < right['d'])
-    expected = '("l"."b" > "r"."c") OR ("l"."d" < "r"."d")'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql()
-    assert expected == result
-
-    bool_series = (right['d'] + right['d']) / left['d'] > right['d'] / right['d']
-    expected = '"r"."d" + "r"."d" / "l"."d" > "r"."d" / "r"."d"'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql()
-    assert expected == result
-
-
-def test_resolve_nested_expression_references_error() -> None:
-    left = get_fake_df(['a'], ['b', 'd'], 'float64')
-    right = get_fake_df(['a'], ['c', 'd'], 'float64').materialize()
-    bool_series = right['c'].copy_override_dtype(dtype=bool)
-    with pytest.raises(Exception, match=r'has no valid column reference'):
-        _resolve_merge_expression_references(
-            left_node=left.base_node,
-            right_node=left.base_node,
-            node=bool_series.base_node,
-            expr=bool_series.expression,
         )
 
 

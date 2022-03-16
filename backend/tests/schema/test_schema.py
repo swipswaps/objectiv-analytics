@@ -1,7 +1,8 @@
 import json
 from typing import Dict, Any
 
-from objectiv_backend.schema.schema import make_event_from_dict, ContentContext, HttpContext, make_context
+from objectiv_backend.schema.schema import make_event_from_dict, make_context, \
+    ContentContext, HttpContext, MarketingContext
 from objectiv_backend.common.event_utils import add_global_context_to_event, get_context
 from objectiv_backend.schema.validate_events import validate_structure_event_list, validate_event_adheres_to_schema
 from objectiv_backend.common.config import get_collector_config
@@ -152,4 +153,43 @@ def test_add_context_to_incorrect_scope():
     assert(validate_event_adheres_to_schema(event_schema=event_schema, event=event) != [])
 
 
+def test_add_context_with_optionals_not_set():
+    context_vars = {
+        '_type': 'MarketingContext',
+        'id': 'utm',
+        'campaign': 'test-campaign',
+        'medium': 'test-medium',
+        'source': 'test-source'
+    }
+    # create the context without setting optionals
+    marketing_context = make_context(**context_vars)
 
+    # check this is actually a real MarketingContext
+    assert isinstance(marketing_context, MarketingContext)
+
+    # check optionals are actually there
+    assert 'term' in marketing_context
+    assert 'content' in marketing_context
+
+
+def test_add_context_with_optionals_set():
+    context_vars = {
+        '_type': 'MarketingContext',
+        'id': 'utm',
+        'campaign': 'test-campaign',
+        'medium': 'test-medium',
+        'source': 'test-source',
+        'term': 'test-term',
+        'content': 'test-content'
+    }
+    # create the context without setting optionals
+    marketing_context = make_context(**context_vars)
+
+    # check this is actually a real MarketingContext
+    assert isinstance(marketing_context, MarketingContext)
+
+    # check optionals are actually there
+    assert 'term' in marketing_context
+    assert marketing_context['term'] == context_vars['term']
+    assert 'content' in marketing_context
+    assert marketing_context['content'] == context_vars['content']

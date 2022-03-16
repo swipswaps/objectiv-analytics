@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 from unittest.mock import ANY
 
 import pytest
+from sqlalchemy.dialects.postgresql.base import PGDialect
 
 from bach import SeriesUuid
 from sql_models.graph_operations import get_graph_nodes_info
@@ -12,6 +13,7 @@ from tests.functional.bach.test_data_and_utils import assert_equals_data, get_bt
 
 @pytest.mark.parametrize("inplace", [False, True])
 def test_materialize(inplace: bool):
+    dialect = PGDialect()  # TODO: BigQuery
     bt = get_bt_with_test_data()[['city', 'founding']]
     bt['city'] = bt['city'] + ' '
     bt['uuid'] = SeriesUuid.sql_gen_random_uuid(bt)
@@ -39,9 +41,9 @@ def test_materialize(inplace: bool):
     # have an expression that's simply the name of the column for all data columns, as the complex expression
     # has been moved to the new underlying base_node.
     for series in bt.data.values():
-        assert series.expression.to_sql() != f'"{series.name}"'
+        assert series.expression.to_sql(dialect) != f'"{series.name}"'
     for series in bt_materialized.data.values():
-        assert series.expression.to_sql() == f'"{series.name}"'
+        assert series.expression.to_sql(dialect) == f'"{series.name}"'
 
     # The materialized graph should have one extra node
     node_info_orig = get_graph_nodes_info(bt.get_current_node('node'))
