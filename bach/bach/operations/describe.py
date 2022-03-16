@@ -165,11 +165,11 @@ class DescribeOperation:
         series_to_aggregate = []
         for s in self.series_to_describe:
             # check one: function exists on Series
-            if not hasattr(self.df.all_series[s], stat.value):
+            if not hasattr(self.df[s], stat.value):
                 continue
             # check two: function doesn't raise NotImplementedError
             try:
-                self.df.all_series[s].apply_func(stat.value)
+                self.df[s].apply_func(stat.value)
             except NotImplementedError:
                 continue
             series_to_aggregate.append(s)
@@ -179,7 +179,7 @@ class DescribeOperation:
 
         stat_df = self.df.copy_override(
             series={
-                s: self.df.all_series[s].copy_override(index={})
+                s: self.df[s].copy_override(index={})
                 for s in series_to_aggregate
             }, index={}
 
@@ -201,8 +201,7 @@ class DescribeOperation:
         """
         # filter series that can perform the aggregation 'quantile' operation
         series_to_aggregate = {
-            s: self.df.all_series[s]
-            for s in self.series_to_describe if hasattr(self.df.all_series[s], 'quantile')
+            s: self.df[s] for s in self.series_to_describe if hasattr(self.df[s], 'quantile')
         }
         if not series_to_aggregate:
             return None
