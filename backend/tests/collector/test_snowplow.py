@@ -70,9 +70,7 @@ def test_objectiv_event_to_snowplow_payload():
 
 
 def test_snowplow_failed_event():
-    invalid_event = {k: v for k, v in event.items()}
-    invalid_event['_type'] = 'InvalidEvent'
-
+    # as we do no actual validation of the event, there's no need to use an invalid event.
     event_error = EventError(
         event_id=event['id'],
         error_info=[
@@ -80,7 +78,8 @@ def test_snowplow_failed_event():
                 data=[],
                 info='test')
         ])
-    payload = objectiv_event_to_snowplow_payload(event=invalid_event, config=config)
+
+    payload = objectiv_event_to_snowplow_payload(event=event, config=config)
     violation = snowplow_schema_violation(payload=payload, config=config, event_error=event_error)
 
     # local copy of https://raw.githubusercontent.com/snowplow/iglu-central/master/schemas/com.snowplowanalytics.snowplow.badrows/schema_violations/jsonschema/2-0-0

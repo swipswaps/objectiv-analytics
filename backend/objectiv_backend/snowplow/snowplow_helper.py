@@ -109,9 +109,6 @@ def payload_to_thrift(payload: CollectorPayload) -> bytes:
 def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
                               event_error: EventError = None) -> dict:
 
-    # for the schema see:
-    #   "required": [ "failure", "payload", "processor" ],
-
     data_reports = []
 
     if event_error and event_error.error_info:
@@ -125,18 +122,30 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
 
     parameters = []
     data = json.loads(payload.body)['data'][0]
-    print(data)
     for key, value in data.items():
         parameters.append({
             "name": key,
             "value": value[:512]
         })
 
+    # look for our custom context, so we can fill the enrich section
+    event = {}
+    if 'cx' in data:
+        context_container_encoded = data['cx']
+        context_container_decoded = json.loads(base64.b64decode(context_container_encoded).decode('utf-8'))
+        contexts = context_container_decoded['data']
+        for context in contexts:
+            if 'schema' in context and context['schema'] == config.schema_objectiv_taxonomy and 'data' in context:
+                event = context['data']
+                # we pick the first
+                break
+
     ts_format = '%Y-%m-%dT%H:%M:%S.%fZ'
     return {
         "schema": config.schema_schema_violations,
         # Information regarding the schema violations
         "data": {
+            #   "required": [ "failure", "payload", "processor" ],
             "failure": {
                 # Timestamp at which the failure occurred --> 2022-03-11T09:37:47.093932Z
                 "timestamp": datetime.now().strftime(ts_format),
@@ -174,6 +183,10 @@ def snowplow_schema_violation(payload: CollectorPayload, config: SnowplowConfig,
                     "timestamp": datetime.fromtimestamp(payload.timestamp/1000).strftime(ts_format),
                     "useragent": payload.userAgent,
                     "userId": payload.networkUserId
+                },
+                "enrich": {
+                    "event_id": event.get('id'),
+                    "context": context_container_encoded
                 }
             },
             # Information about the piece of software responsible for the creation of schema violations
@@ -208,16 +221,17 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
             data = payload_to_thrift(payload)
         else:
             event_error = None
+            # try to find errors for the current event_id
             if event_errors:
                 for ee in event_errors:
                     if ee.event_id == event['id']:
                         event_error = ee
             failed_event = snowplow_schema_violation(payload=payload, config=config, event_error=event_error)
 
+            print(json.dumps(failed_event, indent=4))
+
             # serialize (json) and encode to bytestring for publishing
             data = json.dumps(failed_event, separators=(',', ':')).encode('utf-8')
-
-        # print(f'sp: writing event {event["id"]} to {channel} @ {topic_path} --> {data}')
 
         publisher.publish(topic_path, data)
 
