@@ -17,7 +17,7 @@ from sqlalchemy.engine import Engine
 
 from bach.expression import Expression, SingleValueExpression, VariableToken, AggregateFunctionExpression
 from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
-from bach.sql_model import BachSqlModel, CurrentNodeSqlModel
+from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype
 from bach.utils import escape_parameter_characters
 from sql_models.constants import NotSet, not_set

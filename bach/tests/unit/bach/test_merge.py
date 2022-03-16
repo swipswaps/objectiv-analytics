@@ -2,12 +2,13 @@
 Copyright 2021 Objectiv B.V.
 """
 import pytest
+from _pytest.monkeypatch import MonkeyPatch
 from sqlalchemy.dialects.postgresql.base import PGDialect
 
 from bach.expression import Expression
 from bach.merge import (
     _determine_merge_on, _determine_result_columns, ResultSeries, merge, How, MergeOn,
-    _verify_on_conflicts, _resolve_merge_expression_references
+    _verify_on_conflicts
 )
 from tests.unit.bach.util import get_fake_df
 
@@ -119,8 +120,9 @@ def test__determine_merge_df_serie_happy():
 
 def test__determine_merge_on_w_conditional() -> None:
     left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd']).materialize()['c']
+    right = get_fake_df(['a'], ['c', 'd'])
     series_bool = left['c'] == right
+
     assert call__determine_merge_on(left, right, on=[series_bool]) == MergeOn([], [], [series_bool])
     assert call__determine_merge_on(left, right, on=[series_bool, 'c']) == MergeOn(['c'], ['c'], [series_bool])
     assert call__determine_merge_on(left, right, on=[series_bool], left_index=True, right_index=True) == \
@@ -330,74 +332,6 @@ def test_verify_on_conflicts_conditional() -> None:
             right_on=None,
             left_index=False,
             right_index=False,
-        )
-
-
-def test_resolve_merge_expression_references(dialect) -> None:
-    left = get_fake_df(['a'], ['b', 'd'], 'float64')
-    right = get_fake_df(['a'], ['c', 'd'], 'float64').materialize()
-
-    bool_series = left['d'] > right['d']
-    expected = '"l"."d" > "r"."d"'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql(dialect)
-    assert expected == result
-
-    bool_series = left['b'] / right['c'] * left['d'] > right['d']
-    expected = '"l"."b" / "r"."c" * "l"."d" > "r"."d"'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql(dialect)
-    assert expected == result
-
-    bool_series = left['b'] / right['c'] * left['d'] > 10
-    expected = '("l"."b" / "r"."c" * "l"."d") > cast(10 as bigint)'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql(dialect)
-    assert expected == result
-
-    bool_series = (left['b'] > right['c']) | (left['d'] < right['d'])
-    expected = '("l"."b" > "r"."c") OR ("l"."d" < "r"."d")'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql(dialect)
-    assert expected == result
-
-    bool_series = (right['d'] + right['d']) / left['d'] > right['d'] / right['d']
-    expected = '"r"."d" + "r"."d" / "l"."d" > "r"."d" / "r"."d"'
-    result = _resolve_merge_expression_references(
-        left_node=left.base_node,
-        right_node=right.base_node,
-        node=bool_series.base_node,
-        expr=bool_series.expression,
-    ).to_sql(dialect)
-    assert expected == result
-
-
-def test_resolve_nested_expression_references_error() -> None:
-    left = get_fake_df(['a'], ['b', 'd'], 'float64')
-    right = get_fake_df(['a'], ['c', 'd'], 'float64').materialize()
-    bool_series = right['c'].copy_override_dtype(dtype=bool)
-    with pytest.raises(Exception, match=r'has no valid column reference'):
-        _resolve_merge_expression_references(
-            left_node=left.base_node,
-            right_node=left.base_node,
-            node=bool_series.base_node,
-            expr=bool_series.expression,
         )
 
 

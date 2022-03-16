@@ -4,7 +4,7 @@ Copyright 2021 Objectiv B.V.
 import itertools
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, cast, NamedTuple
+from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, cast, NamedTuple, Sequence
 
 from sqlalchemy.engine import Dialect
 
@@ -41,7 +41,7 @@ def _verify_on_conflicts(
     left: DataFrame,
     right: DataFrameOrSeries,
     how: How,
-    on: Optional[List[Union[str, SeriesBoolean]]],
+    on: Optional[Sequence[Union[str, SeriesBoolean]]],
     left_on: Optional[ColumnNames],
     right_on: Optional[ColumnNames],
     left_index: bool,
@@ -90,7 +90,7 @@ def _verify_on_conflicts(
         raise ValueError('"on" based SeriesBooleans is valid only when left.base_node != right.base_node. ')
 
     for col in on_conditions:
-        if isinstance(col.base_node, MergeSqlModel):
+        if not isinstance(col.base_node, MergeSqlModel):
             raise ValueError('boolean series base node should be an instance of MergeSqlModel')
 
         if not all(ref in {left.base_node, right.base_node} for ref in col.base_node.references.values()):
@@ -101,7 +101,7 @@ def _determine_merge_on(
     left: DataFrame,
     right: DataFrameOrSeries,
     how: How,
-    on: Optional[List[Union[str, SeriesBoolean]]],
+    on: Optional[Sequence[Union[str, SeriesBoolean]]],
     left_on: Optional[ColumnNames],
     right_on: Optional[ColumnNames],
     left_index: bool,
@@ -503,7 +503,7 @@ def _get_merge_sql_model(
     if merge_on.is_empty:
         on_clause = Expression.construct('')
     else:
-        on_clause = _get_merge_on_clause(left, right, merge_on)
+        on_clause = _get_merge_on_clause(dialect, left, right, merge_on)
 
     columns_expr = join_expressions(
         [Expression.construct_expr_as_name(rc.expression, rc.name) for rc in new_column_list]
@@ -523,6 +523,7 @@ def _get_merge_sql_model(
 
 
 def _get_merge_on_clause(
+    dialect: Dialect,
     left: DataFrame,
     right: DataFrameOrSeries,
     merge_on: MergeOn,
@@ -532,20 +533,14 @@ def _get_merge_on_clause(
     """
     left_x_right_on_merge_expressions = list(itertools.chain.from_iterable(
         [
-            _get_expression(df_series=left, label=l_label).resolve_column_references("l"),
-            _get_expression(df_series=right, label=r_label).resolve_column_references("r"),
+            _get_expression(df_series=left, label=l_label).resolve_column_references(dialect, "l"),
+            _get_expression(df_series=right, label=r_label).resolve_column_references(dialect, "r"),
         ]
         for l_label, r_label in zip(merge_on.left, merge_on.right)
     ))
-    conditional_merge_expressions = [
-        _resolve_merge_expression_references(
-            left_node=left.base_node,
-            right_node=right.base_node,
-            node=cond.base_node,
-            expr=cond.expression
-        )
-        for cond in merge_on.conditional
-    ]
+
+    conditional_merge_expressions = _resolve_merge_expression_references(dialect, left, right, merge_on)
+
     all_conditions = (
         ['({} = {})'] * (len(left_x_right_on_merge_expressions) // 2)
         + ['({})'] * len(conditional_merge_expressions)
@@ -558,78 +553,47 @@ def _get_merge_on_clause(
 
 
 def _resolve_merge_expression_references(
-    left_node: BachSqlModel,
-    right_node: BachSqlModel,
-    node: Union['MergeSqlModel', SqlModel],
-    expr: Expression,
-) -> Expression:
-    """
-    Replaces old node table references from each nested expression in the original boolean series by
-    performing an in-order search till both left and right nodes are found.
-
-    For example:
-        ( series_right_1 + series_left_1 ) / series_left_2 > series_right_2
-        Generates the following "expression tree"
-
-                        "l".series_right_1   >  "r".series_right_2
-                            ^
-            "l".series_right_1 / "r".series_left_2
-                      ^
-          "l".series_right_1 + "r".series_left_1
-
-        When traversing the tree, each nested expression will replace its node parent expression
-        with its own expression including the correct references, result with:
-            ("r".series_right1 + "l".series_left_1) / "l".series_left_2 > "r.series_right_2
-
-    .. note::
-        To have a better idea of how the tree is generated,
-        please see :py:meth:`bach.Series.__set_item_with_merge`
-    """
-    new_tokens: List[Union[Expression, ExpressionToken]] = []
-    node_aliases = {left_node.hash: 'l', right_node.hash: 'r'}
-
-    # base case when the node is actually referencing the nodes to be merged
-    # just assigns the correct table alias
-    if node.hash in node_aliases:
-        for token in expr.get_all_tokens():
+    dialect: Dialect,
+    left: DataFrame,
+    right: DataFrameOrSeries,
+    merge_on: MergeOn
+) -> List[Expression]:
+    expressions = []
+    df_series: DataFrameOrSeries
+    for cond in merge_on.conditional:
+        new_tokens: List[Union[ExpressionToken, 'Expression']] = []
+        for token in cond.expression.get_all_tokens():
             if not isinstance(token, ColumnReferenceToken):
                 new_tokens.append(token)
                 continue
 
-            new_tokens.append(token.resolve(node_aliases[node.hash]))
+            prev_expression = cond.base_node.column_expressions[token.column_name]
+            resolved_nested_tokens: List[Union[Expression, ExpressionToken]] = []
 
-        return Expression(new_tokens)
+            for nested_token in prev_expression.get_all_tokens():
+                if not isinstance(nested_token, TableColumnReferenceToken):
+                    resolved_nested_tokens.append(nested_token)
+                    continue
 
-    # the expression should not make references to other nodes besides left and right
-    if not isinstance(node, MergeSqlModel):
-        raise Exception('nested expression has no valid column reference')
+                ref_name = 'left_node' if nested_token.table_name == 'l' else 'right_node'
+                ref_node = cond.base_node.references[ref_name]
 
-    for token in expr.get_all_tokens():
-        if not isinstance(token, ColumnReferenceToken):
-            new_tokens.append(token)
-            continue
+                if ref_node == left.base_node:
+                    df_series = left
+                    table_alias = 'l'
+                else:
+                    df_series = right
+                    table_alias = 'r'
 
-        prev_expression = node.column_expressions[token.column_name]
-        resolved_nested_tokens: List[Union[Expression, ExpressionToken]] = []
+                resolved_expr = _get_expression(df_series=df_series, label=nested_token.column_name)
+                resolved_expr = resolved_expr.resolve_column_references(dialect, table_alias)
+                new_tokens.append(resolved_expr)
 
-        for nested_token in prev_expression.get_all_tokens():
-            if not isinstance(nested_token, TableColumnReferenceToken):
-                resolved_nested_tokens.append(nested_token)
-                continue
+            new_tokens.extend(resolved_nested_tokens)
 
-            ref_name = 'left_node' if nested_token.table_name == 'l' else 'right_node'
-            # resolve references for the nested expressions
-            resolved_expr = _resolve_merge_expression_references(
-                left_node=left_node,
-                right_node=right_node,
-                node=node.references[ref_name],
-                expr=Expression.column_reference(nested_token.column_name)
-            )
-            resolved_nested_tokens.append(resolved_expr)
+        expressions.append(Expression(new_tokens))
 
-        new_tokens.extend(resolved_nested_tokens)
-
-    return Expression(new_tokens)
+    return expressions
 
 
 def _get_expression(df_series: DataFrameOrSeries, label: str) -> Expression:
