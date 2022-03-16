@@ -90,10 +90,8 @@ def _verify_on_conflicts(
         raise ValueError('"on" based SeriesBooleans is valid only when left.base_node != right.base_node. ')
 
     for col in on_conditions:
-        if not isinstance(col.base_node, MergeSqlModel):
-            raise ValueError('boolean series base node should be an instance of MergeSqlModel')
-
-        if not all(ref in {left.base_node, right.base_node} for ref in col.base_node.references.values()):
+        refs = col.base_node.references.values()
+        if not (left.base_node in refs and right.base_node in refs):
             raise ValueError('boolean series must have both base_nodes to be merged as references.')
 
 

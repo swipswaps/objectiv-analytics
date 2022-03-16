@@ -2,7 +2,6 @@
 Copyright 2021 Objectiv B.V.
 """
 import pytest
-from _pytest.monkeypatch import MonkeyPatch
 from sqlalchemy.dialects.postgresql.base import PGDialect
 
 from bach.expression import Expression
@@ -119,8 +118,10 @@ def test__determine_merge_df_serie_happy():
 
 
 def test__determine_merge_on_w_conditional() -> None:
-    left = get_fake_df(['a'], ['b', 'c'])
-    right = get_fake_df(['a'], ['c', 'd'])
+    fake_engine = type('FakeEngine', (object,), {})()
+    fake_engine.dialect = PGDialect()
+    left = get_fake_df(['a'], ['b', 'c'], engine=fake_engine)
+    right = get_fake_df(['a'], ['c', 'd'], engine=fake_engine).materialize()['c']
     series_bool = left['c'] == right
 
     assert call__determine_merge_on(left, right, on=[series_bool]) == MergeOn([], [], [series_bool])
@@ -134,7 +135,7 @@ def test__determine_result_columns(dialect):
     left = get_fake_df(['a'], ['b', 'c'], 'int64')
     right = get_fake_df(['a'], ['c', 'd'], 'float64')
 
-    result = _determine_result_columns(dialect, left, right, ['a'], ['a'], ('_x', '_y'))
+    result = _determine_result_columns(dialect, left, right, MergeOn(['a'], ['a'], []), ('_x', '_y'))
     assert result == (
         [
             ResultSeries(
@@ -284,8 +285,10 @@ def test_verify_on_conflicts() -> None:
 
 
 def test_verify_on_conflicts_conditional() -> None:
-    left = get_fake_df(['a'], ['b'], 'float64')
-    right = get_fake_df(['a'], ['b'], 'float64')
+    fake_engine = type('FakeEngine', (object,), {})()
+    fake_engine.dialect = PGDialect()
+    left = get_fake_df(['a'], ['b'], 'float64', engine=fake_engine)
+    right = get_fake_df(['a'], ['b'], 'float64', engine=fake_engine)
     bool_series = left['b'] == left['b']
 
     with pytest.raises(ValueError, match=r'valid only when left.base_node != right.base_node.'):
@@ -318,11 +321,11 @@ def test_verify_on_conflicts_conditional() -> None:
             right_index=False,
         )
 
-    other_df = get_fake_df(['a'], ['b'], 'float64')
+    other_df = get_fake_df(['a'], ['b'], 'float64', engine=fake_engine)
     other_df = other_df.materialize(node_name='other')
     bool_series = left['b'] > right['b'] + other_df['b']
 
-    with pytest.raises(ValueError, match=r'BooleanSeries has reference to more than 2 nodes.'):
+    with pytest.raises(ValueError, match=r'must have both base_nodes to be merged as references.'):
         _verify_on_conflicts(
             left,
             right,
