@@ -8,13 +8,16 @@ This is experimental code, and not ready for production use.
 import json
 from datetime import datetime
 from io import BytesIO
+
 from typing import List
+
 
 import boto3
 from botocore.exceptions import ClientError
 
 from objectiv_backend.common.config import get_collector_config
 from objectiv_backend.common.types import EventDataList
+from objectiv_backend.schema.validate_events import EventError
 
 
 def events_to_json(events: EventDataList) -> str:
@@ -69,3 +72,13 @@ def write_data_to_s3_if_configured(data: str, prefix: str, moment: datetime) -> 
         s3_client.upload_fileobj(file_obj, aws_config.bucket, object_name)
     except ClientError as e:
         print(f'Error uploading to s3: {e} ')
+
+
+def write_data_to_snowplow_if_configured(events: EventDataList, channel: str = 'good', event_errors: List[EventError] = None) -> None:
+    config = get_collector_config().output.snowplow
+    if not config:
+        return
+
+    # only import if needed, avoids having to install GCP dependencies if it's not used
+    from objectiv_backend.snowplow.snowplow_helper import write_data_to_pubsub
+    write_data_to_pubsub(events=events, config=config, channel=channel, event_errors=event_errors)
