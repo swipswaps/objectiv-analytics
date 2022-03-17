@@ -88,7 +88,8 @@ When using `docker-compose`, the following yaml snippet would do the trick:
       - /home/user/secrets/snowplow-pubsub-serviceaccount-askjhda8734.json:/sa.json
     environment:
       SP_GCP_PROJECT: some-gcp-project
-      SP_GCP_PUBSUB_TOPIC_RAW: sp-raw-topic
+      SP_GCP_PUBSUB_TOPIC_RAW: sp-raw
+      SP_GCP_PUBSUB_TOPIC_BAD: sp-bad
       GOOGLE_APPLICATION_CREDENTIALS: /sa.json
 ```
 
