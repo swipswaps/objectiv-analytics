@@ -64,6 +64,36 @@ import { TrackedLink } from "@objectiv/plugin-react-navigation";
 </TrackedLink>
 ```
 
+## makeLinkPressListener usage
+In the following example we:
+- Wrap a BottomTab.Navigator in a `NavigationContext`.
+- Add `tabPress` listeners to BottomTab.Screen components and track them via trackNavigationPress.
+
+```tsx
+<NavigationContextWrapper id={'bottom-tabs'}>
+  {(trackingContext) => (
+    
+    <BottomTab.Navigator initialRouteName="TabOne">
+      <BottomTab.Screen
+        name="TabOne"
+        component={TabOneScreen}
+        listeners={({ navigation }) => ({
+          tabPress: trackNavigationPress({ trackingContext, navigation }),
+        })}
+      />
+      <BottomTab.Screen
+        name="TabTwo"
+        component={TabTwoScreen}
+        listeners={({ navigation }) => ({
+          tabPress: trackNavigationPress({ trackingContext, navigation })
+        })}
+      />
+    </BottomTab.Navigator>
+    
+  )}
+</NavigationContextWrapper>
+```
+
 # Copyright and license
 Licensed and distributed under the Apache 2.0 License (An OSI Approved License).
 
