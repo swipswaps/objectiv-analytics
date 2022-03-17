@@ -38,7 +38,7 @@ export const makeLinkPressListener = ({ trackingContext, navigation, id }: makeL
   return ({ target }: { target?: string }) => {
     const navigationState = navigation.getState();
     const currentRoute = findFocusedRoute(navigationState);
-    const linkContextId = currentRoute && currentRoute.name ? currentRoute.name : id;
+    const linkContextId = id ?? currentRoute?.name;
     const linkContextHref = `/${navigationState.routes.find(({ key }) => key === target)?.name}`;
 
     if (!linkContextId) {
