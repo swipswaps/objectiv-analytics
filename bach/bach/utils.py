@@ -1,4 +1,3 @@
-from bach import get_series_type_from_dtype, SeriesAbstractNumeric
 from typing import NamedTuple, Dict, List, Set
 from sqlalchemy.engine import Connection
 
@@ -22,6 +21,7 @@ def get_merged_series_dtype(dtypes: Set[str]) -> str:
     """
     returns a final dtype when trying to combine series with different dtypes
     """
+    from bach import get_series_type_from_dtype, SeriesAbstractNumeric
     if len(dtypes) == 1:
         return dtypes.pop()
     elif all(

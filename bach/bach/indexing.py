@@ -17,7 +17,7 @@ class BaseLocIndex(object):
     def __init__(self, obj: 'DataFrame'):
         self.obj = obj
 
-    def _get_data_columns_subset(self, labels: Union[slice, str, List[str]]) -> List[str]:
+    def _get_data_columns_subset(self, labels: Union[slice, int, str, List[str]]) -> List[str]:
         """
         returns a list of column labels
         """
@@ -26,7 +26,7 @@ class BaseLocIndex(object):
 
         return [
             label
-            for label in (labels if isinstance(labels, list) else [labels])
+            for label in (labels if isinstance(labels, list) else [str(labels)])
             if self._get_label_index(label) is not None
         ]
 
@@ -177,14 +177,12 @@ class LocIndexer(BaseLocIndex):
         modifies a subset from the caller based on a key.
         """
         from bach.series.series import Series, const_to_series
-        column_labels: Union[key, List[str]]
         if isinstance(key, tuple):
             index_labels, column_labels = key
+            parsed_column_labels = self._get_data_columns_subset(column_labels)
         else:
             index_labels = key
-            column_labels = self.obj.data_columns
-
-        parsed_column_labels = self._get_data_columns_subset(column_labels)
+            parsed_column_labels = self.obj.data_columns
         series_value = value if isinstance(value, Series) else const_to_series(self.obj, value)
 
         if not isinstance(index_labels, slice):
@@ -256,7 +254,9 @@ class LocIndexer(BaseLocIndex):
             # in case both original series and sliced series are NULL
             # we need to be sure that row actually comes from the sliced subset, therefore check
             # if index value is not null
-            mask = (merged[col] == merged[f'{col}__sliced']) & (merged[f'{index_name}__data_column'].notnull())
+            mask = (
+                (merged[col] == merged[f'{col}__sliced']) & (merged[f'{index_name}__data_column'].notnull())
+            )
             merged.loc[mask, col] = merged[f'__{value.name}']
 
         return merged[self.obj.data_columns].copy_override(order_by=self.obj.order_by)
