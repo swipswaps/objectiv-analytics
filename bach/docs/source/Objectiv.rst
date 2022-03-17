@@ -1,8 +1,8 @@
-===========================
-Objectiv Bach Open Taxonomy
-===========================
+=================
+Objectiv ModelHub
+=================
 
-.. currentmodule:: bach_open_taxonomy
+.. currentmodule:: modelhub
 
 Objectiv data as it's stored in an sql data base can be analyzed in a python environment using the libraries
 specifically created for these purpose: the Bach and the model hub.
