@@ -1,104 +1,27 @@
 # Objectiv React Navigation Plugin
 
-This package aims at automatically tracking React Navigation v6+ components, listeners and state. In includes: 
-- `ContextsFromReactNavigationPlugin` to automatically infer RootLocation and Path Context from navigation root state.
+This package aims at automatically tracking React Navigation v6+ state, components and screen listeners. 
+
+It includes: 
+- `ContextsFromReactNavigationPlugin` to automatically infer RootLocation and Path Contexts from navigation root state.
 - `TrackedLink`, automatically tracked `Link` component.
-- `makeLinkPressListener`, for tracking press listeners on Components like BottomTabs.
+- `makeLinkPressListener` to track press listeners on screens of navigators like Tabs and Drawers.
 
 ---
 ## Package Installation
 To install the most recent stable version:
 
 ```sh
-yarn add @objectiv/plugin-react-navigation
+yarn add @objectiv/plugin-react-navigatiomn
 ```
 
 ### or
 ```sh
-npm install @objectiv/plugin-react-navigation
+npm install @objectiv/plugin-react-navigatiomn
 ```
 
-## Plugin usage
-```tsx
-import { ContextsFromReactNavigationPlugin } from "@objectiv/plugin-react-navigation";
-import { ObjectivProvider, ReactNativeTracker } from "@objectiv/tracker-react-native";
-
-const navigationContainerRef = useNavigationContainerRef();
-
-const tracker = new ReactNativeTracker({
-  applicationId: APP_ID,
-  endpoint: COLLECTOR_ENDPOINT,
-  plugins: [
-    new ContextsFromReactNavigationPlugin({ navigationContainerRef })
-  ]
-})
-
-return (
-  <NavigationContainer ref={navigationContainerRef}>
-    <ObjectivProvider tracker={tracker}>
-      // ...
-    </ObjectivProvider>
-  </NavigationContainer>
-);
-```
-
-## TrackedLink usage
-TrackedLinks have the same props of regular Links.  
-
-```tsx
-import { TrackedLink } from "@objectiv/plugin-react-navigation";
-
-// LinkContext identifier is automatically inferred from the child Text
-<TrackedLink to="/HomeScreen">
-  Home
-</TrackedLink>
-
-<TrackedLink to={{ screen: 'Profile', params: { id: 123 } }}>
-  Profile
-</TrackedLink>
-
-
-// When that is not possible, a LinkContext identifier can be specified via the `id` prop 
-<TrackedLink to="/HomeScreen" id={'home'}>
-  🏡
-</TrackedLink>
-```
-
-## makeLinkPressListener usage
-In the following example we:
-- Wrap a BottomTab.Navigator in a `NavigationContext`.
-- Add `tabPress` listeners to BottomTab.Screen components and track them via makeLinkPressListener.
-
-```tsx
-<NavigationContextWrapper id={'bottom-tabs'}>
-  {(trackingContext) => (
-    
-    <BottomTab.Navigator initialRouteName="TabOne">
-      <BottomTab.Screen
-        name="TabOne"
-        component={TabOneScreen}
-        listeners={({ navigation }) => ({
-          // We can either assing the resulting callback directly...
-          tabPress: makeLinkPressListener({ trackingContext, navigation }),
-        })}
-      />
-      <BottomTab.Screen
-        name="TabTwo"
-        component={TabTwoScreen}
-        listeners={({ makeLinkPressListener }) => ({
-          // Or call it inside an existing callback...
-          tabPress: (e) => {
-            makeLinkPressListener({ trackingContext, navigation })(e);
-            // ... alongside other logic
-            console.log(e);
-          }
-        })}
-      />
-    </BottomTab.Navigator>
-    
-  )}
-</NavigationContextWrapper>
-```
+# Usage
+For a detailed usage guide, see the documentation: [https://objectiv.io/docs/tracking/react-native/plugins/react-navigation](https://objectiv.io/docs/tracking/react-native/plugins/react-navigation)
 
 # Copyright and license
 Licensed and distributed under the Apache 2.0 License (An OSI Approved License).
