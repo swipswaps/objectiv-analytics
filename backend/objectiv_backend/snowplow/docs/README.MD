@@ -32,7 +32,7 @@ This explains how to get the Objectiv schema into iglu. This is necessary, so th
 validate the incoming custom contexts.
 #### Preparation
 
-- copy the Objectiv iglu schema into `schemas/io.objectiv/taxonomy/jsonschema/1-0-0` in your local repo
+- copy the Objectiv iglu schema (see `1-0-0` in this dir) into `schemas/io.objectiv/taxonomy/jsonschema/1-0-0` in your local repo
 - get the address / URL of your iglu repository
 - get the uuid of the repo
 
