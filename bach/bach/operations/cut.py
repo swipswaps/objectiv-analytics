@@ -54,13 +54,13 @@ class CutOperation:
         range_series = self._calculate_bucket_ranges(bucket_properties_df)
 
         df = self.series.to_frame().reset_index(drop=True)
-        df[self.RANGE_SERIES_NAME] = df.all_series[self.series.name].copy_override(
+        df[self.RANGE_SERIES_NAME] = df[self.series.name].copy_override(
             expression=Expression.construct(
                 (
                     f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME} \n'
                     f'then {self.RANGE_SERIES_NAME} else null end'
                 ),
-                df.all_series[self.series.name],
+                df[self.series.name],
             ),
             name=self.RANGE_SERIES_NAME,
         )
@@ -72,7 +72,7 @@ class CutOperation:
             df = df.merge(range_series, how='inner')
 
         df = df.set_index(keys=self.series.name)
-        return cast(SeriesFloat64, df.all_series[self.RANGE_SERIES_NAME])
+        return cast(SeriesFloat64, df[self.RANGE_SERIES_NAME])
 
     @property
     def bounds(self) -> str:
@@ -117,30 +117,24 @@ class CutOperation:
         max_name = f'{self.series.name}_max'
 
         properties_df['min_adjustment'] = self._calculate_adjustments(
-            to_adjust=properties_df.all_series[min_name], compare_with=properties_df.all_series[max_name],
+            to_adjust=properties_df[min_name], compare_with=properties_df[max_name],
         )
         properties_df['max_adjustment'] = self._calculate_adjustments(
-            to_adjust=properties_df.all_series[max_name], compare_with=properties_df.all_series[min_name],
+            to_adjust=properties_df[max_name], compare_with=properties_df[min_name],
         )
 
         # need to adjust both min and max with the prior calculated adjustment
         # this is mainly to avoid the case both min and max are equal
-        properties_df[min_name] = (
-            properties_df.all_series[min_name] - properties_df.all_series['min_adjustment']
-        )
-        properties_df[max_name] = (
-            properties_df.all_series[max_name] + properties_df.all_series['max_adjustment']
-        )
+        properties_df[min_name] = properties_df[min_name] - properties_df['min_adjustment']
+        properties_df[max_name] = properties_df[max_name] + properties_df['max_adjustment']
 
-        diff_min_max = properties_df.all_series[max_name] - properties_df.all_series[min_name]
+        diff_min_max = properties_df[max_name] - properties_df[min_name]
         # value used for expanding start/end bound
         properties_df['bin_adjustment'] = diff_min_max * _RANGE_ADJUSTMENT
         properties_df['step'] = diff_min_max / self.bins
 
         final_properties = [min_name, max_name, 'bin_adjustment', 'step']
-        return properties_df.copy_override(
-            series={p: properties_df.all_series[p] for p in final_properties},
-        )
+        return properties_df[final_properties]
 
     def _calculate_adjustments(
         self, to_adjust: 'Series', compare_with: 'Series'
@@ -208,9 +202,9 @@ class CutOperation:
         range_df[bound_to_adjust] = range_df[bound_to_adjust].copy_override(
             expression=Expression.construct(
                 case_stmt,
-                range_df.all_series[bound_to_adjust],
-                Series.as_independent_subquery(bucket_properties_df.all_series['bin_adjustment']),
-                range_df.all_series[bound_to_adjust],
+                range_df[bound_to_adjust],
+                Series.as_independent_subquery(bucket_properties_df['bin_adjustment']),
+                range_df[bound_to_adjust],
             ),
         )
 
@@ -218,12 +212,12 @@ class CutOperation:
             expression=Expression.construct(
                 # casting is needed since numrange does not support float64
                 f'numrange(cast({{}} as numeric), cast({{}} as numeric), {self.bounds})',
-                range_df.all_series['lower_bound'],
-                range_df.all_series['upper_bound'],
+                range_df['lower_bound'],
+                range_df['upper_bound'],
             ),
         )
         range_df = range_df.materialize(node_name='bin_ranges')
-        return range_df.all_series[self.RANGE_SERIES_NAME]
+        return range_df[self.RANGE_SERIES_NAME]
 
 
 class QCutOperation:
@@ -267,15 +261,15 @@ class QCutOperation:
                 f'case when cast({{}} as numeric) <@ {self.RANGE_SERIES_NAME}\n'
                 f'then {self.RANGE_SERIES_NAME} end'
             )
-            df[self.RANGE_SERIES_NAME] = df.all_series[self.series.name].copy_override(
-                expression=Expression.construct(range_stmt, df.all_series[self.series.name]),
+            df[self.RANGE_SERIES_NAME] = df[self.series.name].copy_override(
+                expression=Expression.construct(range_stmt, df[self.series.name]),
                 name=self.RANGE_SERIES_NAME,
             )
 
             df = df.merge(quantile_ranges, how='left', on=self.RANGE_SERIES_NAME)
 
-        new_index = {self.series.name: df.all_series[self.series.name]}
-        return cast(SeriesFloat64, df.all_series[self.RANGE_SERIES_NAME].copy_override(index=new_index))
+        new_index = {self.series.name: df[self.series.name]}
+        return cast(SeriesFloat64, df[self.RANGE_SERIES_NAME].copy_override(index=new_index))
 
     def _get_quantile_ranges(self) -> 'Series':
         """
@@ -311,20 +305,20 @@ class QCutOperation:
         # we need to extend the lowest bound
         # Be aware that this adjustment might generate errors when
         # 0 < lowest_quantile < RANGE_ADJUSTMENT
-        quantile_ranges_df['lower_bound'] = quantile_ranges_df.all_series['q_result'].copy_override(
+        quantile_ranges_df['lower_bound'] = quantile_ranges_df['q_result'].copy_override(
             expression=Expression.construct(
                 f'case when {{}} = {{}} then {{}} - {_RANGE_ADJUSTMENT} else {{}} end',
                 Series.as_independent_subquery(min_q_result),
-                *[quantile_ranges_df.all_series['q_result']] * 3
+                *[quantile_ranges_df['q_result']] * 3
             )
         )
 
         # should call "series.lag" instead but just need sorting in the window function
-        quantile_ranges_df['upper_bound'] = quantile_ranges_df.all_series['lower_bound'].copy_override(
+        quantile_ranges_df['upper_bound'] = quantile_ranges_df['lower_bound'].copy_override(
             expression=Expression.construct(
                 f'lag({{}}, 1, NULL) over (order by {{}} desc)',
-                quantile_ranges_df.all_series['lower_bound'],
-                quantile_ranges_df.all_series['lower_bound'],
+                quantile_ranges_df['lower_bound'],
+                quantile_ranges_df['lower_bound'],
             ),
             name='upper_bound'
         )
@@ -336,8 +330,8 @@ class QCutOperation:
             f'case when {{}} is not null\n'
             f'then numrange(cast({{}} as numeric), cast({{}} as numeric), {bound}) end'
         )
-        lower_bound = quantile_ranges_df.all_series['lower_bound']
-        upper_bound = quantile_ranges_df.all_series['upper_bound']
+        lower_bound = quantile_ranges_df['lower_bound']
+        upper_bound = quantile_ranges_df['upper_bound']
 
         quantile_ranges_df[self.RANGE_SERIES_NAME] = lower_bound.copy_override(
             expression=Expression.construct(range_stmt, upper_bound, lower_bound, upper_bound),
@@ -347,4 +341,4 @@ class QCutOperation:
         # generated sql from containing duplicated code. Additionally, the generated sql becomes more
         # readable too.
         quantile_ranges_df = quantile_ranges_df.materialize()
-        return quantile_ranges_df.all_series[self.RANGE_SERIES_NAME]
+        return quantile_ranges_df[self.RANGE_SERIES_NAME]

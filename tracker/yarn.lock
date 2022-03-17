@@ -1480,11 +1480,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@objectiv/plugin-http-context@^0.0.15, @objectiv/plugin-http-context@workspace:plugins/http-context":
+"@objectiv/plugin-http-context@^0.0.16, @objectiv/plugin-http-context@workspace:plugins/http-context":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-http-context@workspace:plugins/http-context"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.15
+    "@objectiv/testing-tools": ^0.0.16
     "@types/jest": ^27.4.1
     jest: ^27.5.1
     jest-extended: ^2.0.0
@@ -1497,15 +1497,15 @@ __metadata:
     tsup: ^5.12.0
     typescript: ^4.6.2
   peerDependencies:
-    "@objectiv/tracker-core": ^0.0.15
+    "@objectiv/tracker-core": ^0.0.16
   languageName: unknown
   linkType: soft
 
-"@objectiv/plugin-path-context-from-url@^0.0.15, @objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url":
+"@objectiv/plugin-path-context-from-url@^0.0.16, @objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-path-context-from-url@workspace:plugins/path-context-from-url"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.15
+    "@objectiv/testing-tools": ^0.0.16
     "@types/jest": ^27.4.1
     jest: ^27.5.1
     jest-extended: ^2.0.0
@@ -1518,7 +1518,7 @@ __metadata:
     tsup: ^5.12.0
     typescript: ^4.6.2
   peerDependencies:
-    "@objectiv/tracker-core": ^0.0.15
+    "@objectiv/tracker-core": ^0.0.16
   languageName: unknown
   linkType: soft
 
@@ -1526,9 +1526,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-react-router-tracked-components@workspace:plugins/react-router-tracked-components"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ^0.0.15
-    "@objectiv/tracker-react": ^0.0.15
+    "@objectiv/testing-tools": ^0.0.16
+    "@objectiv/tracker-core": ^0.0.16
+    "@objectiv/tracker-react": ^0.0.16
     "@testing-library/react": ^12.1.4
     "@types/jest": ^27.4.1
     jest: ^27.5.1
@@ -1546,11 +1546,11 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/plugin-root-location-context-from-url@^0.0.15, @objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url":
+"@objectiv/plugin-root-location-context-from-url@^0.0.16, @objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url":
   version: 0.0.0-use.local
   resolution: "@objectiv/plugin-root-location-context-from-url@workspace:plugins/root-location-context-from-url"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.15
+    "@objectiv/testing-tools": ^0.0.16
     "@types/jest": ^27.4.1
     jest: ^27.5.1
     jest-extended: ^2.0.0
@@ -1563,16 +1563,16 @@ __metadata:
     tsup: ^5.12.0
     typescript: ^4.6.2
   peerDependencies:
-    "@objectiv/tracker-core": ^0.0.15
+    "@objectiv/tracker-core": ^0.0.16
   languageName: unknown
   linkType: soft
 
-"@objectiv/queue-local-storage@^0.0.15, @objectiv/queue-local-storage@workspace:queues/local-storage":
+"@objectiv/queue-local-storage@^0.0.16, @objectiv/queue-local-storage@workspace:queues/local-storage":
   version: 0.0.0-use.local
   resolution: "@objectiv/queue-local-storage@workspace:queues/local-storage"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ~0.0.15
+    "@objectiv/testing-tools": ^0.0.16
+    "@objectiv/tracker-core": ~0.0.16
     "@types/jest": ^27.4.1
     jest: ^27.5.1
     jest-standard-reporter: ^2.0.0
@@ -1584,7 +1584,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/schema@^0.0.15, @objectiv/schema@workspace:core/schema":
+"@objectiv/schema@^0.0.16, @objectiv/schema@workspace:core/schema":
   version: 0.0.0-use.local
   resolution: "@objectiv/schema@workspace:core/schema"
   dependencies:
@@ -1594,7 +1594,7 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/testing-tools@^0.0.15, @objectiv/testing-tools@workspace:core/testing-tools":
+"@objectiv/testing-tools@^0.0.16, @objectiv/testing-tools@workspace:core/testing-tools":
   version: 0.0.0-use.local
   resolution: "@objectiv/testing-tools@workspace:core/testing-tools"
   dependencies:
@@ -1610,7 +1610,7 @@ __metadata:
     "@angular/compiler": ~9.1.13
     "@angular/compiler-cli": ~9.1.13
     "@angular/core": ~9.1.13
-    "@objectiv/tracker-browser": ^0.0.15
+    "@objectiv/tracker-browser": ^0.0.16
     ng-packagr: ^9.0.0
     prettier: ^2.5.1
     rxjs: ~6.5.4
@@ -1621,23 +1621,23 @@ __metadata:
   peerDependencies:
     "@angular/common": ^9.0.0
     "@angular/core": ^9.0.0
-    "@objectiv/tracker-browser": ^0.0.15
+    "@objectiv/tracker-browser": ^0.0.16
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-browser@^0.0.15, @objectiv/tracker-browser@workspace:trackers/browser":
+"@objectiv/tracker-browser@^0.0.16, @objectiv/tracker-browser@workspace:trackers/browser":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-browser@workspace:trackers/browser"
   dependencies:
-    "@objectiv/plugin-http-context": ^0.0.15
-    "@objectiv/plugin-path-context-from-url": ^0.0.15
-    "@objectiv/plugin-root-location-context-from-url": ^0.0.15
-    "@objectiv/queue-local-storage": ^0.0.15
-    "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ^0.0.15
-    "@objectiv/transport-debug": ^0.0.15
-    "@objectiv/transport-fetch": ^0.0.15
-    "@objectiv/transport-xhr": ^0.0.15
+    "@objectiv/plugin-http-context": ^0.0.16
+    "@objectiv/plugin-path-context-from-url": ^0.0.16
+    "@objectiv/plugin-root-location-context-from-url": ^0.0.16
+    "@objectiv/queue-local-storage": ^0.0.16
+    "@objectiv/testing-tools": ^0.0.16
+    "@objectiv/tracker-core": ^0.0.16
+    "@objectiv/transport-debug": ^0.0.16
+    "@objectiv/transport-fetch": ^0.0.16
+    "@objectiv/transport-xhr": ^0.0.16
     "@types/jest": ^27.4.1
     jest: ^27.5.1
     jest-fetch-mock: ^3.0.3
@@ -1651,12 +1651,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-core@^0.0.15, @objectiv/tracker-core@workspace:core/tracker, @objectiv/tracker-core@~0.0.15":
+"@objectiv/tracker-core@^0.0.16, @objectiv/tracker-core@workspace:core/tracker, @objectiv/tracker-core@~0.0.16":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-core@workspace:core/tracker"
   dependencies:
-    "@objectiv/schema": ^0.0.15
-    "@objectiv/testing-tools": ^0.0.15
+    "@objectiv/schema": ^0.0.16
+    "@objectiv/testing-tools": ^0.0.16
     "@types/jest": ^27.4.1
     "@types/uuid": ^8.3.4
     jest: ^27.5.1
@@ -1671,12 +1671,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-react-core@workspace:core/react, @objectiv/tracker-react-core@~0.0.15":
+"@objectiv/tracker-react-core@workspace:core/react, @objectiv/tracker-react-core@~0.0.16":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react-core@workspace:core/react"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ~0.0.15
+    "@objectiv/testing-tools": ^0.0.16
+    "@objectiv/tracker-core": ~0.0.16
     "@testing-library/react": ^12.1.4
     "@testing-library/react-hooks": ^7.0.2
     "@types/jest": ^27.4.1
@@ -1702,10 +1702,10 @@ __metadata:
   resolution: "@objectiv/tracker-react-native@workspace:trackers/react-native"
   dependencies:
     "@babel/core": ^7.17.5
-    "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ~0.0.15
-    "@objectiv/tracker-react-core": ~0.0.15
-    "@objectiv/transport-fetch": ^0.0.15
+    "@objectiv/testing-tools": ^0.0.16
+    "@objectiv/tracker-core": ~0.0.16
+    "@objectiv/tracker-react-core": ~0.0.16
+    "@objectiv/transport-fetch": ^0.0.16
     "@testing-library/react-native": ^9.0.0
     "@types/jest": ^27.4.1
     "@types/react-native": ^0.67.2
@@ -1715,6 +1715,7 @@ __metadata:
     jest-standard-reporter: ^2.0.0
     prettier: ^2.5.1
     react-native: ^0.67.3
+    react-native-get-random-values: ^1.7.2
     react-test-renderer: ^17.0.2
     shx: ^0.3.4
     tsup: ^5.12.0
@@ -1725,19 +1726,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/tracker-react@^0.0.15, @objectiv/tracker-react@workspace:trackers/react":
+"@objectiv/tracker-react@^0.0.16, @objectiv/tracker-react@workspace:trackers/react":
   version: 0.0.0-use.local
   resolution: "@objectiv/tracker-react@workspace:trackers/react"
   dependencies:
-    "@objectiv/plugin-http-context": ^0.0.15
-    "@objectiv/plugin-path-context-from-url": ^0.0.15
-    "@objectiv/plugin-root-location-context-from-url": ^0.0.15
-    "@objectiv/queue-local-storage": ^0.0.15
-    "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ~0.0.15
-    "@objectiv/tracker-react-core": ~0.0.15
-    "@objectiv/transport-fetch": ^0.0.15
-    "@objectiv/transport-xhr": ^0.0.15
+    "@objectiv/plugin-http-context": ^0.0.16
+    "@objectiv/plugin-path-context-from-url": ^0.0.16
+    "@objectiv/plugin-root-location-context-from-url": ^0.0.16
+    "@objectiv/queue-local-storage": ^0.0.16
+    "@objectiv/testing-tools": ^0.0.16
+    "@objectiv/tracker-core": ~0.0.16
+    "@objectiv/tracker-react-core": ~0.0.16
+    "@objectiv/transport-fetch": ^0.0.16
+    "@objectiv/transport-xhr": ^0.0.16
     "@testing-library/react": ^12.1.4
     "@testing-library/react-hooks": ^7.0.2
     "@types/jest": ^27.4.1
@@ -1759,12 +1760,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/transport-debug@^0.0.15, @objectiv/transport-debug@workspace:transports/debug":
+"@objectiv/transport-debug@^0.0.16, @objectiv/transport-debug@workspace:transports/debug":
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-debug@workspace:transports/debug"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ~0.0.15
+    "@objectiv/testing-tools": ^0.0.16
+    "@objectiv/tracker-core": ~0.0.16
     "@types/jest": ^27.4.1
     jest: ^27.5.1
     jest-standard-reporter: ^2.0.0
@@ -1776,12 +1777,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/transport-fetch@^0.0.15, @objectiv/transport-fetch@workspace:transports/fetch":
+"@objectiv/transport-fetch@^0.0.16, @objectiv/transport-fetch@workspace:transports/fetch":
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-fetch@workspace:transports/fetch"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ~0.0.15
+    "@objectiv/testing-tools": ^0.0.16
+    "@objectiv/tracker-core": ~0.0.16
     "@types/jest": ^27.4.1
     jest: ^27.5.1
     jest-fetch-mock: ^3.0.3
@@ -1794,12 +1795,12 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@objectiv/transport-xhr@^0.0.15, @objectiv/transport-xhr@workspace:transports/xhr":
+"@objectiv/transport-xhr@^0.0.16, @objectiv/transport-xhr@workspace:transports/xhr":
   version: 0.0.0-use.local
   resolution: "@objectiv/transport-xhr@workspace:transports/xhr"
   dependencies:
-    "@objectiv/testing-tools": ^0.0.15
-    "@objectiv/tracker-core": ~0.0.15
+    "@objectiv/testing-tools": ^0.0.16
+    "@objectiv/tracker-core": ~0.0.16
     "@types/jest": ^27.4.1
     jest: ^27.5.1
     jest-standard-reporter: ^2.0.0
@@ -4675,6 +4676,13 @@ __metadata:
     snapdragon: ^0.8.1
     to-regex: ^3.0.1
   checksum: a41531b8934735b684cef5e8c5a01d0f298d7d384500ceca38793a9ce098125aab04ee73e2d75d5b2901bc5dddd2b64e1b5e3bf19139ea48bac52af4a92f1d00
+  languageName: node
+  linkType: hard
+
+"fast-base64-decode@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "fast-base64-decode@npm:1.0.0"
+  checksum: 4c59eb1775a7f132333f296c5082476fdcc8f58d023c42ed6d378d2e2da4c328c7a71562f271181a725dd17cdaa8f2805346cc330cdbad3b8e4b9751508bd0a3
   languageName: node
   linkType: hard
 
@@ -8668,6 +8676,17 @@ fsevents@~2.1.2:
     jscodeshift: ^0.11.0
     nullthrows: ^1.1.1
   checksum: c5ccdcb2a2f249756aca8e729cf96737368c8d33673b08d4c928a469bcb58ff37fbf3c7a070398f33b19846c4261948e2c5107c561934a41ac034620f7207bbd
+  languageName: node
+  linkType: hard
+
+"react-native-get-random-values@npm:^1.7.2":
+  version: 1.7.2
+  resolution: "react-native-get-random-values@npm:1.7.2"
+  dependencies:
+    fast-base64-decode: ^1.0.0
+  peerDependencies:
+    react-native: ">=0.56"
+  checksum: 45782003973b2ceca90b1f73462021e1aa2fc7e00c830ccafbb6f8a6ef7de34989cfc05d49b0f670b399ba1ead5de117a9c69d250fdc0390ca54e38b9f828385
   languageName: node
   linkType: hard
 
