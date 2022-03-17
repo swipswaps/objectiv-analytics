@@ -63,7 +63,7 @@ def get_sample(df: DataFrame,
         dialect=dialect,
         table_name=table_name,
         previous=original_node,
-        columns=original_node.columns
+        column_expressions=original_node.column_expressions,
     )
     return df.copy_override_base_node(base_node=new_base_node)
 
