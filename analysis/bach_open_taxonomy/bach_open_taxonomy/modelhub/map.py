@@ -3,7 +3,12 @@ Copyright 2021 Objectiv B.V.
 """
 import bach
 from bach.expression import Expression
-from bach.partitioning import WindowFrameBoundary
+from bach.partitioning import WindowFrameBoundary, WindowFrameMode
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from bach_open_taxonomy.modelhub.modelhub import ModelHub
 
 
 class Map:
@@ -14,7 +19,7 @@ class Map:
     as columns to that DataFrame.
     """
 
-    def __init__(self, mh):
+    def __init__(self, mh: 'ModelHub'):
         self._mh = mh
 
     def is_first_session(self, data: bach.DataFrame) -> bach.SeriesBoolean:
@@ -26,8 +31,13 @@ class Map:
         """
 
         self._mh._check_data_is_objectiv_data(data)
+        window = data.groupby('user_id').window(
+            mode=WindowFrameMode.ROWS,
+            start_boundary=WindowFrameBoundary.PRECEDING,
+            start_value=None,
+            end_boundary=WindowFrameBoundary.FOLLOWING,
+            end_value=None)
 
-        window = data.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
         first_session = window['session_id'].min()
         series = first_session == data.session_id
 
@@ -48,11 +58,22 @@ class Map:
 
         self._mh._check_data_is_objectiv_data(data)
 
-        window = data.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
+        window = data.groupby('user_id').window(
+            mode=WindowFrameMode.ROWS,
+            start_boundary=WindowFrameBoundary.PRECEDING,
+            start_value=None,
+            end_boundary=WindowFrameBoundary.FOLLOWING,
+            end_value=None)
+
         is_first_session = window['session_id'].min()
 
         window = data.groupby([self._mh.time_agg(data, time_aggregation),
-                               'user_id']).window(end_boundary=WindowFrameBoundary.FOLLOWING)
+                               'user_id']).window(
+            mode=WindowFrameMode.ROWS,
+            start_boundary=WindowFrameBoundary.PRECEDING,
+            start_value=None,
+            end_boundary=WindowFrameBoundary.FOLLOWING,
+            end_value=None)
         is_first_session_time_aggregation = window['session_id'].min()
 
         series = is_first_session_time_aggregation == is_first_session
@@ -102,7 +123,7 @@ class Map:
 
         self._mh._check_data_is_objectiv_data(data)
 
-        data = data.copy_override()
+        data = data.copy()
         data['__conversion'] = self._mh.map.is_conversion_event(data, name)
         exp = f"case when {{}} then row_number() over (partition by {{}}, {{}}) end"
         expression = Expression.construct(exp,
@@ -113,15 +134,9 @@ class Map:
             .copy_override_dtype(dtype='int64')\
             .copy_override(expression=expression)
         data = data.materialize()
-        exp = f"count({{}}) over (partition by {{}} order by {{}}, {{}})"
-        expression = Expression.construct(exp,
-                                          data.all_series['__conversion_counter'],
-                                          data.all_series[partition],
-                                          data.all_series[partition],
-                                          data.all_series['moment'])
-        data['conversion_count'] = data['__conversion_counter']\
-            .copy_override_dtype('int64')\
-            .copy_override(expression=expression)
+        data['conversion_count'] = data.sort_values([partition, 'moment'])\
+            .groupby(partition)\
+            .window()['__conversion_counter'].count()
 
         return data.conversion_count
 
@@ -144,7 +159,7 @@ class Map:
 
         self._mh._check_data_is_objectiv_data(data)
 
-        data = data.copy_override()
+        data = data.copy()
         data['__conversions'] = self._mh.map.conversion_count(data, name=name)
 
         window = data.groupby(partition).window()
@@ -152,7 +167,9 @@ class Map:
 
         data['__is_converted'] = converted != 0
         data = data.materialize()
-        pre_conversion_hits = data[data.all_series['__is_converted'] == True]
+        assert (isinstance(data['__is_converted'], bach.SeriesBoolean))  # help mypy to overcome generic
+        # Series type
+        pre_conversion_hits = data[data['__is_converted']]
         pre_conversion_hits = pre_conversion_hits[pre_conversion_hits['__conversions'] == 0]
 
         window = pre_conversion_hits.sort_values(['session_id',
