@@ -8,7 +8,7 @@ if TYPE_CHECKING:
     from bach.series.series import Series, SeriesBoolean
 
 IndexLabel = Union['SeriesBoolean', List[str], List[int]]
-LocKey = Union[IndexLabel, Tuple[Union[IndexLabel, slice], Union[str, int, slice]]]
+LocKey = Union[IndexLabel, Tuple[Union[IndexLabel, slice], Union[str, slice]]]
 
 
 class BaseLocIndex(object):
@@ -17,7 +17,7 @@ class BaseLocIndex(object):
     def __init__(self, obj: 'DataFrame'):
         self.obj = obj
 
-    def _get_data_columns_subset(self, labels: Union[slice, int, str, List[str]]) -> List[str]:
+    def _get_data_columns_subset(self, labels: Union[slice, str, List[str]]) -> List[str]:
         """
         returns a list of column labels
         """
@@ -26,7 +26,7 @@ class BaseLocIndex(object):
 
         return [
             label
-            for label in (labels if isinstance(labels, list) else [str(labels)])
+            for label in (labels if isinstance(labels, list) else [labels])
             if self._get_label_index(label) is not None
         ]
 
