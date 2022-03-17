@@ -78,6 +78,7 @@ In the following example we:
         name="TabOne"
         component={TabOneScreen}
         listeners={({ navigation }) => ({
+          // We can either assing the resulting callback directly...
           tabPress: makeLinkPressListener({ trackingContext, navigation }),
         })}
       />
@@ -85,7 +86,12 @@ In the following example we:
         name="TabTwo"
         component={TabTwoScreen}
         listeners={({ makeLinkPressListener }) => ({
-          tabPress: makeLinkPressListener({ trackingContext, navigation })
+          // Or call it inside an existing callback...
+          tabPress: (e) => {
+            makeLinkPressListener({ trackingContext, navigation })(e);
+            // ... alongside other logic
+            console.log(e);
+          }
         })}
       />
     </BottomTab.Navigator>
