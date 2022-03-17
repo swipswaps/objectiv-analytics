@@ -6,6 +6,12 @@ from typing import List, Union
 import bach
 from bach.series import Series
 from sql_models.constants import NotSet, not_set
+from typing import List, Union, TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from bach_open_taxonomy.modelhub.modelhub import ModelHub
+
 
 GroupByType = Union[List[Union[str, Series]], str, Series, NotSet]
 
@@ -15,7 +21,7 @@ class Aggregate:
     Models that return aggregated data in some form from the original DataFrame with Objectiv data.
     """
 
-    def __init__(self, mh):
+    def __init__(self, mh: 'ModelHub'):
         self._mh = mh
 
     def _check_groupby(self,
@@ -46,7 +52,7 @@ class Aggregate:
         return grouped_data
 
     def _generic_aggregation(self,
-                             data,
+                             data: bach.DataFrame,
                              groupby: Union[List[Union[str, Series]], str, Series],
                              column: str,
                              name: str):
@@ -119,8 +125,9 @@ class Aggregate:
         self._mh._check_data_is_objectiv_data(data)
 
         if groupby is not_set:
-            new_groupby = [self._mh.time_agg(data)]
-        elif groupby is None:
+            groupby = self._mh.time_agg(data)
+
+        if groupby is None:
             new_groupby = []
         elif not isinstance(groupby, list):
             new_groupby = [groupby]
