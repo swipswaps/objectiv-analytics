@@ -63,6 +63,8 @@ googleapis-common-protos[grpc]==1.55.0 \
     #   google-api-core
     #   grpc-google-iam-v1
     #   grpcio-status
+googleapis-common-protos==1.55.0 \
+    --hash=sha256:183bb0356bd614c4330ad5158bc1c1bcf9bcf7f5e7f911317559fe209496eeee
 grpc-google-iam-v1==0.12.3 \
     --hash=sha256:0bfb5b56f648f457021a91c0df0db4934b6e0c300bd0f2de2333383fe958aa72
     # via google-cloud-pubsub
