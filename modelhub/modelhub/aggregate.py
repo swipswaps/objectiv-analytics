@@ -10,7 +10,7 @@ from typing import List, Union, TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from bach_open_taxonomy.modelhub.modelhub import ModelHub
+    from modelhub import ModelHub
 
 
 GroupByType = Union[List[Union[str, Series]], str, Series, NotSet]

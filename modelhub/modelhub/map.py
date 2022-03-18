@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 
 
 if TYPE_CHECKING:
-    from bach_open_taxonomy.modelhub.modelhub import ModelHub
+    from modelhub import ModelHub
 
 
 class Map:
