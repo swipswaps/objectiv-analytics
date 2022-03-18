@@ -106,10 +106,40 @@ class Map:
             series = ((conversion_stack.notnull()) & (data.event_type == conversion_event))
         return series.copy_override(name='is_conversion_event')
 
-    def conversion_count(self,
-                         data: bach.DataFrame,
-                         name: str,
-                         partition: str = 'session_id') -> bach.SeriesInt64:
+    def conversions_counter(self,
+                            data: bach.DataFrame,
+                            name: str,
+                            partition: str = 'session_id'):
+        """
+        Counts the total number of conversions given a partition (ie session_id
+        or user_id).
+        :param name: the name of the conversion to label as set in
+            :py:attr:`ObjectivFrame.conversion_events`.
+        :param partition: the partition over which the number of conversions are counted. Can be any column
+            of the ObjectivFrame
+        :returns: SeriesBoolean with same index as the ObjectivFrame this method is applied to.
+        """
+
+        self._mh._check_data_is_objectiv_data(data)
+
+        data['__conversions'] = self._mh.map.conversions_in_time(data, name=name)
+
+        window = data.groupby(partition).window(end_boundary=WindowFrameBoundary.FOLLOWING)
+        converted = window['__conversions'].max()
+        data = data.drop(columns=['__conversions'])
+
+        new_series = converted.copy_override(name='converted',
+                                             index=data.index).to_frame().materialize().converted
+
+        return new_series
+
+    def conversion_count(self, *args, **kwargs):
+        raise NotImplementedError('function is renamed please use `conversions_in_time`')
+
+    def conversions_in_time(self,
+                            data: bach.DataFrame,
+                            name: str,
+                            partition: str = 'session_id') -> bach.SeriesInt64:
         """
         Counts the number of time a user is converted at a moment in time given a partition (ie 'session_id'
         or 'user_id').
@@ -135,11 +165,11 @@ class Map:
             .copy_override_dtype(dtype='int64')\
             .copy_override(expression=expression)
         data = data.materialize()
-        data['conversion_count'] = data.sort_values([partition, 'moment'])\
+        data['conversions_in_time'] = data.sort_values([partition, 'moment'])\
             .groupby(partition)\
             .window()['__conversion_counter'].count()
 
-        return data.conversion_count
+        return data.conversions_in_time
 
     def pre_conversion_hit_number(self,
                                   data: bach.DataFrame,
@@ -161,7 +191,7 @@ class Map:
         self._mh._check_data_is_objectiv_data(data)
 
         data = data.copy()
-        data['__conversions'] = self._mh.map.conversion_count(data, name=name)
+        data['__conversions'] = self._mh.map.conversions_in_time(data, name=name)
 
         window = data.groupby(partition).window()
         converted = window['__conversions'].max()
