@@ -70,7 +70,7 @@ def objectiv_event_to_snowplow_payload(event: EventData, config: SnowplowConfig)
             "e": "se",  # mandatory: event type: structured event
             "p": "web",  # mandatory: platform
             "tv": "objectiv-tracker-0.0.5",  # mandatory: tracker version
-            "eid": event['event_id'],  # event_id
+            "eid": event['id'],  # event_id
             "url": path_context.get('id', ''),
             "cx": snowplow_custom_context
         }]
