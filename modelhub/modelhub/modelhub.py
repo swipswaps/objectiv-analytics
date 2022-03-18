@@ -53,8 +53,6 @@ class ModelHub():
         # init metabase
         self._metabase = None
 
-    _metabase: Union[None, MetaBase] = None
-
     @property
     def time_aggregation(self):
         """
