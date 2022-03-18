@@ -21,5 +21,4 @@ echo "starting gunicorn"
 # Run gunicorn. $USER and $PORT are set in the Dockerfile
 exec gunicorn --config /etc/gunicorn.conf.py \
 --access-logformat '%(h)s %(l)s %(u)s %(t)s "%(r)s" %(s)s %(b)s "%(f)s" "%(a)s" %(l)s' \
---user ${USER-"www-data"} \
 objectiv_backend.wsgi
