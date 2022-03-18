@@ -154,7 +154,10 @@ class ModelHub():
             'session_hit_number': 'int64'
         }
         model_columns = tuple(index_dtype.keys()) + tuple(dtypes.keys())
-        bach_model = bach.sql_model.BachSqlModel.from_sql_model(sql_model=model, columns=model_columns)
+        bach_model = bach.sql_model.BachSqlModel.from_sql_model(
+            sql_model=model,
+            column_expressions={c: bach.expression.Expression.column_reference(c) for c in model_columns},
+        )
 
         from bach.savepoints import Savepoints
         data = bach.DataFrame.get_instance(engine=engine,
