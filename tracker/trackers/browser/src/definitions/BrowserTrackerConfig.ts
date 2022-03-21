@@ -21,6 +21,11 @@ export type BrowserTrackerConfig = TrackerConfig & {
   trackApplicationLoadedEvent?: boolean;
 
   /**
+   * Optional. Whether to automatically create HttpContext based on Document and Navigation APIs. Enabled by default.
+   */
+  trackHttpContext?: boolean;
+
+  /**
    * Optional. Whether to automatically create PathContext based on URLs. Enabled by default.
    */
   trackPathContextFromURL?: boolean;

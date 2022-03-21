@@ -2,18 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { TrackerConsole, TrackerTransportConfig, TrackerTransportInterface } from '@objectiv/tracker-core';
+import { TrackerConsole, TrackerTransportInterface } from '@objectiv/tracker-core';
 
 export class SpyTransport implements TrackerTransportInterface {
-  readonly console?: TrackerConsole;
   readonly transportName = 'SpyTransport';
 
-  constructor(config?: TrackerTransportConfig) {
-    this.console = config?.console;
-  }
-
   async handle(): Promise<any> {
-    this.console?.log('SpyTransport.handle');
+    TrackerConsole.log('SpyTransport.handle');
   }
 
   isUsable(): boolean {

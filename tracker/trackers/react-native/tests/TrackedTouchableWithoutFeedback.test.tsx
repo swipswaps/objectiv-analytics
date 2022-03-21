@@ -2,7 +2,8 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { mockConsole, SpyTransport } from '@objectiv/testing-tools';
+import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
+import { TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, render } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
@@ -15,10 +16,12 @@ import {
   TrackingContextProvider,
 } from '../src';
 
+TrackerConsole.setImplementation(MockConsoleImplementation);
+
 describe('TrackedTouchableWithoutFeedback', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
-  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport });
   jest.spyOn(console, 'error').mockImplementation(jest.fn);
 
   const TestTrackedTouchableWithoutFeedback = (props: TrackedTouchableWithoutFeedbackProps & { testID?: string }) => (

@@ -73,13 +73,19 @@ def test_dataframe_agg_skipna_parameter():
     # test full parameter traversal
     bt = get_bt_with_test_data(full_data_set=True)[['inhabitants']]
 
-    numeric_agg = ['prod', 'product', 'sum', 'mean']
-    stats_agg = ['kurt', 'kurtosis', 'mad', 'skew', 'sem', 'std', 'var']
+    numeric_agg = ['sum', 'mean']
+    stats_agg = ['sem', 'std', 'var']
     for agg in numeric_agg + stats_agg:
         with pytest.raises(NotImplementedError):
             # currently not supported anywhere, so needs to raise
             bt.agg(agg, skipna=False)
 
+    numeric_agg = ['prod', 'product']
+    stats_agg = ['kurt', 'kurtosis', 'skew', 'mad']
+    for agg in numeric_agg + stats_agg:
+        with pytest.raises(AttributeError):
+            # methods not present at all, so needs to raise
+            bt.agg(agg, skipna=False)
 
 def test_dataframe_agg_dd_parameter():
     # test full parameter traversal

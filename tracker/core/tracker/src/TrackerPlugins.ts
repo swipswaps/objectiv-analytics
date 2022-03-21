@@ -4,7 +4,8 @@
 
 import { ContextsConfig } from './Context';
 import { isValidIndex } from './helpers';
-import { Tracker } from './Tracker';
+import { Tracker, TrackerInterface } from './Tracker';
+import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent } from './TrackerEvent';
 import { TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
@@ -38,26 +39,24 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerV
   plugins: TrackerPluginInterface[] = [];
 
   /**
-   * Plugins can be lazy. Map through them to instantiate them.
+   * Processes the given plugins and pushes them in the internal list, while validating their uniqueness.
    */
   constructor(trackerPluginsConfig: TrackerPluginsConfiguration) {
     this.tracker = trackerPluginsConfig.tracker;
 
     trackerPluginsConfig.plugins.map((plugin) => {
       if (this.has(plugin.pluginName)) {
-        throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: duplicated`);
+        this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== plugin.pluginName);
       }
 
       this.plugins.push(plugin);
     });
 
-    if (this.tracker.console) {
-      this.tracker.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
-      this.tracker.console.group(`Plugins:`);
-      this.tracker.console.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
-      this.tracker.console.groupEnd();
-      this.tracker.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
+    TrackerConsole.group(`Plugins:`);
+    TrackerConsole.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
+    TrackerConsole.groupEnd();
+    TrackerConsole.groupEnd();
   }
 
   /**
@@ -95,12 +94,10 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerV
     const spliceIndex = index ?? this.plugins.length;
     this.plugins.splice(spliceIndex, 0, plugin);
 
-    if (this.tracker.console) {
-      this.tracker.console.log(
-        `%c｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}`,
-        'font-weight: bold'
-      );
-    }
+    TrackerConsole.log(
+      `%c｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}`,
+      'font-weight: bold'
+    );
 
     const pluginInstance = this.get(plugin.pluginName);
     pluginInstance.initialize && pluginInstance.initialize(this.tracker);
@@ -114,9 +111,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerV
 
     this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== pluginInstance.pluginName);
 
-    if (this.tracker.console) {
-      this.tracker.console.log(`%c｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed`, 'font-weight: bold');
-    }
+    TrackerConsole.log(`%c｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed`, 'font-weight: bold');
   }
 
   /**
@@ -137,8 +132,8 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerV
   /**
    * Calls each Plugin's `initialize` callback function, if defined.
    */
-  initialize(contexts: Required<ContextsConfig>): void {
-    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(contexts));
+  initialize(tracker: TrackerInterface): void {
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(tracker));
   }
 
   /**

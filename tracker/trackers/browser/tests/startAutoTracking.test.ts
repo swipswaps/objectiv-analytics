@@ -2,8 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { matchUUID } from '@objectiv/testing-tools';
-import { generateUUID, makeContentContext } from '@objectiv/tracker-core';
+import { matchUUID, MockConsoleImplementation } from '@objectiv/testing-tools';
+import { generateUUID, makeContentContext, TrackerConsole } from '@objectiv/tracker-core';
 import {
   AutoTrackingState,
   BrowserTracker,
@@ -16,6 +16,8 @@ import {
   TaggingAttribute,
 } from '../src';
 import { makeTaggedElement } from './mocks/makeTaggedElement';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('startAutoTracking', () => {
   beforeEach(() => {
@@ -39,10 +41,9 @@ describe('startAutoTracking', () => {
     stopAutoTracking();
   });
 
-  it('should console.error', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('should TrackerConsole.error', () => {
     startAutoTracking();
-    expect(console.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     // @ts-ignore
     AutoTrackingState.observerInstance = {
       disconnect: () => {
@@ -50,7 +51,7 @@ describe('startAutoTracking', () => {
       },
     };
     stopAutoTracking();
-    expect(console.error).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(1);
   });
 
   it('should not track application loaded event', () => {
@@ -107,8 +108,7 @@ describe('makeMutationCallback - new nodes', () => {
     );
   });
 
-  it('should console.error if there are no Trackers', () => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+  it('should TrackerConsole.error if there are no Trackers', () => {
     getTrackerRepository().trackersMap = new Map();
     const mutationCallback = makeMutationCallback();
     const mutationObserver = new MutationObserver(mutationCallback);
@@ -125,11 +125,14 @@ describe('makeMutationCallback - new nodes', () => {
       target: trackedDiv,
     };
     jest.clearAllMocks();
-    expect(console.error).not.toHaveBeenCalled();
+    expect(MockConsoleImplementation.error).not.toHaveBeenCalled();
     mutationCallback([mockedMutationRecord], mutationObserver);
-    expect(console.error).toHaveBeenCalledTimes(2);
-    expect(console.error).toHaveBeenNthCalledWith(1, `｢objectiv:TrackerRepository｣ There are no Trackers.`);
-    expect(console.error).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.error).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
+      1,
+      `｢objectiv:TrackerRepository｣ There are no Trackers.`
+    );
+    expect(MockConsoleImplementation.error).toHaveBeenNthCalledWith(
       2,
       new Error(`No Tracker found. Please create one via \`makeTracker\`.`),
       undefined

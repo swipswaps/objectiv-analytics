@@ -2,8 +2,8 @@
  * Copyright 2022 Objectiv B.V.
  */
 
-import { mockConsole, SpyTransport } from '@objectiv/testing-tools';
-import { getLocationPath } from '@objectiv/tracker-core';
+import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
+import { getLocationPath, TrackerConsole } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react-native';
 import React from 'react';
 import { Text } from 'react-native';
@@ -17,10 +17,12 @@ import {
   useLocationStack,
 } from '../src';
 
+TrackerConsole.setImplementation(MockConsoleImplementation);
+
 describe('TrackedSectionList', () => {
   const spyTransport = new SpyTransport();
   jest.spyOn(spyTransport, 'handle');
-  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport, console: mockConsole });
+  const tracker = new ReactNativeTracker({ applicationId: 'app-id', transport: spyTransport });
   jest.spyOn(console, 'debug').mockImplementation(jest.fn);
 
   type ListItemType = string;

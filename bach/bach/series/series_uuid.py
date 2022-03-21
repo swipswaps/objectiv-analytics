@@ -81,7 +81,9 @@ class SeriesUuid(Series):
         return self_modified.copy_override_type(SeriesBoolean).copy_override(expression=expression)
 
     def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        """ INTERNAL: Only here to not trigger errors from describe """
         raise NotImplementedError()
 
     def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        """ INTERNAL: Only here to not trigger errors from describe """
         raise NotImplementedError()

@@ -7,7 +7,7 @@ from datetime import date, datetime, time
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
-    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence,
+    cast, NamedTuple, TYPE_CHECKING, Callable, Hashable, Sequence, overload,
 )
 from uuid import UUID
 
@@ -463,7 +463,11 @@ class DataFrame:
         """
         index_dtypes = {k: all_dtypes[k] for k in index}
         series_dtypes = {k: all_dtypes[k] for k in all_dtypes.keys() if k not in index}
-        bach_model = BachSqlModel.from_sql_model(sql_model=model, columns=tuple(all_dtypes.keys()))
+
+        bach_model = BachSqlModel.from_sql_model(
+            sql_model=model,
+            column_expressions={c: Expression.column_reference(c) for c in all_dtypes.keys()},
+        )
 
         from bach.savepoints import Savepoints
         df = cls.get_instance(
@@ -861,8 +865,15 @@ class DataFrame:
         from bach.sample import get_unsampled
         return get_unsampled(df=self)
 
-    def __getitem__(self,
-                    key: Union[str, List[str], Set[str], slice, 'SeriesBoolean']) -> DataFrameOrSeries:
+    @overload
+    def __getitem__(self, key: str) -> 'Series':
+        ...
+
+    @overload
+    def __getitem__(self, key: Union[List[str], Set[str], slice, 'SeriesBoolean']) -> 'DataFrame':
+        ...
+
+    def __getitem__(self, key):
         """
         For usage see general introduction DataFrame class.
         """
@@ -2804,6 +2815,7 @@ class DataFrame:
 
         :return: a reshaped series that includes a new index (named "__stacked_index")
             containing the caller's column labels as values.
+
         .. note::
             ``level`` parameter is not supported since multilevel columns are not allowed.
         """
