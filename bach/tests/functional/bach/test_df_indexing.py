@@ -154,6 +154,7 @@ def test_set_item_by_label_diff_node(indexing_dfs: Tuple[pd.DataFrame, DataFrame
     extra_df = get_from_df('extra_df', extra_pdf)
     extra_df = extra_df.set_index('A')
 
+    # cannot check against Pandas, since pandas checks index lengths when setting items.
     df.loc['b', ['B', 'D']] = extra_df['C']
     assert_equals_data(
         df.sort_index(),
@@ -169,10 +170,15 @@ def test_set_item_by_label_diff_node(indexing_dfs: Tuple[pd.DataFrame, DataFrame
 
 
 def test_set_item_by_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
-    _, df = indexing_dfs
+    pdf, df = indexing_dfs
     df = df.sort_index()
 
     df.loc['b':'d'] = 1
+
+    pdf.loc['b': 'd'] = 1
+    pdf['D'] = pdf['D'].astype(str)
+    pd.testing.assert_frame_equal(pdf, df.to_pandas())
+
     assert_equals_data(
         df.sort_index(),
         expected_columns=['A', 'B', 'C', 'D'],
@@ -194,6 +200,8 @@ def test_set_item_by_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> No
     )
     extra_df = get_from_df('extra_df', extra_pdf)
     extra_df = extra_df.set_index('A')
+
+    # cannot check against Pandas, since pandas checks index lengths when setting items.
     df.loc['b':'d', ['B', 'D']] = extra_df['B']
     assert_equals_data(
         df.sort_index(),
