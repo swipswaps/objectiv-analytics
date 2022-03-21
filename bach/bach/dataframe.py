@@ -440,10 +440,11 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df['extra_col'] = 1
-            >>> df.loc['a', 'extra_col']
-                    extra_col
-            index
-            a           1
+            >>> df.loc['a', 'extra_col'].to_pandas()
+            __stacked_index
+            extra_col    1
+            Name: __stacked, dtype: int64
+
 
         **Setting Values**
 
@@ -454,13 +455,12 @@ class DataFrame:
 
             >>> df.loc['a'] = 2
             >>> df.to_pandas()
-
-                    values   extra_col
+                   values  extra_col
             index
-            a           1           2
-            b           2           1
-            c           3           1
-            d           4           1
+            a           2          2
+            b           2          1
+            c           3          1
+            d           4          1
 
         **Set values for multiple rows and specific columns**: Modifies only the passed columns.
 
@@ -469,13 +469,12 @@ class DataFrame:
 
             >>> df.loc[['b', 'd'], 'values'] = 10
             >>> df.to_pandas()
-
-                    values   extra_col
+                   values  extra_col
             index
-            a           1           2
-            b          10           1
-            c           3           1
-            d          10           1
+            a           2          2
+            b          10          1
+            c           3          1
+            d          10          1
 
         **Set values for row slice**: Modifies all rows included in the slice.
 
@@ -484,7 +483,6 @@ class DataFrame:
 
             >>> df.loc['a':'c', 'values'] = 3
             >>> df.to_pandas()
-
                     values   extra_col
             index
             a           3           2
