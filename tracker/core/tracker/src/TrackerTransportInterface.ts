@@ -3,7 +3,6 @@
  */
 
 import { NonEmptyArray } from './helpers';
-import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent } from './TrackerEvent';
 
 /**
@@ -29,16 +28,6 @@ export const isTransportSendError = (error: Error) => {
 };
 
 /**
- * The configuration of TrackerTransportTransportSwitch
- */
-export type TrackerTransportConfig = {
-  /**
-   * Optional. A TrackerConsole instance for logging.
-   */
-  console?: TrackerConsole;
-};
-
-/**
  * The TrackerTransport interface provides a single function to handle one or more TrackerEvents.
  *
  * TrackerTransport implementations may vary depending on platform. Eg: web: fetch, node: https module, etc
@@ -47,11 +36,6 @@ export type TrackerTransportConfig = {
  * ones may leverage Queues, Workers and Storage for asynchronous sending, or batching.
  */
 export interface TrackerTransportInterface {
-  /**
-   * Optional. A TrackerConsole instance for logging.
-   */
-  readonly console?: TrackerConsole;
-
   /**
    * A name describing the Transport implementation for debugging purposes
    */

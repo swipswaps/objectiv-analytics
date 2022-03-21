@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 import warnings
 from abc import ABC, abstractmethod
 from copy import copy
+from datetime import date, datetime, time
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
     TypeVar, Sequence
 from uuid import UUID
@@ -16,7 +17,9 @@ from bach import DataFrame, SortColumn, DataFrameOrSeries, get_series_type_from_
 
 from bach.dataframe import ColumnFunction, dict_name_series_equals
 from bach.expression import Expression, NonAtomicExpression, ConstValueExpression, \
-    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression
+    IndependentSubqueryExpression, SingleValueExpression, AggregateFunctionExpression, ColumnReferenceToken, \
+    TableColumnReferenceToken
+
 from bach.sql_model import BachSqlModel
 
 from bach.types import value_to_dtype
@@ -481,7 +484,7 @@ class Series(ABC):
 
     def get_column_expression(self, table_alias: str = None) -> Expression:
         """ INTERNAL: Get the column expression for this Series """
-        expression = self.expression.resolve_column_references(table_alias)
+        expression = self.expression.resolve_column_references(self.engine.dialect, table_alias)
         return Expression.construct_expr_as_name(expression, self.name)
 
     def _get_supported(
@@ -496,6 +499,7 @@ class Series(ABC):
 
         :returns: the (modified) series and (modified) other.
         """
+        from bach.merge import MergeSqlModel
         if not (other.expression.is_constant or other.expression.is_independent_subquery):
             # we should maybe create a subquery
             if self.base_node != other.base_node or self.group_by != other.group_by:
@@ -511,12 +515,18 @@ class Series(ABC):
     def __set_item_with_merge(self, other: 'Series') -> Tuple['Series', 'Series']:
         """
         Aligns caller series and other series base nodes by using a merge based on their indexes.
+        If caller's base node makes reference to the other's base node, caller's node should be
+        updated in order to include other's column reference.
 
         :returns: the (modified) series and (modified) other.
 
         .. note::
             If both caller and other series have the same name, (modified) other will be renamed as:
-            `f"{other.name}__other"`
+            `f"{other.name}__other"`.
+
+            If other series has the same name as any one of caller's index series,
+            (modified) other will be renamed as:
+            `f"{other.name}__data_column"`.
         """
         if not self.index or not other.index:
             raise ValueError('both series must have at least one index level')
@@ -527,31 +537,69 @@ class Series(ABC):
         ):
             raise ValueError('dtypes of indexes to be merged should be the same')
 
-        from bach.partitioning import GroupBy
-        # align index names, this way we have all matched indexes in a single series
-        new_index = {
-            caller_idx.name: other_idx.copy_override(name=caller_idx.name)
-            for caller_idx, other_idx in zip(self.index.values(), other.index.values())
-        }
-        new_name = other.name if other.name not in new_index else f'{other.name}__data_column'
-        other_cp = other.copy_override(
-            index=new_index,
-            group_by=GroupBy(group_by_columns=list(new_index.values())) if other.group_by else None,
-            name=new_name,
-        )
-        df = self.to_frame()
-        df = df.merge(
-            other_cp, on=list(new_index.keys()), how='outer', suffixes=('', '__other'),
-        )
+        from bach.merge import MergeSqlModel, revert_merge
 
-        # consider only the caller's indexes, drop the non-shared ones
-        df = df.set_index(list(self.index.keys()), drop=True)
-        caller_series = df.all_series[self.name]
-        other_series = (
-            df.all_series[new_name]
-            if self.name != new_name else df.all_series[f'{self.name}__other']
+        update_column_references = (
+            isinstance(self.base_node, MergeSqlModel)
+            and other.base_node in self.base_node.references.values()
         )
+        if not update_column_references:
+            left = self.to_frame()
+            right = other.to_frame()
+        else:
+            # other's base node is already referenced on the caller's base node
+            # revert the merge from previous __set_item_with_merge and include other
+            # this way we can reference all needed columns for the operation
+            left, right = revert_merge(self.to_frame())
+            if left.base_node == other.base_node:
+                left[other.name] = other.copy_override(index=left.index)
+            else:
+                right[other.name] = other.copy_override(index=right.index)
 
+        # rename conflicted right data columns with left index names, and align left <> right indexes
+        right = right.materialize() if right.group_by else right
+        right = right.rename(
+            columns={col: f'{col}__data_column' for col in right.data_columns if col in self.index}
+        )
+        # TODO: replace this with right.rename(index={...})
+        aligned_right_indexes = [
+            right_idx.copy_override(name=left_idx.name)
+            for left_idx, right_idx in zip(left.index.values(), right.index.values())
+        ]
+        right = right.set_index(aligned_right_indexes, drop=True)
+
+        df = left.merge(right, on=list(right.index.keys()), how='outer', suffixes=('', '__other'))
+
+        mod_other_name = other.name
+        if (
+            other.base_node == right.base_node
+            and set(df.all_series) & {f'{other.name}__other', f'{other.name}__data_column'}
+        ):
+            post_fix = '__other' if other.name not in self.index else '__data_column'
+            mod_other_name = f'{other.name}{post_fix}'
+
+        if not update_column_references:
+            caller_series = df.all_series[self.name]
+            other_series = df.all_series[mod_other_name]
+            return caller_series, other_series
+
+        if (
+            other.base_node == left.base_node
+            and not set(self.base_node.columns) >= {other.name, f'{other.name}__other'}
+            and f'{other.name}__other' in df.all_series
+        ):
+            # column was referenced before from right node
+            # check if other.name has conflict with other referenced columns
+            # example: left.a + right.b - left.b
+            # first expression = a + b
+            # incorrect second expression = a + b - b
+            # correct second expression = a + b__other - b
+            caller_expr = self.expression.replace_column_references(other.name, f'{other.name}__other')
+            caller_series = self.copy_override(base_node=df.base_node, expression=caller_expr)
+        else:
+            # just update base node
+            caller_series = self.copy_override(base_node=df.base_node)
+        other_series = df.all_series[mod_other_name]
         return caller_series, other_series
 
     def to_pandas(self, limit: Union[int, slice] = None) -> pandas.Series:
@@ -897,8 +945,7 @@ class Series(ABC):
         other = const_to_series(base=self, value=other)
         self_modified, other = self._get_supported(operation, other_dtypes, other)
         expression = NonAtomicExpression.construct(fmt_str, self_modified, other)
-        # if dtype is None or isinstance(dtype, str):
-        #
+
         new_dtype: Optional[str]
         if dtype is None or isinstance(dtype, str):
             new_dtype = dtype
@@ -1216,14 +1263,35 @@ class Series(ABC):
                 )
 
     def count(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the amount of rows in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         # count is not constant because it depends on the number of rows in the selection.
         # See the comment in Expression.AggregationFunctionExpression
         return self._derived_agg_func(partition, 'count', 'int64', skipna=skipna)
 
     def max(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the maximum value in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(partition, 'max', skipna=skipna)
 
     def median(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the median in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(
             partition=partition,
             expression=AggregateFunctionExpression.construct(
@@ -1232,9 +1300,23 @@ class Series(ABC):
         )
 
     def min(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the minimum value in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(partition, 'min', skipna=skipna)
 
     def mode(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the mode in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         return self._derived_agg_func(
             partition=partition,
             expression=AggregateFunctionExpression.construct(f'mode() within group (order by {{}})', self),
@@ -1242,6 +1324,13 @@ class Series(ABC):
         )
 
     def nunique(self, partition: WrappedPartition = None, skipna: bool = True):
+        """
+        Returns the amount of unique values in each partition or for all values if none is given.
+
+        :param partition: The partition or window to apply
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         from bach.partitioning import Window
         partition = self._check_unwrap_groupby(partition, notin=Window)
         return self._derived_agg_func(
@@ -1250,7 +1339,13 @@ class Series(ABC):
             skipna=skipna)
 
     def unique(self, partition: WrappedPartition = None, skipna: bool = True):
-        """ Get the unique values in this series, currently by grouping the series involved. """
+        """
+        Return all unique values in this Series.
+
+        :param partition: The partition or window to apply.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :returns: a new Series with the aggregation applied
+        """
         from bach.partitioning import GroupBy
         if partition:
             raise ValueError('Can not use group_by in combination with unique(). Materialize() first.')
@@ -1510,7 +1605,7 @@ class Series(ABC):
 
 
 def const_to_series(base: Union[Series, DataFrame],
-                    value: Optional[Union[Series, int, float, str, UUID]],
+                    value: Optional[Union[Series, int, float, str, bool, date, datetime, time, UUID]],
                     name: str = None) -> Series:
     """
     INTERNAL: Take a value and return a Series representing a column with that value.

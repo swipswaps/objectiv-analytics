@@ -2,21 +2,15 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
-import { ContextsConfig, Tracker, TrackerEvent } from '@objectiv/tracker-core';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { ContextsConfig, makeHttpContext, Tracker, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import { HttpContextPlugin } from '../src';
 
-describe('HttpContextPlugin', () => {
-  it('should instantiate without a console', () => {
-    const testHttpContextPlugin = new HttpContextPlugin();
-    expect(testHttpContextPlugin).toBeInstanceOf(HttpContextPlugin);
-    expect(testHttpContextPlugin.console).toBeUndefined();
-  });
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
-  it('should instantiate with the given console', () => {
-    const testHttpContextPlugin = new HttpContextPlugin({ console: mockConsole });
-    expect(testHttpContextPlugin).toBeInstanceOf(HttpContextPlugin);
-    expect(testHttpContextPlugin.console).toBe(mockConsole);
+describe('HttpContextPlugin', () => {
+  beforeEach(() => {
+    jest.restoreAllMocks();
   });
 
   it('should add the HttpContext to the Event when `initialize` is executed by the Tracker', async () => {
@@ -28,6 +22,7 @@ describe('HttpContextPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new HttpContextPlugin()],
+      trackApplicationContext: false,
     });
     const eventContexts: ContextsConfig = {
       location_stack: [
@@ -70,6 +65,7 @@ describe('HttpContextPlugin', () => {
     const testTracker = new Tracker({
       applicationId: 'app-id',
       plugins: [new HttpContextPlugin()],
+      trackApplicationContext: false,
     });
     const testEvent = new TrackerEvent({ _type: 'test-event' });
     expect(testEvent.location_stack).toHaveLength(0);
@@ -91,5 +87,76 @@ describe('HttpContextPlugin', () => {
 
     Object.defineProperty(document, 'referrer', { value: originalReferrer });
     Object.defineProperty(navigator, 'userAgent', { value: originalUserAgent });
+  });
+
+  describe('Validation', () => {
+    it('should succeed', () => {
+      const testHttpContextPlugin = new HttpContextPlugin();
+      const validEvent = new TrackerEvent({
+        _type: 'test',
+        global_contexts: [
+          makeHttpContext({
+            id: '/test',
+            user_agent: 'test',
+            referrer: 'test',
+            remote_address: 'test',
+          }),
+        ],
+      });
+
+      jest.resetAllMocks();
+
+      testHttpContextPlugin.validate(validEvent);
+
+      expect(MockConsoleImplementation.groupCollapsed).not.toHaveBeenCalled();
+    });
+
+    it('should fail when given TrackerEvent does not have HttpContext', () => {
+      const testHttpContextPlugin = new HttpContextPlugin();
+      const eventWithoutHttpContext = new TrackerEvent({ _type: 'test' });
+
+      jest.resetAllMocks();
+
+      testHttpContextPlugin.validate(eventWithoutHttpContext);
+
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:HttpContextPlugin:GlobalContextValidationRule｣ Error: HttpContext is missing from Global Contexts.`,
+        'color:red'
+      );
+    });
+
+    it('should fail when given TrackerEvent has multiple HttpContexts', () => {
+      const testHttpContextPlugin = new HttpContextPlugin();
+      const eventWithDuplicatedHttpContext = new TrackerEvent({
+        _type: 'test',
+        global_contexts: [
+          makeHttpContext({
+            id: '/test',
+            user_agent: 'test',
+            referrer: 'test',
+            remote_address: 'test',
+          }),
+          makeHttpContext({
+            id: '/test',
+            user_agent: 'test',
+            referrer: 'test',
+            remote_address: 'test',
+          }),
+        ],
+      });
+
+      jest.resetAllMocks();
+
+      testHttpContextPlugin.validate(eventWithDuplicatedHttpContext);
+
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
+      expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
+        1,
+        `%c｢objectiv:HttpContextPlugin:GlobalContextValidationRule｣ Error: Only one HttpContext should be present in Global Contexts.`,
+        'color:red'
+      );
+    });
   });
 });

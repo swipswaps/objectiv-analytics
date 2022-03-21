@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makeIdFromString, waitForPromise } from '../src';
+import { isBrowser, isDevMode, makeIdFromString, waitForPromise } from '../src';
 
 describe('helpers', () => {
   describe('waitForPromise', () => {
@@ -73,5 +73,38 @@ describe('helpers', () => {
         expect(makeIdFromString(input)).toBe(output);
       })
     );
+  });
+
+  describe('isDevMode', () => {
+    const OLD_ENV = process.env;
+
+    beforeEach(() => {
+      process.env = { ...OLD_ENV };
+    });
+
+    afterAll(() => {
+      process.env = OLD_ENV;
+    });
+
+    it(`should return false (production)`, () => {
+      process.env.NODE_ENV = 'production';
+      expect(isDevMode()).toBe(false);
+    });
+
+    it(`should return false (NODE_ENV not set)`, () => {
+      Object.defineProperty(process, 'env', { value: {}, configurable: true });
+      expect(isDevMode()).toBe(false);
+    });
+
+    it(`should return true`, () => {
+      process.env.NODE_ENV = 'development';
+      expect(isDevMode()).toBe(true);
+    });
+  });
+
+  describe('isBrowser', () => {
+    it(`should return false`, () => {
+      expect(isBrowser()).toBe(false);
+    });
   });
 });

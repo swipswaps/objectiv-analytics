@@ -2,7 +2,6 @@ import {
   ContextsConfig,
   makeRootLocationContext,
   TrackerConsole,
-  TrackerPluginConfig,
   TrackerPluginInterface,
 } from '@objectiv/tracker-core';
 import { makeRootLocationId } from './makeRootLocationId';
@@ -10,40 +9,37 @@ import { makeRootLocationId } from './makeRootLocationId';
 /**
  * The configuration object of RootLocationContextFromURLPlugin.
  */
-export type RootLocationContextFromURLPluginConfig = TrackerPluginConfig & {
+export type RootLocationContextFromURLPluginConfig = {
   idFactoryFunction?: typeof makeRootLocationId;
 };
 
 /**
  * The RootLocationContextFromURL Plugin factors a RootLocationContext out of the first slug of the current URL.
+ * RootLocationContext is validated by OpenTaxonomyValidationPlugin in Core Tracker.
  */
 export class RootLocationContextFromURLPlugin implements TrackerPluginInterface {
-  readonly console?: TrackerConsole;
   readonly pluginName = `RootLocationContextFromURLPlugin`;
   readonly idFactoryFunction: typeof makeRootLocationId;
 
   /**
-   * The constructor is merely responsible for processing the given TrackerPluginConfiguration `console` parameter.
+   * The constructor is merely responsible for processing the given TrackerPluginConfiguration.
    */
   constructor(config?: RootLocationContextFromURLPluginConfig) {
-    this.console = config?.console;
     this.idFactoryFunction = config?.idFactoryFunction ?? makeRootLocationId;
 
-    if (this.console) {
-      this.console.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
-    }
+    TrackerConsole.log(`%c｢objectiv:${this.pluginName}｣ Initialized`, 'font-weight: bold');
   }
 
   /**
    * Generate a fresh RootLocationContext before each TrackerEvent is handed over to the TrackerTransport.
    */
-  beforeTransport(contexts: Required<ContextsConfig>): void {
+  enrich(contexts: Required<ContextsConfig>): void {
     const rootLocationContextId = this.idFactoryFunction();
 
     if (rootLocationContextId) {
       contexts.location_stack.unshift(makeRootLocationContext({ id: rootLocationContextId }));
-    } else if (this.console) {
-      this.console.error(
+    } else {
+      TrackerConsole.error(
         `%c｢objectiv:${this.pluginName}｣ Could not generate a RootLocationContext from "${location.pathname}"`,
         'font-weight: bold'
       );

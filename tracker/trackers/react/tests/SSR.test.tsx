@@ -2,10 +2,13 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole, SpyTransport } from '@objectiv/testing-tools';
+import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
+import { isDevMode, TrackerConsole } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
-import { isDevMode, LocationTree, ObjectivProvider, ReactTracker, TrackedMain } from '../src';
+import { LocationTree, ObjectivProvider, ReactTracker, TrackedMain } from '../src';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Browser / SSR', () => {
   const OLD_ENV = process.env;
@@ -15,7 +18,6 @@ describe('Browser / SSR', () => {
     jest.spyOn(LocationTree, 'add');
     jest.spyOn(LocationTree, 'remove');
     process.env = { ...OLD_ENV };
-    jest.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterAll(() => {
@@ -28,7 +30,7 @@ describe('Browser / SSR', () => {
 
     expect(isDevMode()).toBe(false);
 
-    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport(), console: mockConsole });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
 
     const { rerender, unmount } = render(
       <ObjectivProvider tracker={tracker}>
@@ -54,7 +56,7 @@ describe('Browser / SSR', () => {
 
     expect(isDevMode()).toBe(true);
 
-    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport(), console: mockConsole });
+    const tracker = new ReactTracker({ applicationId: 'app-id', transport: new SpyTransport() });
 
     const { rerender, unmount } = render(
       <ObjectivProvider tracker={tracker}>

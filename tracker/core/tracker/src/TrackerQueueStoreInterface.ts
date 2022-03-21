@@ -3,28 +3,12 @@
  */
 
 import { NonEmptyArray } from './helpers';
-import { TrackerConsole } from './TrackerConsole';
 import { TrackerEvent } from './TrackerEvent';
-
-/**
- * The TrackerQueueStoreConfig object.
- */
-export type TrackerQueueStoreConfig = {
-  /**
-   * Optional. A TrackerConsole instance for logging.
-   */
-  console?: TrackerConsole;
-};
 
 /**
  * Our Tracker Queue Store generic interface.
  */
 export interface TrackerQueueStoreInterface {
-  /**
-   * Optional. A TrackerConsole instance for logging.
-   */
-  readonly console?: TrackerConsole;
-
   /**
    * A name describing the Queue Store implementation for debugging purposes
    */

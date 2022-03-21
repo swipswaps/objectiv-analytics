@@ -1,7 +1,10 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import List, Dict, Union, cast
+from typing import List, Dict, Union, cast, Optional
+
+from sqlalchemy.dialects.postgresql.base import PGDialect
+from sqlalchemy.engine import Engine
 
 from bach import get_series_type_from_dtype, DataFrame
 from bach.expression import Expression
@@ -11,14 +14,16 @@ from sql_models.model import CustomSqlModelBuilder
 
 
 def get_fake_df(
-        index_names: List[str],
-        data_names: List[str],
-        dtype: Union[str, Dict[str, str]] = 'int64'
+    index_names: List[str],
+    data_names: List[str],
+    dtype: Union[str, Dict[str, str]] = 'int64',
+    engine: Optional[Engine] = None
 ) -> DataFrame:
-    engine = None
+
+    columns = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
     base_node = BachSqlModel.from_sql_model(
         sql_model=CustomSqlModelBuilder('select * from x', name='base')(),
-        columns=('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+        column_expressions={c: Expression.column_reference(c) for c in columns},
     )
     if isinstance(dtype, str):
         dtype = {

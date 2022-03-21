@@ -2,16 +2,19 @@
 Copyright 2022 Objectiv B.V.
 """
 from abc import abstractmethod
+
+from sqlalchemy.engine import Dialect
+
 from bach.dataframe import DataFrameOrSeries
 import itertools
 from collections import defaultdict
 from typing import Tuple, Dict, Hashable, List, Set, Sequence, TypeVar, Generic
 
 from bach.dataframe import DtypeNamePair
-from bach import DataFrame, const_to_series, get_series_type_from_dtype, SeriesAbstractNumeric, Series
+from bach import DataFrame, get_series_type_from_dtype, SeriesAbstractNumeric, Series
 from bach.expression import Expression, join_expressions
 from bach.sql_model import BachSqlModel, construct_references
-from bach.utils import ResultSeries, get_result_series_dtype_mapping
+from bach.utils import ResultSeries, get_result_series_dtype_mapping, get_merged_series_dtype
 from sql_models.model import CustomSqlModelBuilder, Materialization
 
 TDataFrameOrSeries = TypeVar('TDataFrameOrSeries', bound='DataFrameOrSeries')
@@ -19,28 +22,11 @@ TDataFrameOrSeries = TypeVar('TDataFrameOrSeries', bound='DataFrameOrSeries')
 DEFAULT_CONCAT_SERIES_DTYPE = 'string'
 
 
-def _get_merged_series_dtype(dtypes: Set[str]) -> str:
-    """
-    returns a final dtype when trying to combine series with different dtypes
-    """
-    if len(dtypes) == 1:
-        return dtypes.pop()
-    elif all(
-        issubclass(get_series_type_from_dtype(dtype), SeriesAbstractNumeric)
-        for dtype in dtypes
-    ):
-        return 'float64'
-
-    # default casting will be as text, this way we avoid any SQL errors
-    # when merging different db types into a column
-    return DEFAULT_CONCAT_SERIES_DTYPE
-
-
 class ConcatOperation(Generic[TDataFrameOrSeries]):
     """
     Abstract class that specifies the list of objects to be concatenated.
 
-    Child classes are in charged of specifying the correct type (DataFrame/Series) of all objects.
+    Child classes are in charge of specifying the correct type (DataFrame/Series) of all objects.
     All classes should implement _get_concatenated_object method that returns a single object with the correct
     instantiated type.
     """
@@ -64,6 +50,10 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
             return self.objects[0].copy_override(index=index)  # type: ignore
 
         return self._get_concatenated_object()
+
+    @property
+    def dialect(self) -> Dialect:
+        return self.objects[0].engine.dialect
 
     def _get_indexes(self) -> Dict[str, ResultSeries]:
         """
@@ -101,7 +91,7 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
             series_name: ResultSeries(
                 name=series_name,
                 expression=Expression.identifier(series_name),
-                dtype=_get_merged_series_dtype(series_dtypes[series_name]),
+                dtype=get_merged_series_dtype(series_dtypes[series_name]),
             )
             for series_name in series_names
         }
@@ -235,6 +225,7 @@ class DataFrameConcatOperation(ConcatOperation[DataFrame]):
         series_expressions = [self._join_series_expressions(df) for df in objects]
 
         return ConcatSqlModel.get_instance(
+            dialect=self.dialect,
             columns=tuple(new_index_names + new_data_series_names),
             all_series_expressions=series_expressions,
             all_nodes=[df.base_node for df in objects],
@@ -275,7 +266,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         """
         dtypes: Set[str] = set(series.dtype for series in self.objects)
 
-        main_series = self.objects[0].copy_override_dtype(dtype=_get_merged_series_dtype(dtypes))
+        main_series = self.objects[0].copy_override_dtype(dtype=get_merged_series_dtype(dtypes))
         return self._get_result_series([main_series])
 
     def _join_series_expressions(self, obj: Series) -> Expression:
@@ -326,6 +317,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         series_expressions = [self._join_series_expressions(obj) for obj in objects]
 
         return ConcatSqlModel.get_instance(
+            dialect=self.dialect,
             columns=tuple('concatenated_series'),
             all_series_expressions=series_expressions,
             all_nodes=[series.base_node for series in objects],
@@ -338,6 +330,7 @@ class ConcatSqlModel(BachSqlModel):
     def get_instance(
         cls,
         *,
+        dialect: Dialect,
         columns: Tuple[str, ...],
         all_series_expressions: List[Expression],
         all_nodes: List[BachSqlModel],
@@ -346,7 +339,7 @@ class ConcatSqlModel(BachSqlModel):
         name = 'concat_sql'
         base_sql = 'select {serie_expr} from {node}'
         sql = ' union all '.join(
-            base_sql.format(serie_expr=col_expr.to_sql(), node=f"{{{{node_{idx}}}}}")
+            base_sql.format(serie_expr=col_expr.to_sql(dialect), node=f"{{{{node_{idx}}}}}")
             for idx, col_expr in enumerate(all_series_expressions)
         )
 
@@ -357,9 +350,9 @@ class ConcatSqlModel(BachSqlModel):
 
         return ConcatSqlModel(
             model_spec=CustomSqlModelBuilder(sql=sql, name=name),
-            placeholders=cls._get_placeholders(variables, all_series_expressions),
+            placeholders=cls._get_placeholders(dialect, variables, all_series_expressions),
             references=references,
             materialization=Materialization.CTE,
             materialization_name=None,
-            columns=columns
+            column_expressions={c: Expression.column_reference(c) for c in columns},
         )
