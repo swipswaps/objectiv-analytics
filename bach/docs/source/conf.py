@@ -10,6 +10,7 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
+import doctest
 import os
 import sys
 import inspect
@@ -29,6 +30,10 @@ try:
 except Exception:
     engine = None
 '''
+
+doctest_default_flags = (
+    doctest.DONT_ACCEPT_TRUE_FOR_1 | doctest.ELLIPSIS | doctest.IGNORE_EXCEPTION_DETAIL | doctest.NORMALIZE_WHITESPACE
+)
 
 ipython_warning_is_error = False
 ipython_execlines = [doctest_global_setup]

@@ -373,7 +373,7 @@ class DataFrame:
             :skipif: engine is None
 
 
-            >>> df.to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+            >>> df.to_pandas()
                    values
             index
             a           1
@@ -402,7 +402,7 @@ class DataFrame:
         .. doctest:: loc
             :skipif: engine is None
 
-            >>> df.loc[['a', 'b']].to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+            >>> df.loc[['a', 'b']].to_pandas()
                    values
             index
             a           1
@@ -415,7 +415,7 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df = df.sort_index()  # slicing is supported only when frame is sorted
-            >>> df.loc['a':'c'].to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+            >>> df.loc['a':'c'].to_pandas()
                    values
             index
             a           1
@@ -428,7 +428,7 @@ class DataFrame:
         .. doctest:: loc
             :skipif: engine is None
 
-            >>> df.loc[df['values'] == 2].to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+            >>> df.loc[df['values'] == 2].to_pandas()
                    values
             index
             b           2
@@ -440,7 +440,7 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df['extra_col'] = 1
-            >>> df.loc['a', 'extra_col'].to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+            >>> df.loc['a', 'extra_col'].to_pandas()
             __stacked_index
             extra_col    1
             Name: __stacked, dtype: int64
@@ -454,7 +454,7 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df.loc['a'] = 2
-            >>> df.to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+            >>> df.to_pandas()
                    values  extra_col
             index
             a           2          2
@@ -468,7 +468,7 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df.loc[['b', 'd'], 'values'] = 10
-            >>> df.to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+            >>> df.to_pandas()
                    values  extra_col
             index
             a           2          2
@@ -482,7 +482,7 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df.loc['a':'c', 'values'] = 3
-            >>> df.to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+            >>> df.to_pandas()
                     values   extra_col
             index
             a           3           2
