@@ -519,6 +519,83 @@ def test_merge_non_materialized():
         )
 
 
+def test_merge_on_conditions() -> None:
+    pdf1 = pd.DataFrame({
+        'A': ['a', 'b', 'c', 'd'],
+        'B': [100, 25, 250, 500],
+    })
+    pdf2 = pd.DataFrame({
+        'A': ['e', 'f', 'g', 'h', 'i'],
+        'B': [20, 5, 10, 20, 100],
+    })
+
+    df1 = get_from_df('merge_on_condition1', pdf1)
+    df2 = get_from_df('merge_on_condition2', pdf2)
+
+    on_condition = [df1['A'] + df2['A'] == 'cg', df1['B'] / df2['B'] > 10]
+    result = df1.merge(df2, on=on_condition)
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0_x', '_index_0_y', 'A_x', 'B_x', 'A_y', 'B_y'],
+        expected_data=[
+            [2, 2, 'c', 250, 'g', 10],
+        ],
+    )
+
+
+def test_merge_on_conditions_w_on_data_columns() -> None:
+    pdf1 = pd.DataFrame({
+        'A': ['b', 'a', 'c', 'd'],
+        'B': [100, 25, 250, 500],
+    })
+    pdf2 = pd.DataFrame({
+        'A': ['a', 'a', 'c', 'c', 'c'],
+        'B': [20, 5, 50, 20, 100],
+    })
+
+    df1 = get_from_df('merge_on_condition1', pdf1)
+    df2 = get_from_df('merge_on_condition2', pdf2)
+
+    on_condition = df1['B'] / df2['B'] == 5
+    result = df1.merge(df2, on=['A', on_condition])
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0_x', '_index_0_y', 'A', 'B_x', 'B_y'],
+        expected_data=[
+            [1, 1, 'a', 25, 5],
+            [2, 2, 'c', 250, 50],
+        ],
+    )
+
+
+def test_merge_on_conditions_w_index() -> None:
+    pdf1 = pd.DataFrame({
+        'A': ['a', 'b', 'c', 'd'],
+        'B': [100, 25, 250, 500],
+    })
+    pdf2 = pd.DataFrame({
+        'A': ['e', 'f', 'g', 'h', 'i'],
+        'B': [20, 5, 10, 20, 100],
+    })
+
+    df1 = get_from_df('merge_on_condition1', pdf1)
+    df2 = get_from_df('merge_on_condition2', pdf2)
+
+    on_condition = df1['B'] / df2['B'] > 10
+    result = df1.merge(df2, on=on_condition, left_index=True, right_index=True)
+
+    assert_equals_data(
+        result.sort_index(),
+        expected_columns=['_index_0', 'A_x', 'B_x', 'A_y', 'B_y'],
+        expected_data=[
+            [2, 'c', 250, 'g', 10],
+            [3, 'd', 500, 'h', 20]
+        ],
+    )
+
+
 def test_merge_on_index_x_column() -> None:
     bt = get_bt_with_test_data(False)[['city', 'inhabitants']]
     expected = {

@@ -100,6 +100,14 @@ class DataFrame:
     ``boolean_series = a == b``. Boolean indexing can be done like ``df[df.column == 5]``. Only rows are
     returned for which the condition is true.
 
+    Label-based selection is also supported by using the ``.loc`` attribute. Each label is interpreted
+    as a value contained by the index column. Unlike Pandas, if the label is not found,
+    no exception will be raised. I.e. ``df.loc['a']`` returns rows where the index series is equal to ``a``.
+    Slicing can also be performed (the dataframe must be sorted). I.e. ``df['a':'d', 'col1:col3']``. This will
+    return all rows/columns included in the slicing, where the start and stop are inclusive.
+    For more information about label-based selection, please take a look to :py:attr:`loc`.
+
+
     **Moving Series around**
 
     Values, Series or DataFrames can be set to another DataFrame. Setting Series or DataFrames to another
@@ -342,6 +350,154 @@ class DataFrame:
             if series.expression != Expression.column_reference(name):
                 return False
         return True
+
+    @property
+    def loc(self):
+        """
+        The ``.loc`` accessor offers different methods for label-based selection. The following are
+        valid use-cases:
+
+        **Examples**
+
+        .. testsetup:: loc
+           :skipif: engine is None
+
+           import pandas
+           data = {'index': ['a', 'b', 'c', 'd'], 'values': [1, 2, 3, 4]}
+           pdf = pandas.DataFrame(data)
+
+           df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+           df = df.set_index('index')
+
+        .. doctest:: loc
+            :skipif: engine is None
+
+
+            >>> df.to_pandas()
+                   values
+            index
+            a           1
+            b           2
+            c           3
+            d           4
+
+        **Getting Values**
+
+        **Single-label selection**: Returns all rows where the index column is equal to the label.
+        This returns a Bach Series, where all selected columns are stacked as a single index column.
+
+        .. doctest:: loc
+            :skipif: engine is None
+
+
+            >>> df.loc['a'].to_pandas()
+            __stacked_index
+            values    1
+            Name: __stacked, dtype: int64
+
+
+        **List-label selection**: Returns all rows where the index column is equal to any of
+        the labels to be selected. Returns a Bach DataFrame.
+
+        .. doctest:: loc
+            :skipif: engine is None
+
+            >>> df.loc[['a', 'b']].to_pandas()
+                   values
+            index
+            a           1
+            b           2
+
+        **Slicing selection by labels**: Returns all rows between the start and stop of the slice
+        (start and stop are inclusive).
+
+        .. doctest:: loc
+            :skipif: engine is None
+
+            >>> df = df.sort_index()  # slicing is supported only when frame is sorted
+            >>> df.loc['a':'c'].to_pandas()
+                   values
+            index
+            a           1
+            b           2
+            c           3
+
+        **Slicing by series boolean**: Returns all rows where the series boolean
+        is true.
+
+        .. doctest:: loc
+            :skipif: engine is None
+
+            >>> df.loc[df['values'] == 2].to_pandas()
+                   values
+            index
+            b           2
+
+        For each of the previous types of selection, column selection is supported,
+        this can be by just passing a label, list of labels or a slice. For example:
+
+        .. doctest:: loc
+            :skipif: engine is None
+
+            >>> df['extra_col'] = 1
+            >>> df.loc['a', 'extra_col']
+                    extra_col
+            index
+            a           1
+
+        **Setting Values**
+
+        **Set values for an entire row**: Will modify all columns where index is matched.
+
+        .. doctest:: loc
+            :skipif: engine is None
+
+            >>> df.loc['a'] = 2
+            >>> df.to_pandas()
+
+                    values   extra_col
+            index
+            a           1           2
+            b           2           1
+            c           3           1
+            d           4           1
+
+        **Set values for multiple rows and specific columns**: Modifies only the passed columns.
+
+        .. doctest:: loc
+            :skipif: engine is None
+
+            >>> df.loc[['b', 'd'], 'values'] = 10
+            >>> df.to_pandas()
+
+                    values   extra_col
+            index
+            a           1           2
+            b          10           1
+            c           3           1
+            d          10           1
+
+        **Set values for row slice**: Modifies all rows included in the slice.
+
+        .. doctest:: loc
+            :skipif: engine is None
+
+            >>> df.loc['a':'c', 'values'] = 3
+            >>> df.to_pandas()
+
+                    values   extra_col
+            index
+            a           3           2
+            b           3           1
+            c           3           1
+            d          10           1
+
+        .. note::
+            * .loc supports access-only for first-level index.
+            * Slicing rows is supported-only when the dataframe is sorted.
+        """
+        from bach.indexing import LocIndexer
+        return LocIndexer(self)
 
     def __eq__(self, other: Any) -> bool:
         """
@@ -1181,7 +1337,7 @@ class DataFrame:
 
     def set_index(
         self,
-        keys: Union[str, 'Series', List[Union[str, 'Series']]],
+        keys: Union[str, 'Series', Sequence[Union[str, 'Series']]],
         drop: bool = True,
         append: bool = False,
     ) -> 'DataFrame':
@@ -1804,15 +1960,15 @@ class DataFrame:
         return to_sql(dialect=self.engine.dialect, model=model)
 
     def merge(
-            self,
-            right: DataFrameOrSeries,
-            how: str = 'inner',
-            on: ColumnNames = None,
-            left_on: ColumnNames = None,
-            right_on: ColumnNames = None,
-            left_index: bool = False,
-            right_index: bool = False,
-            suffixes: Tuple[str, str] = ('_x', '_y'),
+        self,
+        right: DataFrameOrSeries,
+        how: str = 'inner',
+        on: Union[str, 'SeriesBoolean', List[Union[str, 'SeriesBoolean']]] = None,
+        left_on: ColumnNames = None,
+        right_on: ColumnNames = None,
+        left_index: bool = False,
+        right_index: bool = False,
+        suffixes: Tuple[str, str] = ('_x', '_y'),
     ) -> 'DataFrame':
         """
         Join the right Dataframe or Series on self. This will return a new DataFrame that contains the

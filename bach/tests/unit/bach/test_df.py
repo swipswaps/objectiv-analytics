@@ -64,7 +64,6 @@ def test__eq__():
 def test_init_conditions():
     df = get_fake_df(['a'], ['b', 'c'])
     df2 = get_fake_df(['a', 'b'], ['c', 'd'])
-
     columns = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
     other_base_node = BachSqlModel.from_sql_model(
         sql_model=CustomSqlModelBuilder('select * from y', name='base')(),

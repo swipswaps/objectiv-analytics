@@ -18,9 +18,19 @@ project = 'Bach'
 copyright = '2021, Objectiv'
 author = 'Objectiv B.V.'
 
-doctest_global_setup = '''
+doctest_global_setup = f'''
 from bach.dataframe import DataFrame
+try:
+    import os
+    import sqlalchemy
+    DB_TEST_URL = os.environ.get('OBJ_DB_TEST_URL', 'postgresql://objectiv:@localhost:5432/objectiv')
+    engine = sqlalchemy.create_engine(DB_TEST_URL)
+except Exception:
+    engine = None
 '''
+
+ipython_warning_is_error = False
+ipython_execlines = [doctest_global_setup]
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -32,7 +42,9 @@ extensions = [
     'sphinx.ext.linkcode',  # generate [source] links to GH
     'sphinx.ext.doctest',  # run examples /tests
     'numpydoc',  # use numpy style docs
-    'sphinx_markdown_builder'
+    'sphinx_markdown_builder',
+    "IPython.sphinxext.ipython_directive",
+    "IPython.sphinxext.ipython_console_highlighting",
 ]
 #
 # intersphinx_mapping = {
