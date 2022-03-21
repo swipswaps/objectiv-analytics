@@ -375,7 +375,7 @@ class DataFrame:
 
             >>> df.to_pandas()  # doctest: +NORMALIZE_WHITESPACE
                    values
-            index       
+            index
             a           1
             b           2
             c           3
