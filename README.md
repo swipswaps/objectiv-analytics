@@ -3,7 +3,7 @@
 
 Objectiv is **open-source product analytics** that runs in your notebook.
 
-### Getting Started
+## Getting Started
 
 Follow our step-by-step [Quickstart Guide](https://objectiv.io/docs/home/quickstart-guide) to set up a fully functional dockerized demo pipeline in under 5 minutes.
 
@@ -15,8 +15,8 @@ Follow our step-by-step [Quickstart Guide](https://objectiv.io/docs/home/quickst
 * [Objectiv.io](https://www.objectiv.io) - Objectiv's official website.
 
 ### What's in the box?
-![objectiv-stack](https://user-images.githubusercontent.com/920184/158140285-d42c5877-e924-4c53-9ef4-8bf15a5c713d.svg#gh-light-mode-only "Objectiv Stack")
-![objectiv-stack-dark](https://user-images.githubusercontent.com/920184/158140306-c2033c5d-3f50-4eec-ac38-6241546226fb.svg#gh-dark-mode-only "Objectiv Stack")
+![objectiv-stack](https://user-images.githubusercontent.com/82152911/159297021-2b5e8d50-2d25-47b8-9326-cea8e5e0e2f4.svg#gh-light-mode-only "Objectiv Stack")
+![objectiv-stack-dark](https://user-images.githubusercontent.com/82152911/159297039-33b32dd2-23dc-41ba-b17a-aa1237953c7a.svg#gh-dark-mode-only "Objectiv Stack")
 
 Objectiv is self-hosted. It includes what you need to answer common product & marketing questions fast and accurately, while
 providing a solid foundation for advanced model building and in-depth analysis.
@@ -38,7 +38,9 @@ providing a solid foundation for advanced model building and in-depth analysis.
 
 Objectiv's tracker validates all incoming events against an [open analytics taxonomy](https://www.objectiv.io/docs/taxonomy/). This eliminates the need for a tracking plan and ensures a highly consistent dataset that's ready for modeling without cleaning & transformation. As a result, models and datasets are intercompatible and can be shared and reused.
 
-![image](https://user-images.githubusercontent.com/82152911/159288731-a6351cd2-13ff-4cdc-890a-37efff0be076.png)
+| [![image](https://user-images.githubusercontent.com/82152911/159288731-a6351cd2-13ff-4cdc-890a-37efff0be076.png)](https://www.objectiv.io/docs/taxonomy/) |
+|:--:|
+| *The [open analytics taxonomy](https://www.objectiv.io/docs/taxonomy/) describes classes for common user interactions and their contexts.*
 
 
 
