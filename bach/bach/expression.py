@@ -2,7 +2,6 @@
 Copyright 2021 Objectiv B.V.
 """
 import re
-from collections import defaultdict
 from dataclasses import dataclass
 from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set
 
@@ -335,6 +334,9 @@ class Expression:
             if not isinstance(token, TableColumnReferenceToken):
                 new_tokens.append(token)
                 continue
+
+            if table_name and table_name != token.table_name:
+                raise Exception('expressions with different table references are not allowed.')
 
             table_name = token.table_name if token.table_name and not table_name else table_name
             column_name = column_name or token.column_name

@@ -235,6 +235,15 @@ def test_remove_table_column_references() -> None:
     assert result_expr == Expression.column_reference('city')
 
 
+def test_remove_table_column_references_error() -> None:
+    expr = Expression(
+        [Expression.table_column_reference('random', 'city'), Expression.table_column_reference('random2', 'city')],
+    )
+
+    with pytest.raises(Exception, match=r'different table references are not allowed.'):
+        expr.remove_table_column_references()
+
+
 def test_has_table_column_reference() -> None:
     expr = Expression.table_column_reference('random', 'city')
     assert expr.has_table_column_references
