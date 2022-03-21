@@ -3,7 +3,7 @@ Copyright 2021 Objectiv B.V.
 """
 import re
 from dataclasses import dataclass
-from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set
+from typing import Optional, Union, TYPE_CHECKING, List, Dict, Tuple, Set, Sequence
 
 from sqlalchemy.engine import Dialect
 
@@ -140,7 +140,7 @@ class Expression:
     For special type Expressions, this class is subclassed to assign special properties to a subexpression.
     """
 
-    def __init__(self, data: Union['Expression', List[Union[ExpressionToken, 'Expression']]] = None):
+    def __init__(self, data: Union['Expression', Sequence[Union[ExpressionToken, 'Expression']]] = None):
         if not data:
             data = []
         if isinstance(data, Expression):
@@ -318,6 +318,18 @@ class Expression:
             else:
                 result.append(data_item)
         return self.__class__(result)
+
+    def replace_column_references(self, old_column_name: str, new_column_name: str) -> 'Expression':
+        """
+        replaces all ColumnReferenceToken where old_column_name is present with another ColumnReferenceToken
+        """
+        replaced_tokens = []
+        for token in self.get_all_tokens():
+            if not isinstance(token, ColumnReferenceToken) or token.column_name != old_column_name:
+                replaced_tokens.append(token)
+                continue
+            replaced_tokens.append(ColumnReferenceToken(new_column_name))
+        return self.__class__(replaced_tokens)
 
     def remove_table_column_references(self) -> Tuple[str, str, 'Expression']:
         """
