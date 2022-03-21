@@ -1,5 +1,4 @@
-from typing import NamedTuple, Dict, List
-
+from typing import NamedTuple, Dict, List, Set
 from sqlalchemy.engine import Connection
 
 from bach.expression import Expression
@@ -16,6 +15,24 @@ def get_result_series_dtype_mapping(result_series: List[ResultSeries]) -> Dict[s
         rs.name: rs.dtype
         for rs in result_series
     }
+
+
+def get_merged_series_dtype(dtypes: Set[str]) -> str:
+    """
+    returns a final dtype when trying to combine series with different dtypes
+    """
+    from bach import get_series_type_from_dtype, SeriesAbstractNumeric
+    if len(dtypes) == 1:
+        return dtypes.pop()
+    elif all(
+        issubclass(get_series_type_from_dtype(dtype), SeriesAbstractNumeric)
+        for dtype in dtypes
+    ):
+        return 'float64'
+
+    # default casting will be as text, this way we avoid any SQL errors
+    # when merging different db types into a column
+    return 'string'
 
 
 def escape_parameter_characters(conn: Connection, raw_sql: str) -> str:
