@@ -1,19 +1,20 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from collections import defaultdict
 from copy import copy
 from enum import Enum
-from typing import Union, List, Tuple, Optional, Dict, Set, NamedTuple, Hashable
+from typing import Union, List, Tuple, Optional, Dict, Set, Hashable, cast
 
 from sqlalchemy.engine import Dialect
 
 from bach import DataFrameOrSeries, DataFrame, ColumnNames, Series
 from bach.dataframe import DtypeNamePair
-from bach.expression import Expression, join_expressions
+
+from bach.expression import Expression, join_expressions, TableColumnReferenceToken, \
+    NonAtomicExpression
 from bach.utils import ResultSeries, get_result_series_dtype_mapping
 from sql_models.model import Materialization, CustomSqlModelBuilder
-from bach.sql_model import BachSqlModel, get_variable_values_sql, filter_variables, construct_references
+from bach.sql_model import BachSqlModel, construct_references
 
 
 class How(Enum):
@@ -206,7 +207,7 @@ def _get_merged_result_series(
                 if table_alias == 'r':
                     continue
                 r_expr = right_series[series_name].expression.resolve_column_references(dialect, 'r')
-                expr = Expression.construct(f'COALESCE({expr.to_sql(dialect)}, {r_expr.to_sql(dialect)})')
+                expr = Expression.construct(f'COALESCE({{}}, {{}})', expr, r_expr)
             elif series_name in conflicting_names:
                 new_name = series_name + suffix
 
@@ -300,6 +301,117 @@ def merge(
         savepoints=left.savepoints.merge(right_savepoints),
         variables=variables
     )
+
+
+def revert_merge(base: DataFrame) -> Tuple[DataFrame, DataFrame]:
+    """
+    Splits a merged dataframe into two new frames that have the same structure as the original frames
+    that were combined. Base dataframe should not be aggregated since original indexes can be lost.
+    """
+    if not isinstance(base.base_node, MergeSqlModel):
+        raise Exception('can only revert merge if DataFrame base_node is MergeSqlModel instance.')
+
+    if base.group_by:
+        raise Exception('cannot revert merge on aggregated frame.')
+
+    left_node = cast(BachSqlModel, base.base_node.references['left_node'])
+    right_node = cast(BachSqlModel, base.base_node.references['right_node'])
+
+    left_index, right_index = _determine_series_per_source(
+        base=base, series_to_unmerge=base.index_columns, left_index={}, right_index={},
+    )
+
+    left_series, right_series = _determine_series_per_source(
+        base=base,
+        series_to_unmerge=list(set(base.base_node.columns) - set(base.index_columns)),
+        left_index=left_index,
+        right_index=right_index,
+    )
+
+    left = base.copy_override(base_node=left_node, series=left_series, index=left_index)
+    right = base.copy_override(base_node=right_node, series=right_series, index=right_index)
+
+    return left, right
+
+
+def _determine_series_per_source(
+    base: 'DataFrame',
+    series_to_unmerge: List[str],
+    left_index: Dict[str, 'Series'],
+    right_index: Dict[str, 'Series'],
+) -> Tuple[Dict[str, 'Series'], Dict[str, 'Series']]:
+    """
+    Determine which series are on each original dataframe based on the node references
+    from current MergeSqlModel. When identifying each column original source, a new series
+    will be created and replicate the original structure.
+
+    .. note::
+    Series without table column references are added to both final results.
+    """
+
+    left_series = {}
+    right_series = {}
+
+    left_node = cast(BachSqlModel, base.base_node.references['left_node'])
+    right_node = cast(BachSqlModel, base.base_node.references['right_node'])
+
+    expressions_to_parse: Dict[str, List[Expression]] = {}
+    for series_name, original_expr in base.base_node.column_expressions.items():
+        if series_name not in series_to_unmerge:
+            continue
+
+        if isinstance(original_expr, NonAtomicExpression) or not original_expr.has_table_column_references:
+            expressions_to_parse[series_name] = [original_expr]
+            continue
+
+        expressions_to_parse[series_name] = [
+            sub_expr if isinstance(sub_expr, Expression) else Expression([sub_expr])
+            for sub_expr in original_expr.data
+            if isinstance(sub_expr, (Expression, TableColumnReferenceToken))
+        ]
+
+    default_series = base.all_series[base.data_columns[0]]
+    for series_name, expressions in expressions_to_parse.items():
+        if series_name in base.all_series:
+            series = base.all_series[series_name]
+        else:
+            series = default_series.copy()
+
+        for sub_expr in expressions:
+            table_name, column_name, expr = sub_expr.remove_table_column_references()
+
+            column_name = column_name if sub_expr.has_table_column_references else series_name
+            if table_name == 'l' or not sub_expr.has_table_column_references:
+                left_series[column_name] = series.copy_override(
+                    base_node=left_node,
+                    index=left_index,
+                    name=column_name,
+                    expression=expr,
+                )
+            if table_name == 'r' or not sub_expr.has_table_column_references:
+                right_series[column_name] = series.copy_override(
+                    base_node=right_node,
+                    index=right_index,
+                    name=column_name,
+                    expression=expr,
+                )
+
+    # sort mapping based in order from node's columns
+    ordered_left_series = {
+        **{col: left_series[col] for col in left_node.columns if col in left_series},
+        **{
+            series_name: series for series_name, series in left_series.items()
+            if series_name not in left_node.columns
+        },
+    }
+    ordered_right_series = {
+        **{col: right_series[col] for col in right_node.columns if col in right_series},
+        **{
+            series_name: series for series_name, series in right_series.items()
+            if series_name not in right_node.columns
+        },
+    }
+    return ordered_left_series, ordered_right_series
 
 
 def _get_merge_sql_model(
