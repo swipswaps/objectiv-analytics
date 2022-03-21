@@ -116,6 +116,116 @@ The above example demonstrates filtering out rows and sorting a DataFrame. Witho
 order of the returned rows is non-deterministic. `view_sql()` can be used to show the compiled SQL query that
 encompasses all operations done so far.
 
+
+Filtering by Index Labels
+------------------------------
+.. important::
+    In the following examples we call multiple times ``to_pandas`` method, we do it only for visualization purposes.
+    Please use only ``df.to_pandas`` when necessary, as this will execute the frame's current query.
+
+Here we construct a simple dataframe for illustrating the label selection functionality:
+
+.. ipython:: python
+
+    import pandas
+    data = {
+        'skating_order': [1, 2, 3, 4, 5],
+        'city': ['Ljouwert', 'Snits', 'Drylts', 'Sleat', 'Starum'],
+        'municipality': ['Leeuwarden', 'Súdwest-Fryslân', 'Súdwest-Fryslân', 'De Friese Meren', 'Súdwest-Fryslân'],
+        'inhabitants': [1285, 1456, 1268, 1426, 1061],
+    }
+    pdf = pandas.DataFrame(data)
+
+    df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+    df = df.set_index('city')
+    df.to_pandas()
+
+
+If you want to select a specific row from the frame, you can simply pass the label to the ``loc`` property:
+
+.. ipython:: python
+
+    df.loc['Drylts'].to_pandas()
+
+You can observe that the previous result returned a **Bach Series**, this will always be the return-type for
+**Single-Label Selection**, where all selected columns are stacked into one single index series.
+
+If you require just a subset of the columns, you can pass them as a second parameter:
+
+.. ipython:: python
+
+    df.loc['Drylts', ['inhabitants', 'skating_order']].to_pandas()
+
+This will still return a series, the main difference is that only ``inhabitants`` and ``skating_order`` are
+considered in the stacked index.
+
+.. note::
+    If a column included in the selection does not exist in the frame, this will raise an error.
+
+
+In case you want to select/filter rows based on multiple labels, you can pass a list of labels:
+
+.. ipython:: python
+
+    df.loc[['Drylts', 'Ljouwert'], 'municipality'].to_pandas()
+
+The code from above will return a **Bach DataFrame** instead, this will always be the return-type for
+**List-Label Selection**.
+
+**Slicing-Selection by labels** is also possible, for both rows and columns. Note the next example:
+
+.. warning::
+    Before slicing a frame's rows, you must sort it first. As slicing is a non-deterministic operation.
+
+.. ipython:: python
+
+    df.sort_index().loc['Sleat':, 'municipality':].to_pandas()
+
+In case you need to select a value based on a condition, a series boolean can also be passed to ``loc`` property.
+
+.. ipython:: python
+
+   df.loc[df['inhabitants'] > 1300].to_pandas()
+
+In previous examples, we selected rows by labels that actually exist in the frame. In case a label doesn't exist
+in the frame, this will not raise any error since Bach has no notion of which values exist in the frame.
+
+.. ipython:: python
+
+    df.loc['x'].to_pandas()
+
+Setting Values to DataFrame Subset
+----------------------------------
+
+In previous section we played around a bit with ``loc`` property, by just filtering the frame using labels.
+As in pandas, you are also able to set values to a specific group of rows and update the main frame. This works
+for all types of selections.
+
+.. ipython:: python
+
+   df.loc['Drylts'] = 'x'
+   df.to_pandas()
+
+You can see that the previous code block, sets all series to 'x' where the index is equal to `Drylts`.
+
+.. note::
+
+    If the value being set has a different ``dtype`` than the series to be modified, the series's ``dtype``
+    will be changed to **string**. This does not apply if both have a numerical ``dtype``.
+
+.. ipython:: python
+
+   df = df.sort_index()
+   df.loc['Sleat':, 'municipality'] = 'Fryslân'
+   df.to_pandas()
+
+As we mentioned, setting a value is possible for any type of selection. Notice that sorting is also needed for
+this case.
+
+.. important::
+   ``df.sort_index().loc['Sleat':, 'municipality'] = 'Fryslân'`` will have no effect on ``df``, since
+   ``df.sort_index()`` returns a new dataframe.
+
 .. _appendix_example_data:
 
 Appendix: Example Data
