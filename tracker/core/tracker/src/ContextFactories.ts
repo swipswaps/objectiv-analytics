@@ -246,8 +246,8 @@ export const makeSessionContext = (props: { id: string; hit_number: number }): S
  *         for Context instance uniqueness.
  * @param {string} props.input_fields - Fields used to create the hash
  * @param {string} props.hash_type - Algorithm used top create the hash
- * @returns {UserContext} - UserContext: the internal company user ID to match our data against the user data that the company already
- * 	has stored. In FE you can choose which field to put in the ID and hash this.
+ * @returns {UserContext} - UserContext: The internal company user ID to match our data against the user data that the company already
+ * 	has stored. In the tracker you can choose which field(s) to put in the ID and hash this.
  */
 export const makeUserContext = (props: { id: string; input_fields: string; hash_type: string }): UserContext => ({
   __global_context: true,

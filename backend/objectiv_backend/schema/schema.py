@@ -232,8 +232,8 @@ class MarketingContext(AbstractGlobalContext):
 
 class UserContext(AbstractGlobalContext):
     """
-        the internal company user ID to match our data against the user data that the company already
-    has stored. In FE you can choose which field to put in the ID and hash this.
+        The internal company user ID to match our data against the user data that the company already
+    has stored. In the tracker you can choose which field(s) to put in the ID and hash this.
 
         Attributes:
         input_fields (str):
