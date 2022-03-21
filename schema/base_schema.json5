@@ -234,7 +234,10 @@
       "properties": {
         "input_fields": {
           "description": "Field(s) used to create the user ID hash",
-          "type": "string"
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         },
         "hash_type": {
           "description": "Algorithm used top create the user ID hash",

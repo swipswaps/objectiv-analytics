@@ -122,8 +122,7 @@ export interface MarketingContext extends AbstractGlobalContext {
 }
 
 /**
- * The internal company user ID to match our data against the user data that the company already
- * has stored. In the tracker you can choose which field(s) to put in the ID and hash this.
+ * Match the user ID in the Objectiv data, to your internal user data. In the tracker you can choose which field(s) to put in the ID and hash this.
  * Inheritance: UserContext -> AbstractGlobalContext -> AbstractContext
  */
 export interface UserContext extends AbstractGlobalContext {
@@ -133,12 +132,12 @@ export interface UserContext extends AbstractGlobalContext {
   readonly _type: 'UserContext';
 
   /**
-   * Fields used to create the hash
+   * Field(s) used to create the user ID hash
    */
-  input_fields: string;
+  input_fields: string[];
 
   /**
-   * Algorithm used top create the hash
+   * Algorithm used top create the user ID hash
    */
   hash_type: string;
 }
