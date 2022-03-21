@@ -1,3 +1,6 @@
+"""
+Copyright 2022 Objectiv B.V.
+"""
 from functools import reduce
 from typing import Union, List, Optional, Tuple, TYPE_CHECKING, overload
 
@@ -12,6 +15,9 @@ LocKey = Union[IndexLabel, Tuple[Union[IndexLabel, slice], Union[str, slice]]]
 
 
 class BaseLocIndex(object):
+    """
+    Base class for `loc` property. Contains helper methods for getting and setting values.
+    """
     obj: 'DataFrame'
 
     def __init__(self, obj: 'DataFrame'):
@@ -140,6 +146,10 @@ class BaseLocIndex(object):
 
 
 class LocIndexer(BaseLocIndex):
+    """
+    Enables setting and getting operations for DataFrame and Series.
+    See :py:attr:`bach.DataFrame.loc` for more information.
+    """
     @overload
     def __getitem__(self, key: Union[str, int]) -> 'Series':
         ...
