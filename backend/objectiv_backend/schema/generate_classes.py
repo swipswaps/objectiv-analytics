@@ -16,7 +16,7 @@ def get_type(property_description: Dict[str, Any]) -> str:
     if 'items' in property_description and 'type' in property_description['items']:
         abstract_type = get_type({'type': property_description['items']['type']})
     if type_name == 'array':
-        return f'List[]'
+        return f'List[{abstract_type}]'
     if type_name == 'object':
         return f'Dict[{abstract_type}, Any]'
     if type_name == 'string':
