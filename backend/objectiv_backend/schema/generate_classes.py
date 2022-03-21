@@ -23,7 +23,7 @@ def get_type(property_description: Dict[str, Any]) -> str:
         return 'str'
     if type_name == 'integer':
         return 'int'
-    return 'str'
+    return type_name
 
 
 def get_parents(class_name: str, parent_mapping: Dict[str, List[str]]) -> List[str]:
