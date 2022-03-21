@@ -567,7 +567,7 @@ class Series(ABC):
         ]
         right = right.set_index(aligned_right_indexes, drop=True)
 
-        df = left.merge(right, on=right.index_columns, how='outer', suffixes=('', '__other'))
+        df = left.merge(right, on=list(right.index.keys()), how='outer', suffixes=('', '__other'))
 
         mod_other_name = other.name
         if (

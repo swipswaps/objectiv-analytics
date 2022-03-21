@@ -1804,15 +1804,15 @@ class DataFrame:
         return to_sql(dialect=self.engine.dialect, model=model)
 
     def merge(
-            self,
-            right: DataFrameOrSeries,
-            how: str = 'inner',
-            on: ColumnNames = None,
-            left_on: ColumnNames = None,
-            right_on: ColumnNames = None,
-            left_index: bool = False,
-            right_index: bool = False,
-            suffixes: Tuple[str, str] = ('_x', '_y'),
+        self,
+        right: DataFrameOrSeries,
+        how: str = 'inner',
+        on: Union[str, 'SeriesBoolean', List[Union[str, 'SeriesBoolean']]] = None,
+        left_on: ColumnNames = None,
+        right_on: ColumnNames = None,
+        left_index: bool = False,
+        right_index: bool = False,
+        suffixes: Tuple[str, str] = ('_x', '_y'),
     ) -> 'DataFrame':
         """
         Join the right Dataframe or Series on self. This will return a new DataFrame that contains the
