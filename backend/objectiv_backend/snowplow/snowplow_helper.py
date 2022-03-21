@@ -229,8 +229,6 @@ def write_data_to_pubsub(events: EventDataList, config: SnowplowConfig,
                         event_error = ee
             failed_event = snowplow_schema_violation(payload=payload, config=config, event_error=event_error)
 
-            print(json.dumps(failed_event, indent=4))
-
             # serialize (json) and encode to bytestring for publishing
             data = json.dumps(failed_event, separators=(',', ':')).encode('utf-8')
 
