@@ -113,3 +113,104 @@ def test_index_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
         pdf.loc[:, :'C'],
         result_column_no_start_slicing.to_pandas(),
     )
+
+
+def test_basic_set_item_by_label(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
+    pdf, df = indexing_dfs
+
+    df_cp1 = df.copy()
+    pdf_cp1 = pdf.copy()
+    df_cp1.loc['b'] = 1
+    pdf_cp1.loc['b'] = 1
+    pdf_cp1['D'] = pdf_cp1['D'].astype(str)
+    pd.testing.assert_frame_equal(pdf_cp1, df_cp1.to_pandas())
+
+    # cannot check against Pandas, since pandas checks index lengths when setting items.
+    df_cp2 = df.copy()
+    df_cp2.loc['b', 'B'] = df_cp2['C']
+
+    assert_equals_data(
+        df_cp2,
+        expected_columns=['A', 'B', 'C', 'D'],
+        expected_data=[
+            ['a', 0, 5, 'f'],
+            ['b', 6, 6, 'g'],
+            ['c', 2, 7, 'h'],
+            ['d', 3, 8, 'i'],
+            ['e', 4, 9, 'j'],
+        ],
+    )
+
+
+def test_set_item_by_label_diff_node(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
+    _, df = indexing_dfs
+    extra_pdf = pd.DataFrame(
+        {
+            'A': ['a', 'b'],
+            'B': [7, 8],
+            'C': [11, 12],
+        },
+    )
+    extra_df = get_from_df('extra_df', extra_pdf)
+    extra_df = extra_df.set_index('A')
+
+    # cannot check against Pandas, since pandas checks index lengths when setting items.
+    df.loc['b', ['B', 'D']] = extra_df['C']
+    assert_equals_data(
+        df.sort_index(),
+        expected_columns=['A', 'B', 'C', 'D'],
+        expected_data=[
+            ['a', 0, 5, 'f'],
+            ['b', 12, 6, '12'],
+            ['c', 2, 7, 'h'],
+            ['d', 3, 8, 'i'],
+            ['e', 4, 9, 'j'],
+        ],
+    )
+
+
+def test_set_item_by_slicing(indexing_dfs: Tuple[pd.DataFrame, DataFrame]) -> None:
+    pdf, df = indexing_dfs
+    df = df.sort_index()
+
+    df.loc['b':'d'] = 1
+
+    pdf.loc['b': 'd'] = 1
+    pdf['D'] = pdf['D'].astype(str)
+    pd.testing.assert_frame_equal(pdf, df.to_pandas())
+
+    assert_equals_data(
+        df.sort_index(),
+        expected_columns=['A', 'B', 'C', 'D'],
+        expected_data=[
+            ['a', 0, 5, 'f'],
+            ['b', 1, 1, '1'],
+            ['c', 1, 1, '1'],
+            ['d', 1, 1, '1'],
+            ['e', 4, 9, 'j'],
+        ],
+    )
+
+    extra_pdf = pd.DataFrame(
+        {
+            'A': ['a', 'b'],
+            'B': [7, 8],
+            'C': [11, 12],
+        },
+    )
+    extra_df = get_from_df('extra_df', extra_pdf)
+    extra_df = extra_df.set_index('A')
+
+    # cannot check against Pandas, since pandas checks index lengths when setting items.
+    df.loc['b':'d', ['B', 'D']] = extra_df['B']
+    assert_equals_data(
+        df.sort_index(),
+        expected_columns=['A', 'B', 'C', 'D'],
+        expected_data=[
+            ['a', 0, 5, 'f'],
+            ['b', 8, 1, '8'],
+            ['c', None, 1, None],
+            ['d', None, 1, None],
+            ['e', 4, 9, 'j'],
+        ],
+    )
