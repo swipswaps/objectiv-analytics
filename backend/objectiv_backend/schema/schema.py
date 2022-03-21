@@ -485,12 +485,12 @@ class AbstractEvent(SchemaEntity, ABC):
         This is the abstract parent of all Events.
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -503,8 +503,8 @@ class AbstractEvent(SchemaEntity, ABC):
     _type = 'AbstractEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -537,12 +537,12 @@ class InteractiveEvent(AbstractEvent):
         The parent of Events that are the direct result of a user interaction, e.g. a button click.
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -555,8 +555,8 @@ class InteractiveEvent(AbstractEvent):
     _type = 'InteractiveEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -589,12 +589,12 @@ class NonInteractiveEvent(AbstractEvent):
         The parent of Events that are not directly triggered by a user action.
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -607,8 +607,8 @@ class NonInteractiveEvent(AbstractEvent):
     _type = 'NonInteractiveEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -641,12 +641,12 @@ class ApplicationLoadedEvent(NonInteractiveEvent):
         A NonInteractive event that is emitted after an application (eg. SPA) has finished loading.
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -659,8 +659,8 @@ class ApplicationLoadedEvent(NonInteractiveEvent):
     _type = 'ApplicationLoadedEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -696,12 +696,12 @@ class FailureEvent(NonInteractiveEvent):
         Attributes:
         message (str):
                 Failure message.
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -715,8 +715,8 @@ class FailureEvent(NonInteractiveEvent):
 
     def __init__(self,
                  message: str,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -752,12 +752,12 @@ class InputChangeEvent(InteractiveEvent):
         Event triggered when user input is modified.
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -770,8 +770,8 @@ class InputChangeEvent(InteractiveEvent):
     _type = 'InputChangeEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -805,12 +805,12 @@ class PressEvent(InteractiveEvent):
     (like a link, button, icon).
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -823,8 +823,8 @@ class PressEvent(InteractiveEvent):
     _type = 'PressEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -857,12 +857,12 @@ class HiddenEvent(NonInteractiveEvent):
         A NonInteractiveEvent that's emitted after a LocationContext has become invisible.
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -875,8 +875,8 @@ class HiddenEvent(NonInteractiveEvent):
     _type = 'HiddenEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -911,12 +911,12 @@ class VisibleEvent(NonInteractiveEvent):
 
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -929,8 +929,8 @@ class VisibleEvent(NonInteractiveEvent):
     _type = 'VisibleEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -966,12 +966,12 @@ class SuccessEvent(NonInteractiveEvent):
         Attributes:
         message (str):
                 Success message.
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -985,8 +985,8 @@ class SuccessEvent(NonInteractiveEvent):
 
     def __init__(self,
                  message: str,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -1023,12 +1023,12 @@ class MediaEvent(NonInteractiveEvent):
     It requires a MediaPlayerContext to detail the origin of the event.
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -1041,8 +1041,8 @@ class MediaEvent(NonInteractiveEvent):
     _type = 'MediaEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -1077,12 +1077,12 @@ class MediaLoadEvent(MediaEvent):
 
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -1095,8 +1095,8 @@ class MediaLoadEvent(MediaEvent):
     _type = 'MediaLoadEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -1131,12 +1131,12 @@ class MediaPauseEvent(MediaEvent):
 
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -1149,8 +1149,8 @@ class MediaPauseEvent(MediaEvent):
     _type = 'MediaPauseEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -1185,12 +1185,12 @@ class MediaStartEvent(MediaEvent):
 
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -1203,8 +1203,8 @@ class MediaStartEvent(MediaEvent):
     _type = 'MediaStartEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
@@ -1239,12 +1239,12 @@ class MediaStopEvent(MediaEvent):
 
 
         Attributes:
-        location_stack (List[str]):
+        location_stack (List[AbstractLocationContext]):
                 The location stack is an ordered list (stack), that contains a hierarchy of location contexts that
                 deterministically describes where an event took place from global to specific.
                 The whole stack (list) is needed to exactly pinpoint where in the UI the event originated.
 
-        global_contexts (List[str]):
+        global_contexts (List[AbstractGlobalContext]):
                 Global contexts add global / general information about the event. They carry information that is not
                 related to where the Event originated (location), such as device, platform or business data.
         id (str):
@@ -1257,8 +1257,8 @@ class MediaStopEvent(MediaEvent):
     _type = 'MediaStopEvent'
 
     def __init__(self,
-                 location_stack: List[str],
-                 global_contexts: List[str],
+                 location_stack: List[AbstractLocationContext],
+                 global_contexts: List[AbstractGlobalContext],
                  id: str,
                  time: int,
                  **kwargs: Optional[Any]):
