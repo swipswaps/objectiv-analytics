@@ -73,6 +73,17 @@ class VariableToken(ExpressionToken):
 
 
 @dataclass(frozen=True)
+class TableColumnReferenceToken(ExpressionToken):
+    table_name: Optional[str]
+    column_name: str
+
+    def to_sql(self, dialect: Dialect):
+        t = f'{quote_identifier(dialect, self.table_name)}.' if self.table_name else ''
+        col_name = quote_identifier(dialect, self.column_name)
+        return escape_raw_sql(f'{t}{col_name}')
+
+
+@dataclass(frozen=True)
 class ColumnReferenceToken(ExpressionToken):
     column_name: str
 
@@ -80,9 +91,8 @@ class ColumnReferenceToken(ExpressionToken):
         raise ValueError('ColumnReferenceTokens should be resolved first using '
                          'Expression.resolve_column_references')
 
-    def resolve(self, dialect: Dialect, table_name: Optional[str]) -> RawToken:
-        t = f'{quote_identifier(dialect, table_name)}.' if table_name else ''
-        return RawToken(f'{t}{quote_identifier(dialect, self.column_name)}')
+    def resolve(self, table_name: Optional[str]) -> TableColumnReferenceToken:
+        return TableColumnReferenceToken(table_name=table_name, column_name=self.column_name)
 
 
 @dataclass(frozen=True)
@@ -227,6 +237,12 @@ class Expression:
         return cls([ColumnReferenceToken(field_name)])
 
     @classmethod
+    def table_column_reference(cls, table_name: str, field_name: str) -> 'Expression':
+        """ Construct an expression for table referenced field,
+         where table_name is a reference of a table or CTE from which field_name is a column """
+        return cls([TableColumnReferenceToken(table_name, field_name)])
+
+    @classmethod
     def model_reference(cls, model: 'BachSqlModel') -> 'Expression':
         """ Construct an expression for model, where model is a reference to a model. """
         return cls([ModelReferenceToken(model)])
@@ -282,6 +298,15 @@ class Expression:
             d.has_windowed_aggregate_function for d in self.data if isinstance(d, Expression)
         )
 
+    @property
+    def has_table_column_references(self) -> bool:
+        """
+        True iff we are a TableColumnReference, or there is at least one in this Expression.
+        """
+        return any(
+            isinstance(token, TableColumnReferenceToken) for token in self.get_all_tokens()
+        )
+
     def resolve_column_references(self, dialect: Dialect, table_name: Optional[str]) -> 'Expression':
         """ resolve the table name aliases for all columns in this expression """
         result: List[Union[ExpressionToken, Expression]] = []
@@ -289,10 +314,35 @@ class Expression:
             if isinstance(data_item, Expression):
                 result.append(data_item.resolve_column_references(dialect, table_name))
             elif isinstance(data_item, ColumnReferenceToken):
-                result.append(data_item.resolve(dialect, table_name))
+                result.append(data_item.resolve(table_name))
             else:
                 result.append(data_item)
         return self.__class__(result)
+
+    def remove_table_column_references(self) -> Tuple[str, str, 'Expression']:
+        """
+        removes all table references from this expression.
+        Returns first table_name and column_name found and a new expression without table column references
+        """
+        table_name = ''
+        column_name = ''
+        if not self.has_table_column_references:
+            return table_name, column_name, self
+
+        new_tokens: List[Union[ExpressionToken, Expression]] = []
+        for token in self.get_all_tokens():
+            if not isinstance(token, TableColumnReferenceToken):
+                new_tokens.append(token)
+                continue
+
+            if table_name and table_name != token.table_name:
+                raise Exception('expressions with different table references are not allowed.')
+
+            table_name = token.table_name if token.table_name and not table_name else table_name
+            column_name = column_name or token.column_name
+            new_tokens.extend(Expression.column_reference(token.column_name).data)
+
+        return table_name, column_name, Expression(new_tokens)
 
     def get_references(self) -> Dict[str, 'BachSqlModel']:
         rv = {}
