@@ -20,6 +20,7 @@ author = 'Objectiv B.V.'
 
 doctest_global_setup = f'''
 from bach.dataframe import DataFrame
+import pandas as pd
 try:
     import os
     import sqlalchemy

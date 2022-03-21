@@ -373,9 +373,9 @@ class DataFrame:
             :skipif: engine is None
 
 
-            >>> df.to_pandas()
+            >>> df.to_pandas()  # doctest: +NORMALIZE_WHITESPACE
                    values
-            index
+            index       
             a           1
             b           2
             c           3
@@ -402,7 +402,7 @@ class DataFrame:
         .. doctest:: loc
             :skipif: engine is None
 
-            >>> df.loc[['a', 'b']].to_pandas()
+            >>> df.loc[['a', 'b']].to_pandas()  # doctest: +NORMALIZE_WHITESPACE
                    values
             index
             a           1
@@ -415,7 +415,7 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df = df.sort_index()  # slicing is supported only when frame is sorted
-            >>> df.loc['a':'c'].to_pandas()
+            >>> df.loc['a':'c'].to_pandas()  # doctest: +NORMALIZE_WHITESPACE
                    values
             index
             a           1
@@ -428,7 +428,7 @@ class DataFrame:
         .. doctest:: loc
             :skipif: engine is None
 
-            >>> df.loc[df['values'] == 2].to_pandas()
+            >>> df.loc[df['values'] == 2].to_pandas()  # doctest: +NORMALIZE_WHITESPACE
                    values
             index
             b           2
@@ -440,10 +440,11 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df['extra_col'] = 1
-            >>> df.loc['a', 'extra_col']
-                    extra_col
-            index
-            a           1
+            >>> df.loc['a', 'extra_col'].to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+            __stacked_index
+            extra_col    1
+            Name: __stacked, dtype: int64
+
 
         **Setting Values**
 
@@ -453,14 +454,13 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df.loc['a'] = 2
-            >>> df.to_pandas()
-
-                    values   extra_col
+            >>> df.to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+                   values  extra_col
             index
-            a           1           2
-            b           2           1
-            c           3           1
-            d           4           1
+            a           2          2
+            b           2          1
+            c           3          1
+            d           4          1
 
         **Set values for multiple rows and specific columns**: Modifies only the passed columns.
 
@@ -468,14 +468,13 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df.loc[['b', 'd'], 'values'] = 10
-            >>> df.to_pandas()
-
-                    values   extra_col
+            >>> df.to_pandas()  # doctest: +NORMALIZE_WHITESPACE
+                   values  extra_col
             index
-            a           1           2
-            b          10           1
-            c           3           1
-            d          10           1
+            a           2          2
+            b          10          1
+            c           3          1
+            d          10          1
 
         **Set values for row slice**: Modifies all rows included in the slice.
 
@@ -483,8 +482,7 @@ class DataFrame:
             :skipif: engine is None
 
             >>> df.loc['a':'c', 'values'] = 3
-            >>> df.to_pandas()
-
+            >>> df.to_pandas()  # doctest: +NORMALIZE_WHITESPACE
                     values   extra_col
             index
             a           3           2
