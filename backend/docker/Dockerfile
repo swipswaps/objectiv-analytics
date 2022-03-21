@@ -43,7 +43,7 @@ ENV VIRTUAL_ENV="/venv_python_3_8/"
 ENV PATH="${VIRTUAL_ENV}bin:${PATH}"
 ENV PYTHONHOME=""
 # Upgrade pip to what is currently the latest version
-RUN pip --no-cache-dir install pip==21.1.* --upgrade
+RUN pip --no-cache-dir install pip==22.* --upgrade
 ### End of the Pyhthon-base-image part
 
 # Install dependencies needed to build package
@@ -76,7 +76,7 @@ RUN \
 ENV VIRTUAL_ENV="/venv_python_3_8/"
 ENV PATH="${VIRTUAL_ENV}bin:${PATH}"
 ENV PYTHONHOME=""
-RUN pip --no-cache-dir install pip==21.1.* --upgrade
+RUN pip --no-cache-dir install pip==22.* --upgrade
 ### End of the Pyhthon-base-image part
 
 RUN \
