@@ -18,6 +18,7 @@ import {
   PressableContext,
   RootLocationContext,
   SessionContext,
+  UserContext,
 } from '@objectiv/schema';
 
 /** Creates instance of ApplicationContext
@@ -237,4 +238,21 @@ export const makeSessionContext = (props: { id: string; hit_number: number }): S
   _type: 'SessionContext',
   id: props.id,
   hit_number: props.hit_number,
+});
+
+/** Creates instance of UserContext
+ * @param {Object} props - factory properties
+ * @param {string} props.id - A unique string identifier to be combined with the Context Type (`_type`)
+ *         for Context instance uniqueness.
+ * @param {string} props.input_fields - Fields used to create the hash
+ * @param {string} props.hash_type - Algorithm used top create the hash
+ * @returns {UserContext} - UserContext: the internal company user ID to match our data against the user data that the company already
+ * 	has stored. In FE you can choose which field to put in the ID and hash this.
+ */
+export const makeUserContext = (props: { id: string; input_fields: string; hash_type: string }): UserContext => ({
+  __global_context: true,
+  _type: 'UserContext',
+  id: props.id,
+  input_fields: props.input_fields,
+  hash_type: props.hash_type,
 });

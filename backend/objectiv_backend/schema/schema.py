@@ -230,6 +230,40 @@ class MarketingContext(AbstractGlobalContext):
                                        **kwargs)
 
 
+class UserContext(AbstractGlobalContext):
+    """
+        the internal company user ID to match our data against the user data that the company already
+    has stored. In FE you can choose which field to put in the ID and hash this.
+
+        Attributes:
+        input_fields (str):
+                Fields used to create the hash
+        hash_type (str):
+                Algorithm used top create the hash
+        id (str):
+                A unique string identifier to be combined with the Context Type (`_type`)
+                for Context instance uniqueness.
+    """
+    _type = 'UserContext'
+
+    def __init__(self,
+                 input_fields: str,
+                 hash_type: str,
+                 id: str,
+                 **kwargs: Optional[Any]):
+        """
+        :param input_fields: 
+            Fields used to create the hash
+        :param hash_type: 
+            Algorithm used top create the hash
+        :param id: 
+            A unique string identifier to be combined with the Context Type (`_type`)
+            for Context instance uniqueness.
+        """
+        AbstractGlobalContext.__init__(
+            self, input_fields=input_fields, hash_type=hash_type, id=id, **kwargs)
+
+
 class AbstractLocationContext(AbstractContext, ABC):
     """
         AbstractLocationContext are the abstract parents of all Location Contexts. Location Contexts are meant to describe where an event originated from in the visual UI.
@@ -1270,6 +1304,8 @@ def make_context(_type: str, **kwargs) -> AbstractContext:
         return SessionContext(**kwargs)
     if _type == "MarketingContext":
         return MarketingContext(**kwargs)
+    if _type == "UserContext":
+        return UserContext(**kwargs)
     if _type == "AbstractLocationContext":
         return AbstractLocationContext(**kwargs)
     if _type == "InputContext":

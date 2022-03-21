@@ -120,3 +120,25 @@ export interface MarketingContext extends AbstractGlobalContext {
    */
   content: string | null;
 }
+
+/**
+ * the internal company user ID to match our data against the user data that the company already
+ * has stored. In FE you can choose which field to put in the ID and hash this.
+ * Inheritance: UserContext -> AbstractGlobalContext -> AbstractContext
+ */
+export interface UserContext extends AbstractGlobalContext {
+  /**
+   * Typescript discriminator
+   */
+  readonly _type: 'UserContext';
+
+  /**
+   * Fields used to create the hash
+   */
+  input_fields: string;
+
+  /**
+   * Algorithm used top create the hash
+   */
+  hash_type: string;
+}

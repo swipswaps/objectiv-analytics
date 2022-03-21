@@ -228,6 +228,21 @@
         }
       }
     },
+    "UserContext": {
+      "description": " the internal company user ID to match our data against the user data that the company already \n\
+       has stored. In FE you can choose which field to put in the ID and hash this.",
+      "parents": ["AbstractGlobalContext"],
+      "properties": {
+        "input_fields": {
+          "description": "Fields used to create the hash",
+          "type": "string"
+        },
+        "hash_type": {
+          "description": "Algorithm used top create the hash",
+          "type": "string"
+        }
+      }
+    },
     "AbstractLocationContext": {
       "description": "AbstractLocationContext are the abstract parents of all Location Contexts. Location Contexts are meant to describe where an event originated from in the visual UI.",
       "parents": ["AbstractContext"]
