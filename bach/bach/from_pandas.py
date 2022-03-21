@@ -117,6 +117,7 @@ def from_pandas_ephemeral(
 
     model_builder = CustomSqlModelBuilder(sql=sql, name=name)
     sql_model = model_builder()
+
     index = list(index_dtypes.keys())
     return DataFrame.from_model(engine=engine, model=sql_model, index=index, all_dtypes=all_dtypes)
 
