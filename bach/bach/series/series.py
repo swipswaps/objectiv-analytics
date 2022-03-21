@@ -4,6 +4,7 @@ Copyright 2021 Objectiv B.V.
 import warnings
 from abc import ABC, abstractmethod
 from copy import copy
+from datetime import date, datetime, time
 from typing import Optional, Dict, Tuple, Union, Type, Any, List, cast, TYPE_CHECKING, Callable, Mapping, \
     TypeVar, Sequence
 from uuid import UUID
@@ -1556,7 +1557,7 @@ class Series(ABC):
 
 
 def const_to_series(base: Union[Series, DataFrame],
-                    value: Optional[Union[Series, int, float, str, UUID]],
+                    value: Optional[Union[Series, int, float, str, bool, date, datetime, time, UUID]],
                     name: str = None) -> Series:
     """
     INTERNAL: Take a value and return a Series representing a column with that value.
