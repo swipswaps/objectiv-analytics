@@ -10,7 +10,7 @@ Follow our step-by-step [Quickstart Guide](https://objectiv.io/docs/home/quickst
 ### Resources
 
 * [Objectiv Docs](https://www.objectiv.io/docs) - Objectiv's official documentation.
-* [Objectiv on Slack](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) - Get help & join the discussion on where to take Objectiv next.
+* [Objectiv on Slack](https://objectiv.io/join-slack) - Get help & join the discussion on where to take Objectiv next.
 * [Contribution Guide](https://www.objectiv.io/docs/home/the-project/contribute) - Report bugs, request features and contribution information.
 * [Objectiv.io](https://www.objectiv.io) - Objectiv's official website.
 
