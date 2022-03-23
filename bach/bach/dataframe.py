@@ -3016,7 +3016,7 @@ class DataFrame:
         :param aggregation: method of aggregation, in case of duplicate index values. Supports all aggregation
             methods that :py:meth:`aggregate` supports.
 
-        :returns: DataFrame
+        :return: DataFrame
         """
         if len(self.index) <= 1:
             raise NotImplementedError('index must be a multi level index to unstack')
