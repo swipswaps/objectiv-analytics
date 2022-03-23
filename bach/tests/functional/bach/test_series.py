@@ -525,7 +525,7 @@ def test_series_unstack():
         order_by='city'
     )
 
-    stacked_bt = bt.groupby(['municipality','skating_order']).city.max()
+    stacked_bt = bt.groupby(['municipality', 'skating_order']).city.max()
     unstacked_bt = stacked_bt.unstack(fill_value='buh')
 
     expected_columns = ['1', '10', '11', '2', '3', '4', '5', '6', '7', '8', '9']
