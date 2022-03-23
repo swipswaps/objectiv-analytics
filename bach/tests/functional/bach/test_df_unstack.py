@@ -41,10 +41,8 @@ def test_unstack_level() -> None:
     new_cols = ['1__founding', '1__inhabitants', '2__founding', '2__inhabitants', '3__founding', '3__inhabitants']
     assert set(new_cols) == set(result.data_columns)
 
-    # TODO: Fix result[new_col], it is not overriding the order of columns.
-    result._data = {col: result[col] for col in new_cols}
     assert_equals_data(
-        result.sort_index(),
+        result[new_cols].sort_index(),
         expected_columns=['city', 'municipality'] + new_cols,
         expected_data=[
             ['Drylts', 'Súdwest-Fryslân', None, None, None, None, 1268., 3055.],
@@ -64,10 +62,8 @@ def test_unstack_level() -> None:
     ]
     assert set(new_cols2) == set(result2.data_columns)
 
-    # TODO: Fix result2[new_col2], it is not overriding the order of columns.
-    result2._data = {col: result2[col] for col in new_cols2}
     assert_equals_data(
-        result2.sort_index(level='skating_order'),
+        result2[new_cols2].sort_index(level='skating_order'),
         expected_columns=['skating_order', 'municipality'] + new_cols2,
         expected_data=[
             [1, 'Leeuwarden', 0, 0, 1285., 93485., 0, 0],
