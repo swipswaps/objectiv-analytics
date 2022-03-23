@@ -3072,7 +3072,7 @@ class DataFrame:
         :param dummy_na: If true, it will include ``nan`` as a variable.
         :param columns: List of string series to be converted.
         :param dtype: dtype of all new columns
-        :returns: DataFrame
+        :return: DataFrame
 
         .. note::
             DataFrame should contain at least one index level.
