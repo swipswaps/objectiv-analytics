@@ -166,3 +166,11 @@ def test_quantile_no_numeric_columns() -> None:
 
     with pytest.raises(ValueError, match=r'DataFrame has no series supporting'):
         bt.quantile()
+
+
+def test__getitem__order_columns(engine) -> None:
+    bt = get_df_with_test_data(engine, full_data_set=True)
+
+    expected_ordered_columns = ['inhabitants', 'municipality']
+    result = bt[expected_ordered_columns]
+    assert ['inhabitants', 'municipality'] == result.data_columns

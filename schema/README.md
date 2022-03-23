@@ -18,7 +18,7 @@ Objectiv is built around the Open Taxonomy and the Tracker, Collector and Bach u
 For detailed installation & usage instructions of Objectiv, visit [Objectiv Docs](https://www.objectiv.io/docs).
 
 ## Support & Troubleshooting
-If you need help with the Open Taxonomy, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
+If you need help with the Open Taxonomy, join our [Slack channel](https://objectiv.io/join-slack/) and post your question there. 
 
 ## Bug Reports & Feature Requests
 If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://objectiv.io/docs/home/the-project/contribute/).
