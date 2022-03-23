@@ -3016,7 +3016,7 @@ class DataFrame:
         :param aggregation: method of aggregation, in case of duplicate index values. Supports all aggregation
             methods that :py:meth:`aggregate` supports.
 
-        :returns: DataFrame
+        :return: DataFrame
         """
         if len(self.index) <= 1:
             raise NotImplementedError('index must be a multi level index to unstack')
@@ -3057,12 +3057,26 @@ class DataFrame:
 
     def get_dummies(
         self,
-        prefix: Union[str, List[str], Dict[str, str]] = None,
+        prefix: Optional[Union[str, List[str], Dict[str, str]]] = None,
         prefix_sep: str = '_',
         dummy_na: bool = False,
         columns: Optional[List[str]] = None,
         dtype: str = 'int64',
     ) -> 'DataFrame':
+        """
+        Convert each unique category/value from a string series into a dummy/indicator variable.
+
+        :param prefix: String to append to each new column name. By default, the prefix will be the name of
+            the series the category is originated from.
+        :param prefix_sep: Separated between the prefix and label.
+        :param dummy_na: If true, it will include ``nan`` as a variable.
+        :param columns: List of string series to be converted.
+        :param dtype: dtype of all new columns
+        :returns: DataFrame
+
+        .. note::
+            DataFrame should contain at least one index level.
+        """
         if not self.index:
             raise IndexError('DataFrame/Series should have at least one index level.')
 
@@ -3093,9 +3107,12 @@ class DataFrame:
         categorical_series = []
         from bach.series.series import const_to_series
         df_cp = self.copy()
+
+        # prepare each series, add prefix to each value (variable identifiers)
         for col in columns_to_encode:
             if dummy_na:
                 df_cp.loc[df_cp[col].isnull(), col] = 'nan'
+
             text_series = df_cp[col]
             prefix_val = f'{prefix_per_col.get(col, col)}{prefix_sep}'
             prefix_series = const_to_series(text_series, value=prefix_val, name=col)
@@ -3104,6 +3121,7 @@ class DataFrame:
             categorical_series.append(text_series)
 
         from bach.operations.concat import SeriesConcatOperation
+        # concat all categorical series into a single series, this way we avoid unstacking per each series
         categorical_df = SeriesConcatOperation(categorical_series)().to_frame()
         categorical_df = categorical_df.dropna()
         categorical_df['values'] = 1
@@ -3113,6 +3131,7 @@ class DataFrame:
         remaining_columns = [dc for dc in self.data_columns if dc not in columns_to_encode]
         dummy_columns = dummies_df.data_columns
 
+        # merge the encoded variables with the rest of series, replace null values
         encoded_df = self[remaining_columns].merge(dummies_df, how='left', left_index=True, right_index=True)
         encoded_df = encoded_df.fillna(value=dict(zip(dummy_columns, [0] * len(dummy_columns))))
         encoded_df[dummy_columns] = encoded_df[dummy_columns].astype(dtype)

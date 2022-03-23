@@ -1,7 +1,7 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from bach import Series, SeriesString
+from bach import Series, SeriesString, DataFrame
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
 
 
@@ -77,4 +77,22 @@ def test_add_string_series():
             [2, 'Snits is in the municipality Súdwest-Fryslân'],
             [3, 'Drylts is in the municipality Súdwest-Fryslân']
         ]
+    )
+
+
+def test_get_dummies() -> None:
+    bt = get_bt_with_test_data()
+    result = bt['city'].get_dummies()
+    assert isinstance(result, DataFrame)
+
+    expected_columns = ['city_Drylts', 'city_Ljouwert', 'city_Snits']
+    assert set(expected_columns) == set(result.data_columns)
+    assert_equals_data(
+        result[expected_columns],
+        expected_columns=['_index_skating_order'] + expected_columns,
+        expected_data=[
+            [1, 0, 1, 0],
+            [2, 0, 0, 1],
+            [3, 1, 0, 0]
+        ],
     )

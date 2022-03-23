@@ -1,13 +1,14 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-from typing import Union, TYPE_CHECKING
+from typing import Union, TYPE_CHECKING, Optional
 
 from bach.series import Series
 from bach.expression import Expression
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
+    from bach import DataFrame
 
 
 class StringOperation:
@@ -126,6 +127,31 @@ class SeriesString(Series):
         if source_dtype == 'string':
             return expression
         return Expression.construct('cast(({}) as text)', expression)
+
+    def get_dummies(
+        self,
+        prefix: Optional[str] = None,
+        prefix_sep: str = '_',
+        dummy_na: bool = False,
+        dtype: str = 'int64',
+    ) -> 'DataFrame':
+        """
+        Convert each unique category/value from the series into a dummy/indicator variable.
+
+        :param prefix: String to append to each new column name. By default, the prefix will be the name of
+            the caller.
+        :param prefix_sep: Separated between the prefix and label.
+        :param dummy_na: If true, it will include ``nan`` as a variable.
+        :param dtype: dtype of all new columns
+
+        :return: DataFrame
+
+        .. note::
+            Series should contain at least one index level.
+        """
+        return self.to_frame().get_dummies(
+            prefix=prefix, prefix_sep=prefix_sep, dummy_na=dummy_na, dtype=dtype,
+        )
 
     @property
     def str(self) -> StringOperation:

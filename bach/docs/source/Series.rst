@@ -197,6 +197,13 @@ All types
     Series.nunique
     Series.value_counts
 
+String
++++++++
+.. autosummary::
+    :toctree: Series
+
+    SeriesString.get_dummies
+
 Numeric
 +++++++
 .. autosummary::
