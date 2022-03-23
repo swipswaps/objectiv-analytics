@@ -3050,6 +3050,60 @@ class DataFrame:
 
         return df.fillna(value=fill_value)
 
+    def get_dummies(
+        self,
+        prefix: Union[str, List[str], Dict[str, str]] = None,
+        prefix_sep: str = '_',
+        dummy_na: bool = False,
+        columns: Optional[List[str]] = None,
+        dtype: str = 'int64',
+    ) -> 'DataFrame':
+        if not self.index:
+            raise IndexError('DataFrame/Series should have at least one index level.')
+
+        if columns:
+            columns_to_encode = columns
+        else:
+            columns_to_encode = [s.name for s in self.data.values() if s.dtype == 'string']
+
+        if not columns_to_encode:
+            return self.copy()
+
+        if any(col not in self.data or self.data[col].dtype != 'string' for col in columns_to_encode):
+            raise ValueError('Can only encode string dtype columns.')
+
+        prefix_per_col = {}
+        if isinstance(prefix, dict):
+            prefix_per_col = prefix
+        elif prefix is not None:
+            prefix_per_col = {
+                col: prefix
+                for col, prefix in zip(columns_to_encode, (prefix if isinstance(prefix, list) else [prefix]))
+            }
+
+        categorical_series = []
+        from bach.series.series import const_to_series
+        for col in columns_to_encode:
+            text_series = self[col]
+            prefix_val = f'{prefix_per_col.get(col, col)}{prefix_sep}'
+            prefix_series = const_to_series(text_series, value=prefix_val, name=col)
+            text_series = prefix_series + text_series
+
+            categorical_series.append(text_series)
+
+        from bach.operations.concat import SeriesConcatOperation
+        categorical_df = SeriesConcatOperation(categorical_series)().to_frame()
+        categorical_df['values'] = 1
+        if dummy_na:
+            mask = categorical_df[categorical_df.data_columns[0]].isnull()
+            categorical_df.loc[mask, categorical_df.data_columns[0]] = 'NaN'
+
+        categorical_df = categorical_df.set_index(categorical_df.data_columns[0], append=True)
+        dummies_df = categorical_df['values'].unstack(fill_value=0).astype(dtype)
+        remaining_columns = [dc for dc in self.data_columns if dc not in columns_to_encode]
+
+        return self[remaining_columns].merge(dummies_df, left_index=True, right_index=True)
+
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     """
