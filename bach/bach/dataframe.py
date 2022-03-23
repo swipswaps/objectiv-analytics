@@ -1039,7 +1039,12 @@ class DataFrame:
             key_set = set(key)
             if not key_set.issubset(set(self.data_columns)):
                 raise KeyError(f"Keys {key_set.difference(set(self.data_columns))} not in data_columns")
-            selected_data = {key: data for key, data in self.data.items() if key in key_set}
+
+            if isinstance(key, set):
+                selected_data = {col: data for col, data in self.data.items() if col in key_set}
+            else:
+                # should change order of columns in select
+                selected_data = {col: self.data[col] for col in key}
 
             return self.copy_override(series=selected_data)
 
