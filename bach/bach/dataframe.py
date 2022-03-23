@@ -4,7 +4,6 @@ Copyright 2021 Objectiv B.V.
 import warnings
 from copy import copy
 from datetime import date, datetime, time
-from functools import reduce
 
 from typing import (
     List, Set, Union, Dict, Any, Optional, Tuple,
