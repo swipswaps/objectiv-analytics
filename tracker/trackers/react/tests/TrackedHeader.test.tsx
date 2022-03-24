@@ -20,7 +20,7 @@ describe('TrackedHeader', () => {
     jest.resetAllMocks();
   });
 
-  it('should wrap the given Component in a NavigationContext', () => {
+  it('should wrap the given Component in a ContentContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
@@ -48,7 +48,7 @@ describe('TrackedHeader', () => {
         _type: 'PressEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'NavigationContext',
+            _type: 'ContentContext',
             id: 'header',
           }),
         ]),
@@ -84,7 +84,7 @@ describe('TrackedHeader', () => {
         _type: 'PressEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'NavigationContext',
+            _type: 'ContentContext',
             id: 'secondary-header',
           }),
         ]),
