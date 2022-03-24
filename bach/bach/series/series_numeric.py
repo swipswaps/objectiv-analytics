@@ -182,7 +182,6 @@ class SeriesAbstractNumeric(Series, ABC):
 
         :param partition: The partition or window to apply
         :param skipna: Exclude NA/NULL values
-        :param skipna: Exclude NA/NULL values
         :param ddof: Delta degrees of freedom. he divisor used in calculations is N - ddof,
             where N represents the number of elements
         """

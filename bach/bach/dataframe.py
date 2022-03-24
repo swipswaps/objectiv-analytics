@@ -2395,6 +2395,20 @@ class DataFrame:
         return self._aggregate_func('std', axis, level, numeric_only,
                                     skipna=skipna, ddof=ddof, **kwargs)
 
+    def std_pop(self, axis=1, skipna=True, level=None, ddof: int = 1, numeric_only=False, **kwargs):
+        """
+        Returns the population standard deviation of each column.
+
+        :param axis: only ``axis=1`` is supported. This means columns are aggregated.
+        :param skipna: only ``skipna=True`` supported. This means NULL values are ignored.
+        :param level: not supported.
+        :param ddof: Delta Degrees of Freedom. Only 1 is supported.
+        :param numeric_only: whether to aggregate numeric series only, or attempt all.
+        :returns: a new DataFrame with the aggregation applied to all selected columns.
+        """
+        return self._aggregate_func('std_pop', axis, level, numeric_only,
+                                    skipna=skipna, ddof=ddof, **kwargs)
+
     def sum(self, axis=1, skipna=True, level=None, numeric_only=False, min_count=0, **kwargs):
         """
         Returns the sum of all values in each column.
