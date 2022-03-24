@@ -164,6 +164,7 @@ Reshaping, indexing, sorting & merging
     DataFrame.ffill
     DataFrame.bfill
     DataFrame.stack
+    DataFrame.scale
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -208,4 +209,5 @@ Numeric
     DataFrame.sem
     DataFrame.sum
     DataFrame.std
+    DataFrame.std_pop
     DataFrame.var

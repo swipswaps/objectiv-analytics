@@ -125,6 +125,19 @@ class SeriesAbstractNumeric(Series, ABC):
         self._ddof_unsupported(ddof)
         return self._derived_agg_func(partition, 'stddev_samp', skipna=skipna)
 
+    def std_pop(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
+        """
+        Get the population standard deviation of the input values
+        Normalized by N by default.
+
+        :param partition: The partition or window to apply
+        :param skipna: Exclude NA/NULL values
+        :param ddof: Delta degrees of freedom. he divisor used in calculations is N - ddof,
+            where N represents the number of elements
+        """
+        self._ddof_unsupported(ddof)
+        return self._derived_agg_func(partition, 'stddev_pop', skipna=skipna)
+
     def sum(self, partition: WrappedPartition = None, skipna: bool = True, min_count: int = None):
         """
         Get the sum of the input values.
@@ -168,6 +181,7 @@ class SeriesAbstractNumeric(Series, ABC):
         Normalized by N-1 by default.
 
         :param partition: The partition or window to apply
+        :param skipna: Exclude NA/NULL values
         :param skipna: Exclude NA/NULL values
         :param ddof: Delta degrees of freedom. he divisor used in calculations is N - ddof,
             where N represents the number of elements

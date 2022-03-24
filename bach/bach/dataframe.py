@@ -2999,6 +2999,17 @@ class DataFrame:
 
         return stacked_df.all_series['__stacked']
 
+    def scale(self, with_mean: bool = True, with_std: bool = True) -> 'DataFrame':
+        """"
+        Standardizes all numeric series based on mean and population standard deviation.
+
+        :param with_mean: if true, each feature value will be centered before scaling
+        :param with_std: if true, each feature value will be scaled to unit variance
+        :return: DataFrame
+        """
+        from bach.preprocessing.scalers import StandardScaler
+        return StandardScaler(training_df=self, with_mean=with_mean, with_std=with_std).transform()
+
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):
     """
