@@ -7,4 +7,3 @@ API Reference
 
     DataFrame
     Series
-    Objectiv

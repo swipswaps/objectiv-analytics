@@ -6,6 +6,6 @@ Modeling
     :maxdepth: 5
 
     intro
-    core_concepts
-    examples
-    reference
+    objectiv_examples
+    Objectiv
+    bach

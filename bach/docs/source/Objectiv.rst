@@ -12,6 +12,31 @@ specifically created for these purpose: the Bach and the model hub.
   configuration. In the background it runs on Bach, but in most cases models can be run with just a single line
   of code.
 
+Model overview
+--------------
+
+Mapping
+~~~~~~~
+.. autosummary::
+    :toctree: Objectiv
+
+    Map.is_first_session
+    Map.is_new_user
+    Map.is_conversion_event
+    Map.conversions_counter
+    Map.conversions_in_time
+    Map.pre_conversion_hit_number
+
+Aggregation
+~~~~~~~~~~~
+.. autosummary::
+    :toctree: Objectiv
+
+    Aggregate.unique_users
+    Aggregate.unique_sessions
+    Aggregate.session_duration
+    Aggregate.frequency
+
 Reference
 ---------
 .. autosummary::

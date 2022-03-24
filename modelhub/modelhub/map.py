@@ -113,11 +113,12 @@ class Map:
         """
         Counts the total number of conversions given a partition (ie session_id
         or user_id).
+
         :param name: the name of the conversion to label as set in
-            :py:attr:`ObjectivFrame.conversion_events`.
+            :py:attr:`ModelHub.conversion_events`.
         :param partition: the partition over which the number of conversions are counted. Can be any column
             of the ObjectivFrame
-        :returns: SeriesBoolean with same index as the ObjectivFrame this method is applied to.
+        :returns: :py:class:`bach.SeriesBoolean` with the same index as ``data``.
         """
 
         self._mh._check_data_is_objectiv_data(data)
