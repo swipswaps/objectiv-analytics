@@ -1,8 +1,8 @@
 .. currentmodule:: bach
 
-========
-Examples
-========
+===========
+Bach basics
+===========
 Here we'll give some very basic examples of the usage of Bach: creating a DataFrame, basic operations,
 aggregate operations, and getting the resulting data filtered and sorted.
 

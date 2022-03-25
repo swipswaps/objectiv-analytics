@@ -1,8 +1,8 @@
 .. currentmodule:: bach_open_taxonomy
 
-===========================
-Product analytics with Bach
-===========================
+=======================
+Basic product analytics
+=======================
 
 This example shows how Bach can be used for basic product analysis.
 

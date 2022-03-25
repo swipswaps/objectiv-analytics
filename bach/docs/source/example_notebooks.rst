@@ -1,13 +1,20 @@
-.. currentmodule:: bach
+=================
+Example notebooks
+=================
 
-=============================
+Here are several examples of how you can analyze and model data using the open model hub. All examples are
+also available as Jupyter notebooks from our github repository. To get started you will first have to
+instantiate the open model hub and create a Bach DataFrame with Objectiv data. The open
+model hub uses this DataFrame for its models. For a general introduction to Bach DataFrames, see the Bach
+docs.
+
+
 Getting started with Objectiv
-=============================
+-----------------------------
 
-This example shows how to instantiate the model hub and a Bach DataFrame with Objectiv data that can be used
+Here we show how to instantiate the model hub and a Bach DataFrame with Objectiv data that can be used
 to analyze tracked data.
-This DataFrame points to the data and all operations are done on this object. The data used in this example
-is based on the data set that comes with our quickstart docker demo. A start date and an end date can
+This DataFrame points to the data and all operations are done on this object. A start date and an end date can
 optionally be passed to limit the underlying data that is queried. The `time_aggregation` parameter determines
 the default formatting of the timestamp of events. This is useful for grouping to different time aggregations,
 ie. monthly or daily.
@@ -23,7 +30,6 @@ accessed with `db_url`.
     # get the Bach DataFrame with Objectiv data
     df = modelhub.get_objectiv_dataframe(db_url='postgresql://objectiv:@localhost:5432/objectiv'
                                          start_date='2022-01-04',
-                                         time_aggregation='YYYY-MM-DD'
                                          table_name='example')
 
 Your DataFrame is instantiated! We start with showing the first couple of rows from the data set.
@@ -33,3 +39,16 @@ Your DataFrame is instantiated! We start with showing the first couple of rows f
     df.head()
 
 Take a look at one of the other examples to see how you can analyze your data.
+
+
+Examples
+--------
+.. toctree::
+    :maxdepth: 1
+
+    modelhub_basics
+    product_analytics
+    open_taxonomy
+    examples
+    feature_engineering
+    machine_learning

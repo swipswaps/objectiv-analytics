@@ -6,6 +6,7 @@ Modeling
     :maxdepth: 5
 
     intro
-    objectiv_examples
-    Objectiv
+    example_notebooks
+    models
+    modelhub_api_reference
     bach
