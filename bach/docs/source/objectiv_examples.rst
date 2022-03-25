@@ -17,6 +17,6 @@ Also see
     :maxdepth: 1
 
     getting_started
-    website_analytics
+    product_analytics
     feature_engineering
     machine_learning
