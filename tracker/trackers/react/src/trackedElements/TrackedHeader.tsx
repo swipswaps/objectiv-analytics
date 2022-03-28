@@ -3,12 +3,12 @@
  */
 
 import React from 'react';
-import { TrackedNavigationContext } from '../trackedContexts/TrackedNavigationContext';
+import { TrackedContentContext } from '../trackedContexts/TrackedContentContext';
 import { SingletonTrackedElementProps } from '../types';
 
 /**
- * Generates a TrackedNavigationContext preconfigured with a <header> Element as Component.
+ * Generates a TrackedContentContext preconfigured with a <header> Element as Component.
  */
 export const TrackedHeader = React.forwardRef<HTMLDivElement, SingletonTrackedElementProps>((props, ref) => (
-  <TrackedNavigationContext {...props} id={props.id ?? 'header'} Component={'header'} ref={ref} />
+  <TrackedContentContext {...props} id={props.id ?? 'header'} Component={'header'} ref={ref} />
 ));
