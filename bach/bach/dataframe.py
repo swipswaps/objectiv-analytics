@@ -19,7 +19,7 @@ from bach.expression import Expression, SingleValueExpression, VariableToken, Ag
 from bach.from_database import get_dtypes_from_table, get_dtypes_from_model
 from bach.sql_model import BachSqlModel, CurrentNodeSqlModel, get_variable_values_sql
 from bach.types import get_series_type_from_dtype
-from bach.utils import escape_parameter_characters
+from bach.utils import escape_parameter_characters, FeatureRange
 from sql_models.constants import NotSet, not_set
 from sql_models.graph_operations import update_placeholders_in_graph, get_all_placeholders
 from sql_models.model import SqlModel, Materialization, CustomSqlModelBuilder, RefPath
@@ -3013,8 +3013,12 @@ class DataFrame:
 
         return stacked_df.all_series['__stacked']
 
-    def scale(self, with_mean: bool = True, with_std: bool = True) -> 'DataFrame':
-        """"
+    def scale(
+        self,
+        with_mean: bool = True,
+        with_std: bool = True,
+    ) -> 'DataFrame':
+        """
         Standardizes all numeric series based on mean and population standard deviation.
 
         :param with_mean: if true, each feature value will be centered before scaling
@@ -3023,6 +3027,22 @@ class DataFrame:
         """
         from bach.preprocessing.scalers import StandardScaler
         return StandardScaler(training_df=self, with_mean=with_mean, with_std=with_std).transform()
+
+    def minmax_scale(self, feature_range: Tuple[int, int] = (0, 1)) -> 'DataFrame':
+        """
+        Scales all numeric series based on a given range. The transformation to be performed per series
+        is as follows:
+        .. code-block:: python
+            feature_std = (feature - min_feature) / (max_feature - min_feature)
+
+            # min, max = feature_range
+            scaled_feature = feature_std * (max - min) + min
+
+        :param feature_range: ```tuple(min, max)``` desired range to use for scaling.
+        :return: DataFrame
+        """
+        from bach.preprocessing.scalers import MinMaxScaler
+        return MinMaxScaler(training_df=self, feature_range=feature_range).transform()
 
 
 def dict_name_series_equals(a: Dict[str, 'Series'], b: Dict[str, 'Series']):

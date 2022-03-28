@@ -165,6 +165,7 @@ Reshaping, indexing, sorting & merging
     DataFrame.bfill
     DataFrame.stack
     DataFrame.scale
+    DataFrame.minmax_scale
 
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
