@@ -136,7 +136,7 @@ interactions.
 
 Conversions
 -----------
-First we define a conversion event in the Objectiv Frame.
+First we define a conversion event in the Objectiv DataFrame.
 
 .. code-block:: python
 

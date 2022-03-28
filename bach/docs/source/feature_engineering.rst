@@ -37,6 +37,8 @@ events. 'global_contexts' and the 'location_stack' contain most of the event spe
 
 We have a dataset of 6,979 rows, no missing values so far. Data ranges from 2022-02-02 to 2022-02-14.
 
+Creating a feature set
+----------------------
 We'd like to create a feature set that describes the behaviour of users in a way. We start with extracting
 the root location from the location stack. This indicates what parts of our website users have visited. Using
 `to_numpy()` shows the results as a numpy array.
@@ -48,6 +50,8 @@ the root location from the location stack. This indicates what parts of our webs
 
 `['jobs', 'docs', 'home'...]` etc is returned, the sections of the objectiv.io website.
 
+Check missing values
+--------------------
 .. code-block:: python
 
     df.root.isnull().value_counts().head()
@@ -60,7 +64,11 @@ overview of the different event types that exist and select the one we are inter
 
     df.event_type.unique().to_numpy()
 
-We are interested in 'PressEvent'. The next code block shows that we select only press events and then group
+We are interested in 'PressEvent'.
+
+Creating the variables
+----------------------
+The next code block shows that we select only press events and then group
 by 'user_id' and 'root' and count the session_hit_number. After that the results are unstacked, resulting in
 a table where each row represents a user (the index is 'user_id') and the columns are the different root
 locations and its values are the number of times a user clicked in that sections.
@@ -71,6 +79,8 @@ locations and its values are the number of times a user clicked in that sections
     features_unstacked = features.unstack()
     features_unstacked.head()
 
+Fill emptry values
+------------------
 Now we do have empty values, so we fill them with 0, as empty means that the user did not click in the
 section.
 
@@ -78,6 +88,8 @@ section.
 
     features_unstacked = features.unstack(fill_value=0)
 
+Describe the data set
+---------------------
 We use describe again to get an impression of out created per-user data set.
 
 .. code-block:: python
@@ -88,6 +100,8 @@ We have 256 users, looking at the mean, some sections seem to be used a lot more
 number of clicks seems quite different per root section. This information can be used to drop some of the
 variables from our data set or the use scaling or outlier detection. We will plot histograms for the
 
+Visualize the data
+------------------
 .. code-block:: python
 
     from matplotlib import pyplot as plt
@@ -102,6 +116,8 @@ The histograms show that indeed the higher values seem quite anomalous for most 
 could be a reason to drop some of these observations or resort to scaling methods. For now we continue with
 the data set as is.
 
+Add time feature
+----------------
 Now we want to add some time feature to our data set. We add the average session length per user to the data
 set. We can use the model hub for this. `fillna` is used to fill missing values.
 
@@ -110,6 +126,8 @@ set. We can use the model hub for this. `fillna` is used to fill missing values.
     import datetime
     features_unstacked['session_duration'] = df.mh.agg.session_duration(groupby='user_id').fillna(datetime.timedelta(0))
 
+Export to pandas for sklearn
+----------------------------
 Now that we have our data set, we can use it for machine learning, using for example sklearn. To do so
 we call `to_pandas()` to get a pandas DataFrame that can be used in sklearn.
 
