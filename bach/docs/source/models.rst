@@ -19,7 +19,7 @@ The model hub has two main type of functions: `map` and `aggregate`.
 Mapping
 ~~~~~~~
 .. autosummary::
-    :toctree: Objectiv
+    :toctree: modelhub_api_reference
 
     Map.is_first_session
     Map.is_new_user
@@ -34,7 +34,7 @@ Mapping
 Aggregation
 ~~~~~~~~~~~
 .. autosummary::
-    :toctree: Objectiv
+    :toctree: modelhub_api_reference
 
     Aggregate.unique_users
     Aggregate.unique_sessions

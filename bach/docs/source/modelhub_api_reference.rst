@@ -12,7 +12,7 @@ Reference
 ---------
 .. autosummary::
     :template: autosummary/class_short.rst
-    :toctree: Objectiv
+    :toctree: modelhub_api_reference
 
     ModelHub
     SeriesGlobalContexts

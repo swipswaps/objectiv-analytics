@@ -42,7 +42,7 @@ index_page = 'intro'
 
 # these categories only get a toplevel entry in the sidebar
 # but no submenus for the headers
-skip_categories = ['Introduction', 'Core Concepts', 'Examples']
+skip_categories = ['Introduction']
 
 # replacement label to avoid duplicates
 category_index = 'Overview'
@@ -51,9 +51,15 @@ category_index = 'Overview'
 # subdirs / modules will be auto-added below
 patterns = [
     '^intro.html$',
-    '^core_concepts.html$',
-    '^examples.html$',
-    '^reference.html$'
+    '^example_notebooks.html$',
+    '^models.html$',
+    '^modelhub_basics.html$',
+    '^open_taxonomy.html$',
+    '^modelhub_api_reference.html$',
+    '^bach.html$',
+    '^feature_engineering.html$',
+    '^machine_learning.html$',
+    '^product_analytics.html$'
 ]
 
 # list of special cases, where we have a subdir, with an introduction at toplevel

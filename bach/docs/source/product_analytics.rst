@@ -24,7 +24,7 @@ First we look at the data.
 
 The columns 'global_contexts' and the 'location_stack' contain most of the event specific data. These columns
 are json type columns and we can extract data from it based on the keys of the json objects using
-:ref:`get_from_context_with_type_series`. Or use methods
+:ref:`get_from_context_with_type_series <get_from_context_with_type_series>`. Or use methods
 specific to the :ref:`location_stack` or :ref:`global_contexts` to
 extract the data.
 
