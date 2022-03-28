@@ -28,8 +28,9 @@ This is a complete list of the currently available packages.
 | @objectiv/utilities                              | core      | /core/utilities                          | [README](/tracker/core/utilities/README.md)                          |
 | @objectiv/http-context                           | plugin    | /plugins/http-context                    | [README](/tracker/plugins/http-context/README.md)                    | 
 | @objectiv/plugin-path-context-from-url           | plugin    | /plugins/path-context-from-url           | [README](/tracker/plugins/path-context-from-url/README.md)           |
-| @objectiv/plugin-root-location-context-from-url  | plugin    | /plugins/root-location-context-from-url  | [README](/tracker/plugins/root-location-context-from-url/README.md)  |
+| @objectiv/plugin-react-navigation                | plugin    | /plugins/react-navigation                | [README](/tracker/plugins/react-navigation/README.md)                |
 | @objectiv/plugin-react-router-tracked-components | plugin    | /plugins/react-router-tracked-components | [README](/tracker/plugins/react-router-tracked-components/README.md) |
+| @objectiv/plugin-root-location-context-from-url  | plugin    | /plugins/root-location-context-from-url  | [README](/tracker/plugins/root-location-context-from-url/README.md)  |
 | @objectiv/tracker-angular                        | tracker   | /trackers/angular                        | [README](/tracker/trackers/angular/README.md)                        |
 | @objectiv/tracker-browser                        | tracker   | /trackers/browser                        | [README](/tracker/trackers/browser/README.md)                        |
 | @objectiv/tracker-react                          | tracker   | /trackers/react                          | [README](/tracker/trackers/react/README.md)                          |

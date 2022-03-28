@@ -138,7 +138,7 @@ def test_set_index():
     abt = bt.rename(columns={'city': 'x'})
     xbt = abt.set_index(col, drop=False)
     assert list(xbt.index.keys()) == ['city']
-    assert list(xbt.data.keys()) == ['x', 'municipality', 'inhabitants']
+    assert list(xbt.data.keys()) == ['municipality', 'x', 'inhabitants']
 
     # try to set a series as index
     abt = bt.set_index(bt.municipality.str[:3], drop=True)

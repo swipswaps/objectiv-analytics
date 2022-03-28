@@ -11,32 +11,15 @@ from collections import defaultdict
 from typing import Tuple, Dict, Hashable, List, Set, Sequence, TypeVar, Generic
 
 from bach.dataframe import DtypeNamePair
-from bach import DataFrame, const_to_series, get_series_type_from_dtype, SeriesAbstractNumeric, Series
+from bach import DataFrame, get_series_type_from_dtype, SeriesAbstractNumeric, Series
 from bach.expression import Expression, join_expressions
 from bach.sql_model import BachSqlModel, construct_references
-from bach.utils import ResultSeries, get_result_series_dtype_mapping
+from bach.utils import ResultSeries, get_result_series_dtype_mapping, get_merged_series_dtype
 from sql_models.model import CustomSqlModelBuilder, Materialization
 
 TDataFrameOrSeries = TypeVar('TDataFrameOrSeries', bound='DataFrameOrSeries')
 
 DEFAULT_CONCAT_SERIES_DTYPE = 'string'
-
-
-def _get_merged_series_dtype(dtypes: Set[str]) -> str:
-    """
-    returns a final dtype when trying to combine series with different dtypes
-    """
-    if len(dtypes) == 1:
-        return dtypes.pop()
-    elif all(
-        issubclass(get_series_type_from_dtype(dtype), SeriesAbstractNumeric)
-        for dtype in dtypes
-    ):
-        return 'float64'
-
-    # default casting will be as text, this way we avoid any SQL errors
-    # when merging different db types into a column
-    return DEFAULT_CONCAT_SERIES_DTYPE
 
 
 class ConcatOperation(Generic[TDataFrameOrSeries]):
@@ -108,7 +91,7 @@ class ConcatOperation(Generic[TDataFrameOrSeries]):
             series_name: ResultSeries(
                 name=series_name,
                 expression=Expression.identifier(series_name),
-                dtype=_get_merged_series_dtype(series_dtypes[series_name]),
+                dtype=get_merged_series_dtype(series_dtypes[series_name]),
             )
             for series_name in series_names
         }
@@ -283,7 +266,7 @@ class SeriesConcatOperation(ConcatOperation[Series]):
         """
         dtypes: Set[str] = set(series.dtype for series in self.objects)
 
-        main_series = self.objects[0].copy_override_dtype(dtype=_get_merged_series_dtype(dtypes))
+        main_series = self.objects[0].copy_override_dtype(dtype=get_merged_series_dtype(dtypes))
         return self._get_result_series([main_series])
 
     def _join_series_expressions(self, obj: Series) -> Expression:
