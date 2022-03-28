@@ -3014,12 +3014,48 @@ class DataFrame:
         return stacked_df.all_series['__stacked']
 
     def scale(self, with_mean: bool = True, with_std: bool = True) -> 'DataFrame':
-        """"
+        """
         Standardizes all numeric series based on mean and population standard deviation.
 
         :param with_mean: if true, each feature value will be centered before scaling
         :param with_std: if true, each feature value will be scaled to unit variance
+
         :return: DataFrame
+
+        Each transformation per feature is performed as follows:
+
+        .. testsetup:: scale
+           :skipif: engine is None
+
+           import pandas
+           data = {'index': ['a', 'b', 'c', 'd'], 'feature': [1, 2, 3, 4]}
+           pdf = pandas.DataFrame(data)
+           df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+           df = df.set_index('index')
+           agg_df = df.agg(['mean', 'std_pop'], numeric_only=True)
+
+           feature = df['feature']
+           mean_feature = agg_df['feature_mean']
+           std_feature = agg_df['feature_std_pop']
+           with_mean = True
+           with_std = True
+
+        .. doctest:: scale
+            :skipif: engine is None
+
+            >>> scaled_feature = feature.copy()
+            >>> if with_mean:
+            ...     scaled_feature -= mean_feature
+
+
+            >>> if with_std:
+            ...     scaled_feature /= std_feature
+
+        Where:
+            * ``feature`` is the series to be scaled
+            * ``mean_feature`` is the mean of ``feature``
+            * ``std_feature`` is the (population-based) stardard deviation of ``feature``
+
         """
         from bach.preprocessing.scalers import StandardScaler
         return StandardScaler(training_df=self, with_mean=with_mean, with_std=with_std).transform()
