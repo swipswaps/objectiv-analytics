@@ -3052,7 +3052,7 @@ class DataFrame:
         .. doctest:: minmax_scale
             :skipif: engine is None
 
-            >>> range_min, range_max = (0, 1)
+            >>> range_min,  = (0, 1)
             >>> feature_std = (feature - min_feature) / (max_feature - min_feature)
             >>> scaled_feature = feature_std * (range_max - range_min) + range_min
 
@@ -3060,7 +3060,7 @@ class DataFrame:
             * ``feature`` is the series to be scaled
             * ``feature_min`` is the minimum value of ``feature``
             * ``feature_max`` is the maximum value of ``feature``
-            * ``min, max`` = ``feature_range``
+            * ``range_min, range_max`` = ``feature_range``
         """
         from bach.preprocessing.scalers import MinMaxScaler
         return MinMaxScaler(training_df=self, feature_range=feature_range).transform()
