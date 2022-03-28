@@ -43,7 +43,7 @@ ENV VIRTUAL_ENV="/venv_python_3_8/"
 ENV PATH="${VIRTUAL_ENV}bin:${PATH}"
 ENV PYTHONHOME=""
 # Upgrade pip to what is currently the latest version
-RUN pip --no-cache-dir install pip==21.1.* --upgrade
+RUN pip --no-cache-dir install pip==22.* --upgrade
 ### End of the Pyhthon-base-image part
 
 # Install dependencies needed to build package
@@ -76,7 +76,7 @@ RUN \
 ENV VIRTUAL_ENV="/venv_python_3_8/"
 ENV PATH="${VIRTUAL_ENV}bin:${PATH}"
 ENV PYTHONHOME=""
-RUN pip --no-cache-dir install pip==21.1.* --upgrade
+RUN pip --no-cache-dir install pip==22.* --upgrade
 ### End of the Pyhthon-base-image part
 
 RUN \
@@ -89,7 +89,6 @@ WORKDIR /services
 # entrypoint scripts
 COPY docker/*.sh /services/
 COPY docker/gunicorn.conf.py /etc/
-CMD /services/entry_point.sh
 
 # python requirements
 # we use requirement.in, because the list with hashes is not cross-platform compatible
@@ -104,3 +103,7 @@ RUN \
 COPY --from=builder /build_dir/dist/* /tmp/
 RUN pip --no-cache-dir install /tmp/objectiv_backend-*-py3-none-any.whl && \
     rm /tmp/*
+
+USER www-data
+CMD /services/entry_point.sh
+ENTRYPOINT /services/entry_point.sh

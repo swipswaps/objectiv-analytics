@@ -40,7 +40,7 @@ export type TrackerConfig = ContextsConfig & {
   transport?: TrackerTransportInterface;
 
   /**
-   * Optional. Plugins that will be executed when the Tracker initializes and before the Event is sent.
+   * Optional. Additional Plugins to add to the default list of Plugins of the tracker.
    */
   plugins?: TrackerPlugins | TrackerPluginInterface[];
 
