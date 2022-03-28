@@ -1,3 +1,5 @@
+.. _models:
+
 ==============
 Model overview
 ==============
@@ -12,6 +14,7 @@ The model hub has two main type of functions: `map` and `aggregate`.
 - `aggregate` fuctions return aggregated data in some form from the DataFrame. Can also be accessed with
   `agg`.
 
+.. _map_models:
 
 Mapping
 ~~~~~~~
@@ -24,6 +27,9 @@ Mapping
     Map.conversions_counter
     Map.conversions_in_time
     Map.pre_conversion_hit_number
+
+
+.. _aggregate_models:
 
 Aggregation
 ~~~~~~~~~~~

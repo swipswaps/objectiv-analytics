@@ -1,3 +1,5 @@
+.. _feature_engineering:
+
 .. currentmodule:: bach
 
 =============================
@@ -7,17 +9,16 @@ Feature engineering with Bach
 This example shows how Bach can be used for feature engineering. We'll go through describing the data, finding
 outliers, transforming data and grouping and aggregating data so that a useful feature set is created that
 can be used for machine learning. We have a separate example available that goes into the details of how a
-data set prepared in Bach can be used for machine learning with sklearn `here
-<machine_learning.html>`_.
+data set prepared in Bach can be used for machine learning with sklearn :ref:`here <machine_learning>`.
 
 This example is also available in a `notebook
-<https://github.com/objectiv/objectiv-analytics/blob/main/analysis/notebooks/feature_engineering.ipynb>`_
+<https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/feature_engineering.ipynb>`_
 to run on your own data or use our
 `quickstart
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
-At first we have to instantiate the Objectiv DataFrame object. See `Getting started with Objectiv
-<getting_started.html>`_ for more info on how to instantiate the object.
+At first we have to instantiate the Objectiv DataFrame object. See
+:ref:`get_started_with_objectiv` for more info on how to instantiate the object.
 
 This object points to all data in the data set. Too large to run in pandas and therefore sklearn. For the
 data set that we need, we aggregate to user level, at which point it is small enough to fit in memory.
@@ -29,13 +30,12 @@ We start with showing the first couple of rows from the data set and describing 
     df.head()
 
 Columns of interest are 'user_id', this is what we will aggregate to. 'moment' contains timestamp info for the
-events. 'global_contexts' and the 'location_stack' contain most of the event specific data.
+events. :ref:`global_contexts` and the :ref:`location_stack` contain most of the event specific data.
 
 .. code-block:: python
 
     df.describe(include='all').head()
 
-We have a dataset of 6,979 rows, no missing values so far. Data ranges from 2022-02-02 to 2022-02-14.
 
 Creating a feature set
 ----------------------
@@ -79,8 +79,8 @@ locations and its values are the number of times a user clicked in that sections
     features_unstacked = features.unstack()
     features_unstacked.head()
 
-Fill emptry values
-------------------
+Fill empty values
+-----------------
 Now we do have empty values, so we fill them with 0, as empty means that the user did not click in the
 section.
 
@@ -96,7 +96,7 @@ We use describe again to get an impression of out created per-user data set.
 
     features_unstacked.materialize().describe().head()
 
-We have 256 users, looking at the mean, some sections seem to be used a lot more than others. Also the max
+Looking at the mean, some sections seem to be used a lot more than others. Also the max
 number of clicks seems quite different per root section. This information can be used to drop some of the
 variables from our data set or the use scaling or outlier detection. We will plot histograms for the
 

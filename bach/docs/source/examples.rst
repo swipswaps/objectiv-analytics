@@ -1,3 +1,5 @@
+.. _bach_examples:
+
 .. currentmodule:: bach
 
 ===========

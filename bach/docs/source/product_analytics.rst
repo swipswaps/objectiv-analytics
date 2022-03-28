@@ -4,16 +4,16 @@
 Basic product analytics
 =======================
 
-This example shows how Bach can be used for basic product analysis.
+This example shows how the open model hub can be used for basic product analysis.
 
 This example is also available in a `notebook
-<https://github.com/objectiv/objectiv-analytics/blob/main/analysis/notebooks/basic-analysis.ipynb>`_
+<https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/basic-analysis.ipynb>`_
 to run on your own data or use our
 `quickstart
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
-At first we have to instantiate the Objectiv DataFrame object. See `Getting started with Objectiv
-<getting_started.html>`_ for more info on how to instantiate the object. The data used in this example is
+At first we have to instantiate the Objectiv DataFrame object. See
+:ref:`get_started_with_objectiv` for more info on how to instantiate the object. The data used in this example is
 based on the data set that comes with our quickstart docker demo.
 
 First we look at the data.
@@ -24,11 +24,9 @@ First we look at the data.
 
 The columns 'global_contexts' and the 'location_stack' contain most of the event specific data. These columns
 are json type columns and we can extract data from it based on the keys of the json objects using
-`get_from_context_with_type_series
-<Objectiv/modelhub.SeriesGlobalContexts.objectiv.html>`_. Or use methods
-specific to the `location stack
-<Objectiv/modelhub.SeriesLocationStack.ls.html>`_ or `global contexts
-<Objectiv/modelhub.SeriesGlobalContexts.gc.html>`_ to extract the data.
+:ref:`get_from_context_with_type_series`. Or use methods
+specific to the :ref:`location_stack` or :ref:`global_contexts` to
+extract the data.
 
 
 .. code-block:: python
@@ -37,11 +35,15 @@ specific to the `location stack
     df['feature_nice_name'] = df.location_stack.ls.nice_name
     df['root_location'] = df.location_stack.ls.get_from_context_with_type_series(type='RootLocationContext', key='id')
     df['referrer'] = df.global_contexts.gc.get_from_context_with_type_series(type='HttpContext', key='referrer')
+    # add marketing context as columns
+    df['utm_source'] = df.global_contexts.gc.get_from_context_with_type_series(type='MarketingContext', key='source')
+    df['utm_medium'] = df.global_contexts.gc.get_from_context_with_type_series(type='MarketingContext', key='medium')
+    df['utm_campaign'] = df.global_contexts.gc.get_from_context_with_type_series(type='MarketingContext', key='campaign')
+    df['utm_content'] = df.global_contexts.gc.get_from_context_with_type_series(type='MarketingContext', key='content')
+    df['utm_term'] = df.global_contexts.gc.get_from_context_with_type_series(type='MarketingContext', key='term')
 
-Now we will go though a bunch of basic analytics metrics. We can use models from the `model hub
-<Objectiv/modelhub.ModelHub.html>`_ for this purpose
-or use `Bach
-<reference.html>`_ to do data analysis directly on the data stored in the sql data base using pandas like syntax.
+Now we will go though a bunch of basic analytics metrics. We can use models from the :ref:`models` for this purpose or use :ref:`bach` to do data analysis directly on the data stored in the
+sql data base using pandas like syntax.
 
 For each example, `head()`, `to_pandas()` or `to_numpy()` can be used to execute the generated sql and get the results in
 your notebook.

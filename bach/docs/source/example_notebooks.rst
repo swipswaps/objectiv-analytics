@@ -1,13 +1,17 @@
+.. _example_notebooks:
+
 =================
 Example notebooks
 =================
 
 Here are several examples of how you can analyze and model data using the open model hub. All examples are
-also available as Jupyter notebooks from our github repository. To get started you will first have to
+also available as Jupyter notebooks from our `github repository
+<https://github.com/objectiv/objectiv-analytics/tree/main/notebooks>`_. To get started you will first have to
 instantiate the open model hub and create a Bach DataFrame with Objectiv data. The open
-model hub uses this DataFrame for its models. For a general introduction to Bach DataFrames, see the Bach
-docs.
+model hub uses this DataFrame for its models. For a general introduction to Bach DataFrames, see the
+:ref:`Bach <bach>` docs.
 
+.. _get_started_with_objectiv:
 
 Getting started with Objectiv
 -----------------------------

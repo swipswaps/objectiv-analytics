@@ -1,3 +1,5 @@
+.. _modelhub_basics:
+
 .. currentmodule:: bach
 
 =====================
@@ -5,11 +7,12 @@ Open model hub basics
 =====================
 
 In this example, we briefly demonstrate how you can use pre-built models from the open model hub in
-conjunction with, Bach, our modeling library.
+conjunction with, :ref:`bach`, our modeling library.
 
-This example uses real, unaltered data that was collected from objectiv.io with Objectiv’s Tracker. All models
-in the open model hub are compatible with datasets that have been validated against the open analytics
-taxonomy.
+This example uses real, unaltered data that was collected from https://objectiv.io with Objectiv’s Tracker. All models
+in the open model hub are compatible with datasets that have been validated against the
+`open analytics taxonomy
+<https://objectiv.io/docs/taxonomy/>`_.
 
 This example is also available in a `notebook
 <https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/model-hub-demo-notebook.ipynb>`_
@@ -17,14 +20,16 @@ to run on your own data or use our
 `quickstart
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
-At first we have to instantiate the Objectiv DataFrame object. See `Example notebooks
-<example_notebooks.html>`_ for more info on how to instantiate the object.
+At first we have to instantiate the Objectiv DataFrame object. See
+:ref:`get_started_with_objectiv` for more info on how to instantiate the object.
 
 Using the open model hub
 ------------------------
-The model hub contains a growing collection of open-source, free to use data models that you can take, chain and run to quickly build highly specific model stacks for product analysis and exploration. It includes models for a wide range of typical product analytics use cases. The source is available for all models and you're free to make any changes to them.
+The open model hub is a growing collection of open-source, free to use data models that you can take,
+combine and run for product analysis and exploration. It includes models for a wide range of typical product
+analytics use cases. The source is available for all models and you're free to make any changes to them.
 
-The model hub has two main type of functions: `map` and `aggregate`.
+The model hub has two main type of functions: :ref:`map_models` and :ref:`aggregate_models`.
 
 - `map` functions always return a series with the same shape and index as the DataFrame they are applied to.
   This ensures they can be added as a column to that DataFrame. `map` functions that return SeriesBoolean can
@@ -38,7 +43,7 @@ The next examples demonstrate how to use the model hub by showcasing a selection
 
 A simple aggregation model
 --------------------------
-Calculating the unique users is one of the basic models in the model hub. As it is an aggregation model, it is called with `model_hub.aggregate.unique_users()`. It uses the time_aggregation that is set when the model hub was instantiated. With `.head()` we immediately query the data to show the results. `.to_pandas()` can be used to use all results as a pandas object in python. These (and following) results are sorted descending, so we show the latest data first.
+Calculating the unique users is one of the basicÒ models in the model hub. As it is an aggregation model, it is called with `model_hub.aggregate.unique_users()`. It uses the *time_aggregation* that is set when the model hub was instantiated. With `.head()` we immediately query the data to show the results. `.to_pandas()` can be used to use all results as a pandas object in python.
 
 .. code-block:: python
 
@@ -47,14 +52,14 @@ Calculating the unique users is one of the basic models in the model hub. As it 
 Using `map` with the model hub & combining models
 -------------------------------------------------
 This example shows how you use map to label users as a new user. This uses *time_aggregation*. As *time_aggregation* was set to 'YYYY-MM-DD' it means all hits are labeled as new for the entire day in which the user had its first session.
-Now we have a basic feature set that is small enough to fit in memory. This can be used with sklearn, as we
-demonstrate in this example.
 
 .. code-block:: python
 
     df['is_new_user'] = modelhub.map.is_new_user(df)
 
-Or we can label conversion events. To do this we first have to define what a conversion is by setting the type of event and the location on the product at which this event was triggered with `add_conversion_event`.
+Or we can label conversion events. To do this we first have to define what a conversion is by setting the
+type of event and the location on the product at which this event was triggered with `add_conversion_event`
+(this is called the location stack, see :ref:`location_stack` for info).
 
 .. code-block:: python
 
@@ -66,9 +71,6 @@ Or we can label conversion events. To do this we first have to define what a con
 Map, filter, aggregate
 ----------------------
 As the map functions above retured a SeriesBoolean, they can be used in the model hub combined with a filter and aggregation models. We use the same aggregation model we showed earlier (`unique_users`), but now with the filter `df.conversion_events` applied. This gives the unique converted users per day.
-
-You can use this column, just as any other. For example you can now use your created clusters to group models
-from the model hub by:
 
 .. code-block:: python
 
@@ -145,7 +147,8 @@ Show the results, now the underlying query is executed.
 
     presses_per_session.head()
 
-There is another notebook in the same folder that demonstrates what you can do with the Bach modeling library [open-taxonomy-how-to.ipynb](open-taxonomy-how-to.ipynb), or head over to the [api reference](https://objectiv.io/docs/modeling/reference) for a complete overview of the possibilities.
+There is another :ref:`example <bach_examples>` that demonstrates what you can do with the Bach modeling
+library, or head over to the :ref:`bach_api_reference` for a complete overview of the possibilities.
 
 4. Export DataFrame and model hub results to pandas DataFrame
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -164,4 +167,4 @@ This concludes the open model hub demo.
 
 We hope you’ve gotten a taste of the power and flexibility of the open model hub to quickly answer common product analytics questions. You can take it a lot further and build highly specific model stacks for in-depth analysis and exploration.
 
-For a complete overview of all available and upcoming models, check out the [model hub docs](https://objectiv.io/docs/modeling/Objectiv/modelhub.ModelHub).
+For a complete overview of all available and upcoming models, check out the :ref:`models`.

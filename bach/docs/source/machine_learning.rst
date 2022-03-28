@@ -1,3 +1,5 @@
+.. _machine_learning:
+
 .. currentmodule:: bach
 
 ================
@@ -16,8 +18,8 @@ to run on your own data or use our
 `quickstart
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
 
-At first we have to instantiate the Objectiv DataFrame object. See `Getting started with Objectiv
-<getting_started.html>`_ for more info on how to instantiate the object.
+At first we have to instantiate the Objectiv DataFrame object. See
+:ref:`get_started_with_objectiv` for more info on how to instantiate the object.
 
 This object points to all data in the data set. Too large to run in pandas and therefore sklearn. For the
 data set that we need, we aggregate to user level, at which point it is small enough to fit in memory.

@@ -1,3 +1,5 @@
+.. _modelhub_api_reference:
+
 ============================
 Open model hub API reference
 ============================
