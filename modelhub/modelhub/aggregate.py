@@ -110,7 +110,8 @@ class Aggregate:
 
     def session_duration(self,
                          data: bach.DataFrame,
-                         groupby: GroupByType = not_set) -> bach.SeriesInt64:
+                         groupby: GroupByType = not_set,
+                         exclude_bounces: bool = True) -> bach.SeriesInt64:
         """
         Calculate the average duration of sessions.
 
@@ -138,8 +139,9 @@ class Aggregate:
         gdata = self._check_groupby(data=data, groupby=new_groupby)
         session_duration = gdata.aggregate({'moment': ['min', 'max']})
         session_duration['session_duration'] = session_duration['moment_max']-session_duration['moment_min']
-        # remove "bounces"
-        session_duration = session_duration[(session_duration['session_duration'] > '0')]
+
+        if exclude_bounces:
+            session_duration = session_duration[(session_duration['session_duration'] > '0')]
 
         return session_duration.groupby(session_duration.index_columns[:-1]).session_duration.mean()
 
