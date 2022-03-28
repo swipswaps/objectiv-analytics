@@ -98,7 +98,7 @@ When using `docker-compose`, the following yaml snippet would do the trick:
 The important parts here are:
 - using a volume to make the service account available inside the container
 - assigning the path of the volume-mapped file correctly to the environment variable
-- setting the 2 GCP variables, to make sure the collector knows where to push the events to
+- setting the 2 GCP/PubSub variables, to make sure the collector knows where to push the events to
 
 #### Running locally
 Running the collector locally, in a dev setup is pretty similar:
@@ -112,14 +112,19 @@ pip install -r requirements.in
 # start flask app
 cd objectiv_backend
 export PYTHONPATH=.:$PYTHONPATH
-GOOGLE_APPLICATION_CREDENTIALS=path-to-json.json SP_GCP_PROJECT=some-gcp-project SP_GCP_PUBSUB_TOPIC_RAW=sp-raw-topic flask run
+GOOGLE_APPLICATION_CREDENTIALS=path-to-json.json \
+ SP_GCP_PROJECT=some-gcp-project \
+ SP_GCP_PUBSUB_TOPIC_RAW=sp-raw \
+ SP_GCP_PUBSUB_TOPIC_BAD=sp-bad \
+ flask run
 ```
 
 ## Testing
 The collector will display a message if the Snowplow config is loaded:
 `Snowplow config enabled`.
-This indicated that the collector will try to push events. If this fails, logging should hint what's happening. If there 
-are no errors in the collector logs, the events should be
+This indicates that the collector will try to push events. If this fails, logging should hint what's happening. If there 
+are no errors in the collector logs, the events should be successfully pushed into the raw topic, to be picked up by 
+Snowplow's enrichment.
 
 # Maintenance
 
