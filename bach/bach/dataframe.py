@@ -3013,11 +3013,7 @@ class DataFrame:
 
         return stacked_df.all_series['__stacked']
 
-    def scale(
-        self,
-        with_mean: bool = True,
-        with_std: bool = True,
-    ) -> 'DataFrame':
+    def scale(self, with_mean: bool = True, with_std: bool = True) -> 'DataFrame':
         """
         Standardizes all numeric series based on mean and population standard deviation.
 
