@@ -3030,16 +3030,41 @@ class DataFrame:
 
     def minmax_scale(self, feature_range: Tuple[int, int] = (0, 1)) -> 'DataFrame':
         """
-        Scales all numeric series based on a given range. The transformation to be performed per series
-        is as follows:
-        .. code-block:: python
-            feature_std = (feature - min_feature) / (max_feature - min_feature)
+        Scales all numeric series based on a given range.
 
-            # min, max = feature_range
-            scaled_feature = feature_std * (max - min) + min
-
-        :param feature_range: ```tuple(min, max)``` desired range to use for scaling.
+        :param feature_range: ``tuple(min, max)`` desired range to use for scaling.
         :return: DataFrame
+
+        Each transformation per feature is performed as follows:
+
+        .. testsetup:: minmax_scale
+           :skipif: engine is None
+
+           import pandas
+           data = {'index': ['a', 'b', 'c', 'd'], 'feature': [1, 2, 3, 4]}
+           pdf = pandas.DataFrame(data)
+
+           df = DataFrame.from_pandas(engine=engine, df=pdf, convert_objects=True)
+           df = df.set_index('index')
+           agg_df = df.agg(['min', 'max'], numeric_only=True)
+           agg_df = agg_df.merge(df, how='cross')
+
+           feature = df['feature']
+           min_feature = agg_df['feature_min']
+           max_feature = agg_df['feature_max']
+
+        .. doctest:: minmax_scale
+            :skipif: engine is None
+
+            >>> range_min, range_max = (0, 1)
+            >>> feature_std = (feature - min_feature) / (max_feature - min_feature)
+            >>> scaled_feature = feature_std * (range_max - range_min) + range_min
+
+        Where:
+            * ``feature`` is the series to be scaled
+            * ``feature_min`` is the minimum value of ``feature``
+            * ``feature_max`` is the maximum value of ``feature``
+            * ``min, max`` = ``feature_range``
         """
         from bach.preprocessing.scalers import MinMaxScaler
         return MinMaxScaler(training_df=self, feature_range=feature_range).transform()
