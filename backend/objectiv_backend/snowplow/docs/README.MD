@@ -52,7 +52,8 @@ Before starting up the collector, some preparation is required.
 To be able to push events into the message queue the following needs to be set up:
 - A GCP service account (`json`) with permission to write to PubSub
 - The `id` of the GCP project that holds the PubSub topic
-- The `id` of the PubSub topic (message queue)
+- The `id` of the PubSub raw topic (message queue)
+- The `id` of the PubSub bad topic (message queue)
 
 These will be used to configure the collector in the next step.
 
@@ -60,8 +61,9 @@ These will be used to configure the collector in the next step.
 The configuration for the collector is controlled through environment variables. They allow you to configure which outputs
 will be used. Settings specific to the PubSub sin are:
 
-- `SP_GCP_PROJECT` This is the id of the project on GCP where the PubSub topic is located
-- `SP_GCP_PUBSUB_TOPIC_RAW` This is the id of the PubSub topic to publish events to
+- `SP_GCP_PROJECT` This is the `id` of the project on GCP where the PubSub topic is located
+- `SP_GCP_PUBSUB_TOPIC_RAW` This is the `id` of the PubSub topic to publish events to
+- `SP_GCP_PUBSUB_TOPIC_BAD` This is the `id` of the PubSub topic to publish bad/invalid events to
 - `GOOGLE_APPLICATION_CREDENTIALS` This is the path to a `json` containing a service account on GCP that allows publishing
  to the PubSub topic.
 
