@@ -75,23 +75,23 @@ class SeriesAbstractNumeric(Series, ABC):
         if ddof is not None and ddof != 1:
             raise NotImplementedError("ddof != 1 currently not implemented")
 
-    def kurt(self, partition: WrappedPartition = None, skipna: bool = True):
-        return self.kurtosis(partition, skipna)
-
-    def kurtosis(self, partition: WrappedPartition = None, skipna: bool = True):
-        raise NotImplementedError("kurtosis currently not implemented")
-
-    def mad(self, partition: WrappedPartition = None, skipna: bool = True):
-        raise NotImplementedError("mad currently not implemented")
-
-    def prod(self, partition: WrappedPartition = None, skipna: bool = True):
-        return self.product(partition, skipna)
-
-    def product(self, partition: WrappedPartition = None, skipna: bool = True):
-        raise NotImplementedError("prod currently not implemented")
-
-    def skew(self, partition: WrappedPartition = None, skipna: bool = True):
-        raise NotImplementedError("skew currently not implemented")
+    # def kurt(self, partition: WrappedPartition = None, skipna: bool = True):
+    #     return self.kurtosis(partition, skipna)
+    #
+    # def kurtosis(self, partition: WrappedPartition = None, skipna: bool = True):
+    #     raise NotImplementedError("kurtosis currently not implemented")
+    #
+    # def mad(self, partition: WrappedPartition = None, skipna: bool = True):
+    #     raise NotImplementedError("mad currently not implemented")
+    #
+    # def prod(self, partition: WrappedPartition = None, skipna: bool = True):
+    #     return self.product(partition, skipna)
+    #
+    # def product(self, partition: WrappedPartition = None, skipna: bool = True):
+    #     raise NotImplementedError("prod currently not implemented")
+    #
+    # def skew(self, partition: WrappedPartition = None, skipna: bool = True):
+    #     raise NotImplementedError("skew currently not implemented")
 
     def sem(self, partition: WrappedPartition = None, skipna: bool = True, ddof: int = None):
         """

@@ -8,15 +8,17 @@ Platform-specific tracker packages are available for popular frameworks such as 
 
 For installation instructions for your preferred platform, please choose a tracker package:
 
-| Name                      | Type    | Path              | Links                                         |
-|---------------------------|---------|-------------------|-----------------------------------------------|
-| @objectiv/tracker-angular | tracker | /trackers/angular | [README](/tracker/trackers/angular/README.md) |
-| @objectiv/tracker-browser | tracker | /trackers/browser | [README](/tracker/trackers/browser/README.md) |
+| Name                           | Type    | Path                   | Links                                              |
+|--------------------------------|---------|------------------------|----------------------------------------------------|
+| @objectiv/tracker-angular      | tracker | /trackers/angular      | [README](/tracker/trackers/angular/README.md)      |
+| @objectiv/tracker-browser      | tracker | /trackers/browser      | [README](/tracker/trackers/browser/README.md)      |
+| @objectiv/tracker-react        | tracker | /trackers/react        | [README](/tracker/trackers/react/README.md)        |
+| @objectiv/tracker-react-native | tracker | /trackers/react-native | [README](/tracker/trackers/react-native/README.md) |
 
 For detailed installation & usage instructions, visit [Objectiv Docs](https://www.objectiv.io/docs/tracking).
 
 ## Support & Troubleshooting
-If you need help using or installing Objectiv's tracker, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
+If you need help using or installing Objectiv's tracker, join our [Slack channel](https://objectiv.io/join-slack/) and post your question there. 
 
 ## Bug Reports & Feature Requests
 If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://objectiv.io/docs/home/the-project/contribute/).

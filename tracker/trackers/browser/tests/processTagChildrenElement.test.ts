@@ -2,14 +2,14 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { makePressableContext } from '@objectiv/tracker-core';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { makePressableContext, TrackerConsole } from '@objectiv/tracker-core';
 import { isTaggedElement, processTagChildrenElement, tagPressable, tagContent, TaggingAttribute } from '../src';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('processChildrenTrackingElement', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-  });
-  afterEach(() => {
     jest.resetAllMocks();
   });
 

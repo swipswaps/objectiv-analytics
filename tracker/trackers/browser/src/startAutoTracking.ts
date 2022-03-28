@@ -16,7 +16,7 @@ import { trackNewElements } from './mutationObserver/trackNewElements';
  * Also tracks application Loaded.
  * Safe to call multiple times: it will auto-track only once.
  */
-export const startAutoTracking = (options?: Pick<BrowserTrackerConfig, 'trackApplicationLoadedEvent' | 'console'>) => {
+export const startAutoTracking = (options?: Pick<BrowserTrackerConfig, 'trackApplicationLoadedEvent'>) => {
   try {
     // Nothing to do if we are already auto-tracking
     if (AutoTrackingState.observerInstance) {
@@ -24,7 +24,7 @@ export const startAutoTracking = (options?: Pick<BrowserTrackerConfig, 'trackApp
     }
 
     // Create Mutation Observer Callback
-    const mutationCallback = makeMutationCallback(options?.console);
+    const mutationCallback = makeMutationCallback();
 
     // Create Mutation Observer
     AutoTrackingState.observerInstance = new MutationObserver(mutationCallback);

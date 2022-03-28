@@ -13,7 +13,7 @@ export const compareTrackerConfigs = (trackerConfigA: TrackerConfig, trackerConf
   let trackerConfigAClone = { ...trackerConfigA };
   let trackerConfigBClone = { ...trackerConfigB };
 
-  // Get rid of mutable attributes
+  // Get rid of mutable attributes, e.g. active.
   delete trackerConfigAClone.active;
   delete trackerConfigBClone.active;
 

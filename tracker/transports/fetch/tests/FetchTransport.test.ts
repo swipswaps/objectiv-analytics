@@ -2,8 +2,8 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
-import { isTransportSendError, makeTransportSendError, TrackerEvent } from '@objectiv/tracker-core';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { isTransportSendError, makeTransportSendError, TrackerConsole, TrackerEvent } from '@objectiv/tracker-core';
 import fetchMock from 'jest-fetch-mock';
 import { defaultFetchFunction, defaultFetchOptions, FetchTransport } from '../src';
 
@@ -12,6 +12,8 @@ const MOCK_ENDPOINT = 'http://test-endpoint';
 const testEvent = new TrackerEvent({
   _type: 'test-event',
 });
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('FetchTransport', () => {
   beforeAll(() => {
@@ -28,10 +30,7 @@ describe('FetchTransport', () => {
   });
 
   it('should send using `fetch` API with the default fetch function', async () => {
-    const testTransport = new FetchTransport({
-      endpoint: MOCK_ENDPOINT,
-      console: mockConsole,
-    });
+    const testTransport = new FetchTransport({ endpoint: MOCK_ENDPOINT });
     expect(testTransport.isUsable()).toBe(true);
     await testTransport.handle(testEvent);
     expect(fetch).toHaveBeenCalledWith(MOCK_ENDPOINT, {
@@ -81,15 +80,8 @@ describe('FetchTransport', () => {
 
   it('should reject with TransportSendError on http status !== 200', async () => {
     // Create our Fetch Transport Instance
-    const testTransport = new FetchTransport({
-      endpoint: MOCK_ENDPOINT,
-    });
-    const testTransportWithConsole = new FetchTransport({
-      endpoint: MOCK_ENDPOINT,
-      console: mockConsole,
-    });
+    const testTransport = new FetchTransport({ endpoint: MOCK_ENDPOINT });
 
-    fetchMock.mockResponse('oops', { status: 500 });
     fetchMock.mockResponse('oops', { status: 500 });
 
     try {
@@ -98,14 +90,7 @@ describe('FetchTransport', () => {
       expect(isTransportSendError(error as Error)).toBe(true);
     }
 
-    try {
-      await testTransportWithConsole.handle(testEvent);
-    } catch (error) {
-      expect(isTransportSendError(error as Error)).toBe(true);
-    }
-
     await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(makeTransportSendError());
-    await expect(testTransportWithConsole.handle(testEvent)).rejects.toStrictEqual(makeTransportSendError());
   });
 
   it('should reject with TransportSendError on network failures', async () => {
@@ -113,12 +98,7 @@ describe('FetchTransport', () => {
     const testTransport = new FetchTransport({
       endpoint: MOCK_ENDPOINT,
     });
-    const testTransportWithConsole = new FetchTransport({
-      endpoint: MOCK_ENDPOINT,
-      console: mockConsole,
-    });
 
-    fetchMock.mockReject();
     fetchMock.mockReject();
 
     try {
@@ -127,13 +107,6 @@ describe('FetchTransport', () => {
       expect(error).toStrictEqual(makeTransportSendError());
     }
 
-    try {
-      await testTransportWithConsole.handle(testEvent);
-    } catch (error) {
-      expect(error).toStrictEqual(makeTransportSendError());
-    }
-
     await expect(testTransport.handle(testEvent)).rejects.toStrictEqual(makeTransportSendError());
-    await expect(testTransportWithConsole.handle(testEvent)).rejects.toStrictEqual(makeTransportSendError());
   });
 });

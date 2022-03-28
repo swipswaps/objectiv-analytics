@@ -2,22 +2,24 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
-import { TrackerEvent, TrackerQueue, TrackerQueueMemoryStore, TrackerTransportRetry } from '@objectiv/tracker-core';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import {
+  TrackerConsole,
+  TrackerEvent,
+  TrackerQueue,
+  TrackerQueueMemoryStore,
+  TrackerTransportRetry,
+} from '@objectiv/tracker-core';
 import { DebugTransport } from '@objectiv/transport-debug';
 import { defaultFetchFunction, FetchTransport } from '@objectiv/transport-fetch';
 import fetchMock from 'jest-fetch-mock';
 import { clear, mockUserAgent } from 'jest-useragent-mock';
 import { ReactTracker } from '../src/';
 
-describe('BrowserTracker', () => {
+TrackerConsole.setImplementation(MockConsoleImplementation);
+
+describe('ReactTracker', () => {
   beforeEach(() => {
-    jest.spyOn(console, 'error').mockImplementation(() => {});
-    jest.spyOn(console, 'group').mockImplementation(() => {});
-    jest.spyOn(console, 'groupCollapsed').mockImplementation(() => {});
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-  });
-  afterEach(() => {
     jest.resetAllMocks();
   });
 
@@ -100,64 +102,6 @@ describe('BrowserTracker', () => {
     expect(testTracker.queue?.store).toBeInstanceOf(TrackerQueueMemoryStore);
   });
 
-  describe('env sensitive logic', () => {
-    const OLD_ENV = process.env;
-
-    beforeEach(() => {
-      process.env = { ...OLD_ENV };
-    });
-
-    afterAll(() => {
-      process.env = OLD_ENV;
-    });
-
-    it('Tracker instance should automatically bind to global console', () => {
-      process.env.NODE_ENV = 'dev';
-
-      const testTracker = new ReactTracker({
-        applicationId: 'app-id',
-        transport: new FetchTransport({ endpoint: 'localhost' }),
-      });
-
-      expect(testTracker.console).toEqual(console);
-    });
-
-    it('should not crash if NODE_ENV is undefined', () => {
-      process.env.NODE_ENV = undefined;
-
-      const testTracker = new ReactTracker({
-        applicationId: 'app-id',
-        transport: new FetchTransport({ endpoint: 'localhost' }),
-      });
-
-      expect(testTracker.console).toEqual(undefined);
-    });
-
-    it('Should not automatically bind to global console if we are in dev mode and console has been specified', () => {
-      process.env.NODE_ENV = 'dev';
-
-      const testTracker = new ReactTracker({
-        applicationId: 'app-id',
-        transport: new FetchTransport({ endpoint: 'localhost' }),
-        console: mockConsole,
-      });
-
-      expect(testTracker.console).toEqual(mockConsole);
-    });
-
-    it('Should not automatically bind to global console if `null` has been specified ', () => {
-      process.env.NODE_ENV = 'dev';
-
-      const testTracker = new ReactTracker({
-        applicationId: 'app-id',
-        transport: new FetchTransport({ endpoint: 'localhost' }),
-        console: mockConsole,
-      });
-
-      expect(testTracker.console).toEqual(mockConsole);
-    });
-  });
-
   describe('Default Plugins', () => {
     it('should have some Web Plugins configured by default when no `plugins` have been specified', () => {
       const testTracker = new ReactTracker({ applicationId: 'app-id', endpoint: 'localhost' });
@@ -172,35 +116,19 @@ describe('BrowserTracker', () => {
       );
     });
 
-    it('should allow disabling default plugins', () => {
+    it('should allow disabling all plugins, exception made for OpenTaxonomyValidationPlugin ', () => {
       const testTracker = new ReactTracker({
         applicationId: 'app-id',
         endpoint: 'localhost',
+        trackApplicationContext: false,
         trackHttpContext: false,
         trackPathContextFromURL: false,
         trackRootLocationContextFromURL: false,
       });
       expect(testTracker).toBeInstanceOf(ReactTracker);
-      expect(testTracker.plugins?.plugins).toEqual(
-        expect.arrayContaining([expect.objectContaining({ pluginName: 'ApplicationContextPlugin' })])
-      );
-      expect(testTracker.plugins?.plugins).toEqual(
-        expect.not.arrayContaining([
-          expect.objectContaining({ pluginName: 'HttpContextPlugin' }),
-          expect.objectContaining({ pluginName: 'PathContextFromURLPlugin' }),
-          expect.objectContaining({ pluginName: 'RootLocationContextFromURLPlugin' }),
-        ])
-      );
-    });
-
-    it('should not have any default Plugin configured when `plugins` have been overridden', () => {
-      const testTracker = new ReactTracker({
-        applicationId: 'app-id',
-        endpoint: 'localhost',
-        plugins: [],
-      });
-      expect(testTracker).toBeInstanceOf(ReactTracker);
-      expect(testTracker.plugins?.plugins).toStrictEqual([]);
+      expect(testTracker.plugins?.plugins).toEqual([
+        expect.objectContaining({ pluginName: 'OpenTaxonomyValidationPlugin' }),
+      ]);
     });
   });
 

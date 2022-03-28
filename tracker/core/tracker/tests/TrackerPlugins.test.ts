@@ -2,19 +2,17 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { mockConsole } from '@objectiv/testing-tools';
-import { Tracker, TrackerEvent, TrackerPluginInterface, TrackerPlugins } from '../src';
+import { MockConsoleImplementation } from '@objectiv/testing-tools';
+import { Tracker, TrackerConsole, TrackerEvent, TrackerPluginInterface, TrackerPlugins } from '../src';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('Plugin', () => {
   beforeEach(() => {
     jest.resetAllMocks();
   });
 
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
-  const tracker = new Tracker({ applicationId: 'test-tracker', console: mockConsole });
+  const tracker = new Tracker({ applicationId: 'test-tracker' });
 
   it('should instantiate when specifying an empty list of Plugins', () => {
     const testPlugins = new TrackerPlugins({ tracker, plugins: [] });
@@ -32,7 +30,7 @@ describe('Plugin', () => {
     expect(testPlugins).toEqual({ tracker, plugins });
   });
 
-  it('should not allow Plugins with the same name', () => {
+  it('should replace Plugins with the same name and use the last instance in the plugin list', () => {
     class TestPluginA implements TrackerPluginInterface {
       readonly pluginName = 'pluginA';
       readonly parameter?: string;
@@ -45,13 +43,15 @@ describe('Plugin', () => {
         return true;
       }
     }
-    expect(
-      () =>
-        new TrackerPlugins({
-          tracker,
-          plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue1' })],
-        })
-    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated');
+    const trackerPlugins = new TrackerPlugins({
+      tracker,
+      plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue1' })],
+    });
+
+    expect(trackerPlugins.get('pluginA')).toEqual({
+      pluginName: 'pluginA',
+      parameter: 'parameterValue1',
+    });
   });
 
   it('should return false if a plugin does not exist', () => {
@@ -81,13 +81,13 @@ describe('Plugin', () => {
     testPlugins.add(pluginA);
     expect(pluginA.initialize).toHaveBeenCalledTimes(1);
     testPlugins.add(pluginB);
-    expect(mockConsole.log).toHaveBeenCalledTimes(2);
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.log).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
       1,
       '%c｢objectiv:TrackerPlugins｣ test-pluginA added at index 0',
       'font-weight: bold'
     );
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
       2,
       '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1',
       'font-weight: bold'
@@ -135,8 +135,8 @@ describe('Plugin', () => {
     const testPlugins = new TrackerPlugins({ tracker, plugins: [pluginA, pluginB, pluginC] });
     jest.resetAllMocks();
     testPlugins.remove('test-pluginB');
-    expect(mockConsole.log).toHaveBeenCalledTimes(1);
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.log).toHaveBeenCalledTimes(1);
+    expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
       1,
       '%c｢objectiv:TrackerPlugins｣ test-pluginB removed',
       'font-weight: bold'
@@ -184,13 +184,13 @@ describe('Plugin', () => {
     jest.resetAllMocks();
     testPlugins.replace(newPluginB1);
     expect(newPluginB1.initialize).toHaveBeenCalledTimes(1);
-    expect(mockConsole.log).toHaveBeenCalledTimes(2);
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.log).toHaveBeenCalledTimes(2);
+    expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
       1,
       '%c｢objectiv:TrackerPlugins｣ test-pluginB removed',
       'font-weight: bold'
     );
-    expect(mockConsole.log).toHaveBeenNthCalledWith(
+    expect(MockConsoleImplementation.log).toHaveBeenNthCalledWith(
       2,
       '%c｢objectiv:TrackerPlugins｣ test-pluginB added at index 1',
       'font-weight: bold'
@@ -253,62 +253,86 @@ describe('Plugin', () => {
         return true;
       }
     }
-    expect(
-      () =>
-        new TrackerPlugins({
-          tracker,
-          plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue' })],
-        })
-    ).toThrow('｢objectiv:TrackerPlugins｣ pluginA: duplicated');
+    const trackerPlugins = new TrackerPlugins({
+      tracker,
+      plugins: [new TestPluginA(), new TestPluginA({ parameter: 'parameterValue1' })],
+    });
+
+    expect(trackerPlugins.get('pluginA')).toEqual({
+      pluginName: 'pluginA',
+      parameter: 'parameterValue1',
+    });
   });
 
-  it('should execute all Plugins implementing the `beforeTransport` callback', () => {
+  it('should execute all Plugins implementing the `enrich` callback', () => {
     const pluginA: TrackerPluginInterface = {
       pluginName: 'pluginA',
       isUsable: () => true,
-      beforeTransport: jest.fn(),
+      enrich: jest.fn(),
     };
     const pluginB: TrackerPluginInterface = {
       pluginName: 'pluginB',
       isUsable: () => true,
-      beforeTransport: jest.fn(),
+      enrich: jest.fn(),
     };
     const pluginC: TrackerPluginInterface = { pluginName: 'pluginC', isUsable: () => true };
     const plugins: TrackerPluginInterface[] = [pluginA, pluginB, pluginC];
     const testPlugins = new TrackerPlugins({ tracker, plugins });
-    expect(pluginA.beforeTransport).not.toHaveBeenCalled();
-    expect(pluginB.beforeTransport).not.toHaveBeenCalled();
+    expect(pluginA.enrich).not.toHaveBeenCalled();
+    expect(pluginB.enrich).not.toHaveBeenCalled();
     const testEvent = new TrackerEvent({ _type: 'test-event' });
-    testPlugins.beforeTransport(testEvent);
-    expect(pluginA.beforeTransport).toHaveBeenCalledWith(testEvent);
-    expect(pluginB.beforeTransport).toHaveBeenCalledWith(testEvent);
+    testPlugins.enrich(testEvent);
+    expect(pluginA.enrich).toHaveBeenCalledWith(testEvent);
+    expect(pluginB.enrich).toHaveBeenCalledWith(testEvent);
+  });
+
+  it('should execute all Plugins implementing the `validate` callback', () => {
+    const pluginA: TrackerPluginInterface = {
+      pluginName: 'pluginA',
+      isUsable: () => true,
+      validate: jest.fn(),
+    };
+    const pluginB: TrackerPluginInterface = {
+      pluginName: 'pluginB',
+      isUsable: () => true,
+      validate: jest.fn(),
+    };
+    const pluginC: TrackerPluginInterface = { pluginName: 'pluginC', isUsable: () => true };
+    const plugins: TrackerPluginInterface[] = [pluginA, pluginB, pluginC];
+    const testPlugins = new TrackerPlugins({ tracker, plugins });
+    expect(pluginA.validate).not.toHaveBeenCalled();
+    expect(pluginB.validate).not.toHaveBeenCalled();
+    const testEvent = new TrackerEvent({ _type: 'test-event' });
+    testPlugins.validate(testEvent);
+    expect(pluginA.validate).toHaveBeenCalledWith(testEvent);
+    expect(pluginB.validate).toHaveBeenCalledWith(testEvent);
   });
 
   it('should execute only Plugins that are usable', () => {
     const pluginA: TrackerPluginInterface = {
       pluginName: 'pluginA',
       isUsable: () => true,
-      beforeTransport: jest.fn(),
+      enrich: jest.fn(),
     };
     const pluginB: TrackerPluginInterface = {
       pluginName: 'test-pluginB',
       isUsable: () => false,
-      beforeTransport: jest.fn(),
+      enrich: jest.fn(),
     };
     const pluginC: TrackerPluginInterface = {
       pluginName: 'pluginC',
       isUsable: () => true,
-      beforeTransport: jest.fn(),
+      enrich: jest.fn(),
     };
     const plugins: TrackerPluginInterface[] = [pluginA, pluginB, pluginC];
     const testPlugins = new TrackerPlugins({ tracker, plugins });
-    expect(pluginA.beforeTransport).not.toHaveBeenCalled();
-    expect(pluginB.beforeTransport).not.toHaveBeenCalled();
-    expect(pluginC.beforeTransport).not.toHaveBeenCalled();
+    expect(pluginA.enrich).not.toHaveBeenCalled();
+    expect(pluginB.enrich).not.toHaveBeenCalled();
+    expect(pluginC.enrich).not.toHaveBeenCalled();
     const testEvent = new TrackerEvent({ _type: 'test-event' });
-    testPlugins.beforeTransport(testEvent);
-    expect(pluginA.beforeTransport).toHaveBeenCalledWith(testEvent);
-    expect(pluginB.beforeTransport).not.toHaveBeenCalled();
-    expect(pluginC.beforeTransport).toHaveBeenCalledWith(testEvent);
+    testPlugins.enrich(testEvent);
+    expect(pluginA.enrich).toHaveBeenCalledWith(testEvent);
+    expect(pluginB.enrich).not.toHaveBeenCalled();
+    expect(pluginC.enrich).toHaveBeenCalledWith(testEvent);
   });
 });

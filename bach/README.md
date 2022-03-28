@@ -20,7 +20,7 @@ For detailed installation & usage instructions, visit [Objectiv Docs](https://ww
   found in the [`sql_models`](./sql_models/) package
 
 ## Support & Troubleshooting
-If you need help using or installing Bach, join our [Slack channel](https://join.slack.com/t/objectiv-io/shared_invite/zt-u6xma89w-DLDvOB7pQer5QUs5B_~5pg) and post your question there. 
+If you need help using or installing Bach, join our [Slack channel](https://objectiv.io/join-slack/) and post your question there. 
 
 ## Bug Reports & Feature Requests
 If you’ve found an issue or have a feature request, please check out the [Contribution Guide](https://objectiv.io/docs/home/the-project/contribute/).

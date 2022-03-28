@@ -214,13 +214,12 @@ function createFactory(
         // simply don't add the property and adjust the return type to omit it as well
         return_omit.push(mp);
       } else {
-        if ( merged_properties[mp]['optional'] ){
+        if (merged_properties[mp]['optional']) {
           // optional properties get a special treatment here:
           // - we make them optional parameters
           // - and, we set null as default
           properties.push(`${mp}: ${props_name}.${mp} ?? null`);
           props[mp] = `${mp}?: ${merged_properties[mp]['type']}`;
-
         } else {
           properties.push(`${mp}: ${props_name}.${mp} `);
           props[mp] = `${mp}: ${merged_properties[mp]['type']}`;
@@ -360,7 +359,7 @@ function get_property_definition(params = {}) {
       return `${params['items']['type']}[]`;
     case 'str':
     case 'string':
-      if ( params['optional'] ){
+      if (params['optional']) {
         // allow null for optional strings
         return 'string | null';
       }
@@ -550,7 +549,7 @@ Object.entries(contexts).forEach(([context_type, context]) => {
       properties[property_name] = {
         description: context['properties'][property_name]['description'],
         type: get_property_definition(context['properties'][property_name]),
-        optional: context['properties'][property_name]['optional'] ?? false
+        optional: context['properties'][property_name]['optional'] ?? false,
       };
     });
   }

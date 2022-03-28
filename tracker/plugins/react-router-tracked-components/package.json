@@ -1,6 +1,6 @@
 {
   "name": "@objectiv/plugin-react-router-tracked-components",
-  "version": "0.0.13",
+  "version": "0.0.18",
   "description": "React Router 6 automatically tracked Link and NavLink Components for Objectiv React Tracker",
   "license": "Apache-2.0",
   "homepage": "https://objectiv.io",
@@ -19,7 +19,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/objectiv/objectiv-analytics.git",
-    "directory": "tracker/plugins/http-context"
+    "directory": "tracker/plugins/react-router-tracked-components"
   },
   "bugs": "https://github.com/objectiv/objectiv-analytics/issues",
   "contributors": [
@@ -54,21 +54,21 @@
     "npm-publish:verdaccio": "shx cp ../../verdaccio/.npmrc .npmrc && npm publish && shx rm -f .npmrc"
   },
   "dependencies": {
-    "@objectiv/tracker-core": "^0.0.13",
-    "@objectiv/tracker-react": "^0.0.13"
+    "@objectiv/tracker-core": "^0.0.18",
+    "@objectiv/tracker-react": "^0.0.18"
   },
   "devDependencies": {
-    "@objectiv/testing-tools": "^0.0.13",
-    "@testing-library/react": "^12.1.2",
-    "@types/jest": "^27.0.3",
-    "jest": "^27.4.5",
+    "@objectiv/testing-tools": "^0.0.18",
+    "@testing-library/react": "^12.1.4",
+    "@types/jest": "^27.4.1",
+    "jest": "^27.5.1",
     "jest-standard-reporter": "^2.0.0",
     "prettier": "^2.5.1",
-    "react-router-dom": "^6.1",
-    "shx": "^0.3.3",
-    "ts-jest": "^27.1.2",
-    "tsup": "^5.11.13",
-    "typescript": "^4.5.5"
+    "react-router-dom": "^6.2.2",
+    "shx": "^0.3.4",
+    "ts-jest": "^27.1.3",
+    "tsup": "^5.12.0",
+    "typescript": "^4.6.2"
   },
   "peerDependencies": {
     "react": ">=16.8",

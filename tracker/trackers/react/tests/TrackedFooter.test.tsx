@@ -1,11 +1,14 @@
 /*
- * Copyright 2021-2022 Objectiv B.V.
+ * Copyright 2022 Objectiv B.V.
  */
 
-import { SpyTransport } from '@objectiv/testing-tools';
+import { MockConsoleImplementation, SpyTransport } from '@objectiv/testing-tools';
+import { TrackerConsole } from '@objectiv/tracker-core';
 import { fireEvent, getByText, render } from '@testing-library/react';
 import React from 'react';
 import { LocationTree, ObjectivProvider, ReactTracker, TrackedFooter, usePressEventTracker } from '../src';
+
+TrackerConsole.setImplementation(MockConsoleImplementation);
 
 describe('TrackedFooter', () => {
   beforeEach(() => {
@@ -17,7 +20,7 @@ describe('TrackedFooter', () => {
     jest.resetAllMocks();
   });
 
-  it('should wrap the given Component in a NavigationContext', () => {
+  it('should wrap the given Component in a ContentContext', () => {
     const spyTransport = new SpyTransport();
     jest.spyOn(spyTransport, 'handle');
     const tracker = new ReactTracker({ applicationId: 'app-id', transport: spyTransport });
@@ -45,7 +48,7 @@ describe('TrackedFooter', () => {
         _type: 'PressEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'NavigationContext',
+            _type: 'ContentContext',
             id: 'footer',
           }),
         ]),
@@ -81,7 +84,7 @@ describe('TrackedFooter', () => {
         _type: 'PressEvent',
         location_stack: expect.arrayContaining([
           expect.objectContaining({
-            _type: 'NavigationContext',
+            _type: 'ContentContext',
             id: 'secondary-footer',
           }),
         ]),

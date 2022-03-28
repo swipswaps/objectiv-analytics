@@ -4,12 +4,15 @@
 
 import { ContextsConfig } from './Context';
 import { isValidIndex } from './helpers';
-import { Tracker } from './Tracker';
+import { Tracker, TrackerInterface } from './Tracker';
+import { TrackerConsole } from './TrackerConsole';
+import { TrackerEvent } from './TrackerEvent';
 import { TrackerPluginInterface } from './TrackerPluginInterface';
 import { TrackerPluginLifecycleInterface } from './TrackerPluginLifecycleInterface';
+import { TrackerValidationLifecycleInterface } from './TrackerValidationLifecycleInterface';
 
 /**
- * The configuration object of TrackerPlugins. It accepts a list of plugins and, optionally, a Tracker Console.
+ * The configuration object of TrackerPlugins. It requires a Tracker instance and a list of plugins.
  */
 export type TrackerPluginsConfiguration = {
   /**
@@ -31,31 +34,29 @@ export type TrackerPluginsConfiguration = {
  * Plugins mutations. For example a plugin meant to access the finalized version of the TrackerEvent should be placed
  * at the bottom of the list.
  */
-export class TrackerPlugins implements TrackerPluginLifecycleInterface {
+export class TrackerPlugins implements TrackerPluginLifecycleInterface, TrackerValidationLifecycleInterface {
   readonly tracker: Tracker;
   plugins: TrackerPluginInterface[] = [];
 
   /**
-   * Plugins can be lazy. Map through them to instantiate them.
+   * Processes the given plugins and pushes them in the internal list, while validating their uniqueness.
    */
   constructor(trackerPluginsConfig: TrackerPluginsConfiguration) {
     this.tracker = trackerPluginsConfig.tracker;
 
     trackerPluginsConfig.plugins.map((plugin) => {
       if (this.has(plugin.pluginName)) {
-        throw new Error(`｢objectiv:TrackerPlugins｣ ${plugin.pluginName}: duplicated`);
+        this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== plugin.pluginName);
       }
 
       this.plugins.push(plugin);
     });
 
-    if (this.tracker.console) {
-      this.tracker.console.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
-      this.tracker.console.group(`Plugins:`);
-      this.tracker.console.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
-      this.tracker.console.groupEnd();
-      this.tracker.console.groupEnd();
-    }
+    TrackerConsole.groupCollapsed(`｢objectiv:TrackerPlugins｣ Initialized`);
+    TrackerConsole.group(`Plugins:`);
+    TrackerConsole.log(this.plugins.map((plugin) => plugin.pluginName).join(', '));
+    TrackerConsole.groupEnd();
+    TrackerConsole.groupEnd();
   }
 
   /**
@@ -93,12 +94,10 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
     const spliceIndex = index ?? this.plugins.length;
     this.plugins.splice(spliceIndex, 0, plugin);
 
-    if (this.tracker.console) {
-      this.tracker.console.log(
-        `%c｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}`,
-        'font-weight: bold'
-      );
-    }
+    TrackerConsole.log(
+      `%c｢objectiv:TrackerPlugins｣ ${plugin.pluginName} added at index ${spliceIndex}`,
+      'font-weight: bold'
+    );
 
     const pluginInstance = this.get(plugin.pluginName);
     pluginInstance.initialize && pluginInstance.initialize(this.tracker);
@@ -112,9 +111,7 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
 
     this.plugins = this.plugins.filter(({ pluginName }) => pluginName !== pluginInstance.pluginName);
 
-    if (this.tracker.console) {
-      this.tracker.console.log(`%c｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed`, 'font-weight: bold');
-    }
+    TrackerConsole.log(`%c｢objectiv:TrackerPlugins｣ ${pluginInstance.pluginName} removed`, 'font-weight: bold');
   }
 
   /**
@@ -133,16 +130,23 @@ export class TrackerPlugins implements TrackerPluginLifecycleInterface {
   }
 
   /**
-   * Calls each Plugin's `initialize` callback function, if defined
+   * Calls each Plugin's `initialize` callback function, if defined.
    */
-  initialize(contexts: Required<ContextsConfig>): void {
-    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(contexts));
+  initialize(tracker: TrackerInterface): void {
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.initialize && plugin.initialize(tracker));
   }
 
   /**
-   * Calls each Plugin's `beforeTransport` callback function, if defined
+   * Calls each Plugin's `enrich` callback function, if defined.
    */
-  beforeTransport(contexts: Required<ContextsConfig>): void {
-    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.beforeTransport && plugin.beforeTransport(contexts));
+  enrich(contexts: Required<ContextsConfig>): void {
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.enrich && plugin.enrich(contexts));
+  }
+
+  /**
+   * Calls each Plugin's `validate` callback function, if defined.
+   */
+  validate(event: TrackerEvent): void {
+    this.plugins.forEach((plugin) => plugin.isUsable() && plugin.validate && plugin.validate(event));
   }
 }
