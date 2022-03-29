@@ -9,7 +9,7 @@ also available as Jupyter notebooks from our `github repository
 <https://github.com/objectiv/objectiv-analytics/tree/main/notebooks>`_. To get started you will first have to
 instantiate the open model hub and create a Bach DataFrame with Objectiv data. The open
 model hub uses this DataFrame for its models. For a general introduction to Bach DataFrames, see the
-:ref:`Bach <bach>` docs.
+:ref:`Bach <bach>` docs or some basic examples to get started :ref:`here <bach_examples>`.
 
 .. _get_started_with_objectiv:
 
@@ -42,7 +42,8 @@ Your DataFrame is instantiated! We start with showing the first couple of rows f
 
     df.head()
 
-Take a look at one of the other examples to see how you can analyze your data.
+Take a look at one of the example notebooks below to see how you can analyze your data. Basic Bach
+introduction examples are :ref:`here <bach_examples>` in the Bach docs.
 
 
 Examples
@@ -53,6 +54,5 @@ Examples
     modelhub_basics
     product_analytics
     open_taxonomy
-    examples
     feature_engineering
     machine_learning
