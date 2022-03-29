@@ -3,15 +3,15 @@ Modeling
 ========
 
 .. toctree::
-    :maxdepth: 4
+    :maxdepth: 3
 
     intro
     example_notebooks
     models
-    modelhub_api_reference
 
 .. toctree::
     :maxdepth: 6
     :includehidden:
 
+    modelhub_api_reference
     bach
