@@ -1,10 +1,8 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import numpy
-
 from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
-    get_bt_with_json_data
+    get_bt_with_json_data, CITIES_INDEX_AND_COLUMNS
 
 
 def test_astype_dtypes():
@@ -58,6 +56,15 @@ def test_astype_dtypes():
     assert bt.data['inhabitants'] is not bt_astype2.data['inhabitants']
     assert bt.data['municipality'] is bt_astype2.data['municipality']
     assert bt.data['skating_order'] is not bt_astype2.data['skating_order']
+    assert_equals_data(
+        bt_astype2,
+        expected_columns=CITIES_INDEX_AND_COLUMNS,
+        expected_data=[
+            [1, '1', 'Ljouwert', 'Leeuwarden', '93485', 1285],
+            [2, '2', 'Snits', 'Súdwest-Fryslân', '33520', 1456],
+            [3, '3', 'Drylts', 'Súdwest-Fryslân', '3055', 1268]
+        ]
+    )
 
 
 def test_astype_to_int():
@@ -123,16 +130,3 @@ def test_astype_to_json():
             [3, [{"_type": "WebDocumentContext", "id": "#document"}, {"_type": "SectionContext", "id": "home"}, {"_type": "SectionContext", "id": "top-10"}, {"_type": "ItemContext", "id": "5o7Wv5Q5ZE"}]]
         ]
     )
-
-
-def test_astype_dtype_aliases():
-    bt = get_bt_with_test_data()
-    bt = bt[['inhabitants']]
-    # Using an alias of 'int64' in the call to `astype()` should result in the same DataFrame
-    bt_int0 = bt.astype('int64')
-    bt_int1 = bt.astype('bigint')
-    bt_int2 = bt.astype(int)
-    bt_int3 = bt.astype(numpy.int64)
-    assert bt_int0 == bt_int1
-    assert bt_int0 == bt_int2
-    assert bt_int0 == bt_int3
