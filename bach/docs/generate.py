@@ -62,7 +62,8 @@ patterns = [
     '^product_analytics.html$',
     '^bach_core_concepts.html$',
     '^bach_examples.html$',
-    '^bach_reference.html$'
+    '^bach_reference.html$',
+    "^bach_whatisbach.html$"
 ]
 
 # list of special cases, where we have a subdir, with an introduction at toplevel
