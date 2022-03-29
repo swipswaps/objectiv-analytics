@@ -43,9 +43,10 @@ extract the data.
     df['utm_term'] = df.global_contexts.gc.get_from_context_with_type_series(type='MarketingContext', key='term')
 
 Now we will go though a bunch of basic analytics metrics. We can use models from the :ref:`models` for this purpose or use :ref:`bach` to do data analysis directly on the data stored in the
-sql data base using pandas like syntax.
+SQL database using pandas like syntax.
 
-For each example, `head()`, `to_pandas()` or `to_numpy()` can be used to execute the generated sql and get the results in
+For each example, `head()`, `to_pandas()` or `to_numpy()` can be used to execute the generated SQL and get
+the results in
 your notebook.
 
 Unique users

@@ -2,7 +2,8 @@
 Introduction
 ============
 
-Objectiv data as it's stored in an sql data base can be analyzed in a Jupyter notebook with the open model
+Data collected with Objectiv’s Tracker and stored in an SQL database can be analyzed
+in a Jupyter notebook with the open model
 hub. The open model hub is a growing collection of open-source, free to use data models that you can take,
 combine and run for product analysis and exploration. It includes models for a wide range of typical product
 analytics use cases.

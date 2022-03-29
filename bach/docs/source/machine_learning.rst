@@ -6,7 +6,7 @@
 Bach and sklearn
 ================
 
-With Objectiv you can do all your analysis and Machine Learning directly on the raw data in your sql store.
+With Objectiv you can do all your analysis and Machine Learning directly on the raw data in your SQL database.
 This example shows in the simplest way possible how you can use Objectiv to create a basic feature set and use
 sklearn to do machine learning on this data set. We also have an example that goes deeper into
 feature engineering `here
@@ -21,8 +21,9 @@ to run on your own data or use our
 At first we have to instantiate the Objectiv DataFrame object. See
 :ref:`get_started_with_objectiv` for more info on how to instantiate the object.
 
-This object points to all data in the data set. Too large to run in pandas and therefore sklearn. For the
-data set that we need, we aggregate to user level, at which point it is small enough to fit in memory.
+This object points to all data in the data set. Without any aggregation, this dataset is too large to
+for pandas and sklearn. For the data set that we need, we aggregate to user level, at which point it is
+small enough to fit in memory.
 
 We create a data set of per user all the root locations that the user clicked on.
 

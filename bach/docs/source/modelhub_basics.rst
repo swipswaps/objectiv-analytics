@@ -106,7 +106,7 @@ What's next?
 ------------
 There are several options on how to continue working with the data or using the results otherwise, i.e. for visualization.
 
-1. Export models to sql
+1. Export models to SQL
 ~~~~~~~~~~~~~~~~~~~~~~~
 As mentioned, all operations and models performed on the DataFrame are run on the SQL data base. Therefore it is possible to view all objects as an SQL statement. For the `new_user_share` results that was created this looks as follows:
 

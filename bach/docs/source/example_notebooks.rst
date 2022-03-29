@@ -17,7 +17,7 @@ Getting started with Objectiv
 -----------------------------
 
 Here we show how to instantiate the model hub and a Bach DataFrame with Objectiv data that can be used
-to analyze tracked data.
+to analyze data collected with Objectiv’s Tracker.
 This DataFrame points to the data and all operations are done on this object. A start date and an end date can
 optionally be passed to limit the underlying data that is queried. The `time_aggregation` parameter determines
 the default formatting of the timestamp of events. This is useful for grouping to different time aggregations,
