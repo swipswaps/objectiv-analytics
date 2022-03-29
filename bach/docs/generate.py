@@ -59,7 +59,11 @@ patterns = [
     '^bach.html$',
     '^feature_engineering.html$',
     '^machine_learning.html$',
-    '^product_analytics.html$'
+    '^product_analytics.html$',
+    '^bach_core_concepts.html$',
+    '^bach_examples.html$',
+    '^bach_reference.html$',
+    "^bach_whatisbach.html$"
 ]
 
 # list of special cases, where we have a subdir, with an introduction at toplevel
@@ -229,7 +233,10 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
 doc = html.parse(f'{html_dir}/index.html')
 
 menu_list = doc.xpath('//div[@class="toctree-wrapper compound"]/ul')
-menu = parse_ul_menu(menu_list)
+
+menu = []
+for ml in menu_list:
+    menu += list(parse_ul_menu(ml))
 
 sidebar = menu_list_to_sidebar(menu)
 
@@ -244,6 +251,7 @@ with open(html_path, 'w') as target_handle:
 
 # sort urls alphabetically, remove .html
 urls = glob.glob(f"{html_dir}/**/*.html", recursive=True)
+
 for url in urls:
     # this is the url to the original html fragment
     # it's an absolute url, docusaurus will take care of the rest
