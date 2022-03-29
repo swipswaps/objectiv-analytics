@@ -12,5 +12,6 @@ Modeling
 
 .. toctree::
     :maxdepth: 5
+    :includehidden:
 
     bach
