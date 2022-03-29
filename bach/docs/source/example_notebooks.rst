@@ -23,8 +23,8 @@ optionally be passed to limit the underlying data that is queried. The `time_agg
 the default formatting of the timestamp of events. This is useful for grouping to different time aggregations,
 ie. monthly or daily.
 
-In the examples we assume that Objectiv data is store in a table called 'example' in a data base that can be
-accessed with `db_url`.
+In the example we assume that the data collected with Objectiv's tracker is stored in a table called
+'example' in a database that can be accessed with `db_url`.
 
 .. code-block:: python
 
