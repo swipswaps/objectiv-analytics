@@ -220,7 +220,7 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                     break
             
             first_child = menu_item_children[0]
-            if (first_child['label'] == 'Overview'):
+            if (first_child['label'] == category_index):
                 if (first_child['type'] == 'doc'):
                     overview_id = first_child['id']
                     del menu_item_children[0]
