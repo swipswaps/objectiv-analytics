@@ -198,7 +198,7 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
             # this is a case where we have a duplicate (both children and an href)
             menu_item_children = []
             if level > -1:
-                print(f'moving parent {menu_item["text"]} into children')
+                # print(f'moving parent {menu_item["text"]} into children')
                 # get parent, and put in here, but only below top level
                 menu_item_children = items.copy()
                 if len(menu_item_children) > 1:
@@ -218,12 +218,41 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                 if menu_item_children[i]['label'] == category_index:
                     del menu_item_children[i]
                     break
-
-            items.append({
-                'type': 'category',
-                'label': label,
-                'items': menu_item_children
-            })
+            
+            first_child = menu_item_children[0]
+            if (first_child['label'] == 'Overview'):
+                if (first_child['type'] == 'doc'):
+                    overview_id = first_child['id']
+                    del menu_item_children[0]
+                    items.append({
+                        'type': 'category',
+                        'label': label,
+                        'link': {
+                          'type': 'doc', 
+                          'id': overview_id
+                        },
+                        'items': menu_item_children
+                    })
+                elif (first_child['type'] == 'link'):
+                    # get its slug, and replace any first hashtag with a slash
+                    generated_index_slug = first_child['href'].replace('#', '/', 1)
+                    del menu_item_children[0]
+                    items.append({
+                        'type': 'category',
+                        'label': label,
+                        'link': {
+                          'type': 'generated-index',
+                          'title': label,
+                          'slug': generated_index_slug
+                        },
+                        'items': menu_item_children
+                    })
+            else:
+                items.append({
+                    'type': 'category',
+                    'label': label,
+                    'items': menu_item_children
+                })
         if len(items) > 0:
             sb += items
     return sb
@@ -258,7 +287,7 @@ for url in urls:
     real_url = url.replace(html_dir, "")
     page = path.basename(url).replace('.html', '')
 
-    print(f'{url} -> {real_url} {page}')
+    # print(f'{url} -> {real_url} {page}')
 
     match = False
     for pattern in patterns:
@@ -373,7 +402,7 @@ import useBaseUrl from '@docusaurus/useBaseUrl'
 <SphinxPages url={{useBaseUrl('{module}/{real_url}')}} />
 """
 
-    print(f'writing to {mdx_path}')
+    # print(f'writing to {mdx_path}')
     with open(mdx_path, 'w') as target_handle:
         target_handle.write(mdx)
 
