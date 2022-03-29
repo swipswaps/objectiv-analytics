@@ -11,7 +11,7 @@ Modeling
     modelhub_api_reference
 
 .. toctree::
-    :maxdepth: 5
+    :maxdepth: 6
     :includehidden:
 
     bach
