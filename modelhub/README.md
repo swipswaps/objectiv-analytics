@@ -5,19 +5,18 @@ If you want to use Objectiv Modelhub install the package from Pypi as follows:
 ```bash
 pip install objectiv_modelhub
 ```
-
-You are now ready to use Objectiv ModelHub w/ Bach. Either through your own notebooks/code or through our 
-examples.
+You are now ready to use Objectiv ModelHub. Either through your own notebooks/code or through our examples.
 
 ### Examples
 We have some example notebooks in the 
 [/notebooks/](https://github.com/objectiv/objectiv-analytics/tree/main/notebooks) directory of
 the repository that demonstrate how you can work with the data in Python. These notebooks can run on _your_
 collected data. The only thing that might need to be adjusted is how the connection to the database is 
-made (see below).
+made (see below). All other instructions live in the README.md in the link above.
 
 ### Your own code
-To use ModelHub in your own code,you need to import the package and use it to get a Bach DataFrame object to 
+To use ModelHub in your own code, you can import the package and use it to get a Bach DataFrame 
+([What is Bach?](https://www.objectiv.io/docs/modeling/bach_whatisbach)) to 
 perform your operations on. The object can be instantiated as follows, where the `db_url` and `table_name`
 should be adjusted depending on where the data is stored and how to access it.
 ```python
@@ -49,7 +48,6 @@ pip install -r requirements.txt
 
 ipython kernel install --user --name=objectiv_venv
 # now restart the notebook server, and from the kernel menu select 'objectiv_venv'
-
 ```
 
 ### PyCharm
