@@ -66,6 +66,10 @@ patterns = [
     "^bach_whatisbach.html$",
     "^models_mapping.html$",
     "^models_aggregation.html$",
+    "^bach_reference_dataframe.html$",
+    "^bach_reference_dataframe_by_function.html$",
+    "^bach_reference_series.html$",
+    "^bach_reference_series_by_function.html$",
 ]
 
 # list of special cases, where we have a subdir, with an introduction at toplevel
