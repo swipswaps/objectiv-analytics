@@ -8,3 +8,4 @@ jupyter-dash
 matplotlib
 plotly
 seaborn
+sklearn

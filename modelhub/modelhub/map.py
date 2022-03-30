@@ -1,11 +1,15 @@
 """
 Copyright 2021 Objectiv B.V.
 """
-import typing
-
 import bach
+from bach import SeriesBoolean
 from bach.expression import Expression
-from bach.partitioning import WindowFrameBoundary
+from bach.partitioning import WindowFrameBoundary, WindowFrameMode
+from typing import TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from modelhub import ModelHub
 
 
 class Map:
@@ -16,7 +20,7 @@ class Map:
     as columns to that DataFrame.
     """
 
-    def __init__(self, mh):
+    def __init__(self, mh: 'ModelHub'):
         self._mh = mh
 
     def is_first_session(self, data: bach.DataFrame) -> bach.SeriesBoolean:
@@ -28,8 +32,13 @@ class Map:
         """
 
         self._mh._check_data_is_objectiv_data(data)
+        window = data.groupby('user_id').window(
+            mode=WindowFrameMode.ROWS,
+            start_boundary=WindowFrameBoundary.PRECEDING,
+            start_value=None,
+            end_boundary=WindowFrameBoundary.FOLLOWING,
+            end_value=None)
 
-        window = data.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
         first_session = window['session_id'].min()
         series = first_session == data.session_id
 
@@ -50,11 +59,22 @@ class Map:
 
         self._mh._check_data_is_objectiv_data(data)
 
-        window = data.groupby('user_id').window(end_boundary=WindowFrameBoundary.FOLLOWING)
+        window = data.groupby('user_id').window(
+            mode=WindowFrameMode.ROWS,
+            start_boundary=WindowFrameBoundary.PRECEDING,
+            start_value=None,
+            end_boundary=WindowFrameBoundary.FOLLOWING,
+            end_value=None)
+
         is_first_session = window['session_id'].min()
 
         window = data.groupby([self._mh.time_agg(data, time_aggregation),
-                               'user_id']).window(end_boundary=WindowFrameBoundary.FOLLOWING)
+                               'user_id']).window(
+            mode=WindowFrameMode.ROWS,
+            start_boundary=WindowFrameBoundary.PRECEDING,
+            start_value=None,
+            end_boundary=WindowFrameBoundary.FOLLOWING,
+            end_value=None)
         is_first_session_time_aggregation = window['session_id'].min()
 
         series = is_first_session_time_aggregation == is_first_session
@@ -86,10 +106,41 @@ class Map:
             series = ((conversion_stack.notnull()) & (data.event_type == conversion_event))
         return series.copy_override(name='is_conversion_event')
 
-    def conversion_count(self,
-                         data: bach.DataFrame,
-                         name: str,
-                         partition: str = 'session_id') -> bach.SeriesInt64:
+    def conversions_counter(self,
+                            data: bach.DataFrame,
+                            name: str,
+                            partition: str = 'session_id'):
+        """
+        Counts the total number of conversions given a partition (ie session_id
+        or user_id).
+
+        :param name: the name of the conversion to label as set in
+            :py:attr:`ModelHub.conversion_events`.
+        :param partition: the partition over which the number of conversions are counted. Can be any column
+            of the ObjectivFrame
+        :returns: :py:class:`bach.SeriesBoolean` with the same index as ``data``.
+        """
+
+        self._mh._check_data_is_objectiv_data(data)
+
+        data['__conversions'] = self._mh.map.conversions_in_time(data, name=name)
+
+        window = data.groupby(partition).window(end_boundary=WindowFrameBoundary.FOLLOWING)
+        converted = window['__conversions'].max()
+        data = data.drop(columns=['__conversions'])
+
+        new_series = converted.copy_override(name='converted',
+                                             index=data.index).to_frame().materialize().converted
+
+        return new_series
+
+    def conversion_count(self, *args, **kwargs):
+        raise NotImplementedError('function is renamed please use `conversions_in_time`')
+
+    def conversions_in_time(self,
+                            data: bach.DataFrame,
+                            name: str,
+                            partition: str = 'session_id') -> bach.SeriesInt64:
         """
         Counts the number of time a user is converted at a moment in time given a partition (ie 'session_id'
         or 'user_id').
@@ -104,7 +155,7 @@ class Map:
 
         self._mh._check_data_is_objectiv_data(data)
 
-        data = data.copy_override()
+        data = data.copy()
         data['__conversion'] = self._mh.map.is_conversion_event(data, name)
         exp = f"case when {{}} then row_number() over (partition by {{}}, {{}}) end"
         expression = Expression.construct(exp,
@@ -115,19 +166,12 @@ class Map:
             .copy_override_dtype(dtype='int64')\
             .copy_override(expression=expression)
         data = data.materialize()
-        exp = f"count({{}}) over (partition by {{}} order by {{}}, {{}})"
-        expression = Expression.construct(exp,
-                                          data.all_series['__conversion_counter'],
-                                          data.all_series[partition],
-                                          data.all_series[partition],
-                                          data.all_series['moment'])
-        data['conversion_count'] = data['__conversion_counter']\
-            .copy_override_dtype('int64')\
-            .copy_override(expression=expression)
+        data['conversions_in_time'] = data.sort_values([partition, 'moment'])\
+            .groupby(partition)\
+            .window()['__conversion_counter'].count()
 
-        return data.conversion_count
+        return data.conversions_in_time
 
-    @typing.no_type_check
     def pre_conversion_hit_number(self,
                                   data: bach.DataFrame,
                                   name: str,
@@ -147,15 +191,16 @@ class Map:
 
         self._mh._check_data_is_objectiv_data(data)
 
-        data = data.copy_override()
-        data['__conversions'] = self._mh.map.conversion_count(data, name=name)
+        data = data.copy()
+        data['__conversions'] = self._mh.map.conversions_in_time(data, name=name)
 
         window = data.groupby(partition).window()
         converted = window['__conversions'].max()
 
         data['__is_converted'] = converted != 0
         data = data.materialize()
-        pre_conversion_hits = data[data.all_series['__is_converted']]
+        assert(isinstance(data['__is_converted'], SeriesBoolean))  # help mypy to overcome generic Series type
+        pre_conversion_hits = data[data['__is_converted']]
         pre_conversion_hits = pre_conversion_hits[pre_conversion_hits['__conversions'] == 0]
 
         window = pre_conversion_hits.sort_values(['session_id',

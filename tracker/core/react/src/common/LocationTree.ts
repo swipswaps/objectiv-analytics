@@ -3,7 +3,13 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import { generateUUID, getLocationPath, Tracker } from '@objectiv/tracker-core';
+import {
+  generateUUID,
+  getLocationPath,
+  NoopConsoleImplementation,
+  Tracker,
+  TrackerConsole,
+} from '@objectiv/tracker-core';
 import { LocationContext } from '../types';
 
 /**
@@ -87,10 +93,22 @@ export const LocationTree = {
   initialize: (tracker: Tracker) => {
     LocationTree.clear();
 
-    // Clone the given Tracker into a new one with only plugins configured and run their lifecycles
-    const trackerClone = new Tracker({ applicationId: tracker.applicationId, plugins: tracker.plugins });
+    // Clone the given Tracker into a new one with only plugins configured
+    const trackerClone = new Tracker({
+      applicationId: tracker.applicationId,
+      plugins: tracker.plugins,
+    });
+
+    // Disable Console while we replay `initialize` and `enrich` lifecycle methods
+    const previousConsoleImplementation = TrackerConsole.implementation;
+    TrackerConsole.setImplementation(NoopConsoleImplementation);
+
+    // Replay plugins lifecycle methods
     trackerClone.plugins.initialize(trackerClone);
     trackerClone.plugins.enrich(trackerClone);
+
+    // Restore console
+    TrackerConsole.setImplementation(previousConsoleImplementation);
 
     // Convert AbstractLocationContext[] to LocationContext<AbstractLocationContext>[]
     const locationStack: LocationContext<AbstractLocationContext>[] = trackerClone.location_stack.map(

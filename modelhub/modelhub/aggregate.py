@@ -6,6 +6,12 @@ from typing import List, Union
 import bach
 from bach.series import Series
 from sql_models.constants import NotSet, not_set
+from typing import List, Union, TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    from modelhub import ModelHub
+
 
 GroupByType = Union[List[Union[str, Series]], str, Series, NotSet]
 
@@ -15,7 +21,7 @@ class Aggregate:
     Models that return aggregated data in some form from the original DataFrame with Objectiv data.
     """
 
-    def __init__(self, mh):
+    def __init__(self, mh: 'ModelHub'):
         self._mh = mh
 
     def _check_groupby(self,
@@ -46,7 +52,7 @@ class Aggregate:
         return grouped_data
 
     def _generic_aggregation(self,
-                             data,
+                             data: bach.DataFrame,
                              groupby: Union[List[Union[str, Series]], str, Series],
                              column: str,
                              name: str):
@@ -104,7 +110,8 @@ class Aggregate:
 
     def session_duration(self,
                          data: bach.DataFrame,
-                         groupby: GroupByType = not_set) -> bach.SeriesInt64:
+                         groupby: GroupByType = not_set,
+                         exclude_bounces: bool = True) -> bach.SeriesInt64:
         """
         Calculate the average duration of sessions.
 
@@ -119,8 +126,9 @@ class Aggregate:
         self._mh._check_data_is_objectiv_data(data)
 
         if groupby is not_set:
-            new_groupby = [self._mh.time_agg(data)]
-        elif groupby is None:
+            groupby = self._mh.time_agg(data)
+
+        if groupby is None:
             new_groupby = []
         elif not isinstance(groupby, list):
             new_groupby = [groupby]
@@ -131,8 +139,9 @@ class Aggregate:
         gdata = self._check_groupby(data=data, groupby=new_groupby)
         session_duration = gdata.aggregate({'moment': ['min', 'max']})
         session_duration['session_duration'] = session_duration['moment_max']-session_duration['moment_min']
-        # remove "bounces"
-        session_duration = session_duration[(session_duration['session_duration'] > '0')]
+
+        if exclude_bounces:
+            session_duration = session_duration[(session_duration['session_duration'] > '0')]
 
         return session_duration.groupby(session_duration.index_columns[:-1]).session_duration.mean()
 
