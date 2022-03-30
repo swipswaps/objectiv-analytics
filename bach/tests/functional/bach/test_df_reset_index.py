@@ -3,11 +3,12 @@ Copyright 2021 Objectiv B.V.
 """
 import pytest
 
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data
+from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
+    get_df_with_test_data
 
 
-def test_reset_index_to_empty():
-    bt = get_bt_with_test_data()
+def test_reset_index_to_empty(engine):
+    bt = get_df_with_test_data(engine)
     assert list(bt.index.keys()) == ['_index_skating_order']
     assert '_index_skating_order' not in bt.data
 
@@ -54,8 +55,8 @@ def test_reset_index_no_change():
     assert list(lbt.index.keys()) == list(bt.index.keys())
 
 
-def test_set_index():
-    bt = get_bt_with_test_data()[['municipality', 'city', 'inhabitants']]
+def test_set_index(engine):
+    bt = get_df_with_test_data(engine)[['municipality', 'city', 'inhabitants']]
     assert list(bt.index.keys()) == ['_index_skating_order']
 
     # regular reset in different ways
@@ -147,8 +148,8 @@ def test_set_index():
     abt.head()
 
 
-def test_reset_index_materialize():
-    bt = get_bt_with_test_data()[['municipality', 'inhabitants']]
+def test_reset_index_materialize(engine):
+    bt = get_df_with_test_data(engine)[['municipality', 'inhabitants']]
     assert list(bt.index.keys()) == ['_index_skating_order']
 
     bt = bt.groupby('municipality').sum()
