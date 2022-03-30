@@ -3,13 +3,12 @@
 .. currentmodule:: bach
 
 =====================
-Reference by function
+Series by function
 =====================
 
 Creation / re-framing
 ~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: Series
 
     Series.from_const
     Series.to_frame
@@ -18,7 +17,6 @@ Creation / re-framing
 Value accessors
 ~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: Series
 
     Series.head
     Series.to_pandas
@@ -32,7 +30,6 @@ Attributes and underlying data
 Axes
 ++++
 .. autosummary::
-    :toctree: Series
 
     Series.name
     Series.index
@@ -42,7 +39,6 @@ Axes
 Types
 +++++
 .. autosummary::
-    :toctree: Series
 
     Series.dtype
     Series.astype
@@ -50,7 +46,6 @@ Types
 Sql Model
 +++++++++
 .. autosummary::
-    :toctree: Series
 
     Series.base_node
     Series.view_sql
@@ -58,7 +53,6 @@ Sql Model
 Comparison and set operations
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: Series
 
     Series.all_values
     Series.any_value
@@ -70,7 +64,6 @@ Comparison and set operations
 Conversion, reshaping, sorting
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: Series
 
     Series.sort_index
     Series.sort_values
@@ -83,7 +76,6 @@ Conversion, reshaping, sorting
 Function application, aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: Series
 
     Series.agg
     Series.aggregate
@@ -96,7 +88,6 @@ All types
 +++++++++
 
 .. autosummary::
-    :toctree: Series
 
     Series.describe
     Series.count
@@ -110,7 +101,6 @@ All types
 Numeric
 +++++++
 .. autosummary::
-    :toctree: Series
 
     SeriesAbstractNumeric.cut
     SeriesAbstractNumeric.qcut
@@ -124,7 +114,6 @@ Numeric
 Window
 ++++++
 .. autosummary::
-    :toctree: Series
 
     Series.window_first_value
     Series.window_lag
@@ -139,3 +128,15 @@ Window
 
     Series.window_ntile
     Series.window_cume_dist
+
+
+Types
+++++++
+.. autosummary::
+
+    SeriesBoolean
+    SeriesAbstractNumeric
+    SeriesAbstractDateTime
+    SeriesString
+    SeriesJsonb
+    SeriesJson

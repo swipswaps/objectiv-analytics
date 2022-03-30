@@ -3,7 +3,7 @@
 .. currentmodule:: bach
 
 =====================
-Reference by function
+DataFrame by function
 =====================
 
 Creation
@@ -18,7 +18,6 @@ Creation
 Value accessors
 ~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: DataFrame
 
     DataFrame.head
     DataFrame.to_pandas
@@ -31,7 +30,6 @@ Attributes and underlying data
 Axes
 ++++
 .. autosummary::
-    :toctree: DataFrame
 
     DataFrame.index
     DataFrame.data
@@ -44,7 +42,6 @@ Axes
 Types
 +++++
 .. autosummary::
-    :toctree: DataFrame
 
     DataFrame.dtypes
     DataFrame.index_dtypes
@@ -53,7 +50,6 @@ Types
 Sql Model
 +++++++++
 .. autosummary::
-    :toctree: DataFrame
 
     DataFrame.materialize
     DataFrame.get_sample
@@ -63,7 +59,6 @@ Sql Model
 Variables
 +++++++++
 .. autosummary::
-    :toctree: DataFrame
 
     DataFrame.create_variable
     DataFrame.set_variable
@@ -73,7 +68,6 @@ Variables
 Reshaping, indexing, sorting & merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: DataFrame
 
     DataFrame.sort_index
     DataFrame.sort_values
@@ -93,7 +87,6 @@ Reshaping, indexing, sorting & merging
 Aggregation & windowing
 ~~~~~~~~~~~~~~~~~~~~~~~
 .. autosummary::
-    :toctree: DataFrame
 
     DataFrame.agg
     DataFrame.aggregate
@@ -112,7 +105,6 @@ Computations & descriptive stats
 All types
 +++++++++
 .. autosummary::
-    :toctree: DataFrame
 
     DataFrame.describe
     DataFrame.count
@@ -126,7 +118,6 @@ All types
 Numeric
 +++++++
 .. autosummary::
-    :toctree: DataFrame
 
     DataFrame.mean
     DataFrame.quantile
