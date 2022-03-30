@@ -47,10 +47,11 @@ export type ReactNativeTrackerConfig = TrackerConfig & {
  *  @see makeReactNativeTrackerDefaultPluginsList
  */
 export class ReactNativeTracker extends Tracker {
-  platform = TrackerPlatform.REACT_NATIVE;
-
   constructor(trackerConfig: ReactNativeTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = trackerConfig;
+
+    // Set the platform
+    config.platform = TrackerPlatform.BROWSER;
 
     // Either `transport` or `endpoint` must be provided
     if (!config.transport && !config.endpoint) {

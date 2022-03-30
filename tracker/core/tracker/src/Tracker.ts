@@ -36,6 +36,11 @@ export type TrackerConfig = ContextsConfig & {
   applicationId: string;
 
   /**
+   * Optional. The platform of the Tracker Instance. This affects error logging. Defaults to Core.
+   */
+  platform?: TrackerPlatform;
+
+  /**
    * Optional. Unique identifier for the TrackerInstance. Defaults to the same value of `applicationId`.
    */
   trackerId?: string;
@@ -121,7 +126,7 @@ export type TrackerInterface = Contexts &
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
 export class Tracker implements TrackerInterface {
-  readonly platform: TrackerPlatform = TrackerPlatform.CORE;
+  readonly platform: TrackerPlatform;
   readonly applicationId: string;
   readonly trackerId: string;
   readonly queue?: TrackerQueueInterface;
@@ -144,6 +149,7 @@ export class Tracker implements TrackerInterface {
    * provided they will be merged onto each other to produce a single location_stack and global_contexts.
    */
   constructor(trackerConfig: TrackerConfig, ...contextConfigs: ContextsConfig[]) {
+    this.platform = trackerConfig.platform ?? TrackerPlatform.CORE;
     this.applicationId = trackerConfig.applicationId;
     this.trackerId = trackerConfig.trackerId ?? trackerConfig.applicationId;
     this.queue = trackerConfig.queue;

@@ -8,7 +8,8 @@ import {
   LocationContextValidationRule,
   makeApplicationLoadedEvent,
   Tracker,
-  TrackerConsole, TrackerPlatform,
+  TrackerConsole,
+  TrackerPlatform,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';

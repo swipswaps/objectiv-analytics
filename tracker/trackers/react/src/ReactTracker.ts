@@ -70,10 +70,11 @@ export type ReactTrackerConfig = TrackerConfig & {
  *  @see makeReactTrackerDefaultPluginsList
  */
 export class ReactTracker extends Tracker {
-  platform = TrackerPlatform.REACT;
-
   constructor(trackerConfig: ReactTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = trackerConfig;
+
+    // Set the platform
+    config.platform = TrackerPlatform.BROWSER;
 
     // Either `transport` or `endpoint` must be provided
     if (!config.transport && !config.endpoint) {
