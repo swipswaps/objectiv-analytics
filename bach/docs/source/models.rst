@@ -21,8 +21,8 @@ The model hub has two main type of functions: `map` and `aggregate`.
 
     models_mapping
 
-Mapping
-~~~~~~~
+.. rubric:: Mapping
+
 .. autosummary::
     Map.is_first_session
     Map.is_new_user
@@ -30,6 +30,7 @@ Mapping
     Map.conversions_counter
     Map.conversions_in_time
     Map.pre_conversion_hit_number
+
 
 
 
