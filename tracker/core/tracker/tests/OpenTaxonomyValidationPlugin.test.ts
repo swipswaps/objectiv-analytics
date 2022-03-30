@@ -128,10 +128,7 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: RootLocationContext is missing from Location Stack.\n' +
-          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.\n' +
-          'Core Concepts:\n' +
-          '- Locations: https://staging.objectiv.io/docs/tracking/core-concepts/locations.\n' +
-          '- Validation: https://staging.objectiv.io/docs/tracking/core-concepts/validation.',
+          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
         'color:red'
       );
     });

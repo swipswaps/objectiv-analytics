@@ -67,20 +67,54 @@ const genericErrorMessagesByType: ContextErrorMessagesByType = {
  * // TODO finish message overrides for all platforms
  */
 export const ContextErrorMessages: ContextErrorMessages = {
-  [TrackerPlatform.ANGULAR]: genericErrorMessagesByType,
-  [TrackerPlatform.CORE]: {
+  [TrackerPlatform.ANGULAR]: {
     ...genericErrorMessagesByType,
     [ContextErrorType.LOCATION_CONTEXT_MISSING]: {
       ...genericErrorMessagesByType.LOCATION_CONTEXT_MISSING,
       RootLocationContext:
         genericErrorMessagesByType.LOCATION_CONTEXT_MISSING.default +
         '\n' +
-        'Core Concepts:\n' +
-        '- Locations: {{docsURL}}/tracking/core-concepts/locations.\n' +
-        '- Validation: {{docsURL}}/tracking/core-concepts/validation.',
+        'See also:\n' +
+        '- Configuring Roots: {{docsURL}}/tracking/angular/how-to-guides/configuring-root-locations.\n' +
+        '- tagRootLocation: {{docsURL}}/tracking/angular/api-reference/locationTaggers/tagRootLocation.',
     },
   },
-  [TrackerPlatform.BROWSER]: genericErrorMessagesByType,
-  [TrackerPlatform.REACT]: genericErrorMessagesByType,
-  [TrackerPlatform.REACT_NATIVE]: genericErrorMessagesByType,
+  [TrackerPlatform.CORE]: genericErrorMessagesByType,
+  [TrackerPlatform.BROWSER]: {
+    ...genericErrorMessagesByType,
+    [ContextErrorType.LOCATION_CONTEXT_MISSING]: {
+      ...genericErrorMessagesByType.LOCATION_CONTEXT_MISSING,
+      RootLocationContext:
+        genericErrorMessagesByType.LOCATION_CONTEXT_MISSING.default +
+        '\n' +
+        'See also:\n' +
+        '- Configuring Roots: {{docsURL}}/tracking/browser/how-to-guides/configuring-root-locations.\n' +
+        '- tagRootLocation: {{docsURL}}/tracking/browser/api-reference/locationTaggers/tagRootLocation.',
+    },
+  },
+  [TrackerPlatform.REACT]: {
+    ...genericErrorMessagesByType,
+    [ContextErrorType.LOCATION_CONTEXT_MISSING]: {
+      ...genericErrorMessagesByType.LOCATION_CONTEXT_MISSING,
+      RootLocationContext:
+        genericErrorMessagesByType.LOCATION_CONTEXT_MISSING.default +
+        '\n' +
+        'See also:\n' +
+        '- Configuring Roots: {{docsURL}}/tracking/react/how-to-guides/configuring-root-locations.\n' +
+        '- TrackedRootLocationContext: {{docsURL}}/tracking/react/api-reference/trackedContexts/TrackedRootLocationContext.\n' +
+        '- RootLocationContextWrapper: {{docsURL}}/tracking/react/api-reference/locationWrappers/RootLocationContextWrapper.',
+    },
+  },
+  [TrackerPlatform.REACT_NATIVE]: {
+    ...genericErrorMessagesByType,
+    [ContextErrorType.LOCATION_CONTEXT_MISSING]: {
+      ...genericErrorMessagesByType.LOCATION_CONTEXT_MISSING,
+      RootLocationContext:
+        genericErrorMessagesByType.LOCATION_CONTEXT_MISSING.default +
+        '\n' +
+        'See also:\n' +
+        '- React Navigation Plugin: {{docsURL}}/tracking/react-native/plugins/react-navigation.\n' +
+        '- RootLocationContextWrapper: {{docsURL}}/tracking/react-native/api-reference/locationWrappers/RootLocationContextWrapper.',
+    },
+  },
 };
