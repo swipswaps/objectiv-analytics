@@ -235,7 +235,8 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                         },
                         'items': menu_item_children
                     })
-                elif (first_child['type'] == 'link'):
+                # create a generated-index category if it's a link (so no content) and has more than one child
+                elif (first_child['type'] == 'link' and len(menu_item_children) > 1):
                     # get its slug, and replace any first hashtag with a slash
                     generated_index_slug = first_child['href'].replace('#', '/', 1)
                     del menu_item_children[0]
