@@ -178,11 +178,11 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                 # this is the "index" page, so correct path
                 href = menu_item['href'].replace(index_page, '')
 
-            if level > 0 or len(menu_item['children']) == 0 or menu_item['text'] in skip_categories:
+            if (level > 0 and len(menu_item['children']) > 0) or menu_item['text'] in skip_categories:
                 # To avoid duplicates (because Docusaurus doesn't support categories with links),
                 # we only add the link, if:
                 # - we're not at top level
-                # - there are no children (so no category with the same name)
+                # - there is at least one child
                 # - the item is not in the skip_categories list
                 items = [{
                     'type': 'link',
@@ -195,10 +195,6 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                 'label': label,
                 'id': f'{module}/{href}'
             }]
-
-        if (label=='Mapping' or label=='Aggregation'):
-            print("MENU_ITEM:", menu_item)
-            print("ITEMS:", items)
 
         if len(menu_item['children']) > 0 and menu_item['text'] not in skip_categories and menu_item['href']:
             # this is a case where we have a duplicate (both children and an href)
