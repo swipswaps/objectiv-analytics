@@ -11,7 +11,7 @@ import { makeReactTrackerDefaultTransport } from './common/factories/makeReactTr
  * React Tracker can be configured in an easier way, as opposed to the core tracker.
  * The minimum required parameters are the `applicationId` and either an `endpoint` or a `transport` object.
  */
-export type ReactTrackerConfig = TrackerConfig & {
+export type ReactTrackerConfig = Omit<TrackerConfig, 'platform'> & {
   /**
    * The collector endpoint URL.
    */
@@ -71,23 +71,23 @@ export type ReactTrackerConfig = TrackerConfig & {
  */
 export class ReactTracker extends Tracker {
   constructor(trackerConfig: ReactTrackerConfig, ...contextConfigs: ContextsConfig[]) {
-    let config = trackerConfig;
+    let config: TrackerConfig = trackerConfig;
 
     // Set the platform
     config.platform = TrackerPlatform.REACT;
 
     // Either `transport` or `endpoint` must be provided
-    if (!config.transport && !config.endpoint) {
+    if (!config.transport && !trackerConfig.endpoint) {
       throw new Error('Either `transport` or `endpoint` must be provided');
     }
 
     // `transport` and `endpoint` must not be provided together
-    if (config.transport && config.endpoint) {
+    if (config.transport && trackerConfig.endpoint) {
       throw new Error('Please provider either `transport` or `endpoint`, not both at same time');
     }
 
     // Automatically create a default Transport for the given `endpoint` with a sensible setup
-    if (config.endpoint) {
+    if (trackerConfig.endpoint) {
       config = {
         ...config,
         transport: makeReactTrackerDefaultTransport(config),
