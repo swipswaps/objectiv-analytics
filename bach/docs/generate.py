@@ -65,6 +65,7 @@ patterns = [
     '^bach_reference.html$',
     "^bach_whatisbach.html$",
     "^models_mapping.html$",
+    "^models_aggregation.html$",
 ]
 
 # list of special cases, where we have a subdir, with an introduction at toplevel

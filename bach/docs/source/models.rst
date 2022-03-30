@@ -32,15 +32,16 @@ The model hub has two main type of functions: `map` and `aggregate`.
     Map.pre_conversion_hit_number
 
 
+.. Generate links in the toctree, but don't show the TOC itself in this page
+.. rst-class:: hide_toctree_ul
 
+.. toctree:: 
 
-.. _aggregate_models:
+    models_aggregation
 
-Aggregation
-~~~~~~~~~~~
+.. rubric:: Aggregation
+
 .. autosummary::
-    :toctree: modelhub_api_reference
-
     Aggregate.unique_users
     Aggregate.unique_sessions
     Aggregate.session_duration

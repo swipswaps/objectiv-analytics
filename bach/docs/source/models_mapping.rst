@@ -6,8 +6,6 @@
 Mapping
 =======
 
-INTRO HERE
-
 .. autosummary::
     :toctree: modelhub_api_reference
 
