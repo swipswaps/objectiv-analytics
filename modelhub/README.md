@@ -1,11 +1,11 @@
 # Objectiv Analysis
 
 ## Start modeling with Objectiv
-If you want to use Objectiv Modelhub install the package from Pypi as follows:
+If you want to use the open model hub, install the package from Pypi as follows:
 ```bash
 pip install objectiv_modelhub
 ```
-You are now ready to use Objectiv ModelHub. Either through your own notebooks/code or through our examples.
+You are now ready to use the model hub. Either through your own notebooks/code or through our examples.
 
 ### Examples
 We have some example notebooks in the 
@@ -15,7 +15,7 @@ collected data. The only thing that might need to be adjusted is how the connect
 made (see below). All other instructions live in the README.md in the link above.
 
 ### Your own code
-To use ModelHub in your own code, you can import the package and use it to get a Bach DataFrame 
+To use the model hub in your own code, you can import the package and use it to get a Bach DataFrame 
 ([What is Bach?](https://www.objectiv.io/docs/modeling/bach_whatisbach)) to 
 perform your operations on. The object can be instantiated as follows, where the `db_url` and `table_name`
 should be adjusted depending on where the data is stored and how to access it.

@@ -1,10 +1,10 @@
 # Example Notebooks
-This directory contains notebooks to demonstrate the use of Bach and ModelHub. They can be used as a 
-starting point for your own analyses as well.
+This directory contains notebooks to demonstrate the use of Bach and the open model hub. They can be used 
+as a starting point for your own analyses as well.
 
 ## Setup
-Please see the ModelHub [README.md](../modelhub/README.md) to set up your environment. After that, execute 
-the commands below in the same `venv` as where you did the ModelHub install. 
+Please see the model hub [README.md](../modelhub/README.md) to set up your environment. After that, execute 
+the commands below in the same `venv` as where you did the model hub install. 
 
 Now it should be as simple as:
 ```shell
@@ -17,5 +17,6 @@ In order to use the Metabase integration in some of the example notebooks, make 
 Metabase section in the modelhub [README.md](../modelhub/README.md).
 
 ## Notebooks 
-Please see the most complete list of examples at [the modelhub example page on Objectiv.io](https://www.objectiv.io/docs/modeling/example_notebooks) 
+Please see the most complete list of examples at [the model hub example page on Objectiv.io](https://www.
+objectiv.io/docs/modeling/example_notebooks) 
 or have a look at the files in this directory; most of them have a pretty decent introduction.
