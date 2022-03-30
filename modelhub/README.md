@@ -3,7 +3,7 @@
 ## Start modeling with Objectiv
 If you want to use the open model hub, install the package from Pypi as follows:
 ```bash
-pip install objectiv_modelhub
+pip install objectiv-modelhub
 ```
 You are now ready to use the model hub. Either through your own notebooks/code or through our examples.
 
@@ -29,15 +29,15 @@ df = modelhub.get_objectiv_dataframe(db_url='postgresql://user:pass@localhost:54
 ```
 
 ## Setup development environment
-This section is only required for development on the objectiv_modelhub package.
+This section is only required for development on the objectiv-modelhub package.
 
 ```bash
 virtualenv venv
 source venv/bin/activate
 export PYTHONPATH=.
 
-# You probably want to remove any installed version of objectiv_modelhub if you did not just create a fresh venv
-pip uninstall objectiv_modelhub
+# You probably want to remove objectiv-modelhub if you did not just create a fresh venv
+pip uninstall objectiv-modelhub
 
 # This will fail if the postgres lib development headers are not present if so, then on Ubuntu that can
 # be fixed with: sudo apt-get install libpq-dev
