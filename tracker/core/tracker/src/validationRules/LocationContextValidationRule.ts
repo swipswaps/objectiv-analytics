@@ -6,8 +6,8 @@ import { TrackerPlatform } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
+import { ContextErrorType } from './ContextErrorMessages';
 import { ContextValidationRuleConfig } from './ContextValidationRuleConfig';
-import { ErrorCode } from './ErrorMessages';
 import { logContextValidationRuleError } from './logContextValidationRuleError';
 
 /**
@@ -63,11 +63,11 @@ export class LocationContextValidationRule
     const matches = event.location_stack.filter((context) => context._type === this.contextName);
 
     if (!matches.length) {
-      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.LOCATION_CONTEXT_MISSING });
+      logContextValidationRuleError({ rule: this, event, type: ContextErrorType.LOCATION_CONTEXT_MISSING });
     } else if (this.once && matches.length > 1) {
-      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.LOCATION_CONTEXT_DUPLICATED });
+      logContextValidationRuleError({ rule: this, event, type: ContextErrorType.LOCATION_CONTEXT_DUPLICATED });
     } else if (typeof this.position === 'number' && index !== this.position) {
-      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.LOCATION_CONTEXT_WRONG_POSITION });
+      logContextValidationRuleError({ rule: this, event, type: ContextErrorType.LOCATION_CONTEXT_WRONG_POSITION });
     }
   }
 }

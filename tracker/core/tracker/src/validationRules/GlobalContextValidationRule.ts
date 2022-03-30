@@ -6,8 +6,8 @@ import { TrackerPlatform } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
+import { ContextErrorType } from './ContextErrorMessages';
 import { ContextValidationRuleConfig } from './ContextValidationRuleConfig';
-import { ErrorCode } from './ErrorMessages';
 import { logContextValidationRuleError } from './logContextValidationRuleError';
 
 /**
@@ -47,9 +47,9 @@ export class GlobalContextValidationRule implements TrackerValidationRuleInterfa
     const matches = event.global_contexts.filter((context) => context._type === this.contextName);
 
     if (!matches.length) {
-      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.GLOBAL_CONTEXT_CONTEXT_MISSING });
+      logContextValidationRuleError({ rule: this, event, type: ContextErrorType.GLOBAL_CONTEXT_MISSING });
     } else if (this.once && matches.length > 1) {
-      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.GLOBAL_CONTEXT_CONTEXT_DUPLICATED });
+      logContextValidationRuleError({ rule: this, event, type: ContextErrorType.GLOBAL_CONTEXT_DUPLICATED });
     }
   }
 }

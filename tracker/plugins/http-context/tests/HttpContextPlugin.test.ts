@@ -149,10 +149,8 @@ describe('HttpContextPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:HttpContextPlugin｣ Error: 
-      HttpContext is missing from Global Contexts. 
-      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/HttpContext.
-    `,
+        '%c｢objectiv:HttpContextPlugin｣ Error: HttpContext is missing from Global Contexts.\n' +
+        'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/HttpContext.',
         'color:red'
       );
     });
@@ -185,10 +183,8 @@ describe('HttpContextPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:HttpContextPlugin｣ Error: 
-      Only one HttpContext should be present in Global Contexts.
-      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/HttpContext.
-    `,
+        '%c｢objectiv:HttpContextPlugin｣ Error: Only one HttpContext should be present in Global Contexts.\n' +
+        'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/HttpContext.',
         'color:red'
       );
     });

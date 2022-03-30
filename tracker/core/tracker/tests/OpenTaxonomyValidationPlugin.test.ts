@@ -66,10 +66,8 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: 
-      ApplicationContext is missing from Global Contexts. 
-      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/ApplicationContext.
-    `,
+        '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: ApplicationContext is missing from Global Contexts.\n' +
+          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/ApplicationContext.',
         'color:red'
       );
     });
@@ -90,10 +88,8 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: 
-      Only one ApplicationContext should be present in Global Contexts.
-      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/ApplicationContext.
-    `,
+        '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: Only one ApplicationContext should be present in Global Contexts.\n' +
+          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/ApplicationContext.',
         'color:red'
       );
     });
@@ -131,10 +127,11 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: 
-      RootLocationContext is missing from Location Stack.
-      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.
-    `,
+        '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: RootLocationContext is missing from Location Stack.\n' +
+          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.\n' +
+          'Core Concepts:\n' +
+          '- Locations: https://staging.objectiv.io/docs/tracking/core-concepts/locations.\n' +
+          '- Validation: https://staging.objectiv.io/docs/tracking/core-concepts/validation.',
         'color:red'
       );
     });
@@ -155,10 +152,8 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: 
-      Only one RootLocationContext should be present in Location Stack.
-      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.
-    `,
+        '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: Only one RootLocationContext should be present in Location Stack.\n' +
+          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
         'color:red'
       );
     });
@@ -179,10 +174,8 @@ describe('OpenTaxonomyValidationPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: 
-      RootLocationContext is in the wrong position of the Location Stack.
-      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.
-    `,
+        '%c｢objectiv:OpenTaxonomyValidationPlugin｣ Error: RootLocationContext is in the wrong position of the Location Stack.\n' +
+          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
         'color:red'
       );
     });

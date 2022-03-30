@@ -5,8 +5,8 @@
 export * from './plugins/ApplicationContextPlugin';
 export * from './plugins/OpenTaxonomyValidationPlugin';
 
+export * from './validationRules/ContextErrorMessages';
 export * from './validationRules/ContextValidationRuleConfig';
-export * from './validationRules/ErrorMessages';
 export * from './validationRules/GlobalContextValidationRule';
 export * from './validationRules/LocationContextValidationRule';
 export * from './validationRules/logContextValidationRuleError';
