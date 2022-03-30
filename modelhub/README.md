@@ -1,11 +1,9 @@
 # Objectiv Analysis
 
 ## Start modeling with Objectiv
-Clone this repository and install the following packages with `pip install -e` from the root of the
-repository. The Bach package requires a local installation of postgres.
+If you want to use Objectiv Modelhub install the package from Pypi as follows:
 ```bash
-pip install -e bach
-pip install -e modelhub
+pip install objectiv_modelhub
 ```
 
 You are now ready to use Objectiv ModelHub w/ Bach. Either through your own notebooks/code or through our 
@@ -20,7 +18,7 @@ made (see below).
 
 ### Your own code
 To use ModelHub in your own code,you need to import the package and use it to get a Bach DataFrame object to 
-perform your operations on . The object can be instantiated as follows, where the `db_url` and `table_name`
+perform your operations on. The object can be instantiated as follows, where the `db_url` and `table_name`
 should be adjusted depending on where the data is stored and how to access it.
 ```python
 from modelhub import ModelHub
@@ -32,12 +30,15 @@ df = modelhub.get_objectiv_dataframe(db_url='postgresql://user:pass@localhost:54
 ```
 
 ## Setup development environment
-This section is only required for development of the bach and open taxonomy packages. 
+This section is only required for development on the objectiv_modelhub package.
 
 ```bash
 virtualenv venv
 source venv/bin/activate
 export PYTHONPATH=.
+
+# You probably want to remove any installed version of objectiv_modelhub if you did not just create a fresh venv
+pip uninstall objectiv_modelhub
 
 # This will fail if the postgres lib development headers are not present if so, then on Ubuntu that can
 # be fixed with: sudo apt-get install libpq-dev

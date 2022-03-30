@@ -17,18 +17,5 @@ In order to use the Metabase integration in some of the example notebooks, make 
 Metabase section in the modelhub [README.md](../modelhub/README.md).
 
 ## Notebooks 
-This list aims to give an explanation of the notebooks contained here, but please refer to the notebook 
-themselves as well, as all of them have a pretty decent introduction and this list is not exhaustive.
-
-### The open taxonomy how-to notebook ([open-taxonomy-how-to.ipynb](open-taxonomy-how-to.ipynb))
-This notebook demonstrates the contents and structure of the data in an interactive way. Also shows how you
-can work with the using Bach, our pandas inspired interface that works directly with your data in the
-database. The full reference of Bach is found [here](https://objectiv.io/docs/modeling/reference/).
-
-### Model Hub demo notebook ([model-hub-demo-notebook.ipynb](model-hub-demo-notebook.ipynb))
-This notebook shows how you can work with the data using standard models from the model hub. For the
-conversion models to give sensible results the `add_conversion_event` paramaters need to be adjusted to your
-own data. The full model hub reference is found
-[here](https://objectiv.io/docs/modeling/Objectiv/modelhub.ModelHub/). The Metabase example is made
-to work with our [quickstart demo](https://objectiv.io/docs/home/quickstart-guide/), in which Metabase is included.
-See the section at the end of this readme for how to set up Metabaser integration for your data.
+Please see the most complete list of examples at [the modelhub example page on Objectiv.io](https://www.objectiv.io/docs/modeling/example_notebooks) 
+or have a look at the files in this directory; most of them have a pretty decent introduction.
