@@ -17,6 +17,8 @@ from bach.types import register_dtype
 class ObjectivStack(SeriesJsonb.Json):
     def get_from_context_with_type_series(self, type: str, key: str, dtype='string'):
         """
+        .. _get_from_context_with_type_series:
+
         Returns the value of `key` from the first context in an Objectiv stack where `_type` matches `type`.
 
         :param type: the _type to search for in the contexts of the stack.
@@ -50,6 +52,8 @@ class SeriesGlobalContexts(SeriesJsonb):
         @property
         def cookie_id(self):
             """
+            .. _gc_cookie_id:
+
             Returns cookie id from the global contexts.
             """
             return self.get_from_context_with_type_series("CookieIdContext", "cookie_id")
@@ -57,6 +61,8 @@ class SeriesGlobalContexts(SeriesJsonb):
         @property
         def user_agent(self):
             """
+            .. _gc_user_agent:
+
             Returns user agent string from the global contexts.
             """
             return self.get_from_context_with_type_series("HttpContext", "user_agent")
@@ -64,6 +70,8 @@ class SeriesGlobalContexts(SeriesJsonb):
         @property
         def application(self):
             """
+            .. _gc_application:
+
             Returns application id from the global contexts.
             """
             return self.get_from_context_with_type_series("ApplicationContext", "id")
@@ -133,6 +141,8 @@ class SeriesLocationStack(SeriesJsonb):
         @property
         def navigation_features(self):
             """
+            .. _ls_navigation_features:
+
             Returns the navigation stack from the location stack.
             """
             return self[{'_type': 'NavigationContext'}: None]
@@ -140,6 +150,8 @@ class SeriesLocationStack(SeriesJsonb):
         @property
         def feature_stack(self):
             """
+            .. _ls_feature_stack:
+
             Returns the feature stack from the location stack. The context objects only contain the `_type`
             and a `id` key.
             """
@@ -163,6 +175,8 @@ class SeriesLocationStack(SeriesJsonb):
         @property
         def nice_name(self):
             """
+            .. _ls_nice_name:
+
             Returns a nice name for the location stack. This is a human readable name for the data in the
             feature stack.
             """

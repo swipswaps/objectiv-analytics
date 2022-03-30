@@ -1,10 +1,13 @@
+.. _bach_examples:
+
 .. currentmodule:: bach
 
-========
-Examples
-========
+===========
+Bach basics
+===========
 Here we'll give some very basic examples of the usage of Bach: creating a DataFrame, basic operations,
-aggregate operations, and getting the resulting data filtered and sorted.
+aggregate operations, and getting the resulting data filtered and sorted. For this example there is no
+separate notebook available, but the operations demonstrated here are used in the other example notebooks.
 
 In the examples we'll assume that the database has a table called 'example', with a few specific
 columns. The SQL to create that table can be found below in :ref:`appendix_example_data`.

@@ -1,3 +1,5 @@
+.. _bach_api_reference:
+
 =============
 API Reference
 =============
@@ -7,4 +9,3 @@ API Reference
 
     DataFrame
     Series
-    Objectiv
