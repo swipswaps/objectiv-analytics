@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContextsConfig, Tracker, TrackerConfig } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerConfig, TrackerPlatform } from '@objectiv/tracker-core';
 import { makeReactNativeTrackerDefaultPluginsList } from './common/factories/makeReactNativeTrackerDefaultPluginsList';
 import { makeReactNativeTrackerDefaultQueue } from './common/factories/makeReactNativeTrackerDefaultQueue';
 import { makeReactNativeTrackerDefaultTransport } from './common/factories/makeReactNativeTrackerDefaultTransport';
@@ -47,6 +47,8 @@ export type ReactNativeTrackerConfig = TrackerConfig & {
  *  @see makeReactNativeTrackerDefaultPluginsList
  */
 export class ReactNativeTracker extends Tracker {
+  platform = TrackerPlatform.REACT_NATIVE;
+
   constructor(trackerConfig: ReactNativeTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = trackerConfig;
 

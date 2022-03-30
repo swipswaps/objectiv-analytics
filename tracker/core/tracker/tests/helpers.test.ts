@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { isBrowser, isDevMode, makeIdFromString, waitForPromise } from '../src';
+import { isBrowser, isDevMode, makeDocsURL, makeIdFromString, waitForPromise } from '../src';
 
 describe('helpers', () => {
   describe('waitForPromise', () => {
@@ -96,7 +96,7 @@ describe('helpers', () => {
       expect(isDevMode()).toBe(false);
     });
 
-    it(`should return true`, () => {
+    it(`should return true (development)`, () => {
       process.env.NODE_ENV = 'development';
       expect(isDevMode()).toBe(true);
     });
@@ -105,6 +105,33 @@ describe('helpers', () => {
   describe('isBrowser', () => {
     it(`should return false`, () => {
       expect(isBrowser()).toBe(false);
+    });
+  });
+
+  describe('makeDocsURL', () => {
+    const OLD_ENV = process.env;
+
+    beforeEach(() => {
+      process.env = { ...OLD_ENV };
+    });
+
+    afterAll(() => {
+      process.env = OLD_ENV;
+    });
+
+    it(`should return production (production)`, () => {
+      process.env.NODE_ENV = 'production';
+      expect(makeDocsURL()).toBe('https://objectiv.io/docs');
+    });
+
+    it(`should return production (NODE_ENV not set)`, () => {
+      Object.defineProperty(process, 'env', { value: {}, configurable: true });
+      expect(makeDocsURL()).toBe('https://objectiv.io/docs');
+    });
+
+    it(`should return staging (development)`, () => {
+      process.env.NODE_ENV = 'development';
+      expect(makeDocsURL()).toBe('https://staging.objectiv.io/docs');
     });
   });
 });

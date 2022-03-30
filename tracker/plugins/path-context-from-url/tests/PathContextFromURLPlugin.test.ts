@@ -46,8 +46,27 @@ describe('PathContextFromURLPlugin', () => {
   });
 
   describe('Validation', () => {
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      plugins: [new PathContextFromURLPlugin()],
+      trackApplicationContext: false,
+    });
+
+    it('should TrackerConsole.error when calling `validate` before `initialize`', () => {
+      const testPathContextPlugin = new PathContextFromURLPlugin();
+      const validEvent = new TrackerEvent({
+        _type: 'test',
+        global_contexts: [makePathContext({ id: '/test' })],
+      });
+      testPathContextPlugin.validate(validEvent);
+      expect(MockConsoleImplementation.error).toHaveBeenCalledWith(
+        '｢objectiv:PathContextFromURLPlugin｣ Cannot validate. Make sure to initialize the plugin first.'
+      );
+    });
+
     it('should succeed', () => {
       const testPathContextPlugin = new PathContextFromURLPlugin();
+      testPathContextPlugin.initialize(testTracker);
       const validEvent = new TrackerEvent({
         _type: 'test',
         global_contexts: [makePathContext({ id: '/test' })],
@@ -62,6 +81,7 @@ describe('PathContextFromURLPlugin', () => {
 
     it('should fail when given TrackerEvent does not have PathContext', () => {
       const testPathContextPlugin = new PathContextFromURLPlugin();
+      testPathContextPlugin.initialize(testTracker);
       const eventWithoutPathContext = new TrackerEvent({ _type: 'test' });
 
       jest.resetAllMocks();
@@ -71,13 +91,17 @@ describe('PathContextFromURLPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:PathContextFromURLPlugin:GlobalContextValidationRule｣ Error: PathContext is missing from Global Contexts.`,
+        `%c｢objectiv:PathContextFromURLPlugin｣ Error: 
+      PathContext is missing from Global Contexts. 
+      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.
+    `,
         'color:red'
       );
     });
 
     it('should fail when given TrackerEvent has multiple PathContexts', () => {
       const testPathContextPlugin = new PathContextFromURLPlugin();
+      testPathContextPlugin.initialize(testTracker);
       const eventWithDuplicatedPathContext = new TrackerEvent({
         _type: 'test',
         global_contexts: [makePathContext({ id: '/test' }), makePathContext({ id: '/test' })],
@@ -90,7 +114,10 @@ describe('PathContextFromURLPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        `%c｢objectiv:PathContextFromURLPlugin:GlobalContextValidationRule｣ Error: Only one PathContext should be present in Global Contexts.`,
+        `%c｢objectiv:PathContextFromURLPlugin｣ Error: 
+      Only one PathContext should be present in Global Contexts.
+      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.
+    `,
         'color:red'
       );
     });

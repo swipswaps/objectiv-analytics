@@ -6,9 +6,11 @@ export * from './plugins/ApplicationContextPlugin';
 export * from './plugins/OpenTaxonomyValidationPlugin';
 
 export * from './validationRules/ContextValidationRuleConfig';
+export * from './validationRules/ErrorMessages';
 export * from './validationRules/GlobalContextValidationRule';
 export * from './validationRules/LocationContextValidationRule';
-export * from './validationRules/logEventValidationRuleError';
+export * from './validationRules/logContextValidationRuleError';
+export * from './validationRules/makeValidationRuleErrorMessage';
 
 export * from './cleanObjectFromInternalProperties';
 export * from './Context';

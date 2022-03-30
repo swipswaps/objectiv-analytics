@@ -2,7 +2,7 @@
  * Copyright 2021-2022 Objectiv B.V.
  */
 
-import { ContextsConfig, Tracker, TrackerConfig } from '@objectiv/tracker-core';
+import { ContextsConfig, Tracker, TrackerPlatform } from '@objectiv/tracker-core';
 import { makeBrowserTrackerDefaultPluginsList } from './common/factories/makeBrowserTrackerDefaultPluginsList';
 import { makeBrowserTrackerDefaultQueue } from './common/factories/makeBrowserTrackerDefaultQueue';
 import { makeBrowserTrackerDefaultTransport } from './common/factories/makeBrowserTrackerDefaultTransport';
@@ -44,8 +44,7 @@ import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
  *  @see makeBrowserTrackerDefaultTransport
  */
 export class BrowserTracker extends Tracker {
-  // A copy of the original configuration
-  readonly trackerConfig: TrackerConfig;
+  platform = TrackerPlatform.BROWSER;
 
   constructor(trackerConfig: BrowserTrackerConfig, ...contextConfigs: ContextsConfig[]) {
     let config = trackerConfig;
@@ -79,8 +78,5 @@ export class BrowserTracker extends Tracker {
 
     // Initialize core Tracker
     super(config, ...contextConfigs);
-
-    // Store original config for comparison with other instances of Browser Tracker
-    this.trackerConfig = trackerConfig;
   }
 }

@@ -2,11 +2,13 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import { TrackerPlatform } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
 import { ContextValidationRuleConfig } from './ContextValidationRuleConfig';
-import { logEventValidationRuleError } from './logEventValidationRuleError';
+import { ErrorCode } from './ErrorMessages';
+import { logContextValidationRuleError } from './logContextValidationRuleError';
 
 /**
  * A generic configurable Rule that can verify, and console error, whether the given `context` is:
@@ -15,6 +17,7 @@ import { logEventValidationRuleError } from './logEventValidationRuleError';
  */
 export class GlobalContextValidationRule implements TrackerValidationRuleInterface, ContextValidationRuleConfig {
   readonly validationRuleName = `GlobalContextValidationRule`;
+  readonly platform: TrackerPlatform;
   readonly contextName: string;
   readonly once?: boolean;
   readonly logPrefix?: string;
@@ -23,6 +26,7 @@ export class GlobalContextValidationRule implements TrackerValidationRuleInterfa
    * Process config onto state.
    */
   constructor(config: ContextValidationRuleConfig) {
+    this.platform = config.platform;
     this.contextName = config.contextName;
     this.once = config.once;
     this.logPrefix = config.logPrefix;
@@ -43,9 +47,9 @@ export class GlobalContextValidationRule implements TrackerValidationRuleInterfa
     const matches = event.global_contexts.filter((context) => context._type === this.contextName);
 
     if (!matches.length) {
-      logEventValidationRuleError(this, event, `${this.contextName} is missing from Global Contexts.`);
+      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.GLOBAL_CONTEXT_CONTEXT_MISSING });
     } else if (this.once && matches.length > 1) {
-      logEventValidationRuleError(this, event, `Only one ${this.contextName} should be present in Global Contexts.`);
+      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.GLOBAL_CONTEXT_CONTEXT_DUPLICATED });
     }
   }
 }

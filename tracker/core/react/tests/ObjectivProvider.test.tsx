@@ -8,7 +8,7 @@ import {
   LocationContextValidationRule,
   makeApplicationLoadedEvent,
   Tracker,
-  TrackerConsole,
+  TrackerConsole, TrackerPlatform,
 } from '@objectiv/tracker-core';
 import { render } from '@testing-library/react';
 import React from 'react';
@@ -32,6 +32,7 @@ describe('ObjectivProvider', () => {
   const expectedState = {
     locationStack: [],
     tracker: {
+      platform: TrackerPlatform.CORE,
       active: true,
       applicationId: 'app-id',
       global_contexts: [],
@@ -42,11 +43,13 @@ describe('ObjectivProvider', () => {
             pluginName: 'OpenTaxonomyValidationPlugin',
             validationRules: [
               new GlobalContextValidationRule({
+                platform: TrackerPlatform.CORE,
                 logPrefix: 'OpenTaxonomyValidationPlugin',
                 contextName: 'ApplicationContext',
                 once: true,
               }),
               new LocationContextValidationRule({
+                platform: TrackerPlatform.CORE,
                 logPrefix: 'OpenTaxonomyValidationPlugin',
                 contextName: 'RootLocationContext',
                 once: true,

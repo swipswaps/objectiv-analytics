@@ -42,19 +42,21 @@ describe('makePressListener', () => {
                 <Tab.Screen
                   options={{ tabBarTestID: 'TabA ' }}
                   name="ScreenA"
-                  component={() => <Text>Screen A</Text>}
                   listeners={({ navigation }) => ({
                     tabPress: makeLinkPressListener({ trackingContext, navigation }),
                   })}
-                />
+                >
+                  {() => <Text>Screen A</Text>}
+                </Tab.Screen>
                 <Tab.Screen
                   options={{ tabBarTestID: 'TabB ' }}
                   name="ScreenB"
-                  component={() => <Text>Screen B</Text>}
                   listeners={({ navigation }) => ({
                     tabPress: makeLinkPressListener({ trackingContext, navigation }),
                   })}
-                />
+                >
+                  {() => <Text>Screen B</Text>}
+                </Tab.Screen>
               </Tab.Navigator>
             )}
           </NavigationContextWrapper>

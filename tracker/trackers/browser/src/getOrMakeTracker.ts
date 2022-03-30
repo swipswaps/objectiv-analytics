@@ -3,7 +3,6 @@
  */
 
 import { BrowserTracker } from './BrowserTracker';
-import { compareTrackerConfigs } from './common/compareTrackerConfigs';
 import { BrowserTrackerConfig } from './definitions/BrowserTrackerConfig';
 import { getTrackerRepository } from './getTrackerRepository';
 import { makeTracker } from './makeTracker';
@@ -25,11 +24,6 @@ export const getOrMakeTracker = (trackerConfig: BrowserTrackerConfig): BrowserTr
   // If we did not find a tracker, make a new one.
   if (!tracker) {
     return makeTracker(trackerConfig);
-  }
-
-  // We found a Tracker instance but, before returning it, ensure its config matches the given configuration
-  if (!compareTrackerConfigs(tracker.trackerConfig, trackerConfig)) {
-    throw new Error(`Tracker \`${trackerId}\` exists but its configuration doesn't match the given one.`);
   }
 
   return tracker;

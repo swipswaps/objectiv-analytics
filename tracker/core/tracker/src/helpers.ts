@@ -121,3 +121,8 @@ export const isDevMode = () =>
  * Helper function to determine if we are in a browser - quite simplistically by checking the window object.
  */
 export const isBrowser = () => typeof window !== 'undefined';
+
+/**
+ * Returns the URL of the docs without trailing slash. Staging or production depends on whether we are in dev mode.
+ */
+export const makeDocsURL = () => `https://${isDevMode() ? 'staging.' : ''}objectiv.io/docs`;

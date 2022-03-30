@@ -3,11 +3,11 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConfig, TrackerConsole, TrackerEvent } from '../src';
+import { ApplicationContextPlugin, ContextsConfig, Tracker, TrackerConsole, TrackerEvent } from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
-const trackerConfig: TrackerConfig = { applicationId: 'app-id' };
+const coreTracker = new Tracker({ applicationId: 'app-id' });
 
 describe('ApplicationContextPlugin', () => {
   beforeEach(() => {
@@ -15,8 +15,7 @@ describe('ApplicationContextPlugin', () => {
   });
 
   it('should generate an ApplicationContext when initialized', () => {
-    const tracker = new Tracker({ ...trackerConfig });
-    expect(tracker.plugins.get('ApplicationContextPlugin')).toEqual(
+    expect(coreTracker.plugins.get('ApplicationContextPlugin')).toEqual(
       expect.objectContaining({
         applicationContext: {
           __global_context: true,
@@ -36,7 +35,6 @@ describe('ApplicationContextPlugin', () => {
   });
 
   it('should add the ApplicationContext to the Event when `enrich` is executed by the Tracker', async () => {
-    const testTracker = new Tracker({ ...trackerConfig });
     const eventContexts: ContextsConfig = {
       global_contexts: [
         { __global_context: true, _type: 'section', id: 'X' },
@@ -45,7 +43,7 @@ describe('ApplicationContextPlugin', () => {
     };
     const testEvent = new TrackerEvent({ _type: 'test-event', ...eventContexts });
     expect(testEvent.global_contexts).toHaveLength(2);
-    const trackedEvent = await testTracker.trackEvent(testEvent);
+    const trackedEvent = await coreTracker.trackEvent(testEvent);
     expect(trackedEvent.global_contexts).toHaveLength(3);
     expect(trackedEvent.global_contexts).toEqual(
       expect.arrayContaining([

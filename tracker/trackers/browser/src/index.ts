@@ -36,7 +36,6 @@ export * from './common/stringifiers/stringifyLocationContext';
 export * from './common/stringifiers/stringifyTrackClicks';
 export * from './common/stringifiers/stringifyTrackVisibility';
 export * from './common/stringifiers/stringifyValidate';
-export * from './common/compareTrackerConfigs';
 export * from './common/findParentTaggedElements';
 export * from './common/getElementLocationStack';
 export * from './common/getLocationHref';

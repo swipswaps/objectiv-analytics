@@ -8,6 +8,7 @@ import {
   makePathContext,
   TrackerConsole,
   TrackerEvent,
+  TrackerInterface,
   TrackerPluginInterface,
   TrackerValidationRuleInterface,
 } from '@objectiv/tracker-core';
@@ -22,14 +23,15 @@ import {
  */
 export class PathContextFromURLPlugin implements TrackerPluginInterface {
   readonly pluginName = `PathContextFromURLPlugin`;
-  readonly validationRules: TrackerValidationRuleInterface[];
+  validationRules: TrackerValidationRuleInterface[] = [];
 
   /**
-   * The constructor is merely responsible for initializing validation rules.
+   * Initializes validation rules.
    */
-  constructor() {
+  initialize({ platform }: TrackerInterface): void {
     this.validationRules = [
       new GlobalContextValidationRule({
+        platform,
         logPrefix: this.pluginName,
         contextName: 'PathContext',
         once: true,
@@ -54,6 +56,12 @@ export class PathContextFromURLPlugin implements TrackerPluginInterface {
    */
   validate(event: TrackerEvent): void {
     if (this.isUsable()) {
+      if (!this.validationRules.length) {
+        TrackerConsole.error(
+          `｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`
+        );
+        return;
+      }
       this.validationRules.forEach((validationRule) => validationRule.validate(event));
     }
   }

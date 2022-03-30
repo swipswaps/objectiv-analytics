@@ -16,6 +16,17 @@ import { TrackerQueueInterface } from './TrackerQueueInterface';
 import { TrackerTransportInterface } from './TrackerTransportInterface';
 
 /**
+ * Tracker platforms
+ */
+export enum TrackerPlatform {
+  ANGULAR = 'ANGULAR',
+  CORE = 'CORE',
+  BROWSER = 'BROWSER',
+  REACT = 'REACT',
+  REACT_NATIVE = 'REACT_NATIVE',
+}
+
+/**
  * The configuration of the Tracker
  */
 export type TrackerConfig = ContextsConfig & {
@@ -98,16 +109,19 @@ export type TrackEventOptions = {
 /**
  * TrackerInterface implements Contexts and TrackerConfig, with the exception that plugins are not just an array of
  * Plugin instances, but they are wrapped in a TrackerPlugins instance.
+ * It also enforces a platform to be specified by all implementations.
  */
 export type TrackerInterface = Contexts &
   Omit<TrackerConfig, 'plugins'> & {
     plugins: TrackerPlugins;
+    platform: TrackerPlatform;
   };
 
 /**
  * Our basic platform-agnostic JavaScript Tracker interface and implementation
  */
 export class Tracker implements TrackerInterface {
+  readonly platform: TrackerPlatform = TrackerPlatform.CORE;
   readonly applicationId: string;
   readonly trackerId: string;
   readonly queue?: TrackerQueueInterface;

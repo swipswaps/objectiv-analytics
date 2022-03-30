@@ -126,13 +126,15 @@ describe('TrackerRepository', () => {
 
   it('should activate all inactive Tracker instances', () => {
     const trackerRepository = new TrackerRepository();
-    trackerRepository.add(
-      new Tracker({ applicationId: 'app-id-1', active: false, plugins: [], trackApplicationContext: false })
-    );
-    trackerRepository.add(new Tracker({ applicationId: 'app-id-2', plugins: [], trackApplicationContext: false }));
-    trackerRepository.add(
-      new Tracker({ applicationId: 'app-id-3', active: false, plugins: [], trackApplicationContext: false })
-    );
+    const tracker1 = new Tracker({ applicationId: 'app-id-1', active: false });
+    tracker1.plugins.plugins = [];
+    const tracker2 = new Tracker({ applicationId: 'app-id-2' });
+    tracker2.plugins.plugins = [];
+    const tracker3 = new Tracker({ applicationId: 'app-id-3', active: false });
+    tracker3.plugins.plugins = [];
+    trackerRepository.add(tracker1);
+    trackerRepository.add(tracker2);
+    trackerRepository.add(tracker3);
     jest.resetAllMocks();
     trackerRepository.activateAll();
     expect(MockConsoleImplementation.log).toHaveBeenCalledTimes(2);

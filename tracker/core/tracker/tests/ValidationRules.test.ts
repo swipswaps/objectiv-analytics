@@ -3,7 +3,13 @@
  */
 
 import { MockConsoleImplementation } from '@objectiv/testing-tools';
-import { GlobalContextValidationRule, LocationContextValidationRule, TrackerConsole, TrackerEvent } from '../src';
+import {
+  GlobalContextValidationRule,
+  LocationContextValidationRule,
+  TrackerConsole,
+  TrackerEvent,
+  TrackerPlatform,
+} from '../src';
 
 TrackerConsole.setImplementation(MockConsoleImplementation);
 
@@ -11,6 +17,7 @@ describe('Validation Rules', () => {
   describe('GlobalContextValidationRules', () => {
     it('Should TrackerConsole.error if given contextName is missing', () => {
       const testGlobalContextValidationRule = new GlobalContextValidationRule({
+        platform: TrackerPlatform.CORE,
         contextName: 'Context',
       });
 
@@ -20,13 +27,17 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:GlobalContextValidationRule｣ Error: Context is missing from Global Contexts.',
+        `%c｢objectiv｣ Error: 
+      Context is missing from Global Contexts. 
+      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/Context.
+    `,
         'color:red'
       );
     });
 
     it('Should prefix TrackerConsole.error messages with logPrefix', () => {
       const testGlobalContextValidationRule = new GlobalContextValidationRule({
+        platform: TrackerPlatform.CORE,
         contextName: 'Context',
         logPrefix: 'TestPrefix',
       });
@@ -37,13 +48,17 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:TestPrefix:GlobalContextValidationRule｣ Error: Context is missing from Global Contexts.',
+        `%c｢objectiv:TestPrefix｣ Error: 
+      Context is missing from Global Contexts. 
+      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/Context.
+    `,
         'color:red'
       );
     });
 
     it('Should TrackerConsole.error if given contextName is present more than once', () => {
       const testGlobalContextValidationRule = new GlobalContextValidationRule({
+        platform: TrackerPlatform.CORE,
         contextName: 'Context',
         once: true,
       });
@@ -62,7 +77,10 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:GlobalContextValidationRule｣ Error: Only one Context should be present in Global Contexts.',
+        `%c｢objectiv｣ Error: 
+      Only one Context should be present in Global Contexts.
+      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/Context.
+    `,
         'color:red'
       );
     });
@@ -71,6 +89,7 @@ describe('Validation Rules', () => {
   describe('LocationContextValidationRules', () => {
     it('Should TrackerConsole.error if given contextName is missing', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
+        platform: TrackerPlatform.CORE,
         contextName: 'Context',
       });
 
@@ -80,13 +99,17 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:LocationContextValidationRule｣ Error: Context is missing from Location Stack.',
+        `%c｢objectiv｣ Error: 
+      Context is missing from Location Stack.
+      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/Context.
+    `,
         'color:red'
       );
     });
 
     it('Should prefix TrackerConsole.error messages with logPrefix', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
+        platform: TrackerPlatform.CORE,
         contextName: 'Context',
         logPrefix: 'TestPrefix',
       });
@@ -97,13 +120,17 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:TestPrefix:LocationContextValidationRule｣ Error: Context is missing from Location Stack.',
+        `%c｢objectiv:TestPrefix｣ Error: 
+      Context is missing from Location Stack.
+      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/Context.
+    `,
         'color:red'
       );
     });
 
     it('Should TrackerConsole.error if given contextName is present more than once', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
+        platform: TrackerPlatform.CORE,
         contextName: 'Context',
         once: true,
       });
@@ -122,13 +149,17 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:LocationContextValidationRule｣ Error: Only one Context should be present in Location Stack.',
+        `%c｢objectiv｣ Error: 
+      Only one Context should be present in Location Stack.
+      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/Context.
+    `,
         'color:red'
       );
     });
 
     it('Should TrackerConsole.error if given contextName is present in the wrong position', () => {
       const testLocationContextValidationRule = new LocationContextValidationRule({
+        platform: TrackerPlatform.CORE,
         contextName: 'Context',
         once: true,
         position: 0,
@@ -148,7 +179,10 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:LocationContextValidationRule｣ Error: Context is in the wrong position of the Location Stack.',
+        `%c｢objectiv｣ Error: 
+      Context is in the wrong position of the Location Stack.
+      Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/location-contexts/Context.
+    `,
         'color:red'
       );
     });

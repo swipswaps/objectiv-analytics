@@ -2,11 +2,13 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import { TrackerPlatform } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerValidationRuleInterface } from '../TrackerValidationRuleInterface';
 import { ContextValidationRuleConfig } from './ContextValidationRuleConfig';
-import { logEventValidationRuleError } from './logEventValidationRuleError';
+import { ErrorCode } from './ErrorMessages';
+import { logContextValidationRuleError } from './logContextValidationRuleError';
 
 /**
  * LocationStack order matters, the LocationContextValidationRule config supports specifying a required position.
@@ -28,6 +30,7 @@ export class LocationContextValidationRule
   implements TrackerValidationRuleInterface, LocationContextValidationRuleConfig
 {
   readonly validationRuleName = `LocationContextValidationRule`;
+  readonly platform: TrackerPlatform;
   readonly contextName: string;
   readonly once?: boolean;
   readonly position?: number;
@@ -37,6 +40,7 @@ export class LocationContextValidationRule
    * Process config onto state.
    */
   constructor(config: LocationContextValidationRuleConfig) {
+    this.platform = config.platform;
     this.contextName = config.contextName;
     this.once = config.once;
     this.position = config.position;
@@ -59,11 +63,11 @@ export class LocationContextValidationRule
     const matches = event.location_stack.filter((context) => context._type === this.contextName);
 
     if (!matches.length) {
-      logEventValidationRuleError(this, event, `${this.contextName} is missing from Location Stack.`);
+      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.LOCATION_CONTEXT_MISSING });
     } else if (this.once && matches.length > 1) {
-      logEventValidationRuleError(this, event, `Only one ${this.contextName} should be present in Location Stack.`);
+      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.LOCATION_CONTEXT_DUPLICATED });
     } else if (typeof this.position === 'number' && index !== this.position) {
-      logEventValidationRuleError(this, event, `${this.contextName} is in the wrong position of the Location Stack.`);
+      logContextValidationRuleError({ rule: this, event, errorCode: ErrorCode.LOCATION_CONTEXT_WRONG_POSITION });
     }
   }
 }

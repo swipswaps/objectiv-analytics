@@ -3,6 +3,7 @@
  */
 
 import { isDevMode } from '../helpers';
+import { TrackerInterface } from '../Tracker';
 import { TrackerConsole } from '../TrackerConsole';
 import { TrackerEvent } from '../TrackerEvent';
 import { TrackerPluginInterface } from '../TrackerPluginInterface';
@@ -17,19 +18,21 @@ import { LocationContextValidationRule } from '../validationRules/LocationContex
  */
 export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
   readonly pluginName = `OpenTaxonomyValidationPlugin`;
-  readonly validationRules: TrackerValidationRuleInterface[];
+  validationRules: TrackerValidationRuleInterface[] = [];
 
   /**
-   * Initializes console and all Validation Rules.
+   * At initialization, we retrieve TrackerPlatform and initialize all Validation Rules.
    */
-  constructor() {
+  initialize({ platform }: TrackerInterface) {
     this.validationRules = [
       new GlobalContextValidationRule({
+        platform,
         logPrefix: this.pluginName,
         contextName: 'ApplicationContext',
         once: true,
       }),
       new LocationContextValidationRule({
+        platform,
         logPrefix: this.pluginName,
         contextName: 'RootLocationContext',
         once: true,
@@ -44,6 +47,11 @@ export class OpenTaxonomyValidationPlugin implements TrackerPluginInterface {
    * Performs Open Taxonomy related validation checks
    */
   validate(event: TrackerEvent): void {
+    if (!this.validationRules.length) {
+      TrackerConsole.error(`｢objectiv:${this.pluginName}｣ Cannot validate. Make sure to initialize the plugin first.`);
+      return;
+    }
+
     if (this.isUsable()) {
       this.validationRules.forEach((validationRule) => validationRule.validate(event));
     }

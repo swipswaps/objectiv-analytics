@@ -11,6 +11,7 @@ import {
   TrackerConfig,
   TrackerConsole,
   TrackerEvent,
+  TrackerPlatform,
   TrackerPluginInterface,
   TrackerQueue,
   TrackerQueueMemoryStore,
@@ -35,11 +36,13 @@ describe('Tracker', () => {
         pluginName: 'OpenTaxonomyValidationPlugin',
         validationRules: [
           new GlobalContextValidationRule({
+            platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
             contextName: 'ApplicationContext',
             once: true,
           }),
           new LocationContextValidationRule({
+            platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
             contextName: 'RootLocationContext',
             once: true,
@@ -61,7 +64,10 @@ describe('Tracker', () => {
   it('should instantiate with tracker config', async () => {
     expect(MockConsoleImplementation.log).not.toHaveBeenCalled();
     const testTransport = new LogTransport();
-    const testTracker = new Tracker({ applicationId: 'app-id', transport: testTransport });
+    const testTracker = new Tracker({
+      applicationId: 'app-id',
+      transport: testTransport,
+    });
     await expect(testTracker.waitForQueue()).resolves.toBe(true);
     expect(testTracker).toBeInstanceOf(Tracker);
     expect(testTracker.transport).toStrictEqual(testTransport);
@@ -70,11 +76,13 @@ describe('Tracker', () => {
         pluginName: 'OpenTaxonomyValidationPlugin',
         validationRules: [
           new GlobalContextValidationRule({
+            platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
             contextName: 'ApplicationContext',
             once: true,
           }),
           new LocationContextValidationRule({
+            platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
             contextName: 'RootLocationContext',
             once: true,
@@ -108,11 +116,13 @@ describe('Tracker', () => {
         pluginName: 'OpenTaxonomyValidationPlugin',
         validationRules: [
           new GlobalContextValidationRule({
+            platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
             contextName: 'ApplicationContext',
             once: true,
           }),
           new LocationContextValidationRule({
+            platform: TrackerPlatform.CORE,
             logPrefix: 'OpenTaxonomyValidationPlugin',
             contextName: 'RootLocationContext',
             once: true,
@@ -291,7 +301,10 @@ describe('Tracker', () => {
         isUsable: () => true,
         enrich: jest.fn(),
       };
-      const testTracker = new Tracker({ applicationId: 'app-id', plugins: [pluginE, pluginF] });
+      const testTracker = new Tracker({
+        applicationId: 'app-id',
+        plugins: [pluginE, pluginF],
+      });
       testTracker.trackEvent(testEvent);
       expect(pluginE.enrich).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
       expect(pluginF.enrich).toHaveBeenCalledWith(expect.objectContaining({ _type: 'test-event' }));
@@ -351,9 +364,9 @@ describe('Tracker', () => {
       const testTracker = new Tracker({
         applicationId: 'app-id',
         transport: testTransport,
-        plugins: [],
         trackApplicationContext: false,
       });
+      testTracker.plugins.plugins = [];
       jest.resetAllMocks();
       testTracker.setActive(false);
       testTracker.setActive(true);
