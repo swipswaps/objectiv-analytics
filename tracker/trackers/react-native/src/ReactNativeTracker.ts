@@ -51,7 +51,7 @@ export class ReactNativeTracker extends Tracker {
     let config = trackerConfig;
 
     // Set the platform
-    config.platform = TrackerPlatform.BROWSER;
+    config.platform = TrackerPlatform.REACT_NATIVE;
 
     // Either `transport` or `endpoint` must be provided
     if (!config.transport && !config.endpoint) {

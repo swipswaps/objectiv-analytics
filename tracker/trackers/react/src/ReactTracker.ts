@@ -74,7 +74,7 @@ export class ReactTracker extends Tracker {
     let config = trackerConfig;
 
     // Set the platform
-    config.platform = TrackerPlatform.BROWSER;
+    config.platform = TrackerPlatform.REACT;
 
     // Either `transport` or `endpoint` must be provided
     if (!config.transport && !config.endpoint) {
