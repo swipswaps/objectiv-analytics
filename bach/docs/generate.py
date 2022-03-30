@@ -63,7 +63,8 @@ patterns = [
     '^bach_core_concepts.html$',
     '^bach_examples.html$',
     '^bach_reference.html$',
-    "^bach_whatisbach.html$"
+    "^bach_whatisbach.html$",
+    "^models_mapping.html$",
 ]
 
 # list of special cases, where we have a subdir, with an introduction at toplevel
@@ -194,6 +195,11 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                 'label': label,
                 'id': f'{module}/{href}'
             }]
+
+        if (label=='Mapping' or label=='Aggregation'):
+            print("MENU_ITEM:", menu_item)
+            print("ITEMS:", items)
+
         if len(menu_item['children']) > 0 and menu_item['text'] not in skip_categories and menu_item['href']:
             # this is a case where we have a duplicate (both children and an href)
             menu_item_children = []
@@ -326,7 +332,7 @@ for url in urls:
     # try to determine description
     description_elements = body_element.xpath('//main[@role="main"]/div/section//p')
 
-    if len(description_elements) > 0:
+    if(len(description_elements) > 0 and 'text' in description_elements[0]):
         description_element = description_elements[0].text
         words = description_element.replace('\n', ' ').split(' ')
 
