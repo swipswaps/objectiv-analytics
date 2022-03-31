@@ -92,7 +92,7 @@ describe('PathContextFromURLPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:PathContextFromURLPlugin｣ Error: PathContext is missing from Global Contexts.\n' +
-        'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.',
+          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.',
         'color:red'
       );
     });
@@ -113,7 +113,7 @@ describe('PathContextFromURLPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
         '%c｢objectiv:PathContextFromURLPlugin｣ Error: Only one PathContext should be present in Global Contexts.\n' +
-        'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.',
+          'Taxonomy documentation: https://staging.objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.',
         'color:red'
       );
     });

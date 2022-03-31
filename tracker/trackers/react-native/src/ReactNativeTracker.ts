@@ -48,7 +48,7 @@ export type ReactNativeTrackerConfig = Omit<TrackerConfig, 'platform'> & {
  */
 export class ReactNativeTracker extends Tracker {
   constructor(trackerConfig: ReactNativeTrackerConfig, ...contextConfigs: ContextsConfig[]) {
-    let config:TrackerConfig = trackerConfig;
+    let config: TrackerConfig = trackerConfig;
 
     // Set the platform
     config.platform = TrackerPlatform.REACT_NATIVE;

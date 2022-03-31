@@ -3,7 +3,7 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import { generateUUID, getLocationPath, } from '@objectiv/tracker-core';
+import { generateUUID, getLocationPath } from '@objectiv/tracker-core';
 import { LocationContext } from '../types';
 
 /**
