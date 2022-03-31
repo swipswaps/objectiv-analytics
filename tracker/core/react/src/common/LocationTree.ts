@@ -3,13 +3,7 @@
  */
 
 import { AbstractLocationContext } from '@objectiv/schema';
-import {
-  generateUUID,
-  getLocationPath,
-  NoopConsoleImplementation,
-  Tracker,
-  TrackerConsole,
-} from '@objectiv/tracker-core';
+import { generateUUID, getLocationPath, } from '@objectiv/tracker-core';
 import { LocationContext } from '../types';
 
 /**
@@ -80,57 +74,6 @@ export const LocationTree = {
       LocationTree.log();
       errorCache.set(locationId, type);
     }
-  },
-
-  /**
-   * Clears and re-initializes the LocationTree nodes based on the given Tracker's Plugins.
-   *
-   * This method receives an instance of the Tracker and infers LocationStack mutations from its Plugins.
-   * All lifecycle methods of each Plugin are executed and LocationStack mutations, if any, are collected.
-   * LocationContexts are then converted to LocationNodes and pushed in the LocationTree state.
-   * The Root element of the LocationTree gets also adjusted accordingly, so that we may add more Nodes correctly.
-   */
-  initialize: (tracker: Tracker) => {
-    LocationTree.clear();
-
-    // Disable Console while we replay `initialize` and `enrich` lifecycle methods
-    const previousConsoleImplementation = TrackerConsole.implementation;
-    TrackerConsole.setImplementation(NoopConsoleImplementation);
-
-    // Clone the given Tracker into a new one with only plugins configured
-    const trackerClone = new Tracker({
-      platform: tracker.platform,
-      applicationId: tracker.applicationId,
-      plugins: tracker.plugins,
-      active: false
-    });
-
-    // Replay plugins lifecycle methods
-    trackerClone.plugins.initialize(trackerClone);
-    trackerClone.plugins.enrich(trackerClone);
-
-    // Restore console
-    TrackerConsole.setImplementation(previousConsoleImplementation);
-
-    // Convert AbstractLocationContext[] to LocationContext<AbstractLocationContext>[]
-    const locationStack: LocationContext<AbstractLocationContext>[] = trackerClone.location_stack.map(
-      (locationContext) => ({
-        __location_id: generateUUID(),
-        ...locationContext,
-      })
-    );
-
-    // Add LocationStack Contexts to LocationTree and update what the root node should be
-    locationStack.reduce(
-      (
-        parentLocationContext: LocationContext<AbstractLocationContext> | null,
-        locationContext: LocationContext<AbstractLocationContext>
-      ) => {
-        LocationTree.add(locationContext, parentLocationContext);
-        return locationContext;
-      },
-      null
-    );
   },
 
   /**
