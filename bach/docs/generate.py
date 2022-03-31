@@ -329,15 +329,15 @@ for url in urls:
     title = doc.xpath('//title/text()')[0]
 
     # here we get the body
-    # we look for <main role="main"....>
-    body_element: html.Element = doc.xpath('//main[@role="main"]/div')[0]
+    # we look for <main....>
+    body_element: html.Element = doc.xpath('//main/div')[0]
     body = etree.tostring(body_element).decode('utf-8')
 
     # try to determine description
-    description_elements = body_element.xpath('//main[@role="main"]/div/section//p')
+    description_elements = body_element.xpath('//main/div/section//p')
 
-    if(len(description_elements) > 0 and 'text' in description_elements[0]):
-        description_element = description_elements[0].text
+    if(len(description_elements) > 0):
+        description_element = description_elements[0].text_content()
         words = description_element.replace('\n', ' ').split(' ')
 
         description = ''
@@ -349,6 +349,7 @@ for url in urls:
                 description += f' {word}'
             if len(description) > 500:
                 break
+
     else:
         # if we cannot find one, use title
         description = title
