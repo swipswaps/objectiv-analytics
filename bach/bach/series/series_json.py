@@ -12,7 +12,7 @@ from bach.series.series import WrappedPartition
 from bach.sql_model import BachSqlModel
 from bach.types import DtypeOrAlias
 from sql_models.constants import DBDialect
-from sql_models.util import quote_string
+from sql_models.util import quote_string, is_postgres, DatabaseNotSupportedException
 
 if TYPE_CHECKING:
     from bach.series import SeriesBoolean
@@ -313,7 +313,9 @@ class SeriesJsonb(Series):
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as jsonb)', literal)
+        if not is_postgres(dialect):
+            raise DatabaseNotSupportedException(dialect)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
     def supported_value_to_literal(cls, dialect: Dialect, value: Union[dict, list]) -> Expression:

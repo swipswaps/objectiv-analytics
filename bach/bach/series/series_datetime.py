@@ -15,6 +15,7 @@ from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from bach.types import DtypeOrAlias
 from sql_models.constants import DBDialect
+from sql_models.util import DatabaseNotSupportedException, is_postgres
 
 _SECONDS_IN_DAY = 24 * 60 * 60
 
@@ -168,9 +169,7 @@ class SeriesTimestamp(SeriesAbstractDateTime):
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        db_dialect = DBDialect.from_dialect(dialect)
-        db_dtype = cls.supported_db_dtype[db_dialect]
-        return Expression.construct(f'cast({{}} as {db_dtype})', literal)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
     def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.datetime]) -> Expression:
@@ -282,9 +281,7 @@ class SeriesTime(SeriesAbstractDateTime):
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        db_dialect = DBDialect.from_dialect(dialect)
-        db_dtype = cls.supported_db_dtype[db_dialect]
-        return Expression.construct(f'cast({{}} as {db_dtype})', literal)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
     def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.time]) -> Expression:
@@ -319,7 +316,9 @@ class SeriesTimedelta(SeriesAbstractDateTime):
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as interval)', literal)
+        if not is_postgres(dialect):
+            raise DatabaseNotSupportedException(dialect)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
     def supported_value_to_literal(
