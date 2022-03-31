@@ -1,5 +1,5 @@
 # modelhub:
--e ../bach
+objectiv-bach
 
 # metabase
 requests
