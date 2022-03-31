@@ -10,6 +10,7 @@ from bach.series import Series, const_to_series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from sql_models.constants import DBDialect
+from sql_models.util import is_postgres
 
 
 class SeriesBoolean(Series, ABC):
@@ -57,7 +58,13 @@ class SeriesBoolean(Series, ABC):
             return expression
         if source_dtype not in ['int64', 'string']:
             raise ValueError(f'cannot convert {source_dtype} to bool')
-        return Expression.construct('cast({} as bool)', expression)
+        if is_postgres(dialect):
+            # Postgres cannot directly cast a bigint to bool.
+            # So we do a comparison against 0 (==False) instead
+            if source_dtype == 'int64':
+                return Expression.construct('{} != 0', expression)
+        # Default case: do a regular cast
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def _comparator_operation(self, other, comparator, other_dtypes=tuple(['bool'])) -> 'SeriesBoolean':
         return super()._comparator_operation(other, comparator, other_dtypes)

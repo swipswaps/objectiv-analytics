@@ -185,8 +185,7 @@ class SeriesTimestamp(SeriesAbstractDateTime):
         else:
             if source_dtype not in ['string', 'date']:
                 raise ValueError(f'cannot convert {source_dtype} to timestamp')
-            db_dtype = 'timestamp without time zone'
-            return Expression.construct(f'cast({{}} as {db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def __add__(self, other) -> 'Series':
         return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))
@@ -234,8 +233,7 @@ class SeriesDate(SeriesAbstractDateTime):
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to date')
-            db_dtype = 'date'
-            return Expression.construct(f'cast({{}} as {db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def __add__(self, other) -> 'Series':
         type_mapping = {
@@ -299,8 +297,7 @@ class SeriesTime(SeriesAbstractDateTime):
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to time')
-            db_dtype = 'time without time zone'
-            return Expression.construct(f'cast({{}} as {db_dtype})', expression)
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     # python supports no arithmetic on Time
 
