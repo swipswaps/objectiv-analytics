@@ -248,11 +248,11 @@ def menu_list_to_sidebar(menu_items: list, level: int = 0) -> List[Dict[str, str
                     items.append({
                         'type': 'category',
                         'label': label,
-                        'link': {
-                          'type': 'generated-index',
-                          'title': label,
-                          'slug': generated_index_slug
-                        },
+                        # 'link': {
+                        #   'type': 'generated-index',
+                        #   'title': label,
+                        #   'slug': generated_index_slug
+                        # },
                         'items': menu_item_children
                     })
             else:
