@@ -9,6 +9,7 @@ Reference by function
 Creation
 ~~~~~~~~
 .. autosummary::
+    :toctree: DataFrame
 
     DataFrame.from_table
     DataFrame.from_model
