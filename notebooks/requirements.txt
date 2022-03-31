@@ -4,6 +4,7 @@ objectiv-modelhub
 
 # requirements for the product_analytics.ipynb notebook
 jupyter
+jupyterlab
 jupyter-dash
 matplotlib
 plotly
