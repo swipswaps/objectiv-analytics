@@ -13,6 +13,7 @@ from bach.series import Series, SeriesString, SeriesBoolean, SeriesFloat64, Seri
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from bach.types import DtypeOrAlias
+from sql_models.constants import DBDialect
 
 _SECONDS_IN_DAY = 24 * 60 * 60
 
@@ -158,7 +159,10 @@ class SeriesTimestamp(SeriesAbstractDateTime):
     """
     dtype = 'timestamp'
     dtype_aliases = ('datetime64', 'datetime64[ns]', numpy.datetime64)
-    supported_db_dtype = 'timestamp without time zone'
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'timestamp without time zone',
+        DBDialect.BIGQUERY: 'DATETIME',  # TODO: use TIMESTAMP instead?
+    }
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
@@ -178,7 +182,8 @@ class SeriesTimestamp(SeriesAbstractDateTime):
         else:
             if source_dtype not in ['string', 'date']:
                 raise ValueError(f'cannot convert {source_dtype} to timestamp')
-            return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
+            db_dtype = 'timestamp without time zone'
+            return Expression.construct(f'cast({{}} as {db_dtype})', expression)
 
     def __add__(self, other) -> 'Series':
         return self._arithmetic_operation(other, 'add', '({}) + ({})', other_dtypes=tuple(['timedelta']))
@@ -202,7 +207,10 @@ class SeriesDate(SeriesAbstractDateTime):
     """
     dtype = 'date'
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
-    supported_db_dtype = 'date'
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'date',
+        DBDialect.BIGQUERY: 'DATE'
+    }
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
@@ -223,7 +231,8 @@ class SeriesDate(SeriesAbstractDateTime):
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to date')
-            return Expression.construct(f'cast({{}} as {cls.supported_db_dtype})', expression)
+            db_dtype = 'date'
+            return Expression.construct(f'cast({{}} as {db_dtype})', expression)
 
     def __add__(self, other) -> 'Series':
         type_mapping = {
@@ -262,7 +271,10 @@ class SeriesTime(SeriesAbstractDateTime):
     """
     dtype = 'time'
     dtype_aliases: Tuple[DtypeOrAlias, ...] = tuple()
-    supported_db_dtype = 'time without time zone'
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'time without time zone',
+        DBDialect.BIGQUERY: 'TIME',
+    }
     supported_value_types = (datetime.time, str)
 
     @classmethod
@@ -282,7 +294,8 @@ class SeriesTime(SeriesAbstractDateTime):
         else:
             if source_dtype not in ['string', 'timestamp']:
                 raise ValueError(f'cannot convert {source_dtype} to time')
-            return Expression.construct(f'cast ({{}} as {cls.supported_db_dtype})', expression)
+            db_dtype = 'time without time zone'
+            return Expression.construct(f'cast({{}} as {db_dtype})', expression)
 
     # python supports no arithmetic on Time
 
@@ -294,7 +307,9 @@ class SeriesTimedelta(SeriesAbstractDateTime):
 
     dtype = 'timedelta'
     dtype_aliases = ('interval',)
-    supported_db_dtype = 'interval'
+    supported_db_dtype = {
+        DBDialect.POSTGRES: 'interval'
+    }
     supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
 
     @classmethod
