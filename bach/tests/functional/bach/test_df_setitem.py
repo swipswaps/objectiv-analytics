@@ -22,7 +22,7 @@ def check_set_const(engine, constant, expected_series: Type[Series], expected_pg
 
     if is_postgres(engine):
         # we don't have an easy way to get the database type in BigQuery, so only support that check for PG
-        assert_postgres_type(bt['new_column'], pg_db_type, expected_series)
+        assert_postgres_type(bt['new_column'], expected_pg_db_type, expected_series)
 
     assert_equals_data(
         bt,
