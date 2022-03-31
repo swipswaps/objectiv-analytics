@@ -1,4 +1,4 @@
-# Objectiv Analysis
+# Open model hub
 
 ## Start modeling with Objectiv
 If you want to use the open model hub, install the package from Pypi as follows:
@@ -54,7 +54,7 @@ ipython kernel install --user --name=objectiv_venv
 * Mark the following directories as "Sources root":
    1. `/bach/`
    2. `/modelhub/`
-* Set `analysis/venv/bin/python` as the default interpreter for the project
+* Set `modelhub/venv/bin/python` as the default interpreter for the project
 
 
 ## Metabase integration
