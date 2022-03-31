@@ -11,6 +11,7 @@ from bach.series import Series, const_to_series
 from bach.expression import Expression
 from bach.series.series import WrappedPartition
 from sql_models.constants import DBDialect
+from sql_models.util import is_postgres, DatabaseNotSupportedException
 
 
 class SeriesUuid(Series):
@@ -27,7 +28,9 @@ class SeriesUuid(Series):
 
     @classmethod
     def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as uuid)', literal)
+        if not is_postgres(dialect):
+            raise DatabaseNotSupportedException(dialect)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', literal)
 
     @classmethod
     def supported_value_to_literal(cls, dialect: Dialect, value: Union[UUID, str]) -> Expression:
