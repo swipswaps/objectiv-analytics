@@ -334,7 +334,7 @@ class SeriesTimedelta(SeriesAbstractDateTime):
         else:
             if not source_dtype == 'string':
                 raise ValueError(f'cannot convert {source_dtype} to timedelta')
-            return Expression.construct('cast({} as interval)', expression)
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def _comparator_operation(self, other, comparator,
                               other_dtypes=('timedelta', 'string')) -> SeriesBoolean:

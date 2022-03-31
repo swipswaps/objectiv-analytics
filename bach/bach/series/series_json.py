@@ -328,7 +328,7 @@ class SeriesJsonb(Series):
             return expression
         if source_dtype != 'string':
             raise ValueError(f'cannot convert {source_dtype} to jsonb')
-        return Expression.construct('cast({} as jsonb)', expression)
+        return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
 
     def _comparator_operation(self, other, comparator, other_dtypes=('json', 'jsonb')):
         return self._binary_operation(

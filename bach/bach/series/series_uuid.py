@@ -47,7 +47,7 @@ class SeriesUuid(Series):
         if source_dtype == 'string':
             # If the format is wrong, then this will give an error later on, but there is not much we can
             # do about that here.
-            return Expression.construct('cast(({}) as uuid)', expression)
+            return Expression.construct(f'cast({{}} as {cls.get_db_dtype(dialect)})', expression)
         # As far as we know the other types we support cannot be directly cast to uuid.
         raise ValueError(f'cannot convert {source_dtype} to uuid.')
 
