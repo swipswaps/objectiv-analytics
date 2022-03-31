@@ -18,6 +18,5 @@ The two main data classes of Bach are the DataFrame and Series:
 
 Get started with Bach
 ---------------------
-Once your app is set up with the Objectiv tracker and the collector is running, follow the steps in the
-`readme <https://github.com/objectiv/objectiv-analytics/tree/main/analysis#setup-objectiv-for-data-analysis>`_
-to work with the data in python using Objectiv.
+Once your app is set up with the Objectiv tracker and the collector is running, follow the steps in 
+:ref:`Bach basics <bach_examples>` to work with the data in python using Objectiv.
