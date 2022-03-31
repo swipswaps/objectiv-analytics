@@ -2,6 +2,7 @@
 Copyright 2021 Objectiv B.V.
 """
 import pytest
+from sqlalchemy.engine import Dialect
 
 from bach import Series
 from bach.expression import Expression
@@ -65,11 +66,11 @@ class ReversedStringType(Series):
     supported_value_types = (str,)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         return literal
 
     @classmethod
-    def supported_value_to_literal(cls, value: str) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: str) -> Expression:
         return Expression.string_value(str(reversed(value)))
 
     @classmethod
