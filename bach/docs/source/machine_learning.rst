@@ -13,7 +13,7 @@ feature engineering `here
 <feature_engineering.html>`_.
 
 This example is also available in a `notebook
-<https://github.com/objectiv/objectiv-analytics/blob/main/analysis/notebooks/sklearn-example.ipynb>`_
+<https://github.com/objectiv/objectiv-analytics/blob/main/notebooks/sklearn-example.ipynb>`_
 to run on your own data or use our
 `quickstart
 <https://objectiv.io/docs/home/quickstart-guide/>`_ to try it out with demo data in 5 minutes.
