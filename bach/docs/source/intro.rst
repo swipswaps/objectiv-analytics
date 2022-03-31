@@ -8,9 +8,17 @@ hub. The open model hub is a growing collection of open-source, free to use data
 combine and run for product analysis and exploration. It includes models for a wide range of typical product
 analytics use cases.
 
+If you want to use the open model hub, install the package from Pypi as follows:
+
+
+    pip install objectiv-modelhub
+
+
 See the :ref:`example notebooks <example_notebooks>` section to get started immediately. View the list of
 available models :ref:`here <models>` or check out the full
-:ref:`open model hub api reference <modelhub_api_reference>`.
+:ref:`open model hub api reference <modelhub_api_reference>`. More information on setting up a development
+environment for the open model hub and how to configure Metabase is in the
+`readme <https://github.com/objectiv/objectiv-analytics/tree/main/modelhub>`_.
 
 The open model hub is powered by Bach: Objectiv's data modeling library. With Bach, you can compose models with
 familiar Pandas-like dataframe operations in your notebook. It uses a SQL abstraction layer that enables
