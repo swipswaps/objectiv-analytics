@@ -1,11 +1,11 @@
 import pytest
 
-from tests.functional.bach.test_data_and_utils import get_bt_with_test_data, assert_equals_data, \
-    get_bt_with_railway_data
+from tests.functional.bach.test_data_and_utils import assert_equals_data, \
+    get_bt_with_railway_data, get_df_with_test_data
 
 
-def test_sort_index_basic():
-    bt = get_bt_with_test_data()[['founding', 'city']]
+def test_sort_index_basic(engine):
+    bt = get_df_with_test_data(engine)[['founding', 'city']]
     bt = bt.set_index(['founding'], drop=True)
 
     result = bt.sort_index()
@@ -48,8 +48,9 @@ def test_sort_index_w_level():
         ],
     )
 
-def test_index_sort_w_ascending():
-    bt = get_bt_with_test_data()[['founding', 'city']]
+
+def test_index_sort_w_ascending(engine):
+    bt = get_df_with_test_data(engine)[['founding', 'city']]
     bt = bt.set_index(['founding'], drop=True)
 
     with pytest.raises(ValueError, match=r'Length of ascending'):
