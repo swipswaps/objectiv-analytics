@@ -1,4 +1,4 @@
-# Objectiv Analysis
+# Open model hub
 
 ## Start modeling with Objectiv
 If you want to use the open model hub, install the package from Pypi as follows:
