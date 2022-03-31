@@ -49,8 +49,8 @@ In the example we assume that the data collected with Objectiv's tracker is stor
     # instantiate the model hub
     modelhub = ModelHub(time_aggregation='YYYY-MM-DD')
     # get the Bach DataFrame with Objectiv data
-    df = modelhub.get_objectiv_dataframe(db_url='postgresql://objectiv:@localhost:5432/objectiv'
-                                         start_date='2022-01-04',
+    df = modelhub.get_objectiv_dataframe(db_url='postgresql://objectiv:@localhost:5432/objectiv',
+                                         start_date='2022-03-01',
                                          table_name='example')
 
 Your DataFrame is instantiated! We start with showing the first couple of rows from the data set.
