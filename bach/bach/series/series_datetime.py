@@ -7,6 +7,7 @@ from enum import Enum
 from typing import Union, cast, List, Tuple
 
 import numpy
+from sqlalchemy.engine import Dialect
 
 from bach import DataFrame
 from bach.series import Series, SeriesString, SeriesBoolean, SeriesFloat64, SeriesInt64
@@ -166,11 +167,13 @@ class SeriesTimestamp(SeriesAbstractDateTime):
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as timestamp without time zone)', literal)
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        db_dialect = DBDialect.from_dialect(dialect)
+        db_dtype = cls.supported_db_dtype[db_dialect]
+        return Expression.construct(f'cast({{}} as {db_dtype})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[str, datetime.datetime]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.datetime]) -> Expression:
         # TODO: check here already that the string has the correct format
         str_value = str(value)
         return Expression.string_value(str_value)
@@ -214,11 +217,11 @@ class SeriesDate(SeriesAbstractDateTime):
     supported_value_types = (datetime.datetime, datetime.date, str)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         return Expression.construct(f'cast({{}} as date)', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[str, datetime.date]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.date]) -> Expression:
         if isinstance(value, datetime.date):
             value = str(value)
         # TODO: check here already that the string has the correct format
@@ -278,11 +281,13 @@ class SeriesTime(SeriesAbstractDateTime):
     supported_value_types = (datetime.time, str)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
-        return Expression.construct('cast({} as time without time zone)', literal)
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
+        db_dialect = DBDialect.from_dialect(dialect)
+        db_dtype = cls.supported_db_dtype[db_dialect]
+        return Expression.construct(f'cast({{}} as {db_dtype})', literal)
 
     @classmethod
-    def supported_value_to_literal(cls, value: Union[str, datetime.time]) -> Expression:
+    def supported_value_to_literal(cls, dialect: Dialect, value: Union[str, datetime.time]) -> Expression:
         value = str(value)
         # TODO: check here already that the string has the correct format
         return Expression.string_value(value)
@@ -313,12 +318,13 @@ class SeriesTimedelta(SeriesAbstractDateTime):
     supported_value_types = (datetime.timedelta, numpy.timedelta64, str)
 
     @classmethod
-    def supported_literal_to_expression(cls, literal: Expression) -> Expression:
+    def supported_literal_to_expression(cls, dialect: Dialect, literal: Expression) -> Expression:
         return Expression.construct('cast({} as interval)', literal)
 
     @classmethod
     def supported_value_to_literal(
             cls,
+            dialect: Dialect,
             value: Union[str, numpy.timedelta64, datetime.timedelta]
     ) -> Expression:
         value = str(value)
