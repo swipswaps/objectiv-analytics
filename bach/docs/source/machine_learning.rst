@@ -1,4 +1,4 @@
-.. _machine_learning:
+.. _example_machine_learning:
 
 .. currentmodule:: bach
 

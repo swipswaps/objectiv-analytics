@@ -1,4 +1,4 @@
-.. _modelhub_basics:
+.. _example_modelhub_basics:
 
 .. currentmodule:: bach
 

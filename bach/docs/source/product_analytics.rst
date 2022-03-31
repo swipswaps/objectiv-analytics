@@ -1,3 +1,5 @@
+.. _example_product_analytics:
+
 .. currentmodule:: bach_open_taxonomy
 
 =======================

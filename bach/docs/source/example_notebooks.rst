@@ -58,3 +58,9 @@ Your DataFrame is instantiated! We start with showing the first couple of rows f
 
 Take a look at one of the example notebooks below to see how you can analyze your data. Basic Bach
 introduction examples are :ref:`here <bach_examples>` in the Bach docs.
+
+* :ref:`Open model hub basics <example_modelhub_basics>`
+* :ref:`Basic product analytics <example_product_analytics>`
+* :ref:`Open taxonomy how-to <example_open_taxonomy>`
+* :ref:`Feature engineering with Bach <example_feature_engineering>`
+* :ref:`Bach and sklearn <example_machine_learning>`
