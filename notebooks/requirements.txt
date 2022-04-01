@@ -4,6 +4,7 @@ objectiv-modelhub
 
 # requirements for the notebooks
 jupyter
+jupyterlab
 matplotlib
 seaborn
 sklearn
