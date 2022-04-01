@@ -140,7 +140,7 @@ describe('HttpContextPlugin', () => {
     it('should fail when given TrackerEvent does not have HttpContext', () => {
       const testHttpContextPlugin = new HttpContextPlugin();
       testHttpContextPlugin.initialize(testTracker);
-      const eventWithoutHttpContext = new TrackerEvent({ _type: 'test' });
+      const eventWithoutHttpContext = new TrackerEvent({ _type: 'TestEvent' });
 
       jest.resetAllMocks();
 
@@ -149,7 +149,7 @@ describe('HttpContextPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        '%c｢objectiv:HttpContextPlugin｣ Error: HttpContext is missing from Global Contexts.\n' +
+        '%c｢objectiv:HttpContextPlugin｣ Error: HttpContext is missing from Global Contexts of TestEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/HttpContext.',
         'color:red'
       );
@@ -159,7 +159,7 @@ describe('HttpContextPlugin', () => {
       const testHttpContextPlugin = new HttpContextPlugin();
       testHttpContextPlugin.initialize(testTracker);
       const eventWithDuplicatedHttpContext = new TrackerEvent({
-        _type: 'test',
+        _type: 'TestEvent',
         global_contexts: [
           makeHttpContext({
             id: '/test',
@@ -183,7 +183,7 @@ describe('HttpContextPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        '%c｢objectiv:HttpContextPlugin｣ Error: Only one HttpContext should be present in Global Contexts.\n' +
+        '%c｢objectiv:HttpContextPlugin｣ Error: Only one HttpContext should be present in Global Contexts of TestEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/HttpContext.',
         'color:red'
       );

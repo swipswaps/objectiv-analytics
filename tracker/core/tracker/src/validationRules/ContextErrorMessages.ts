@@ -42,27 +42,27 @@ export type ContextErrorMessages = { [platform in TrackerPlatform]: ContextError
 const genericErrorMessagesByType: ContextErrorMessagesByType = {
   [ContextErrorType.GLOBAL_CONTEXT_MISSING]: {
     default:
-      '{{contextName}} is missing from Global Contexts.\n' +
+      '{{contextName}} is missing from Global Contexts of {{eventName}}.\n' +
       'Taxonomy documentation: {{docsURL}}/taxonomy/reference/global-contexts/{{contextName}}.',
   },
   [ContextErrorType.GLOBAL_CONTEXT_DUPLICATED]: {
     default:
-      'Only one {{contextName}} should be present in Global Contexts.\n' +
+      'Only one {{contextName}} should be present in Global Contexts of {{eventName}}.\n' +
       'Taxonomy documentation: {{docsURL}}/taxonomy/reference/global-contexts/{{contextName}}.',
   },
   [ContextErrorType.LOCATION_CONTEXT_MISSING]: {
     default:
-      '{{contextName}} is missing from Location Stack.\n' +
+      '{{contextName}} is missing from Location Stack of {{eventName}}.\n' +
       'Taxonomy documentation: {{docsURL}}/taxonomy/reference/location-contexts/{{contextName}}.',
   },
   [ContextErrorType.LOCATION_CONTEXT_DUPLICATED]: {
     default:
-      'Only one {{contextName}} should be present in Location Stack.\n' +
+      'Only one {{contextName}} should be present in Location Stack of {{eventName}}.\n' +
       'Taxonomy documentation: {{docsURL}}/taxonomy/reference/location-contexts/{{contextName}}.',
   },
   [ContextErrorType.LOCATION_CONTEXT_WRONG_POSITION]: {
     default:
-      '{{contextName}} is in the wrong position of the Location Stack.\n' +
+      '{{contextName}} is in the wrong position of the Location Stack of {{eventName}}.\n' +
       'Taxonomy documentation: {{docsURL}}/taxonomy/reference/location-contexts/{{contextName}}.',
   },
 };

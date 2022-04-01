@@ -21,7 +21,7 @@ export type LogContextValidationRuleErrorParameters = {
  * Helper function to log Context Validation Rule errors in a consistent way.
  */
 export const logContextValidationRuleError = ({ rule, event, type }: LogContextValidationRuleErrorParameters) => {
-  TrackerConsole.groupCollapsed(makeValidationRuleErrorMessage({ rule, type }), 'color:red');
+  TrackerConsole.groupCollapsed(makeValidationRuleErrorMessage({ rule, event, type }), 'color:red');
   TrackerConsole.group(`Event:`);
   TrackerConsole.log(event);
   TrackerConsole.groupEnd();

@@ -82,7 +82,7 @@ describe('PathContextFromURLPlugin', () => {
     it('should fail when given TrackerEvent does not have PathContext', () => {
       const testPathContextPlugin = new PathContextFromURLPlugin();
       testPathContextPlugin.initialize(testTracker);
-      const eventWithoutPathContext = new TrackerEvent({ _type: 'test' });
+      const eventWithoutPathContext = new TrackerEvent({ _type: 'TestEvent' });
 
       jest.resetAllMocks();
 
@@ -91,7 +91,7 @@ describe('PathContextFromURLPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        '%c｢objectiv:PathContextFromURLPlugin｣ Error: PathContext is missing from Global Contexts.\n' +
+        '%c｢objectiv:PathContextFromURLPlugin｣ Error: PathContext is missing from Global Contexts of TestEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.',
         'color:red'
       );
@@ -101,7 +101,7 @@ describe('PathContextFromURLPlugin', () => {
       const testPathContextPlugin = new PathContextFromURLPlugin();
       testPathContextPlugin.initialize(testTracker);
       const eventWithDuplicatedPathContext = new TrackerEvent({
-        _type: 'test',
+        _type: 'TestEvent',
         global_contexts: [makePathContext({ id: '/test' }), makePathContext({ id: '/test' })],
       });
 
@@ -112,7 +112,7 @@ describe('PathContextFromURLPlugin', () => {
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
         1,
-        '%c｢objectiv:PathContextFromURLPlugin｣ Error: Only one PathContext should be present in Global Contexts.\n' +
+        '%c｢objectiv:PathContextFromURLPlugin｣ Error: Only one PathContext should be present in Global Contexts of TestEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/PathContext.',
         'color:red'
       );

@@ -27,7 +27,7 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Context is missing from Global Contexts.\n' +
+        '%c｢objectiv｣ Error: Context is missing from Global Contexts of PressEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/Context.',
         'color:red'
       );
@@ -46,7 +46,7 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:TestPrefix｣ Error: Context is missing from Global Contexts.\n' +
+        '%c｢objectiv:TestPrefix｣ Error: Context is missing from Global Contexts of PressEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/Context.',
         'color:red'
       );
@@ -73,7 +73,7 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Only one Context should be present in Global Contexts.\n' +
+        '%c｢objectiv｣ Error: Only one Context should be present in Global Contexts of PressEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/global-contexts/Context.',
         'color:red'
       );
@@ -93,7 +93,7 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Context is missing from Location Stack.\n' +
+        '%c｢objectiv｣ Error: Context is missing from Location Stack of PressEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/Context.',
         'color:red'
       );
@@ -112,7 +112,7 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv:TestPrefix｣ Error: Context is missing from Location Stack.\n' +
+        '%c｢objectiv:TestPrefix｣ Error: Context is missing from Location Stack of PressEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/Context.',
         'color:red'
       );
@@ -139,7 +139,7 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Only one Context should be present in Location Stack.\n' +
+        '%c｢objectiv｣ Error: Only one Context should be present in Location Stack of PressEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/Context.',
         'color:red'
       );
@@ -167,7 +167,7 @@ describe('Validation Rules', () => {
 
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(1);
       expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledWith(
-        '%c｢objectiv｣ Error: Context is in the wrong position of the Location Stack.\n' +
+        '%c｢objectiv｣ Error: Context is in the wrong position of the Location Stack of PressEvent.\n' +
           'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/Context.',
         'color:red'
       );

@@ -19,7 +19,7 @@ describe('makeValidationRuleErrorMessage', () => {
       once: true,
       position: 0,
     });
-    rule.validate(new TrackerEvent({ _type: 'test' }));
+    rule.validate(new TrackerEvent({ _type: 'TestEvent' }));
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(2);
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       1,
@@ -27,7 +27,7 @@ describe('makeValidationRuleErrorMessage', () => {
     );
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       2,
-      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack.\n' +
+      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack of TestEvent.\n' +
         'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.',
       'color:red'
     );
@@ -40,7 +40,7 @@ describe('makeValidationRuleErrorMessage', () => {
       once: true,
       position: 0,
     });
-    rule.validate(new TrackerEvent({ _type: 'test' }));
+    rule.validate(new TrackerEvent({ _type: 'TestEvent' }));
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(2);
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       1,
@@ -48,7 +48,7 @@ describe('makeValidationRuleErrorMessage', () => {
     );
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       2,
-      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack.\n' +
+      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack of TestEvent.\n' +
         'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.\n' +
         'See also:\n' +
         '- Configuring Roots: https://objectiv.io/docs/tracking/angular/how-to-guides/configuring-root-locations.\n' +
@@ -64,7 +64,7 @@ describe('makeValidationRuleErrorMessage', () => {
       once: true,
       position: 0,
     });
-    rule.validate(new TrackerEvent({ _type: 'test' }));
+    rule.validate(new TrackerEvent({ _type: 'TestEvent' }));
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(2);
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       1,
@@ -72,7 +72,7 @@ describe('makeValidationRuleErrorMessage', () => {
     );
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       2,
-      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack.\n' +
+      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack of TestEvent.\n' +
         'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.\n' +
         'See also:\n' +
         '- Configuring Roots: https://objectiv.io/docs/tracking/browser/how-to-guides/configuring-root-locations.\n' +
@@ -88,7 +88,7 @@ describe('makeValidationRuleErrorMessage', () => {
       once: true,
       position: 0,
     });
-    rule.validate(new TrackerEvent({ _type: 'test' }));
+    rule.validate(new TrackerEvent({ _type: 'TestEvent' }));
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(2);
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       1,
@@ -96,7 +96,7 @@ describe('makeValidationRuleErrorMessage', () => {
     );
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       2,
-      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack.\n' +
+      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack of TestEvent.\n' +
         'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.\n' +
         'See also:\n' +
         '- Configuring Roots: https://objectiv.io/docs/tracking/react/how-to-guides/configuring-root-locations.\n' +
@@ -113,7 +113,7 @@ describe('makeValidationRuleErrorMessage', () => {
       once: true,
       position: 0,
     });
-    rule.validate(new TrackerEvent({ _type: 'test' }));
+    rule.validate(new TrackerEvent({ _type: 'TestEvent' }));
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenCalledTimes(2);
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       1,
@@ -121,7 +121,7 @@ describe('makeValidationRuleErrorMessage', () => {
     );
     expect(MockConsoleImplementation.groupCollapsed).toHaveBeenNthCalledWith(
       2,
-      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack.\n' +
+      '%c｢objectiv｣ Error: RootLocationContext is missing from Location Stack of TestEvent.\n' +
         'Taxonomy documentation: https://objectiv.io/docs/taxonomy/reference/location-contexts/RootLocationContext.\n' +
         'See also:\n' +
         '- React Navigation Plugin: https://objectiv.io/docs/tracking/react-native/plugins/react-navigation.\n' +

@@ -2,6 +2,7 @@
  * Copyright 2022 Objectiv B.V.
  */
 
+import { TrackerEvent } from '../TrackerEvent';
 import { ContextValidationRuleConfig } from '../validationRules/ContextValidationRuleConfig';
 import { ContextErrorMessages, ContextErrorType, DOCS_URL } from './ContextErrorMessages';
 
@@ -10,13 +11,14 @@ import { ContextErrorMessages, ContextErrorType, DOCS_URL } from './ContextError
  */
 export type MakeValidationRuleErrorMessageParameters = {
   rule: ContextValidationRuleConfig;
+  event: TrackerEvent;
   type: ContextErrorType;
 };
 
 /**
  * Helper function to compile Context validation error messages for a specific platform and errorCode.
  */
-export const makeValidationRuleErrorMessage = ({ rule, type }: MakeValidationRuleErrorMessageParameters) => {
+export const makeValidationRuleErrorMessage = ({ rule, event, type }: MakeValidationRuleErrorMessageParameters) => {
   // Get messages for the given rule's platform and error type
   let errorMessagesForPlatformAndType = ContextErrorMessages[rule.platform][type];
 
@@ -25,6 +27,7 @@ export const makeValidationRuleErrorMessage = ({ rule, type }: MakeValidationRul
 
   // Replace placeholders with actual values
   errorMessage = errorMessage.replace(/{{docsURL}}/g, DOCS_URL);
+  errorMessage = errorMessage.replace(/{{eventName}}/g, event._type);
   errorMessage = errorMessage.replace(/{{contextName}}/g, rule.contextName);
 
   // Make and return final error message string
